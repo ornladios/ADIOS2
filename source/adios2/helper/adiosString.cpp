@@ -19,6 +19,8 @@
 #include <stdexcept> // std::invalid_argument
 /// \endcond
 
+#include "adios2/helper/adiosType.h" //BytesFactor
+
 namespace adios2
 {
 namespace helper
@@ -62,16 +64,6 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
                     ", format must be key" + delimKeyValue +
                     "value for each entry \n");
             }
-            /*
-                        if (equalPosition == parameter.size() - 1)
-                        {
-                            throw std::invalid_argument(
-                                "ERROR: empty value in IO parameter " +
-               parameter +
-                                ", format must be key" + delimKeyValue + "value
-               \n");
-                        }
-                        */
         }
 
         field = parameter.substr(0, equalPosition);
@@ -81,7 +73,7 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
     // BODY OF FUNCTION STARTS HERE
     Params parametersOutput;
 
-    for (const auto parameter : parameters)
+    for (const std::string &parameter : parameters)
     {
         std::string field, value;
         lf_GetFieldValue(parameter, field, value, delimKeyValue, debugMode);
@@ -182,12 +174,9 @@ bool EndsWith(const std::string &str, const std::string &ending,
         }
         else
         {
-            std::string strLC = std::string(str);
-            std::string endLC = std::string(ending);
-            std::transform(strLC.begin(), strLC.end(), strLC.begin(),
-                           ::tolower);
-            std::transform(endLC.begin(), endLC.end(), endLC.begin(),
-                           ::tolower);
+            const std::string strLC = LowerCase(str);
+            const std::string endLC = LowerCase(ending);
+
             return (!strLC.compare(strLC.length() - endLC.length(),
                                    endLC.length(), endLC));
         }
@@ -258,8 +247,7 @@ void SetParameterValueInt(const std::string key, const Params &parameters,
     if (itKey == parameters.end())
     {
         // try lower case
-        std::string keyLC = key;
-        std::transform(keyLC.begin(), keyLC.end(), keyLC.begin(), ::tolower);
+        const std::string keyLC = LowerCase(key);
 
         itKey = parameters.find(keyLC);
         if (itKey == parameters.end())
@@ -295,6 +283,54 @@ std::string GlobalName(const std::string &localName, const std::string &prefix,
     }
 
     return prefix + separator + localName;
+}
+
+size_t StringToSizeT(const std::string &input, const bool debugMode,
+                     const std::string &hint)
+{
+    if (sizeof(size_t) == sizeof(uint32_t))
+    {
+        return StringTo<uint32_t>(input, debugMode, hint);
+    }
+
+    return StringTo<uint64_t>(input, debugMode, hint);
+}
+
+size_t StringToByteUnits(const std::string &input, const bool debugMode,
+                         const std::string &hint)
+{
+    std::string units;
+    size_t unitsLength = 2;
+
+    if (EndsWith(input, "gb", true))
+    {
+        units = "gb";
+    }
+    else if (EndsWith(input, "mb", true))
+    {
+        units = "mb";
+    }
+    else if (EndsWith(input, "kb", true))
+    {
+        units = "kb";
+    }
+    else if (EndsWith(input, "b", true))
+    {
+        units = "b";
+        unitsLength = 1;
+    }
+
+    const std::string number(input.substr(0, input.size() - unitsLength));
+    const size_t factor = BytesFactor(units, debugMode);
+
+    return static_cast<size_t>(std::stoul(number) * factor);
+}
+
+std::string LowerCase(const std::string &input)
+{
+    std::string output = input;
+    std::transform(output.begin(), output.end(), output.begin(), ::tolower);
+    return output;
 }
 
 } // end namespace helper

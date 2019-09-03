@@ -8,15 +8,14 @@
  *      Author: Greg Eisenhauer
  */
 
-#include "adios2/helper/adiosFunctions.h"
-#include "adios2/toolkit/format/bp3/BP3.h"
+#include "SstReader.h"
+#include "SstParamParser.h"
+#include "SstReader.tcc"
+
 #include <cstring>
 #include <string>
 
-#include "SstReader.h"
-#include "SstReader.tcc"
-
-#include "SstParamParser.h"
+#include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
@@ -312,7 +311,8 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         //   (and to the control plane).)
 
         m_BP3Deserializer = new format::BP3Deserializer(m_Comm, m_DebugMode);
-        m_BP3Deserializer->InitParameters(m_IO.m_Parameters);
+        m_BP3Deserializer->Init(m_IO.m_Parameters,
+                                "in call to BP3::Open for reading");
 
         m_BP3Deserializer->m_Metadata.Resize(
             (*m_CurrentStepMetaData->WriterMetadata)->DataSize,

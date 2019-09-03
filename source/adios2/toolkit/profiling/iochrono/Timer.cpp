@@ -63,13 +63,10 @@ std::string Timer::GetShortUnits() const noexcept
 // PRIVATE
 int64_t Timer::GetElapsedTime()
 {
-    if (m_DebugMode)
+    if (m_DebugMode && !m_InitialTimeSet)
     {
-        if (!m_InitialTimeSet)
-        {
-            throw std::invalid_argument("ERROR: Resume() in process " +
-                                        m_Process + " not called\n");
-        }
+        throw std::invalid_argument("ERROR: Resume() in process " + m_Process +
+                                    " not called\n");
     }
 
     int64_t time = -1;
@@ -111,5 +108,5 @@ int64_t Timer::GetElapsedTime()
     return time;
 }
 
-} // end namespace
-} // end namespace
+} // end namespace profiling
+} // end namespace adios2

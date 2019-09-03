@@ -94,7 +94,7 @@ void BP3Writer::EndStep()
     m_BP3Serializer.SerializeData(m_IO, true);
 
     const size_t currentStep = CurrentStep();
-    const size_t flushStepsCount = m_BP3Serializer.m_FlushStepsCount;
+    const size_t flushStepsCount = m_BP3Serializer.m_Parameters.FlushStepsCount;
 
     if (currentStep % flushStepsCount == 0)
     {
@@ -108,7 +108,7 @@ void BP3Writer::Flush(const int transportIndex)
     DoFlush(false, transportIndex);
     m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
 
-    if (m_BP3Serializer.m_CollectiveMetadata)
+    if (m_BP3Serializer.m_Parameters.CollectiveMetadata)
     {
         WriteCollectiveMetadataFile();
     }
@@ -152,7 +152,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void BP3Writer::InitParameters()
 {
-    m_BP3Serializer.InitParameters(m_IO.m_Parameters);
+    m_BP3Serializer.Init(m_IO.m_Parameters, "in call to BP3::Open for writing");
 }
 
 void BP3Writer::InitTransports()
@@ -179,24 +179,24 @@ void BP3Writer::InitTransports()
         bpSubStreamNames = m_BP3Serializer.GetBPSubStreamNames(transportsNames);
     }
 
-    m_BP3Serializer.ProfilerStart("mkdir");
+    m_BP3Serializer.m_Profiler.Start("mkdir");
     m_FileDataManager.MkDirsBarrier(bpSubStreamNames,
-                                    m_BP3Serializer.m_NodeLocal);
-    m_BP3Serializer.ProfilerStop("mkdir");
+                                    m_BP3Serializer.m_Parameters.NodeLocal);
+    m_BP3Serializer.m_Profiler.Stop("mkdir");
 
     if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
     {
-        if (m_BP3Serializer.m_AsyncThreads == 0)
+        if (m_BP3Serializer.m_Parameters.AsyncTasks)
         {
             m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
                                         m_IO.m_TransportsParameters,
-                                        m_BP3Serializer.m_Profiler.IsActive);
+                                        m_BP3Serializer.m_Profiler.m_IsActive);
         }
         else
         {
             m_FutureOpenFiles = m_FileDataManager.OpenFilesAsync(
                 bpSubStreamNames, m_OpenMode, m_IO.m_TransportsParameters,
-                m_BP3Serializer.m_Profiler.IsActive);
+                m_BP3Serializer.m_Profiler.m_IsActive);
         }
     }
 }
@@ -244,13 +244,13 @@ void BP3Writer::DoClose(const int transportIndex)
         m_FileDataManager.CloseFiles(transportIndex);
     }
 
-    if (m_BP3Serializer.m_CollectiveMetadata &&
+    if (m_BP3Serializer.m_Parameters.CollectiveMetadata &&
         m_FileDataManager.AllTransportsClosed())
     {
         WriteCollectiveMetadataFile(true);
     }
 
-    if (m_BP3Serializer.m_Profiler.IsActive &&
+    if (m_BP3Serializer.m_Profiler.m_IsActive &&
         m_FileDataManager.AllTransportsClosed())
     {
         WriteProfilingJSONFile();
@@ -309,7 +309,7 @@ void BP3Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
         m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,
                                         m_IO.m_TransportsParameters,
-                                        m_BP3Serializer.m_Profiler.IsActive);
+                                        m_BP3Serializer.m_Profiler.m_IsActive);
 
         m_FileMetadataManager.WriteFiles(
             m_BP3Serializer.m_Metadata.m_Buffer.data(),

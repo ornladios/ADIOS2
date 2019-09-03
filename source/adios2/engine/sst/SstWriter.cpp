@@ -141,7 +141,8 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
         // initialize BP serializer, deleted in
         // SstWriter::EndStep()::lf_FreeBlocks()
         m_BP3Serializer = new format::BP3Serializer(m_Comm, m_DebugMode);
-        m_BP3Serializer->InitParameters(m_IO.m_Parameters);
+        m_BP3Serializer->Init(m_IO.m_Parameters,
+                              "in call to BP3::Open for writing");
         m_BP3Serializer->m_MetadataSet.TimeStep = 1;
         m_BP3Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
     }

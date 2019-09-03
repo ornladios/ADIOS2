@@ -11,15 +11,15 @@
  *      Author: Norbert Podhorszki pnorbert@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_INSITUMPIREADER_H_
-#define ADIOS2_ENGINE_INSITUMPIREADER_H_
+#ifndef ADIOS2_ENGINE_INSITUMPI_INSITUMPIREADER_H_
+#define ADIOS2_ENGINE_INSITUMPI_INSITUMPIREADER_H_
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
-#include "adios2/toolkit/format/bp3/BP3.h"
+#include "adios2/toolkit/format/bp/bp3/BP3Deserializer.h"
 
 namespace adios2
 {
@@ -154,4 +154,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_INSITUMPIMPIREADER_H_ */
+#endif /* ADIOS2_ENGINE_INSITUMPI_INSITUMPIREADER_H_ */

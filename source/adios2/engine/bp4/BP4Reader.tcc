@@ -63,7 +63,7 @@ void BP4Reader::GetDeferredCommon(Variable<T> &variable, T *data)
 template <class T>
 void BP4Reader::ReadVariableBlocks(Variable<T> &variable)
 {
-    const bool profile = m_BP4Deserializer.m_Profiler.IsActive;
+    const bool profile = m_BP4Deserializer.m_Profiler.m_IsActive;
 
     for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {

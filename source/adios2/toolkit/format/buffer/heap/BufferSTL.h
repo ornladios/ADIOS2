@@ -31,6 +31,9 @@ public:
 
     void Resize(const size_t size, const std::string hint) final;
 
+    void Reset(const bool resetAbsolutePosition,
+               const bool zeroInitialize) final;
+
     size_t GetAvailableSize() const final;
 };
 

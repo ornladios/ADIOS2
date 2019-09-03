@@ -14,7 +14,7 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
-#include "adios2/toolkit/format/bp4/BP4.h" //format::BP4Deserializer
+#include "adios2/toolkit/format/bp/bp4/BP4Deserializer.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 namespace adios2

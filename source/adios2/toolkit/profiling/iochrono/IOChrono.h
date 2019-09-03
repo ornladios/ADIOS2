@@ -24,12 +24,11 @@ namespace adios2
 namespace profiling
 {
 
-/**
- * Struct used to track
- */
-struct IOChrono
+/** Class used to track different timers */
+class IOChrono
 {
 
+public:
     /**
      * Create timers for each process
      * <pre>
@@ -38,13 +37,25 @@ struct IOChrono
      * chronometer with Resume() and Pause() functions
      * </pre>
      */
-    std::unordered_map<std::string, Timer> Timers;
+    std::unordered_map<std::string, Timer> m_Timers;
 
     /** Create byte tracking counter for each process*/
-    std::unordered_map<std::string, size_t> Bytes;
+    std::unordered_map<std::string, size_t> m_Bytes;
 
     /** flag to determine if IOChrono object is being used */
-    bool IsActive = false;
+    bool m_IsActive = false;
+
+    IOChrono() = default;
+    ~IOChrono() = default;
+
+    /** Start existing process in m_Timers */
+    void Start(const std::string process) noexcept;
+
+    /**
+     * Stop existing process in m_Timers
+     * @throws std::invalid_argument if Start wasn't called
+     * */
+    void Stop(const std::string process);
 };
 
 } // end namespace profiling

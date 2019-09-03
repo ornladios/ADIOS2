@@ -8,8 +8,8 @@
  *      Author: Norbert Podhorszki pnorbert@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_INSITUMPIREADER_TCC_
-#define ADIOS2_ENGINE_INSITUMPIREADER_TCC_
+#ifndef ADIOS2_ENGINE_INSITUMPI_INSITUMPIREADER_TCC_
+#define ADIOS2_ENGINE_INSITUMPI_INSITUMPIREADER_TCC_
 
 #include "InSituMPIReader.h"
 
@@ -195,4 +195,4 @@ void InSituMPIReader::AsyncRecvVariable(
 } // end namespace core
 } // end namespace adios2
 
-#endif // ADIOS2_ENGINE_INSITUMPIREADER_TCC_
+#endif // ADIOS2_ENGINE_INSITUMPI_INSITUMPIREADER_TCC_

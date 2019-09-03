@@ -30,6 +30,9 @@ public:
 
     const char *Data() const noexcept final;
 
+    void Reset(const bool resetAbsolutePosition,
+               const bool zeroInitialize) final;
+
 private:
     /** shared memory segment ID from shmget */
     int m_ShmID = -1;

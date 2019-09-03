@@ -264,12 +264,12 @@ enum class BlockDivisionMethod
  */
 struct BlockDivisionInfo
 {
-    uint16_t nBlocks;
-    size_t subblockSize;
-    BlockDivisionMethod divisionMethod;
-    std::vector<uint16_t> div;
-    std::vector<uint16_t> rem;
-    std::vector<uint16_t> reverseDivProduct;
+    uint16_t NBlocks;
+    size_t SubBlockSize;
+    BlockDivisionMethod DivisionMethod;
+    std::vector<uint16_t> Div;
+    std::vector<uint16_t> Rem;
+    std::vector<uint16_t> ReverseDivProduct;
 };
 
 /** Chop a block into smaller pieces by a size limit.
