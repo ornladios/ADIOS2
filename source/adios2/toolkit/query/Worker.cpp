@@ -15,6 +15,9 @@ Worker::~Worker()
 {
     if (m_SourceReader)
         m_SourceReader->Close();
+
+    if (m_Query != nullptr)
+        delete m_Query;
 }
 /*
 template <class T>
