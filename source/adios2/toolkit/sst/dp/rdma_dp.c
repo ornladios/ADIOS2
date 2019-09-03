@@ -140,11 +140,17 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
             useinfo = info;
             break;
         }
-        if ((((strcmp(prov_name, "verbs") == 0) && info->src_addr) || (strcmp(prov_name, "verbs") == 0) || (strcmp(prov_name, "psm2") == 0)) && (!useinfo || !ifname || (strcmp(useinfo->domain_attr->name, ifname) != 0))) {
+        if ((((strcmp(prov_name, "verbs") == 0) && info->src_addr) ||
+             (strcmp(prov_name, "verbs") == 0) ||
+             (strcmp(prov_name, "psm2") == 0)) &&
+            (!useinfo || !ifname ||
+             (strcmp(useinfo->domain_attr->name, ifname) != 0)))
+        {
             useinfo = info;
         }
         else if (((strstr(prov_name, "verbs") && info->src_addr) ||
-            strstr(prov_name, "gni") || strstr(prov_name, "psm2")) && !useinfo)
+                  strstr(prov_name, "gni") || strstr(prov_name, "psm2")) &&
+                 !useinfo)
         {
             useinfo = info;
         }
@@ -193,11 +199,12 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
 
     info->domain_attr->mr_mode = FI_MR_BASIC;
 #ifdef SST_HAVE_CRAY_DRC
-    if(strstr(info->fabric_attr->prov_name, "gni") && fabric->auth_key) {
+    if (strstr(info->fabric_attr->prov_name, "gni") && fabric->auth_key)
+    {
         info->domain_attr->auth_key = (uint8_t *)fabric->auth_key;
         info->domain_attr->auth_key_size = sizeof(struct fi_gni_raw_auth_key);
     }
-#endif /* SST_HAVE_CRAY_DRC */ 
+#endif /* SST_HAVE_CRAY_DRC */
     fabric->info = fi_dupinfo(info);
 
     fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
@@ -338,7 +345,8 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
 
     *ReaderContactInfoPtr = NULL;
 
-    if(Params) {
+    if (Params)
+    {
         Stream->Params = malloc(sizeof(*Stream->Params));
         memcpy(Stream->Params, Params, sizeof(*Params));
     }
@@ -366,7 +374,6 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     FabricState Fabric;
     int rc;
 
-
     memset(Stream, 0, sizeof(struct _Rdma_WS_Stream));
 
     MPI_Comm_rank(comm, &Stream->Rank);
@@ -374,27 +381,39 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
     Fabric = Stream->Fabric;
 #ifdef SST_HAVE_CRAY_DRC
-    if(Stream->Rank == 0) {
+    if (Stream->Rank == 0)
+    {
         rc = drc_acquire(&Fabric->credential, DRC_FLAGS_FLEX_CREDENTIAL);
-        if(rc != DRC_SUCCESS) {
-            Svcs->verbose(CP_Stream, "Could not acquire DRC credential. Failed with %d.\n", rc);
+        if (rc != DRC_SUCCESS)
+        {
+            Svcs->verbose(CP_Stream,
+                          "Could not acquire DRC credential. Failed with %d.\n",
+                          rc);
             goto err_out;
-        } else {
-            Svcs->verbose(CP_Stream, "DRC acquired credential id %d.\n", Fabric->credential);
+        }
+        else
+        {
+            Svcs->verbose(CP_Stream, "DRC acquired credential id %d.\n",
+                          Fabric->credential);
         }
     }
 
-    MPI_Bcast(&Fabric->credential, sizeof(Fabric->credential), MPI_BYTE, 0, comm);
+    MPI_Bcast(&Fabric->credential, sizeof(Fabric->credential), MPI_BYTE, 0,
+              comm);
     rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
-    if(rc != DRC_SUCCESS) {
-        Svcs->verbose(CP_Stream, "Could not access DRC credential. Failed with %d.\n", rc);
+    if (rc != DRC_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream,
+                      "Could not access DRC credential. Failed with %d.\n", rc);
         goto err_out;
     }
 
     Fabric->auth_key = malloc(sizeof(*Fabric->auth_key));
     Fabric->auth_key->type = GNIX_AKT_RAW;
-    Fabric->auth_key->raw.protection_key = drc_get_first_cookie(Fabric->drc_info);
-    Svcs->verbose(CP_Stream, "Using protection key %08x.\n", Fabric->auth_key->raw.protection_key); 
+    Fabric->auth_key->raw.protection_key =
+        drc_get_first_cookie(Fabric->drc_info);
+    Svcs->verbose(CP_Stream, "Using protection key %08x.\n",
+                  Fabric->auth_key->raw.protection_key);
 #endif /* SST_HAVE_CRAY_DRC */
 
     init_fabric(Stream->Fabric, Params);
@@ -405,7 +424,8 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
         goto err_out;
     }
 
-    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n", fi_tostr(Fabric->info, FI_TYPE_INFO));
+    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n",
+                  fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     /*
      * save the CP_stream value of later use
@@ -413,16 +433,17 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     Stream->CP_Stream = CP_Stream;
 
     return (void *)Stream;
-    
+
 err_out:
-    if(Stream) {
-        if(Stream->Fabric) {
+    if (Stream)
+    {
+        if (Stream->Fabric)
+        {
             free(Stream->Fabric);
         }
         free(Stream);
     }
-    return(NULL);
-
+    return (NULL);
 }
 
 static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
@@ -493,24 +514,33 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
         calloc(writerCohortSize, sizeof(*RS_Stream->WriterAddr));
 
     RS_Stream->Fabric = calloc(1, sizeof(struct fabric_state));
-    
+
     Fabric = RS_Stream->Fabric;
 #ifdef SST_HAVE_CRAY_DRC
-    if(providedWriterInfo) {
+    if (providedWriterInfo)
+    {
         Fabric->credential = (*providedWriterInfo)->Credential;
-    } else {
-        Svcs->verbose(CP_Stream, "Writer contact info needed to access DRC credentials.\n", rc);
+    }
+    else
+    {
+        Svcs->verbose(CP_Stream,
+                      "Writer contact info needed to access DRC credentials.\n",
+                      rc);
     }
 
     rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
-    if(rc != DRC_SUCCESS) {
-        Svcs->verbose(CP_Stream, "Could not access DRC credential. Failed with %d.\n", rc);
+    if (rc != DRC_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream,
+                      "Could not access DRC credential. Failed with %d.\n", rc);
     }
 
     Fabric->auth_key = malloc(sizeof(*Fabric->auth_key));
     Fabric->auth_key->type = GNIX_AKT_RAW;
-    Fabric->auth_key->raw.protection_key = drc_get_first_cookie(Fabric->drc_info);
-    Svcs->verbose(CP_Stream, "Using protection key %08x.\n", Fabric->auth_key->raw.protection_key);
+    Fabric->auth_key->raw.protection_key =
+        drc_get_first_cookie(Fabric->drc_info);
+    Svcs->verbose(CP_Stream, "Using protection key %08x.\n",
+                  Fabric->auth_key->raw.protection_key);
 #endif /* SST_HAVE_CRAY_DRC */
 
     init_fabric(RS_Stream->Fabric, RS_Stream->Params);
@@ -519,7 +549,8 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
         Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
     }
 
-    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n", fi_tostr(Fabric->info, FI_TYPE_INFO));
+    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n",
+                  fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     /*
      * make a copy of writer contact information (original will not be
@@ -810,9 +841,10 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
     fini_fabric(WS_Stream->Fabric);
 
 #ifdef SST_HAVE_CRAY_DRC
-    if(WS_Stream->Rank == 0) {
+    if (WS_Stream->Rank == 0)
+    {
         drc_release(Credential, 0);
-    } 
+    }
 #endif /* SST_HAVE_CRAY_DRC */
 
     while (WS_Stream->ReaderCount > 0)
@@ -839,7 +871,8 @@ static FMField RdmaWriterContactList[] = {
     {"Address", "integer[Length]", sizeof(char),
      FMOffset(RdmaWriterContactInfo, Address)},
 #ifdef SST_HAVE_CRAY_DRC
-    {"Credential", "integer", sizeof(int), FMOffset(RdmaWriterContactInfo, Credential)},
+    {"Credential", "integer", sizeof(int),
+     FMOffset(RdmaWriterContactInfo, Credential)},
 #endif /* SST_HAVE_CRAY_DRC */
     {NULL, NULL, 0, 0}};
 
