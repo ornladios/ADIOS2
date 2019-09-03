@@ -124,9 +124,17 @@ if(ADIOS2_HAVE_ZeroMQ)
     target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
 endif()
 
+#if (ADIOS2_HAVE_JSON)
+if (ADIOS2_HAVE_DataMan)
+    target_sources(adios2 PRIVATE
+	toolkit/query/JsonWorker.cpp			
+   	)
+    target_link_libraries(adios2 PRIVATE nlohmann_json)
+endif()
+
 if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_WDM OR ADIOS2_HAVE_Table)
     target_sources(adios2 PRIVATE
-        toolkit/format/dataman/DataManSerializer.cpp
+       	toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
         )
     target_link_libraries(adios2 PRIVATE nlohmann_json)
