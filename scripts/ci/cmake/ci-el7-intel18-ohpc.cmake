@@ -16,7 +16,7 @@ set(ENV{FFLAGS} "-warn errors")
 
 set(ENV{CMAKE_PREFIX_PATH} "/opt/libfabric/1.6.0:$ENV{CMAKE_PREFIX_PATH}")
 
-set(dashboard_cache [[
+set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
@@ -27,7 +27,7 @@ ADIOS2_USE_Python:BOOL=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
 
 PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python2.7
-]])
+")
 
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
