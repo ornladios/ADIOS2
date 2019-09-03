@@ -17,6 +17,7 @@ Parameters are passed at:
 3. :ref:`Runtime Configuration Files` in the :ref:`ADIOS` component.
 
 .. include:: bp3.rst
+.. include:: bp4.rst
 .. include:: hdf5.rst
 .. include:: insitu_mpi.rst
 .. include:: dataman.rst
