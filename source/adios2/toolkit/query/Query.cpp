@@ -86,7 +86,7 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io,
     if (m_Nodes.size() == 0)
         return;
 
-    uint counter = 0;
+    int counter = 0;
     for (auto node : m_Nodes)
     {
         counter++;
