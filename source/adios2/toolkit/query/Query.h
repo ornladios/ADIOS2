@@ -140,6 +140,16 @@ public:
     virtual void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
                                     std::vector<Box<Dims>> &touchedBlocks) = 0;
 
+    Box<Dims> GetIntersection(const Box<Dims> &box1,
+                              const Box<Dims> &box2) noexcept
+    {
+        Box<Dims> b1 = adios2::helper::StartEndBox(box1.first, box1.second);
+        Box<Dims> b2 = adios2::helper::StartEndBox(box2.first, box2.second);
+
+        Box<Dims> result = adios2::helper::IntersectionBox(b1, b2);
+        return adios2::helper::StartCountBox(result.first, result.second);
+    }
+
     bool UseOutputRegion(const adios2::Box<adios2::Dims> &region)
     {
         if (!IsCompatible(region))
@@ -202,8 +212,8 @@ public:
     {
         for (auto it = touchedBlocks.begin(); it != touchedBlocks.end(); it++)
         {
-            Box<Dims> overlap =
-                adios2::helper::IntersectionBox(m_Selection, *it);
+            Box<Dims> overlap = GetIntersection(m_Selection, *it);
+            // adios2::helper::IntersectionBox(m_Selection, *it);
             it->first = overlap.first;
             it->second = overlap.second;
         }

@@ -61,8 +61,8 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io,
             for (auto it = touchedBlocks.begin(); it != touchedBlocks.end();
                  it++)
             {
-                adios2::Box<Dims> curr =
-                    adios2::helper::IntersectionBox(*it, block);
+                adios2::Box<Dims> curr = GetIntersection(*it, block);
+                // adios2::helper::IntersectionBox(*it, block);
                 if (curr.first.size() == 0) // no intersection
                     touchedBlocks.erase(it);
                 else
@@ -96,6 +96,17 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io,
         {
             touchedBlocks = currBlocks;
             continue;
+        }
+
+        if (currBlocks.size() == 0)
+        {
+            if (adios2::query::Relation::AND == m_Relation)
+            {
+                touchedBlocks.clear();
+                break;
+            }
+            else
+                continue;
         }
 
         for (auto block : currBlocks)
