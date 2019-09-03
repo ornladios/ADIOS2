@@ -4,9 +4,9 @@
 #------------------------------------------------------------------------------#
 
 unset(ENV{DESTDIR})
-file(REMOVE_RECURSE "${ADIOS2_BINARY_DIR}/testing/adios2/install/install")
+file(REMOVE_RECURSE "${ADIOS2_BINARY_DIR}/testing/install/install")
 execute_process(COMMAND "${CMAKE_COMMAND}"
-  "-DCMAKE_INSTALL_PREFIX=${ADIOS2_BINARY_DIR}/testing/adios2/install/install"
+  "-DCMAKE_INSTALL_PREFIX=${ADIOS2_BINARY_DIR}/testing/install/install"
   -P "${ADIOS2_BINARY_DIR}/cmake_install.cmake"
   RESULT_VARIABLE result
   )
