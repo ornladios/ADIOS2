@@ -92,19 +92,19 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
     const pugi::xml_attribute ioName =
         adios2::query::XmlUtil::XMLAttribute("name", ioNode);
     if (m_SourceReader->m_IO.m_Name.compare(ioName.value()) != 0)
-        throw std::ios_base::failure(
-            "invalid query io. Expecting io name = query");
+        throw std::ios_base::failure("invalid query io. Expecting io name = " +
+                                     m_SourceReader->m_IO.m_Name);
 #endif
     // std::cout<<m_SourceReader.Type()<<std::endl;
 
     std::map<std::string, QueryBase *> subqueries;
 
     adios2::Box<adios2::Dims> ref;
-    for (const pugi::xml_node &qNameNode : ioNode.children("name"))
+    for (const pugi::xml_node &qTagNode : ioNode.children("tag"))
     {
-        const pugi::xml_attribute tag =
-            adios2::query::XmlUtil::XMLAttribute("tag", qNameNode);
-        const pugi::xml_node &variable = qNameNode.child("var");
+        const pugi::xml_attribute name =
+            adios2::query::XmlUtil::XMLAttribute("name", qTagNode);
+        const pugi::xml_node &variable = qTagNode.child("var");
         QueryVar *q =
             ParseVarNode(variable, m_SourceReader->m_IO, *m_SourceReader);
         if (ref.first.size() == 0)
@@ -113,7 +113,7 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
             throw std::ios_base::failure("impactible query found on var:" +
                                          q->GetVarName());
         // std::cout<<" found sub query for: "<<tag.value()<<std::endl;
-        subqueries[tag.value()] = q;
+        subqueries[name.value()] = q;
     }
 
     const pugi::xml_node &qNode = ioNode.child("query");
