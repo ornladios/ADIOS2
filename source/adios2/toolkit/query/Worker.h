@@ -129,8 +129,8 @@ static Worker *GetWorker(const std::string &configFile,
         return new XmlWorker(configFile, adiosEngine);
     }
 
-    //#ifdef ADIOS2_HAVE_DataMan // so json is included
-#ifndef ADIOS2_HAVE_JSON // so json is included
+///#ifndef ADIOS2_HAVE_JSON // so json is included
+#ifdef ADIOS2_HAVE_DATAMAN // so json is included
     if (adios2::query::IsFileNameJSON(configFile))
     {
         return new JsonWorker(configFile, adiosEngine);
