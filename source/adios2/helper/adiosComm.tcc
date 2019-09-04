@@ -97,8 +97,7 @@ unsigned int Comm::ReduceValues(const unsigned int source, MPI_Op operation,
 {
     unsigned int sourceLocal = source;
     unsigned int reduceValue = 0;
-    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED, operation,
-                rankDestination, m_MPIComm);
+    this->Reduce(&sourceLocal, &reduceValue, 1, operation, rankDestination);
     return reduceValue;
 }
 
@@ -109,8 +108,7 @@ unsigned long int Comm::ReduceValues(const unsigned long int source,
 {
     unsigned long int sourceLocal = source;
     unsigned long int reduceValue = 0;
-    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG, operation,
-                rankDestination, m_MPIComm);
+    this->Reduce(&sourceLocal, &reduceValue, 1, operation, rankDestination);
     return reduceValue;
 }
 
@@ -121,8 +119,7 @@ unsigned long long int Comm::ReduceValues(const unsigned long long int source,
 {
     unsigned long long int sourceLocal = source;
     unsigned long long int reduceValue = 0;
-    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG_LONG,
-                operation, rankDestination, m_MPIComm);
+    this->Reduce(&sourceLocal, &reduceValue, 1, operation, rankDestination);
     return reduceValue;
 }
 
