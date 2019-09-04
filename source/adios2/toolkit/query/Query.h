@@ -156,8 +156,12 @@ public:
             return false;
 
         m_OutputRegion = region;
+        BroadcastOutputRegion(region);
         return true;
     }
+
+    virtual void
+    BroadcastOutputRegion(const adios2::Box<adios2::Dims> &region) = 0;
 
     void ApplyOutputRegion(std::vector<Box<Dims>> &touchedBlocks,
                            const adios2::Box<Dims> &referenceRegion);
@@ -177,6 +181,10 @@ public:
     std::string &GetVarName() { return m_VarName; }
     void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
                             std::vector<Box<Dims>> &touchedBlocks);
+    void BroadcastOutputRegion(const adios2::Box<adios2::Dims> &region)
+    {
+        m_OutputRegion = region;
+    }
 
     void Print() { m_RangeTree.Print(); }
 
@@ -237,6 +245,16 @@ public:
             delete n;
         m_Nodes.clear();
     }
+
+    void BroadcastOutputRegion(const adios2::Box<adios2::Dims> &region)
+    {
+        if (m_Nodes.size() == 0)
+            return;
+
+        for (auto n : m_Nodes)
+            n->BroadcastOutputRegion(region);
+    }
+
     void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
                             std::vector<Box<Dims>> &touchedBlocks);
 
