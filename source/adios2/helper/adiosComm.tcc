@@ -43,32 +43,16 @@ template <>
 void Comm::GatherArrays(const char *source, size_t sourceCount,
                         char *destination, int rankDestination) const
 {
-    int countsInt = static_cast<int>(sourceCount);
-    int result = SMPI_Gather(const_cast<char *>(source), countsInt, MPI_CHAR,
-                             destination, countsInt, MPI_CHAR, rankDestination,
-                             m_MPIComm);
-
-    if (result != MPI_SUCCESS)
-    {
-        throw std::runtime_error("ERROR: in ADIOS2 detected failure in MPI "
-                                 "Gather type MPI_CHAR function\n");
-    }
+    this->Gather(source, sourceCount, destination, sourceCount,
+                 rankDestination);
 }
 
 template <>
 void Comm::GatherArrays(const size_t *source, size_t sourceCount,
                         size_t *destination, int rankDestination) const
 {
-    int countsInt = static_cast<int>(sourceCount);
-    int result = SMPI_Gather(const_cast<size_t *>(source), countsInt,
-                             ADIOS2_MPI_SIZE_T, destination, countsInt,
-                             ADIOS2_MPI_SIZE_T, rankDestination, m_MPIComm);
-
-    if (result != MPI_SUCCESS)
-    {
-        throw std::runtime_error("ERROR: in ADIOS2 detected failure in MPI "
-                                 "Gather type size_t function\n");
-    }
+    this->Gather(source, sourceCount, destination, sourceCount,
+                 rankDestination);
 }
 
 // GathervArrays full specializations forward-declared in 'adiosComm.inl'.
