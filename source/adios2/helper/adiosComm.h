@@ -193,6 +193,11 @@ public:
                 size_t recvcount, int root,
                 const std::string &hint = std::string()) const;
 
+    template <typename TSend, typename TRecv>
+    void Gatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                 const size_t *recvcounts, const size_t *displs, int root,
+                 const std::string &hint = std::string()) const;
+
     template <typename T>
     void Reduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op, int root,
                 const std::string &hint = std::string()) const;
@@ -251,6 +256,12 @@ private:
                     MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
                     MPI_Datatype recvtype, int root,
                     const std::string &hint) const;
+
+    void GathervImpl(const void *sendbuf, size_t sendcount,
+                     MPI_Datatype sendtype, void *recvbuf,
+                     const size_t *recvcounts, const size_t *displs,
+                     MPI_Datatype recvtype, int root,
+                     const std::string &hint) const;
 
     void ReduceImpl(const void *sendbuf, void *recvbuf, size_t count,
                     MPI_Datatype datatype, MPI_Op op, int root,

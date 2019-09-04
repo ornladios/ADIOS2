@@ -8,7 +8,9 @@
 #include "adiosComm.h"
 #include "adiosComm.tcc"
 
+#include <algorithm>
 #include <ios> //std::ios_base::failure
+#include <iterator>
 #include <utility>
 
 #include "adios2/common/ADIOSMPI.h"
@@ -171,6 +173,31 @@ void Comm::GatherImpl(const void *sendbuf, size_t sendcount,
     CheckMPIReturn(SMPI_Gather(sendbuf, static_cast<int>(sendcount), sendtype,
                                recvbuf, static_cast<int>(recvcount), recvtype,
                                root, m_MPIComm),
+                   hint);
+}
+
+void Comm::GathervImpl(const void *sendbuf, size_t sendcount,
+                       MPI_Datatype sendtype, void *recvbuf,
+                       const size_t *recvcounts, const size_t *displs,
+                       MPI_Datatype recvtype, int root,
+                       const std::string &hint) const
+{
+    std::vector<int> countsInt;
+    std::vector<int> displsInt;
+    if (root == this->Rank())
+    {
+        auto cast = [](size_t sz) -> int { return int(sz); };
+        const int size = this->Size();
+        countsInt.reserve(size);
+        std::transform(recvcounts, recvcounts + size,
+                       std::back_inserter(countsInt), cast);
+        displsInt.reserve(size);
+        std::transform(displs, displs + size, std::back_inserter(displsInt),
+                       cast);
+    }
+    CheckMPIReturn(SMPI_Gatherv(sendbuf, static_cast<int>(sendcount), sendtype,
+                                recvbuf, countsInt.data(), displsInt.data(),
+                                recvtype, root, m_MPIComm),
                    hint);
 }
 

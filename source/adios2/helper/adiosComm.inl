@@ -171,6 +171,15 @@ void Comm::Gather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
                       Datatype<TRecv>(), root, hint);
 }
 
+template <typename TSend, typename TRecv>
+void Comm::Gatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                   const size_t *recvcounts, const size_t *displs, int root,
+                   const std::string &hint) const
+{
+    return GathervImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
+                       recvcounts, displs, Datatype<TRecv>(), root, hint);
+}
+
 template <typename T>
 void Comm::Reduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
                   int root, const std::string &hint) const
