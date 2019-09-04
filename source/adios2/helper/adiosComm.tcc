@@ -127,16 +127,13 @@ unsigned long long int Comm::ReduceValues(const unsigned long long int source,
 template <>
 size_t Comm::BroadcastValue(const size_t &input, const int rankSource) const
 {
-    int rank;
-    SMPI_Comm_rank(m_MPIComm, &rank);
     size_t output = 0;
-
-    if (rank == rankSource)
+    if (rankSource == this->Rank())
     {
         output = input;
     }
 
-    SMPI_Bcast(&output, 1, ADIOS2_MPI_SIZE_T, rankSource, m_MPIComm);
+    this->Bcast(&output, 1, rankSource);
 
     return output;
 }
@@ -145,13 +142,11 @@ template <>
 std::string Comm::BroadcastValue(const std::string &input,
                                  const int rankSource) const
 {
-    int rank;
-    SMPI_Comm_rank(m_MPIComm, &rank);
     const size_t inputSize = input.size();
     const size_t length = this->BroadcastValue(inputSize, rankSource);
     std::string output;
 
-    if (rank == rankSource)
+    if (rankSource == this->Rank())
     {
         output = input;
     }
@@ -160,8 +155,7 @@ std::string Comm::BroadcastValue(const std::string &input,
         output.resize(length);
     }
 
-    SMPI_Bcast(const_cast<char *>(output.data()), static_cast<int>(length),
-               MPI_CHAR, rankSource, m_MPIComm);
+    this->Bcast(const_cast<char *>(output.data()), length, rankSource);
 
     return output;
 }
