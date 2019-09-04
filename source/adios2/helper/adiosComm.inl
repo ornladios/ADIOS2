@@ -157,7 +157,7 @@ template <typename T>
 void Comm::Bcast(T *buffer, const size_t count, int root,
                  const std::string &hint) const
 {
-    return BcastImpl(buffer, count, Datatype<T>(), root, hint);
+    return BcastImpl(buffer, count, Datatype<T>(), sizeof(T), root, hint);
 }
 
 template <typename TSend, typename TRecv>

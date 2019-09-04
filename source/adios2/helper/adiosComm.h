@@ -249,7 +249,8 @@ private:
                        MPI_Datatype datatype, MPI_Op op,
                        const std::string &hint) const;
 
-    void BcastImpl(void *buffer, size_t count, MPI_Datatype datatype, int root,
+    void BcastImpl(void *buffer, size_t count, MPI_Datatype datatype,
+                   size_t datatypeSize, int root,
                    const std::string &hint) const;
 
     void GatherImpl(const void *sendbuf, size_t sendcount,

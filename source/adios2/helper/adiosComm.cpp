@@ -158,11 +158,22 @@ void Comm::AllreduceImpl(const void *sendbuf, void *recvbuf, size_t count,
 }
 
 void Comm::BcastImpl(void *buffer, size_t count, MPI_Datatype datatype,
-                     int root, const std::string &hint) const
+                     size_t datatypeSize, int root,
+                     const std::string &hint) const
 {
-    CheckMPIReturn(
-        SMPI_Bcast(buffer, static_cast<int>(count), datatype, root, m_MPIComm),
-        hint);
+    size_t inputSize = count;
+    const int MAXBCASTSIZE = 1073741824;
+    size_t blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    unsigned char *blockBuf = static_cast<unsigned char *>(buffer);
+    while (inputSize > 0)
+    {
+        CheckMPIReturn(SMPI_Bcast(blockBuf, static_cast<int>(blockSize),
+                                  datatype, root, m_MPIComm),
+                       hint);
+        blockBuf += blockSize * datatypeSize;
+        inputSize -= blockSize;
+        blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    }
 }
 
 void Comm::GatherImpl(const void *sendbuf, size_t sendcount,

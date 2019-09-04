@@ -165,70 +165,40 @@ template <>
 void Comm::BroadcastVector(std::vector<char> &vector,
                            const int rankSource) const
 {
-    int size;
-    SMPI_Comm_size(m_MPIComm, &size);
-
-    if (size == 1)
+    if (this->Size() == 1)
     {
         return;
     }
 
     // First Broadcast the size, then the contents
     size_t inputSize = this->BroadcastValue(vector.size(), rankSource);
-    int rank;
-    SMPI_Comm_rank(m_MPIComm, &rank);
 
-    if (rank != rankSource)
+    if (rankSource != this->Rank())
     {
         vector.resize(inputSize);
     }
 
-    const int MAXBCASTSIZE = 1073741824;
-    size_t blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
-    char *buffer = vector.data();
-    while (inputSize > 0)
-    {
-        SMPI_Bcast(buffer, static_cast<int>(blockSize), MPI_CHAR, rankSource,
-                   m_MPIComm);
-        buffer += blockSize;
-        inputSize -= blockSize;
-        blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
-    }
+    this->Bcast(vector.data(), inputSize, rankSource);
 }
 
 template <>
 void Comm::BroadcastVector(std::vector<size_t> &vector,
                            const int rankSource) const
 {
-    int size;
-    SMPI_Comm_size(m_MPIComm, &size);
-
-    if (size == 1)
+    if (this->Size() == 1)
     {
         return;
     }
 
     // First Broadcast the size, then the contents
     size_t inputSize = this->BroadcastValue(vector.size(), rankSource);
-    int rank;
-    SMPI_Comm_rank(m_MPIComm, &rank);
 
-    if (rank != rankSource)
+    if (rankSource != this->Rank())
     {
         vector.resize(inputSize);
     }
 
-    const int MAXBCASTSIZE = 1073741824 / sizeof(size_t);
-    size_t blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
-    size_t *buffer = vector.data();
-    while (inputSize > 0)
-    {
-        SMPI_Bcast(buffer, static_cast<int>(blockSize), ADIOS2_MPI_SIZE_T,
-                   rankSource, m_MPIComm);
-        buffer += blockSize;
-        inputSize -= blockSize;
-        blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
-    }
+    this->Bcast(vector.data(), inputSize, rankSource);
 }
 
 // Datatype full specializations forward-declared in 'adiosComm.inl'.
