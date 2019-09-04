@@ -135,16 +135,44 @@ class QueryBase
 {
 public:
     virtual ~QueryBase(){};
-    virtual bool IsCompatible(adios2::Box<adios2::Dims> &box) = 0;
+    virtual bool IsCompatible(const adios2::Box<adios2::Dims> &box) = 0;
     virtual void Print() = 0;
     virtual void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
                                     std::vector<Box<Dims>> &touchedBlocks) = 0;
+
+    Box<Dims> GetIntersection(const Box<Dims> &box1,
+                              const Box<Dims> &box2) noexcept
+    {
+        Box<Dims> b1 = adios2::helper::StartEndBox(box1.first, box1.second);
+        Box<Dims> b2 = adios2::helper::StartEndBox(box2.first, box2.second);
+
+        Box<Dims> result = adios2::helper::IntersectionBox(b1, b2);
+        return adios2::helper::StartCountBox(result.first, result.second);
+    }
+
+    bool UseOutputRegion(const adios2::Box<adios2::Dims> &region)
+    {
+        if (!IsCompatible(region))
+            return false;
+
+        m_OutputRegion = region;
+        return true;
+    }
+
+    void ApplyOutputRegion(std::vector<Box<Dims>> &touchedBlocks,
+                           const adios2::Box<Dims> &referenceRegion);
+
+    adios2::Box<adios2::Dims> m_OutputRegion;
+
+private:
+    // bool ResetToOutputRegion(Box<Dims>& block);
 };
 
 class QueryVar : public QueryBase
 {
 public:
     QueryVar(const std::string &varName) : m_VarName(varName) {}
+    ~QueryVar() {}
 
     std::string &GetVarName() { return m_VarName; }
     void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
@@ -152,8 +180,11 @@ public:
 
     void Print() { m_RangeTree.Print(); }
 
-    bool IsCompatible(adios2::Box<adios2::Dims> &box)
+    bool IsCompatible(const adios2::Box<adios2::Dims> &box)
     {
+        if ((m_Selection.first.size() == 0) || (box.first.size() == 0))
+            return true;
+
         if (box.first.size() != m_Selection.first.size())
             return false;
 
@@ -174,18 +205,38 @@ public:
 
     bool TouchSelection(adios2::Dims &start, adios2::Dims &count) const;
 
+    void LoadSelection(const std::string &startStr,
+                       const std::string &countStr);
+
+    void LimitToSelection(std::vector<Box<Dims>> &touchedBlocks)
+    {
+        for (auto it = touchedBlocks.begin(); it != touchedBlocks.end(); it++)
+        {
+            Box<Dims> overlap = GetIntersection(m_Selection, *it);
+            // adios2::helper::IntersectionBox(m_Selection, *it);
+            it->first = overlap.first;
+            it->second = overlap.second;
+        }
+    }
+
     RangeTree m_RangeTree;
     adios2::Box<adios2::Dims> m_Selection;
 
-private:
     std::string m_VarName;
+
+private:
 }; // class QueryVar
 
 class QueryComposite : public QueryBase
 {
 public:
     QueryComposite(adios2::query::Relation relation) : m_Relation(relation) {}
-
+    ~QueryComposite()
+    {
+        for (auto n : m_Nodes)
+            delete n;
+        m_Nodes.clear();
+    }
     void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
                             std::vector<Box<Dims>> &touchedBlocks);
 
@@ -198,7 +249,7 @@ public:
             n->Print();
     }
 
-    bool IsCompatible(adios2::Box<adios2::Dims> &box)
+    bool IsCompatible(const adios2::Box<adios2::Dims> &box)
     {
         if (m_Nodes.size() == 0)
             return false;

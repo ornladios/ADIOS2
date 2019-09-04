@@ -15,6 +15,9 @@ Worker::~Worker()
 {
     if (m_SourceReader)
         m_SourceReader->Close();
+
+    if (m_Query != nullptr)
+        delete m_Query;
 }
 /*
 template <class T>
@@ -39,6 +42,33 @@ m_adios2.DeclareIO(std::string("BLOCKINDEX-Write-")+m_DataReader->Name());
 }
 */
 
+QueryVar *Worker::GetBasicVarQuery(adios2::core::IO &currentIO,
+                                   const std::string &variableName)
+{
+    const std::string varType = currentIO.InquireVariableType(variableName);
+    if (varType.size() == 0)
+    {
+        std::cerr << "No such variable: " << variableName << std::endl;
+        return nullptr;
+    }
+#define declare_type(T)                                                        \
+    if (varType == helper::GetType<T>())                                       \
+    {                                                                          \
+        core::Variable<T> *var = currentIO.InquireVariable<T>(variableName);   \
+        if (var)                                                               \
+        {                                                                      \
+            QueryVar *q = new QueryVar(variableName);                          \
+            adios2::Dims zero(var->Shape().size(), 0);                         \
+            adios2::Dims shape = var->Shape();                                 \
+            q->SetSelection(zero, shape);                                      \
+            return q;                                                          \
+        }                                                                      \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    return nullptr;
+}
+
 void Worker::GetResultCoverage(const adios2::Box<adios2::Dims> &outputRegion,
                                std::vector<Box<Dims>> &touchedBlocks)
 {
@@ -46,22 +76,12 @@ void Worker::GetResultCoverage(const adios2::Box<adios2::Dims> &outputRegion,
     //           << std::endl;
     touchedBlocks.clear();
 
+    if (!m_Query->UseOutputRegion(outputRegion))
+        throw std::invalid_argument("Unable to use the output region.");
+
     if (m_Query && m_SourceReader)
         m_Query->BlockIndexEvaluate(m_SourceReader->m_IO, *m_SourceReader,
                                     touchedBlocks);
-
-    // Query<T> simpleQ = parse();
-
-    /*
-    if (m_Idx == nullptr) {
-      throw std::invalid_argument("Unable to use index with given type.");
-    }
-
-    {
-      // use min max
-
-    }
-    */
 }
 } // namespace query
 } // namespace adios2

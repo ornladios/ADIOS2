@@ -7,17 +7,6 @@ template <class T>
 bool Range::CheckInterval(T &min, T &max) const
 {
     bool isHit = false;
-    /*
-    if (m_Value == nullptr)
-      {
-        std::stringstream convert(m_StrValue);
-        T val;
-        convert >> val;
-        m_Value = new T;
-        *((T*)m_Value) = val;
-      }
-    T value = *((T*)m_Value);
-    */
     std::stringstream convert(m_StrValue);
     T value;
     convert >> value;

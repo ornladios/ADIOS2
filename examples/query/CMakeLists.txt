@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_MPI)
-  add_executable(queryTest test_xml.cpp)
+  add_executable(queryTest test.cpp)
   target_link_libraries(queryTest adios2 MPI::MPI_C pugixml)    
 endif()
 

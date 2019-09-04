@@ -21,6 +21,7 @@
 
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
+#include "adios2/helper/adiosMath.h"
 #include "adios2/helper/adiosType.h"
 
 namespace adios2
@@ -97,6 +98,8 @@ public:
         T Min = T();
         T Max = T();
         T Value = T();
+        std::vector<T> MinMaxs; // sub-block level min-max
+        struct helper::BlockDivisionInfo SubBlockInfo;
         T *BufferP = nullptr;
         std::vector<T> BufferV;
         int WriterID = 0;

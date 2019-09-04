@@ -33,7 +33,6 @@ public:
                       std::vector<adios2::Box<adios2::Dims>> &touched_blocks);
 
 private:
-    // adios2::query::Worker* m_Worker;
     std::shared_ptr<adios2::query::Worker> m_Worker;
 }; // class QueryWorker
 

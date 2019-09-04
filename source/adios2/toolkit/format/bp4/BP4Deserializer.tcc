@@ -1193,6 +1193,9 @@ std::vector<typename core::Variable<T>::Info> BP4Deserializer::BlocksInfoCommon(
             blockInfo.IsValue = false;
             blockInfo.Min = blockCharacteristics.Statistics.Min;
             blockInfo.Max = blockCharacteristics.Statistics.Max;
+            blockInfo.MinMaxs = blockCharacteristics.Statistics.MinMaxs;
+            blockInfo.SubBlockInfo =
+                blockCharacteristics.Statistics.SubblockInfo;
         }
         if (blockInfo.Shape.size() == 1 &&
             blockInfo.Shape.front() == LocalValueDim)
