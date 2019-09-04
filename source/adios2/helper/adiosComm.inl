@@ -68,8 +68,7 @@ void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
 
     size_t gatheredSize = 0;
 
-    int rank;
-    SMPI_Comm_rank(m_MPIComm, &rank);
+    int rank = this->Rank();
 
     if (rank == rankDestination) // pre-allocate vector
     {
