@@ -97,8 +97,7 @@ void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
 template <class T>
 std::vector<T> Comm::AllGatherValues(const T source) const
 {
-    int size;
-    SMPI_Comm_size(m_MPIComm, &size);
+    int size = this->Size();
     std::vector<T> output(size);
 
     T sourceCopy = source; // so we can have an address for rvalues
