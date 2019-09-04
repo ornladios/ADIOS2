@@ -31,9 +31,8 @@ void Comm::GatherArrays(const size_t *source, size_t sourceCount,
 template <class T>
 std::vector<T> Comm::GatherValues(T source, int rankDestination) const
 {
-    int rank, size;
-    SMPI_Comm_rank(m_MPIComm, &rank);
-    SMPI_Comm_size(m_MPIComm, &size);
+    int rank = this->Rank();
+    int size = this->Size();
 
     std::vector<T> output;
 
