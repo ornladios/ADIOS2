@@ -13,8 +13,6 @@
 
 #include "adios2/common/ADIOSMPI.h"
 
-#include <stdexcept> //std::runtime_error
-
 namespace adios2
 {
 namespace helper
@@ -89,16 +87,7 @@ template <>
 void Comm::AllGatherArrays(const size_t *source, const size_t sourceCount,
                            size_t *destination) const
 {
-    int countsInt = static_cast<int>(sourceCount);
-    int result = MPI_Allgather(const_cast<size_t *>(source), countsInt,
-                               ADIOS2_MPI_SIZE_T, destination, countsInt,
-                               ADIOS2_MPI_SIZE_T, m_MPIComm);
-
-    if (result != MPI_SUCCESS)
-    {
-        throw std::runtime_error("ERROR: in ADIOS2 detected failure in MPI "
-                                 "Allgather type size_t function\n");
-    }
+    this->Allgather(source, sourceCount, destination, sourceCount);
 }
 
 // ReduceValues full specializations forward-declared in 'adiosComm.inl'.
