@@ -59,6 +59,7 @@ function prefixify() {
 }
 
 export adios2_DIR="${DESTDIR}$1"
+shift
 CMAKE="@CMAKE_COMMAND@"
 SOURCE_DIR="@ADIOS2_SOURCE_DIR@/cmake/install/post/adios2-config-dummy"
 BUILD_DIR=$(mktemp -d)
@@ -75,6 +76,11 @@ fi
 if [ @ADIOS2_CONFIG_MPIFC@ -eq 1 ]
 then
   export FC="@MPI_Fortran_COMPILER@"
+fi
+
+if [ -n "@CMAKE_PREFIX_PATH@" ]
+then
+  EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DCMAKE_PREFIX_PATH=@CMAKE_PREFIX_PATH@"
 fi
 
 echo "Configuring adios2-config dummy CMake project"
