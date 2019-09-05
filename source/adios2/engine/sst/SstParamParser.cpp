@@ -13,10 +13,11 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
 {
     auto lf_SetBoolParameter = [&](const std::string key, int &parameter) {
         auto itKey = io.m_Parameters.find(key);
-        std::string value = itKey->second;
-        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
         if (itKey != io.m_Parameters.end())
         {
+            std::string value = itKey->second;
+            std::transform(value.begin(), value.end(), value.begin(),
+                           ::tolower);
             if (value == "yes" || value == "true" || value == "on")
             {
                 parameter = 1;
