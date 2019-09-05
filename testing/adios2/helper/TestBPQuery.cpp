@@ -200,7 +200,8 @@ void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            LoadTestData(m_TestData, static_cast<int>(step), mpiRank, Nx);
+            LoadTestData(m_TestData, static_cast<int>(step), mpiRank,
+                         static_cast<int>(Nx));
 
             auto var_i32 = io.InquireVariable<int32_t>("intV");
             auto var_r64 = io.InquireVariable<double>("doubleV");
