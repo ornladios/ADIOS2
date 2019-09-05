@@ -18,7 +18,6 @@ public:
     SstParamFailTest() = default;
 };
 
-adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
 std::string fname = "ADIOS2Sst";
 
@@ -59,21 +58,23 @@ static adios2::Params ParseEngineParams(std::string Input)
 // ADIOS2 Sst param fail
 TEST_F(SstParamFailTest, ParamNoValue)
 {
-    EXPECT_THROW(engineParams = ParseEngineParams("MarshalMethod:"),
+    EXPECT_THROW(adios2::Params engineParams =
+                     ParseEngineParams("MarshalMethod:"),
                  std::invalid_argument);
 }
 
 // ADIOS2 Sst param fail
 TEST_F(SstParamFailTest, ParamNoValue2)
 {
-    EXPECT_THROW(engineParams = ParseEngineParams("MarshalMethod"),
+    EXPECT_THROW(adios2::Params engineParams =
+                     ParseEngineParams("MarshalMethod"),
                  std::invalid_argument);
 }
 
 // ADIOS2 Sst param fail
 TEST_F(SstParamFailTest, MarshalMethodUnknown)
 {
-    engineParams = ParseEngineParams("MarshalMethod:unknown");
+    adios2::Params engineParams = ParseEngineParams("MarshalMethod:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -97,7 +98,8 @@ TEST_F(SstParamFailTest, MarshalMethodUnknown)
 // ADIOS2 Sst param fail
 TEST_F(SstParamFailTest, CompressionMethodUnknown)
 {
-    engineParams = ParseEngineParams("CompressionMethod:unknown");
+    adios2::Params engineParams =
+        ParseEngineParams("CompressionMethod:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -121,7 +123,7 @@ TEST_F(SstParamFailTest, CompressionMethodUnknown)
 // ADIOS2 Sst param fail
 TEST_F(SstParamFailTest, QueueFullPolicyUnknown)
 {
-    engineParams = ParseEngineParams("QueueFullPolicy:unknown");
+    adios2::Params engineParams = ParseEngineParams("QueueFullPolicy:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -145,7 +147,8 @@ TEST_F(SstParamFailTest, QueueFullPolicyUnknown)
 // ADIOS2 Sst param fail
 TEST_F(SstParamFailTest, RendezvousReaderCountBad)
 {
-    engineParams = ParseEngineParams("RendezvousReaderCount:unknown");
+    adios2::Params engineParams =
+        ParseEngineParams("RendezvousReaderCount:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -169,7 +172,7 @@ TEST_F(SstParamFailTest, RendezvousReaderCountBad)
 // ADIOS2 Sst param fail
 TEST_F(SstParamFailTest, QueueLimitBad)
 {
-    engineParams = ParseEngineParams("QueueLimit:unknown");
+    adios2::Params engineParams = ParseEngineParams("QueueLimit:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -184,6 +187,31 @@ TEST_F(SstParamFailTest, QueueLimitBad)
     io.SetParameters(engineParams);
 
     adios2::Engine engine;
+    EXPECT_THROW(engine = io.Open(fname, adios2::Mode::Write),
+                 std::invalid_argument);
+    // Close the file
+    EXPECT_FALSE(engine);
+}
+
+// ADIOS2 Sst param fail
+TEST_F(SstParamFailTest, PreciousFirstTimestepParamTest)
+{
+    adios2::Params engineParams =
+        ParseEngineParams("FirstTimestepPrecious:unknown");
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
+
+    adios2::IO io = adios.DeclareIO("TestIO");
+    adios2::Engine engine;
+
+    // Create the Engine
+    io.SetEngine("Sst");
+    io.SetParameters(engineParams);
+
     EXPECT_THROW(engine = io.Open(fname, adios2::Mode::Write),
                  std::invalid_argument);
     // Close the file

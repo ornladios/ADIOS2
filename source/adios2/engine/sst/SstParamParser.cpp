@@ -13,15 +13,22 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
 {
     auto lf_SetBoolParameter = [&](const std::string key, int &parameter) {
         auto itKey = io.m_Parameters.find(key);
+        std::string value = itKey->second;
+        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
         if (itKey != io.m_Parameters.end())
         {
-            if (itKey->second == "yes" || itKey->second == "true")
+            if (value == "yes" || value == "true" || value == "on")
             {
                 parameter = 1;
             }
-            else if (itKey->second == "no" || itKey->second == "false")
+            else if (value == "no" || value == "false" || value == "off")
             {
                 parameter = 0;
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown Sst Boolean parameter \"" + value + "\"");
             }
         }
     };
