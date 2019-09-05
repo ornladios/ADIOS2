@@ -22,7 +22,7 @@ namespace adios2
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
-class IO; // friend
+class IO;    // friend
 class Query; // friend
 namespace core
 {
