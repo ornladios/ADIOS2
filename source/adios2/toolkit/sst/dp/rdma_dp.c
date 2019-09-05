@@ -141,7 +141,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
             break;
         }
         if ((((strcmp(prov_name, "verbs") == 0) && info->src_addr) ||
-             (strcmp(prov_name, "verbs") == 0) ||
+             (strcmp(prov_name, "gni") == 0) ||
              (strcmp(prov_name, "psm2") == 0)) &&
             (!useinfo || !ifname ||
              (strcmp(useinfo->domain_attr->name, ifname) != 0)))
