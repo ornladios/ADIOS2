@@ -86,21 +86,21 @@ subroutine testing_adios_io_engine()
   call testing_adios_io_init()
 
   ! Engine related functionality
-  call adios2_set_engine(io, "bpfile", ierr)
+  call adios2_set_engine(io, "file", ierr)
 
   call adios2_io_engine_type(engine_type, io, ierr)
-  if (engine_type /= "bpfile") stop "FAIL adios2_io_engine_type"
+  if (engine_type /= "file") stop "FAIL adios2_io_engine_type"
   deallocate(engine_type)
 
   call adios2_open(engine, io, "ftypes.bp", adios2_mode_write, ierr)
 
-  if (engine%type /= "BP3") stop "FAIL engine%type"
+  if (engine%type /= "BP4Writer") stop "FAIL engine%type"
   ! // FIXME, I'd like to check that the engine type itself is correct, but
   ! // there's no (function-style) API to get it
   ! // FIXME, I'd like to check the engine's name, but there's no API to get it
 
   call adios2_io_engine_type(engine_type, io, ierr)
-  if (engine_type /= "bpfile") stop "FAIL adios2_io_engine_type"
+  if (engine_type /= "file") stop "FAIL adios2_io_engine_type"
   deallocate(engine_type)
 
   call testing_adios_io_finalize()
@@ -129,7 +129,7 @@ subroutine testing_adios_io_engine_default()
 
   call adios2_open(engine, io, "ftypes.bp", adios2_mode_write, ierr)
 
-  if (engine%type /= "BP3") stop "FAIL engine%type"
+  if (engine%type /= "BP4Writer") stop "FAIL engine%type"
   ! // FIXME, I'd like to check that the engine type itself is correct, but
   ! // there's no (function-style) API to get it
   ! // FIXME, I'd like to check the engine's name, but there's no API to get it

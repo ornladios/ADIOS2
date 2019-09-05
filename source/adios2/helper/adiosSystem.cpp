@@ -18,7 +18,13 @@
 
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosString.h"
+
+// needed by IsHDF5File()
+#include "adios2/core/IO.h"
+#include "adios2/toolkit/transportman/TransportMan.h"
+#include <cstring>
 
 // remove ctime warning on Windows
 #ifdef _WIN32
@@ -103,6 +109,48 @@ int ExceptionToError(const std::string &function)
         std::cerr << function << "\n";
         return 4;
     }
+}
+
+bool IsHDF5File(const std::string &name, helper::Comm &comm,
+                std::vector<Params> &transportsParameters) noexcept
+{
+    bool isHDF5 = false;
+    if (!comm.Rank())
+    {
+        try
+        {
+            transportman::TransportMan tm(Comm::Duplicate(MPI_COMM_SELF),
+                                          false);
+            if (transportsParameters.empty())
+            {
+                std::vector<Params> defaultTransportParameters(1);
+                defaultTransportParameters[0]["transport"] = "File";
+                tm.OpenFiles({name}, adios2::Mode::Read,
+                             defaultTransportParameters, false);
+            }
+            else
+            {
+                tm.OpenFiles({name}, adios2::Mode::Read, transportsParameters,
+                             false);
+            }
+            const unsigned char HDF5Header[8] = {137, 72, 68, 70,
+                                                 13,  10, 26, 10};
+            if (tm.GetFileSize(0) >= 8)
+            {
+                char header[8];
+                tm.ReadFile(header, 8, 0);
+                tm.CloseFiles();
+                isHDF5 = !std::memcmp(header, HDF5Header, 8);
+            }
+        }
+        catch (std::exception &e)
+        {
+            isHDF5 = false;
+        }
+    }
+    size_t flag = (isHDF5 ? 1 : 0);
+    flag = comm.BroadcastValue(flag);
+    return (flag == 1);
 }
 
 } // end namespace helper

@@ -248,6 +248,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionNone)
     // clang-format on
 
     // write
+    m_IOWriter.SetEngine("BP3");
     auto writer =
         m_IOWriter.Open("test_selection_none.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -257,6 +258,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionNone)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine = m_IOReader.Open("test_selection_none.bp", adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 0}, {3, 4}});
@@ -278,6 +280,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionWrite)
     // clang-format on
 
     // write
+    m_IOWriter.SetEngine("BP3");
     auto writer =
         m_IOWriter.Open("test_selection_write.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -287,6 +290,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionWrite)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_selection_write.bp", adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");
@@ -309,6 +313,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionWriteStart)
     // clang-format on
 
     // write
+    m_IOWriter.SetEngine("BP3");
     auto writer =
         m_IOWriter.Open("test_selection_write_start.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -318,6 +323,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionWriteStart)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_selection_write_start.bp", adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");
@@ -339,6 +345,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionRead)
 			  {20., 21.}});
     // clang-format on
 
+    m_IOWriter.SetEngine("BP3");
     auto writer =
         m_IOWriter.Open("test_selection_read.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -348,6 +355,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionRead)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine = m_IOReader.Open("test_selection_read.bp", adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 0}, {3, 2}});
@@ -369,6 +377,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionReadStart)
     // clang-format on
 
     // write
+    m_IOWriter.SetEngine("BP3");
     auto writer =
         m_IOWriter.Open("test_selection_read_start.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -378,6 +387,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionReadStart)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_selection_read_start.bp", adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");
@@ -402,6 +412,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionNone)
     // clang-format on
 
     // write
+    m_IOWriter.SetEngine("BP3");
     auto writer =
         m_IOWriter.Open("test_mem_selection_none.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -412,6 +423,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionNone)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_mem_selection_none.bp", adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");
@@ -436,6 +448,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWrite)
     // clang-format on
 
     // write
+    m_IOWriter.SetEngine("BP3");
     auto writer =
         m_IOWriter.Open("test_mem_selection_write.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -446,6 +459,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWrite)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_mem_selection_write.bp", adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");
@@ -470,6 +484,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWriteStart)
     // clang-format on
 
     // write
+    m_IOWriter.SetEngine("BP3");
     auto writer = m_IOWriter.Open("test_mem_selection_write_start.bp",
                                   adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -480,6 +495,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWriteStart)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine = m_IOReader.Open("test_mem_selection_write_start.bp",
                                   adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");
@@ -503,6 +519,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionRead)
 			  {0.,  0.,  0., 0.}});
     // clang-format on
 
+    m_IOWriter.SetEngine("BP3");
     auto writer =
         m_IOWriter.Open("test_mem_selection_read.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -512,6 +529,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionRead)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_mem_selection_read.bp", adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");
@@ -536,6 +554,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionReadStart)
 			  {0.,  0.,  0., 0.}});
     // clang-format on
 
+    m_IOWriter.SetEngine("BP3");
     auto writer = m_IOWriter.Open("test_mem_selection_read_start.bp",
                                   adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -545,6 +564,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionReadStart)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_mem_selection_read_start.bp", adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");
@@ -571,6 +591,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionComplex)
 			  {0.,  0.,  0., 0.}});
     // clang-format on
 
+    m_IOWriter.SetEngine("BP3");
     auto writer =
         m_IOWriter.Open("test_mem_selection_complex.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {4, 4});
@@ -591,6 +612,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionComplex)
 
     // read back center block, with bits from every block written
     auto arr_read = MultiArrayT(ref.dims());
+    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_mem_selection_complex.bp", adios2::Mode::Read);
     var = m_IOReader.InquireVariable<DataType>("var");

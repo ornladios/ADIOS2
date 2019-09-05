@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 
 /**
- * Basic test to see that writing and reading a simple BP3 file works without
+ * Basic test to see that writing and reading a simple BP4 file works without
  * initializing MPI
  */
 TEST(ADIOSInterface, ADIOSNoMpi)

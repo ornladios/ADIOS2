@@ -91,7 +91,7 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead1D8)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
 
         io.AddTransport("file");
@@ -428,7 +428,7 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D2x4)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
         io.AddTransport("file");
 
@@ -766,7 +766,7 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D4x2)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
 
         io.AddTransport("file");
@@ -1089,7 +1089,7 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteRead1D8ZeroBlock)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
 
         io.AddTransport("file");

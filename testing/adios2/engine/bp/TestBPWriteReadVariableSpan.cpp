@@ -52,10 +52,14 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
-        //        if (!engineName.empty())
-        //        {
-        //            io.SetEngine(engineName);
-        //        }
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
 
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
@@ -150,10 +154,14 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
-        //        if (!engineName.empty())
-        //        {
-        //            io.SetEngine(engineName);
-        //        }
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -346,6 +354,15 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
+
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
         // The local process' part (start, count) can be defined now or later
         // before Write().
@@ -378,16 +395,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
             "cr32", shape, start, count, adios2::ConstantDims);
         auto var_cr64 = io.DefineVariable<std::complex<double>>(
             "cr64", shape, start, count, adios2::ConstantDims);
-
-        //        if (!engineName.empty())
-        //        {
-        //            io.SetEngine(engineName);
-        //        }
-        //        else
-        //        {
-        //            // Create the BP Engine
-        //            io.SetEngine("BPFile");
-        //        }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -456,10 +463,14 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
-        //        if (!engineName.empty())
-        //        {
-        //            io.SetEngine(engineName);
-        //        }
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -661,10 +672,14 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
-        //        if (!engineName.empty())
-        //        {
-        //            io.SetEngine(engineName);
-        //        }
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
 
         const adios2::Dims shape{};
         const adios2::Dims start{};
@@ -756,10 +771,14 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
-        //        if (!engineName.empty())
-        //        {
-        //            io.SetEngine(engineName);
-        //        }
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -929,6 +948,15 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
+
         const adios2::Dims shape{};
         const adios2::Dims start{};
         const adios2::Dims count{Ny, Nx};
@@ -958,16 +986,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
             "cr32", shape, start, count, adios2::ConstantDims);
         auto var_cr64 = io.DefineVariable<std::complex<double>>(
             "cr64", shape, start, count, adios2::ConstantDims);
-
-        //        if (!engineName.empty())
-        //        {
-        //            io.SetEngine(engineName);
-        //        }
-        //        else
-        //        {
-        //            // Create the BP Engine
-        //            io.SetEngine("BPFile");
-        //        }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -1036,10 +1054,14 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
-        //        if (!engineName.empty())
-        //        {
-        //            io.SetEngine(engineName);
-        //        }
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -1212,10 +1234,14 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
-        //        if (!engineName.empty())
-        //        {
-        //            io.SetEngine(engineName);
-        //        }
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
 
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
@@ -1296,10 +1322,14 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
-        //        if (!engineName.empty())
-        //        {
-        //            io.SetEngine(engineName);
-        //        }
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
