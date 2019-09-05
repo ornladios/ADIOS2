@@ -3,6 +3,34 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+function(setup_version BASE)
+  set(ver_tweak)
+  if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/.git)
+    if(NOT GIT_COMMAND)
+      find_program(GIT_COMMAND git)
+    endif()
+    if(GIT_COMMAND)
+      execute_process(
+        COMMAND git
+          --git-dir=${CMAKE_CURRENT_LIST_DIR}/.git
+          describe --tags --match v${BASE}
+        RESULT_VARIABLE res
+        OUTPUT_VARIABLE out
+        ERROR_QUIET
+      )
+      if(res EQUAL 0 AND out MATCHES "[^-]*-([^-]*)-g[a-f0-9]*")
+        set(ver_tweak ${CMAKE_MATCH_1})
+      endif()  
+    endif()
+  endif()
+  if(ver_tweak)
+    set(ADIOS2_VERSION ${BASE}.${ver_tweak} PARENT_SCOPE)
+  else()
+    set(ADIOS2_VERSION ${BASE} PARENT_SCOPE)
+  endif()
+  set(ADIOS2_LIBRARY_VERSION ${BASE} PARENT_SCOPE)
+endfunction()
+
 function(adios_option name description default)
   set(ADIOS2_USE_${name} ${default} CACHE STRING "${description}")
   set_property(CACHE ADIOS2_USE_${name} PROPERTY

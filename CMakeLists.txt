@@ -12,7 +12,11 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
     "separate from the source directory")
 endif()
 
-project(ADIOS2 VERSION 2.4.0)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/ADIOSFunctions.cmake)
+
+setup_version(2.4.0)
+
+project(ADIOS2 VERSION ${ADIOS2_VERSION})
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
@@ -63,7 +67,6 @@ add_subdirectory(cmake/install/pre)
 #------------------------------------------------------------------------------#
 # Top level options
 #------------------------------------------------------------------------------#
-include(ADIOSFunctions)
 
 # Default to a debug build if not specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
