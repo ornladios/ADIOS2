@@ -7,6 +7,8 @@ QueryWorker::QueryWorker(const std::string &configFile, adios2::Engine &reader)
 {
     adios2::query::Worker *m =
         adios2::query::GetWorker(configFile, reader.m_Engine);
+    if (m == nullptr)
+        throw std::invalid_argument("ERROR: unable to construct query. ");
     m_Worker = std::make_shared<adios2::query::Worker>(*m);
 }
 
