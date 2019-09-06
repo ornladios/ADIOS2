@@ -112,7 +112,7 @@ int ExceptionToError(const std::string &function)
 }
 
 bool IsHDF5File(const std::string &name, helper::Comm &comm,
-                std::vector<Params> &transportsParameters) noexcept
+                const std::vector<Params> &transportsParameters) noexcept
 {
     bool isHDF5 = false;
     if (!comm.Rank())
@@ -143,7 +143,7 @@ bool IsHDF5File(const std::string &name, helper::Comm &comm,
                 isHDF5 = !std::memcmp(header, HDF5Header, 8);
             }
         }
-        catch (std::exception &e)
+        catch (std::ios_base::failure &)
         {
             isHDF5 = false;
         }

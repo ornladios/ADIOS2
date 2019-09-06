@@ -12,7 +12,7 @@
 #include "IO.tcc"
 
 #include <sstream>
-#include <utility>
+#include <utility> // std::pair
 
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSMacros.h"
@@ -82,11 +82,13 @@ IO::IO(ADIOS &adios, const std::string name, const bool inConfigFile,
 {
 }
 
-#define INSERTPARAM(k, v)                                                      \
-    m_Parameters.insert(std::pair<std::string, std::string>(k, v));
-
 void IO::SetEngine(const std::string engineType) noexcept
 {
+    auto lf_InsertParam = [&](const std::string &key,
+                              const std::string &value) {
+        m_Parameters.insert(std::pair<std::string, std::string>(key, value));
+    };
+
     /* First step in handling virtual engine names */
     std::string finalEngineType;
     std::string engineTypeLC = engineType;
@@ -95,34 +97,34 @@ void IO::SetEngine(const std::string engineType) noexcept
     if (engineTypeLC == "insituviz" || engineTypeLC == "insituvisualization")
     {
         finalEngineType = "SST";
-        INSERTPARAM("FirstTimestepPrecious", "true");
-        INSERTPARAM("RendezvousReaderCount", "0");
-        INSERTPARAM("QueueLimit", "3");
-        INSERTPARAM("QueueFullPolicy", "Discard");
-        INSERTPARAM("AlwaysProvideLatestTimestep", "false");
+        lf_InsertParam("FirstTimestepPrecious", "true");
+        lf_InsertParam("RendezvousReaderCount", "0");
+        lf_InsertParam("QueueLimit", "3");
+        lf_InsertParam("QueueFullPolicy", "Discard");
+        lf_InsertParam("AlwaysProvideLatestTimestep", "false");
     }
     else if (engineTypeLC == "insituanalysis")
     {
         finalEngineType = "SST";
-        INSERTPARAM("FirstTimestepPrecious", "false");
-        INSERTPARAM("RendezvousReaderCount", "1");
-        INSERTPARAM("QueueLimit", "1");
-        INSERTPARAM("QueueFullPolicy", "Block");
-        INSERTPARAM("AlwaysProvideLatestTimestep", "false");
+        lf_InsertParam("FirstTimestepPrecious", "false");
+        lf_InsertParam("RendezvousReaderCount", "1");
+        lf_InsertParam("QueueLimit", "1");
+        lf_InsertParam("QueueFullPolicy", "Block");
+        lf_InsertParam("AlwaysProvideLatestTimestep", "false");
     }
     else if (engineTypeLC == "codecoupling")
     {
         finalEngineType = "SST";
-        INSERTPARAM("FirstTimestepPrecious", "false");
-        INSERTPARAM("RendezvousReaderCount", "1");
-        INSERTPARAM("QueueLimit", "1");
-        INSERTPARAM("QueueFullPolicy", "Block");
-        INSERTPARAM("AlwaysProvideLatestTimestep", "false");
+        lf_InsertParam("FirstTimestepPrecious", "false");
+        lf_InsertParam("RendezvousReaderCount", "1");
+        lf_InsertParam("QueueLimit", "1");
+        lf_InsertParam("QueueFullPolicy", "Block");
+        lf_InsertParam("AlwaysProvideLatestTimestep", "false");
     }
     else if (engineTypeLC == "filestream")
     {
         finalEngineType = "BP4";
-        INSERTPARAM("OpenTimeoutSecs", "3600");
+        lf_InsertParam("OpenTimeoutSecs", "3600");
     }
     /* "file" is handled entirely in IO::Open() as it needs the name */
     else

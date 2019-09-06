@@ -8,11 +8,11 @@ add_test(NAME HeatTransfer.SST.FFS.Mx1
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:heatTransfer_write_adios2>
       ${CMAKE_CURRENT_SOURCE_DIR}/heat_sst_ffs.xml
-      HeatTransfer.SST.FFS.Write.Mx1 2 2 10 10 10 10
+      HeatTransfer.SST.FFS.Write.Mx1.bp 2 2 10 10 10 10
   : ${MPIEXEC_NUMPROC_FLAG} 1
       $<TARGET_FILE:heatTransfer_read>
       ${CMAKE_CURRENT_SOURCE_DIR}/heat_sst_ffs.xml
-      HeatTransfer.SST.FFS.Write.Mx1.bp HeatTransfer.SST.FFS.Read.Mx1 1 1
+      HeatTransfer.SST.FFS.Write.Mx1.bp HeatTransfer.SST.FFS.Read.Mx1.bp 1 1
 )
 
 add_test(NAME HeatTransfer.SST.FFS.Dump.Mx1

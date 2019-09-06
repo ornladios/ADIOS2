@@ -76,7 +76,7 @@ bool IsZeroIndexed(const std::string hostLanguage) noexcept;
 int ExceptionToError(const std::string &function);
 
 bool IsHDF5File(const std::string &name, helper::Comm &comm,
-                std::vector<Params> &transportsParameters) noexcept;
+                const std::vector<Params> &transportsParameters) noexcept;
 
 } // end namespace helper
 } // end namespace adios2

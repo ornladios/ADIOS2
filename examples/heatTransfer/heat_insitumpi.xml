@@ -47,7 +47,7 @@ the MPI_COMM_WORLD and create two partitions of the processes.
         =======================================-->
     
     <io name="readerOutput">
-        <engine type="BP3">
+        <engine type="File">
         </engine>
     </io>
 </adios-config>

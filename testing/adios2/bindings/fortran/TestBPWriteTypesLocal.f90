@@ -97,7 +97,7 @@
                                  adios2_type_dp, ierr)
 
      write (*, *) "Engine type: ", ioWrite%engine_type
-     if (TRIM(ioWrite%engine_type) /= 'BP3') stop 'Wrong engine_type'
+     if (TRIM(ioWrite%engine_type) /= 'File') stop 'Wrong engine_type'
 
      call adios2_set_engine(ioWrite, "SST", ierr)
      write (*, *) "Engine type: ", ioWrite%engine_type
