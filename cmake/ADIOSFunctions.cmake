@@ -134,3 +134,45 @@ function(adios2_add_thirdparty_target PackageName TargetName)
     INTERFACE ${TargetName}
   )
 endfunction()
+
+# Setup the test dependencies and fixtures for a given pipeline:
+function(SetupTestPipeline basename pipeline do_setup)
+  # The ideal way to set these up is via test fixtures.  However since those
+  # were only available in >= 3.7 then we can get by with DEPENDS.  Since it's
+  # all just setting properties anyways though then we go ahead and set both
+  # and if >= 3.7 then the fixtures will just get used, otherwise the DEPENDS
+  # will take over as a fallback
+
+  if(do_setup)
+    add_test(NAME ${basename}.Setup
+      COMMAND ${CMAKE_COMMAND}
+        -DDIR_NAME=${CMAKE_CURRENT_BINARY_DIR}/${basename}
+        -P ${PROJECT_SOURCE_DIR}/cmake/EmptyDir.cmake
+    )
+    list(INSERT pipeline 0 "Setup")
+  endif()
+  unset(prev_suffix)
+  foreach(curr_step IN LISTS pipeline)
+    if(curr_step)
+      set(curr_suffix .${curr_step})
+    else()
+      set(curr_suffix "")
+    endif()
+    if(DEFINED prev_suffix)
+      set_property(TEST ${basename}${prev_suffix} APPEND PROPERTY
+        FIXTURES_SETUP ${basename}${curr_suffix}
+      )
+      set_property(TEST ${basename}${curr_suffix} PROPERTY
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${basename}
+      )
+      set_property(TEST ${basename}${curr_suffix} APPEND PROPERTY
+        DEPENDS ${basename}${prev_suffix}
+      )
+      set_property(TEST ${basename}${curr_suffix} APPEND PROPERTY
+        FIXTURES_REQUIRED ${basename}${curr_suffix}
+      )
+    endif()
+    set(prev_suffix "${curr_suffix}")
+  endforeach()
+endfunction()
+
