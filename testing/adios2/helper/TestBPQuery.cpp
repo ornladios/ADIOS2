@@ -73,6 +73,8 @@ public:
     const size_t Nx = 100;
     // Number of steps
     const size_t NSteps = 3;
+
+    int mpiRank = 0, mpiSize = 1;
 };
 
 void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios)
@@ -144,7 +146,6 @@ void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios)
 
 void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios)
 {
-    int mpiRank = 0, mpiSize = 1;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -242,8 +243,11 @@ TEST_F(BPQueryTest, BP3)
 
     WriteFile(fname, adios);
 
-    QueryDoubleVar(fname, adios);
-    QueryIntVar(fname, adios);
+    if (mpiSize == 1)
+    {
+        QueryDoubleVar(fname, adios);
+        QueryIntVar(fname, adios);
+    }
 }
 
 //******************************************************************************
@@ -265,8 +269,11 @@ TEST_F(BPQueryTest, BP4)
 
     WriteFile(fname, adios);
 
-    QueryDoubleVar(fname, adios);
-    QueryIntVar(fname, adios);
+    if (mpiSize == 1)
+    {
+        QueryDoubleVar(fname, adios);
+        QueryIntVar(fname, adios);
+    }
 }
 
 //******************************************************************************
