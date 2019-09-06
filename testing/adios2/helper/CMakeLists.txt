@@ -18,12 +18,3 @@ add_executable(TestMinMaxs TestMinMaxs.cpp)
 target_link_libraries(TestMinMaxs adios2 gtest)
 
 gtest_add_tests(TARGET TestMinMaxs ${extra_test_args})
-
-
-add_executable(TestBPQuery TestBPQuery.cpp)
-target_link_libraries(TestBPQuery adios2 gtest)
-if(ADIOS2_HAVE_MPI)
-  target_link_libraries(TestBPQuery MPI::MPI_C)
-endif()
-
-gtest_add_tests(TARGET TestBPQuery ${extra_test_args})

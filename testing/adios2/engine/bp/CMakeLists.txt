@@ -10,6 +10,9 @@ file(MAKE_DIRECTORY ${BP4_DIR})
 
 add_subdirectory(operations)
 
+add_executable(TestBPQuery TestBPQuery.cpp)
+target_link_libraries(TestBPQuery adios2 gtest)
+
 add_executable(TestBPWriteReadADIOS2 TestBPWriteReadADIOS2.cpp)
 target_link_libraries(TestBPWriteReadADIOS2 adios2 gtest)
 
@@ -86,7 +89,7 @@ add_executable(TestBPTimeAggregationADIOS2 TestBPTimeAggregationADIOS2.cpp)
 target_link_libraries(TestBPTimeAggregationADIOS2 adios2 gtest)
 
 if(ADIOS2_HAVE_MPI)
-
+  target_link_libraries(TestBPQuery MPI::MPI_C)
   target_link_libraries(TestBPWriteReadADIOS2 MPI::MPI_C)
   target_link_libraries(TestBPWriteReadADIOS2fstream MPI::MPI_C)
   target_link_libraries(TestBPWriteReadADIOS2stdio MPI::MPI_C)
@@ -121,7 +124,7 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests(TARGET TestBPWriteAggregateRead ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
   
 endif()
-
+gtest_add_tests(TARGET TestBPQuery ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadADIOS2fstream ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadADIOS2stdio ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
