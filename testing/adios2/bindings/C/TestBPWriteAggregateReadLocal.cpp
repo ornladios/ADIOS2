@@ -180,6 +180,7 @@ void LocalAggregate1DBlock0(const std::string substreams)
     // writer
     {
         adios2_io *ioH = adios2_declare_io(adiosH, "TestIO");
+        adios2_set_engine(ioH, "BP3");
 
         size_t count[1];
         count[0] = Nx;
@@ -237,12 +238,14 @@ void LocalAggregate1DBlock0(const std::string substreams)
     {
         // read block zero from collective, then compare to subfile read
         adios2_io *ioH = adios2_declare_io(adiosH, "Reader");
+        adios2_set_engine(ioH, "File");
 
         adios2_engine *bpReader =
             adios2_open(ioH, fname.c_str(), adios2_mode_read);
 
         // subfile read
         adios2_io *ioH0 = adios2_declare_io(adiosH, "Reader0");
+        adios2_set_engine(ioH0, "File");
 
         const std::string fnameBP0 = fname + ".dir/" + fname + ".0";
 

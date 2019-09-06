@@ -63,7 +63,7 @@
      call adios2_in_config_file(result, ioWrite, ierr)
      if( result .eqv. .true. ) stop 'Invalid ioWrite adios2_in_config_file'
 
-     call adios2_set_engine(ioWrite, 'bpfile', ierr)
+     call adios2_set_engine(ioWrite, 'File', ierr)
 
      call adios2_set_parameter(ioWrite, 'ProfileUnits', 'Microseconds', ierr)
 
@@ -169,12 +169,12 @@
      if( bpWriter%valid .eqv. .false. ) stop 'Invalid adios2_engine post-open'
      if( TRIM(bpWriter%name) /= "ftypes.bp") stop 'Invalid adios2_engine name'
 
-     if( TRIM(bpWriter%type) /= 'BP3') then
+     if( TRIM(bpWriter%type) /= 'BP4Writer') then
         write(*,*) 'Engine Type ', TRIM(bpWriter%type)
         stop 'Invalid adios2_engine type'
      end if
      call adios2_io_engine_type(engineType, ioWrite, ierr)
-     if( engineType /= 'bpfile') then ! FIXME, different from the above!
+     if( engineType /= 'File') then ! FIXME, different from the above!
         write(*,*) 'Engine Type ', engineType
         stop 'Invalid type from adios2_engine_type'
      end if

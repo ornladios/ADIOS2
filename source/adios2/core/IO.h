@@ -77,7 +77,7 @@ public:
     std::vector<Operation> m_Operations;
 
     /** BP3 engine default if unknown */
-    std::string m_EngineType = "BP3";
+    std::string m_EngineType = "File";
 
     /** at read for file engines: true: in streaming (step-by-step) mode, or
      * false: random-access mode (files) */

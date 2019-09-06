@@ -1,6 +1,6 @@
-*************
-BP3 (Default)
-*************
+****
+BP3 
+****
 
 The BP3 Engine writes and reads files in ADIOS2 native binary-pack (bp) format. BP files are backwards compatible with ADIOS1.x and have the following structure given a "name" string passed as the first argument of ``IO::Open``:
 

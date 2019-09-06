@@ -20,8 +20,8 @@ endif()
 #   3rd arg: engine parameters
 
 gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 
-                EXTRA_ARGS "BPFile" "1"
-                TEST_SUFFIX _BPFile)
+                EXTRA_ARGS "File" "1"
+                TEST_SUFFIX _File)
                 
 if(ADIOS2_HAVE_HDF5)
 gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 

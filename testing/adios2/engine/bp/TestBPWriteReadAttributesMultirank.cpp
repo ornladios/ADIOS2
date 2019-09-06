@@ -69,7 +69,7 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
         io.AddTransport("file");
 

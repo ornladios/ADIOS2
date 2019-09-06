@@ -1777,6 +1777,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
+        io.SetEngine("BP3");
         const adios2::Dims shape{};
         const adios2::Dims start{};
         const adios2::Dims count{Nx0};

@@ -79,7 +79,7 @@ void WriteAggRead1D8(const std::string substreams)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
 
         io.AddTransport("file");
@@ -386,7 +386,7 @@ void WriteAggRead2D4x2(const std::string substreams)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
 
         io.AddTransport("file");
@@ -696,7 +696,7 @@ void WriteAggRead2D2x4(const std::string substreams)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
 
         io.AddTransport("file");

@@ -11,6 +11,8 @@ import atexit
 
 
 is_file_engine = {"bpfile": True,
+                  "file": True,
+                  "filestream": False,
                   "bp": True,
                   "bp3": True,
                   "bp4": True,

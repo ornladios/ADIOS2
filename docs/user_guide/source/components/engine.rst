@@ -523,7 +523,7 @@ A particular engine is set within the IO object that creates it with the ``IO::S
 +-------------------------+---------+---------------------------------------------+
 | Application             | Engine  | Description                                 |
 +-------------------------+---------+---------------------------------------------+
-| File                    | BP3     | DEFAULT write/read ADIOS2 native bp files   |
+| File                    | BP4     | DEFAULT write/read ADIOS2 native bp files   |
 |                         |         |                                             |
 |                         | HDF5    | write/read interoperability with HDF5 files |
 +-------------------------+---------+---------------------------------------------+

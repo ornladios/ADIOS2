@@ -168,12 +168,12 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
 
         size_t engineTypeSize;
         adios2_engine_get_type(NULL, &engineTypeSize, engineH);
-        EXPECT_EQ(engineTypeSize, 3);
+        EXPECT_EQ(engineTypeSize, 9);
 
         char *engineType = new char[engineTypeSize + 1]();
         adios2_engine_get_type(engineType, &engineTypeSize, engineH);
 
-        EXPECT_EQ(std::string(engineType, engineTypeSize), "BP3");
+        EXPECT_EQ(std::string(engineType, engineTypeSize), "BP4Writer");
 
         adios2_close(engineH);
 

@@ -8,11 +8,11 @@ add_test(NAME HeatTransfer.InsituMPI.MxN
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:heatTransfer_write_adios2>
       ${CMAKE_CURRENT_SOURCE_DIR}/heat_insitumpi.xml
-      HeatTransfer.InsituMPI.Write.MxN 2 2 10 10 10 10
+      HeatTransfer.InsituMPI.Write.MxN.bp 2 2 10 10 10 10
   : ${MPIEXEC_NUMPROC_FLAG} 3
       $<TARGET_FILE:heatTransfer_read>
       ${CMAKE_CURRENT_SOURCE_DIR}/heat_insitumpi.xml
-      HeatTransfer.InsituMPI.Write.MxN.bp HeatTransfer.InsituMPI.Read.MxN 1 3
+      HeatTransfer.InsituMPI.Write.MxN.bp HeatTransfer.InsituMPI.Read.MxN.bp 1 3
 )
 
 add_test(NAME HeatTransfer.InsituMPI.Dump.MxN

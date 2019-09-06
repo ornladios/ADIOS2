@@ -38,11 +38,12 @@ Writer usage:  heatTransfer  config output  N  M   nx  ny   steps iterations
   steps:  the total number of steps to output
   iterations: one step consist of this many iterations
 
-The ADIOS2 executable needs an XML config file to select the Engine used for the output. The engines are: BPFile and HDF5, the corresponding XML config files are in the examples/heatTransfer/ directory.
+The ADIOS2 executable needs an XML config file to select the Engine used for the output. The engines are: File, BP4 and HDF5, the corresponding XML config files are in the examples/heatTransfer/ directory. The "File" engine will be BP4 or HDF5 depending on the extension of the file name. 
 
 The adios1, ph5 and hdf5 versions of the example do not use XML config files, so just type "none" for the config argument.
 
-$  mpirun -np 12 ./bin/heatTransfer_write_adios2 ../examples/heatTransfer/heat_bpfile.xml  heat  4 3  5 10 10 10
+$  mpirun -np 12 ./bin/heatTransfer_write_adios2 ../examples/heatTransfer/heat_file.xml  heat.bp  4 3  5 10 10 10
+$  mpirun -np 12 ./bin/heatTransfer_write_adios2 ../examples/heatTransfer/heat_file.xml  heat.h5  4 3  5 10 10 10
 
 
 2. Read the output step-by-step and print data into text files (data.<rank> per reader process)
@@ -54,7 +55,7 @@ Reader Usage:   heatRead  config  input  N  M
   M:      number of processes in Y dimension
 
 
-$ mpirun -np 2 ./bin/heatTransfer_read ../examples/heatTransfer/heat.xml heat 2 1 
+$ mpirun -np 2 ./bin/heatTransfer_read ../examples/heatTransfer/heat_file.xml heat 2 1 
 
 
 Notes:

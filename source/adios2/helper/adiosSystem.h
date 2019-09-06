@@ -17,6 +17,9 @@
 #include <vector>
 /// \endcond
 
+#include "adios2/common/ADIOSTypes.h"
+#include "adios2/helper/adiosComm.h"
+
 namespace adios2
 {
 namespace helper
@@ -71,6 +74,9 @@ bool IsZeroIndexed(const std::string hostLanguage) noexcept;
  * </pre>
  */
 int ExceptionToError(const std::string &function);
+
+bool IsHDF5File(const std::string &name, helper::Comm &comm,
+                const std::vector<Params> &transportsParameters) noexcept;
 
 } // end namespace helper
 } // end namespace adios2

@@ -21,7 +21,7 @@ adios2::Variable<unsigned int> varGndx;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
-    m_outputfilename = MakeFilename(s.outputfile, ".bp");
+    m_outputfilename = s.outputfile;
 
     ad = adios2::ADIOS(s.configfile, comm, adios2::DebugON);
 

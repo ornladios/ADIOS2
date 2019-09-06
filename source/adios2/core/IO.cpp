@@ -12,6 +12,7 @@
 #include "IO.tcc"
 
 #include <sstream>
+#include <utility> // std::pair
 
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSMacros.h"
@@ -83,7 +84,55 @@ IO::IO(ADIOS &adios, const std::string name, const bool inConfigFile,
 
 void IO::SetEngine(const std::string engineType) noexcept
 {
-    m_EngineType = engineType;
+    auto lf_InsertParam = [&](const std::string &key,
+                              const std::string &value) {
+        m_Parameters.insert(std::pair<std::string, std::string>(key, value));
+    };
+
+    /* First step in handling virtual engine names */
+    std::string finalEngineType;
+    std::string engineTypeLC = engineType;
+    std::transform(engineTypeLC.begin(), engineTypeLC.end(),
+                   engineTypeLC.begin(), ::tolower);
+    if (engineTypeLC == "insituviz" || engineTypeLC == "insituvisualization")
+    {
+        finalEngineType = "SST";
+        lf_InsertParam("FirstTimestepPrecious", "true");
+        lf_InsertParam("RendezvousReaderCount", "0");
+        lf_InsertParam("QueueLimit", "3");
+        lf_InsertParam("QueueFullPolicy", "Discard");
+        lf_InsertParam("AlwaysProvideLatestTimestep", "false");
+    }
+    else if (engineTypeLC == "insituanalysis")
+    {
+        finalEngineType = "SST";
+        lf_InsertParam("FirstTimestepPrecious", "false");
+        lf_InsertParam("RendezvousReaderCount", "1");
+        lf_InsertParam("QueueLimit", "1");
+        lf_InsertParam("QueueFullPolicy", "Block");
+        lf_InsertParam("AlwaysProvideLatestTimestep", "false");
+    }
+    else if (engineTypeLC == "codecoupling")
+    {
+        finalEngineType = "SST";
+        lf_InsertParam("FirstTimestepPrecious", "false");
+        lf_InsertParam("RendezvousReaderCount", "1");
+        lf_InsertParam("QueueLimit", "1");
+        lf_InsertParam("QueueFullPolicy", "Block");
+        lf_InsertParam("AlwaysProvideLatestTimestep", "false");
+    }
+    else if (engineTypeLC == "filestream")
+    {
+        finalEngineType = "BP4";
+        lf_InsertParam("OpenTimeoutSecs", "3600");
+    }
+    /* "file" is handled entirely in IO::Open() as it needs the name */
+    else
+    {
+        finalEngineType = engineType;
+    }
+
+    m_EngineType = finalEngineType;
 }
 void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; }
 
@@ -467,11 +516,17 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
                        engineTypeLC.begin(), ::tolower);
     }
 
+    /* Second step in handling virtual engines */
     /* BPFile for read needs to use BP4 or BP3 depending on the file's version
      */
-    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp" || isDefaultEngine))
+    if ((engineTypeLC == "file" || engineTypeLC == "bpfile" ||
+         engineTypeLC == "bp" || isDefaultEngine))
     {
-        if (mode == Mode::Read)
+        if (helper::EndsWith(name, ".h5", false))
+        {
+            engineTypeLC = "hdf5";
+        }
+        else if (mode == Mode::Read)
         {
             if (adios2sys::SystemTools::FileIsDirectory(name))
             {
@@ -479,12 +534,29 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
             }
             else
             {
-                engineTypeLC = "bp3";
+                if (helper::EndsWith(name, ".bp", false))
+                {
+                    engineTypeLC = "bp3";
+                }
+                else
+                {
+                    /* We need to figure out the type of file
+                     * from the file itself
+                     */
+                    if (helper::IsHDF5File(name, comm, m_TransportsParameters))
+                    {
+                        engineTypeLC = "hdf5";
+                    }
+                    else
+                    {
+                        engineTypeLC = "bp3";
+                    }
+                }
             }
         }
         else
         {
-            engineTypeLC = "bp3";
+            engineTypeLC = "bp4";
         }
     }
 

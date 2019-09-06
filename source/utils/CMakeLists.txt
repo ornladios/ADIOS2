@@ -19,6 +19,14 @@ file(GENERATE
   INPUT ${PROJECT_BINARY_DIR}/bpls.cmake.gen
 )
 
+
+# BPSPLIT
+#add_executable(bpsplit ./bpsplit/bpsplit.cpp)
+#target_link_libraries(bpsplit adios2 adios2sys_interface pugixml)
+#install(TARGETS bpsplit EXPORT adios2
+#  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#)
+
 # ADIOS_REORGANIZE
 add_executable(adios_reorganize 
                ./adios_reorganize/main.cpp 

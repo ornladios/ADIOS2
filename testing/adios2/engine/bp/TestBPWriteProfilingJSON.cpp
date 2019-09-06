@@ -99,7 +99,7 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
 
         io.SetParameters({{"Threads", "2"}});
@@ -245,7 +245,7 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON_Off)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
 
         io.SetParameters({{"Profile", "Off"}});

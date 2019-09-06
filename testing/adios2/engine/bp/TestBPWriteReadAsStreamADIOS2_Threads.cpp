@@ -96,7 +96,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead1D8)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
@@ -353,7 +353,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D2x4)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
@@ -622,7 +622,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D4x2)
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
@@ -886,7 +886,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
@@ -1151,7 +1151,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
@@ -1419,7 +1419,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
         else
         {
             // Create the BP Engine
-            io.SetEngine("BPFile");
+            io.SetEngine("File");
         }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
