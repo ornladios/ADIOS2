@@ -127,7 +127,8 @@ void JsonWorker::ParseJson()
     auto ioName = (*ioO)["name"];
     if (m_SourceReader->m_IO.m_Name.compare(ioName) != 0)
         throw std::ios_base::failure("invalid query io. Expecting io name = " +
-                                     m_SourceReader->m_IO.m_Name);
+                                     m_SourceReader->m_IO.m_Name +
+                                     " found:" + ioName);
     if (adios2::query::JsonUtil::HasEntry(*ioO, "var"))
     {
         auto varO = (*ioO).find("var");

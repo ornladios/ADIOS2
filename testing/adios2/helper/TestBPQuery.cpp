@@ -79,7 +79,8 @@ public:
 
 void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios)
 {
-    adios2::IO io = adios.DeclareIO("TestQueryIO2");
+    std::string ioName = "IOQueryTestInt" + engineName;
+    adios2::IO io = adios.DeclareIO(ioName.c_str());
 
     if (!engineName.empty())
     {
@@ -90,8 +91,9 @@ void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios)
 
     EXPECT_EQ(bpReader.Steps(), NSteps);
 
-    std::string queryFile = "./.test.xml";
-    WriteXmlQuery1D(queryFile, "TestQueryIO2", "intV");
+    std::string queryFile = "./test.xml";
+    std::cout << ioName << std::endl;
+    WriteXmlQuery1D(queryFile, ioName, "intV");
     adios2::QueryWorker w = adios2::QueryWorker(queryFile, bpReader);
 
     std::vector<size_t> rr;
@@ -113,7 +115,8 @@ void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios)
 
 void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios)
 {
-    adios2::IO io = adios.DeclareIO("TestQueryIO");
+    std::string ioName = "IOQueryTestDouble" + engineName;
+    adios2::IO io = adios.DeclareIO(ioName.c_str());
 
     if (!engineName.empty())
     {
@@ -125,7 +128,7 @@ void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios)
     EXPECT_EQ(bpReader.Steps(), NSteps);
 
     std::string queryFile = "./.test.xml";
-    WriteXmlQuery1D(queryFile, "TestQueryIO", "doubleV");
+    WriteXmlQuery1D(queryFile, ioName, "doubleV");
     adios2::QueryWorker w = adios2::QueryWorker(queryFile, bpReader);
 
     std::vector<size_t> rr; //= {0,9,9};
