@@ -15,10 +15,12 @@
 #include <thread>
 #include <vector>
 
-size_t steps = 10000;
-adios2::Dims shape({10, 10});
-adios2::Dims start({0, 0});
-adios2::Dims count({6, 8});
+size_t Nx = 10;
+size_t Ny = 10;
+size_t steps = 100000;
+adios2::Dims shape;
+adios2::Dims start;
+adios2::Dims count;
 
 int rank, size;
 
@@ -53,28 +55,34 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    // initialize data dimensions
+    count = {Nx, Ny};
+    start = {rank * Nx, 0};
+    shape = {size * Nx, Ny};
+
     // initialize adios2
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-    adios2::IO dataManIO = adios.DeclareIO("WAN");
+    adios2::IO dataManIO = adios.DeclareIO("whatever");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(
         {{"IPAddress", "127.0.0.1"}, {"Port", "12306"}, {"Timeout", "5"}});
 
     // open stream
     adios2::Engine dataManWriter =
-        dataManIO.Open("myFloats.bp", adios2::Mode::Write);
+        dataManIO.Open("HelloDataMan", adios2::Mode::Write);
 
     // define variable
-    auto bpFloats =
-        dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
+    auto floatArrayVar =
+        dataManIO.DefineVariable<float>("FloatArray", shape, start, count);
 
     // write data
     for (size_t i = 0; i < steps; ++i)
     {
-        auto myFloats = GenerateData<float>(i);
+        auto floatVector = GenerateData<float>(i);
         dataManWriter.BeginStep();
-        dataManWriter.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
-        PrintData(myFloats, dataManWriter.CurrentStep());
+        dataManWriter.Put(floatArrayVar, floatVector.data(),
+                          adios2::Mode::Sync);
+        PrintData(floatVector, dataManWriter.CurrentStep());
         dataManWriter.EndStep();
     }
 
