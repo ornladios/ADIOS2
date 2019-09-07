@@ -33,9 +33,12 @@ for i in range(0, Nx):
 adios = adios2.ADIOS(comm)
 dataManIO = adios.DeclareIO("whatever")
 dataManIO.SetEngine("DataMan")
-dataManIO.SetParameters({"IPAddress" : "127.0.0.1", "Port" : "12306", "Timeout" : "5"})
+dataManIO.SetParameters({"IPAddress":"127.0.0.1",
+                         "Port":"12306",
+                         "Timeout":"5"})
 
-var = dataManIO.DefineVariable("FloatArray", floatArray, shape, start, count, adios2.ConstantDims)
+var = dataManIO.DefineVariable(
+    "FloatArray", floatArray, shape, start, count, adios2.ConstantDims)
 
 dataManWriter = dataManIO.Open('HelloDataMan', adios2.Mode.Write)
 
