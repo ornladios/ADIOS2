@@ -136,7 +136,8 @@ static Worker *GetWorker(const std::string &configFile,
         return new JsonWorker(configFile, adiosEngine);
     }
 #endif
-    return nullptr;
+    throw std::invalid_argument("ERROR: Unable to construct xml  query.");
+    // return nullptr;
 }
 
 /*

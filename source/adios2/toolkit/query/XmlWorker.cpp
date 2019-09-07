@@ -93,7 +93,8 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
         adios2::query::XmlUtil::XMLAttribute("name", ioNode);
     if (m_SourceReader->m_IO.m_Name.compare(ioName.value()) != 0)
         throw std::ios_base::failure("invalid query io. Expecting io name = " +
-                                     m_SourceReader->m_IO.m_Name);
+                                     m_SourceReader->m_IO.m_Name +
+                                     " found:" + ioName.value());
 #endif
     // std::cout<<m_SourceReader.Type()<<std::endl;
 
