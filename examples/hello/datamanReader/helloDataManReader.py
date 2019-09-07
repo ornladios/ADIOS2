@@ -19,9 +19,9 @@ size = comm.Get_size()
 adios = adios2.ADIOS(comm)
 dataManIO = adios.DeclareIO("whatever")
 dataManIO.SetEngine("DataMan")
-dataManIO.SetParameters({"IPAddress":"127.0.0.1",
-                         "Port":"12306",
-                         "Timeout":"5"})
+dataManIO.SetParameters({"IPAddress": "127.0.0.1",
+                         "Port": "12306",
+                         "Timeout": "5"})
 
 dataManReader = dataManIO.Open('HelloDataMan', adios2.Mode.Read, comm)
 
@@ -40,4 +40,3 @@ while True:
         break;
 
 dataManReader.Close()
-
