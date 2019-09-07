@@ -37,6 +37,6 @@ while True:
         print("Step", currentStep, floatArray)
     elif stepStatus == adios2.StepStatus.EndOfStream:
         print("End of stream")
-        break;
+        break
 
 dataManReader.Close()
