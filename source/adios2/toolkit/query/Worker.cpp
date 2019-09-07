@@ -13,8 +13,8 @@ Worker::Worker(const std::string &queryFile, adios2::core::Engine *adiosEngine)
 
 Worker::~Worker()
 {
-    if (m_SourceReader)
-        m_SourceReader->Close();
+    // if (m_SourceReader)
+    //#m_SourceReader->Close();
 
     if (m_Query != nullptr)
         delete m_Query;

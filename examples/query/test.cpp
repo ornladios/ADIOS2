@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
             }
             reader.EndStep();
         }
-
+        reader.Close();
         return 0;
     }
     catch (std::exception &e)
