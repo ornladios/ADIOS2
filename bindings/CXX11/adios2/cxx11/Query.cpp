@@ -16,7 +16,7 @@ void QueryWorker::GetResultCoverage(
     adios2::Box<adios2::Dims> &outputSelection,
     std::vector<adios2::Box<adios2::Dims>> &touched_blocks)
 {
-  if (m_Worker)
-    return m_Worker->GetResultCoverage(outputSelection, touched_blocks);
+    if (m_Worker)
+        return m_Worker->GetResultCoverage(outputSelection, touched_blocks);
 }
 }
