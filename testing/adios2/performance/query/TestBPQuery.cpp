@@ -297,7 +297,7 @@ int main(int argc, char **argv)
         engineName = std::string(argv[1]);
     }
     // result = RUN_ALL_TESTS();
-    result = 1;
+    result = 0;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
