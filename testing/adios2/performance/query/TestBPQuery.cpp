@@ -286,7 +286,8 @@ TEST_F(BPQueryTest, BP4)
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
-    MPI_Init(nullptr, nullptr);
+    // MPI_Init(nullptr, nullptr);
+    MPI_Init(&argc, &argv);
 #endif
 
     int result;
