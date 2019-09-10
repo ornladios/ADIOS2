@@ -2,236 +2,211 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #---------------------------------------------------------------------#
-#
-# Test suite for pipelines, workflows and coupled runs 
-# using adios_iotest
-#
 
-if(ADIOS2_HAVE_MPI)
+# SetupTestPipeline
+include(ADIOSFunctions)
 
 set(mpicmd ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG})
 
 #------------------------------------------
-#  Test suite for Utils.IOTest.Pipe2
+#  Pipe2 BP Write
 #------------------------------------------
-
-#
-#  Pipe2 BP version 
-#
-  set(WORKDIR ${CMAKE_CURRENT_BINARY_DIR}/Pipe2.BP)
-  file(MAKE_DIRECTORY ${WORKDIR})
-
-#  BP file version Write part
 add_test(NAME Utils.IOTest.Pipe2.BP.Write
-  COMMAND ${mpicmd} 2 ${PROJECT_BINARY_DIR}/bin/adios_iotest -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP.xml -d 2 1 --strong-scaling
-  WORKING_DIRECTORY ${WORKDIR} 
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+    $<TARGET_FILE:adios_iotest>
+      -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+      -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP.xml -d 2 1 --strong-scaling
 )
+set_tests_properties(Utils.IOTest.Pipe2.BP.Write PROPERTIES PROCESSORS 2)
 
-add_test(NAME Utils.IOTest.Pipe2.BP.DumpWrite
+add_test(NAME Utils.IOTest.Pipe2.BP.Write.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-laD
     -DINPUT_FILE=pipe2_write.bp
     -DOUTPUT_FILE=IOTest.Pipe2.BP.Write.bpls.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-  WORKING_DIRECTORY ${WORKDIR} 
 )
 
-set_property(TEST Utils.IOTest.Pipe2.BP.DumpWrite
-  PROPERTY DEPENDS Utils.IOTest.Pipe2.BP.Write
-)
-
-add_test(NAME Utils.IOTest.Pipe2.BP.ValidateWrite
+add_test(NAME Utils.IOTest.Pipe2.BP.Write.Validate
   COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.BP.Write.bpls.txt
-    ${WORKDIR}/IOTest.Pipe2.BP.Write.bpls.txt
-  WORKING_DIRECTORY ${WORKDIR} 
-)
-set_property(TEST Utils.IOTest.Pipe2.BP.ValidateWrite
-  PROPERTY DEPENDS Utils.IOTest.Pipe2.BP.DumpWrite
+    IOTest.Pipe2.BP.Write.bpls.txt
 )
 
-#  BP file version Read part
+SetupTestPipeline(
+  Utils.IOTest.Pipe2.BP
+  "Write;Write.Dump;Write.Validate"
+  TRUE
+)
 
+#------------------------------------------
+#  Pipe2 BP Read
+#------------------------------------------
 add_test(NAME Utils.IOTest.Pipe2.BP.Read
-  COMMAND ${mpicmd} 2 ${PROJECT_BINARY_DIR}/bin/adios_iotest -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP.xml -d 2 1 --strong-scaling
-  WORKING_DIRECTORY ${WORKDIR} 
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+    $<TARGET_FILE:adios_iotest>
+      -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+      -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP.xml -d 2 1 --strong-scaling
 )
+set_tests_properties(Utils.IOTest.Pipe2.BP.Read PROPERTIES PROCESSORS 2)
 
-add_test(NAME Utils.IOTest.Pipe2.BP.DumpRead
+add_test(NAME Utils.IOTest.Pipe2.BP.Read.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-laD
     -DINPUT_FILE=pipe2_read.bp
     -DOUTPUT_FILE=IOTest.Pipe2.BP.Read.bpls.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-  WORKING_DIRECTORY ${WORKDIR} 
 )
 
-set_property(TEST Utils.IOTest.Pipe2.BP.DumpRead
-  PROPERTY DEPENDS Utils.IOTest.Pipe2.BP.Read
-)
-
-add_test(NAME Utils.IOTest.Pipe2.BP.ValidateRead
+add_test(NAME Utils.IOTest.Pipe2.BP.Read.Validate
   COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.BP.Read.bpls.txt
-    ${WORKDIR}/IOTest.Pipe2.BP.Read.bpls.txt
-  WORKING_DIRECTORY ${WORKDIR} 
-)
-set_property(TEST Utils.IOTest.Pipe2.BP.ValidateRead
-  PROPERTY DEPENDS Utils.IOTest.Pipe2.BP.DumpRead
+    IOTest.Pipe2.BP.Read.bpls.txt
 )
 
+SetupTestPipeline(
+  Utils.IOTest.Pipe2.BP
+  "Write;Read;Read.Dump;Read.Validate"
+  FALSE
+)
 
-if (ADIOS2_HAVE_HDF5)
-  #
-  #  Pipe2 HDF5 version 
-  #
-  set(WORKDIR ${CMAKE_CURRENT_BINARY_DIR}/Pipe2.HDF5)
-  file(MAKE_DIRECTORY ${WORKDIR})
-
-  #  HDF5 file version Write part
+if(ADIOS2_HAVE_HDF5)
+  #------------------------------------------
+  #  Pipe2 HDF5 Write
+  #------------------------------------------
   add_test(NAME Utils.IOTest.Pipe2.HDF5.Write
-    COMMAND ${mpicmd} 2 ${PROJECT_BINARY_DIR}/bin/adios_iotest -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.txt -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.xml -d 2 1 --strong-scaling
-    WORKING_DIRECTORY ${WORKDIR} 
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+      $<TARGET_FILE:adios_iotest>
+        -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.txt
+        -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.xml -d 2 1 --strong-scaling
   )
+  set_tests_properties(Utils.IOTest.Pipe2.HDF5.Write PROPERTIES PROCESSORS 2)
 
-  add_test(NAME Utils.IOTest.Pipe2.HDF5.DumpWrite
+  add_test(NAME Utils.IOTest.Pipe2.HDF5.Write.Dump
     COMMAND ${CMAKE_COMMAND}
       -DARG1=-laD
       -DINPUT_FILE=pipe2_write.h5
       -DOUTPUT_FILE=IOTest.Pipe2.HDF5.Write.bpls.txt
       -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-    WORKING_DIRECTORY ${WORKDIR} 
   )
 
-  set_property(TEST Utils.IOTest.Pipe2.HDF5.DumpWrite
-    PROPERTY DEPENDS Utils.IOTest.Pipe2.HDF5.Write
-  )
-
-  add_test(NAME Utils.IOTest.Pipe2.HDF5.ValidateWrite
+  add_test(NAME Utils.IOTest.Pipe2.HDF5.Write.Validate
     COMMAND ${DIFF_EXECUTABLE} -u
       ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.HDF5.Write.bpls.txt
-      ${WORKDIR}/IOTest.Pipe2.HDF5.Write.bpls.txt
-    WORKING_DIRECTORY ${WORKDIR} 
-  )
-  set_property(TEST Utils.IOTest.Pipe2.HDF5.ValidateWrite
-    PROPERTY DEPENDS Utils.IOTest.Pipe2.HDF5.DumpWrite
+      IOTest.Pipe2.HDF5.Write.bpls.txt
   )
 
-  #  HDF5 file version Read part
+  SetupTestPipeline(
+    Utils.IOTest.Pipe2.HDF5
+    "Write;Write.Dump;Write.Validate"
+    TRUE
+  )
 
+  #------------------------------------------
+  #  Pipe2 HDF5 Read
+  #------------------------------------------
   add_test(NAME Utils.IOTest.Pipe2.HDF5.Read
-    COMMAND ${mpicmd} 2 ${PROJECT_BINARY_DIR}/bin/adios_iotest -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.txt -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.xml -d 2 1 --strong-scaling
-    WORKING_DIRECTORY ${WORKDIR} 
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+      $<TARGET_FILE:adios_iotest>
+        -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.txt
+        -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.xml -d 2 1 --strong-scaling
   )
+  set_tests_properties(Utils.IOTest.Pipe2.HDF5.Read PROPERTIES PROCESSORS 2)
 
-  add_test(NAME Utils.IOTest.Pipe2.HDF5.DumpRead
+  add_test(NAME Utils.IOTest.Pipe2.HDF5.Read.Dump
     COMMAND ${CMAKE_COMMAND}
       -DARG1=-laD
       -DINPUT_FILE=pipe2_read.h5
       -DOUTPUT_FILE=IOTest.Pipe2.HDF5.Read.bpls.txt
       -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-    WORKING_DIRECTORY ${WORKDIR} 
   )
 
-  set_property(TEST Utils.IOTest.Pipe2.HDF5.DumpRead
-    PROPERTY DEPENDS Utils.IOTest.Pipe2.HDF5.Read
-  )
-
-  add_test(NAME Utils.IOTest.Pipe2.HDF5.ValidateRead
+  add_test(NAME Utils.IOTest.Pipe2.HDF5.Read.Validate
     COMMAND ${DIFF_EXECUTABLE} -u
       ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.HDF5.Read.bpls.txt
-      ${WORKDIR}/IOTest.Pipe2.HDF5.Read.bpls.txt
-    WORKING_DIRECTORY ${WORKDIR} 
-  )
-  set_property(TEST Utils.IOTest.Pipe2.HDF5.ValidateRead
-    PROPERTY DEPENDS Utils.IOTest.Pipe2.HDF5.DumpRead
+      IOTest.Pipe2.HDF5.Read.bpls.txt
   )
 
-endif (ADIOS2_HAVE_HDF5)
+  SetupTestPipeline(
+    Utils.IOTest.Pipe2.HDF5
+    "Write;Read;Read.Dump;Read.Validate"
+    FALSE
+  )
+endif()
 
-#
-math(EXPR HAVE_2_PROCS "${MPIEXEC_MAX_NUMPROCS} - 1")
-if (${HAVE_2_PROCS}) 
-
-  #
+if(MPIEXEC_MAX_NUMPROCS GREATER 1) 
+  #------------------------------------------
   #  Pipe2 InsituMPI version 
-  #
-  set(WORKDIR ${CMAKE_CURRENT_BINARY_DIR}/Pipe2.InSituMPI)
-  file(MAKE_DIRECTORY ${WORKDIR})
-
+  #------------------------------------------
   add_test(NAME Utils.IOTest.Pipe2.InSituMPI
-    COMMAND ${mpicmd} 1 ${PROJECT_BINARY_DIR}/bin/adios_iotest -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-InSituMPI.xml -d 1 1 --strong-scaling :  ${MPIEXEC_NUMPROC_FLAG} 1 ${PROJECT_BINARY_DIR}/bin/adios_iotest -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-InSituMPI.xml -d 1 1 --strong-scaling 
-    WORKING_DIRECTORY ${WORKDIR} 
+    COMMAND ${MPIEXEC_EXECUTABLE}
+      ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+        -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+        -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-InSituMPI.xml -d 1 1
+        --strong-scaling
+      :
+      ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+        -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+        -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-InSituMPI.xml -d 1 1
+        --strong-scaling 
   )
+  set_tests_properties(Utils.IOTest.Pipe2.InSituMPI PROPERTIES PROCESSORS 2)
 
-  add_test(NAME Utils.IOTest.Pipe2.DumpInSituMPI
+  add_test(NAME Utils.IOTest.Pipe2.InSituMPI.Dump
     COMMAND ${CMAKE_COMMAND}
       -DARG1=-laD
       -DINPUT_FILE=pipe2_read.bp
       -DOUTPUT_FILE=IOTest.Pipe2.InSituMPI.bpls.txt
       -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-    WORKING_DIRECTORY ${WORKDIR} 
   )
 
-  set_property(TEST Utils.IOTest.Pipe2.DumpInSituMPI
-    PROPERTY DEPENDS Utils.IOTest.Pipe2.InSituMPI
-  )
-
-  add_test(NAME Utils.IOTest.Pipe2.ValidateInSituMPI
+  add_test(NAME Utils.IOTest.Pipe2.InSituMPI.Validate
     COMMAND ${DIFF_EXECUTABLE} -u
       ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.InSituMPI.bpls.txt
-      ${WORKDIR}/IOTest.Pipe2.InSituMPI.bpls.txt
-    WORKING_DIRECTORY ${WORKDIR} 
-  )
-  set_property(TEST Utils.IOTest.Pipe2.ValidateInSituMPI
-    PROPERTY DEPENDS Utils.IOTest.Pipe2.DumpInSituMPI
+      IOTest.Pipe2.InSituMPI.bpls.txt
   )
 
+  SetupTestPipeline(
+    Utils.IOTest.Pipe2.InSituMPI
+    ";Dump;Validate"
+    TRUE
+  )
 
-  #
+  #------------------------------------------
   #  Pipe2 SST version 
-  #
+  #------------------------------------------
   if(ADIOS2_HAVE_SST)
-	set(WORKDIR ${CMAKE_CURRENT_BINARY_DIR}/Pipe2.SST)
-	file(MAKE_DIRECTORY ${WORKDIR})
+    add_test(NAME Utils.IOTest.Pipe2.SST
+      COMMAND ${MPIEXEC_EXECUTABLE}
+        ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+          -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SST.xml -d 1 1 --strong-scaling
+        :
+        ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+          -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SST.xml -d 1 1 --strong-scaling 
+    )
 	
-	add_test(NAME Utils.IOTest.Pipe2.SST
-	  COMMAND ${mpicmd} 1 ${PROJECT_BINARY_DIR}/bin/adios_iotest -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SST.xml -d 1 1 --strong-scaling :  ${MPIEXEC_NUMPROC_FLAG} 1 ${PROJECT_BINARY_DIR}/bin/adios_iotest -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SST.xml -d 1 1 --strong-scaling 
-	  WORKING_DIRECTORY ${WORKDIR} 
-	)
-	
-	add_test(NAME Utils.IOTest.Pipe2.DumpSST
-	  COMMAND ${CMAKE_COMMAND}
-	    -DARG1=-laD
-	    -DINPUT_FILE=pipe2_read.bp
-	    -DOUTPUT_FILE=IOTest.Pipe2.SST.bpls.txt
-	    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-	  WORKING_DIRECTORY ${WORKDIR} 
-	)
-	
-	set_property(TEST Utils.IOTest.Pipe2.DumpSST
-	  PROPERTY DEPENDS Utils.IOTest.Pipe2.SST
-	)
-	
-	add_test(NAME Utils.IOTest.Pipe2.ValidateSST
-          COMMAND ${DIFF_EXECUTABLE} -u
-	    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.SST.bpls.txt
-	    ${WORKDIR}/IOTest.Pipe2.SST.bpls.txt
-	  WORKING_DIRECTORY ${WORKDIR} 
-	)
-	set_property(TEST Utils.IOTest.Pipe2.ValidateSST
-	  PROPERTY DEPENDS Utils.IOTest.Pipe2.DumpSST
-	)
-  endif(ADIOS2_HAVE_SST)
+    add_test(NAME Utils.IOTest.Pipe2.SST.Dump
+      COMMAND ${CMAKE_COMMAND}
+        -DARG1=-laD
+        -DINPUT_FILE=pipe2_read.bp
+        -DOUTPUT_FILE=IOTest.Pipe2.SST.bpls.txt
+        -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+    )
 
-else (${HAVE_2_PROCS}) 
-message(WARNING "We don't have enough (2) processes to run insitu test fwith adios_iotest")
-endif (${HAVE_2_PROCS}) 
+    add_test(NAME Utils.IOTest.Pipe2.SST.Validate
+      COMMAND ${DIFF_EXECUTABLE} -u
+        ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.SST.bpls.txt
+        IOTest.Pipe2.SST.bpls.txt
+    )
 
-
-#------------------------------------------
-#  Test suite for Utils.IOTest.Coupling2
-#------------------------------------------
-
-endif(ADIOS2_HAVE_MPI)
-
+    SetupTestPipeline(
+      Utils.IOTest.Pipe2.SST
+      ";Dump;Validate"
+      TRUE
+    )
+  endif()
+else()
+  message(WARNING "Not enough (2) MPI procs for insitu tests with adios_iotest")
+endif() 

@@ -13,3 +13,8 @@ if(ADIOS2_HAVE_MPI)
 endif()
 add_subdirectory(adios2)
 add_subdirectory(utils)
+add_subdirectory(install)
+
+if(ADIOS2_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
