@@ -104,7 +104,7 @@ DataManWriter::~DataManWriter()
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     ++m_CurrentStep;
-    m_DataManSerializer.NewWriterBuffer(m_SerializerBufferSize);
+    m_FastSerializer.NewWriterBuffer(m_SerializerBufferSize);
 
     if (m_Reliable)
     {
@@ -134,11 +134,11 @@ void DataManWriter::EndStep()
 {
     if (m_CurrentStep == 0)
     {
-        m_DataManSerializer.PutAttributes(m_IO);
+        m_FastSerializer.PutAttributes(m_IO);
     }
 
-    m_DataManSerializer.AttachAttributes();
-    const auto buf = m_DataManSerializer.GetLocalPack();
+    m_FastSerializer.AttachAttributes();
+    const auto buf = m_FastSerializer.GetLocalPack();
     m_SerializerBufferSize = buf->size();
     m_DataPublisher.PushBufferQueue(buf);
 
@@ -202,6 +202,12 @@ void DataManWriter::ReplyThread(const std::string &address)
             {
                 replier.SendReply(m_AllAddresses.data(), m_AllAddresses.size());
             }
+            else if (r == "Attributes")
+            {
+                m_ReliableSerializer.PutAttributes(m_IO);
+                m_ReliableSerializer.AttachAttributes();
+                replier.SendReply(m_ReliableSerializer.GetLocalPack());
+            }
             else
             {
                 size_t step;
@@ -246,6 +252,7 @@ void DataManWriter::ReplyThread(const std::string &address)
 #undef declare_type
                     else { throw("unknown data type"); }
                 }
+                replier.SendReply(m_ReliableSerializer.GetLocalPack());
             }
         }
     }

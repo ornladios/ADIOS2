@@ -35,12 +35,11 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 template <class T>
 void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
-
     variable.SetData(values);
     if (m_IsRowMajor)
     {
-        m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
-                                   "", Params());
+        m_FastSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, "",
+                                Params());
     }
     else
     {
@@ -54,9 +53,9 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         std::reverse(shape.begin(), shape.end());
         std::reverse(memstart.begin(), memstart.end());
         std::reverse(memcount.begin(), memcount.end());
-        m_DataManSerializer.PutVar(variable.m_Data, variable.m_Name, shape,
-                                   start, count, memstart, memcount, m_Name,
-                                   CurrentStep(), m_MpiRank, "", Params());
+        m_FastSerializer.PutVar(variable.m_Data, variable.m_Name, shape, start,
+                                count, memstart, memcount, m_Name,
+                                CurrentStep(), m_MpiRank, "", Params());
     }
 
     if (m_Reliable)
@@ -75,6 +74,24 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 template <class T>
 void DataManWriter::ReadVarFromFile(const std::string &varName)
 {
+    auto var = m_ReaderSubIO.InquireVariable<T>(varName);
+    if (var)
+    {
+        auto shape = var.Shape();
+        auto count = shape;
+        Dims start(shape.size(), 0);
+        size_t totalBytes = std::accumulate(
+            shape.begin(), shape.end(), sizeof(T), std::multiplies<size_t>());
+        std::vector<T> data(totalBytes);
+        m_ReaderSubEngine.Get<T>(var, data.data(), adios2::Mode::Sync);
+        m_ReliableSerializer.PutVar(
+            data.data(), varName, shape, start, count, start, count, m_Name,
+            m_ReaderSubEngine.CurrentStep(), 0, "", Params());
+    }
+    else
+    {
+        throw(std::runtime_error("variable not found"));
+    }
 }
 
 } // end namespace engine

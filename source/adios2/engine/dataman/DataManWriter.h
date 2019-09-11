@@ -43,9 +43,6 @@ private:
 
     adios2::zmq::ZmqPubSub m_DataPublisher;
 
-    format::VecPtr m_AggregatedMetadata = nullptr;
-    std::mutex m_AggregatedMetadataMutex;
-
     void ReplyThread(const std::string &address);
     std::thread m_ReplyThread;
 

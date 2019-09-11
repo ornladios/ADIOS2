@@ -22,7 +22,8 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
                              helper::Comm comm)
 : Engine(engineType, io, name, mode, std::move(comm)),
   m_IsRowMajor(helper::IsRowMajor(io.m_HostLanguage)),
-  m_DataManSerializer(m_Comm, m_IsRowMajor)
+  m_FastSerializer(m_Comm, m_IsRowMajor),
+  m_ReliableSerializer(MPI_COMM_SELF, m_IsRowMajor)
 {
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();

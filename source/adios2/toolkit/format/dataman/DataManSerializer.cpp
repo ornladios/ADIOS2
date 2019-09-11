@@ -1116,66 +1116,64 @@ bool DataManSerializer::StepHasMinimumBlocks(const size_t step,
     return false;
 }
 
-DmvVecPtr DataManSerializer::GetEarliestStep(int64_t &currentStep,
-                                             const int requireMinimumBlocks)
+DmvVecPtr DataManSerializer::GetEarliestLatestStep(
+    int64_t &currentStep, const int requireMinimumBlocks,
+    const float timeoutSeconds, const bool latest)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
+    DmvVecPtr ret = nullptr;
 
-    bool hasStep = false;
-    size_t earliestStep = std::numeric_limits<size_t>::max();
-
-    for (const auto &i : m_DataManVarMap)
+    auto start_time = std::chrono::system_clock::now();
+    while (ret == nullptr)
     {
-        if (earliestStep > i.first)
+        std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
+
+        bool hasStep = false;
+        size_t latestStep = 0;
+        size_t earliestStep = std::numeric_limits<size_t>::max();
+
+        for (const auto &i : m_DataManVarMap)
         {
-            earliestStep = i.first;
+            if (latestStep < i.first)
+            {
+                latestStep = i.first;
+            }
+            if (earliestStep > i.first)
+            {
+                earliestStep = i.first;
+            }
+            hasStep = true;
         }
-        hasStep = true;
-    }
 
-    if (not hasStep)
-    {
-        return nullptr;
-    }
-
-    if (StepHasMinimumBlocks(earliestStep, requireMinimumBlocks))
-    {
-        currentStep = earliestStep;
-        return m_DataManVarMap[earliestStep];
-    }
-
-    return nullptr;
-}
-DmvVecPtr DataManSerializer::GetLatestStep(int64_t &currentStep,
-                                           const int requireMinimumBlocks)
-{
-    TAU_SCOPED_TIMER_FUNC();
-
-    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-
-    bool hasStep = false;
-    size_t latestStep = 0;
-
-    for (const auto &i : m_DataManVarMap)
-    {
-        if (latestStep < i.first)
+        if (not hasStep)
         {
-            latestStep = i.first;
+            auto now_time = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                now_time - start_time);
+            if (duration.count() > timeoutSeconds and timeoutSeconds > 0)
+            {
+                return nullptr;
+            }
+            else
+            {
+                continue;
+            }
         }
-        hasStep = true;
-    }
 
-    if (not hasStep)
-    {
-        return nullptr;
-    }
+        if (latest)
+        {
+            currentStep = latestStep;
+        }
+        else
+        {
+            currentStep = earliestStep;
+        }
 
-    if (StepHasMinimumBlocks(latestStep, requireMinimumBlocks))
-    {
-        currentStep = latestStep;
-        return m_DataManVarMap[latestStep];
+        if (StepHasMinimumBlocks(currentStep, requireMinimumBlocks))
+        {
+            return m_DataManVarMap[currentStep];
+        }
     }
 
     return nullptr;

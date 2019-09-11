@@ -8,11 +8,7 @@
  *      Author: Jason Wang
  */
 
-#include "DataManReader.h"
 #include "DataManReader.tcc"
-
-#include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 namespace adios2
 {
@@ -135,35 +131,21 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         return StepStatus::EndOfStream;
     }
 
-    auto start_time = std::chrono::system_clock::now();
-    while (m_CurrentStepMetadata == nullptr)
+    m_CurrentStepMetadata = m_FastSerializer.GetEarliestLatestStep(
+        m_CurrentStep, m_TotalWriters, timeoutSeconds, m_ProvideLatest);
+
+    if (m_CurrentStepMetadata == nullptr)
     {
-        if (m_ProvideLatest)
+        if (m_Verbosity >= 5)
         {
-            m_CurrentStepMetadata = m_DataManSerializer.GetLatestStep(
-                m_CurrentStep, m_TotalWriters);
+            std::cout << "DataManReader::BeginStep() returned EndOfStream, "
+                         "final step is "
+                      << m_FinalStep << std::endl;
         }
-        else
-        {
-            m_CurrentStepMetadata = m_DataManSerializer.GetEarliestStep(
-                m_CurrentStep, m_TotalWriters);
-        }
-        auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            now_time - start_time);
-        if (duration.count() < timeoutSeconds)
-        {
-            if (m_Verbosity >= 5)
-            {
-                std::cout << "DataManReader::BeginStep() returned EndOfStream, "
-                             "final step is "
-                          << m_FinalStep << std::endl;
-            }
-            return StepStatus::EndOfStream;
-        }
+        return StepStatus::EndOfStream;
     }
 
-    m_DataManSerializer.GetAttributes(m_IO);
+    m_FastSerializer.GetAttributes(m_IO);
 
     for (const auto &i : *m_CurrentStepMetadata)
     {
@@ -199,7 +181,7 @@ void DataManReader::PerformGets() {}
 
 void DataManReader::EndStep()
 {
-    m_DataManSerializer.Erase(m_CurrentStep);
+    m_FastSerializer.Erase(m_CurrentStep);
     m_CurrentStepMetadata = nullptr;
     if (m_Verbosity >= 5)
     {
@@ -221,13 +203,11 @@ void DataManReader::SubscriberThread()
             auto buffer = z->PopBufferQueue();
             if (buffer != nullptr && buffer->size() > 0)
             {
-                // check if is control signal
                 if (buffer->size() < 64)
                 {
                     try
                     {
-                        nlohmann::json jmsg =
-                            nlohmann::json::parse(buffer->data());
+                        auto jmsg = nlohmann::json::parse(buffer->data());
                         m_FinalStep = jmsg["FinalStep"].get<size_t>();
                         continue;
                     }
@@ -235,7 +215,7 @@ void DataManReader::SubscriberThread()
                     {
                     }
                 }
-                m_DataManSerializer.PutPack(buffer);
+                m_FastSerializer.PutPack(buffer);
             }
         }
     }

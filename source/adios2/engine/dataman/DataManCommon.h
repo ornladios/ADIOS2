@@ -56,7 +56,8 @@ protected:
     std::string m_IPAddress;
     int m_Port = 50001;
 
-    format::DataManSerializer m_DataManSerializer;
+    format::DataManSerializer m_FastSerializer;
+    format::DataManSerializer m_ReliableSerializer;
 
     bool GetParameter(const Params &params, const std::string &key,
                       bool &value);
