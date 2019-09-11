@@ -20,7 +20,7 @@ if(ADIOS2_HAVE_MPI)
       TEST_LIST _gtest_added_tests
     )
     set_tests_properties(${_gtest_added_tests} PROPERTIES
-      PROCESSORS ${MPI_PROCS}
+      PROCESSORS ${NUM_TEST_PROCS}
     )
     gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
       EXTRA_ARGS "SST" "MarshalMethod=BP"
@@ -28,7 +28,7 @@ if(ADIOS2_HAVE_MPI)
       TEST_LIST _gtest_added_tests
     )
     set_tests_properties(${_gtest_added_tests} PROPERTIES
-      PROCESSORS ${MPI_PROCS}
+      PROCESSORS ${NUM_TEST_PROCS}
     )
   endif()
 
@@ -37,7 +37,9 @@ if(ADIOS2_HAVE_MPI)
     TEST_SUFFIX _InSituMPI
     TEST_LIST _gtest_added_tests
   )
-  set_tests_properties(${_gtest_added_tests} PROPERTIES PROCESSORS ${MPI_PROCS})
+  set_tests_properties(${_gtest_added_tests} PROPERTIES
+    PROCESSORS ${NUM_TEST_PROCS}
+  )
 endif()
 
 add_executable(TestCommonWrite TestCommonWrite.cpp)

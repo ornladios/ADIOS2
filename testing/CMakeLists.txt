@@ -6,12 +6,12 @@
 include(GoogleTest)
 
 if(ADIOS2_HAVE_MPI)
-  #math(EXPR MPI_PROCS "${MPIEXEC_MAX_NUMPROCS} / 2")
-  set(MPI_PROCS ${MPIEXEC_MAX_NUMPROCS})
+  set(NUM_TEST_PROCS ${MPIEXEC_MAX_NUMPROCS})
   set(MPIEXEC_COMMAND
-    ${MPIEXEC_EXECUTABLE} 
-        ${MPIEXEC_NUMPROC_FLAG} ${MPI_PROCS}
+    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${NUM_TEST_PROCS}
   )
+else()
+  set(NUM_TEST_PROCS 1)
 endif()
 add_subdirectory(adios2)
 add_subdirectory(utils)

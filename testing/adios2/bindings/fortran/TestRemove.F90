@@ -1,6 +1,8 @@
 program TestRemove
     use small_test_data
+#ifdef USE_MPI
     use mpi
+#endif
     use adios2
     implicit none
 
@@ -14,10 +16,15 @@ program TestRemove
     type(adios2_variable), dimension(12) :: variables
     type(adios2_engine) :: bpWriter, bpReader
 
+#ifdef USE_MPI
     ! Launch MPI
     call MPI_Init(ierr)
     call MPI_Comm_rank(MPI_COMM_WORLD, irank, ierr)
     call MPI_Comm_size(MPI_COMM_WORLD, isize, ierr)
+#else
+    irank = 0
+    isize = 1
+#endif
 
     ! Application variables
     inx = 10
@@ -28,7 +35,11 @@ program TestRemove
     count_dims(1) = inx
 
     ! Create adios handler passing the communicator, debug mode and error flag
+#ifdef USE_MPI
     call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
+#else
+    call adios2_init(adios, adios2_debug_mode_on, ierr)
+#endif
 
     !!!!!!!!!!!!!!!!!!!!!!!!! WRITER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! Declare an IO process configuration inside adios
@@ -148,6 +159,8 @@ program TestRemove
 
     call adios2_finalize(adios, ierr)
 
+#ifdef USE_MPI
     call MPI_Finalize(ierr)
+#endif
 
 end program TestRemove

@@ -3,184 +3,75 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_library(SmallTestData_f OBJECT SmallTestData_mod.f90)
+set(test_targets)
 
-add_executable(TestBPWriteReadTypes_f $<TARGET_OBJECTS:SmallTestData_f>)
-target_link_libraries(TestBPWriteReadTypes_f adios2_f)
+macro(add_fortran_test testname)
+  add_executable(Test${testname}_f Test${testname}.F90)
+  target_link_libraries(Test${testname}_f adios2_f)
+  if(ADIOS2_HAVE_MPI)
+    target_compile_definitions(Test${testname}_f PRIVATE USE_MPI)
+    target_link_libraries(Test${testname}_f MPI::MPI_Fortran)
+  endif()
+  add_test(NAME Bindings.Fortran.${testname}
+    COMMAND ${MPIEXEC_COMMAND} $<TARGET_FILE:Test${testname}_f>
+  )
+  set_tests_properties(Bindings.Fortran.${testname} PROPERTIES
+    PROCESSORS ${NUM_TEST_PROCS}
+  )
+endmacro()
 
-add_executable(TestRemove_f $<TARGET_OBJECTS:SmallTestData_f>)
-target_link_libraries(TestRemove_f adios2_f)
+add_library(SmallTestData_f OBJECT SmallTestData_mod.F90)
+add_library(ISmallTestData_f INTERFACE)
+target_sources(ISmallTestData_f INTERFACE $<TARGET_OBJECTS:SmallTestData_f>)
+
+add_fortran_test(BPWriteTypes)
+target_link_libraries(TestBPWriteTypes_f ISmallTestData_f)
+
+add_fortran_test(Remove)
+target_link_libraries(TestRemove_f ISmallTestData_f)
 
 if(ADIOS2_HAVE_MPI)
-  add_executable(TestAdios2BindingsFortranIO_f TestAdios2BindingsFortranIO.f90)
-  target_link_libraries(TestAdios2BindingsFortranIO_f adios2_f MPI::MPI_Fortran)
+  add_fortran_test(Adios2BindingsFortranIO)
+  
+  add_fortran_test(BPWriteReadAttributes)
+  target_link_libraries(TestBPWriteReadAttributes_f ISmallTestData_f)
 
-  target_sources(TestBPWriteReadTypes_f PRIVATE TestBPWriteTypes.f90)
-  target_link_libraries(TestBPWriteReadTypes_f MPI::MPI_Fortran)
+  add_fortran_test(BPWriteVariableAttributes) 
+  target_link_libraries(TestBPWriteVariableAttributes_f ISmallTestData_f)
+
+  add_fortran_test(BPWriteTypesByName)
+  target_link_libraries(TestBPWriteTypesByName_f ISmallTestData_f)
+ 
+  add_fortran_test(BPWriteTypesLocal)
+  target_link_libraries(TestBPWriteTypesLocal_f ISmallTestData_f)
   
-  target_sources(TestRemove_f PRIVATE TestRemove.f90)
-  target_link_libraries(TestRemove_f MPI::MPI_Fortran)
+  add_fortran_test(BPWriteReadHeatMap2D)
+  add_fortran_test(BPWriteReadHeatMap3D)
+  add_fortran_test(BPWriteReadHeatMap4D)
+  add_fortran_test(BPWriteReadHeatMap5D)
+  add_fortran_test(BPWriteReadHeatMap6D)
+  add_fortran_test(BPReadGlobalsByName)
+  add_fortran_test(BPWriteMemorySelectionRead2D)
+  add_fortran_test(BPWriteMemorySelectionRead3D)
+  add_fortran_test(NullEngine)
   
-  add_executable(TestBPWriteReadAttributes_f $<TARGET_OBJECTS:SmallTestData_f>)
-  target_link_libraries(TestBPWriteReadAttributes_f adios2_f)
-  target_sources(TestBPWriteReadAttributes_f PRIVATE TestBPWriteReadAttributes.f90)
-  target_link_libraries(TestBPWriteReadAttributes_f MPI::MPI_Fortran)
+  if(ADIOS2_HAVE_SZ)
+    add_fortran_test(BPWriteReadSZ2D)
+    add_fortran_test(BPWriteReadSZ3D)
+  endif()
   
-  add_executable(TestBPWriteVariableAttributes_f $<TARGET_OBJECTS:SmallTestData_f>)
-  target_link_libraries(TestBPWriteVariableAttributes_f adios2_f)
-  target_sources(TestBPWriteVariableAttributes_f PRIVATE TestBPWriteVariableAttributes.f90)
-  target_link_libraries(TestBPWriteVariableAttributes_f MPI::MPI_Fortran)
-  
-  add_executable(TestBPWriteTypesByName_f $<TARGET_OBJECTS:SmallTestData_f>)
-  target_link_libraries(TestBPWriteTypesByName_f adios2_f)
-  target_sources(TestBPWriteTypesByName_f PRIVATE TestBPWriteTypesByName.f90)
-  target_link_libraries(TestBPWriteTypesByName_f MPI::MPI_Fortran)
-  
-  add_executable(TestBPWriteLocal_f $<TARGET_OBJECTS:SmallTestData_f>)
-  target_link_libraries(TestBPWriteLocal_f adios2_f)
-  target_sources(TestBPWriteLocal_f PRIVATE TestBPWriteTypesLocal.f90)
-  target_link_libraries(TestBPWriteLocal_f MPI::MPI_Fortran)
-  
-  add_executable(TestBPWriteReadHeatMap2D_f TestBPWriteReadHeatMap2D.f90)
-  target_link_libraries(TestBPWriteReadHeatMap2D_f adios2_f MPI::MPI_Fortran)
-  
-  add_executable(TestBPWriteReadHeatMap3D_f TestBPWriteReadHeatMap3D.f90)
-  target_link_libraries(TestBPWriteReadHeatMap3D_f adios2_f MPI::MPI_Fortran)
-  
-  add_executable(TestBPWriteReadHeatMap4D_f TestBPWriteReadHeatMap4D.f90)
-  target_link_libraries(TestBPWriteReadHeatMap4D_f adios2_f MPI::MPI_Fortran)
-  
-  add_executable(TestBPWriteReadHeatMap5D_f TestBPWriteReadHeatMap5D.f90)
-  target_link_libraries(TestBPWriteReadHeatMap5D_f adios2_f MPI::MPI_Fortran)
-  
-  add_executable(TestBPWriteReadHeatMap6D_f TestBPWriteReadHeatMap6D.f90)
-  target_link_libraries(TestBPWriteReadHeatMap6D_f adios2_f MPI::MPI_Fortran)
-  
-  add_executable(TestBPReadGlobalsByName_f TestBPReadGlobalsByName.f90)
-  target_link_libraries(TestBPReadGlobalsByName_f adios2_f MPI::MPI_Fortran)
-  
-  add_executable(TestBPMemorySelection2D_f TestBPWriteMemorySelectionRead2D.f90)
-  target_link_libraries(TestBPMemorySelection2D_f adios2_f MPI::MPI_Fortran)
-  
-  add_executable(TestBPMemorySelection3D_f TestBPWriteMemorySelectionRead3D.f90)
-  target_link_libraries(TestBPMemorySelection3D_f adios2_f MPI::MPI_Fortran)
-  
-  add_executable(TestNullEngine_f TestNullEngine.f90)
-  target_link_libraries(TestNullEngine_f adios2_f MPI::MPI_Fortran)
+  if(ADIOS2_HAVE_ZFP)
+    add_fortran_test(BPWriteReadZfp2D)
+  endif()
   
   # F2C 
   add_executable(TestBPReadFBlocks_f2c TestF2C_BPReadFBlocks.cpp)
   target_link_libraries(TestBPReadFBlocks_f2c adios2 gtest MPI::MPI_C)
-  
-  if(ADIOS2_HAVE_SZ)
-    add_executable(TestBPWriteReadSZ2D_f operation/TestBPWriteReadSZ2D.f90)
-    target_link_libraries(TestBPWriteReadSZ2D_f adios2_f MPI::MPI_Fortran)
-    
-    add_executable(TestBPWriteReadSZ3D_f operation/TestBPWriteReadSZ3D.f90)
-    target_link_libraries(TestBPWriteReadSZ3D_f adios2_f MPI::MPI_Fortran)
-  endif()
-  
-  if(ADIOS2_HAVE_ZFP)
-    add_executable(TestBPWriteReadZfp2D_f operation/TestBPWriteReadZfp2D.f90)
-    target_link_libraries(TestBPWriteReadZfp2D_f adios2_f MPI::MPI_Fortran)
-  endif()
-  
-  set(test_parameters
-    ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
+  add_test(NAME Bindings.Fortran.F2C.BPReadFBlocks
+    COMMAND ${MPIEXEC_COMMAND} $<TARGET_FILE:TestBPReadFBlocks_f2c>
   )
-  
-  add_test(NAME TestAdios2BindingsFortranIO_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestAdios2BindingsFortranIO_f>
+  set_tests_properties(Bindings.Fortran.F2C.BPReadFBlocks PROPERTIES
+    DEPENDS "Bindings.Fortran.BPWriteReadHeatMap2D;Bindings.Fortran.BPWriteReadHeatMap3D"
+    PROCESSORS ${NUM_TEST_PROCS}
   )
-
-  add_test(NAME BPWriteReadAttributes_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadAttributes_f>
-  )
-  
-  add_test(NAME BPWriteVariableAttributes_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteVariableAttributes_f>
-  )
-  
-  add_test(NAME BPWriteReadTypesByName_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteTypesByName_f>
-  )
-  
-  add_test(NAME BPWriteLocal_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteLocal_f>
-  )
-  
-  add_test(NAME BPWriteReadHeatMap2D_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadHeatMap2D_f>
-  )
-  
-  add_test(NAME BPWriteReadHeatMap3D_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadHeatMap3D_f>
-  )
-  
-  add_test(NAME BPWriteReadHeatMap4D_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadHeatMap4D_f>
-  )
-  
-  add_test(NAME BPWriteReadHeatMap5D_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadHeatMap5D_f>
-  )
-  
-  add_test(NAME BPWriteReadHeatMap6D_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadHeatMap6D_f>
-  )
-  
-  add_test(NAME BPWriteReadTypes_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadTypes_f>
-  )
-
-  add_test(NAME Remove_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestRemove_f>
-  )
-  
-  add_test(NAME BPReadGlobalsByName_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPReadGlobalsByName_f>
-  )
-  
-  add_test(NAME TestBPReadFBlocks_f2c
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPReadFBlocks_f2c>
-  )
-  
-  set_property(TEST TestBPReadFBlocks_f2c
-    PROPERTY DEPENDS BPWriteReadHeatMap2D_f BPWriteReadHeatMap3D_f
-  )
-  
-  add_test(NAME TestNullEngine_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestNullEngine_f>
-  )
-  
-  if(ADIOS2_HAVE_SZ)
-    add_test(NAME BPWriteReadSZ2D_f
-      COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadSZ2D_f>
-    )
-    
-    add_test(NAME BPWriteReadSZ3D_f
-      COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadSZ3D_f>
-    )
-  endif()
-  
-  if(ADIOS2_HAVE_ZFP)
-    add_test(NAME BPWriteReadZfp2D_f
-      COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadZfp2D_f>
-    )
-  endif()
-  
-  add_test(NAME BPMemorySelection2D_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPMemorySelection2D_f>
-  )
-  
-  add_test(NAME BPMemorySelection3D_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPMemorySelection3D_f>
-  )
-  
-else()
-  
-  target_sources(TestBPWriteReadTypes_f PRIVATE TestBPWriteTypes_nompi.f90)
-  
-  target_sources(TestRemove_f PRIVATE TestRemove_nompi.f90)
-
 endif()
