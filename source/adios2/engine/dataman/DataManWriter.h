@@ -6,7 +6,6 @@
  *
  *  Created on: Jan 10, 2017
  *      Author: Jason Wang
- *              William F Godoy
  */
 
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
@@ -47,8 +46,16 @@ private:
     format::VecPtr m_AggregatedMetadata = nullptr;
     std::mutex m_AggregatedMetadataMutex;
 
-    void ControlThread(const std::string &address);
-    std::thread m_ControlThread;
+    void ReplyThread(const std::string &address);
+    std::thread m_ReplyThread;
+
+    std::shared_ptr<adios2::ADIOS> m_WriterSubAdios;
+    adios2::IO m_WriterSubIO;
+    adios2::Engine m_WriterSubEngine;
+
+    std::shared_ptr<adios2::ADIOS> m_ReaderSubAdios;
+    adios2::IO m_ReaderSubIO;
+    adios2::Engine m_ReaderSubEngine;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
@@ -61,6 +68,9 @@ private:
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
+
+    template <class T>
+    void ReadVarFromFile(const std::string &varName);
 
     void DoClose(const int transportIndex = -1) final;
 };

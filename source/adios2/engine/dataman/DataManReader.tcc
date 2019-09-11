@@ -5,7 +5,7 @@
  * DataManReader.tcc
  *
  *  Created on: Dec 8, 2017
- *      Author: William F Godoy godoywf@ornl.gov
+ *      Author: Jason Wang
  */
 
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANREADER_TCC_

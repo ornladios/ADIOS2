@@ -6,7 +6,6 @@
  *
  *  Created on: Feb 21, 2017
  *      Author: Jason Wang
- *              William F Godoy
  */
 
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
@@ -39,16 +38,19 @@ public:
 private:
     bool m_ProvideLatest = false;
     bool m_InitFailed = false;
+    bool m_StreamingRank = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
     int m_TotalWriters;
     adios2::zmq::ZmqReqRep m_ZmqRequester;
     std::vector<std::string> m_DataAddresses;
     std::vector<std::string> m_ControlAddresses;
     std::vector<std::shared_ptr<adios2::zmq::ZmqPubSub>> m_ZmqSubscriberVec;
-    std::thread m_SubscriberThread;
     format::DmvVecPtr m_CurrentStepMetadata;
+    std::thread m_SubscriberThread;
+    std::thread m_RequesterThread;
 
     void SubscriberThread();
+    void RequesterThread();
     void DoClose(const int transportIndex = -1) final;
 
 #define declare_type(T)                                                        \

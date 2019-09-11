@@ -326,7 +326,7 @@ TEST_F(DataManEngineTest, DataManBase)
     if (mpiGroup == 1)
     {
         adios2::Params engineParams = {
-            {"Port", "13316"}, {"IPAddress", "127.0.0.1"}, {"Verbose", "11"}};
+            {"Port", "13316"}, {"IPAddress", "127.0.0.1"}, {"Verbose", "0"}};
         Reader(shape, start, count, steps, engineParams, filename);
     }
 

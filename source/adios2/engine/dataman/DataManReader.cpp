@@ -6,7 +6,6 @@
  *
  *  Created on: Feb 21, 2017
  *      Author: Jason Wang
- *              William F Godoy
  */
 
 #include "DataManReader.h"
@@ -28,6 +27,15 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 {
     GetParameter(m_IO.m_Parameters, "AlwaysProvideLatestTimestep",
                  m_ProvideLatest);
+
+    if (m_MpiRank == m_MpiSize - 1)
+    {
+        m_StreamingRank = true;
+    }
+    else
+    {
+        m_StreamingRank = false;
+    }
 
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
 
@@ -75,8 +83,11 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
         dataZmq->OpenSubscriber(address, m_Timeout, m_ReceiverBufferSize);
         m_ZmqSubscriberVec.push_back(dataZmq);
     }
-
     m_SubscriberThread = std::thread(&DataManReader::SubscriberThread, this);
+
+    if (m_Reliable)
+    {
+    }
 }
 
 DataManReader::~DataManReader()
@@ -112,10 +123,11 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         return StepStatus::EndOfStream;
     }
 
-    if (m_CurrentStep == m_FinalStep and m_CurrentStep > 0)
+    if (m_CurrentStep >= m_FinalStep and m_CurrentStep >= 0)
     {
         if (m_Verbosity >= 5)
         {
+            std::cout << m_CurrentStep << " >= " << m_FinalStep << std::endl;
             std::cout << "DataManReader::BeginStep() returned EndOfStream, "
                          "final step is "
                       << m_FinalStep << std::endl;
@@ -124,7 +136,6 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
 
     auto start_time = std::chrono::system_clock::now();
-
     while (m_CurrentStepMetadata == nullptr)
     {
         if (m_ProvideLatest)
@@ -137,7 +148,6 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
             m_CurrentStepMetadata = m_DataManSerializer.GetEarliestStep(
                 m_CurrentStep, m_TotalWriters);
         }
-
         auto now_time = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
             now_time - start_time);
@@ -159,9 +169,9 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (i.step == m_CurrentStep)
         {
-            if (i.type == "compound")
+            if (i.type.empty())
             {
-                throw("Compound type is not supported yet.");
+                throw("unknown data type");
             }
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
@@ -170,11 +180,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-            else
-            {
-                throw("Unknown type caught in "
-                      "DataManReader::BeginStepSubscribe.");
-            }
+            else { throw("unknown data type"); }
         }
     }
 
@@ -225,7 +231,7 @@ void DataManReader::SubscriberThread()
                         m_FinalStep = jmsg["FinalStep"].get<size_t>();
                         continue;
                     }
-                    catch (std::exception)
+                    catch (...)
                     {
                     }
                 }
@@ -234,6 +240,8 @@ void DataManReader::SubscriberThread()
         }
     }
 }
+
+void DataManReader::RequesterThread() {}
 
 #define declare_type(T)                                                        \
     void DataManReader::DoGetSync(Variable<T> &variable, T *data)              \

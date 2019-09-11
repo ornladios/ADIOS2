@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * DataMan.cpp
+ * DataManWriter.cpp
  *
  *  Created on: Jan 10, 2017
- *      Author: wfg
+ *      Author: Jason Wang
  */
 
 #include "DataManWriter.h"
@@ -70,10 +70,27 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         // TODO: Add filesystem based handshake
     }
 
+    m_ReplyThread =
+        std::thread(&DataManWriter::ReplyThread, this, m_ControlAddress);
+
     m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout);
 
-    m_ControlThread =
-        std::thread(&DataManWriter::ControlThread, this, m_ControlAddress);
+    if (m_Reliable)
+    {
+        m_WriterSubAdios =
+            std::make_shared<adios2::ADIOS>(mpiComm, adios2::DebugOFF);
+        m_WriterSubIO = m_WriterSubAdios->DeclareIO("DataManWriter");
+        m_WriterSubIO.SetEngine("bp4");
+        m_WriterSubEngine =
+            m_WriterSubIO.Open(m_Name, adios2::Mode::Write, mpiComm);
+
+        m_ReaderSubAdios =
+            std::make_shared<adios2::ADIOS>(mpiComm, adios2::DebugOFF);
+        m_ReaderSubIO = m_ReaderSubAdios->DeclareIO("DataManReader");
+        m_ReaderSubIO.SetEngine("bp4");
+        m_ReaderSubEngine =
+            m_ReaderSubIO.Open(m_Name, adios2::Mode::Read, MPI_COMM_SELF);
+    }
 }
 
 DataManWriter::~DataManWriter()
@@ -89,6 +106,11 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
     ++m_CurrentStep;
     m_DataManSerializer.NewWriterBuffer(m_SerializerBufferSize);
 
+    if (m_Reliable)
+    {
+        m_WriterSubEngine.BeginStep(mode, timeout_sec);
+    }
+
     if (m_Verbosity >= 5)
     {
         std::cout << "DataManWriter::BeginStep() Rank " << m_MpiRank
@@ -100,7 +122,13 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 
 size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
 
-void DataManWriter::PerformPuts() {}
+void DataManWriter::PerformPuts()
+{
+    if (m_Reliable)
+    {
+        m_WriterSubEngine.PerformPuts();
+    }
+}
 
 void DataManWriter::EndStep()
 {
@@ -108,13 +136,22 @@ void DataManWriter::EndStep()
     {
         m_DataManSerializer.PutAttributes(m_IO);
     }
+
     m_DataManSerializer.AttachAttributes();
     const auto buf = m_DataManSerializer.GetLocalPack();
     m_SerializerBufferSize = buf->size();
     m_DataPublisher.PushBufferQueue(buf);
+
+    if (m_Reliable)
+    {
+        m_WriterSubEngine.EndStep();
+    }
 }
 
-void DataManWriter::Flush(const int transportIndex) {}
+void DataManWriter::Flush(const int transportIndex)
+{
+    m_WriterSubEngine.Flush(transportIndex);
+}
 
 // PRIVATE functions below
 
@@ -139,14 +176,19 @@ void DataManWriter::DoClose(const int transportIndex)
     std::memcpy(cvp->data(), s.c_str(), s.size());
     m_DataPublisher.PushBufferQueue(cvp);
 
-    m_ThreadActive = false;
-    if (m_ControlThread.joinable())
+    if (m_Reliable)
     {
-        m_ControlThread.join();
+        m_WriterSubEngine.Close(transportIndex);
+    }
+
+    m_ThreadActive = false;
+    if (m_ReplyThread.joinable())
+    {
+        m_ReplyThread.join();
     }
 }
 
-void DataManWriter::ControlThread(const std::string &address)
+void DataManWriter::ReplyThread(const std::string &address)
 {
     adios2::zmq::ZmqReqRep replier;
     replier.OpenReplier(address, m_Timeout, 8192);
@@ -159,6 +201,51 @@ void DataManWriter::ControlThread(const std::string &address)
             if (r == "Address")
             {
                 replier.SendReply(m_AllAddresses.data(), m_AllAddresses.size());
+            }
+            else
+            {
+                size_t step;
+                try
+                {
+                    step = stoull(r);
+                }
+                catch (...)
+                {
+                    continue;
+                }
+                m_ReaderSubEngine.BeginStep();
+                while (m_ReaderSubEngine.CurrentStep() < step)
+                {
+                    m_ReaderSubEngine.EndStep();
+                    m_ReaderSubEngine.BeginStep();
+                }
+                auto varMap = m_ReaderSubIO.AvailableVariables();
+                for (const auto &varPair : varMap)
+                {
+                    size_t elementBytes;
+                    auto varParamsIt = varPair.second.find("Type");
+                    std::string type;
+                    if (varParamsIt == varPair.second.end())
+                    {
+                        throw("unknown data type");
+                    }
+                    else
+                    {
+                        type = varParamsIt->second;
+                    }
+                    if (type.empty())
+                    {
+                        throw("unknown data type");
+                    }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        ReadVarFromFile<T>(varPair.first);                                     \
+    }
+                    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+                    else { throw("unknown data type"); }
+                }
             }
         }
     }

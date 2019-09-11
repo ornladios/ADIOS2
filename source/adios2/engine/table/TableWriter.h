@@ -72,9 +72,9 @@ private:
     int m_CurrentStep = -1;
     size_t m_AppID;
     std::thread m_ReplyThread;
+    bool m_IsRowMajor;
     adios2::ADIOS m_SubAdios;
     adios2::IO m_SubIO;
-    bool m_IsRowMajor;
     std::shared_ptr<adios2::Engine> m_SubEngine;
 
     void Init() final;

@@ -21,6 +21,8 @@
 #include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
 #include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 
+#include "../../bindings/CXX11/adios2.h"
+
 namespace adios2
 {
 namespace core
@@ -37,11 +39,12 @@ public:
     virtual ~DataManCommon();
 
 protected:
-    // external paremeters
+    // external parameters
     int m_Verbosity = 0;
     size_t m_SerializerBufferSize = 128 * 1024 * 1024;
     size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
-    std::string m_StagingMode = "wide";
+    std::string m_StagingMode = "wide"; // wide or local
+    bool m_Reliable = false;
     int m_Timeout = 5;
 
     // internal variables

@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * DataMan.h
+ * DataManWriter.h
  *
  *  Created on: Jan 10, 2017
- *      Author: wfg
+ *      Author: Jason Wang
  */
 
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_TCC_
@@ -37,7 +37,6 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
 
     variable.SetData(values);
-
     if (m_IsRowMajor)
     {
         m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
@@ -59,10 +58,27 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
                                    start, count, memstart, memcount, m_Name,
                                    CurrentStep(), m_MpiRank, "", Params());
     }
+
+    if (m_Reliable)
+    {
+        auto var = m_WriterSubIO.InquireVariable<T>(variable.m_Name);
+        if (not var)
+        {
+            var = m_WriterSubIO.DefineVariable<T>(
+                variable.m_Name, variable.m_Shape, variable.m_Start,
+                variable.m_Count);
+        }
+        m_WriterSubEngine.Put<T>(var, values, adios2::Mode::Deferred);
+    }
+}
+
+template <class T>
+void DataManWriter::ReadVarFromFile(const std::string &varName)
+{
 }
 
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_ */
+#endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_TCC_ */
