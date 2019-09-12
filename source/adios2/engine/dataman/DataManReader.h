@@ -36,7 +36,7 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    bool m_ProvideLatest = false;
+    bool m_ProvideLatest = true;
     bool m_InitFailed = false;
     bool m_StreamingRank = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();

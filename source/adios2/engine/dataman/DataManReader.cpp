@@ -108,6 +108,13 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                   << m_CurrentStep << std::endl;
     }
 
+    float timeout = timeoutSeconds;
+
+    if (timeout <= 0)
+    {
+        timeout = m_Timeout;
+    }
+
     if (m_InitFailed)
     {
         if (m_Verbosity >= 5)
@@ -132,15 +139,15 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
 
     m_CurrentStepMetadata = m_FastSerializer.GetEarliestLatestStep(
-        m_CurrentStep, m_TotalWriters, timeoutSeconds, m_ProvideLatest);
+        m_CurrentStep, m_TotalWriters, timeout, m_ProvideLatest);
 
     if (m_CurrentStepMetadata == nullptr)
     {
         if (m_Verbosity >= 5)
         {
-            std::cout << "DataManReader::BeginStep() returned EndOfStream, "
-                         "final step is "
-                      << m_FinalStep << std::endl;
+            std::cout << "DataManReader::BeginStep() returned EndOfStream due "
+                         "to timeout"
+                      << std::endl;
         }
         return StepStatus::EndOfStream;
     }
@@ -181,7 +188,7 @@ void DataManReader::PerformGets() {}
 
 void DataManReader::EndStep()
 {
-    m_FastSerializer.Erase(m_CurrentStep);
+    m_FastSerializer.Erase(m_CurrentStep, true);
     m_CurrentStepMetadata = nullptr;
     if (m_Verbosity >= 5)
     {

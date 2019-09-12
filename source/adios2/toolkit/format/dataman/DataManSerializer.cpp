@@ -585,7 +585,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
         for (auto it = m_DataManVarMap.begin(); it != m_DataManVarMap.end();
              ++it)
         {
-            if (it->first < step)
+            if (it->first <= step)
             {
                 if (not IsStepProtected(it->first))
                 {
@@ -1122,10 +1122,8 @@ DmvVecPtr DataManSerializer::GetEarliestLatestStep(
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    DmvVecPtr ret = nullptr;
-
     auto start_time = std::chrono::system_clock::now();
-    while (ret == nullptr)
+    while (true)
     {
         std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
 
@@ -1146,57 +1144,49 @@ DmvVecPtr DataManSerializer::GetEarliestLatestStep(
             hasStep = true;
         }
 
-        if (not hasStep)
+        if (hasStep)
         {
-            auto now_time = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-                now_time - start_time);
-            if (duration.count() > timeoutSeconds and timeoutSeconds > 0)
+            bool hasCompleteStep = false;
+            if (latest)
             {
-                return nullptr;
+                for (size_t step = latestStep; step >= earliestStep; --step)
+                {
+                    if (StepHasMinimumBlocks(step, requireMinimumBlocks))
+                    {
+                        currentStep = step;
+                        hasCompleteStep = true;
+                        break;
+                    }
+                }
             }
             else
             {
-                continue;
-            }
-        }
-
-        bool hasCompleteStep = false;
-
-        if (latest)
-        {
-            for (size_t step = latestStep; step >= earliestStep; --step)
-            {
-                if (StepHasMinimumBlocks(step, requireMinimumBlocks))
+                for (size_t step = earliestStep; step <= latestStep; ++step)
                 {
-                    currentStep = step;
-                    hasCompleteStep = true;
-                    break;
+                    if (StepHasMinimumBlocks(step, requireMinimumBlocks))
+                    {
+                        currentStep = step;
+                        hasCompleteStep = true;
+                        break;
+                    }
                 }
             }
-        }
-        else
-        {
-            for (size_t step = earliestStep; step <= latestStep; ++step)
+
+            if (hasCompleteStep)
             {
-                if (StepHasMinimumBlocks(step, requireMinimumBlocks))
-                {
-                    currentStep = step;
-                    hasCompleteStep = true;
-                    break;
-                }
+                return m_DataManVarMap[currentStep];
             }
         }
 
-        if (hasCompleteStep)
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > timeoutSeconds and timeoutSeconds > 0)
         {
-            ret = m_DataManVarMap[currentStep];
+            return nullptr;
         }
     }
-
-    std::cout << " ============ reached the end" << std::endl;
-
-    return ret;
+    return nullptr;
 }
 
 void DataManSerializer::Log(const int level, const std::string &message,
