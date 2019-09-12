@@ -20,13 +20,13 @@ namespace adios2
 namespace helper
 {
 
-// GatherArrays full specializations implemented in 'adiosComm.tcc'.
-template <>
-void Comm::GatherArrays(const char *source, size_t sourceCount,
-                        char *destination, int rankDestination) const;
-template <>
-void Comm::GatherArrays(const size_t *source, size_t sourceCount,
-                        size_t *destination, int rankDestination) const;
+template <class T>
+void Comm::GatherArrays(const T *source, size_t sourceCount, T *destination,
+                        int rankDestination) const
+{
+    this->Gather(source, sourceCount, destination, sourceCount,
+                 rankDestination);
+}
 
 template <class T>
 std::vector<T> Comm::GatherValues(T source, int rankDestination) const

@@ -18,23 +18,6 @@ namespace adios2
 namespace helper
 {
 
-// GatherArrays full specializations forward-declared in 'adiosComm.inl'.
-template <>
-void Comm::GatherArrays(const char *source, size_t sourceCount,
-                        char *destination, int rankDestination) const
-{
-    this->Gather(source, sourceCount, destination, sourceCount,
-                 rankDestination);
-}
-
-template <>
-void Comm::GatherArrays(const size_t *source, size_t sourceCount,
-                        size_t *destination, int rankDestination) const
-{
-    this->Gather(source, sourceCount, destination, sourceCount,
-                 rankDestination);
-}
-
 // GathervArrays full specializations forward-declared in 'adiosComm.inl'.
 template <>
 void Comm::GathervArrays(const char *source, size_t sourceCount,
