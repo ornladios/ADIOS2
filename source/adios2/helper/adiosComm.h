@@ -139,16 +139,6 @@ public:
     template <class T>
     std::vector<T> AllGatherValues(const T source) const;
 
-    /**
-     * Perform AllGather for equal size arrays
-     * @param source
-     * @param sourceCount
-     * @param destination
-     */
-    template <class T>
-    void AllGatherArrays(const T *source, const size_t sourceCount,
-                         T *destination) const;
-
     template <class T>
     T ReduceValues(const T source, MPI_Op operation = MPI_SUM,
                    const int rankDestination = 0) const;

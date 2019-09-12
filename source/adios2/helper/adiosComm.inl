@@ -101,14 +101,9 @@ std::vector<T> Comm::AllGatherValues(const T source) const
     std::vector<T> output(size);
 
     T sourceCopy = source; // so we can have an address for rvalues
-    this->AllGatherArrays(&sourceCopy, 1, output.data());
+    this->Allgather(&sourceCopy, 1, output.data(), 1);
     return output;
 }
-
-// AllGatherArrays full specializations implemented in 'adiosComm.tcc'.
-template <>
-void Comm::AllGatherArrays(const size_t *source, const size_t sourceCount,
-                           size_t *destination) const;
 
 // ReduceValues full specializations implemented in 'adiosComm.tcc'.
 template <>

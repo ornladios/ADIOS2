@@ -82,14 +82,6 @@ void Comm::GathervArrays(const size_t *source, size_t sourceCount,
                   rankDestination);
 }
 
-// AllGatherArrays full specializations forward-declared in 'adiosComm.inl'.
-template <>
-void Comm::AllGatherArrays(const size_t *source, const size_t sourceCount,
-                           size_t *destination) const
-{
-    this->Allgather(source, sourceCount, destination, sourceCount);
-}
-
 // ReduceValues full specializations forward-declared in 'adiosComm.inl'.
 template <>
 unsigned int Comm::ReduceValues(const unsigned int source, MPI_Op operation,
