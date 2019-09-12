@@ -119,24 +119,6 @@ void Comm::Barrier(const std::string &hint) const
     CheckMPIReturn(SMPI_Barrier(m_MPIComm), hint);
 }
 
-std::string Comm::BroadcastFile(const std::string &fileName,
-                                const std::string hint,
-                                const int rankSource) const
-{
-    int rank = this->Rank();
-    std::string fileContents;
-
-    // Read the file on rank 0 and broadcast it to everybody else
-    if (rank == rankSource)
-    {
-        // load file contents
-        fileContents = FileToString(fileName, hint);
-    }
-    fileContents = this->BroadcastValue(fileContents, rankSource);
-
-    return fileContents;
-}
-
 void Comm::AllgatherImpl(const void *sendbuf, size_t sendcount,
                          MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
                          MPI_Datatype recvtype, const std::string &hint) const
@@ -365,6 +347,24 @@ Comm::Req Comm::IrecvImpl(void *buffer, size_t count, MPI_Datatype datatype,
     }
 
     return req;
+}
+
+std::string Comm::BroadcastFile(const std::string &fileName,
+                                const std::string hint,
+                                const int rankSource) const
+{
+    int rank = this->Rank();
+    std::string fileContents;
+
+    // Read the file on rank 0 and broadcast it to everybody else
+    if (rank == rankSource)
+    {
+        // load file contents
+        fileContents = FileToString(fileName, hint);
+    }
+    fileContents = this->BroadcastValue(fileContents, rankSource);
+
+    return fileContents;
 }
 
 Comm::Req::Req() = default;
