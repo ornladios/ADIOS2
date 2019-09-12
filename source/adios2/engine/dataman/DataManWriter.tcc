@@ -2,21 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * DataManWriter.h
+ * DataManWriter.tcc
  *
  *  Created on: Jan 10, 2017
  *      Author: Jason Wang
  */
 
-#ifndef ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_TCC_
-#define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_TCC_
+#ifndef ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_TCC_
+#define ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_TCC_
 
 #include "DataManWriter.h"
-
-#include "adios2/common/ADIOSMPI.h"
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
-
-#include <iostream>
 
 namespace adios2
 {
@@ -63,4 +58,4 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_TCC_ */
+#endif /* ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_TCC_ */

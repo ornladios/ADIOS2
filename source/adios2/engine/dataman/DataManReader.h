@@ -13,8 +13,6 @@
 
 #include "DataManCommon.h"
 
-#include "adios2/helper/adiosComm.h"
-
 namespace adios2
 {
 namespace core
@@ -38,7 +36,6 @@ public:
 private:
     bool m_ProvideLatest = true;
     bool m_InitFailed = false;
-    bool m_StreamingRank = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
     int m_TotalWriters;
     adios2::zmq::ZmqReqRep m_ZmqRequester;
@@ -47,10 +44,7 @@ private:
     std::vector<std::shared_ptr<adios2::zmq::ZmqPubSub>> m_ZmqSubscriberVec;
     format::DmvVecPtr m_CurrentStepMetadata;
     std::thread m_SubscriberThread;
-    std::thread m_RequesterThread;
-
     void SubscriberThread();
-    void RequesterThread();
     void DoClose(const int transportIndex = -1) final;
 
 #define declare_type(T)                                                        \

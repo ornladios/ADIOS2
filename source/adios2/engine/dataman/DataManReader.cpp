@@ -24,15 +24,6 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
     GetParameter(m_IO.m_Parameters, "AlwaysProvideLatestTimestep",
                  m_ProvideLatest);
 
-    if (m_MpiRank == m_MpiSize - 1)
-    {
-        m_StreamingRank = true;
-    }
-    else
-    {
-        m_StreamingRank = false;
-    }
-
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
 
     if (m_StagingMode == "wide")
@@ -126,7 +117,6 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (m_Verbosity >= 5)
         {
-            std::cout << m_CurrentStep << " >= " << m_FinalStep << std::endl;
             std::cout << "DataManReader::BeginStep() returned EndOfStream, "
                          "final step is "
                       << m_FinalStep << std::endl;
@@ -223,8 +213,6 @@ void DataManReader::SubscriberThread()
         }
     }
 }
-
-void DataManReader::RequesterThread() {}
 
 #define declare_type(T)                                                        \
     void DataManReader::DoGetSync(Variable<T> &variable, T *data)              \

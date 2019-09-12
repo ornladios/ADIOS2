@@ -8,13 +8,7 @@
  *      Author: Jason Wang
  */
 
-#include "DataManWriter.h"
 #include "DataManWriter.tcc"
-
-#include <iostream>
-
-#include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 namespace adios2
 {

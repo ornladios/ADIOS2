@@ -12,8 +12,6 @@
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_TCC_
 
 #include "DataManReader.h"
-#include <iostream>
-#include <limits>
 
 namespace adios2
 {
