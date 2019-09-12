@@ -123,8 +123,7 @@ std::string Comm::BroadcastFile(const std::string &fileName,
                                 const std::string hint,
                                 const int rankSource) const
 {
-    int rank;
-    MPI_Comm_rank(m_MPIComm, &rank);
+    int rank = this->Rank();
     std::string fileContents;
 
     // Read the file on rank 0 and broadcast it to everybody else
