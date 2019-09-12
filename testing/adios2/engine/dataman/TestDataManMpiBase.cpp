@@ -321,7 +321,7 @@ TEST_F(DataManEngineTest, DataManBase)
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
 
-    size_t steps = 10000;
+    size_t steps = 1000;
 
     if (mpiGroup == 1)
     {
