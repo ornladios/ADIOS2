@@ -80,10 +80,6 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
         m_ZmqSubscriberVec.push_back(dataZmq);
     }
     m_SubscriberThread = std::thread(&DataManReader::SubscriberThread, this);
-
-    if (m_Reliable)
-    {
-    }
 }
 
 DataManReader::~DataManReader()

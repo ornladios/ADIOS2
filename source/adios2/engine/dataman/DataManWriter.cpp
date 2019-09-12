@@ -74,23 +74,6 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         std::thread(&DataManWriter::ReplyThread, this, m_ControlAddress);
 
     m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout);
-
-    if (m_Reliable)
-    {
-        m_WriterSubAdios =
-            std::make_shared<adios2::ADIOS>(mpiComm, adios2::DebugOFF);
-        m_WriterSubIO = m_WriterSubAdios->DeclareIO("DataManWriter");
-        m_WriterSubIO.SetEngine("bp4");
-        m_WriterSubEngine =
-            m_WriterSubIO.Open(m_Name, adios2::Mode::Write, mpiComm);
-
-        m_ReaderSubAdios =
-            std::make_shared<adios2::ADIOS>(mpiComm, adios2::DebugOFF);
-        m_ReaderSubIO = m_ReaderSubAdios->DeclareIO("DataManReader");
-        m_ReaderSubIO.SetEngine("bp4");
-        m_ReaderSubEngine =
-            m_ReaderSubIO.Open(m_Name, adios2::Mode::Read, MPI_COMM_SELF);
-    }
 }
 
 DataManWriter::~DataManWriter()
@@ -106,11 +89,6 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
     ++m_CurrentStep;
     m_FastSerializer.NewWriterBuffer(m_SerializerBufferSize);
 
-    if (m_Reliable)
-    {
-        m_WriterSubEngine.BeginStep(mode, timeout_sec);
-    }
-
     if (m_Verbosity >= 5)
     {
         std::cout << "DataManWriter::BeginStep() Rank " << m_MpiRank
@@ -122,13 +100,7 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 
 size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
 
-void DataManWriter::PerformPuts()
-{
-    if (m_Reliable)
-    {
-        m_WriterSubEngine.PerformPuts();
-    }
-}
+void DataManWriter::PerformPuts() {}
 
 void DataManWriter::EndStep()
 {
@@ -141,17 +113,9 @@ void DataManWriter::EndStep()
     const auto buf = m_FastSerializer.GetLocalPack();
     m_SerializerBufferSize = buf->size();
     m_DataPublisher.PushBufferQueue(buf);
-
-    if (m_Reliable)
-    {
-        m_WriterSubEngine.EndStep();
-    }
 }
 
-void DataManWriter::Flush(const int transportIndex)
-{
-    m_WriterSubEngine.Flush(transportIndex);
-}
+void DataManWriter::Flush(const int transportIndex) {}
 
 // PRIVATE functions below
 
@@ -176,11 +140,6 @@ void DataManWriter::DoClose(const int transportIndex)
     std::memcpy(cvp->data(), s.c_str(), s.size());
     m_DataPublisher.PushBufferQueue(cvp);
 
-    if (m_Reliable)
-    {
-        m_WriterSubEngine.Close(transportIndex);
-    }
-
     m_ThreadActive = false;
     if (m_ReplyThread.joinable())
     {
@@ -201,58 +160,6 @@ void DataManWriter::ReplyThread(const std::string &address)
             if (r == "Address")
             {
                 replier.SendReply(m_AllAddresses.data(), m_AllAddresses.size());
-            }
-            else if (r == "Attributes")
-            {
-                m_ReliableSerializer.PutAttributes(m_IO);
-                m_ReliableSerializer.AttachAttributes();
-                replier.SendReply(m_ReliableSerializer.GetLocalPack());
-            }
-            else
-            {
-                size_t step;
-                try
-                {
-                    step = stoull(r);
-                }
-                catch (...)
-                {
-                    continue;
-                }
-                m_ReaderSubEngine.BeginStep();
-                while (m_ReaderSubEngine.CurrentStep() < step)
-                {
-                    m_ReaderSubEngine.EndStep();
-                    m_ReaderSubEngine.BeginStep();
-                }
-                auto varMap = m_ReaderSubIO.AvailableVariables();
-                for (const auto &varPair : varMap)
-                {
-                    size_t elementBytes;
-                    auto varParamsIt = varPair.second.find("Type");
-                    std::string type;
-                    if (varParamsIt == varPair.second.end())
-                    {
-                        throw("unknown data type");
-                    }
-                    else
-                    {
-                        type = varParamsIt->second;
-                    }
-                    if (type.empty())
-                    {
-                        throw("unknown data type");
-                    }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        ReadVarFromFile<T>(varPair.first);                                     \
-    }
-                    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-                    else { throw("unknown data type"); }
-                }
-                replier.SendReply(m_ReliableSerializer.GetLocalPack());
             }
         }
     }

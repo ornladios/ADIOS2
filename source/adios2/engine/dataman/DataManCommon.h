@@ -44,7 +44,6 @@ protected:
     size_t m_SerializerBufferSize = 128 * 1024 * 1024;
     size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
     std::string m_StagingMode = "wide"; // wide or local
-    bool m_Reliable = false;
     int m_Timeout = 5;
 
     // internal variables
@@ -57,7 +56,6 @@ protected:
     int m_Port = 50001;
 
     format::DataManSerializer m_FastSerializer;
-    format::DataManSerializer m_ReliableSerializer;
 
     bool GetParameter(const Params &params, const std::string &key,
                       bool &value);

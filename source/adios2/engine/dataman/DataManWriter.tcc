@@ -57,41 +57,6 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
                                 count, memstart, memcount, m_Name,
                                 CurrentStep(), m_MpiRank, "", Params());
     }
-
-    if (m_Reliable)
-    {
-        auto var = m_WriterSubIO.InquireVariable<T>(variable.m_Name);
-        if (not var)
-        {
-            var = m_WriterSubIO.DefineVariable<T>(
-                variable.m_Name, variable.m_Shape, variable.m_Start,
-                variable.m_Count);
-        }
-        m_WriterSubEngine.Put<T>(var, values, adios2::Mode::Deferred);
-    }
-}
-
-template <class T>
-void DataManWriter::ReadVarFromFile(const std::string &varName)
-{
-    auto var = m_ReaderSubIO.InquireVariable<T>(varName);
-    if (var)
-    {
-        auto shape = var.Shape();
-        auto count = shape;
-        Dims start(shape.size(), 0);
-        size_t totalBytes = std::accumulate(
-            shape.begin(), shape.end(), sizeof(T), std::multiplies<size_t>());
-        std::vector<T> data(totalBytes);
-        m_ReaderSubEngine.Get<T>(var, data.data(), adios2::Mode::Sync);
-        m_ReliableSerializer.PutVar(
-            data.data(), varName, shape, start, count, start, count, m_Name,
-            m_ReaderSubEngine.CurrentStep(), 0, "", Params());
-    }
-    else
-    {
-        throw(std::runtime_error("variable not found"));
-    }
 }
 
 } // end namespace engine
