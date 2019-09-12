@@ -41,47 +41,6 @@ std::string Comm::BroadcastValue(const std::string &input,
     return output;
 }
 
-// BroadcastVector full specializations forward-declared in 'adiosComm.inl'.
-template <>
-void Comm::BroadcastVector(std::vector<char> &vector,
-                           const int rankSource) const
-{
-    if (this->Size() == 1)
-    {
-        return;
-    }
-
-    // First Broadcast the size, then the contents
-    size_t inputSize = this->BroadcastValue(vector.size(), rankSource);
-
-    if (rankSource != this->Rank())
-    {
-        vector.resize(inputSize);
-    }
-
-    this->Bcast(vector.data(), inputSize, rankSource);
-}
-
-template <>
-void Comm::BroadcastVector(std::vector<size_t> &vector,
-                           const int rankSource) const
-{
-    if (this->Size() == 1)
-    {
-        return;
-    }
-
-    // First Broadcast the size, then the contents
-    size_t inputSize = this->BroadcastValue(vector.size(), rankSource);
-
-    if (rankSource != this->Rank())
-    {
-        vector.resize(inputSize);
-    }
-
-    this->Bcast(vector.data(), inputSize, rankSource);
-}
-
 // Datatype full specializations forward-declared in 'adiosComm.inl'.
 template <>
 MPI_Datatype Comm::Datatype<signed char>()

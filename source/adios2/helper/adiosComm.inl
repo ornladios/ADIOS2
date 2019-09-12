@@ -138,13 +138,24 @@ template <>
 std::string Comm::BroadcastValue(const std::string &input,
                                  const int rankSource) const;
 
-// BroadcastVector full specializations implemented in 'adiosComm.tcc'.
-template <>
-void Comm::BroadcastVector(std::vector<char> &vector,
-                           const int rankSource) const;
-template <>
-void Comm::BroadcastVector(std::vector<size_t> &vector,
-                           const int rankSource) const;
+template <class T>
+void Comm::BroadcastVector(std::vector<T> &vector, const int rankSource) const
+{
+    if (this->Size() == 1)
+    {
+        return;
+    }
+
+    // First Broadcast the size, then the contents
+    size_t inputSize = this->BroadcastValue(vector.size(), rankSource);
+
+    if (rankSource != this->Rank())
+    {
+        vector.resize(inputSize);
+    }
+
+    this->Bcast(vector.data(), inputSize, rankSource);
+}
 
 template <typename TSend, typename TRecv>
 void Comm::Allgather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
