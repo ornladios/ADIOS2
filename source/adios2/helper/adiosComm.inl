@@ -142,30 +142,30 @@ template <typename TSend, typename TRecv>
 void Comm::Allgather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
                      size_t recvcount, const std::string &hint) const
 {
-    return AllgatherImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
-                         recvcount, Datatype<TRecv>(), hint);
+    return m_Impl->Allgather(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
+                             recvcount, Datatype<TRecv>(), hint);
 }
 
 template <typename T>
 void Comm::Allreduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
                      const std::string &hint) const
 {
-    return AllreduceImpl(sendbuf, recvbuf, count, Datatype<T>(), op, hint);
+    return m_Impl->Allreduce(sendbuf, recvbuf, count, Datatype<T>(), op, hint);
 }
 
 template <typename T>
 void Comm::Bcast(T *buffer, const size_t count, int root,
                  const std::string &hint) const
 {
-    return BcastImpl(buffer, count, Datatype<T>(), sizeof(T), root, hint);
+    return m_Impl->Bcast(buffer, count, Datatype<T>(), sizeof(T), root, hint);
 }
 
 template <typename TSend, typename TRecv>
 void Comm::Gather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
                   size_t recvcount, int root, const std::string &hint) const
 {
-    return GatherImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf, recvcount,
-                      Datatype<TRecv>(), root, hint);
+    return m_Impl->Gather(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
+                          recvcount, Datatype<TRecv>(), root, hint);
 }
 
 template <typename TSend, typename TRecv>
@@ -173,58 +173,59 @@ void Comm::Gatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
                    const size_t *recvcounts, const size_t *displs, int root,
                    const std::string &hint) const
 {
-    return GathervImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
-                       recvcounts, displs, Datatype<TRecv>(), root, hint);
+    return m_Impl->Gatherv(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
+                           recvcounts, displs, Datatype<TRecv>(), root, hint);
 }
 
 template <typename T>
 void Comm::Reduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
                   int root, const std::string &hint) const
 {
-    return ReduceImpl(sendbuf, recvbuf, count, Datatype<T>(), op, root, hint);
+    return m_Impl->Reduce(sendbuf, recvbuf, count, Datatype<T>(), op, root,
+                          hint);
 }
 
 template <typename T>
 void Comm::ReduceInPlace(T *buf, size_t count, MPI_Op op, int root,
                          const std::string &hint) const
 {
-    return ReduceInPlaceImpl(buf, count, Datatype<T>(), op, root, hint);
+    return m_Impl->ReduceInPlace(buf, count, Datatype<T>(), op, root, hint);
 }
 
 template <typename T>
 void Comm::Send(const T *buf, size_t count, int dest, int tag,
                 const std::string &hint) const
 {
-    return SendImpl(buf, count, Datatype<T>(), dest, tag, hint);
+    return m_Impl->Send(buf, count, Datatype<T>(), dest, tag, hint);
 }
 
 template <typename T>
 Comm::Status Comm::Recv(T *buf, size_t count, int source, int tag,
                         const std::string &hint) const
 {
-    return RecvImpl(buf, count, Datatype<T>(), source, tag, hint);
+    return m_Impl->Recv(buf, count, Datatype<T>(), source, tag, hint);
 }
 
 template <typename TSend, typename TRecv>
 void Comm::Scatter(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
                    size_t recvcount, int root, const std::string &hint) const
 {
-    return ScatterImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
-                       recvcount, Datatype<TRecv>(), root, hint);
+    return m_Impl->Scatter(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
+                           recvcount, Datatype<TRecv>(), root, hint);
 }
 
 template <typename T>
 Comm::Req Comm::Isend(const T *buffer, const size_t count, int dest, int tag,
                       const std::string &hint) const
 {
-    return IsendImpl(buffer, count, Datatype<T>(), dest, tag, hint);
+    return m_Impl->Isend(buffer, count, Datatype<T>(), dest, tag, hint);
 }
 
 template <typename T>
 Comm::Req Comm::Irecv(T *buffer, const size_t count, int source, int tag,
                       const std::string &hint) const
 {
-    return IrecvImpl(buffer, count, Datatype<T>(), source, tag, hint);
+    return m_Impl->Irecv(buffer, count, Datatype<T>(), source, tag, hint);
 }
 
 // Datatype full specializations implemented in 'adiosComm.tcc'.

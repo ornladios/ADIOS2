@@ -10,6 +10,7 @@
 
 #include "adios2/common/ADIOSMPI.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -17,6 +18,9 @@ namespace adios2
 {
 namespace helper
 {
+
+class CommImpl;
+class CommReqImpl;
 
 /** @brief Encapsulation for communication in a multi-process environment.  */
 class Comm
@@ -59,11 +63,6 @@ public:
      * @brief Deleted copy assignment.  A communicator may not be copied.
      */
     Comm &operator=(Comm const &) = delete;
-
-    /**
-     * @brief Swap communicator state with another.
-     */
-    void swap(Comm &comm);
 
     /**
      * @brief Free the communicator.
@@ -218,74 +217,15 @@ public:
               const std::string &hint = std::string()) const;
 
 private:
-    /**
-     * @brief Construct by taking ownership of a MPI communicator.
-     *
-     * This is a private implementation detail used by static
-     * methods like Duplicate.
-     */
-    explicit Comm(MPI_Comm mpiComm);
+    friend class CommImpl;
 
-    /** Encapsulated MPI communicator instance.  */
-    MPI_Comm m_MPIComm = MPI_COMM_NULL;
+    explicit Comm(std::unique_ptr<CommImpl> impl);
 
-    static void CheckMPIReturn(const int value, const std::string &hint);
-
-    void AllgatherImpl(const void *sendbuf, size_t sendcount,
-                       MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
-                       MPI_Datatype recvtype, const std::string &hint) const;
-
-    void AllreduceImpl(const void *sendbuf, void *recvbuf, size_t count,
-                       MPI_Datatype datatype, MPI_Op op,
-                       const std::string &hint) const;
-
-    void BcastImpl(void *buffer, size_t count, MPI_Datatype datatype,
-                   size_t datatypeSize, int root,
-                   const std::string &hint) const;
-
-    void GatherImpl(const void *sendbuf, size_t sendcount,
-                    MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
-                    MPI_Datatype recvtype, int root,
-                    const std::string &hint) const;
-
-    void GathervImpl(const void *sendbuf, size_t sendcount,
-                     MPI_Datatype sendtype, void *recvbuf,
-                     const size_t *recvcounts, const size_t *displs,
-                     MPI_Datatype recvtype, int root,
-                     const std::string &hint) const;
-
-    void ReduceImpl(const void *sendbuf, void *recvbuf, size_t count,
-                    MPI_Datatype datatype, MPI_Op op, int root,
-                    const std::string &hint) const;
-
-    void ReduceInPlaceImpl(void *buf, size_t count, MPI_Datatype datatype,
-                           MPI_Op op, int root, const std::string &hint) const;
-
-    void SendImpl(const void *buf, size_t count, MPI_Datatype datatype,
-                  int dest, int tag, const std::string &hint) const;
-
-    Status RecvImpl(void *buf, size_t count, MPI_Datatype datatype, int source,
-                    int tag, const std::string &hint) const;
-
-    void ScatterImpl(const void *sendbuf, size_t sendcount,
-                     MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
-                     MPI_Datatype recvtype, int root,
-                     const std::string &hint) const;
-
-    Req IsendImpl(const void *buffer, size_t count, MPI_Datatype datatype,
-                  int dest, int tag, const std::string &hint) const;
-
-    Req IrecvImpl(void *buffer, size_t count, MPI_Datatype datatype, int source,
-                  int tag, const std::string &hint) const;
+    std::unique_ptr<CommImpl> m_Impl;
 
     /** Return MPI datatype id for type T.  */
     template <typename T>
     static MPI_Datatype Datatype();
-
-    friend Comm CommFromMPI(MPI_Comm mpiComm);
-    friend MPI_Comm CommAsMPI(Comm const &comm);
-    MPI_Comm AsMPI() const { return m_MPIComm; }
-    static Comm FromMPI(MPI_Comm mpiComm);
 };
 
 class Comm::Req
@@ -325,11 +265,6 @@ public:
     Req &operator=(Req const &) = delete;
 
     /**
-     * @brief Swap request state with another.
-     */
-    void swap(Req &req);
-
-    /**
      * @brief Wait for the request to finish.
      *
      * On return, the request is empty.
@@ -337,16 +272,11 @@ public:
     Comm::Status Wait(const std::string &hint = std::string());
 
 private:
-    friend class Comm;
+    friend class CommImpl;
 
-    Req(MPI_Datatype datatype);
+    explicit Req(std::unique_ptr<CommReqImpl> impl);
 
-    /** Encapsulated MPI datatype of the requested operation.  */
-    MPI_Datatype m_MPIDatatype = MPI_DATATYPE_NULL;
-
-    /** Encapsulated MPI request instances.  There may be more than
-     *  one when we batch requests too large for MPI interfaces.  */
-    std::vector<MPI_Request> m_MPIReqs;
+    std::unique_ptr<CommReqImpl> m_Impl;
 };
 
 class Comm::Status
@@ -371,6 +301,80 @@ public:
      * @brief True if this is the status of a cancelled operation.
      */
     bool Cancelled = false;
+};
+
+class CommImpl
+{
+public:
+    virtual ~CommImpl() = 0;
+    virtual void Free(const std::string &hint) = 0;
+    virtual std::unique_ptr<CommImpl> Split(int color, int key,
+                                            const std::string &hint) const = 0;
+    virtual int Rank() const = 0;
+    virtual int Size() const = 0;
+    virtual void Barrier(const std::string &hint) const = 0;
+    virtual void Allgather(const void *sendbuf, size_t sendcount,
+                           MPI_Datatype sendtype, void *recvbuf,
+                           size_t recvcount, MPI_Datatype recvtype,
+                           const std::string &hint) const = 0;
+
+    virtual void Allreduce(const void *sendbuf, void *recvbuf, size_t count,
+                           MPI_Datatype datatype, MPI_Op op,
+                           const std::string &hint) const = 0;
+
+    virtual void Bcast(void *buffer, size_t count, MPI_Datatype datatype,
+                       size_t datatypeSize, int root,
+                       const std::string &hint) const = 0;
+
+    virtual void Gather(const void *sendbuf, size_t sendcount,
+                        MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
+                        MPI_Datatype recvtype, int root,
+                        const std::string &hint) const = 0;
+
+    virtual void Gatherv(const void *sendbuf, size_t sendcount,
+                         MPI_Datatype sendtype, void *recvbuf,
+                         const size_t *recvcounts, const size_t *displs,
+                         MPI_Datatype recvtype, int root,
+                         const std::string &hint) const = 0;
+
+    virtual void Reduce(const void *sendbuf, void *recvbuf, size_t count,
+                        MPI_Datatype datatype, MPI_Op op, int root,
+                        const std::string &hint) const = 0;
+
+    virtual void ReduceInPlace(void *buf, size_t count, MPI_Datatype datatype,
+                               MPI_Op op, int root,
+                               const std::string &hint) const = 0;
+
+    virtual void Send(const void *buf, size_t count, MPI_Datatype datatype,
+                      int dest, int tag, const std::string &hint) const = 0;
+
+    virtual Comm::Status Recv(void *buf, size_t count, MPI_Datatype datatype,
+                              int source, int tag,
+                              const std::string &hint) const = 0;
+
+    virtual void Scatter(const void *sendbuf, size_t sendcount,
+                         MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
+                         MPI_Datatype recvtype, int root,
+                         const std::string &hint) const = 0;
+
+    virtual Comm::Req Isend(const void *buffer, size_t count,
+                            MPI_Datatype datatype, int dest, int tag,
+                            const std::string &hint) const = 0;
+
+    virtual Comm::Req Irecv(void *buffer, size_t count, MPI_Datatype datatype,
+                            int source, int tag,
+                            const std::string &hint) const = 0;
+
+    static Comm MakeComm(std::unique_ptr<CommImpl> impl);
+    static Comm::Req MakeReq(std::unique_ptr<CommReqImpl> impl);
+    static CommImpl *Get(Comm const &comm);
+};
+
+class CommReqImpl
+{
+public:
+    virtual ~CommReqImpl() = 0;
+    virtual Comm::Status Wait(const std::string &hint) = 0;
 };
 
 } // end namespace helper
