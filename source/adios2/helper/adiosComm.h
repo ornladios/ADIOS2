@@ -112,8 +112,6 @@ public:
 
     /**
      * Gather arrays of the same type into a destination (must be pre-allocated)
-     * if countsSize == 1, calls MPI_Gather, otherwise calls MPI_Gatherv.
-     * This function must be specialized for each MPI_Type.
      * @param source  input from each rank
      * @param counts  counts for each source
      * @param countsSize number of counts

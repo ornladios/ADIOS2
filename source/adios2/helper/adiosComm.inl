@@ -47,15 +47,19 @@ std::vector<T> Comm::GatherValues(T source, int rankDestination) const
     return output;
 }
 
-// GathervArrays full specializations implemented in 'adiosComm.tcc'.
-template <>
-void Comm::GathervArrays(const char *source, size_t sourceCount,
+template <class T>
+void Comm::GathervArrays(const T *source, size_t sourceCount,
                          const size_t *counts, size_t countsSize,
-                         char *destination, int rankDestination) const;
-template <>
-void Comm::GathervArrays(const size_t *source, size_t sourceCount,
-                         const size_t *counts, size_t countsSize,
-                         size_t *destination, int rankDestination) const;
+                         T *destination, int rankDestination) const
+{
+    std::vector<size_t> displs;
+    if (rankDestination == this->Rank())
+    {
+        displs = GetGathervDisplacements(counts, countsSize);
+    }
+    this->Gatherv(source, sourceCount, destination, counts, displs.data(),
+                  rankDestination);
+}
 
 template <class T>
 void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
