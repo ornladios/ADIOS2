@@ -15,6 +15,7 @@
 #include <cstring>
 #include <string>
 
+#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
@@ -34,7 +35,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 
     Init();
 
-    m_Input = SstReaderOpen(cstr, &Params, m_Comm.AsMPI());
+    m_Input = SstReaderOpen(cstr, &Params, CommAsMPI(m_Comm));
     if (!m_Input)
     {
         throw std::runtime_error(

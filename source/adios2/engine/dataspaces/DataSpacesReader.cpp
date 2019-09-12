@@ -12,6 +12,7 @@
 
 #include "DataSpacesReader.h"
 #include "DataSpacesReader.tcc"
+#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 #include "adios2/toolkit/dataspaces/ds_data.h"
 #include "dataspaces.h"
@@ -52,7 +53,7 @@ DataSpacesReader::DataSpacesReader(IO &io, const std::string &name,
     {
         m_ProvideLatest = false;
     }
-    MPI_Comm mpiComm = m_Comm.AsMPI();
+    MPI_Comm mpiComm = CommAsMPI(m_Comm);
     ret = adios_read_dataspaces_init(&mpiComm, &m_data);
     if (ret < 0)
     {

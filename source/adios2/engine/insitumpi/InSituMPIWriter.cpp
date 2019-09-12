@@ -11,6 +11,7 @@
  *      Author: Norbert Podhorszki pnorbert@ornl.gov
  */
 
+#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosMath.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
@@ -39,7 +40,7 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     m_BP3Serializer.Init(m_IO.m_Parameters, "in call to InSituMPI::Open write");
 
     m_RankAllPeers =
-        insitumpi::FindPeers(m_Comm.AsMPI(), m_Name, true, m_CommWorld);
+        insitumpi::FindPeers(CommAsMPI(m_Comm), m_Name, true, m_CommWorld);
     for (int i = 0; i < m_RankAllPeers.size(); i++)
     {
         m_RankToPeerID[m_RankAllPeers[i]] = i;

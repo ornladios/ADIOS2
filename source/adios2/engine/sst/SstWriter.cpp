@@ -8,6 +8,7 @@
  *      Author: Greg Eisenhauer
  */
 
+#include "adios2/helper/adiosCommMPI.h"
 #include <memory>
 
 #include "SstParamParser.h"
@@ -108,7 +109,7 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
 
     Init();
 
-    m_Output = SstWriterOpen(name.c_str(), &Params, m_Comm.AsMPI());
+    m_Output = SstWriterOpen(name.c_str(), &Params, CommAsMPI(m_Comm));
 
     if (m_MarshalMethod == SstMarshalBP)
     {

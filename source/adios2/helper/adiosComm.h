@@ -66,16 +66,6 @@ public:
     void swap(Comm &comm);
 
     /**
-     * @brief Get the underlying raw MPI communicator.
-     */
-    MPI_Comm AsMPI() const { return m_MPIComm; }
-
-    /**
-     * @brief Create a communicator by duplicating a MPI communicator.
-     */
-    static Comm Duplicate(MPI_Comm mpiComm);
-
-    /**
      * @brief Free the communicator.
      * @param hint Description of std::runtime_error exception on error.
      *
@@ -291,6 +281,11 @@ private:
     /** Return MPI datatype id for type T.  */
     template <typename T>
     static MPI_Datatype Datatype();
+
+    friend Comm CommFromMPI(MPI_Comm mpiComm);
+    friend MPI_Comm CommAsMPI(Comm const &comm);
+    MPI_Comm AsMPI() const { return m_MPIComm; }
+    static Comm FromMPI(MPI_Comm mpiComm);
 };
 
 class Comm::Req

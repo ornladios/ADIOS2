@@ -13,8 +13,8 @@
 #include <algorithm> // std::transform
 #include <ios>       //std::ios_base::failure
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
 
 // OPERATORS
@@ -60,7 +60,7 @@ namespace core
 ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
              const bool debugMode, const std::string hostLanguage)
 : m_ConfigFile(configFile), m_DebugMode(debugMode),
-  m_HostLanguage(hostLanguage), m_Comm(helper::Comm::Duplicate(mpiComm))
+  m_HostLanguage(hostLanguage), m_Comm(helper::CommFromMPI(mpiComm))
 {
     if (!configFile.empty())
     {

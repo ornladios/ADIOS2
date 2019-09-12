@@ -14,6 +14,7 @@
 
 #include "InSituMPIReader.tcc"
 
+#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
@@ -38,7 +39,7 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
     Init();
 
     m_RankAllPeers =
-        insitumpi::FindPeers(m_Comm.AsMPI(), m_Name, false, m_CommWorld);
+        insitumpi::FindPeers(CommAsMPI(m_Comm), m_Name, false, m_CommWorld);
     MPI_Comm_rank(m_CommWorld, &m_GlobalRank);
     MPI_Comm_size(m_CommWorld, &m_GlobalNproc);
     m_ReaderRank = m_Comm.Rank();

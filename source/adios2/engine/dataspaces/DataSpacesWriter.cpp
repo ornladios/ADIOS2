@@ -13,6 +13,7 @@
 
 #include "DataSpacesWriter.h"
 #include "DataSpacesWriter.tcc"
+#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 #include "adios2/toolkit/dataspaces/ds_data.h"
 #include "dataspaces.h"
@@ -40,7 +41,7 @@ DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name,
     {
         m_data.appid = 0;
     }
-    MPI_Comm mpiComm = m_Comm.AsMPI();
+    MPI_Comm mpiComm = CommAsMPI(m_Comm);
     ret = adios_dataspaces_init(&mpiComm, &m_data);
     if (ret < 0)
         fprintf(stderr, "Unable to connect to DataSpaces. Err: %d\n", ret);

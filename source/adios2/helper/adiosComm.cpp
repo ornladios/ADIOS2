@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Comm.cpp
+ * adiosComm.cpp
  */
 
 #include "adiosComm.h"
@@ -54,7 +54,7 @@ Comm &Comm::operator=(Comm &&comm)
 
 void Comm::swap(Comm &comm) { std::swap(this->m_MPIComm, comm.m_MPIComm); }
 
-Comm Comm::Duplicate(MPI_Comm mpiComm)
+Comm Comm::FromMPI(MPI_Comm mpiComm)
 {
     MPI_Comm newComm;
     SMPI_Comm_dup(mpiComm, &newComm);
