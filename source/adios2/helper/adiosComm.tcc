@@ -18,24 +18,6 @@ namespace adios2
 namespace helper
 {
 
-namespace
-{
-
-std::vector<size_t> GetGathervDisplacements(const size_t *counts,
-                                            const size_t countsSize)
-{
-    std::vector<size_t> displacements(countsSize);
-    displacements[0] = 0;
-
-    for (size_t i = 1; i < countsSize; ++i)
-    {
-        displacements[i] = displacements[i - 1] + counts[i - 1];
-    }
-    return displacements;
-}
-
-}
-
 // GatherArrays full specializations forward-declared in 'adiosComm.inl'.
 template <>
 void Comm::GatherArrays(const char *source, size_t sourceCount,

@@ -58,6 +58,19 @@ std::string Comm::BroadcastFile(const std::string &fileName,
     return fileContents;
 }
 
+std::vector<size_t> Comm::GetGathervDisplacements(const size_t *counts,
+                                                  const size_t countsSize)
+{
+    std::vector<size_t> displacements(countsSize);
+    displacements[0] = 0;
+
+    for (size_t i = 1; i < countsSize; ++i)
+    {
+        displacements[i] = displacements[i - 1] + counts[i - 1];
+    }
+    return displacements;
+}
+
 Comm::Req::Req() = default;
 
 Comm::Req::Req(std::unique_ptr<CommReqImpl> impl) : m_Impl(std::move(impl)) {}

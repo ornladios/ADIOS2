@@ -216,6 +216,9 @@ private:
     /** Return MPI datatype id for type T.  */
     template <typename T>
     static MPI_Datatype Datatype();
+
+    static std::vector<size_t> GetGathervDisplacements(const size_t *counts,
+                                                       const size_t countsSize);
 };
 
 class Comm::Req
