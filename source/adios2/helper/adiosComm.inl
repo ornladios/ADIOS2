@@ -119,9 +119,21 @@ T Comm::ReduceValues(const T source, MPI_Op operation,
     return reduceValue;
 }
 
+template <class T>
+T Comm::BroadcastValue(const T &input, const int rankSource) const
+{
+    T output = 0;
+    if (rankSource == this->Rank())
+    {
+        output = input;
+    }
+
+    this->Bcast(&output, 1, rankSource);
+
+    return output;
+}
+
 // BroadcastValue full specializations implemented in 'adiosComm.tcc'.
-template <>
-size_t Comm::BroadcastValue(const size_t &input, const int rankSource) const;
 template <>
 std::string Comm::BroadcastValue(const std::string &input,
                                  const int rankSource) const;
