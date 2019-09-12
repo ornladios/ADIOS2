@@ -24,7 +24,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_SZ)
     Dims shape = {10, 10};
     Dims start = {0, 0};
     Dims count = {6, 8};
-    size_t steps = 1000;
+    size_t steps = 10000;
     adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
                                    {"Port", "12314"}};
     // run workflow

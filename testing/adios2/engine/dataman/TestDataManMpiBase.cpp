@@ -210,7 +210,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     size_t currentStep;
     while (true)
     {
-        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
+        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 3);
         if (status == adios2::StepStatus::OK)
         {
             received_steps = true;
@@ -321,7 +321,7 @@ TEST_F(DataManEngineTest, DataManBase)
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
 
-    size_t steps = 1000;
+    size_t steps = 10000;
 
     if (mpiGroup == 1)
     {

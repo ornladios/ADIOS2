@@ -185,7 +185,7 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
 TEST_F(DataManEngineTest, WriteRead_3D_MemSelect)
 {
 
-    size_t steps = 1000;
+    size_t steps = 10000;
     adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
                                    {"Port", "12310"}};
     // run workflow

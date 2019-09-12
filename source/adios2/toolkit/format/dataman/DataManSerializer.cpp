@@ -1161,22 +1161,42 @@ DmvVecPtr DataManSerializer::GetEarliestLatestStep(
             }
         }
 
+        bool hasCompleteStep = false;
+
         if (latest)
         {
-            currentStep = latestStep;
+            for (size_t step = latestStep; step >= earliestStep; --step)
+            {
+                if (StepHasMinimumBlocks(step, requireMinimumBlocks))
+                {
+                    currentStep = step;
+                    hasCompleteStep = true;
+                    break;
+                }
+            }
         }
         else
         {
-            currentStep = earliestStep;
+            for (size_t step = earliestStep; step <= latestStep; ++step)
+            {
+                if (StepHasMinimumBlocks(step, requireMinimumBlocks))
+                {
+                    currentStep = step;
+                    hasCompleteStep = true;
+                    break;
+                }
+            }
         }
 
-        if (StepHasMinimumBlocks(currentStep, requireMinimumBlocks))
+        if (hasCompleteStep)
         {
-            return m_DataManVarMap[currentStep];
+            ret = m_DataManVarMap[currentStep];
         }
     }
 
-    return nullptr;
+    std::cout << " ============ reached the end" << std::endl;
+
+    return ret;
 }
 
 void DataManSerializer::Log(const int level, const std::string &message,
