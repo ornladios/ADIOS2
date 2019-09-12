@@ -109,18 +109,15 @@ std::vector<T> Comm::AllGatherValues(const T source) const
     return output;
 }
 
-// ReduceValues full specializations implemented in 'adiosComm.tcc'.
-template <>
-unsigned int Comm::ReduceValues(const unsigned int source, MPI_Op operation,
-                                const int rankDestination) const;
-template <>
-unsigned long int Comm::ReduceValues(const unsigned long int source,
-                                     MPI_Op operation,
-                                     const int rankDestination) const;
-template <>
-unsigned long long int Comm::ReduceValues(const unsigned long long int source,
-                                          MPI_Op operation,
-                                          const int rankDestination) const;
+template <class T>
+T Comm::ReduceValues(const T source, MPI_Op operation,
+                     const int rankDestination) const
+{
+    T sourceLocal = source;
+    T reduceValue = 0;
+    this->Reduce(&sourceLocal, &reduceValue, 1, operation, rankDestination);
+    return reduceValue;
+}
 
 // BroadcastValue full specializations implemented in 'adiosComm.tcc'.
 template <>

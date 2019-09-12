@@ -18,68 +18,6 @@ namespace adios2
 namespace helper
 {
 
-// GathervArrays full specializations forward-declared in 'adiosComm.inl'.
-template <>
-void Comm::GathervArrays(const char *source, size_t sourceCount,
-                         const size_t *counts, size_t countsSize,
-                         char *destination, int rankDestination) const
-{
-    std::vector<size_t> displs;
-    if (rankDestination == this->Rank())
-    {
-        displs = GetGathervDisplacements(counts, countsSize);
-    }
-    this->Gatherv(source, sourceCount, destination, counts, displs.data(),
-                  rankDestination);
-}
-
-template <>
-void Comm::GathervArrays(const size_t *source, size_t sourceCount,
-                         const size_t *counts, size_t countsSize,
-                         size_t *destination, int rankDestination) const
-{
-    std::vector<size_t> displs;
-    if (rankDestination == this->Rank())
-    {
-        displs = GetGathervDisplacements(counts, countsSize);
-    }
-    this->Gatherv(source, sourceCount, destination, counts, displs.data(),
-                  rankDestination);
-}
-
-// ReduceValues full specializations forward-declared in 'adiosComm.inl'.
-template <>
-unsigned int Comm::ReduceValues(const unsigned int source, MPI_Op operation,
-                                const int rankDestination) const
-{
-    unsigned int sourceLocal = source;
-    unsigned int reduceValue = 0;
-    this->Reduce(&sourceLocal, &reduceValue, 1, operation, rankDestination);
-    return reduceValue;
-}
-
-template <>
-unsigned long int Comm::ReduceValues(const unsigned long int source,
-                                     MPI_Op operation,
-                                     const int rankDestination) const
-{
-    unsigned long int sourceLocal = source;
-    unsigned long int reduceValue = 0;
-    this->Reduce(&sourceLocal, &reduceValue, 1, operation, rankDestination);
-    return reduceValue;
-}
-
-template <>
-unsigned long long int Comm::ReduceValues(const unsigned long long int source,
-                                          MPI_Op operation,
-                                          const int rankDestination) const
-{
-    unsigned long long int sourceLocal = source;
-    unsigned long long int reduceValue = 0;
-    this->Reduce(&sourceLocal, &reduceValue, 1, operation, rankDestination);
-    return reduceValue;
-}
-
 // BroadcastValue full specializations forward-declared in 'adiosComm.inl'.
 template <>
 size_t Comm::BroadcastValue(const size_t &input, const int rankSource) const
