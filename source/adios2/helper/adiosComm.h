@@ -30,6 +30,28 @@ public:
     class Status;
 
     /**
+     * @brief Enumeration of element-wise accumulation operations.
+     */
+    enum class Op
+    {
+        Null,
+        Max,
+        Min,
+        Sum,
+        Product,
+        LogicalAnd,
+        BitwiseAnd,
+        LogicalOr,
+        BitwiseOr,
+        LogicalXor,
+        BitwiseXor,
+        MaxLoc,
+        MinLoc,
+        Replace,
+        None,
+    };
+
+    /**
      * @brief Default constructor.  Produces an empty communicator.
      *
      * An empty communicator may not be used for communcation.
@@ -138,7 +160,7 @@ public:
     std::vector<T> AllGatherValues(const T source) const;
 
     template <class T>
-    T ReduceValues(const T source, MPI_Op operation = MPI_SUM,
+    T ReduceValues(const T source, Op op = Op::Sum,
                    const int rankDestination = 0) const;
 
     template <class T>
@@ -158,7 +180,7 @@ public:
                    const std::string &hint = std::string()) const;
 
     template <typename T>
-    void Allreduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
+    void Allreduce(const T *sendbuf, T *recvbuf, size_t count, Op op,
                    const std::string &hint = std::string()) const;
 
     template <typename T>
@@ -176,11 +198,11 @@ public:
                  const std::string &hint = std::string()) const;
 
     template <typename T>
-    void Reduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op, int root,
+    void Reduce(const T *sendbuf, T *recvbuf, size_t count, Op op, int root,
                 const std::string &hint = std::string()) const;
 
     template <typename T>
-    void ReduceInPlace(T *buf, size_t count, MPI_Op op, int root,
+    void ReduceInPlace(T *buf, size_t count, Op op, int root,
                        const std::string &hint = std::string()) const;
 
     template <typename T>
@@ -310,7 +332,7 @@ public:
                            const std::string &hint) const = 0;
 
     virtual void Allreduce(const void *sendbuf, void *recvbuf, size_t count,
-                           MPI_Datatype datatype, MPI_Op op,
+                           MPI_Datatype datatype, Comm::Op op,
                            const std::string &hint) const = 0;
 
     virtual void Bcast(void *buffer, size_t count, MPI_Datatype datatype,
@@ -329,11 +351,11 @@ public:
                          const std::string &hint) const = 0;
 
     virtual void Reduce(const void *sendbuf, void *recvbuf, size_t count,
-                        MPI_Datatype datatype, MPI_Op op, int root,
+                        MPI_Datatype datatype, Comm::Op op, int root,
                         const std::string &hint) const = 0;
 
     virtual void ReduceInPlace(void *buf, size_t count, MPI_Datatype datatype,
-                               MPI_Op op, int root,
+                               Comm::Op op, int root,
                                const std::string &hint) const = 0;
 
     virtual void Send(const void *buf, size_t count, MPI_Datatype datatype,

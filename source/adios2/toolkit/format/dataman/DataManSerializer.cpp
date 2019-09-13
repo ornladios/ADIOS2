@@ -72,7 +72,7 @@ void DataManSerializer::AggregateMetadata()
     auto localJsonPack = SerializeJson(m_MetadataJson);
     unsigned int size = localJsonPack->size();
     unsigned int maxSize;
-    m_Comm.Allreduce(&size, &maxSize, 1, MPI_MAX);
+    m_Comm.Allreduce(&size, &maxSize, 1, helper::Comm::Op::Max);
     maxSize += sizeof(uint64_t);
     localJsonPack->resize(maxSize, '\0');
     *(reinterpret_cast<uint64_t *>(localJsonPack->data() +

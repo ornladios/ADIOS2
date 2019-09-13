@@ -24,6 +24,15 @@ namespace helper
 
 namespace
 {
+
+const MPI_Op OpToMPI[] = {
+    MPI_OP_NULL, MPI_MAX,    MPI_MIN,    MPI_SUM,     MPI_PROD,
+    MPI_LAND,    MPI_BAND,   MPI_LOR,    MPI_BOR,     MPI_LXOR,
+    MPI_BXOR,    MPI_MAXLOC, MPI_MINLOC, MPI_REPLACE, MPI_NO_OP,
+};
+
+MPI_Op ToMPI(Comm::Op op) { return OpToMPI[int(op)]; }
+
 void CheckMPIReturn(const int value, const std::string &hint)
 {
     if (value == MPI_SUCCESS)
@@ -88,7 +97,7 @@ public:
                    const std::string &hint) const override;
 
     void Allreduce(const void *sendbuf, void *recvbuf, size_t count,
-                   MPI_Datatype datatype, MPI_Op op,
+                   MPI_Datatype datatype, Comm::Op op,
                    const std::string &hint) const override;
 
     void Bcast(void *buffer, size_t count, MPI_Datatype datatype,
@@ -105,11 +114,11 @@ public:
                  const std::string &hint) const override;
 
     void Reduce(const void *sendbuf, void *recvbuf, size_t count,
-                MPI_Datatype datatype, MPI_Op op, int root,
+                MPI_Datatype datatype, Comm::Op op, int root,
                 const std::string &hint) const override;
 
     void ReduceInPlace(void *buf, size_t count, MPI_Datatype datatype,
-                       MPI_Op op, int root,
+                       Comm::Op op, int root,
                        const std::string &hint) const override;
 
     void Send(const void *buf, size_t count, MPI_Datatype datatype, int dest,
@@ -195,11 +204,11 @@ void CommImplMPI::Allgather(const void *sendbuf, size_t sendcount,
 }
 
 void CommImplMPI::Allreduce(const void *sendbuf, void *recvbuf, size_t count,
-                            MPI_Datatype datatype, MPI_Op op,
+                            MPI_Datatype datatype, Comm::Op op,
                             const std::string &hint) const
 {
     CheckMPIReturn(SMPI_Allreduce(sendbuf, recvbuf, static_cast<int>(count),
-                                  datatype, op, m_MPIComm),
+                                  datatype, ToMPI(op), m_MPIComm),
                    hint);
 }
 
@@ -259,20 +268,20 @@ void CommImplMPI::Gatherv(const void *sendbuf, size_t sendcount,
 }
 
 void CommImplMPI::Reduce(const void *sendbuf, void *recvbuf, size_t count,
-                         MPI_Datatype datatype, MPI_Op op, int root,
+                         MPI_Datatype datatype, Comm::Op op, int root,
                          const std::string &hint) const
 {
     CheckMPIReturn(SMPI_Reduce(sendbuf, recvbuf, static_cast<int>(count),
-                               datatype, op, root, m_MPIComm),
+                               datatype, ToMPI(op), root, m_MPIComm),
                    hint);
 }
 
 void CommImplMPI::ReduceInPlace(void *buf, size_t count, MPI_Datatype datatype,
-                                MPI_Op op, int root,
+                                Comm::Op op, int root,
                                 const std::string &hint) const
 {
     CheckMPIReturn(SMPI_Reduce(MPI_IN_PLACE, buf, static_cast<int>(count),
-                               datatype, op, root, m_MPIComm),
+                               datatype, ToMPI(op), root, m_MPIComm),
                    hint);
 }
 

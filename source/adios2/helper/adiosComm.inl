@@ -110,12 +110,11 @@ std::vector<T> Comm::AllGatherValues(const T source) const
 }
 
 template <class T>
-T Comm::ReduceValues(const T source, MPI_Op operation,
-                     const int rankDestination) const
+T Comm::ReduceValues(const T source, Op op, const int rankDestination) const
 {
     T sourceLocal = source;
     T reduceValue = 0;
-    this->Reduce(&sourceLocal, &reduceValue, 1, operation, rankDestination);
+    this->Reduce(&sourceLocal, &reduceValue, 1, op, rankDestination);
     return reduceValue;
 }
 
@@ -166,7 +165,7 @@ void Comm::Allgather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
 }
 
 template <typename T>
-void Comm::Allreduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
+void Comm::Allreduce(const T *sendbuf, T *recvbuf, size_t count, Op op,
                      const std::string &hint) const
 {
     return m_Impl->Allreduce(sendbuf, recvbuf, count, Datatype<T>(), op, hint);
@@ -197,15 +196,15 @@ void Comm::Gatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
 }
 
 template <typename T>
-void Comm::Reduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
-                  int root, const std::string &hint) const
+void Comm::Reduce(const T *sendbuf, T *recvbuf, size_t count, Op op, int root,
+                  const std::string &hint) const
 {
     return m_Impl->Reduce(sendbuf, recvbuf, count, Datatype<T>(), op, root,
                           hint);
 }
 
 template <typename T>
-void Comm::ReduceInPlace(T *buf, size_t count, MPI_Op op, int root,
+void Comm::ReduceInPlace(T *buf, size_t count, Op op, int root,
                          const std::string &hint) const
 {
     return m_Impl->ReduceInPlace(buf, count, Datatype<T>(), op, root, hint);
