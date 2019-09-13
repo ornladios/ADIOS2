@@ -26,6 +26,12 @@ void Buffer::Resize(const size_t size, const std::string hint)
                                 " can't call Resize " + hint + "\n");
 }
 
+void Buffer::Reset(const bool resetAbsolutePosition, const bool zeroInitialize)
+{
+    throw std::invalid_argument("ERROR: buffer memory of type " + m_Type +
+                                " can't call Reset\n");
+}
+
 char *Buffer::Data() noexcept { return nullptr; }
 
 const char *Buffer::Data() const noexcept { return nullptr; }

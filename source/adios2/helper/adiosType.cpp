@@ -103,7 +103,7 @@ Uint64VectorToSizetVector(const std::vector<uint64_t> &in) noexcept
 }
 
 TimeUnit StringToTimeUnit(const std::string timeUnitString,
-                          const bool debugMode)
+                          const bool debugMode, const std::string hint)
 {
     TimeUnit timeUnit = TimeUnit::Microseconds; // default
 
@@ -134,9 +134,10 @@ TimeUnit StringToTimeUnit(const std::string timeUnitString,
         {
             throw std::invalid_argument("ERROR: invalid value " +
                                         timeUnitString +
-                                        " in ProfileUnits=value "
+                                        " in Parameter key=ProfileUnits, "
                                         " must be Microseconds, Milliseconds, "
-                                        "Seconds, Minutes or Hours\n");
+                                        "Seconds, Minutes or Hours " +
+                                        hint + "\n");
         }
     }
     return timeUnit;

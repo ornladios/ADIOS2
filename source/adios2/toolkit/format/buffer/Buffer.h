@@ -39,6 +39,14 @@ public:
 
     virtual void Resize(const size_t size, const std::string hint);
 
+    /**
+     * Reset the buffer m_Position to zero
+     * @param resetAbsolutePosition true: reset m_AbsolutePosition = 0
+     * @param zeroInitialize populate current buffer contents with '\0'
+     */
+    virtual void Reset(const bool resetAbsolutePosition,
+                       const bool zeroInitialize);
+
     virtual size_t GetAvailableSize() const;
 };
 

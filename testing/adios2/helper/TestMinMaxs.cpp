@@ -48,16 +48,16 @@ void printTestInfo(const adios2::Dims &count, const size_t blockSize,
 
 void printBlockDivisionInfo(const adios2::helper::BlockDivisionInfo &info)
 {
-    std::cout << "    nblocks = " << info.nBlocks;        // << std::endl;
-    std::cout << " subblockSize = " << info.subblockSize; // << std::endl;
+    std::cout << "    nblocks = " << info.NBlocks;        // << std::endl;
+    std::cout << " subblockSize = " << info.SubBlockSize; // << std::endl;
     std::cout << " div = ";
-    printVector(info.div);
+    printVector(info.Div);
     // std::cout << std::endl;
     std::cout << " rem = ";
-    printVector(info.rem);
+    printVector(info.Rem);
     // std::cout << std::endl;
     std::cout << " reverseDivProduct = ";
-    printVector(info.reverseDivProduct);
+    printVector(info.ReverseDivProduct);
     std::cout << std::endl;
 }
 
@@ -153,42 +153,42 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_1D_100)
         blockSize = 100;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
+        printBlockDivisionInfo(subBlockInfo);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0}, {100});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99, {0, 99});
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99, {0, 99});
     }
 
     {
         blockSize = 50;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
+        printBlockDivisionInfo(subBlockInfo);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0}, {50});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {50}, {50});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99,
                       {0, 49, 50, 99});
     }
 
@@ -196,39 +196,39 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_1D_100)
         blockSize = 17;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
+        printBlockDivisionInfo(subBlockInfo);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0}, {17});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {17}, {17});
 
         blockID = 2;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {34}, {17});
 
         blockID = 3;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {51}, {17});
 
         blockID = 4;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {68}, {16});
 
         blockID = 5;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {84}, {16});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99,
                       {0, 16, 17, 33, 34, 50, 51, 67, 68, 83, 84, 99});
     }
 
@@ -236,56 +236,56 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_1D_100)
         blockSize = 170;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
+        printBlockDivisionInfo(subBlockInfo);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0}, {100});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99, {0, 99});
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99, {0, 99});
     }
 
     {
         blockSize = 1;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 100);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 1);
-        ASSERT_EQ(SubblockInfo.div[0], 100);
-        ASSERT_EQ(SubblockInfo.rem.size(), 1);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 100);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 1);
+        ASSERT_EQ(subBlockInfo.Div[0], 100);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 1);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0}, {1});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1}, {1});
 
         blockID = 77;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {77}, {1});
 
         blockID = 99;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {99}, {1});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
         std::vector<int> mm(200);
         for (int j = 0; j < 100; j++)
@@ -293,7 +293,7 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_1D_100)
             mm[2 * j] = j;
             mm[2 * j + 1] = j;
         }
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99, mm);
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99, mm);
     }
 }
 
@@ -316,42 +316,42 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_2D_10x10)
         blockSize = 100;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
+        printBlockDivisionInfo(subBlockInfo);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0}, {10, 10});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99, {0, 99});
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99, {0, 99});
     }
 
     {
         blockSize = 50;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
+        printBlockDivisionInfo(subBlockInfo);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0}, {5, 10});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {5, 0}, {5, 10});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99,
                       {0, 49, 50, 99});
     }
 
@@ -359,50 +359,50 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_2D_10x10)
         blockSize = 5;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 20);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 2);
-        ASSERT_EQ(SubblockInfo.div[0], 10);
-        ASSERT_EQ(SubblockInfo.div[1], 2);
-        ASSERT_EQ(SubblockInfo.rem.size(), 2);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 2);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 2);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 20);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 2);
+        ASSERT_EQ(subBlockInfo.Div[0], 10);
+        ASSERT_EQ(subBlockInfo.Div[1], 2);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 2);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 2);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 2);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0}, {1, 5});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 5}, {1, 5});
 
         blockID = 2;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 0}, {1, 5});
 
         blockID = 3;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 5}, {1, 5});
 
         blockID = 18;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 0}, {1, 5});
 
         blockID = 19;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 5}, {1, 5});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99,
                       {0,  4,  5,  9,  10, 14, 15, 19, 20, 24, 25, 29, 30, 34,
                        35, 39, 40, 44, 45, 49, 50, 54, 55, 59, 60, 64, 65, 69,
                        70, 74, 75, 79, 80, 84, 85, 89, 90, 94, 95, 99});
@@ -412,50 +412,50 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_2D_10x10)
         blockSize = 17;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 6);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 2);
-        ASSERT_EQ(SubblockInfo.div[0], 6);
-        ASSERT_EQ(SubblockInfo.div[1], 1);
-        ASSERT_EQ(SubblockInfo.rem.size(), 2);
-        ASSERT_EQ(SubblockInfo.rem[0], 4);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 2);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 6);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 2);
+        ASSERT_EQ(subBlockInfo.Div[0], 6);
+        ASSERT_EQ(subBlockInfo.Div[1], 1);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 2);
+        ASSERT_EQ(subBlockInfo.Rem[0], 4);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 2);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0}, {2, 10});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {2, 0}, {2, 10});
 
         blockID = 2;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {4, 0}, {2, 10});
 
         blockID = 3;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {6, 0}, {2, 10});
 
         blockID = 4;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {8, 0}, {1, 10});
 
         blockID = 5;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 0}, {1, 10});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99,
                       {0, 19, 20, 39, 40, 59, 60, 79, 80, 89, 90, 99});
     }
 
@@ -463,78 +463,78 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_2D_10x10)
         blockSize = 170;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 1);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 2);
-        ASSERT_EQ(SubblockInfo.div[0], 1);
-        ASSERT_EQ(SubblockInfo.div[1], 1);
-        ASSERT_EQ(SubblockInfo.rem.size(), 2);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 2);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 1);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 2);
+        ASSERT_EQ(subBlockInfo.Div[0], 1);
+        ASSERT_EQ(subBlockInfo.Div[1], 1);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 2);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 2);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0}, {10, 10});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99, {0, 99});
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99, {0, 99});
     }
 
     {
         blockSize = 1;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 100);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 2);
-        ASSERT_EQ(SubblockInfo.div[0], 10);
-        ASSERT_EQ(SubblockInfo.div[1], 10);
-        ASSERT_EQ(SubblockInfo.rem.size(), 2);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 2);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 10);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 100);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 2);
+        ASSERT_EQ(subBlockInfo.Div[0], 10);
+        ASSERT_EQ(subBlockInfo.Div[1], 10);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 2);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 2);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 10);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0}, {1, 1});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 1}, {1, 1});
 
         blockID = 9;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 9}, {1, 1});
 
         blockID = 10;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 0}, {1, 1});
 
         blockID = 77;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {7, 7}, {1, 1});
 
         blockID = 99;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 9}, {1, 1});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
         std::vector<int> mm(200);
         for (int j = 0; j < 100; j++)
@@ -542,68 +542,68 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_2D_10x10)
             mm[2 * j] = j;
             mm[2 * j + 1] = j;
         }
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99, mm);
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99, mm);
     }
 
     {
         blockSize = 3;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 30);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 2);
-        ASSERT_EQ(SubblockInfo.div[0], 10);
-        ASSERT_EQ(SubblockInfo.div[1], 3);
-        ASSERT_EQ(SubblockInfo.rem.size(), 2);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 2);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 3);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 30);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 2);
+        ASSERT_EQ(subBlockInfo.Div[0], 10);
+        ASSERT_EQ(subBlockInfo.Div[1], 3);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 2);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 2);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 3);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0}, {1, 4});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 4}, {1, 3});
 
         blockID = 2;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 7}, {1, 3});
 
         blockID = 3;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 0}, {1, 4});
 
         blockID = 4;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 4}, {1, 3});
 
         blockID = 5;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 7}, {1, 3});
 
         blockID = 27;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 0}, {1, 4});
 
         blockID = 28;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 4}, {1, 3});
 
         blockID = 29;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 7}, {1, 3}); */
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 99,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 99,
                       {0,  3,  4,  6,  7,  9,  10, 13, 14, 16, 17, 19,
                        20, 23, 24, 26, 27, 29, 30, 33, 34, 36, 37, 39,
                        40, 43, 44, 46, 47, 49, 50, 53, 54, 56, 57, 59,
@@ -631,41 +631,41 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_10x10x10)
         blockSize = 100;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 10);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 3);
-        ASSERT_EQ(SubblockInfo.div[0], 10);
-        ASSERT_EQ(SubblockInfo.div[1], 1);
-        ASSERT_EQ(SubblockInfo.div[2], 1);
-        ASSERT_EQ(SubblockInfo.rem.size(), 3);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.rem[2], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 3);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[2], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 10);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 3);
+        ASSERT_EQ(subBlockInfo.Div[0], 10);
+        ASSERT_EQ(subBlockInfo.Div[1], 1);
+        ASSERT_EQ(subBlockInfo.Div[2], 1);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 3);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.Rem[2], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 3);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[2], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 0}, {1, 10, 10});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 0, 0}, {1, 10, 10});
 
         blockID = 9;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 0, 0}, {1, 10, 10});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 999,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 999,
                       {0,   99,  100, 199, 200, 299, 300, 399, 400, 499,
                        500, 599, 600, 699, 700, 799, 800, 899, 900, 999});
     }
@@ -674,36 +674,36 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_10x10x10)
         blockSize = 500;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 2);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 3);
-        ASSERT_EQ(SubblockInfo.div[0], 2);
-        ASSERT_EQ(SubblockInfo.div[1], 1);
-        ASSERT_EQ(SubblockInfo.div[2], 1);
-        ASSERT_EQ(SubblockInfo.rem.size(), 3);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.rem[2], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 3);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[2], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 2);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 3);
+        ASSERT_EQ(subBlockInfo.Div[0], 2);
+        ASSERT_EQ(subBlockInfo.Div[1], 1);
+        ASSERT_EQ(subBlockInfo.Div[2], 1);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 3);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.Rem[2], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 3);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[2], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 0}, {5, 10, 10});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {5, 0, 0}, {5, 10, 10});*/
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 999,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 999,
                       {0, 499, 500, 999});
     }
 
@@ -711,53 +711,53 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_10x10x10)
         blockSize = 50;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 20);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 3);
-        ASSERT_EQ(SubblockInfo.div[0], 10);
-        ASSERT_EQ(SubblockInfo.div[1], 2);
-        ASSERT_EQ(SubblockInfo.div[2], 1);
-        ASSERT_EQ(SubblockInfo.rem.size(), 3);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.rem[2], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 3);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 2);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[2], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 20);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 3);
+        ASSERT_EQ(subBlockInfo.Div[0], 10);
+        ASSERT_EQ(subBlockInfo.Div[1], 2);
+        ASSERT_EQ(subBlockInfo.Div[2], 1);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 3);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.Rem[2], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 3);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 2);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[2], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 0}, {1, 5, 10});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 5, 0}, {1, 5, 10});
 
         blockID = 2;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 0, 0}, {1, 5, 10});
 
         blockID = 3;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 5, 0}, {1, 5, 10});
 
         blockID = 18;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 0, 0}, {1, 5, 10});
 
         blockID = 19;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 5, 0}, {1, 5, 10});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 999,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 999,
                       {0,   49,  50,  99,  100, 149, 150, 199, 200, 249,
                        250, 299, 300, 349, 350, 399, 400, 449, 450, 499,
                        500, 549, 550, 599, 600, 649, 650, 699, 700, 749,
@@ -768,55 +768,55 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_10x10x10)
         blockSize = 17;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 50);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 3);
-        ASSERT_EQ(SubblockInfo.div[0], 10);
-        ASSERT_EQ(SubblockInfo.div[1], 5);
-        ASSERT_EQ(SubblockInfo.div[2], 1);
-        ASSERT_EQ(SubblockInfo.rem.size(), 3);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.rem[2], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 3);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 5);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[2], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 50);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 3);
+        ASSERT_EQ(subBlockInfo.Div[0], 10);
+        ASSERT_EQ(subBlockInfo.Div[1], 5);
+        ASSERT_EQ(subBlockInfo.Div[2], 1);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 3);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.Rem[2], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 3);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 5);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[2], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 0}, {1, 2, 10});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 2, 0}, {1, 2, 10});
 
         blockID = 2;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 4, 0}, {1, 2, 10});
 
         blockID = 4;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 8, 0}, {1, 2, 10});
 
         blockID = 5;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 0, 0}, {1, 2, 10});
 
         blockID = 48;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 6, 0}, {1, 2, 10});
 
         blockID = 49;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 8, 0}, {1, 2, 10});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
         std::vector<int> mm(100);
         for (int j = 0; j < 50; j++)
@@ -824,61 +824,61 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_10x10x10)
             mm[2 * j] = 20 * j;
             mm[2 * j + 1] = 20 * j + 19;
         }
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 999, mm);
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 999, mm);
     }
 
     {
         blockSize = 170;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 6);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 3);
-        ASSERT_EQ(SubblockInfo.div[0], 6);
-        ASSERT_EQ(SubblockInfo.div[1], 1);
-        ASSERT_EQ(SubblockInfo.div[2], 1);
-        ASSERT_EQ(SubblockInfo.rem.size(), 3);
-        ASSERT_EQ(SubblockInfo.rem[0], 4);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.rem[2], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 3);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[2], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 6);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 3);
+        ASSERT_EQ(subBlockInfo.Div[0], 6);
+        ASSERT_EQ(subBlockInfo.Div[1], 1);
+        ASSERT_EQ(subBlockInfo.Div[2], 1);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 3);
+        ASSERT_EQ(subBlockInfo.Rem[0], 4);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.Rem[2], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 3);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[2], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 0}, {2, 10, 10});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {2, 0, 0}, {2, 10, 10});
 
         blockID = 2;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {4, 0, 0}, {2, 10, 10});
 
         blockID = 3;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {6, 0, 0}, {2, 10, 10});
 
         blockID = 4;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {8, 0, 0}, {1, 10, 10});
 
         blockID = 5;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 0, 0}, {1, 10, 10}); */
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
         assert_minmax(
-            SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 999,
+            subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 999,
             {0, 199, 200, 399, 400, 599, 600, 799, 800, 899, 900, 999});
     }
 
@@ -886,51 +886,51 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_10x10x10)
         blockSize = 1;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 1000);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 3);
-        ASSERT_EQ(SubblockInfo.div[0], 10);
-        ASSERT_EQ(SubblockInfo.div[1], 10);
-        ASSERT_EQ(SubblockInfo.div[2], 10);
-        ASSERT_EQ(SubblockInfo.rem.size(), 3);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.rem[2], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 3);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 100);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 10);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[2], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 1000);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 3);
+        ASSERT_EQ(subBlockInfo.Div[0], 10);
+        ASSERT_EQ(subBlockInfo.Div[1], 10);
+        ASSERT_EQ(subBlockInfo.Div[2], 10);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 3);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.Rem[2], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 3);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 100);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 10);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[2], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 0}, {1, 1, 1});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 1}, {1, 1, 1});
 
         blockID = 10;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 1, 0}, {1, 1, 1});
 
         blockID = 17;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 1, 7}, {1, 1, 1});
 
         blockID = 536;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {5, 3, 6}, {1, 1, 1});
 
         blockID = 999;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 9, 9}, {1, 1, 1});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
         std::vector<int> mm(2000);
         for (int j = 0; j < 1000; j++)
@@ -938,74 +938,74 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_10x10x10)
             mm[2 * j] = j;
             mm[2 * j + 1] = j;
         }
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 999, mm);
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 999, mm);
     }
 
     {
         blockSize = 3;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 300);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 3);
-        ASSERT_EQ(SubblockInfo.div[0], 10);
-        ASSERT_EQ(SubblockInfo.div[1], 10);
-        ASSERT_EQ(SubblockInfo.div[2], 3);
-        ASSERT_EQ(SubblockInfo.rem.size(), 3);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.rem[2], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 3);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 30);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 3);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[2], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 300);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 3);
+        ASSERT_EQ(subBlockInfo.Div[0], 10);
+        ASSERT_EQ(subBlockInfo.Div[1], 10);
+        ASSERT_EQ(subBlockInfo.Div[2], 3);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 3);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.Rem[2], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 3);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 30);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 3);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[2], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 0}, {1, 1, 4});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 4}, {1, 1, 3});
 
         blockID = 2;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 7}, {1, 1, 3});
 
         blockID = 3;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 1, 0}, {1, 1, 4});
 
         blockID = 29;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 9, 7}, {1, 1, 3});
 
         blockID = 30;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 0, 0}, {1, 1, 4});
 
         blockID = 60;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {2, 0, 0}, {1, 1, 4});
 
         blockID = 180;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {6, 0, 0}, {1, 1, 4});
 
         blockID = 217;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {7, 2, 4}, {1, 1, 3});
 
         blockID = 299;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {9, 9, 7}, {1, 1, 3});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
         std::vector<int> mm(600);
         for (int i = 0; i < 10; i++)
@@ -1023,7 +1023,7 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_10x10x10)
                 mm[k++] = minstart + 9;
             }
         }
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 999, mm);
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 999, mm);
     }
 }
 
@@ -1047,41 +1047,41 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_24x24x48)
         blockSize = 5000;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 6);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 3);
-        ASSERT_EQ(SubblockInfo.div[0], 6);
-        ASSERT_EQ(SubblockInfo.div[1], 1);
-        ASSERT_EQ(SubblockInfo.div[2], 1);
-        ASSERT_EQ(SubblockInfo.rem.size(), 3);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.rem[2], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 3);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[2], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 6);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 3);
+        ASSERT_EQ(subBlockInfo.Div[0], 6);
+        ASSERT_EQ(subBlockInfo.Div[1], 1);
+        ASSERT_EQ(subBlockInfo.Div[2], 1);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 3);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.Rem[2], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 3);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[2], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 0}, {4, 24, 48});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {4, 0, 0}, {4, 24, 48});
 
         blockID = 5;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {20, 0, 0}, {4, 24, 48});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 27647,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 27647,
                       {0, 4607, 4608, 9215, 9216, 13823, 13824, 18431, 18432,
                        23039, 23040, 27647});
     }
@@ -1107,64 +1107,64 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_4D_3x2x5x4)
         blockSize = 6;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo SubblockInfo =
+        struct adios2::helper::BlockDivisionInfo subBlockInfo =
             adios2::helper::DivideBlock(
                 count, blockSize,
                 adios2::helper::BlockDivisionMethod::Contiguous);
-        printBlockDivisionInfo(SubblockInfo);
-        ASSERT_EQ(SubblockInfo.nBlocks, 18);
-        ASSERT_EQ(SubblockInfo.subblockSize, blockSize);
-        ASSERT_EQ(SubblockInfo.div.size(), 4);
-        ASSERT_EQ(SubblockInfo.div[0], 3);
-        ASSERT_EQ(SubblockInfo.div[1], 2);
-        ASSERT_EQ(SubblockInfo.div[2], 3);
-        ASSERT_EQ(SubblockInfo.div[3], 1);
-        ASSERT_EQ(SubblockInfo.rem.size(), 4);
-        ASSERT_EQ(SubblockInfo.rem[0], 0);
-        ASSERT_EQ(SubblockInfo.rem[1], 0);
-        ASSERT_EQ(SubblockInfo.rem[2], 2);
-        ASSERT_EQ(SubblockInfo.rem[3], 0);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct.size(), 4);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[0], 6);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[1], 3);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[2], 1);
-        ASSERT_EQ(SubblockInfo.reverseDivProduct[3], 1);
+        printBlockDivisionInfo(subBlockInfo);
+        ASSERT_EQ(subBlockInfo.NBlocks, 18);
+        ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
+        ASSERT_EQ(subBlockInfo.Div.size(), 4);
+        ASSERT_EQ(subBlockInfo.Div[0], 3);
+        ASSERT_EQ(subBlockInfo.Div[1], 2);
+        ASSERT_EQ(subBlockInfo.Div[2], 3);
+        ASSERT_EQ(subBlockInfo.Div[3], 1);
+        ASSERT_EQ(subBlockInfo.Rem.size(), 4);
+        ASSERT_EQ(subBlockInfo.Rem[0], 0);
+        ASSERT_EQ(subBlockInfo.Rem[1], 0);
+        ASSERT_EQ(subBlockInfo.Rem[2], 2);
+        ASSERT_EQ(subBlockInfo.Rem[3], 0);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct.size(), 4);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[0], 6);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[1], 3);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[2], 1);
+        ASSERT_EQ(subBlockInfo.ReverseDivProduct[3], 1);
 
         /*blockID = 0;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 0, 0}, {1, 1, 2, 4});
 
         blockID = 1;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 2, 0}, {1, 1, 2, 4});
 
         blockID = 2;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 0, 4, 0}, {1, 1, 1, 4});
 
         blockID = 3;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 1, 0, 0}, {1, 1, 2, 4});
 
         blockID = 4;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 1, 2, 0}, {1, 1, 2, 4});
 
         blockID = 5;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {0, 1, 4, 0}, {1, 1, 1, 4});
 
         blockID = 6;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {1, 0, 0, 0}, {1, 1, 2, 4});
 
         blockID = 17;
-        block = adios2::helper::GetSubBlock(count, SubblockInfo, blockID);
+        block = adios2::helper::GetSubBlock(count, subBlockInfo, blockID);
         assert_block(block, blockID, {2, 1, 4, 0}, {1, 1, 1, 4});*/
 
-        adios2::helper::GetMinMaxSubblocks(data.data(), count, SubblockInfo,
+        adios2::helper::GetMinMaxSubblocks(data.data(), count, subBlockInfo,
                                            MinMaxs, Min, Max, 1);
-        assert_minmax(SubblockInfo.nBlocks, Min, Max, MinMaxs, 0, 119,
+        assert_minmax(subBlockInfo.NBlocks, Min, Max, MinMaxs, 0, 119,
                       {0,  7,  8,  15, 16, 19, 20,  27,  28,  35,  36,  39,
                        40, 47, 48, 55, 56, 59, 60,  67,  68,  75,  76,  79,
                        80, 87, 88, 95, 96, 99, 100, 107, 108, 115, 116, 119});

@@ -19,6 +19,33 @@ namespace helper
 {
 
 template <>
+bool StringTo(const std::string &input, const bool debugMode,
+              const std::string &hint)
+{
+    const std::string value = LowerCase(input);
+    bool result = false;
+
+    if (value == "off" || value == "false")
+    {
+        result = false;
+    }
+    else if (value == "on" || value == "true")
+    {
+        result = true;
+    }
+    else
+    {
+        if (debugMode)
+        {
+            throw std::invalid_argument(
+                "ERROR: invalid input value: " + input +
+                " for on/off or true/false bool conversion " + hint + "\n");
+        }
+    }
+    return result;
+}
+
+template <>
 int32_t StringTo(const std::string &input, const bool debugMode,
                  const std::string &hint)
 {

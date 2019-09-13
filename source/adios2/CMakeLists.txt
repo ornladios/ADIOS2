@@ -62,23 +62,29 @@ add_library(adios2
   toolkit/format/buffer/Buffer.cpp
   toolkit/format/buffer/heap/BufferSTL.cpp
 
-  toolkit/format/bp3/BP3Base.cpp toolkit/format/bp3/BP3Base.tcc
-  toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc
-  toolkit/format/bp3/BP3Deserializer.cpp toolkit/format/bp3/BP3Deserializer.tcc
+  toolkit/format/bp/BPBase.cpp toolkit/format/bp/BPBase.tcc
 
-  toolkit/format/bp4/BP4Base.cpp toolkit/format/bp4/BP4Base.tcc
-  toolkit/format/bp4/BP4Serializer.cpp toolkit/format/bp4/BP4Serializer.tcc
-  toolkit/format/bp4/BP4Deserializer.cpp toolkit/format/bp4/BP4Deserializer.tcc
+  toolkit/format/bp/bp3/BP3Base.cpp
+  toolkit/format/bp/bp3/BP3Serializer.cpp toolkit/format/bp/bp3/BP3Serializer.tcc
+  toolkit/format/bp/bp3/BP3Deserializer.cpp toolkit/format/bp/bp3/BP3Deserializer.tcc
+
+  toolkit/format/bp/bp4/BP4Base.cpp
+  toolkit/format/bp/bp4/BP4Serializer.cpp toolkit/format/bp/bp4/BP4Serializer.tcc
+  toolkit/format/bp/bp4/BP4Deserializer.cpp toolkit/format/bp/bp4/BP4Deserializer.tcc
   
-  toolkit/format/bpOperation/BPOperation.cpp toolkit/format/bpOperation/BPOperation.tcc
-  toolkit/format/bpOperation/compress/BPZFP.cpp toolkit/format/bpOperation/compress/BPZFP.tcc
-  toolkit/format/bpOperation/compress/BPSZ.cpp
-  toolkit/format/bpOperation/compress/BPMGARD.cpp
-  toolkit/format/bpOperation/compress/BPPNG.cpp
-  toolkit/format/bpOperation/compress/BPBZIP2.cpp toolkit/format/bpOperation/compress/BPBZIP2.tcc
-  toolkit/format/bpOperation/compress/BPBlosc.cpp
+  toolkit/format/bp/bpOperation/BPOperation.cpp 
+  toolkit/format/bp/bpOperation/BPOperation.tcc
+  toolkit/format/bp/bpOperation/compress/BPZFP.cpp 
+  toolkit/format/bp/bpOperation/compress/BPZFP.tcc
+  toolkit/format/bp/bpOperation/compress/BPSZ.cpp
+  toolkit/format/bp/bpOperation/compress/BPMGARD.cpp
+  toolkit/format/bp/bpOperation/compress/BPPNG.cpp
+  toolkit/format/bp/bpOperation/compress/BPBZIP2.cpp 
+  toolkit/format/bp/bpOperation/compress/BPBZIP2.tcc
+  toolkit/format/bp/bpOperation/compress/BPBlosc.cpp
   
   toolkit/profiling/iochrono/Timer.cpp
+  toolkit/profiling/iochrono/IOChrono.cpp
 
   toolkit/query/Query.cpp
   toolkit/query/Worker.cpp

@@ -161,7 +161,7 @@ std::vector<size_t> Uint64ArrayToSizetVector(const size_t nElements,
  * @return TimeUnit enum (int) TimeUnit::s, TimeUnit::ms, etc.
  */
 TimeUnit StringToTimeUnit(const std::string timeUnitString,
-                          const bool debugMode);
+                          const bool debugMode, const std::string hint = "");
 
 /**
  * Returns the conversion factor from input units Tb, Gb, Mb, Kb, to bytes as a

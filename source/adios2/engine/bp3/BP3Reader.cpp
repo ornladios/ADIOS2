@@ -149,7 +149,7 @@ void BP3Reader::InitTransports()
 
     if (m_BP3Deserializer.m_RankMPI == 0)
     {
-        const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
+        const bool profile = m_BP3Deserializer.m_Profiler.m_IsActive;
         try
         {
             m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read,

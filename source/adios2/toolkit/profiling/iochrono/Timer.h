@@ -54,8 +54,9 @@ public:
     /** sets timer active to start counting */
     void Resume() noexcept;
 
-    /** pauses timer (set to inactive)
-     * @exception std::invalid_argument if Resume not previously called
+    /**
+     * Pauses timer (set to inactive)
+     * @throws std::invalid_argument if Resume not previously called
      */
     void Pause();
 
@@ -65,12 +66,16 @@ public:
 private:
     /** true: extra exceptions */
     const bool m_DebugMode = false;
+
     /** Set at Resume */
     std::chrono::time_point<std::chrono::high_resolution_clock> m_InitialTime;
+
     /** Set at Pause */
     std::chrono::time_point<std::chrono::high_resolution_clock> m_ElapsedTime;
+
     /** Checks if m_InitialTime is set, timer is running */
     bool m_InitialTimeSet = false;
+
     /** called by Pause to get time between Pause and Resume */
     int64_t GetElapsedTime();
 };

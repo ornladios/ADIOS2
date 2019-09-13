@@ -35,17 +35,17 @@ void Transport::IRead(char *buffer, size_t size, Status &status, size_t start)
 
 void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
 {
-    m_Profiler.IsActive = true;
+    m_Profiler.m_IsActive = true;
 
-    m_Profiler.Timers.emplace(std::make_pair(
+    m_Profiler.m_Timers.emplace(std::make_pair(
         "open", profiling::Timer("open", TimeUnit::Microseconds, m_DebugMode)));
 
     if (openMode == Mode::Write)
     {
-        m_Profiler.Timers.emplace(
+        m_Profiler.m_Timers.emplace(
             "write", profiling::Timer("write", timeUnit, m_DebugMode));
 
-        m_Profiler.Bytes.emplace("write", 0);
+        m_Profiler.m_Bytes.emplace("write", 0);
     }
     else if (openMode == Mode::Append)
     {
@@ -54,24 +54,24 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
             "append", profiling::Timer("append", timeUnit, m_DebugMode));
         m_Profiler.Bytes.emplace("append", 0);
         */
-        m_Profiler.Timers.emplace(
+        m_Profiler.m_Timers.emplace(
             "write", profiling::Timer("write", timeUnit, m_DebugMode));
 
-        m_Profiler.Bytes.emplace("write", 0);
+        m_Profiler.m_Bytes.emplace("write", 0);
 
-        m_Profiler.Timers.emplace(
+        m_Profiler.m_Timers.emplace(
             "read", profiling::Timer("read", timeUnit, m_DebugMode));
 
-        m_Profiler.Bytes.emplace("read", 0);
+        m_Profiler.m_Bytes.emplace("read", 0);
     }
     else if (openMode == Mode::Read)
     {
-        m_Profiler.Timers.emplace(
+        m_Profiler.m_Timers.emplace(
             "read", profiling::Timer("read", timeUnit, m_DebugMode));
-        m_Profiler.Bytes.emplace("read", 0);
+        m_Profiler.m_Bytes.emplace("read", 0);
     }
 
-    m_Profiler.Timers.emplace(
+    m_Profiler.m_Timers.emplace(
         "close",
         profiling::Timer("close", TimeUnit::Microseconds, m_DebugMode));
 }
@@ -100,17 +100,17 @@ size_t Transport::GetSize() { return 0; }
 
 void Transport::ProfilerStart(const std::string process) noexcept
 {
-    if (m_Profiler.IsActive)
+    if (m_Profiler.m_IsActive)
     {
-        m_Profiler.Timers.at(process).Resume();
+        m_Profiler.m_Timers.at(process).Resume();
     }
 }
 
 void Transport::ProfilerStop(const std::string process) noexcept
 {
-    if (m_Profiler.IsActive)
+    if (m_Profiler.m_IsActive)
     {
-        m_Profiler.Timers.at(process).Pause();
+        m_Profiler.m_Timers.at(process).Pause();
     }
 }
 

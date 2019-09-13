@@ -40,6 +40,20 @@ void BufferSTL::Resize(const size_t size, const std::string hint)
     }
 }
 
+void BufferSTL::Reset(const bool resetAbsolutePosition,
+                      const bool zeroInitialize)
+{
+    m_Position = 0;
+    if (resetAbsolutePosition)
+    {
+        m_AbsolutePosition = 0;
+    }
+    if (zeroInitialize)
+    {
+        m_Buffer.assign(m_Buffer.size(), '\0');
+    }
+}
+
 size_t BufferSTL::GetAvailableSize() const
 {
     return m_Buffer.size() - m_Position;

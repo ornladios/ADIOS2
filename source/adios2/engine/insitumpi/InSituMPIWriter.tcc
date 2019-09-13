@@ -7,8 +7,8 @@
  *  Created on: Dec 18, 2017
  *      Author: Norbert Podhorszki pnorbert@ornl.gov
  */
-#ifndef ADIOS2_ENGINE_INSITUMPIWRITER_TCC_
-#define ADIOS2_ENGINE_INSITUMPIWRITER_TCC_
+#ifndef ADIOS2_ENGINE_INSITU_INSITUMPIWRITER_TCC_
+#define ADIOS2_ENGINE_INSITU_INSITUMPIWRITER_TCC_
 
 #include "InSituMPIWriter.h"
 
@@ -149,4 +149,4 @@ void InSituMPIWriter::AsyncSendVariable(
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_INSITUMPIWRITER_TCC_ */
+#endif /* ADIOS2_ENGINE_INSITUMPI_INSITUWRITER_TCC_ */

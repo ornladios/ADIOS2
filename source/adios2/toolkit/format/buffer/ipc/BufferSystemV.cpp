@@ -62,5 +62,19 @@ char *BufferSystemV::Data() noexcept { return m_Data; }
 
 const char *BufferSystemV::Data() const noexcept { return m_Data; }
 
+void BufferSystemV::Reset(const bool resetAbsolutePosition,
+                          const bool zeroInitialize)
+{
+    m_Position = 0;
+    if (resetAbsolutePosition)
+    {
+        m_AbsolutePosition = 0;
+    }
+    if (zeroInitialize)
+    {
+        memset(m_Data, 0, m_FixedSize);
+    }
+}
+
 } // end namespace format
 } // end namespace adios2

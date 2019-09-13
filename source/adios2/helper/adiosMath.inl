@@ -354,7 +354,7 @@ void GetMinMaxSubblocks(const T *values, const Dims &count,
 {
     const int ndim = static_cast<int>(count.size());
     const size_t nElems = helper::GetTotalSize(count);
-    if (info.nBlocks <= 1)
+    if (info.NBlocks <= 1)
     {
         GetMinMaxThreads(values, nElems, bmin, bmax, threads);
         MinMaxs.resize(2);
@@ -364,8 +364,8 @@ void GetMinMaxSubblocks(const T *values, const Dims &count,
     else
     {
         // Calculate min/max for each block separately
-        MinMaxs.resize(2 * info.nBlocks);
-        for (int b = 0; b < info.nBlocks; ++b)
+        MinMaxs.resize(2 * info.NBlocks);
+        for (int b = 0; b < info.NBlocks; ++b)
         {
             Box<Dims> box = GetSubBlock(count, info, b);
             // calculate start position of this subblock in values array

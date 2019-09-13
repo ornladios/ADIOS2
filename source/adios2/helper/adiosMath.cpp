@@ -328,23 +328,23 @@ size_t GetDistance(const size_t end, const size_t start, const bool debugMode,
 void CalculateSubblockInfo(const Dims &count, BlockDivisionInfo &info) noexcept
 {
     const int ndim = static_cast<int>(count.size());
-    info.rem.resize(ndim, 0);
-    info.reverseDivProduct.resize(ndim, 0);
+    info.Rem.resize(ndim, 0);
+    info.ReverseDivProduct.resize(ndim, 0);
     uint16_t n = 1;
     // remainders + nBlocks calculation
     for (int j = 0; j < ndim; ++j)
     {
-        info.rem[j] = count[j] % info.div[j];
-        n = n * info.div[j];
+        info.Rem[j] = count[j] % info.Div[j];
+        n = n * info.Div[j];
     }
-    info.nBlocks = n;
+    info.NBlocks = n;
 
     // division vector for calculating N-dim blockIDs from blockID
     uint16_t d = 1; // div[n-2] * div[n-3] * ... div[0]
     for (int j = ndim - 1; j >= 0; --j)
     {
-        info.reverseDivProduct[j] = d;
-        d = d * info.div[j];
+        info.ReverseDivProduct[j] = d;
+        d = d * info.Div[j];
     }
 }
 
@@ -374,23 +374,23 @@ BlockDivisionInfo DivideBlock(const Dims &count, const size_t subblockSize,
     }
 
     BlockDivisionInfo info;
-    info.subblockSize = subblockSize;
-    info.divisionMethod = divisionMethod;
-    info.div.resize(ndim, 1);
-    info.rem.resize(ndim, 0);
-    info.reverseDivProduct.resize(ndim, 1);
-    info.nBlocks = static_cast<uint16_t>(nBlocks64);
-    if (info.nBlocks == 0)
+    info.SubBlockSize = subblockSize;
+    info.DivisionMethod = divisionMethod;
+    info.Div.resize(ndim, 1);
+    info.Rem.resize(ndim, 0);
+    info.ReverseDivProduct.resize(ndim, 1);
+    info.NBlocks = static_cast<uint16_t>(nBlocks64);
+    if (info.NBlocks == 0)
     {
-        info.nBlocks = 1;
+        info.NBlocks = 1;
     }
 
-    if (info.nBlocks > 1)
+    if (info.NBlocks > 1)
     {
         /* Split the block into 'nBlocks' subblocks */
         /* FIXME: What about column-major dimension order here? */
         int i = 0;
-        uint16_t n = info.nBlocks;
+        uint16_t n = info.NBlocks;
         size_t dim;
         uint16_t div = 1;
         while (n > 1 && i < ndim)
@@ -406,7 +406,7 @@ BlockDivisionInfo DivideBlock(const Dims &count, const size_t subblockSize,
                 div = static_cast<uint16_t>(dim);
                 n = static_cast<uint16_t>(n / dim); // calming VS++
             }
-            info.div[i] = div;
+            info.Div[i] = div;
             ++i;
         }
         CalculateSubblockInfo(count, info);
@@ -423,10 +423,10 @@ Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
     std::vector<uint16_t> blockIds(ndim, 0); // blockID in N-dim
     for (int j = 0; j < ndim; ++j)
     {
-        blockIds[j] = blockID / info.reverseDivProduct[j];
+        blockIds[j] = blockID / info.ReverseDivProduct[j];
         if (j > 0)
         {
-            blockIds[j] = blockIds[j] % info.div[j];
+            blockIds[j] = blockIds[j] % info.Div[j];
         }
     }
 
@@ -435,16 +435,16 @@ Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
     Dims sbStart(ndim, 0);
     for (int j = 0; j < ndim; ++j)
     {
-        sbCount[j] = count[j] / info.div[j];
+        sbCount[j] = count[j] / info.Div[j];
         sbStart[j] = sbCount[j] * blockIds[j];
-        if (blockIds[j] < info.rem[j])
+        if (blockIds[j] < info.Rem[j])
         {
             sbCount[j] += 1;
             sbStart[j] += blockIds[j];
         }
         else
         {
-            sbStart[j] += info.rem[j];
+            sbStart[j] += info.Rem[j];
         }
     }
 

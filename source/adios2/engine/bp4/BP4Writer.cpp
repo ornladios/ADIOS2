@@ -106,7 +106,7 @@ void BP4Writer::EndStep()
     m_BP4Serializer.SerializeData(m_IO, true);
 
     const size_t currentStep = CurrentStep();
-    const size_t flushStepsCount = m_BP4Serializer.m_FlushStepsCount;
+    const size_t flushStepsCount = m_BP4Serializer.m_Parameters.FlushStepsCount;
 
     if (currentStep % flushStepsCount == 0)
     {
@@ -120,7 +120,7 @@ void BP4Writer::Flush(const int transportIndex)
     DoFlush(false, transportIndex);
     m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Data);
 
-    if (m_BP4Serializer.m_CollectiveMetadata)
+    if (m_BP4Serializer.m_Parameters.CollectiveMetadata)
     {
         WriteCollectiveMetadataFile();
     }
@@ -150,7 +150,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void BP4Writer::InitParameters()
 {
-    m_BP4Serializer.InitParameters(m_IO.m_Parameters);
+    m_BP4Serializer.Init(m_IO.m_Parameters, "in call to BP4::Open to write");
 }
 
 void BP4Writer::InitTransports()
@@ -177,10 +177,10 @@ void BP4Writer::InitTransports()
         bpSubStreamNames = m_BP4Serializer.GetBPSubStreamNames(transportsNames);
     }
 
-    m_BP4Serializer.ProfilerStart("mkdir");
+    m_BP4Serializer.m_Profiler.Start("mkdir");
     m_FileDataManager.MkDirsBarrier(bpSubStreamNames,
-                                    m_BP4Serializer.m_NodeLocal);
-    m_BP4Serializer.ProfilerStop("mkdir");
+                                    m_BP4Serializer.m_Parameters.NodeLocal);
+    m_BP4Serializer.m_Profiler.Stop("mkdir");
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
     {
@@ -188,7 +188,7 @@ void BP4Writer::InitTransports()
         // bpSubStreamNames[0] << std::endl;
         m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
                                     m_IO.m_TransportsParameters,
-                                    m_BP4Serializer.m_Profiler.IsActive);
+                                    m_BP4Serializer.m_Profiler.m_IsActive);
     }
 
     if (m_BP4Serializer.m_RankMPI == 0)
@@ -202,14 +202,14 @@ void BP4Writer::InitTransports()
 
         m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,
                                         m_IO.m_TransportsParameters,
-                                        m_BP4Serializer.m_Profiler.IsActive);
+                                        m_BP4Serializer.m_Profiler.m_IsActive);
 
         std::vector<std::string> metadataIndexFileNames =
             m_BP4Serializer.GetBPMetadataIndexFileNames(transportsNames);
 
         m_FileMetadataIndexManager.OpenFiles(
             metadataIndexFileNames, m_OpenMode, m_IO.m_TransportsParameters,
-            m_BP4Serializer.m_Profiler.IsActive);
+            m_BP4Serializer.m_Profiler.m_IsActive);
 
         if (m_OpenMode != Mode::Append ||
             m_FileMetadataIndexManager.GetFileSize(0) == 0)
@@ -367,13 +367,13 @@ void BP4Writer::DoClose(const int transportIndex)
         m_FileDataManager.CloseFiles(transportIndex);
     }
 
-    if (m_BP4Serializer.m_CollectiveMetadata &&
+    if (m_BP4Serializer.m_Parameters.CollectiveMetadata &&
         m_FileDataManager.AllTransportsClosed())
     {
         WriteCollectiveMetadataFile(true);
     }
 
-    if (m_BP4Serializer.m_Profiler.IsActive &&
+    if (m_BP4Serializer.m_Profiler.m_IsActive &&
         m_FileDataManager.AllTransportsClosed())
     {
         // std::cout << "write profiling file!" << std::endl;
@@ -513,22 +513,22 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
             const uint64_t pgIndexStartMetadataFile =
                 m_BP4Serializer
                     .m_MetadataIndexTable[m_BP4Serializer.m_RankMPI][t][0] +
-                m_BP4Serializer.m_MetadataSet.metadataFileLength +
+                m_BP4Serializer.m_MetadataSet.MetadataFileLength +
                 m_BP4Serializer.m_PreMetadataFileLength;
             const uint64_t varIndexStartMetadataFile =
                 m_BP4Serializer
                     .m_MetadataIndexTable[m_BP4Serializer.m_RankMPI][t][1] +
-                m_BP4Serializer.m_MetadataSet.metadataFileLength +
+                m_BP4Serializer.m_MetadataSet.MetadataFileLength +
                 m_BP4Serializer.m_PreMetadataFileLength;
             const uint64_t attrIndexStartMetadataFile =
                 m_BP4Serializer
                     .m_MetadataIndexTable[m_BP4Serializer.m_RankMPI][t][2] +
-                m_BP4Serializer.m_MetadataSet.metadataFileLength +
+                m_BP4Serializer.m_MetadataSet.MetadataFileLength +
                 m_BP4Serializer.m_PreMetadataFileLength;
             const uint64_t currentStepEndPosMetadataFile =
                 m_BP4Serializer
                     .m_MetadataIndexTable[m_BP4Serializer.m_RankMPI][t][3] +
-                m_BP4Serializer.m_MetadataSet.metadataFileLength +
+                m_BP4Serializer.m_MetadataSet.MetadataFileLength +
                 m_BP4Serializer.m_PreMetadataFileLength;
             PopulateMetadataIndexFileContent(
                 m_BP4Serializer.m_MetadataIndex, t, m_BP4Serializer.m_RankMPI,
@@ -594,7 +594,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
             m_BP4Serializer.m_MetadataIndex.m_Position);
         m_FileMetadataIndexManager.FlushFiles();
 
-        m_BP4Serializer.m_MetadataSet.metadataFileLength +=
+        m_BP4Serializer.m_MetadataSet.MetadataFileLength +=
             m_BP4Serializer.m_Metadata.m_Position;
 
         if (isFinal)

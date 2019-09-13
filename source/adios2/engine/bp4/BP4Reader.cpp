@@ -141,7 +141,7 @@ void BP4Reader::Init()
         }
     }
 
-    m_BP4Deserializer.InitParameters(m_IO.m_Parameters);
+    m_BP4Deserializer.Init(m_IO.m_Parameters, "in call to BP4::Open to write");
     InitTransports();
     InitBuffer();
 }
@@ -150,7 +150,7 @@ void BP4Reader::OpenFiles()
 {
     /* Do a collective wait for the file(s) to appear within timeout.
        Make sure every process comes to the same conclusion */
-    float timeoutSeconds = m_BP4Deserializer.m_OpenTimeoutSecs;
+    const float timeoutSeconds = m_BP4Deserializer.m_Parameters.OpenTimeoutSecs;
 
     // set poll to 1/100 of timeout
     uint64_t pollTime_ms =
@@ -178,7 +178,7 @@ void BP4Reader::OpenFiles()
             try
             {
                 errno = 0;
-                const bool profile = m_BP4Deserializer.m_Profiler.IsActive;
+                const bool profile = m_BP4Deserializer.m_Profiler.m_IsActive;
                 /* Open the metadata index table */
                 const std::string metadataIndexFile(
                     m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
@@ -455,7 +455,8 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
         timeoutSeconds = std::numeric_limits<float>::max();
     }
 
-    float pollSecs = m_BP4Deserializer.m_BeginStepPollingFrequencySecs;
+    float pollSecs =
+        m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs;
     if (pollSecs > timeoutSeconds)
     {
         pollSecs = timeoutSeconds;
