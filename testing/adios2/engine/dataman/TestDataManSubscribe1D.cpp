@@ -24,7 +24,7 @@ TEST_F(DataManEngineTest, WriteRead_1D_Subscribe)
     Dims shape = {10};
     Dims start = {0};
     Dims count = {10};
-    size_t steps = 1000;
+    size_t steps = 10000;
     adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
                                    {"Port", "12318"}};
 

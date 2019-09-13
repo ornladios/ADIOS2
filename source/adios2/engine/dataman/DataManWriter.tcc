@@ -2,21 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * DataMan.h
+ * DataManWriter.tcc
  *
  *  Created on: Jan 10, 2017
- *      Author: wfg
+ *      Author: Jason Wang
  */
 
-#ifndef ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_TCC_
-#define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_TCC_
+#ifndef ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_TCC_
+#define ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_TCC_
 
 #include "DataManWriter.h"
-
-#include "adios2/common/ADIOSMPI.h"
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
-
-#include <iostream>
 
 namespace adios2
 {
@@ -35,13 +30,11 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 template <class T>
 void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
-
     variable.SetData(values);
-
     if (m_IsRowMajor)
     {
-        m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
-                                   "", Params());
+        m_FastSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, "",
+                                Params());
     }
     else
     {
@@ -55,9 +48,9 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         std::reverse(shape.begin(), shape.end());
         std::reverse(memstart.begin(), memstart.end());
         std::reverse(memcount.begin(), memcount.end());
-        m_DataManSerializer.PutVar(variable.m_Data, variable.m_Name, shape,
-                                   start, count, memstart, memcount, m_Name,
-                                   CurrentStep(), m_MpiRank, "", Params());
+        m_FastSerializer.PutVar(variable.m_Data, variable.m_Name, shape, start,
+                                count, memstart, memcount, m_Name,
+                                CurrentStep(), m_MpiRank, "", Params());
     }
 }
 
@@ -65,4 +58,4 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_ */
+#endif /* ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_TCC_ */

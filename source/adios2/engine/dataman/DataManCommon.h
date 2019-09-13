@@ -37,11 +37,11 @@ public:
     virtual ~DataManCommon();
 
 protected:
-    // external paremeters
+    // external parameters
     int m_Verbosity = 0;
     size_t m_SerializerBufferSize = 128 * 1024 * 1024;
     size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
-    std::string m_StagingMode = "wide";
+    std::string m_StagingMode = "wide"; // wide or local
     int m_Timeout = 5;
 
     // internal variables
@@ -53,7 +53,7 @@ protected:
     std::string m_IPAddress;
     int m_Port = 50001;
 
-    format::DataManSerializer m_DataManSerializer;
+    format::DataManSerializer m_FastSerializer;
 
     bool GetParameter(const Params &params, const std::string &key,
                       bool &value);

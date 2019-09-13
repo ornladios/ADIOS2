@@ -6,15 +6,12 @@
  *
  *  Created on: Feb 21, 2017
  *      Author: Jason Wang
- *              William F Godoy
  */
 
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 
 #include "DataManCommon.h"
-
-#include "adios2/helper/adiosComm.h"
 
 namespace adios2
 {
@@ -37,7 +34,7 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    bool m_ProvideLatest = false;
+    bool m_ProvideLatest = true;
     bool m_InitFailed = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
     int m_TotalWriters;
@@ -45,9 +42,8 @@ private:
     std::vector<std::string> m_DataAddresses;
     std::vector<std::string> m_ControlAddresses;
     std::vector<std::shared_ptr<adios2::zmq::ZmqPubSub>> m_ZmqSubscriberVec;
-    std::thread m_SubscriberThread;
     format::DmvVecPtr m_CurrentStepMetadata;
-
+    std::thread m_SubscriberThread;
     void SubscriberThread();
     void DoClose(const int transportIndex = -1) final;
 

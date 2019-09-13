@@ -2,19 +2,13 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * DataMan.cpp
+ * DataManWriter.cpp
  *
  *  Created on: Jan 10, 2017
- *      Author: wfg
+ *      Author: Jason Wang
  */
 
-#include "DataManWriter.h"
 #include "DataManWriter.tcc"
-
-#include <iostream>
-
-#include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 namespace adios2
 {
@@ -70,10 +64,10 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         // TODO: Add filesystem based handshake
     }
 
-    m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout);
+    m_ReplyThread =
+        std::thread(&DataManWriter::ReplyThread, this, m_ControlAddress);
 
-    m_ControlThread =
-        std::thread(&DataManWriter::ControlThread, this, m_ControlAddress);
+    m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout);
 }
 
 DataManWriter::~DataManWriter()
@@ -87,7 +81,7 @@ DataManWriter::~DataManWriter()
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     ++m_CurrentStep;
-    m_DataManSerializer.NewWriterBuffer(m_SerializerBufferSize);
+    m_FastSerializer.NewWriterBuffer(m_SerializerBufferSize);
 
     if (m_Verbosity >= 5)
     {
@@ -106,10 +100,11 @@ void DataManWriter::EndStep()
 {
     if (m_CurrentStep == 0)
     {
-        m_DataManSerializer.PutAttributes(m_IO);
+        m_FastSerializer.PutAttributes(m_IO);
     }
-    m_DataManSerializer.AttachAttributes();
-    const auto buf = m_DataManSerializer.GetLocalPack();
+
+    m_FastSerializer.AttachAttributes();
+    const auto buf = m_FastSerializer.GetLocalPack();
     m_SerializerBufferSize = buf->size();
     m_DataPublisher.PushBufferQueue(buf);
 }
@@ -140,13 +135,13 @@ void DataManWriter::DoClose(const int transportIndex)
     m_DataPublisher.PushBufferQueue(cvp);
 
     m_ThreadActive = false;
-    if (m_ControlThread.joinable())
+    if (m_ReplyThread.joinable())
     {
-        m_ControlThread.join();
+        m_ReplyThread.join();
     }
 }
 
-void DataManWriter::ControlThread(const std::string &address)
+void DataManWriter::ReplyThread(const std::string &address)
 {
     adios2::zmq::ZmqReqRep replier;
     replier.OpenReplier(address, m_Timeout, 8192);

@@ -170,11 +170,10 @@ public:
 
     size_t LocalBufferSize();
 
-    DmvVecPtr GetLatestStep(int64_t &currentStep,
-                            const int requireMinimumBlocks);
-
-    DmvVecPtr GetEarliestStep(int64_t &currentStep,
-                              const int requireMinimumBlocks);
+    DmvVecPtr GetEarliestLatestStep(int64_t &currentStep,
+                                    const int requireMinimumBlocks,
+                                    const float timeoutSeconds,
+                                    const bool latest);
 
 private:
     template <class T>

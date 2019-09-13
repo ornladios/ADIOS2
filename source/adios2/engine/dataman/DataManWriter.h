@@ -6,14 +6,12 @@
  *
  *  Created on: Jan 10, 2017
  *      Author: Jason Wang
- *              William F Godoy
  */
 
-#ifndef ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
-#define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
+#ifndef ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_H_
+#define ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_H_
 
 #include "DataManCommon.h"
-#include "adios2/helper/adiosComm.h"
 
 namespace adios2
 {
@@ -44,11 +42,8 @@ private:
 
     adios2::zmq::ZmqPubSub m_DataPublisher;
 
-    format::VecPtr m_AggregatedMetadata = nullptr;
-    std::mutex m_AggregatedMetadataMutex;
-
-    void ControlThread(const std::string &address);
-    std::thread m_ControlThread;
+    void ReplyThread(const std::string &address);
+    std::thread m_ReplyThread;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
@@ -69,4 +64,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_ */
+#endif /* ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_H_ */

@@ -6,14 +6,9 @@
  *
  *  Created on: Feb 21, 2017
  *      Author: Jason Wang
- *              William F Godoy
  */
 
-#include "DataManReader.h"
 #include "DataManReader.tcc"
-
-#include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 namespace adios2
 {
@@ -75,7 +70,6 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
         dataZmq->OpenSubscriber(address, m_Timeout, m_ReceiverBufferSize);
         m_ZmqSubscriberVec.push_back(dataZmq);
     }
-
     m_SubscriberThread = std::thread(&DataManReader::SubscriberThread, this);
 }
 
@@ -101,6 +95,13 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                   << m_CurrentStep << std::endl;
     }
 
+    float timeout = timeoutSeconds;
+
+    if (timeout <= 0)
+    {
+        timeout = m_Timeout;
+    }
+
     if (m_InitFailed)
     {
         if (m_Verbosity >= 5)
@@ -112,7 +113,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         return StepStatus::EndOfStream;
     }
 
-    if (m_CurrentStep == m_FinalStep and m_CurrentStep > 0)
+    if (m_CurrentStep >= m_FinalStep and m_CurrentStep >= 0)
     {
         if (m_Verbosity >= 5)
         {
@@ -123,45 +124,29 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         return StepStatus::EndOfStream;
     }
 
-    auto start_time = std::chrono::system_clock::now();
+    m_CurrentStepMetadata = m_FastSerializer.GetEarliestLatestStep(
+        m_CurrentStep, m_TotalWriters, timeout, m_ProvideLatest);
 
-    while (m_CurrentStepMetadata == nullptr)
+    if (m_CurrentStepMetadata == nullptr)
     {
-        if (m_ProvideLatest)
+        if (m_Verbosity >= 5)
         {
-            m_CurrentStepMetadata = m_DataManSerializer.GetLatestStep(
-                m_CurrentStep, m_TotalWriters);
+            std::cout << "DataManReader::BeginStep() returned EndOfStream due "
+                         "to timeout"
+                      << std::endl;
         }
-        else
-        {
-            m_CurrentStepMetadata = m_DataManSerializer.GetEarliestStep(
-                m_CurrentStep, m_TotalWriters);
-        }
-
-        auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            now_time - start_time);
-        if (duration.count() < timeoutSeconds)
-        {
-            if (m_Verbosity >= 5)
-            {
-                std::cout << "DataManReader::BeginStep() returned EndOfStream, "
-                             "final step is "
-                          << m_FinalStep << std::endl;
-            }
-            return StepStatus::EndOfStream;
-        }
+        return StepStatus::EndOfStream;
     }
 
-    m_DataManSerializer.GetAttributes(m_IO);
+    m_FastSerializer.GetAttributes(m_IO);
 
     for (const auto &i : *m_CurrentStepMetadata)
     {
         if (i.step == m_CurrentStep)
         {
-            if (i.type == "compound")
+            if (i.type.empty())
             {
-                throw("Compound type is not supported yet.");
+                throw("unknown data type");
             }
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
@@ -170,11 +155,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-            else
-            {
-                throw("Unknown type caught in "
-                      "DataManReader::BeginStepSubscribe.");
-            }
+            else { throw("unknown data type"); }
         }
     }
 
@@ -193,7 +174,7 @@ void DataManReader::PerformGets() {}
 
 void DataManReader::EndStep()
 {
-    m_DataManSerializer.Erase(m_CurrentStep);
+    m_FastSerializer.Erase(m_CurrentStep, true);
     m_CurrentStepMetadata = nullptr;
     if (m_Verbosity >= 5)
     {
@@ -215,21 +196,19 @@ void DataManReader::SubscriberThread()
             auto buffer = z->PopBufferQueue();
             if (buffer != nullptr && buffer->size() > 0)
             {
-                // check if is control signal
                 if (buffer->size() < 64)
                 {
                     try
                     {
-                        nlohmann::json jmsg =
-                            nlohmann::json::parse(buffer->data());
+                        auto jmsg = nlohmann::json::parse(buffer->data());
                         m_FinalStep = jmsg["FinalStep"].get<size_t>();
                         continue;
                     }
-                    catch (std::exception)
+                    catch (...)
                     {
                     }
                 }
-                m_DataManSerializer.PutPack(buffer);
+                m_FastSerializer.PutPack(buffer);
             }
         }
     }

@@ -585,7 +585,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
         for (auto it = m_DataManVarMap.begin(); it != m_DataManVarMap.end();
              ++it)
         {
-            if (it->first < step)
+            if (it->first <= step)
             {
                 if (not IsStepProtected(it->first))
                 {
@@ -1116,68 +1116,76 @@ bool DataManSerializer::StepHasMinimumBlocks(const size_t step,
     return false;
 }
 
-DmvVecPtr DataManSerializer::GetEarliestStep(int64_t &currentStep,
-                                             const int requireMinimumBlocks)
+DmvVecPtr DataManSerializer::GetEarliestLatestStep(
+    int64_t &currentStep, const int requireMinimumBlocks,
+    const float timeoutSeconds, const bool latest)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-
-    bool hasStep = false;
-    size_t earliestStep = std::numeric_limits<size_t>::max();
-
-    for (const auto &i : m_DataManVarMap)
+    auto start_time = std::chrono::system_clock::now();
+    while (true)
     {
-        if (earliestStep > i.first)
+        std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
+
+        bool hasStep = false;
+        size_t latestStep = 0;
+        size_t earliestStep = std::numeric_limits<size_t>::max();
+
+        for (const auto &i : m_DataManVarMap)
         {
-            earliestStep = i.first;
+            if (latestStep < i.first)
+            {
+                latestStep = i.first;
+            }
+            if (earliestStep > i.first)
+            {
+                earliestStep = i.first;
+            }
+            hasStep = true;
         }
-        hasStep = true;
-    }
 
-    if (not hasStep)
-    {
-        return nullptr;
-    }
-
-    if (StepHasMinimumBlocks(earliestStep, requireMinimumBlocks))
-    {
-        currentStep = earliestStep;
-        return m_DataManVarMap[earliestStep];
-    }
-
-    return nullptr;
-}
-DmvVecPtr DataManSerializer::GetLatestStep(int64_t &currentStep,
-                                           const int requireMinimumBlocks)
-{
-    TAU_SCOPED_TIMER_FUNC();
-
-    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-
-    bool hasStep = false;
-    size_t latestStep = 0;
-
-    for (const auto &i : m_DataManVarMap)
-    {
-        if (latestStep < i.first)
+        if (hasStep)
         {
-            latestStep = i.first;
+            bool hasCompleteStep = false;
+            if (latest)
+            {
+                for (size_t step = latestStep; step >= earliestStep; --step)
+                {
+                    if (StepHasMinimumBlocks(step, requireMinimumBlocks))
+                    {
+                        currentStep = step;
+                        hasCompleteStep = true;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                for (size_t step = earliestStep; step <= latestStep; ++step)
+                {
+                    if (StepHasMinimumBlocks(step, requireMinimumBlocks))
+                    {
+                        currentStep = step;
+                        hasCompleteStep = true;
+                        break;
+                    }
+                }
+            }
+
+            if (hasCompleteStep)
+            {
+                return m_DataManVarMap[currentStep];
+            }
         }
-        hasStep = true;
-    }
 
-    if (not hasStep)
-    {
-        return nullptr;
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > timeoutSeconds and timeoutSeconds > 0)
+        {
+            return nullptr;
+        }
     }
-
-    if (StepHasMinimumBlocks(latestStep, requireMinimumBlocks))
-    {
-        currentStep = latestStep;
-        return m_DataManVarMap[latestStep];
-    }
-
     return nullptr;
 }
 

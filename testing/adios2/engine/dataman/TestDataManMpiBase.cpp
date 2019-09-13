@@ -210,7 +210,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     size_t currentStep;
     while (true)
     {
-        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
+        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 3);
         if (status == adios2::StepStatus::OK)
         {
             received_steps = true;
@@ -326,7 +326,7 @@ TEST_F(DataManEngineTest, DataManBase)
     if (mpiGroup == 1)
     {
         adios2::Params engineParams = {
-            {"Port", "13316"}, {"IPAddress", "127.0.0.1"}, {"Verbose", "11"}};
+            {"Port", "13316"}, {"IPAddress", "127.0.0.1"}, {"Verbose", "0"}};
         Reader(shape, start, count, steps, engineParams, filename);
     }
 
