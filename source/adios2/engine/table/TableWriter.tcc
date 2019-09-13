@@ -21,6 +21,32 @@ namespace core
 namespace engine
 {
 
+template <>
+void TableWriter::PutSyncCommon<std::string>(Variable<std::string> &variable,
+                                             const std::string *data)
+{
+    auto var = m_SubIO.InquireVariable<std::string>(variable.m_Name);
+    if (not var)
+    {
+        var = m_SubIO.DefineVariable<std::string>(variable.m_Name,
+                                                  {LocalValueDim});
+    }
+    m_SubEngine->Put(var, data, Mode::Sync);
+}
+
+template <>
+void TableWriter::PutDeferredCommon<std::string>(
+    Variable<std::string> &variable, const std::string *data)
+{
+    auto var = m_SubIO.InquireVariable<std::string>(variable.m_Name);
+    if (not var)
+    {
+        var = m_SubIO.DefineVariable<std::string>(variable.m_Name,
+                                                  {LocalValueDim});
+    }
+    m_SubEngine->Put(var, data, Mode::Deferred);
+}
+
 template <class T>
 void TableWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
