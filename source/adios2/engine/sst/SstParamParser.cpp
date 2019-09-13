@@ -1,5 +1,4 @@
 
-#include <adios2/common/ADIOSMPI.h>
 #include <memory>
 
 #include "SstParamParser.h"
