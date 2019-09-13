@@ -16,7 +16,7 @@
 
 //#include "../engine/SmallTestData.h"
 
-std::string engineName; // comes from command line
+// std::string engineName; // comes from command line
 
 struct QueryTestData
 {
@@ -63,9 +63,12 @@ class BPQueryTest : public ::testing::Test
 public:
     BPQueryTest() = default;
 
-    void WriteFile(const std::string &fname, adios2::ADIOS &adios);
-    void QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios);
-    void QueryIntVar(const std::string &fname, adios2::ADIOS &adios);
+    void WriteFile(const std::string &fname, adios2::ADIOS &adios,
+                   const std::string &engineName);
+    void QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios,
+                        const std::string &engineName);
+    void QueryIntVar(const std::string &fname, adios2::ADIOS &adios,
+                     const std::string &engineName);
 
     QueryTestData m_TestData;
 
@@ -77,7 +80,8 @@ public:
     int mpiRank = 0, mpiSize = 1;
 };
 
-void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios)
+void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios,
+                              const std::string &engineName)
 {
     std::string ioName = "IOQueryTestInt" + engineName;
     adios2::IO io = adios.DeclareIO(ioName.c_str());
@@ -91,7 +95,7 @@ void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios)
 
     EXPECT_EQ(bpReader.Steps(), NSteps);
 
-    std::string queryFile = "./test.xml";
+    std::string queryFile = "./" + ioName + "test.xml"; //"./test.xml";
     std::cout << ioName << std::endl;
     WriteXmlQuery1D(queryFile, ioName, "intV");
     adios2::QueryWorker w = adios2::QueryWorker(queryFile, bpReader);
@@ -113,7 +117,8 @@ void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios)
     bpReader.Close();
 }
 
-void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios)
+void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios,
+                                 const std::string &engineName)
 {
     std::string ioName = "IOQueryTestDouble" + engineName;
     adios2::IO io = adios.DeclareIO(ioName.c_str());
@@ -127,7 +132,8 @@ void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios)
 
     EXPECT_EQ(bpReader.Steps(), NSteps);
 
-    std::string queryFile = "./.test.xml";
+    // std::string queryFile = "./.test.xml";
+    std::string queryFile = "./" + ioName + "test.xml";
     WriteXmlQuery1D(queryFile, ioName, "doubleV");
     adios2::QueryWorker w = adios2::QueryWorker(queryFile, bpReader);
 
@@ -147,7 +153,8 @@ void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios)
     bpReader.Close();
 }
 
-void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios)
+void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios,
+                            const std::string &engineName)
 {
 
 #ifdef ADIOS2_HAVE_MPI
@@ -233,7 +240,7 @@ void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios)
 
 TEST_F(BPQueryTest, BP3)
 {
-    engineName = "BP3";
+    std::string engineName = "BP3";
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
     const std::string fname(engineName + "Query1D.bp");
@@ -244,12 +251,12 @@ TEST_F(BPQueryTest, BP3)
     adios2::ADIOS adios(true);
 #endif
 
-    WriteFile(fname, adios);
+    WriteFile(fname, adios, engineName);
 
     if (mpiSize == 1)
     {
-        QueryDoubleVar(fname, adios);
-        QueryIntVar(fname, adios);
+        QueryDoubleVar(fname, adios, engineName);
+        QueryIntVar(fname, adios, engineName);
     }
 }
 
@@ -259,10 +266,10 @@ TEST_F(BPQueryTest, BP3)
 
 TEST_F(BPQueryTest, BP4)
 {
-    engineName = "BP4";
+    std::string engineName = "BP4";
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname(engineName + "Query1D.bp");
+    const std::string fname(engineName + "4Query1D.bp");
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -270,12 +277,12 @@ TEST_F(BPQueryTest, BP4)
     adios2::ADIOS adios(true);
 #endif
 
-    WriteFile(fname, adios);
+    WriteFile(fname, adios, engineName);
 
     if (mpiSize == 1)
     {
-        QueryDoubleVar(fname, adios);
-        QueryIntVar(fname, adios);
+        QueryDoubleVar(fname, adios, engineName);
+        QueryIntVar(fname, adios, engineName);
     }
 }
 
@@ -295,7 +302,7 @@ int main(int argc, char **argv)
 
     if (argc > 1)
     {
-        engineName = std::string(argv[1]);
+        // engineName = std::string(argv[1]);
     }
     result = RUN_ALL_TESTS();
 
