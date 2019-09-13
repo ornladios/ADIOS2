@@ -33,6 +33,29 @@ const MPI_Op OpToMPI[] = {
 
 MPI_Op ToMPI(Comm::Op op) { return OpToMPI[int(op)]; }
 
+const MPI_Datatype DatatypeToMPI[] = {
+    MPI_SIGNED_CHAR,
+    MPI_CHAR,
+    MPI_SHORT,
+    MPI_INT,
+    MPI_LONG,
+    MPI_UNSIGNED_CHAR,
+    MPI_UNSIGNED_SHORT,
+    MPI_UNSIGNED,
+    MPI_UNSIGNED_LONG,
+    MPI_UNSIGNED_LONG_LONG,
+    MPI_LONG_LONG_INT,
+    MPI_DOUBLE,
+    MPI_LONG_DOUBLE,
+    MPI_2INT,
+    MPI_FLOAT_INT,
+    MPI_DOUBLE_INT,
+    MPI_LONG_DOUBLE_INT,
+    MPI_SHORT_INT,
+};
+
+MPI_Datatype ToMPI(CommImpl::Datatype dt) { return DatatypeToMPI[int(dt)]; }
+
 void CheckMPIReturn(const int value, const std::string &hint)
 {
     if (value == MPI_SUCCESS)
@@ -92,52 +115,49 @@ public:
     int Size() const override;
     void Barrier(const std::string &hint) const override;
 
-    void Allgather(const void *sendbuf, size_t sendcount, MPI_Datatype sendtype,
-                   void *recvbuf, size_t recvcount, MPI_Datatype recvtype,
+    void Allgather(const void *sendbuf, size_t sendcount, Datatype sendtype,
+                   void *recvbuf, size_t recvcount, Datatype recvtype,
                    const std::string &hint) const override;
 
     void Allreduce(const void *sendbuf, void *recvbuf, size_t count,
-                   MPI_Datatype datatype, Comm::Op op,
+                   Datatype datatype, Comm::Op op,
                    const std::string &hint) const override;
 
-    void Bcast(void *buffer, size_t count, MPI_Datatype datatype,
+    void Bcast(void *buffer, size_t count, Datatype datatype,
                size_t datatypeSize, int root,
                const std::string &hint) const override;
 
-    void Gather(const void *sendbuf, size_t sendcount, MPI_Datatype sendtype,
-                void *recvbuf, size_t recvcount, MPI_Datatype recvtype,
-                int root, const std::string &hint) const override;
+    void Gather(const void *sendbuf, size_t sendcount, Datatype sendtype,
+                void *recvbuf, size_t recvcount, Datatype recvtype, int root,
+                const std::string &hint) const override;
 
-    void Gatherv(const void *sendbuf, size_t sendcount, MPI_Datatype sendtype,
+    void Gatherv(const void *sendbuf, size_t sendcount, Datatype sendtype,
                  void *recvbuf, const size_t *recvcounts, const size_t *displs,
-                 MPI_Datatype recvtype, int root,
+                 Datatype recvtype, int root,
                  const std::string &hint) const override;
 
     void Reduce(const void *sendbuf, void *recvbuf, size_t count,
-                MPI_Datatype datatype, Comm::Op op, int root,
+                Datatype datatype, Comm::Op op, int root,
                 const std::string &hint) const override;
 
-    void ReduceInPlace(void *buf, size_t count, MPI_Datatype datatype,
-                       Comm::Op op, int root,
-                       const std::string &hint) const override;
+    void ReduceInPlace(void *buf, size_t count, Datatype datatype, Comm::Op op,
+                       int root, const std::string &hint) const override;
 
-    void Send(const void *buf, size_t count, MPI_Datatype datatype, int dest,
+    void Send(const void *buf, size_t count, Datatype datatype, int dest,
               int tag, const std::string &hint) const override;
 
-    Comm::Status Recv(void *buf, size_t count, MPI_Datatype datatype,
-                      int source, int tag,
-                      const std::string &hint) const override;
+    Comm::Status Recv(void *buf, size_t count, Datatype datatype, int source,
+                      int tag, const std::string &hint) const override;
 
-    void Scatter(const void *sendbuf, size_t sendcount, MPI_Datatype sendtype,
-                 void *recvbuf, size_t recvcount, MPI_Datatype recvtype,
-                 int root, const std::string &hint) const override;
+    void Scatter(const void *sendbuf, size_t sendcount, Datatype sendtype,
+                 void *recvbuf, size_t recvcount, Datatype recvtype, int root,
+                 const std::string &hint) const override;
 
-    Comm::Req Isend(const void *buffer, size_t count, MPI_Datatype datatype,
+    Comm::Req Isend(const void *buffer, size_t count, Datatype datatype,
                     int dest, int tag, const std::string &hint) const override;
 
-    Comm::Req Irecv(void *buffer, size_t count, MPI_Datatype datatype,
-                    int source, int tag,
-                    const std::string &hint) const override;
+    Comm::Req Irecv(void *buffer, size_t count, Datatype datatype, int source,
+                    int tag, const std::string &hint) const override;
 };
 
 CommImplMPI::~CommImplMPI()
@@ -193,26 +213,26 @@ void CommImplMPI::Barrier(const std::string &hint) const
 }
 
 void CommImplMPI::Allgather(const void *sendbuf, size_t sendcount,
-                            MPI_Datatype sendtype, void *recvbuf,
-                            size_t recvcount, MPI_Datatype recvtype,
-                            const std::string &hint) const
+                            Datatype sendtype, void *recvbuf, size_t recvcount,
+                            Datatype recvtype, const std::string &hint) const
 {
-    CheckMPIReturn(
-        SMPI_Allgather(sendbuf, static_cast<int>(sendcount), sendtype, recvbuf,
-                       static_cast<int>(recvcount), recvtype, m_MPIComm),
-        hint);
-}
-
-void CommImplMPI::Allreduce(const void *sendbuf, void *recvbuf, size_t count,
-                            MPI_Datatype datatype, Comm::Op op,
-                            const std::string &hint) const
-{
-    CheckMPIReturn(SMPI_Allreduce(sendbuf, recvbuf, static_cast<int>(count),
-                                  datatype, ToMPI(op), m_MPIComm),
+    CheckMPIReturn(SMPI_Allgather(sendbuf, static_cast<int>(sendcount),
+                                  ToMPI(sendtype), recvbuf,
+                                  static_cast<int>(recvcount), ToMPI(recvtype),
+                                  m_MPIComm),
                    hint);
 }
 
-void CommImplMPI::Bcast(void *buffer, size_t count, MPI_Datatype datatype,
+void CommImplMPI::Allreduce(const void *sendbuf, void *recvbuf, size_t count,
+                            Datatype datatype, Comm::Op op,
+                            const std::string &hint) const
+{
+    CheckMPIReturn(SMPI_Allreduce(sendbuf, recvbuf, static_cast<int>(count),
+                                  ToMPI(datatype), ToMPI(op), m_MPIComm),
+                   hint);
+}
+
+void CommImplMPI::Bcast(void *buffer, size_t count, Datatype datatype,
                         size_t datatypeSize, int root,
                         const std::string &hint) const
 {
@@ -223,7 +243,7 @@ void CommImplMPI::Bcast(void *buffer, size_t count, MPI_Datatype datatype,
     while (inputSize > 0)
     {
         CheckMPIReturn(SMPI_Bcast(blockBuf, static_cast<int>(blockSize),
-                                  datatype, root, m_MPIComm),
+                                  ToMPI(datatype), root, m_MPIComm),
                        hint);
         blockBuf += blockSize * datatypeSize;
         inputSize -= blockSize;
@@ -232,20 +252,21 @@ void CommImplMPI::Bcast(void *buffer, size_t count, MPI_Datatype datatype,
 }
 
 void CommImplMPI::Gather(const void *sendbuf, size_t sendcount,
-                         MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
-                         MPI_Datatype recvtype, int root,
+                         Datatype sendtype, void *recvbuf, size_t recvcount,
+                         Datatype recvtype, int root,
                          const std::string &hint) const
 {
-    CheckMPIReturn(SMPI_Gather(sendbuf, static_cast<int>(sendcount), sendtype,
-                               recvbuf, static_cast<int>(recvcount), recvtype,
+    CheckMPIReturn(SMPI_Gather(sendbuf, static_cast<int>(sendcount),
+                               ToMPI(sendtype), recvbuf,
+                               static_cast<int>(recvcount), ToMPI(recvtype),
                                root, m_MPIComm),
                    hint);
 }
 
 void CommImplMPI::Gatherv(const void *sendbuf, size_t sendcount,
-                          MPI_Datatype sendtype, void *recvbuf,
+                          Datatype sendtype, void *recvbuf,
                           const size_t *recvcounts, const size_t *displs,
-                          MPI_Datatype recvtype, int root,
+                          Datatype recvtype, int root,
                           const std::string &hint) const
 {
     std::vector<int> countsInt;
@@ -261,45 +282,46 @@ void CommImplMPI::Gatherv(const void *sendbuf, size_t sendcount,
         std::transform(displs, displs + size, std::back_inserter(displsInt),
                        cast);
     }
-    CheckMPIReturn(SMPI_Gatherv(sendbuf, static_cast<int>(sendcount), sendtype,
-                                recvbuf, countsInt.data(), displsInt.data(),
-                                recvtype, root, m_MPIComm),
+    CheckMPIReturn(SMPI_Gatherv(sendbuf, static_cast<int>(sendcount),
+                                ToMPI(sendtype), recvbuf, countsInt.data(),
+                                displsInt.data(), ToMPI(recvtype), root,
+                                m_MPIComm),
                    hint);
 }
 
 void CommImplMPI::Reduce(const void *sendbuf, void *recvbuf, size_t count,
-                         MPI_Datatype datatype, Comm::Op op, int root,
+                         Datatype datatype, Comm::Op op, int root,
                          const std::string &hint) const
 {
     CheckMPIReturn(SMPI_Reduce(sendbuf, recvbuf, static_cast<int>(count),
-                               datatype, ToMPI(op), root, m_MPIComm),
+                               ToMPI(datatype), ToMPI(op), root, m_MPIComm),
                    hint);
 }
 
-void CommImplMPI::ReduceInPlace(void *buf, size_t count, MPI_Datatype datatype,
+void CommImplMPI::ReduceInPlace(void *buf, size_t count, Datatype datatype,
                                 Comm::Op op, int root,
                                 const std::string &hint) const
 {
     CheckMPIReturn(SMPI_Reduce(MPI_IN_PLACE, buf, static_cast<int>(count),
-                               datatype, ToMPI(op), root, m_MPIComm),
+                               ToMPI(datatype), ToMPI(op), root, m_MPIComm),
                    hint);
 }
 
-void CommImplMPI::Send(const void *buf, size_t count, MPI_Datatype datatype,
+void CommImplMPI::Send(const void *buf, size_t count, Datatype datatype,
                        int dest, int tag, const std::string &hint) const
 {
-    CheckMPIReturn(
-        MPI_Send(buf, static_cast<int>(count), datatype, dest, tag, m_MPIComm),
-        hint);
+    CheckMPIReturn(MPI_Send(buf, static_cast<int>(count), ToMPI(datatype), dest,
+                            tag, m_MPIComm),
+                   hint);
 }
 
-Comm::Status CommImplMPI::Recv(void *buf, size_t count, MPI_Datatype datatype,
+Comm::Status CommImplMPI::Recv(void *buf, size_t count, Datatype datatype,
                                int source, int tag,
                                const std::string &hint) const
 {
     MPI_Status mpiStatus;
-    CheckMPIReturn(MPI_Recv(buf, static_cast<int>(count), datatype, source, tag,
-                            m_MPIComm, &mpiStatus),
+    CheckMPIReturn(MPI_Recv(buf, static_cast<int>(count), ToMPI(datatype),
+                            source, tag, m_MPIComm, &mpiStatus),
                    hint);
 
     Comm::Status status;
@@ -308,7 +330,8 @@ Comm::Status CommImplMPI::Recv(void *buf, size_t count, MPI_Datatype datatype,
     status.Tag = mpiStatus.MPI_TAG;
     {
         int mpiCount = 0;
-        CheckMPIReturn(MPI_Get_count(&mpiStatus, datatype, &mpiCount), hint);
+        CheckMPIReturn(MPI_Get_count(&mpiStatus, ToMPI(datatype), &mpiCount),
+                       hint);
         status.Count = mpiCount;
     }
 #endif
@@ -316,21 +339,23 @@ Comm::Status CommImplMPI::Recv(void *buf, size_t count, MPI_Datatype datatype,
 }
 
 void CommImplMPI::Scatter(const void *sendbuf, size_t sendcount,
-                          MPI_Datatype sendtype, void *recvbuf,
-                          size_t recvcount, MPI_Datatype recvtype, int root,
+                          Datatype sendtype, void *recvbuf, size_t recvcount,
+                          Datatype recvtype, int root,
                           const std::string &hint) const
 {
-    CheckMPIReturn(MPI_Scatter(sendbuf, static_cast<int>(sendcount), sendtype,
-                               recvbuf, static_cast<int>(recvcount), recvtype,
+    CheckMPIReturn(MPI_Scatter(sendbuf, static_cast<int>(sendcount),
+                               ToMPI(sendtype), recvbuf,
+                               static_cast<int>(recvcount), ToMPI(recvtype),
                                root, m_MPIComm),
                    hint);
 }
 
 Comm::Req CommImplMPI::Isend(const void *buffer, size_t count,
-                             MPI_Datatype datatype, int dest, int tag,
+                             Datatype datatype, int dest, int tag,
                              const std::string &hint) const
 {
-    auto req = std::unique_ptr<CommReqImplMPI>(new CommReqImplMPI(datatype));
+    auto req =
+        std::unique_ptr<CommReqImplMPI>(new CommReqImplMPI(ToMPI(datatype)));
 
     if (count > DefaultMaxFileBatchSize)
     {
@@ -342,9 +367,9 @@ Comm::Req CommImplMPI::Isend(const void *buffer, size_t count,
             int batchSize = static_cast<int>(DefaultMaxFileBatchSize);
             MPI_Request mpiReq;
             CheckMPIReturn(
-                MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)) +
-                              position,
-                          batchSize, datatype, dest, tag, m_MPIComm, &mpiReq),
+                MPI_Isend(
+                    static_cast<char *>(const_cast<void *>(buffer)) + position,
+                    batchSize, ToMPI(datatype), dest, tag, m_MPIComm, &mpiReq),
                 "in call to Isend batch " + std::to_string(b) + " " + hint +
                     "\n");
             req->m_MPIReqs.emplace_back(mpiReq);
@@ -357,9 +382,9 @@ Comm::Req CommImplMPI::Isend(const void *buffer, size_t count,
             int batchSize = static_cast<int>(remainder);
             MPI_Request mpiReq;
             CheckMPIReturn(
-                MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)) +
-                              position,
-                          batchSize, datatype, dest, tag, m_MPIComm, &mpiReq),
+                MPI_Isend(
+                    static_cast<char *>(const_cast<void *>(buffer)) + position,
+                    batchSize, ToMPI(datatype), dest, tag, m_MPIComm, &mpiReq),
                 "in call to Isend remainder batch " + hint + "\n");
             req->m_MPIReqs.emplace_back(mpiReq);
         }
@@ -370,7 +395,8 @@ Comm::Req CommImplMPI::Isend(const void *buffer, size_t count,
         MPI_Request mpiReq;
         CheckMPIReturn(
             MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)),
-                      batchSize, datatype, dest, tag, m_MPIComm, &mpiReq),
+                      batchSize, ToMPI(datatype), dest, tag, m_MPIComm,
+                      &mpiReq),
             " in call to Isend with single batch " + hint + "\n");
         req->m_MPIReqs.emplace_back(mpiReq);
     }
@@ -378,10 +404,11 @@ Comm::Req CommImplMPI::Isend(const void *buffer, size_t count,
     return MakeReq(std::move(req));
 }
 
-Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, MPI_Datatype datatype,
+Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype,
                              int source, int tag, const std::string &hint) const
 {
-    auto req = std::unique_ptr<CommReqImplMPI>(new CommReqImplMPI(datatype));
+    auto req =
+        std::unique_ptr<CommReqImplMPI>(new CommReqImplMPI(ToMPI(datatype)));
 
     if (count > DefaultMaxFileBatchSize)
     {
@@ -392,7 +419,7 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, MPI_Datatype datatype,
             int batchSize = static_cast<int>(DefaultMaxFileBatchSize);
             MPI_Request mpiReq;
             CheckMPIReturn(MPI_Irecv(static_cast<char *>(buffer) + position,
-                                     batchSize, datatype, source, tag,
+                                     batchSize, ToMPI(datatype), source, tag,
                                      m_MPIComm, &mpiReq),
                            "in call to Irecv batch " + std::to_string(b) + " " +
                                hint + "\n");
@@ -407,7 +434,7 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, MPI_Datatype datatype,
             int batchSize = static_cast<int>(remainder);
             MPI_Request mpiReq;
             CheckMPIReturn(MPI_Irecv(static_cast<char *>(buffer) + position,
-                                     batchSize, datatype, source, tag,
+                                     batchSize, ToMPI(datatype), source, tag,
                                      m_MPIComm, &mpiReq),
                            "in call to Irecv remainder batch " + hint + "\n");
             req->m_MPIReqs.emplace_back(mpiReq);
@@ -417,8 +444,8 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, MPI_Datatype datatype,
     {
         int batchSize = static_cast<int>(count);
         MPI_Request mpiReq;
-        CheckMPIReturn(MPI_Irecv(buffer, batchSize, datatype, source, tag,
-                                 m_MPIComm, &mpiReq),
+        CheckMPIReturn(MPI_Irecv(buffer, batchSize, ToMPI(datatype), source,
+                                 tag, m_MPIComm, &mpiReq),
                        " in call to Isend with single batch " + hint + "\n");
         req->m_MPIReqs.emplace_back(mpiReq);
     }

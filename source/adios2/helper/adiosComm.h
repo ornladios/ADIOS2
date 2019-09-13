@@ -8,8 +8,6 @@
 #ifndef ADIOS2_HELPER_ADIOSCOMM_H_
 #define ADIOS2_HELPER_ADIOSCOMM_H_
 
-#include "adios2/common/ADIOSMPI.h"
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -233,10 +231,6 @@ private:
 
     std::unique_ptr<CommImpl> m_Impl;
 
-    /** Return MPI datatype id for type T.  */
-    template <typename T>
-    static MPI_Datatype Datatype();
-
     static std::vector<size_t> GetGathervDisplacements(const size_t *counts,
                                                        const size_t countsSize);
 };
@@ -319,6 +313,31 @@ public:
 class CommImpl
 {
 public:
+    enum class Datatype
+    {
+        SignedChar,
+        Char,
+        Short,
+        Int,
+        Long,
+        UnsignedChar,
+        UnsignedShort,
+        UnsignedInt,
+        UnsignedLong,
+        UnsignedLongLong,
+        LongLong,
+        Double,
+        LongDouble,
+        Int_Int,
+        Float_Int,
+        Double_Int,
+        LongDouble_Int,
+        Short_Int,
+    };
+
+    template <typename T>
+    static Datatype GetDatatype();
+
     virtual ~CommImpl() = 0;
     virtual void Free(const std::string &hint) = 0;
     virtual std::unique_ptr<CommImpl> Split(int color, int key,
@@ -327,54 +346,54 @@ public:
     virtual int Size() const = 0;
     virtual void Barrier(const std::string &hint) const = 0;
     virtual void Allgather(const void *sendbuf, size_t sendcount,
-                           MPI_Datatype sendtype, void *recvbuf,
-                           size_t recvcount, MPI_Datatype recvtype,
+                           Datatype sendtype, void *recvbuf, size_t recvcount,
+                           Datatype recvtype,
                            const std::string &hint) const = 0;
 
     virtual void Allreduce(const void *sendbuf, void *recvbuf, size_t count,
-                           MPI_Datatype datatype, Comm::Op op,
+                           Datatype datatype, Comm::Op op,
                            const std::string &hint) const = 0;
 
-    virtual void Bcast(void *buffer, size_t count, MPI_Datatype datatype,
+    virtual void Bcast(void *buffer, size_t count, Datatype datatype,
                        size_t datatypeSize, int root,
                        const std::string &hint) const = 0;
 
     virtual void Gather(const void *sendbuf, size_t sendcount,
-                        MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
-                        MPI_Datatype recvtype, int root,
+                        Datatype sendtype, void *recvbuf, size_t recvcount,
+                        Datatype recvtype, int root,
                         const std::string &hint) const = 0;
 
     virtual void Gatherv(const void *sendbuf, size_t sendcount,
-                         MPI_Datatype sendtype, void *recvbuf,
+                         Datatype sendtype, void *recvbuf,
                          const size_t *recvcounts, const size_t *displs,
-                         MPI_Datatype recvtype, int root,
+                         Datatype recvtype, int root,
                          const std::string &hint) const = 0;
 
     virtual void Reduce(const void *sendbuf, void *recvbuf, size_t count,
-                        MPI_Datatype datatype, Comm::Op op, int root,
+                        Datatype datatype, Comm::Op op, int root,
                         const std::string &hint) const = 0;
 
-    virtual void ReduceInPlace(void *buf, size_t count, MPI_Datatype datatype,
+    virtual void ReduceInPlace(void *buf, size_t count, Datatype datatype,
                                Comm::Op op, int root,
                                const std::string &hint) const = 0;
 
-    virtual void Send(const void *buf, size_t count, MPI_Datatype datatype,
+    virtual void Send(const void *buf, size_t count, Datatype datatype,
                       int dest, int tag, const std::string &hint) const = 0;
 
-    virtual Comm::Status Recv(void *buf, size_t count, MPI_Datatype datatype,
+    virtual Comm::Status Recv(void *buf, size_t count, Datatype datatype,
                               int source, int tag,
                               const std::string &hint) const = 0;
 
     virtual void Scatter(const void *sendbuf, size_t sendcount,
-                         MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
-                         MPI_Datatype recvtype, int root,
+                         Datatype sendtype, void *recvbuf, size_t recvcount,
+                         Datatype recvtype, int root,
                          const std::string &hint) const = 0;
 
-    virtual Comm::Req Isend(const void *buffer, size_t count,
-                            MPI_Datatype datatype, int dest, int tag,
+    virtual Comm::Req Isend(const void *buffer, size_t count, Datatype datatype,
+                            int dest, int tag,
                             const std::string &hint) const = 0;
 
-    virtual Comm::Req Irecv(void *buffer, size_t count, MPI_Datatype datatype,
+    virtual Comm::Req Irecv(void *buffer, size_t count, Datatype datatype,
                             int source, int tag,
                             const std::string &hint) const = 0;
 

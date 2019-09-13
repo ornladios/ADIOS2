@@ -11,8 +11,6 @@
 
 #include "adiosComm.h"
 
-#include "adios2/common/ADIOSMPI.h"
-
 namespace adios2
 {
 namespace helper
@@ -41,113 +39,114 @@ std::string Comm::BroadcastValue(const std::string &input,
     return output;
 }
 
-// Datatype full specializations forward-declared in 'adiosComm.inl'.
+// Comm::Impl::GetDatatype full specializations forward-declared in
+// 'adiosComm.inl'.
 template <>
-MPI_Datatype Comm::Datatype<signed char>()
+CommImpl::Datatype CommImpl::GetDatatype<signed char>()
 {
-    return MPI_SIGNED_CHAR;
+    return CommImpl::Datatype::SignedChar;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<char>()
+CommImpl::Datatype CommImpl::GetDatatype<char>()
 {
-    return MPI_CHAR;
+    return CommImpl::Datatype::Char;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<short>()
+CommImpl::Datatype CommImpl::GetDatatype<short>()
 {
-    return MPI_SHORT;
+    return CommImpl::Datatype::Short;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<int>()
+CommImpl::Datatype CommImpl::GetDatatype<int>()
 {
-    return MPI_INT;
+    return CommImpl::Datatype::Int;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<long>()
+CommImpl::Datatype CommImpl::GetDatatype<long>()
 {
-    return MPI_LONG;
+    return CommImpl::Datatype::Long;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<unsigned char>()
+CommImpl::Datatype CommImpl::GetDatatype<unsigned char>()
 {
-    return MPI_UNSIGNED_CHAR;
+    return CommImpl::Datatype::UnsignedChar;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<unsigned short>()
+CommImpl::Datatype CommImpl::GetDatatype<unsigned short>()
 {
-    return MPI_UNSIGNED_SHORT;
+    return CommImpl::Datatype::UnsignedShort;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<unsigned int>()
+CommImpl::Datatype CommImpl::GetDatatype<unsigned int>()
 {
-    return MPI_UNSIGNED;
+    return CommImpl::Datatype::UnsignedInt;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<unsigned long>()
+CommImpl::Datatype CommImpl::GetDatatype<unsigned long>()
 {
-    return MPI_UNSIGNED_LONG;
+    return CommImpl::Datatype::UnsignedLong;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<unsigned long long>()
+CommImpl::Datatype CommImpl::GetDatatype<unsigned long long>()
 {
-    return MPI_UNSIGNED_LONG_LONG;
+    return CommImpl::Datatype::UnsignedLongLong;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<long long>()
+CommImpl::Datatype CommImpl::GetDatatype<long long>()
 {
-    return MPI_LONG_LONG_INT;
+    return CommImpl::Datatype::LongLong;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<double>()
+CommImpl::Datatype CommImpl::GetDatatype<double>()
 {
-    return MPI_DOUBLE;
+    return CommImpl::Datatype::Double;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<long double>()
+CommImpl::Datatype CommImpl::GetDatatype<long double>()
 {
-    return MPI_LONG_DOUBLE;
+    return CommImpl::Datatype::LongDouble;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<std::pair<int, int>>()
+CommImpl::Datatype CommImpl::GetDatatype<std::pair<int, int>>()
 {
-    return MPI_2INT;
+    return CommImpl::Datatype::Int_Int;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<std::pair<float, int>>()
+CommImpl::Datatype CommImpl::GetDatatype<std::pair<float, int>>()
 {
-    return MPI_FLOAT_INT;
+    return CommImpl::Datatype::Float_Int;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<std::pair<double, int>>()
+CommImpl::Datatype CommImpl::GetDatatype<std::pair<double, int>>()
 {
-    return MPI_DOUBLE_INT;
+    return CommImpl::Datatype::Double_Int;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<std::pair<long double, int>>()
+CommImpl::Datatype CommImpl::GetDatatype<std::pair<long double, int>>()
 {
-    return MPI_LONG_DOUBLE_INT;
+    return CommImpl::Datatype::LongDouble_Int;
 }
 
 template <>
-MPI_Datatype Comm::Datatype<std::pair<short, int>>()
+CommImpl::Datatype CommImpl::GetDatatype<std::pair<short, int>>()
 {
-    return MPI_SHORT_INT;
+    return CommImpl::Datatype::Short_Int;
 }
 
 } // end namespace helper
