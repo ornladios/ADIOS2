@@ -84,7 +84,7 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
-    if (print_lines < 100)
+    if (print_lines < 32)
     {
         PrintData(data, step, start, count);
         ++print_lines;
@@ -99,7 +99,7 @@ void VerifyData(const T *data, size_t step, const Dims &start,
                                   std::multiplies<size_t>());
     bool compressed = false;
     std::vector<T> tmpdata(size);
-    if (print_lines < 100)
+    if (print_lines < 32)
     {
         PrintData(data, step, start, count);
         ++print_lines;
@@ -325,7 +325,7 @@ TEST_F(SscEngineTest, SscNoSelection)
 
     if (mpiGroup == 0)
     {
-        Writer(shape, start, count, 1000, engineParams, filename);
+        Writer(shape, start, count, 200, engineParams, filename);
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));

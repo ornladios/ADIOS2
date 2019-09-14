@@ -114,7 +114,7 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
-    if (print_lines < 100)
+    if (print_lines < 32)
     {
         PrintData(data, step, start, count);
         ++print_lines;
@@ -129,7 +129,7 @@ void VerifyData(const T *data, size_t step, const Dims &start,
                                   std::multiplies<size_t>());
     bool compressed = false;
     std::vector<T> tmpdata(size);
-    if (print_lines < 100)
+    if (print_lines < 32)
     {
         PrintData(data, step, start, count);
         ++print_lines;
