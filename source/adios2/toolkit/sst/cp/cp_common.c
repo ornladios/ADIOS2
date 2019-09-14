@@ -1057,7 +1057,7 @@ extern void SstStreamDestroy(SstStream Stream)
     CP_verbose(&StackStream, "SstStreamDestroy successful, returning\n");
 }
 
-extern char *CP_GetContactString(SstStream Stream)
+extern char *CP_GetContactString(SstStream Stream, attr_list DPAttrs)
 {
     attr_list ListenList = create_attr_list(), ContactList;
     set_string_attr(ListenList, CM_TRANSPORT_ATOM,
@@ -1076,6 +1076,10 @@ extern char *CP_GetContactString(SstStream Stream)
     if (strcmp(Stream->ConfigParams->ControlTransport, "enet") == 0)
     {
         set_int_attr(ContactList, CM_ENET_CONN_TIMEOUT, 60000); /* 60 seconds */
+    }
+    if (DPAttrs)
+    {
+        attr_merge_lists(ContactList, DPAttrs);
     }
     char *ret = attr_list_to_string(ContactList);
     free_attr_list(ListenList);

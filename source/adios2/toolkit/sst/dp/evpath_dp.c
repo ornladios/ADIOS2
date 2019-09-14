@@ -227,7 +227,8 @@ static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream,
 
 static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
                                      void **ReaderContactInfoPtr,
-                                     struct _SstParams *Params)
+                                     struct _SstParams *Params,
+                                     attr_list WriterContact)
 {
     Evpath_RS_Stream Stream = malloc(sizeof(struct _Evpath_RS_Stream));
     EvpathReaderContactInfo Contact =
@@ -539,7 +540,8 @@ static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
 }
 
 static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream,
-                                     struct _SstParams *Params)
+                                     struct _SstParams *Params,
+                                     attr_list DPAttrs)
 {
     Evpath_WS_Stream Stream = malloc(sizeof(struct _Evpath_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
@@ -569,6 +571,11 @@ static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream,
      * register read reply message structure so we can send later
      */
     Stream->ReadReplyFormat = CMregister_format(cm, EvpathReadReplyStructs);
+
+    //   We'd set an attribute here if we needed to communicate it to possible
+    //   readers
+    //    set_int_attr(DPAttrs, attr_atom_from_string("EVPATH_DP_Attr"),
+    //    0xdeadbeef);
 
     return (void *)Stream;
 }
@@ -1153,6 +1160,9 @@ static struct _CP_DP_Interface evpathDPInterface;
 static int EvpathGetPriority(CP_Services Svcs, void *CP_Stream,
                              struct _SstParams *Params)
 {
+    // Define any unique attributes here
+    (void)attr_atom_from_string("EVPATH_DP_Attr");
+
     /* The evpath DP should be a lower priority than any RDMA dp, so return 1 */
     return 1;
 }
