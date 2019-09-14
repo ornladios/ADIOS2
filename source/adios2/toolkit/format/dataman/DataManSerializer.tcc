@@ -528,14 +528,17 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                 return -103; // bzip2 library not found
 #endif
             }
-            if (j.start.size() > 0 && j.start.size() == j.count.size() &&
-                j.start.size() == varStart.size() &&
+
+            if (not decompressed)
+            {
+                input_data += j.position;
+            }
+
+            if (j.shape.size() > 0 and j.shape[0] > 1 and j.start.size() > 0 and
+                j.start.size() == j.count.size() and
+                j.start.size() == varStart.size() and
                 j.start.size() == varCount.size())
             {
-                if (not decompressed)
-                {
-                    input_data += j.position;
-                }
                 if (m_ContiguousMajor)
                 {
                     helper::NdCopy<T>(
@@ -552,6 +555,10 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                         varStart, varCount, m_IsRowMajor, m_IsLittleEndian,
                         j.start, j.count, varMemStart, varMemCount);
                 }
+            }
+            if (j.shape.empty() or (j.shape.size() == 1 and j.shape[0] == 1))
+            {
+                *outputData = *reinterpret_cast<T *>(input_data);
             }
         }
     }
