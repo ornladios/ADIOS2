@@ -138,10 +138,11 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
         "bpComplexes", shape, start, count);
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
+    auto bpUInt64s = dataManIO.DefineVariable<uint64_t>("bpUInt64s");
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter =
         dataManIO.Open("stream", adios2::Mode::Write);
-    for (int i = 0; i < steps; ++i)
+    for (uint64_t i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();
         GenData(myChars, i);
@@ -165,6 +166,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
         dataManWriter.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpDComplexes, myDComplexes.data(),
                           adios2::Mode::Sync);
+        dataManWriter.Put(bpUInt64s, i);
         dataManWriter.EndStep();
     }
     dataManWriter.Close();
@@ -204,7 +206,7 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
         {
             received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
-            ASSERT_EQ(vars.size(), 10);
+            ASSERT_EQ(vars.size(), 11);
             if (print_lines == 0)
             {
                 std::cout << "All available variables : ";
@@ -235,6 +237,8 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<float>>("bpComplexes");
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
+            adios2::Variable<uint64_t> bpUInt64s =
+                dataManIO.InquireVariable<uint64_t>("bpUInt64s");
             auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
             bpChars.SetSelection({start, count});
             bpUChars.SetSelection({start, count});
@@ -258,6 +262,9 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
                               adios2::Mode::Sync);
             dataManReader.Get(bpDComplexes, myDComplexes.data(),
                               adios2::Mode::Sync);
+            uint64_t stepValue;
+            dataManReader.Get(bpUInt64s, &stepValue, adios2::Mode::Sync);
+            ASSERT_EQ(currentStep, stepValue);
             VerifyData(myChars, currentStep);
             VerifyData(myUChars, currentStep);
             VerifyData(myShorts, currentStep);
