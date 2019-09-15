@@ -327,7 +327,8 @@ typedef struct _RdmaWriterContactInfo
 
 static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
                                    void **ReaderContactInfoPtr,
-                                   struct _SstParams *Params)
+                                   struct _SstParams *Params,
+                                   attr_list WriterContact)
 {
     Rdma_RS_Stream Stream = malloc(sizeof(struct _Rdma_RS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
@@ -351,6 +352,16 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
         memcpy(Stream->Params, Params, sizeof(*Params));
     }
 
+#ifdef SST_HAVE_CRAY_DRC
+    int protection_key;
+    if (!get_int_attr(WriterContact, attr_atom_from_string("RDMA_DRC_KEY"),
+                      &protection_key))
+    {
+        Svcs->verbose(CP_Stream, "Didn't find DRC credential\n");
+        return NULL;
+    }
+    // do something with protection key?
+#endif
     return Stream;
 }
 
@@ -366,7 +377,7 @@ typedef struct _RdmaCompletionHandle
 } * RdmaCompletionHandle;
 
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
-                                   struct _SstParams *Params)
+                                   struct _SstParams *Params, attr_list DPAttrs)
 {
     Rdma_WS_Stream Stream = malloc(sizeof(struct _Rdma_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
@@ -414,6 +425,10 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
         drc_get_first_cookie(Fabric->drc_info);
     Svcs->verbose(CP_Stream, "Using protection key %08x.\n",
                   Fabric->auth_key->raw.protection_key);
+
+    set_int_attr(DPAttrs, attr_atom_from_string("RDMA_DRC_KEY"),
+                 Fabric->auth_key->raw.protection_key);
+
 #endif /* SST_HAVE_CRAY_DRC */
 
     init_fabric(Stream->Fabric, Params);
@@ -911,6 +926,9 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     struct fi_info *hints, *info, *originfo, *useinfo;
     char *ifname;
     int Ret = -1;
+
+    (void)attr_atom_from_string(
+        "RDMA_DRC_KEY"); // make sure this attribute is translatable
 
     hints = fi_allocinfo();
     hints->caps = FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ |

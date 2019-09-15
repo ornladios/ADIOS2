@@ -53,9 +53,9 @@ static int locked = 0;
 #define SST_ASSERT_UNLOCKED() assert(unlocked)
 #endif
 
-static char *buildContactInfo(SstStream Stream)
+static char *buildContactInfo(SstStream Stream, attr_list DPAttrs)
 {
-    char *Contact = CP_GetContactString(Stream);
+    char *Contact = CP_GetContactString(Stream, DPAttrs);
     char *FullInfo = malloc(strlen(Contact) + 20);
     sprintf(FullInfo, "%p:%s", (void *)Stream, Contact);
     free(Contact);
@@ -126,9 +126,10 @@ static void RemoveNameFromExitList(const char *FileName)
     }
 }
 
-static void writeContactInfoFile(const char *Name, SstStream Stream)
+static void writeContactInfoFile(const char *Name, SstStream Stream,
+                                 attr_list DPAttrs)
 {
-    char *Contact = buildContactInfo(Stream);
+    char *Contact = buildContactInfo(Stream, DPAttrs);
     char *TmpName = malloc(strlen(Name) + strlen(".tmp") + 1);
     char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
     FILE *WriterInfo;
@@ -151,9 +152,10 @@ static void writeContactInfoFile(const char *Name, SstStream Stream)
     AddNameToExitList(Stream->AbsoluteFilename);
 }
 
-static void writeContactInfoScreen(const char *Name, SstStream Stream)
+static void writeContactInfoScreen(const char *Name, SstStream Stream,
+                                   attr_list DPAttrs)
 {
-    char *Contact = buildContactInfo(Stream);
+    char *Contact = buildContactInfo(Stream, DPAttrs);
 
     /*
      * write the contact information file to the screen
@@ -167,15 +169,16 @@ static void writeContactInfoScreen(const char *Name, SstStream Stream)
     free(Contact);
 }
 
-static void registerContactInfo(const char *Name, SstStream Stream)
+static void registerContactInfo(const char *Name, SstStream Stream,
+                                attr_list DPAttrs)
 {
     switch (Stream->RegistrationMethod)
     {
     case SstRegisterFile:
-        writeContactInfoFile(Name, Stream);
+        writeContactInfoFile(Name, Stream, DPAttrs);
         break;
     case SstRegisterScreen:
-        writeContactInfoScreen(Name, Stream);
+        writeContactInfoScreen(Name, Stream, DPAttrs);
         break;
     case SstRegisterCloud:
         /* not yet */
@@ -787,7 +790,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     struct _CP_DP_PairInfo **pointers = NULL;
 
     memset(&cpInfo, 0, sizeof(cpInfo));
-    cpInfo.ContactInfo = CP_GetContactString(Stream);
+    cpInfo.ContactInfo = CP_GetContactString(Stream, NULL);
     cpInfo.WriterID = CP_WSR_Stream;
 
     combined_init.CP_Info = (void **)&cpInfo;
@@ -1122,12 +1125,13 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
         Stream->FirstReaderCondition = -1;
     }
 
-    Stream->DP_Stream =
-        Stream->DP_Interface->initWriter(&Svcs, Stream, Stream->ConfigParams);
+    attr_list DPAttrs = create_attr_list();
+    Stream->DP_Stream = Stream->DP_Interface->initWriter(
+        &Svcs, Stream, Stream->ConfigParams, DPAttrs);
 
     if (Stream->Rank == 0)
     {
-        registerContactInfo(Filename, Stream);
+        registerContactInfo(Filename, Stream, DPAttrs);
     }
 
     CP_verbose(Stream, "Opening Stream \"%s\"\n", Filename);
@@ -1140,7 +1144,8 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     if (globalNetinfoCallback)
     {
-        (globalNetinfoCallback)(0, CP_GetContactString(Stream), IPDiagString);
+        (globalNetinfoCallback)(0, CP_GetContactString(Stream, DPAttrs),
+                                IPDiagString);
     }
     while (Stream->RendezvousReaderCount > 0)
     {

@@ -225,7 +225,7 @@ static void **ParticipateInReaderInitDataExchange(SstStream Stream,
 
     struct _CP_DP_PairInfo **pointers;
 
-    cpInfo.ContactInfo = CP_GetContactString(Stream);
+    cpInfo.ContactInfo = CP_GetContactString(Stream, NULL);
     cpInfo.ReaderID = Stream;
 
     combined_init.CP_Info = (void **)&cpInfo;
@@ -268,6 +268,73 @@ static int HasAllPeers(SstStream Stream)
     }
 }
 
+attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
+                        MPI_Comm comm, CMConnection *conn_p,
+                        void **WriterFileID_p)
+{
+    int DataSize = 0;
+    attr_list RetVal = NULL;
+
+    if (Stream->Rank == 0)
+    {
+        char *Writer0Contact =
+            readContactInfo(Filename, Stream, Params->OpenTimeoutSecs);
+        char *CMContactString;
+        CMConnection conn = NULL;
+        attr_list WriterRank0Contact;
+
+        if (Writer0Contact)
+        {
+
+            CMContactString =
+                malloc(strlen(Writer0Contact)); /* at least long enough */
+            sscanf(Writer0Contact, "%p:%s", WriterFileID_p, CMContactString);
+            //        printf("Writer contact info is fileID %p, contact info
+            //        %s\n",
+            //               WriterFileID, CMContactString);
+            free(Writer0Contact);
+
+            if (globalNetinfoCallback)
+            {
+                (globalNetinfoCallback)(1, CP_GetContactString(Stream, NULL),
+                                        IPDiagString);
+                (globalNetinfoCallback)(2, CMContactString, NULL);
+            }
+            WriterRank0Contact = attr_list_from_string(CMContactString);
+            conn = CMget_conn(Stream->CPInfo->cm, WriterRank0Contact);
+            free_attr_list(WriterRank0Contact);
+        }
+        if (conn)
+        {
+            DataSize = strlen(CMContactString);
+            *conn_p = conn;
+        }
+        else
+        {
+            DataSize = 0;
+            *conn_p = NULL;
+        }
+        SMPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
+        if (DataSize != 0)
+        {
+            SMPI_Bcast(CMContactString, DataSize, MPI_CHAR, 0, Stream->mpiComm);
+            RetVal = attr_list_from_string(CMContactString);
+        }
+    }
+    else
+    {
+        SMPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
+        if (DataSize != 0)
+        {
+            char *Buffer = malloc(DataSize);
+            SMPI_Bcast(Buffer, DataSize, MPI_CHAR, 0, Stream->mpiComm);
+            RetVal = attr_list_from_string(Buffer);
+            free(Buffer);
+        }
+    }
+    return RetVal;
+}
+
 SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 {
     SstStream Stream;
@@ -280,6 +347,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     struct timeval Start, Stop, Diff;
     char *Filename = strdup(Name);
     CMConnection rank0_to_rank0_conn = NULL;
+    void *WriterFileID;
 
     Stream = CP_newStream();
     Stream->Role = ReaderRole;
@@ -298,117 +366,72 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->FinalTimestep = INT_MAX; /* set this on close */
     Stream->LastDPNotifiedTimestep = -1;
 
-    Stream->DP_Stream = Stream->DP_Interface->initReader(&Svcs, Stream, &dpInfo,
-                                                         Stream->ConfigParams);
+    gettimeofday(&Start, NULL);
+
+    attr_list WriterContactAttributes = ContactWriter(
+        Stream, Filename, Params, comm, &rank0_to_rank0_conn, &WriterFileID);
+
+    if (WriterContactAttributes == NULL)
+        return NULL;
+
+    Stream->DP_Stream = Stream->DP_Interface->initReader(
+        &Svcs, Stream, &dpInfo, Stream->ConfigParams, WriterContactAttributes);
 
     pointers = (struct _CP_DP_PairInfo **)ParticipateInReaderInitDataExchange(
         Stream, dpInfo, &data_block);
 
-    gettimeofday(&Start, NULL);
-
     if (Stream->Rank == 0)
     {
-        char *Writer0Contact =
-            readContactInfo(Filename, Stream, Params->OpenTimeoutSecs);
-        void *WriterFileID;
-        char *CMContactString;
         struct _CombinedWriterInfo WriterData;
-        CMConnection conn = NULL;
-        attr_list WriterRank0Contact;
+        struct _ReaderRegisterMsg ReaderRegister;
 
-        memset(&WriterData, 0, sizeof(WriterData));
-        if (!Writer0Contact)
+        memset(&ReaderRegister, 0, sizeof(ReaderRegister));
+        ReaderRegister.WriterFile = WriterFileID;
+        ReaderRegister.WriterResponseCondition =
+            CMCondition_get(Stream->CPInfo->cm, rank0_to_rank0_conn);
+        ReaderRegister.ReaderCohortSize = Stream->CohortSize;
+        ReaderRegister.CP_ReaderInfo =
+            malloc(ReaderRegister.ReaderCohortSize * sizeof(void *));
+        ReaderRegister.DP_ReaderInfo =
+            malloc(ReaderRegister.ReaderCohortSize * sizeof(void *));
+        for (int i = 0; i < ReaderRegister.ReaderCohortSize; i++)
         {
-            /* The file didn't appear prior to the timeout, notify the other
-             * ranks of failure */
-            WriterData.WriterCohortSize = -1;
+            ReaderRegister.CP_ReaderInfo[i] =
+                (CP_ReaderInitInfo)pointers[i]->CP_Info;
+            ReaderRegister.DP_ReaderInfo[i] = pointers[i]->DP_Info;
         }
-        else
+        /* the response value is set in the handler */
+        struct _WriterResponseMsg *response = NULL;
+        CMCondition_set_client_data(Stream->CPInfo->cm,
+                                    ReaderRegister.WriterResponseCondition,
+                                    &response);
+
+        if (CMwrite(rank0_to_rank0_conn, Stream->CPInfo->ReaderRegisterFormat,
+                    &ReaderRegister) != 1)
         {
-
-            CMContactString =
-                malloc(strlen(Writer0Contact)); /* at least long enough */
-            sscanf(Writer0Contact, "%p:%s", &WriterFileID, CMContactString);
-            //        printf("Writer contact info is fileID %p, contact info
-            //        %s\n",
-            //               WriterFileID, CMContactString);
-            free(Writer0Contact);
-
-            if (globalNetinfoCallback)
-            {
-                (globalNetinfoCallback)(1, CP_GetContactString(Stream),
-                                        IPDiagString);
-                (globalNetinfoCallback)(2, CMContactString, NULL);
-            }
-            WriterRank0Contact = attr_list_from_string(CMContactString);
-            conn = CMget_conn(Stream->CPInfo->cm, WriterRank0Contact);
-            free_attr_list(WriterRank0Contact);
-        }
-        if (conn)
-        {
-            /* success!   We have a connection to the writer! */
-            struct _ReaderRegisterMsg ReaderRegister;
-
-            memset(&ReaderRegister, 0, sizeof(ReaderRegister));
-            ReaderRegister.WriterFile = WriterFileID;
-            ReaderRegister.WriterResponseCondition =
-                CMCondition_get(Stream->CPInfo->cm, conn);
-            ReaderRegister.ReaderCohortSize = Stream->CohortSize;
-            ReaderRegister.CP_ReaderInfo =
-                malloc(ReaderRegister.ReaderCohortSize * sizeof(void *));
-            ReaderRegister.DP_ReaderInfo =
-                malloc(ReaderRegister.ReaderCohortSize * sizeof(void *));
-            for (int i = 0; i < ReaderRegister.ReaderCohortSize; i++)
-            {
-                ReaderRegister.CP_ReaderInfo[i] =
-                    (CP_ReaderInitInfo)pointers[i]->CP_Info;
-                ReaderRegister.DP_ReaderInfo[i] = pointers[i]->DP_Info;
-            }
-            /* the response value is set in the handler */
-            struct _WriterResponseMsg *response = NULL;
-            CMCondition_set_client_data(Stream->CPInfo->cm,
-                                        ReaderRegister.WriterResponseCondition,
-                                        &response);
-
-            if (CMwrite(conn, Stream->CPInfo->ReaderRegisterFormat,
-                        &ReaderRegister) != 1)
-            {
-                CP_verbose(
-                    Stream,
-                    "Message failed to send to writer in SstReaderOpen\n");
-            }
-            free(ReaderRegister.CP_ReaderInfo);
-            free(ReaderRegister.DP_ReaderInfo);
-
-            /* wait for "go" from writer */
-            CP_verbose(
-                Stream,
-                "Waiting for writer response message in SstReadOpen(\"%s\")\n",
-                Filename, ReaderRegister.WriterResponseCondition);
-            CMCondition_wait(Stream->CPInfo->cm,
-                             ReaderRegister.WriterResponseCondition);
             CP_verbose(Stream,
-                       "finished wait writer response message in read_open\n");
-
-            if (response)
-            {
-                WriterData.WriterCohortSize = response->WriterCohortSize;
-                WriterData.WriterConfigParams = response->WriterConfigParams;
-                WriterData.StartingStepNumber = response->NextStepNumber;
-                WriterData.CP_WriterInfo = response->CP_WriterInfo;
-                WriterData.DP_WriterInfo = response->DP_WriterInfo;
-                rank0_to_rank0_conn = conn;
-            }
-            else
-            {
-                WriterData.WriterCohortSize = -1;
-            }
+                       "Message failed to send to writer in SstReaderOpen\n");
         }
-        else
+        free(ReaderRegister.CP_ReaderInfo);
+        free(ReaderRegister.DP_ReaderInfo);
+
+        /* wait for "go" from writer */
+        CP_verbose(
+            Stream,
+            "Waiting for writer response message in SstReadOpen(\"%s\")\n",
+            Filename, ReaderRegister.WriterResponseCondition);
+        CMCondition_wait(Stream->CPInfo->cm,
+                         ReaderRegister.WriterResponseCondition);
+        CP_verbose(Stream,
+                   "finished wait writer response message in read_open\n");
+
+        if (response)
         {
-            /* there was no contact with the writer at that location, notify the
-             * other ranks */
-            WriterData.WriterCohortSize = -1;
+            WriterData.WriterCohortSize = response->WriterCohortSize;
+            WriterData.WriterConfigParams = response->WriterConfigParams;
+            WriterData.StartingStepNumber = response->NextStepNumber;
+            WriterData.CP_WriterInfo = response->CP_WriterInfo;
+            WriterData.DP_WriterInfo = response->DP_WriterInfo;
         }
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &WriterData, Stream->CPInfo->CombinedWriterInfoFormat,
