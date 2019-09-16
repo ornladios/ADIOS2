@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-include(ADIOS2Functions)
+include(ADIOSFunctions)
 
 add_test(NAME HeatTransfer.BP3.zfp.Mx1.Write
   COMMAND ${MPIEXEC_EXECUTABLE}
