@@ -354,8 +354,7 @@ public:
                            Datatype datatype, Comm::Op op,
                            const std::string &hint) const = 0;
 
-    virtual void Bcast(void *buffer, size_t count, Datatype datatype,
-                       size_t datatypeSize, int root,
+    virtual void Bcast(void *buffer, size_t count, Datatype datatype, int root,
                        const std::string &hint) const = 0;
 
     virtual void Gather(const void *sendbuf, size_t sendcount,
@@ -396,6 +395,8 @@ public:
     virtual Comm::Req Irecv(void *buffer, size_t count, Datatype datatype,
                             int source, int tag,
                             const std::string &hint) const = 0;
+
+    static size_t SizeOf(Datatype datatype);
 
     static Comm MakeComm(std::unique_ptr<CommImpl> impl);
     static Comm::Req MakeReq(std::unique_ptr<CommReqImpl> impl);

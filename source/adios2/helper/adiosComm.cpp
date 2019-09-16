@@ -17,6 +17,32 @@ namespace adios2
 namespace helper
 {
 
+namespace
+{
+const size_t DatatypeToSize[] = {
+    sizeof(signed char),
+    sizeof(char),
+    sizeof(short),
+    sizeof(int),
+    sizeof(long),
+    sizeof(unsigned char),
+    sizeof(unsigned short),
+    sizeof(unsigned int),
+    sizeof(unsigned long),
+    sizeof(unsigned long long),
+    sizeof(long long),
+    sizeof(double),
+    sizeof(long double),
+    sizeof(std::pair<int, int>),
+    sizeof(std::pair<float, int>),
+    sizeof(std::pair<double, int>),
+    sizeof(std::pair<long double, int>),
+    sizeof(std::pair<short, int>),
+};
+
+size_t ToSize(CommImpl::Datatype dt) { return DatatypeToSize[int(dt)]; }
+}
+
 Comm::Comm() = default;
 
 Comm::Comm(std::unique_ptr<CommImpl> impl) : m_Impl(std::move(impl)) {}
@@ -93,6 +119,8 @@ Comm::Status Comm::Req::Wait(const std::string &hint)
 }
 
 CommImpl::~CommImpl() = default;
+
+size_t CommImpl::SizeOf(Datatype datatype) { return ToSize(datatype); }
 
 Comm CommImpl::MakeComm(std::unique_ptr<CommImpl> impl)
 {

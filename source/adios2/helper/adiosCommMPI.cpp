@@ -123,8 +123,7 @@ public:
                    Datatype datatype, Comm::Op op,
                    const std::string &hint) const override;
 
-    void Bcast(void *buffer, size_t count, Datatype datatype,
-               size_t datatypeSize, int root,
+    void Bcast(void *buffer, size_t count, Datatype datatype, int root,
                const std::string &hint) const override;
 
     void Gather(const void *sendbuf, size_t sendcount, Datatype sendtype,
@@ -232,8 +231,7 @@ void CommImplMPI::Allreduce(const void *sendbuf, void *recvbuf, size_t count,
                    hint);
 }
 
-void CommImplMPI::Bcast(void *buffer, size_t count, Datatype datatype,
-                        size_t datatypeSize, int root,
+void CommImplMPI::Bcast(void *buffer, size_t count, Datatype datatype, int root,
                         const std::string &hint) const
 {
     size_t inputSize = count;
@@ -245,7 +243,7 @@ void CommImplMPI::Bcast(void *buffer, size_t count, Datatype datatype,
         CheckMPIReturn(SMPI_Bcast(blockBuf, static_cast<int>(blockSize),
                                   ToMPI(datatype), root, m_MPIComm),
                        hint);
-        blockBuf += blockSize * datatypeSize;
+        blockBuf += blockSize * CommImpl::SizeOf(datatype);
         inputSize -= blockSize;
         blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
     }
