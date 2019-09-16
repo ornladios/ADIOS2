@@ -580,11 +580,9 @@ protected:
      * @param isLittleEndian true: buffer is little endian, false: big endian
      * @return populated PGIndex struct
      */
-    //    ElementIndexHeader
-    //    ReadElementIndexHeader(const std::vector<char> &buffer, size_t
-    //    &position,
-    //                           const bool isLittleEndian = true) const
-    //                           noexcept;
+    virtual ElementIndexHeader
+    ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
+                           const bool isLittleEndian = true) const noexcept = 0;
 
     /**
      * Read variable element (block) characteristics from a buffer position and

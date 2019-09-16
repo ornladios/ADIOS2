@@ -255,62 +255,6 @@ void BP3Serializer::PutAttributeInData(const core::Attribute<T> &attribute,
     PutAttributeLengthInData(attribute, stats, attributeLengthPosition);
 }
 
-template <>
-inline void BP3Serializer::PutAttributeCharacteristicValueInIndex(
-    uint8_t &characteristicsCounter,
-    const core::Attribute<std::string> &attribute,
-    std::vector<char> &buffer) noexcept
-{
-    const uint8_t characteristicID =
-        static_cast<uint8_t>(CharacteristicID::characteristic_value);
-
-    helper::InsertToBuffer(buffer, &characteristicID);
-
-    if (attribute.m_IsSingleValue) // Single string
-    {
-        const uint16_t dataSize =
-            static_cast<uint16_t>(attribute.m_DataSingleValue.size());
-        helper::InsertToBuffer(buffer, &dataSize);
-        helper::InsertToBuffer(buffer, attribute.m_DataSingleValue.data(),
-                               attribute.m_DataSingleValue.size());
-    }
-    else // string array
-    {
-        for (size_t s = 0; s < attribute.m_Elements; ++s)
-        {
-            // without zero terminated character
-            const std::string element(attribute.m_DataArray[s]);
-
-            const uint16_t elementSize = static_cast<uint16_t>(element.size());
-
-            helper::InsertToBuffer(buffer, &elementSize);
-            helper::InsertToBuffer(buffer, element.data(), element.size());
-        }
-    }
-    ++characteristicsCounter;
-}
-
-template <class T>
-void BP3Serializer::PutAttributeCharacteristicValueInIndex(
-    uint8_t &characteristicsCounter, const core::Attribute<T> &attribute,
-    std::vector<char> &buffer) noexcept
-{
-    const uint8_t characteristicID = CharacteristicID::characteristic_value;
-
-    helper::InsertToBuffer(buffer, &characteristicID);
-
-    if (attribute.m_IsSingleValue) // single value
-    {
-        helper::InsertToBuffer(buffer, &attribute.m_DataSingleValue);
-    }
-    else // array
-    {
-        helper::InsertToBuffer(buffer, attribute.m_DataArray.data(),
-                               attribute.m_Elements);
-    }
-    ++characteristicsCounter;
-}
-
 template <class T>
 void BP3Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
                                         const Stats<T> &stats) noexcept
@@ -641,31 +585,6 @@ void BP3Serializer::PutBoundsRecord(const bool singleValue,
     }
 }
 
-template <class T>
-void BP3Serializer::PutCharacteristicRecord(const uint8_t characteristicID,
-                                            uint8_t &characteristicsCounter,
-                                            const T &value,
-                                            std::vector<char> &buffer) noexcept
-{
-    const uint8_t id = characteristicID;
-    helper::InsertToBuffer(buffer, &id);
-    helper::InsertToBuffer(buffer, &value);
-    ++characteristicsCounter;
-}
-
-template <class T>
-void BP3Serializer::PutCharacteristicRecord(const uint8_t characteristicID,
-                                            uint8_t &characteristicsCounter,
-                                            const T &value,
-                                            std::vector<char> &buffer,
-                                            size_t &position) noexcept
-{
-    const uint8_t id = characteristicID;
-    helper::CopyToBuffer(buffer, position, &id);
-    helper::CopyToBuffer(buffer, position, &value);
-    ++characteristicsCounter;
-}
-
 template <>
 inline void BP3Serializer::PutVariableCharacteristics(
     const core::Variable<std::string> &variable,
@@ -841,43 +760,6 @@ void BP3Serializer::PutVariableCharacteristics(
     const uint32_t characteristicsLength =
         static_cast<uint32_t>(position - characteristicsCountPosition - 4 - 1);
     helper::CopyToBuffer(buffer, backPosition, &characteristicsLength);
-}
-
-template <>
-inline void BP3Serializer::PutPayloadInBuffer(
-    const core::Variable<std::string> &variable,
-    const typename core::Variable<std::string>::Info &blockInfo,
-    const bool /* sourceRowMajor*/) noexcept
-{
-    PutNameRecord(*blockInfo.Data, m_Data.m_Buffer, m_Data.m_Position);
-    m_Data.m_AbsolutePosition += blockInfo.Data->size() + 2;
-}
-
-template <class T>
-void BP3Serializer::PutPayloadInBuffer(
-    const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
-    const bool sourceRowMajor) noexcept
-{
-    const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
-    m_Profiler.Start("memcpy");
-    if (!blockInfo.MemoryStart.empty())
-    {
-        helper::CopyMemoryBlock(
-            reinterpret_cast<T *>(m_Data.m_Buffer.data() + m_Data.m_Position),
-            blockInfo.Start, blockInfo.Count, sourceRowMajor, blockInfo.Data,
-            blockInfo.Start, blockInfo.Count, sourceRowMajor, false, Dims(),
-            Dims(), blockInfo.MemoryStart, blockInfo.MemoryCount);
-        m_Data.m_Position += blockSize * sizeof(T);
-    }
-    else
-    {
-        helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position,
-                                    blockInfo.Data, blockSize,
-                                    m_Parameters.Threads);
-    }
-    m_Profiler.Stop("memcpy");
-    m_Data.m_AbsolutePosition += blockSize * sizeof(T); // payload size
 }
 
 template <class T>
