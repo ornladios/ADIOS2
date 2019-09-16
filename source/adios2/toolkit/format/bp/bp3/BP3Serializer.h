@@ -18,12 +18,14 @@
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
 
+#include "adios2/toolkit/format/bp/BPSerializer.h"
+
 namespace adios2
 {
 namespace format
 {
 
-class BP3Serializer : public BP3Base
+class BP3Serializer : public BP3Base, public BPSerializer
 {
 
 public:
@@ -73,13 +75,6 @@ public:
                          const typename core::Variable<T>::Span &span) noexcept;
 
     /**
-     *  Serializes data buffer and close current process group
-     * @param io : attributes written in first step
-     * @param advanceStep true: advances step, false: doesn't advance
-     */
-    void SerializeData(core::IO &io, const bool advanceStep = false);
-
-    /**
      * Serializes the metadata indices appending it into the data buffer inside
      * m_Data
      * @param updateAbsolutePosition true: adds footer size to absolute position
@@ -111,24 +106,6 @@ public:
     void ResetIndices();
 
     /**
-     * Get a string with profiling information for this rank
-     * @param name stream name
-     * @param transportsTypes list of transport types
-     * @param transportsProfilers list of references to transport profilers
-     */
-    std::string GetRankProfilingJSON(
-        const std::vector<std::string> &transportsTypes,
-        const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept;
-
-    /**
-     * Forms the final profiling.json string aggregating from all ranks
-     * @param rankProfilingJSON
-     * @return profiling.json
-     */
-    std::vector<char>
-    AggregateProfilingJSON(const std::string &rankProfilingJSON);
-
-    /**
      * Aggregate collective metadata
      * @param comm input establishing domain (all or per aggregator)
      * @param bufferSTL buffer to put the metadata
@@ -149,9 +126,6 @@ public:
 private:
     std::vector<char> m_SerializedIndices;
     std::vector<char> m_GatheredSerializedIndices;
-
-    /** BP format version */
-    const uint8_t m_Version = 3;
 
     static std::mutex m_Mutex;
 
@@ -204,19 +178,6 @@ private:
                             Stats<T> &stats) noexcept;
 
     /**
-     * Writes attribute value in index characteristic value.
-     * @param characteristicID
-     * @param characteristicsCounter
-     * @param attribute
-     * @param buffer
-     */
-    template <class T>
-    void
-    PutAttributeCharacteristicValueInIndex(std::uint8_t &characteristicsCounter,
-                                           const core::Attribute<T> &attribute,
-                                           std::vector<char> &buffer) noexcept;
-
-    /**
      * Write a single attribute in m_Metadata AttributesIndex, called from
      * WriteAttributes
      * @param attribute
@@ -265,42 +226,6 @@ private:
         const Stats<T> &stats, std::vector<char> &buffer,
         size_t &position) noexcept;
 
-    /**
-     * Writes from &buffer[position]:  [2
-     * bytes:string.length()][string.length():
-     * string.c_str()]
-     * @param name to be written in bp file
-     * @param buffer metadata buffer
-     */
-    void PutNameRecord(const std::string name,
-                       std::vector<char> &buffer) noexcept;
-
-    /** Overloaded version for data buffer */
-    void PutNameRecord(const std::string name, std::vector<char> &buffer,
-                       size_t &position) noexcept;
-
-    /**
-     * Write a dimension record for a global variable used by
-     * WriteVariableCommon
-     * @param buffer
-     * @param position
-     * @param localDimensions
-     * @param globalDimensions
-     * @param offsets
-     * @param addType true: for data buffers, false: for metadata buffer and
-     * data
-     * characteristic
-     */
-    void PutDimensionsRecord(const Dims &localDimensions,
-                             const Dims &globalDimensions, const Dims &offsets,
-                             std::vector<char> &buffer) noexcept;
-
-    /** Overloaded version for data buffer */
-    void PutDimensionsRecord(const Dims &localDimensions,
-                             const Dims &globalDimensions, const Dims &offsets,
-                             std::vector<char> &buffer, size_t &position,
-                             const bool isCharacteristic = false) noexcept;
-
     /** Writes min max */
     template <class T>
     void PutBoundsRecord(const bool singleValue, const Stats<T> &stats,
@@ -312,28 +237,6 @@ private:
     void PutBoundsRecord(const bool singleValue, const Stats<T> &stats,
                          uint8_t &characteristicsCounter,
                          std::vector<char> &buffer, size_t &position) noexcept;
-
-    /**
-     * Write a characteristic value record to buffer
-     * @param id
-     * @param value
-     * @param buffers
-     * @param positions
-     * @param characvteristicsCounter to be updated by 1
-     * @param addLength true for data, false for metadata
-     */
-    template <class T>
-    void PutCharacteristicRecord(const uint8_t characteristicID,
-                                 uint8_t &characteristicsCounter,
-                                 const T &value,
-                                 std::vector<char> &buffer) noexcept;
-
-    /** Overloaded version for data buffer */
-    template <class T>
-    void PutCharacteristicRecord(const uint8_t characteristicID,
-                                 uint8_t &characteristicsCounter,
-                                 const T &value, std::vector<char> &buffer,
-                                 size_t &position) noexcept;
 
     /**
      * Returns corresponding serial index, if doesn't exists creates a
@@ -355,22 +258,7 @@ private:
      * length and attributes count and attributes length
      * @param io object containing all attributes
      */
-    void SerializeDataBuffer(core::IO &io) noexcept;
-
-    /**
-     * Puts minifooter into a bp buffer
-     * @param pgIndexStart input offset
-     * @param variablesIndexStart input offset
-     * @param attributesIndexStart input offset
-     * @param buffer  buffer to add the minifooter
-     * @param position current buffer position
-     * @param addSubfiles true: metadata file, false: data file
-     */
-    void PutMinifooter(const uint64_t pgIndexStart,
-                       const uint64_t variablesIndexStart,
-                       const uint64_t attributesIndexStart,
-                       std::vector<char> &buffer, size_t &position,
-                       const bool addSubfiles = false);
+    void SerializeDataBuffer(core::IO &io) noexcept final;
 
     /**
      * Refactored function that reduces the communication at scale by just
@@ -392,18 +280,6 @@ private:
         const std::unordered_map<std::string, std::vector<SerialElementIndex>>
             &nameRankIndices,
         helper::Comm const &comm, BufferSTL &bufferSTL);
-
-    std::vector<char>
-    SetCollectiveProfilingJSON(const std::string &rankLog) const;
-
-    /**
-     * Specialized for string and other types
-     * @param variable input from which Payload is taken
-     */
-    template <class T>
-    void PutPayloadInBuffer(const core::Variable<T> &variable,
-                            const typename core::Variable<T>::Info &blockInfo,
-                            const bool sourceRowMajor = true) noexcept;
 
     template <class T>
     void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,

@@ -27,7 +27,7 @@ namespace adios2
 namespace format
 {
 
-class BP4Deserializer : public BP4Base
+class BP4Deserializer : virtual public BP4Base
 {
 
 public:

@@ -29,7 +29,7 @@ namespace format
 std::mutex BP3Deserializer::m_Mutex;
 
 BP3Deserializer::BP3Deserializer(helper::Comm const &comm, const bool debugMode)
-: BP3Base(comm, debugMode), m_Minifooter(3)
+: BP3Base(comm, debugMode), BPBase(comm, debugMode), m_Minifooter(3)
 {
 }
 

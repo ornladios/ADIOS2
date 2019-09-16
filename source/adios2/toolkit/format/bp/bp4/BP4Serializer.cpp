@@ -31,7 +31,8 @@ namespace format
 std::mutex BP4Serializer::m_Mutex;
 
 BP4Serializer::BP4Serializer(helper::Comm const &comm, const bool debugMode)
-: BP4Base(comm, debugMode)
+: BPSerializer(comm, debugMode, 4), BP4Base(comm, debugMode),
+  BPBase(comm, debugMode)
 {
 }
 
@@ -234,18 +235,6 @@ void BP4Serializer::PutProcessGroupIndex(
     m_Profiler.Stop("buffering");
 }
 
-void BP4Serializer::SerializeData(core::IO &io, const bool advanceStep)
-{
-    m_Profiler.Start("buffering");
-    SerializeDataBuffer(io);
-    if (advanceStep)
-    {
-        ++m_MetadataSet.TimeStep;
-        ++m_MetadataSet.CurrentStep;
-    }
-    m_Profiler.Stop("buffering");
-}
-
 size_t BP4Serializer::CloseData(core::IO &io)
 {
     m_Profiler.Start("buffering");
@@ -361,72 +350,6 @@ void BP4Serializer::ResetAllIndices()
 
 /* Reset the metadata index table*/
 void BP4Serializer::ResetMetadataIndexTable() { m_MetadataIndexTable.clear(); }
-
-std::string BP4Serializer::GetRankProfilingJSON(
-    const std::vector<std::string> &transportsTypes,
-    const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept
-{
-    auto lf_WriterTimer = [](std::string &rankLog,
-                             const profiling::Timer &timer) {
-        rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
-                   "\": " + std::to_string(timer.m_ProcessTime) + ", ";
-    };
-
-    // prepare string dictionary per rank
-    std::string rankLog("{ \"rank\": " + std::to_string(m_RankMPI) + ", ");
-
-    auto &profiler = m_Profiler;
-
-    std::string timeDate(profiler.m_Timers.at("buffering").m_LocalTimeDate);
-    timeDate.pop_back();
-    // avoid whitespace
-    std::replace(timeDate.begin(), timeDate.end(), ' ', '_');
-
-    rankLog += "\"start\": \"" + timeDate + "\", ";
-    rankLog += "\"threads\": " + std::to_string(m_Parameters.Threads) + ", ";
-    rankLog +=
-        "\"bytes\": " + std::to_string(profiler.m_Bytes.at("buffering")) + ", ";
-    lf_WriterTimer(rankLog, profiler.m_Timers.at("buffering"));
-    lf_WriterTimer(rankLog, profiler.m_Timers.at("memcpy"));
-    lf_WriterTimer(rankLog, profiler.m_Timers.at("minmax"));
-    lf_WriterTimer(rankLog, profiler.m_Timers.at("meta_sort_merge"));
-    lf_WriterTimer(rankLog, profiler.m_Timers.at("mkdir"));
-
-    const size_t transportsSize = transportsTypes.size();
-
-    for (unsigned int t = 0; t < transportsSize; ++t)
-    {
-        rankLog += "\"transport_" + std::to_string(t) + "\": { ";
-        rankLog += "\"type\": \"" + transportsTypes[t] + "\", ";
-
-        for (const auto &transportTimerPair : transportsProfilers[t]->m_Timers)
-        {
-            lf_WriterTimer(rankLog, transportTimerPair.second);
-        }
-        // replace last comma with space
-        rankLog.pop_back();
-        rankLog.pop_back();
-        rankLog += " ";
-
-        if (t == transportsSize - 1) // last element
-        {
-            rankLog += "}";
-        }
-        else
-        {
-            rankLog += "},";
-        }
-    }
-    rankLog += " }"; // end rank entry
-
-    return rankLog;
-}
-
-std::vector<char>
-BP4Serializer::AggregateProfilingJSON(const std::string &rankProfilingLog)
-{
-    return SetCollectiveProfilingJSON(rankProfilingLog);
-}
 
 void BP4Serializer::AggregateCollectiveMetadata(helper::Comm const &comm,
                                                 BufferSTL &bufferSTL,
@@ -638,97 +561,6 @@ void BP4Serializer::PutAttributes(core::IO &io)
     helper::CopyToBuffer(buffer, backPosition, &attributesLength);
 }
 
-void BP4Serializer::PutDimensionsRecord(const Dims &localDimensions,
-                                        const Dims &globalDimensions,
-                                        const Dims &offsets,
-                                        std::vector<char> &buffer) noexcept
-{
-    if (offsets.empty())
-    {
-        for (const auto localDimension : localDimensions)
-        {
-            helper::InsertU64(buffer, localDimension);
-            buffer.insert(buffer.end(), 2 * sizeof(uint64_t), '\0');
-        }
-    }
-    else
-    {
-        for (unsigned int d = 0; d < localDimensions.size(); ++d)
-        {
-            helper::InsertU64(buffer, localDimensions[d]);
-            helper::InsertU64(buffer, globalDimensions[d]);
-            helper::InsertU64(buffer, offsets[d]);
-        }
-    }
-}
-
-void BP4Serializer::PutDimensionsRecord(const Dims &localDimensions,
-                                        const Dims &globalDimensions,
-                                        const Dims &offsets,
-                                        std::vector<char> &buffer,
-                                        size_t &position,
-                                        const bool isCharacteristic) noexcept
-{
-    auto lf_CopyDimension = [](std::vector<char> &buffer, size_t &position,
-                               const size_t dimension,
-                               const bool isCharacteristic) {
-        if (!isCharacteristic)
-        {
-            constexpr char no = 'n';
-            helper::CopyToBuffer(buffer, position, &no);
-        }
-
-        const uint64_t dimension64 = static_cast<uint64_t>(dimension);
-
-        helper::CopyToBuffer(buffer, position, &dimension64);
-    };
-
-    // BODY Starts here
-    if (offsets.empty())
-    {
-        unsigned int globalBoundsSkip = 18;
-        if (isCharacteristic)
-        {
-            globalBoundsSkip = 16;
-        }
-
-        for (const auto &localDimension : localDimensions)
-        {
-            lf_CopyDimension(buffer, position, localDimension,
-                             isCharacteristic);
-            position += globalBoundsSkip;
-        }
-    }
-    else
-    {
-        for (unsigned int d = 0; d < localDimensions.size(); ++d)
-        {
-            lf_CopyDimension(buffer, position, localDimensions[d],
-                             isCharacteristic);
-            lf_CopyDimension(buffer, position, globalDimensions[d],
-                             isCharacteristic);
-            lf_CopyDimension(buffer, position, offsets[d], isCharacteristic);
-        }
-    }
-}
-
-void BP4Serializer::PutNameRecord(const std::string name,
-                                  std::vector<char> &buffer) noexcept
-{
-    const uint16_t length = static_cast<uint16_t>(name.size());
-    helper::InsertToBuffer(buffer, &length);
-    helper::InsertToBuffer(buffer, name.c_str(), name.size());
-}
-
-void BP4Serializer::PutNameRecord(const std::string name,
-                                  std::vector<char> &buffer,
-                                  size_t &position) noexcept
-{
-    const uint16_t length = static_cast<uint16_t>(name.length());
-    helper::CopyToBuffer(buffer, position, &length);
-    helper::CopyToBuffer(buffer, position, name.c_str(), length);
-}
-
 BP4Serializer::SerialElementIndex &BP4Serializer::GetSerialElementIndex(
     const std::string &name,
     std::unordered_map<std::string, SerialElementIndex> &indices,
@@ -906,61 +738,6 @@ void BP4Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
     {
         m_Profiler.m_Bytes.emplace("buffering", absolutePosition);
     }
-}
-
-void BP4Serializer::PutMinifooter(const uint64_t pgIndexStart,
-                                  const uint64_t variablesIndexStart,
-                                  const uint64_t attributesIndexStart,
-                                  std::vector<char> &buffer, size_t &position,
-                                  const bool addSubfiles)
-{
-    auto lf_CopyVersionChar = [](const std::string version,
-                                 std::vector<char> &buffer, size_t &position) {
-        helper::CopyToBuffer(buffer, position, version.c_str());
-    };
-
-    const std::string majorVersion(std::to_string(ADIOS2_VERSION_MAJOR));
-    const std::string minorVersion(std::to_string(ADIOS2_VERSION_MINOR));
-    const std::string patchVersion(std::to_string(ADIOS2_VERSION_PATCH));
-
-    const std::string versionLongTag("ADIOS-BP v" + majorVersion + "." +
-                                     minorVersion + "." + patchVersion);
-    const size_t versionLongTagSize = versionLongTag.size();
-    if (versionLongTagSize < 24)
-    {
-        helper::CopyToBuffer(buffer, position, versionLongTag.c_str(),
-                             versionLongTagSize);
-        position += 24 - versionLongTagSize;
-    }
-    else
-    {
-        helper::CopyToBuffer(buffer, position, versionLongTag.c_str(), 24);
-    }
-
-    lf_CopyVersionChar(majorVersion, buffer, position);
-    lf_CopyVersionChar(minorVersion, buffer, position);
-    lf_CopyVersionChar(patchVersion, buffer, position);
-    ++position;
-
-    helper::CopyToBuffer(buffer, position, &pgIndexStart);
-    helper::CopyToBuffer(buffer, position, &variablesIndexStart);
-    helper::CopyToBuffer(buffer, position, &attributesIndexStart);
-
-    const uint8_t endianness = helper::IsLittleEndian() ? 0 : 1;
-    helper::CopyToBuffer(buffer, position, &endianness);
-
-    if (addSubfiles)
-    {
-        const uint8_t zeros1 = 0;
-        helper::CopyToBuffer(buffer, position, &zeros1);
-        helper::CopyToBuffer(buffer, position, &m_Version);
-    }
-    else
-    {
-        const uint16_t zeros2 = 0;
-        helper::CopyToBuffer(buffer, position, &zeros2);
-    }
-    helper::CopyToBuffer(buffer, position, &m_Version);
 }
 
 void BP4Serializer::AggregateIndex(const SerialElementIndex &index,
@@ -2887,43 +2664,6 @@ void BP4Serializer::MergeSerializeIndices(
     {
         thread.join();
     }
-}
-
-std::vector<char>
-BP4Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
-{
-    // Gather sizes
-    const size_t rankLogSize = rankLog.size();
-    std::vector<size_t> rankLogsSizes = m_Comm.GatherValues(rankLogSize);
-
-    // Gatherv JSON per rank
-    std::vector<char> profilingJSON(3);
-    const std::string header("[\n");
-    const std::string footer("\n]\n");
-    size_t gatheredSize = 0;
-    size_t position = 0;
-
-    if (m_RankMPI == 0) // pre-allocate in destination
-    {
-        gatheredSize = std::accumulate(rankLogsSizes.begin(),
-                                       rankLogsSizes.end(), size_t(0));
-
-        profilingJSON.resize(gatheredSize + header.size() + footer.size() - 2);
-        helper::CopyToBuffer(profilingJSON, position, header.c_str(),
-                             header.size());
-    }
-
-    m_Comm.GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
-                         rankLogsSizes.size(), &profilingJSON[position]);
-
-    if (m_RankMPI == 0) // add footer to close JSON
-    {
-        position += gatheredSize - 2;
-        helper::CopyToBuffer(profilingJSON, position, footer.c_str(),
-                             footer.size());
-    }
-
-    return profilingJSON;
 }
 
 uint32_t BP4Serializer::GetFileIndex() const noexcept
