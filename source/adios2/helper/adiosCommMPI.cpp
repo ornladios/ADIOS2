@@ -108,6 +108,7 @@ public:
     ~CommImplMPI() override;
 
     void Free(const std::string &hint) override;
+    std::unique_ptr<CommImpl> Duplicate(const std::string &hint) const override;
     std::unique_ptr<CommImpl> Split(int color, int key,
                                     const std::string &hint) const override;
 
@@ -182,6 +183,13 @@ void CommImplMPI::Free(const std::string &hint)
     {
         CheckMPIReturn(SMPI_Comm_free(&m_MPIComm), hint);
     }
+}
+
+std::unique_ptr<CommImpl> CommImplMPI::Duplicate(const std::string &hint) const
+{
+    MPI_Comm newComm;
+    CheckMPIReturn(MPI_Comm_dup(m_MPIComm, &newComm), hint);
+    return std::unique_ptr<CommImpl>(new CommImplMPI(newComm));
 }
 
 std::unique_ptr<CommImpl> CommImplMPI::Split(int color, int key,

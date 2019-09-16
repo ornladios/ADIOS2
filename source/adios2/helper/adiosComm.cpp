@@ -55,6 +55,11 @@ Comm &Comm::operator=(Comm &&comm) = default;
 
 void Comm::Free(const std::string &hint) { m_Impl->Free(hint); }
 
+Comm Comm::Duplicate(const std::string &hint) const
+{
+    return Comm(m_Impl->Duplicate(hint));
+}
+
 Comm Comm::Split(int color, int key, const std::string &hint) const
 {
     return Comm(m_Impl->Split(color, key, hint));

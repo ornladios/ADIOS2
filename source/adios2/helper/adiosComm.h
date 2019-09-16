@@ -93,6 +93,14 @@ public:
     void Free(const std::string &hint = std::string());
 
     /**
+     * @brief Duplicate the communicator.
+     * @param hint Description of std::runtime_error exception on error.
+     *
+     * Creates a new communicator covering the same processes as the original.
+     */
+    Comm Duplicate(const std::string &hint = std::string()) const;
+
+    /**
      * @brief Split the communicator.
      * @param color Control of subset assignment (nonnegative integer).
      * @param key Control of rank assignment (integer).
@@ -340,6 +348,8 @@ public:
 
     virtual ~CommImpl() = 0;
     virtual void Free(const std::string &hint) = 0;
+    virtual std::unique_ptr<CommImpl>
+    Duplicate(const std::string &hint) const = 0;
     virtual std::unique_ptr<CommImpl> Split(int color, int key,
                                             const std::string &hint) const = 0;
     virtual int Rank() const = 0;
