@@ -228,11 +228,11 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     tableWriter.Close();
 }
 
-TEST_F(TableEngineTest, TableBase)
+TEST_F(TableEngineTest, TestTableMultiRank)
 {
-    std::string filename = "TableBase";
+    std::string filename = "TestTableMultiRank";
     adios2::Params engineParams = {{"Verbose", "0"},
-                                   {"RowsPerAggregatorBuffer", "40"}};
+                                   {"RowsPerAggregatorBuffer", "400"}};
 
     size_t rows = 10000;
     Dims shape = {rows, 1, 128};

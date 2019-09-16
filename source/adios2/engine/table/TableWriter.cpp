@@ -70,16 +70,26 @@ void TableWriter::EndStep()
 
     for (auto serializer : m_Serializers)
     {
-        auto localPack = serializer->GetLocalPack();
-        auto reply = m_SendStagingMan.Request(
-            localPack->data(), localPack->size(), serializer->GetDestination());
-        if (m_Verbosity >= 1)
+        if (m_MpiSize > 1)
         {
-            std::cout << "TableWriter::EndStep Rank " << m_MpiRank
-                      << " Sent a package of size " << localPack->size()
-                      << " to " << serializer->GetDestination()
-                      << " and received reply " << reply->data()[0]
-                      << std::endl;
+            auto localPack = serializer->GetLocalPack();
+            auto reply =
+                m_SendStagingMan.Request(localPack->data(), localPack->size(),
+                                         serializer->GetDestination());
+            if (m_Verbosity >= 1)
+            {
+                std::cout << "TableWriter::EndStep Rank " << m_MpiRank
+                          << " Sent a package of size " << localPack->size()
+                          << " to " << serializer->GetDestination()
+                          << " and received reply " << reply->data()[0]
+                          << std::endl;
+            }
+        }
+        else
+        {
+            auto localPack = serializer->GetLocalPack();
+            m_Deserializer.PutPack(localPack);
+            PutAggregatorBuffer();
         }
     }
 
@@ -231,8 +241,15 @@ void TableWriter::InitTransports()
         m_Serializers.push_back(s);
     }
 
-    m_Listening = true;
-    m_ReplyThread = std::thread(&TableWriter::ReplyThread, this);
+    if (m_MpiSize > 1)
+    {
+        m_Listening = true;
+        m_ReplyThread = std::thread(&TableWriter::ReplyThread, this);
+    }
+    else
+    {
+        m_Listening = false;
+    }
 
     m_SubIO.SetEngine("bp4");
     m_SubEngine = std::make_shared<adios2::Engine>(
