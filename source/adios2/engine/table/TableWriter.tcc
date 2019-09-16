@@ -93,18 +93,30 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
                            Params());
         if (serializer->LocalBufferSize() > m_SerializerBufferSize / 2)
         {
-            auto localPack = serializer->GetLocalPack();
-            auto reply =
-                m_SendStagingMan.Request(localPack->data(), localPack->size(),
-                                         serializer->GetDestination());
-            serializer->NewWriterBuffer(m_SerializerBufferSize);
-            if (m_Verbosity >= 1)
+            if (m_MpiSize > 1)
             {
-                std::cout << "TableWriter::PutDeferredCommon Rank " << m_MpiRank
-                          << " Sent a package of size " << localPack->size()
-                          << " to " << serializer->GetDestination()
-                          << " and received reply " << reply->data()[0]
-                          << std::endl;
+                auto localPack = serializer->GetLocalPack();
+                auto reply = m_SendStagingMan.Request(
+                    localPack->data(), localPack->size(),
+                    serializer->GetDestination());
+                serializer->NewWriterBuffer(m_SerializerBufferSize);
+                if (m_Verbosity >= 1)
+                {
+                    std::cout << "TableWriter::PutDeferredCommon Rank "
+                              << m_MpiRank << " Sent a package of size "
+                              << localPack->size() << " to "
+                              << serializer->GetDestination()
+                              << " and received reply " << reply->data()[0]
+                              << std::endl;
+                }
+            }
+            else
+            {
+                auto localPack = serializer->GetLocalPack();
+                m_Deserializer.PutPack(localPack);
+                serializer->NewWriterBuffer(m_SerializerBufferSize);
+                PutAggregatorBuffer();
+                PutSubEngine();
             }
         }
     }
