@@ -13,8 +13,6 @@
 
 #include "BP4Base.h"
 
-#include <mutex>
-
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
 
@@ -141,8 +139,6 @@ private:
 
     /** BP format version */
     const uint8_t m_Version = 4;
-
-    static std::mutex m_Mutex;
 
     /** aggregate pg rank indices */
     std::unordered_map<size_t, std::vector<std::tuple<size_t, size_t, size_t>>>
@@ -345,14 +341,6 @@ private:
                                           helper::Comm const &comm,
                                           const bool isRankConstant) const
         noexcept;
-    /**
-     * Merge indices by time step (default) and write to m_HeapBuffer.m_Metadata
-     * @param nameRankIndices
-     */
-    void MergeSerializeIndices(
-        const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-            &nameRankIndices,
-        helper::Comm const &comm, BufferSTL &bufferSTL);
 
     /**
      * Only merge indices of each time step and write to
@@ -364,11 +352,6 @@ private:
         const std::unordered_map<std::string, std::vector<SerialElementIndex>>
             &nameRankIndices,
         helper::Comm const &comm, BufferSTL &bufferSTL);
-
-    template <class T>
-    void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
-                                           const DataTypes dataType,
-                                           std::vector<char> &buffer);
 
     uint32_t GetFileIndex() const noexcept;
 

@@ -13,8 +13,6 @@
 
 #include "BP3Base.h"
 
-#include <mutex>
-
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
 
@@ -126,8 +124,6 @@ public:
 private:
     std::vector<char> m_SerializedIndices;
     std::vector<char> m_GatheredSerializedIndices;
-
-    static std::mutex m_Mutex;
 
     /** aggregate pg rank indices */
     std::vector<char> m_PGRankIndices;
@@ -271,20 +267,6 @@ private:
     std::vector<size_t>
     AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                                        BufferSTL &bufferSTL);
-
-    /**
-     * Merge indices by time step (default) and write to m_HeapBuffer.m_Metadata
-     * @param nameRankIndices
-     */
-    void MergeSerializeIndices(
-        const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-            &nameRankIndices,
-        helper::Comm const &comm, BufferSTL &bufferSTL);
-
-    template <class T>
-    void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
-                                           const DataTypes dataType,
-                                           std::vector<char> &buffer);
 
     uint32_t GetFileIndex() const noexcept;
 

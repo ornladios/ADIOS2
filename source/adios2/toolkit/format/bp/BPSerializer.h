@@ -13,6 +13,8 @@
 
 #include "adios2/toolkit/format/bp/BPBase.h"
 
+#include <mutex>
+
 namespace adios2
 {
 namespace format
@@ -53,6 +55,8 @@ public:
 protected:
     /** BP format version */
     const uint8_t m_Version;
+
+    static std::mutex m_Mutex;
 
     virtual void SerializeDataBuffer(core::IO &io) noexcept = 0;
 
@@ -102,7 +106,11 @@ protected:
 
     void UpdateOffsetsInMetadata();
 
-private:
+    void MergeSerializeIndices(
+        const std::unordered_map<std::string, std::vector<SerialElementIndex>>
+            &nameRankIndices,
+        helper::Comm const &comm, BufferSTL &bufferSTL);
+
     template <class T>
     void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
                                            const DataTypes dataType,
