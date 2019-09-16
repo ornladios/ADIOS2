@@ -42,6 +42,7 @@ public:
 
 TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
 {
+    const char fname[] = "ADIOS2_C_API.ADIOS2BPWriteTypes.bp";
     // write
     {
         // IO
@@ -148,8 +149,7 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
         adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
 
-        adios2_engine *engineH =
-            adios2_open(ioH, "ctypes.bp", adios2_mode_write);
+        adios2_engine *engineH = adios2_open(ioH, fname, adios2_mode_write);
 
         adios2_put(engineH, varStr, dataStr, adios2_mode_sync);
         adios2_put(engineH, varI8, data_I8, adios2_mode_deferred);
@@ -184,8 +184,7 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
 #endif
     {
         adios2_io *ioH = adios2_declare_io(adiosH, "Reader");
-        adios2_engine *engineH =
-            adios2_open(ioH, "ctypes.bp", adios2_mode_read);
+        adios2_engine *engineH = adios2_open(ioH, fname, adios2_mode_read);
 
         size_t steps;
         adios2_steps(&steps, engineH);
@@ -399,6 +398,7 @@ std::string adios2_engine_name_as_string(adios2_engine *engineH)
 
 TEST_F(ADIOS2_C_API_IO, Engine)
 {
+    const char fname[] = "ADIOS2_C_API_IO.engine.bp";
     int ierr;
 
     ierr = adios2_set_engine(ioH, "bpfile");
@@ -407,16 +407,17 @@ TEST_F(ADIOS2_C_API_IO, Engine)
     std::string engine_type = testing::adios2_engine_type_as_string(ioH);
     EXPECT_EQ(engine_type, "bpfile");
 
-    adios2_engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
+    adios2_engine *engineH = adios2_open(ioH, fname, adios2_mode_write);
 
     // FIXME, I'd like to check that the engine type itself is correct, but
     // there's no API to get it
     std::string engine_name = testing::adios2_engine_name_as_string(engineH);
-    EXPECT_EQ(engine_name, "ctypes.bp");
+    EXPECT_EQ(engine_name, fname);
 }
 
 TEST_F(ADIOS2_C_API_IO, EngineDefault)
 {
+    const char fname[] = "ADIOS2_C_API_IO.EngineDefault.bp";
     int ierr;
 
     ierr = adios2_set_engine(ioH, "");
@@ -425,12 +426,12 @@ TEST_F(ADIOS2_C_API_IO, EngineDefault)
     std::string engine_type = testing::adios2_engine_type_as_string(ioH);
     EXPECT_EQ(engine_type, "");
 
-    adios2_engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
+    adios2_engine *engineH = adios2_open(ioH, fname, adios2_mode_write);
 
     // FIXME, I'd like to check that the engine type itself is correct, but
     // there's no API to get it
     std::string engine_name = testing::adios2_engine_name_as_string(engineH);
-    EXPECT_EQ(engine_name, "ctypes.bp");
+    EXPECT_EQ(engine_name, fname);
 }
 
 TEST_F(ADIOS2_C_API_IO, ReturnedStrings)
