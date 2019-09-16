@@ -3,7 +3,7 @@ macro(EXEC CMD)
 endmacro()
 
 macro(EXEC_CHECK CMD)
-    execute_process(COMMAND "mpirun" "-n" "8" ${CMD} RESULT_VARIABLE CMD_RESULT)
+    execute_process(COMMAND "mpirun" "--oversubscribe" "-n" "8" ${CMD} RESULT_VARIABLE CMD_RESULT)
     if(CMD_RESULT)
         message(FATAL_ERROR "Error running ${CMD}")
     endif()
