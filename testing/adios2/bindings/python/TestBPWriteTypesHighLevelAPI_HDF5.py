@@ -18,6 +18,8 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
+print("debug0")
+
 # Test data
 data = SmallTestData()
 nx = data.Nx
@@ -28,10 +30,11 @@ count = [nx]
 
 # Writer
 with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
-
+    print("debug1")
     for i in range(0, 5):
-
+        print("debug2: i=%d"%i)
         data.update(rank, i, size)
+        print("debug3")
 
         if(rank == 0 and i == 0):
             fw.write("tag", "Testing ADIOS2 high-level API")
@@ -100,8 +103,11 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
             fw.write_attribute("varattrR64Value", data.R64, "varR64")
 
         fw.end_step()
+        print("debug4")
 
+print("debug5")
 comm.Barrier()
+print("debug6")
 
 # Reader
 data = SmallTestData()
