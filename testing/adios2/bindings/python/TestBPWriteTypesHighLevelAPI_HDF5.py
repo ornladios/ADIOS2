@@ -28,9 +28,7 @@ count = [nx]
 
 # Writer
 with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
-
     for i in range(0, 5):
-
         data.update(rank, i, size)
 
         if(rank == 0 and i == 0):

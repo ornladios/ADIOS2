@@ -11,9 +11,9 @@
 
 # Blosc
 if(ADIOS2_USE_Blosc STREQUAL AUTO)
-  find_package(Blosc)
+  find_package(Blosc 1.7)
 elseif(ADIOS2_USE_Blosc)
-  find_package(Blosc REQUIRED)
+  find_package(Blosc 1.7 REQUIRED)
 endif()
 if(BLOSC_FOUND)
   set(ADIOS2_HAVE_Blosc TRUE)

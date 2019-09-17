@@ -5,18 +5,18 @@ defaults: &defaults
         path: /home/adios2/source
     - run:
         name: Update
-        command: bash source/scripts/circle/runOnCircle.sh update
+        command: bash source/scripts/ci/runOnCircle.sh update
     - run:
         name: Configure
-        command: bash source/scripts/circle/runOnCircle.sh configure
+        command: bash source/scripts/ci/runOnCircle.sh configure
     - run:
         name: Build
-        command: bash source/scripts/circle/runOnCircle.sh build
+        command: bash source/scripts/ci/runOnCircle.sh build
     - run:
         name: Test
         command: |
           ulimit -c unlimited
-          bash source/scripts/circle/runOnCircle.sh test
+          bash source/scripts/ci/runOnCircle.sh test
     - run:
         command: |
           mkdir -p /tmp/core_dumps
@@ -28,41 +28,6 @@ defaults: &defaults
 version: 2
 
 jobs:
-  "el7":
-    <<: *defaults
-    docker:
-      - image: ornladios/adios2-auto:el7
-
-  "el7-gnu8":
-    <<: *defaults
-    docker:
-      - image: ornladios/adios2-auto:el7-gnu8-ohpc
-
-  "el7-gnu8-openmpi":
-    <<: *defaults
-    docker:
-      - image: ornladios/adios2-auto:el7-gnu8-openmpi-ohpc
-
-  "el7-intel18":
-    <<: *defaults
-    docker:
-      - image: ornladios/adios2-auto:el7-intel18-ohpc
-
-  "el7-intel18-openmpi":
-    <<: *defaults
-    docker:
-      - image: ornladios/adios2-auto:el7-intel18-openmpi-ohpc
-
-  "suse-pgi":
-    <<: *defaults
-    docker:
-      - image: ornladios/adios2-auto:suse-pgi
-
-  "suse-pgi-openmpi":
-    <<: *defaults
-    docker:
-      - image: ornladios/adios2-auto:suse-pgi-openmpi
-
   "fedora-ubsan":
     <<: *defaults
     docker:
@@ -77,12 +42,5 @@ workflows:
   version: 2
   build:
     jobs:
-      - "el7"
-      - "el7-gnu8"
-      - "el7-gnu8-openmpi"
-      - "el7-intel18"
-      - "el7-intel18-openmpi"
-      - "suse-pgi"
-      - "suse-pgi-openmpi"
       - "fedora-ubsan"
       - "fedora-openmpi-ubsan"

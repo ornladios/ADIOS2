@@ -12,6 +12,7 @@ list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
   ".*/thirdparty/.*/(.*\\.(c|cc|cxx|CC))"
   "warning: Using '.*' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking"
   "PGC.*compilation completed with warnings"
+  "Warning: stand-alone `data16' prefix"
 )
 list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
   ".*/thirdparty/.*"

@@ -6,23 +6,40 @@
 find_package(Threads REQUIRED)
 
 if(ADIOS2_HAVE_MPI)
-    set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
+  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 
-    add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
-    target_link_libraries(TestStagingMPMD adios2 gtest ${CMAKE_THREAD_LIBS_INIT})
-    target_link_libraries(TestStagingMPMD adios2 gtest_interface MPI::MPI_C)
-    if(ADIOS2_HAVE_SST)
-        gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-        		EXTRA_ARGS "SST" "MarshalMethod=FFS"
-			TEST_SUFFIX _SST_FFS)
-	gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-        	        EXTRA_ARGS "SST" "MarshalMethod=BP"
-                	TEST_SUFFIX _SST_BP)
-    endif()
-
+  add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
+  target_link_libraries(TestStagingMPMD
+    ${CMAKE_THREAD_LIBS_INIT}
+    adios2 gtest gtest_interface MPI::MPI_C
+  )
+  if(ADIOS2_HAVE_SST)
     gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-                    EXTRA_ARGS "InSituMPI"
-                    TEST_SUFFIX _InSituMPI)
+      EXTRA_ARGS "SST" "MarshalMethod=FFS"
+      TEST_SUFFIX _SST_FFS
+      TEST_LIST _gtest_added_tests
+    )
+    set_tests_properties(${_gtest_added_tests} PROPERTIES
+      PROCESSORS ${NUM_TEST_PROCS}
+    )
+    gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
+      EXTRA_ARGS "SST" "MarshalMethod=BP"
+      TEST_SUFFIX _SST_BP
+      TEST_LIST _gtest_added_tests
+    )
+    set_tests_properties(${_gtest_added_tests} PROPERTIES
+      PROCESSORS ${NUM_TEST_PROCS}
+    )
+  endif()
+
+  gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
+    EXTRA_ARGS "InSituMPI"
+    TEST_SUFFIX _InSituMPI
+    TEST_LIST _gtest_added_tests
+  )
+  set_tests_properties(${_gtest_added_tests} PROPERTIES
+    PROCESSORS ${NUM_TEST_PROCS}
+  )
 endif()
 
 add_executable(TestCommonWrite TestCommonWrite.cpp)
@@ -103,7 +120,7 @@ configure_file(
 
 include (TestSupp.cmake )
 
-if (ADIOS2_HAVE_MPI AND NOT ("${MPIEXEC_EXECUTABLE}" STREQUAL "MPIEXEC_EXECUTABLE-NOTFOUND"))
+if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    # we want to know if mpiexec is a shell script or a binary executable
    file(READ ${MPIEXEC_EXECUTABLE} MPIFILEDATA LIMIT 1024 HEX)
    string(LENGTH ${MPIFILEDATA} DATALENGTH)
