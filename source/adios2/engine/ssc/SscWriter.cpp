@@ -140,6 +140,10 @@ void SscWriter::InitParameters()
         {
             m_StepsPerAggregation = std::stoi(value);
         }
+        else if (key == "timeout")
+        {
+            m_Timeout = std::stoi(value);
+        }
     }
 }
 

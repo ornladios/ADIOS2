@@ -47,6 +47,10 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
         {
             m_Verbosity = std::stoi(value);
         }
+        else if (key == "timeout")
+        {
+            m_Timeout = std::stoi(value);
+        }
     }
 
     // retrieve all writer addresses
