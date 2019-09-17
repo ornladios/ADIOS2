@@ -231,6 +231,7 @@ void SscWriter::ReplyThread(const std::string &address)
 
 void SscWriter::DoClose(const int transportIndex)
 {
+    std::this_thread::sleep_for(std::chrono::seconds(m_Timeout));
     m_Comm.Barrier();
     m_Listening = false;
     for (auto &i : m_ReplyThreads)

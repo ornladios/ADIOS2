@@ -3,48 +3,47 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-
 if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_ZeroMQ)
-    add_executable(SscBase SscBase.cpp)
-    target_link_libraries(SscBase adios2 gtest MPI::MPI_C)
+    add_executable(TestSscBase TestSscBase.cpp)
+    target_link_libraries(TestSscBase adios2 gtest MPI::MPI_C)
     add_test(
-        NAME SscBase
+        NAME TestSscBase
         COMMAND ${CMAKE_COMMAND}
-        -DCMD1=SscBase.ssc
-        -DCMD2=$<TARGET_FILE:SscBase>
+        -DCMD1=TestSscBase.ssc
+        -DCMD2=$<TARGET_FILE:TestSscBase>
         -P ${CMAKE_CURRENT_SOURCE_DIR}/RunTest.cmake)
 endif()
 
 if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_ZeroMQ)
-    add_executable(SscNoAttributes SscNoAttributes.cpp)
-    target_link_libraries(SscNoAttributes adios2 gtest MPI::MPI_C)
+    add_executable(TestSscNoAttributes TestSscNoAttributes.cpp)
+    target_link_libraries(TestSscNoAttributes adios2 gtest MPI::MPI_C)
     add_test(
-        NAME SscNoAttributes
+        NAME TestSscNoAttributes
         COMMAND ${CMAKE_COMMAND}
-        -DCMD1=SscNoAttributes.ssc
-        -DCMD2=$<TARGET_FILE:SscNoAttributes>
+        -DCMD1=TestSscNoAttributes.ssc
+        -DCMD2=$<TARGET_FILE:TestSscNoAttributes>
         -P ${CMAKE_CURRENT_SOURCE_DIR}/RunTest.cmake)
 endif()
 
 if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_ZeroMQ)
-    add_executable(SscNoSelection SscNoSelection.cpp)
-    target_link_libraries(SscNoSelection adios2 gtest MPI::MPI_C)
+    add_executable(TestSscNoSelection TestSscNoSelection.cpp)
+    target_link_libraries(TestSscNoSelection adios2 gtest MPI::MPI_C)
     add_test(
-        NAME SscNoSelection
+        NAME TestSscNoSelection
         COMMAND ${CMAKE_COMMAND}
-        -DCMD1=SscNoSelection.ssc
-        -DCMD2=$<TARGET_FILE:SscNoSelection>
+        -DCMD1=TestSscNoSelection.ssc
+        -DCMD2=$<TARGET_FILE:TestSscNoSelection>
         -P ${CMAKE_CURRENT_SOURCE_DIR}/RunTest.cmake)
 endif()
 
 if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_ZeroMQ)
-    add_executable(Ssc7d Ssc7d.cpp)
-    target_link_libraries(Ssc7d adios2 gtest MPI::MPI_C)
+    add_executable(TestSsc7d TestSsc7d.cpp)
+    target_link_libraries(TestSsc7d adios2 gtest MPI::MPI_C)
     add_test(
-        NAME Ssc7d
+        NAME TestSsc7d
         COMMAND ${CMAKE_COMMAND}
-        -DCMD1=Ssc7d.ssc
-        -DCMD2=$<TARGET_FILE:Ssc7d>
+        -DCMD1=TestSsc7d.ssc
+        -DCMD2=$<TARGET_FILE:TestSsc7d>
         -P ${CMAKE_CURRENT_SOURCE_DIR}/RunTest.cmake)
 endif()
 

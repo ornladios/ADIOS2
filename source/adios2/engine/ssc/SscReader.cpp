@@ -83,11 +83,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 SscReader::~SscReader()
 {
     TAU_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Staging Reader " << m_MpiRank << " destructor on "
-                  << m_Name << "\n";
-    }
+    Log(5, "SscReader::~SscReader()", true, true);
 }
 
 StepStatus SscReader::BeginStepIterator(StepMode stepMode,
@@ -115,7 +111,7 @@ StepStatus SscReader::BeginStepIterator(StepMode stepMode,
             maxStep = i.first;
         }
     }
-    if (m_CurrentStep > maxStep)
+    if (maxStep <= m_CurrentStep)
     {
         Log(50,
             "SscReader::BeginStepIterator() returned NotReady because no new "
@@ -193,8 +189,12 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                     "timeout.",
                     true, true);
                 --m_CurrentStep;
-                return StepStatus::NotReady;
+                return StepStatus::EndOfStream;
             }
+        }
+        else
+        {
+            return StepStatus::NotReady;
         }
     }
 
@@ -256,29 +256,13 @@ void SscReader::PerformGets()
     {
         auto reply = m_DataTransport.Request(i.second->data(), i.second->size(),
                                              i.first);
-        if (reply->empty())
+        if (reply == nullptr or reply->size() <= 16)
         {
+            m_ConnectionLost = true;
             Log(1,
                 "Lost connection to writer. Data for the final step is "
                 "corrupted!",
                 true, true);
-            m_ConnectionLost = true;
-            return;
-        }
-        if (reply->size() <= 16)
-        {
-            std::string msg = "Step " + std::to_string(m_CurrentStep) +
-                              " received empty data package from writer " +
-                              i.first +
-                              ". This may be caused by a network failure.";
-            if (m_Tolerance)
-            {
-                Log(1, msg, true, true);
-            }
-            else
-            {
-                throw(std::runtime_error(msg));
-            }
         }
         else
         {
@@ -384,11 +368,7 @@ void SscReader::RequestMetadata(const int64_t step)
 void SscReader::DoClose(const int transportIndex)
 {
     TAU_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Staging Reader " << m_MpiRank << " Close(" << m_Name
-                  << ")\n";
-    }
+    Log(5, "SscReader::DoClose()", true, true);
 }
 
 void SscReader::Log(const int level, const std::string &message, const bool mpi,
