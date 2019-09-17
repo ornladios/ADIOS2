@@ -23,12 +23,12 @@ On the reader side you need to do instead:
 
 The DataMan engine takes the following parameters:
 
-1. **IPAddress**: the IP address of the host where the writer application runs.
+1. ``IPAddress``: No default value. The IP address of the host where the writer application runs.
    This parameter is compulsory in wide area network data staging.
 
-2. **Port**: the port on the writer host that will be used for data transfers.
+2. ``Port``: Default **50001**. The port number on the writer host that will be used for data transfers.
 
-3. **Timeout**: the timeout in seconds to wait for every send / receive operation.
+3. ``Timeout``: Default **5**. Timeout in seconds to wait for every send / receive operation.
    Packages not sent or received within this time are considered lost.
 
 4. ``AlwaysProvideLatestTimestep``: Default **TRUE**.
