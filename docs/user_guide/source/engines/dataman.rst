@@ -1,6 +1,6 @@
-***************
-DataMan for WAN
-***************
+******************************************
+DataMan for Wide Area Network Data Staging
+******************************************
 
 The DataMan engine is designed for data transfers over the wide area network. To use this engine, you can either specify it in your xml config file, with tag ``<engine type=DataMan>`` or set it in your application code:
 
@@ -21,23 +21,33 @@ On the reader side you need to do instead:
 .. note::
  The DataMan engine currently does not support data staging within a cluster.
 
-The DataMan engine does not accept any parameters. However, users are allowed to specify the following transport parameters:
+The DataMan engine takes the following parameters:
 
-1. **Library**: the underlying network / socket library used for data transfer.
+1. **IPAddress**: the IP address of the host where the writer application runs.
+   This parameter is compulsory in wide area network data staging.
 
-2. **IPAddress**: the IP address of the host where the writer application runs.
+2. **Port**: the port on the writer host that will be used for data transfers.
 
-3. **Port**: the port on the writer host that will be used for data transfers.
+3. **Timeout**: the timeout in seconds to wait for every send / receive operation.
+   Packages not sent or received within this time are considered lost.
 
-4. **Timeout**: the timeout in seconds to wait for every send / receive.
+4. ``AlwaysProvideLatestTimestep``: Default **TRUE**.
+AlwaysProvideLatestTimestep is a boolean parameter that affects what
+of the available timesteps will be provided to the reader engine.  If
+AlwaysProvideLatestTimestep is **TRUE**, then if there are multiple
+timesteps available to the reader, older timesteps will be skipped and
+the reader will see only the newest available upon BeginStep.
+This value is interpreted by only by the DataMan Reader engine.
+If AlwaysProvideLatestTimestep is **FALSE**, then the reader engine
+will be provided with the oldest step that has not been processed.
 
-============= ================= ================================================
- **Key**       **Value Format**  **Default** and Examples
-============= ================= ================================================
- Library           string        **ZMQ**
- IPAddress         string        **127.0.0.1**, 22.195.18.29
- Port              integer       **12306**, 22000, 33000
- Timeout           integer       **5**, 10, 30
-============= ================= ================================================
+=============================== ================== ================================================
+ **Key**                         **Value Format**   **Default** and Examples
+=============================== ================== ================================================
+ IPAddress                       string             **N/A**, 22.195.18.29
+ Port                            integer            **50001**, 22000, 33000
+ Timeout                         integer            **5**, 10, 30
+ AlwaysProvideLatestTimestep     boolean            **TRUE**, false
+=============================== ================== ================================================
 
 
