@@ -498,7 +498,7 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                 // key (variable name) is not in the map, add it
                 // mutex portion
                 {
-                    std::lock_guard<std::mutex> lock(BPSerializer::m_Mutex);
+                    std::lock_guard<std::mutex> lock(m_Mutex);
                     deserializedIndexes =
                         &(deserialized
                               .emplace(
@@ -628,7 +628,6 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                 serializedPosition += headerInfo[0] + 4;
             }
         }
-        // TODO: threaded version
     }
 
     // now merge (and sort variables and attributes) indices

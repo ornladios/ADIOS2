@@ -18,6 +18,10 @@
 
 #include "adios2/toolkit/format/bp/BPSerializer.h"
 
+#ifdef _WIN32
+#pragma warning(disable : 4250)
+#endif
+
 namespace adios2
 {
 namespace format
