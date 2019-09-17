@@ -727,9 +727,145 @@ void BPSerializer::MergeSerializeIndices(
     }
 }
 
+uint32_t BPSerializer::GetFileIndex() const noexcept
+{
+    if (m_Aggregator.m_IsActive)
+    {
+        return static_cast<uint32_t>(m_Aggregator.m_SubStreamIndex);
+    }
+
+    return static_cast<uint32_t>(m_RankMPI);
+}
+
+size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
+{
+    size_t attributesSizeInData = 0;
+
+    auto &attributes = io.GetAttributesDataMap();
+
+    for (const auto &attribute : attributes)
+    {
+        const std::string type = attribute.second.first;
+
+        // each attribute is only written to output once
+        // so filter out the ones already written
+        auto it = m_SerializedAttributes.find(attribute.first);
+        if (it != m_SerializedAttributes.end())
+        {
+            continue;
+        }
+
+        if (type == "compound")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        const std::string name = attribute.first;                              \
+        const core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);   \
+        attributesSizeInData += GetAttributeSizeInData<T>(attribute);          \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
+    return attributesSizeInData;
+}
+
+void BPSerializer::PutAttributes(core::IO &io)
+{
+    const auto &attributesDataMap = io.GetAttributesDataMap();
+
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
+
+    const size_t attributesCountPosition = position;
+
+    // count is known ahead of time
+    const uint32_t attributesCount =
+        static_cast<uint32_t>(attributesDataMap.size());
+    helper::CopyToBuffer(buffer, position, &attributesCount);
+
+    // will go back
+    const size_t attributesLengthPosition = position;
+    position += 8; // skip attributes length
+
+    absolutePosition += position - attributesCountPosition;
+
+    uint32_t memberID = 0;
+
+    for (const auto &attributePair : attributesDataMap)
+    {
+        const std::string name(attributePair.first);
+        const std::string type(attributePair.second.first);
+
+        // each attribute is only written to output once
+        // so filter out the ones already written
+        auto it = m_SerializedAttributes.find(name);
+        if (it != m_SerializedAttributes.end())
+        {
+            continue;
+        }
+
+        if (type == "unknown")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Stats<T> stats;                                                        \
+        stats.Offset = absolutePosition + m_PreDataFileLength;                 \
+        stats.MemberID = memberID;                                             \
+        stats.Step = m_MetadataSet.TimeStep;                                   \
+        stats.FileIndex = GetFileIndex();                                      \
+        core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
+        PutAttributeInData(attribute, stats);                                  \
+        PutAttributeInIndex(attribute, stats);                                 \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+        ++memberID;
+    }
+
+    // complete attributes length
+    const uint64_t attributesLength =
+        static_cast<uint64_t>(position - attributesLengthPosition);
+
+    size_t backPosition = attributesLengthPosition;
+    helper::CopyToBuffer(buffer, backPosition, &attributesLength);
+}
+
+BPSerializer::SerialElementIndex &BPSerializer::GetSerialElementIndex(
+    const std::string &name,
+    std::unordered_map<std::string, SerialElementIndex> &indices,
+    bool &isNew) const noexcept
+{
+    auto itName = indices.find(name);
+    if (itName == indices.end())
+    {
+        indices.emplace(
+            name, SerialElementIndex(static_cast<uint32_t>(indices.size())));
+        isNew = true;
+        return indices.at(name);
+    }
+
+    isNew = false;
+    return itName->second;
+}
+
 #define declare_template_instantiation(T)                                      \
     template void BPSerializer::PutAttributeCharacteristicValueInIndex(        \
-        uint8_t &, const core::Attribute<T> &, std::vector<char> &) noexcept;
+        uint8_t &, const core::Attribute<T> &, std::vector<char> &) noexcept;  \
+                                                                               \
+    template size_t BPSerializer::GetAttributeSizeInData(                      \
+        const core::Attribute<T> &) const noexcept;                            \
+                                                                               \
+    template void BPSerializer::PutAttributeInData(const core::Attribute<T> &, \
+                                                   Stats<T> &) noexcept;       \
+    template void BPSerializer::PutAttributeInIndex(                           \
+        const core::Attribute<T> &attribute, const Stats<T> &stats) noexcept;
 
 ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -745,7 +881,14 @@ ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
                                                                                \
     template void BPSerializer::PutPayloadInBuffer(                            \
         const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        const bool) noexcept;
+        const bool) noexcept;                                                  \
+                                                                               \
+    template void BPSerializer::PutCharacteristicOperation(                    \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        std::vector<char> &) noexcept;                                         \
+                                                                               \
+    template void BPSerializer::PutOperationPayloadInBuffer(                   \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &);
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

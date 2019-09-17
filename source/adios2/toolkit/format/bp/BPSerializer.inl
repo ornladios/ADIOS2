@@ -64,6 +64,28 @@ inline void BPSerializer::PutPayloadInBuffer(
     m_Data.m_AbsolutePosition += blockInfo.Data->size() + 2;
 }
 
+template <>
+inline size_t BPSerializer::GetAttributeSizeInData(
+    const core::Attribute<std::string> &attribute) const noexcept
+{
+    // index header
+    size_t size = 14 + attribute.m_Name.size() + 10;
+
+    if (attribute.m_IsSingleValue)
+    {
+        size += 4 + attribute.m_DataSingleValue.size();
+    }
+    else
+    {
+        size += 4;
+        for (const std::string &dataString : attribute.m_DataArray)
+        {
+            size += 4 + dataString.size();
+        }
+    }
+    return size;
+}
+
 } // end namespace format
 } // end namespace adios2
 

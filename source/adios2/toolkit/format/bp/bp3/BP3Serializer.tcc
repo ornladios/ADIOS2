@@ -170,9 +170,9 @@ void BP3Serializer::PutAttributeLengthInData(
 }
 
 template <>
-inline void
-BP3Serializer::PutAttributeInData(const core::Attribute<std::string> &attribute,
-                                  Stats<std::string> &stats) noexcept
+inline void BP3Serializer::PutAttributeInDataCommon(
+    const core::Attribute<std::string> &attribute,
+    Stats<std::string> &stats) noexcept
 {
     const size_t attributeLengthPosition =
         PutAttributeHeaderInData(attribute, stats);
@@ -222,8 +222,8 @@ BP3Serializer::PutAttributeInData(const core::Attribute<std::string> &attribute,
 }
 
 template <class T>
-void BP3Serializer::PutAttributeInData(const core::Attribute<T> &attribute,
-                                       Stats<T> &stats) noexcept
+void BP3Serializer::PutAttributeInDataCommon(
+    const core::Attribute<T> &attribute, Stats<T> &stats) noexcept
 {
     const size_t attributeLengthPosition =
         PutAttributeHeaderInData(attribute, stats);
@@ -253,83 +253,6 @@ void BP3Serializer::PutAttributeInData(const core::Attribute<T> &attribute,
     }
 
     PutAttributeLengthInData(attribute, stats, attributeLengthPosition);
-}
-
-template <class T>
-void BP3Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
-                                        const Stats<T> &stats) noexcept
-{
-    SerialElementIndex index(stats.MemberID);
-    auto &buffer = index.Buffer;
-
-    buffer.insert(buffer.end(), 4, '\0'); // skip attribute length (4)
-    helper::InsertToBuffer(buffer, &stats.MemberID);
-    buffer.insert(buffer.end(), 2, '\0'); // skip group name
-    PutNameRecord(attribute.m_Name, buffer);
-    buffer.insert(buffer.end(), 2, '\0'); // skip path
-
-    uint8_t dataType = TypeTraits<T>::type_enum; // dataType
-
-    if (dataType == type_string && !attribute.m_IsSingleValue)
-    {
-        dataType = type_string_array;
-    }
-
-    helper::InsertToBuffer(buffer, &dataType);
-
-    // Characteristics Sets Count in Metadata
-    index.Count = 1;
-    helper::InsertToBuffer(buffer, &index.Count);
-
-    // START OF CHARACTERISTICS
-    const size_t characteristicsCountPosition = buffer.size();
-    // skip characteristics count(1) + length (4)
-    buffer.insert(buffer.end(), 5, '\0');
-    uint8_t characteristicsCounter = 0;
-
-    // DIMENSIONS
-    PutCharacteristicRecord(characteristic_time_index, characteristicsCounter,
-                            stats.Step, buffer);
-
-    PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
-                            stats.FileIndex, buffer);
-
-    uint8_t characteristicID = characteristic_dimensions;
-    helper::InsertToBuffer(buffer, &characteristicID);
-    constexpr uint8_t dimensions = 1;
-    helper::InsertToBuffer(buffer, &dimensions); // count
-    constexpr uint16_t dimensionsLength = 24;
-    helper::InsertToBuffer(buffer, &dimensionsLength); // length
-    PutDimensionsRecord({attribute.m_Elements}, {}, {}, buffer);
-    ++characteristicsCounter;
-
-    // VALUE
-    PutAttributeCharacteristicValueInIndex(characteristicsCounter, attribute,
-                                           buffer);
-
-    PutCharacteristicRecord(characteristic_offset, characteristicsCounter,
-                            stats.Offset, buffer);
-
-    PutCharacteristicRecord(characteristic_payload_offset,
-                            characteristicsCounter, stats.PayloadOffset,
-                            buffer);
-    // END OF CHARACTERISTICS
-
-    // Back to characteristics count and length
-    size_t backPosition = characteristicsCountPosition;
-    helper::CopyToBuffer(buffer, backPosition,
-                         &characteristicsCounter); // count (1)
-
-    // remove its own length (4) + characteristic counter (1)
-    const uint32_t characteristicsLength = static_cast<uint32_t>(
-        buffer.size() - characteristicsCountPosition - 4 - 1);
-
-    helper::CopyToBuffer(buffer, backPosition,
-                         &characteristicsLength); // length
-
-    // Remember this attribute and its serialized piece
-    m_MetadataSet.AttributesIndices.emplace(attribute.m_Name, index);
-    m_SerializedAttributes.emplace(attribute.m_Name);
 }
 
 template <>
@@ -760,98 +683,6 @@ void BP3Serializer::PutVariableCharacteristics(
     const uint32_t characteristicsLength =
         static_cast<uint32_t>(position - characteristicsCountPosition - 4 - 1);
     helper::CopyToBuffer(buffer, backPosition, &characteristicsLength);
-}
-
-template <>
-inline size_t BP3Serializer::GetAttributeSizeInData(
-    const core::Attribute<std::string> &attribute) const noexcept
-{
-    // index header
-    size_t size = 14 + attribute.m_Name.size() + 10;
-
-    if (attribute.m_IsSingleValue)
-    {
-        size += 4 + attribute.m_DataSingleValue.size();
-    }
-    else
-    {
-        size += 4;
-        for (const auto &dataString : attribute.m_DataArray)
-        {
-            size += 4 + dataString.size();
-        }
-    }
-    return size;
-}
-
-template <class T>
-size_t
-BP3Serializer::GetAttributeSizeInData(const core::Attribute<T> &attribute) const
-    noexcept
-{
-    size_t size = 14 + attribute.m_Name.size() + 10;
-    size += 4 + sizeof(T) * attribute.m_Elements;
-    return size;
-}
-
-// operations related functions
-template <class T>
-void BP3Serializer::PutCharacteristicOperation(
-    const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
-    std::vector<char> &buffer) noexcept
-{
-    // TODO: we only take the first operation for now
-    const std::map<size_t, std::shared_ptr<BPOperation>> bpOperations =
-        SetBPOperations(blockInfo.Operations);
-
-    const size_t operationIndex = bpOperations.begin()->first;
-    std::shared_ptr<BPOperation> bpOperation = bpOperations.begin()->second;
-
-    auto &operation = blockInfo.Operations[operationIndex];
-
-    const std::string type = operation.Op->m_Type;
-    const uint8_t typeLength = static_cast<uint8_t>(type.size());
-    helper::InsertToBuffer(buffer, &typeLength);
-    helper::InsertToBuffer(buffer, type.c_str(), type.size());
-
-    // pre-transform type
-    const uint8_t dataType = TypeTraits<T>::type_enum;
-    helper::InsertToBuffer(buffer, &dataType);
-    // pre-transform dimensions
-    const uint8_t dimensions = static_cast<uint8_t>(blockInfo.Count.size());
-    helper::InsertToBuffer(buffer, &dimensions); // count
-    const uint16_t dimensionsLength = static_cast<uint16_t>(24 * dimensions);
-    helper::InsertToBuffer(buffer, &dimensionsLength); // length
-    PutDimensionsRecord(blockInfo.Count, blockInfo.Shape, blockInfo.Start,
-                        buffer);
-    // here put the metadata info depending on operation
-    bpOperation->SetMetadata(variable, blockInfo, operation, buffer);
-}
-
-template <class T>
-void BP3Serializer::PutOperationPayloadInBuffer(
-    const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo)
-{
-    // TODO: we only take the first operation for now
-    const std::map<size_t, std::shared_ptr<BPOperation>> bpOperations =
-        SetBPOperations(blockInfo.Operations);
-
-    const size_t operationIndex = bpOperations.begin()->first;
-    const std::shared_ptr<BPOperation> bpOperation =
-        bpOperations.begin()->second;
-
-    bpOperation->SetData(variable, blockInfo,
-                         blockInfo.Operations[operationIndex], m_Data);
-
-    // update metadata
-    bool isFound = false;
-    SerialElementIndex &variableIndex = GetSerialElementIndex(
-        variable.m_Name, m_MetadataSet.VarsIndices, isFound);
-    bpOperation->UpdateMetadata(variable, blockInfo,
-                                blockInfo.Operations[operationIndex],
-                                variableIndex.Buffer);
 }
 
 } // end namespace format

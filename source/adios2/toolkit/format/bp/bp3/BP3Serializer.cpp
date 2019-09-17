@@ -226,171 +226,7 @@ void BP3Serializer::AggregateCollectiveMetadata(helper::Comm const &comm,
     m_Profiler.Stop("buffering");
 }
 
-void BP3Serializer::UpdateOffsetsInMetadata()
-{
-    auto lf_UpdatePGIndexOffsets = [&]() {
-        auto &buffer = m_MetadataSet.PGIndex.Buffer;
-        size_t &currentPosition = m_MetadataSet.PGIndex.LastUpdatedPosition;
-        const bool isLittleEndian = helper::IsLittleEndian();
-
-        while (currentPosition < buffer.size())
-        {
-            ProcessGroupIndex pgIndex = ReadProcessGroupIndexHeader(
-                buffer, currentPosition, isLittleEndian);
-
-            const uint64_t updatedOffset =
-                pgIndex.Offset +
-                static_cast<uint64_t>(m_Data.m_AbsolutePosition);
-            currentPosition -= sizeof(uint64_t);
-            helper::CopyToBuffer(buffer, currentPosition, &updatedOffset);
-        }
-    };
-
-    auto lf_UpdateIndexOffsets = [&](SerialElementIndex &index) {
-        auto &buffer = index.Buffer;
-
-        // First get the type:
-        size_t headerPosition = 0;
-        ElementIndexHeader header = ReadElementIndexHeader(
-            buffer, headerPosition, helper::IsLittleEndian());
-        const DataTypes dataTypeEnum = static_cast<DataTypes>(header.DataType);
-
-        size_t &currentPosition = index.LastUpdatedPosition;
-
-        while (currentPosition < buffer.size())
-        {
-            switch (dataTypeEnum)
-            {
-
-            case (type_string):
-            {
-                // do nothing, strings are obtained from metadata
-                currentPosition = buffer.size();
-                break;
-            }
-
-#define make_case(T)                                                           \
-    case (TypeTraits<T>::type_enum):                                           \
-    {                                                                          \
-        UpdateIndexOffsetsCharacteristics<T>(                                  \
-            currentPosition, TypeTraits<T>::type_enum, buffer);                \
-        break;                                                                 \
-    }
-
-                ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(make_case)
-#undef make_case
-
-            default:
-                // TODO: complex, long double
-                throw std::invalid_argument(
-                    "ERROR: type " + std::to_string(header.DataType) +
-                    " not supported in updating aggregated offsets\n");
-
-            } // end switch
-        }
-    };
-
-    // BODY OF FUNCTION STARTS HERE
-    if (m_Aggregator.m_IsConsumer)
-    {
-        return;
-    }
-
-    // PG Indices
-    lf_UpdatePGIndexOffsets();
-
-    // Variable Indices
-    for (auto &varIndexPair : m_MetadataSet.VarsIndices)
-    {
-        SerialElementIndex &index = varIndexPair.second;
-        lf_UpdateIndexOffsets(index);
-    }
-}
-
 // PRIVATE FUNCTIONS
-void BP3Serializer::PutAttributes(core::IO &io)
-{
-    const auto &attributesDataMap = io.GetAttributesDataMap();
-
-    auto &buffer = m_Data.m_Buffer;
-    auto &position = m_Data.m_Position;
-    auto &absolutePosition = m_Data.m_AbsolutePosition;
-
-    const size_t attributesCountPosition = position;
-
-    // count is known ahead of time
-    const uint32_t attributesCount =
-        static_cast<uint32_t>(attributesDataMap.size());
-    helper::CopyToBuffer(buffer, position, &attributesCount);
-
-    // will go back
-    const size_t attributesLengthPosition = position;
-    position += 8; // skip attributes length
-
-    absolutePosition += position - attributesCountPosition;
-
-    uint32_t memberID = 0;
-
-    for (const auto &attributePair : attributesDataMap)
-    {
-        const std::string name(attributePair.first);
-        const std::string type(attributePair.second.first);
-
-        // each attribute is only written to output once
-        // so filter out the ones already written
-        auto it = m_SerializedAttributes.find(name);
-        if (it != m_SerializedAttributes.end())
-        {
-            continue;
-        }
-
-        if (type == "unknown")
-        {
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        Stats<T> stats;                                                        \
-        stats.Offset = absolutePosition;                                       \
-        stats.MemberID = memberID;                                             \
-        stats.Step = m_MetadataSet.TimeStep;                                   \
-        stats.FileIndex = GetFileIndex();                                      \
-        core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
-        PutAttributeInData(attribute, stats);                                  \
-        PutAttributeInIndex(attribute, stats);                                 \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
-        ++memberID;
-    }
-
-    // complete attributes length
-    const uint64_t attributesLength =
-        static_cast<uint64_t>(position - attributesLengthPosition);
-
-    size_t backPosition = attributesLengthPosition;
-    helper::CopyToBuffer(buffer, backPosition, &attributesLength);
-}
-
-BP3Serializer::SerialElementIndex &BP3Serializer::GetSerialElementIndex(
-    const std::string &name,
-    std::unordered_map<std::string, SerialElementIndex> &indices,
-    bool &isNew) const noexcept
-{
-    auto itName = indices.find(name);
-    if (itName == indices.end())
-    {
-        indices.emplace(
-            name, SerialElementIndex(static_cast<uint32_t>(indices.size())));
-        isNew = true;
-        return indices.at(name);
-    }
-
-    isNew = false;
-    return itName->second;
-}
-
 void BP3Serializer::SerializeDataBuffer(core::IO &io) noexcept
 {
     auto &buffer = m_Data.m_Buffer;
@@ -821,51 +657,6 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     return indexPositions;
 }
 
-uint32_t BP3Serializer::GetFileIndex() const noexcept
-{
-    if (m_Aggregator.m_IsActive)
-    {
-        return static_cast<uint32_t>(m_Aggregator.m_SubStreamIndex);
-    }
-
-    return static_cast<uint32_t>(m_RankMPI);
-}
-
-size_t BP3Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
-{
-    size_t attributesSizeInData = 0;
-
-    auto &attributes = io.GetAttributesDataMap();
-
-    for (const auto &attribute : attributes)
-    {
-        const std::string type = attribute.second.first;
-
-        // each attribute is only written to output once
-        // so filter out the ones already written
-        auto it = m_SerializedAttributes.find(attribute.first);
-        if (it != m_SerializedAttributes.end())
-        {
-            continue;
-        }
-
-        if (type == "compound")
-        {
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        const std::string name = attribute.first;                              \
-        const core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);   \
-        attributesSizeInData += GetAttributeSizeInData<T>(attribute);          \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    }
-
-    return attributesSizeInData;
-}
-
 void BP3Serializer::SetDataOffset(uint64_t &offset) noexcept
 {
     if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsConsumer)
@@ -877,6 +668,15 @@ void BP3Serializer::SetDataOffset(uint64_t &offset) noexcept
         offset = static_cast<uint64_t>(m_Data.m_AbsolutePosition);
     }
 }
+
+#define declare_template_instantiation(T)                                      \
+    void BP3Serializer::DoPutAttributeInData(                                  \
+        const core::Attribute<T> &attribute, Stats<T> &stats) noexcept         \
+    {                                                                          \
+        PutAttributeInDataCommon(attribute, stats);                            \
+    }
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
     template void BP3Serializer::PutVariableMetadata(                          \
