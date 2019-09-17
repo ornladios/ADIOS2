@@ -127,7 +127,7 @@ if(ADIOS2_HAVE_Fortran)
   set (SIMPLE_FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
 endif()
 
-set (SPECIAL_TESTS "TimeoutReader;LatestReader;LatestReaderHold;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
+set (SPECIAL_TESTS "TimeoutReader;LatestReader;LatestReaderHold;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard;1x1.NoPreload;1x1.ForcePreload")
 if (MPIEXEC_IS_BINARY)
     # run_test.py can only kill readers/writers if mpiexec is not a shell script
     list(APPEND SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;KillWriterTimeout_2x2")
@@ -137,6 +137,7 @@ set (SIMPLE_MPI_TESTS "")
 set (SIMPLE_MPI_FORTRAN_TESTS "")
 if (ADIOS2_HAVE_MPI)
   set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;3x5LockGeometry;2x1.Local;1x2.Local;3x5.Local;5x3.Local;2x1ZeroDataVar;2x1ZeroDataR64")
+  list (APPEND SPECIAL_TESTS "2x1.NoPreload;2x3.ForcePreload")
   if (ADIOS_HAVE_Fortran)
     set (SIMPLE_MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
   endif()
@@ -240,6 +241,8 @@ if(NOT MSVC)    # not on windows
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*TimeoutReader.BPS$")
     # LatestTimestep not a feature of BP4
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*LatestReader.*BPS$")
+    # Preload not a feature of BP4_streaming
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Preload.*BPS$")
     # KillWriter fails with BP4
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*KillWriter.*BPS$")
     # SharedVars fail with BP4_streaming*

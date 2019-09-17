@@ -716,6 +716,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
         reader_data.CP_ReaderInfo = Req->Msg->CP_ReaderInfo;
         reader_data.DP_ReaderInfo = Req->Msg->DP_ReaderInfo;
         reader_data.RankZeroID = CP_WSR_Stream;
+        reader_data.SpecPreload = Req->Msg->SpecPreload;
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &reader_data, Stream->CPInfo->CombinedReaderInfoFormat,
             &free_block);
@@ -766,6 +767,12 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     CP_WSR_Stream->Connections = connections_to_reader;
     CP_WSR_Stream->ReaderDefinitionsLocked = 0;
     CP_WSR_Stream->ReaderSelectionLockTimestep = -1;
+    if (ReturnData->SpecPreload == SpecPreloadOn)
+    {
+
+        CP_WSR_Stream->PreloadMode = SstPreloadSpeculative;
+        CP_verbose(Stream, "Setting SpeculativePreload ON for new reader\n");
+    }
 
     int MySuccess = initWSReader(CP_WSR_Stream, ReturnData->ReaderCohortSize,
                                  ReturnData->CP_ReaderInfo);

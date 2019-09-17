@@ -318,6 +318,7 @@ if args.reader_delay != 0:
 
 test_setup(args.filename)
 atexit.register(test_teardown, args.filename)
+sys.stdout.flush()
 if args.test_protocol == 'simple':
     print("TestDriver:MPMD value is " + str(mpmd_possible) + "\n")
     if mpmd_possible:

@@ -237,7 +237,26 @@ parameter that specifies the number of seconds SST is to wait for a peer
 connection on Open().  Currently this is only implemented on the Reader side
 of SST, and is a timeout for locating the contact information file created
 by Writer-side Open, not for completing the entire Open() handshake.
-Currentlyvalue is interpreted by only by the SST Reader engine.
+Currently value is interpreted by only by the SST Reader engine.
+
+14. ``SpeculativePreloadMode``: Default **AUTO**.  In some
+circumstances, SST eagerly sends all data from writers to every
+readers without first waiting for read requests.  Generally this
+improves performance if every reader needs all the data, but can be
+very detrimental otherwise.  The value **AUTO** for this engine
+parameter instructs SST to apply its own heuristic for determining if
+data should be eagerly sent.  The value **OFF** disables this feature
+and the value **ON** causes eager sending regardless of heuristic.
+Currently SST's heuristic is simple.  If the size of the reader cohort
+is less than or equal to the value of the ``SpecAutoNodeThreshold``
+engine parameter (Default value 1), eager sending is initiated.
+Currently value is interpreted by only by the SST Reader engine.
+
+15.  ``SpecAutoNodeThreshold``:  Default **1**.  If the size of the
+reader cohort is less than or equal to this value *and* the
+``SpeculativePreloadMode`` parameter is **AUTO**, SST will initiate
+eager data sending of all data from each writer to all readers.
+Currently value is interpreted by only by the SST Reader engine.
 
 
 ============================= ===================== ================================================
@@ -256,4 +275,6 @@ Currentlyvalue is interpreted by only by the SST Reader engine.
  FirstTimestepPrecious           boolean             **FALSE**, true, no, yes
  AlwaysProvideLatestTimestep     boolean             **FALSE**, true, no, yes
  OpenTimeoutSecs                 integer             **60**
+ SpeculativePreloadMode          string              **AUTO**, ON, OFF
+ SpecAutoNodeThreshold           integer             **1**
 ============================= ===================== ================================================

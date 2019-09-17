@@ -271,6 +271,7 @@ struct _ReaderRegisterMsg
     void *WriterFile;
     int WriterResponseCondition;
     int ReaderCohortSize;
+    SpeculativePreloadMode SpecPreload; // should be On or Off, not Auto
     CP_ReaderInitInfo *CP_ReaderInfo;
     void **DP_ReaderInfo;
 };
@@ -285,6 +286,7 @@ typedef struct _CombinedReaderInfo
     CP_ReaderInitInfo *CP_ReaderInfo;
     void **DP_ReaderInfo;
     void *RankZeroID;
+    SpeculativePreloadMode SpecPreload; // should be On or Off, not Auto
 } * reader_data_t;
 
 /*
