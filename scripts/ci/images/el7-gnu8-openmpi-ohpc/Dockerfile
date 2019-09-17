@@ -21,7 +21,7 @@ RUN curl -O https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.4
   cd hdf5-1.10.4 && \
   source /etc/profile && \
   module load gnu8 openmpi3 && \
-  export CC=gcc CXX=g++ FC=gfortran && \
+  export CC=mpicc CXX=mpicxx FC=mpif90 && \
   ./configure --prefix=/opt/hdf5/1.10.4 --enable-shared --disable-static --enable-parallel && \
   make -j$(grep -c '^processor' /proc/cpuinfo) install && \
   cd .. && \
