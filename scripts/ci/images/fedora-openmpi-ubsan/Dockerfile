@@ -1,7 +1,7 @@
 FROM fedora:latest
 
 # Install core dev packages
-RUN dnf -y install gcc gcc-c++ gcc-gfortran cmake git make curl file patch \
+RUN dnf -y install gcc gcc-c++ gcc-gfortran git make curl file patch \
         zlib-devel bzip2 bzip2-libs bzip2-devel openmpi-devel vim valgrind \
         python3-devel python3-numpy python3-mpi4py-openmpi zeromq-devel \
         libubsan
@@ -28,6 +28,11 @@ RUN export uid=1001 gid=1001 && \
     echo "adios2:x:${uid}:${gid}:adios2,,,:/home/adios2:/bin/bash" >> /etc/passwd && \
     echo "adios2:x:${uid}:" >> /etc/group && \
     chown ${uid}:${gid} -R /home/adios2
+
+# Install the CMake binary
+WORKDIR /opt/cmake
+RUN curl -L https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.tar.gz | \
+    tar -C /opt/cmake --strip-components=1 -xzv
 
 # Install and initialize git-lfs
 RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash && \

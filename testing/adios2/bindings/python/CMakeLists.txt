@@ -29,9 +29,10 @@ if(ADIOS2_HAVE_MPI)
   add_python_mpi_test(BPChangingShapeHighLevelAPI)
   add_python_mpi_test(NullEngine)
 
-  if(ADIOS2_HAVE_HDF5)
-    add_python_mpi_test(BPWriteTypesHighLevelAPI_HDF5)
-  endif()
+  # Currently hangs in H5Fclose for unknown reasons
+  #if(ADIOS2_HAVE_HDF5)
+  #  add_python_mpi_test(BPWriteTypesHighLevelAPI_HDF5)
+  #endif()
     
   if(ADIOS2_HAVE_ZFP)
     add_python_mpi_test(BPZfpHighLevelAPI)

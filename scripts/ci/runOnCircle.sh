@@ -120,9 +120,9 @@ then
   export PKG_CONFIG_PATH=$(dirname $(find /opt/libfabric/1.6.0 -name libfabric.pc))
 fi
 
-if [ -x /opt/cmake/3.6.3/bin/ctest ]
+if [ -x /opt/cmake/bin/ctest ]
 then
-  CTEST=/opt/cmake/3.6.3/bin/ctest
+  CTEST=/opt/cmake/bin/ctest
 else
   CTEST=ctest
 fi

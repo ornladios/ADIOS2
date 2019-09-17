@@ -25,7 +25,7 @@ set(ENV{UBSAN_OPTIONS} "print_stacktrace=1")
 find_package(EnvModules REQUIRED)
 env_module(load mpi)
 
-set(CMAKE_PREFIX_PATH /opt/hdf5/1.10.4)
+set(ENV{CMAKE_PREFIX_PATH} "/opt/hdf5/1.10.4:$ENV{CMAKE_PREFIX_PATH}")
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:STRING=ON

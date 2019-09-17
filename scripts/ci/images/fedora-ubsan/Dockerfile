@@ -1,12 +1,17 @@
 FROM fedora:latest
 
 # Install core dev packages
-RUN dnf -y install gcc gcc-c++ gcc-gfortran cmake git make curl file \
+RUN dnf -y install gcc gcc-c++ gcc-gfortran git make curl file \
         zlib zlib-devel bzip2-libs bzip2-devel hdf5 hdf5-devel vim valgrind \
         python3-devel python3-numpy zeromq zeromq-devel libubsan
 
 # Cleanup headers and packages
 RUN dnf clean all
+
+# Install the CMake binary
+WORKDIR /opt/cmake
+RUN curl -L https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.tar.gz | \
+    tar -C /opt/cmake --strip-components=1 -xzv
 
 # Create a non-root user to run the builds/tests
 RUN export uid=1001 gid=1001 && \

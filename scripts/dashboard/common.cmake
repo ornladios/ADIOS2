@@ -420,13 +420,7 @@ if(dashboard_do_configure)
     if(COMMAND dashboard_hook_configure)
       dashboard_hook_configure()
     endif()
-    if(CMAKE_PREFIX_PATH AND NOT dashboard_configure_args)
-      set(dashboard_configure_args
-        OPTIONS
-          "-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
-        )
-    endif()
-    message("Calling ctest_configure")
+    message("Calling ctest_configure)")
     ctest_configure(${dashboard_configure_args})
   endif()
   if(dashboard_do_submit)
