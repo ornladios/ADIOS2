@@ -224,6 +224,11 @@ static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
                                  void *client_Data, attr_list attrs);
 static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream,
                                   long Timestep);
+static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
+                            TimestepList TS);
+static void SendSpeculativePreloadMsgs(CP_Services Svcs,
+                                       Evpath_WSR_Stream WSR_Stream,
+                                       TimestepList TS);
 
 static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
                                      void **ReaderContactInfoPtr,
@@ -896,25 +901,51 @@ static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
     Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)WSRStream_v;
     Evpath_WS_Stream WS_Stream =
         WSR_Stream->WS_Stream; /* pointer to writer struct */
+    TimestepList Entry = WS_Stream->Timesteps;
 
+    while (Entry)
     {
-        /* go ahead and record read patterns, just in case we need them */
-        TimestepList tmp = WS_Stream->Timesteps;
-
-        while (tmp != NULL)
+        if (Entry->Timestep == Timestep)
         {
-            if (tmp->Timestep == Timestep)
-            {
-                ReaderRequestTrackPtr ReqTrk = calloc(1, sizeof(*ReqTrk));
-                ReqTrk->Reader = WSR_Stream;
-                ReqTrk->RequestList = calloc(1, WSR_Stream->ReaderCohortSize);
-                ReqTrk->Next = tmp->ReaderRequests;
-                tmp->ReaderRequests = ReqTrk;
-                return;
-            }
-            tmp = tmp->Next;
+            break;
         }
-        printf("TIMESTEP NOT FOUND in READER REGISTER!\n");
+        Entry = Entry->Next;
+    }
+    if (!Entry)
+    {
+        fprintf(
+            stderr,
+            "Didn't find timestep in per reader register, shouldn't happen\n");
+        return;
+    }
+    /* go ahead and record read patterns, just in case we need them */
+    ReaderRequestTrackPtr ReqTrk = calloc(1, sizeof(*ReqTrk));
+    ReqTrk->Reader = WSR_Stream;
+    ReqTrk->RequestList = calloc(1, WSR_Stream->ReaderCohortSize);
+    ReqTrk->Next = Entry->ReaderRequests;
+    Entry->ReaderRequests = ReqTrk;
+
+    Svcs->verbose(WS_Stream->CP_Stream,
+                  "Per reader registration for timestep %ld, preload mode %d\n",
+                  Timestep, PreloadMode);
+    if (PreloadMode == SstPreloadLearned)
+    {
+        if (WSR_Stream->ReaderRequests)
+        {
+            Svcs->verbose(
+                WS_Stream->CP_Stream,
+                "Sending Learned Preload messages, reader %p, timestep %ld\n",
+                WSR_Stream, Timestep);
+            SendPreloadMsgs(Svcs, WSR_Stream, Entry);
+        }
+    }
+    else if (PreloadMode == SstPreloadSpeculative)
+    {
+        Svcs->verbose(
+            WS_Stream->CP_Stream,
+            "Sending Speculative Preload messages, reader %p, timestep %ld\n",
+            WSR_Stream, Timestep);
+        SendSpeculativePreloadMsgs(Svcs, WSR_Stream, Entry);
     }
 }
 
@@ -950,6 +981,45 @@ static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
             CMwrite(WSR_Stream->ReaderContactInfo[i].Conn,
                     WS_Stream->PreloadFormat, &PreloadMsg);
         }
+    }
+}
+
+static void SendSpeculativePreloadMsgs(CP_Services Svcs,
+                                       Evpath_WSR_Stream WSR_Stream,
+                                       TimestepList TS)
+{
+    Evpath_WS_Stream WS_Stream =
+        WSR_Stream->WS_Stream; /* pointer to writer struct */
+    CManager cm = Svcs->getCManager(WS_Stream->CP_Stream);
+    struct _EvpathPreloadMsg PreloadMsg;
+    memset(&PreloadMsg, 0, sizeof(PreloadMsg));
+    PreloadMsg.Timestep = TS->Timestep;
+    PreloadMsg.DataLength = TS->Data.DataSize;
+    PreloadMsg.Data = TS->Data.block;
+    PreloadMsg.WriterRank = WS_Stream->Rank;
+
+    for (int i = 0; i < WSR_Stream->ReaderCohortSize; i++)
+    {
+        if (!WSR_Stream->ReaderContactInfo[i].Conn)
+        {
+            attr_list List = attr_list_from_string(
+                WSR_Stream->ReaderContactInfo[i].ContactString);
+            CMConnection Conn = CMget_conn(cm, List);
+            free_attr_list(List);
+            if (!Conn)
+            {
+                Svcs->verbose(
+                    WS_Stream->CP_Stream,
+                    "Failed to connect to reader rank %d for response to "
+                    "remote read, assume failure, no response sent\n",
+                    i);
+                return;
+            }
+            WSR_Stream->ReaderContactInfo[i].Conn = Conn;
+        }
+        PreloadMsg.RS_Stream = WSR_Stream->ReaderContactInfo[i].RS_Stream;
+        CMwrite(WSR_Stream->ReaderContactInfo[i].Conn, WS_Stream->PreloadFormat,
+                &PreloadMsg);
     }
 }
 
@@ -989,7 +1059,10 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
             tmp = WS_Stream->Timesteps;
             while (tmp != NULL)
             {
-                SendPreloadMsgs(Svcs, WSR_Stream, tmp);
+                if (tmp->Timestep <= WSR_Stream->ReadPatternLockTimestep)
+                {
+                    SendPreloadMsgs(Svcs, WSR_Stream, tmp);
+                }
                 tmp = tmp->Next;
             }
         }
@@ -1036,16 +1109,6 @@ static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     Entry->Next = Stream->Timesteps;
     Stream->Timesteps = Entry;
     *TimestepInfoPtr = NULL;
-
-    /* send out preloads for readers with locked patterns */
-    for (int i = 0; i < Stream->ReaderCount; i++)
-    {
-        Evpath_WSR_Stream WSR_Stream = Stream->Readers[i];
-        if (WSR_Stream->ReaderRequests)
-        {
-            SendPreloadMsgs(Svcs, WSR_Stream, Entry);
-        }
-    }
 }
 
 static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,

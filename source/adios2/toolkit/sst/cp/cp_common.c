@@ -123,6 +123,7 @@ static char *SstMarshalStr[] = {"FFS", "BP"};
 static char *SstQueueFullStr[] = {"Block", "Discard"};
 static char *SstCompressStr[] = {"None", "ZFP"};
 static char *SstCommPatternStr[] = {"Min", "Peer"};
+static char *SstPreloadModeStr[] = {"Off", "On", "Auto"};
 
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
                           int ReaderSide)
@@ -130,51 +131,55 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
     if (!Stream->CPVerbose)
         return;
 
-    fprintf(stderr, "Param -   RegistrationMethod:%s\n",
+    fprintf(stderr, "Param -   RegistrationMethod=%s\n",
             SstRegStr[Params->RegistrationMethod]);
     if (!ReaderSide)
     {
-        fprintf(stderr, "Param -   RendezvousReaderCount:%d\n",
+        fprintf(stderr, "Param -   RendezvousReaderCount=%d\n",
                 Params->RendezvousReaderCount);
-        fprintf(stderr, "Param -   QueueLimit:%d %s\n", Params->QueueLimit,
+        fprintf(stderr, "Param -   QueueLimit=%d %s\n", Params->QueueLimit,
                 (Params->QueueLimit == 0) ? "(unlimited)" : "");
-        fprintf(stderr, "Param -   QueueFullPolicy:%s\n",
+        fprintf(stderr, "Param -   QueueFullPolicy=%s\n",
                 SstQueueFullStr[Params->QueueFullPolicy]);
     }
-    fprintf(stderr, "Param -   DataTransport:%s\n",
+    fprintf(stderr, "Param -   DataTransport=%s\n",
             Params->DataTransport ? Params->DataTransport : "");
-    fprintf(stderr, "Param -   ControlTransport:%s\n",
+    fprintf(stderr, "Param -   ControlTransport=%s\n",
             Params->ControlTransport);
-    fprintf(stderr, "Param -   NetworkInterface:%s\n",
+    fprintf(stderr, "Param -   NetworkInterface=%s\n",
             Params->NetworkInterface ? Params->NetworkInterface : "(default)");
-    fprintf(stderr, "Param -   ControlInterface:%s\n",
+    fprintf(stderr, "Param -   ControlInterface=%s\n",
             Params->ControlInterface
                 ? Params->ControlInterface
                 : "(default to NetworkInterface if applicable)");
-    fprintf(stderr, "Param -   DataInterface:%s\n",
+    fprintf(stderr, "Param -   DataInterface=%s\n",
             Params->DataInterface
                 ? Params->DataInterface
                 : "(default to NetworkInterface if applicable)");
     if (!ReaderSide)
     {
-        fprintf(stderr, "Param -   CompressionMethod:%s\n",
+        fprintf(stderr, "Param -   CompressionMethod=%s\n",
                 SstCompressStr[Params->CompressionMethod]);
-        fprintf(stderr, "Param -   CPCommPattern:%s\n",
+        fprintf(stderr, "Param -   CPCommPattern=%s\n",
                 SstCommPatternStr[Params->CPCommPattern]);
-        fprintf(stderr, "Param -   MarshalMethod:%s\n",
+        fprintf(stderr, "Param -   MarshalMethod=%s\n",
                 SstMarshalStr[Params->MarshalMethod]);
-        fprintf(stderr, "Param -   FirstTimestepPrecious:%s\n",
+        fprintf(stderr, "Param -   FirstTimestepPrecious=%s\n",
                 Params->FirstTimestepPrecious ? "True" : "False");
-        fprintf(stderr, "Param -   IsRowMajor:%d  (not user settable) \n",
+        fprintf(stderr, "Param -   IsRowMajor=%d  (not user settable) \n",
                 Params->IsRowMajor);
     }
     if (ReaderSide)
     {
-        fprintf(stderr, "Param -   AlwaysProvideLatestTimestep:%s\n",
+        fprintf(stderr, "Param -   AlwaysProvideLatestTimestep=%s\n",
                 Params->AlwaysProvideLatestTimestep ? "True" : "False");
     }
-    fprintf(stderr, "Param -   OpenTimeoutSecs:%d (seconds)\n",
+    fprintf(stderr, "Param -   OpenTimeoutSecs=%d (seconds)\n",
             Params->OpenTimeoutSecs);
+    fprintf(stderr, "Param -   SpeculativePreloadMode=%s\n",
+            SstPreloadModeStr[Params->SpeculativePreloadMode]);
+    fprintf(stderr, "Param -   SpecAutoNodeThreshold=%d\n",
+            Params->SpecAutoNodeThreshold);
 }
 
 static FMField CP_SstParamsList_RAW[] = {
@@ -230,6 +235,8 @@ static FMField CP_DP_ArrayReaderList[] = {
      FMOffset(struct _CombinedReaderInfo *, DP_ReaderInfo)},
     {"RankZeroID", "integer", sizeof(void *),
      FMOffset(struct _CombinedReaderInfo *, RankZeroID)},
+    {"SpecPreload", "integer", sizeof(int),
+     FMOffset(struct _CombinedReaderInfo *, SpecPreload)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_DP_ReaderArrayStructs[] = {
@@ -264,6 +271,8 @@ static FMField CP_ReaderRegisterList[] = {
      FMOffset(struct _ReaderRegisterMsg *, WriterResponseCondition)},
     {"ReaderCohortSize", "integer", sizeof(int),
      FMOffset(struct _ReaderRegisterMsg *, ReaderCohortSize)},
+    {"SpecPreload", "integer", sizeof(int),
+     FMOffset(struct _ReaderRegisterMsg *, SpecPreload)},
     {"CP_ReaderInfo", "(*CP_STRUCT)[ReaderCohortSize]",
      sizeof(struct _CP_ReaderInitInfo),
      FMOffset(struct _ReaderRegisterMsg *, CP_ReaderInfo)},

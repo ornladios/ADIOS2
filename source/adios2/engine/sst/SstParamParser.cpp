@@ -201,6 +201,37 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
         return false;
     };
 
+    auto lf_SetSpecPreloadModeParameter = [&](const std::string key,
+                                              int &parameter) {
+        auto itKey = io.m_Parameters.find(key);
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string method = itKey->second;
+            std::transform(method.begin(), method.end(), method.begin(),
+                           ::tolower);
+            if (method == "off")
+            {
+                parameter = SpecPreloadOff;
+            }
+            else if (method == "on")
+            {
+                parameter = SpecPreloadOn;
+            }
+            else if (method == "auto")
+            {
+                parameter = SpecPreloadAuto;
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown Sst SpeculativePreloadMode parameter \"" +
+                    method + "\"");
+            }
+            return true;
+        }
+        return false;
+    };
+
 #define get_params(Param, Type, Typedecl, Default)                             \
     Params.Param = Default;                                                    \
     lf_Set##Type##Parameter(#Param, Params.Param);

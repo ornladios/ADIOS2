@@ -390,6 +390,23 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         ReaderRegister.WriterResponseCondition =
             CMCondition_get(Stream->CPInfo->cm, rank0_to_rank0_conn);
         ReaderRegister.ReaderCohortSize = Stream->CohortSize;
+        switch (Stream->ConfigParams->SpeculativePreloadMode)
+        {
+        case SpecPreloadOff:
+        case SpecPreloadOn:
+            ReaderRegister.SpecPreload =
+                Stream->ConfigParams->SpeculativePreloadMode;
+            break;
+        case SpecPreloadAuto:
+            ReaderRegister.SpecPreload = SpecPreloadOff;
+            if (Stream->CohortSize <=
+                Stream->ConfigParams->SpecAutoNodeThreshold)
+            {
+                ReaderRegister.SpecPreload = SpecPreloadOn;
+            }
+            break;
+        }
+
         ReaderRegister.CP_ReaderInfo =
             malloc(ReaderRegister.ReaderCohortSize * sizeof(void *));
         ReaderRegister.DP_ReaderInfo =
@@ -1795,7 +1812,7 @@ extern void SstReaderClose(SstStream Stream)
     if (Stream->Stats)
         Stream->Stats->ValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
-    CMsleep(Stream->CPInfo->cm, 1);
+    CMusleep(Stream->CPInfo->cm, 100000);
     if (Stream->CurrentMetadata != NULL)
     {
         if (Stream->CurrentMetadata->FreeBlock)

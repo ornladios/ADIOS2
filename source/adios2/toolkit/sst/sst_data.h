@@ -42,7 +42,9 @@ struct _SstBlock
     MACRO(DataInterface, String, char *, NULL)                                 \
     MACRO(CPCommPattern, CPCommPattern, size_t, SstCPCommMin)                  \
     MACRO(CompressionMethod, CompressionMethod, size_t, 0)                     \
-    MACRO(AlwaysProvideLatestTimestep, Bool, int, 0)
+    MACRO(AlwaysProvideLatestTimestep, Bool, int, 0)                           \
+    MACRO(SpeculativePreloadMode, SpecPreloadMode, int, SpecPreloadAuto)       \
+    MACRO(SpecAutoNodeThreshold, Int, int, 1)
 
 typedef enum
 {
@@ -50,6 +52,13 @@ typedef enum
     SstRegisterScreen,
     SstRegisterCloud
 } SstRegistrationMethod;
+
+typedef enum
+{
+    SpecPreloadOff,
+    SpecPreloadOn,
+    SpecPreloadAuto
+} SpeculativePreloadMode;
 
 struct _SstParams
 {
