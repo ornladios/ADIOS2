@@ -52,6 +52,8 @@ public:
      */
     std::vector<char> AggregateProfilingJSON(const std::string &rankLog) const;
 
+    void UpdateOffsetsInMetadata();
+
 protected:
     /** BP format version */
     const uint8_t m_Version;
@@ -104,8 +106,6 @@ protected:
                        std::vector<char> &buffer, size_t &position,
                        const bool addSubfiles = false);
 
-    void UpdateOffsetsInMetadata();
-
     void MergeSerializeIndices(
         const std::unordered_map<std::string, std::vector<SerialElementIndex>>
             &nameRankIndices,
@@ -115,6 +115,47 @@ protected:
     void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
                                            const DataTypes dataType,
                                            std::vector<char> &buffer);
+
+    uint32_t GetFileIndex() const noexcept;
+
+    size_t GetAttributesSizeInData(core::IO &io) const noexcept;
+
+    template <class T>
+    size_t GetAttributeSizeInData(const core::Attribute<T> &attribute) const
+        noexcept;
+
+    void PutAttributes(core::IO &io);
+
+    SerialElementIndex &GetSerialElementIndex(
+        const std::string &name,
+        std::unordered_map<std::string, SerialElementIndex> &indices,
+        bool &isNew) const noexcept;
+
+    template <class T>
+    void PutAttributeInData(const core::Attribute<T> &attribute,
+                            Stats<T> &stats) noexcept;
+    template <class T>
+    void PutAttributeInIndex(const core::Attribute<T> &attribute,
+                             const Stats<T> &stats) noexcept;
+
+#define declare_template_instantiation(T)                                      \
+    virtual void DoPutAttributeInData(const core::Attribute<T> &attribute,     \
+                                      Stats<T> &stats) noexcept = 0;
+
+    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+    // Operations related functions
+    template <class T>
+    void PutCharacteristicOperation(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo,
+        std::vector<char> &buffer) noexcept;
+
+    template <class T>
+    void PutOperationPayloadInBuffer(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo);
 };
 
 } // end namespace format

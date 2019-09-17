@@ -114,13 +114,6 @@ public:
                                      BufferSTL &bufferSTL,
                                      const bool inMetadataBuffer);
 
-    /**
-     * Updates variable and payload offsets in metadata characteristics with
-     * the updated Buffer m_DataAbsolutePosition for a particular rank. This is
-     * a local (non-MPI) operation
-     */
-    void UpdateOffsetsInMetadata();
-
 private:
     std::vector<char> m_SerializedIndices;
     std::vector<char> m_GatheredSerializedIndices;
@@ -133,13 +126,6 @@ private:
     /** deserialized attribute indices per rank (vector index) */
     std::unordered_map<std::string, std::vector<BPBase::SerialElementIndex>>
         m_AttributesRankIndices;
-
-    /**
-     * Put in BP buffer all attributes defined in an IO object.
-     * Called by SerializeData function
-     * @param io input containing attributes
-     */
-    void PutAttributes(core::IO &io);
 
     /**
      * Put in BP buffer attribute header, called from PutAttributeInData
@@ -164,24 +150,15 @@ private:
                              Stats<T> &stats,
                              const size_t attributeLengthPosition) noexcept;
 
-    /**
-     * Write a single attribute in data buffer, called from WriteAttributes
-     * @param attribute input
-     * @param stats BP3 Stats
-     */
-    template <class T>
-    void PutAttributeInData(const core::Attribute<T> &attribute,
-                            Stats<T> &stats) noexcept;
+#define declare_template_instantiation(T)                                      \
+    void DoPutAttributeInData(const core::Attribute<T> &attribute,             \
+                              Stats<T> &stats) noexcept final;
+    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
-    /**
-     * Write a single attribute in m_Metadata AttributesIndex, called from
-     * WriteAttributes
-     * @param attribute
-     * @param stats BP3 stats
-     */
     template <class T>
-    void PutAttributeInIndex(const core::Attribute<T> &attribute,
-                             const Stats<T> &stats) noexcept;
+    void PutAttributeInDataCommon(const core::Attribute<T> &attribute,
+                                  Stats<T> &stats) noexcept;
 
     /**
      * Get variable statistics
@@ -235,20 +212,6 @@ private:
                          std::vector<char> &buffer, size_t &position) noexcept;
 
     /**
-     * Returns corresponding serial index, if doesn't exists creates a
-     * new one. Used for variables and attributes
-     * @param name variable or attribute name to look for index
-     * @param indices look up hash table of indices
-     * @param isNew true: index is newly created, false: index already exists in
-     * indices
-     * @return reference to BP1Index in indices
-     */
-    SerialElementIndex &GetSerialElementIndex(
-        const std::string &name,
-        std::unordered_map<std::string, SerialElementIndex> &indices,
-        bool &isNew) const noexcept;
-
-    /**
      * Wraps up the data buffer serialization in m_HeapBuffer and fills the pg
      * length, vars count, vars
      * length and attributes count and attributes length
@@ -268,27 +231,7 @@ private:
     AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                                        BufferSTL &bufferSTL);
 
-    uint32_t GetFileIndex() const noexcept;
-
-    size_t GetAttributesSizeInData(core::IO &io) const noexcept;
-
     void SetDataOffset(uint64_t &offset) noexcept;
-
-    template <class T>
-    size_t GetAttributeSizeInData(const core::Attribute<T> &attribute) const
-        noexcept;
-
-    // Operations related functions
-    template <class T>
-    void PutCharacteristicOperation(
-        const core::Variable<T> &variable,
-        const typename core::Variable<T>::Info &blockInfo,
-        std::vector<char> &buffer) noexcept;
-
-    template <class T>
-    void PutOperationPayloadInBuffer(
-        const core::Variable<T> &variable,
-        const typename core::Variable<T>::Info &blockInfo);
 };
 
 #define declare_template_instantiation(T)                                      \

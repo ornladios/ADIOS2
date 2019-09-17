@@ -53,15 +53,12 @@ public:
 
     BufferSTL m_MetadataIndex;
 
-    size_t m_PreMetadataFileLength = 0;
-    size_t m_PreDataFileLength = 0;
-
     /** Positions of flags in Index Table Header that Reader uses */
-    const size_t m_EndianFlagPosition = 36;
-    const size_t m_BPVersionPosition = 37;
-    const size_t m_ActiveFlagPosition = 38;
-    const size_t m_VersionTagPosition = 0;
-    const size_t m_VersionTagLength = 32;
+    static constexpr size_t m_EndianFlagPosition = 36;
+    static constexpr size_t m_BPVersionPosition = 37;
+    static constexpr size_t m_ActiveFlagPosition = 38;
+    static constexpr size_t m_VersionTagPosition = 0;
+    static constexpr size_t m_VersionTagLength = 32;
 
     /**
      * Unique constructor

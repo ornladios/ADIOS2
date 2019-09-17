@@ -41,8 +41,6 @@ BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
-BP4Writer::~BP4Writer() = default;
-
 StepStatus BP4Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER("BP4Writer::BeginStep");
@@ -277,23 +275,14 @@ void BP4Writer::InitBPBuffer()
             position = pos_last_step;
             const uint64_t lastStep = helper::ReadValue<uint64_t>(
                 preMetadataIndex.m_Buffer, position, IsLittleEndian);
-            // std::cout << "last step of previous run is: " << lastStep <<
-            // std::endl;
             m_BP4Serializer.m_MetadataSet.TimeStep +=
                 static_cast<uint32_t>(lastStep);
             m_BP4Serializer.m_MetadataSet.CurrentStep += lastStep;
-            // std::cout << "TimeStep is: " <<
-            // m_BP4Serializer.m_MetadataSet.TimeStep << std::endl; std::cout <<
-            // "CurrentStep is: " << m_BP4Serializer.m_MetadataSet.CurrentStep
-            // << std::endl;
 
             if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
             {
                 m_BP4Serializer.m_PreDataFileLength =
                     m_FileDataManager.GetFileSize(0);
-
-                // std::cout << "size of existing data file: " <<
-                // m_BP4Serializer.m_PreDataFileLength << std::endl;
             }
 
             if (m_BP4Serializer.m_RankMPI == 0)
@@ -305,8 +294,6 @@ void BP4Writer::InitBPBuffer()
                 // Get the size of existing metadata file
                 m_BP4Serializer.m_PreMetadataFileLength =
                     m_FileMetadataManager.GetFileSize(0);
-                // std::cout << "size of existing metadata file: " <<
-                // m_BP4Serializer.m_PreMetadataFileLength << std::endl;
             }
         }
     }
@@ -350,14 +337,6 @@ void BP4Writer::DoClose(const int transportIndex)
     if (m_BP4Serializer.m_DeferredVariables.size() > 0)
     {
         PerformPuts();
-
-        // DoFlush(false, transportIndex);
-
-        // if (m_BP4Serializer.m_CollectiveMetadata &&
-        //     m_FileDataManager.AllTransportsClosed())
-        // {
-        //     WriteCollectiveMetadataFile(false);
-        // }
     }
 
     DoFlush(true, transportIndex);
@@ -537,58 +516,6 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
                 currentTimeStamp);
         }
 
-        // /*record the starting position of indices in metadata file*/
-        // const uint64_t pgIndexStartMetadataFile =
-        //     m_BP4Serializer.m_MetadataSet.pgIndexStart +
-        //     m_BP4Serializer.m_MetadataSet.metadataFileLength +
-        //     m_BP4Serializer.m_PreMetadataFileLength;
-        // const uint64_t varIndexStartMetadataFile =
-        //     m_BP4Serializer.m_MetadataSet.varIndexStart +
-        //     m_BP4Serializer.m_MetadataSet.metadataFileLength +
-        //     m_BP4Serializer.m_PreMetadataFileLength;
-        // const uint64_t attrIndexStartMetadataFile =
-        //     m_BP4Serializer.m_MetadataSet.attrIndexStart +
-        //     m_BP4Serializer.m_MetadataSet.metadataFileLength +
-        //     m_BP4Serializer.m_PreMetadataFileLength;
-        // size_t currentStepEndPos =
-        //     m_BP4Serializer.m_MetadataSet.metadataFileLength +
-        //     m_BP4Serializer.m_Metadata.m_Position +
-        //     m_BP4Serializer.m_PreMetadataFileLength;
-
-        // BufferSTL metadataIndex;
-        // metadataIndex.Resize(128, "BP4 Index Table Entry");
-
-        // uint64_t currentStep;
-        // if (isFinal && m_BP4Serializer.m_MetadataSet.DataPGCount > 0)
-        // {
-        //     // Not run with BeginStep() and EndStep().
-        //     // Only one step of metadata is generated at close.
-        //     currentStep = m_BP4Serializer.m_MetadataSet.TimeStep;
-        // }
-        // else
-        // {
-        //     currentStep = m_BP4Serializer.m_MetadataSet.TimeStep -
-        //                   1; // The current TimeStep has already been
-        //                   increased
-        //                      // by 1 at this point, so decrease it by 1
-        // }
-
-        // // std::cout << "currentStep: " << currentStep << std::endl;
-
-        // if (currentStep == 1) // TimeStep starts from 1
-        // {
-        //     m_BP4Serializer.MakeHeader(metadataIndex, "Index Table",
-        //     true);
-        // }
-
-        // std::time_t currentTimeStamp = std::time(nullptr);
-
-        // PopulateMetadataIndexFileContent(
-        //     metadataIndex, currentStep, m_BP4Serializer.m_RankMPI,
-        //     pgIndexStartMetadataFile, varIndexStartMetadataFile,
-        //     attrIndexStartMetadataFile, currentStepEndPos,
-        //     currentTimeStamp);
-
         m_FileMetadataIndexManager.WriteFiles(
             m_BP4Serializer.m_MetadataIndex.m_Buffer.data(),
             m_BP4Serializer.m_MetadataIndex.m_Position);
@@ -619,7 +546,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
 {
     TAU_SCOPED_TIMER("BP4Writer::WriteData");
-    size_t dataSize; // = m_BP4Serializer.m_Data.m_Position;
+    size_t dataSize;
 
     // write data without footer
     if (isFinal)
