@@ -46,7 +46,6 @@ public:
     void EndStep() final;
 
 private:
-    bool m_Tolerance = false;
     format::DataManSerializer m_DataManSerializer;
     adios2::zmq::ZmqReqRep m_DataTransport;
     adios2::zmq::ZmqReqRep m_MetadataTransport;
