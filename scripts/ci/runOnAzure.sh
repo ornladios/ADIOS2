@@ -7,6 +7,12 @@ else
   CTEST=ctest
 fi
 
+if [ -d /opt/hdf5/1.10.4 ]
+then
+  export PATH=/opt/hdf5/1.10.4/bin:$PATH
+  export LD_LIBRARY_PATH=/opt/hdf5/1.10.4/lib:$LD_LIBRARY_PATH
+fi
+
 export CI_SITE_NAME="Azure Pipelines"
 export CI_BUILD_NAME="pr${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER}_${SYSTEM_PULLREQUEST_SOURCEBRANCH}_${BUILD_BUILDID}_${CONTAINERRESOURCE}"
 export CI_ROOT_DIR="${PIPELINE_WORKSPACE}"

@@ -11,7 +11,6 @@ env_module(load gnu8)
 env_module(load py3-numpy)
 env_module(load openmpi3)
 env_module(load py3-mpi4py)
-env_module(load phdf5)
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
@@ -20,7 +19,7 @@ set(ENV{CFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 set(ENV{CXXFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 set(ENV{FFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 
-set(ENV{CMAKE_PREFIX_PATH} "/opt/libfabric/1.6.0:$ENV{CMAKE_PREFIX_PATH}")
+set(CMAKE_PREFIX_PATH /opt/libfabric/1.6.0 /opt/hdf5/1.10.4)
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON

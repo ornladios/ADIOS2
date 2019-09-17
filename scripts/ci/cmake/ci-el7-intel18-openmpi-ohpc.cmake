@@ -10,7 +10,6 @@ env_module(purge)
 env_module(load intel)
 env_module(load py2-numpy)
 env_module(load openmpi3)
-env_module(load phdf5)
 env_module(load py2-mpi4py)
 
 set(ENV{CC}  icc)
@@ -20,7 +19,7 @@ set(ENV{CFLAGS} -Werror)
 set(ENV{CXXFLAGS} -Werror)
 set(ENV{FFLAGS} "-warn errors")
 
-set(ENV{CMAKE_PREFIX_PATH} "/opt/libfabric/1.6.0:$ENV{CMAKE_PREFIX_PATH}")
+set(CMAKE_PREFIX_PATH /opt/libfabric/1.6.0 /opt/hdf5/1.10.4)
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON

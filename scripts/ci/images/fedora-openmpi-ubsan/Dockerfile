@@ -2,15 +2,25 @@ FROM fedora:latest
 
 # Install core dev packages
 RUN dnf -y install gcc gcc-c++ gcc-gfortran cmake git make curl file patch \
-        zlib-devel bzip2-devel openmpi-devel hdf5-openmpi-devel vim valgrind \
+        zlib-devel bzip2 bzip2-libs bzip2-devel openmpi-devel vim valgrind \
         python3-devel python3-numpy python3-mpi4py-openmpi zeromq-devel \
         libubsan
 
-# Patch the installed Lmod to properly deal with a CMake shell
-RUN curl https://github.com/TACC/Lmod/commit/516a986322ac462876218ce140214824f47f5887.patch | patch -p 2 /usr/share/lmod/7.5.16/libexec/tcl2lua.tcl
-
 # Cleanup headers and packages
 RUN dnf clean all
+
+# Install HDF5 1.10.4 (the current 1.10.5 has a parallel close bug affecting
+# the tests
+WORKDIR /opt/hdf5
+RUN curl -O https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.4/src/hdf5-1.10.4.tar.bz2 && \
+  tar -xvf hdf5-1.10.4.tar.bz2 && \
+  cd hdf5-1.10.4 && \
+  source /etc/profile && \
+  module load mpi && \
+  ./configure --prefix=/opt/hdf5/1.10.4 --enable-shared --disable-static --enable-parallel && \
+  make -j$(grep -c '^processor' /proc/cpuinfo) install && \
+  cd .. && \
+  rm -rf hdf5-1.10.4.tar.bz2 hdf5-1.10.4
 
 # Create a non-root user to run the builds/tests
 RUN export uid=1001 gid=1001 && \

@@ -89,7 +89,7 @@ if(mpi)
   )
   add_test(NAME Bindings.Fortran.F2C.BPReadFBlocks
     COMMAND
-      ${MPIEXEC_COMMAND}$<TARGET_FILE:Test.Bindings.Fortran.F2C.BPReadFBlocks>
+      ${MPIEXEC_COMMAND} $<TARGET_FILE:Test.Bindings.Fortran.F2C.BPReadFBlocks>
   )
   set_tests_properties(Bindings.Fortran.F2C.BPReadFBlocks PROPERTIES
     DEPENDS "Bindings.Fortran.BPWriteReadHeatMap2D;Bindings.Fortran.BPWriteReadHeatMap3D"

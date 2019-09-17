@@ -42,6 +42,20 @@ RUN zypper in -y environment-modules \
   && echo 'export MODULEPATH=/opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.sh \
   && echo 'setenv MODULEPATH /opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.csh
 
+# Install HDF5 1.10.4 (the current 1.10.5 has a parallel close bug affecting
+# the tests
+#WORKDIR /opt/hdf5
+#RUN curl -O https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.4/src/hdf5-1.10.4.tar.bz2 && \
+#  tar -xvf hdf5-1.10.4.tar.bz2 && \
+#  cd hdf5-1.10.4 && \
+#  source /etc/profile && \
+#  module load pgi openmpi && \
+#  export CC=pgcc CXX=pgc++ FC=pgfortran && \
+#  ./configure --prefix=/opt/hdf5/1.10.4 --enable-shared --disable-static --enable-parallel && \
+#  make -j$(grep -c '^processor' /proc/cpuinfo) install && \
+#  cd .. && \
+#  rm -rf hdf5-1.10.4.tar.bz2 hdf5-1.10.4
+
 # Misc cleanup of unneeded files
 RUN rm -rf /tmp/* \
   && zypper clean

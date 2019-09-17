@@ -22,8 +22,10 @@ set(ENV{CXXFLAGS} -fsanitize=undefined -fno-sanitize-recover=all -pthread)
 set(ENV{FFLAGS} -fsanitize=undefined -fno-sanitize-recover=all -pthread)
 set(ENV{UBSAN_OPTIONS} "print_stacktrace=1")
 
-include(${CMAKE_CURRENT_LIST_DIR}/EnvironmentModules.cmake)
-module(load mpi)
+find_package(EnvModules REQUIRED)
+env_module(load mpi)
+
+set(CMAKE_PREFIX_PATH /opt/hdf5/1.10.4)
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:STRING=ON
@@ -38,4 +40,4 @@ ADIOS2_USE_ZeroMQ:STRING=ON
 MPIEXEC_MAX_NUMPROCS:STRING=4
 ")
 
-include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../dashboard/adios_common.cmake)

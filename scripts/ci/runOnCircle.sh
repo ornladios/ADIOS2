@@ -80,7 +80,7 @@ if [ ! "${CUSTOM_BUILD_NAME}" ]
 then
   get_real_branch_name
 
-  LINETOSAVE="export CUSTOM_BUILD_NAME=${REALBRANCH}_${CIRCLE_BUILD_NUM}_${CIRCLE_JOB}"
+  LINETOSAVE="export CUSTOM_BUILD_NAME=pr${CIRCLE_PR_NUMBER}_${REALBRANCH}_${CIRCLE_BUILD_NUM}_${CIRCLE_JOB}"
 
   # Set the custom build name for this step
   eval $LINETOSAVE
@@ -90,7 +90,7 @@ then
 fi
 
 SOURCE_DIR=${CIRCLE_WORKING_DIRECTORY}/source
-CTEST_SCRIPT="${SOURCE_DIR}/scripts/ci/circle_${CIRCLE_JOB}.cmake"
+CTEST_SCRIPT="${SOURCE_DIR}/scripts/ci/cmake/circle_${CIRCLE_JOB}.cmake"
 
 if [ ! -f "${CTEST_SCRIPT}" ]
 then
@@ -126,4 +126,11 @@ then
 else
   CTEST=ctest
 fi
+
+if [ -d /opt/hdf5/1.10.4 ]
+then
+  export PATH=/opt/hdf5/1.10.4/bin:$PATH
+  export LD_LIBRARY_PATH=/opt/hdf5/1.10.4/lib:$LD_LIBRARY_PATH
+fi
+
 ${CTEST} -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE -DCTEST_BUILD_NAME=${CUSTOM_BUILD_NAME}

@@ -19,11 +19,24 @@ RUN yum -y install epel-release https://github.com/openhpc/ohpc/releases/downloa
 # Install intel OpenHPC packages
 RUN yum -y install \
   lmod-ohpc intel-compilers-devel-ohpc python-numpy-intel-ohpc \
-  openmpi3-intel-ohpc python-mpi4py-intel-openmpi3-ohpc \
-  phdf5-intel-openmpi3-ohpc netcdf-intel-openmpi3-ohpc adios-intel-openmpi3-ohpc
+  openmpi3-intel-ohpc python-mpi4py-intel-openmpi3-ohpc
 
 # Cleanup headers and packages
 RUN yum clean all
+
+# Install HDF5 1.10.4 (the current 1.10.5 has a parallel close bug affecting
+# the tests
+WORKDIR /opt/hdf5
+RUN curl -O https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.4/src/hdf5-1.10.4.tar.bz2 && \
+  tar -xvf hdf5-1.10.4.tar.bz2 && \
+  cd hdf5-1.10.4 && \
+  source /etc/profile && \
+  module load intel openmpi3 && \
+  export CC=icc CXX=icpc FC=ifort && \
+  ./configure --prefix=/opt/hdf5/1.10.4 --enable-shared --disable-static --enable-parallel && \
+  make -j$(grep -c '^processor' /proc/cpuinfo) install && \
+  cd .. && \
+  rm -rf hdf5-1.10.4.tar.bz2 hdf5-1.10.4
 
 # Install libfabric
 WORKDIR /opt/libfabric

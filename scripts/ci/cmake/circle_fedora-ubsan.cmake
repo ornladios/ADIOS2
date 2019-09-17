@@ -33,4 +33,4 @@ ADIOS2_USE_ZFP:STRING=OFF
 ADIOS2_USE_ZeroMQ:STRING=ON
 ")
 
-include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../dashboard/adios_common.cmake)
