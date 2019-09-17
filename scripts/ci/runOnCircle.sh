@@ -39,7 +39,7 @@ EOF
 }
 
 check_and_post_status() {
-  PYTHON_SCRIPT="${SOURCE_DIR}/scripts/circle/findStatus.py"
+  PYTHON_SCRIPT="${SOURCE_DIR}/scripts/ci/findStatus.py"
   curl -u "${STATUS_ROBOT_NAME}:${STATUS_ROBOT_KEY}" "${API_BASE}/commits/${COMMIT}/statuses" | ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPT} --context ${CDASH_STATUS_CONTEXT}
   if [ $? -ne 0 ]
   then
@@ -90,7 +90,7 @@ then
 fi
 
 SOURCE_DIR=${CIRCLE_WORKING_DIRECTORY}/source
-CTEST_SCRIPT="${SOURCE_DIR}/scripts/circle/circle_${CIRCLE_JOB}.cmake"
+CTEST_SCRIPT="${SOURCE_DIR}/scripts/ci/circle_${CIRCLE_JOB}.cmake"
 
 if [ ! -f "${CTEST_SCRIPT}" ]
 then
