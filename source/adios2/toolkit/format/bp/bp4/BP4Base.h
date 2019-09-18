@@ -29,11 +29,10 @@
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
+#include "adios2/toolkit/format/bp/BPBase.h"
 #include "adios2/toolkit/format/bp/bpOperation/BPOperation.h"
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
-
-#include "adios2/toolkit/format/bp/BPBase.h"
 
 namespace adios2
 {
@@ -43,7 +42,7 @@ namespace format
 /**
  * Base class for BP1Writer and BP1Reader format
  */
-class BP4Base : public BPBase
+class BP4Base : virtual public BPBase
 {
 
 public:
@@ -54,15 +53,12 @@ public:
 
     BufferSTL m_MetadataIndex;
 
-    size_t m_PreMetadataFileLength = 0;
-    size_t m_PreDataFileLength = 0;
-
     /** Positions of flags in Index Table Header that Reader uses */
-    const size_t m_EndianFlagPosition = 36;
-    const size_t m_BPVersionPosition = 37;
-    const size_t m_ActiveFlagPosition = 38;
-    const size_t m_VersionTagPosition = 0;
-    const size_t m_VersionTagLength = 32;
+    static constexpr size_t m_EndianFlagPosition = 36;
+    static constexpr size_t m_BPVersionPosition = 37;
+    static constexpr size_t m_ActiveFlagPosition = 38;
+    static constexpr size_t m_VersionTagPosition = 0;
+    static constexpr size_t m_VersionTagLength = 32;
 
     /**
      * Unique constructor
@@ -137,7 +133,8 @@ protected:
 
     ElementIndexHeader
     ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
-                           const bool isLittleEndian = true) const noexcept;
+                           const bool isLittleEndian = true) const
+        noexcept final;
 
 private:
     std::string GetBPSubStreamName(const std::string &name, const size_t rank,
