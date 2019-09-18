@@ -182,11 +182,18 @@ void BP4Writer::InitTransports()
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
     {
-        // std::cout << "rank " << m_BP4Serializer.m_RankMPI << ": " <<
-        // bpSubStreamNames[0] << std::endl;
-        m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
-                                    m_IO.m_TransportsParameters,
-                                    m_BP4Serializer.m_Profiler.m_IsActive);
+        if (m_BP4Serializer.m_Parameters.AsyncTasks)
+        {
+            m_FutureOpenFiles = m_FileDataManager.OpenFilesAsync(
+                bpSubStreamNames, m_OpenMode, m_IO.m_TransportsParameters,
+                m_BP4Serializer.m_Profiler.m_IsActive);
+        }
+        else
+        {
+            m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
+                                        m_IO.m_TransportsParameters,
+                                        m_BP4Serializer.m_Profiler.m_IsActive);
+        }
     }
 
     if (m_BP4Serializer.m_RankMPI == 0)
@@ -281,6 +288,10 @@ void BP4Writer::InitBPBuffer()
 
             if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
             {
+                if (m_FutureOpenFiles.valid())
+                {
+                    m_FutureOpenFiles.get();
+                }
                 m_BP4Serializer.m_PreDataFileLength =
                     m_FileDataManager.GetFileSize(0);
             }
