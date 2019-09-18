@@ -58,16 +58,15 @@ template <class T>
 void GenData(std::vector<T> &data, const size_t step, const Dims &start,
              const Dims &count, const Dims &shape)
 {
-    size_t total_size = std::accumulate(count.begin(), count.end(), 1,
-                                        std::multiplies<size_t>());
-    data.resize(total_size);
-
-    for (int m = 0; m < count[0]; m++)
+    if (start.size() == 2)
     {
-        for (int n = 0; n < count[1]; n++)
+        for (size_t i = 0; i < count[0]; ++i)
         {
-            data[m * count[1] + n] =
-                (m + start[0]) * shape[1] + (n + start[1]) + step;
+            for (size_t j = 0; j < count[1]; ++j)
+            {
+                data[i * count[1] + j] =
+                    (i + start[1]) * shape[1] + j + start[0] + step;
+            }
         }
     }
 }
@@ -194,7 +193,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     dataManIO.SetParameters(engineParams);
     adios2::Engine dataManReader = dataManIO.Open(name, adios2::Mode::Read);
 
-    size_t datasize = std::accumulate(shape.begin(), shape.end(), 1,
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
@@ -208,11 +207,9 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<double>> myDComplexes(datasize);
 
     bool received_steps = false;
-    size_t i;
-    for (i = 0; i < steps; ++i)
+    while (true)
     {
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
-
         if (status == adios2::StepStatus::OK)
         {
             received_steps = true;
@@ -228,6 +225,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             }
             ASSERT_EQ(vars.size(), 10);
             size_t currentStep = dataManReader.CurrentStep();
+            //            ASSERT_EQ(i, currentStep);
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
             adios2::Variable<unsigned char> bpUChars =
@@ -250,6 +248,17 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
             auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
 
+            bpChars.SetSelection({start, count});
+            bpUChars.SetSelection({start, count});
+            bpShorts.SetSelection({start, count});
+            bpUShorts.SetSelection({start, count});
+            bpInts.SetSelection({start, count});
+            bpUInts.SetSelection({start, count});
+            bpFloats.SetSelection({start, count});
+            bpDoubles.SetSelection({start, count});
+            bpComplexes.SetSelection({start, count});
+            bpDComplexes.SetSelection({start, count});
+
             dataManReader.Get(bpChars, myChars.data(), adios2::Mode::Sync);
             dataManReader.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
             dataManReader.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
@@ -262,26 +271,16 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                               adios2::Mode::Sync);
             dataManReader.Get(bpDComplexes, myDComplexes.data(),
                               adios2::Mode::Sync);
-            VerifyData(myChars.data(), currentStep, Dims(shape.size(), 0),
-                       shape, shape);
-            VerifyData(myUChars.data(), currentStep, Dims(shape.size(), 0),
-                       shape, shape);
-            VerifyData(myShorts.data(), currentStep, Dims(shape.size(), 0),
-                       shape, shape);
-            VerifyData(myUShorts.data(), currentStep, Dims(shape.size(), 0),
-                       shape, shape);
-            VerifyData(myInts.data(), currentStep, Dims(shape.size(), 0), shape,
-                       shape);
-            VerifyData(myUInts.data(), currentStep, Dims(shape.size(), 0),
-                       shape, shape);
-            VerifyData(myFloats.data(), currentStep, Dims(shape.size(), 0),
-                       shape, shape);
-            VerifyData(myDoubles.data(), currentStep, Dims(shape.size(), 0),
-                       shape, shape);
-            VerifyData(myComplexes.data(), currentStep, Dims(shape.size(), 0),
-                       shape, shape);
-            VerifyData(myDComplexes.data(), currentStep, Dims(shape.size(), 0),
-                       shape, shape);
+            VerifyData(myChars.data(), currentStep, start, count, shape);
+            VerifyData(myUChars.data(), currentStep, start, count, shape);
+            VerifyData(myShorts.data(), currentStep, start, count, shape);
+            VerifyData(myUShorts.data(), currentStep, start, count, shape);
+            VerifyData(myInts.data(), currentStep, start, count, shape);
+            VerifyData(myUInts.data(), currentStep, start, count, shape);
+            VerifyData(myFloats.data(), currentStep, start, count, shape);
+            VerifyData(myDoubles.data(), currentStep, start, count, shape);
+            VerifyData(myComplexes.data(), currentStep, start, count, shape);
+            VerifyData(myDComplexes.data(), currentStep, start, count, shape);
             dataManReader.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
@@ -305,10 +304,10 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     print_lines = 0;
 }
 
-TEST_F(SscEngineTest, SscNoSelection)
+TEST_F(SscEngineTest, TestSscBase)
 {
-    std::string filename = "SscNoSelection";
-    adios2::Params engineParams = {{"Port", "12336"}, {"Verbose", "0"}};
+    std::string filename = "TestSscBase";
+    adios2::Params engineParams = {{"Port", "12316"}, {"Verbose", "0"}};
 
     int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
@@ -319,9 +318,9 @@ TEST_F(SscEngineTest, SscNoSelection)
     MPI_Comm_rank(mpiComm, &mpiRank);
     MPI_Comm_size(mpiComm, &mpiSize);
 
-    Dims shape = {(size_t)mpiSize, 10};
-    Dims start = {(size_t)mpiRank, 0};
-    Dims count = {1, 10};
+    Dims shape = {10, (size_t)mpiSize * 2};
+    Dims start = {2, (size_t)mpiRank * 2};
+    Dims count = {5, 2};
 
     if (mpiGroup == 0)
     {
