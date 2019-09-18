@@ -17,6 +17,8 @@
 #include "adios2/toolkit/format/bp/bp4/BP4Deserializer.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
+#include <chrono>
+
 namespace adios2
 {
 namespace core
@@ -50,6 +52,8 @@ public:
     void PerformGets() final;
 
 private:
+    typedef std::chrono::duration<double> Seconds;
+
     format::BP4Deserializer m_BP4Deserializer;
     /* transport manager for metadata file */
     transportman::TransportMan m_MDFileManager;
@@ -93,7 +97,7 @@ private:
      *  Used by BeginStep() to get new steps from file when it reaches the
      *  end of steps in memory.
      */
-    StepStatus CheckForNewSteps(float timeoutSeconds);
+    StepStatus CheckForNewSteps(Seconds timeoutSeconds);
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
