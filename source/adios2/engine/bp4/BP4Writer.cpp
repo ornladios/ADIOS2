@@ -296,6 +296,10 @@ void BP4Writer::InitBPBuffer()
 
             if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
             {
+                if (m_FutureOpenFiles.valid())
+                {
+                    m_FutureOpenFiles.get();
+                }
                 m_BP4Serializer.m_PreDataFileLength =
                     m_FileDataManager.GetFileSize(0);
 
