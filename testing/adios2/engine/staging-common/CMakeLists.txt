@@ -138,16 +138,16 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;NoReaderNoWait;TimeoutOnOpen;Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
+set (SIMPLE_TESTS "1x1;NoReaderNoWait;TimeoutOnOpen;1x1.Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
 set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (SIMPLE_FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
 endif()
 
-set (SPECIAL_TESTS "TimeoutReader;LatestReader;LatestReaderHold;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard;1x1.NoPreload;1x1.ForcePreload")
+set (SPECIAL_TESTS "TimeoutReader.1x1;LatestReader.1x1;LatestReaderHold.1x1;DiscardWriter.1x1;PreciousTimestep.3x2;PreciousTimestepDiscard.3x2;1x1.NoPreload;1x1.ForcePreload")
 if (MPIEXEC_IS_BINARY)
     # run_test.py can only kill readers/writers if mpiexec is not a shell script
-    list(APPEND SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;KillWriterTimeout_2x2")
+    list(APPEND SPECIAL_TESTS "KillReadersSerialized.3x2;KillReaders3Max.3x6;KillWriter_2x2;KillWriterTimeout_2x2")
 endif()
 
 set (SIMPLE_MPI_TESTS "")
@@ -200,7 +200,7 @@ endforeach()
 if(ADIOS2_HAVE_MPI)
     set (INSITU_TESTS ${ALL_SIMPLE_TESTS})
     # Tests that don't work for InSitu
-    list (REMOVE_ITEM INSITU_TESTS "TimeoutOnOpen" "Modes" "1x1.Attrs")
+    list (REMOVE_ITEM INSITU_TESTS "TimeoutOnOpen" "1x1.Modes" "1x1.Attrs")
     # Local Vars don't work for InSitu
     list (FILTER INSITU_TESTS EXCLUDE REGEX ".*Local$")
     # Multiple streams don't work for InSitu
@@ -251,11 +251,11 @@ if(NOT MSVC)    # not on windows
     # SharedVars fail with BP4_streaming*
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*SharedVar.BPS$")
     # Discard not a feature of BP4
-    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*DiscardWriter.BPS$")
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*DiscardWriter.1x1.*BPS$")
     # PreciousTimestep not a feature of BP4
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Precious.*BPS$")
     # Timeout on Reader BeginStep failing in BP4
-    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*TimeoutReader.BPS$")
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*TimeoutReader.1x1.*BPS$")
     # LatestTimestep not a feature of BP4
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*LatestReader.*BPS$")
     # Preload not a feature of BP4_streaming
