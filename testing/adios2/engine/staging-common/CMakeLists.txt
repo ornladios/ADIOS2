@@ -200,7 +200,7 @@ endforeach()
 if(ADIOS2_HAVE_MPI)
     set (INSITU_TESTS ${ALL_SIMPLE_TESTS})
     # Tests that don't work for InSitu
-    list (REMOVE_ITEM INSITU_TESTS "TimeoutOnOpen" "Modes" "1x1.Attrs")
+    list (REMOVE_ITEM INSITU_TESTS "TimeoutOnOpen" "1x1.Modes" "1x1.Attrs")
     # Local Vars don't work for InSitu
     list (FILTER INSITU_TESTS EXCLUDE REGEX ".*Local$")
     # Multiple streams don't work for InSitu
