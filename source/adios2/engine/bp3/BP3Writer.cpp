@@ -188,15 +188,15 @@ void BP3Writer::InitTransports()
     {
         if (m_BP3Serializer.m_Parameters.AsyncTasks)
         {
-            m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
-                                        m_IO.m_TransportsParameters,
-                                        m_BP3Serializer.m_Profiler.m_IsActive);
-        }
-        else
-        {
             m_FutureOpenFiles = m_FileDataManager.OpenFilesAsync(
                 bpSubStreamNames, m_OpenMode, m_IO.m_TransportsParameters,
                 m_BP3Serializer.m_Profiler.m_IsActive);
+        }
+        else
+        {
+            m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
+                                        m_IO.m_TransportsParameters,
+                                        m_BP3Serializer.m_Profiler.m_IsActive);
         }
     }
 }
