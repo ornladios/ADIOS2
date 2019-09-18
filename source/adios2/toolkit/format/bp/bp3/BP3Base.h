@@ -42,7 +42,7 @@ namespace format
 /**
  * Base class for BP1Writer and BP1Reader format
  */
-class BP3Base : public BPBase
+class BP3Base : virtual public BPBase
 {
 
 public:
@@ -96,7 +96,8 @@ public:
 protected:
     ElementIndexHeader
     ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
-                           const bool isLittleEndian = true) const noexcept;
+                           const bool isLittleEndian = true) const
+        noexcept final;
 
 private:
     std::string GetBPSubStreamName(const std::string &name, const size_t rank,

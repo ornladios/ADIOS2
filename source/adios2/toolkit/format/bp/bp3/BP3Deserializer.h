@@ -26,7 +26,7 @@ namespace adios2
 namespace format
 {
 
-class BP3Deserializer : public BP3Base
+class BP3Deserializer : virtual public BP3Base
 {
 
 public:

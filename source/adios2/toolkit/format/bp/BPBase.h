@@ -217,13 +217,10 @@ public:
     int m_SizeMPI = 1;          ///< current MPI processes size
     int m_Processes = 1;        ///< number of aggregated MPI processes
 
-    /** sub-block size for min/max calculation of large arrays
-     * in number of elements (not bytes)
-     * The default big number per Put() default will result in the original
-     * single min/max value-pair per block
-     * BP4Only
-     */
-    // size_t m_StatsBlockSize = 1125899906842624;
+    /** used for appending to existing file */
+    size_t m_PreMetadataFileLength = 0;
+    /** used for appending to existing file */
+    size_t m_PreDataFileLength = 0;
 
     /** contains data buffer for this rank */
     BufferSTL m_Data;
@@ -580,11 +577,9 @@ protected:
      * @param isLittleEndian true: buffer is little endian, false: big endian
      * @return populated PGIndex struct
      */
-    //    ElementIndexHeader
-    //    ReadElementIndexHeader(const std::vector<char> &buffer, size_t
-    //    &position,
-    //                           const bool isLittleEndian = true) const
-    //                           noexcept;
+    virtual ElementIndexHeader
+    ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
+                           const bool isLittleEndian = true) const noexcept = 0;
 
     /**
      * Read variable element (block) characteristics from a buffer position and
