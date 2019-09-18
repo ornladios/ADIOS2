@@ -1935,6 +1935,8 @@ extern void SstInternalProvideTimestep(
         ReturnData = CP_distributeDataFromRankZero(
             Stream, NULL, Stream->CPInfo->ReturnMetadataInfoFormat,
             &data_block2);
+        Stream->PreviousFormats = AddUniqueFormats(
+            Stream->PreviousFormats, ReturnData->Msg.Formats, /*copy*/ 1);
     }
     free(data_block1);
     PendingReaderCount = ReturnData->PendingReaderCount;
