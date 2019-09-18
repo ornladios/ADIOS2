@@ -15,19 +15,19 @@ pr:
 resources:
   containers:
   - container: el7
-    image: ornladios/adios2-auto:el7
+    image: ornladios/adios2:el7
   - container: el7-gnu8-ohpc
-    image: ornladios/adios2-auto:el7-gnu8-ohpc
+    image: ornladios/adios2:el7-gnu8-ohpc
   - container: el7-gnu8-openmpi-ohpc
-    image: ornladios/adios2-auto:el7-gnu8-openmpi-ohpc
+    image: ornladios/adios2:el7-gnu8-openmpi-ohpc
   - container:  el7-intel18-ohpc
-    image: ornladios/adios2-auto:el7-intel18-ohpc
+    image: ornladios/adios2:el7-intel18-ohpc
   - container: el7-intel18-openmpi-ohpc
-    image: ornladios/adios2-auto:el7-intel18-openmpi-ohpc
+    image: ornladios/adios2:el7-intel18-openmpi-ohpc
   - container:  suse-pgi
-    image: ornladios/adios2-auto:suse-pgi
+    image: ornladios/adios2:suse-pgi
   - container:  suse-pgi-openmpi
-    image: ornladios/adios2-auto:suse-pgi-openmpi
+    image: ornladios/adios2:suse-pgi-openmpi
 
 strategy:
   matrix:

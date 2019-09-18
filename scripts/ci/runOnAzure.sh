@@ -1,18 +1,5 @@
 #!/bin/bash --login
 
-if [ -x /opt/cmake/bin/ctest ]
-then
-  CTEST=/opt/cmake/bin/ctest
-else
-  CTEST=ctest
-fi
-
-if [ -d /opt/hdf5/1.10.4 ]
-then
-  export PATH=/opt/hdf5/1.10.4/bin:$PATH
-  export LD_LIBRARY_PATH=/opt/hdf5/1.10.4/lib:$LD_LIBRARY_PATH
-fi
-
 export CI_SITE_NAME="Azure Pipelines"
 if [ -n "${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER}" ]
 then
@@ -49,6 +36,13 @@ export OMPI_MCA_hwloc_base_binding_policy=none
 echo "**********Env Begin**********"
 env | sort
 echo "**********Env End************"
+
+if [ -x /opt/cmake/bin/ctest ]
+then
+  CTEST=/opt/cmake/bin/ctest
+else
+  CTEST=ctest
+fi
 
 echo "**********CTest Begin**********"
 ${CTEST} --version
