@@ -1330,8 +1330,8 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         my_info.LatestTimestep = MaxQueuedMetadata(Stream);
         my_info.timeout_sec = timeout_sec;
         my_info.mode = mode;
-        SMPI_Gather(&my_info, sizeof(my_info), MPI_BYTE, global_info,
-                    sizeof(my_info), MPI_BYTE, 0, Stream->mpiComm);
+        SMPI_Gather(&my_info, sizeof(my_info), MPI_CHAR, global_info,
+                    sizeof(my_info), MPI_CHAR, 0, Stream->mpiComm);
         if (Stream->Rank == 0)
         {
             long Biggest = -1;
