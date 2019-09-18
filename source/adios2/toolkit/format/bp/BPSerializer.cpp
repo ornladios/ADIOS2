@@ -11,6 +11,11 @@
 #include "BPSerializer.h"
 #include "BPSerializer.tcc"
 
+#ifdef _WIN32
+#pragma warning(                                                               \
+    disable : 4503) // Windows complains about MergeSerializeIndex long types
+#endif
+
 namespace adios2
 {
 namespace format
