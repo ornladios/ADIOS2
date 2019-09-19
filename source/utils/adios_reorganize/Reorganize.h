@@ -82,9 +82,9 @@ private:
     static const int timeout_sec = 300;
 
     // Global variables
-    int rank = 0;
-    int numproc = 1;
-    MPI_Comm comm;
+    int m_Rank = 0;
+    int m_Size = 1;
+    MPI_Comm m_Comm;
 
     // Read/write method parameters
     Params rmethodparams;
