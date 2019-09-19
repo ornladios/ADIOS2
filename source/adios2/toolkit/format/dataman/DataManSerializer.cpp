@@ -11,6 +11,8 @@
 #include "DataManSerializer.h"
 #include "DataManSerializer.tcc"
 
+#include "adios2/common/ADIOSMPI.h"
+
 #include <cstring>
 #include <iostream>
 

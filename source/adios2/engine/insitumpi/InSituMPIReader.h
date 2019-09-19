@@ -15,6 +15,7 @@
 #define ADIOS2_ENGINE_INSITUMPI_INSITUMPIREADER_H_
 
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
