@@ -14,8 +14,6 @@ set(ENV{CFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 set(ENV{CXXFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 set(ENV{FFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 
-set(ENV{CMAKE_PREFIX_PATH} "/opt/libfabric/1.6.0:$ENV{CMAKE_PREFIX_PATH}")
-
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc:BOOL=ON
@@ -24,7 +22,9 @@ ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_HDF5:BOOL=ON
 ADIOS2_USE_MPI:BOOL=OFF
 ADIOS2_USE_Python:BOOL=ON
+ADIOS2_USE_SZ:BOOL=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
+ADIOS2_USE_ZFP:BOOL=ON
 
 PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python3.4
 ")

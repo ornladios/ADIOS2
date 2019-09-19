@@ -12,8 +12,6 @@ set(ENV{FC}  pgfortran)
 set(ENV{CXXFLAGS} --brief_diagnostics)
 #set(ENV{FFLAGS} "-warn errors")
 
-set(ENV{CMAKE_PREFIX_PATH} "/opt/libfabric/1.6.0:$ENV{CMAKE_PREFIX_PATH}")
-
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc:BOOL=OFF
@@ -22,7 +20,9 @@ ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_HDF5:BOOL=ON
 ADIOS2_USE_MPI:BOOL=OFF
 ADIOS2_USE_Python:BOOL=OFF
+ADIOS2_USE_SZ:BOOL=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
+ADIOS2_USE_ZFP:BOOL=ON
 ")
 
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")

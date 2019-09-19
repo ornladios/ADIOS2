@@ -70,15 +70,8 @@ if(mpi)
   fortran_add_test_helper(BPWriteMemorySelectionRead2D TRUE)
   fortran_add_test_helper(BPWriteMemorySelectionRead3D TRUE)
   fortran_add_test_helper(NullEngine TRUE)
-  
-  if(ADIOS2_HAVE_SZ)
-    fortran_add_test_helper(BPWriteReadSZ2D TRUE)
-    fortran_add_test_helper(BPWriteReadSZ3D TRUE)
-  endif()
-  
-  if(ADIOS2_HAVE_ZFP)
-    fortran_add_test_helper(BPWriteReadZfp2D TRUE)
-  endif()
+
+  add_subdirectory(operation) 
   
   # F2C 
   add_executable(Test.Bindings.Fortran.F2C.BPReadFBlocks
