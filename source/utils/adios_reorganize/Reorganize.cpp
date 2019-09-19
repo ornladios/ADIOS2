@@ -29,6 +29,8 @@
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosString.h"
 
@@ -44,9 +46,12 @@ namespace utils
 Reorganize::Reorganize(int argc, char *argv[])
 : Utils("adios_reorganize", argc, argv)
 {
-    MPI_Comm_split(MPI_COMM_WORLD, m_MPISplitColor, 0, &m_Comm);
-    MPI_Comm_rank(m_Comm, &m_Rank);
-    MPI_Comm_size(m_Comm, &m_Size);
+    {
+        auto commWorld = helper::CommFromMPI(MPI_COMM_WORLD);
+        m_Comm = commWorld.Split(m_CommSplitColor, 0);
+    }
+    m_Rank = m_Comm.Rank();
+    m_Size = m_Comm.Size();
 
     if (argc < 5)
     {
@@ -118,11 +123,7 @@ void Reorganize::Run()
     print0("Write method            = ", wmethodname);
     print0("Write method parameters = ", wmethodparam_str);
 
-#ifdef ADIOS2_HAVE_MPI
-    core::ADIOS adios(m_Comm, true, "C++");
-#else
-    core::ADIOS adios(true, "C++");
-#endif
+    core::ADIOS adios(CommAsMPI(m_Comm), true, "C++");
     core::IO &io = adios.DeclareIO("group");
 
     print0("Waiting to open stream ", infilename, "...");
