@@ -16,12 +16,12 @@
 #include <thread>
 #include <vector>
 
-int rank, size;
+int mpiRank, mpiSize;
 
 template <class T>
 void PrintData(std::vector<T> &data, size_t step)
 {
-    std::cout << "Rank: " << rank << " Step: " << step << " [";
+    std::cout << "Rank: " << mpiRank << " Step: " << step << " [";
     for (size_t i = 0; i < data.size(); ++i)
     {
         std::cout << data[i] << " ";
@@ -33,8 +33,8 @@ int main(int argc, char *argv[])
 {
     // initialize MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 
     // initialize adios2
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
