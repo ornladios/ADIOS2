@@ -196,6 +196,15 @@ add_subdirectory(source)
 add_subdirectory(bindings)
 
 #------------------------------------------------------------------------------#
+# Examples
+#------------------------------------------------------------------------------#
+option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
+option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
+if(ADIOS2_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
+
+#------------------------------------------------------------------------------#
 # Testing
 #------------------------------------------------------------------------------#
 if(DEFINED BUILD_TESTING)
@@ -217,15 +226,6 @@ if(BUILD_TESTING)
 
   enable_testing()
   add_subdirectory(testing)
-endif()
-
-#------------------------------------------------------------------------------#
-# Examples
-#------------------------------------------------------------------------------#
-option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
-option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
-if(ADIOS2_BUILD_EXAMPLES)
-  add_subdirectory(examples)
 endif()
 
 #------------------------------------------------------------------------------#
@@ -280,6 +280,7 @@ endif()
 message("    Library Type: ${msg_lib_type}")
 message("    Build Type:   ${CMAKE_BUILD_TYPE}")
 message("    Testing: ${BUILD_TESTING}")
+message("    Examples: ${ADIOS2_BUILD_EXAMPLES}")
 message("    Build Options:")
 
 foreach(opt IN LISTS ADIOS2_CONFIG_OPTS)
@@ -295,4 +296,3 @@ message("    RDMA Transport for Staging: Available")
 else()
 message("    RDMA Transport for Staging: Unconfigured")
 endif()
-message("")
