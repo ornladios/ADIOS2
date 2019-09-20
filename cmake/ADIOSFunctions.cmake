@@ -149,7 +149,11 @@ function(SetupTestPipeline basename pipeline do_setup)
         -DDIR_NAME=${CMAKE_CURRENT_BINARY_DIR}/${basename}
         -P ${PROJECT_SOURCE_DIR}/cmake/EmptyDir.cmake
     )
-    list(INSERT pipeline 0 "Setup")
+    if(pipeline)
+      list(INSERT pipeline 0 "Setup")
+    else()
+      set(pipeline "Setup;")
+    endif()
   endif()
   unset(prev_suffix)
   foreach(curr_step IN LISTS pipeline)
