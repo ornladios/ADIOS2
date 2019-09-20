@@ -22,12 +22,12 @@ adios2::Dims shape;
 adios2::Dims start;
 adios2::Dims count;
 
-int rank, size;
+int mpiRank, mpiSize;
 
 template <class T>
 void PrintData(std::vector<T> &data, const size_t step)
 {
-    std::cout << "Rank: " << rank << " Step: " << step << " [";
+    std::cout << "Rank: " << mpiRank << " Step: " << step << " [";
     for (const auto i : data)
     {
         std::cout << i << " ";
@@ -43,7 +43,7 @@ std::vector<T> GenerateData(const size_t step)
     std::vector<T> myVec(datasize);
     for (size_t i = 0; i < datasize; ++i)
     {
-        myVec[i] = i + rank * 10000 + step;
+        myVec[i] = i + mpiRank * 10000 + step;
     }
     return myVec;
 }
@@ -52,13 +52,13 @@ int main(int argc, char *argv[])
 {
     // initialize MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 
     // initialize data dimensions
     count = {Nx, Ny};
-    start = {rank * Nx, 0};
-    shape = {size * Nx, Ny};
+    start = {mpiRank * Nx, 0};
+    shape = {mpiSize * Nx, Ny};
 
     // initialize adios2
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
