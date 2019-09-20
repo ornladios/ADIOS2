@@ -68,6 +68,12 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         std::thread(&DataManWriter::ReplyThread, this, m_ControlAddress);
 
     m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout);
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManWriter::DataManWriter() Rank " << m_MpiRank
+                  << std::endl;
+    }
 }
 
 DataManWriter::~DataManWriter()
@@ -75,6 +81,11 @@ DataManWriter::~DataManWriter()
     if (not m_IsClosed)
     {
         DoClose();
+    }
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManWriter::~DataManWriter() Rank " << m_MpiRank
+                  << ", Fianl Step " << m_CurrentStep << std::endl;
     }
 }
 
@@ -107,6 +118,12 @@ void DataManWriter::EndStep()
     const auto buf = m_FastSerializer.GetLocalPack();
     m_SerializerBufferSize = buf->size();
     m_DataPublisher.PushBufferQueue(buf);
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManWriter::EndStep() Rank " << m_MpiRank << ", Step "
+                  << m_CurrentStep << std::endl;
+    }
 }
 
 void DataManWriter::Flush(const int transportIndex) {}
@@ -138,6 +155,11 @@ void DataManWriter::DoClose(const int transportIndex)
     if (m_ReplyThread.joinable())
     {
         m_ReplyThread.join();
+    }
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManWriter::DoClose() Rank " << m_MpiRank << ", Step "
+                  << m_CurrentStep << std::endl;
     }
 }
 
