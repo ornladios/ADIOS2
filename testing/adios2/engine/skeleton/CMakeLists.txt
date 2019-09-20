@@ -14,7 +14,9 @@ target_link_libraries(Test.Engine.Skeleton.Reader adios2)
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(Test.Engine.Skeleton.Writer MPI::MPI_C)
   target_link_libraries(Test.Engine.Skeleton.Reader MPI::MPI_C)
-  set(MPIEXEC_COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1)
+  set(cmd_executor ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1)
+else()
+  set(cmd_executor)
 endif()
 
 add_test(NAME Engine.Skeleton.Writer
@@ -24,21 +26,18 @@ add_test(NAME Engine.Skeleton.Writer
 add_test(NAME Engine.Skeleton.Reader
   COMMAND ${cmd_executor} $<TARGET_FILE:Test.Engine.Skeleton.Reader>
 )
+SetupTestPipeline(Engine.Skeleton "Writer;Reader" TRUE)
 
-if(ADIOS2_HAVE_MPI)
-  add_test(NAME Engine.Skeleton.Writer.Validate
-    COMMAND ${DIFF_EXECUTABLE} -u
-      ${CMAKE_CURRENT_SOURCE_DIR}/TestSkeletonWriterExpectedOutput.txt
-      TestSkeletonWriterOutput.txt
-  )
-  SetupTestPipeline(Engine.Skeleton "Writer;Writer.Validate" TRUE)
+add_test(NAME Engine.Skeleton.Writer.Validate
+  COMMAND ${DIFF_EXECUTABLE} -u
+    ${CMAKE_CURRENT_SOURCE_DIR}/TestSkeletonWriterExpectedOutput.txt
+    TestSkeletonWriterOutput.txt
+)
+SetupTestPipeline(Engine.Skeleton "Writer;Writer.Validate" FALSE)
 
-  add_test(NAME Engine.Skeleton.Reader.Validate
-    COMMAND ${DIFF_EXECUTABLE} -u
-      ${CMAKE_CURRENT_SOURCE_DIR}/TestSkeletonReaderExpectedOutput.txt
-      TestSkeletonReaderOutput.txt
-  )
-  SetupTestPipeline(Engine.Skeleton "Writer;Reader;Reader.Validate" FALSE)
-else()
-  SetupTestPipeline(Engine.Skeleton "Writer;Reader" TRUE)
-endif()
+add_test(NAME Engine.Skeleton.Reader.Validate
+  COMMAND ${DIFF_EXECUTABLE} -u
+    ${CMAKE_CURRENT_SOURCE_DIR}/TestSkeletonReaderExpectedOutput.txt
+    TestSkeletonReaderOutput.txt
+)
+SetupTestPipeline(Engine.Skeleton "Reader;Reader.Validate" FALSE)
