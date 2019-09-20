@@ -30,7 +30,7 @@ add_test(NAME HeatTransfer.BP3.zfp.Mx1.Dump
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
-SetupTestPipeline(HeatTransfer.BP3.zfp.Mx1 "Write;Read;Dump;Validate" TRUE)
+SetupTestPipeline(HeatTransfer.BP3.zfp.Mx1 "Write;Read;Dump" TRUE)
 
 #############################################################################
 add_test(NAME HeatTransfer.BP4.zfp.Mx1.Write
@@ -58,4 +58,4 @@ add_test(NAME HeatTransfer.BP4.zfp.Mx1.Dump
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
-SetupTestPipeline(HeatTransfer.BP4.zfp.Mx1 "Write;Read;Dump;Validate" TRUE)
+SetupTestPipeline(HeatTransfer.BP4.zfp.Mx1 "Write;Read;Dump" TRUE)

@@ -3,62 +3,56 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_executable(TestUtilsChangingShape TestUtilsChangingShape.cpp)
-target_link_libraries(TestUtilsChangingShape adios2)
+include(ADIOSFunctions)
+
+add_executable(Test.Utils.ChangingShape TestUtilsChangingShape.cpp)
+target_link_libraries(Test.Utils.ChangingShape adios2)
 
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(TestUtilsChangingShape MPI::MPI_C)
+  target_link_libraries(Test.Utils.ChangingShape MPI::MPI_C)
   set(cmd_executor ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1)
 else()
   set(cmd_executor)
 endif()
 
 add_test(NAME Utils.ChangingShape
-  COMMAND ${cmd_executor} $<TARGET_FILE:TestUtilsChangingShape>
+  COMMAND ${cmd_executor} $<TARGET_FILE:Test.Utils.ChangingShape>
 )
-# This test produces TestUtilsChangingShape.bp
 
-
+########################################
 # bpls -la to screen for testing
-add_test(NAME Utils.ChangingShape.Bpls.la.Screen
+########################################
+add_test(NAME Utils.ChangingShape.Screen
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-la
     -DINPUT_FILE=TestUtilsChangingShape.bp
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
-set_property(TEST Utils.ChangingShape.Bpls.la.Screen
-  PROPERTY DEPENDS Utils.ChangingShape
-)
 
-
-# bpls -la
-add_test(NAME Utils.ChangingShape.Bpls.la.Dump
+add_test(NAME Utils.ChangingShape.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-la
     -DINPUT_FILE=TestUtilsChangingShape.bp
     -DOUTPUT_FILE=TestUtilsChangingShape.bplsla.result.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
-set_property(TEST Utils.ChangingShape.Bpls.la.Dump
-  PROPERTY DEPENDS Utils.ChangingShape
-)
 
 if(ADIOS2_HAVE_MPI)
-
-add_test(NAME Utils.ChangingShape.Bpls.la.Validate
-  COMMAND ${DIFF_EXECUTABLE} -u
-    ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsChangingShape.bplsla.expected.txt
-    ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsChangingShape.bplsla.result.txt
-)
-set_property(TEST Utils.ChangingShape.Bpls.la.Validate
-  PROPERTY DEPENDS Utils.ChangingShape.Bpls.la.Dump
-)
-
-endif(ADIOS2_HAVE_MPI)
+  add_test(NAME Utils.ChangingShape.Validate
+    COMMAND ${DIFF_EXECUTABLE} -uw
+      ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsChangingShape.bplsla.expected.txt
+      TestUtilsChangingShape.bplsla.result.txt
+  )
+  SetupTestPipeline(Utils.ChangingShape ";Screen;Dump;Validate" TRUE)
+else()
+  SetupTestPipeline(Utils.ChangingShape ";Screen;Dump" TRUE)
+endif()
 
 
+########################################
 # bpls -ld  AlternatingStepsAndChangingShapeVar
-add_test(NAME Utils.ChangingShape.Bpls.ldAlternatingStepsAndChangingShapeVar.Dump
+########################################
+add_test(NAME Utils.ChangingShape.AlternatingStepsAndChangingShapeVar.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-ld
     -DARG2=AlternatingStepsAndChangingShapeVar
@@ -66,25 +60,27 @@ add_test(NAME Utils.ChangingShape.Bpls.ldAlternatingStepsAndChangingShapeVar.Dum
     -DOUTPUT_FILE=TestUtilsChangingShape.bplsldAlternatingStepsAndChangingShapeVar.result.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
-set_property(TEST Utils.ChangingShape.Bpls.ldAlternatingStepsAndChangingShapeVar.Dump
-  PROPERTY DEPENDS Utils.ChangingShape
-)
 
 if(ADIOS2_HAVE_MPI)
+  add_test(NAME Utils.ChangingShape.AlternatingStepsAndChangingShapeVar.Validate
+    COMMAND ${DIFF_EXECUTABLE} -uw
+      ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsChangingShape.bplsldAlternatingStepsAndChangingShapeVar.expected.txt
+      TestUtilsChangingShape.bplsldAlternatingStepsAndChangingShapeVar.result.txt
+  )
+  SetupTestPipeline(Utils.ChangingShape
+    ";AlternatingStepsAndChangingShapeVar.Dump;AlternatingStepsAndChangingShapeVar.Validate"
+    FALSE
+  )
+else()
+  SetupTestPipeline(Utils.ChangingShape
+    ";AlternatingStepsAndChangingShapeVar.Dump" FALSE
+  )
+endif()
 
-add_test(NAME Utils.ChangingShape.Bpls.ldAlternatingStepsAndChangingShapeVar.Validate
-  COMMAND ${DIFF_EXECUTABLE} -u
-    ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsChangingShape.bplsldAlternatingStepsAndChangingShapeVar.expected.txt
-    ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsChangingShape.bplsldAlternatingStepsAndChangingShapeVar.result.txt
-)
-set_property(TEST Utils.ChangingShape.Bpls.ldAlternatingStepsAndChangingShapeVar.Validate
-  PROPERTY DEPENDS Utils.ChangingShape.Bpls.ldAlternatingStepsAndChangingShapeVar.Dump
-)
-
-endif(ADIOS2_HAVE_MPI)
-
+########################################
 # bpls -ld AlternatingStepsVar -s "1,0,0" -c "3,-1,-1" -n 8
-add_test(NAME Utils.ChangingShape.Bpls.ldAlternatingStepsVarSelection.Dump
+########################################
+add_test(NAME Utils.ChangingShape.AlternatingStepsVarSelection.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-ld
     -DARG2=AlternatingStepsVar
@@ -98,25 +94,27 @@ add_test(NAME Utils.ChangingShape.Bpls.ldAlternatingStepsVarSelection.Dump
     -DOUTPUT_FILE=TestUtilsChangingShape.bplsldAlternatingStepsVarSelection.result.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
-set_property(TEST Utils.ChangingShape.Bpls.ldAlternatingStepsVarSelection.Dump
-  PROPERTY DEPENDS Utils.ChangingShape
-)
 
 if(ADIOS2_HAVE_MPI)
+  add_test(NAME Utils.ChangingShape.AlternatingStepsVarSelection.Validate
+    COMMAND ${DIFF_EXECUTABLE} -uw
+      ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsChangingShape.bplsldAlternatingStepsVarSelection.expected.txt
+      TestUtilsChangingShape.bplsldAlternatingStepsVarSelection.result.txt
+  )
+  SetupTestPipeline(Utils.ChangingShape
+    ";AlternatingStepsVarSelection.Dump;AlternatingStepsVarSelection.Validate"
+    FALSE
+  )
+else()
+  SetupTestPipeline(Utils.ChangingShape
+    ";AlternatingStepsVarSelection.Dump" FALSE
+  )
+endif()
 
-add_test(NAME Utils.ChangingShape.Bpls.ldAlternatingStepsVarSelection.Validate
-  COMMAND ${DIFF_EXECUTABLE} -u
-    ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsChangingShape.bplsldAlternatingStepsVarSelection.expected.txt
-    ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsChangingShape.bplsldAlternatingStepsVarSelection.result.txt
-)
-set_property(TEST Utils.ChangingShape.Bpls.ldAlternatingStepsVarSelection.Validate
-  PROPERTY DEPENDS Utils.ChangingShape.Bpls.ldAlternatingStepsVarSelection.Dump
-)
-
-endif(ADIOS2_HAVE_MPI)
-
+########################################
 # bpls -ld ChangingShapeVar -s "5,0,0" -c "1,-1,-1" -n 12
-add_test(NAME Utils.ChangingShape.Bpls.ldChangingShapeVarOneStep.Dump
+########################################
+add_test(NAME Utils.ChangingShape.ChangingShapeVarOneStep.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-ld
     -DARG2=ChangingShapeVar
@@ -130,26 +128,24 @@ add_test(NAME Utils.ChangingShape.Bpls.ldChangingShapeVarOneStep.Dump
     -DOUTPUT_FILE=TestUtilsChangingShape.bplsldChangingShapeVarOneStep.result.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
-set_property(TEST Utils.ChangingShape.Bpls.ldChangingShapeVarOneStep.Dump
-  PROPERTY DEPENDS Utils.ChangingShape
-)
-
 if(ADIOS2_HAVE_MPI)
+  add_test(NAME Utils.ChangingShape.ChangingShapeVarOneStep.Validate
+    COMMAND ${DIFF_EXECUTABLE} -uw
+      ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsChangingShape.bplsldChangingShapeVarOneStep.expected.txt
+      TestUtilsChangingShape.bplsldChangingShapeVarOneStep.result.txt
+  )
+  SetupTestPipeline(Utils.ChangingShape
+    ";ChangingShapeVarOneStep.Dump;ChangingShapeVarOneStep.Validate"
+    FALSE
+  )
+else()
+  SetupTestPipeline(Utils.ChangingShape ";ChangingShapeVarOneStep.Dump" FALSE)
+endif()
 
-add_test(NAME Utils.ChangingShape.Bpls.ldChangingShapeVarOneStep.Validate
-  COMMAND ${DIFF_EXECUTABLE} -u
-    ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsChangingShape.bplsldChangingShapeVarOneStep.expected.txt
-    ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsChangingShape.bplsldChangingShapeVarOneStep.result.txt
-)
-set_property(TEST Utils.ChangingShape.Bpls.ldChangingShapeVarOneStep.Validate
-  PROPERTY DEPENDS Utils.ChangingShape.Bpls.ldChangingShapeVarOneStep.Dump
-)
-
-
-endif(ADIOS2_HAVE_MPI)
-
+########################################
 # bpls -ld FixedShapeVar -s "5,0,0" -c "10,-1,-1"
-add_test(NAME Utils.ChangingShape.Bpls.ldFixedShapeVarTooManySteps.Dump
+########################################
+add_test(NAME Utils.ChangingShape.FixedShapeVarTooManySteps.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-ld
     -DARG2=FixedShapeVar
@@ -161,22 +157,19 @@ add_test(NAME Utils.ChangingShape.Bpls.ldFixedShapeVarTooManySteps.Dump
     -DOUTPUT_FILE=TestUtilsChangingShape.bplsldFixedShapeVarTooManySteps.result.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
-set_property(TEST Utils.ChangingShape.Bpls.ldFixedShapeVarTooManySteps.Dump
-  PROPERTY DEPENDS Utils.ChangingShape
-)
 
 if(ADIOS2_HAVE_MPI)
-
-add_test(NAME Utils.ChangingShape.Bpls.ldFixedShapeVarTooManySteps.Validate
-  COMMAND ${DIFF_EXECUTABLE} -u
-    ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsChangingShape.bplsldFixedShapeVarTooManySteps.expected.txt
-    ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsChangingShape.bplsldFixedShapeVarTooManySteps.result.txt
-)
-set_property(TEST Utils.ChangingShape.Bpls.ldFixedShapeVarTooManySteps.Validate
-  PROPERTY DEPENDS Utils.ChangingShape.Bpls.ldFixedShapeVarTooManySteps.Dump
-)
-
-
-endif(ADIOS2_HAVE_MPI)
+  add_test(NAME Utils.ChangingShape.FixedShapeVarTooManySteps.Validate
+    COMMAND ${DIFF_EXECUTABLE} -uw
+      ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsChangingShape.bplsldFixedShapeVarTooManySteps.expected.txt
+      TestUtilsChangingShape.bplsldFixedShapeVarTooManySteps.result.txt
+  )
+  SetupTestPipeline(Utils.ChangingShape
+    ";FixedShapeVarTooManySteps.Dump;FixedShapeVarTooManySteps.Validate"
+    FALSE
+  )
+else()
+  SetupTestPipeline(Utils.ChangingShape ";FixedShapeVarTooManySteps.Dump" FALSE)
+endif()
 
 
