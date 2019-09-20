@@ -13,6 +13,7 @@
 #include <utility>
 
 #include "adiosComm.h"
+#include "adiosCommDummy.h"
 
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSTypes.h"
@@ -172,7 +173,7 @@ CommImplMPI::~CommImplMPI()
         if (m_MPIComm != MPI_COMM_NULL && m_MPIComm != MPI_COMM_WORLD &&
             m_MPIComm != MPI_COMM_SELF)
         {
-            SMPI_Comm_free(&m_MPIComm);
+            MPI_Comm_free(&m_MPIComm);
         }
     }
 }
@@ -182,7 +183,7 @@ void CommImplMPI::Free(const std::string &hint)
     if (m_MPIComm != MPI_COMM_NULL && m_MPIComm != MPI_COMM_WORLD &&
         m_MPIComm != MPI_COMM_SELF)
     {
-        CheckMPIReturn(SMPI_Comm_free(&m_MPIComm), hint);
+        CheckMPIReturn(MPI_Comm_free(&m_MPIComm), hint);
     }
 }
 
@@ -209,30 +210,30 @@ std::unique_ptr<CommImpl> CommImplMPI::World(const std::string &) const
 int CommImplMPI::Rank() const
 {
     int rank;
-    CheckMPIReturn(SMPI_Comm_rank(m_MPIComm, &rank), {});
+    CheckMPIReturn(MPI_Comm_rank(m_MPIComm, &rank), {});
     return rank;
 }
 
 int CommImplMPI::Size() const
 {
     int size;
-    CheckMPIReturn(SMPI_Comm_size(m_MPIComm, &size), {});
+    CheckMPIReturn(MPI_Comm_size(m_MPIComm, &size), {});
     return size;
 }
 
 void CommImplMPI::Barrier(const std::string &hint) const
 {
-    CheckMPIReturn(SMPI_Barrier(m_MPIComm), hint);
+    CheckMPIReturn(MPI_Barrier(m_MPIComm), hint);
 }
 
 void CommImplMPI::Allgather(const void *sendbuf, size_t sendcount,
                             Datatype sendtype, void *recvbuf, size_t recvcount,
                             Datatype recvtype, const std::string &hint) const
 {
-    CheckMPIReturn(SMPI_Allgather(sendbuf, static_cast<int>(sendcount),
-                                  ToMPI(sendtype), recvbuf,
-                                  static_cast<int>(recvcount), ToMPI(recvtype),
-                                  m_MPIComm),
+    CheckMPIReturn(MPI_Allgather(sendbuf, static_cast<int>(sendcount),
+                                 ToMPI(sendtype), recvbuf,
+                                 static_cast<int>(recvcount), ToMPI(recvtype),
+                                 m_MPIComm),
                    hint);
 }
 
@@ -240,8 +241,8 @@ void CommImplMPI::Allreduce(const void *sendbuf, void *recvbuf, size_t count,
                             Datatype datatype, Comm::Op op,
                             const std::string &hint) const
 {
-    CheckMPIReturn(SMPI_Allreduce(sendbuf, recvbuf, static_cast<int>(count),
-                                  ToMPI(datatype), ToMPI(op), m_MPIComm),
+    CheckMPIReturn(MPI_Allreduce(sendbuf, recvbuf, static_cast<int>(count),
+                                 ToMPI(datatype), ToMPI(op), m_MPIComm),
                    hint);
 }
 
@@ -254,8 +255,8 @@ void CommImplMPI::Bcast(void *buffer, size_t count, Datatype datatype, int root,
     unsigned char *blockBuf = static_cast<unsigned char *>(buffer);
     while (inputSize > 0)
     {
-        CheckMPIReturn(SMPI_Bcast(blockBuf, static_cast<int>(blockSize),
-                                  ToMPI(datatype), root, m_MPIComm),
+        CheckMPIReturn(MPI_Bcast(blockBuf, static_cast<int>(blockSize),
+                                 ToMPI(datatype), root, m_MPIComm),
                        hint);
         blockBuf += blockSize * CommImpl::SizeOf(datatype);
         inputSize -= blockSize;
@@ -268,10 +269,10 @@ void CommImplMPI::Gather(const void *sendbuf, size_t sendcount,
                          Datatype recvtype, int root,
                          const std::string &hint) const
 {
-    CheckMPIReturn(SMPI_Gather(sendbuf, static_cast<int>(sendcount),
-                               ToMPI(sendtype), recvbuf,
-                               static_cast<int>(recvcount), ToMPI(recvtype),
-                               root, m_MPIComm),
+    CheckMPIReturn(MPI_Gather(sendbuf, static_cast<int>(sendcount),
+                              ToMPI(sendtype), recvbuf,
+                              static_cast<int>(recvcount), ToMPI(recvtype),
+                              root, m_MPIComm),
                    hint);
 }
 
@@ -294,10 +295,10 @@ void CommImplMPI::Gatherv(const void *sendbuf, size_t sendcount,
         std::transform(displs, displs + size, std::back_inserter(displsInt),
                        cast);
     }
-    CheckMPIReturn(SMPI_Gatherv(sendbuf, static_cast<int>(sendcount),
-                                ToMPI(sendtype), recvbuf, countsInt.data(),
-                                displsInt.data(), ToMPI(recvtype), root,
-                                m_MPIComm),
+    CheckMPIReturn(MPI_Gatherv(sendbuf, static_cast<int>(sendcount),
+                               ToMPI(sendtype), recvbuf, countsInt.data(),
+                               displsInt.data(), ToMPI(recvtype), root,
+                               m_MPIComm),
                    hint);
 }
 
@@ -305,8 +306,8 @@ void CommImplMPI::Reduce(const void *sendbuf, void *recvbuf, size_t count,
                          Datatype datatype, Comm::Op op, int root,
                          const std::string &hint) const
 {
-    CheckMPIReturn(SMPI_Reduce(sendbuf, recvbuf, static_cast<int>(count),
-                               ToMPI(datatype), ToMPI(op), root, m_MPIComm),
+    CheckMPIReturn(MPI_Reduce(sendbuf, recvbuf, static_cast<int>(count),
+                              ToMPI(datatype), ToMPI(op), root, m_MPIComm),
                    hint);
 }
 
@@ -314,8 +315,8 @@ void CommImplMPI::ReduceInPlace(void *buf, size_t count, Datatype datatype,
                                 Comm::Op op, int root,
                                 const std::string &hint) const
 {
-    CheckMPIReturn(SMPI_Reduce(MPI_IN_PLACE, buf, static_cast<int>(count),
-                               ToMPI(datatype), ToMPI(op), root, m_MPIComm),
+    CheckMPIReturn(MPI_Reduce(MPI_IN_PLACE, buf, static_cast<int>(count),
+                              ToMPI(datatype), ToMPI(op), root, m_MPIComm),
                    hint);
 }
 
@@ -530,8 +531,12 @@ Comm::Status CommReqImplMPI::Wait(const std::string &hint)
 
 Comm CommFromMPI(MPI_Comm mpiComm)
 {
+    if (mpiComm == MPI_COMM_NULL)
+    {
+        return CommDummy();
+    }
     MPI_Comm newComm;
-    SMPI_Comm_dup(mpiComm, &newComm);
+    MPI_Comm_dup(mpiComm, &newComm);
     auto comm = std::unique_ptr<CommImpl>(new CommImplMPI(newComm));
     return CommImpl::MakeComm(std::move(comm));
 }
