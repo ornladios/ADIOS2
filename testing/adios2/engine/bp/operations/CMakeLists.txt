@@ -9,31 +9,31 @@ file(MAKE_DIRECTORY ${BP3_DIR})
 file(MAKE_DIRECTORY ${BP4_DIR})
 
 if(ADIOS2_HAVE_SZ)
-  bp3_bp4_gtest_add_tests_helper(BPWriteReadSZ)
+  bp3_bp4_gtest_add_tests_helper(WriteReadSZ)
 endif()
 
 
 if(ADIOS2_HAVE_ZFP)
-  bp3_bp4_gtest_add_tests_helper(BPWriteReadZfp)
-  bp3_bp4_gtest_add_tests_helper(BPWriteReadZfpHighLevelAPI)
-  bp3_bp4_gtest_add_tests_helper(BPWriteReadZfpConfig)
-  target_compile_definitions(Test.Engine.BP.BPWriteReadZfpConfig PRIVATE
+  bp3_bp4_gtest_add_tests_helper(WriteReadZfp)
+  bp3_bp4_gtest_add_tests_helper(WriteReadZfpHighLevelAPI)
+  bp3_bp4_gtest_add_tests_helper(WriteReadZfpConfig)
+  target_compile_definitions(Test.Engine.BP.WriteReadZfpConfig PRIVATE
     "XML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
   )
 endif()
 
 if(ADIOS2_HAVE_MGARD)
-  bp3_bp4_gtest_add_tests_helper(BPWriteReadMGARD)
+  bp3_bp4_gtest_add_tests_helper(WriteReadMGARD)
 endif()
 
 if(ADIOS2_HAVE_BZip2)
-  bp3_bp4_gtest_add_tests_helper(BPWriteReadBZIP2)
+  bp3_bp4_gtest_add_tests_helper(WriteReadBZIP2)
 endif()
 
 if(ADIOS2_HAVE_PNG)
-  bp3_bp4_gtest_add_tests_helper(BPWriteReadPNG)
+  bp3_bp4_gtest_add_tests_helper(WriteReadPNG)
 endif()
 
 if(ADIOS2_HAVE_Blosc)
-  bp3_bp4_gtest_add_tests_helper(BPWriteReadBlosc)
+  bp3_bp4_gtest_add_tests_helper(WriteReadBlosc)
 endif()
