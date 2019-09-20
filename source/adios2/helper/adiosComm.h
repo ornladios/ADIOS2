@@ -112,6 +112,12 @@ public:
     Comm Split(int color, int key,
                const std::string &hint = std::string()) const;
 
+    /**
+     * @brief Create a communicator covering all processes.
+     * @param hint Description of std::runtime_error exception on error.
+     */
+    Comm World(const std::string &hint = std::string()) const;
+
     int Rank() const;
     int Size() const;
 
@@ -352,6 +358,7 @@ public:
     Duplicate(const std::string &hint) const = 0;
     virtual std::unique_ptr<CommImpl> Split(int color, int key,
                                             const std::string &hint) const = 0;
+    virtual std::unique_ptr<CommImpl> World(const std::string &hint) const = 0;
     virtual int Rank() const = 0;
     virtual int Size() const = 0;
     virtual void Barrier(const std::string &hint) const = 0;

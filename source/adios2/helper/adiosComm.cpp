@@ -65,6 +65,11 @@ Comm Comm::Split(int color, int key, const std::string &hint) const
     return Comm(m_Impl->Split(color, key, hint));
 }
 
+Comm Comm::World(const std::string &hint) const
+{
+    return Comm(m_Impl->World(hint));
+}
+
 int Comm::Rank() const { return m_Impl->Rank(); }
 
 int Comm::Size() const { return m_Impl->Size(); }

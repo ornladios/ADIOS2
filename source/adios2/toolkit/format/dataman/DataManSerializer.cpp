@@ -11,8 +11,6 @@
 #include "DataManSerializer.h"
 #include "DataManSerializer.tcc"
 
-#include "adios2/common/ADIOSMPI.h"
-
 #include <cstring>
 #include <iostream>
 
@@ -1195,8 +1193,7 @@ void DataManSerializer::Log(const int level, const std::string &message,
                             const bool mpi, const bool endline)
 {
     TAU_SCOPED_TIMER_FUNC();
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const int rank = m_Comm.World().Rank();
 
     if (m_Verbosity >= level)
     {

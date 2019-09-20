@@ -111,6 +111,7 @@ public:
     std::unique_ptr<CommImpl> Duplicate(const std::string &hint) const override;
     std::unique_ptr<CommImpl> Split(int color, int key,
                                     const std::string &hint) const override;
+    std::unique_ptr<CommImpl> World(const std::string &hint) const override;
 
     int Rank() const override;
     int Size() const override;
@@ -198,6 +199,11 @@ std::unique_ptr<CommImpl> CommImplMPI::Split(int color, int key,
     MPI_Comm newComm;
     CheckMPIReturn(MPI_Comm_split(m_MPIComm, color, key, &newComm), hint);
     return std::unique_ptr<CommImpl>(new CommImplMPI(newComm));
+}
+
+std::unique_ptr<CommImpl> CommImplMPI::World(const std::string &) const
+{
+    return std::unique_ptr<CommImpl>(new CommImplMPI(MPI_COMM_WORLD));
 }
 
 int CommImplMPI::Rank() const
