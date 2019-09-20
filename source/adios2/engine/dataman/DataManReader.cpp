@@ -71,18 +71,25 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
         m_ZmqSubscriberVec.push_back(dataZmq);
     }
     m_SubscriberThread = std::thread(&DataManReader::SubscriberThread, this);
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::DataManReader() Rank " << m_MpiRank
+                  << std::endl;
+    }
 }
 
 DataManReader::~DataManReader()
 {
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "DataManReader::~DataManReader() Step " << m_CurrentStep
-                  << std::endl;
-    }
     if (not m_IsClosed)
     {
         DoClose();
+    }
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::~DataManReader() Rank " << m_MpiRank
+                  << ", Step " << m_CurrentStep << std::endl;
     }
 }
 
@@ -91,8 +98,8 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 {
     if (m_Verbosity >= 5)
     {
-        std::cout << "DataManReader::BeginStep() begin. Last step "
-                  << m_CurrentStep << std::endl;
+        std::cout << "DataManReader::BeginStep() begin, Rank " << m_MpiRank
+                  << ", Step " << m_CurrentStep << std::endl;
     }
 
     float timeout = timeoutSeconds;
@@ -106,7 +113,8 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (m_Verbosity >= 5)
         {
-            std::cout << "DataManReader::BeginStep() returned EndOfStream due "
+            std::cout << "DataManReader::BeginStep(), Rank " << m_MpiRank
+                      << " returned EndOfStream due "
                          "to initialization failure"
                       << std::endl;
         }
@@ -117,7 +125,8 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (m_Verbosity >= 5)
         {
-            std::cout << "DataManReader::BeginStep() returned EndOfStream, "
+            std::cout << "DataManReader::BeginStep() Rank " << m_MpiRank
+                      << " returned EndOfStream, "
                          "final step is "
                       << m_FinalStep << std::endl;
         }
@@ -131,7 +140,8 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (m_Verbosity >= 5)
         {
-            std::cout << "DataManReader::BeginStep() returned EndOfStream due "
+            std::cout << "DataManReader::BeginStep() Rank " << m_MpiRank
+                      << "returned EndOfStream due "
                          "to timeout"
                       << std::endl;
         }
@@ -161,8 +171,8 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 
     if (m_Verbosity >= 5)
     {
-        std::cout << "DataManReader::BeginStep() end. Current step "
-                  << m_CurrentStep << std::endl;
+        std::cout << "DataManReader::BeginStep() end, Rank " << m_MpiRank
+                  << ", Step " << m_CurrentStep << std::endl;
     }
 
     return StepStatus::OK;
@@ -242,6 +252,11 @@ void DataManReader::DoClose(const int transportIndex)
     if (m_SubscriberThread.joinable())
     {
         m_SubscriberThread.join();
+    }
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::DoClose() Rank " << m_MpiRank << ", Step "
+                  << m_CurrentStep << std::endl;
     }
 }
 
