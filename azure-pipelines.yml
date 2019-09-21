@@ -8,9 +8,6 @@ pr:
     include:
     - master
     - release
-  paths:
-    exclude:
-    - docs/*
 
 resources:
   containers:
