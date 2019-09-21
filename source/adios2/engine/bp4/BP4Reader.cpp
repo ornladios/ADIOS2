@@ -93,7 +93,6 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
                                          "in call to BP4 Reader BeginStep");
     }
 
-
     return status;
 }
 
