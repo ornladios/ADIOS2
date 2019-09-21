@@ -28,7 +28,7 @@ install:
   ############################################################################
   # Install a recent CMake
   ############################################################################
-  - set CMAKE_URL="https://cmake.org/files/v3.11/cmake-3.11.0-win64-x64.zip"
+  - set CMAKE_URL="https://cmake.org/files/v3.15/cmake-3.15.3-win64-x64.zip"
   - appveyor DownloadFile %CMAKE_URL% -FileName cmake.zip
   - 7z x cmake.zip -oC:\projects\deps > nul
   - move C:\projects\deps\cmake-* C:\projects\deps\cmake
@@ -49,8 +49,10 @@ before_build:
 - ps: |
     if(Test-Path env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH) {
         $env:BUILD_NAME_BRANCH = $env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH
+        $env:CUSTOM_BUILD_NAME = ("pr{0}_{1}_{2}_vs{3}" -f $env:APPVEYOR_PULL_REQUEST_NUMBER, $env:BUILD_NAME_BRANCH, $env:APPVEYOR_BUILD_NUMBER, $env:APPVEYOR_BUILD_WORKER_IMAGE.split()[2] )
     } else {
         $env:BUILD_NAME_BRANCH = $env:APPVEYOR_REPO_BRANCH
+        $env:CUSTOM_BUILD_NAME = ("{0}_{1}_vs{2}" -f $env:BUILD_NAME_BRANCH, $env:APPVEYOR_BUILD_NUMBER, $env:APPVEYOR_BUILD_WORKER_IMAGE.split()[2] )
     }
     if($env:APPVEYOR_BUILD_WORKER_IMAGE.split()[2] -eq "2015") {
         $env:VCVARSALLPATH = 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat'
@@ -61,7 +63,6 @@ before_build:
     }
     $env:CC = "cl.exe"
     $env:CXX = "cl.exe"
-    $env:CUSTOM_BUILD_NAME = ("{0}_{1}_vs{2}" -f $env:BUILD_NAME_BRANCH, $env:APPVEYOR_BUILD_NUMBER, $env:APPVEYOR_BUILD_WORKER_IMAGE.split()[2] )
 - call "%VCVARSALLPATH%" %VCVARSALLARGS%
 - ctest.exe -VV -S ..\adios2\scripts\appveyor\appveyor_ninja.cmake
     -Ddashboard_full=OFF
