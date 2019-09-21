@@ -60,9 +60,19 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     m_IO.m_ReadStreaming = true;
     StepStatus status = StepStatus::OK;
 
-    if (m_CurrentStep + 1 >= m_BP4Deserializer.m_MetadataSet.StepsCount)
+    if (m_FirstStep)
     {
-        status = CheckForNewSteps(Seconds(timeoutSeconds));
+        if (m_BP4Deserializer.m_MetadataSet.StepsCount == 0)
+        {
+            status = CheckForNewSteps(Seconds(timeoutSeconds));
+        }
+    }
+    else
+    {
+        if (m_CurrentStep + 1 >= m_BP4Deserializer.m_MetadataSet.StepsCount)
+        {
+            status = CheckForNewSteps(Seconds(timeoutSeconds));
+        }
     }
 
     // This should be after getting new steps
