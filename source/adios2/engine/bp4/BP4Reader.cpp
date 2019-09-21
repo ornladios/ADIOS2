@@ -56,32 +56,33 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         }
     }
 
-    if (m_FirstStep)
-    {
-        m_FirstStep = false;
-    }
-    else
-    {
-        ++m_CurrentStep;
-    }
-
     // used to inquire for variables in streaming mode
     m_IO.m_ReadStreaming = true;
     StepStatus status = StepStatus::OK;
 
-    if (m_CurrentStep >= m_BP4Deserializer.m_MetadataSet.StepsCount)
+    if (m_CurrentStep + 1 >= m_BP4Deserializer.m_MetadataSet.StepsCount)
     {
         status = CheckForNewSteps(Seconds(timeoutSeconds));
     }
 
     // This should be after getting new steps
-    m_IO.m_EngineStep = m_CurrentStep;
 
     if (status == StepStatus::OK)
     {
+        if (m_FirstStep)
+        {
+            m_FirstStep = false;
+        }
+        else
+        {
+            ++m_CurrentStep;
+        }
+
+        m_IO.m_EngineStep = m_CurrentStep;
         m_IO.ResetVariablesStepSelection(false,
                                          "in call to BP4 Reader BeginStep");
     }
+
 
     return status;
 }
