@@ -59,6 +59,7 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     // used to inquire for variables in streaming mode
     m_IO.m_ReadStreaming = true;
     StepStatus status = StepStatus::OK;
+
     if (m_FirstStep)
     {
         if (m_BP4Deserializer.m_MetadataSet.StepsCount == 0)
