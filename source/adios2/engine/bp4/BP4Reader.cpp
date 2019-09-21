@@ -59,10 +59,19 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     // used to inquire for variables in streaming mode
     m_IO.m_ReadStreaming = true;
     StepStatus status = StepStatus::OK;
-
-    if (m_CurrentStep + 1 >= m_BP4Deserializer.m_MetadataSet.StepsCount)
+    if (m_FirstStep)
     {
-        status = CheckForNewSteps(Seconds(timeoutSeconds));
+        if (m_BP4Deserializer.m_MetadataSet.StepsCount == 0)
+        {
+            status = CheckForNewSteps(Seconds(timeoutSeconds));
+        }
+    }
+    else
+    {
+        if (m_CurrentStep + 1 >= m_BP4Deserializer.m_MetadataSet.StepsCount)
+        {
+            status = CheckForNewSteps(Seconds(timeoutSeconds));
+        }
     }
 
     // This should be after getting new steps
@@ -82,7 +91,6 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         m_IO.ResetVariablesStepSelection(false,
                                          "in call to BP4 Reader BeginStep");
     }
-
 
     return status;
 }
@@ -295,10 +303,7 @@ uint64_t
 MetadataExpectedMinFileSize(const format::BP4Deserializer &m_BP4Deserializer,
                             const std::string &IdxFileName, bool hasHeader)
 {
-    std::cerr << "MetadataExpectedMinFileSize Entering" << std::endl;
     size_t idxsize = m_BP4Deserializer.m_MetadataIndex.m_Buffer.size();
-    std::cerr << "MetadataExpectedMinFileSize idxsize = " << idxsize
-              << std::endl;
     if (idxsize % 64 != 0)
     {
         throw std::runtime_error(
@@ -314,8 +319,6 @@ MetadataExpectedMinFileSize(const format::BP4Deserializer &m_BP4Deserializer,
     }
     uint64_t lastpos = *(uint64_t *)&(
         m_BP4Deserializer.m_MetadataIndex.m_Buffer[idxsize - 24]);
-    std::cerr << "MetadataExpectedMinFileSize lastpos = " << lastpos
-              << std::endl;
     return lastpos;
 }
 
@@ -393,18 +396,6 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
      * In ProcessMetadataForNewSteps(), we will re-read the metadata which
      * is in the buffer but has not been processed yet.
      */
-
-    /* Test assumption: Metadata is already really on disk when Index table has
-     * the entry for a step */
-    size_t idxsize = m_BP4Deserializer.m_MetadataIndex.m_Buffer.size();
-    uint64_t lastpos = *(uint64_t *)&(
-        m_BP4Deserializer.m_MetadataIndex.m_Buffer[idxsize - 24]);
-    std::cerr << "Rank " << m_BP4Deserializer.m_RankMPI
-              << " InitBuffer: m_MDFileProcessedSize = "
-              << m_MDFileProcessedSize << " Metadata buffer size = "
-              << m_BP4Deserializer.m_Metadata.m_Buffer.size()
-              << " Index table last pos = " << std::to_string(lastpos)
-              << std::endl;
 }
 
 size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
@@ -437,10 +428,6 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
             do
             {
                 fileSize = m_MDFileManager.GetFileSize(0);
-                std::cerr << "Rank " << m_BP4Deserializer.m_RankMPI
-                          << " UpdateBuffer: md.0 size = " << fileSize
-                          << " Expected min size = " << expectedMinFileSize
-                          << std::endl;
                 if (fileSize >= expectedMinFileSize)
                 {
                     break;
@@ -450,7 +437,6 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
 
             if (fileSize >= expectedMinFileSize)
             {
-
                 /* Read corresponding new metadata (throwing away the old)
                  * There may be unprocessed entries in the metadata if the index
                  * had less steps than the metadata file at the last read.
@@ -522,12 +508,6 @@ void BP4Reader::ProcessMetadataForNewSteps(const size_t newIdxSize)
     size_t idxsize = m_BP4Deserializer.m_MetadataIndex.m_Buffer.size();
     uint64_t lastpos = *(uint64_t *)&(
         m_BP4Deserializer.m_MetadataIndex.m_Buffer[idxsize - 24]);
-    std::cerr << "Rank " << m_BP4Deserializer.m_RankMPI
-              << " UpdateBuffer: m_MDFileProcessedSize = "
-              << m_MDFileProcessedSize << " Metadata buffer size = "
-              << m_BP4Deserializer.m_Metadata.m_Position
-              << " Index table last pos = " << std::to_string(lastpos)
-              << std::endl;
 }
 
 bool BP4Reader::CheckWriterActive()
