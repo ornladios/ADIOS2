@@ -21,19 +21,26 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
 : DataManCommon("DataManWriter", io, name, openMode, std::move(comm))
 {
-    if (m_StagingMode == "wide")
+    if (m_IPAddress.empty())
     {
-        if (m_IPAddress.empty())
-        {
-            throw(std::invalid_argument(
-                "IP address not specified in wide area staging"));
-        }
-        m_Port += m_MpiRank;
-        m_ControlAddress =
-            "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
-        m_DataAddress =
-            "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + m_MpiSize);
+        throw(std::invalid_argument(
+            "IP address not specified in wide area staging"));
+    }
+    m_Port += m_MpiRank;
+    m_ControlAddress = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
+    m_DataAddress =
+        "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + m_MpiSize);
 
+    std::vector<std::string> daVec;
+    std::vector<std::string> caVec;
+
+    if (m_MpiSize == 1 or m_OneToOneMode)
+    {
+        daVec.push_back(m_DataAddress);
+        caVec.push_back(m_ControlAddress);
+    }
+    else
+    {
         std::vector<char> allDaVec(32 * m_MpiSize, '\0');
         std::vector<char> allCaVec(32 * m_MpiSize, '\0');
 
@@ -42,9 +49,6 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         m_Comm.Allgather(m_ControlAddress.data(), m_ControlAddress.size(),
                          allCaVec.data(), 32);
 
-        std::vector<std::string> daVec;
-        std::vector<std::string> caVec;
-
         for (int i = 0; i < m_MpiSize; ++i)
         {
             daVec.push_back(std::string(allDaVec.begin() + i * 32,
@@ -52,17 +56,12 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
             caVec.push_back(std::string(allCaVec.begin() + i * 32,
                                         allCaVec.begin() + (i + 1) * 32));
         }
-
-        nlohmann::json addJson;
-        addJson["DataAddresses"] = daVec;
-        addJson["ControlAddresses"] = caVec;
-
-        m_AllAddresses = addJson.dump() + '\0';
     }
-    else if (m_StagingMode == "local")
-    {
-        // TODO: Add filesystem based handshake
-    }
+
+    nlohmann::json addJson;
+    addJson["DataAddresses"] = daVec;
+    addJson["ControlAddresses"] = caVec;
+    m_AllAddresses = addJson.dump() + '\0';
 
     m_ReplyThread =
         std::thread(&DataManWriter::ReplyThread, this, m_ControlAddress);

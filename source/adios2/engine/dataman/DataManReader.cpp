@@ -26,7 +26,14 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
 
-    if (m_StagingMode == "wide")
+    if (m_OneToOneMode)
+    {
+        m_ControlAddresses.push_back("tcp://" + m_IPAddress + ":" +
+                                     std::to_string(m_Port));
+        m_DataAddresses.push_back("tcp://" + m_IPAddress + ":" +
+                                  std::to_string(m_Port + m_MpiSize));
+    }
+    else
     {
         if (m_IPAddress.empty())
         {
@@ -58,10 +65,6 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
         m_ControlAddresses =
             addJson["ControlAddresses"].get<std::vector<std::string>>();
         m_TotalWriters = m_DataAddresses.size();
-    }
-    else if (m_StagingMode == "local")
-    {
-        // TODO: Add filesystem based handshake
     }
 
     for (const auto &address : m_DataAddresses)

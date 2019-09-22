@@ -41,8 +41,8 @@ protected:
     int m_Verbosity = 0;
     size_t m_SerializerBufferSize = 128 * 1024 * 1024;
     size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
-    std::string m_StagingMode = "wide"; // wide or local
     int m_Timeout = 5;
+    bool m_OneToOneMode = false;
 
     // internal variables
     int m_MpiRank;

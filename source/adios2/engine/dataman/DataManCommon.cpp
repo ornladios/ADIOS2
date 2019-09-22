@@ -28,9 +28,9 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     m_MpiSize = m_Comm.Size();
     GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);
     GetParameter(m_IO.m_Parameters, "Port", m_Port);
-    GetParameter(m_IO.m_Parameters, "StagingMode", m_StagingMode);
     GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
     GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    GetParameter(m_IO.m_Parameters, "OneToOneMode", m_OneToOneMode);
 }
 
 DataManCommon::~DataManCommon() {}
