@@ -32,7 +32,7 @@ The DataMan engine takes the following parameters:
    Packages not sent or received within this time are considered lost.
 
 4. ``AlwaysProvideLatestTimestep``: Default **TRUE**.
-AlwaysProvideLatestTimestep is a boolean parameter that affects what
+This is a boolean parameter that affects what
 of the available timesteps will be provided to the reader engine.  If
 AlwaysProvideLatestTimestep is **TRUE**, then if there are multiple
 timesteps available to the reader, older timesteps will be skipped and
@@ -41,6 +41,11 @@ This value is interpreted by only by the DataMan Reader engine.
 If AlwaysProvideLatestTimestep is **FALSE**, then the reader engine
 will be provided with the oldest step that has not been processed.
 
+5. ``OneToOneMode``: Default **FALSE**. It is recommended that this parameter is set to TRUE when
+   there is only one writer process and only one reader process. This will explicitly tell both the
+   writer engine and the reader engine that it only needs to connect to a single writer or reader,
+   and thus saves the handshake overhead.
+
 =============================== ================== ================================================
  **Key**                         **Value Format**   **Default** and Examples
 =============================== ================== ================================================
@@ -48,6 +53,7 @@ will be provided with the oldest step that has not been processed.
  Port                            integer            **50001**, 22000, 33000
  Timeout                         integer            **5**, 10, 30
  AlwaysProvideLatestTimestep     boolean            **TRUE**, false
+ OneToOneMode                    boolean            **FALSE**, true
 =============================== ================== ================================================
 
 
