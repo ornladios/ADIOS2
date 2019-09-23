@@ -78,12 +78,7 @@ void BP4Writer::PerformPuts()
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(                               \
             variableName, "in call to PerformPuts, EndStep or Close");         \
-                                                                               \
-        for (const auto &blockInfo : variable.m_BlocksInfo)                    \
-        {                                                                      \
-            PutSyncCommon(variable, blockInfo);                                \
-        }                                                                      \
-        variable.m_BlocksInfo.clear();                                         \
+        PerformPutCommon(variable);                                            \
     }
 
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
@@ -133,10 +128,22 @@ void BP4Writer::Init()
 }
 
 #define declare_type(T)                                                        \
+    void BP4Writer::DoPut(Variable<T> &variable,                               \
+                          typename Variable<T>::Span &span,                    \
+                          const size_t bufferID, const T &value)               \
+    {                                                                          \
+        TAU_SCOPED_TIMER("BP4Writer::Put");                                    \
+        PutCommon(variable, span, bufferID, value);                            \
+    }
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                        \
     void BP4Writer::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
         PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
-        variable.m_BlocksInfo.clear();                                         \
+        variable.m_BlocksInfo.pop_back();                                      \
     }                                                                          \
     void BP4Writer::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \

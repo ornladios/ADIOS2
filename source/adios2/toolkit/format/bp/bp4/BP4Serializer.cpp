@@ -5,7 +5,9 @@
  * BP4Serializer.cpp
  *
  *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
+ *  Author: William F Godoy godoywf@ornl.gov
+ *          Lipeng Wan wanl@ornl.gov
+ *          Norbert Podhorszki pnb@ornl.gov
  */
 
 #include "BP4Serializer.h"
@@ -1796,16 +1798,24 @@ ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #define declare_template_instantiation(T)                                      \
     template void BP4Serializer::PutVariablePayload(                           \
         const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        const bool) noexcept;                                                  \
+        const bool, typename core::Variable<T>::Span *) noexcept;              \
                                                                                \
     template void BP4Serializer::PutVariableMetadata(                          \
         const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        const bool) noexcept;
+        const bool, typename core::Variable<T>::Span *) noexcept;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 //------------------------------------------------------------------------------
+
+#define declare_template_instantiation(T)                                      \
+    template void BP4Serializer::PutSpanMetadata(                              \
+        const core::Variable<T> &,                                             \
+        const typename core::Variable<T>::Span &) noexcept;
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace format
 } // end namespace adios2

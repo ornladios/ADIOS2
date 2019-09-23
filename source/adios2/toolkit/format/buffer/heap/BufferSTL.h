@@ -35,6 +35,9 @@ public:
                const bool zeroInitialize) final;
 
     size_t GetAvailableSize() const final;
+
+    template <class T>
+    size_t Align() const noexcept;
 };
 
 } // end namespace format

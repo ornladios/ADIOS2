@@ -128,7 +128,7 @@ void BP3Writer::Init()
                           const size_t bufferID, const T &value)               \
     {                                                                          \
         TAU_SCOPED_TIMER("BP3Writer::Put");                                    \
-        return PutCommon(variable, span, bufferID, value);                     \
+        PutCommon(variable, span, bufferID, value);                            \
     }
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)

@@ -176,10 +176,11 @@ private:
                         const bool isRowMajor) noexcept;
 
     template <class T>
-    void
-    PutVariableMetadataInData(const core::Variable<T> &variable,
-                              const typename core::Variable<T>::Info &blockInfo,
-                              const Stats<T> &stats) noexcept;
+    void PutVariableMetadataInData(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo,
+        const Stats<T> &stats,
+        const typename core::Variable<T>::Span *span = nullptr) noexcept;
 
     template <class T>
     void PutVariableMetadataInIndex(
@@ -234,8 +235,6 @@ private:
     std::vector<size_t>
     AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                                        BufferSTL &bufferSTL);
-
-    void SetDataOffset(uint64_t &offset) noexcept;
 };
 
 #define declare_template_instantiation(T)                                      \

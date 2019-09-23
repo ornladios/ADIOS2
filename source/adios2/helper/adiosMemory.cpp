@@ -294,11 +294,6 @@ size_t PaddingToAlignPointer(const void *ptr)
     {
         padSize = 0;
     }
-    /*std::cout << " -- Pad pointer with " << std::to_string(padSize)
-              << " bytes. original pointer = " << std::to_string(memLocation)
-              << " aligned pointer = " << std::to_string(memLocation + padSize)
-              << " sizeof(max_align_t) = "
-              << std::to_string(sizeof(max_align_t)) << std::endl;*/
     return padSize;
 }
 

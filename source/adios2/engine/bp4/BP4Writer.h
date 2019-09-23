@@ -72,23 +72,32 @@ private:
     void InitBPBuffer();
 
 #define declare_type(T)                                                        \
+    void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \
+               const size_t bufferID, const T &value) final;
+
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
     void DoPutDeferred(Variable<T> &, const T *) final;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    /**
-     * Common function for primitive PutSync, puts variables in buffer
-     * @param variable
-     * @param values
-     */
+    template <class T>
+    void PutCommon(Variable<T> &variable, typename Variable<T>::Span &span,
+                   const size_t bufferID, const T &value);
+
     template <class T>
     void PutSyncCommon(Variable<T> &variable,
                        const typename Variable<T>::Info &blockInfo);
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *data);
+
+    template <class T>
+    void PerformPutCommon(Variable<T> &variable);
 
     void DoFlush(const bool isFinal = false, const int transportIndex = -1);
 
