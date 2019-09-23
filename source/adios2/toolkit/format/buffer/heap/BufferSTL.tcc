@@ -13,8 +13,6 @@
 
 #include "BufferSTL.h"
 
-#include <memory>
-
 namespace adios2
 {
 namespace format
@@ -23,10 +21,22 @@ namespace format
 template <class T>
 size_t BufferSTL::Align() const noexcept
 {
+    auto lf_align = [](const size_t align, const size_t size, void *&ptr,
+                       size_t &space) {
+        const uintptr_t largePtr = reinterpret_cast<uintptr_t>(ptr);
+        const uintptr_t aligned = (largePtr - 1u + align) & -align;
+        const uintptr_t diff = aligned - largePtr;
+        if ((size + diff) <= space)
+        {
+            space -= diff;
+        }
+    };
+
     void *currentAddress = reinterpret_cast<void *>(
         const_cast<char *>(m_Buffer.data() + m_Position));
     size_t size = GetAvailableSize();
-    std::align(alignof(T), sizeof(T), currentAddress, size);
+    lf_align(alignof(T), sizeof(T), currentAddress, size);
+
     return GetAvailableSize() - size;
 }
 
