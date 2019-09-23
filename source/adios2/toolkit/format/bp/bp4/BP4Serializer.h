@@ -5,7 +5,9 @@
  * BP4Serializer.h
  *
  *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
+ *  Author: William F Godoy godoywf@ornl.gov
+ *          Lipeng Wan wanl@ornl.gov
+ *          Norbert Podhorszki pnb@ornl.gov
  */
 
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP_BP4_BP4SERIALIZER_H_
@@ -84,6 +86,7 @@ public:
 
     template <class T>
     void PutSpanMetadata(const core::Variable<T> &variable,
+                         const typename core::Variable<T>::Info &blockInfo,
                          const typename core::Variable<T>::Span &span) noexcept;
 
     /**
@@ -342,7 +345,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 
 #define declare_template_instantiation(T)                                      \
     extern template void BP4Serializer::PutSpanMetadata(                       \
-        const core::Variable<T> &,                                             \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
         const typename core::Variable<T>::Span &) noexcept;
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)

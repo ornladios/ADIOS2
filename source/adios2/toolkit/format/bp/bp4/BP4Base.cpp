@@ -5,7 +5,9 @@
  * BP4Base.cpp
  *
  *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
+ *  Author: William F Godoy godoywf@ornl.gov
+ *          Lipeng Wan wanl@ornl.gov
+ *          Norbert Podhorszki pnb@ornl.gov
  */
 #include "BP4Base.h"
 

@@ -137,7 +137,8 @@ void BP4Writer::PerformPutCommon(Variable<T> &variable)
         }
         else
         {
-            m_BP4Serializer.PutSpanMetadata(variable, itSpanBlock->second);
+            m_BP4Serializer.PutSpanMetadata(variable, variable.m_BlocksInfo[b],
+                                            itSpanBlock->second);
         }
     }
 

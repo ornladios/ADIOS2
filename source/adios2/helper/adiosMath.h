@@ -264,12 +264,12 @@ enum class BlockDivisionMethod
  */
 struct BlockDivisionInfo
 {
-    uint16_t NBlocks;
-    size_t SubBlockSize;
-    BlockDivisionMethod DivisionMethod;
     std::vector<uint16_t> Div;
     std::vector<uint16_t> Rem;
     std::vector<uint16_t> ReverseDivProduct;
+    size_t SubBlockSize;
+    uint16_t NBlocks;
+    BlockDivisionMethod DivisionMethod;
 };
 
 /** Chop a block into smaller pieces by a size limit.
@@ -312,7 +312,7 @@ Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
  */
 template <class T>
 void GetMinMaxSubblocks(const T *values, const Dims &count,
-                        const BlockDivisionInfo info, std::vector<T> &MinMaxs,
+                        const BlockDivisionInfo &info, std::vector<T> &MinMaxs,
                         T &bmin, T &bmax, const unsigned int threads) noexcept;
 
 } // end namespace helper

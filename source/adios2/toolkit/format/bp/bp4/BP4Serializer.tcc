@@ -133,28 +133,34 @@ inline void BP4Serializer::PutVariablePayload(
 template <class T>
 void BP4Serializer::PutSpanMetadata(
     const core::Variable<T> &variable,
+    const typename core::Variable<T>::Info &blockInfo,
     const typename core::Variable<T>::Span &span) noexcept
 {
     if (m_Parameters.StatsLevel > 0)
     {
         // Get Min/Max from populated data
         m_Profiler.Start("minmax");
-        T min, max;
-        helper::GetMinMaxThreads(span.Data(), span.Size(), min, max,
-                                 m_Parameters.Threads);
+        Stats<T> stats;
+        stats.Min = {};
+        stats.Max = {};
+        stats.SubBlockInfo =
+            helper::DivideBlock(blockInfo.Count, m_Parameters.StatsBlockSize,
+                                helper::BlockDivisionMethod::Contiguous);
+        // set stats MinMaxs with the correct size
+        helper::GetMinMaxSubblocks(span.Data(), blockInfo.Count,
+                                   stats.SubBlockInfo, stats.MinMaxs, stats.Min,
+                                   stats.Max, m_Parameters.Threads);
         m_Profiler.Stop("minmax");
 
-        // Put min/max in variable index
+        // Put min/max blocks in variable index
         SerialElementIndex &variableIndex =
             m_MetadataSet.VarsIndices.at(variable.m_Name);
         auto &buffer = variableIndex.Buffer;
 
-        const size_t minPosition = span.m_MinMaxMetadataPositions.first;
-        const size_t maxPosition = span.m_MinMaxMetadataPositions.second;
-        //        std::copy(&min, &min + 1,
-        //                  reinterpret_cast<T *>(buffer.data() + minPosition));
-        //        std::copy(&max, &max + 1,
-        //                  reinterpret_cast<T *>(buffer.data() + maxPosition));
+        size_t minMaxPosition = span.m_MinMaxMetadataPositions.first;
+        // here repopulate the metadata buffer
+        uint8_t dummyCounter = 0;
+        PutBoundsRecord(false, stats, dummyCounter, buffer, minMaxPosition);
     }
 }
 
@@ -327,11 +333,18 @@ BP4Serializer::GetBPStats(const bool singleValue,
     stats.Step = m_MetadataSet.TimeStep;
     stats.FileIndex = GetFileIndex();
 
-    // added to support span
-    if (blockInfo.Data == nullptr)
+    // support span
+    if (blockInfo.Data == nullptr && m_Parameters.StatsLevel > 0)
     {
         stats.Min = {};
         stats.Max = {};
+        stats.SubBlockInfo =
+            helper::DivideBlock(blockInfo.Count, m_Parameters.StatsBlockSize,
+                                helper::BlockDivisionMethod::Contiguous);
+        // set stats MinMaxs with the correct size
+        helper::GetMinMaxSubblocks(blockInfo.Data, blockInfo.Count,
+                                   stats.SubBlockInfo, stats.MinMaxs, stats.Min,
+                                   stats.Max, m_Parameters.Threads);
         return stats;
     }
 
@@ -765,9 +778,9 @@ void BP4Serializer::PutVariableCharacteristics(
         // TODO conflict between BP3 and BP4 with Span
         if (m_Parameters.StatsLevel > 0 && span != nullptr)
         {
-            span->m_MinMaxMetadataPositions.first = buffer.size() + 1;
-            span->m_MinMaxMetadataPositions.second =
-                buffer.size() + 2 + sizeof(T);
+            // store the characteristic position to be filled by PutSpanMetadata
+            span->m_MinMaxMetadataPositions.first = buffer.size();
+            span->m_MinMaxMetadataPositions.second = buffer.size();
         }
 
         PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,

@@ -1811,7 +1811,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 
 #define declare_template_instantiation(T)                                      \
     template void BP4Serializer::PutSpanMetadata(                              \
-        const core::Variable<T> &,                                             \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
         const typename core::Variable<T>::Span &) noexcept;
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
