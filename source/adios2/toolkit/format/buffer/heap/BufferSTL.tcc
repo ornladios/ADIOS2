@@ -13,6 +13,12 @@
 
 #include "BufferSTL.h"
 
+#include <memory>
+
+#ifdef _WIN32
+#pragma warning(disable : 4146) // Windows complains about unsigned minus
+#endif
+
 namespace adios2
 {
 namespace format
@@ -21,14 +27,20 @@ namespace format
 template <class T>
 size_t BufferSTL::Align() const noexcept
 {
-    auto lf_align = [](const size_t align, const size_t size, void *&ptr,
+    // LLVM MIT license
+    // https://github.com/llvm-mirror/libcxx/blob/6952d1478ddd5a1870079d01f1a0e1eea5b09a1a/src/memory.cpp#L217
+    auto lf_align = [](const size_t alignment, const size_t size, void *&ptr,
                        size_t &space) {
-        const uintptr_t largePtr = reinterpret_cast<uintptr_t>(ptr);
-        const uintptr_t aligned = (largePtr - 1u + align) & -align;
-        const uintptr_t diff = aligned - largePtr;
-        if ((size + diff) <= space)
+        if (size <= space)
         {
-            space -= diff;
+            const char *p1 = static_cast<char *>(ptr);
+            const char *p2 = reinterpret_cast<char *>(
+                reinterpret_cast<size_t>(p1 + (alignment - 1)) & -alignment);
+            const size_t d = static_cast<size_t>(p2 - p1);
+            if (d <= space - size)
+            {
+                space -= d;
+            }
         }
     };
 
@@ -36,7 +48,6 @@ size_t BufferSTL::Align() const noexcept
         const_cast<char *>(m_Buffer.data() + m_Position));
     size_t size = GetAvailableSize();
     lf_align(alignof(T), sizeof(T), currentAddress, size);
-
     return GetAvailableSize() - size;
 }
 
