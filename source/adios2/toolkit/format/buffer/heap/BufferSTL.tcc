@@ -23,7 +23,8 @@ namespace format
 template <class T>
 size_t BufferSTL::Align() const noexcept
 {
-    void *currentAddress = m_Buffer.data() + m_Position;
+    void *currentAddress = reinterpret_cast<void *>(
+        const_cast<char *>(m_Buffer.data() + m_Position));
     size_t size = GetAvailableSize();
     std::align(alignof(T), sizeof(T), currentAddress, size);
     return GetAvailableSize() - size;

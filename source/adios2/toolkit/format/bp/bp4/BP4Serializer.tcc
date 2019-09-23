@@ -84,6 +84,32 @@ inline void BP4Serializer::PutVariablePayload(
     const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
     m_Profiler.Start("buffering");
+    if (span != nullptr)
+    {
+        const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
+        if (span->m_Value != T{})
+        {
+            T *itBegin = reinterpret_cast<T *>(m_Data.m_Buffer.data() +
+                                               m_Data.m_Position);
+
+            // TODO: does std::fill_n have a bug in gcc or due to optimizations
+            // this is impossible due to memory alignment? This seg faults in
+            // Release mode only . Even RelWithDebInfo works, replacing with
+            // explicit loop below using access operator [] std::fill_n(itBegin,
+            // blockSize, span->m_Value);
+
+            for (size_t i = 0; i < blockSize; ++i)
+            {
+                itBegin[i] = span->m_Value;
+            }
+        }
+
+        m_Data.m_Position += blockSize * sizeof(T);
+        m_Data.m_AbsolutePosition += blockSize * sizeof(T);
+        m_Profiler.Stop("buffering");
+        return;
+    }
+
     if (blockInfo.Operations.empty())
     {
         PutPayloadInBuffer(variable, blockInfo, sourceRowMajor);
@@ -125,10 +151,10 @@ void BP4Serializer::PutSpanMetadata(
 
         const size_t minPosition = span.m_MinMaxMetadataPositions.first;
         const size_t maxPosition = span.m_MinMaxMetadataPositions.second;
-        std::copy(&min, &min + 1,
-                  reinterpret_cast<T *>(buffer.data() + minPosition));
-        std::copy(&max, &max + 1,
-                  reinterpret_cast<T *>(buffer.data() + maxPosition));
+        //        std::copy(&min, &min + 1,
+        //                  reinterpret_cast<T *>(buffer.data() + minPosition));
+        //        std::copy(&max, &max + 1,
+        //                  reinterpret_cast<T *>(buffer.data() + maxPosition));
     }
 }
 
@@ -152,7 +178,6 @@ BP4Serializer::PutAttributeHeaderInData(const core::Attribute<T> &attribute,
     PutNameRecord(attribute.m_Name, buffer, position);
     position += 2; // skip path
 
-    // TODO: attribute from Variable??
     constexpr int8_t no = 'n';
     helper::CopyToBuffer(buffer, position,
                          &no); // not associated with a Variable
@@ -398,7 +423,6 @@ size_t BP4Serializer::PutVariableMetadataInData(
                                      position);
 
     // here align pointer for span
-    // TODO: span only
     if (span != nullptr)
     {
         const size_t padLengthPosition = position;
@@ -737,6 +761,8 @@ void BP4Serializer::PutVariableCharacteristics(
     {
         // minmax array depends on number of dimensions so this must
         // come after dimensions characteristics
+
+        // TODO conflict between BP3 and BP4 with Span
         if (m_Parameters.StatsLevel > 0 && span != nullptr)
         {
             span->m_MinMaxMetadataPositions.first = buffer.size() + 1;

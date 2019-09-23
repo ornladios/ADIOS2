@@ -81,7 +81,7 @@ void BP4Writer::PerformPuts()
         PerformPutCommon(variable);                                            \
     }
 
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
     m_BP4Serializer.m_DeferredVariables.clear();
@@ -638,6 +638,16 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
     m_BP4Serializer.m_Aggregator.ResetBuffers();
 }
+
+#define declare_type(T, L)                                                     \
+    T *BP4Writer::DoBufferData_##L(const size_t payloadPosition,               \
+                                   const size_t bufferID) noexcept             \
+    {                                                                          \
+        return BufferDataCommon<T>(payloadPosition, bufferID);                 \
+    }
+
+ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
 
 } // end namespace engine
 } // end namespace core

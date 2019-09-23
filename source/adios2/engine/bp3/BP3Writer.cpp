@@ -76,6 +76,7 @@ void BP3Writer::PerformPuts()
             variableName, "in call to PerformPuts, EndStep or Close");         \
         PerformPutCommon(variable);                                            \
     }
+
         ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }

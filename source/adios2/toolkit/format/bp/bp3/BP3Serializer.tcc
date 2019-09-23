@@ -51,9 +51,9 @@ void BP3Serializer::PutVariableMetadata(
         variable.m_Name, m_MetadataSet.VarsIndices, isNew);
     stats.MemberID = variableIndex.MemberID;
 
-    SetDataOffset(stats.Offset);
+    lf_SetOffset(stats.Offset);
     PutVariableMetadataInData(variable, blockInfo, stats, span);
-    SetDataOffset(stats.PayloadOffset);
+    lf_SetOffset(stats.PayloadOffset);
     if (span != nullptr)
     {
         span->m_PayloadPosition = m_Data.m_Position;

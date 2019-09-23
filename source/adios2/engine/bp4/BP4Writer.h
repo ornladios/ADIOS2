@@ -96,9 +96,6 @@ private:
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *data);
 
-    template <class T>
-    void PerformPutCommon(Variable<T> &variable);
-
     void DoFlush(const bool isFinal = false, const int transportIndex = -1);
 
     void DoClose(const int transportIndex = -1) final;
@@ -128,6 +125,20 @@ private:
      * @param transportIndex
      */
     void AggregateWriteData(const bool isFinal, const int transportIndex = -1);
+
+#define declare_type(T, L)                                                     \
+    T *DoBufferData_##L(const size_t payloadPosition,                          \
+                        const size_t bufferID = 0) noexcept final;
+
+    ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
+
+    template <class T>
+    T *BufferDataCommon(const size_t payloadOffset,
+                        const size_t bufferID) noexcept;
+
+    template <class T>
+    void PerformPutCommon(Variable<T> &variable);
 };
 
 } // end namespace engine
