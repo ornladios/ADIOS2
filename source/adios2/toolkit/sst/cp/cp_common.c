@@ -116,6 +116,33 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     CP_verbose(Stream, "Sst set to use %s as a Control Transport\n",
                Params->ControlTransport);
+    if (Params->ControlModule != NULL)
+    {
+        int i;
+        char *SelectedModule = malloc(strlen(Params->ControlModule) + 1);
+        for (i = 0; Params->ControlModule[i] != 0; i++)
+        {
+            SelectedModule[i] = tolower(Params->ControlModule[i]);
+        }
+        SelectedModule[i] = 0;
+
+        /* canonicalize SelectedModule */
+        if (strcmp(SelectedModule, "select") == 0)
+        {
+            Params->ControlModule = strdup("select");
+        }
+        else if (strcmp(SelectedModule, "epoll") == 0)
+        {
+            Params->ControlModule = strdup("epoll");
+        }
+        else
+        {
+            fprintf(stderr,
+                    "Invalid ControlModule parameter (%s) for SST Stream %s\n",
+                    Params->ControlModule, Stream->Filename);
+        }
+        free(SelectedModule);
+    }
 }
 
 static char *SstRegStr[] = {"File", "Screen", "Cloud"};
@@ -180,6 +207,9 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
             SstPreloadModeStr[Params->SpeculativePreloadMode]);
     fprintf(stderr, "Param -   SpecAutoNodeThreshold=%d\n",
             Params->SpecAutoNodeThreshold);
+    fprintf(stderr, "Param -   ControlModule=%s\n",
+            Params->ControlModule ? Params->ControlModule
+                                  : " (default - Advanced param)");
 }
 
 static FMField CP_SstParamsList_RAW[] = {
@@ -1095,7 +1125,7 @@ extern char *CP_GetContactString(SstStream Stream, attr_list DPAttrs)
     return ret;
 }
 
-extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
+extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
 {
 
     if (CPInfo)
@@ -1109,7 +1139,7 @@ extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
     CPInfo = malloc(sizeof(*CPInfo));
     memset(CPInfo, 0, sizeof(*CPInfo));
 
-    CPInfo->cm = CManager_create();
+    CPInfo->cm = CManager_create_control(ControlModule);
     if (CMfork_comm_thread(CPInfo->cm) == 0)
     {
         fprintf(stderr, "ADIOS2 SST Engine failed to fork a communication "
