@@ -556,7 +556,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
         }
         else
         {
-            engineTypeLC = "bp4";
+            engineTypeLC = "bp3";
         }
     }
 

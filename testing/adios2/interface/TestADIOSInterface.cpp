@@ -121,7 +121,7 @@ TEST_F(ADIOS2_CXX11_API, APIToString)
 
     auto engine = io.Open("test.bp", adios2::Mode::Write);
     EXPECT_EQ(ToString(engine),
-              "Engine(Name: \"test.bp\", Type: \"BP4Writer\")");
+              "Engine(Name: \"test.bp\", Type: \"BP3\")");
 }
 
 TEST_F(ADIOS2_CXX11_API, operatorLL)
@@ -148,7 +148,7 @@ TEST_F(ADIOS2_CXX11_API_IO, Engine)
 
     adios2::Engine engine = m_Io.Open("types.bp", adios2::Mode::Write);
     EXPECT_EQ(engine.Name(), "types.bp");
-    EXPECT_EQ(engine.Type(), "BP4Writer");
+    EXPECT_EQ(engine.Type(), "BP3");
 }
 
 TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
@@ -158,7 +158,7 @@ TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
 
     adios2::Engine engine = m_Io.Open("types.bp", adios2::Mode::Write);
     EXPECT_EQ(engine.Name(), "types.bp");
-    EXPECT_EQ(engine.Type(), "BP4Writer");
+    EXPECT_EQ(engine.Type(), "BP3");
 }
 
 template <class T>
