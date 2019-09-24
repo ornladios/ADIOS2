@@ -278,17 +278,17 @@ Dims StringToDims(const std::string &dimensions)
 {
     std::vector<size_t> shape;
     size_t begin = 0;
-    for (size_t end = 0; end < dimentions.size(); ++end)
+    for (size_t end = 0; end < dimensions.size(); ++end)
     {
-        if (dimentions[end] == ',')
+        if (dimensions[end] == ',')
         {
-            std::string s(dimentions, begin, end - begin);
+            std::string s(dimensions, begin, end - begin);
             shape.push_back(stoull(s));
             begin = end + 1;
             end = begin;
         }
     }
-    std::string s(dimentions, begin, dimentions.size() - begin);
+    std::string s(dimensions, begin, dimensions.size() - begin);
     shape.push_back(stoull(s));
     return shape;
 }
