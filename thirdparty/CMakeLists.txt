@@ -21,6 +21,7 @@ endif()
 
 add_subdirectory(pugixml)
 add_subdirectory(nlohmann_json)
+add_subdirectory(RapidJSON)
 
 if(WIN32)
   add_subdirectory(mingw-w64)
