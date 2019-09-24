@@ -27,6 +27,22 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
+    if(m_InitialStep)
+    {
+        m_InitialStep=false;
+        auto vars = m_IO.GetAvailableVariables();
+        for(const auto &i : vars)
+        {
+            std::cout << i.first << std::endl;
+            for(const auto &j : i.second)
+            {
+                std::cout << "    " << j.first << " = " << j.second << std::endl;
+            }
+        }
+    }
+    else{
+        ++m_CurrentStep;
+    }
     return StepStatus::OK;
 }
 
