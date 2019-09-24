@@ -27,8 +27,8 @@ namespace format
 template <class T>
 size_t BufferSTL::Align() const noexcept
 {
-    // LLVM MIT license
-    // https://github.com/llvm-mirror/libcxx/blob/6952d1478ddd5a1870079d01f1a0e1eea5b09a1a/src/memory.cpp#L217
+    // std::align implementation from llvm libc++
+    // needed due to bug in gcc 4.8
     auto lf_align = [](const size_t alignment, const size_t size, void *&ptr,
                        size_t &space) {
         if (size <= space)
