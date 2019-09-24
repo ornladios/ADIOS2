@@ -113,7 +113,9 @@ size_t BP3Base::GetBPIndexSizeInData(const std::string &variableName,
         indexSize += 28 * dimensions + 1;
     }
 
-    return indexSize + 12; // extra 12 bytes in case of attributes
+    indexSize += 32 + 5; // extra bytes for padding
+    indexSize += 12;     // extra 12 bytes in case of attributes
+    return indexSize;
 }
 
 // PROTECTED

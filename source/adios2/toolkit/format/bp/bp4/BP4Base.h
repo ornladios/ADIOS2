@@ -5,7 +5,9 @@
  * BP4Base.h  base class for BP4Serializer and BP4Deserializer
  *
  *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
+ *  Author: William F Godoy godoywf@ornl.gov
+ *          Lipeng Wan wanl@ornl.gov
+ *          Norbert Podhorszki pnb@ornl.gov
  */
 
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP_BP4_BP4BASE_H_

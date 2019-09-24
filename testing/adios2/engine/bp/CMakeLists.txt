@@ -38,15 +38,13 @@ bp3_bp4_gtest_add_tests_helper(WriteReadLocalVariablesSel)
 bp3_bp4_gtest_add_tests_helper(WriteReadLocalVariablesSelHighLevel)
 bp3_bp4_gtest_add_tests_helper(ChangingShape)
 bp3_bp4_gtest_add_tests_helper(WriteReadBlockInfo)
+bp3_bp4_gtest_add_tests_helper(WriteReadVariableSpan)
 
 if(ADIOS2_HAVE_MPI)
   bp3_bp4_gtest_add_tests_helper(WriteAggregateRead) 
 endif()
 
 # BP3 only for now
-gtest_add_tests_helper(WriteReadVariableSpan ${test_mpi} BP Engine.BP. .BP3
-  WORKING_DIRECTORY ${BP3_DIR} EXTRA_ARGS "BP3"
-)
 gtest_add_tests_helper(WriteNull ${test_mpi} BP Engine.BP. .BP3
   WORKING_DIRECTORY ${BP3_DIR} EXTRA_ARGS "BP3"
 )

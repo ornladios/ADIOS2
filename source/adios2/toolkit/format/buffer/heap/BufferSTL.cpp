@@ -9,6 +9,7 @@
  */
 
 #include "BufferSTL.h"
+#include "BufferSTL.tcc"
 
 namespace adios2
 {
@@ -58,6 +59,12 @@ size_t BufferSTL::GetAvailableSize() const
 {
     return m_Buffer.size() - m_Position;
 }
+
+#define declare_template_instantiation(T)                                      \
+    template size_t BufferSTL::Align<T>() const noexcept;
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace format
 } // end namespace adios2

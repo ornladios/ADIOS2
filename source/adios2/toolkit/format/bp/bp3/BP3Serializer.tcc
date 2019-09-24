@@ -28,6 +28,18 @@ void BP3Serializer::PutVariableMetadata(
     const typename core::Variable<T>::Info &blockInfo,
     const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
+    auto lf_SetOffset = [&](uint64_t &offset) {
+        if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsConsumer)
+        {
+            offset = static_cast<uint64_t>(m_Data.m_Position);
+        }
+        else
+        {
+            offset = static_cast<uint64_t>(m_Data.m_AbsolutePosition +
+                                           m_PreDataFileLength);
+        }
+    };
+
     m_Profiler.Start("buffering");
 
     Stats<T> stats =
@@ -39,9 +51,9 @@ void BP3Serializer::PutVariableMetadata(
         variable.m_Name, m_MetadataSet.VarsIndices, isNew);
     stats.MemberID = variableIndex.MemberID;
 
-    SetDataOffset(stats.Offset);
-    PutVariableMetadataInData(variable, blockInfo, stats);
-    SetDataOffset(stats.PayloadOffset);
+    lf_SetOffset(stats.Offset);
+    PutVariableMetadataInData(variable, blockInfo, stats, span);
+    lf_SetOffset(stats.PayloadOffset);
     if (span != nullptr)
     {
         span->m_PayloadPosition = m_Data.m_Position;
@@ -71,10 +83,10 @@ inline void BP3Serializer::PutVariablePayload(
                                                m_Data.m_Position);
 
             // TODO: does std::fill_n have a bug in gcc or due to optimizations
-            // this is impossible? This seg faults in Release mode only . Even
-            // RelWithDebInfo works, replacing with explicit loop below using
-            // access operator []
-            // std::fill_n(itBegin, blockSize, span->m_Value);
+            // this is impossible due to memory alignment? This seg faults in
+            // Release mode only . Even RelWithDebInfo works, replacing with
+            // explicit loop below using access operator [] std::fill_n(itBegin,
+            // blockSize, span->m_Value);
 
             for (size_t i = 0; i < blockSize; ++i)
             {
@@ -318,8 +330,8 @@ BP3Serializer::GetBPStats(const bool singleValue,
 template <class T>
 void BP3Serializer::PutVariableMetadataInData(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
-    const Stats<T> &stats) noexcept
+    const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
+    const typename core::Variable<T>::Span *span) noexcept
 {
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
@@ -354,7 +366,26 @@ void BP3Serializer::PutVariableMetadataInData(
     // CHARACTERISTICS
     PutVariableCharacteristics(variable, blockInfo, stats, buffer, position);
 
-    // Back to varLength including payload size
+    // here align pointer for span
+    if (span != nullptr)
+    {
+        const size_t padLengthPosition = position;
+        uint8_t zero = 0;
+        // skip 1 for paddingLength and 4 for VMD] ending
+        helper::CopyToBuffer(buffer, position, &zero, 5);
+        // here check for the next aligned pointer
+        const size_t extraBytes = m_Data.Align<T>();
+        const std::string pad = std::string(extraBytes, '\0') + "VMD]";
+
+        size_t backPosition = padLengthPosition;
+        const uint8_t padLength = static_cast<uint8_t>(pad.size());
+        helper::CopyToBuffer(buffer, backPosition, &padLength);
+        helper::CopyToBuffer(buffer, backPosition, pad.c_str(), pad.size());
+
+        position += extraBytes;
+    }
+
+    // Back to varLength including payload size and pad
     // not need to remove its own size (8) from length from bpdump
     const uint64_t varLength = static_cast<uint64_t>(
         position - varLengthPosition +
@@ -370,7 +401,8 @@ template <>
 inline void BP3Serializer::PutVariableMetadataInData(
     const core::Variable<std::string> &variable,
     const typename core::Variable<std::string>::Info &blockInfo,
-    const Stats<std::string> &stats) noexcept
+    const Stats<std::string> &stats,
+    const typename core::Variable<std::string>::Span * /*span*/) noexcept
 {
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
