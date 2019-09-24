@@ -5,7 +5,9 @@
  * BP4Deserializer.tcc
  *
  *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
+ *  Author: William F Godoy godoywf@ornl.gov
+ *          Lipeng Wan wanl@ornl.gov
+ *          Norbert Podhorszki pnb@ornl.gov
  */
 
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP4DESERIALIZER_TCC_

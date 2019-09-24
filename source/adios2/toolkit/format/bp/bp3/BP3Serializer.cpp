@@ -656,18 +656,6 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     return indexPositions;
 }
 
-void BP3Serializer::SetDataOffset(uint64_t &offset) noexcept
-{
-    if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsConsumer)
-    {
-        offset = static_cast<uint64_t>(m_Data.m_Position);
-    }
-    else
-    {
-        offset = static_cast<uint64_t>(m_Data.m_AbsolutePosition);
-    }
-}
-
 #define declare_template_instantiation(T)                                      \
     void BP3Serializer::DoPutAttributeInData(                                  \
         const core::Attribute<T> &attribute, Stats<T> &stats) noexcept         \

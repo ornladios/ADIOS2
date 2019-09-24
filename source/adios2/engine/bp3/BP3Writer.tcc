@@ -31,7 +31,7 @@ void BP3Writer::PutCommon(Variable<T> &variable,
             m_IO.m_Name, m_IO.m_HostLanguage,
             m_FileDataManager.GetTransportsTypes());
     }
-    const typename Variable<T>::Info blockInfo =
+    const typename Variable<T>::Info &blockInfo =
         variable.SetBlockInfo(nullptr, CurrentStep());
     m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
 
