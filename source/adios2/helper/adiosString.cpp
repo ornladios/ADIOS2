@@ -274,6 +274,25 @@ std::string DimsToString(const Dims &dimensions)
     return dimensionsString;
 }
 
+Dims StringToDims(const std::string &dimentions)
+{
+    std::vector<size_t> shape;
+    size_t begin = 0;
+    for (size_t end = 0; end < dimentions.size(); ++end)
+    {
+        if (dimentions[end] == ',')
+        {
+            std::string s(dimentions, begin, end - begin);
+            shape.push_back(stoull(s));
+            begin = end + 1;
+            end = begin;
+        }
+    }
+    std::string s(dimentions, begin, dimentions.size() - begin);
+    shape.push_back(stoull(s));
+    return shape;
+}
+
 std::string GlobalName(const std::string &localName, const std::string &prefix,
                        const std::string separator) noexcept
 {

@@ -120,6 +120,8 @@ void SetParameterValue(const std::string key, const Params &parameters,
  */
 std::string DimsToString(const Dims &dimensions);
 
+Dims StringToDims(const std::string &dimentions);
+
 /**
  * Sets global name: prefix + separator + localName. If prefix is empty it
  * returns the localName as-is.
