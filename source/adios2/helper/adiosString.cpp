@@ -274,7 +274,7 @@ std::string DimsToString(const Dims &dimensions)
     return dimensionsString;
 }
 
-Dims StringToDims(const std::string &dimentions)
+Dims StringToDims(const std::string &dimensions)
 {
     std::vector<size_t> shape;
     size_t begin = 0;
