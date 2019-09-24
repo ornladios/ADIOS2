@@ -290,30 +290,6 @@ CMControlList_set_blocking_func(CMControlList cl, CManager cm,
 				CMPollFunc bfunc, CMPollFunc pfunc,
 				void *client_data)
 {
-    assert(cl->network_blocking_function.func == NULL);
-    cl->network_blocking_function.func = bfunc;
-    cl->network_blocking_function.client_data = client_data;
-    cl->network_blocking_function.cm = NULL;
-    cl->network_polling_function.func = pfunc;
-    cl->network_polling_function.client_data = client_data;
-    cl->network_polling_function.cm = NULL;
-    if (cl->has_thread == -1) {
-	thr_thread_t server_thread = 
-	    thr_fork((void*(*)(void*))server_thread_func, 
-		     (void*)cm);
-	if (server_thread ==  (thr_thread_t) NULL) {
-	    return;
-	}
-	CMtrace_out(cm, CMLowLevelVerbose,
-		    "CM - Forked comm thread %lx\n", (long)server_thread);
-	cm->control_list->server_thread = server_thread;
-	cm->control_list->cl_reference_count++;
-	cm->control_list->free_reference_count++;
-	cl->has_thread = 1;
-	cm->reference_count++;
-	CMtrace_out(cm, CMFreeVerbose, "Forked - CManager %lx ref count now %d\n", 
-		    (long) cm, cm->reference_count);
-    }
 }
 
 extern void
@@ -731,6 +707,13 @@ extern
 CManager
 INT_CManager_create()
 {
+    return INT_CManager_create_control(NULL);
+}
+
+extern
+CManager
+INT_CManager_create_control(char *control_module)
+{
     CManager cm = (CManager) INT_CMmalloc(sizeof(CManager_s));
     int atom_init = 0;
 
@@ -767,6 +750,33 @@ INT_CManager_create()
     cm->initialized = 0;
     cm->reference_count = 1;
 
+    char *tmp;
+    if ((tmp = getenv("CMControlModule"))) {
+	control_module = tmp;
+    }
+
+    if (control_module != NULL) {
+	for (char *c = control_module; *c; ++c) *c = tolower(*c);
+#ifdef HAVE_SYS_EPOLL_H
+	if (strcmp(control_module, "epoll") == 0) {
+	    cm->control_module_choice = "epoll";
+	} else
+#endif
+	if (strcmp(control_module, "select") == 0) {
+	    cm->control_module_choice = "select";
+	} else {
+	    fprintf(stderr, "Warning:  Specified CM/EVPath control module \"%s\" unknown or not built.\n", control_module);
+	    /* force to default */
+	    control_module = NULL;
+	}
+    }	
+    if (control_module == NULL) {
+#ifdef HAVE_SYS_EPOLL_H
+	cm->control_module_choice = "epoll";
+#else
+	cm->control_module_choice = "select";
+#endif
+    }
     cm->control_list = CMControlList_create();
     thr_mutex_init(cm->exchange_lock);
 
@@ -3587,8 +3597,6 @@ INT_CMget_ip_config_diagnostics(CManager cm)
      return handle;
  }
 
- typedef void (*SelectInitFunc)(CMtrans_services svc, CManager cm, void *client_data);
-
  static void
  select_shutdown(CManager cm, void *shutdown_funcv)
  {
@@ -3610,74 +3618,111 @@ INT_CMget_ip_config_diagnostics(CManager cm)
      free(task_data);
  }
 
+#ifdef HAVE_SYS_EPOLL_H
+extern void
+libcmepoll_init_sel_item(struct _select_item *sel_item);
+#endif
+extern void
+libcmselect_init_sel_item(struct _select_item *sel_item);
 
- static void
- CM_init_select(CMControlList cl, CManager cm)
- {
-     CMPollFunc blocking_function, polling_function;
-     SelectInitFunc init_function;
-     SelectInitFunc shutdown_function;
-     SelectInitFunc select_free_function;
-     void *dlhandle = NULL;
- #if !NO_DYNAMIC_LINKING
-     char *libname;
-     lt_dlhandle handle;	
-     lt_dladdsearchdir(EVPATH_LIBRARY_BUILD_DIR);
-     lt_dladdsearchdir(EVPATH_LIBRARY_INSTALL_DIR);
-     libname = malloc(strlen("lib" CM_LIBRARY_PREFIX "cmselect") + strlen(MODULE_EXT) + 1);
-     strcpy(libname, "lib" CM_LIBRARY_PREFIX "cmselect");
-     strcat(libname, MODULE_EXT);
-     handle = CMdlopen(cm->CMTrace_file, libname, 0);
-     dlhandle = handle;
-     free(libname);
-     if (!handle) {
-	 fprintf(stderr, "Failed to load required select dll.\n");
-	 fprintf(stderr, "Search path includes '.', '%s', '%s' and any default search paths supported by ld.so\n", EVPATH_LIBRARY_BUILD_DIR, 
-		 EVPATH_LIBRARY_INSTALL_DIR);
-	 exit(1);
-     }
-     cl->add_select = (CMAddSelectFunc)lt_dlsym(handle, "add_select");  
-     cl->remove_select = (CMRemoveSelectFunc)lt_dlsym(handle, "remove_select");  
-     cl->write_select = (CMAddSelectFunc)lt_dlsym(handle, "write_select");  
-     cl->add_periodic = (CMAddPeriodicFunc)lt_dlsym(handle, "add_periodic");  
-     cl->add_delayed_task = 
-	 (CMAddPeriodicFunc)lt_dlsym(handle, "add_delayed_task");  
-     cl->remove_periodic = (CMRemovePeriodicFunc)lt_dlsym(handle, "remove_periodic");  
-     cl->wake_select = (CMWakeSelectFunc)lt_dlsym(handle, "wake_function");
-     blocking_function = (CMPollFunc)lt_dlsym(handle, "blocking_function");
-     polling_function = (CMPollFunc)lt_dlsym(handle, "polling_function");
-     init_function = (SelectInitFunc)lt_dlsym(handle, "select_initialize");
-     shutdown_function = (SelectInitFunc)lt_dlsym(handle, "select_shutdown");
-     select_free_function = (SelectInitFunc)lt_dlsym(handle, "select_free");
-     cl->stop_select = (CMWakeSelectFunc)lt_dlsym(handle, "select_stop");
- #else
-     cl->add_select = (CMAddSelectFunc)libcmselect_LTX_add_select;
-     cl->remove_select = (CMRemoveSelectFunc)libcmselect_LTX_remove_select;
-     cl->write_select = (CMAddSelectFunc) libcmselect_LTX_write_select;
-     cl->add_periodic = (CMAddPeriodicFunc)libcmselect_LTX_add_periodic;
-     cl->add_delayed_task = 
-	 (CMAddPeriodicFunc)libcmselect_LTX_add_delayed_task;
-     cl->remove_periodic = (CMRemovePeriodicFunc)libcmselect_LTX_remove_periodic;
-     cl->wake_select = (CMWakeSelectFunc)libcmselect_LTX_wake_function;
-     blocking_function = (CMPollFunc)libcmselect_LTX_blocking_function;
-     polling_function = (CMPollFunc)libcmselect_LTX_polling_function;
-     init_function = (SelectInitFunc)libcmselect_LTX_select_initialize;
-     shutdown_function = (SelectInitFunc) libcmselect_LTX_select_shutdown;
-     select_free_function = (SelectInitFunc) libcmselect_LTX_select_free;
-     cl->stop_select = (CMWakeSelectFunc) libcmselect_LTX_select_stop;
+static void
+CM_init_select(CMControlList cl, CManager cm)
+{
+    SelectInitFunc init_function;
+    SelectInitFunc shutdown_function;
+    SelectInitFunc select_free_function;
+    void *dlhandle = NULL;
+    struct _select_item sel_item;
+    char *select_module = cm->control_module_choice;
+     
+    CMtrace_out(cm, CMControlVerbose, "Loading CMselect module %s\n", select_module);
+#if !NO_DYNAMIC_LINKING
+    char *libname;
+    lt_dlhandle handle;	
+    lt_dladdsearchdir(EVPATH_LIBRARY_BUILD_DIR);
+    lt_dladdsearchdir(EVPATH_LIBRARY_INSTALL_DIR);
+    libname = malloc(strlen("lib" CM_LIBRARY_PREFIX "cm") + strlen(select_module) + strlen(MODULE_EXT) + 1);
+    strcpy(libname, "lib" CM_LIBRARY_PREFIX "cm");
+    strcat(libname, select_module);
+    strcat(libname, MODULE_EXT);
+    handle = CMdlopen(cm->CMTrace_file, libname, 0);
+    dlhandle = handle;
+    free(libname);
+    if (!handle) {
+	fprintf(stderr, "Failed to load requested libcm%s dll.\n", select_module);
+	fprintf(stderr, "Search path includes '.', '%s', '%s' and any default search paths supported by ld.so\n", EVPATH_LIBRARY_BUILD_DIR, 
+		EVPATH_LIBRARY_INSTALL_DIR);
+	fprintf(stderr, "Consider setting LD_LIBRARY_PATH or otherwise modifying module search paths.\n");
+	exit(1);
+    }
+    sel_item.add_select = (CMAddSelectFunc)lt_dlsym(handle, "add_select");  
+    sel_item.remove_select = (CMRemoveSelectFunc)lt_dlsym(handle, "remove_select");  
+    sel_item.write_select = (CMAddSelectFunc)lt_dlsym(handle, "write_select");  
+    sel_item.add_periodic = (CMAddPeriodicFunc)lt_dlsym(handle, "add_periodic");  
+    sel_item.add_delayed_task = 
+	(CMAddPeriodicFunc)lt_dlsym(handle, "add_delayed_task");  
+    sel_item.remove_periodic = (CMRemovePeriodicFunc)lt_dlsym(handle, "remove_periodic");  
+    sel_item.wake_function = (CMWakeSelectFunc)lt_dlsym(handle, "wake_function");
+    sel_item.blocking_function = (CMPollFunc)lt_dlsym(handle, "blocking_function");
+    sel_item.polling_function = (CMPollFunc)lt_dlsym(handle, "polling_function");;
+    sel_item.initialize = (SelectInitFunc)lt_dlsym(handle, "select_initialize");
+    sel_item.shutdown = (SelectInitFunc)lt_dlsym(handle, "select_shutdown");
+    sel_item.free = (SelectInitFunc)lt_dlsym(handle, "select_free");
+    sel_item.stop = (CMWakeSelectFunc)lt_dlsym(handle, "select_stop");
+#else
 
+#ifdef HAVE_SYS_EPOLL_H
+    if (strcmp(select_module, "epoll") == 0) {
+	libcmepoll_init_sel_item(&sel_item);
+    }
+#endif
+    if (strcmp(select_module, "select") == 0) {
+	libcmselect_init_sel_item(&sel_item);
+    }
 
- #endif
+#endif
+     cl->add_select = sel_item.add_select;
+     cl->remove_select = sel_item.remove_select;
+     cl->write_select = sel_item.write_select;
+     cl->add_periodic = sel_item.add_periodic;
+     cl->add_delayed_task = sel_item.add_delayed_task;
+     cl->remove_periodic = sel_item.remove_periodic;
+     cl->wake_select = sel_item.wake_function;
+     cl->network_blocking_function.func = sel_item.blocking_function;
+     cl->network_polling_function.func = sel_item.polling_function;
+     init_function = sel_item.initialize;
+     shutdown_function = sel_item.shutdown;
+     select_free_function = sel_item.free;
+     cl->stop_select = sel_item.stop;
+
+    cl->network_blocking_function.client_data = (void*)&(cl->select_data);
+    cl->network_blocking_function.cm = NULL;
+    cl->network_polling_function.client_data = (void*)&(cl->select_data);
+    cl->network_polling_function.cm = NULL;
      if ((cl->add_select == NULL) || (cl->remove_select == NULL) || 
-	 (blocking_function == NULL) || (cl->add_periodic == NULL) ||
+	 (cl->network_blocking_function.func == NULL) || (cl->add_periodic == NULL) ||
 	 (cl->remove_periodic == NULL)) {
 	 printf("Select failed to load properly\n");
 	 exit(1);
      }
      init_function(&CMstatic_trans_svcs, cm, &cm->control_list->select_data);
-     CMControlList_set_blocking_func(cl, cm, blocking_function, 
-				     polling_function,
-				     (void*)&(cl->select_data));
+    if (cl->has_thread == -1) {
+	thr_thread_t server_thread = 
+	    thr_fork((void*(*)(void*))server_thread_func, 
+		     (void*)cm);
+	if (server_thread ==  (thr_thread_t) NULL) {
+	    return;
+	}
+	CMtrace_out(cm, CMLowLevelVerbose,
+		    "CM - Forked comm thread %lx\n", (long)server_thread);
+	cm->control_list->server_thread = server_thread;
+	cm->control_list->cl_reference_count++;
+	cm->control_list->free_reference_count++;
+	cl->has_thread = 1;
+	cm->reference_count++;
+	CMtrace_out(cm, CMFreeVerbose, "Forked - CManager %lx ref count now %d\n", 
+		    (long) cm, cm->reference_count);
+    }
      cl->select_initialized = 1;
      CMtrace_out(cm, CMFreeVerbose, "CManager adding select shutdown function, %lx\n",(long)shutdown_function);
      internal_add_shutdown_task(cm, select_shutdown, (void*)shutdown_function, SHUTDOWN_TASK);

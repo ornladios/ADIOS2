@@ -170,6 +170,7 @@ return 2;\n\
 }\0\0";
 
 char *transport = NULL;
+char *control = NULL;
 #include "support.c"
 
 int

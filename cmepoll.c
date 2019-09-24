@@ -61,6 +61,9 @@
 #define thr_thread_self() pthread_self()
 #define thr_thread_yield() sched_yield()
 
+#include <sys/epoll.h>
+#define MAX_EVENTS 32
+
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
 #endif
@@ -82,9 +85,8 @@ typedef struct _periodic_task *periodic_task_handle;
 
 typedef struct select_data {
     thr_thread_t server_thread;
+    int epfd;
 
-    void *fdset;		/* bitmap of the fds for read select */
-    void *write_set;		/* bitmap of the fds for write select */
     int 	sel_item_max;
     FunctionListElement *select_items;
     FunctionListElement *write_items;
@@ -122,10 +124,7 @@ CManager cm;
 {
     select_data_ptr sd = malloc(sizeof(struct select_data));
     *sdp = sd;
-    sd->fdset = svc->malloc_func(sizeof(fd_set));
-    FD_ZERO((fd_set *) sd->fdset);
-    sd->write_set = svc->malloc_func(sizeof(fd_set));
-    FD_ZERO((fd_set *) sd->write_set);
+    sd->epfd = epoll_create(1);
     sd->server_thread =  (thr_thread_t) NULL;
     sd->closed = 0;
     sd->sel_item_max = 0;
@@ -161,7 +160,7 @@ typedef struct _periodic_task {
 } task_handle_s;
 
 static void
-free_select_data(svc, sdp)
+free_epoll_data(svc, sdp)
 CMtrans_services svc;
 select_data_ptr *sdp;
 {
@@ -169,8 +168,6 @@ select_data_ptr *sdp;
     select_data_ptr sd = *sdp;
     *sdp = NULL;
     tasks = sd->periodic_task_list;
-    svc->free_func(sd->fdset);
-    svc->free_func(sd->write_set);
     svc->free_func(sd->select_items);
     svc->free_func(sd->write_items);
     while (tasks != NULL) {
@@ -240,7 +237,10 @@ int timeout_sec;
 int timeout_usec;
 {
     int i, res;
-    fd_set rd_set, wr_set;
+    int fd;
+    struct epoll_event events[MAX_EVENTS];
+    int ep_timeout;
+
     struct timeval timeout;
     int tmp_select_consistency_number = sd->select_consistency_number;
 
@@ -264,8 +264,6 @@ int timeout_usec;
 	fprintf(stderr, "          Server thread set to %lx.\n", (long) thr_thread_self());
 	sd->server_thread = thr_thread_self();
     }
-    rd_set = *(fd_set *) sd->fdset;
-    wr_set = *(fd_set *) sd->write_set;
     if ((timeout_sec >= 0) || (sd->periodic_task_list != NULL)) {
 	struct timeval now;
 #ifndef HAVE_WINDOWS_H
@@ -295,14 +293,15 @@ int timeout_usec;
 	    timeout.tv_sec = 0;
 	}
 	DROP_CM_LOCK(svc, sd->cm);
-	res = select(sd->sel_item_max+1, &rd_set, &wr_set,
-                     (fd_set *) NULL, &timeout);
+	ep_timeout = (1000 * timeout.tv_sec) + (timeout.tv_usec / 1000);
+        res = epoll_wait(sd->epfd, events, MAX_EVENTS, ep_timeout);
+
 	ACQUIRE_CM_LOCK(svc, sd->cm);
     } else {
-	int max = sd->sel_item_max;
 	svc->verbose(sd->cm, CMSelectVerbose, "CMSelect blocking select");
 	DROP_CM_LOCK(svc, sd->cm);
-	res = select(max+1, &rd_set, &wr_set, (fd_set *) NULL, NULL);
+	res = epoll_wait(sd->epfd, events, MAX_EVENTS, -1);
+
 	ACQUIRE_CM_LOCK(svc, sd->cm);
     }
     if (sd->closed) {
@@ -329,34 +328,7 @@ int timeout_usec;
 	    return;
 	}
 	if (errno == EBADF) {
-	    int j;
-	    int found_one = 0;
-	    for (j = 0; j < FD_SETSIZE; j++) {
-		if (FD_ISSET(j, &rd_set)) {
-		    fd_set test_set;
-		    timeout.tv_usec = 0;
-		    timeout.tv_sec = 0;
-		    FD_ZERO(&test_set);
-		    FD_SET(j, &test_set);
-		    errno = 0;
-		    select(sd->sel_item_max+1, &test_set, (fd_set *) NULL,
-			   (fd_set *) NULL, &timeout);
-		    if (errno == EBADF) {
-			fprintf(stderr, "Select failed, fd %d is bad.  Removing from select list.\n",
-				j);
-			FD_CLR(j, (fd_set *) sd->fdset);
-			FD_CLR(j, (fd_set *) sd->write_set);
-			found_one++;
-			FD_CLR(j, &rd_set);
-		    }
-		}
-	    }
-	    if (sd->closed) {
-		sd->server_thread =  (thr_thread_t) NULL; 
-		return;
-	    }
-/* if (found_one == 0) { fprintf(stderr, "Bad file descriptor in select
- * Warning.  Failed to localize.\n"); } */
+	    fprintf(stderr, "The epoll fd is invalid. This is catastrophic.\n");
 	} else if (errno != EAGAIN) {
 #ifdef HAVE_FDS_BITS
 	    fprintf(stderr, "select failed, errno %d, rd_set was %lx, %lx,%lx, %lx\n\n", errno,
@@ -422,43 +394,36 @@ int timeout_usec;
      * Careful!  We're reading the control list here without locking!
      * Something bad *might* happen, it's just unlikely.
      */
-    if (res != 0) {
-	for (i = 0; i <= sd->sel_item_max; i++) {
-	    if (sd->closed) {
-		sd->server_thread =  (thr_thread_t) NULL; 
-		return;
-	    }
-	    if (FD_ISSET(i, &wr_set)) {
-		if (sd->write_items[i].func != NULL) {
-		    svc->verbose(sd->cm, CMSelectVerbose, 
-				   "Running select write action on fd %d",
-				   i);
-		    sd->write_items[i].func(sd->write_items[i].arg1,
-					    sd->write_items[i].arg2);
-		} else {
-		    assert(!FD_ISSET(i, (fd_set *)sd->write_set));
-		}
-		if (sd->select_consistency_number != 
-		    tmp_select_consistency_number) return;
-	    }
-	    if (FD_ISSET(i, &rd_set)) {
-		if (sd->select_items[i].func != NULL) {
-		    svc->verbose(sd->cm, CMSelectVerbose, 
-				   "Running select read action on fd %d",
-				   i);
-		    sd->select_items[i].func(sd->select_items[i].arg1,
-					     sd->select_items[i].arg2);
-		} else {
-		    if(FD_ISSET(i, (fd_set *)sd->fdset)) {
-			printf("FD %d is set in rd_set without being in fdset\n", i);
-			assert(FALSE);
-		    }
-		}
-		if (sd->select_consistency_number != 
-		    tmp_select_consistency_number) return;
-	    }
-	}
+    for(i = 0; i < res; i++) {
+    	if (sd->closed) {
+    		sd->server_thread =  (thr_thread_t) NULL;
+    		return;
+    	}
+    	fd = events[i].data.fd;
+    	if(events[i].events & EPOLLIN) {
+    		if(sd->select_items[fd].func != NULL) {
+    			svc->verbose(sd->cm, CMSelectVerbose,
+    				"Running select read action on fd %d", fd);
+    			sd->select_items[fd].func(sd->select_items[fd].arg1,
+    				sd->select_items[fd].arg2);
+    		}
+    	}
+    	if (sd->select_consistency_number !=
+    		tmp_select_consistency_number) return;
+    	if(events[i].events & EPOLLOUT) {
+    		if(sd->write_items[fd].func != NULL) {
+    			svc->verbose(sd->cm, CMSelectVerbose,
+    					"Running select write action on fd %d", fd);
+    			sd->write_items[fd].func(sd->write_items[fd].arg1,
+    				sd->write_items[fd].arg2);
+    		} else {
+    			fprintf(stderr, "FD %d is polled, but no write item function.\n", fd);
+    		}
+    	}
+    	if (sd->select_consistency_number !=
+    		tmp_select_consistency_number) return;
     }
+
     if (sd->periodic_task_list != NULL) {
 	/* handle periodic tasks */
 	periodic_task_handle this_periodic_task = sd->periodic_task_list;
@@ -513,7 +478,7 @@ int timeout_usec;
 }
 
 extern void
-libcmselect_LTX_add_select(svc, sdp, fd, func, arg1, arg2)
+libcmepoll_LTX_add_select(svc, sdp, fd, func, arg1, arg2)
 CMtrans_services svc;
 select_data_ptr *sdp;
 int fd;
@@ -522,6 +487,8 @@ void *arg1;
 void *arg2;
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
+    struct epoll_event ep_event;
+
     if (sd->cm) {
 	/* assert CM is locked */
 	assert(CM_LOCKED(svc, sd->cm));
@@ -553,16 +520,20 @@ void *arg2;
 	}
 	sd->sel_item_max = fd;
     }
-    FD_SET(fd, (fd_set *) sd->fdset);
-    if (fd > FD_SETSIZE) {
-	fprintf(stderr, "The file descriptor number (%d) has exceeded the capability of select() on this system\n", fd);
-#ifndef HAVE_WINDOWS_H
-	fprintf(stderr, "Increase FD_SETSIZE if possible.\n");
-#else
-        fprintf(stderr, "Try running with a different control module if possible\n");
-#endif
-        fprintf(stderr, "Item not added to fdset.\n");
+    ep_event.events = EPOLLIN;
+    ep_event.data.fd = fd;
+    if(epoll_ctl(sd->epfd, EPOLL_CTL_ADD, fd, &ep_event) < 0) {
+    	if(errno == EEXIST) {
+    		/* This is fd is already armed for read */
+    		ep_event.events = EPOLLIN | EPOLLOUT;
+    		if (epoll_ctl(sd->epfd, EPOLL_CTL_MOD, fd, &ep_event) < 0) {
+    			fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
+    		}
+    	} else {
+    		fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
+    	}
     }
+
     svc->verbose(sd->cm, CMSelectVerbose, "Adding fd %d to select read list", fd);
     sd->select_items[fd].func = func;
     sd->select_items[fd].arg1 = arg1;
@@ -571,7 +542,7 @@ void *arg2;
 }
 
 extern void
-libcmselect_LTX_write_select(svc, sdp, fd, func, arg1, arg2)
+libcmepoll_LTX_write_select(svc, sdp, fd, func, arg1, arg2)
 CMtrans_services svc;
 select_data_ptr *sdp;
 int fd;
@@ -580,6 +551,8 @@ void *arg1;
 void *arg2;
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
+    struct epoll_event ep_event;
+
     if (sd == NULL) {
 	init_select_data(svc, (select_data_ptr*)sdp, NULL);
 	sd = *((select_data_ptr *)sdp);
@@ -611,22 +584,32 @@ void *arg2;
 	}
 	sd->sel_item_max = fd;
     }
-    if (func != NULL) {
-	svc->verbose(sd->cm, CMSelectVerbose, "Adding fd %d to select write list", fd);
-	FD_SET(fd, (fd_set *) sd->write_set);
-    } else {
-	svc->verbose(sd->cm, CMSelectVerbose, "Removing fd %d to select write list", fd);
-	FD_CLR(fd, (fd_set *) sd->write_set);
+    ep_event.data.fd = fd;
+    if(func != NULL) {
+    	ep_event.events = EPOLLOUT;
+    	if(epoll_ctl(sd->epfd, EPOLL_CTL_ADD, fd, &ep_event) < 0) {
+    		if(errno == EEXIST) {
+    		    /* This is fd is already armed for read */
+    		    ep_event.events = EPOLLIN | EPOLLOUT;
+    		    if (epoll_ctl(sd->epfd, EPOLL_CTL_MOD, fd, &ep_event) < 0) {
+    		    	fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
+    		    }
+    		} else {
+    		    fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
+    		}
+    	}
+    } else if(sd->select_items[fd].func) {
+    	/* This fd should stay armed for read */
+    	ep_event.events = EPOLLIN;
+    	if (epoll_ctl(sd->epfd, EPOLL_CTL_MOD, fd, &ep_event) < 0) {
+    	    fprintf(stderr, "Something bad in %s. %d\n", __func__, errno);
+    	}
+	} else {
+    	if(epoll_ctl(sd->epfd, EPOLL_CTL_DEL, fd, &ep_event) < 0) {
+    	    fprintf(stderr, "Something bad happened in %s. %d\n", __func__, errno);
+    	}
     }
-    if (fd > FD_SETSIZE) {
-	fprintf(stderr, "The file descriptor number (%d) has exceeded the capability of select() on this system\n", fd);
-#ifndef HAVE_WINDOWS_H
-	fprintf(stderr, "Increase FD_SETSIZE if possible.\n");
-#else
-        fprintf(stderr, "Try running with a different control module if possible\n");
-#endif
-        fprintf(stderr, "Item not added to fdset.\n");
-    }
+
     sd->write_items[fd].func = func;
     sd->write_items[fd].arg1 = arg1;
     sd->write_items[fd].arg2 = arg2;
@@ -634,7 +617,7 @@ void *arg2;
 }
 
 extern periodic_task_handle
-libcmselect_LTX_add_periodic(svc, sdp, interval_sec, interval_usec,
+libcmepoll_LTX_add_periodic(svc, sdp, interval_sec, interval_usec,
 			     func, arg1, arg2)
 CMtrans_services svc;
 select_data_ptr *sdp;
@@ -689,7 +672,7 @@ void *arg2;
 
 
 extern periodic_task_handle
-libcmselect_LTX_add_delayed_task(svc, sdp, delay_sec, delay_usec, 
+libcmepoll_LTX_add_delayed_task(svc, sdp, delay_sec, delay_usec, 
 				 func, arg1, arg2)
 CMtrans_services svc;
 select_data_ptr *sdp;
@@ -783,7 +766,7 @@ periodic_task_handle handle;
 
 
 extern void
-libcmselect_LTX_remove_periodic(svc, sdp, handle)
+libcmepoll_LTX_remove_periodic(svc, sdp, handle)
 CMtrans_services svc;
 select_data_ptr *sdp;
 periodic_task_handle handle;
@@ -796,18 +779,33 @@ periodic_task_handle handle;
 }
 
 extern void
-libcmselect_LTX_remove_select(svc, sdp, fd)
+libcmepoll_LTX_remove_select(svc, sdp, fd)
 CMtrans_services svc;
 select_data_ptr *sdp;
 int fd;
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
+
+    struct epoll_event ep_event = {0}; // for a dumb kernel bug that we will never see
+
     if (sd == NULL) {
 	init_select_data(svc, (select_data_ptr*)sdp, NULL);
 	sd = *((select_data_ptr *)sdp);
     }
     sd->select_consistency_number++;
-    FD_CLR(fd, (fd_set *) sd->fdset);
+    if(sd->write_items[fd].func) {
+    	/* this fd should stay armed for write */
+    	ep_event.data.fd = fd;
+    	ep_event.events = EPOLLOUT;
+    	if (epoll_ctl(sd->epfd, EPOLL_CTL_MOD, fd, &ep_event) < 0) {
+    	    fprintf(stderr, "Something bad happened in %s. %d\n", __func__, errno);
+    	}
+    } else {
+    	if(epoll_ctl(sd->epfd, EPOLL_CTL_DEL, fd, &ep_event) < 0) {
+    		fprintf(stderr, "Something bad happened in %s. %d\n", __func__, errno);
+        }
+    }
+
     sd->select_items[fd].func = NULL;
     sd->select_items[fd].arg1 = NULL;
     sd->select_items[fd].arg2 = NULL;
@@ -1013,12 +1011,12 @@ select_data_ptr *sdp;
     sd->wake_write_fd = filedes[1];
     svc->verbose(sd->cm, CMSelectVerbose, "CMSelect Adding read_wake_fd as action on fd %d",
 		   sd->wake_read_fd);
-    libcmselect_LTX_add_select(svc, sdp, sd->wake_read_fd, read_wake_fd, 
+    libcmepoll_LTX_add_select(svc, sdp, sd->wake_read_fd, read_wake_fd, 
 			       (void*)(long)sd->wake_read_fd, NULL);
 }
 
 extern void
-libcmselect_LTX_wake_function(svc, sdp)
+libcmepoll_LTX_wake_function(svc, sdp)
 CMtrans_services svc;
 select_data_ptr *sdp;
 {
@@ -1044,7 +1042,7 @@ select_data_ptr sd;
 }
 
 extern void
-libcmselect_LTX_blocking_function(svc, client_data)
+libcmepoll_LTX_blocking_function(svc, client_data)
 CMtrans_services svc;
 void *client_data;
 {
@@ -1061,7 +1059,7 @@ void *client_data;
 }
 
 extern void
-libcmselect_LTX_polling_function(svc, client_data)
+libcmepoll_LTX_polling_function(svc, client_data)
 CMtrans_services svc;
 void *client_data;
 {
@@ -1078,7 +1076,7 @@ void *client_data;
 }
 
 extern void
-libcmselect_LTX_select_initialize(svc, cm, client_data)
+libcmepoll_LTX_select_initialize(svc, cm, client_data)
 CMtrans_services svc;
 CManager cm;
 void *client_data;
@@ -1089,7 +1087,7 @@ void *client_data;
 }
 
 extern void
-libcmselect_LTX_select_shutdown(svc, cm, client_data)
+libcmepoll_LTX_select_shutdown(svc, cm, client_data)
 CMtrans_services svc;
 CManager cm;
 void *client_data;
@@ -1100,12 +1098,13 @@ void *client_data;
     svc->verbose(sd->cm, CMSelectVerbose, "CMSelect Shutdown task called");
     if (sd->server_thread != thr_thread_self()) {
 	sd->closed = 1;
+	close(sd->epfd);
 	wake_server_thread(sd);
     }
 }
 
 extern void
-libcmselect_LTX_select_free(svc, cm, client_data)
+libcmepoll_LTX_select_free(svc, cm, client_data)
 CMtrans_services svc;
 CManager cm;
 void *client_data;
@@ -1116,12 +1115,12 @@ void *client_data;
     svc->verbose(sd->cm, CMFreeVerbose, "CMSelect free task called");
 
     if (*((select_data_ptr *)client_data) != NULL) {
-	free_select_data(svc, sdp);
+	free_epoll_data(svc, sdp);
     }
 }
 
 extern void
-libcmselect_LTX_select_stop(svc, client_data)
+libcmepoll_LTX_select_stop(svc, client_data)
 CMtrans_services svc;
 void *client_data;
 {
@@ -1131,20 +1130,20 @@ void *client_data;
 }
 
 extern void
-libcmselect_init_sel_item(struct _select_item *sel_item)
+libcmepoll_init_sel_item(struct _select_item *sel_item)
 {
-    sel_item->add_select = (CMAddSelectFunc)libcmselect_LTX_add_select;
-    sel_item->remove_select = (CMRemoveSelectFunc)libcmselect_LTX_remove_select;
-    sel_item->write_select = (CMAddSelectFunc) libcmselect_LTX_write_select;
-    sel_item->add_periodic = (CMAddPeriodicFunc)libcmselect_LTX_add_periodic;
+    sel_item->add_select = (CMAddSelectFunc)libcmepoll_LTX_add_select;
+    sel_item->remove_select = (CMRemoveSelectFunc)libcmepoll_LTX_remove_select;
+    sel_item->write_select = (CMAddSelectFunc) libcmepoll_LTX_write_select;
+    sel_item->add_periodic = (CMAddPeriodicFunc)libcmepoll_LTX_add_periodic;
     sel_item->add_delayed_task = 
-	 (CMAddPeriodicFunc)libcmselect_LTX_add_delayed_task;
-    sel_item->remove_periodic = (CMRemovePeriodicFunc)libcmselect_LTX_remove_periodic;
-    sel_item->wake_function = (CMWakeSelectFunc)libcmselect_LTX_wake_function;
-    sel_item->blocking_function = (CMPollFunc)libcmselect_LTX_blocking_function;
-    sel_item->polling_function =  (CMPollFunc)libcmselect_LTX_polling_function;
-    sel_item->initialize = (SelectInitFunc)libcmselect_LTX_select_initialize;
-    sel_item->shutdown = (SelectInitFunc) libcmselect_LTX_select_shutdown;
-    sel_item->free = (SelectInitFunc) libcmselect_LTX_select_free;
-    sel_item->stop = (CMWakeSelectFunc) libcmselect_LTX_select_stop;
+	 (CMAddPeriodicFunc)libcmepoll_LTX_add_delayed_task;
+    sel_item->remove_periodic = (CMRemovePeriodicFunc)libcmepoll_LTX_remove_periodic;
+    sel_item->wake_function = (CMWakeSelectFunc)libcmepoll_LTX_wake_function;
+    sel_item->blocking_function = (CMPollFunc)libcmepoll_LTX_blocking_function;
+    sel_item->polling_function =  (CMPollFunc)libcmepoll_LTX_polling_function;
+    sel_item->initialize = (SelectInitFunc)libcmepoll_LTX_select_initialize;
+    sel_item->shutdown = (SelectInitFunc) libcmepoll_LTX_select_shutdown;
+    sel_item->free = (SelectInitFunc) libcmepoll_LTX_select_free;
+    sel_item->stop = (CMWakeSelectFunc) libcmepoll_LTX_select_stop;
 }

@@ -189,6 +189,7 @@ data_free(void *event_data, void *client_data)
 }
 
 char *transport = NULL;
+char *control = NULL;
 #include "support.c"
 
 int
