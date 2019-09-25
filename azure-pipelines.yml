@@ -55,3 +55,9 @@ jobs:
       name: Build
     - bash: scripts/ci/runOnAzure.sh test
       name: Test
+    - task: PublishTestResults@2
+      inputs:
+        testRunTitle: 'CTest: $(System.JobDisplayName)'
+        testResultsFormat: 'cTest'
+        testResultsFiles: '*/Testing/*/Test.xml'
+        searchFolder: '$(Build.BinariesDirectory)/'
