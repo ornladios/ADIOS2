@@ -26,31 +26,32 @@ resources:
   - container:  suse-pgi-openmpi
     image: ornladios/adios2-auto:suse-pgi-openmpi
 
-strategy:
-  matrix:
-    el7:
-      containerResource: el7
-    el7-gnu8-ohpc:
-      containerResource: el7-gnu8-ohpc
-    el7-gnu8-openmpi-ohpc:
-      containerResource: el7-gnu8-openmpi-ohpc
-    el7-intel18-ohpc:
-      containerResource: el7-intel18-ohpc
-    el7-intel18-openmpi-ohpc:
-      containerResource: el7-intel18-openmpi-ohpc
-    suse-pgi:
-      containerResource: suse-pgi
-    suse-pgi-openmpi:
-      containerResource: suse-pgi-openmpi
-
-container: $[ variables['containerResource'] ]
-
-steps:
-  - bash: scripts/ci/runOnAzure.sh update
-    name: Update
-  - bash: scripts/ci/runOnAzure.sh configure
-    name: Configure
-  - bash: scripts/ci/runOnAzure.sh build
-    name: Build
-  - bash: scripts/ci/runOnAzure.sh test
-    name: Test
+jobs:
+- job: linux
+  timeoutInMinutes: 90
+  strategy:
+    matrix:
+      el7:
+        containerResource: el7
+      el7-gnu8-ohpc:
+        containerResource: el7-gnu8-ohpc
+      el7-gnu8-openmpi-ohpc:
+        containerResource: el7-gnu8-openmpi-ohpc
+      el7-intel18-ohpc:
+        containerResource: el7-intel18-ohpc
+      el7-intel18-openmpi-ohpc:
+        containerResource: el7-intel18-openmpi-ohpc
+      suse-pgi:
+        containerResource: suse-pgi
+      suse-pgi-openmpi:
+        containerResource: suse-pgi-openmpi
+  container: $[ variables['containerResource'] ]
+  steps:
+    - bash: scripts/ci/runOnAzure.sh update
+      name: Update
+    - bash: scripts/ci/runOnAzure.sh configure
+      name: Configure
+    - bash: scripts/ci/runOnAzure.sh build
+      name: Build
+    - bash: scripts/ci/runOnAzure.sh test
+      name: Test
