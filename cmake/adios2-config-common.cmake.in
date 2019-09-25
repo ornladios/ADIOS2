@@ -29,7 +29,7 @@ if(NOT @BUILD_SHARED_LIBS@)
 
   set(ADIOS2_HAVE_ZFP @ADIOS2_HAVE_ZFP@)
   if(ADIOS2_HAVE_ZFP)
-    find_dependency(ZFP)
+    find_dependency(zfp)
   endif()
   
   set(ADIOS2_HAVE_MGARD @ADIOS2_HAVE_MGARD@)
