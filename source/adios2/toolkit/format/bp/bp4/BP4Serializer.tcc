@@ -436,23 +436,22 @@ size_t BP4Serializer::PutVariableMetadataInData(
                                      position);
 
     // here align pointer for span
-    if (span != nullptr)
-    {
-        const size_t padLengthPosition = position;
-        uint8_t zero = 0;
-        // skip 1 for paddingLength and 4 for VMD] ending
-        helper::CopyToBuffer(buffer, position, &zero, 5);
-        // here check for the next aligned pointer
-        const size_t extraBytes = m_Data.Align<T>();
-        const std::string pad = std::string(extraBytes, '\0') + "VMD]";
 
-        size_t backPosition = padLengthPosition;
-        const uint8_t padLength = static_cast<uint8_t>(pad.size());
-        helper::CopyToBuffer(buffer, backPosition, &padLength);
-        helper::CopyToBuffer(buffer, backPosition, pad.c_str(), pad.size());
+    const size_t padLengthPosition = position;
+    uint8_t zero = 0;
+    // skip 1 for paddingLength and 4 for VMD] ending
+    helper::CopyToBuffer(buffer, position, &zero, 5);
+    // here check for the next aligned pointer
+    const size_t extraBytes = m_Data.Align<T>();
+    const std::string pad =
+        span == nullptr ? "VMD]" : std::string(extraBytes, '\0') + "VMD]";
 
-        position += extraBytes;
-    }
+    size_t backPosition = padLengthPosition;
+    const uint8_t padLength = static_cast<uint8_t>(pad.size());
+    helper::CopyToBuffer(buffer, backPosition, &padLength);
+    helper::CopyToBuffer(buffer, backPosition, pad.c_str(), pad.size());
+
+    position += extraBytes;
 
     absolutePosition += position - mdBeginPosition;
     return varLengthPosition;
