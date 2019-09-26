@@ -9,6 +9,8 @@
  */
 
 #include "SscReader.tcc"
+#include "nlohmann/json.hpp"
+#include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
 {
@@ -22,6 +24,10 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 : Engine("SscReader", io, name, mode, std::move(comm))
 {
     TAU_SCOPED_TIMER_FUNC();
+    MPI_Comm_rank(MPI_COMM_WORLD, &m_WorldRank);
+    m_ReaderRank = m_Comm.Rank();
+    SyncMetadata();
+    DeserializeMetadata();
 }
 
 SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
@@ -44,6 +50,92 @@ size_t SscReader::CurrentStep() const
 void SscReader::EndStep() { TAU_SCOPED_TIMER_FUNC(); }
 
 // PRIVATE
+
+void SscReader::SyncMetadata()
+{
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscReader::SyncMetadata, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << std::endl;
+    }
+
+    size_t metadataSize = m_MetadataJsonCharVector.size();
+    MPI_Bcast(&metadataSize, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+    m_MetadataJsonCharVector.resize(metadataSize);
+
+    MPI_Win win;
+    MPI_Win_create(NULL, 0, sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_fence(0, win);
+    MPI_Get(m_MetadataJsonCharVector.data(), m_MetadataJsonCharVector.size(), MPI_CHAR, 0,0,m_MetadataJsonCharVector.size(), MPI_CHAR, win);
+    MPI_Win_fence(0, win);
+    MPI_Win_free(&win);
+
+    for(auto i : m_MetadataJsonCharVector)
+    {
+        std::cout << i ;
+    }
+    std::cout << std::endl;
+}
+
+void SscReader::DeserializeMetadata()
+{
+    nlohmann::json j = nlohmann::json::parse(m_MetadataJsonCharVector);
+    auto itAV = j.find("A");
+    if(itAV != j.end())
+    {
+        // TODO: Add attributes
+    }
+    itAV = j.find("V");
+    if(itAV != j.end())
+    {
+        std::cout << itAV->dump(4) << std::endl;
+        for(auto itVar = itAV->begin(); itVar != itAV->end(); ++itVar)
+        {
+            std::string shapeStr;
+            std::string type;
+            auto itST = itVar.value().find("S");
+            if(itST != itVar.value().end())
+            {
+                shapeStr = *itST;
+            }
+            else{
+                throw(std::runtime_error("metadata corrupted"));
+            }
+            itST = itVar.value().find("T");
+            if(itST != itVar.value().end())
+            {
+                type = *itST;
+            }
+            else{
+                throw(std::runtime_error("metadata corrupted"));
+            }
+            Dims shape;
+            try
+            {
+                shape = helper::StringToDims(shapeStr);
+            }
+            catch(...)
+            {
+                throw(std::runtime_error("metadata corrupted"));
+            }
+            Dims start = Dims(shape.size(), 0);
+            if(type.empty())
+            {
+                throw(std::runtime_error("unknown data type"));
+            }
+#define declare_type(T)                                                        \
+            else if (type == helper::GetType<T>())                                   \
+            {                                                                          \
+                m_IO.DefineVariable<T>(itVar.key(), shape, start, shape);\
+            }
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            else {
+                throw(std::runtime_error("unknown data type"));
+            }
+        }
+    }
+}
+
 
 #define declare_type(T)                                                        \
     void SscReader::DoGetSync(Variable<T> &variable, T *data)                  \

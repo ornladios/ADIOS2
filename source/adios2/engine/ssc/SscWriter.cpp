@@ -9,6 +9,7 @@
  */
 
 #include "SscWriter.tcc"
+#include "nlohmann/json.hpp"
 
 namespace adios2
 {
@@ -22,6 +23,8 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 : Engine("SscWriter", io, name, mode, std::move(comm))
 {
     TAU_SCOPED_TIMER_FUNC();
+    MPI_Comm_rank(MPI_COMM_WORLD, &m_WorldRank);
+    m_WriterRank = m_Comm.Rank();
 }
 
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -30,15 +33,8 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if(m_InitialStep)
     {
         m_InitialStep=false;
-        auto vars = m_IO.GetAvailableVariables();
-        for(const auto &i : vars)
-        {
-            std::cout << i.first << std::endl;
-            for(const auto &j : i.second)
-            {
-                std::cout << "    " << j.first << " = " << j.second << std::endl;
-            }
-        }
+        SerializeMetadata();
+        SyncMetadata();
     }
     else{
         ++m_CurrentStep;
@@ -59,6 +55,51 @@ void SscWriter::EndStep() { TAU_SCOPED_TIMER_FUNC(); }
 void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
 
 // PRIVATE
+
+void SscWriter::SerializeMetadata()
+{
+    nlohmann::json j;
+    auto variables = m_IO.GetAvailableVariables();
+    for(const auto &i : variables)
+    {
+        auto it = i.second.find("Shape");
+        if(it != i.second.end())
+        {
+            j["V"][i.first]["S"] = it->second;
+        }
+        it = i.second.find("Type");
+        if(it != i.second.end())
+        {
+            j["V"][i.first]["T"] = it->second;
+        }
+    }
+    // TODO: Add attributes
+    m_MetadataJsonString = j.dump();
+    m_MetadataJsonCharVector.resize(m_MetadataJsonString.size());
+    std::memcpy(m_MetadataJsonCharVector.data(), m_MetadataJsonString.data(), m_MetadataJsonString.size());
+}
+
+void SscWriter::SyncMetadata()
+{
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscWriter::SyncMetadata, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+    size_t metadataSize = m_MetadataJsonCharVector.size();
+    MPI_Bcast(&metadataSize, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+
+    MPI_Win win;
+    MPI_Win_create(m_MetadataJsonCharVector.data(), m_MetadataJsonCharVector.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_fence(0, win);
+    MPI_Win_fence(0, win);
+    MPI_Win_free(&win);
+
+    for(auto i : m_MetadataJsonCharVector)
+    {
+        std::cout << i ;
+    }
+    std::cout << std::endl;
+}
 
 #define declare_type(T)                                                        \
     void SscWriter::DoPutSync(Variable<T> &variable, const T *data)            \

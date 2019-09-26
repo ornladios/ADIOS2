@@ -41,6 +41,14 @@ public:
 private:
     size_t m_CurrentStep = 0;
     bool m_InitialStep = true;
+    std::string m_MetadataJsonString;
+    std::vector<char> m_MetadataJsonCharVector;
+
+    int m_WorldRank;
+    int m_WriterRank;
+
+    void SerializeMetadata();
+    void SyncMetadata();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
@@ -56,7 +64,7 @@ private:
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
-    int m_Verbosity = 0;
+    int m_Verbosity = 10;
 };
 
 } // end namespace engine
