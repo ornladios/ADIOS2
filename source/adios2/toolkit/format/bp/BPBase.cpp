@@ -170,7 +170,11 @@ void BPBase::Init(const Params &parameters, const std::string hint)
             {
                 subStreams = m_SizeMPI;
             }
-            m_Aggregator.Init(subStreams, m_Comm);
+
+            if (subStreams < m_SizeMPI)
+            {
+                m_Aggregator.Init(subStreams, m_Comm);
+            }
         }
         else if (key == "node-local")
         {
