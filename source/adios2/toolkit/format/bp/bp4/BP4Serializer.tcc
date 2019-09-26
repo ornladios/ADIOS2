@@ -442,7 +442,7 @@ size_t BP4Serializer::PutVariableMetadataInData(
     // skip 1 for paddingLength and 4 for VMD] ending
     helper::CopyToBuffer(buffer, position, &zero, 5);
     // here check for the next aligned pointer
-    const size_t extraBytes = m_Data.Align<T>();
+    const size_t extraBytes = span == nullptr ? 0 : m_Data.Align<T>();
     const std::string pad =
         span == nullptr ? "VMD]" : std::string(extraBytes, '\0') + "VMD]";
 
