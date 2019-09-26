@@ -82,7 +82,8 @@ public:
 
     std::string GetBPSubFileName(const std::string &name,
                                  const size_t subFileIndex,
-                                 const bool hasSubFiles = true) const noexcept;
+                                 const bool hasSubFiles = true,
+                                 const bool isReader = false) const noexcept;
 
     /**
      * Returns the estimated variable index size. Used by ResizeBuffer public
@@ -100,9 +101,9 @@ protected:
         noexcept final;
 
 private:
-    std::string GetBPSubStreamName(const std::string &name, const size_t rank,
-                                   const bool hasSubFiles = true) const
-        noexcept;
+    std::string GetBPSubStreamName(const std::string &name, const size_t id,
+                                   const bool hasSubFiles = true,
+                                   const bool isReader = false) const noexcept;
 };
 
 } // end namespace format
