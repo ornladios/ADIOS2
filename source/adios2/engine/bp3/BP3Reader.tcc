@@ -86,7 +86,7 @@ void BP3Reader::ReadVariableBlocks(Variable<T> &variable)
                     const std::string subFileName =
                         m_BP3Deserializer.GetBPSubFileName(
                             m_Name, subStreamBoxInfo.SubStreamID,
-                            m_BP3Deserializer.m_Minifooter.HasSubFiles);
+                            m_BP3Deserializer.m_Minifooter.HasSubFiles, true);
 
                     m_SubFileManager.OpenFileID(
                         subFileName, subStreamBoxInfo.SubStreamID, Mode::Read,

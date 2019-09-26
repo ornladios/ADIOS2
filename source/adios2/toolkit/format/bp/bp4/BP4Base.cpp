@@ -113,9 +113,10 @@ BP4Base::GetBPSubStreamNames(const std::vector<std::string> &names) const
 
 std::string BP4Base::GetBPSubFileName(const std::string &name,
                                       const size_t subFileIndex,
-                                      const bool hasSubFiles) const noexcept
+                                      const bool hasSubFiles,
+                                      const bool isReader) const noexcept
 {
-    return GetBPSubStreamName(name, subFileIndex, hasSubFiles);
+    return GetBPSubStreamName(name, subFileIndex, hasSubFiles, isReader);
 }
 
 size_t BP4Base::GetBPIndexSizeInData(const std::string &variableName,
@@ -188,8 +189,8 @@ BP4Base::ReadElementIndexHeader(const std::vector<char> &buffer,
 
 // PRIVATE
 std::string BP4Base::GetBPSubStreamName(const std::string &name,
-                                        const size_t rank,
-                                        const bool hasSubFiles) const noexcept
+                                        const size_t id, const bool hasSubFiles,
+                                        const bool isReader) const noexcept
 {
     if (!hasSubFiles)
     {
@@ -199,7 +200,8 @@ std::string BP4Base::GetBPSubStreamName(const std::string &name,
     const std::string bpName = RemoveTrailingSlash(name);
 
     const size_t index =
-        m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex : rank;
+        isReader ? id
+                 : m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex : id;
 
     /* the name of a data file starts with "data." */
     const std::string bpRankName(bpName + PathSeparator + "data." +
