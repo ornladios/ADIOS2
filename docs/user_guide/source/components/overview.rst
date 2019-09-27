@@ -46,7 +46,7 @@ The following section provides a common overview to all languages based on the C
 
 The following figure depicts the components hierarchy from the application's point of view.
 
-.. image:: https://imgur.com/OMjKThq : alt: my-picture2
+.. image:: https://imgur.com/y7bkQQt : alt: my-picture2
 
 * **ADIOS**: the ADIOS component is the starting point between an application and the ADIOS2 library. Applications provide:
     1. the scope of the ADIOS object through the MPI communicator,
