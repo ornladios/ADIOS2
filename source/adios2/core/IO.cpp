@@ -335,8 +335,6 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         if (variable.m_SingleValue)                                            \
         {                                                                      \
             variablesInfo[name]["SingleValue"] = "true";                       \
-            variablesInfo[name]["Value"] =                                     \
-                helper::ValueToString(variable.m_Value);                       \
         }                                                                      \
         else                                                                   \
         {                                                                      \
