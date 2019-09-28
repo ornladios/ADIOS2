@@ -134,6 +134,16 @@ typedef void (*CMWriteCallbackFunc) (CManager cm, CMConnection conn,
 extern CManager CManager_create();
 
 /*!
+ * create a CManager.
+ *
+ * CManager is the root of control flow and message handling in a CM program.
+ * This version of a call selects a specific control_module for managing waiting 
+ * network and control events, currently either "select" or "epoll".
+ */
+/*NOLOCK*/
+extern CManager CManager_create_control(char *control_module);
+
+/*!
  * close a CManager
  *
  * the close operation shuts down all connections and causes the

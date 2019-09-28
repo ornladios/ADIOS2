@@ -184,6 +184,7 @@ return 2;\n\
 }\0\0";
 
 char *transport;
+char *control = NULL;
 #include "support.c"
 
 int

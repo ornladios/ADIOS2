@@ -361,7 +361,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams);
 
-    Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
+    Stream->CPInfo =
+        CP_getCPInfo(Stream->DP_Interface, Stream->ConfigParams->ControlModule);
 
     Stream->FinalTimestep = INT_MAX; /* set this on close */
     Stream->LastDPNotifiedTimestep = -1;

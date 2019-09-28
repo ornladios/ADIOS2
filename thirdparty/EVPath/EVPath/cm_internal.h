@@ -101,6 +101,7 @@ typedef struct _CManager {
     transport_entry *transports;
     int initialized;
     int reference_count;
+    char *control_module_choice;  /* this is static, doesn't need to be free'd */
 
     CMControlList control_list;	/* the control list for this DE */
 
@@ -164,23 +165,10 @@ typedef struct free_block_rec {
 typedef void (*CMNetworkFunc)(void *svcs, void *client_data);
 
 
-typedef void (*CMRemoveSelectFunc)(void *svcs, void *select_data, int fd);
-
-typedef struct _periodic_task *periodic_task_handle;
-
 struct _CMTaskHandle {
     CManager cm;
     periodic_task_handle task;
 };
-
-typedef periodic_task_handle (*CMAddPeriodicFunc) 
-   (void *svcs, void *select_data, int period_sec, int period_usec,
-	  select_list_func func, void *param1, void *param2);
-
-typedef void (*CMRemovePeriodicFunc)(void *svcs, void *select_data, 
-					   periodic_task_handle handle);
-
-typedef void (*CMWakeSelectFunc)(void *svcs, void *select_data);
 
 typedef struct _CMControlList {
     func_entry network_blocking_function;
@@ -399,6 +387,7 @@ extern void INT_CMfree(void *ptr);
 extern void INT_CMadd_shutdown_task(CManager cm, CMPollFunc func, void *client_data, int task_type);
 extern void INT_CManager_close(CManager cm);
 extern CManager INT_CManager_create ();
+extern CManager INT_CManager_create_control ( char *control_module);
 extern int INT_CMlisten_specific(CManager cm, attr_list listen_info);
 extern void INT_CMConnection_close(CMConnection conn);
 extern void internal_connection_close(CMConnection conn);

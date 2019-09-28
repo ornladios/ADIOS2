@@ -20,7 +20,11 @@ usage()
 #define PARSE_ARGS() \
     argv0 = argv[0];\
     while (argv[1] && (argv[1][0] == '-')) {\
-	if (argv[1][1] == 'c') {\
+	if (strcmp(&argv[1][1], "control") == 0) {	\
+	    control = argv[2];\
+	    argv++;\
+	    argc--;\
+	} else if (argv[1][1] == 'c') {		\
 	    regression_master = 0;\
 	} else if (strcmp(&argv[1][1], "ssh") == 0) {\
 	    char *destination_host;\

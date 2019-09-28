@@ -93,6 +93,7 @@ static int regression = 1;
 extern 	void EVthin_socket_listen(CManager cm,  char **hostname, int *thin_port);
 
 char *transport = NULL;
+char *control = NULL;
 #include "support.c"
 
 int

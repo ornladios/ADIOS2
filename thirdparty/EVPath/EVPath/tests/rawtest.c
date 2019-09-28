@@ -172,6 +172,7 @@ static int do_regression_master_test();
 static int regression = 1;
 
 char *transport = NULL;
+char *control = NULL;
 #include "support.c"
 
 int
