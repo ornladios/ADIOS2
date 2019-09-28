@@ -25,8 +25,10 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 {
     TAU_SCOPED_TIMER_FUNC();
     MPI_Comm_rank(MPI_COMM_WORLD, &m_WorldRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &m_WorldSize);
     m_ReaderRank = m_Comm.Rank();
     m_ReaderSize = m_Comm.Size();
+    m_WriterSize = m_WorldSize - m_ReaderSize;
 
     SyncRank();
 
@@ -40,6 +42,12 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                                 const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscReader::BeginStep, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << std::endl;
+    }
+
     if(m_InitialStep)
     {
         m_InitialStep = false;
@@ -60,7 +68,14 @@ size_t SscReader::CurrentStep() const
     return m_CurrentStep;
 }
 
-void SscReader::EndStep() { TAU_SCOPED_TIMER_FUNC(); }
+void SscReader::EndStep()
+{
+    TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscReader::EndStep, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << std::endl;
+    }
+}
 
 // PRIVATE
 
@@ -208,21 +223,48 @@ void SscReader::SyncRequests()
     {
         std::cout << "SscReader::SyncRequests, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << std::endl;
     }
-
     size_t localSize = m_LocalRequestJsonString.size();
     size_t maxSize;
-    m_Comm.Reduce(&localSize, &maxSize, 1, MPI_MAX, 0);
-    m_LocalRequestJsonString.resize(maxSize);
+    m_Comm.Allreduce(&localSize, &maxSize, 1, MPI_MAX);
+    std::vector<char> element(maxSize, '\0');
+    std::memcpy(element.data(), m_LocalRequestJsonString.c_str(), m_LocalRequestJsonString.size());
+    std::vector<char> array(maxSize * m_ReaderSize);
+    m_Comm.GatherArrays(element.data(), maxSize, array.data(), 0);
 
-    size_t arraySize = maxSize * m_ReaderSize;
-    std::vector<char> array(arraySize);
+    if(m_ReaderRank == 0)
+    {
+        nlohmann::json allRequests;
+        for(size_t i=0; i<m_ReaderSize; ++i)
+        {
+            auto request = nlohmann::json::parse(array.begin()+i*maxSize, array.begin()+(i+1)*maxSize);
+            allRequests[i] = request;
+        }
+        m_GlobalRequestJsonString = allRequests.dump();
+    }
 
-    m_Comm.Barrier();
+    size_t globalRequestSizeSrc = m_GlobalRequestJsonString.size();
+    size_t globalRequestSizeDst = 0;
+    MPI_Allreduce(&globalRequestSizeSrc, &globalRequestSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
 
-    std::cout << "================= " <<  m_LocalRequestJsonString.size() << " ============= " << array.size() << std::endl;
+    if(m_GlobalRequestJsonString.size() < globalRequestSizeDst)
+    {
+        m_GlobalRequestJsonString.resize(globalRequestSizeDst);
+    }
 
-    m_Comm.GatherArrays(m_LocalRequestJsonString.data(), m_LocalRequestJsonString.size(), array.data(), 0);
+    std::vector<char> globalRequestCharVec(m_GlobalRequestJsonString.size());
+    std::memcpy(globalRequestCharVec.data(), m_GlobalRequestJsonString.data(), m_GlobalRequestJsonString.size() );
 
+    MPI_Win win;
+    MPI_Win_create(globalRequestCharVec.data(), globalRequestCharVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_fence(0, win);
+    if(m_ReaderRank !=0)
+    {
+        MPI_Get(globalRequestCharVec.data(), globalRequestCharVec.size(), MPI_CHAR, m_ReaderMasterWorldRank,0,globalRequestCharVec.size(), MPI_CHAR, win);
+    }
+    MPI_Win_fence(0, win);
+    MPI_Win_free(&win);
+
+    m_GlobalRequestJsonString = std::string(globalRequestCharVec.begin(), globalRequestCharVec.end());
 }
 
 #define declare_type(T)                                                        \
@@ -247,7 +289,14 @@ void SscReader::SyncRequests()
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void SscReader::DoClose(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
+void SscReader::DoClose(const int transportIndex)
+{
+    TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscReader::DoClose, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << std::endl;
+    }
+}
 
 } // end namespace engine
 } // end namespace core

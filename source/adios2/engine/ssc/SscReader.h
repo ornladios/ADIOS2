@@ -55,8 +55,10 @@ private:
     std::string m_GlobalRequestJsonString;
 
     int m_WorldRank;
+    int m_WorldSize;
     int m_ReaderRank;
     int m_ReaderSize;
+    int m_WriterSize;
     int m_WriterMasterWorldRank;
     int m_ReaderMasterWorldRank;
 

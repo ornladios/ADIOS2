@@ -32,11 +32,18 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscWriter::BeginStep, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+
     if(m_InitialStep)
     {
         m_InitialStep=false;
         SerializeMetadata();
         SyncMetadata();
+        SyncRequests();
     }
     else{
         ++m_CurrentStep;
@@ -52,7 +59,14 @@ size_t SscWriter::CurrentStep() const
 
 void SscWriter::PerformPuts() { TAU_SCOPED_TIMER_FUNC(); }
 
-void SscWriter::EndStep() { TAU_SCOPED_TIMER_FUNC(); }
+void SscWriter::EndStep()
+{
+    TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscWriter::EndStep, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+}
 
 void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
 
@@ -123,18 +137,25 @@ void SscWriter::SyncRequests()
         std::cout << "SscWriter::SyncRequests, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
+    size_t globalRequestSizeSrc = 0;
+    size_t globalRequestSizeDst = 0;
+    MPI_Allreduce(&globalRequestSizeSrc, &globalRequestSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
 
-    /*
-    size_t requestsSize = m_MetadataJsonCharVector.size();
-    MPI_Bcast(&metadataSize, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+    if(m_GlobalRequestJsonString.size() < globalRequestSizeDst)
+    {
+        m_GlobalRequestJsonString.resize(globalRequestSizeDst);
+    }
+
+    std::vector<char> globalRequestCharVec(m_GlobalRequestJsonString.size());
 
     MPI_Win win;
-    MPI_Win_create(m_MetadataJsonCharVector.data(), m_MetadataJsonCharVector.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_create(globalRequestCharVec.data(), globalRequestCharVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     MPI_Win_fence(0, win);
+    MPI_Get(globalRequestCharVec.data(), globalRequestCharVec.size(), MPI_CHAR, m_ReaderMasterWorldRank,0,globalRequestCharVec.size(), MPI_CHAR, win);
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
-    */
 
+    m_GlobalRequestJsonString = std::string(globalRequestCharVec.begin(), globalRequestCharVec.end());
 }
 
 #define declare_type(T)                                                        \
@@ -149,7 +170,14 @@ void SscWriter::SyncRequests()
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void SscWriter::DoClose(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
+void SscWriter::DoClose(const int transportIndex)
+{
+    TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscWriter::DoClose, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+}
 
 } // end namespace engine
 } // end namespace core
