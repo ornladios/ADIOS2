@@ -27,25 +27,54 @@ resources:
     image: ornladios/adios2-auto:suse-pgi-openmpi
 
 jobs:
-- job: linux
+#- job: linux
+#  timeoutInMinutes: 90
+#  strategy:
+#    matrix:
+#      el7:
+#        containerResource: el7
+#      el7_gnu8_ohpc:
+#        containerResource: el7-gnu8-ohpc
+#      el7_gnu8_openmpi_ohpc:
+#        containerResource: el7-gnu8-openmpi-ohpc
+#      el7_intel18_ohpc:
+#        containerResource: el7-intel18-ohpc
+#      el7_intel18_openmpi_ohpc:
+#        containerResource: el7-intel18-openmpi-ohpc
+#      suse_pgi:
+#        containerResource: suse-pgi
+#      suse_pgi_openmpi:
+#        containerResource: suse-pgi-openmpi
+#  container: $[ variables['containerResource'] ]
+#  steps:
+#    - bash: scripts/ci/runOnAzure.sh update
+#      name: Update
+#    - bash: scripts/ci/runOnAzure.sh configure
+#      name: Configure
+#    - bash: scripts/ci/runOnAzure.sh build
+#      name: Build
+#    - bash: scripts/ci/runOnAzure.sh test
+#      name: Test
+#    - task: PublishTestResults@2
+#      inputs:
+#        testRunTitle: 'CTest: $(System.JobDisplayName)'
+#        testResultsFormat: 'cTest'
+#        testResultsFiles: '*/Testing/*/Test.xml'
+#        searchFolder: '$(Build.BinariesDirectory)/'
+- job: windows
   timeoutInMinutes: 90
   strategy:
     matrix:
-      el7:
-        containerResource: el7
-      el7-gnu8-ohpc:
-        containerResource: el7-gnu8-ohpc
-      el7-gnu8-openmpi-ohpc:
-        containerResource: el7-gnu8-openmpi-ohpc
-      el7-intel18-ohpc:
-        containerResource: el7-intel18-ohpc
-      el7-intel18-openmpi-ohpc:
-        containerResource: el7-intel18-openmpi-ohpc
-      suse-pgi:
-        containerResource: suse-pgi
-      suse-pgi-openmpi:
-        containerResource: suse-pgi-openmpi
-  container: $[ variables['containerResource'] ]
+      vs2017:
+        imageName: 'vs2017-win2016'
+      vs2017_msmpi:
+        imageName: 'vs2017-win2016'
+      vs2019:
+        imageName: 'windows-2019'
+      vs2019_msmpi:
+        imageName: 'windows-2019'
+  pool:
+    vmImage: $[ variables['imageName'] ]
   steps:
     - bash: scripts/ci/runOnAzure.sh update
       name: Update
@@ -55,9 +84,3 @@ jobs:
       name: Build
     - bash: scripts/ci/runOnAzure.sh test
       name: Test
-    - task: PublishTestResults@2
-      inputs:
-        testRunTitle: 'CTest: $(System.JobDisplayName)'
-        testResultsFormat: 'cTest'
-        testResultsFiles: '*/Testing/*/Test.xml'
-        searchFolder: '$(Build.BinariesDirectory)/'
