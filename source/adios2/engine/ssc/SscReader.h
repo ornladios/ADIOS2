@@ -41,11 +41,30 @@ private:
     std::string m_MetadataJsonString;
     std::vector<char> m_MetadataJsonCharVector;
 
+    struct RequestElement
+    {
+        Dims shape;
+        Dims start;
+        Dims count;
+        std::string type;
+    };
+    std::unordered_map<std::string, RequestElement> m_LocalRequestMap;
+    std::string m_LocalRequestJsonString;
+
+    std::unordered_map<std::string, RequestElement> m_GlobalRequestMap;
+    std::string m_GlobalRequestJsonString;
+
     int m_WorldRank;
     int m_ReaderRank;
+    int m_ReaderSize;
+    int m_WriterMasterWorldRank;
+    int m_ReaderMasterWorldRank;
 
+    void SyncRank();
     void SyncMetadata();
     void DeserializeMetadata();
+    void SerializeRequests();
+    void SyncRequests();
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \

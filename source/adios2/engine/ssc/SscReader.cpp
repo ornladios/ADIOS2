@@ -26,6 +26,10 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     TAU_SCOPED_TIMER_FUNC();
     MPI_Comm_rank(MPI_COMM_WORLD, &m_WorldRank);
     m_ReaderRank = m_Comm.Rank();
+    m_ReaderSize = m_Comm.Size();
+
+    SyncRank();
+
     SyncMetadata();
     DeserializeMetadata();
 }
@@ -36,6 +40,15 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                                 const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
+    if(m_InitialStep)
+    {
+        m_InitialStep = false;
+        SerializeRequests();
+        SyncRequests();
+    }
+    else{
+        ++m_CurrentStep;
+    }
     return StepStatus::OK;
 }
 
@@ -50,6 +63,18 @@ size_t SscReader::CurrentStep() const
 void SscReader::EndStep() { TAU_SCOPED_TIMER_FUNC(); }
 
 // PRIVATE
+
+void SscReader::SyncRank()
+{
+    int readerMasterWorldRank = 0;
+    int writerMasterWorldRank = 0;
+    if(m_ReaderRank == 0)
+    {
+        readerMasterWorldRank = m_WorldRank;
+    }
+    MPI_Allreduce(&readerMasterWorldRank, &m_ReaderMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&writerMasterWorldRank, &m_WriterMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+}
 
 void SscReader::SyncMetadata()
 {
@@ -69,16 +94,18 @@ void SscReader::SyncMetadata()
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
-    for(auto i : m_MetadataJsonCharVector)
-    {
-        std::cout << i ;
-    }
-    std::cout << std::endl;
 }
 
 void SscReader::DeserializeMetadata()
 {
     nlohmann::json j = nlohmann::json::parse(m_MetadataJsonCharVector);
+
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscReader::DeserializeMetadata obtained metadata: ";
+        std::cout << j.dump(4) << std::endl;
+    }
+
     auto itAV = j.find("A");
     if(itAV != j.end())
     {
@@ -126,6 +153,8 @@ void SscReader::DeserializeMetadata()
             else if (type == helper::GetType<T>())                                   \
             {                                                                          \
                 m_IO.DefineVariable<T>(itVar.key(), shape, start, shape);\
+                m_LocalRequestMap[itVar.key()].shape = shape;\
+                m_LocalRequestMap[itVar.key()].type = type;\
             }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -136,6 +165,65 @@ void SscReader::DeserializeMetadata()
     }
 }
 
+void SscReader::SerializeRequests()
+{
+    for(auto &var : m_LocalRequestMap)
+    {
+        if(var.second.type.empty())
+        {
+            throw(std::runtime_error("unknown data type"));
+        }
+#define declare_type(T)                                                        \
+        else if (var.second.type == helper::GetType<T>())                                   \
+        {                                                                          \
+            auto v = m_IO.InquireVariable<T>(var.first);\
+            if(v) {\
+                var.second.count = v->m_Count;\
+                var.second.start = v->m_Start;\
+            }\
+        }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        else {
+            throw(std::runtime_error("unknown data type"));
+        }
+    }
+
+    nlohmann::json j;
+    for(auto &var : m_LocalRequestMap)
+    {
+        j[var.first]["type"] = var.second.type;
+        j[var.first]["shape"] = var.second.shape;
+        j[var.first]["start"] = var.second.start;
+        j[var.first]["count"] = var.second.count;
+    }
+
+    m_LocalRequestJsonString = j.dump();
+
+}
+
+void SscReader::SyncRequests()
+{
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscReader::SyncRequests, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << std::endl;
+    }
+
+    size_t localSize = m_LocalRequestJsonString.size();
+    size_t maxSize;
+    m_Comm.Reduce(&localSize, &maxSize, 1, MPI_MAX, 0);
+    m_LocalRequestJsonString.resize(maxSize);
+
+    size_t arraySize = maxSize * m_ReaderSize;
+    std::vector<char> array(arraySize);
+
+    m_Comm.Barrier();
+
+    std::cout << "================= " <<  m_LocalRequestJsonString.size() << " ============= " << array.size() << std::endl;
+
+    m_Comm.GatherArrays(m_LocalRequestJsonString.data(), m_LocalRequestJsonString.size(), array.data(), 0);
+
+}
 
 #define declare_type(T)                                                        \
     void SscReader::DoGetSync(Variable<T> &variable, T *data)                  \

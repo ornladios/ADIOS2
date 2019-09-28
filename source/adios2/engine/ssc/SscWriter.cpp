@@ -25,6 +25,8 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     TAU_SCOPED_TIMER_FUNC();
     MPI_Comm_rank(MPI_COMM_WORLD, &m_WorldRank);
     m_WriterRank = m_Comm.Rank();
+
+    SyncRank();
 }
 
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -55,6 +57,18 @@ void SscWriter::EndStep() { TAU_SCOPED_TIMER_FUNC(); }
 void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
 
 // PRIVATE
+
+void SscWriter::SyncRank()
+{
+    int readerMasterWorldRank = 0;
+    int writerMasterWorldRank = 0;
+    if(m_WriterRank == 0)
+    {
+        writerMasterWorldRank = m_WorldRank;
+    }
+    MPI_Allreduce(&readerMasterWorldRank, &m_ReaderMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&writerMasterWorldRank, &m_WriterMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+}
 
 void SscWriter::SerializeMetadata()
 {
@@ -99,6 +113,28 @@ void SscWriter::SyncMetadata()
         std::cout << i ;
     }
     std::cout << std::endl;
+}
+
+void SscWriter::SyncRequests()
+{
+
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscWriter::SyncRequests, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+
+
+    /*
+    size_t requestsSize = m_MetadataJsonCharVector.size();
+    MPI_Bcast(&metadataSize, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+
+    MPI_Win win;
+    MPI_Win_create(m_MetadataJsonCharVector.data(), m_MetadataJsonCharVector.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_fence(0, win);
+    MPI_Win_fence(0, win);
+    MPI_Win_free(&win);
+    */
+
 }
 
 #define declare_type(T)                                                        \
