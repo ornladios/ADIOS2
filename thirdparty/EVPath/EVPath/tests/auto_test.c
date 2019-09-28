@@ -150,6 +150,7 @@ char *ECL_generate = "{\n\
 }";
 
 char *transport = NULL;
+char *control = NULL;
 
 #include "support.c"
 

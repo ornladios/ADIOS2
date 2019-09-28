@@ -44,7 +44,8 @@ struct _SstBlock
     MACRO(CompressionMethod, CompressionMethod, size_t, 0)                     \
     MACRO(AlwaysProvideLatestTimestep, Bool, int, 0)                           \
     MACRO(SpeculativePreloadMode, SpecPreloadMode, int, SpecPreloadAuto)       \
-    MACRO(SpecAutoNodeThreshold, Int, int, 1)
+    MACRO(SpecAutoNodeThreshold, Int, int, 1)                                  \
+    MACRO(ControlModule, String, char *, NULL)
 
 typedef enum
 {

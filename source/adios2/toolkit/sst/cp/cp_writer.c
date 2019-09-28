@@ -1120,7 +1120,8 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
         return NULL;
     }
 
-    Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
+    Stream->CPInfo =
+        CP_getCPInfo(Stream->DP_Interface, Stream->ConfigParams->ControlModule);
 
     if (Stream->RendezvousReaderCount > 0)
     {

@@ -21,6 +21,13 @@ set_property(TEST evtest_SELF PROPERTY
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/evtests.tsts
   "CMSelfFormats=1 evtest\n" )
 
+if (HAVE_SYS_EPOLL_H) 
+   add_test(NAME evtest_SELECT COMMAND evtest -control select)
+   add_test(NAME evtest_SELECT_ENV COMMAND evtest)
+   set_property(TEST evtest_SELECT_ENV PROPERTY
+      ENVIRONMENT "CMControlModule=select")
+endif()
+
 add_executable(thin_client thin_client.c)
 target_link_libraries(thin_client evpath ffs::ffs)
 

@@ -458,7 +458,7 @@ typedef struct _MetadataPlusDPInfo *MetadataPlusDPInfo;
 extern atom_t CM_TRANSPORT_ATOM;
 
 void CP_validateParams(SstStream stream, SstParams Params, int Writer);
-extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo);
+extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule);
 extern char *CP_GetContactString(SstStream s, attr_list DPAttrs);
 extern SstStream CP_newStream();
 extern void SstInternalProvideTimestep(
