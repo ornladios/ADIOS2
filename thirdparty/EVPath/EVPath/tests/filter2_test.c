@@ -297,6 +297,7 @@ static atom_t CM_MCAST_ADDR;
 static atom_t CM_MCAST_PORT;
 
 char *transport = NULL;
+char *control = NULL;
 #include "support.c"
 
 int
