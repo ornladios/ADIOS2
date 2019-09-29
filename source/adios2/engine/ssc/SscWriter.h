@@ -51,14 +51,17 @@ private:
         Dims count;
         std::string type;
     };
-    std::unordered_map<std::string, RequestElement> m_LocalRequestMap;
     std::string m_LocalRequestJsonString;
-
-    std::unordered_map<std::string, RequestElement> m_GlobalRequestMap;
     std::string m_GlobalRequestJsonString;
+    using RequestMap = std::unordered_map<std::string, RequestElement>;
+    RequestMap m_LocalRequestMap;
+    std::vector<RequestMap> m_GlobalRequestMap;
 
     int m_WorldRank;
+    int m_WorldSize;
     int m_WriterRank;
+    int m_WriterSize;
+    int m_ReaderSize;
     int m_WriterMasterWorldRank;
     int m_ReaderMasterWorldRank;
 

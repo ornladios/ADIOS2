@@ -207,10 +207,10 @@ void SscReader::SerializeRequests()
     nlohmann::json j;
     for(auto &var : m_LocalRequestMap)
     {
-        j[var.first]["type"] = var.second.type;
-        j[var.first]["shape"] = var.second.shape;
-        j[var.first]["start"] = var.second.start;
-        j[var.first]["count"] = var.second.count;
+        j[var.first]["T"] = var.second.type;
+        j[var.first]["S"] = var.second.shape;
+        j[var.first]["O"] = var.second.start;
+        j[var.first]["C"] = var.second.count;
     }
 
     m_LocalRequestJsonString = j.dump();

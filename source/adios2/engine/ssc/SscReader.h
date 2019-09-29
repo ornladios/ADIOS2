@@ -48,11 +48,11 @@ private:
         Dims count;
         std::string type;
     };
-    std::unordered_map<std::string, RequestElement> m_LocalRequestMap;
     std::string m_LocalRequestJsonString;
-
-    std::unordered_map<std::string, RequestElement> m_GlobalRequestMap;
     std::string m_GlobalRequestJsonString;
+    using RequestMap = std::unordered_map<std::string, RequestElement>;
+    RequestMap m_LocalRequestMap;
+    std::vector<RequestMap> m_GlobalRequestMap;
 
     int m_WorldRank;
     int m_WorldSize;
@@ -94,7 +94,7 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
-    int m_Verbosity = 10;
+    int m_Verbosity = 0;
 };
 
 } // end namespace engine

@@ -24,7 +24,10 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 {
     TAU_SCOPED_TIMER_FUNC();
     MPI_Comm_rank(MPI_COMM_WORLD, &m_WorldRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &m_WorldSize);
     m_WriterRank = m_Comm.Rank();
+    m_WriterSize = m_Comm.Size();
+    m_ReaderSize = m_WorldSize - m_WriterSize;
 
     SyncRank();
 }
@@ -156,6 +159,30 @@ void SscWriter::SyncRequests()
     MPI_Win_free(&win);
 
     m_GlobalRequestJsonString = std::string(globalRequestCharVec.begin(), globalRequestCharVec.end());
+
+    auto j = nlohmann::json::parse(m_GlobalRequestJsonString);
+
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscWriter::SyncRequests, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << " obtained reading requests: " << j.dump(4) << std::endl;
+    }
+
+    m_GlobalRequestMap.resize(m_ReaderSize);
+
+    int s = 0;
+    for(auto &rankj : j)
+    {
+        for(auto it = rankj.begin(); it!=rankj.end(); ++it)
+        {
+            auto &v = m_GlobalRequestMap[s][it.key()];
+            v.type = it.value()["T"].get<std::string>();
+            v.shape = it.value()["S"].get<Dims>();
+            v.start = it.value()["O"].get<Dims>();
+            v.count = it.value()["C"].get<Dims>();
+        }
+        ++s;
+    }
+
 }
 
 #define declare_type(T)                                                        \
