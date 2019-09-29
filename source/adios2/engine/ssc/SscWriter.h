@@ -41,8 +41,6 @@ public:
 private:
     size_t m_CurrentStep = 0;
     bool m_InitialStep = true;
-    std::string m_MetadataJsonString;
-    std::vector<char> m_MetadataJsonCharVector;
 
     struct RequestElement
     {
@@ -51,10 +49,7 @@ private:
         Dims count;
         std::string type;
     };
-    std::string m_LocalRequestJsonString;
-    std::string m_GlobalRequestJsonString;
     using RequestMap = std::unordered_map<std::string, RequestElement>;
-    RequestMap m_LocalRequestMap;
     std::vector<RequestMap> m_GlobalRequestMap;
 
     int m_WorldRank;
@@ -66,10 +61,8 @@ private:
     int m_ReaderMasterWorldRank;
 
     void SyncRank();
-    void SerializeMetadata();
     void SyncMetadata();
     void SyncRequests();
-    void DeserializeRequests();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \

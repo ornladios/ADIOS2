@@ -44,7 +44,6 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if(m_InitialStep)
     {
         m_InitialStep=false;
-        SerializeMetadata();
         SyncMetadata();
         SyncRequests();
     }
@@ -87,8 +86,14 @@ void SscWriter::SyncRank()
     MPI_Allreduce(&writerMasterWorldRank, &m_WriterMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 }
 
-void SscWriter::SerializeMetadata()
+void SscWriter::SyncMetadata()
 {
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscWriter::SyncMetadata, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+
+    // serialize
     nlohmann::json j;
     auto variables = m_IO.GetAvailableVariables();
     for(const auto &i : variables)
@@ -104,32 +109,21 @@ void SscWriter::SerializeMetadata()
             j["V"][i.first]["T"] = it->second;
         }
     }
-    // TODO: Add attributes
-    m_MetadataJsonString = j.dump();
-    m_MetadataJsonCharVector.resize(m_MetadataJsonString.size());
-    std::memcpy(m_MetadataJsonCharVector.data(), m_MetadataJsonString.data(), m_MetadataJsonString.size());
-}
 
-void SscWriter::SyncMetadata()
-{
-    if(m_Verbosity >=5)
-    {
-        std::cout << "SscWriter::SyncMetadata, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
-    }
-    size_t metadataSize = m_MetadataJsonCharVector.size();
+    // sync
+    // TODO: Add attributes
+    std::string metadataJsonString = j.dump();
+    std::vector<char> metadataJsonCharVector(metadataJsonString.size());
+    std::memcpy(metadataJsonCharVector.data(), metadataJsonString.data(), metadataJsonString.size());
+    size_t metadataSize = metadataJsonCharVector.size();
     MPI_Bcast(&metadataSize, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
 
     MPI_Win win;
-    MPI_Win_create(m_MetadataJsonCharVector.data(), m_MetadataJsonCharVector.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_create(metadataJsonCharVector.data(), metadataJsonCharVector.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     MPI_Win_fence(0, win);
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
-    for(auto i : m_MetadataJsonCharVector)
-    {
-        std::cout << i ;
-    }
-    std::cout << std::endl;
 }
 
 void SscWriter::SyncRequests()
@@ -144,12 +138,7 @@ void SscWriter::SyncRequests()
     size_t globalRequestSizeDst = 0;
     MPI_Allreduce(&globalRequestSizeSrc, &globalRequestSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
 
-    if(m_GlobalRequestJsonString.size() < globalRequestSizeDst)
-    {
-        m_GlobalRequestJsonString.resize(globalRequestSizeDst);
-    }
-
-    std::vector<char> globalRequestCharVec(m_GlobalRequestJsonString.size());
+    std::vector<char> globalRequestCharVec(globalRequestSizeDst);
 
     MPI_Win win;
     MPI_Win_create(globalRequestCharVec.data(), globalRequestCharVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
@@ -158,9 +147,7 @@ void SscWriter::SyncRequests()
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
-    m_GlobalRequestJsonString = std::string(globalRequestCharVec.begin(), globalRequestCharVec.end());
-
-    auto j = nlohmann::json::parse(m_GlobalRequestJsonString);
+    auto j = nlohmann::json::parse(globalRequestCharVec);
 
     if(m_Verbosity >=5)
     {

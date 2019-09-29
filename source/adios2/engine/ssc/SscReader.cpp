@@ -33,7 +33,6 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     SyncRank();
 
     SyncMetadata();
-    DeserializeMetadata();
 }
 
 SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
@@ -51,7 +50,6 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     if(m_InitialStep)
     {
         m_InitialStep = false;
-        SerializeRequests();
         SyncRequests();
     }
     else{
@@ -98,22 +96,20 @@ void SscReader::SyncMetadata()
         std::cout << "SscReader::SyncMetadata, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << std::endl;
     }
 
-    size_t metadataSize = m_MetadataJsonCharVector.size();
+    //sync
+    size_t metadataSize = 0;
     MPI_Bcast(&metadataSize, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
-    m_MetadataJsonCharVector.resize(metadataSize);
+    std::vector<char> metadataJsonCharVector(metadataSize);
 
     MPI_Win win;
     MPI_Win_create(NULL, 0, sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     MPI_Win_fence(0, win);
-    MPI_Get(m_MetadataJsonCharVector.data(), m_MetadataJsonCharVector.size(), MPI_CHAR, 0,0,m_MetadataJsonCharVector.size(), MPI_CHAR, win);
+    MPI_Get(metadataJsonCharVector.data(), metadataJsonCharVector.size(), MPI_CHAR, 0,0,metadataJsonCharVector.size(), MPI_CHAR, win);
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
-}
-
-void SscReader::DeserializeMetadata()
-{
-    nlohmann::json j = nlohmann::json::parse(m_MetadataJsonCharVector);
+    //deserialize
+    nlohmann::json j = nlohmann::json::parse(metadataJsonCharVector);
 
     if(m_Verbosity >=5)
     {
@@ -180,8 +176,14 @@ void SscReader::DeserializeMetadata()
     }
 }
 
-void SscReader::SerializeRequests()
+void SscReader::SyncRequests()
 {
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscReader::SyncRequests, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << std::endl;
+    }
+
+    //serialize
     for(auto &var : m_LocalRequestMap)
     {
         if(var.second.type.empty())
@@ -213,46 +215,40 @@ void SscReader::SerializeRequests()
         j[var.first]["C"] = var.second.count;
     }
 
-    m_LocalRequestJsonString = j.dump();
+    std::string localRequestJsonString = j.dump();
 
-}
+    // sync
+    size_t localSize = localRequestJsonString.size();
+    size_t maxLocalSize;
+    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, MPI_MAX);
+    std::vector<char> element(maxLocalSize, '\0');
+    std::memcpy(element.data(), localRequestJsonString.c_str(), localRequestJsonString.size());
+    std::vector<char> array(maxLocalSize * m_ReaderSize);
+    m_Comm.GatherArrays(element.data(), maxLocalSize, array.data(), 0);
 
-void SscReader::SyncRequests()
-{
-    if(m_Verbosity >=5)
-    {
-        std::cout << "SscReader::SyncRequests, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << std::endl;
-    }
-    size_t localSize = m_LocalRequestJsonString.size();
-    size_t maxSize;
-    m_Comm.Allreduce(&localSize, &maxSize, 1, MPI_MAX);
-    std::vector<char> element(maxSize, '\0');
-    std::memcpy(element.data(), m_LocalRequestJsonString.c_str(), m_LocalRequestJsonString.size());
-    std::vector<char> array(maxSize * m_ReaderSize);
-    m_Comm.GatherArrays(element.data(), maxSize, array.data(), 0);
-
+    std::string globalRequestJsonString;
     if(m_ReaderRank == 0)
     {
         nlohmann::json allRequests;
         for(size_t i=0; i<m_ReaderSize; ++i)
         {
-            auto request = nlohmann::json::parse(array.begin()+i*maxSize, array.begin()+(i+1)*maxSize);
+            auto request = nlohmann::json::parse(array.begin()+i*maxLocalSize, array.begin()+(i+1)*maxLocalSize);
             allRequests[i] = request;
         }
-        m_GlobalRequestJsonString = allRequests.dump();
+        globalRequestJsonString = allRequests.dump();
     }
 
-    size_t globalRequestSizeSrc = m_GlobalRequestJsonString.size();
+    size_t globalRequestSizeSrc = globalRequestJsonString.size();
     size_t globalRequestSizeDst = 0;
     MPI_Allreduce(&globalRequestSizeSrc, &globalRequestSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
 
-    if(m_GlobalRequestJsonString.size() < globalRequestSizeDst)
+    if(globalRequestJsonString.size() < globalRequestSizeDst)
     {
-        m_GlobalRequestJsonString.resize(globalRequestSizeDst);
+        globalRequestJsonString.resize(globalRequestSizeDst);
     }
 
-    std::vector<char> globalRequestCharVec(m_GlobalRequestJsonString.size());
-    std::memcpy(globalRequestCharVec.data(), m_GlobalRequestJsonString.data(), m_GlobalRequestJsonString.size() );
+    std::vector<char> globalRequestCharVec(globalRequestJsonString.size());
+    std::memcpy(globalRequestCharVec.data(), globalRequestJsonString.data(), globalRequestJsonString.size() );
 
     MPI_Win win;
     MPI_Win_create(globalRequestCharVec.data(), globalRequestCharVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
@@ -263,8 +259,6 @@ void SscReader::SyncRequests()
     }
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
-
-    m_GlobalRequestJsonString = std::string(globalRequestCharVec.begin(), globalRequestCharVec.end());
 }
 
 #define declare_type(T)                                                        \
