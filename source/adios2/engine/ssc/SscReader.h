@@ -39,15 +39,16 @@ private:
     size_t m_CurrentStep = 0;
     bool m_InitialStep = true;
 
-    struct RequestElement
+    struct VarInfo
     {
         Dims shape;
         Dims start;
         Dims count;
         std::string type;
     };
-    using RequestMap = std::unordered_map<std::string, RequestElement>;
-    RequestMap m_LocalRequestMap;
+    using VarInfoMap = std::unordered_map<std::string, VarInfo>;
+    std::vector<VarInfoMap> m_GlobalWriterVarInfoMap;
+    VarInfoMap m_LocalReaderVarInfoMap;
 
     int m_WorldRank;
     int m_WorldSize;
@@ -87,7 +88,7 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
-    int m_Verbosity = 0;
+    int m_Verbosity = 10;
 };
 
 } // end namespace engine

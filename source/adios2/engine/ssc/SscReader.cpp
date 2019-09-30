@@ -97,83 +97,71 @@ void SscReader::SyncMetadata()
     }
 
     //sync
-    size_t metadataSize = 0;
-    MPI_Bcast(&metadataSize, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
-    std::vector<char> metadataJsonCharVector(metadataSize);
+    size_t globalSizeDst = 0;
+    size_t globalSizeSrc = 0;
+    MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
+    std::vector<char> globalVec(globalSizeDst);
 
     MPI_Win win;
     MPI_Win_create(NULL, 0, sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     MPI_Win_fence(0, win);
-    MPI_Get(metadataJsonCharVector.data(), metadataJsonCharVector.size(), MPI_CHAR, 0,0,metadataJsonCharVector.size(), MPI_CHAR, win);
+    MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR, 0,0,globalVec.size(), MPI_CHAR, win);
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
     //deserialize
-    nlohmann::json j = nlohmann::json::parse(metadataJsonCharVector);
+    nlohmann::json j = nlohmann::json::parse(globalVec);
 
     if(m_Verbosity >=5)
     {
-        std::cout << "SscReader::DeserializeMetadata obtained metadata: ";
-        std::cout << j.dump(4) << std::endl;
+        std::cout << "SscReader::SyncMetadata obtained metadata: "<< j.dump(4) << std::endl;
     }
 
-    auto itAV = j.find("A");
-    if(itAV != j.end())
+    m_GlobalWriterVarInfoMap.resize(m_WriterSize);
+    int rank = 0;
+    for(auto &rankj : j)
     {
-        // TODO: Add attributes
-    }
-    itAV = j.find("V");
-    if(itAV != j.end())
-    {
-        std::cout << itAV->dump(4) << std::endl;
-        for(auto itVar = itAV->begin(); itVar != itAV->end(); ++itVar)
+        for(auto itVar = rankj.begin(); itVar != rankj.end(); ++itVar)
         {
-            std::string shapeStr;
-            std::string type;
-            auto itST = itVar.value().find("S");
-            if(itST != itVar.value().end())
+            std::string type = itVar.value()["T"].get<std::string>();
+            Dims shape = itVar.value()["S"].get<Dims>();
+            Dims start = itVar.value()["O"].get<Dims>();
+            Dims count = itVar.value()["C"].get<Dims>();
+
+            if(rank == 0)
             {
-                shapeStr = *itST;
-            }
-            else{
-                throw(std::runtime_error("metadata corrupted"));
-            }
-            itST = itVar.value().find("T");
-            if(itST != itVar.value().end())
-            {
-                type = *itST;
-            }
-            else{
-                throw(std::runtime_error("metadata corrupted"));
-            }
-            Dims shape;
-            try
-            {
-                shape = helper::StringToDims(shapeStr);
-            }
-            catch(...)
-            {
-                throw(std::runtime_error("metadata corrupted"));
-            }
-            Dims start = Dims(shape.size(), 0);
-            if(type.empty())
-            {
-                throw(std::runtime_error("unknown data type"));
-            }
+                if(type.empty())
+                {
+                    throw(std::runtime_error("unknown data type"));
+                }
 #define declare_type(T)                                                        \
-            else if (type == helper::GetType<T>())                                   \
-            {                                                                          \
-                m_IO.DefineVariable<T>(itVar.key(), shape, start, shape);\
-                m_LocalRequestMap[itVar.key()].shape = shape;\
-                m_LocalRequestMap[itVar.key()].type = type;\
-            }
-            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+                else if (type == helper::GetType<T>())                                   \
+                {                                                                          \
+                    m_IO.DefineVariable<T>(itVar.key(), shape, start, shape);\
+                    m_LocalReaderVarInfoMap[itVar.key()].type = type;\
+                }
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-            else {
-                throw(std::runtime_error("unknown data type"));
+                else {
+                    throw(std::runtime_error("unknown data type"));
+                }
+            }
+            else if(rank == m_ReaderSize)
+            {
+                // TODO: Parse attributes
+            }
+            else
+            {
+                auto &mapRef = m_GlobalWriterVarInfoMap[rank][itVar.key()];
+                mapRef.shape = shape;
+                mapRef.start = start;
+                mapRef.count = count;
+                mapRef.type = type;
             }
         }
+        ++rank;
     }
+
 }
 
 void SscReader::SyncRequests()
@@ -184,7 +172,7 @@ void SscReader::SyncRequests()
     }
 
     //serialize
-    for(auto &var : m_LocalRequestMap)
+    for(auto &var : m_LocalReaderVarInfoMap)
     {
         if(var.second.type.empty())
         {
@@ -207,56 +195,56 @@ void SscReader::SyncRequests()
     }
 
     nlohmann::json j;
-    for(auto &var : m_LocalRequestMap)
+    for(auto &var : m_LocalReaderVarInfoMap)
     {
         j[var.first]["T"] = var.second.type;
-        j[var.first]["S"] = var.second.shape;
         j[var.first]["O"] = var.second.start;
         j[var.first]["C"] = var.second.count;
     }
 
-    std::string localRequestJsonString = j.dump();
+    std::string localStr = j.dump();
 
-    // sync
-    size_t localSize = localRequestJsonString.size();
+    // aggregate global read pattern across all readers
+    size_t localSize = localStr.size();
     size_t maxLocalSize;
     m_Comm.Allreduce(&localSize, &maxLocalSize, 1, MPI_MAX);
-    std::vector<char> element(maxLocalSize, '\0');
-    std::memcpy(element.data(), localRequestJsonString.c_str(), localRequestJsonString.size());
-    std::vector<char> array(maxLocalSize * m_ReaderSize);
-    m_Comm.GatherArrays(element.data(), maxLocalSize, array.data(), 0);
+    std::vector<char> localVec(maxLocalSize, '\0');
+    std::memcpy(localVec.data(), localStr.c_str(), localStr.size());
+    std::vector<char> globalVec(maxLocalSize * m_ReaderSize);
+    m_Comm.GatherArrays(localVec.data(), maxLocalSize, globalVec.data(), 0);
 
-    std::string globalRequestJsonString;
+    std::string globalStr;
     if(m_ReaderRank == 0)
     {
-        nlohmann::json allRequests;
+        nlohmann::json globalJson;
         for(size_t i=0; i<m_ReaderSize; ++i)
         {
-            auto request = nlohmann::json::parse(array.begin()+i*maxLocalSize, array.begin()+(i+1)*maxLocalSize);
-            allRequests[i] = request;
+            globalJson[i] = nlohmann::json::parse(globalVec.begin()+i*maxLocalSize, globalVec.begin()+(i+1)*maxLocalSize);
         }
-        globalRequestJsonString = allRequests.dump();
+        globalStr = globalJson.dump();
     }
 
-    size_t globalRequestSizeSrc = globalRequestJsonString.size();
-    size_t globalRequestSizeDst = 0;
-    MPI_Allreduce(&globalRequestSizeSrc, &globalRequestSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
+    size_t globalSizeSrc = globalStr.size();
+    size_t globalSizeDst = 0;
+    MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
 
-    if(globalRequestJsonString.size() < globalRequestSizeDst)
+    if(globalStr.size() < globalSizeDst)
     {
-        globalRequestJsonString.resize(globalRequestSizeDst);
+        globalStr.resize(globalSizeDst);
     }
 
-    std::vector<char> globalRequestCharVec(globalRequestJsonString.size());
-    std::memcpy(globalRequestCharVec.data(), globalRequestJsonString.data(), globalRequestJsonString.size() );
+    globalVec.resize(globalSizeDst);
+    std::memcpy(globalVec.data(), globalStr.data(), globalStr.size() );
 
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscReader::SyncRequests, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << ", serialized global read pattern: " << globalStr << std::endl;
+    }
+
+    // sync with writers
     MPI_Win win;
-    MPI_Win_create(globalRequestCharVec.data(), globalRequestCharVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     MPI_Win_fence(0, win);
-    if(m_ReaderRank !=0)
-    {
-        MPI_Get(globalRequestCharVec.data(), globalRequestCharVec.size(), MPI_CHAR, m_ReaderMasterWorldRank,0,globalRequestCharVec.size(), MPI_CHAR, win);
-    }
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 }

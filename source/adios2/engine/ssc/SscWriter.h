@@ -42,15 +42,16 @@ private:
     size_t m_CurrentStep = 0;
     bool m_InitialStep = true;
 
-    struct RequestElement
+    struct VarInfo
     {
         Dims shape;
         Dims start;
         Dims count;
         std::string type;
     };
-    using RequestMap = std::unordered_map<std::string, RequestElement>;
-    std::vector<RequestMap> m_GlobalRequestMap;
+    using VarInfoMap = std::unordered_map<std::string, VarInfo>;
+    std::vector<VarInfoMap> m_GlobalReaderVarInfoMap;
+    VarInfoMap m_LocalWriterVarInfoMap;
 
     int m_WorldRank;
     int m_WorldSize;
