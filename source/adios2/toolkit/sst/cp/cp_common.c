@@ -143,6 +143,10 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         }
         free(SelectedModule);
     }
+    else
+    {
+        Params->ControlModule = strdup("select");
+    }
 }
 
 static char *SstRegStr[] = {"File", "Screen", "Cloud"};
