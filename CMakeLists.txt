@@ -14,7 +14,7 @@ endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/ADIOSFunctions.cmake)
 
-setup_version(2.4.0)
+setup_version(2.5.0)
 
 project(ADIOS2 VERSION ${ADIOS2_VERSION})
 if(POLICY CMP0074)
