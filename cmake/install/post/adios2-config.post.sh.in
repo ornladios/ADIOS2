@@ -1,14 +1,15 @@
 
 function usage() {
-  echo "adios2-config (--help | [--c-flags] [--c-libs] [--cxx-flags] [--cxx-libs] [-fortran-flags] [--fortran-libs])"
-  echo "  --help           Display help information"
+  echo "adios2-config [OPTION]"
+  echo "  -h, --help       Display help information"
+  echo "  -v, --version    Display version information"
   echo "  -c               Both compile and link flags for the C bindings"
   echo "  --c-flags        Preprocessor and compile flags for the C bindings"
   echo "  --c-libs         Linker flags for the C bindings"
-  echo "  -x               Both compile and link flags for the C++ bindings"
+  echo "  -x, -cxx         Both compile and link flags for the C++ bindings"
   echo "  --cxx-flags      Preprocessor and compile flags for the C++ bindings"
   echo "  --cxx-libs       Linker flags for the C++ bindings"
-  echo "  -f               Both compile and link flags for the F90 bindings"
+  echo "  -f, --fortran    Both compile and link flags for the F90 bindings"
   echo "  --fortran-flags  Preprocessor and compile flags for the F90 bindings"
   echo "  --fortran-libs   Linker flags for the F90 bindings"
 }
@@ -33,13 +34,19 @@ do
     -c) CF=1; CL=1 ;;
     --c-flags) CF=1 ;;
     --c-libs) CL=1 ;;
-    -x) CXXF=1; CXXL=1 ;;
+    -x|--cxx) CXXF=1; CXXL=1 ;;
     --cxx-flags) CXXF=1 ;;
     --cxx-libs) CXXL=1 ;;
-    -f) FF=1; FL=1 ;;
+    -f|--fortran) FF=1; FL=1 ;;
     --fortran-flags) FF=1 ;;
     --fortran-libs) FL=1 ;;
-    --help)
+    -v|--version)
+      echo "ADIOS @ADIOS2_VERSION@"
+      echo "Copyright (c) 2019 UT-BATTELLE, LLC"
+      echo "Licensed under the Apache License, Version 2.0"
+      exit 0
+      ;;
+    -h|--help)
       usage
       exit 1
       ;;
