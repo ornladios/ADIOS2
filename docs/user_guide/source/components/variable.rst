@@ -77,7 +77,7 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
 
 2. **Global Array**: the most common shape used for storing self-describing data used for analysis that lives in several MPI processes. The image below illustrates the definitions of the dimension components in a global array: shape, start, and count.
 
-   .. image:: https://imgur.com/MKwNe5e : alt: my-picture2
+   .. image:: https://i.imgur.com/MKwNe5e.png : alt: my-picture2
    
    .. warning::
 
@@ -98,7 +98,7 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
 
 4. **Local Array**: single array variables that are local to the MPI process. These are more commonly used to write Checkpoint data, that is later read for Restart. Reading, however, needs to be handled differently: each process' array has to be read separately, using SetSelection per rank. The size of each process selection should be discovered by the reading application by inquiring per-block size information of the variable, and allocate memory accordingly.
 
-  .. image:: https://imgur.com/XLh2TUG : alt: my-picture3
+  .. image:: https://i.imgur.com/XLh2TUG.png : alt: my-picture3
 
 
 5. **Joined Array (NOT YET SUPPORTED)**: in certain circumstances every process has an array that is different only in one dimension. ADIOS2 allows user to present them as a global array by joining the arrays together. For example, if every process has a table with a different number of rows, and one does not want to do a global communication to calculate the offsets in the global table, one can just write the local arrays and let ADIOS2 calculate the offsets at read time (when all sizes are known by any process).
