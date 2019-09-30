@@ -194,7 +194,6 @@ void SscWriter::SyncWritePattern()
     MPI_Win_fence(0, win);
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
-
 }
 
 void SscWriter::SyncReadPattern()
@@ -249,7 +248,6 @@ void SscWriter::SyncReadPattern()
         }
         ++rank;
     }
-
 }
 
 #define declare_type(T)                                                        \
