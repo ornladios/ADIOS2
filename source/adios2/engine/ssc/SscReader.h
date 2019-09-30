@@ -11,6 +11,7 @@
 #ifndef ADIOS2_ENGINE_SSCREADER_H_
 #define ADIOS2_ENGINE_SSCREADER_H_
 
+#include "SscHelper.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include <queue>
@@ -39,16 +40,8 @@ private:
     size_t m_CurrentStep = 0;
     bool m_InitialStep = true;
 
-    struct VarInfo
-    {
-        Dims shape;
-        Dims start;
-        Dims count;
-        std::string type;
-    };
-    using VarInfoMap = std::unordered_map<std::string, VarInfo>;
-    std::vector<VarInfoMap> m_GlobalWriterVarInfoMap;
-    VarInfoMap m_LocalReaderVarInfoMap;
+    ssc::VarMapVec m_GlobalWritePatternMap;
+    ssc::VarMap m_LocalReadPatternMap;
 
     int m_WorldRank;
     int m_WorldSize;
@@ -58,9 +51,9 @@ private:
     int m_WriterMasterWorldRank;
     int m_ReaderMasterWorldRank;
 
-    void SyncRank();
-    void SyncMetadata();
-    void SyncRequests();
+    void SyncMpiPattern();
+    void SyncWritePattern();
+    void SyncReadPattern();
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \

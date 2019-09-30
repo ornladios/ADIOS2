@@ -29,7 +29,7 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     m_WriterSize = m_Comm.Size();
     m_ReaderSize = m_WorldSize - m_WriterSize;
 
-    SyncRank();
+    SyncMpiPattern();
 }
 
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -44,8 +44,8 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if(m_InitialStep)
     {
         m_InitialStep=false;
-        SyncMetadata();
-        SyncRequests();
+        SyncWritePattern();
+        SyncReadPattern();
     }
     else{
         ++m_CurrentStep;
@@ -74,7 +74,7 @@ void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
 
 // PRIVATE
 
-void SscWriter::SyncRank()
+void SscWriter::SyncMpiPattern()
 {
     int readerMasterWorldRank = 0;
     int writerMasterWorldRank = 0;
@@ -92,24 +92,27 @@ void SscWriter::SyncRank()
 
     if(m_Verbosity >=5)
     {
-        std::cout << "SscWriter::SyncRank, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+        std::cout << "SscWriter::SyncMpiPattern, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
     }
 }
 
-void SscWriter::SyncMetadata()
+void SscWriter::SyncWritePattern()
 {
     if(m_Verbosity >=5)
     {
-        std::cout << "SscWriter::SyncMetadata, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+        std::cout << "SscWriter::SyncWritePattern, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
     // serialize local writer rank metadata
     nlohmann::json j;
     auto variables = m_IO.GetAvailableVariables();
+    size_t varIndex = 0;
     for(auto &i : variables)
     {
-        auto type = i.second["Type"];
-        j[i.first]["T"] = type;
+        std::string type = i.second["Type"];
+        Dims start;
+        Dims count;
+        Dims shape;
 
         if(type.empty())
         {
@@ -118,18 +121,31 @@ void SscWriter::SyncMetadata()
 #define declare_type(T)                                                        \
         else if (type == helper::GetType<T>())                                   \
         {                                                                          \
-            auto v = m_IO.InquireVariable<T>(i.first);\
-            if(v){\
-                j[i.first]["S"] = v->m_Shape;\
-                j[i.first]["O"] = v->m_Start;\
-                j[i.first]["C"] = v->m_Count;\
-            }\
+            auto var = m_IO.InquireVariable<T>(i.first);\
+            shape = var->m_Shape;\
+            start = var->m_Start;\
+            count = var->m_Count;\
         }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         else {
             throw(std::runtime_error("unknown data type"));
         }
+
+        auto &jref = j[i.first];
+        jref["T"] = type;
+        jref["S"] = shape;
+        jref["O"] = start;
+        jref["C"] = count;
+
+        auto &mref = m_LocalWritePatternMap[i.first];
+        mref.type = type;
+        mref.shape = shape;
+        mref.start = start;
+        mref.count = count;
+        mref.index = varIndex;
+
+        ++varIndex;
     }
     std::string localStr = j.dump();
 
@@ -181,12 +197,12 @@ void SscWriter::SyncMetadata()
 
 }
 
-void SscWriter::SyncRequests()
+void SscWriter::SyncReadPattern()
 {
 
     if(m_Verbosity >=5)
     {
-        std::cout << "SscWriter::SyncRequests, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+        std::cout << "SscWriter::SyncReadPattern, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
     size_t globalSizeSrc = 0;
@@ -213,22 +229,25 @@ void SscWriter::SyncRequests()
 
     if(m_Verbosity >=5)
     {
-        std::cout << "SscWriter::SyncRequests, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << " obtained reading requests: " << j.dump(4) << std::endl;
+        std::cout << "SscWriter::SyncReadPattern, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << " obtained reading requests: " << j.dump(4) << std::endl;
     }
 
-    m_GlobalReaderVarInfoMap.resize(m_ReaderSize);
+    m_GlobalReadPatternMap.resize(m_ReaderSize);
 
-    int s = 0;
+    int rank = 0;
     for(auto &rankj : j)
     {
+        int varIndex = 0;
         for(auto it = rankj.begin(); it!=rankj.end(); ++it)
         {
-            auto &v = m_GlobalReaderVarInfoMap[s][it.key()];
+            auto &v = m_GlobalReadPatternMap[rank][it.key()];
             v.type = it.value()["T"].get<std::string>();
             v.start = it.value()["O"].get<Dims>();
             v.count = it.value()["C"].get<Dims>();
+            v.index = varIndex;
+            ++varIndex;
         }
-        ++s;
+        ++rank;
     }
 
 }
