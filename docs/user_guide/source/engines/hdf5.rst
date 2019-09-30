@@ -35,8 +35,8 @@ We can  pass options to HDF5 API from  ADIOS xml configuration. Currently we sup
 
 .. code-block:: xml
 
-<parameter key="H5CollectiveMPIO" value="yes"/>
-<parameter key="H5ChunkDim" value="200 200"/>
-<parameter key="H5ChunkVar" value="VarName1 VarName2"/>
+	<parameter key="H5CollectiveMPIO" value="yes"/>
+	<parameter key="H5ChunkDim" value="200 200"/>
+	<parameter key="H5ChunkVar" value="VarName1 VarName2"/>
 
 We suggest to read HDF5 documentation before appling these options.

@@ -160,8 +160,7 @@ The resulting bpls output should contain the "vtk.xml" attribute and the variabl
 
 The result is that the generated BP file should be recognize by a branch of Paraview/VTK that must be built from source:
 
-.. image:: https://imgur.com/ap3l9Z5 : alt: my-picture2
-
+.. image:: https://i.imgur.com/ap3l9Z5.png : alt: my-picture2
 
 
 Similarly, unstructured grid (.vtu) support can be added with the limitations of using specific labels for the variable names setting the "connectivity", "vertices", and cell "types".
@@ -207,7 +206,7 @@ The resulting `bpls` output for unstructured grid data types:
  
 and resulting visualization in Paraview for different "cell" types:
 
-.. image:: https://imgur.com/ke1xiNh : alt: my-picture3
+.. image:: https://i.imgur.com/ke1xiNh.png : alt: my-picture3
 
 Build VTK and Paraview with ADIOS 2 Support
 -------------------------------------------

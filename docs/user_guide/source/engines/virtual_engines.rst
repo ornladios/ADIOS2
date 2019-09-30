@@ -46,8 +46,7 @@ Virtual Engine Setups
 
 These are the actual settings in ADIOS when a virtual engine is selected. The parameters below can be modified before the Open call. 
 
-1. ``File``.
-    Engine can be ``BP4`` or ``HDF5`` depending on file extension (".h5" for HDF5, otherwise always BP4), 
+1. ``File``. Engine can be ``BP4`` or ``HDF5`` depending on file extension (".h5" for HDF5, otherwise always BP4), 
     or it can be ``BP3`` in reading if the input file has an older BP version. 
 
 2. ``FileStream``. The engine is ``BP4``. The parameters are set to:
