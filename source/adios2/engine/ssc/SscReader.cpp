@@ -31,7 +31,6 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     m_WriterSize = m_WorldSize - m_ReaderSize;
 
     SyncRank();
-
     SyncMetadata();
 }
 
@@ -87,6 +86,16 @@ void SscReader::SyncRank()
     }
     MPI_Allreduce(&readerMasterWorldRank, &m_ReaderMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     MPI_Allreduce(&writerMasterWorldRank, &m_WriterMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+
+    if(m_WorldSize == m_ReaderSize)
+    {
+        throw(std::runtime_error("no writers are found"));
+    }
+
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscReader::SyncRank, World Rank " << m_WorldRank << ", Reader Rank " << m_ReaderRank << std::endl;
+    }
 }
 
 void SscReader::SyncMetadata()
@@ -110,7 +119,14 @@ void SscReader::SyncMetadata()
     MPI_Win_free(&win);
 
     //deserialize
-    nlohmann::json j = nlohmann::json::parse(globalVec);
+    nlohmann::json j;
+    try{
+        j = nlohmann::json::parse(globalVec);
+    }
+    catch(...)
+    {
+        throw(std::runtime_error("reader received corrupted metadata"));
+    }
 
     if(m_Verbosity >=5)
     {
@@ -217,12 +233,19 @@ void SscReader::SyncRequests()
     if(m_ReaderRank == 0)
     {
         nlohmann::json globalJson;
-        for(size_t i=0; i<m_ReaderSize; ++i)
+        try{
+            for(size_t i=0; i<m_ReaderSize; ++i)
+            {
+                globalJson[i] = nlohmann::json::parse(globalVec.begin()+i*maxLocalSize, globalVec.begin()+(i+1)*maxLocalSize);
+            }
+        }
+        catch(...)
         {
-            globalJson[i] = nlohmann::json::parse(globalVec.begin()+i*maxLocalSize, globalVec.begin()+(i+1)*maxLocalSize);
+            throw(std::runtime_error("reader received corrupted aggregated read pattern"));
         }
         globalStr = globalJson.dump();
     }
+
 
     size_t globalSizeSrc = globalStr.size();
     size_t globalSizeDst = 0;

@@ -84,6 +84,16 @@ void SscWriter::SyncRank()
     }
     MPI_Allreduce(&readerMasterWorldRank, &m_ReaderMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     MPI_Allreduce(&writerMasterWorldRank, &m_WriterMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+
+    if(m_WorldSize == m_WriterSize)
+    {
+        throw(std::runtime_error("no readers are found"));
+    }
+
+    if(m_Verbosity >=5)
+    {
+        std::cout << "SscWriter::SyncRank, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+    }
 }
 
 void SscWriter::SyncMetadata()
@@ -136,9 +146,15 @@ void SscWriter::SyncMetadata()
     if(m_WriterRank ==0)
     {
         nlohmann::json globalJson;
-        for(size_t i=0; i<m_WriterSize; ++i)
+        try{
+            for(size_t i=0; i<m_WriterSize; ++i)
+            {
+                globalJson[i] = nlohmann::json::parse(globalVec.begin()+i*maxLocalSize, globalVec.begin()+(i+1)*maxLocalSize);
+            }
+        }
+        catch(...)
         {
-            globalJson[i] = nlohmann::json::parse(globalVec.begin()+i*maxLocalSize, globalVec.begin()+(i+1)*maxLocalSize);
+            throw(std::runtime_error("writer received corrupted aggregated metadata"));
         }
         // TODO: Add attributes
         globalStr = globalJson.dump();
@@ -177,16 +193,23 @@ void SscWriter::SyncRequests()
     size_t globalSizeDst = 0;
     MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
 
-    std::vector<char> globalRequestCharVec(globalSizeDst);
+    std::vector<char> globalVec(globalSizeDst);
 
     MPI_Win win;
-    MPI_Win_create(globalRequestCharVec.data(), globalRequestCharVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     MPI_Win_fence(0, win);
-    MPI_Get(globalRequestCharVec.data(), globalRequestCharVec.size(), MPI_CHAR, m_ReaderMasterWorldRank,0,globalRequestCharVec.size(), MPI_CHAR, win);
+    MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR, m_ReaderMasterWorldRank,0,globalVec.size(), MPI_CHAR, win);
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
-    auto j = nlohmann::json::parse(globalRequestCharVec);
+    nlohmann::json j;
+    try{
+        j = nlohmann::json::parse(globalVec);
+    }
+    catch(...)
+    {
+        throw(std::runtime_error("writer received corrupted read pattern"));
+    }
 
     if(m_Verbosity >=5)
     {
