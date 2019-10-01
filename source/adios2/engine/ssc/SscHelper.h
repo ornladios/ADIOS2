@@ -38,6 +38,13 @@ namespace ssc
     void PrintVarMap(const VarMap& vm, const std::string &label = std::string());
     void PrintVarMapVec(const VarMapVec& vmv, const std::string &label = std::string());
 
+    size_t GetTypeSize(const std::string &type);
+
+    size_t TotalDataSize(const VarMap &vm);
+    size_t TotalDataSize(const VarMapVec &vmv);
+
+    Dims BufferPointers(const VarMapVec &vmv);
+
 } // end namespace ssc
 } // end namespace engine
 } // end namespace core
