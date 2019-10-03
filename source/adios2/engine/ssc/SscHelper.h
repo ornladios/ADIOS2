@@ -28,8 +28,11 @@ namespace ssc
         Dims shape;
         Dims start;
         Dims count;
+        Dims overlapStart;
+        Dims overlapCount;
         std::string type;
-        size_t index;
+        size_t id;
+        size_t position;
     };
     using VarMap = std::map<std::string, VarInfo>;
     using VarMapVec = std::vector<VarMap>;
@@ -43,7 +46,10 @@ namespace ssc
     size_t TotalDataSize(const VarMap &vm);
     size_t TotalDataSize(const VarMapVec &vmv);
 
-    Dims BufferPointers(const VarMapVec &vmv);
+    size_t TotalOverlapSize(const VarMap &vm);
+    size_t TotalOverlapSize(const VarMapVec &vmv);
+
+    void CalculateOverlap(VarMapVec &mapVec, VarMap &singleMap);
 
 } // end namespace ssc
 } // end namespace engine

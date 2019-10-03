@@ -143,7 +143,7 @@ void SscWriter::SyncWritePattern()
         mref.shape = shape;
         mref.start = start;
         mref.count = count;
-        mref.index = varIndex;
+        mref.id = varIndex;
 
         ++varIndex;
     }
@@ -243,7 +243,7 @@ void SscWriter::SyncReadPattern()
             v.type = it.value()["T"].get<std::string>();
             v.start = it.value()["O"].get<Dims>();
             v.count = it.value()["C"].get<Dims>();
-            v.index = varIndex;
+            v.id = varIndex;
             ++varIndex;
         }
         ++rank;

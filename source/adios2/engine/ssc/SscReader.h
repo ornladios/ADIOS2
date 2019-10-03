@@ -43,6 +43,8 @@ private:
     ssc::VarMapVec m_GlobalWritePatternMap;
     ssc::VarMap m_LocalReadPatternMap;
 
+    std::vector<char> m_Buffer;
+
     int m_WorldRank;
     int m_WorldSize;
     int m_ReaderRank;

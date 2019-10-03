@@ -72,7 +72,7 @@ private:
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
-    int m_Verbosity = 10;
+    int m_Verbosity = 0;
 };
 
 } // end namespace engine

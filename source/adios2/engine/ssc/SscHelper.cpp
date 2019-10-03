@@ -56,21 +56,83 @@ namespace ssc
         size_t s = 0;
         for(const auto &v : vm)
         {
-            s += std::accumulate(v.second.count.begin(), v.second.count.end(), GetTypeSize(v.second.type), std::multiplies<size_t>());
+            if(not v.second.count.empty())
+            {
+                s += std::accumulate(v.second.count.begin(), v.second.count.end(), GetTypeSize(v.second.type), std::multiplies<size_t>());
+            }
         }
         return s;
     }
 
-    Dims BufferPointers(const VarMapVec &vmv)
+    size_t TotalOverlapSize(const VarMapVec &vmv)
     {
-        Dims pointers;
         size_t s = 0;
         for(const auto &vm : vmv)
         {
-            pointers.push_back(s);
-            s += TotalDataSize(vm);
+            s += TotalOverlapSize(vm);
         }
-        return pointers;
+        return s;
+    }
+
+    size_t TotalOverlapSize(const VarMap &vm)
+    {
+        size_t s = 0;
+        for(const auto &v : vm)
+        {
+            if(not v.second.overlapCount.empty())
+            {
+                s += std::accumulate(v.second.overlapCount.begin(), v.second.overlapCount.end(), GetTypeSize(v.second.type), std::multiplies<size_t>());
+            }
+        }
+        return s;
+    }
+
+    void CalculateOverlap(VarMapVec &mapVec, VarMap &singleMap)
+    {
+        for(auto &rankMap : mapVec)
+        {
+            for(auto &varPair : rankMap)
+            {
+                auto &ref1 = varPair.second;
+                auto &ref2 = singleMap[varPair.first];
+
+                if (ref1.start.size() != ref1.count.size() || ref2.start.size() != ref2.count.size() || ref1.start.size() != ref2.start.size())
+                {
+                    continue;
+                }
+
+                ref1.overlapStart.resize(ref1.start.size());
+                ref1.overlapCount.resize(ref1.count.size());
+
+                for (size_t i = 0; i < ref1.start.size(); ++i)
+                {
+                    if (ref1.start[i] + ref1.count[i] < ref2.start[i] or ref2.start[i] + ref2.count[i] < ref1.start[i])
+                    {
+                        ref1.overlapStart.clear();
+                        ref1.overlapCount.clear();
+                        break;
+                    }
+
+                    if (ref1.start[i] < ref2.start[i])
+                    {
+                        ref1.overlapStart[i] = ref2.start[i];
+                    }
+                    else
+                    {
+                        ref1.overlapStart[i] = ref1.start[i];
+                    }
+
+                    if (ref1.start[i] + ref1.count[i] < ref2.start[i] + ref2.count[i])
+                    {
+                        ref1.overlapCount[i] = ref1.start[i] + ref1.count[i] - ref1.overlapStart[i];
+                    }
+                    else
+                    {
+                        ref1.overlapCount[i] = ref2.start[i] + ref2.count[i] - ref1.overlapStart[i];
+                    }
+                }
+            }
+        }
     }
 
     void PrintDims(const Dims &dims, const std::string &label)
@@ -90,10 +152,12 @@ namespace ssc
         {
             std::cout << i.first << std::endl;
             std::cout << "    Type : " << i.second.type << std::endl;
-            std::cout << "    Index : " << i.second.index << std::endl;
+            std::cout << "    ID : " << i.second.id << std::endl;
             PrintDims(i.second.shape, "    Shape : ");
             PrintDims(i.second.start, "    Start : ");
             PrintDims(i.second.count, "    Count : ");
+            PrintDims(i.second.overlapStart, "    Overlap Start : ");
+            PrintDims(i.second.overlapCount, "    Overlap Count : ");
         }
     }
 
@@ -108,10 +172,12 @@ namespace ssc
             {
                 std::cout << "    " << i.first << std::endl;
                 std::cout << "        Type : " << i.second.type << std::endl;
-                std::cout << "        Index : " << i.second.index << std::endl;
+                std::cout << "        ID : " << i.second.id << std::endl;
                 PrintDims(i.second.shape, "        Shape : ");
                 PrintDims(i.second.start, "        Start : ");
                 PrintDims(i.second.count, "        Count : ");
+                PrintDims(i.second.overlapStart, "        Overlap Start : ");
+                PrintDims(i.second.overlapCount, "        Overlap Count : ");
             }
             ++rank;
         }

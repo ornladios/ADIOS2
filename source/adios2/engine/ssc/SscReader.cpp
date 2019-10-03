@@ -137,7 +137,7 @@ void SscReader::SyncWritePattern()
     int rank = 0;
     for(auto &rankj : j)
     {
-        int varIndex = 0;
+        int varId = 0;
         for(auto itVar = rankj.begin(); itVar != rankj.end(); ++itVar)
         {
             std::string type = itVar.value()["T"].get<std::string>();
@@ -152,7 +152,7 @@ void SscReader::SyncWritePattern()
                 mapRef.start = start;
                 mapRef.count = count;
                 mapRef.type = type;
-                mapRef.index = varIndex;
+                mapRef.id = varId;
 
                 if(rank == 0)
                 {
@@ -166,7 +166,7 @@ void SscReader::SyncWritePattern()
                         m_IO.DefineVariable<T>(itVar.key(), shape, start, shape);\
                         auto &mref = m_LocalReadPatternMap[itVar.key()];\
                         mref.type = type;\
-                        mref.index = varIndex;\
+                        mref.id = varId;\
                     }
                     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -179,7 +179,7 @@ void SscReader::SyncWritePattern()
             {
                 // TODO: Parse attributes
             }
-            ++varIndex;
+            ++varId;
         }
         ++rank;
     }
@@ -248,7 +248,6 @@ void SscReader::SyncReadPattern()
         globalStr = globalJson.dump();
     }
 
-
     size_t globalSizeSrc = globalStr.size();
     size_t globalSizeDst = 0;
     MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
@@ -272,6 +271,13 @@ void SscReader::SyncReadPattern()
     MPI_Win_fence(0, win);
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
+
+    ssc::CalculateOverlap(m_GlobalWritePatternMap, m_LocalReadPatternMap);
+
+    ssc::PrintVarMapVec(m_GlobalWritePatternMap);
+    ssc::PrintVarMap(m_LocalReadPatternMap);
+
+    m_Buffer.resize(ssc::TotalDataSize(m_LocalReadPatternMap));
 }
 
 #define declare_type(T)                                                        \
