@@ -69,9 +69,9 @@ if(ADIOS2_HAVE_SST)
     find_package(ffs REQUIRED)
 
     if(NOT ADIOS2_USE_EXTERNAL_ENET)
-      add_subdirectory(enet)
+      add_subdirectory(zpl-enet)
     endif()
-    find_package(enet REQUIRED)
+    find_package(zpl-enet REQUIRED)
 
     add_subdirectory(EVPath)
   endif()
