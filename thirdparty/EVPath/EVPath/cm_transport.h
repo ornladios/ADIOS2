@@ -65,17 +65,6 @@ typedef CMbuffer (*CMTransport_create_data_buffer)(CManager cm, void *buffer, in
 typedef int (*CMTransport_modify_global_lock)(CManager cm, const char *file, int line);
 typedef void (*CMTransport_add_buffer_to_pending_queue)(CManager cm, CMConnection conn, CMbuffer buf, long length);
 typedef void (*CMTransport_cond_wait_CM_lock)(CManager cm, void *cond, char *file, int line);
-typedef void (*CMRemoveSelectFunc)(void *svcs, void *select_data, int fd);
-typedef struct _periodic_task *periodic_task_handle;
-
-typedef periodic_task_handle (*CMAddPeriodicFunc) 
-   (void *svcs, void *select_data, int period_sec, int period_usec,
-	  select_list_func func, void *param1, void *param2);
-
-typedef void (*CMRemovePeriodicFunc)(void *svcs, void *select_data, 
-					   periodic_task_handle handle);
-
-typedef void (*CMWakeSelectFunc)(void *svcs, void *select_data);
 
 typedef struct CMtrans_services_s {
     CMTransport_malloc_func malloc_func;
@@ -169,7 +158,6 @@ typedef int (*CMTransport_install_pull_schedule)(CMtrans_services svc,
 
 typedef void (*DataAvailableCallback)(transport_entry trans, CMConnection conn);
 typedef void (*WritePossibleCallback)(transport_entry trans, CMConnection conn);
-typedef void (*SelectInitFunc)(CMtrans_services svc, CManager cm, void *client_data);
 
 struct _transport_item {
     char *trans_name;
@@ -194,24 +182,12 @@ struct _transport_item {
     CMTransport_install_pull_schedule install_pull_schedule_func;
 };
 
-struct _select_item {
-    CMAddSelectFunc add_select;
-    CMRemoveSelectFunc remove_select;
-    CMAddSelectFunc write_select;
-    CMAddPeriodicFunc add_periodic;
-    CMAddPeriodicFunc add_delayed_task;
-    CMRemovePeriodicFunc remove_periodic;
-    CMWakeSelectFunc wake_function;
-    CMPollFunc blocking_function;
-    CMPollFunc polling_function;
-    SelectInitFunc initialize;
-    SelectInitFunc shutdown;
-    SelectInitFunc free;
-    CMWakeSelectFunc stop;
-};
-
 extern void
 get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int *port_range_high_p, 
+	      int *use_hostname_p, attr_list attrs, CMTransport_trace trace_func, void *trace_data);
+
+extern void
+get_IPv6_config(char *hostname_buf, int len, int* IP_p, char *IPv6_p, int *port_range_low_p, int *port_range_high_p, 
 	      int *use_hostname_p, attr_list attrs, CMTransport_trace trace_func, void *trace_data);
 
 extern char *

@@ -49,6 +49,136 @@ static int ipv4_is_loopback(int addr)
 static void dump_output(int length_estimate, char *format, ...);
 
 static int
+get_self_ipv6_iface(struct in6_addr *addr_buf, CMTransport_trace trace_func, void* trace_data, char *interface)
+{
+    struct hostent *host = NULL;
+    char hostname_buf[256];
+    char **p;
+#ifdef HAVE_GETIFADDRS
+  struct ifaddrs *if_addrs = NULL;
+  struct ifaddrs *if_addr = NULL;
+  void *tmp = NULL;
+  char buf[INET6_ADDRSTRLEN];
+#endif
+#ifdef SIOCGIFCONF
+    char *ifreqs;
+    struct ifreq *ifr;
+    struct sockaddr_in *sai;
+    struct ifconf ifaces;
+    int ifrn;
+    int ss;
+    int ipv4_count = 0;
+    int ipv6_count = 0;
+    static int first_call = 1;
+    static struct in6_addr saved_return;
+#endif
+    int rv = 0;
+    if (!first_call && !interface) {
+	memcpy(addr_buf, &saved_return, sizeof(struct in6_addr));
+	return 1;
+    }
+#ifdef HAVE_GETIFADDRS
+    if (getifaddrs(&if_addrs) == 0) {    
+	// Print possible addresses
+	for (if_addr = if_addrs; if_addr != NULL; if_addr = if_addr->ifa_next) {
+	    int family;
+	    if (!if_addr->ifa_addr) continue;
+	    family = if_addr->ifa_addr->sa_family;
+	    if ((family != AF_INET) && (family != AF_INET6)) continue;
+	    if (if_addr->ifa_addr->sa_family == AF_INET) {
+	        tmp = &((struct sockaddr_in *)if_addr->ifa_addr)->sin_addr;
+		ipv4_count++;
+	    } else {
+	        tmp = &((struct sockaddr_in6 *)if_addr->ifa_addr)->sin6_addr;
+		ipv6_count++;
+	    }
+	    trace_func(trace_data, "CM<IP_CONFIG> IP possibility -> %s : %s",
+		       if_addr->ifa_name,
+		       inet_ntop(family, tmp, buf, sizeof(buf)));
+	    if ((family == AF_INET) && first_call) {
+//		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG Possible interface %s : IPV4 %s\n",
+//			    if_addr->ifa_name,
+//			    inet_ntop(family, tmp, buf, sizeof(buf)));
+	    } else {
+		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG Possible interface %s : IPV6 %s\n",
+			    if_addr->ifa_name,
+			    inet_ntop(family, tmp, buf, sizeof(buf)));
+	    }
+	}
+	if (!interface) interface = getenv(IPCONFIG_ENVVAR_PREFIX "INTERFACE");
+	if (interface != NULL) {
+	    trace_func(trace_data, "CM<IP_CONFIG> searching for interface %s\n", interface);
+	    if (first_call) dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG interface %s requested\n", interface);
+	    for (if_addr = if_addrs; if_addr != NULL; if_addr = if_addr->ifa_next) {
+	        int family;
+		uint32_t IP;
+	        if (!if_addr->ifa_addr) continue;
+		family = if_addr->ifa_addr->sa_family;
+		if (family != AF_INET6) continue;  /* currently looking for ipv6 */
+		if (strncmp(if_addr->ifa_name, interface, strlen(interface)) != 0) continue;
+		tmp = &((struct sockaddr_in6 *)if_addr->ifa_addr)->sin6_addr;
+		trace_func(trace_data, "CM<IP_CONFIG> Interface specified, returning ->%s : %s",
+			   if_addr->ifa_name,
+			   inet_ntop(family, tmp, buf, sizeof(buf)));
+		if (first_call)
+		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG interface %s found, using IP %s\n", interface,
+			   inet_ntop(family, tmp, buf, sizeof(buf)));
+		memcpy(addr_buf, tmp, sizeof(struct in6_addr));
+		memcpy(&saved_return, tmp, sizeof(struct in6_addr));
+		free(if_addrs);
+		first_call = 0;
+		return IP;
+	    }
+	    printf("Warning!  " IPCONFIG_ENVVAR_PREFIX "INTERFACE specified as \"%s\", but no active interface by that name found\n", interface);
+	}
+	    
+	first_call = 0;
+	gethostname(hostname_buf, sizeof(hostname_buf));
+	if (index(hostname_buf, '.') != NULL) {
+	    /* don't even check for host if not fully qualified */
+	    host = gethostbyname2(hostname_buf, AF_INET6);
+	}
+	if (host != NULL) {
+	    for (p = host->h_addr_list; *p != 0; p++) {
+		struct in6_addr *in = *(struct in6_addr **) p;
+		if (!IN6_IS_ADDR_LOOPBACK(in)) {
+		    char str[INET_ADDRSTRLEN];
+					      
+		    inet_ntop(AF_INET, &in, str, sizeof(str));
+		    trace_func(trace_data, "CM<IP_CONFIG> Prefer IP associated with hostname net -> %s", str);
+		    memcpy(addr_buf, in, sizeof(struct in6_addr));
+		    memcpy(&saved_return, tmp, sizeof(struct in6_addr));
+		    free(if_addrs);
+		    return 1;
+		}
+	    }
+	}
+	/* choose the first thing that's not a loopback interface */
+	for (if_addr = if_addrs; if_addr != NULL; if_addr = if_addr->ifa_next) {
+	    int family;
+	    uint32_t ret_ip;
+	    if (!if_addr->ifa_addr) continue;
+	    family = if_addr->ifa_addr->sa_family;
+	    if (family != AF_INET6) continue;  /* currently looking for ipv6 */
+	    if ((if_addr->ifa_flags & IFF_LOOPBACK) != 0)  continue;
+	    tmp = &((struct sockaddr_in6 *)if_addr->ifa_addr)->sin6_addr;
+	    if (IN6_IS_ADDR_LOOPBACK((struct in6_addr *)tmp)) continue;
+	    if (IN6_IS_ADDR_SITELOCAL((struct in6_addr *)tmp)) continue;
+	    if (IN6_IS_ADDR_LINKLOCAL((struct in6_addr *)tmp)) continue;
+	    trace_func(trace_data, "CM<IP_CONFIG> get_self_ipv6_addr returning first avail -> %s : %s",
+			       if_addr->ifa_name,
+			       inet_ntop(family, tmp, buf, sizeof(buf)));
+	    memcpy(addr_buf, tmp, sizeof(struct in6_addr));
+	    memcpy(&saved_return, tmp, sizeof(struct in6_addr));
+	    free(if_addrs);
+	    return 1;
+	}
+    }
+#endif	
+    return 0;
+}
+
+static int
 get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interface)
 {
     struct hostent *host = NULL;
@@ -268,6 +398,12 @@ get_self_ip_addr(CMTransport_trace trace_func, void* trace_data)
 }
 
 static int
+get_self_ipv6_addr(struct in6_addr *addr_buf, CMTransport_trace trace_func, void* trace_data)
+{
+    return get_self_ipv6_iface(addr_buf, trace_func, trace_data, NULL);
+}
+
+static int
 is_private_IP(int IP)
 {
     if ((IP & 0xffff0000) == 0xC0A80000) return 1;	/* equal 192.168.x.x */
@@ -476,12 +612,14 @@ dump_output(int length_estimate, char *format, ...)
 #define HOST_NAME_MAX 255
 #endif
 extern void
-get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int *port_range_high_p, 
+get_IPv6_config(char *hostname_buf, int len, int* IP_p, char *IPv6_buf, int *port_range_low_p, int *port_range_high_p, 
 	      int *use_hostname_p, attr_list attrs, CMTransport_trace trace_func, void *trace_data)
 {
     static int first_call = 1;
     static char determined_hostname[HOST_NAME_MAX+1];
     static int determined_IP = -1;
+    static int IPv6_determined = 0;
+    static struct in6_addr determined_IPv6;
     static int port_range_low = 26000, port_range_high = 26100;
     static int use_hostname = 0;
     char hostname_to_use[HOST_NAME_MAX+1];
@@ -549,6 +687,19 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	    inet_ntop(AF_INET, &(addr.s_addr), str, sizeof(str));
 	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG best guess IP is \"%s\"\n", str);
 	}
+	if (IPv6_determined == 0) {
+	    /* I.E. the specified hostname didn't determine what IP we should use */
+	    char str[INET6_ADDRSTRLEN];
+	    struct in6_addr addr;
+	    get_self_ipv6_addr(&addr, trace_func, trace_data);
+					      
+	    inet_ntop(AF_INET, &addr, str, sizeof(str));
+	    if (IPv6_buf) {
+		memcpy(IPv6_buf, &addr, sizeof(struct in6_addr));
+	    }
+	    memcpy(&determined_IPv6, &addr, sizeof(struct in6_addr));
+	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG best guess IP is \"%s\"\n", str);
+	}
 	if (port_range != NULL) {
 	    if (sscanf(port_range, "%d:%d", &port_range_high, &port_range_low) != 2) {
 		printf(IPCONFIG_ENVVAR_PREFIX "PORT_RANGE spec not understood \"%s\"\n", port_range);
@@ -587,6 +738,9 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
     if (port_range_high_p) {
 	*port_range_high_p = port_range_high;
     }
+    if (IPv6_buf) {
+	memcpy(IPv6_buf, &determined_IPv6, sizeof(struct in6_addr));
+    }
     if (use_hostname_p) {
 	*use_hostname_p = use_hostname;
     }
@@ -596,4 +750,11 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	trace_func(trace_data, "CM<IP_CONFIG> returning hostname \"%s\", IP %s, use_hostname = %d, port range %d:%d",
 		   hostname_to_use, inet_ntop(AF_INET, &net_byte_order, &buf[0], 256), use_hostname, port_range_low, port_range_high);
     }
+}
+
+extern void
+get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int *port_range_high_p, 
+	      int *use_hostname_p, attr_list attrs, CMTransport_trace trace_func, void *trace_data)
+{
+    get_IPv6_config(hostname_buf, len, IP_p, NULL, port_range_low_p, port_range_high_p, use_hostname_p, attrs, trace_func, trace_data);
 }
