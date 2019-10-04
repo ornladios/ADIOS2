@@ -11,7 +11,6 @@
 #include "HDF5ReaderP.h"
 #include "HDF5ReaderP.tcc"
 
-#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 #include <vector>
@@ -62,7 +61,7 @@ void HDF5ReaderP::Init()
             ", in call to Open\n");
     }
 
-    m_H5File.Init(m_Name, CommAsMPI(m_Comm), false);
+    m_H5File.Init(m_Name, m_Comm, false);
     m_H5File.ParseParameters(m_IO);
 
     /*

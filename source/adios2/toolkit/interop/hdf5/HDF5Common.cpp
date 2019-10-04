@@ -17,9 +17,12 @@
 #include <stdexcept>
 #include <vector>
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" // IsRowMajor
 #include <cstring>                        // strlen
+
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/helper/adiosCommMPI.h"
+#endif
 
 namespace adios2
 {
@@ -112,17 +115,27 @@ void HDF5Common::ParseParameters(core::IO &io)
     }
 }
 
-void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
+void HDF5Common::Init(const std::string &name, helper::Comm const &comm,
+                      bool toWrite)
 {
     m_WriteMode = toWrite;
     m_PropertyListId = H5Pcreate(H5P_FILE_ACCESS);
 
 #ifdef ADIOS2_HAVE_MPI
-    SMPI_Comm_rank(comm, &m_CommRank);
-    SMPI_Comm_size(comm, &m_CommSize);
-    if (m_CommSize != 1)
+    MPI_Comm mpiComm = helper::CommAsMPI(comm);
+    if (mpiComm != MPI_COMM_NULL)
     {
-        H5Pset_fapl_mpio(m_PropertyListId, comm, MPI_INFO_NULL);
+        MPI_Comm_rank(mpiComm, &m_CommRank);
+        MPI_Comm_size(mpiComm, &m_CommSize);
+        if (m_CommSize != 1)
+        {
+            H5Pset_fapl_mpio(m_PropertyListId, mpiComm, MPI_INFO_NULL);
+        }
+    }
+    else
+    {
+        m_CommRank = 0;
+        m_CommSize = 1;
     }
 #endif
 

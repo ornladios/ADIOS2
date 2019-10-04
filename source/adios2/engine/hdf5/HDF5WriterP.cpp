@@ -10,7 +10,6 @@
 
 #include "HDF5WriterP.h"
 
-#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 namespace adios2
@@ -58,7 +57,7 @@ void HDF5WriterP::Init()
     }
 
 #ifdef NEVER
-    m_H5File.Init(m_Name, CommAsMPI(m_Comm), true);
+    m_H5File.Init(m_Name, m_Comm, true);
 #else
     // enforce .h5 ending
     std::string suffix = ".h5";
@@ -71,11 +70,11 @@ void HDF5WriterP::Init()
     {
         // is a file with .bp ending
         std::string updatedName = m_Name.substr(0, wpos) + suffix;
-        m_H5File.Init(updatedName, CommAsMPI(m_Comm), true);
+        m_H5File.Init(updatedName, m_Comm, true);
     }
     else
     {
-        m_H5File.Init(m_Name, CommAsMPI(m_Comm), true);
+        m_H5File.Init(m_Name, m_Comm, true);
     }
     m_H5File.ParseParameters(m_IO);
 #endif
