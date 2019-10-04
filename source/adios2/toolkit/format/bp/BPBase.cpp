@@ -132,7 +132,7 @@ void BPBase::Init(const Params &parameters, const std::string hint)
                     value, m_DebugMode,
                     " in Parameter key=StatsLevel " + hint));
             if (m_DebugMode &&
-                (m_Parameters.StatsLevel < 0 || m_Parameters.StatsLevel > 5))
+                m_Parameters.StatsLevel > 5)
             {
                 throw std::invalid_argument(
                     "ERROR: value for Parameter key=StatsLevel must be "
