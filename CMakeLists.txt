@@ -284,7 +284,7 @@ message("    Examples: ${ADIOS2_BUILD_EXAMPLES}")
 message("    Build Options:")
 
 foreach(opt IN LISTS ADIOS2_CONFIG_OPTS)
-  message_pad("      ${opt}" 15 label)
+  message_pad("      ${opt}" 16 label)
   if(${ADIOS2_HAVE_${opt}})
     message("${label}: ON")
   else()
