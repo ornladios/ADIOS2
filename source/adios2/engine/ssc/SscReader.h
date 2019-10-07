@@ -83,7 +83,7 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
-    int m_Verbosity = 10;
+    int m_Verbosity = 0;
 };
 
 } // end namespace engine

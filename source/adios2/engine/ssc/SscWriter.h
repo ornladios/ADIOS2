@@ -43,6 +43,7 @@ private:
     size_t m_CurrentStep = 0;
     bool m_InitialStep = true;
 
+    ssc::VarMapVec m_GlobalWritePatternMap;
     ssc::VarMapVec m_GlobalReadPatternMap;
     ssc::VarMap m_LocalWritePatternMap;
 

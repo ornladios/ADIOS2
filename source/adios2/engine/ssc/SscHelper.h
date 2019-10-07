@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include "adios2/common/ADIOSTypes.h"
+#include "nlohmann/json.hpp"
 
 namespace adios2
 {
@@ -32,7 +33,8 @@ namespace ssc
         Dims overlapCount;
         std::string type;
         size_t id;
-        size_t position;
+        size_t posStart;
+        size_t posCount;
     };
     using VarMap = std::map<std::string, VarInfo>;
     using VarMapVec = std::vector<VarMap>;
@@ -50,6 +52,12 @@ namespace ssc
     size_t TotalOverlapSize(const VarMapVec &vmv);
 
     void CalculateOverlap(VarMapVec &mapVec, VarMap &singleMap);
+    void CalculatePosition(VarMapVec &mapVec);
+    void CalculatePosition(VarMapVec &writerMapVec, VarMapVec &readerMapVec, const int writerRank);
+
+    VarMapVec JsonToVarMapVec(const nlohmann::json &input, const int size);
+    VarMapVec JsonToVarMapVec(const std::vector<char> &input, const int size);
+    VarMapVec JsonToVarMapVec(const std::string &input, const int size);
 
 } // end namespace ssc
 } // end namespace engine

@@ -192,8 +192,14 @@ void SscWriter::SyncWritePattern()
     MPI_Win win;
     MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     MPI_Win_fence(0, win);
+    if(m_WorldRank > 0)
+    {
+        MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR, 0,0,globalVec.size(), MPI_CHAR, win);
+    }
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
+
+    m_GlobalWritePatternMap = ssc::JsonToVarMapVec(globalVec, m_WriterSize);
 }
 
 void SscWriter::SyncReadPattern()
@@ -217,37 +223,11 @@ void SscWriter::SyncReadPattern()
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
-    nlohmann::json j;
-    try{
-        j = nlohmann::json::parse(globalVec);
-    }
-    catch(...)
-    {
-        throw(std::runtime_error("writer received corrupted read pattern"));
-    }
+    m_GlobalReadPatternMap = ssc::JsonToVarMapVec(globalVec, m_ReaderSize);
 
-    if(m_Verbosity >=5)
-    {
-        std::cout << "SscWriter::SyncReadPattern, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << " obtained reading requests: " << j.dump(4) << std::endl;
-    }
+    ssc::CalculateOverlap(m_GlobalReadPatternMap, m_LocalWritePatternMap);
+    ssc::CalculatePosition(m_GlobalWritePatternMap, m_GlobalReadPatternMap, m_WriterRank);
 
-    m_GlobalReadPatternMap.resize(m_ReaderSize);
-
-    int rank = 0;
-    for(auto &rankj : j)
-    {
-        int varIndex = 0;
-        for(auto it = rankj.begin(); it!=rankj.end(); ++it)
-        {
-            auto &v = m_GlobalReadPatternMap[rank][it.key()];
-            v.type = it.value()["T"].get<std::string>();
-            v.start = it.value()["O"].get<Dims>();
-            v.count = it.value()["C"].get<Dims>();
-            v.id = varIndex;
-            ++varIndex;
-        }
-        ++rank;
-    }
 }
 
 #define declare_type(T)                                                        \

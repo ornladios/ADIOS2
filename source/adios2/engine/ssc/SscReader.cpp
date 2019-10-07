@@ -207,6 +207,7 @@ void SscReader::SyncReadPattern()
             auto v = m_IO.InquireVariable<T>(var.first);\
             var.second.count = v->m_Count;\
             var.second.start = v->m_Start;\
+            var.second.shape = v->m_Shape;\
         }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -218,6 +219,7 @@ void SscReader::SyncReadPattern()
         jref["T"] = var.second.type;
         jref["O"] = var.second.start;
         jref["C"] = var.second.count;
+        jref["S"] = var.second.shape;
     }
 
     std::string localStr = j.dump();
@@ -273,9 +275,7 @@ void SscReader::SyncReadPattern()
     MPI_Win_free(&win);
 
     ssc::CalculateOverlap(m_GlobalWritePatternMap, m_LocalReadPatternMap);
-
-    ssc::PrintVarMapVec(m_GlobalWritePatternMap);
-    ssc::PrintVarMap(m_LocalReadPatternMap);
+    ssc::CalculatePosition(m_GlobalWritePatternMap);
 
     m_Buffer.resize(ssc::TotalDataSize(m_LocalReadPatternMap));
 }
