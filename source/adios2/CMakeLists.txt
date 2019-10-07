@@ -33,6 +33,7 @@ add_library(adios2
 
 #helper
   helper/adiosComm.h  helper/adiosComm.cpp
+  helper/adiosCommDummy.h  helper/adiosCommDummy.cpp
   helper/adiosCommMPI.h  helper/adiosCommMPI.cpp
   helper/adiosDynamicBinder.h  helper/adiosDynamicBinder.cpp
   helper/adiosMath.cpp
