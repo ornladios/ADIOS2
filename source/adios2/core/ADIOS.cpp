@@ -14,7 +14,7 @@
 #include <ios>       //std::ios_base::failure
 
 #include "adios2/core/IO.h"
-#include "adios2/helper/adiosCommMPI.h"
+#include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
 
 // OPERATORS
@@ -57,10 +57,10 @@ namespace adios2
 namespace core
 {
 
-ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
+ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
              const bool debugMode, const std::string hostLanguage)
 : m_ConfigFile(configFile), m_DebugMode(debugMode),
-  m_HostLanguage(hostLanguage), m_Comm(helper::CommFromMPI(mpiComm))
+  m_HostLanguage(hostLanguage), m_Comm(std::move(comm))
 {
     if (!configFile.empty())
     {
@@ -74,18 +74,18 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
 
 ADIOS::ADIOS(const std::string configFile, const bool debugMode,
              const std::string hostLanguage)
-: ADIOS(configFile, MPI_COMM_NULL, debugMode, hostLanguage)
+: ADIOS(configFile, helper::CommDummy(), debugMode, hostLanguage)
 {
 }
 
-ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode,
+ADIOS::ADIOS(helper::Comm comm, const bool debugMode,
              const std::string hostLanguage)
-: ADIOS("", mpiComm, debugMode, hostLanguage)
+: ADIOS("", std::move(comm), debugMode, hostLanguage)
 {
 }
 
 ADIOS::ADIOS(const bool debugMode, const std::string hostLanguage)
-: ADIOS("", MPI_COMM_NULL, debugMode, hostLanguage)
+: ADIOS("", helper::CommDummy(), debugMode, hostLanguage)
 {
 }
 

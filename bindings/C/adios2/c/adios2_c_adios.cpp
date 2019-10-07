@@ -10,9 +10,12 @@
 
 #include "adios2_c_adios.h"
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/helper/adiosFunctions.h"
+
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/helper/adiosCommMPI.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +38,8 @@ adios2_adios *adios2_init_config_glue(const char *config_file, MPI_Comm comm,
         const bool debugBool =
             (debug_mode == adios2_debug_mode_on) ? true : false;
         adios = reinterpret_cast<adios2_adios *>(new adios2::core::ADIOS(
-            config_file, comm, debugBool, host_language));
+            config_file, adios2::helper::CommFromMPI(comm), debugBool,
+            host_language));
     }
     catch (...)
     {

@@ -12,10 +12,13 @@
 
 #include <vector>
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 #include "adios2_c_internal.h"
+
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/helper/adiosCommMPI.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -729,7 +732,8 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
             io, "for adios2_io, in call to adios2_open");
         engine = reinterpret_cast<adios2_engine *>(
             &reinterpret_cast<adios2::core::IO *>(io)->Open(
-                name, adios2_ToOpenMode(mode), comm));
+                name, adios2_ToOpenMode(mode),
+                adios2::helper::CommFromMPI(comm)));
     }
     catch (...)
     {

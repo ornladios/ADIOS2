@@ -11,7 +11,9 @@
 #include "ADIOS2fstream.h"
 #include "ADIOS2fstream.tcc"
 
-#include "adios2/common/ADIOSMPI.h"
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/helper/adiosCommMPI.h"
+#endif
 
 namespace adios2
 {
@@ -19,15 +21,16 @@ namespace adios2
 #ifdef ADIOS2_HAVE_MPI
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string engineType)
-: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, engineType,
-                                          "C++"))
+: m_Stream(std::make_shared<core::Stream>(
+      name, ToMode(mode), helper::CommFromMPI(comm), engineType, "C++"))
 {
 }
 
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string &configFile,
                  const std::string ioInConfigFile)
-: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, configFile,
+: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode),
+                                          helper::CommFromMPI(comm), configFile,
                                           ioInConfigFile, "C++"))
 {
 }
@@ -54,8 +57,8 @@ void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
                    const std::string engineType)
 {
     CheckOpen(name);
-    m_Stream = std::make_shared<core::Stream>(name, ToMode(mode), comm,
-                                              engineType, "C++");
+    m_Stream = std::make_shared<core::Stream>(
+        name, ToMode(mode), helper::CommFromMPI(comm), engineType, "C++");
 }
 
 void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
@@ -64,7 +67,8 @@ void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
 {
     CheckOpen(name);
     m_Stream = std::make_shared<core::Stream>(
-        name, ToMode(mode), comm, configFile, ioInConfigFile, "C++");
+        name, ToMode(mode), helper::CommFromMPI(comm), configFile,
+        ioInConfigFile, "C++");
 }
 #else
 void fstream::open(const std::string &name, const openmode mode,

@@ -24,15 +24,19 @@
 #include <iostream>
 #include <string>
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosComm.h"
-#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosString.h"
+
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/helper/adiosCommMPI.h"
+#else
+#include "adios2/helper/adiosCommDummy.h"
+#endif
 
 // C headers
 #include <cerrno>
@@ -46,10 +50,14 @@ namespace utils
 Reorganize::Reorganize(int argc, char *argv[])
 : Utils("adios_reorganize", argc, argv)
 {
+#ifdef ADIOS2_HAVE_MPI
     {
         auto commWorld = helper::CommFromMPI(MPI_COMM_WORLD);
         m_Comm = commWorld.Split(m_CommSplitColor, 0);
     }
+#else
+    m_Comm = helper::CommDummy();
+#endif
     m_Rank = m_Comm.Rank();
     m_Size = m_Comm.Size();
 
@@ -123,7 +131,7 @@ void Reorganize::Run()
     print0("Write method            = ", wmethodname);
     print0("Write method parameters = ", wmethodparam_str);
 
-    core::ADIOS adios(CommAsMPI(m_Comm), true, "C++");
+    core::ADIOS adios(m_Comm.Duplicate(), true, "C++");
     core::IO &io = adios.DeclareIO("group");
 
     print0("Waiting to open stream ", infilename, "...");
