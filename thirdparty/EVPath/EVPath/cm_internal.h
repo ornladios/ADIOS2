@@ -539,7 +539,7 @@ extern void INT_CMTrace_file_id(int ID);
 #else
 #define TRACE_TIME_DECL	struct timeval tv
 #define TRACE_TIME_GET gettimeofday(&tv, NULL)
-#define TRACE_TIME_PRINTDETAILS "%lld.%.6ld - ", (long long)tv.tv_sec, tv.tv_usec
+#define TRACE_TIME_PRINTDETAILS "%lld.%.6ld - ", (long long)tv.tv_sec, (long)tv.tv_usec
 #endif
 #define CMtrace_out(cm, trace_type, ...) {TRACE_TIME_DECL ; (CMtrace_on(cm,trace_type) ? (CMtrace_PID ? fprintf(cm->CMTrace_file, "P%lxT%lx - ", (long) getpid(), (long)thr_thread_self()) : 0) , CMtrace_timing? TRACE_TIME_GET,fprintf(cm->CMTrace_file, TRACE_TIME_PRINTDETAILS):0, fprintf(cm->CMTrace_file, __VA_ARGS__) : 0);fflush(cm->CMTrace_file);}
 extern void CMdo_performance_response(CMConnection conn, long length, int func,
