@@ -53,6 +53,7 @@ def clean_server_kill(writer):
     
     print("TestDriver:  Waiting for writer after touching file")
     writer.wait()
+    print("TestDriver:  Writer complete")
     os.remove('DieTest')
 
 
