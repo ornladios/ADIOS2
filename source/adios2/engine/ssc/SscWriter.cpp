@@ -107,6 +107,7 @@ void SscWriter::SyncWritePattern()
     nlohmann::json j;
     auto variables = m_IO.GetAvailableVariables();
     size_t varIndex = 0;
+    size_t position = 0;
     for(auto &i : variables)
     {
         std::string type = i.second["Type"];
@@ -144,7 +145,9 @@ void SscWriter::SyncWritePattern()
         mref.start = start;
         mref.count = count;
         mref.id = varIndex;
-
+        mref.posStart = position;
+        mref.posCount = ssc::TotalDataSize(count, type);
+        position += mref.posCount;
         ++varIndex;
     }
     std::string localStr = j.dump();
@@ -200,11 +203,12 @@ void SscWriter::SyncWritePattern()
     MPI_Win_free(&win);
 
     m_GlobalWritePatternMap = ssc::JsonToVarMapVec(globalVec, m_WriterSize);
+
+    m_Buffer.resize(ssc::TotalDataSize(m_LocalWritePatternMap));
 }
 
 void SscWriter::SyncReadPattern()
 {
-
     if(m_Verbosity >=5)
     {
         std::cout << "SscWriter::SyncReadPattern, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
@@ -227,6 +231,8 @@ void SscWriter::SyncReadPattern()
 
     ssc::CalculateOverlap(m_GlobalReadPatternMap, m_LocalWritePatternMap);
     ssc::CalculatePosition(m_GlobalWritePatternMap, m_GlobalReadPatternMap, m_WriterRank);
+
+    m_AllSendingReaderRanks = ssc::AllOverlapRanks(m_GlobalReadPatternMap);
 
 }
 

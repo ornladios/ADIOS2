@@ -277,7 +277,9 @@ void SscReader::SyncReadPattern()
     ssc::CalculateOverlap(m_GlobalWritePatternMap, m_LocalReadPatternMap);
     ssc::CalculatePosition(m_GlobalWritePatternMap);
 
-    m_Buffer.resize(ssc::TotalDataSize(m_LocalReadPatternMap));
+    m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePatternMap);
+
+    m_Buffer.resize(ssc::TotalDataSize(m_GlobalWritePatternMap, m_AllReceivingWriterRanks));
 }
 
 #define declare_type(T)                                                        \

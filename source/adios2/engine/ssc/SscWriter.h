@@ -27,13 +27,10 @@ class SscWriter : public Engine
 {
 
 public:
-    SscWriter(IO &adios, const std::string &name, const Mode mode,
-              helper::Comm comm);
+    SscWriter(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
     ~SscWriter() = default;
 
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep( StepMode mode, const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
@@ -46,6 +43,9 @@ private:
     ssc::VarMapVec m_GlobalWritePatternMap;
     ssc::VarMapVec m_GlobalReadPatternMap;
     ssc::VarMap m_LocalWritePatternMap;
+
+    std::vector<int> m_AllSendingReaderRanks;
+    std::vector<char> m_Buffer;
 
     int m_WorldRank;
     int m_WorldSize;

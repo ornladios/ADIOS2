@@ -25,12 +25,23 @@ template <class T>
 void SscWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
+    variable.SetData(data);
+    auto saved = m_LocalWritePatternMap[variable.m_Name];
+    if(ssc::AreSameDims(variable.m_Start, saved.start) and ssc::AreSameDims(variable.m_Count, saved.count) and ssc::AreSameDims(variable.m_Shape, saved.shape))
+    {
+        std::memcpy(m_Buffer.data() + saved.posStart, data, saved.posCount);
+    }
+    else
+    {
+        throw std::runtime_error("ssc only accepts fixed IO pattern");
+    }
 }
 
 template <class T>
 void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
+    PutSyncCommon(variable, data);
 }
 
 } // end namespace engine

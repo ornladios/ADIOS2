@@ -41,6 +41,24 @@ namespace ssc
         }
     }
 
+    size_t TotalDataSize(const Dims &dims, const std::string &type)
+    {
+        return std::accumulate(dims.begin(), dims.end(), GetTypeSize(type), std::multiplies<size_t>());
+    }
+
+    size_t TotalDataSize(const VarMap &vm)
+    {
+        size_t s = 0;
+        for(const auto &v : vm)
+        {
+            if(not v.second.count.empty())
+            {
+                s += TotalDataSize(v.second.count, v.second.type);
+            }
+        }
+        return s;
+    }
+
     size_t TotalDataSize(const VarMapVec &vmv)
     {
         size_t s = 0;
@@ -51,15 +69,12 @@ namespace ssc
         return s;
     }
 
-    size_t TotalDataSize(const VarMap &vm)
+    size_t TotalDataSize(const VarMapVec &vmv, const std::vector<int> &ranks)
     {
         size_t s = 0;
-        for(const auto &v : vm)
+        for(const auto i : ranks)
         {
-            if(not v.second.count.empty())
-            {
-                s += std::accumulate(v.second.count.begin(), v.second.count.end(), GetTypeSize(v.second.type), std::multiplies<size_t>());
-            }
+            s += TotalDataSize(vmv[i]);
         }
         return s;
     }
@@ -128,6 +143,29 @@ namespace ssc
                 }
             }
         }
+    }
+
+    std::vector<int> AllOverlapRanks(const VarMapVec &mapVec)
+    {
+        std::vector<int> ret;
+        int rank = 0;
+        for(auto &rankMap : mapVec)
+        {
+            bool hasOverlap = false;
+            for(auto &varPair : rankMap)
+            {
+                if(not varPair.second.overlapCount.empty())
+                {
+                    hasOverlap = true;
+                }
+            }
+            if(hasOverlap)
+            {
+                ret.push_back(rank);
+            }
+            ++rank;
+        }
+        return ret;
     }
 
     void CalculatePosition(VarMapVec &mapVec)
@@ -215,6 +253,22 @@ namespace ssc
         return JsonToVarMapVec(j, size);
     }
 
+    bool AreSameDims(const Dims &a, const Dims &b)
+    {
+        if(a.size() != b.size())
+        {
+            return false;
+        }
+        for(size_t i = 0; i<a.size(); ++i)
+        {
+            if(a[i] != b[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
     void PrintDims(const Dims &dims, const std::string &label)
     {
         std::cout << label;
@@ -238,6 +292,8 @@ namespace ssc
             PrintDims(i.second.count, "    Count : ");
             PrintDims(i.second.overlapStart, "    Overlap Start : ");
             PrintDims(i.second.overlapCount, "    Overlap Count : ");
+            std::cout << "    Position Start : " << i.second.posStart << std::endl;
+            std::cout << "    Position Count : " << i.second.posCount << std::endl;
         }
     }
 

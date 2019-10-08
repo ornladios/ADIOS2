@@ -45,8 +45,10 @@ namespace ssc
 
     size_t GetTypeSize(const std::string &type);
 
+    size_t TotalDataSize(const Dims &dims, const std::string &type);
     size_t TotalDataSize(const VarMap &vm);
     size_t TotalDataSize(const VarMapVec &vmv);
+    size_t TotalDataSize(const VarMapVec &vmv, const std::vector<int> &ranks);
 
     size_t TotalOverlapSize(const VarMap &vm);
     size_t TotalOverlapSize(const VarMapVec &vmv);
@@ -55,9 +57,13 @@ namespace ssc
     void CalculatePosition(VarMapVec &mapVec);
     void CalculatePosition(VarMapVec &writerMapVec, VarMapVec &readerMapVec, const int writerRank);
 
+    std::vector<int> AllOverlapRanks(const VarMapVec &mapVec);
+
     VarMapVec JsonToVarMapVec(const nlohmann::json &input, const int size);
     VarMapVec JsonToVarMapVec(const std::vector<char> &input, const int size);
     VarMapVec JsonToVarMapVec(const std::string &input, const int size);
+
+    bool AreSameDims(const Dims &a, const Dims &b);
 
 } // end namespace ssc
 } // end namespace engine
