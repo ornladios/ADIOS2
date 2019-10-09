@@ -104,7 +104,6 @@ get_self_ipv6_iface(struct in6_addr *addr_buf, CMTransport_trace trace_func, voi
 	    if (first_call) dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG interface %s requested\n", interface);
 	    for (if_addr = if_addrs; if_addr != NULL; if_addr = if_addr->ifa_next) {
 	        int family;
-		uint32_t IP;
 	        if (!if_addr->ifa_addr) continue;
 		family = if_addr->ifa_addr->sa_family;
 		if (family != AF_INET6) continue;  /* currently looking for ipv6 */
@@ -120,7 +119,7 @@ get_self_ipv6_iface(struct in6_addr *addr_buf, CMTransport_trace trace_func, voi
 		memcpy(&saved_return, tmp, sizeof(struct in6_addr));
 		free(if_addrs);
 		first_call = 0;
-		return IP;
+		return 1;
 	    }
 	    printf("Warning!  " IPCONFIG_ENVVAR_PREFIX "INTERFACE specified as \"%s\", but no active interface by that name found\n", interface);
 	}
