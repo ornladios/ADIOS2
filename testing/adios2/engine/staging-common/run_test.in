@@ -50,7 +50,10 @@ def touch(path):
 
 def clean_server_kill(writer):
     touch('DieTest')
+    
+    print("TestDriver:  Waiting for writer after touching file")
     writer.wait()
+    print("TestDriver:  Writer complete")
     os.remove('DieTest')
 
 
@@ -211,6 +214,7 @@ def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval):
             print("TestDriver: Killing surviving Reader")
             reader.terminate()
             reader.wait()
+            print("TestDriver: Wait on Reader Succeeded")
             sys.stdout.flush()
     clean_server_kill(writer)
     print("TestDriver: Writer exit status was " + str(writer.returncode))
