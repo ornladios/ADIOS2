@@ -811,18 +811,6 @@ libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
         addr.s_addr = htonl(requested_IP);
 	svc->trace_out(cm, "IP translation for hostname %s is %s", host_name,
 		       inet_ntoa(addr));
-#else
-        struct addrinfo* result;
-        struct addrinfo* res;
-        int error;
-
-        /* resolve the domain name into a list of addresses */
-        error = getaddrinfo(host_name, NULL, NULL, &result);
-        if (error != 0) {   
-            requested_IP = -1;
-        }  else  {
-            memcpy(&v6_request, res->ai_addr, sizeof(requested_IP));
-        }  
 #endif
     }
     /* requested IP is in host byte order */
