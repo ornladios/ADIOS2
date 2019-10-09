@@ -12,9 +12,7 @@
 
 #include <cstring> //std::memcpy
 
-extern "C" {
-#include <mgard_capi.h>
-}
+#include <mgard_api.h>
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -96,8 +94,8 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
 
     int sizeOut = 0;
     unsigned char *dataOutPtr =
-        mgard_compress(mgardType, const_cast<void *>(dataIn), &sizeOut, r[0],
-                       r[1], r[2], &tolerance, 0);
+        mgard_compress(mgardType, const_cast<double *>(static_cast<const double *>(dataIn)), sizeOut, r[0],
+                       r[1], r[2], tolerance, 0.0);
 
     const size_t sizeOutT = static_cast<size_t>(sizeOut);
     std::memcpy(bufferOut, dataOutPtr, sizeOutT);
