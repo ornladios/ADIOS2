@@ -100,7 +100,6 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
     const size_t sizeOutT = static_cast<size_t>(sizeOut);
     std::memcpy(bufferOut, dataOutPtr, sizeOutT);
 
-
     return sizeOutT;
 }
 
