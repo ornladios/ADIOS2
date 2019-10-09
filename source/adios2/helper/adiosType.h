@@ -220,6 +220,14 @@ std::string ValueToString(const T value) noexcept;
 template <class T>
 void CheckForNullptr(T *pointer, const std::string hint);
 
+/**
+ * Converts an unordered map key to a sorted set
+ * @param hash input hash
+ * @return ordered keys
+ */
+template <class T, class U>
+std::set<T> KeysToSet(const std::unordered_map<T, U> &hash) noexcept;
+
 } // end namespace helper
 } // end namespace adios2
 

@@ -74,6 +74,7 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     m_IO.ResetVariablesStepSelection(false, "in call to BP3 Reader BeginStep");
+    m_IO.SetPrefixedNames();
 
     return StepStatus::OK;
 }

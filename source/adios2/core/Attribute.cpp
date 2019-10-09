@@ -9,6 +9,7 @@
  */
 
 #include "Attribute.h"
+#include "Attribute.tcc"
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
@@ -32,6 +33,12 @@ namespace core
     Attribute<T>::Attribute(const std::string &name, const T &value)           \
     : AttributeBase(name, helper::GetType<T>()), m_DataSingleValue(value)      \
     {                                                                          \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    Params Attribute<T>::GetInfo() const noexcept                              \
+    {                                                                          \
+        return DoGetInfo();                                                    \
     }
 
 ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)

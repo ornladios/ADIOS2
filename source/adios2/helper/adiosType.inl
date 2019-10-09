@@ -256,6 +256,17 @@ void CheckForNullptr(T *pointer, const std::string hint)
     }
 }
 
+template <class T, class U>
+std::set<T> KeysToSet(const std::unordered_map<T, U> &hash) noexcept
+{
+    std::set<T> output;
+    for (const auto &pair : hash)
+    {
+        output.insert(pair.first);
+    }
+    return output;
+}
+
 } // end namespace helper
 } // end namespace adios2
 

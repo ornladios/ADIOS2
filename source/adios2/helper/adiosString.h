@@ -13,6 +13,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 /// \endcond
@@ -174,6 +175,16 @@ size_t StringToByteUnits(const std::string &input, const bool debugMode,
  * @return input contents in lower case
  */
 std::string LowerCase(const std::string &input);
+
+/**
+ * Extract inputs subset that matches a prefix input
+ * @param prefix input prefix
+ * @param inputs input names
+ * @return  all names with prefix "pre": pre1, pre2, ..., preXYZ,
+ */
+std::set<std::string>
+PrefixMatches(const std::string &prefix,
+              const std::set<std::string> &inputs) noexcept;
 
 } // end namespace helper
 } // end namespace adios2

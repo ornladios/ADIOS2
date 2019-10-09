@@ -352,5 +352,29 @@ std::string LowerCase(const std::string &input)
     return output;
 }
 
+std::set<std::string>
+PrefixMatches(const std::string &prefix,
+              const std::set<std::string> &inputs) noexcept
+{
+    std::set<std::string> outputs;
+    auto itPrefix = inputs.lower_bound(prefix);
+
+    while (itPrefix != inputs.end())
+    {
+        const std::string &input = *itPrefix;
+        // check if it's an actual prefix
+        if (input.compare(0, prefix.size(), prefix) == 0)
+        {
+            outputs.insert(input);
+        }
+        else
+        {
+            break;
+        }
+        ++itPrefix;
+    }
+    return outputs;
+}
+
 } // end namespace helper
 } // end namespace adios2
