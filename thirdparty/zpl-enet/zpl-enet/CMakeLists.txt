@@ -33,8 +33,6 @@ include(CMakeDependentOption)
 
 if(MSVC)
 	add_definitions(-W3)
-else()
-	add_definitions(-Wno-error)
 endif()
 
 set (ZPL-ENET_SHARED ON)
