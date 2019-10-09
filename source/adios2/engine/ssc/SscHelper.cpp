@@ -118,7 +118,7 @@ namespace ssc
                 ref1.overlapCount.resize(ref1.count.size());
                 for (size_t i = 0; i < ref1.start.size(); ++i)
                 {
-                    if (ref1.start[i] + ref1.count[i] < ref2.start[i] or ref2.start[i] + ref2.count[i] < ref1.start[i])
+                    if (ref1.start[i] + ref1.count[i] <= ref2.start[i] or ref2.start[i] + ref2.count[i] <= ref1.start[i])
                     {
                         ref1.overlapStart.clear();
                         ref1.overlapCount.clear();
@@ -168,10 +168,64 @@ namespace ssc
         return ret;
     }
 
-    void CalculatePosition(VarMapVec &mapVec)
+    void CalculatePosition(VarMapVec &mapVec, const std::vector<int> &allRanks)
+    {
+        size_t sum = 0;
+        int rank = 0;
+        for(auto &rankMap : mapVec)
+        {
+            bool hasOverlap = false;
+            for(const auto r : allRanks)
+            {
+                if(r == rank)
+                {
+                    hasOverlap = true;
+                    break;
+                }
+            }
+            if(hasOverlap)
+            {
+                for(auto &varPair : rankMap)
+                {
+                    auto &ref1 = varPair.second;
+                    ref1.posStart = sum;
+                    ref1.posCount = 0;
+                    if(not ref1.count.empty())
+                    {
+                        ref1.posCount += std::accumulate(ref1.count.begin(), ref1.count.end(), GetTypeSize(ref1.type), std::multiplies<size_t>());
+                        sum += ref1.posCount;
+                    }
+//                    std::cout << varPair.first << "============ " << ref1.posStart << " -> " << ref1.posStart + ref1.posCount << std::endl;
+                }
+            }
+            ++rank;
+        }
+    }
+
+    void CalculatePosition(VarMapVec &writerMapVec, VarMapVec &readerMapVec, const int writerRank, const std::vector<int> &allOverlapRanks )
+    {
+        for(int rank : allOverlapRanks)
+        {
+            auto &readerRankMap  = readerMapVec[rank];
+            CalculateOverlap(writerMapVec, readerRankMap);
+            auto tmpAllRanks = AllOverlapRanks(writerMapVec);
+            CalculatePosition(writerMapVec, tmpAllRanks);
+            auto &writerRef = writerMapVec[writerRank];
+            for(auto &writerVar : writerRef)
+            {
+                auto &readerRankVar = readerRankMap[writerVar.first];
+                readerRankVar.overlapStart = writerVar.second.overlapStart;
+                readerRankVar.overlapCount = writerVar.second.overlapCount;
+                readerRankVar.posStart = writerVar.second.posStart;
+                readerRankVar.posCount = writerVar.second.posCount;
+            }
+            std::cout << "========only rank " << rank << std::endl;
+        }
+    }
+
+    void CalculateOverlapPosition(VarMapVec &mapVec)
     {
         size_t sumVec = 0;
-        size_t tmp = 0;
         for(auto &rankMap : mapVec)
         {
             for(auto &varPair : rankMap)
@@ -185,16 +239,15 @@ namespace ssc
                     sumVec += ref1.posCount;
                 }
             }
-            ++tmp;
         }
     }
 
-    void CalculatePosition(VarMapVec &writerMapVec, VarMapVec &readerMapVec, const int writerRank)
+    void CalculateOverlapPosition(VarMapVec &writerMapVec, VarMapVec &readerMapVec, const int writerRank)
     {
         for(auto &readerRankMap : readerMapVec)
         {
             CalculateOverlap(writerMapVec, readerRankMap);
-            CalculatePosition(writerMapVec);
+            CalculateOverlapPosition(writerMapVec);
             auto &writerRef = writerMapVec[writerRank];
             for(auto &writerVar : writerRef)
             {

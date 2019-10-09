@@ -923,11 +923,11 @@ bool DataManSerializer::CalculateOverlap(const Dims &inStart,
     }
     for (size_t i = 0; i < inStart.size(); ++i)
     {
-        if (inStart[i] + inCount[i] < outStart[i])
+        if (inStart[i] + inCount[i] <= outStart[i])
         {
             return false;
         }
-        if (outStart[i] + outCount[i] < inStart[i])
+        if (outStart[i] + outCount[i] <= inStart[i])
         {
             return false;
         }

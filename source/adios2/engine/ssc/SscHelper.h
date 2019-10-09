@@ -54,8 +54,10 @@ namespace ssc
     size_t TotalOverlapSize(const VarMapVec &vmv);
 
     void CalculateOverlap(VarMapVec &mapVec, VarMap &singleMap);
-    void CalculatePosition(VarMapVec &mapVec);
-    void CalculatePosition(VarMapVec &writerMapVec, VarMapVec &readerMapVec, const int writerRank);
+    void CalculateOverlapPosition(VarMapVec &mapVec);
+    void CalculateOverlapPosition(VarMapVec &writerMapVec, VarMapVec &readerMapVec, const int writerRank);
+    void CalculatePosition(VarMapVec &mapVec, const std::vector<int> &allOverlapRanks);
+    void CalculatePosition(VarMapVec &writerMapVec, VarMapVec &readerMapVec, const int writerRank, const std::vector<int> &allOverlapRanks);
 
     std::vector<int> AllOverlapRanks(const VarMapVec &mapVec);
 

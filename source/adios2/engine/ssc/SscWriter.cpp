@@ -228,12 +228,11 @@ void SscWriter::SyncReadPattern()
     MPI_Win_free(&win);
 
     m_GlobalReadPatternMap = ssc::JsonToVarMapVec(globalVec, m_ReaderSize);
-
     ssc::CalculateOverlap(m_GlobalReadPatternMap, m_LocalWritePatternMap);
-    ssc::CalculatePosition(m_GlobalWritePatternMap, m_GlobalReadPatternMap, m_WriterRank);
-
     m_AllSendingReaderRanks = ssc::AllOverlapRanks(m_GlobalReadPatternMap);
+    ssc::CalculatePosition(m_GlobalWritePatternMap, m_GlobalReadPatternMap, m_WriterRank, m_AllSendingReaderRanks);
 
+    ssc::PrintVarMapVec(m_GlobalReadPatternMap);
 }
 
 #define declare_type(T)                                                        \

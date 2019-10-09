@@ -275,11 +275,11 @@ void SscReader::SyncReadPattern()
     MPI_Win_free(&win);
 
     ssc::CalculateOverlap(m_GlobalWritePatternMap, m_LocalReadPatternMap);
-    ssc::CalculatePosition(m_GlobalWritePatternMap);
-
     m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePatternMap);
+    ssc::CalculatePosition(m_GlobalWritePatternMap, m_AllReceivingWriterRanks);
 
     m_Buffer.resize(ssc::TotalDataSize(m_GlobalWritePatternMap, m_AllReceivingWriterRanks));
+
 }
 
 #define declare_type(T)                                                        \
