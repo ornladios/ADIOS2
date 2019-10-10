@@ -561,7 +561,8 @@ add_attr(attr_list list, atom_t attr_id, attr_value_type val_type, attr_value va
 	}
 	break;
     case Attr_Opaque:
-	value.u.o = *(attr_opaque_p)&val;
+        assert(FALSE);
+
 	break;
     case Attr_String:
     case Attr_List:
@@ -652,8 +653,8 @@ set_opaque_attr(attr_list list, atom_t attr_id, int length, char *buffer)
     attr_union value;
     value.u.o.length = length;
     value.u.o.buffer = buffer;
-    if (replace_pattr(list, attr_id, Attr_String, value) == 0) {
-	return add_pattr(list, attr_id, Attr_String, value);
+    if (replace_pattr(list, attr_id, Attr_Opaque, value) == 0) {
+	return add_pattr(list, attr_id, Attr_Opaque, value);
     }
     return 1;
 }
