@@ -4931,7 +4931,12 @@ extern "C" {
         // Note that statics are auto-initialized to zero, and starting a thread
         // implies a memory barrier. So we know that whatever thread calls this,
         // it correctly sees the start_time_ns as 0 initially.
+
+#ifdef ENET_ATOMIC_READ
         uint64_t offset_ns = ENET_ATOMIC_READ(&start_time_ns);
+#else 
+        uint64_t offset_ns = start_time_ns;
+#endif
         if (offset_ns == 0) {
             // We still need to CAS, since two different threads can get here
             // at the same time.
@@ -4941,6 +4946,17 @@ extern "C" {
             // Set the value of the start_time_ns, such that the first timestamp
             // is at 1ms. This ensures 0 remains a special value.
             uint64_t want_value = current_time_ns - 1 * ns_in_ms;
+#ifndef ENET_ATOMIC_CAS
+        #define ENET_ATOMIC_CAS(ptr, old_value, new_value)                                                      \
+            ({                                                                                             \
+                typeof(*(ptr)) ENET_ATOMIC_CAS_old_actual_ = (*(ptr));                                          \
+                if (ATOMIC_CAS_old_actual_ == (old_value)) {                                               \
+                    *(ptr) = new_value;                                                                    \
+                }                                                                                          \
+                ENET_ATOMIC_CAS_old_actual_;                                                                    \
+            })
+
+#endif
             uint64_t old_value = ENET_ATOMIC_CAS(&start_time_ns, 0, want_value);
             offset_ns = old_value == 0 ? want_value : old_value;
         }
