@@ -34,4 +34,4 @@ if(ADIOS2_HAVE_MPI)
   add_subdirectory(insitumpi)
 endif()
 
-#add_subdirectory(staging-common)
+add_subdirectory(staging-common)

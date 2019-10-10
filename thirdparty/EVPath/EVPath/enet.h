@@ -4950,7 +4950,7 @@ extern "C" {
         #define ENET_ATOMIC_CAS(ptr, old_value, new_value)                                                      \
             ({                                                                                             \
                 typeof(*(ptr)) ENET_ATOMIC_CAS_old_actual_ = (*(ptr));                                          \
-                if (ATOMIC_CAS_old_actual_ == (old_value)) {                                               \
+                if (ENET_ATOMIC_CAS_old_actual_ == (old_value)) {                                               \
                     *(ptr) = new_value;                                                                    \
                 }                                                                                          \
                 ENET_ATOMIC_CAS_old_actual_;                                                                    \
