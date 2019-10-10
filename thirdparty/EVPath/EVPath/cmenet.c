@@ -64,6 +64,7 @@ typedef struct enet_connection_data {
     int remote_IP;     /* in host byte order */
 #else
     struct in6_addr remote_IP;
+    int remote_IPv4;     /* in host byte order */
 #endif
     int remote_contact_port;
     ENetPeer *peer;
@@ -209,6 +210,10 @@ enet_service_network(CManager cm, void *void_trans)
 	    svc->trace_out(cm, "A new client connected from %s:%u.\n", 
 			   &straddr[0],
 			   event.peer->address.port);
+            struct in6_addr *IPV6 = &event.peer->address.host;
+            struct in_addr addr;
+            addr.s_addr = ((enet_uint32 *)&event.peer->address.host.s6_addr)[3];
+            svc->trace_out(cm, "That was IPV4 address %s\n", inet_ntoa(addr));
 #endif            
 
 	    enet_connection_data = enet_accept_conn(ecd, trans, &event.peer->address);
@@ -365,6 +370,8 @@ enet_accept_conn(enet_client_data_ptr ecd, transport_entry trans,
     enet_conn_data->remote_IP = ntohl(address->host);   /* remote_IP is in host byte order */
 #else
     enet_conn_data->remote_IP = address->host;
+    enet_conn_data->remote_IPv4 = ntohl(((enet_uint32 *)&address->host.s6_addr)[0]);
+    add_int_attr(conn_attr_list, CM_PEER_IP, enet_conn_data->remote_IPv4);
 #endif
     if (!conn_reuse) {
         enet_conn_data->remote_contact_port = -1;
@@ -427,6 +434,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     int host_ip = 0;
 #else
     struct in6_addr host_ip;
+    int host_ipv4 = 0;
 #endif
     struct in_addr sin_addr;
     (void)conn_attr_list;
@@ -455,27 +463,18 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     }
 
 #else
-    int length;
-    char *buffer;
-    if (!get_opaque_attr(attrs, CM_ENET_V6ADDR, &length, &buffer)) {
-	svc->trace_out(cm, "CMEnet transport found no CM_ENET_V6ADDR attribute");
+    if (!query_attr(attrs, CM_ENET_ADDR, /* type pointer */ NULL,
+    /* value pointer */ (attr_value *)(long) & host_ipv4)) {
+	svc->trace_out(cm, "CMEnet transport found no CM_ENET_ADDR attribute");
 	/* wasn't there */
-        if (host_name == NULL)
-            printf("No host no IP\n");
-	return 0;
+	host_ipv4 = 0;
     } else {
-        if (length != sizeof(struct in6_addr)) {
-            svc->trace_out(cm, "CMEnet transport length was wrong in CM_ENET_V6ADDR attribute");
-            if (host_name == NULL)
-                printf("No host no IP\n");
-            return 0;
-        } else {
-            char straddr[INET6_ADDRSTRLEN];
-            memcpy(&host_ip, buffer, length);
-            inet_ntop(AF_INET6, &host_ip, straddr,
-                      sizeof(straddr));
-            svc->trace_out(cm, "CMEnet transport connect to host_IP %s", &straddr[0]);
-        }
+        svc->trace_out(cm, "CMEnet transport connect to host_IP %lx", host_ipv4);
+    }
+    /* HOST_IP is in HOST BYTE ORDER */
+    if ((host_name == NULL) && (host_ipv4 == 0)) {
+	printf("No host no IP\n");
+	return 0;
     }
 #endif
 
@@ -531,13 +530,22 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 		       int_port_num);
 #else
         char straddr[INET6_ADDRSTRLEN];
+        ((enet_uint32 *)&host_ip.s6_addr)[0] = 0;
+        ((enet_uint32 *)&host_ip.s6_addr)[1] = 0;
+        ((enet_uint32 *)&host_ip.s6_addr)[2] = htonl(0xffff);
+        ((enet_uint32 *)&host_ip.s6_addr)[3] = htonl(host_ipv4);
         inet_ntop(AF_INET6, &host_ip, straddr,
                   sizeof(straddr));
+
 	svc->trace_out(cm, "Attempting ENET RUDP connection, USING host=\"%s\", IP = %s, port %d",
 		       host_name == 0 ? "(unknown)" : host_name, 
 		       &straddr[0],
 		       int_port_num);
+        sin_addr.s_addr = htonl(host_ipv4);
+	svc->trace_out(cm, "Attempting ENET RUDP connection, USING IPv4 = %s\n",
+		       inet_ntoa(sin_addr));
         memcpy(&address.host, &host_ip, sizeof(struct in6_addr));
+//        enet_address_set_host(&address, inet_ntoa(sin_addr));
 #endif        
     }
     address.port = (unsigned short) int_port_num;
@@ -785,24 +793,13 @@ libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
 	svc->trace_out(cm, "Conn Eq CMenet transport found no CM_ENET_PORT attribute");
 	return 0;
     }
-#ifndef USE_IPV6
+
     if (!query_attr(attrs, CM_ENET_ADDR, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & requested_IP)) {
 	svc->trace_out(cm, "CMENET transport found no CM_ENET_ADDR attribute");
     }
-#else
-    int length;
-    char *buffer;
-    if (!get_opaque_attr(attrs, CM_ENET_V6ADDR, &length, &buffer)) {
-        requested_IP = -1;
-    } else {
-        if (length != sizeof(struct in6_addr)) {
-            svc->trace_out(cm, "CMEnet transport length was wrong in CM_ENET_V6ADDR attribute");
-        } else {
-            memcpy(&v6_request, buffer, length);
-        }
-    }
-#endif
+
+
     if (requested_IP == -1) {
 #ifndef USE_IPV6
 	check_host(host_name, (void *) &requested_IP);
@@ -882,19 +879,10 @@ build_listen_attrs(CManager cm, CMtrans_services svc, enet_client_data_ptr ecd,
 	ecd->hostname = strdup(host_name);
 	ecd->listen_port = int_port_num;
     }
-#ifndef USE_IPV6
     if ((IP != 0) && !use_hostname) {
 	add_attr(ret_list, CM_ENET_ADDR, Attr_Int4,
 		 (attr_value) (long)IP);
     }
-#else
-    if ((IP != 0) && !use_hostname) {
-        struct in6_addr *tmp = malloc(sizeof(struct in6_addr));
-        memcpy(tmp, &IPV6, sizeof(struct in6_addr));
-	set_opaque_attr(ret_list, CM_ENET_V6ADDR, sizeof(struct in6_addr),
-                        (char*)tmp);
-    }
-#endif
     if ((getenv("CMEnetsUseHostname") != NULL) || 
 	use_hostname) {
 	add_attr(ret_list, CM_ENET_HOSTNAME, Attr_String,
