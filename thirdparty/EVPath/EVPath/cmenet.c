@@ -210,7 +210,6 @@ enet_service_network(CManager cm, void *void_trans)
 	    svc->trace_out(cm, "A new client connected from %s:%u.\n", 
 			   &straddr[0],
 			   event.peer->address.port);
-            struct in6_addr *IPV6 = &event.peer->address.host;
             struct in_addr addr;
             addr.s_addr = ((enet_uint32 *)&event.peer->address.host.s6_addr)[3];
             svc->trace_out(cm, "That was IPV4 address %s\n", inet_ntoa(addr));
