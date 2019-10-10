@@ -878,7 +878,7 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
             *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
             CP_verbose(s, "Sending a message to reader %d (%p)\n", peer,
                        *RS_StreamPtr);
-            if (CMwrite(conn, f, Msg) != 1)
+            if ((!conn) || (CMwrite(conn, f, Msg) != 1))
             {
                 CP_verbose(s, "Message failed to send to reader %d (%p)\n",
                            peer, *RS_StreamPtr);
@@ -898,7 +898,7 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
             *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
             CP_verbose(s, "Sending a message to reader %d (%p)\n", peer,
                        *RS_StreamPtr);
-            if (CMwrite(conn, f, Msg) != 1)
+            if ((!conn) || (CMwrite(conn, f, Msg) != 1))
             {
                 CP_verbose(s, "Message failed to send to reader %d (%p)\n",
                            peer, *RS_StreamPtr);
