@@ -1638,6 +1638,7 @@ add_to_tmp_buffer(AttrBuffer buf, unsigned int size)
 static void
 recursive_encode(attr_list l, AttrBuffer b, attr_value_type t)
 {
+    printf("enter recursive encode\n");
     if (l->list_of_lists == 0) {
 	switch (t) {
 	case Attr_Int4: {
@@ -1686,7 +1687,9 @@ recursive_encode(attr_list l, AttrBuffer b, attr_value_type t)
 		    if (attr->val_type == Attr_String) {
 			value = (char*) attr->value.u.p;
 			len = (int)strlen((char*)value) + 1;
+                        printf("Marshaling string, len %d\n", len);
 		    } else {
+                        printf("Marshaling Opaque, len %d\n", attr->value.u.o.length);
 			value = attr->value.u.o.buffer;
 			len = attr->value.u.o.length;
 		    }
@@ -1694,6 +1697,7 @@ recursive_encode(attr_list l, AttrBuffer b, attr_value_type t)
 		    buffer_end = add_to_tmp_buffer(b, 2 + pad_len);
 		    *((int2*)buffer_end) = (int2) len;
 		    memcpy((char*)buffer_end + 2, value, len);
+                    printf("Done with memcpy\n");
 		    break;
 		  }
 		case Attr_List:
@@ -1710,6 +1714,7 @@ recursive_encode(attr_list l, AttrBuffer b, attr_value_type t)
 	    recursive_encode(l, b, t);
 	}
     }
+    printf("return from recursive encode\n");
 }
 
 	
