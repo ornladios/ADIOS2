@@ -1659,6 +1659,7 @@ recursive_encode(attr_list l, AttrBuffer b, attr_value_type t)
 	    for (i=0; i<l->l.list.iattrs->other_attr_count; i++) {
 		attr_p attr = &l->l.list.attributes[i];
 		void *buffer_end = add_to_tmp_buffer(b, 8);
+                printf("attr %d of %d, type %d\n", i, l->l.list.iattrs->other_attr_count, attr->val_type);
 		memcpy(buffer_end, attr, 8);
 		switch (attr->val_type) {
 		case Attr_Int4:
