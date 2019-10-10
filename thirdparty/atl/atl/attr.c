@@ -561,7 +561,7 @@ add_attr(attr_list list, atom_t attr_id, attr_value_type val_type, attr_value va
 	}
 	break;
     case Attr_Opaque:
-        assert(FALSE);
+        assert(0);
 
 	break;
     case Attr_String:
