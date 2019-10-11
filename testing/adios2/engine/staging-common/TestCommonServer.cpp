@@ -167,7 +167,8 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
 #ifdef ADIOS2_HAVE_MPI
         if (file_exists(shutdown_name))
         {
-	    std::cout << "Noticed that file " << shutdown_name << " exists now, considering shutdown" << std::endl;
+            std::cout << "Noticed that file " << shutdown_name
+                      << " exists now, considering shutdown" << std::endl;
             MyCloseNow = GlobalCloseNow = 1;
         }
         MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
@@ -176,7 +177,8 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
         GlobalCloseNow = MyCloseNow;
         if (file_exists(shutdown_name))
         {
-	    std::cout << "NOMPI Noticed that file " << shutdown_name << " exists now, considering shutdown" << std::endl;
+            std::cout << "NOMPI Noticed that file " << shutdown_name
+                      << " exists now, considering shutdown" << std::endl;
             MyCloseNow = GlobalCloseNow = 1;
         }
 #endif
