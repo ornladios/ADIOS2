@@ -15,8 +15,9 @@
 #include "adiosComm.h"
 #include "adiosCommDummy.h"
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSTypes.h"
+
+#include <mpi.h>
 
 namespace adios2
 {

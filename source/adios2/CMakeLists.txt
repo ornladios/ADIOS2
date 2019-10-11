@@ -34,7 +34,6 @@ add_library(adios2
 #helper
   helper/adiosComm.h  helper/adiosComm.cpp
   helper/adiosCommDummy.h  helper/adiosCommDummy.cpp
-  helper/adiosCommMPI.h  helper/adiosCommMPI.cpp
   helper/adiosDynamicBinder.h  helper/adiosDynamicBinder.cpp
   helper/adiosMath.cpp
   helper/adiosMemory.cpp
@@ -227,6 +226,7 @@ endif()
 
 if(ADIOS2_HAVE_MPI)
   target_sources(adios2 PRIVATE
+    helper/adiosCommMPI.h  helper/adiosCommMPI.cpp
     engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc
     engine/insitumpi/InSituMPIReader.cpp engine/insitumpi/InSituMPIReader.tcc
     engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
