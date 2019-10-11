@@ -49,8 +49,11 @@ def touch(path):
 
 
 def clean_server_kill(writer):
+    print("TestDriver: clean server kill, touching die test")
+    sys.stdout.flush()
     touch('DieTest')
     writer.wait()
+    print("TestDriver: clean server kill, wait finished")
     os.remove('DieTest')
 
 
@@ -193,7 +196,10 @@ def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval):
         sys.stdout.flush()
         time.sleep(interval)
     print("TestDriver:  Done with test")
+    sys.stdout.flush()
     for reader in readers:
+        print("TestDriver:  Doing reader poll")
+        sys.stdout.flush()
         reader.poll()
         if reader.returncode is not None:
             # if reader has already exited, we want to know if it
@@ -202,18 +208,23 @@ def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval):
                 print("TestDriver: Unterminated Reader failed, " +
                       "causing test failure (return code) " +
                       str(reader.returncode))
+                sys.stdout.flush()
                 return_code = 1
             else:
                 print("TestDriver: Surviving Reader succeeded")
+                sys.stdout.flush()
         else:
             # if reader hasn't already exited,
             # kill it and ignore the exit status
             print("TestDriver: Killing surviving Reader")
+            sys.stdout.flush()
             reader.terminate()
             reader.wait()
+            print("TestDriver: Wait on surviving reader succeeded")
             sys.stdout.flush()
     clean_server_kill(writer)
     print("TestDriver: Writer exit status was " + str(writer.returncode))
+    sys.stdout.flush()
     if writer.returncode != 0:
         print("TestDriver: Writer failed, causing test failure")
         return_code = 1
