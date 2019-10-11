@@ -724,6 +724,9 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
     SstStream Stream;
     struct _TimestepMetadataMsg *Msg = (struct _TimestepMetadataMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
+
+    printf("Metadata handler msg arrived, msg %p, Stream %p\n", Msg, Stream);
+    printf("Metadata handler WriterConfig %p\n", Stream->WriterConfigParams);
     if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
     {
         /* everyone is getting this */
@@ -741,7 +744,9 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
              */
             if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
             {
+                printf("Metadata handler install precious metadata\n");
                 FFSMarshalInstallPreciousMetadata(Stream, Msg);
+                printf("Metadata handler install precious metadata - done\n");
             }
             pthread_mutex_unlock(&Stream->DataLock);
 
@@ -757,7 +762,9 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
         /* arrange for this message data to stay around */
         CMtake_buffer(cm, Msg);
 
+        printf("queueing timestep\n");
         queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
+        printf("queueing timestep - done\n");
     }
     else
     {
@@ -765,8 +772,9 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
          * everyone */
         /* arrange for this message data to stay around */
         CMtake_buffer(cm, Msg);
-
+        printf("queueing timestep\n");
         queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
+        printf("queueing timestep done\n");
     }
     TAU_STOP_FUNC();
 }
