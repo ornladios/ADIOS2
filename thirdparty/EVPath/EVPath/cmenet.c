@@ -1150,9 +1150,9 @@ static int enet_global_init = 0;
 static void
 free_enet_data(CManager cm, void *ecdv)
 {
-    enet_client_data_ptr ecd = (enet_client_data_ptr) ecdv;
-    CMtrans_services svc = ecd->svc;
-    (void)cm;
+//    enet_client_data_ptr ecd = (enet_client_data_ptr) ecdv;
+//    CMtrans_services svc = ecd->svc;
+//    (void)cm;
 //    if (ecd->hostname != NULL)
 //	svc->free_func(ecd->hostname);
 //    svc->free_func(ecd);
