@@ -165,22 +165,26 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
             DelayMS)); /* sleep for DelayMS milliseconds */
         step++;
 #ifdef ADIOS2_HAVE_MPI
-        MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
-                      MPI_COMM_WORLD);
         if (file_exists(shutdown_name))
         {
+	    std::cout << "Noticed that file " << shutdown_name << " exists now, considering shutdown" << std::endl;
             MyCloseNow = GlobalCloseNow = 1;
         }
+        MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
+                      MPI_COMM_WORLD);
 #else
         GlobalCloseNow = MyCloseNow;
         if (file_exists(shutdown_name))
         {
+	    std::cout << "NOMPI Noticed that file " << shutdown_name << " exists now, considering shutdown" << std::endl;
             MyCloseNow = GlobalCloseNow = 1;
         }
 #endif
     }
+    std::cout << "Rank " << mpiRank << " is closing the engine " << std::endl;
     // Close the file
     engine.Close();
+    std::cout << "Rank " << mpiRank << " is closed the engine " << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -196,9 +200,11 @@ int main(int argc, char **argv)
 
     result = RUN_ALL_TESTS();
 
+    std::cout << "Calling MPI FINALIZE" << std::endl;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
 #endif
+    std::cout << "DONE Calling MPI FINALIZE" << std::endl;
 
     return result;
 }
