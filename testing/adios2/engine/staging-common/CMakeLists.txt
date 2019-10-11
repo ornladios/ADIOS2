@@ -144,7 +144,10 @@ if(ADIOS2_HAVE_Fortran)
   set (SIMPLE_FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
 endif()
 
-set (SPECIAL_TESTS "TimeoutReader.1x1;LatestReader.1x1;LatestReaderHold.1x1;DiscardWriter.1x1;PreciousTimestep.3x2;PreciousTimestepDiscard.3x2;1x1.NoPreload;1x1.ForcePreload")
+set (SPECIAL_TESTS "TimeoutReader.1x1;LatestReader.1x1;LatestReaderHold.1x1;DiscardWriter.1x1;1x1.NoPreload;1x1.ForcePreload")
+if (ADIOS2_HAVE_MPI)
+   list (APPEND SPECIAL_TESTS "PreciousTimestep.3x2;PreciousTimestepDiscard.3x2")
+endif()
 if (MPIEXEC_IS_BINARY)
     # run_test.py can only kill readers/writers if mpiexec is not a shell script
     list(APPEND SPECIAL_TESTS "KillReadersSerialized.3x2;KillReaders3Max.3x6;KillWriter_2x2;KillWriterTimeout_2x2")
