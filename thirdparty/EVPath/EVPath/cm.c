@@ -869,8 +869,8 @@ CManager_free(CManager cm)
     while (list != NULL) {
 	CMbuffer next = list->next;
 	CMtrace_out(cm, CMBufferVerbose, "Final buffer disposition buf %d, %p, size %ld, ref_count %d\n", i++, list, list->size, list->ref_count);
-	INT_CMfree2(cm, list->buffer);
-	INT_CMfree2(cm, list);
+//	INT_CMfree2(cm, list->buffer);
+//	INT_CMfree2(cm, list);
 	list = next;
     }
     cm->cm_buffer_list = NULL;
