@@ -245,6 +245,9 @@ enet_service_network(CManager cm, void *void_trans)
             }
             break;
 	}           
+#ifdef ZPL_ENET_FOUND
+        case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
+#endif
         case ENET_EVENT_TYPE_DISCONNECT: {
 	    enet_conn_data_ptr enet_conn_data = event.peer->data;
 	    svc->trace_out(cm, "Got a disconnect on connection %p\n",
@@ -254,17 +257,6 @@ enet_service_network(CManager cm, void *void_trans)
 	    enet_conn_data->read_buffer_len = -1;
             svc->connection_fail(enet_conn_data->conn);
         }
-#ifdef ZPL_ENET_FOUND
-        case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT: {
-	    enet_conn_data_ptr enet_conn_data = event.peer->data;
-	    svc->trace_out(cm, "Got a disconnect TIMEOUT on connection %p\n",
-		event.peer->data);
-
-            enet_conn_data = event.peer->data;
-	    enet_conn_data->read_buffer_len = -1;
-            svc->connection_fail(enet_conn_data->conn);
-        }
-#endif
 	}
     }
     ecd->last_host_service_zero_return = enet_time_get();
@@ -619,6 +611,9 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         }
         case ENET_EVENT_TYPE_NONE:
             break;
+#ifdef ZPL_ENET_FOUND
+        case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
+#endif
         case ENET_EVENT_TYPE_DISCONNECT:
             if (event.peer == peer) {
                 enet_peer_reset (peer);
@@ -652,17 +647,6 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
                 last->next = entry;
             }
             break;
-#ifdef ZPL_ENET_FOUND
-        case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT: {
-	    enet_conn_data_ptr enet_conn_data = event.peer->data;
-	    svc->trace_out(cm, "Got a disconnect TIMEOUT on connection %p\n",
-		event.peer->data);
-
-            enet_conn_data = event.peer->data;
-	    enet_conn_data->read_buffer_len = -1;
-            svc->connection_fail(enet_conn_data->conn);
-        }
-#endif
         }
         }
     }
