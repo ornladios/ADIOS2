@@ -22,6 +22,11 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 if(NOT @BUILD_SHARED_LIBS@)
+  set(ADIOS2_HAVE_Blosc @ADIOS2_HAVE_Blosc@)
+  if(ADIOS2_HAVE_Blosc)
+    find_dependency(Blosc)
+  endif()
+
   set(ADIOS2_HAVE_BZip2 @ADIOS2_HAVE_BZip2@)
   if(ADIOS2_HAVE_BZip2)
     find_dependency(BZip2)
