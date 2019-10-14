@@ -51,6 +51,8 @@ public:
                     void *bufferOut, const Params &parameters,
                     Params &info) const final;
 
+    using Operator::Decompress;
+
     /**
      * Wrapper around zfp decompression
      * @param bufferIn
