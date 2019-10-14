@@ -802,19 +802,20 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
                                         currentTestData.S3.size(), var2.Name(),
                                         separator);
 
+        io.DefineAttribute<uint32_t>("u32Value", 1, var1.Name(), separator);
+        io.DefineAttribute<uint32_t>("u32Value", 1, var2.Name(), separator);
+
+#ifndef _WIN32
         io.DefineAttribute<std::string>("smile", "\u263A", var1.Name(),
                                         separator);
         io.DefineAttribute<std::string>("smile", "\u263A", var2.Name(),
                                         separator);
 
-        io.DefineAttribute<uint32_t>("u32Value", 1, var1.Name(), separator);
-        io.DefineAttribute<uint32_t>("u32Value", 1, var2.Name(), separator);
-
         io.DefineAttribute<std::string>("utf8", std::string(u8"महसुस"),
                                         var1.Name(), separator);
         io.DefineAttribute<std::string>("utf8", std::string(u8"महसुस"),
                                         var2.Name(), separator);
-
+#endif
         adios2::Engine bpWriter = io.Open(fName, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -852,19 +853,20 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
             EXPECT_EQ(itSArray->second.at("Value"),
                       R"({ "one", "two", "three" })");
 
-            auto itSmile =
-                attributesInfo.find(variableName + separator + "smile");
-            EXPECT_NE(itSmile, attributesInfo.end());
-            EXPECT_EQ(itSmile->second.at("Type"), "string");
-            EXPECT_EQ(itSmile->second.at("Elements"), "1");
-            EXPECT_EQ(itSmile->second.at("Value"), std::string("\"\u263A\""));
-
             auto itU32Value =
                 attributesInfo.find(variableName + separator + "u32Value");
             EXPECT_NE(itU32Value, attributesInfo.end());
             EXPECT_EQ(itU32Value->second.at("Type"), "uint32_t");
             EXPECT_EQ(itU32Value->second.at("Elements"), "1");
             EXPECT_EQ(itU32Value->second.at("Value"), "1");
+
+#ifndef _WIN32
+            auto itSmile =
+                attributesInfo.find(variableName + separator + "smile");
+            EXPECT_NE(itSmile, attributesInfo.end());
+            EXPECT_EQ(itSmile->second.at("Type"), "string");
+            EXPECT_EQ(itSmile->second.at("Elements"), "1");
+            EXPECT_EQ(itSmile->second.at("Value"), std::string("\"\u263A\""));
 
             auto itUTF8 =
                 attributesInfo.find(variableName + separator + "utf8");
@@ -873,6 +875,7 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
             EXPECT_EQ(itUTF8->second.at("Elements"), "1");
             EXPECT_EQ(itUTF8->second.at("Value"),
                       "\"" + std::string(u8"महसुस") + "\"");
+#endif
         };
 
         adios2::IO io = adios.DeclareIO("ReaderIO");
