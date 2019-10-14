@@ -440,7 +440,7 @@ public:
     void ResetVariablesStepSelection(const bool zeroStart = false,
                                      const std::string hint = "");
 
-    void SetPrefixedNames() noexcept;
+    void SetPrefixedNames(const bool isStep) noexcept;
 
     /** Gets the internal reference to a variable map for type T */
     template <class T>

@@ -796,40 +796,6 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
                                      const std::string hint)
 {
     TAU_SCOPED_TIMER("IO::other");
-    const auto &variablesData = GetVariablesDataMap();
-
-    for (const auto &variableData : variablesData)
-    {
-        const std::string name = variableData.first;
-        const std::string type = InquireVariableType(name);
-
-        if (type.empty())
-        {
-            continue;
-        }
-
-        if (type == "compound")
-        {
-        }
-// using relative start
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        Variable<T> *variable = InquireVariable<T>(name);                      \
-        variable->CheckRandomAccessConflict(hint);                             \
-        variable->ResetStepsSelection(zeroStart);                              \
-        variable->m_RandomAccess = false;                                      \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    }
-}
-
-void IO::SetPrefixedNames() noexcept
-{
-    const std::set<std::string> attributes = helper::KeysToSet(m_Attributes);
-    const std::set<std::string> variables = helper::KeysToSet(m_Variables);
-
     for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
          ++itVariable)
     {
@@ -844,10 +810,47 @@ void IO::SetPrefixedNames() noexcept
         if (type == "compound")
         {
         }
+// using relative start
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        const Variable<T> &variable =                                          \
+        Variable<T> &variable =                                                \
+            GetVariableMap<T>().at(itVariable->second.second);                 \
+        variable.CheckRandomAccessConflict(hint);                              \
+        variable.ResetStepsSelection(zeroStart);                               \
+        variable.m_RandomAccess = false;                                       \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    }
+}
+
+void IO::SetPrefixedNames(const bool isStep) noexcept
+{
+    const std::set<std::string> attributes = helper::KeysToSet(m_Attributes);
+    const std::set<std::string> variables = helper::KeysToSet(m_Variables);
+
+    for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
+         ++itVariable)
+    {
+        const std::string &name = itVariable->first;
+        // if for each step (BP4), check if variable type is not empty (means
+        // variable exist in that step)
+        const std::string type =
+            isStep ? InquireVariableType(itVariable) : itVariable->second.first;
+
+        if (type.empty())
+        {
+            continue;
+        }
+
+        if (type == "compound")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> &variable =                                                \
             GetVariableMap<T>().at(itVariable->second.second);                 \
         variable.m_PrefixedVariables =                                         \
             helper::PrefixMatches(variable.m_Name, variables);                 \

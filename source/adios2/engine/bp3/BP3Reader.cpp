@@ -74,7 +74,6 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     m_IO.ResetVariablesStepSelection(false, "in call to BP3 Reader BeginStep");
-    m_IO.SetPrefixedNames();
 
     return StepStatus::OK;
 }
@@ -207,6 +206,8 @@ void BP3Reader::InitBuffer()
 
     // fills IO with available Variables and Attributes
     m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, *this);
+    // caches attributes associated with variables
+    m_IO.SetPrefixedNames(false);
 }
 
 #define declare_type(T)                                                        \
