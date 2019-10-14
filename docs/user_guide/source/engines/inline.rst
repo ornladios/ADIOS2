@@ -13,8 +13,8 @@ To use this engine, you can either specify it in your xml config file, with tag 
     adios2::IO inlineIO = adios.DeclareIO("ioName");
     inlineIO.SetEngine("Inline");
     adios2::Engine inlineWriter = inlineIO.Open("inline_write", adios2::Mode::Write);
-   io.SetParameters({{"writerID", "inline_write"}});
-   adios2::Engine inlineReader = inlineIO.Open("inline_read", adios2::Mode::Read);
+    io.SetParameters({{"writerID", "inline_write"}});
+    adios2::Engine inlineReader = inlineIO.Open("inline_read", adios2::Mode::Read);
 
 Notice that unlike other engines, the reader and writer share an IO instance. Also, the ``writerID`` parameter allows the reader to connect to the writer.
 

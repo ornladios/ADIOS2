@@ -53,6 +53,10 @@ public:
 
 private:
     typedef std::chrono::duration<double> Seconds;
+    typedef std::chrono::time_point<
+        std::chrono::steady_clock,
+        std::chrono::duration<double, std::chrono::steady_clock::period>>
+        TimePoint;
 
     format::BP4Deserializer m_BP4Deserializer;
     /* transport manager for metadata file */
@@ -72,14 +76,21 @@ private:
 
     void Init();
     void InitTransports();
-    void InitBuffer();
-    void OpenFiles();
+
+    /** Open files within timeout.
+     * @return True if files are opened, False in case of timeout
+     */
+    void OpenFiles(const TimePoint &timeoutInstant, const Seconds &pollSeconds,
+                   const Seconds &timeoutSeconds);
+    void InitBuffer(const TimePoint &timeoutInstant, const Seconds &pollSeconds,
+                    const Seconds &timeoutSeconds);
 
     /** Read in more metadata if exist (throwing away old).
      *  For streaming only.
      *  @return size of new content from Index Table
      */
-    size_t UpdateBuffer();
+    size_t UpdateBuffer(const TimePoint &timeoutInstant,
+                        const Seconds &pollSeconds);
 
     /** Process the new metadata coming in (in UpdateBuffer)
      *  @param newIdxSize: the size of the new content from Index Table

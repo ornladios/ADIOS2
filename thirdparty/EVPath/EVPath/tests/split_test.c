@@ -155,6 +155,7 @@ static atom_t CM_MCAST_PORT;
 static int regression = 1;
 
 char *transport = NULL;
+char *control = NULL;
 #include "support.c"
 
 int

@@ -1,13 +1,13 @@
 trigger:
 - master
-- release
+- release*
 
 pr:
   autoCancel: true
   branches:
     include:
     - master
-    - release
+    - release*
 
 resources:
   containers:

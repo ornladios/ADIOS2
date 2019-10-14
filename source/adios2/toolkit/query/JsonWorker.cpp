@@ -124,7 +124,7 @@ void JsonWorker::ParseJson()
     }
 
     auto ioO = jsonObj.find("io");
-    auto ioName = (*ioO)["name"];
+    std::string const ioName = (*ioO)["name"];
     if (m_SourceReader->m_IO.m_Name.compare(ioName) != 0)
         throw std::ios_base::failure("invalid query io. Expecting io name = " +
                                      m_SourceReader->m_IO.m_Name);

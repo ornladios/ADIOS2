@@ -14,7 +14,7 @@ endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/ADIOSFunctions.cmake)
 
-setup_version(2.4.0)
+setup_version(2.5.0)
 
 project(ADIOS2 VERSION ${ADIOS2_VERSION})
 if(POLICY CMP0074)
@@ -284,7 +284,7 @@ message("    Examples: ${ADIOS2_BUILD_EXAMPLES}")
 message("    Build Options:")
 
 foreach(opt IN LISTS ADIOS2_CONFIG_OPTS)
-  message_pad("      ${opt}" 15 label)
+  message_pad("      ${opt}" 16 label)
   if(${ADIOS2_HAVE_${opt}})
     message("${label}: ON")
   else()

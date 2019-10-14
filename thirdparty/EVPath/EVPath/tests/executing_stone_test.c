@@ -103,6 +103,7 @@ simple_handler(CManager cm, void *vevent, void *client_data, attr_list attrs)
 }
 
 char *transport = NULL;
+char *control = NULL;
 
 #include "support.c"
 int regression_master, regression;  /* not used in this test */

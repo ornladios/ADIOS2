@@ -5,7 +5,7 @@ Adaptable IO beyond files in Scientific Data Lifecycles
 Performant and usable tools for data management at scale are essential in an era where scientific breakthroughs are collaborative, multidisciplinary, and computational.
 ADIOS2 is an *adaptable*, *scalable*, and *unified* framework to aid scientific applications when data transfer volumes exceed the capabilities of traditional file I/O.
 
-.. image:: http://i65.tinypic.com/2h5k38w.png : alt: my-picture1
+.. image:: https://i.imgur.com/VLSvvjM.png : alt: my-picture1
 
 
 ADIOS2 provides

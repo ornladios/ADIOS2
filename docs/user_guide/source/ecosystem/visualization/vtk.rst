@@ -160,8 +160,7 @@ The resulting bpls output should contain the "vtk.xml" attribute and the variabl
 
 The result is that the generated BP file should be recognize by a branch of Paraview/VTK that must be built from source:
 
-.. image:: http://i66.tinypic.com/33krfh2.png : alt: my-picture2
-
+.. image:: https://i.imgur.com/ap3l9Z5.png : alt: my-picture2
 
 
 Similarly, unstructured grid (.vtu) support can be added with the limitations of using specific labels for the variable names setting the "connectivity", "vertices", and cell "types".
@@ -207,14 +206,14 @@ The resulting `bpls` output for unstructured grid data types:
  
 and resulting visualization in Paraview for different "cell" types:
 
-.. image:: http://i67.tinypic.com/sll8gl.png : alt: my-picture3
+.. image:: https://i.imgur.com/ke1xiNh.png : alt: my-picture3
 
 Build VTK and Paraview with ADIOS 2 Support
 -------------------------------------------
 
 .. note::
 
-   Currently the implementation for ADIOS 2 readers exist in VTK and Paraview branches. We expect this to be part of the VTK and Paraview release cycle with their upcoming releases. Users must build from source and point to these branches until formal merge into their master branches is done.
+   Currently the implementation for ADIOS 2 readers exist in VTK and Paraview nightly releases and master branches. We expect this to be part of the VTK and Paraview release cycle with their upcoming releases. Users must build from source and point to these branches until formal merge into their master branches is done.
 
 
 Paraview and its VTK dependency must be built with the following CMake options:
