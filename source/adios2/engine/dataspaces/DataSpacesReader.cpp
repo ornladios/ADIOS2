@@ -83,7 +83,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 
     MPI_Comm lock_comm = m_data.mpi_comm;
     dspaces_lock_on_read(meta_lk, &lock_comm);
-    
+
     int nVars = 0;
     if (!m_ProvideLatest)
     {
@@ -237,8 +237,8 @@ void DataSpacesReader::DoClose(const int transportIndex)
         !globals_adios_is_dataspaces_connected_from_both())
     {
         // fprintf(stderr, "Disconnecting reader via finalize \n");
-        MPI_Barrier(m_data.mpi_comm);
-        dspaces_finalize();
+        // MPI_Barrier(m_data.mpi_comm);
+        // dspaces_finalize();
     }
     globals_adios_set_dataspaces_disconnected_from_writer();
 }

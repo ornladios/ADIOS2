@@ -80,7 +80,8 @@ void DataSpacesReader::ReadDsData(Variable<T> &variable, T *data, int version)
             {
                 gdims_in[i] =
                     static_cast<uint64_t>(variable.m_Shape[ndims - i - 1]);
-                lb_in[i] = static_cast<uint64_t>(variable.m_Start[ndims - i - 1]);
+                lb_in[i] =
+                    static_cast<uint64_t>(variable.m_Start[ndims - i - 1]);
                 ub_in[i] =
                     static_cast<uint64_t>(variable.m_Start[ndims - i - 1] +
                                           variable.m_Count[ndims - i - 1] - 1);

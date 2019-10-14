@@ -65,7 +65,8 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
                 gdims_in[i] =
                     static_cast<uint64_t>(variable.m_Shape[ndims - i - 1]);
                 dims_vec.push_back(gdims_in[i]);
-                lb_in[i] = static_cast<uint64_t>(variable.m_Start[ndims - i - 1]);
+                lb_in[i] =
+                    static_cast<uint64_t>(variable.m_Start[ndims - i - 1]);
                 ub_in[i] =
                     static_cast<uint64_t>(variable.m_Start[ndims - i - 1] +
                                           variable.m_Count[ndims - i - 1] - 1);

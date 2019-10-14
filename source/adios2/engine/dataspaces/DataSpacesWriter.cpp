@@ -94,8 +94,8 @@ void DataSpacesWriter::DoClose(const int transportIndex)
         !globals_adios_is_dataspaces_connected_from_both())
     {
         // fprintf(stderr, "Disconnecting writer via finalize \n");
-        MPI_Barrier(m_data.mpi_comm);
-        dspaces_finalize();
+        // MPI_Barrier(m_data.mpi_comm);
+        // dspaces_finalize();
     }
     globals_adios_set_dataspaces_disconnected_from_writer();
 }
@@ -125,7 +125,7 @@ void DataSpacesWriter::WriteVarInfo()
     uint64_t *gdim_meta;
     uint64_t gdims[MAX_DS_NDIM], lb[MAX_DS_NDIM], ub[MAX_DS_NDIM];
     MPI_Comm_rank(m_data.mpi_comm, &rank);
-    
+
     if (rank == 0)
     {
 
