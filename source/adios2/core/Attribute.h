@@ -44,6 +44,11 @@ public:
     Attribute<T>(const std::string &name, const T &data);
 
     ~Attribute<T>() = default;
+
+    Params GetInfo() const noexcept;
+
+private:
+    Params DoGetInfo() const noexcept;
 };
 
 } // end namespace core

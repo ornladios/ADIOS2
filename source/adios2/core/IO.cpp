@@ -358,33 +358,11 @@ IO::GetAvailableAttributes(const std::string &variableName,
 {
     TAU_SCOPED_TIMER("IO::GetAvailableAttributes");
     std::map<std::string, Params> attributesInfo;
-    const std::string variablePrefix = variableName + separator;
 
-    for (const auto &attributePair : m_Attributes)
+    if (!variableName.empty())
     {
-        const std::string absoluteName(attributePair.first);
-        std::string name = absoluteName;
-        if (!variableName.empty())
-        {
-            // valid associated attribute
-            if (absoluteName.size() <= variablePrefix.size())
-            {
-                continue;
-            }
-
-            if (absoluteName.compare(0, variablePrefix.size(),
-                                     variablePrefix) == 0)
-            {
-                name = absoluteName.substr(variablePrefix.size());
-            }
-            else
-            {
-                continue;
-            }
-        }
-
-        const std::string type(attributePair.second.first);
-        attributesInfo[name]["Type"] = type;
+        auto itVariable = m_Variables.find(variableName);
+        const std::string type = InquireVariableType(itVariable);
 
         if (type == "compound")
         {
@@ -392,25 +370,35 @@ IO::GetAvailableAttributes(const std::string &variableName,
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        Attribute<T> &attribute = *InquireAttribute<T>(absoluteName);          \
-        attributesInfo[name]["Elements"] =                                     \
-            std::to_string(attribute.m_Elements);                              \
-                                                                               \
-        if (attribute.m_IsSingleValue)                                         \
-        {                                                                      \
-            attributesInfo[name]["Value"] =                                    \
-                helper::ValueToString(attribute.m_DataSingleValue);            \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            attributesInfo[name]["Value"] =                                    \
-                "{ " + helper::VectorToCSV(attribute.m_DataArray) + " }";      \
-        }                                                                      \
+        Variable<T> &variable =                                                \
+            GetVariableMap<T>().at(itVariable->second.second);                 \
+        attributesInfo = variable.GetAttributesInfo(*this, separator);         \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+        return attributesInfo;
+    }
+
+    // return all attributes if variable name is empty
+    for (const auto &attributePair : m_Attributes)
+    {
+        const std::string &name = attributePair.first;
+        const std::string type = attributePair.second.first;
+
+        if (type == "compound")
+        {
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Attribute<T> &attribute =                                              \
+            GetAttributeMap<T>().at(attributePair.second.second);              \
+        attributesInfo[name] = attribute.GetInfo();                            \
     }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
-
-    } // end for
+    }
     return attributesInfo;
 }
 
@@ -418,9 +406,15 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
 {
     TAU_SCOPED_TIMER("IO::other");
     auto itVariable = m_Variables.find(name);
+    return InquireVariableType(itVariable);
+}
+
+std::string
+IO::InquireVariableType(const DataMap::const_iterator itVariable) const noexcept
+{
     if (itVariable == m_Variables.end())
     {
-        return std::string();
+        return "";
     }
 
     const std::string type = itVariable->second.first;
@@ -438,7 +432,7 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
                 itVariable->second.second);                                    \
         if (!variable.IsValidStep(m_EngineStep + 1))                           \
         {                                                                      \
-            return std::string();                                              \
+            return "";                                                         \
         }                                                                      \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
@@ -459,7 +453,7 @@ std::string IO::InquireAttributeType(const std::string &name,
     auto itAttribute = m_Attributes.find(globalName);
     if (itAttribute == m_Attributes.end())
     {
-        return std::string();
+        return "";
     }
 
     return itAttribute->second.first;
@@ -802,12 +796,11 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
                                      const std::string hint)
 {
     TAU_SCOPED_TIMER("IO::other");
-    const auto &variablesData = GetVariablesDataMap();
-
-    for (const auto &variableData : variablesData)
+    for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
+         ++itVariable)
     {
-        const std::string name = variableData.first;
-        const std::string type = InquireVariableType(name);
+        const std::string &name = itVariable->first;
+        const std::string type = InquireVariableType(itVariable);
 
         if (type.empty())
         {
@@ -821,14 +814,54 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        Variable<T> *variable = InquireVariable<T>(name);                      \
-        variable->CheckRandomAccessConflict(hint);                             \
-        variable->ResetStepsSelection(zeroStart);                              \
-        variable->m_RandomAccess = false;                                      \
+        Variable<T> &variable =                                                \
+            GetVariableMap<T>().at(itVariable->second.second);                 \
+        variable.CheckRandomAccessConflict(hint);                              \
+        variable.ResetStepsSelection(zeroStart);                               \
+        variable.m_RandomAccess = false;                                       \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
+}
+
+void IO::SetPrefixedNames(const bool isStep) noexcept
+{
+    const std::set<std::string> attributes = helper::KeysToSet(m_Attributes);
+    const std::set<std::string> variables = helper::KeysToSet(m_Variables);
+
+    for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
+         ++itVariable)
+    {
+        const std::string &name = itVariable->first;
+        // if for each step (BP4), check if variable type is not empty (means
+        // variable exist in that step)
+        const std::string type =
+            isStep ? InquireVariableType(itVariable) : itVariable->second.first;
+
+        if (type.empty())
+        {
+            continue;
+        }
+
+        if (type == "compound")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> &variable =                                                \
+            GetVariableMap<T>().at(itVariable->second.second);                 \
+        variable.m_PrefixedVariables =                                         \
+            helper::PrefixMatches(variable.m_Name, variables);                 \
+        variable.m_PrefixedAttributes =                                        \
+            helper::PrefixMatches(variable.m_Name, attributes);                \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
+    m_IsPrefixedNames = true;
 }
 
 // PRIVATE

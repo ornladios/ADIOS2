@@ -206,6 +206,8 @@ void BP3Reader::InitBuffer()
 
     // fills IO with available Variables and Attributes
     m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, *this);
+    // caches attributes associated with variables
+    m_IO.SetPrefixedNames(false);
 }
 
 #define declare_type(T)                                                        \

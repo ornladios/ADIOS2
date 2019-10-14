@@ -16,7 +16,9 @@
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
+#include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 
@@ -298,6 +300,60 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
     {
         ++m_StepsStart;
     }
+}
+
+std::map<std::string, Params>
+VariableBase::GetAttributesInfo(core::IO &io, const std::string separator) const
+    noexcept
+{
+    auto lf_GetAttributeInfo =
+        [](const std::string &prefix, const std::string &attributeName,
+           core::IO &io, std::map<std::string, Params> &attributesInfo) {
+            if (attributeName.compare(0, prefix.size(), prefix) != 0)
+            {
+                return;
+            }
+
+            auto itAttribute = io.m_Attributes.find(attributeName);
+            const std::string type = itAttribute->second.first;
+
+            if (type == "compound")
+            {
+            }
+#define declare_template_instantiation(T)                                      \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Attribute<T> &attribute =                                              \
+            io.GetAttributeMap<T>().at(itAttribute->second.second);            \
+        attributesInfo[attributeName] = attribute.GetInfo();                   \
+    }
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(
+                declare_template_instantiation)
+#undef declare_template_instantiation
+        };
+
+    // BODY OF FUNCTION STARTS HERE
+    std::map<std::string, Params> attributesInfo;
+    const std::string prefix = m_Name + separator;
+
+    if (io.m_IsPrefixedNames)
+    {
+        // get prefixed attributes from stored attributes
+        for (const std::string &attributeName : m_PrefixedAttributes)
+        {
+            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo);
+        }
+    }
+    else
+    { // get prefixed attributes on-the-fly (expensive)
+        for (const auto &attributePair : io.m_Attributes)
+        {
+            const std::string &attributeName = attributePair.first;
+            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo);
+        }
+    }
+
+    return attributesInfo;
 }
 
 // PRIVATE
