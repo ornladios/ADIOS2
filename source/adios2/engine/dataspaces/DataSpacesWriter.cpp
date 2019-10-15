@@ -90,13 +90,6 @@ void DataSpacesWriter::DoClose(const int transportIndex)
     dspaces_lock_on_write(meta_lk, &(m_data.mpi_comm));
     dspaces_unlock_on_write(meta_lk, &(m_data.mpi_comm));
 
-    if (globals_adios_is_dataspaces_connected_from_writer() &&
-        !globals_adios_is_dataspaces_connected_from_both())
-    {
-        // fprintf(stderr, "Disconnecting writer via finalize \n");
-        // MPI_Barrier(m_data.mpi_comm);
-        // dspaces_finalize();
-    }
     globals_adios_set_dataspaces_disconnected_from_writer();
 }
 

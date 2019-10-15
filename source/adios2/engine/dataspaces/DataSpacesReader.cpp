@@ -233,14 +233,7 @@ void DataSpacesReader::EndStep()
 void DataSpacesReader::DoClose(const int transportIndex)
 {
 
-    if (globals_adios_is_dataspaces_connected_from_reader() &&
-        !globals_adios_is_dataspaces_connected_from_both())
-    {
-        // fprintf(stderr, "Disconnecting reader via finalize \n");
-        // MPI_Barrier(m_data.mpi_comm);
-        // dspaces_finalize();
-    }
-    globals_adios_set_dataspaces_disconnected_from_writer();
+    globals_adios_set_dataspaces_disconnected_from_reader();
 }
 
 void DataSpacesReader::Flush(const int transportIndex) {}
