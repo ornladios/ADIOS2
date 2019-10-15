@@ -33,19 +33,19 @@ jobs:
     matrix:
       el7:
         containerResource: el7
-      el7-gnu8-ohpc:
+      el7_gnu8_ohpc:
         containerResource: el7-gnu8-ohpc
-      el7-gnu8-openmpi-ohpc:
+      el7_gnu8_openmpi_ohpc:
         containerResource: el7-gnu8-openmpi-ohpc
-      el7-gnu8-openmpi-ohpc-static:
+      el7_gnu8_openmpi_ohpc_static:
         containerResource: el7-gnu8-openmpi-ohpc
-      el7-intel18-ohpc:
+      el7_intel18_ohpc:
         containerResource: el7-intel18-ohpc
-      el7-intel18-openmpi-ohpc:
+      el7_intel18_openmpi_ohpc:
         containerResource: el7-intel18-openmpi-ohpc
-      suse-pgi:
+      suse_pgi:
         containerResource: suse-pgi
-      suse-pgi-openmpi:
+      suse_pgi_openmpi:
         containerResource: suse-pgi-openmpi
   container: $[ variables['containerResource'] ]
   steps:
