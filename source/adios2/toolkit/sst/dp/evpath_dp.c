@@ -501,6 +501,7 @@ static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream,
                 RS_Stream->QueuedTimesteps = Entry->Next;
             }
             /* free item */
+            printf("DP returning buffer %p\n", ItemToFree->Data);
             CMreturn_buffer(cm, ItemToFree->Data);
 
             free(ItemToFree);
@@ -529,6 +530,7 @@ static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
         PreloadMsg->WriterRank, PreloadMsg->Timestep);
 
     /* arrange for this message data to stay around */
+    printf("DP taking buffere %p\n", msg_v);
     CMtake_buffer(cm, msg_v);
 
     Entry->Timestep = PreloadMsg->Timestep;

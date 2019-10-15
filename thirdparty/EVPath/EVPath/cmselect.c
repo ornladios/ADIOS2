@@ -78,6 +78,8 @@ typedef struct func_list_item {
     void *arg2;
 } FunctionListElement;
 
+typedef struct _periodic_task *periodic_task_handle;
+
 typedef struct select_data {
     thr_thread_t server_thread;
 

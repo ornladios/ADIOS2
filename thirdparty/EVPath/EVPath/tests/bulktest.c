@@ -462,6 +462,7 @@ main(int argc, char **argv)
 	    } else {
 		data->condition = -1;
 	    }
+	    if (i == (msg_limit/2)) exit(0);
 	    EVsubmit(source_handle, data, attrs);
 	    if (request_response) CMCondition_wait(cm, data->condition);
 	}

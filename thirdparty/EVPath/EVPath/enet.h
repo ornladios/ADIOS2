@@ -2411,6 +2411,7 @@ extern "C" {
         if (peerID == ENET_PROTOCOL_MAXIMUM_PEER_ID) {
             peer = NULL;
         } else if (peerID >= host->peerCount) {
+            printf("PEER ID EXCEEDS PEER COUNT!   SHOULD NEVER HAPPEN!!!\n");
             return 0;
         } else {
             peer = &host->peers[peerID];

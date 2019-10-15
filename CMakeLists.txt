@@ -108,6 +108,13 @@ cmake_dependent_option(BUILD_SHARED_LIBS
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
 
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "^(AppleClang|Clang|GNU)")
+    set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -O2 -Wfatal-errors -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
+    set(CMAKE_CFLAGS_DEBUG "-Wall -g -O2 -Wfatal-errors -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
+  endif()
+endif()
+
 adios_option(Blosc     "Enable support for Blosc transforms" AUTO)
 adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)

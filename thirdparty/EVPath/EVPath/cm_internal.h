@@ -368,7 +368,6 @@ internal_cm_network_submit(CManager cm, CMbuffer cm_data_buf,
 			   attr_list attrs, CMConnection conn, 
 			   void *buffer, int length, int stone_id);
 #define CMcreate_attr_list(cm) CMint_create_attr_list(cm, __FILE__, __LINE__)
-#define INT_CMfree2(cm, p) CMint_cmfree(cm, p, __FILE__, __LINE__)
 #define INT_CMfree_attr_list(cm, l) CMint_free_attr_list(cm, l, __FILE__, __LINE__)
 #define CMadd_ref_attr_list(cm, l) CMint_add_ref_attr_list(cm, l, __FILE__, __LINE__)
 #define CMattr_copy_list(cm, l) CMint_attr_copy_list(cm, l, __FILE__, __LINE__)
@@ -377,7 +376,6 @@ internal_cm_network_submit(CManager cm, CMbuffer cm_data_buf,
 
 extern attr_list CMint_create_attr_list(CManager cm, char *file, int line);
 extern void CMint_free_attr_list(CManager cm, attr_list l, char *file, int line);
-extern void CMint_cmfree(CManager cm, void *p, char *file, int line);
 extern attr_list CMint_add_ref_attr_list(CManager cm, attr_list l, char *file, int line);
 extern attr_list CMint_attr_copy_list(CManager cm, attr_list l, char *file, int line);
 extern void CMint_attr_merge_lists(CManager cm, attr_list l1, attr_list l2, 
@@ -541,7 +539,7 @@ extern void INT_CMTrace_file_id(int ID);
 #else
 #define TRACE_TIME_DECL	struct timeval tv
 #define TRACE_TIME_GET gettimeofday(&tv, NULL)
-#define TRACE_TIME_PRINTDETAILS "%lld.%.6ld - ", (long long)tv.tv_sec, tv.tv_usec
+#define TRACE_TIME_PRINTDETAILS "%lld.%.6ld - ", (long long)tv.tv_sec, (long)tv.tv_usec
 #endif
 #define CMtrace_out(cm, trace_type, ...) {TRACE_TIME_DECL ; (CMtrace_on(cm,trace_type) ? (CMtrace_PID ? fprintf(cm->CMTrace_file, "P%lxT%lx - ", (long) getpid(), (long)thr_thread_self()) : 0) , CMtrace_timing? TRACE_TIME_GET,fprintf(cm->CMTrace_file, TRACE_TIME_PRINTDETAILS):0, fprintf(cm->CMTrace_file, __VA_ARGS__) : 0);fflush(cm->CMTrace_file);}
 extern void CMdo_performance_response(CMConnection conn, long length, int func,

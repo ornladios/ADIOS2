@@ -9,8 +9,8 @@
 /* Define to 1 if you have the enet header and libraries */
 #cmakedefine ENET_FOUND
 
-/* Define to 1 if you have the zpl-enet header and libraries */
-#cmakedefine ZPL_ENET_FOUND
+/* Define to 1 to use the embedded ZPL enet header */
+#cmakedefine USE_ZPL_ENET
 
 /* Define to 1 if you have the udt4 header and libraries */
 #cmakedefine UDT4_FOUND
@@ -92,6 +92,9 @@
 
 /* Define to 1 if you have the `sysinfo' function. */
 #cmakedefine HAVE_SYSINFO
+
+/* Define to 1 if you have the <sys/epoll.h> header file. */
+#cmakedefine HAVE_SYS_EPOLL_H
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 #cmakedefine HAVE_SYS_SELECT_H

@@ -829,28 +829,28 @@ CManager_free(CManager cm)
     int i;
     CMbuffer list = NULL;
 
-    INT_CMfree2(cm, cm->transports);
+    INT_CMfree(cm->transports);
     cm->transports = NULL;
 /*    free_FFSContext(cm->FFScontext);*/
     cm->FFScontext = NULL;
-    INT_CMfree2(cm, cm->in_formats);
+    INT_CMfree(cm->in_formats);
 
     for (i=0 ; i < cm->reg_format_count; i++) {
-	INT_CMfree2(cm, cm->reg_formats[i]->format_name);
-	INT_CMfree2(cm, cm->reg_formats[i]);
+	INT_CMfree(cm->reg_formats[i]->format_name);
+	INT_CMfree(cm->reg_formats[i]);
     }
-    INT_CMfree2(cm, cm->reg_formats);
+    INT_CMfree(cm->reg_formats);
 
     /*
      *  Applications are expected to free the user contexts that 
      *  they request.  If they do this, there will be no user formats to
      *  free at this point.  (Doing so might result in double freeing.)
      */
-    INT_CMfree2(cm, cm->reg_user_formats);
+    INT_CMfree(cm->reg_user_formats);
 
-    INT_CMfree2(cm, cm->pbio_requests);
+    INT_CMfree(cm->pbio_requests);
 
-    INT_CMfree2(cm, cm->connections);
+    INT_CMfree(cm->connections);
 
     thr_mutex_free(cm->exchange_lock);
 
@@ -862,21 +862,21 @@ CManager_free(CManager cm)
 	    INT_CMfree_attr_list(cm, cm->contact_lists[i]);
 	    i++;
 	}
-	INT_CMfree2(cm, cm->contact_lists);
+	INT_CMfree(cm->contact_lists);
     }
     list = cm->cm_buffer_list;
     i=0;
     while (list != NULL) {
 	CMbuffer next = list->next;
 	CMtrace_out(cm, CMBufferVerbose, "Final buffer disposition buf %d, %p, size %ld, ref_count %d\n", i++, list, list->size, list->ref_count);
-//	INT_CMfree2(cm, list->buffer);
-//	INT_CMfree2(cm, list);
+	INT_CMfree(list->buffer);
+	INT_CMfree(list);
 	list = next;
     }
     cm->cm_buffer_list = NULL;
-    if (cm->shutdown_functions) INT_CMfree2(cm, cm->shutdown_functions);
-    INT_CMfree2(cm, cm->avail);
-    INT_CMfree2(cm, cm);
+    if (cm->shutdown_functions) INT_CMfree(cm->shutdown_functions);
+    INT_CMfree(cm->avail);
+     INT_CMfree(cm);
  }
 
  extern void
@@ -885,15 +885,11 @@ CManager_free(CManager cm)
      cm->perf_upcall = upcall;
  }
 
-extern int CMtrace_val[];
-
  extern void
  INT_CManager_close(CManager cm)
  {
      CMControlList cl = cm->control_list;
 
-     CMtrace_val[CMFreeVerbose] = 1;
-     
      CMtrace_out(cm, CMFreeVerbose, "CManager %p closing, ref count %d\n", cm,
 		 cm->reference_count);
 
@@ -943,7 +939,7 @@ extern int CMtrace_val[];
 		     shutdown_functions[i].func = NULL;
 		 }
 	     }
-	     INT_CMfree2(cm, shutdown_functions);
+	     INT_CMfree(shutdown_functions);
 	 }
 	 CMtrace_out(cm, CMFreeVerbose, "Freeing CManager %p\n", cm);
 	 cl->free_reference_count = 1;
@@ -1266,15 +1262,15 @@ extern int CMtrace_val[];
 	 INT_CMConnection_failed(conn);
      }
      CMtrace_out(conn->cm, CMFreeVerbose, "CM - Dereference connection %p FREEING\n", (void*)conn);
-     if (conn->write_callbacks) INT_CMfree2(conn->cm, conn->write_callbacks);
-     INT_CMfree2(conn->cm, conn->preloaded_formats);
+     if (conn->write_callbacks) INT_CMfree(conn->write_callbacks);
+     INT_CMfree(conn->preloaded_formats);
      INT_CMfree_attr_list(conn->cm, conn->attrs);
      free_FFSBuffer(conn->io_out_buffer);
      free_AttrBuffer(conn->attr_encode_buffer);
  #ifdef EV_INTERNAL_H
      INT_EVforget_connection(conn->cm, conn);
  #endif
-     INT_CMfree2(conn->cm, conn);
+     INT_CMfree(conn);
  }
 
 void
@@ -1309,7 +1305,7 @@ INT_CMConnection_failed(CMConnection conn)
 		list->close_handler(conn->cm, conn, list->close_client_data);
 		CManager_lock(conn->cm);
 	    }
-	    INT_CMfree2(conn->cm, list);
+	    INT_CMfree(list);
 	    list = next;
 	}
     }
@@ -1396,11 +1392,11 @@ INT_CMConnection_failed(CMConnection conn)
 	     fprintf(cm->CMTrace_file, "CMControlList_free freeing %lx\n", (long)cl);
 	 }
 	 if (cl->polling_function_list != NULL) {
-	     INT_CMfree2(cm, cl->polling_function_list);
+	     INT_CMfree(cl->polling_function_list);
 	 }
 	 thr_mutex_free(cl->list_mutex);
 	 internal_condition_free(cl);
-	 INT_CMfree2(cm, cl);
+	 INT_CMfree(cl);
      }
  }
 
@@ -1506,7 +1502,7 @@ INT_CMget_ip_config_diagnostics(CManager cm)
 	     CMtrace_out(conn->cm, CMConnectionVerbose, 
 			 "CM - Establish connection %p - %s\n", (void*)conn,
 			 attr_str);
-	     INT_CMfree2(cm, attr_str);
+	     INT_CMfree(attr_str);
 	 }
 	 if (conn->use_read_thread) {
 	     INT_CMstart_read_thread(conn);
@@ -3261,7 +3257,7 @@ INT_CMget_ip_config_diagnostics(CManager cm)
 
 	 actual = INT_CMwrite_raw(conn, tmp_vec, vec, vec_count, byte_count, attrs, 0);
 	 if (tmp_vec != &static_vec[0]) {
-	     INT_CMfree2(cm, tmp_vec);
+	     INT_CMfree(tmp_vec);
 	 }
 	 if (actual == 0) {
 	     /* fail */
@@ -3423,7 +3419,7 @@ INT_CMget_ip_config_diagnostics(CManager cm)
 	 actual = INT_CMwrite_raw(conn, tmp_vec, vec, vec_count, byte_count, attrs,
 				     vec == &preencoded_vec[0]);
 	 if (tmp_vec != &static_vec[0]) {
-	     INT_CMfree2(cm, tmp_vec);
+	     INT_CMfree(tmp_vec);
 	 }
 	 if (actual <= 0) {
 	     /* fail */
@@ -3753,7 +3749,7 @@ CM_init_select(CMControlList cl, CManager cm)
      int cond = INT_CMCondition_get(cm, NULL);
      CMTaskHandle handle = 
 	 INT_CMadd_delayed_task(cm, sec, 0, wake_function, (void*)(long)cond);
-     INT_CMfree2(cm, handle);
+     INT_CMfree(handle);
      INT_CMCondition_wait(cm, cond);
  }
 
@@ -3763,7 +3759,7 @@ CM_init_select(CMControlList cl, CManager cm)
      int cond = INT_CMCondition_get(cm, NULL);
      CMTaskHandle handle = 
 	 INT_CMadd_delayed_task(cm, 0, usec, wake_function, (void*)(long)cond);
-     INT_CMfree2(cm, handle);
+     INT_CMfree(handle);
      INT_CMCondition_wait(cm, cond);
  }
 

@@ -672,6 +672,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
                        "ignoring in PRIOR DISCARD\n",
                        tsm->Timestep);
         }
+        printf("Returning timestep message %p\n", tsm);
         CMreturn_buffer(Stream->CPInfo->cm, tsm);
         return;
     }
@@ -760,6 +761,7 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
                 Msg->Timestep);
         }
         /* arrange for this message data to stay around */
+        printf("Taking metadata message %p\n", Msg);
         CMtake_buffer(cm, Msg);
 
         printf("queueing timestep\n");
@@ -771,6 +773,7 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
         /* I must be rank 0 and only I got this, I'll need to distribute it to
          * everyone */
         /* arrange for this message data to stay around */
+        printf("Taking metadata message %p\n", Msg);
         CMtake_buffer(cm, Msg);
         printf("queueing timestep\n");
         queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
@@ -798,6 +801,7 @@ void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
     //    }
 
     /* arrange for this message data to stay around */
+    printf("Taking writer response message %p\n", Msg);
     CMtake_buffer(cm, Msg);
 
     /* attach the message to the CMCondition so it an be retrieved by the main
@@ -1029,6 +1033,7 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
             sendOneToEachWriterRank(Stream,
                                     Stream->CPInfo->ReleaseTimestepFormat, &Msg,
                                     &Msg.WSR_Stream);
+            printf("returning metadata message %p\n", This->MetadataMsg);
             CMreturn_buffer(Stream->CPInfo->cm, This->MetadataMsg);
             if (Last == NULL)
             {
@@ -1059,6 +1064,7 @@ static void FreeTimestep(SstStream Stream, long Timestep)
     if (Stream->Timesteps->MetadataMsg->Timestep == Timestep)
     {
         Stream->Timesteps = List->Next;
+        printf("Returning metadata message %p\n", List->MetadataMsg);
         CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
         free(List);
     }
@@ -1071,6 +1077,7 @@ static void FreeTimestep(SstStream Stream, long Timestep)
             if (List->MetadataMsg->Timestep == Timestep)
             {
                 last->Next = List->Next;
+                printf("Returning metadata message %p\n", List->MetadataMsg);
                 CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
                 free(List);
                 break;
@@ -1211,6 +1218,7 @@ static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
             /* add the writer Stream identifier to each outgoing
              * message */
             *WS_StreamPtr = s->ConnectionsToWriter[peer].RemoteStreamID;
+            CP_verbose(s, "Sending Message to writer rank %d (%p)\n", peer, *WS_StreamPtr);
             if (CMwrite(conn, f, Msg) != 1)
             {
                 CP_verbose(s, "Message failed to send to writer %d (%p)\n",

@@ -224,15 +224,6 @@ CMint_free_attr_list(CManager cm, attr_list l, char *file, int line)
     free_attr_list(l);
 }
 
-extern void 
-CMint_cmfree(CManager cm, void *p, char *file, int line)
-{
-    (void)cm;
-    CMtrace_out(cm, CMFreeVerbose, "Freeing item %p at %s:%d\n", 
-		p, file, line);
-    free(p);
-}
-
 
 extern attr_list 
 CMint_add_ref_attr_list(CManager cm, attr_list l, char *file, int line)
