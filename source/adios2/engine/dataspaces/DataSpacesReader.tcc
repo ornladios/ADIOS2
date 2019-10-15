@@ -65,28 +65,38 @@ void DataSpacesReader::ReadDsData(Variable<T> &variable, T *data, int version)
                     i,j   --> j, i     = lb[1], lb[0]
                     i     --> i        = lb[0]
         */
-
-    if (isOrderC)
+    if (variable.m_Shape.size() == 0)
     {
-        for (int i = 0; i < ndims; i++)
-        {
-            gdims_in[i] =
-                static_cast<uint64_t>(variable.m_Shape[ndims - i - 1]);
-            lb_in[i] = static_cast<uint64_t>(variable.m_Start[ndims - i - 1]);
-            ub_in[i] =
-                static_cast<uint64_t>(variable.m_Start[ndims - i - 1] +
-                                      variable.m_Count[ndims - i - 1] - 1);
-        }
+        gdims_in[0] = dspaces_get_num_space_server();
+        lb_in[0] = 0;
+        ub_in[0] = 0;
+        ndims = 1;
     }
     else
     {
-
-        for (int i = 0; i < ndims; i++)
+        if (isOrderC)
         {
-            gdims_in[i] = static_cast<uint64_t>(variable.m_Shape[i]);
-            lb_in[i] = static_cast<uint64_t>(variable.m_Start[i]);
-            ub_in[i] = static_cast<uint64_t>(variable.m_Start[i] +
-                                             variable.m_Count[i] - 1);
+            for (int i = 0; i < ndims; i++)
+            {
+                gdims_in[i] =
+                    static_cast<uint64_t>(variable.m_Shape[ndims - i - 1]);
+                lb_in[i] =
+                    static_cast<uint64_t>(variable.m_Start[ndims - i - 1]);
+                ub_in[i] =
+                    static_cast<uint64_t>(variable.m_Start[ndims - i - 1] +
+                                          variable.m_Count[ndims - i - 1] - 1);
+            }
+        }
+        else
+        {
+
+            for (int i = 0; i < ndims; i++)
+            {
+                gdims_in[i] = static_cast<uint64_t>(variable.m_Shape[i]);
+                lb_in[i] = static_cast<uint64_t>(variable.m_Start[i]);
+                ub_in[i] = static_cast<uint64_t>(variable.m_Start[i] +
+                                                 variable.m_Count[i] - 1);
+            }
         }
     }
 
@@ -99,12 +109,10 @@ void DataSpacesReader::ReadDsData(Variable<T> &variable, T *data, int version)
     char *cstr = new char[l_Name.length() + 1];
     strcpy(cstr, l_Name.c_str());
 
-    dspaces_lock_on_read(cstr, &m_data.mpi_comm);
-
     dspaces_define_gdim(var_str, ndims, gdims_in);
     dspaces_get(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in,
                 (void *)data);
-    dspaces_unlock_on_read(cstr, &m_data.mpi_comm);
+
     delete[] cstr;
     delete[] var_str;
 }

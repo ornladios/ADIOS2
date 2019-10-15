@@ -67,10 +67,16 @@ size_t DataSpacesWriter::CurrentStep() const { return m_CurrentStep; }
 
 void DataSpacesWriter::EndStep()
 {
-    int rank;
-    MPI_Comm_rank(m_data.mpi_comm, &rank);
+    std::string local_file_var;
+
+    local_file_var = f_Name + std::to_string(m_CurrentStep);
+    char *meta_lk = new char[local_file_var.length() + 1];
+    strcpy(meta_lk, local_file_var.c_str());
+    MPI_Comm lock_comm = m_data.mpi_comm;
+
+    dspaces_lock_on_write(meta_lk, &lock_comm);
     WriteVarInfo();
-    MPI_Barrier(m_data.mpi_comm);
+    dspaces_unlock_on_write(meta_lk, &lock_comm);
 }
 void DataSpacesWriter::Flush(const int transportIndex) {}
 
@@ -85,13 +91,6 @@ void DataSpacesWriter::DoClose(const int transportIndex)
     dspaces_lock_on_write(meta_lk, &(m_data.mpi_comm));
     dspaces_unlock_on_write(meta_lk, &(m_data.mpi_comm));
 
-    if (globals_adios_is_dataspaces_connected_from_writer() &&
-        !globals_adios_is_dataspaces_connected_from_both())
-    {
-        // fprintf(stderr, "Disconnecting writer via finalize \n");
-        MPI_Barrier(m_data.mpi_comm);
-        dspaces_finalize();
-    }
     globals_adios_set_dataspaces_disconnected_from_writer();
 }
 
@@ -119,12 +118,7 @@ void DataSpacesWriter::WriteVarInfo()
     char *local_str, *buffer, *name_string;
     uint64_t *gdim_meta;
     uint64_t gdims[MAX_DS_NDIM], lb[MAX_DS_NDIM], ub[MAX_DS_NDIM];
-
-    local_file_var = f_Name + std::to_string(m_CurrentStep);
-    char *meta_lk = new char[local_file_var.length() + 1];
-    strcpy(meta_lk, local_file_var.c_str());
     MPI_Comm_rank(m_data.mpi_comm, &rank);
-    MPI_Comm lock_comm = MPI_COMM_SELF;
 
     if (rank == 0)
     {
@@ -181,13 +175,11 @@ void DataSpacesWriter::WriteVarInfo()
         lb[0] = 0;
         ub[0] = buf_len - 1;
         gdims[0] = (ub[0] - lb[0] + 1) * dspaces_get_num_space_server();
-        dspaces_lock_on_write(meta_lk, &lock_comm);
         dspaces_define_gdim(local_str, ndim, gdims);
 
         dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, buffer);
 
         dspaces_put_sync(); // wait on previous put to finish
-        dspaces_unlock_on_write(meta_lk, &lock_comm);
         delete[] local_str;
         free(dim_meta);
         free(elemSize_meta);

@@ -36,7 +36,6 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
     unsigned int version;
     version = m_CurrentStep;
     int ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
-    ndim_vector.push_back(ndims);
     bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
     /* Order of dimensions: in DataSpaces: fast --> slow --> slowest
            For example:
@@ -47,30 +46,43 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
                     i,j   --> j, i     = lb[1], lb[0]
                     i     --> i        = lb[0]
         */
-
-    if (isOrderC)
+    if (variable.m_SingleValue)
     {
-        for (int i = 0; i < ndims; i++)
-        {
-            gdims_in[i] =
-                static_cast<uint64_t>(variable.m_Shape[ndims - i - 1]);
-            dims_vec.push_back(gdims_in[i]);
-            lb_in[i] = static_cast<uint64_t>(variable.m_Start[ndims - i - 1]);
-            ub_in[i] =
-                static_cast<uint64_t>(variable.m_Start[ndims - i - 1] +
-                                      variable.m_Count[ndims - i - 1] - 1);
-        }
+        gdims_in[0] = dspaces_get_num_space_server();
+        lb_in[0] = 0;
+        ub_in[0] = 0;
+        ndims = 1;
+        dims_vec.push_back(0);
+        ndim_vector.push_back(0);
     }
     else
     {
-
-        for (int i = 0; i < ndims; i++)
+        ndim_vector.push_back(ndims);
+        if (isOrderC)
         {
-            gdims_in[i] = static_cast<uint64_t>(variable.m_Shape[i]);
-            dims_vec.push_back(gdims_in[i]);
-            lb_in[i] = static_cast<uint64_t>(variable.m_Start[i]);
-            ub_in[i] = static_cast<uint64_t>(variable.m_Start[i] +
-                                             variable.m_Count[i] - 1);
+            for (int i = 0; i < ndims; i++)
+            {
+                gdims_in[i] =
+                    static_cast<uint64_t>(variable.m_Shape[ndims - i - 1]);
+                dims_vec.push_back(gdims_in[i]);
+                lb_in[i] =
+                    static_cast<uint64_t>(variable.m_Start[ndims - i - 1]);
+                ub_in[i] =
+                    static_cast<uint64_t>(variable.m_Start[ndims - i - 1] +
+                                          variable.m_Count[ndims - i - 1] - 1);
+            }
+        }
+        else
+        {
+
+            for (int i = 0; i < ndims; i++)
+            {
+                gdims_in[i] = static_cast<uint64_t>(variable.m_Shape[i]);
+                dims_vec.push_back(gdims_in[i]);
+                lb_in[i] = static_cast<uint64_t>(variable.m_Start[i]);
+                ub_in[i] = static_cast<uint64_t>(variable.m_Start[i] +
+                                                 variable.m_Count[i] - 1);
+            }
         }
     }
     gdims_vector.push_back(dims_vec);
@@ -98,12 +110,11 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
     char *cstr = new char[l_Name.length() + 1];
     strcpy(cstr, l_Name.c_str());
 
-    dspaces_lock_on_write(cstr, &m_data.mpi_comm);
     dspaces_define_gdim(var_str, ndims, gdims_in);
     dspaces_put(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in,
                 values);
     dspaces_put_sync();
-    dspaces_unlock_on_write(cstr, &m_data.mpi_comm);
+    dspaces_put_sync();
     delete[] cstr;
     delete[] var_str;
 }
