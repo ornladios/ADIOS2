@@ -37,6 +37,8 @@ jobs:
         containerResource: el7-gnu8-ohpc
       el7-gnu8-openmpi-ohpc:
         containerResource: el7-gnu8-openmpi-ohpc
+      el7-gnu8-openmpi-ohpc-static:
+        containerResource: el7-gnu8-openmpi-ohpc
       el7-intel18-ohpc:
         containerResource: el7-intel18-ohpc
       el7-intel18-openmpi-ohpc:
