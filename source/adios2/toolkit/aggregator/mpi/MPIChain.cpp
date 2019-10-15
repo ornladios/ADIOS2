@@ -9,8 +9,6 @@
  */
 #include "MPIChain.h"
 
-#include "adios2/common/ADIOSMPI.h"
-
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
 
 namespace adios2

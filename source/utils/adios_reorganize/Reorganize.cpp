@@ -24,13 +24,19 @@
 #include <iostream>
 #include <string>
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosString.h"
+
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/helper/adiosCommMPI.h"
+#else
+#include "adios2/helper/adiosCommDummy.h"
+#endif
 
 // C headers
 #include <cerrno>
@@ -44,9 +50,16 @@ namespace utils
 Reorganize::Reorganize(int argc, char *argv[])
 : Utils("adios_reorganize", argc, argv)
 {
-    MPI_Comm_split(MPI_COMM_WORLD, m_MPISplitColor, rank, &comm);
-    MPI_Comm_rank(comm, &rank);
-    MPI_Comm_size(comm, &numproc);
+#ifdef ADIOS2_HAVE_MPI
+    {
+        auto commWorld = helper::CommFromMPI(MPI_COMM_WORLD);
+        m_Comm = commWorld.Split(m_CommSplitColor, 0);
+    }
+#else
+    m_Comm = helper::CommDummy();
+#endif
+    m_Rank = m_Comm.Rank();
+    m_Size = m_Comm.Size();
 
     if (argc < 5)
     {
@@ -92,14 +105,14 @@ Reorganize::Reorganize(int argc, char *argv[])
         prod *= decomp_values[i];
     }
 
-    if (prod > numproc)
+    if (prod > m_Size)
     {
         print0("ERROR: Product of decomposition numbers %d > number of "
                "processes %d\n",
-               prod, numproc);
+               prod, m_Size);
         std::string errmsg("ERROR: The product of decomposition numbers " +
                            std::to_string(prod) + " > number of processes " +
-                           std::to_string(numproc) + "\n");
+                           std::to_string(m_Size) + "\n");
         PrintUsage();
         throw std::invalid_argument(errmsg);
     }
@@ -118,11 +131,7 @@ void Reorganize::Run()
     print0("Write method            = ", wmethodname);
     print0("Write method parameters = ", wmethodparam_str);
 
-#ifdef ADIOS2_HAVE_MPI
-    core::ADIOS adios(comm, true, "C++");
-#else
-    core::ADIOS adios(true, "C++");
-#endif
+    core::ADIOS adios(m_Comm.Duplicate(), true, "C++");
     core::IO &io = adios.DeclareIO("group");
 
     print0("Waiting to open stream ", infilename, "...");
@@ -145,7 +154,7 @@ void Reorganize::Run()
             rStream.BeginStep(adios2::StepMode::Read, 10.0);
         if (status == adios2::StepStatus::NotReady)
         {
-            if (!rank)
+            if (!m_Rank)
             {
                 std::cout << " No new steps arrived in a while " << std::endl;
             }
@@ -161,7 +170,7 @@ void Reorganize::Run()
         if (rStream.CurrentStep() != static_cast<size_t>(curr_step + 1))
         {
             // we missed some steps
-            std::cout << "rank " << rank << " WARNING: steps " << curr_step
+            std::cout << "rank " << m_Rank << " WARNING: steps " << curr_step
                       << ".." << rStream.CurrentStep() - 1
                       << "were missed when advancing." << std::endl;
         }
@@ -195,7 +204,7 @@ void Reorganize::Run()
 template <typename Arg, typename... Args>
 void Reorganize::osprint0(std::ostream &out, Arg &&arg, Args &&... args)
 {
-    if (!rank)
+    if (!m_Rank)
     {
         out << std::forward<Arg>(arg);
         using expander = int[];
@@ -207,7 +216,7 @@ void Reorganize::osprint0(std::ostream &out, Arg &&arg, Args &&... args)
 template <typename Arg, typename... Args>
 void Reorganize::print0(Arg &&arg, Args &&... args)
 {
-    if (!rank)
+    if (!m_Rank)
     {
         std::cout << std::forward<Arg>(arg);
         using expander = int[];
@@ -447,13 +456,13 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
 
         if (variable == nullptr)
         {
-            std::cerr << "rank " << rank << ": ERROR: Variable " << name
+            std::cerr << "rank " << m_Rank << ": ERROR: Variable " << name
                       << " inquiry failed" << std::endl;
             return 1;
         }
 
         // print variable type and dimensions
-        if (!rank)
+        if (!m_Rank)
         {
             std::cout << "    " << type << " " << name;
             if (variable->GetShape().size() > 0)
@@ -473,7 +482,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
 
         // determine subset we will write
         size_t sum_count =
-            Decompose(numproc, rank, varinfo[varidx], decomp_values);
+            Decompose(m_Size, m_Rank, varinfo[varidx], decomp_values);
         varinfo[varidx].writesize = sum_count * variable->m_ElementSize;
 
         if (varinfo[varidx].writesize != 0)
@@ -490,7 +499,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
         write_total + variables.size() * 200 + attributes.size() * 32 + 1024;
     if (bufsize > max_write_buffer_size)
     {
-        std::cerr << "ERROR: rank " << rank
+        std::cerr << "ERROR: rank " << m_Rank
                   << ": write buffer size needs to hold about " << bufsize
                   << "bytes but max is set to " << max_write_buffer_size
                   << std::endl;
@@ -499,7 +508,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
 
     if (bufsize > max_read_buffer_size)
     {
-        std::cerr << "ERROR: rank " << rank
+        std::cerr << "ERROR: rank " << m_Rank
                   << ": read buffer size needs to hold at least " << bufsize
                   << "bytes but max is set to " << max_read_buffer_size
                   << std::endl;
@@ -518,7 +527,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
     if (nvars != varinfo.size())
     {
         std::cerr
-            << "ERROR rank " << rank
+            << "ERROR rank " << m_Rank
             << ": Invalid program state, number "
                "of variables ("
             << nvars
@@ -536,7 +545,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
         if (varinfo[varidx].writesize != 0)
         {
             // read variable subset
-            std::cout << "rank " << rank << ": Read variable " << name
+            std::cout << "rank " << m_Rank << ": Read variable " << name
                       << std::endl;
             const std::string &type = variables.at(name).first;
             if (type == "compound")
@@ -577,7 +586,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
         if (varinfo[varidx].writesize != 0)
         {
             // Write variable subset
-            std::cout << "rank " << rank << ": Write variable " << name
+            std::cout << "rank " << m_Rank << ": Write variable " << name
                       << std::endl;
             const std::string &type = variables.at(name).first;
             if (type == "compound")

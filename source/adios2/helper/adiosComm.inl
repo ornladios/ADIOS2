@@ -20,20 +20,19 @@ namespace adios2
 namespace helper
 {
 
-// GatherArrays full specializations implemented in 'adiosComm.tcc'.
-template <>
-void Comm::GatherArrays(const char *source, size_t sourceCount,
-                        char *destination, int rankDestination) const;
-template <>
-void Comm::GatherArrays(const size_t *source, size_t sourceCount,
-                        size_t *destination, int rankDestination) const;
+template <class T>
+void Comm::GatherArrays(const T *source, size_t sourceCount, T *destination,
+                        int rankDestination) const
+{
+    this->Gather(source, sourceCount, destination, sourceCount,
+                 rankDestination);
+}
 
 template <class T>
 std::vector<T> Comm::GatherValues(T source, int rankDestination) const
 {
-    int rank, size;
-    SMPI_Comm_rank(m_MPIComm, &rank);
-    SMPI_Comm_size(m_MPIComm, &size);
+    int rank = this->Rank();
+    int size = this->Size();
 
     std::vector<T> output;
 
@@ -48,15 +47,19 @@ std::vector<T> Comm::GatherValues(T source, int rankDestination) const
     return output;
 }
 
-// GathervArrays full specializations implemented in 'adiosComm.tcc'.
-template <>
-void Comm::GathervArrays(const char *source, size_t sourceCount,
+template <class T>
+void Comm::GathervArrays(const T *source, size_t sourceCount,
                          const size_t *counts, size_t countsSize,
-                         char *destination, int rankDestination) const;
-template <>
-void Comm::GathervArrays(const size_t *source, size_t sourceCount,
-                         const size_t *counts, size_t countsSize,
-                         size_t *destination, int rankDestination) const;
+                         T *destination, int rankDestination) const
+{
+    std::vector<size_t> displs;
+    if (rankDestination == this->Rank())
+    {
+        displs = GetGathervDisplacements(counts, countsSize);
+    }
+    this->Gatherv(source, sourceCount, destination, counts, displs.data(),
+                  rankDestination);
+}
 
 template <class T>
 void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
@@ -69,8 +72,7 @@ void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
 
     size_t gatheredSize = 0;
 
-    int rank;
-    SMPI_Comm_rank(m_MPIComm, &rank);
+    int rank = this->Rank();
 
     if (rank == rankDestination) // pre-allocate vector
     {
@@ -99,165 +101,198 @@ void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
 template <class T>
 std::vector<T> Comm::AllGatherValues(const T source) const
 {
-    int size;
-    SMPI_Comm_size(m_MPIComm, &size);
+    int size = this->Size();
     std::vector<T> output(size);
 
     T sourceCopy = source; // so we can have an address for rvalues
-    this->AllGatherArrays(&sourceCopy, 1, output.data());
+    this->Allgather(&sourceCopy, 1, output.data(), 1);
     return output;
 }
 
-// AllGatherArrays full specializations implemented in 'adiosComm.tcc'.
-template <>
-void Comm::AllGatherArrays(const size_t *source, const size_t sourceCount,
-                           size_t *destination) const;
+template <class T>
+T Comm::ReduceValues(const T source, Op op, const int rankDestination) const
+{
+    T sourceLocal = source;
+    T reduceValue = 0;
+    this->Reduce(&sourceLocal, &reduceValue, 1, op, rankDestination);
+    return reduceValue;
+}
 
-// ReduceValues full specializations implemented in 'adiosComm.tcc'.
-template <>
-unsigned int Comm::ReduceValues(const unsigned int source, MPI_Op operation,
-                                const int rankDestination) const;
-template <>
-unsigned long int Comm::ReduceValues(const unsigned long int source,
-                                     MPI_Op operation,
-                                     const int rankDestination) const;
-template <>
-unsigned long long int Comm::ReduceValues(const unsigned long long int source,
-                                          MPI_Op operation,
-                                          const int rankDestination) const;
+template <class T>
+T Comm::BroadcastValue(const T &input, const int rankSource) const
+{
+    T output = 0;
+    if (rankSource == this->Rank())
+    {
+        output = input;
+    }
+
+    this->Bcast(&output, 1, rankSource);
+
+    return output;
+}
 
 // BroadcastValue full specializations implemented in 'adiosComm.tcc'.
-template <>
-size_t Comm::BroadcastValue(const size_t &input, const int rankSource) const;
 template <>
 std::string Comm::BroadcastValue(const std::string &input,
                                  const int rankSource) const;
 
-// BroadcastVector full specializations implemented in 'adiosComm.tcc'.
-template <>
-void Comm::BroadcastVector(std::vector<char> &vector,
-                           const int rankSource) const;
-template <>
-void Comm::BroadcastVector(std::vector<size_t> &vector,
-                           const int rankSource) const;
+template <class T>
+void Comm::BroadcastVector(std::vector<T> &vector, const int rankSource) const
+{
+    if (this->Size() == 1)
+    {
+        return;
+    }
+
+    // First Broadcast the size, then the contents
+    size_t inputSize = this->BroadcastValue(vector.size(), rankSource);
+
+    if (rankSource != this->Rank())
+    {
+        vector.resize(inputSize);
+    }
+
+    this->Bcast(vector.data(), inputSize, rankSource);
+}
 
 template <typename TSend, typename TRecv>
 void Comm::Allgather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
                      size_t recvcount, const std::string &hint) const
 {
-    return AllgatherImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
-                         recvcount, Datatype<TRecv>(), hint);
+    return m_Impl->Allgather(sendbuf, sendcount, CommImpl::GetDatatype<TSend>(),
+                             recvbuf, recvcount, CommImpl::GetDatatype<TRecv>(),
+                             hint);
 }
 
 template <typename T>
-void Comm::Allreduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
+void Comm::Allreduce(const T *sendbuf, T *recvbuf, size_t count, Op op,
                      const std::string &hint) const
 {
-    return AllreduceImpl(sendbuf, recvbuf, count, Datatype<T>(), op, hint);
+    return m_Impl->Allreduce(sendbuf, recvbuf, count,
+                             CommImpl::GetDatatype<T>(), op, hint);
 }
 
 template <typename T>
 void Comm::Bcast(T *buffer, const size_t count, int root,
                  const std::string &hint) const
 {
-    return BcastImpl(buffer, count, Datatype<T>(), root, hint);
+    return m_Impl->Bcast(buffer, count, CommImpl::GetDatatype<T>(), root, hint);
 }
 
 template <typename TSend, typename TRecv>
 void Comm::Gather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
                   size_t recvcount, int root, const std::string &hint) const
 {
-    return GatherImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf, recvcount,
-                      Datatype<TRecv>(), root, hint);
+    return m_Impl->Gather(sendbuf, sendcount, CommImpl::GetDatatype<TSend>(),
+                          recvbuf, recvcount, CommImpl::GetDatatype<TRecv>(),
+                          root, hint);
 }
 
-template <typename T>
-void Comm::Reduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
-                  int root, const std::string &hint) const
+template <typename TSend, typename TRecv>
+void Comm::Gatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                   const size_t *recvcounts, const size_t *displs, int root,
+                   const std::string &hint) const
 {
-    return ReduceImpl(sendbuf, recvbuf, count, Datatype<T>(), op, root, hint);
+    return m_Impl->Gatherv(sendbuf, sendcount, CommImpl::GetDatatype<TSend>(),
+                           recvbuf, recvcounts, displs,
+                           CommImpl::GetDatatype<TRecv>(), root, hint);
 }
 
 template <typename T>
-void Comm::ReduceInPlace(T *buf, size_t count, MPI_Op op, int root,
+void Comm::Reduce(const T *sendbuf, T *recvbuf, size_t count, Op op, int root,
+                  const std::string &hint) const
+{
+    return m_Impl->Reduce(sendbuf, recvbuf, count, CommImpl::GetDatatype<T>(),
+                          op, root, hint);
+}
+
+template <typename T>
+void Comm::ReduceInPlace(T *buf, size_t count, Op op, int root,
                          const std::string &hint) const
 {
-    return ReduceInPlaceImpl(buf, count, Datatype<T>(), op, root, hint);
+    return m_Impl->ReduceInPlace(buf, count, CommImpl::GetDatatype<T>(), op,
+                                 root, hint);
 }
 
 template <typename T>
 void Comm::Send(const T *buf, size_t count, int dest, int tag,
                 const std::string &hint) const
 {
-    return SendImpl(buf, count, Datatype<T>(), dest, tag, hint);
+    return m_Impl->Send(buf, count, CommImpl::GetDatatype<T>(), dest, tag,
+                        hint);
 }
 
 template <typename T>
 Comm::Status Comm::Recv(T *buf, size_t count, int source, int tag,
                         const std::string &hint) const
 {
-    return RecvImpl(buf, count, Datatype<T>(), source, tag, hint);
+    return m_Impl->Recv(buf, count, CommImpl::GetDatatype<T>(), source, tag,
+                        hint);
 }
 
 template <typename TSend, typename TRecv>
 void Comm::Scatter(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
                    size_t recvcount, int root, const std::string &hint) const
 {
-    return ScatterImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
-                       recvcount, Datatype<TRecv>(), root, hint);
+    return m_Impl->Scatter(sendbuf, sendcount, CommImpl::GetDatatype<TSend>(),
+                           recvbuf, recvcount, CommImpl::GetDatatype<TRecv>(),
+                           root, hint);
 }
 
 template <typename T>
 Comm::Req Comm::Isend(const T *buffer, const size_t count, int dest, int tag,
                       const std::string &hint) const
 {
-    return IsendImpl(buffer, count, Datatype<T>(), dest, tag, hint);
+    return m_Impl->Isend(buffer, count, CommImpl::GetDatatype<T>(), dest, tag,
+                         hint);
 }
 
 template <typename T>
 Comm::Req Comm::Irecv(T *buffer, const size_t count, int source, int tag,
                       const std::string &hint) const
 {
-    return IrecvImpl(buffer, count, Datatype<T>(), source, tag, hint);
+    return m_Impl->Irecv(buffer, count, CommImpl::GetDatatype<T>(), source, tag,
+                         hint);
 }
 
-// Datatype full specializations implemented in 'adiosComm.tcc'.
+// CommImpl::GetDatatype full specializations implemented in 'adiosComm.tcc'.
 template <>
-MPI_Datatype Comm::Datatype<signed char>();
+CommImpl::Datatype CommImpl::GetDatatype<signed char>();
 template <>
-MPI_Datatype Comm::Datatype<char>();
+CommImpl::Datatype CommImpl::GetDatatype<char>();
 template <>
-MPI_Datatype Comm::Datatype<short>();
+CommImpl::Datatype CommImpl::GetDatatype<short>();
 template <>
-MPI_Datatype Comm::Datatype<int>();
+CommImpl::Datatype CommImpl::GetDatatype<int>();
 template <>
-MPI_Datatype Comm::Datatype<long>();
+CommImpl::Datatype CommImpl::GetDatatype<long>();
 template <>
-MPI_Datatype Comm::Datatype<unsigned char>();
+CommImpl::Datatype CommImpl::GetDatatype<unsigned char>();
 template <>
-MPI_Datatype Comm::Datatype<unsigned short>();
+CommImpl::Datatype CommImpl::GetDatatype<unsigned short>();
 template <>
-MPI_Datatype Comm::Datatype<unsigned int>();
+CommImpl::Datatype CommImpl::GetDatatype<unsigned int>();
 template <>
-MPI_Datatype Comm::Datatype<unsigned long>();
+CommImpl::Datatype CommImpl::GetDatatype<unsigned long>();
 template <>
-MPI_Datatype Comm::Datatype<unsigned long long>();
+CommImpl::Datatype CommImpl::GetDatatype<unsigned long long>();
 template <>
-MPI_Datatype Comm::Datatype<long long>();
+CommImpl::Datatype CommImpl::GetDatatype<long long>();
 template <>
-MPI_Datatype Comm::Datatype<double>();
+CommImpl::Datatype CommImpl::GetDatatype<double>();
 template <>
-MPI_Datatype Comm::Datatype<long double>();
+CommImpl::Datatype CommImpl::GetDatatype<long double>();
 template <>
-MPI_Datatype Comm::Datatype<std::pair<int, int>>();
+CommImpl::Datatype CommImpl::GetDatatype<std::pair<int, int>>();
 template <>
-MPI_Datatype Comm::Datatype<std::pair<float, int>>();
+CommImpl::Datatype CommImpl::GetDatatype<std::pair<float, int>>();
 template <>
-MPI_Datatype Comm::Datatype<std::pair<double, int>>();
+CommImpl::Datatype CommImpl::GetDatatype<std::pair<double, int>>();
 template <>
-MPI_Datatype Comm::Datatype<std::pair<long double, int>>();
+CommImpl::Datatype CommImpl::GetDatatype<std::pair<long double, int>>();
 template <>
-MPI_Datatype Comm::Datatype<std::pair<short, int>>();
+CommImpl::Datatype CommImpl::GetDatatype<std::pair<short, int>>();
 
 } // end namespace helper
 } // end namespace adios2

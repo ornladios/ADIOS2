@@ -11,8 +11,11 @@
 #include "IO.h"
 #include "IO.tcc"
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/core/IO.h"
+
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/helper/adiosCommMPI.h"
+#endif
 
 namespace adios2
 {
@@ -109,7 +112,7 @@ Engine IO::Open(const std::string &name, const Mode mode, MPI_Comm comm)
 {
     helper::CheckForNullptr(m_IO,
                             "for engine " + name + ", in call to IO::Open");
-    return Engine(&m_IO->Open(name, mode, comm));
+    return Engine(&m_IO->Open(name, mode, helper::CommFromMPI(comm)));
 }
 #endif
 

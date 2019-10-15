@@ -14,6 +14,7 @@
 
 #include "InSituMPIReader.tcc"
 
+#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
@@ -38,7 +39,7 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
     Init();
 
     m_RankAllPeers =
-        insitumpi::FindPeers(m_Comm.AsMPI(), m_Name, false, m_CommWorld);
+        insitumpi::FindPeers(CommAsMPI(m_Comm), m_Name, false, m_CommWorld);
     MPI_Comm_rank(m_CommWorld, &m_GlobalRank);
     MPI_Comm_size(m_CommWorld, &m_GlobalNproc);
     m_ReaderRank = m_Comm.Rank();
@@ -191,7 +192,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         }
         /* Exchange steps */
         int maxstep;
-        m_Comm.Allreduce(&step, &maxstep, 1, MPI_MAX);
+        m_Comm.Allreduce(&step, &maxstep, 1, helper::Comm::Op::Max);
 
         if (m_Verbosity == 5 && !m_ReaderRank)
         {
@@ -422,12 +423,13 @@ void InSituMPIReader::SendReadSchedule(
     if (m_ReaderRootRank == m_ReaderRank)
     {
         m_Comm.ReduceInPlace(nReaderPerWriter.data(), nReaderPerWriter.size(),
-                             MPI_SUM, m_ReaderRootRank);
+                             helper::Comm::Op::Sum, m_ReaderRootRank);
     }
     else
     {
         m_Comm.Reduce(nReaderPerWriter.data(), nReaderPerWriter.data(),
-                      nReaderPerWriter.size(), MPI_SUM, m_ReaderRootRank);
+                      nReaderPerWriter.size(), helper::Comm::Op::Sum,
+                      m_ReaderRootRank);
     }
 
     // Reader root sends nReaderPerWriter to writer root
@@ -592,8 +594,10 @@ void InSituMPIReader::DoClose(const int transportIndex)
     if (m_Verbosity > 2)
     {
         uint64_t inPlaceBytes, inTempBytes;
-        m_Comm.Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1, MPI_SUM, 0);
-        m_Comm.Reduce(&m_BytesReceivedInTemporary, &inTempBytes, 1, MPI_SUM, 0);
+        m_Comm.Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1,
+                      helper::Comm::Op::Sum, 0);
+        m_Comm.Reduce(&m_BytesReceivedInTemporary, &inTempBytes, 1,
+                      helper::Comm::Op::Sum, 0);
         if (m_ReaderRank == 0)
         {
             std::cout << "ADIOS InSituMPI Reader for " << m_Name << " received "

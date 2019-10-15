@@ -11,7 +11,6 @@
 #include "BP3Writer.h"
 #include "BP3Writer.tcc"
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange

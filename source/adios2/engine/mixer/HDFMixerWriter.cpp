@@ -11,7 +11,6 @@
 #include <iostream>
 
 #include "HDFMixerWriter.h"
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h"
 
 //
@@ -24,11 +23,11 @@ namespace core
 namespace engine
 {
 
-HDFVDSWriter::HDFVDSWriter(MPI_Comm mpiComm, bool debugMode)
-: m_MPISubfileComm(mpiComm), m_VDSFile(debugMode), m_Rank(-1)
+HDFVDSWriter::HDFVDSWriter(helper::Comm const &comm, bool debugMode)
+: m_SubfileComm(comm), m_VDSFile(debugMode), m_Rank(-1)
 {
-    MPI_Comm_size(m_MPISubfileComm, &m_NumSubFiles);
-    MPI_Comm_rank(m_MPISubfileComm, &m_Rank);
+    m_NumSubFiles = m_SubfileComm.Size();
+    m_Rank = m_SubfileComm.Rank();
 }
 
 void HDFVDSWriter::Init(const std::string &name)
@@ -42,7 +41,7 @@ void HDFVDSWriter::Init(const std::string &name)
     // VDS can only operate on one process. So let rank = 0 handle it
     //
     std::string h5Name = adios2::helper::AddExtension(name, ".h5");
-    m_VDSFile.Init(h5Name, MPI_COMM_SELF, true);
+    m_VDSFile.Init(h5Name, helper::Comm(), true);
     // m_FileName = h5Name;
     m_FileName = name;
 }
@@ -129,11 +128,8 @@ void HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
     GetVarInfo(var, dimsf, nDims, start, count, one);
     //
 
-    MPI_Gather(start.data(), nDims, ADIOS2_MPI_SIZE_T, all_starts, nDims,
-               ADIOS2_MPI_SIZE_T, 0, m_MPISubfileComm);
-
-    MPI_Gather(count.data(), nDims, ADIOS2_MPI_SIZE_T, all_counts, nDims,
-               ADIOS2_MPI_SIZE_T, 0, m_MPISubfileComm);
+    m_SubfileComm.Gather(start.data(), nDims, all_starts[0], nDims, 0);
+    m_SubfileComm.Gather(count.data(), nDims, all_counts[0], nDims, 0);
 
     herr_t status;
     if (m_Rank == 0)
@@ -196,7 +192,7 @@ void HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
     }
 
     // m_VDSFile.Close();
-    MPI_Barrier(m_MPISubfileComm);
+    m_SubfileComm.Barrier();
 }
 
 void HDFVDSWriter::Advance(const float timeoutSeconds)
@@ -222,8 +218,9 @@ void HDFVDSWriter::Close(const int transportIndex)
 //
 // class HDFSerialWriter
 //
-HDFSerialWriter::HDFSerialWriter(MPI_Comm mpiComm, const bool debugMode = false)
-: m_MPILocalComm(mpiComm), m_DebugMode(debugMode), m_H5File(debugMode)
+HDFSerialWriter::HDFSerialWriter(helper::Comm const &comm,
+                                 const bool debugMode = false)
+: m_LocalComm(comm), m_DebugMode(debugMode), m_H5File(debugMode)
 {
 }
 
@@ -291,7 +288,7 @@ void HDFSerialWriter::Init(const std::string &name, int rank)
     StaticCreateName(baseName, rootTag, h5Name, name, rank);
     // std::cout<<"rank="<<rank<<"  name="<<h5Name<<std::endl;
     adios2::helper::CreateDirectory(baseName);
-    m_H5File.Init(h5Name, m_MPILocalComm, true);
+    m_H5File.Init(h5Name, m_LocalComm, true);
 
     m_FileName = h5Name;
     m_Rank = rank;

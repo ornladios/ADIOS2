@@ -14,9 +14,13 @@
 #include <algorithm>
 #include <iostream>
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSMacros.h"
+#include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h"
+
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/helper/adiosCommMPI.h"
+#endif
 
 #include "py11types.h"
 
@@ -25,31 +29,37 @@ namespace adios2
 namespace py11
 {
 
+#ifdef ADIOS2_HAVE_MPI
 File::File(const std::string &name, const std::string mode, MPI_Comm comm,
            const std::string engineType)
 : m_Name(name), m_Mode(mode),
-  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, engineType,
-                                          "Python"))
+  m_Stream(std::make_shared<core::Stream>(
+      name, ToMode(mode), helper::CommFromMPI(comm), engineType, "Python"))
 {
 }
 
 File::File(const std::string &name, const std::string mode, MPI_Comm comm,
            const std::string &configFile, const std::string ioInConfigFile)
 : m_Name(name), m_Mode(mode),
-  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, configFile,
+  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode),
+                                          helper::CommFromMPI(comm), configFile,
                                           ioInConfigFile, "Python"))
 {
 }
+#endif
 
 File::File(const std::string &name, const std::string mode,
            const std::string engineType)
-: File(name, mode, MPI_COMM_NULL, engineType)
+: m_Name(name), m_Mode(mode), m_Stream(std::make_shared<core::Stream>(
+                                  name, ToMode(mode), engineType, "Python"))
 {
 }
 
 File::File(const std::string &name, const std::string mode,
            const std::string &configFile, const std::string ioInConfigFile)
-: File(name, mode, MPI_COMM_NULL, configFile, ioInConfigFile)
+: m_Name(name), m_Mode(mode),
+  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), configFile,
+                                          ioInConfigFile, "Python"))
 {
 }
 

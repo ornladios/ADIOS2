@@ -14,7 +14,6 @@
 #include <sstream>
 #include <utility> // std::pair
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSMacros.h"
 
 #include "adios2/engine/bp3/BP3Reader.h"
@@ -466,7 +465,7 @@ size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
     return m_Operations.size() - 1;
 }
 
-Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
+Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
 {
     TAU_SCOPED_TIMER("IO::Open");
     auto itEngineFound = m_Engines.find(name);
@@ -498,7 +497,6 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
         }
     }
 
-    auto comm = helper::Comm::Duplicate(mpiComm);
     std::shared_ptr<Engine> engine;
     const bool isDefaultEngine = m_EngineType.empty() ? true : false;
     std::string engineTypeLC = m_EngineType;
@@ -759,7 +757,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
 
 Engine &IO::Open(const std::string &name, const Mode mode)
 {
-    return Open(name, mode, m_ADIOS.GetComm().AsMPI());
+    return Open(name, mode, m_ADIOS.GetComm().Duplicate());
 }
 
 Engine &IO::GetEngine(const std::string &name)

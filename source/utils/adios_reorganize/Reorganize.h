@@ -13,6 +13,7 @@
 
 #include "adios2.h"
 #include "adios2/core/IO.h" // DataMap
+#include "adios2/helper/adiosComm.h"
 #include "utils/Utils.h"
 
 namespace adios2
@@ -40,7 +41,7 @@ public:
     void Run() final;
 
 private:
-    static const int m_MPISplitColor = 23731; // color in MPI_Split_comm() call
+    static const int m_CommSplitColor = 23731; // color in Comm::Split() call
     static const std::string m_HelpMessage;
     static const Params m_Options;
 
@@ -82,9 +83,9 @@ private:
     static const int timeout_sec = 300;
 
     // Global variables
-    int rank = 0;
-    int numproc = 1;
-    MPI_Comm comm;
+    int m_Rank = 0;
+    int m_Size = 1;
+    helper::Comm m_Comm;
 
     // Read/write method parameters
     Params rmethodparams;

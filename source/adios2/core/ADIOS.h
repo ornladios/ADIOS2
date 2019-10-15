@@ -19,7 +19,6 @@
 /// \endcond
 
 #include "adios2/common/ADIOSConfig.h"
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Operator.h"
 #include "adios2/helper/adiosComm.h"
@@ -55,7 +54,7 @@ public:
      * false: optional feature to turn off checks on user input data,
      * recommended in stable flows
      */
-    ADIOS(const std::string configFile, MPI_Comm mpiComm, const bool debugMode,
+    ADIOS(const std::string configFile, helper::Comm comm, const bool debugMode,
           const std::string hostLanguage);
 
     /**
@@ -77,7 +76,7 @@ public:
      * false: optional feature to turn off checks on user input data,
      * recommended in stable flows
      */
-    ADIOS(MPI_Comm mpiComm, const bool debugMode,
+    ADIOS(helper::Comm comm, const bool debugMode,
           const std::string hostLanguage);
 
     /**

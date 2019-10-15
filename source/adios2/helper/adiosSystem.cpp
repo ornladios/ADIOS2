@@ -16,7 +16,6 @@
 
 #include <adios2sys/SystemTools.hxx>
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosString.h"

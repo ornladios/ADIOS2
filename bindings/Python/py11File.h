@@ -16,6 +16,10 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Stream.h"
 
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/common/ADIOSMPI.h"
+#endif
+
 namespace adios2
 {
 namespace py11
@@ -27,11 +31,13 @@ public:
     const std::string m_Name;
     const std::string m_Mode;
 
+#ifdef ADIOS2_HAVE_MPI
     File(const std::string &name, const std::string mode, MPI_Comm comm,
          const std::string engineType = "BPFile");
 
     File(const std::string &name, const std::string mode, MPI_Comm comm,
          const std::string &configFile, const std::string ioInConfigFile);
+#endif
 
     File(const std::string &name, const std::string mode,
          const std::string engineType = "BPFile");

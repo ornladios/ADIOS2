@@ -11,7 +11,6 @@
 #include "HDFMixer.h"
 #include "HDFMixer.tcc"
 
-#include "adios2/common/ADIOSMPI.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
 #include "adios2/toolkit/transport/file/FileFStream.h"
@@ -27,7 +26,7 @@ HDFMixer::HDFMixer(IO &io, const std::string &name, const Mode openMode,
                    helper::Comm comm)
 : Engine("HDFMixer", io, name, openMode, std::move(comm)),
   m_HDFVDSWriter(m_Comm, m_DebugMode),
-  m_HDFSerialWriter(MPI_COMM_SELF, m_DebugMode),
+  m_HDFSerialWriter(helper::Comm(), m_DebugMode),
   m_TransportsManager(m_Comm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open HDFMixer " + m_Name + "\n";
@@ -102,9 +101,7 @@ void HDFMixer::InitTransports()
 */
 #else
 
-    int rank;
-    MPI_Comm_rank(m_Comm, &rank);
-    m_HDFSerialWriter.Init(m_Name, rank);
+    m_HDFSerialWriter.Init(m_Name, m_Comm.Rank());
     m_HDFVDSWriter.Init(m_Name);
 /*
 auto transportsNames = m_TransportsManager.GetFilesBaseNames(

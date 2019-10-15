@@ -82,20 +82,21 @@ typedef int MPI_Op;
 #define MPI_ANY_SOURCE 0
 #define MPI_ANY_TAG 0
 
-#define MPI_MAX 0
-#define MPI_MIN 1
-#define MPI_SUM 2
-#define MPI_PROD 3
-#define MPI_LAND 4
-#define MPI_BAND 5
-#define MPI_LOR 6
-#define MPI_BOR 7
-#define MPI_LXOR 8
-#define MPI_BXOR 9
-#define MPI_MAXLOC 10
-#define MPI_MINLOC 11
-#define MPI_REPLACE 12
-#define MPI_NO_OP 13
+#define MPI_OP_NULL 0
+#define MPI_MAX 1
+#define MPI_MIN 2
+#define MPI_SUM 3
+#define MPI_PROD 4
+#define MPI_LAND 5
+#define MPI_BAND 6
+#define MPI_LOR 7
+#define MPI_BOR 8
+#define MPI_LXOR 9
+#define MPI_BXOR 10
+#define MPI_MAXLOC 11
+#define MPI_MINLOC 12
+#define MPI_REPLACE 13
+#define MPI_NO_OP 14
 
 #define MPI_MAX_PROCESSOR_NAME 32
 

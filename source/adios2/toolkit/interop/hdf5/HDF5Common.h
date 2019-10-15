@@ -19,6 +19,7 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h" // for CreateVar
 #include "adios2/core/Variable.h"
+#include "adios2/helper/adiosComm.h"
 
 #include <stdexcept> // for Intel Compiler
 
@@ -120,7 +121,7 @@ public:
     static const std::string PARAMETER_CHUNK_VARS;
 
     void ParseParameters(core::IO &io);
-    void Init(const std::string &name, MPI_Comm comm, bool toWrite);
+    void Init(const std::string &name, helper::Comm const &comm, bool toWrite);
 
     template <class T>
     void Write(core::Variable<T> &variable, const T *values);

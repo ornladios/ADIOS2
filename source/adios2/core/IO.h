@@ -394,7 +394,7 @@ public:
      * @exception std::invalid_argument if Engine with unique name is already
      * created with another Open, in debug mode only
      */
-    Engine &Open(const std::string &name, const Mode mode, MPI_Comm mpiComm);
+    Engine &Open(const std::string &name, const Mode mode, helper::Comm comm);
 
     /**
      * Overloaded version that reuses the MPI_Comm object passed
