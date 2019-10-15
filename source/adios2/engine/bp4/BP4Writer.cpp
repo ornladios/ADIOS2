@@ -281,7 +281,7 @@ void BP4Writer::InitBPBuffer()
                 throw std::runtime_error(
                     "ERROR: previous run generated BigEndian bp file, "
                     "this version of ADIOS2 wasn't compiled "
-                    "with the cmake flag -DADIOS2_USE_ENDIAN_REVERSE=ON "
+                    "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
                     "explicitly, in call to Open\n");
             }
             const size_t pos_last_step = preMetadataIndexFileSize - 64;
