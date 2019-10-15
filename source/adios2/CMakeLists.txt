@@ -141,7 +141,7 @@ if (ADIOS2_HAVE_DataMan)
     target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
-if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_WDM OR ADIOS2_HAVE_Table)
+if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_WDM OR ADIOS2_HAVE_Table OR ADIOS2_HAVE_SSC)
     target_sources(adios2 PRIVATE
        	toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
@@ -162,8 +162,6 @@ endif()
 
 if(ADIOS2_HAVE_SSC)
     target_sources(adios2 PRIVATE
-        toolkit/format/dataman/DataManSerializer.cpp
-        toolkit/format/dataman/DataManSerializer.tcc
         engine/ssc/SscReader.cpp
         engine/ssc/SscReader.tcc
         engine/ssc/SscWriter.cpp
