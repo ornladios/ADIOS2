@@ -157,7 +157,9 @@ install(FILES ${PROJECT_BINARY_DIR}/source/adios2/common/ADIOSConfig.h
 # Some specialized shared library and RPATH handling
 #------------------------------------------------------------------------------#
 if(BUILD_SHARED_LIBS)
-  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  if(NOT DEFINED CMAKE_INSTALL_RPATH_USE_LINK_PATH)
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  endif()
 
   if(APPLE)
     # On Mac OS X, set the dir included as part of the installed library's path:
@@ -167,14 +169,22 @@ if(BUILD_SHARED_LIBS)
     endif ()
 
     # Various homebrew MPI fortran installations break rpath usage on OSX
-    if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
-      set(CMAKE_MACOSX_RPATH OFF)
+    if(NOT DEFINED CMAKE_MACOSX_RPATH)
+      if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
+        set(CMAKE_MACOSX_RPATH OFF)
+      else()
+        set(CMAKE_MACOSX_RPATH ON)
+      endif()
     endif()
 
   elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     # Linux needs some specialized RPATH handling
     string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_LIBDIR}")
-    set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+    if(DEFINED CMAKE_INSTALL_RPATH)
+      set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+    else()
+      set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+    endif()
   endif()
 endif()
 
