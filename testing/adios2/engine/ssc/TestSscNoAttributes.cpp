@@ -205,13 +205,11 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
 
-    bool received_steps = false;
-    while (true)
+    for (size_t i = 0; i < steps; ++i)
     {
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
-            received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
             if (print_lines == 0)
             {
@@ -321,7 +319,7 @@ TEST_F(SscEngineTest, TestSscNoAttributes)
 
     if (mpiGroup == 1)
     {
-        Reader(shape, start, count, 10, engineParams, filename);
+        Reader(shape, start, count, 200, engineParams, filename);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);

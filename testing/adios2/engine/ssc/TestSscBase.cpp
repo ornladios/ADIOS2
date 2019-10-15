@@ -206,13 +206,11 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
 
-    bool received_steps = false;
-    while (true)
+    for (size_t i = 0; i < steps; ++i)
     {
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
-            received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
             if (print_lines == 0)
             {
@@ -291,15 +289,11 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             break;
         }
     }
-    if (received_steps)
-    {
-        auto attInt = dataManIO.InquireAttribute<int>("AttInt");
-        std::cout << "[Rank " + std::to_string(mpiRank) +
-                         "] Attribute received "
-                  << attInt.Data()[0] << ", expected 110" << std::endl;
-        ASSERT_EQ(110, attInt.Data()[0]);
-        ASSERT_NE(111, attInt.Data()[0]);
-    }
+    auto attInt = dataManIO.InquireAttribute<int>("AttInt");
+    std::cout << "[Rank " + std::to_string(mpiRank) + "] Attribute received "
+              << attInt.Data()[0] << ", expected 110" << std::endl;
+    ASSERT_EQ(110, attInt.Data()[0]);
+    ASSERT_NE(111, attInt.Data()[0]);
     dataManReader.Close();
     print_lines = 0;
 }
