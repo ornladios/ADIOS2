@@ -10,6 +10,7 @@
 
 #include "SscWriter.tcc"
 #include "nlohmann/json.hpp"
+#include <mpi.h>
 
 namespace adios2
 {
@@ -175,7 +176,7 @@ void SscWriter::SyncWritePattern()
     // aggregate global metadata across all writers
     size_t localSize = localStr.size();
     size_t maxLocalSize;
-    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, MPI_MAX);
+    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, m_Comm.Op::Max);
     std::vector<char> localVec(maxLocalSize, '\0');
     std::memcpy(localVec.data(), localStr.data(), localStr.size());
     std::vector<char> globalVec(maxLocalSize * m_WriterSize);

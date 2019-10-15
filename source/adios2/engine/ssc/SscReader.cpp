@@ -11,6 +11,7 @@
 #include "SscReader.tcc"
 #include "adios2/helper/adiosFunctions.h"
 #include "nlohmann/json.hpp"
+#include <mpi.h>
 
 namespace adios2
 {
@@ -264,7 +265,7 @@ void SscReader::SyncReadPattern()
     // aggregate global read pattern across all readers
     size_t localSize = localStr.size();
     size_t maxLocalSize;
-    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, MPI_MAX);
+    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, m_Comm.Op::Max);
     std::vector<char> localVec(maxLocalSize, '\0');
     std::memcpy(localVec.data(), localStr.c_str(), localStr.size());
     std::vector<char> globalVec(maxLocalSize * m_ReaderSize);
