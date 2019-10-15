@@ -36,18 +36,20 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    if(m_Verbosity >=5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::BeginStep, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+        std::cout << "SscWriter::BeginStep, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
-    if(m_InitialStep)
+    if (m_InitialStep)
     {
-        m_InitialStep=false;
+        m_InitialStep = false;
         SyncWritePattern();
         SyncReadPattern();
     }
-    else{
+    else
+    {
         ++m_CurrentStep;
     }
     return StepStatus::OK;
@@ -64,10 +66,26 @@ void SscWriter::PerformPuts() { TAU_SCOPED_TIMER_FUNC(); }
 void SscWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
-    if(m_Verbosity >=5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::EndStep, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+        std::cout << "SscWriter::EndStep, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
     }
+
+    MPI_Win win;
+    MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
+                   MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_fence(0, win);
+
+    for (const auto &i : m_AllSendingReaderRanks)
+    {
+        MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
+                m_ReaderMasterWorldRank + i.first, i.second, m_Buffer.size(),
+                MPI_CHAR, win);
+    }
+
+    MPI_Win_fence(0, win);
+    MPI_Win_free(&win);
 }
 
 void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
@@ -78,29 +96,33 @@ void SscWriter::SyncMpiPattern()
 {
     int readerMasterWorldRank = 0;
     int writerMasterWorldRank = 0;
-    if(m_WriterRank == 0)
+    if (m_WriterRank == 0)
     {
         writerMasterWorldRank = m_WorldRank;
     }
-    MPI_Allreduce(&readerMasterWorldRank, &m_ReaderMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    MPI_Allreduce(&writerMasterWorldRank, &m_WriterMasterWorldRank, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&readerMasterWorldRank, &m_ReaderMasterWorldRank, 1, MPI_INT,
+                  MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&writerMasterWorldRank, &m_WriterMasterWorldRank, 1, MPI_INT,
+                  MPI_MAX, MPI_COMM_WORLD);
 
-    if(m_WorldSize == m_WriterSize)
+    if (m_WorldSize == m_WriterSize)
     {
         throw(std::runtime_error("no readers are found"));
     }
 
-    if(m_Verbosity >=5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::SyncMpiPattern, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+        std::cout << "SscWriter::SyncMpiPattern, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
     }
 }
 
 void SscWriter::SyncWritePattern()
 {
-    if(m_Verbosity >=5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::SyncWritePattern, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+        std::cout << "SscWriter::SyncWritePattern, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
     // serialize local writer rank metadata
@@ -108,30 +130,28 @@ void SscWriter::SyncWritePattern()
     auto variables = m_IO.GetAvailableVariables();
     size_t varIndex = 0;
     size_t position = 0;
-    for(auto &i : variables)
+    for (auto &i : variables)
     {
         std::string type = i.second["Type"];
         Dims start;
         Dims count;
         Dims shape;
 
-        if(type.empty())
+        if (type.empty())
         {
             throw(std::runtime_error("unknown data type"));
         }
 #define declare_type(T)                                                        \
-        else if (type == helper::GetType<T>())                                   \
-        {                                                                          \
-            auto var = m_IO.InquireVariable<T>(i.first);\
-            shape = var->m_Shape;\
-            start = var->m_Start;\
-            count = var->m_Count;\
-        }
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        auto var = m_IO.InquireVariable<T>(i.first);                           \
+        shape = var->m_Shape;                                                  \
+        start = var->m_Start;                                                  \
+        count = var->m_Count;                                                  \
+    }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-        else {
-            throw(std::runtime_error("unknown data type"));
-        }
+        else { throw(std::runtime_error("unknown data type")); }
 
         auto &jref = j[i.first];
         jref["T"] = type;
@@ -162,18 +182,22 @@ void SscWriter::SyncWritePattern()
     m_Comm.GatherArrays(localVec.data(), maxLocalSize, globalVec.data(), 0);
 
     std::string globalStr;
-    if(m_WriterRank ==0)
+    if (m_WriterRank == 0)
     {
         nlohmann::json globalJson;
-        try{
-            for(size_t i=0; i<m_WriterSize; ++i)
+        try
+        {
+            for (size_t i = 0; i < m_WriterSize; ++i)
             {
-                globalJson[i] = nlohmann::json::parse(globalVec.begin()+i*maxLocalSize, globalVec.begin()+(i+1)*maxLocalSize);
+                globalJson[i] = nlohmann::json::parse(
+                    globalVec.begin() + i * maxLocalSize,
+                    globalVec.begin() + (i + 1) * maxLocalSize);
             }
         }
-        catch(...)
+        catch (...)
         {
-            throw(std::runtime_error("writer received corrupted aggregated metadata"));
+            throw(std::runtime_error(
+                "writer received corrupted aggregated metadata"));
         }
         // TODO: Add attributes
         globalStr = globalJson.dump();
@@ -181,9 +205,10 @@ void SscWriter::SyncWritePattern()
 
     size_t globalSizeSrc = globalStr.size();
     size_t globalSizeDst = 0;
-    MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG,
+                  MPI_MAX, MPI_COMM_WORLD);
 
-    if(globalStr.size() < globalSizeDst)
+    if (globalStr.size() < globalSizeDst)
     {
         globalStr.resize(globalSizeDst);
     }
@@ -193,11 +218,13 @@ void SscWriter::SyncWritePattern()
 
     // sync with readers
     MPI_Win win;
-    MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char),
+                   MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     MPI_Win_fence(0, win);
-    if(m_WorldRank > 0)
+    if (m_WorldRank > 0)
     {
-        MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR, 0,0,globalVec.size(), MPI_CHAR, win);
+        MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR, 0, 0,
+                globalVec.size(), MPI_CHAR, win);
     }
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
@@ -209,30 +236,33 @@ void SscWriter::SyncWritePattern()
 
 void SscWriter::SyncReadPattern()
 {
-    if(m_Verbosity >=5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::SyncReadPattern, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+        std::cout << "SscWriter::SyncReadPattern, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
     size_t globalSizeSrc = 0;
     size_t globalSizeDst = 0;
-    MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG,
+                  MPI_MAX, MPI_COMM_WORLD);
 
     std::vector<char> globalVec(globalSizeDst);
 
     MPI_Win win;
-    MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char),
+                   MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     MPI_Win_fence(0, win);
-    MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR, m_ReaderMasterWorldRank,0,globalVec.size(), MPI_CHAR, win);
+    MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR,
+            m_ReaderMasterWorldRank, 0, globalVec.size(), MPI_CHAR, win);
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
     m_GlobalReadPatternMap = ssc::JsonToVarMapVec(globalVec, m_ReaderSize);
     ssc::CalculateOverlap(m_GlobalReadPatternMap, m_LocalWritePatternMap);
     m_AllSendingReaderRanks = ssc::AllOverlapRanks(m_GlobalReadPatternMap);
-    ssc::CalculatePosition(m_GlobalWritePatternMap, m_GlobalReadPatternMap, m_WriterRank, m_AllSendingReaderRanks);
-
-    ssc::PrintVarMapVec(m_GlobalReadPatternMap);
+    ssc::CalculatePosition(m_GlobalWritePatternMap, m_GlobalReadPatternMap,
+                           m_WriterRank, m_AllSendingReaderRanks);
 }
 
 #define declare_type(T)                                                        \
@@ -250,9 +280,10 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void SscWriter::DoClose(const int transportIndex)
 {
     TAU_SCOPED_TIMER_FUNC();
-    if(m_Verbosity >=5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::DoClose, World Rank " << m_WorldRank << ", Writer Rank " << m_WriterRank << std::endl;
+        std::cout << "SscWriter::DoClose, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
     }
 }
 

@@ -43,7 +43,7 @@ private:
     ssc::VarMapVec m_GlobalWritePatternMap;
     ssc::VarMap m_LocalReadPatternMap;
 
-    std::vector<int> m_AllReceivingWriterRanks;
+    ssc::PosMap m_AllReceivingWriterRanks;
     std::vector<char> m_Buffer;
 
     int m_WorldRank;
