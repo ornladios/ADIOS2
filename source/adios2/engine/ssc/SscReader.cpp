@@ -153,32 +153,27 @@ void SscReader::SyncWritePattern()
     }
 
     m_GlobalWritePatternMap.resize(m_WriterSize);
-    int rank = 0;
-    for (auto &rankj : j)
+    for (int rank = 0; rank < m_WriterSize; ++rank)
     {
         int varId = 0;
-        for (auto itVar = rankj.begin(); itVar != rankj.end(); ++itVar)
+        for (auto itVar = j[rank].begin(); itVar != j[rank].end(); ++itVar)
         {
             std::string type = itVar.value()["T"].get<std::string>();
             Dims shape = itVar.value()["S"].get<Dims>();
             Dims start = itVar.value()["O"].get<Dims>();
             Dims count = itVar.value()["C"].get<Dims>();
-
-            if (rank >= 0 and rank < m_WriterSize)
+            auto &mapRef = m_GlobalWritePatternMap[rank][itVar.key()];
+            mapRef.shape = shape;
+            mapRef.start = start;
+            mapRef.count = count;
+            mapRef.type = type;
+            mapRef.id = varId;
+            if (rank == 0)
             {
-                auto &mapRef = m_GlobalWritePatternMap[rank][itVar.key()];
-                mapRef.shape = shape;
-                mapRef.start = start;
-                mapRef.count = count;
-                mapRef.type = type;
-                mapRef.id = varId;
-
-                if (rank == 0)
+                if (type.empty())
                 {
-                    if (type.empty())
-                    {
-                        throw(std::runtime_error("unknown data type"));
-                    }
+                    throw(std::runtime_error("unknown data type"));
+                }
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
@@ -187,18 +182,44 @@ void SscReader::SyncWritePattern()
         mref.type = type;                                                      \
         mref.id = varId;                                                       \
     }
-                    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-                    else { throw(std::runtime_error("unknown data type")); }
-                }
-            }
-            else
-            {
-                // TODO: Parse attributes
+                else { throw(std::runtime_error("unknown data type")); }
             }
             ++varId;
         }
-        ++rank;
+    }
+
+    for (const auto &attributeJson : j[m_WriterSize])
+    {
+        const std::string type(attributeJson["T"].get<std::string>());
+        if (type.empty())
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        const auto &attributesDataMap = m_IO.GetAttributesDataMap();           \
+        auto it =                                                              \
+            attributesDataMap.find(attributeJson["N"].get<std::string>());     \
+        if (it == attributesDataMap.end())                                     \
+        {                                                                      \
+            if (attributeJson["S"].get<bool>())                                \
+            {                                                                  \
+                m_IO.DefineAttribute<T>(attributeJson["N"].get<std::string>(), \
+                                        attributeJson["V"].get<T>());          \
+            }                                                                  \
+            else                                                               \
+            {                                                                  \
+                m_IO.DefineAttribute<T>(                                       \
+                    attributeJson["N"].get<std::string>(),                     \
+                    attributeJson["V"].get<std::vector<T>>().data(),           \
+                    attributeJson["V"].get<std::vector<T>>().size());          \
+            }                                                                  \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
     }
 }
 

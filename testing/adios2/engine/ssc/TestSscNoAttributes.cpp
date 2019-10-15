@@ -309,17 +309,18 @@ TEST_F(SscEngineTest, TestSscNoAttributes)
     Dims shape = {10, (size_t)mpiSize * 2};
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
+    size_t steps = 200;
 
     if (mpiGroup == 0)
     {
-        Writer(shape, start, count, 200, engineParams, filename);
+        Writer(shape, start, count, steps, engineParams, filename);
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     if (mpiGroup == 1)
     {
-        Reader(shape, start, count, 200, engineParams, filename);
+        Reader(shape, start, count, steps, engineParams, filename);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);

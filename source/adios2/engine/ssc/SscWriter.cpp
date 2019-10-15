@@ -199,8 +199,40 @@ void SscWriter::SyncWritePattern()
             throw(std::runtime_error(
                 "writer received corrupted aggregated metadata"));
         }
-        // TODO: Add attributes
+
+        nlohmann::json attributesJson;
+        const auto &attributeMap = m_IO.GetAttributesDataMap();
+        for (const auto &attributePair : attributeMap)
+        {
+            const std::string name(attributePair.first);
+            const std::string type(attributePair.second.first);
+            if (type.empty())
+            {
+            }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        const auto &attribute = m_IO.InquireAttribute<T>(name);                \
+        nlohmann::json attributeJson;                                          \
+        attributeJson["N"] = attribute->m_Name;                                \
+        attributeJson["T"] = attribute->m_Type;                                \
+        attributeJson["S"] = attribute->m_IsSingleValue;                       \
+        if (attribute->m_IsSingleValue)                                        \
+        {                                                                      \
+            attributeJson["V"] = attribute->m_DataSingleValue;                 \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            attributeJson["V"] = attribute->m_DataArray;                       \
+        }                                                                      \
+        attributesJson.emplace_back(std::move(attributeJson));                 \
+    }
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        }
+        globalJson[m_WriterSize] = attributesJson;
         globalStr = globalJson.dump();
+        std::cout << " =============== " << globalJson.dump(4);
     }
 
     size_t globalSizeSrc = globalStr.size();
