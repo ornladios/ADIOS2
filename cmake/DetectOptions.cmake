@@ -31,11 +31,11 @@ endif()
 
 # ZFP
 if(ADIOS2_USE_ZFP STREQUAL AUTO)
-  find_package(zfp 0.5.1 CONFIG)
+  find_package(ZFP 0.5.1 CONFIG)
 elseif(ADIOS2_USE_ZFP)
-  find_package(zfp 0.5.1 REQUIRED CONFIG)
+  find_package(ZFP 0.5.1 REQUIRED CONFIG)
 endif()
-if(zfp_FOUND)
+if(ZFP_FOUND)
   set(ADIOS2_HAVE_ZFP TRUE)
 endif()
 
