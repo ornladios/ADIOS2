@@ -756,19 +756,21 @@ INT_CManager_create_control(char *control_module)
     }
 
     if (control_module != NULL) {
-	for (char *c = control_module; *c; ++c) *c = tolower(*c);
+	char *tmp = strdup(control_module);
+	for (char *c = tmp; *c; ++c) *c = tolower(*c);
 #ifdef HAVE_SYS_EPOLL_H
-	if (strcmp(control_module, "epoll") == 0) {
+	if (strcmp(tmp, "epoll") == 0) {
 	    cm->control_module_choice = "epoll";
 	} else
 #endif
-	if (strcmp(control_module, "select") == 0) {
+	if (strcmp(tmp, "select") == 0) {
 	    cm->control_module_choice = "select";
 	} else {
 	    fprintf(stderr, "Warning:  Specified CM/EVPath control module \"%s\" unknown or not built.\n", control_module);
 	    /* force to default */
 	    control_module = NULL;
 	}
+	free(tmp);
     }	
     if (control_module == NULL) {
 #ifdef HAVE_SYS_EPOLL_H

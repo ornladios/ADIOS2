@@ -260,7 +260,6 @@ enet_service_network(CManager cm, void *void_trans)
         case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
 #endif
         case ENET_EVENT_TYPE_DISCONNECT: {
-            printf("ENET_LEVEL DISCONNECT EVENT %d, CONN %p\n", event.type, enet_conn_data->conn);
 	    enet_conn_data_ptr enet_conn_data = event.peer->data;
 	    svc->trace_out(cm, "Got a disconnect on connection %p\n",
 		event.peer->data);
@@ -608,7 +607,6 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
 #endif
         case ENET_EVENT_TYPE_DISCONNECT:
-            printf("ENET_LEVEL DISCONNECT EVENT %d, CONN %p\n", event.type, enet_conn_data->conn);
             if (event.peer == peer) {
                 enet_peer_reset (peer);
                 
