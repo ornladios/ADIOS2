@@ -37,9 +37,16 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
     for (const auto &i : m_AllReceivingWriterRanks)
     {
         const auto &m = m_GlobalWritePatternMap[i.first][variable.m_Name];
-        helper::NdCopy<T>(m_Buffer.data() + m.posStart, m.start, m.count, true,
-                          true, reinterpret_cast<char *>(data),
-                          variable.m_Start, variable.m_Count, true, true);
+        if (m.start.empty())
+        {
+            data[0] = reinterpret_cast<T *>(m_Buffer.data() + m.posStart)[0];
+        }
+        else
+        {
+            helper::NdCopy<T>(m_Buffer.data() + m.posStart, m.start, m.count,
+                              true, true, reinterpret_cast<char *>(data),
+                              variable.m_Start, variable.m_Count, true, true);
+        }
     }
 }
 
@@ -58,8 +65,35 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
                             const size_t step) const
 {
     TAU_SCOPED_TIMER_FUNC();
-    std::vector<typename Variable<T>::Info> v;
-    return v;
+    std::vector<typename Variable<T>::Info> ret;
+    for (const auto &r : m_AllReceivingWriterRanks)
+    {
+        for (auto &v : m_GlobalWritePatternMap[r.first])
+        {
+            if (v.first != variable.m_Name)
+            {
+                continue;
+            }
+            if (v.second.overlapCount.empty())
+            {
+                continue;
+            }
+            typename Variable<T>::Info b;
+            b.Start = v.second.overlapStart;
+            b.Count = v.second.overlapCount;
+            b.Shape = v.second.shape;
+            b.IsValue = false;
+            if (v.second.shape.size() == 1)
+            {
+                if (v.second.shape[0] == 1)
+                {
+                    b.IsValue = true;
+                }
+            }
+            ret.push_back(b);
+        }
+    }
+    return ret;
 }
 
 } // end namespace engine

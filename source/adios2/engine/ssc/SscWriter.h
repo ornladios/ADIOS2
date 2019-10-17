@@ -14,6 +14,7 @@
 #include "SscHelper.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <mpi.h>
 #include <queue>
 
 namespace adios2
@@ -49,6 +50,7 @@ private:
 
     ssc::PosMap m_AllSendingReaderRanks;
     std::vector<char> m_Buffer;
+    MPI_Win m_MpiWin;
 
     int m_WorldRank;
     int m_WorldSize;

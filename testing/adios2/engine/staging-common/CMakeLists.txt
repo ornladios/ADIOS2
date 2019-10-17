@@ -288,16 +288,3 @@ if(NOT MSVC AND ADIOS2_HAVE_HDF5)    # not on windows and only if we have HDF5
         add_common_test(${test} HDF5)
     endforeach()
 endif()
-
-
-#
-#   Setup tests for SSC engine
-#
-if(ADIOS2_HAVE_SSC AND ADIOS2_HAVE_MPI)
-    set(SSC_TESTS "NoReaderNoWait")
-    foreach(test ${SSC_TESTS})
-        add_common_test(${test} SSC)
-    endforeach()
-endif()
-
-

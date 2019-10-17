@@ -9,8 +9,8 @@
  */
 
 #include "SscWriter.tcc"
+#include "adios2/helper/adiosComm.h"
 #include "nlohmann/json.hpp"
-#include <mpi.h>
 
 namespace adios2
 {
@@ -48,6 +48,8 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         m_InitialStep = false;
         SyncWritePattern();
         SyncReadPattern();
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
+                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
     else
     {
@@ -73,20 +75,14 @@ void SscWriter::EndStep()
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
-    MPI_Win win;
-    MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
-                   MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-    MPI_Win_fence(0, win);
-
+    MPI_Win_fence(0, m_MpiWin);
     for (const auto &i : m_AllSendingReaderRanks)
     {
         MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
                 m_ReaderMasterWorldRank + i.first, i.second, m_Buffer.size(),
-                MPI_CHAR, win);
+                MPI_CHAR, m_MpiWin);
     }
-
-    MPI_Win_fence(0, win);
-    MPI_Win_free(&win);
+    MPI_Win_fence(0, m_MpiWin);
 }
 
 void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
@@ -176,7 +172,7 @@ void SscWriter::SyncWritePattern()
     // aggregate global metadata across all writers
     size_t localSize = localStr.size();
     size_t maxLocalSize;
-    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, m_Comm.Op::Max);
+    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, helper::Comm::Op::Max);
     std::vector<char> localVec(maxLocalSize, '\0');
     std::memcpy(localVec.data(), localStr.data(), localStr.size());
     std::vector<char> globalVec(maxLocalSize * m_WriterSize);
@@ -233,7 +229,6 @@ void SscWriter::SyncWritePattern()
         }
         globalJson[m_WriterSize] = attributesJson;
         globalStr = globalJson.dump();
-        std::cout << " =============== " << globalJson.dump(4);
     }
 
     size_t globalSizeSrc = globalStr.size();
@@ -318,6 +313,7 @@ void SscWriter::DoClose(const int transportIndex)
         std::cout << "SscWriter::DoClose, World Rank " << m_WorldRank
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
+    MPI_Win_free(&m_MpiWin);
 }
 
 } // end namespace engine

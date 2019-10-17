@@ -9,9 +9,9 @@
  */
 
 #include "SscReader.tcc"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "nlohmann/json.hpp"
-#include <mpi.h>
 
 namespace adios2
 {
@@ -52,18 +52,16 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     {
         m_InitialStep = false;
         SyncReadPattern();
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
+                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
     else
     {
         ++m_CurrentStep;
     }
 
-    MPI_Win win;
-    MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
-                   MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-    MPI_Win_fence(0, win);
-    MPI_Win_fence(0, win);
-    MPI_Win_free(&win);
+    MPI_Win_fence(0, m_MpiWin);
+    MPI_Win_fence(0, m_MpiWin);
 
     return StepStatus::OK;
 }
@@ -265,7 +263,7 @@ void SscReader::SyncReadPattern()
     // aggregate global read pattern across all readers
     size_t localSize = localStr.size();
     size_t maxLocalSize;
-    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, m_Comm.Op::Max);
+    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, helper::Comm::Op::Max);
     std::vector<char> localVec(maxLocalSize, '\0');
     std::memcpy(localVec.data(), localStr.c_str(), localStr.size());
     std::vector<char> globalVec(maxLocalSize * m_ReaderSize);
@@ -359,6 +357,7 @@ void SscReader::DoClose(const int transportIndex)
         std::cout << "SscReader::DoClose, World Rank " << m_WorldRank
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
+    MPI_Win_free(&m_MpiWin);
 }
 
 } // end namespace engine
