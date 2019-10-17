@@ -19,7 +19,7 @@
 #ifdef ADIOS2_HAVE_MPI
 #include "adios2/helper/adiosCommMPI.h"
 #else
-#include "adios2/helper/mpiwrap.h"
+#include "adios2/toolkit/sst/mpiwrap.h"
 #endif
 
 namespace adios2
