@@ -270,6 +270,7 @@ namespace key
 {
 constexpr char tolerance[] = "tolerance";
 constexpr char accuracy[] = "accuracy";
+constexpr char s[] = "s";
 }
 }
 #endif
