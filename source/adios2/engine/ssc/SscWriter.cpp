@@ -8,15 +8,9 @@
  *      Author: Jason Wang
  */
 
-#include "SscWriter.h"
 #include "SscWriter.tcc"
-
-#include "adios2/helper/adiosFunctions.h"
-#include "adios2/toolkit/transport/file/FileFStream.h"
-
-#include <iostream>
-
-#include <zmq.h>
+#include "adios2/helper/adiosComm.h"
+#include "nlohmann/json.hpp"
 
 namespace adios2
 {
@@ -27,72 +21,277 @@ namespace engine
 
 SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
-: Engine("SscWriter", io, name, mode, std::move(comm)),
-  m_DataManSerializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
+: Engine("SscWriter", io, name, mode, std::move(comm))
 {
     TAU_SCOPED_TIMER_FUNC();
-    Init();
-    Log(5, "SscWriter::SscWriter()", true, true);
+    MPI_Comm_rank(MPI_COMM_WORLD, &m_WorldRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &m_WorldSize);
+    m_WriterRank = m_Comm.Rank();
+    m_WriterSize = m_Comm.Size();
+    m_ReaderSize = m_WorldSize - m_WriterSize;
+
+    SyncMpiPattern();
 }
 
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
-    Log(5,
-        "SscWriter::BeginStep() begin. Last step " +
-            std::to_string(m_CurrentStep),
-        true, true);
 
-    ++m_CurrentStep;
-    if (m_CurrentStep % m_StepsPerAggregation == 0)
+    if (m_Verbosity >= 5)
     {
-        m_CurrentStepActive = true;
-        m_DataManSerializer.NewWriterBuffer(m_SerializationBufferSize);
-        if (not m_AttributesSet)
-        {
-            m_DataManSerializer.PutAttributes(m_IO);
-            m_AttributesSet = true;
-        }
+        std::cout << "SscWriter::BeginStep, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+
+    if (m_InitialStep)
+    {
+        m_InitialStep = false;
+        SyncWritePattern();
+        SyncReadPattern();
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
+                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
     else
     {
-        m_CurrentStepActive = false;
+        ++m_CurrentStep;
     }
-
-    Log(5,
-        "SscWriter::BeginStep() end. New step " + std::to_string(m_CurrentStep),
-        true, true);
     return StepStatus::OK;
 }
 
-size_t SscWriter::CurrentStep() const { return m_CurrentStep; }
+size_t SscWriter::CurrentStep() const
+{
+    TAU_SCOPED_TIMER_FUNC();
+    return m_CurrentStep;
+}
 
-void SscWriter::PerformPuts() {}
+void SscWriter::PerformPuts() { TAU_SCOPED_TIMER_FUNC(); }
 
 void SscWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
-    Log(5, "SscWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep),
-        true, false);
-
-    if (m_CurrentStepActive)
+    if (m_Verbosity >= 5)
     {
-        m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
-        m_DataManSerializer.AggregateMetadata();
+        std::cout << "SscWriter::EndStep, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
-    if (m_CurrentStep > 5)
+    MPI_Win_fence(0, m_MpiWin);
+    for (const auto &i : m_AllSendingReaderRanks)
     {
-        m_DataManSerializer.Erase(m_CurrentStep - 5, true);
+        MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
+                m_ReaderMasterWorldRank + i.first, i.second, m_Buffer.size(),
+                MPI_CHAR, m_MpiWin);
     }
-
-    Log(5, "SscWriter::EndStep() end. Step " + std::to_string(m_CurrentStep),
-        true, true);
+    MPI_Win_fence(0, m_MpiWin);
 }
 
-void SscWriter::Flush(const int transportIndex) {}
+void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
 
 // PRIVATE
+
+void SscWriter::SyncMpiPattern()
+{
+    int readerMasterWorldRank = 0;
+    int writerMasterWorldRank = 0;
+    if (m_WriterRank == 0)
+    {
+        writerMasterWorldRank = m_WorldRank;
+    }
+    MPI_Allreduce(&readerMasterWorldRank, &m_ReaderMasterWorldRank, 1, MPI_INT,
+                  MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&writerMasterWorldRank, &m_WriterMasterWorldRank, 1, MPI_INT,
+                  MPI_MAX, MPI_COMM_WORLD);
+
+    if (m_WorldSize == m_WriterSize)
+    {
+        throw(std::runtime_error("no readers are found"));
+    }
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "SscWriter::SyncMpiPattern, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+}
+
+void SscWriter::SyncWritePattern()
+{
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "SscWriter::SyncWritePattern, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+
+    // serialize local writer rank metadata
+    nlohmann::json j;
+    auto variables = m_IO.GetAvailableVariables();
+    size_t varIndex = 0;
+    size_t position = 0;
+    for (auto &i : variables)
+    {
+        std::string type = i.second["Type"];
+        Dims start;
+        Dims count;
+        Dims shape;
+
+        if (type.empty())
+        {
+            throw(std::runtime_error("unknown data type"));
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        auto var = m_IO.InquireVariable<T>(i.first);                           \
+        shape = var->m_Shape;                                                  \
+        start = var->m_Start;                                                  \
+        count = var->m_Count;                                                  \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        else { throw(std::runtime_error("unknown data type")); }
+
+        auto &jref = j[i.first];
+        jref["T"] = type;
+        jref["S"] = shape;
+        jref["O"] = start;
+        jref["C"] = count;
+
+        auto &mref = m_LocalWritePatternMap[i.first];
+        mref.type = type;
+        mref.shape = shape;
+        mref.start = start;
+        mref.count = count;
+        mref.id = varIndex;
+        mref.posStart = position;
+        mref.posCount = ssc::TotalDataSize(count, type);
+        position += mref.posCount;
+        ++varIndex;
+    }
+    std::string localStr = j.dump();
+
+    // aggregate global metadata across all writers
+    size_t localSize = localStr.size();
+    size_t maxLocalSize;
+    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, helper::Comm::Op::Max);
+    std::vector<char> localVec(maxLocalSize, '\0');
+    std::memcpy(localVec.data(), localStr.data(), localStr.size());
+    std::vector<char> globalVec(maxLocalSize * m_WriterSize);
+    m_Comm.GatherArrays(localVec.data(), maxLocalSize, globalVec.data(), 0);
+
+    std::string globalStr;
+    if (m_WriterRank == 0)
+    {
+        nlohmann::json globalJson;
+        try
+        {
+            for (size_t i = 0; i < m_WriterSize; ++i)
+            {
+                globalJson[i] = nlohmann::json::parse(
+                    globalVec.begin() + i * maxLocalSize,
+                    globalVec.begin() + (i + 1) * maxLocalSize);
+            }
+        }
+        catch (...)
+        {
+            throw(std::runtime_error(
+                "writer received corrupted aggregated metadata"));
+        }
+
+        nlohmann::json attributesJson;
+        const auto &attributeMap = m_IO.GetAttributesDataMap();
+        for (const auto &attributePair : attributeMap)
+        {
+            const std::string name(attributePair.first);
+            const std::string type(attributePair.second.first);
+            if (type.empty())
+            {
+            }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        const auto &attribute = m_IO.InquireAttribute<T>(name);                \
+        nlohmann::json attributeJson;                                          \
+        attributeJson["N"] = attribute->m_Name;                                \
+        attributeJson["T"] = attribute->m_Type;                                \
+        attributeJson["S"] = attribute->m_IsSingleValue;                       \
+        if (attribute->m_IsSingleValue)                                        \
+        {                                                                      \
+            attributeJson["V"] = attribute->m_DataSingleValue;                 \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            attributeJson["V"] = attribute->m_DataArray;                       \
+        }                                                                      \
+        attributesJson.emplace_back(std::move(attributeJson));                 \
+    }
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        }
+        globalJson[m_WriterSize] = attributesJson;
+        globalStr = globalJson.dump();
+    }
+
+    size_t globalSizeSrc = globalStr.size();
+    size_t globalSizeDst = 0;
+    MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG,
+                  MPI_MAX, MPI_COMM_WORLD);
+
+    if (globalStr.size() < globalSizeDst)
+    {
+        globalStr.resize(globalSizeDst);
+    }
+
+    globalVec.resize(globalSizeDst);
+    std::memcpy(globalVec.data(), globalStr.data(), globalStr.size());
+
+    // sync with readers
+    MPI_Win win;
+    MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char),
+                   MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_fence(0, win);
+    if (m_WorldRank > 0)
+    {
+        MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR, 0, 0,
+                globalVec.size(), MPI_CHAR, win);
+    }
+    MPI_Win_fence(0, win);
+    MPI_Win_free(&win);
+
+    m_GlobalWritePatternMap = ssc::JsonToVarMapVec(globalVec, m_WriterSize);
+
+    m_Buffer.resize(ssc::TotalDataSize(m_LocalWritePatternMap));
+}
+
+void SscWriter::SyncReadPattern()
+{
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "SscWriter::SyncReadPattern, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+
+    size_t globalSizeSrc = 0;
+    size_t globalSizeDst = 0;
+    MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG,
+                  MPI_MAX, MPI_COMM_WORLD);
+
+    std::vector<char> globalVec(globalSizeDst);
+
+    MPI_Win win;
+    MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char),
+                   MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_fence(0, win);
+    MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR,
+            m_ReaderMasterWorldRank, 0, globalVec.size(), MPI_CHAR, win);
+    MPI_Win_fence(0, win);
+    MPI_Win_free(&win);
+
+    m_GlobalReadPatternMap = ssc::JsonToVarMapVec(globalVec, m_ReaderSize);
+    ssc::CalculateOverlap(m_GlobalReadPatternMap, m_LocalWritePatternMap);
+    m_AllSendingReaderRanks = ssc::AllOverlapRanks(m_GlobalReadPatternMap);
+    ssc::CalculatePosition(m_GlobalWritePatternMap, m_GlobalReadPatternMap,
+                           m_WriterRank, m_AllSendingReaderRanks);
+}
 
 #define declare_type(T)                                                        \
     void SscWriter::DoPutSync(Variable<T> &variable, const T *data)            \
@@ -106,167 +305,15 @@ void SscWriter::Flush(const int transportIndex) {}
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void SscWriter::Init()
-{
-    TAU_SCOPED_TIMER_FUNC();
-    m_MpiRank = m_Comm.Rank();
-    m_MpiSize = m_Comm.Size();
-    srand(time(NULL));
-    InitParameters();
-    helper::HandshakeWriter(m_Comm, m_AppID, m_FullAddresses, m_Name, "ssc",
-                            m_Port, m_Channels, m_MaxRanksPerNode,
-                            m_MaxAppsPerNode);
-    InitTransports();
-}
-
-void SscWriter::InitParameters()
-{
-    TAU_SCOPED_TIMER_FUNC();
-    for (const auto &pair : m_IO.m_Parameters)
-    {
-        std::string key(pair.first);
-        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-        std::string value(pair.second);
-        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-        if (key == "verbose")
-        {
-            m_Verbosity = std::stoi(value);
-        }
-        else if (key == "port")
-        {
-            m_Port = std::stoi(value);
-        }
-        else if (key == "stepsperaggregation")
-        {
-            m_StepsPerAggregation = std::stoi(value);
-        }
-        else if (key == "timeout")
-        {
-            m_Timeout = std::stoi(value);
-        }
-    }
-}
-
-void SscWriter::InitTransports()
-{
-    TAU_SCOPED_TIMER_FUNC();
-    m_Listening = true;
-    for (const auto &address : m_FullAddresses)
-    {
-        m_ReplyThreads.emplace_back(
-            std::thread(&SscWriter::ReplyThread, this, address));
-    }
-}
-
-void SscWriter::ReplyThread(const std::string &address)
-{
-    adios2::zmq::ZmqReqRep replier;
-    replier.OpenReplier(address, m_Timeout, m_ReceiverBufferSize);
-    while (m_Listening)
-    {
-        auto request = replier.ReceiveRequest();
-        if (request == nullptr)
-        {
-            continue;
-        }
-        if (request->size() == 2 * sizeof(int64_t))
-        {
-            int64_t reader_id = reinterpret_cast<int64_t *>(request->data())[0];
-            int64_t stepRequested =
-                reinterpret_cast<int64_t *>(request->data())[1];
-            std::shared_ptr<std::vector<char>> aggMetadata = nullptr;
-            int64_t stepProvided = -1;
-            while (aggMetadata == nullptr)
-            {
-                if (stepRequested == -5) // let writer decide what to send
-                {
-                    aggMetadata = m_DataManSerializer.GetAggregatedMetadataPack(
-                        -2, stepProvided, m_AppID);
-                }
-                else
-                {
-                    aggMetadata = m_DataManSerializer.GetAggregatedMetadataPack(
-                        stepRequested, stepProvided, m_AppID);
-                }
-            }
-            replier.SendReply(aggMetadata);
-
-            if (m_Verbosity >= 100)
-            {
-                Log(100,
-                    "SscWriter::MetadataRepThread() sending metadata "
-                    "pack, size =  " +
-                        std::to_string(aggMetadata->size()),
-                    true, true);
-                std::cout << nlohmann::json::parse(*aggMetadata).dump(4)
-                          << std::endl;
-            }
-        }
-        else if (request->size() > 16)
-        {
-            size_t step;
-            m_CompressionParamsMutex.lock();
-            std::unordered_map<std::string, Params> p = m_CompressionParams;
-            m_CompressionParamsMutex.unlock();
-            auto reply = m_DataManSerializer.GenerateReply(*request, step, p);
-            replier.SendReply(reply);
-            if (reply->size() <= 16)
-            {
-                if (m_Tolerance)
-                {
-                    Log(1,
-                        "SscWriter::ReplyThread received data request but "
-                        "the step is already removed from buffer. Increase the"
-                        "buffer size to prevent this from happening again.",
-                        true, true);
-                }
-                else
-                {
-                    throw(std::runtime_error(
-                        "SscWriter::ReplyThread received data request but the "
-                        "step is already removed from buffer. Increase the "
-                        "buffer "
-                        "size to prevent this from happening again."));
-                }
-            }
-        }
-    }
-}
-
 void SscWriter::DoClose(const int transportIndex)
 {
-    std::this_thread::sleep_for(std::chrono::seconds(m_Timeout));
-    m_Comm.Barrier();
-    m_Listening = false;
-    for (auto &i : m_ReplyThreads)
-    {
-        if (i.joinable())
-        {
-            i.join();
-        }
-    }
-
-    remove(".staging");
-    remove(std::string(m_Name + ".staging").c_str());
-
-    Log(5, "SscWriter::DoClose(" + m_Name + ")", true, true);
-}
-void SscWriter::Log(const int level, const std::string &message, const bool mpi,
-                    const bool endline)
-{
     TAU_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= level)
+    if (m_Verbosity >= 5)
     {
-        if (mpi)
-        {
-            std::cout << "[Rank " << m_MpiRank << "] ";
-        }
-        std::cout << message;
-        if (endline)
-        {
-            std::cout << std::endl;
-        }
+        std::cout << "SscWriter::DoClose, World Rank " << m_WorldRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
     }
+    MPI_Win_free(&m_MpiWin);
 }
 
 } // end namespace engine

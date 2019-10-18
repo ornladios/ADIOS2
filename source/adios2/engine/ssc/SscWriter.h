@@ -11,14 +11,11 @@
 #ifndef ADIOS2_ENGINE_SSCWRITER_H_
 #define ADIOS2_ENGINE_SSCWRITER_H_
 
-#include <queue>
-
+#include "SscHelper.h"
 #include "adios2/core/Engine.h"
-#include "adios2/helper/adiosComm.h"
-#include "adios2/toolkit/format/dataman/DataManSerializer.h"
-#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
-#include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
+#include <mpi.h>
+#include <queue>
 
 namespace adios2
 {
@@ -33,7 +30,6 @@ class SscWriter : public Engine
 public:
     SscWriter(IO &adios, const std::string &name, const Mode mode,
               helper::Comm comm);
-
     ~SscWriter() = default;
 
     StepStatus BeginStep(
@@ -45,34 +41,28 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    int m_Channels = 1;
-    size_t m_SerializationBufferSize = 1024;
-    size_t m_ReceiverBufferSize = 1e8;
-    int m_Port = 12307;
-    int m_MaxRanksPerNode = 200;
-    int m_MaxAppsPerNode = 10;
-    int m_StepsPerAggregation = 1;
+    size_t m_CurrentStep = 0;
+    bool m_InitialStep = true;
 
-    format::DataManSerializer m_DataManSerializer;
-    int64_t m_CurrentStep = -1;
-    int m_MpiRank;
-    int m_MpiSize;
-    std::vector<std::string> m_FullAddresses;
-    int m_Timeout = 5;
-    bool m_Listening = false;
-    bool m_Tolerance = true;
-    bool m_AttributesSet = false;
-    bool m_CurrentStepActive = true;
-    size_t m_AppID = 0;
-    std::unordered_map<std::string, Params> m_CompressionParams;
-    std::mutex m_CompressionParamsMutex;
+    ssc::VarMapVec m_GlobalWritePatternMap;
+    ssc::VarMapVec m_GlobalReadPatternMap;
+    ssc::VarMap m_LocalWritePatternMap;
 
-    void Init() final;
-    void InitParameters() final;
-    void InitTransports() final;
+    ssc::PosMap m_AllSendingReaderRanks;
+    std::vector<char> m_Buffer;
+    MPI_Win m_MpiWin;
 
-    void ReplyThread(const std::string &address);
-    std::vector<std::thread> m_ReplyThreads;
+    int m_WorldRank;
+    int m_WorldSize;
+    int m_WriterRank;
+    int m_WriterSize;
+    int m_ReaderSize;
+    int m_WriterMasterWorldRank;
+    int m_ReaderMasterWorldRank;
+
+    void SyncMpiPattern();
+    void SyncWritePattern();
+    void SyncReadPattern();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
@@ -80,27 +70,13 @@ private:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    /**
-     * Closes a single transport or all transports
-     * @param transportIndex, if -1 (default) closes all transports,
-     * otherwise it closes a transport in m_Transport[transportIndex].
-     * In debug mode the latter is bounds-checked.
-     */
     void DoClose(const int transportIndex = -1) final;
 
-    /**
-     * Common function for primitive PutSync, puts variables in buffer
-     * @param variable
-     * @param values
-     */
     template <class T>
     void PutSyncCommon(Variable<T> &variable, const T *values);
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
-
-    void Log(const int level, const std::string &message, const bool mpi,
-             const bool endline);
 
     int m_Verbosity = 0;
 };

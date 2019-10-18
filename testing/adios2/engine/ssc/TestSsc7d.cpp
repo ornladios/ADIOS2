@@ -237,13 +237,11 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
 
-    bool received_steps = false;
-    while (true)
+    for (size_t i = 0; i < steps; ++i)
     {
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
-            received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
             if (print_lines == 0)
             {
@@ -320,15 +318,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             break;
         }
     }
-    if (received_steps)
-    {
-        auto attInt = dataManIO.InquireAttribute<int>("AttInt");
-        std::cout << "[Rank " + std::to_string(mpiRank) +
-                         "] Attribute received "
-                  << attInt.Data()[0] << ", expected 110" << std::endl;
-        ASSERT_EQ(110, attInt.Data()[0]);
-        ASSERT_NE(111, attInt.Data()[0]);
-    }
     dataManReader.Close();
     print_lines = 0;
 }
@@ -350,17 +339,18 @@ TEST_F(SscEngineTest, TestSsc7d)
     Dims shape = {10, 2, 2, (size_t)mpiSize, 2, 8, 10};
     Dims start = {0, 0, 0, (size_t)mpiRank, 0, 0, 0};
     Dims count = {10, 2, 2, 1, 2, 8, 10};
+    size_t steps = 200;
 
     if (mpiGroup == 0)
     {
-        Writer(shape, start, count, 200, engineParams, filename);
+        Writer(shape, start, count, steps, engineParams, filename);
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     if (mpiGroup == 1)
     {
-        Reader(shape, start, count, 1, engineParams, filename);
+        Reader(shape, start, count, steps, engineParams, filename);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);

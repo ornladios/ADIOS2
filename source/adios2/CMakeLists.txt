@@ -166,7 +166,9 @@ if(ADIOS2_HAVE_SSC)
         engine/ssc/SscReader.tcc
         engine/ssc/SscWriter.cpp
         engine/ssc/SscWriter.tcc
-    )
+        engine/ssc/SscHelper.cpp
+        )
+    target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_Table)

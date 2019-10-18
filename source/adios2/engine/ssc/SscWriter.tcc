@@ -12,7 +12,6 @@
 #define ADIOS2_ENGINE_SSCWRITER_TCC_
 
 #include "SscWriter.h"
-
 #include <iostream>
 
 namespace adios2
@@ -26,65 +25,26 @@ template <class T>
 void SscWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
-    Log(5,
-        "SscWriter::PutSync(" + variable.m_Name + ") begin. Current step " +
-            std::to_string(m_CurrentStep),
-        true, true);
-    if (m_CurrentStepActive)
+    variable.SetData(data);
+    auto saved = m_LocalWritePatternMap[variable.m_Name];
+    if (ssc::AreSameDims(variable.m_Start, saved.start) and
+        ssc::AreSameDims(variable.m_Count, saved.count) and
+        ssc::AreSameDims(variable.m_Shape, saved.shape))
     {
-        PutDeferredCommon(variable, data);
-        PerformPuts();
+        std::memcpy(m_Buffer.data() + saved.posStart, data, saved.posCount);
     }
-    Log(5,
-        "SscWriter::PutSync(" + variable.m_Name + ") end. Current step " +
-            std::to_string(m_CurrentStep),
-        true, true);
+    else
+    {
+        throw std::runtime_error("ssc only accepts fixed IO pattern");
+    }
 }
 
 template <class T>
 void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
-    Log(5,
-        "SscWriter::PutDeferred(" + variable.m_Name + ") start. Current step " +
-            std::to_string(m_CurrentStep),
-        true, true);
-
-    if (m_CurrentStepActive)
-    {
-        for (const auto &op : variable.m_Operations)
-        {
-            std::lock_guard<std::mutex> l(m_CompressionParamsMutex);
-            std::string opName = op.Op->m_Type;
-            if (opName == "zfp" or opName == "bzip2" or opName == "sz")
-            {
-                m_CompressionParams[variable.m_Name]["CompressionMethod"] =
-                    opName;
-                for (const auto &p : op.Parameters)
-                {
-                    m_CompressionParams[variable.m_Name]
-                                       [opName + ":" + p.first] = p.second;
-                }
-                break;
-            }
-        }
-
-        if (variable.m_SingleValue)
-        {
-            variable.m_Shape = Dims(1, 1);
-            variable.m_Start = Dims(1, 0);
-            variable.m_Count = Dims(1, 1);
-        }
-        variable.SetData(data);
-        m_DataManSerializer.PutVar(
-            variable, m_Name, CurrentStep(), m_MpiRank,
-            m_FullAddresses[rand() % m_FullAddresses.size()], Params());
-    }
-
-    Log(5,
-        "SscWriter::PutDeferred(" + variable.m_Name + ") end. Current step " +
-            std::to_string(m_CurrentStep),
-        true, true);
+    PutSyncCommon(variable, data);
+    PerformPuts();
 }
 
 } // end namespace engine
