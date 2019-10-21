@@ -115,6 +115,7 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
 {
     int mgardType = -1;
     size_t elementSize = 0;
+    double quantizer = 0.0;
 
     if (type == helper::GetType<double>())
     {
@@ -143,7 +144,7 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
     }
 
     void *dataPtr = mgard_decompress(
-        mgardType,
+        mgardType, quantizer,
         reinterpret_cast<unsigned char *>(const_cast<void *>(bufferIn)),
         static_cast<int>(sizeIn), r[0], r[1], r[2], 0);
 
