@@ -353,7 +353,8 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
 
 std::map<std::string, Params>
 IO::GetAvailableAttributes(const std::string &variableName,
-                           const std::string separator) noexcept
+                           const std::string separator,
+                           const bool fullNameKeys) noexcept
 {
     TAU_SCOPED_TIMER("IO::GetAvailableAttributes");
     std::map<std::string, Params> attributesInfo;
@@ -371,7 +372,8 @@ IO::GetAvailableAttributes(const std::string &variableName,
     {                                                                          \
         Variable<T> &variable =                                                \
             GetVariableMap<T>().at(itVariable->second.second);                 \
-        attributesInfo = variable.GetAttributesInfo(*this, separator);         \
+        attributesInfo =                                                       \
+            variable.GetAttributesInfo(*this, separator, fullNameKeys);        \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

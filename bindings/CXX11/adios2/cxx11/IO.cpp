@@ -137,10 +137,10 @@ std::map<std::string, Params> IO::AvailableVariables()
 
 std::map<std::string, Params>
 IO::AvailableAttributes(const std::string &variableName,
-                        const std::string separator)
+                        const std::string separator, const bool fullNameKeys)
 {
     helper::CheckForNullptr(m_IO, "in call to IO::AvailableAttributes");
-    return m_IO->GetAvailableAttributes(variableName, separator);
+    return m_IO->GetAvailableAttributes(variableName, separator, fullNameKeys);
 }
 
 std::string IO::VariableType(const std::string &name) const

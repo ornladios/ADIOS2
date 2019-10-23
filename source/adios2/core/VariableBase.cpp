@@ -303,34 +303,38 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
 }
 
 std::map<std::string, Params>
-VariableBase::GetAttributesInfo(core::IO &io, const std::string separator) const
-    noexcept
+VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
+                                const bool fullNameKeys) const noexcept
 {
-    auto lf_GetAttributeInfo =
-        [](const std::string &prefix, const std::string &attributeName,
-           core::IO &io, std::map<std::string, Params> &attributesInfo) {
-            if (attributeName.compare(0, prefix.size(), prefix) != 0)
-            {
-                return;
-            }
+    auto lf_GetAttributeInfo = [](const std::string &prefix,
+                                  const std::string &attributeName,
+                                  core::IO &io,
+                                  std::map<std::string, Params> &attributesInfo,
+                                  const bool fullNameKeys) {
+        if (attributeName.compare(0, prefix.size(), prefix) != 0)
+        {
+            return;
+        }
 
-            auto itAttribute = io.m_Attributes.find(attributeName);
-            const std::string type = itAttribute->second.first;
+        auto itAttribute = io.m_Attributes.find(attributeName);
+        const std::string type = itAttribute->second.first;
 
-            if (type == "compound")
-            {
-            }
+        const std::string key =
+            fullNameKeys ? attributeName : attributeName.substr(prefix.size());
+
+        if (type == "compound")
+        {
+        }
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         Attribute<T> &attribute =                                              \
             io.GetAttributeMap<T>().at(itAttribute->second.second);            \
-        attributesInfo[attributeName] = attribute.GetInfo();                   \
+        attributesInfo[key] = attribute.GetInfo();                             \
     }
-            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(
-                declare_template_instantiation)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
-        };
+    };
 
     // BODY OF FUNCTION STARTS HERE
     std::map<std::string, Params> attributesInfo;
@@ -341,7 +345,8 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator) const
         // get prefixed attributes from stored attributes
         for (const std::string &attributeName : m_PrefixedAttributes)
         {
-            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo);
+            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo,
+                                fullNameKeys);
         }
     }
     else
@@ -349,7 +354,8 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator) const
         for (const auto &attributePair : io.m_Attributes)
         {
             const std::string &attributeName = attributePair.first;
-            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo);
+            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo,
+                                fullNameKeys);
         }
     }
 

@@ -296,6 +296,8 @@ public:
      * attributes, if empty (default) return all attributes
      * @param separator optional name hierarchy separator (/, ::, _, -, \\,
      * etc.)
+     * @param fullNameKeys true: return full attribute names in keys, false
+     * (default): return attribute names relative to variableName
      * @return map:
      * <pre>
      * key: unique attribute name
@@ -305,8 +307,9 @@ public:
      * </pre>
      */
     std::map<std::string, Params>
-    AvailableAttributes(const std::string &variableName = std::string(),
-                        const std::string separator = "/");
+    AvailableAttributes(const std::string &variableName = "",
+                        const std::string separator = "/",
+                        const bool fullNameKeys = false);
 
     /**
      * Inspects variable type. This function can be used in conjunction with

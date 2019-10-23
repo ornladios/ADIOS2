@@ -210,8 +210,8 @@ public:
      * @return attributes info
      */
     std::map<std::string, Params>
-    GetAttributesInfo(core::IO &io, const std::string separator = "/") const
-        noexcept;
+    GetAttributesInfo(core::IO &io, const std::string separator,
+                      const bool fullNameKeys) const noexcept;
 
 protected:
     const bool m_DebugMode = false;
