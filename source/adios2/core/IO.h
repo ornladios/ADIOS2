@@ -354,7 +354,8 @@ public:
      */
     std::map<std::string, Params>
     GetAvailableAttributes(const std::string &variableName = std::string(),
-                           const std::string separator = "/") noexcept;
+                           const std::string separator = "/",
+                           const bool fullNamesKeys = false) noexcept;
 
     /**
      * @brief Check existence in config file passed to ADIOS class constructor

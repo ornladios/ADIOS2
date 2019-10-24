@@ -841,35 +841,39 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
     {
         auto lf_VerifyAttributes = [](const std::string &variableName,
                                       const std::string separator,
-                                      adios2::IO &io) {
+                                      adios2::IO &io, const bool fullNames) {
             const std::map<std::string, adios2::Params> attributesInfo =
-                io.AvailableAttributes(variableName, separator);
+                io.AvailableAttributes(variableName, separator, fullNames);
 
-            auto itSArray =
-                attributesInfo.find(variableName + separator + "sArray");
+            const std::string sArrayName =
+                fullNames ? variableName + separator + "sArray" : "sArray";
+            auto itSArray = attributesInfo.find(sArrayName);
             EXPECT_NE(itSArray, attributesInfo.end());
             EXPECT_EQ(itSArray->second.at("Type"), "string");
             EXPECT_EQ(itSArray->second.at("Elements"), "3");
             EXPECT_EQ(itSArray->second.at("Value"),
                       R"({ "one", "two", "three" })");
 
-            auto itU32Value =
-                attributesInfo.find(variableName + separator + "u32Value");
+            const std::string u32ValueName =
+                fullNames ? variableName + separator + "u32Value" : "u32Value";
+            auto itU32Value = attributesInfo.find(u32ValueName);
             EXPECT_NE(itU32Value, attributesInfo.end());
             EXPECT_EQ(itU32Value->second.at("Type"), "uint32_t");
             EXPECT_EQ(itU32Value->second.at("Elements"), "1");
             EXPECT_EQ(itU32Value->second.at("Value"), "1");
 
 #ifndef _WIN32
-            auto itSmile =
-                attributesInfo.find(variableName + separator + "smile");
+            const std::string smileName =
+                fullNames ? variableName + separator + "smile" : "smile";
+            auto itSmile = attributesInfo.find(smileName);
             EXPECT_NE(itSmile, attributesInfo.end());
             EXPECT_EQ(itSmile->second.at("Type"), "string");
             EXPECT_EQ(itSmile->second.at("Elements"), "1");
             EXPECT_EQ(itSmile->second.at("Value"), std::string("\"\u263A\""));
 
-            auto itUTF8 =
-                attributesInfo.find(variableName + separator + "utf8");
+            const std::string utf8Name =
+                fullNames ? variableName + separator + "utf8" : "utf8";
+            auto itUTF8 = attributesInfo.find(utf8Name);
             EXPECT_NE(itUTF8, attributesInfo.end());
             EXPECT_EQ(itUTF8->second.at("Type"), "string");
             EXPECT_EQ(itUTF8->second.at("Elements"), "1");
@@ -886,13 +890,15 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
             auto var1 = io.InquireVariable<int32_t>("var1");
             if (var1)
             {
-                lf_VerifyAttributes("var1", separator, io);
+                lf_VerifyAttributes("var1", separator, io, false);
+                lf_VerifyAttributes("var1", separator, io, true);
             }
 
             auto var2 = io.InquireVariable<int32_t>("var2");
             if (var2)
             {
-                lf_VerifyAttributes("var2", separator, io);
+                lf_VerifyAttributes("var1", separator, io, false);
+                lf_VerifyAttributes("var2", separator, io, true);
             }
 
             bpReader.EndStep();
