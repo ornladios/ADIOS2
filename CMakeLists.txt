@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-project(EVPath VERSION 4.4.0 LANGUAGES C CXX)
+project(EVPath VERSION 4.5.0 LANGUAGES C CXX)
 
 # Enable <PackageName>_ROOT variables for dependency searching
 # CMake v3.12
