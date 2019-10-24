@@ -310,9 +310,11 @@ static void QueueMaintenance(SstStream Stream)
     CPTimestepList List;
     for (int i = 0; i < Stream->ReaderCount; i++)
     {
-        CP_verbose(Stream, "Reader %d status %s has last released %ld\n", i,
-                   SSTStreamStatusStr[Stream->Readers[i]->ReaderStatus],
-                   Stream->Readers[i]->LastReleasedTimestep);
+        CP_verbose(Stream,
+                   "Reader %d status %s has last released %ld, last sent %ld\n",
+                   i, SSTStreamStatusStr[Stream->Readers[i]->ReaderStatus],
+                   Stream->Readers[i]->LastReleasedTimestep,
+                   Stream->Readers[i]->LastSentTimestep);
         if (Stream->Readers[i]->ReaderStatus == Established)
         {
             if (Stream->Readers[i]->LastReleasedTimestep <
@@ -538,6 +540,10 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
                 return 0;
             }
 
+            CP_verbose(
+                Stream,
+                "Registering a close handler for connection %p, to peer %d\n",
+                reader->Connections[peer].CMconn, peer);
             CMconn_register_close_handler(reader->Connections[peer].CMconn,
                                           WriterConnCloseHandler,
                                           (void *)reader);
@@ -878,7 +884,7 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
             *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
             CP_verbose(s, "Sending a message to reader %d (%p)\n", peer,
                        *RS_StreamPtr);
-            if (CMwrite(conn, f, Msg) != 1)
+            if ((!conn) || (CMwrite(conn, f, Msg) != 1))
             {
                 CP_verbose(s, "Message failed to send to reader %d (%p)\n",
                            peer, *RS_StreamPtr);
@@ -898,7 +904,7 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
             *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
             CP_verbose(s, "Sending a message to reader %d (%p)\n", peer,
                        *RS_StreamPtr);
-            if (CMwrite(conn, f, Msg) != 1)
+            if ((!conn) || (CMwrite(conn, f, Msg) != 1))
             {
                 CP_verbose(s, "Message failed to send to reader %d (%p)\n",
                            peer, *RS_StreamPtr);
@@ -932,10 +938,18 @@ static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader,
                               long Timestep)
 {
     struct _SentTimestepRec *List = Reader->SentTimestepList, *Last = NULL;
+    CP_verbose(Stream, "Reader sent timestep list %p, trying to release %ld\n",
+               Reader->SentTimestepList, Timestep);
+
     while (List)
     {
+
         int Freed = 0;
         struct _SentTimestepRec *Next = List->Next;
+        CP_verbose(
+            Stream,
+            "Reader considering sent timestep %ld,trying to release %ld\n",
+            List->Timestep, Timestep);
         if (List->Timestep == Timestep)
         {
             struct _SentTimestepRec *ItemToFree = List;
@@ -968,13 +982,18 @@ static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader,
 
 static void DerefAllSentTimesteps(SstStream Stream, WS_ReaderInfo Reader)
 {
-    struct _SentTimestepRec *List = Reader->SentTimestepList;
+    CPTimestepList List = Stream->QueuedTimesteps;
+
+    CP_verbose(Stream, "Dereferencing all timesteps sent to reader %p\n",
+               Reader);
     while (List)
     {
-        struct _SentTimestepRec *Next = List->Next;
+        CPTimestepList Next = List->Next;
+        CP_verbose(Stream, "Checking on timestep %d\n", List->Timestep);
         DerefSentTimestep(Stream, Reader, List->Timestep);
         List = Next;
     }
+    CP_verbose(Stream, "DONE DEREFERENCING\n");
 }
 
 static void SendTimestepEntryToSingleReader(SstStream Stream,
@@ -992,6 +1011,11 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
                        Entry->Timestep, rank);
         }
         Entry->ReferenceCount++;
+
+        CP_verbose(Stream,
+                   "ADDING timestep %ld to sent list for reader cohort %d, "
+                   "READER %p, reference count is now %d\n",
+                   Entry->Timestep, rank, CP_WSR_Stream, Entry->ReferenceCount);
         AddTSToSentList(Stream, CP_WSR_Stream, Entry->Timestep);
         if (Stream->DP_Interface->readerRegisterTimestep)
         {
@@ -1246,10 +1270,21 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     SstStream ParentStream = CP_WSR_Stream->ParentStream;
     SST_ASSERT_LOCKED();
     if (ParentStream->Status != Established)
+    {
+        CP_verbose(
+            ParentStream,
+            "In PeerFailCloseWSReader, but Parent status not Established, %d\n",
+            ParentStream->Status);
         return;
+    }
 
     if (CP_WSR_Stream->ReaderStatus == NewState)
+    {
+        CP_verbose(ParentStream,
+                   "In PeerFailCloseWSReader, but status is already set% d\n",
+                   ParentStream->Status);
         return;
+    }
 
     if ((NewState == PeerClosed) || (NewState == Closed))
     {
@@ -1324,9 +1359,16 @@ void SstWriterClose(SstStream Stream)
                 CPTimestepList List = Stream->QueuedTimesteps;
                 char *StringList = malloc(1);
                 StringList[0] = 0;
+
                 while (List)
                 {
                     char tmp[20];
+                    CP_verbose(Stream,
+                               "IN TS WAIT, ENTRIES areTimestep %ld (exp %d, "
+                               "Prec %d, Ref %d), Count now %d\n",
+                               List->Timestep, List->Expired,
+                               List->PreciousTimestep, List->ReferenceCount,
+                               Stream->QueuedTimestepCount);
                     sprintf(tmp, "%ld ", List->Timestep);
                     StringList = realloc(StringList,
                                          strlen(StringList) + strlen(tmp) + 1);
@@ -1620,6 +1662,14 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
                 CP_verbose(Stream,
                            "Release List, and set ref count of timestep %ld\n",
                            Metadata->ReleaseList[i].Timestep);
+                /* per reader release here */
+                if (Stream->DP_Interface->readerReleaseTimestep)
+                {
+                    (Stream->DP_Interface->readerReleaseTimestep)(
+                        &Svcs, Stream->Readers[j]->DP_WSR_Stream,
+                        List->Timestep);
+                }
+
                 List->ReferenceCount = 0;
             }
             List = List->Next;
@@ -1994,7 +2044,7 @@ extern void SstInternalProvideTimestep(
         CP_verbose(Stream,
                    "Sending TimestepMetadata for timestep %d (ref count "
                    "%d), one to each reader\n",
-                   Timestep, Entry->ReferenceCount - 1);
+                   Timestep, Entry->ReferenceCount);
 
         PTHREAD_MUTEX_LOCK(&Stream->DataLock);
         SendTimestepEntryToReaders(Stream, Entry);
