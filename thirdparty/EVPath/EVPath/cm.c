@@ -756,19 +756,21 @@ INT_CManager_create_control(char *control_module)
     }
 
     if (control_module != NULL) {
-	for (char *c = control_module; *c; ++c) *c = tolower(*c);
+	char *tmp = strdup(control_module);
+	for (char *c = tmp; *c; ++c) *c = tolower(*c);
 #ifdef HAVE_SYS_EPOLL_H
-	if (strcmp(control_module, "epoll") == 0) {
+	if (strcmp(tmp, "epoll") == 0) {
 	    cm->control_module_choice = "epoll";
 	} else
 #endif
-	if (strcmp(control_module, "select") == 0) {
+	if (strcmp(tmp, "select") == 0) {
 	    cm->control_module_choice = "select";
 	} else {
 	    fprintf(stderr, "Warning:  Specified CM/EVPath control module \"%s\" unknown or not built.\n", control_module);
 	    /* force to default */
 	    control_module = NULL;
 	}
+	free(tmp);
     }	
     if (control_module == NULL) {
 #ifdef HAVE_SYS_EPOLL_H
@@ -869,7 +871,11 @@ CManager_free(CManager cm)
     while (list != NULL) {
 	CMbuffer next = list->next;
 	CMtrace_out(cm, CMBufferVerbose, "Final buffer disposition buf %d, %p, size %ld, ref_count %d\n", i++, list, list->size, list->ref_count);
-	INT_CMfree(list->buffer);
+	if (list->return_callback) {
+	    (list->return_callback)(list->return_callback_data);
+	} else {
+	    INT_CMfree(list->buffer);
+	}
 	INT_CMfree(list);
 	list = next;
     }
