@@ -10,7 +10,7 @@
 #ifndef SST_H_
 #define SST_H_
 
-#include "adios2/helper/mpiwrap.h"
+#include "mpiwrap.h"
 
 #ifdef __cplusplus
 extern "C" {

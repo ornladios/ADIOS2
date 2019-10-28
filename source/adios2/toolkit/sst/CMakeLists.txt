@@ -9,8 +9,8 @@ add_library(sst
   cp/cp_writer.c
   cp/cp_common.c
   cp/ffs_marshal.c
-  ${PROJECT_SOURCE_DIR}/source/adios2/helper/mpidummy.cpp
-  ${PROJECT_SOURCE_DIR}/source/adios2/helper/mpiwrap.cpp
+  mpidummy.cpp
+  mpiwrap.cpp
 )
 
 target_link_libraries(sst PRIVATE taustubs)

@@ -17,7 +17,7 @@
 #include "adios2/core/Stream.h"
 
 #ifdef ADIOS2_HAVE_MPI
-#include "adios2/common/ADIOSMPI.h"
+#include <mpi.h>
 #endif
 
 namespace adios2

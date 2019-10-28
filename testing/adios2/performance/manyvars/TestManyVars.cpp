@@ -14,12 +14,16 @@
  *
  */
 
+#include <chrono>
 #include <vector>
 
 #include <gtest/gtest.h>
 
 #include <adios2/common/ADIOSConfig.h>
-#include <adios2/common/ADIOSMPI.h>
+
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
 
 #include "adios2_c.h"
 #include <errno.h>
@@ -126,9 +130,11 @@ std::vector<RunParams> CreateRunParams()
             break;                                                             \
         }
 
+#ifdef ADIOS2_HAVE_MPI
 MPI_Comm comm = MPI_COMM_WORLD;
-int rank;
-int numprocs;
+#endif
+int rank = 0;
+int numprocs = 1;
 
 class TestManyVars : public ::testing::TestWithParam<RunParams>
 {
@@ -318,11 +324,10 @@ public:
     int write_file(int step)
     {
         int block, v, i;
-        double tb, te;
         size_t count[2] = {ldim1, ldim2};
 
         log("Write step %d to %s\n", step, FILENAME);
-        tb = MPI_Wtime();
+        auto tb = std::chrono::high_resolution_clock::now();
 
         adios2_step_status status;
         adios2_begin_step(engineW, adios2_step_mode_append, 0.0, &status);
@@ -341,12 +346,16 @@ public:
         adios2_perform_puts(engineW);
         adios2_end_step(engineW);
 
-        te = MPI_Wtime();
+        auto te = std::chrono::high_resolution_clock::now();
         if (rank == 0)
         {
-            log("  Write time for step %d was %6.3lf seconds\n", step, te - tb);
+            log("  Write time for step %d was %6.3lf seconds\n", step,
+                double(std::chrono::duration_cast<std::chrono::seconds>(te - tb)
+                           .count()));
         }
+#ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(comm);
+#endif
         return 0;
     }
 
@@ -364,8 +373,9 @@ public:
         int err = 0;
         size_t step, i, v;
         int iMacro; // loop variable in macros
-        double tb, te;
-        double tsb, ts; // time for just scheduling for one step/block
+        std::chrono::time_point<std::chrono::high_resolution_clock> tb, te;
+        std::chrono::duration<double>
+            ts; // time for just scheduling for one step/block
 
         size_t start[2] = {offs1, offs2};
         size_t count[2] = {ldim1, ldim2};
@@ -384,23 +394,27 @@ public:
         adios2_begin_step(engineR, adios2_step_mode_read, 0.0, &status);
 
         log("  Check variable definitions... %s\n", FILENAME);
-        tb = MPI_Wtime();
+        tb = std::chrono::high_resolution_clock::now();
         for (i = 0; i < NVARS; i++)
         {
             CHECK_VARINFO(varnames[i], 2, NSTEPS)
         }
+#ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(comm);
-        te = MPI_Wtime();
+#endif
+        te = std::chrono::high_resolution_clock::now();
         if (rank == 0)
         {
-            log("  Time to check all vars' info: %6.3lf seconds\n", te - tb);
+            log("  Time to check all vars' info: %6.3lf seconds\n",
+                double(std::chrono::duration_cast<std::chrono::seconds>(te - tb)
+                           .count()));
         }
 
         log("  Check variable content...\n");
         for (step = 0; step < NSTEPS; step++)
         {
-            tb = MPI_Wtime();
-            ts = 0;
+            tb = std::chrono::high_resolution_clock::now();
+            ts = std::chrono::duration<double>::zero();
             if (step > 0)
             {
                 adios2_begin_step(engineR, adios2_step_mode_read, 0.0, &status);
@@ -418,12 +432,13 @@ public:
 
                     for (i = 0; i < NVARS; i++)
                     {
-                        tsb = MPI_Wtime();
+                        auto tsb = std::chrono::high_resolution_clock::now();
                         adios2_variable *varH =
                             adios2_inquire_variable(ioR, varnames[i]);
                         adios2_set_selection(varH, 2, start, count);
                         adios2_get(engineR, varH, r2, adios2_mode_sync);
-                        ts += MPI_Wtime() - tsb;
+                        auto tse = std::chrono::high_resolution_clock::now();
+                        ts += tse - tsb;
                         CHECK_ARRAY(varnames[i], r2, ldim1 * ldim2, v, step,
                                     block, iMacro)
                     }
@@ -435,18 +450,24 @@ public:
                 }
             }
             adios2_end_step(engineR);
+#ifdef ADIOS2_HAVE_MPI
             MPI_Barrier(comm);
-            te = MPI_Wtime();
+#endif
+            te = std::chrono::high_resolution_clock::now();
             if (rank == 0)
             {
-                log("  Read time for step %zu was %6.3lfs\n", step, ts);
+                log("  Read time for step %zu was %6.3lfs\n", step,
+                    double(std::chrono::duration_cast<std::chrono::seconds>(ts)
+                               .count()));
             }
         }
 
     endread:
 
         adios2_close(engineR);
+#ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(comm);
+#endif
         return err;
     }
 };
@@ -467,15 +488,21 @@ INSTANTIATE_TEST_CASE_P(NxM, TestManyVars,
 
 int main(int argc, char **argv)
 {
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
+#endif
     ::testing::InitGoogleTest(&argc, argv);
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+#endif
 
     int result;
     result = RUN_ALL_TESTS();
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
     return result;
 }

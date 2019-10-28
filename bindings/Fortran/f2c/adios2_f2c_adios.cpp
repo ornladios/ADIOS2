@@ -10,7 +10,9 @@
 
 #include "adios2_f2c_common.h"
 
-#include "adios2/common/ADIOSMPI.h"
+#ifdef ADIOS2_HAVE_MPI_F
+#include <mpi.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

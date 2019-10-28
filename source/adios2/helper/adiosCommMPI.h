@@ -8,9 +8,14 @@
 #ifndef ADIOS2_HELPER_ADIOSCOMMMPI_H_
 #define ADIOS2_HELPER_ADIOSCOMMMPI_H_
 
+#include "adios2/common/ADIOSConfig.h"
+#ifndef ADIOS2_HAVE_MPI
+#error "Do not include adiosCommMPI.h without ADIOS2_HAVE_MPI."
+#endif
+
 #include "adiosComm.h"
 
-#include "adios2/common/ADIOSMPI.h"
+#include <mpi.h>
 
 namespace adios2
 {

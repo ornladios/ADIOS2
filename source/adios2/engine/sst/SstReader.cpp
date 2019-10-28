@@ -15,9 +15,15 @@
 #include <cstring>
 #include <string>
 
-#include "adios2/helper/adiosCommMPI.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/helper/adiosCommMPI.h"
+#else
+#include "adios2/toolkit/sst/mpiwrap.h"
+#endif
 
 namespace adios2
 {
@@ -35,7 +41,13 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 
     Init();
 
-    m_Input = SstReaderOpen(cstr, &Params, CommAsMPI(m_Comm));
+    m_Input = SstReaderOpen(cstr, &Params,
+#ifdef ADIOS2_HAVE_MPI
+                            CommAsMPI(m_Comm)
+#else
+                            MPI_COMM_NULL
+#endif
+    );
     if (!m_Input)
     {
         throw std::runtime_error(

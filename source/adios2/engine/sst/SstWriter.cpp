@@ -8,13 +8,19 @@
  *      Author: Greg Eisenhauer
  */
 
-#include "adios2/helper/adiosCommMPI.h"
+#include "adios2/helper/adiosComm.h"
 #include <memory>
 
 #include "SstParamParser.h"
 #include "SstWriter.h"
 #include "SstWriter.tcc"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+
+#ifdef ADIOS2_HAVE_MPI
+#include "adios2/helper/adiosCommMPI.h"
+#else
+#include "adios2/toolkit/sst/mpiwrap.h"
+#endif
 
 namespace adios2
 {
@@ -109,7 +115,13 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
 
     Init();
 
-    m_Output = SstWriterOpen(name.c_str(), &Params, CommAsMPI(m_Comm));
+    m_Output = SstWriterOpen(name.c_str(), &Params,
+#ifdef ADIOS2_HAVE_MPI
+                             CommAsMPI(m_Comm)
+#else
+                             MPI_COMM_NULL
+#endif
+    );
 
     if (m_MarshalMethod == SstMarshalBP)
     {
