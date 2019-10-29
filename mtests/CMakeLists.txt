@@ -57,6 +57,10 @@ if(RUN_ENET_TESTS)
   file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/correctness_spec" 
     "\$test_set{\"enet\"} = \"basic_size_list all_read_buffer_styles all_write_buffer_styles\";\n")
 endif()
+if(RUN_ZPL_ENET_TESTS)
+  file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/correctness_spec" 
+    "\$test_set{\"zplenet\"} = \"basic_size_list all_read_buffer_styles all_write_buffer_styles\";\n")
+endif()
 if(RUN_IB_TESTS)
   file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/correctness_spec" 
     "\$test_set{\"ib\"} = \"basic_size_list all_read_buffer_styles all_write_buffer_styles\";\n")
