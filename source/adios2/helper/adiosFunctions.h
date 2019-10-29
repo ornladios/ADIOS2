@@ -19,5 +19,6 @@
 #include "adios2/helper/adiosSystem.h"  //OS functionality, POSIX, filesystem
 #include "adios2/helper/adiosType.h"    //Type casting, conversion, checks, etc.
 #include "adios2/helper/adiosXML.h"     //XML parsing
+#include "adios2/helper/adiosYAML.h"    //YAML parsing
 
 #endif /* ADIOS2_HELPER_ADIOSFUNCTIONS_H_ */

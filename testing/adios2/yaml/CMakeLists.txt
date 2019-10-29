@@ -3,10 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(interface)
-add_subdirectory(engine)
-add_subdirectory(bindings)
-add_subdirectory(xml)
-add_subdirectory(yaml)
-add_subdirectory(performance)
-add_subdirectory(helper)
+gtest_add_tests_helper(YAMLConfig ${test_mpi} "" "" "")
+target_compile_definitions(Test.YAMLConfig PRIVATE
+  "YAML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+)

@@ -887,7 +887,9 @@ INSTANTIATE_TEST_CASE_P(
     ZfpConfigFile, BPWriteReadZfpConfig,
     ::testing::Values("configZfp_rate8.xml", "configZfp_rate8Simple.xml",
                       "configZfp_rate9.xml", "configZfp_rate9Simple.xml",
-                      "configZfp_rate10.xml", "configZfp_rate10Simple.xml"));
+                      "configZfp_rate10.xml", "configZfp_rate10Simple.xml",
+                      "configZfp_rate8.yaml", "configZfp_rate9.yaml",
+                      "configZfp_rate10.yaml"));
 
 int main(int argc, char **argv)
 {

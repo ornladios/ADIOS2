@@ -1,41 +1,23 @@
 ---
-# adios2 config.yaml prototype
+# adios2 config file in yaml format
 
-- io:
-  name: "SimulationOutput"
-  engine:
-    Type: "BP4"
-    CollectiveMetadata: On
-    Threads: 2
-    InitialBufferSize: 10Gb
-
-- io: 
-  name: "PDFAnalysisOutput"
-  engine:
-    type: "BP4"
-    # Simple parameters are passed as dict/maps as in adios2 code
-    # SST engine parameters
-    RendevouzReaderCount: 1
-    QueueLimit: 5
-    QueueFullPolicy: Block
-    # BP4/SST engine parameters
-    OpenTimeOutSecs: 10.0
-    MaxBufferSize: 100Gb
-    #CollectiveMetadata: On  # easily commented out
-  
-  variables:
-  
-    - name: "U"
-      operations:
-        - type: sz
-          accuracy: 0.001
-   
-    - name: "V"
-      operations:
-        - {type: sz, accuracy: 0.001}
-        - {type: z-checker, key1: value1, key2: value2}
-  
-  transports:
-    - {type: file, library: fstream}
-    - {type: rdma, library: ibverbs} 
+## 1st IO ###
+- IO: "Test IO 1"
+  Engine:
+      # only type must be lower case
+    Type: "BPFile"
+    Threads: 1
+    ProfileUnits: Microseconds
+    MaxBufferSize: 20Mb
+    InitialBufferSize: 1Mb
+    BufferGrowthFactor: 2
     
+  Transports:
+      - {Type: file, Library: fstream, ProfileUnits: Milliseconds }
+     
+     
+### 2nd IO ####
+- IO: "Test IO 2"
+  
+  Engine:
+    Type: "BPFile"
