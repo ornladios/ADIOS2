@@ -12,6 +12,7 @@ function(add_install_cmake_test name)
     "-DTEST_CASE=${name}"
     "-DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}"
     "-DCMAKE_INSTALL_CMAKEDIR=${CMAKE_INSTALL_CMAKEDIR}"
+    "-DBUILD_TYPE=$<CONFIG>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/run_cmake.cmake"
     )
   set_tests_properties(Install.CMake.${name} PROPERTIES
@@ -54,6 +55,7 @@ endfunction()
 add_test(NAME Install.Setup COMMAND "${CMAKE_COMMAND}"
   "-DADIOS2_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
   "-DADIOS2_BINARY_DIR=${CMAKE_BINARY_DIR}"
+  "-DBUILD_TYPE=$<CONFIG>"
   -P "${CMAKE_CURRENT_SOURCE_DIR}/run_install.cmake"
   )
 set_tests_properties(Install.Setup PROPERTIES
