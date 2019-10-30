@@ -313,6 +313,19 @@ void SscWriter::DoClose(const int transportIndex)
         std::cout << "SscWriter::DoClose, World Rank " << m_WorldRank
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
+
+    MPI_Win_fence(0, m_MpiWin);
+    if (m_WriterRank == 0)
+    {
+        m_Buffer[0] = 1;
+        for (int i = 0; i < m_ReaderSize; ++i)
+        {
+            MPI_Put(m_Buffer.data(), 1, MPI_CHAR, m_ReaderMasterWorldRank + i,
+                    ssc::TotalDataSize(m_GlobalReadPatternMap[i]), 1, MPI_CHAR,
+                    m_MpiWin);
+        }
+    }
+    MPI_Win_fence(0, m_MpiWin);
     MPI_Win_free(&m_MpiWin);
 }
 

@@ -63,6 +63,11 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     MPI_Win_fence(0, m_MpiWin);
     MPI_Win_fence(0, m_MpiWin);
 
+    if (*m_Buffer.rbegin() == 1)
+    {
+        return StepStatus::EndOfStream;
+    }
+
     return StepStatus::OK;
 }
 
@@ -323,8 +328,7 @@ void SscReader::SyncReadPattern()
     m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePatternMap);
     ssc::CalculatePosition(m_GlobalWritePatternMap, m_AllReceivingWriterRanks);
 
-    m_Buffer.resize(
-        ssc::TotalDataSize(m_GlobalWritePatternMap, m_AllReceivingWriterRanks));
+    m_Buffer.resize(ssc::TotalDataSize(m_LocalReadPatternMap) + 1);
 }
 
 #define declare_type(T)                                                        \

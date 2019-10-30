@@ -207,7 +207,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
 
-    for (size_t i = 0; i < steps; ++i)
+    while (true)
     {
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
@@ -279,6 +279,13 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             VerifyData(myDComplexes.data(), currentStep, Dims(shape.size(), 0),
                        shape, shape);
             dataManReader.EndStep();
+        }
+        else if (status == adios2::StepStatus::EndOfStream)
+        {
+            std::cout << "[Rank " + std::to_string(mpiRank) +
+                             "] SscTest reader end of stream!"
+                      << std::endl;
+            break;
         }
     }
 
