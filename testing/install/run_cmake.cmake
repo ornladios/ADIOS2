@@ -16,6 +16,7 @@ execute_process(COMMAND "${CMAKE_CTEST_COMMAND}"
   --build-options
     "-Dadios2_DIR=${ADIOS2_BINARY_DIR}/testing/install/install/${CMAKE_INSTALL_CMAKEDIR}"
   --test-command "${CMAKE_CTEST_COMMAND}" -V
+  -C "${BUILD_TYPE}"
   RESULT_VARIABLE result
   )
 if(result)
