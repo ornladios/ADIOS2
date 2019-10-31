@@ -11,18 +11,25 @@
 
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
-#include <mpi.h>
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
 #include <adios2.h>
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
 
 int main(int argc, char *argv[])
 {
-    MPI_Init(&argc, &argv);
     int rank, size;
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+#else
+    rank = 0;
+    size = 1;
+#endif
 
     /** Application variable */
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -35,7 +42,11 @@ int main(int argc, char *argv[])
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
+#ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+        adios2::ADIOS adios(adios2::DebugON);
+#endif
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
@@ -73,38 +84,32 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        if (rank == 0)
-        {
-            std::cerr
-                << "Invalid argument exception, STOPPING PROGRAM from rank "
-                << rank << "\n";
-            std::cerr << e.what() << "\n";
-        }
+        std::cerr << "Invalid argument exception: " << e.what() << "\n";
+#ifdef ADIOS2_HAVE_MPI
+        std::cerr << "STOPPING PROGRAM from rank " << rank << "\n";
         MPI_Abort(MPI_COMM_WORLD, 1);
+#endif
     }
     catch (std::ios_base::failure &e)
     {
-        if (rank == 0)
-        {
-            std::cerr << "IO System base failure exception, STOPPING PROGRAM "
-                         "from rank "
-                      << rank << "\n";
-            std::cerr << e.what() << "\n";
-        }
+        std::cerr << "IO System base failure exception: " << e.what() << "\n";
+#ifdef ADIOS2_HAVE_MPI
+        std::cerr << "STOPPING PROGRAM from rank " << rank << "\n";
         MPI_Abort(MPI_COMM_WORLD, 1);
+#endif
     }
     catch (std::exception &e)
     {
-        if (rank == 0)
-        {
-            std::cerr << "Exception, STOPPING PROGRAM from rank " << rank
-                      << "\n";
-            std::cerr << e.what() << "\n";
-        }
+        std::cerr << "Exception: " << e.what() << "\n";
+#ifdef ADIOS2_HAVE_MPI
+        std::cerr << "STOPPING PROGRAM from rank " << rank << "\n";
         MPI_Abort(MPI_COMM_WORLD, 1);
+#endif
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }
