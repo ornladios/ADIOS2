@@ -293,16 +293,19 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         TimeGapDetected++;
     }
 
-    if (TimeGapExpected)
+    if (!IgnoreTimeGap)
     {
-        EXPECT_TRUE(TimeGapDetected);
-    }
-    else
-    {
+        if (TimeGapExpected)
+        {
+            EXPECT_TRUE(TimeGapDetected);
+        }
+        else
+        {
+            EXPECT_FALSE(TimeGapDetected);
+        }
         EXPECT_EQ(t, NSteps);
-
-        EXPECT_FALSE(TimeGapDetected);
     }
+
     // Close the file
     engine.Close();
 }
