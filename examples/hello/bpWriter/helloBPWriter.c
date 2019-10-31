@@ -7,11 +7,14 @@
  *  Created on: Aug 8, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
-#include <mpi.h>
 #include <stdio.h>  // printf
 #include <stdlib.h> // malloc, free, exit
 
 #include <adios2_c.h>
+
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
 
 void check_error(const int error)
 {
@@ -33,10 +36,16 @@ void check_handler(const void *handler, const char *message)
 
 int main(int argc, char *argv[])
 {
-    MPI_Init(&argc, &argv);
     int rank, size;
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+#else
+    rank = 0;
+    size = 1;
+#endif
 
     adios2_error errio;
     // application input, data in heap
@@ -50,7 +59,12 @@ int main(int argc, char *argv[])
         myFloats[i] = (float)i;
     }
 
+#ifdef ADIOS2_HAVE_MPI
     adios2_adios *adios = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+#else
+    adios2_adios *adios = adios2_init(adios2_debug_mode_on);
+#endif
+
     check_handler(adios, "adios");
 
     adios2_io *io = adios2_declare_io(adios, "BPFile_Write");
@@ -86,7 +100,9 @@ int main(int argc, char *argv[])
 
     free(myFloats);
 
+#ifdef ADISO2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }
