@@ -28,11 +28,11 @@ ADIOS 2 focuses on:
     
 In addition, ADIOS 2 APIs are based on:
 
-* **MPI** ADIOS 2 is MPI-based, it can be used in non-MPI serial code.
+* **MPI** ADIOS 2 is MPI-based, it can be used in non-MPI serial code. Non-MPI 100% serial build is optional.
 
 * **Data Groups** ADIOS 2 favors a deferred/prefetch/grouped variables transport mode by default to maximize data-per-request ratios. Sync mode, one variable at a time, is treated as the special case.
 
-* **Data Steps** ADIOS 2 follow the actual production/consumption of data using an “steps” abstraction removing the need to manage extra indexing information.
+* **Data Steps** ADIOS 2 follows the actual production/consumption of data using an I/O “steps” abstraction removing the need to manage extra indexing information.
 
 * **Data Engines** ADIOS 2 Engine abstraction allows for reusing the APIs for different transport modes removing the need for drastic code changes.
 
@@ -53,7 +53,11 @@ Please find [The ADIOS 2 User Guide at readthedocs](https://adios2.readthedocs.i
 * Spack: [adios2 package](https://spack.readthedocs.io/en/latest/package_list.html#adios2)
 
 
-  Once ADIOS 2 is installed refer to: 
+* Docker images: 
+    * Ubuntu 18.04: under [scripts/docker/images/ubuntu18.04/Dockerfile](https://github.com/ornladios/ADIOS2/tree/master/scripts/docker/images/ubuntu18.04/Dockerfile)
+
+
+Once ADIOS 2 is installed refer to: 
 
 * [Linking ADIOS 2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
 
