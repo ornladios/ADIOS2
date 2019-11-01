@@ -68,7 +68,9 @@ endfunction()
 
 add_subdirectory(adios2)
 add_subdirectory(utils)
-add_subdirectory(install)
+if(ADIOS2_RUN_INSTALL_TEST)
+  add_subdirectory(install)
+endif()
 
 if(ADIOS2_BUILD_EXAMPLES)
   add_subdirectory(examples)
