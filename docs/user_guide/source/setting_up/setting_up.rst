@@ -1,4 +1,4 @@
 
 .. include:: source.rst
-.. include:: conda.rst
+.. include:: package.rst
 .. include:: linking.rst

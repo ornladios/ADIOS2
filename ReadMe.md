@@ -42,10 +42,15 @@ Please find [The ADIOS 2 User Guide at readthedocs](https://adios2.readthedocs.i
 
 ## Getting ADIOS2
 
-* From source: [Install ADIOS 2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#) requires CMake v3.6 or above
+* From source: [Install ADIOS 2 documentation](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#) requires CMake v3.6 or above. For a cmake configuration example see [scripts/runconf/runconf.sh](https://github.com/ornladios/ADIOS2/blob/master/scripts/runconf/runconf.sh)
 
 
-* Conda packages: [https://anaconda.org/williamfgc](https://anaconda.org/williamfgc)
+* Conda packages: 
+    * [https://anaconda.org/williamfgc](https://anaconda.org/williamfgc)
+    * [https://anaconda.org/conda-forge/adios2](https://anaconda.org/conda-forge/adios2)
+
+
+* Spack: [adios2 package](https://spack.readthedocs.io/en/latest/package_list.html#adios2)
 
 
   Once ADIOS 2 is installed refer to: 

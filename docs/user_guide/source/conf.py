@@ -106,7 +106,7 @@ exclude_patterns = [
     'setting_up/source/ctest.rst',
     'setting_up/source/cpp_c.rst',
     'setting_up/source.rst',
-    'setting_up/conda.rst',
+    'setting_up/package.rst',
     'setting_up/linking.rst',
     'api_full/fortran.rst',
     'api_full/python.rst',
