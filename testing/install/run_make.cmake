@@ -13,6 +13,9 @@ else()
   set(have_mpi 0)
 endif()
 set(ENV{PATH} "${ADIOS2_BINARY_DIR}/testing/install/install/${CMAKE_INSTALL_BINDIR}:$ENV{PATH}")
+if(CMAKE_OSX_SYSROOT)
+  set(isysroot "-isysroot ${CMAKE_OSX_SYSROOT}")
+endif()
 execute_process(
   COMMAND "${MAKE_COMMAND}"
     "CC=${CMAKE_C_COMPILER}"
@@ -20,6 +23,7 @@ execute_process(
     "FC=${CMAKE_Fortran_COMPILER}"
     "MPIEXEC=${MPIEXEC_EXECUTABLE}"
     "ADIOS2_HAVE_MPI=${have_mpi}"
+    "ISYSROOT=${isysroot}"
   WORKING_DIRECTORY "${ADIOS2_BINARY_DIR}/testing/install/make/${TEST_CASE}"
   RESULT_VARIABLE result
   )

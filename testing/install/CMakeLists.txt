@@ -44,6 +44,7 @@ function(add_install_make_test name)
     "-DTEST_CASE=${name}"
     "-DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}"
     "-DMPIEXEC_EXECUTABLE=${mpiexec}"
+    "-DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/run_make.cmake"
     )
   set_tests_properties(Install.Make.${name} PROPERTIES
