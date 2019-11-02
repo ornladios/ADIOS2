@@ -3,7 +3,7 @@ Install from Source
 ###################
 
 ADIOS2 uses `CMake <https://cmake.org/>`_ version 3.6 or above, for building,
-testing and installing the library, examples and utilities.
+testing and installing the library and utilities.
 
 .. include:: source/cmake.rst
 .. include:: source/hpc_systems.rst
