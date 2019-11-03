@@ -196,6 +196,8 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
         CP_verbose(Stream, "Reader-side Rank received a "
                            "connection-close event after close, "
                            "not unexpected\n");
+        Stream->DP_Interface->notifyConnFailure(&Svcs, Stream->DP_Stream,
+                                                FailedPeerRank);
     }
     else
     {

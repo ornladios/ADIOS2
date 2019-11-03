@@ -425,7 +425,6 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
                    "connection-close event in unexpected "
                    "state %s\n",
                    SSTStreamStatusStr[WSreader->ReaderStatus]);
-        CP_PeerFailCloseWSReader(WSreader, PeerFailed);
     }
     QueueMaintenance(ParentWriterStream);
     PTHREAD_MUTEX_UNLOCK(&ParentWriterStream->DataLock);
@@ -1304,6 +1303,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     }
     if (NewState == PeerFailed)
     {
+        DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
         CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0, CloseWSRStream,
                            CP_WSR_Stream);
     }
@@ -1596,7 +1596,8 @@ static void ProcessReaderStatusList(SstStream Stream,
             CP_verbose(Stream, "Adjusting reader %d status from %s to %s\n", i,
                        SSTStreamStatusStr[Stream->Readers[i]->ReaderStatus],
                        SSTStreamStatusStr[Metadata->ReaderStatus[i]]);
-            Stream->Readers[i]->ReaderStatus = Metadata->ReaderStatus[i];
+            CP_PeerFailCloseWSReader(Stream->Readers[i],
+                                     Metadata->ReaderStatus[i]);
         }
     }
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
