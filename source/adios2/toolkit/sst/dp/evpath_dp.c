@@ -385,9 +385,13 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
      * timestep that we don't have.
      */
     fprintf(stderr, "\n\n\n\n");
-    fprintf(stderr, "Writer rank %d - Failed to read Timestep %ld, not found.  This is an internal inconsistency\n",
+    fprintf(stderr,
+            "Writer rank %d - Failed to read Timestep %ld, not found.  This is "
+            "an internal inconsistency\n",
             WSR_Stream->WS_Stream->Rank, ReadRequestMsg->Timestep);
-    fprintf(stderr, "Writer rank %d - Request came from rank %d, please report this error!\n",
+    fprintf(stderr,
+            "Writer rank %d - Request came from rank %d, please report this "
+            "error!\n",
             WSR_Stream->WS_Stream->Rank, RequestingRank);
     fprintf(stderr, "\n\n\n\n");
 

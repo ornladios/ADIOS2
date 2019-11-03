@@ -1596,7 +1596,8 @@ static void ProcessReaderStatusList(SstStream Stream,
             CP_verbose(Stream, "Adjusting reader %d status from %s to %s\n", i,
                        SSTStreamStatusStr[Stream->Readers[i]->ReaderStatus],
                        SSTStreamStatusStr[Metadata->ReaderStatus[i]]);
-            CP_PeerFailCloseWSReader(Stream->Readers[i], Metadata->ReaderStatus[i]);
+            CP_PeerFailCloseWSReader(Stream->Readers[i],
+                                     Metadata->ReaderStatus[i]);
         }
     }
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
