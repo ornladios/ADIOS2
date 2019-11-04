@@ -25,41 +25,106 @@ resources:
     image: ornladios/adios2-auto:suse-pgi
   - container:  suse-pgi-openmpi
     image: ornladios/adios2-auto:suse-pgi-openmpi
+  - container: win2019-vs2017-msmpi
+    image: ornladios/adios2:win2019-vs2017-msmpi
+  - container: win2019-vs2019-msmpi
+    image: ornladios/adios2:win2019-vs2019-msmpi
 
 jobs:
-- job: linux
+- job: containers
   timeoutInMinutes: 90
   strategy:
     matrix:
-      el7:
-        containerResource: el7
-      el7_gnu8_ohpc:
-        containerResource: el7-gnu8-ohpc
-      el7_gnu8_openmpi_ohpc:
-        containerResource: el7-gnu8-openmpi-ohpc
-      el7_gnu8_openmpi_ohpc_static:
-        containerResource: el7-gnu8-openmpi-ohpc
-      el7_intel18_ohpc:
-        containerResource: el7-intel18-ohpc
-      el7_intel18_openmpi_ohpc:
-        containerResource: el7-intel18-openmpi-ohpc
-      suse_pgi:
-        containerResource: suse-pgi
-      suse_pgi_openmpi:
-        containerResource: suse-pgi-openmpi
+#      el7:
+#        containerResource: el7
+#        hostImage: ubuntu-latest
+#      el7_gnu8_ohpc:
+#        containerResource: el7-gnu8-ohpc
+#        hostImage: ubuntu-latest
+#      el7_gnu8_openmpi_ohpc:
+#        containerResource: el7-gnu8-openmpi-ohpc
+#        hostImage: ubuntu-latest
+#      el7_gnu8_openmpi_ohpc_static:
+#        containerResource: el7-gnu8-openmpi-ohpc
+#        hostImage: ubuntu-latest
+#      el7_intel18_ohpc:
+#        containerResource: el7-intel18-ohpc
+#        hostImage: ubuntu-latest
+#      el7_intel18_openmpi_ohpc:
+#        containerResource: el7-intel18-openmpi-ohpc
+#        hostImage: ubuntu-latest
+#      suse_pgi:
+#        containerResource: suse-pgi
+#        hostImage: ubuntu-latest
+#      suse_pgi_openmpi:
+#        containerResource: suse-pgi-openmpi
+#        hostImage: ubuntu-latest
+      win2019_vs2017:
+        containerResource: win2019-vs2017-msmpi
+        hostImage: windows-2019
+      win2019_vs2017_msmpi:
+        containerResource: win2019-vs2017-msmpi
+        hostImage: windows-2019
+      win2019_vs2017_msmpi_ninja:
+        containerResource: win2019-vs2017-msmpi
+        hostImage: windows-2019
+      win2019_vs2019:
+        containerResource: win2019-vs2019-msmpi
+        hostImage: windows-2019
+      win2019_vs2019_ninja:
+        containerResource: win2019-vs2019-msmpi
+        hostImage: windows-2019
+      win2019_vs2019_msmpi:
+        containerResource: win2019-vs2019-msmpi
+        hostImage: windows-2019
+
+  pool:
+    vmImage: $[ variables['hostImage'] ]
   container: $[ variables['containerResource'] ]
+
   steps:
-    - bash: scripts/ci/runOnAzure.sh update
+    - bash: scripts/ci/azure/Linux-setup.sh
+      name: SetupLinux
+      condition: eq(variables['Agent.OS'], 'Linux')
+    - powershell: scripts/ci/azure/Windows_NT-setup.ps1
+      name: SetupWindows
+      condition: eq(variables['Agent.OS'], 'Windows_NT')
+    - bash: scripts/ci/azure/run.sh update
       name: Update
-    - bash: scripts/ci/runOnAzure.sh configure
+    - bash: scripts/ci/azure/run.sh configure
       name: Configure
-    - bash: scripts/ci/runOnAzure.sh build
+    - bash: scripts/ci/azure/run.sh build
       name: Build
-    - bash: scripts/ci/runOnAzure.sh test
+    - bash: scripts/ci/azure/run.sh test
       name: Test
-    - task: PublishTestResults@2
-      inputs:
-        testRunTitle: 'CTest: $(System.JobDisplayName)'
-        testResultsFormat: 'cTest'
-        testResultsFiles: '*/Testing/*/Test.xml'
-        searchFolder: '$(Build.BinariesDirectory)/'
+
+- job: macos
+  timeoutInMinutes: 90
+  strategy:
+    matrix:
+      macos1013_xcode941:
+        hostImage: 'macOS-10.13'
+      macos1013_xcode941_openmpi:
+        hostImage: 'macOS-10.13'
+      macos1013_xcode941_openmpi_ninja:
+        hostImage: 'macOS-10.13'
+      macos1014_xcode104:
+        hostImage: 'macOS-10.14'
+      macos1014_xcode104_make:
+        hostImage: 'macOS-10.14'
+      macos1014_xcode104_openmpi:
+        hostImage: 'macOS-10.14'
+  pool:
+    vmImage: $[ variables['hostImage'] ]
+  steps:
+    - bash: scripts/ci/azure/Darwin-setup.sh
+      name: Setup
+    - bash: scripts/ci/azure/run.sh update
+      name: Update
+    - bash: scripts/ci/azure/run.sh configure
+      name: Configure
+    - bash: scripts/ci/azure/run.sh build
+      name: Build
+    - bash: scripts/ci/azure/run.sh test
+      name: Test
+
