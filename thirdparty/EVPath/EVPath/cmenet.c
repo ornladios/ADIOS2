@@ -2,6 +2,7 @@
 #include "config.h"
 #if defined (__INTEL_COMPILER)
 #  pragma warning (disable: 1418)
+#  pragma warning (disable: 3781)
 #endif
 
 #undef NDEBUG
