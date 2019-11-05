@@ -268,6 +268,19 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	(void) add_transport_to_cm(cm, transport);
     }
 #endif
+#ifdef ZPL_ENET_AVAILABLE
+    if (strcmp(trans_name, "zplenet") == 0) {
+	extern transport_entry cmzplenet_add_static_transport(CManager cm,
+							   CMtrans_services
+							   svc);
+	transport = cmzplenet_add_static_transport(cm, &CMstatic_trans_svcs);
+	transport->data_available = CMDataAvailable;	/* callback
+							 * pointer */
+	transport->write_possible = CMWriteQueuedData;	/* callback
+							 * pointer */
+	(void) add_transport_to_cm(cm, transport);
+    }
+#endif
 #ifdef UDT4_FOUND
     if (strcmp(trans_name, "udt4") == 0) {
 	extern transport_entry cmudt4_add_static_transport(CManager cm,

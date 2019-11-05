@@ -54,6 +54,7 @@ typedef CMTaskHandle (*CMTransport_add_period_task)(CManager cm,
 						    int period_usec,
 						    CMPollFunc func,
 						    void *client_data);
+typedef void (*CMTransport_remove_periodic)(CMTaskHandle cmt);
 typedef void (*CMTransport_add_poll)(CManager cm, CMPollFunc func,
 				     void *client_data);
 typedef CMbuffer (*CMTransport_get_data_buffer)(CManager cm, int length);
@@ -89,6 +90,7 @@ typedef struct CMtrans_services_s {
     CMTransport_conn_create connection_create;
     CMTransport_add_shut_task add_shutdown_task;
     CMTransport_add_period_task add_periodic_task;
+    CMTransport_remove_periodic remove_periodic;
     CMTransport_add_poll add_poll;
     CMTransport_get_data_buffer get_data_buffer;
     CMTransport_return_data_buffer return_data_buffer;
