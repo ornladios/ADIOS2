@@ -81,8 +81,6 @@ typedef struct func_list_item {
     void *arg2;
 } FunctionListElement;
 
-typedef struct _periodic_task *periodic_task_handle;
-
 typedef struct select_data {
     thr_thread_t server_thread;
     int epfd;
@@ -520,6 +518,7 @@ void *arg2;
 	}
 	sd->sel_item_max = fd;
     }
+    memset(&ep_event, 0, sizeof(ep_event));
     ep_event.events = EPOLLIN;
     ep_event.data.fd = fd;
     if(epoll_ctl(sd->epfd, EPOLL_CTL_ADD, fd, &ep_event) < 0) {
@@ -561,6 +560,7 @@ void *arg2;
 	/* assert CM is locked */
 	assert(CM_LOCKED(svc, sd->cm));
     }
+    memset(&ep_event, 0, sizeof(ep_event));
     sd->select_consistency_number++;
     if (fd > sd->sel_item_max) {
 	int i;
