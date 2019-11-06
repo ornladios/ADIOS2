@@ -55,16 +55,6 @@ inline void BPSerializer::PutAttributeCharacteristicValueInIndex(
 }
 
 template <>
-inline void BPSerializer::PutPayloadInBuffer(
-    const core::Variable<std::string> &variable,
-    const typename core::Variable<std::string>::Info &blockInfo,
-    const bool /* sourceRowMajor*/) noexcept
-{
-    PutNameRecord(*blockInfo.Data, m_Data.m_Buffer, m_Data.m_Position);
-    m_Data.m_AbsolutePosition += blockInfo.Data->size() + 2;
-}
-
-template <>
 inline size_t BPSerializer::GetAttributeSizeInData(
     const core::Attribute<std::string> &attribute) const noexcept
 {
@@ -84,6 +74,16 @@ inline size_t BPSerializer::GetAttributeSizeInData(
         }
     }
     return size;
+}
+
+template <>
+inline void BPSerializer::PutPayloadInBuffer(
+    const core::Variable<std::string> &variable,
+    const typename core::Variable<std::string>::Info &blockInfo,
+    const bool /* sourceRowMajor*/) noexcept
+{
+    PutNameRecord(*blockInfo.Data, m_Data.m_Buffer, m_Data.m_Position);
+    m_Data.m_AbsolutePosition += blockInfo.Data->size() + 2;
 }
 
 } // end namespace format

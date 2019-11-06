@@ -872,7 +872,7 @@ BPSerializer::SerialElementIndex &BPSerializer::GetSerialElementIndex(
     template void BPSerializer::PutAttributeInIndex(                           \
         const core::Attribute<T> &attribute, const Stats<T> &stats) noexcept;
 
-ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
@@ -884,10 +884,6 @@ ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
         const uint8_t, uint8_t &, const T &, std::vector<char> &,              \
         size_t &) noexcept;                                                    \
                                                                                \
-    template void BPSerializer::PutPayloadInBuffer(                            \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        const bool) noexcept;                                                  \
-                                                                               \
     template void BPSerializer::PutCharacteristicOperation(                    \
         const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
         std::vector<char> &) noexcept;                                         \
@@ -896,6 +892,14 @@ ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
         const core::Variable<T> &, const typename core::Variable<T>::Info &);
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
+    template void BPSerializer::PutPayloadInBuffer(                            \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool) noexcept;
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format
