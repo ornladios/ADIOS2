@@ -90,6 +90,7 @@ struct CMtrans_services_s CMstatic_trans_svcs = {INT_CMmalloc, INT_CMrealloc, IN
 						 CMConnection_create,
 						 INT_CMadd_shutdown_task,
 						 INT_CMadd_periodic_task,
+						 INT_CMremove_periodic,
 						 INT_CMadd_poll,
 						 cm_get_data_buf,
 						 cm_return_data_buf,
@@ -757,7 +758,8 @@ INT_CManager_create_control(char *control_module)
 
     if (control_module != NULL) {
 	char *tmp = strdup(control_module);
-	for (char *c = tmp; *c; ++c) *c = tolower(*c);
+	char *c;
+	for (c = tmp; *c; ++c) *c = tolower(*c);
 #ifdef HAVE_SYS_EPOLL_H
 	if (strcmp(tmp, "epoll") == 0) {
 	    cm->control_module_choice = "epoll";
