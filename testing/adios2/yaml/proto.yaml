@@ -25,15 +25,13 @@
     - Variable: "U"
       Operations:
         - Type: zfp
-          Accuracy: 0.001
+          accuracy: 0.001
             
     - Variable: "V"
       Operations:
-        - {Type: zfp, Accuracy: 0.001}
-        - {Type: z-checker, key1: value1, key2: value2}
+        - {Type: zfp, accuracy: 0.001}
+        
   
   Transports: 
-    - {Type: file, Library: fstream}
-    - {Type: rdma, Library: ibverbs}
-
+    - {Type: file, library: fstream}
 ...
