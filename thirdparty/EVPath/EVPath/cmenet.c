@@ -24,7 +24,7 @@
         return host->socket;
     }
 
-static void ENETdummy() {  // for warning suppression
+extern void ZPLENETdummy() {  // for warning suppression
      (void) enet_initialize_with_callbacks(0, NULL);
      (void) enet_deinitialize() ;
      (void) enet_linked_version() ;

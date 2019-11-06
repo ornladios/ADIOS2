@@ -919,7 +919,6 @@ extern "C" {
     ENET_API enet_uint32 enet_host_get_packets_received(ENetHost *);
     ENET_API enet_uint32 enet_host_get_bytes_sent(ENetHost *);
     ENET_API enet_uint32 enet_host_get_bytes_received(ENetHost *);
-    ENET_API enet_uint32 enet_host_sock_fd(ENetHost *);
     ENET_API enet_uint32 enet_host_get_received_data(ENetHost *, enet_uint8** data);
     ENET_API enet_uint32 enet_host_get_mtu(ENetHost *);
 
