@@ -12,7 +12,76 @@
 #include <limits.h>
 #include <pthread.h>
 
+#ifdef USE_ZPL_ENET
+#define ENET_IMPLEMENTATION
+#define USE_IPV6
+#define MAX_CLIENTS 4095
+#include <netinet/in.h>
+#include <zpl-enet/include/enet.h>
+    /*  extra function to access the UDP socket FD */
+    ENET_API enet_uint32 enet_host_get_sock_fd(ENetHost *);
+    enet_uint32 enet_host_get_sock_fd(ENetHost *host) {
+        return host->socket;
+    }
+
+extern void ZPLENETdummy() {  // for warning suppression
+     (void) enet_initialize_with_callbacks(0, NULL);
+     (void) enet_deinitialize() ;
+     (void) enet_linked_version() ;
+     (void) enet_socket_listen(0, 0) ;
+     (void) enet_socket_accept(0, NULL) ;
+     (void) enet_socket_connect(0, NULL) ;
+     (void) enet_socket_get_option(0, 1, NULL) ;
+     (void) enet_socket_shutdown(0, 1) ;
+     (void) enet_socketset_select(0, NULL, NULL, 0) ;
+     (void) enet_address_get_host(NULL, NULL, 0 ) ;
+     (void) enet_host_get_peers_count( NULL) ;
+     (void) enet_host_get_packets_sent(NULL) ;
+     (void) enet_host_get_packets_received(NULL) ;
+     (void) enet_host_get_bytes_sent(NULL) ;
+     (void) enet_host_get_bytes_received(NULL) ;
+     (void) enet_host_get_received_data(NULL, NULL) ;
+     (void) enet_host_get_mtu(NULL) ;
+     (void) enet_peer_get_id(NULL) ;
+     (void) enet_peer_get_ip(NULL, NULL, 0) ;
+     (void) enet_peer_get_port(NULL) ;
+     (void) enet_peer_get_rtt(NULL) ;
+     (void) enet_peer_get_packets_sent(NULL) ;
+     (void) enet_peer_get_packets_lost(NULL) ;
+     (void) enet_peer_get_bytes_sent(NULL) ;
+     (void) enet_peer_get_bytes_received(NULL) ;
+     (void) enet_peer_get_state(NULL) ;
+     (void) enet_peer_get_data(NULL) ;
+     (void) enet_peer_set_data(NULL, NULL) ;
+     (void) enet_packet_get_data(NULL) ;
+     (void) enet_packet_get_length(NULL) ;
+     (void) enet_packet_set_free_callback(NULL, NULL) ;
+     (void) enet_packet_create_offset(NULL, 0, 0, 0) ;
+     (void) enet_crc32(NULL, 0) ;
+     (void) enet_host_check_events(NULL, NULL);
+     (void) enet_host_send_raw(NULL, NULL, NULL, 0) ;
+     (void) enet_host_send_raw_ex(NULL, NULL, NULL, 0, 0) ;
+     (void) enet_host_set_intercept(NULL, NULL) ;
+     (void) enet_host_broadcast(NULL, 0, NULL) ;
+     (void) enet_host_compress(NULL, NULL);
+     (void) enet_host_channel_limit(NULL, 0);
+     (void) enet_host_bandwidth_limit(NULL, 0,0);
+     (void) enet_peer_ping_interval(NULL, 0) ;
+     (void) enet_peer_disconnect_now(NULL, 0) ;
+     (void) enet_peer_disconnect_later(NULL, 0) ;
+     (void) enet_peer_throttle_configure(NULL, 0, 0, 0) ;
+}
+
+#define TPORT "CMZplEnet"
+#define TRANSPORT_STRING "zplenet"
+#define INTERFACE_NAME(NAME) libcmzplenet_LTX_ ## NAME
+#else
+#define TPORT "CMEnet"
+#define MAX_CLIENTS 0
+#define TRANSPORT_STRING "enet"
+#define INTERFACE_NAME(NAME) libcmenet_LTX_ ## NAME
 #include <enet/enet.h>
+#endif
 #include <arpa/inet.h>
 #include <time.h>
 #include <sys/time.h>
@@ -49,11 +118,19 @@ typedef struct enet_client_data {
     int wake_write_fd;
     int wake_read_fd;
     enet_uint32 last_host_service_zero_return;
+    CMTaskHandle periodic_handle;
+    pthread_mutex_t enet_lock;
+    int enet_locked;
 } *enet_client_data_ptr;
 
 typedef struct enet_connection_data {
     char *remote_host;
+#ifndef USE_IPV6
     int remote_IP;     /* in host byte order */
+#else
+    struct in6_addr remote_IP;
+    int remote_IPv4;     /* in host byte order */
+#endif
     int remote_contact_port;
     ENetPeer *peer;
     CMbuffer read_buffer;
@@ -75,9 +152,33 @@ static atom_t CM_TRANSPORT = -1;
 
 static enet_uint32 enet_host_service_warn_interval = 0;
 
-extern attr_list
-libcmenet_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
-				  transport_entry trans, attr_list listen_info);
+#ifdef __cplusplus
+extern "C"
+#else
+extern
+#endif
+attr_list
+INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
+                                    transport_entry trans, attr_list listen_info);
+
+#define ENETlock(lock) IntENET_lock(lock, __FILE__, __LINE__)
+#define ENETunlock(lock) IntENET_unlock(lock, __FILE__, __LINE__)
+
+static void
+IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
+{
+//    if (file) printf("Trying ENET Lock at %s, line %d\n", file, line);
+    pthread_mutex_lock(&ecd->enet_lock);
+    ecd->enet_locked++;
+}
+
+static void
+IntENET_unlock(enet_client_data_ptr ecd, char *file, int line)
+{
+//    if (file) printf("ENET Unlock at %s, line %d\n", file, line);
+    ecd->enet_locked--;
+    pthread_mutex_unlock(&ecd->enet_lock);
+}
 
 static int
 check_host(char *hostname, void *sin_addr)
@@ -109,8 +210,7 @@ check_host(char *hostname, void *sin_addr)
 static enet_conn_data_ptr 
 create_enet_conn_data(CMtrans_services svc)
 {
-    enet_conn_data_ptr enet_conn_data =
-    svc->malloc_func(sizeof(struct enet_connection_data));
+    enet_conn_data_ptr enet_conn_data = (enet_conn_data_ptr) svc->malloc_func(sizeof(struct enet_connection_data));
     enet_conn_data->remote_host = NULL;
     enet_conn_data->remote_contact_port = -1;
     enet_conn_data->read_buffer = NULL;
@@ -125,7 +225,9 @@ enet_accept_conn(enet_client_data_ptr ecd, transport_entry trans,
 static void free_func(void *packet)
 {
     /* Clean up the packet now that we're done using it. */
+//    ENETlock(enet_data);
     enet_packet_destroy ((ENetPacket*)packet);
+//    ENETunlock(enet_data);
 }
 
 static void
@@ -166,27 +268,46 @@ enet_service_network(CManager cm, void *void_trans)
         svc->trace_out(cm, "ENET Handling pending data\n");
         queued_data entry = ecd->pending_data;
         ecd->pending_data = entry->next;
-        handle_packet(cm, svc, trans, entry->econn_d, entry->packet);
+        handle_packet(cm, svc, trans, (enet_conn_data_ptr) entry->econn_d, entry->packet);
         free(entry);
     }
 
-    while (ecd->server && (enet_host_service (ecd->server, & event, 0) > 0)) {
+    while (ecd->server) {
+        IntENET_lock(ecd, NULL, 0);
+        int ret = enet_host_service (ecd->server, & event, 0);
+        IntENET_unlock(ecd, NULL, 0);
         if (enet_host_service_warn_interval && 
             (enet_time_get() > (ecd->last_host_service_zero_return + enet_host_service_warn_interval))) {
             fprintf(stderr, "WARNING, time between zero return for enet_host_service = %d msecs\n",
                     enet_time_get() - ecd->last_host_service_zero_return);
         }
-
+        if (ret <= 0) {
+            break;
+        }
         switch (event.type) {
 	case ENET_EVENT_TYPE_NONE:
 	    break;
         case ENET_EVENT_TYPE_CONNECT: {
 	    void *enet_connection_data;
+#ifndef USE_IPV6
             struct in_addr addr;
             addr.s_addr = event.peer->address.host;
 	    svc->trace_out(cm, "A new client connected from %s:%u.\n", 
 			   inet_ntoa(addr),
 			   event.peer->address.port);
+#else
+            char straddr[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, &event.peer->address.host, straddr,
+                      sizeof(straddr));
+	    svc->trace_out(cm, "A new client connected from %s:%u.\n", 
+			   &straddr[0],
+			   event.peer->address.port);
+            struct in_addr addr;
+            if (ntohl(((enet_uint32 *)&event.peer->address.host.s6_addr)[3]) == 0xffff) {;
+                addr.s_addr = ((enet_uint32 *)&event.peer->address.host.s6_addr)[3];
+                svc->trace_out(cm, "That was IPV4 address %s\n", inet_ntoa(addr));
+            }
+#endif            
 
 	    enet_connection_data = enet_accept_conn(ecd, trans, &event.peer->address);
 
@@ -198,29 +319,42 @@ enet_service_network(CManager cm, void *void_trans)
             break;
 	}
         case ENET_EVENT_TYPE_RECEIVE: {
-	    enet_conn_data_ptr econn_d = event.peer->data;
+	    enet_conn_data_ptr econn_d = (enet_conn_data_ptr) event.peer->data;
             if (econn_d) {
-                handle_packet(cm, svc, trans, event.peer->data, event.packet);
+                handle_packet(cm, svc, trans, econn_d, event.packet);
             } else {
+#ifndef USE_IPV6
                 struct in_addr addr;
                 addr.s_addr = event.peer->address.host;
                 svc->trace_out(cm, "ENET  ====== virgin peer, address is %s, port %u.\n", inet_ntoa(addr), event.peer->address.port);
-                svc->trace_out(cm, "ENET  ====== DiSCARDING DATA\n");
+#else
+                char straddr[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, &event.peer->address.host, straddr,
+                          sizeof(straddr));
+                svc->trace_out(cm, "ENET  ====== virgin peer, address is %s, port %u.\n", 
+                               &straddr[0],
+                               event.peer->address.port);
+#endif               
+                svc->trace_out(cm, "ENET  ====== DISCARDING DATA\n");
             }
             break;
 	}           
+#ifdef USE_ZPL_ENET
+        case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
+#endif
         case ENET_EVENT_TYPE_DISCONNECT: {
-	    enet_conn_data_ptr enet_conn_data = event.peer->data;
+	    enet_conn_data_ptr enet_conn_data = (enet_conn_data_ptr) event.peer->data;
 	    svc->trace_out(cm, "Got a disconnect on connection %p\n",
 		event.peer->data);
 
-            enet_conn_data = event.peer->data;
+            enet_conn_data = (enet_conn_data_ptr) event.peer->data;
 	    enet_conn_data->read_buffer_len = -1;
             svc->connection_fail(enet_conn_data->conn);
         }
 	}
     }
     ecd->last_host_service_zero_return = enet_time_get();
+    IntENET_unlock(ecd, NULL, 0);
 }
 
 static
@@ -317,8 +451,14 @@ enet_accept_conn(enet_client_data_ptr ecd, transport_entry trans,
     conn = svc->connection_create(trans, enet_conn_data, conn_attr_list);
     enet_conn_data->conn = conn;
 
+#ifndef USE_IPV6
     add_int_attr(conn_attr_list, CM_PEER_IP, ntohl(address->host));
-    enet_conn_data->remote_IP = ntohl(address->host);   /* remote_IP is in host byte order */
+    enet_conn_data->remote_IP = ntohl(address->host); 
+#else
+    enet_conn_data->remote_IP = address->host;
+    enet_conn_data->remote_IPv4 = ntohl(((enet_uint32 *)&address->host.s6_addr)[3]);
+    add_int_attr(conn_attr_list, CM_PEER_IP, enet_conn_data->remote_IPv4);  /* remote_IPv4 is in host byte order */
+#endif
     if (!conn_reuse) {
         enet_conn_data->remote_contact_port = -1;
     } else {
@@ -333,11 +473,21 @@ enet_accept_conn(enet_client_data_ptr ecd, transport_entry trans,
     }
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
 	     (attr_value) (long)enet_conn_data->remote_contact_port);
+#ifndef USE_IPV6
     struct in_addr addr;
     addr.s_addr = htonl(enet_conn_data->remote_IP);
     svc->trace_out(trans->cm, "Remote host (IP %s) is listening at port %d\n",
-		   inet_ntoa(addr),
-		   enet_conn_data->remote_contact_port);
+        inet_ntoa(addr),
+        enet_conn_data->remote_contact_port);
+#else
+    char straddr[INET6_ADDRSTRLEN];
+    inet_ntop(AF_INET6, &enet_conn_data->remote_IP, straddr,
+              sizeof(straddr));
+    svc->trace_out(trans->cm, "Remote host (IP %s) is listening at port %d\n",
+        &straddr[0],
+        enet_conn_data->remote_contact_port);
+#endif
+
     free_attr_list(conn_attr_list);
 
     /* 
@@ -349,8 +499,13 @@ enet_accept_conn(enet_client_data_ptr ecd, transport_entry trans,
     return enet_conn_data;
 }
 
-extern void
-libcmenet_LTX_shutdown_conn(CMtrans_services svc, enet_conn_data_ptr scd)
+#ifdef __cplusplus
+extern "C"
+#else
+extern
+#endif
+void
+INTERFACE_NAME(shutdown_conn)(CMtrans_services svc, enet_conn_data_ptr scd)
 {
     svc->connection_deref(scd->conn);
     if (scd->remote_host) free(scd->remote_host);
@@ -367,16 +522,19 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     enet_client_data_ptr ecd = (enet_client_data_ptr) trans->trans_data;
     char *host_name;
     int host_ip = 0;
+#ifdef USE_IPV6
+    struct in6_addr host_ipv6;
+#endif
     struct in_addr sin_addr;
     (void)conn_attr_list;
     int timeout = 5000;   /* connection time out default 5 seconds */
 
     if (!query_attr(attrs, CM_ENET_HOSTNAME, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & host_name)) {
-	svc->trace_out(cm, "CMEnet transport found no CM_ENET_HOSTNAME attribute");
+	svc->trace_out(cm, TPORT " transport found no CM_ENET_HOSTNAME attribute");
 	host_name = NULL;
     } else {
-        svc->trace_out(cm, "CMEnet transport connect to host %s", host_name);
+        svc->trace_out(cm, TPORT " transport connect to host %s", host_name);
     }
     if (!query_attr(attrs, CM_ENET_ADDR, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & host_ip)) {
@@ -421,41 +579,76 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 
     if (host_name) {
 	enet_address_set_host (& address, host_name);
+#ifndef USE_IPV6
 	sin_addr.s_addr = address.host;
 	svc->trace_out(cm, "Attempting ENET RUDP connection, USING host=\"%s\", IP = %s, port %d",
 		       host_name == 0 ? "(unknown)" : host_name, 
 		       inet_ntoa(sin_addr),
 		       int_port_num);
+#else
+        char straddr[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, &event.peer->address.host, straddr,
+                  sizeof(straddr));
+	svc->trace_out(cm, "Attempting ENET RUDP connection, USING host=\"%s\", IP = %s, port %d",
+		       host_name == 0 ? "(unknown)" : host_name, 
+		       &straddr[0],
+		       int_port_num);
+#endif
     } else {
+#ifndef USE_IPV6
 	address.host = ntohl(host_ip);
 	svc->trace_out(cm, "Attempting ENET RUDP connection, USING IP = %s, port %d",
 		       inet_ntoa(sin_addr),
 		       int_port_num);
+#else
+        char straddr[INET6_ADDRSTRLEN];
+        ((enet_uint32 *)&host_ipv6.s6_addr)[0] = 0;
+        ((enet_uint32 *)&host_ipv6.s6_addr)[1] = 0;
+        ((enet_uint32 *)&host_ipv6.s6_addr)[2] = htonl(0xffff);
+        ((enet_uint32 *)&host_ipv6.s6_addr)[3] = htonl(host_ip);
+        inet_ntop(AF_INET6, &host_ipv6, straddr,
+                  sizeof(straddr));
+
+	svc->trace_out(cm, "Attempting ENET RUDP connection, USING host=\"%s\", IP = %s, port %d",
+		       host_name == 0 ? "(unknown)" : host_name, 
+		       &straddr[0],
+		       int_port_num);
+        sin_addr.s_addr = htonl(host_ip);
+	svc->trace_out(cm, "Attempting ENET RUDP connection, USING IPv4 = %s\n",
+		       inet_ntoa(sin_addr));
+        memcpy(&address.host, &host_ipv6, sizeof(struct in6_addr));
+#endif        
     }
     address.port = (unsigned short) int_port_num;
 
     if (ecd->server == NULL) {
-	attr_list l = libcmenet_LTX_non_blocking_listen(cm, svc, trans, NULL);
+	attr_list l = INTERFACE_NAME(non_blocking_listen)(cm, svc, trans, NULL);
 	if (l) free_attr_list(l);
     }
 
     /* Initiate the connection, allocating the two channels 0 and 1. */
+    ENETlock(ecd);
     peer = enet_host_connect (ecd->server, & address, 1, 0);    
-    peer->data = enet_conn_data;
-    svc->trace_out(cm, "ENET ========   On init Assigning peer %p has data %p\n", peer, enet_conn_data);
     if (peer == NULL)
     {
        fprintf (stderr, 
-                "No available peers for initiating an ENet connection.\n");
+                "No available peers for initiating an ENet connection, count at initiation was %d.\n", MAX_CLIENTS);
        exit (EXIT_FAILURE);
     }
     
+    enet_peer_timeout(peer, 0, 0, 5000);
+    ENETunlock(ecd);
+    peer->data = enet_conn_data;
+    svc->trace_out(cm, "ENET ========   On init Assigning peer %p has data %p\n", peer, enet_conn_data);
+
     /* Wait up to 'timeout' milliseconds for the connection attempt to succeed. */
     int finished = 0;
     int got_connection = 0;
     enet_uint32 end = enet_time_get() + timeout;
     while (!finished) {
+        ENETlock(ecd);
         int ret = enet_host_service (ecd->server, & event, 100); 
+        ENETunlock(ecd);
         enet_uint32 now = enet_time_get();
         if (enet_host_service_warn_interval && 
             (enet_time_get() > (ecd->last_host_service_zero_return + enet_host_service_warn_interval))) {
@@ -473,21 +666,34 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         case ENET_EVENT_TYPE_CONNECT: {
             if (event.peer != peer) {
                 enet_conn_data_ptr enet_connection_data;
+#ifndef USE_IPV6
                 struct in_addr addr;
                 addr.s_addr = event.peer->address.host;
                 svc->trace_out(cm, "A new client connected from %s:%u.\n", 
                                inet_ntoa(addr),
                                event.peer->address.port);
-                
-                enet_connection_data = enet_accept_conn(ecd, trans, &event.peer->address);
+#else
+                char straddr[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, &event.peer->address.host, straddr,
+                          sizeof(straddr));
+                svc->trace_out(cm, "A new client connected from %s:%u.\n", 
+                               &straddr[0],
+                               event.peer->address.port);
+                enet_peer_timeout(event.peer, 0, 0, 5000);
+#endif                
+                enet_connection_data = (enet_conn_data_ptr) enet_accept_conn(ecd, trans, &event.peer->address);
                 
                 /* Store any relevant client information here. */
                 svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
                 event.peer->data = enet_connection_data;
                 ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
+                ENETlock(ecd);
                 enet_host_flush (ecd->server);
+                ENETunlock(ecd);
             } else {
+                ENETlock(ecd);
                 enet_host_flush (ecd->server);
+                ENETunlock(ecd);
                 svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
                 finished = 1;
                 got_connection = 1;
@@ -496,6 +702,9 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         }
         case ENET_EVENT_TYPE_NONE:
             break;
+#ifdef USE_ZPL_ENET
+        case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
+#endif
         case ENET_EVENT_TYPE_DISCONNECT:
             if (event.peer == peer) {
                 enet_peer_reset (peer);
@@ -503,18 +712,18 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
                 svc->trace_out(cm, "Connection to %s:%d failed   type was %d.\n", inet_ntoa(sin_addr), address.port, event.type);
                 return 0;
             } else {
-                enet_conn_data_ptr enet_conn_data = event.peer->data;
+                enet_conn_data_ptr enet_conn_data = (enet_conn_data_ptr) event.peer->data;
                 svc->trace_out(cm, "Got a disconnect on connection %p\n",
                                event.peer->data);
                 
-                enet_conn_data = event.peer->data;
+                enet_conn_data = (enet_conn_data_ptr) event.peer->data;
                 enet_conn_data->read_buffer_len = -1;
                 svc->connection_fail(enet_conn_data->conn);
             }
             break;
         case ENET_EVENT_TYPE_RECEIVE: {
-	    enet_conn_data_ptr econn_d = event.peer->data;
-            queued_data entry = malloc(sizeof(*entry));
+	    enet_conn_data_ptr econn_d = (enet_conn_data_ptr) event.peer->data;
+            queued_data entry = (queued_data) malloc(sizeof(*entry));
             entry->next = NULL;
             entry->econn_d = econn_d;
             entry->packet = event.packet;
@@ -539,7 +748,12 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     }
     svc->trace_out(cm, "--> Connection established\n");
     enet_conn_data->remote_host = host_name == NULL ? NULL : strdup(host_name);
+#ifndef USE_IPV6
     enet_conn_data->remote_IP = htonl(host_ip);
+#else
+    memcpy(&enet_conn_data->remote_IP, &host_ipv6, sizeof(enet_conn_data->remote_IP));
+    enet_conn_data->remote_IPv4 = htonl(host_ip);
+#endif
     enet_conn_data->remote_contact_port = int_port_num;
     enet_conn_data->ecd = ecd;
     enet_conn_data->peer = peer;
@@ -550,8 +764,13 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 /* 
  * Initiate a ENET RUDP connection with another CM.
  */
-extern CMConnection
-libcmenet_LTX_initiate_conn(CManager cm, CMtrans_services svc,
+#ifdef __cplusplus
+extern "C"
+#else
+extern
+#endif
+CMConnection
+INTERFACE_NAME(initiate_conn)(CManager cm, CMtrans_services svc,
 			    transport_entry trans, attr_list attrs)
 {
     enet_conn_data_ptr enet_conn_data = create_enet_conn_data(svc);
@@ -579,12 +798,17 @@ libcmenet_LTX_initiate_conn(CManager cm, CMtrans_services svc,
  * For enet, this involves checking to see if the host name is the 
  * same as ours and if the CM_ENET_PORT matches the one we are listening on.
  */
-extern int
-libcmenet_LTX_self_check(CManager cm, CMtrans_services svc, 
+#ifdef __cplusplus
+extern "C"
+#else
+extern
+#endif
+int
+INTERFACE_NAME(self_check)(CManager cm, CMtrans_services svc, 
 			 transport_entry trans, attr_list attrs)
 {
 
-    enet_client_data_ptr ecd = trans->trans_data;
+    enet_client_data_ptr ecd = (enet_client_data_ptr) trans->trans_data;
     int host_addr;
     int int_port_num;
     char *host_name;
@@ -631,8 +855,13 @@ libcmenet_LTX_self_check(CManager cm, CMtrans_services svc,
     return 1;
 }
 
-extern int
-libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
+#ifdef __cplusplus
+extern "C"
+#else
+extern
+#endif
+int
+INTERFACE_NAME(connection_eq)(CManager cm, CMtrans_services svc,
 			    transport_entry trans, attr_list attrs,
 			    enet_conn_data_ptr ecd)
 {
@@ -669,12 +898,20 @@ libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
         return 0;
     }
     struct in_addr addr1, addr2;
+#ifdef USE_IPV6
+    addr1.s_addr = htonl(ecd->remote_IPv4);
+#else
     addr1.s_addr = htonl(ecd->remote_IP);
+#endif
     addr2.s_addr = htonl(requested_IP);
     svc->trace_out(cm, "ENET Conn_eq comparing IP/ports %s/%d and %s/%d",
 		   inet_ntoa(addr1), ecd->remote_contact_port,
                    inet_ntoa(addr2), int_port_num);
+#ifdef USE_IPV6
+    if ((ecd->remote_IPv4 == requested_IP) &&    /* both in host byte order */
+#else
     if ((ecd->remote_IP == requested_IP) &&    /* both in host byte order */
+#endif
 	(ecd->remote_contact_port == int_port_num)) {
 	svc->trace_out(cm, "ENET Conn_eq returning TRUE");
 	return 1;
@@ -718,19 +955,19 @@ build_listen_attrs(CManager cm, CMtrans_services svc, enet_client_data_ptr ecd,
 	     (attr_value) (long)int_port_num);
     
     add_attr(ret_list, CM_TRANSPORT, Attr_String,
-	     (attr_value) strdup("enet"));
+	     (attr_value) strdup(TRANSPORT_STRING));
     return ret_list;
 }
 
 static void
-wake_enet_server_thread(enet_client_data_ptr enet_data)
+wake_enet_server_thread(enet_client_data_ptr ecd)
 {
     static char buffer = 'W';  /* doesn't matter what we write */
-    if (enet_data->wake_write_fd != -1) {
+    if (ecd->wake_write_fd != -1) {
 #ifdef HAVE_WINDOWS_H
-	send(enet_data->wake_write_fd, &buffer, 1, 0);
+	send(ecd->wake_write_fd, &buffer, 1, 0);
 #else
-	if (write(enet_data->wake_write_fd, &buffer, 1) != 1) {
+	if (write(ecd->wake_write_fd, &buffer, 1) != 1) {
 	    printf("Whoops, wake write failed\n");
 	}
 #endif
@@ -740,11 +977,16 @@ wake_enet_server_thread(enet_client_data_ptr enet_data)
 /* 
  * Create an IP socket for connection from other CMs
  */
-extern attr_list
-libcmenet_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
+#ifdef __cplusplus
+extern "C"
+#else
+extern
+#endif
+attr_list
+INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
 				  transport_entry trans, attr_list listen_info)
 {
-    enet_client_data_ptr enet_data = trans->trans_data;
+    enet_client_data_ptr ecd = (enet_client_data_ptr) trans->trans_data;
     ENetAddress address;
     ENetHost * server;
 
@@ -771,11 +1013,11 @@ libcmenet_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
 
     address.host = ENET_HOST_ANY;
 
-    if (enet_data->server != NULL) {
+    if (ecd->server != NULL) {
 	/* we're already listening */
         if (port_num == 0) {
 	    /* not requesting a specific port, return what we have */
-	    return build_listen_attrs(cm, svc, NULL, listen_info, enet_data->listen_port);
+	    return build_listen_attrs(cm, svc, NULL, listen_info, ecd->listen_port);
 	} else {
 	    printf("CMlisten_specific() requesting a specific port follows other Enet operation which initiated listen at another port.  Only one listen allowed, second listen fails.\n");
 	    return NULL;
@@ -789,17 +1031,19 @@ libcmenet_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
 	address.port = port_num;
 
 	svc->trace_out(cm, "CMEnet trying to bind selected port %d", port_num);
+        ENETlock(ecd);
 	server = enet_host_create (& address /* the address to bind the server host to */, 
-				   0      /* allow up to 4095 clients and/or outgoing connections */,
+                                   MAX_CLIENTS,     /* max 4095 connections */
 				   1      /* allow up to 2 channels to be used, 0 and 1 */,
 				   0      /* assume any amount of incoming bandwidth */,
 				   0      /* assume any amount of outgoing bandwidth */);
+        ENETunlock(ecd);
 	if (server == NULL) {
 	    fprintf (stderr, 
 		     "An error occurred while trying to create an ENet server host.\n");
 	    return NULL;
 	}
-	enet_data->server = server;
+	ecd->server = server;
     } else {
 	long seedval = time(NULL) + getpid();
 	/* port num is free.  Constrain to range 26000 : 26100 */
@@ -818,11 +1062,13 @@ libcmenet_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
 	    address.port = target;
 	    svc->trace_out(cm, "CMEnet trying to bind port %d", target);
 
+            ENETlock(ecd);
 	    server = enet_host_create (& address /* the address to bind the server host to */, 
-				       0     /* 0 means dynamic alloc clients and/or outgoing connnections */,
+				       MAX_CLIENTS     /* 0 means dynamic alloc clients and/or outgoing connnections */,
 				       1      /* allow up to 2 channels to be used, 0 and 1 */,
 				       0      /* assume any amount of incoming bandwidth */,
 				       0      /* assume any amount of outgoing bandwidth */);
+            ENETunlock(ecd);
 	    tries--;
 	    if (server != NULL) tries = 0;
 	    if (tries == 5) {
@@ -834,20 +1080,20 @@ libcmenet_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
 	    high_bound += 100;
 	    goto restart;
 	}
-	enet_data->server = server;
+	ecd->server = server;
     }
     svc->fd_add_select(cm, enet_host_get_sock_fd (server), 
 		       (select_list_func) enet_service_network, (void*)cm, (void*)trans);
 
-    svc->add_periodic_task(cm, 0, 100, (CMPollFunc) enet_service_network_lock, (void*)trans);
+    ecd->periodic_handle = svc->add_periodic_task(cm, 0, 100, (CMPollFunc) enet_service_network_lock, (void*)trans);
 
-    svc->trace_out(enet_data->cm, "CMENET Adding read_wake_fd as action on fd %d",
-		   enet_data->wake_read_fd);
+    svc->trace_out(ecd->cm, "CMENET Adding read_wake_fd as action on fd %d",
+		   ecd->wake_read_fd);
 
-    svc->fd_add_select(cm, enet_data->wake_read_fd, (select_list_func)read_wake_fd_and_service, 
+    svc->fd_add_select(cm, ecd->wake_read_fd, (select_list_func)read_wake_fd_and_service, 
                        (void*)cm, (void*)trans);
 
-    return build_listen_attrs(cm, svc, enet_data, listen_info, address.port);
+    return build_listen_attrs(cm, svc, ecd, listen_info, address.port);
 }
 
 #if defined(HAVE_WINDOWS_H) && !defined(NEED_IOVEC_DEFINE)
@@ -862,8 +1108,13 @@ struct iovec {
 
 #endif
 
-extern void *
-libcmenet_LTX_read_block_func(CMtrans_services svc,
+#ifdef __cplusplus
+extern "C"
+#else
+extern
+#endif
+void *
+INTERFACE_NAME(read_block_func)(CMtrans_services svc,
 			      enet_conn_data_ptr conn_data, int *actual_len,
 			      int *offset_ptr)
 {
@@ -912,8 +1163,13 @@ static struct timespec time_diff(struct timespec start, struct timespec end)
 }
 #endif
 
-extern int
-libcmenet_LTX_writev_func(CMtrans_services svc, enet_conn_data_ptr ecd,
+#ifdef __cplusplus
+extern "C"
+#else
+extern
+#endif
+int
+INTERFACE_NAME(writev_func)(CMtrans_services svc, enet_conn_data_ptr ecd,
 			  struct iovec *iov, int iovcnt, attr_list attrs)
 {
     int i;
@@ -929,8 +1185,10 @@ libcmenet_LTX_writev_func(CMtrans_services svc, enet_conn_data_ptr ecd,
 		   length, ecd->peer);
 
    /* Create a reliable packet of the right size */
+    ENETlock(ecd->ecd);
     ENetPacket * packet = enet_packet_create (NULL, length, 
 					      ENET_PACKET_FLAG_RELIABLE);
+    ENETunlock(ecd->ecd);
 
     length = 0;
     /* copy in the data */
@@ -940,14 +1198,17 @@ libcmenet_LTX_writev_func(CMtrans_services svc, enet_conn_data_ptr ecd,
     }
 
     /* Send the packet to the peer over channel id 0. */
+    ENETlock(ecd->ecd);
     if (enet_peer_send (ecd->peer, 0, packet) == -1) {
         enet_packet_destroy(packet);
         svc->trace_out(ecd->ecd->cm, "ENET  ======  failed to send a packet to peer %p, state %d\n", ecd->peer, ecd->peer->state);
 	return -1;
     }
+    ENETunlock(ecd->ecd);
 
     wake_enet_server_thread(ecd->ecd);
 
+    ENETlock(ecd->ecd);
     if (last_flush_call == 0) {
 	enet_host_flush(ecd->ecd->server);
 	last_flush_call = time(NULL);
@@ -958,6 +1219,7 @@ libcmenet_LTX_writev_func(CMtrans_services svc, enet_conn_data_ptr ecd,
 	    enet_host_flush(ecd->ecd->server);
 	}
     }
+    ENETunlock(ecd->ecd);
     return iovcnt;
 }
 
@@ -984,15 +1246,25 @@ shutdown_enet_thread
     (void)cm;
     if (ecd->server != NULL) {
 	ENetHost * server = ecd->server;
+        ENETlock(ecd);
 	enet_host_flush(ecd->server);
+        ENETunlock(ecd);
 	svc->fd_remove_select(cm, enet_host_get_sock_fd (server));
+	svc->remove_periodic(ecd->periodic_handle);
 	ecd->server = NULL;
+        ENETlock(ecd);
 	enet_host_destroy(server);
+        ENETunlock(ecd);
     }
 }
 
-extern void *
-libcmenet_LTX_initialize(CManager cm, CMtrans_services svc,
+#ifdef __cplusplus
+extern "C"
+#else
+extern
+#endif
+void *
+INTERFACE_NAME(initialize)(CManager cm, CMtrans_services svc,
 			 transport_entry trans, attr_list attrs)
 {
     static int atom_init = 0;
@@ -1008,7 +1280,9 @@ libcmenet_LTX_initialize(CManager cm, CMtrans_services svc,
 	    fprintf (stderr, "An error occurred while initializing ENet.\n");
 	    //return EXIT_FAILURE;
 	}
-        enet_time_set(0);   /* rollover in 50 days */
+#ifndef USE_ZPL_ENET
+        enet_time_set(0);   /* rollover in 50 days, old ENET only */
+#endif
     }
     if (atom_init == 0) {
 	CM_ENET_HOSTNAME = attr_atom_from_string("CM_ENET_HOST");
@@ -1026,7 +1300,9 @@ libcmenet_LTX_initialize(CManager cm, CMtrans_services svc,
         sscanf(env, "%d", &enet_host_service_warn_interval);
         fprintf(stderr, "DEBUG: Setting enet_host_service_warn_interval to %d\n", enet_host_service_warn_interval);
     }
-    enet_data = svc->malloc_func(sizeof(struct enet_client_data));
+    enet_data = (enet_client_data_ptr) svc->malloc_func(sizeof(struct enet_client_data));
+    pthread_mutex_init(&enet_data->enet_lock, NULL);
+    enet_data->enet_locked = 0;
     enet_data->cm = cm;
     enet_data->hostname = NULL;
     enet_data->listen_port = -1;
@@ -1045,23 +1321,30 @@ libcmenet_LTX_initialize(CManager cm, CMtrans_services svc,
     return (void *) enet_data;
 }
 
-extern transport_entry
-cmenet_add_static_transport(CManager cm, CMtrans_services svc)
+#ifdef USE_ZPL_ENET
+extern transport_entry cmzplenet_add_static_transport(CManager cm, CMtrans_services svc)
+#else
+extern transport_entry cmenet_add_static_transport(CManager cm, CMtrans_services svc)
+#endif
 {
     transport_entry transport;
-    transport = svc->malloc_func(sizeof(struct _transport_item));
+    transport = (transport_entry) svc->malloc_func(sizeof(struct _transport_item));
     memset(transport, 0, sizeof(*transport));
+#ifndef USE_ZPL_ENET
     transport->trans_name = strdup("enet");
+#else
+    transport->trans_name = strdup("zplenet");
+#endif
     transport->cm = cm;
-    transport->transport_init = (CMTransport_func)libcmenet_LTX_initialize;
-    transport->listen = (CMTransport_listen_func)libcmenet_LTX_non_blocking_listen;
-    transport->initiate_conn = (CMConnection(*)())libcmenet_LTX_initiate_conn;
-    transport->self_check = (int(*)())libcmenet_LTX_self_check;
-    transport->connection_eq = (int(*)())libcmenet_LTX_connection_eq;
-    transport->shutdown_conn = (CMTransport_shutdown_conn_func)libcmenet_LTX_shutdown_conn;
-    transport->read_block_func = (CMTransport_read_block_func)libcmenet_LTX_read_block_func;
+    transport->transport_init = (CMTransport_func)INTERFACE_NAME(initialize);
+    transport->listen = (CMTransport_listen_func)INTERFACE_NAME(non_blocking_listen);
+    transport->initiate_conn = (CMTransport_conn_func)INTERFACE_NAME(initiate_conn);
+    transport->self_check = (CMTransport_self_check_func)INTERFACE_NAME(self_check);
+    transport->connection_eq = (CMTransport_connection_eq_func)INTERFACE_NAME(connection_eq);
+    transport->shutdown_conn = (CMTransport_shutdown_conn_func)INTERFACE_NAME(shutdown_conn);
+    transport->read_block_func = (CMTransport_read_block_func)INTERFACE_NAME(read_block_func);
     transport->read_to_buffer_func = (CMTransport_read_to_buffer_func)NULL;
-    transport->writev_func = (CMTransport_writev_func)libcmenet_LTX_writev_func;
+    transport->writev_func = (CMTransport_writev_func)INTERFACE_NAME(writev_func);
     transport->get_transport_characteristics = NULL;
     if (transport->transport_init) {
 	transport->trans_data = transport->transport_init(cm, svc, transport);
