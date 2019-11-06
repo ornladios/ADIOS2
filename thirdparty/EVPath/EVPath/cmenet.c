@@ -70,7 +70,6 @@ extern void ZPLENETdummy() {  // for warning suppression
      (void) enet_peer_disconnect_now(NULL, 0) ;
      (void) enet_peer_disconnect_later(NULL, 0) ;
      (void) enet_peer_throttle_configure(NULL, 0, 0, 0) ;
-     (void) ENETdummy();
 }
 
 #define TPORT "CMZplEnet"
