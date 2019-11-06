@@ -24,6 +24,55 @@
         return host->socket;
     }
 
+static void ENETdummy() {  // for warning suppression
+     (void) enet_initialize_with_callbacks(0, NULL);
+     (void) enet_deinitialize() ;
+     (void) enet_linked_version() ;
+     (void) enet_socket_listen(0, 0) ;
+     (void) enet_socket_accept(0, NULL) ;
+     (void) enet_socket_connect(0, NULL) ;
+     (void) enet_socket_get_option(0, 1, NULL) ;
+     (void) enet_socket_shutdown(0, 1) ;
+     (void) enet_socketset_select(0, NULL, NULL, 0) ;
+     (void) enet_address_get_host(NULL, NULL, 0 ) ;
+     (void) enet_host_get_peers_count( NULL) ;
+     (void) enet_host_get_packets_sent(NULL) ;
+     (void) enet_host_get_packets_received(NULL) ;
+     (void) enet_host_get_bytes_sent(NULL) ;
+     (void) enet_host_get_bytes_received(NULL) ;
+     (void) enet_host_get_received_data(NULL, NULL) ;
+     (void) enet_host_get_mtu(NULL) ;
+     (void) enet_peer_get_id(NULL) ;
+     (void) enet_peer_get_ip(NULL, NULL, 0) ;
+     (void) enet_peer_get_port(NULL) ;
+     (void) enet_peer_get_rtt(NULL) ;
+     (void) enet_peer_get_packets_sent(NULL) ;
+     (void) enet_peer_get_packets_lost(NULL) ;
+     (void) enet_peer_get_bytes_sent(NULL) ;
+     (void) enet_peer_get_bytes_received(NULL) ;
+     (void) enet_peer_get_state(NULL) ;
+     (void) enet_peer_get_data(NULL) ;
+     (void) enet_peer_set_data(NULL, NULL) ;
+     (void) enet_packet_get_data(NULL) ;
+     (void) enet_packet_get_length(NULL) ;
+     (void) enet_packet_set_free_callback(NULL, NULL) ;
+     (void) enet_packet_create_offset(NULL, 0, 0, 0) ;
+     (void) enet_crc32(NULL, 0) ;
+     (void) enet_host_check_events(NULL, NULL);
+     (void) enet_host_send_raw(NULL, NULL, NULL, 0) ;
+     (void) enet_host_send_raw_ex(NULL, NULL, NULL, 0, 0) ;
+     (void) enet_host_set_intercept(NULL, NULL) ;
+     (void) enet_host_broadcast(NULL, 0, NULL) ;
+     (void) enet_host_compress(NULL, NULL);
+     (void) enet_host_channel_limit(NULL, 0);
+     (void) enet_host_bandwidth_limit(NULL, 0,0);
+     (void) enet_peer_ping_interval(NULL, 0) ;
+     (void) enet_peer_disconnect_now(NULL, 0) ;
+     (void) enet_peer_disconnect_later(NULL, 0) ;
+     (void) enet_peer_throttle_configure(NULL, 0, 0, 0) ;
+     (void) ENETdummy();
+}
+
 #define TPORT "CMZplEnet"
 #define TRANSPORT_STRING "zplenet"
 #define INTERFACE_NAME(NAME) libcmzplenet_LTX_ ## NAME
@@ -130,12 +179,6 @@ IntENET_unlock(enet_client_data_ptr ecd, char *file, int line)
 //    if (file) printf("ENET Unlock at %s, line %d\n", file, line);
     ecd->enet_locked--;
     pthread_mutex_unlock(&ecd->enet_lock);
-}
-
-static void
-ENETassert_locked(enet_client_data_ptr ecd)
-{
-    assert(ecd->enet_locked);
 }
 
 static int
