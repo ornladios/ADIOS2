@@ -10,24 +10,20 @@
 #define str_helper(X) #X
 #define str(X) str_helper(X)
 
-class YAMLConfigTest : public ::testing::Test
+class YAMLConfigTestSerial : public ::testing::Test
 {
 public:
-    YAMLConfigTest() : configDir(str(YAML_CONFIG_DIR)) {}
+    YAMLConfigTestSerial() : configDir(str(YAML_CONFIG_DIR)) {}
 
     std::string configDir;
 };
 
-TEST_F(YAMLConfigTest, TwoIOs)
+TEST_F(YAMLConfigTestSerial, TwoIOs)
 {
     const std::string configFile(
         configDir + std::string(&adios2::PathSeparator, 1) + "config1.yaml");
 
-#ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON);
-#else
     adios2::ADIOS adios(configFile, adios2::DebugON);
-#endif
 
     // must be declared at least once
     EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1"),
@@ -63,57 +59,30 @@ TEST_F(YAMLConfigTest, TwoIOs)
     EXPECT_THROW(adios.DeclareIO("Test IO 2"), std::invalid_argument);
 }
 
-TEST_F(YAMLConfigTest, OpTypeException)
+TEST_F(YAMLConfigTestSerial, OpTypeException)
 {
     const std::string configFile(configDir +
                                  std::string(&adios2::PathSeparator, 1) +
                                  "configOpTypeException.yaml");
 
-#ifdef ADIOS2_HAVE_MPI
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    if (rank == 0)
-    {
-        EXPECT_THROW(
-            adios2::ADIOS adios(configFile, MPI_COMM_SELF, adios2::DebugON),
-            std::invalid_argument);
-    }
-#else
     EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
                  std::invalid_argument);
-#endif
 }
 
-TEST_F(YAMLConfigTest, OpNullException)
+TEST_F(YAMLConfigTestSerial, OpNullException)
 {
     const std::string configFile(configDir +
                                  std::string(&adios2::PathSeparator, 1) +
                                  "configOpNullException.yaml");
 
-#ifdef ADIOS2_HAVE_MPI
-    EXPECT_THROW(
-        adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON),
-        std::invalid_argument);
-#else
     EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
                  std::invalid_argument);
-#endif
 }
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Init(&argc, &argv);
-#endif
-
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
-
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Finalize();
-#endif
-
     return result;
 }
