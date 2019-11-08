@@ -20,8 +20,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include <ios>      //std::ios_base::failure
-#include <iostream> //std::cout
+#include <ios>       //std::ios_base::failure
+#include <iostream>  //std::cout
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 

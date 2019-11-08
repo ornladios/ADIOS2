@@ -150,6 +150,19 @@ void SscWriter::SyncWritePattern()
 #undef declare_type
         else { throw(std::runtime_error("unknown data type")); }
 
+        if (start.empty())
+        {
+            start.push_back(0);
+        }
+        if (count.empty())
+        {
+            count.push_back(1);
+        }
+        if (shape.empty())
+        {
+            shape.push_back(1);
+        }
+
         auto &jref = j[i.first];
         jref["T"] = type;
         jref["S"] = shape;

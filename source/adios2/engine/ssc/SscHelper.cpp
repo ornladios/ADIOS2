@@ -47,30 +47,7 @@ size_t TotalDataSize(const VarMap &vm)
     size_t s = 0;
     for (const auto &v : vm)
     {
-        if (not v.second.count.empty())
-        {
-            s += TotalDataSize(v.second.count, v.second.type);
-        }
-    }
-    return s;
-}
-
-size_t TotalDataSize(const VarMapVec &vmv)
-{
-    size_t s = 0;
-    for (const auto &vm : vmv)
-    {
-        s += TotalDataSize(vm);
-    }
-    return s;
-}
-
-size_t TotalDataSize(const VarMapVec &vmv, const PosMap &ranks)
-{
-    size_t s = 0;
-    for (const auto i : ranks)
-    {
-        s += TotalDataSize(vmv[i.first]);
+        s += TotalDataSize(v.second.count, v.second.type);
     }
     return s;
 }
