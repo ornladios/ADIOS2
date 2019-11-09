@@ -25,6 +25,34 @@ public:
     SscEngineTest() = default;
 };
 
+void PrintData(const char *data, const size_t step, const Dims &start,
+               const Dims &count)
+{
+    size_t size = std::accumulate(count.begin(), count.end(), 1,
+                                  std::multiplies<size_t>());
+    std::cout << "Rank: " << mpiRank << " Step: " << step << " Size:" << size
+              << "\n";
+    size_t printsize = 128;
+
+    if (size < printsize)
+    {
+        printsize = size;
+    }
+    int s = 0;
+    for (size_t i = 0; i < printsize; ++i)
+    {
+        ++s;
+        std::cout << (int)(data[i]) << " ";
+        if (s == count[1])
+        {
+            std::cout << std::endl;
+            s = 0;
+        }
+    }
+
+    std::cout << "]" << std::endl;
+}
+
 template <class T>
 void PrintData(const T *data, const size_t step, const Dims &start,
                const Dims &count)
@@ -152,6 +180,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         "bpComplexes", shape, start, count);
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
+    auto scalarInt = dataManIO.DefineVariable<int>("scalarInt");
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter = dataManIO.Open(name, adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
@@ -178,6 +207,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         dataManWriter.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpDComplexes, myDComplexes.data(),
                           adios2::Mode::Sync);
+        dataManWriter.Put(scalarInt, i);
         dataManWriter.EndStep();
     }
     dataManWriter.Close();
@@ -221,9 +251,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 }
                 std::cout << std::endl;
             }
-            ASSERT_EQ(vars.size(), 10);
+            ASSERT_EQ(vars.size(), 11);
             size_t currentStep = dataManReader.CurrentStep();
-            //            ASSERT_EQ(i, currentStep);
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
             adios2::Variable<unsigned char> bpUChars =
@@ -244,6 +273,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<float>>("bpComplexes");
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
+            auto scalarInt = dataManIO.InquireVariable<int>("scalarInt");
             auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
 
             bpChars.SetSelection({start, count});
@@ -269,6 +299,11 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                               adios2::Mode::Sync);
             dataManReader.Get(bpDComplexes, myDComplexes.data(),
                               adios2::Mode::Sync);
+            int i;
+            dataManReader.Get(scalarInt, &i);
+
+            ASSERT_EQ(i, currentStep);
+
             VerifyData(myChars.data(), currentStep, start, count, shape);
             VerifyData(myUChars.data(), currentStep, start, count, shape);
             VerifyData(myShorts.data(), currentStep, start, count, shape);
