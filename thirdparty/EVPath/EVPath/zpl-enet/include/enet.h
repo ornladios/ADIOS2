@@ -2428,6 +2428,7 @@ extern "C" {
                 (peer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID &&
                 sessionID != peer->incomingSessionID)
             ) {
+                printf("Packet discard because of peer state peerID %d..  COMMAND DISCARDED, BUT THIS SHOULD NEVER HAPPEN\n", peerID);
                 return 0;
             }
         }
@@ -2435,6 +2436,7 @@ extern "C" {
         if (flags & ENET_PROTOCOL_HEADER_FLAG_COMPRESSED) {
             size_t originalSize;
             if (host->compressor.context == NULL || host->compressor.decompress == NULL) {
+                printf("Packet discard because of bad compression peerID %d..  COMMAND DISCARDED, BUT THIS SHOULD NEVER HAPPEN\n", peerID);
                 return 0;
             }
 
@@ -2446,6 +2448,7 @@ extern "C" {
             );
 
             if (originalSize <= 0 || originalSize > sizeof(host->packetData[1]) - headerSize) {
+                printf("Packet discard because of original size <=0 peerID %d..  COMMAND DISCARDED, BUT THIS SHOULD NEVER HAPPEN\n", peerID);
                 return 0;
             }
 
@@ -2465,6 +2468,7 @@ extern "C" {
             buffer.dataLength = host->receivedDataLength;
 
             if (host->checksum(&buffer, 1) != desiredChecksum) {
+                printf("Packet discard because of checksum peerID %d..  COMMAND DISCARDED, BUT THIS SHOULD NEVER HAPPEN\n", peerID);
                 return 0;
             }
         }
@@ -2621,6 +2625,7 @@ extern "C" {
             return 1;
         }
 
+        printf("Packet discard because of command error peerID %d..  COMMAND DISCARDED, BUT THIS SHOULD NEVER HAPPEN\n", peerID);
         return 0;
     } /* enet_protocol_handle_incoming_commands */
 
