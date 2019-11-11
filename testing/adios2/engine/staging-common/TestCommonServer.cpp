@@ -165,14 +165,13 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
             DelayMS)); /* sleep for DelayMS milliseconds */
         step++;
 #ifdef ADIOS2_HAVE_MPI
-        MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
-                      MPI_COMM_WORLD);
         if (file_exists(shutdown_name))
         {
             MyCloseNow = GlobalCloseNow = 1;
         }
+        MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
+                      MPI_COMM_WORLD);
 #else
-        GlobalCloseNow = MyCloseNow;
         if (file_exists(shutdown_name))
         {
             MyCloseNow = GlobalCloseNow = 1;
