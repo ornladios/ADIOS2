@@ -4,9 +4,16 @@ Runtime Configuration Files
 
 ADIOS2 supports passing an optional runtime configuration file to the :ref:`ADIOS` component constructor (``adios2_init`` in C, Fortran).
 
-This file contains key-value pairs equivalent to the compile time ``IO::SetParameters`` (``adios2_set_parameter`` in C, Fortran), and ``IO::AddTransport`` (``adios2_set_transport_parameter`` in C, Fortran).
+This file contains key-value pairs equivalent to the compile time ``IO::SetParameters`` (``adios2_set_parameter`` in C, Fortran), and ``IO::AddTransport`` (``adios2_set_transport_parameter`` in C, Fortran). 
 
-Each Engine should provide a set of available parameters as described in the :ref:`Supported Engines` section. Currently, only the XML format is supported. The typical format is as follows:
+Each Engine and Operator must provide a set of available parameters as described in the :ref:`Supported Engines` section. Up to version v2.5.0 only XML is supported, v2.6.0 and beyond support XML as well as YAML.
+
+.. warning::
+
+   Configuration files must have the corresponding format extension ``.xml``, ``.yaml``: ``config.xml``, ``config.yaml``, etc.
+
+XML
+---
 
 .. code-block:: xml
 
@@ -40,6 +47,57 @@ Each Engine should provide a set of available parameters as described in the :re
    </adios-config>
             
            
-.. warning::
+YAML
+----
+
+Starting with v2.6.0, ADIOS supports YAML configuration files. The syntax follows strict use of the YAML node keywords mapping to the ADIOS2 components hierarchy. If a keyword is unknown ADIOS2 simply ignores it. For an example file refer to `adios2 config file example in our repo. <https://github.com/ornladios/ADIOS2/tree/master/testing/adios2/yaml/proto.yaml>`_
+
+.. code-block:: yaml
    
-   Only XML files are supported in the current ADIOS2 version. Configuration files must have the ``.xml`` extension: ``config.xml``, ``output.xml``, etc.
+   ---
+   # adios2 config.yaml
+   # IO YAML Sequence (-) Nodes to allow for multiple IO nodes
+   # IO name referred in code with DeclareIO is mandatory
+   
+   - IO: "IOName"   
+     
+     Engine:
+        # If Type is missing or commented out, default Engine is picked up
+        Type: "BP4"
+        # optional engine parameters
+        key1: value1
+        key2: value2
+        key3: value3
+     
+     Variables:
+
+         # Variable Name is Mandatory
+       - Variable: "VariableName1"
+         Operations:
+             # Operation Type is mandatory (zfp, sz, etc.)
+           - Type: operatorType
+             key1: value1
+             key2: value2
+       
+       - Variable: "VariableName2"
+         Operations:
+             # Operations sequence of maps
+           - {Type: operatorType, key1: value1}
+           - {Type: z-checker, key1: value1, key2: value2}
+      
+     Transports: 
+         # Transport sequence of maps 
+       - {Type: file, Library: fstream}
+       - {Type: rdma, Library: ibverbs}
+        
+     ...
+
+
+.. caution::
+   
+   YAML is case sensitive, make sure the node identifiers follow strictly the keywords: IO, Engine, Variables, Variable, Operations, Transports, Type.
+   
+.. tip::
+   
+   Run a YAML validator or use a YAML editor to make sure the provided file is YAML compatible.
+   

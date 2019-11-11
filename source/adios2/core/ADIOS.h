@@ -136,7 +136,7 @@ public:
      * @exception std::invalid_argument if Operator with unique name is already
      * defined, in debug mode only
      */
-    Operator &DefineOperator(const std::string name, const std::string type,
+    Operator &DefineOperator(const std::string &name, const std::string type,
                              const Params &parameters = Params());
     /**
      * Retrieve a reference pointer to an existing Operator object
@@ -144,7 +144,7 @@ public:
      * @return if IO exists returns a reference to existing IO object inside
      * ADIOS, otherwise a nullptr
      */
-    Operator *InquireOperator(const std::string name) noexcept;
+    Operator *InquireOperator(const std::string &name) noexcept;
 
 /** define CallBack1 */
 #define declare_type(T)                                                        \
@@ -207,6 +207,8 @@ private:
     void CheckOperator(const std::string name) const;
 
     void XMLInit(const std::string &configFileXML);
+
+    void YAMLInit(const std::string &configFileYAML);
 };
 
 } // end namespace core
