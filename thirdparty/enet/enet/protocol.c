@@ -1037,8 +1037,10 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
     if (peerID == ENET_PROTOCOL_MAXIMUM_PEER_ID)
       peer = NULL;
     else
-    if (peerID >= host -> peerCount)
+        if (peerID >= host -> peerCount) {
+            printf("INCOMING PEER ID %d IS GREATER THAN NATIVE PEER COUNT %zu.  COMMAND DISCARDED, BUT THIS SHOULD NEVER HAPPEN\n", peerID, host->peerCount);
       return 0;
+}
     else
     {
        peer = host -> peer_list [peerID];
