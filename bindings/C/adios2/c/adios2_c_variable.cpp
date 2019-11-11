@@ -111,15 +111,16 @@ adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
         adios2::helper::CheckForNullptr(variable,
                                         "for adios2_variable, in call to "
                                         "adios2_set_selection");
-        adios2::helper::CheckForNullptr(start, "for start, in call to "
-                                               "adios2_set_selection");
         adios2::helper::CheckForNullptr(count, "for count, in call to "
                                                "adios2_set_selection");
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
 
-        const adios2::Dims startV(start, start + ndims);
-        const adios2::Dims countV(count, count + ndims);
+        const adios2::Dims startV = (start == nullptr)
+                                        ? adios2::Dims()
+                                        : adios2::Dims(start, start + ndims);
+        const adios2::Dims countV = adios2::Dims(count, count + ndims);
+
         variableBase->SetSelection({startV, countV});
         variableBase->CheckDimensions("in call to adios2_set_selection");
         return adios2_error_none;
@@ -193,7 +194,7 @@ adios2_error adios2_variable_name(char *name, size_t *size,
             variable,
             "for const adios2_variable, in call to adios2_variable_name");
         adios2::helper::CheckForNullptr(
-            size, "for size_t* length, in call to adios2_variable_name");
+            size, "for size_t* size, in call to adios2_variable_name");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);

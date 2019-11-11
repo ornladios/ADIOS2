@@ -4,12 +4,12 @@
      use adios2
      implicit none
 
-     integer(kind=8), dimension(1) :: count_dims
+     integer(kind=8), dimension(1) :: count_dims, changing_count_dims
      integer :: inx, irank, isize, ierr, i, step_status, s
 
      type(adios2_adios) :: adios
      type(adios2_io) :: ioWrite, ioRead, ioDummy
-     type(adios2_variable), dimension(12) :: variables
+     type(adios2_variable), dimension(13) :: variables
      type(adios2_engine) :: bpWriter, bpReader
 
      ! read handlers
@@ -25,6 +25,7 @@
      integer(kind=8), dimension(10) :: I64, inI64
      real(kind=4), dimension(10) :: R32, inR32
      real(kind=8), dimension(10) :: R64, inR64
+     real(kind=8), dimension(10) :: changingR64, inchangingR64
 
      ! Program starts
 
@@ -38,6 +39,7 @@
 
      ! Variable dimensions
      count_dims(1) = inx
+     changing_count_dims(1) = inx
 
      ! Create adios handler passing the communicator, debug mode and error flag
      call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
@@ -75,7 +77,7 @@
      call adios2_define_variable(variables(6), ioWrite, "var_R64", &
                                  adios2_type_dp, 1, &
                                  adios2_null_dims, adios2_null_dims, count_dims, &
-                                 adios2_constant_dims, ierr)
+                                 .false., ierr)
 
      ! Global variables
      call adios2_define_variable(variables(7), ioWrite, "gvar_I8", &
@@ -96,6 +98,11 @@
      call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
                                  adios2_type_dp, ierr)
 
+     call adios2_define_variable(variables(13), ioWrite, "var_changingR64", &
+                                 adios2_type_dp, 1, &
+                                 adios2_null_dims, adios2_null_dims, changing_count_dims, &
+                                 adios2_constant_dims, ierr)
+
      write (*, *) "Engine type: ", ioWrite%engine_type
      if (TRIM(ioWrite%engine_type) /= 'File') stop 'Wrong engine_type'
 
@@ -107,7 +114,7 @@
      write (*, *) "Engine type: ", ioDummy%engine_type
      if (TRIM(ioDummy%engine_type) /= 'SST') stop 'Wrong engine_type'
 
-     call adios2_set_engine(ioWrite, "BP3", ierr)
+     call adios2_set_engine(ioWrite, "BPFile", ierr)
 
      ! Open myVector_f.bp in write mode, this launches an engine
      call adios2_open(bpWriter, ioWrite, "ftypes_local.bp", adios2_mode_write, &
@@ -137,12 +144,21 @@
              R64(i) = data_R64(i) + irank + current_step
          end do
 
+         ! changing count
+         changing_count_dims(1) = s
+         call adios2_set_selection(variables(13), 1, adios2_null_dims, &
+                                    changing_count_dims, ierr)
+         do i = 1, s
+             changingR64(i) = data_R64(i) + irank + current_step
+         end do
+
          call adios2_put(bpWriter, variables(1), I8, ierr)
          call adios2_put(bpWriter, variables(2), I16, ierr)
          call adios2_put(bpWriter, variables(3), I32, ierr)
          call adios2_put(bpWriter, variables(4), I64, ierr)
          call adios2_put(bpWriter, variables(5), R32, ierr)
          call adios2_put(bpWriter, variables(6), R64, ierr)
+         call adios2_put(bpWriter, variables(13), changingR64, ierr)
 
          call adios2_end_step(bpWriter, ierr)
      end do
@@ -237,6 +253,12 @@
          call adios2_variable_steps(steps_count, variables(6), ierr)
          if (steps_count /= 3) stop 'var_R64 steps_count is not 3'
 
+         call adios2_inquire_variable(variables(13), ioRead, "var_changingR64", ierr)
+         if (variables(13)%name /= 'var_changingR64') stop 'var_changingR64 not recognized'
+         if (variables(13)%type /= adios2_type_dp) stop 'var_R64 type not recognized'
+         call adios2_variable_steps(steps_count, variables(13), ierr)
+         if (steps_count /= 3) stop 'var_changingR64 steps_count is not 3'
+
          do block_id = 0, isize - 1
 
              call adios2_set_block_selection(variables(1), block_id, ierr)
@@ -245,6 +267,7 @@
              call adios2_set_block_selection(variables(4), block_id, ierr)
              call adios2_set_block_selection(variables(5), block_id, ierr)
              call adios2_set_block_selection(variables(6), block_id, ierr)
+             call adios2_set_block_selection(variables(13), block_id, ierr)
 
              call adios2_get(bpReader, variables(1), inI8, ierr)
              call adios2_get(bpReader, variables(2), inI16, ierr)
@@ -252,6 +275,7 @@
              call adios2_get(bpReader, variables(4), inI64, ierr)
              call adios2_get(bpReader, variables(5), inR32, ierr)
              call adios2_get(bpReader, variables(6), inR64, ierr)
+             call adios2_get(bpReader, variables(13), inchangingR64, ierr)
              call adios2_perform_gets(bpReader, ierr)
 
              do i = 1, inx
@@ -270,6 +294,11 @@
                  if (I64(i) /= inI64(i)) stop 'Error reading var_I64'
                  if (R32(i) /= inR32(i)) stop 'Error reading var_R32'
                  if (R64(i) /= inR64(i)) stop 'Error reading var_R64'
+
+                 if( i < current_step) then
+                     if (R64(i) /= inchangingR64(i)) stop 'Error reading var_changingR64'
+                 end if
+
              end do
 
          end do

@@ -153,29 +153,48 @@ void FC_GLOBAL(adios2_set_selection_f2c,
                                          const int *ndims, const int64_t *start,
                                          const int64_t *count, int *ierr)
 {
-    auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
-                            std::vector<std::size_t> &output) {
-        output.resize(size);
+    auto lf_IntToSizeT = [](const int64_t *input,
+                            const int size) -> std::vector<std::size_t> {
+        std::vector<std::size_t> output;
+        output.reserve(size);
 
         for (auto d = 0; d < size; ++d)
         {
-            output[d] = dimensions[d];
+            output.push_back(static_cast<std::size_t>(input[d]));
         }
+        return output;
     };
 
     try
     {
+        // is this even possible coming from Fortran ?
         if (start == nullptr || count == nullptr || ndims == nullptr)
         {
             throw std::invalid_argument("ERROR: either start_dims, count_dims "
                                         "or ndims is a null pointer, in call "
                                         "to adios2_set_selection\n");
         }
-        std::vector<std::size_t> startV, countV;
-        lf_IntToSizeT(start, *ndims, startV);
-        lf_IntToSizeT(count, *ndims, countV);
-        *ierr = static_cast<int>(adios2_set_selection(
-            *variable, *ndims, startV.data(), countV.data()));
+        if (*ndims <= 0)
+        {
+            throw std::invalid_argument("ERROR: ndims must be larger than 0, "
+                                        "in call to adios2_set_selection\n");
+        }
+
+        const std::vector<size_t> countV = lf_IntToSizeT(count, *ndims);
+        // local array selection
+        if (start[0] == -1)
+        {
+            *ierr = static_cast<int>(adios2_set_selection(
+                *variable, *ndims, nullptr, countV.data()));
+        }
+        // global array selection
+        else
+        {
+            const std::vector<std::size_t> startV =
+                lf_IntToSizeT(start, *ndims);
+            *ierr = static_cast<int>(adios2_set_selection(
+                *variable, *ndims, startV.data(), countV.data()));
+        }
     }
     catch (...)
     {
