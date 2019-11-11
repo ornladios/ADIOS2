@@ -2622,10 +2622,10 @@ extern "C" {
 
     commandError:
         if (event != NULL && event->type != ENET_EVENT_TYPE_NONE) {
+            printf("Packet discard because of command error peerID %d..  COMMAND DISCARDED, BUT THIS SHOULD NEVER HAPPEN\n", peerID);
             return 1;
         }
 
-        printf("Packet discard because of command error peerID %d..  COMMAND DISCARDED, BUT THIS SHOULD NEVER HAPPEN\n", peerID);
         return 0;
     } /* enet_protocol_handle_incoming_commands */
 
