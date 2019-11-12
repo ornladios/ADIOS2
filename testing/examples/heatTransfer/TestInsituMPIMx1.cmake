@@ -28,7 +28,7 @@ add_test(NAME HeatTransfer.InsituMPI.Mx1.Dump
 )
 
 add_test(NAME HeatTransfer.InsituMPI.Mx1.Validate
-  COMMAND ${DIFF_EXECUTABLE} -uw
+  COMMAND ${DIFF_COMMAND} -uw
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     Dump.txt
 )
