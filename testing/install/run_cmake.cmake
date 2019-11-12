@@ -12,10 +12,15 @@ execute_process(COMMAND "${CMAKE_CTEST_COMMAND}"
   "${ADIOS2_SOURCE_DIR}/testing/install/${TEST_CASE}"
   "${ADIOS2_BINARY_DIR}/testing/install/cmake/${TEST_CASE}"
   --build-generator "${CMAKE_GENERATOR}"
+  --build-generator-platform "${CMAKE_GENERATOR_PLATFORM}"
+  --build-generator-toolset "${CMAKE_GENERATOR_TOOLSET}"
   --build-makeprogram "${CMAKE_MAKE_PROGRAM}"
   --build-options
     "-Dadios2_DIR=${ADIOS2_BINARY_DIR}/testing/install/install/${CMAKE_INSTALL_CMAKEDIR}"
+    "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
+    "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
   --test-command "${CMAKE_CTEST_COMMAND}" -V
+  -C "${BUILD_TYPE}"
   RESULT_VARIABLE result
   )
 if(result)

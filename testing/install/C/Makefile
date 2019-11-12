@@ -25,7 +25,7 @@ adios_c_test: main.o
 	$(CXX) -o adios_c_test main.o $(ADIOS_C_LD_FLAGS)
 
 main.o: $(main_c)
-	$(CC) -o main.o -c $(main_c) $(ADIOS_C_FLAGS)
+	$(CC) $(ISYSROOT) -o main.o -c $(main_c) $(ADIOS_C_FLAGS)
 
 adios_c_test_2: $(main_c)
-	$(CXX) -o adios_c_test_2 $(main_c) $(ADIOS_C_ALL_FLAGS)
+	$(CXX) $(ISYSROOT) -o adios_c_test_2 $(main_c) $(ADIOS_C_ALL_FLAGS)

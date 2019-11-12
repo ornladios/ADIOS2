@@ -8,10 +8,15 @@ function(add_install_cmake_test name)
     "-DADIOS2_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
     "-DADIOS2_BINARY_DIR=${CMAKE_BINARY_DIR}"
     "-DCMAKE_GENERATOR=${CMAKE_GENERATOR}"
+    "-DCMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}"
+    "-DCMAKE_GENERATOR_TOOLSET=${CMAKE_GENERATOR_TOOLSET}"
     "-DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
     "-DTEST_CASE=${name}"
     "-DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}"
     "-DCMAKE_INSTALL_CMAKEDIR=${CMAKE_INSTALL_CMAKEDIR}"
+    "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
+    "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+    "-DBUILD_TYPE=$<CONFIG>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/run_cmake.cmake"
     )
   set_tests_properties(Install.CMake.${name} PROPERTIES
@@ -43,6 +48,7 @@ function(add_install_make_test name)
     "-DTEST_CASE=${name}"
     "-DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}"
     "-DMPIEXEC_EXECUTABLE=${mpiexec}"
+    "-DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/run_make.cmake"
     )
   set_tests_properties(Install.Make.${name} PROPERTIES
@@ -54,6 +60,7 @@ endfunction()
 add_test(NAME Install.Setup COMMAND "${CMAKE_COMMAND}"
   "-DADIOS2_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
   "-DADIOS2_BINARY_DIR=${CMAKE_BINARY_DIR}"
+  "-DBUILD_TYPE=$<CONFIG>"
   -P "${CMAKE_CURRENT_SOURCE_DIR}/run_install.cmake"
   )
 set_tests_properties(Install.Setup PROPERTIES
