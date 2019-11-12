@@ -114,9 +114,10 @@ endif()
 
 configure_file(
   run_test.in
-  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_test.py
+  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_test.conf
   @ONLY
 )
+file(GENERATE OUTPUT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_test.py INPUT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_test.conf )
 
 include (TestSupp.cmake )
 
