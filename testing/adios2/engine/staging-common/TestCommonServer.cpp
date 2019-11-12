@@ -28,9 +28,6 @@ public:
     CommonServerTest() = default;
 };
 
-static int MyCloseNow = 0;
-static int GlobalCloseNow = 0;
-
 inline bool file_exists(const std::string &name)
 {
     struct stat buffer;
@@ -41,6 +38,7 @@ inline bool file_exists(const std::string &name)
 TEST_F(CommonServerTest, ADIOS2CommonServer)
 {
     int mpiRank = 0, mpiSize = 1;
+    int GlobalCloseNow = 0;
 
     std::remove(shutdown_name.c_str());
 #ifdef ADIOS2_HAVE_MPI
@@ -164,21 +162,26 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
         std::this_thread::sleep_for(std::chrono::milliseconds(
             DelayMS)); /* sleep for DelayMS milliseconds */
         step++;
+        {
+            int MyCloseNow = 0;
+            if (file_exists(shutdown_name))
+            {
+                MyCloseNow = 1;
+            }
 #ifdef ADIOS2_HAVE_MPI
-        MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
-                      MPI_COMM_WORLD);
-        if (file_exists(shutdown_name))
-        {
-            MyCloseNow = GlobalCloseNow = 1;
-        }
+            MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
+                          MPI_COMM_WORLD);
 #else
-        GlobalCloseNow = MyCloseNow;
-        if (file_exists(shutdown_name))
-        {
-            MyCloseNow = GlobalCloseNow = 1;
-        }
+            GlobalCloseNow = MyCloseNow;
 #endif
+        }
+        if (GlobalCloseNow)
+        {
+            std::cout << "Writer closing stream because file \""
+                      << shutdown_name << "\" was noticed" << std::endl;
+        }
     }
+    std::cout << "Writer closing stream normally" << std::endl;
     // Close the file
     engine.Close();
 }
