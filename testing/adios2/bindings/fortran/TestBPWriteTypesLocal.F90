@@ -101,7 +101,7 @@
      call adios2_define_variable(variables(13), ioWrite, "var_changingR64", &
                                  adios2_type_dp, 1, &
                                  adios2_null_dims, adios2_null_dims, changing_count_dims, &
-                                 adios2_constant_dims, ierr)
+                                 adios2_variable_dims, ierr)
 
      write (*, *) "Engine type: ", ioWrite%engine_type
      if (TRIM(ioWrite%engine_type) /= 'File') stop 'Wrong engine_type'
