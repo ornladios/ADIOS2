@@ -28,7 +28,7 @@ add_test(NAME HeatTransfer.SST.FFS.MxM.Dump
 )
 
 add_test(NAME HeatTransfer.SST.FFS.MxM.Validate
-  COMMAND ${DIFF_EXECUTABLE} -uw
+  COMMAND ${DIFF_COMMAND} -uw
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     Dump.txt
 )
