@@ -250,14 +250,14 @@ args = parser.parse_args()
 
 if args.test_protocol == 'simple':
     if args.writer is None:
-        args.writer = 'TestCommonWrite'
+        args.writer = '$<TARGET_FILE:TestCommonWrite>'
     if args.reader is None:
-        args.reader = 'TestCommonRead'
+        args.reader = '$<TARGET_FILE:TestCommonRead>'
 else:
     if args.writer is None:
-        args.writer = 'TestCommonServer'
+        args.writer = '$<TARGET_FILE:TestCommonServer>'
     if args.reader is None:
-        args.reader = 'TestCommonClient'
+        args.reader = '$<TARGET_FILE:TestCommonClient>'
 
 writer_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + \
     str(args.num_writers)

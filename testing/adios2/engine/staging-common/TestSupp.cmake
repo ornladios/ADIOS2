@@ -55,95 +55,98 @@
 # engine params.  The WENGINE_PARAMS string is retained in the
 # resulting _CMD strings until add_common_test() which removes it.
 #
+
+find_package(PythonInterp REQUIRED)
+
 # Change the STAGING_COMMON_TEST_SUPP_VERBOSE value to ON for debugging output
 #
 set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
 
-set (1x1_CMD "run_test.py -nw 1 -nr 1")
-set (1x1.NoPreload_CMD "run_test.py -nw 1 -nr 1 --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
-set (1x1.ForcePreload_CMD "run_test.py -nw 1 -nr 1 --rarg=PreloadMode=SstPreloadOn,RENGINE_PARAMS")
-set (1x1Bulk_CMD "run_test.py -nw 1 -nr 1  --warg=--nx --warg=10000 --warg=--num_steps --warg=101 --rarg=--num_steps --rarg=101")
-set (1x1BulkLockGeometry_CMD "run_test.py -nw 1 -nr 1  --warg=--num_steps --warg=101  --warg=--nx --warg=10000 --rarg=--num_steps --rarg=101 --warg=--lock_geometry --rarg=--lock_geometry")
-set (2x1_CMD "run_test.py -nw 2 -nr 1")
-set (2x1ZeroDataVar_CMD "run_test.py -nw 2 -nr 1 --warg=--zero_data_var")
-set (2x1ZeroDataR64_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWrite -r TestCommonReadR64 --warg=--zero_data_var")
-set (2x1.NoPreload_CMD "run_test.py -nw 2 -nr 1 --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
-set (2x3.ForcePreload_CMD "run_test.py -nw 2 -nr 3 --rarg=PreloadMode=SstPreloadOn,RENGINE_PARAMS")
-set (1x2_CMD "run_test.py -nw 1 -nr 2")
-set (3x5_CMD "run_test.py -nw 3 -nr 5")
-set (3x5LockGeometry_CMD "run_test.py -nw 3 -nr 5 --warg=--num_steps --warg=100 --rarg=--num_steps --rarg=100 --warg=--lock_geometry --rarg=--lock_geometry")
-set (5x3_CMD "run_test.py -nw 5 -nr 3")
-set (1x1.Local_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteLocal -r TestCommonReadLocal")
-set (2x1.Local_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteLocal -r TestCommonReadLocal")
-set (1x2.Local_CMD "run_test.py -nw 1 -nr 2  -w TestCommonWriteLocal -r TestCommonReadLocal")
-set (3x5.Local_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWriteLocal -r TestCommonReadLocal")
-set (5x3.Local_CMD "run_test.py -nw 5 -nr 3  -w TestCommonWriteLocal -r TestCommonReadLocal")
-set (DelayedReader_3x5_CMD "run_test.py -rd 5 -nw 3 -nr 5")
-set (FtoC.3x5_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWrite_f -r TestCommonRead")
-set (FtoF.3x5_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWrite_f -r TestCommonRead_f")
-set (1x1.SharedNothing_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--write_mode --warg=deferred")
-set (1x1.SharedIO_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=deferred")
-set (1x1.SharedVar_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=deferred")
-set (1x1.SharedNothingSync_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--write_mode --warg=sync")
-set (1x1.SharedIOSync_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=sync")
-set (1x1.SharedVarSync_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=sync")
+set (1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1")
+set (1x1.NoPreload_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
+set (1x1.ForcePreload_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=PreloadMode=SstPreloadOn,RENGINE_PARAMS")
+set (1x1Bulk_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--nx --warg=10000 --warg=--num_steps --warg=101 --rarg=--num_steps --rarg=101")
+set (1x1BulkLockGeometry_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  --warg=--num_steps --warg=101  --warg=--nx --warg=10000 --rarg=--num_steps --rarg=101 --warg=--lock_geometry --rarg=--lock_geometry")
+set (2x1_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1")
+set (2x1ZeroDataVar_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1 --warg=--zero_data_var")
+set (2x1ZeroDataR64_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -r $<TARGET_FILE:TestCommonReadR64> --warg=--zero_data_var")
+set (2x1.NoPreload_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1 --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
+set (2x3.ForcePreload_CMD "run_test.py.$<CONFIG> -nw 2 -nr 3 --rarg=PreloadMode=SstPreloadOn,RENGINE_PARAMS")
+set (1x2_CMD "run_test.py.$<CONFIG> -nw 1 -nr 2")
+set (3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5")
+set (3x5LockGeometry_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 --warg=--num_steps --warg=100 --rarg=--num_steps --rarg=100 --warg=--lock_geometry --rarg=--lock_geometry")
+set (5x3_CMD "run_test.py.$<CONFIG> -nw 5 -nr 3")
+set (1x1.Local_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteLocal> -r $<TARGET_FILE:TestCommonReadLocal>")
+set (2x1.Local_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -w $<TARGET_FILE:TestCommonWriteLocal> -r $<TARGET_FILE:TestCommonReadLocal>")
+set (1x2.Local_CMD "run_test.py.$<CONFIG> -nw 1 -nr 2  -w $<TARGET_FILE:TestCommonWriteLocal> -r $<TARGET_FILE:TestCommonReadLocal>")
+set (3x5.Local_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWriteLocal> -r $<TARGET_FILE:TestCommonReadLocal>")
+set (5x3.Local_CMD "run_test.py.$<CONFIG> -nw 5 -nr 3  -w $<TARGET_FILE:TestCommonWriteLocal> -r $<TARGET_FILE:TestCommonReadLocal>")
+set (DelayedReader_3x5_CMD "run_test.py.$<CONFIG> -rd 5 -nw 3 -nr 5")
+set (FtoC.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWrite_f>")
+set (FtoF.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWrite_f> -r $<TARGET_FILE:TestCommonRead_f>")
+set (1x1.SharedNothing_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--write_mode --warg=deferred")
+set (1x1.SharedIO_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=deferred")
+set (1x1.SharedVar_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=deferred")
+set (1x1.SharedNothingSync_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--write_mode --warg=sync")
+set (1x1.SharedIOSync_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=sync")
+set (1x1.SharedVarSync_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=sync")
 
-set (2x1.SharedNothing_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--write_mode --warg=deferred")
-set (2x1.SharedIO_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=deferred")
-set (2x1.SharedVar_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=deferred")
-set (2x1.SharedNothingSync_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--write_mode --warg=sync")
-set (2x1.SharedIOSync_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=sync")
-set (2x1.SharedVarSync_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=sync")
+set (2x1.SharedNothing_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--write_mode --warg=deferred")
+set (2x1.SharedIO_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=deferred")
+set (2x1.SharedVar_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=deferred")
+set (2x1.SharedNothingSync_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--write_mode --warg=sync")
+set (2x1.SharedIOSync_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=sync")
+set (2x1.SharedVarSync_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -w $<TARGET_FILE:TestCommonWriteShared> -r $<TARGET_FILE:TestCommonReadShared> --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=sync")
 
 
 # NoReaderNoWait runs a writer with the RendezvousReaderCount = 0 and then never spawns a reader.  The test should run to termination and execute cleanly
-set (NoReaderNoWait_CMD "run_test.py -nw 1 -nr 0 --warg=RendezvousReaderCount=0,QueueLimit=3,QueueFullPolicy=discard,WENGINE_PARAMS")
+set (NoReaderNoWait_CMD "run_test.py.$<CONFIG> -nw 1 -nr 0 --warg=RendezvousReaderCount=0,QueueLimit=3,QueueFullPolicy=discard,WENGINE_PARAMS")
 
 # TimeoutOnOpen runs a reader but never spawns a writer.  The Open should run to timeout and throw an exception
-set (TimeoutOnOpen_CMD "run_test.py -nw 0 -nr 1 --rarg=--expect_timeout --rarg=OpenTimeoutSecs=10,RENGINE_PARAMS")
+set (TimeoutOnOpen_CMD "run_test.py.$<CONFIG> -nw 0 -nr 1 --rarg=--expect_timeout --rarg=OpenTimeoutSecs=10,RENGINE_PARAMS")
 
 # The Modes test checks to see that we can mix and match Put Sync and Deferred modes and still get good data
-set (1x1.Modes_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteModes -r TestCommonRead")
+set (1x1.Modes_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteModes>")
 
 # 1x1.Attrs tests writing and reading of attributes defined before Open
-set (1x1.Attrs_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteAttrs -r TestCommonReadAttrs")
+set (1x1.Attrs_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteAttrs> -r $<TARGET_FILE:TestCommonReadAttrs>")
 
 # Basic Fortran tests, Fortran to C, C to Fortran and Fortran to Fortran
-set (FtoC.1x1_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWrite_f -r TestCommonRead")
-set (CtoF.1x1_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWrite -r TestCommonRead_f")
-set (FtoF.1x1_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWrite_f -r TestCommonRead_f")
+set (FtoC.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWrite_f>")
+set (CtoF.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -r $<TARGET_FILE:TestCommonRead_f>")
+set (FtoF.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWrite_f> -r $<TARGET_FILE:TestCommonRead_f>")
 
 # Tests for ZFP compression (where supported by an engine param)
-set (ZFPCompression.1x1_CMD "run_test.py -nw 1 -nr 1 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
-set (ZFPCompression.3x5_CMD "run_test.py -nw 3 -nr 5 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
+set (ZFPCompression.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
+set (ZFPCompression.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
 
 # Test if writer will survive readers departing unexpectedly
-set (KillReadersSerialized.3x2_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 1 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
+set (KillReadersSerialized.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 1 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
 set (KillReadersSerialized.3x2_TIMEOUT "300")
-set (KillReaders3Max.3x6_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 3 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
+set (KillReaders3Max.3x6_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 3 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
 set (KillReaders3Max.3x6_TIMEOUT "300")
 
-set (KillWriter_2x2_CMD "run_test.py --test_protocol kill_writer   -nw 2 -nr 2 --interval 10 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000")
-set (KillWriterTimeout_2x2_CMD "run_test.py --test_protocol kill_writer -nw 2 -nr 2 --interval 10 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000 --rarg=--non_blocking")
+set (KillWriter_2x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_writer   -nw 2 -nr 2 --interval 10 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000")
+set (KillWriterTimeout_2x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_writer -nw 2 -nr 2 --interval 10 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000 --rarg=--non_blocking")
 
-set (PreciousTimestep.3x2_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=True,RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first")
+set (PreciousTimestep.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=True,RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first")
 
 set (PreciousTimestep.3x2_TIMEOUT "300")
 
-set (PreciousTimestepDiscard.3x2_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=On,RendezvousReaderCount=0,QueueLimit=3,QueueFullPolicy=discard,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --rarg=--discard --warg=--ms_delay --warg=500")
+set (PreciousTimestepDiscard.3x2_CMD "run_test.py.$<CONFIG> --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=On,RendezvousReaderCount=0,QueueLimit=3,QueueFullPolicy=discard,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --rarg=--discard --warg=--ms_delay --warg=500")
 set (PreciousTimestepDiscard.3x2_TIMEOUT "300")
 
 # Readers using BeginStep with timeout.  Here we run the writer with a longer delay to make the reader timeout
-set (TimeoutReader.1x1_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --rarg=--non_blocking --warg=--ms_delay --warg=2000")
+set (TimeoutReader.1x1_CMD "run_test.py.$<CONFIG> --test_protocol one_client -nw 1 -nr 1 --rarg=--non_blocking --warg=--ms_delay --warg=2000")
 set (TimeoutReader.1x1_TIMEOUT "60")
 
 # Readers using LatestAvailable   Writer runs faster than reader, so we expect misses
-set (LatestReader.1x1_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --rarg=--latest --rarg=--long_first_delay")
+set (LatestReader.1x1_CMD "run_test.py.$<CONFIG> --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --rarg=--latest --rarg=--long_first_delay")
 
-set (LatestReaderHold.1x1_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --rarg=--latest --rarg=--long_first_delay --rarg=--delay_while_holding")
+set (LatestReaderHold.1x1_CMD "run_test.py.$<CONFIG> --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --rarg=--latest --rarg=--long_first_delay --rarg=--delay_while_holding")
 
 # A faster writer and a queue policy that will cause timesteps to be discarded
-set (DiscardWriter.1x1_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--engine_params --warg=QueueLimit=1,QueueFullPolicy=discard,WENGINE_PARAMS --warg=--ms_delay --warg=250 --rarg=--discard")
+set (DiscardWriter.1x1_CMD "run_test.py.$<CONFIG> --test_protocol one_client -nw 1 -nr 1 --warg=--engine_params --warg=QueueLimit=1,QueueFullPolicy=discard,WENGINE_PARAMS --warg=--ms_delay --warg=250 --rarg=--discard")
 
 function(remove_engine_params_placeholder dst_str src_str )
     string(REGEX REPLACE "([^ 		  ]*),WENGINE_PARAMS" "\\1" src_str "${src_str}")
@@ -210,10 +213,10 @@ function(add_common_test basename engine)
     if ("${${basename}_CMD}" STREQUAL "") 
        message(SEND_ERROR "Staging-Common test ${basename} has no defined ${basename}_CMD")
     endif()
-    string (CONCAT command "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" ${${basename}_CMD})
+    set(command "${PYTHON_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${${basename}_CMD}")
     remove_engine_params_placeholder(command  "${command}")
     separate_arguments(command)
-    list(INSERT command 1 "${engine}" "${testname}")
+    list(INSERT command 2 "${engine}" "${testname}")
     add_test(NAME ${testname} COMMAND ${command})
     if(testname MATCHES "([1-9][0-9]*)x([1-9][0-9]*)")
       math(EXPR nprocs "${CMAKE_MATCH_1} + ${CMAKE_MATCH_2}")

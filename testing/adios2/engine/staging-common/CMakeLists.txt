@@ -113,10 +113,13 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 configure_file(
-  run_test.in
-  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_test.py
+  run_test.py.gen.in
+  ${CMAKE_CURRENT_BINARY_DIR}/run_test.py.gen
   @ONLY
 )
+file(GENERATE
+  OUTPUT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_test.py.$<CONFIG>
+  INPUT ${CMAKE_CURRENT_BINARY_DIR}/run_test.py.gen)
 
 include (TestSupp.cmake )
 
