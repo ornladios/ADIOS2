@@ -180,7 +180,8 @@ void AssignStep3D(const size_t step, std::vector<std::complex<double>> &vector,
 
 void HDF5Steps1D(const size_t ghostCells)
 {
-    const std::string fname("HDF5Steps1D_" + std::to_string(ghostCells) + ".h5");
+    const std::string fname("HDF5Steps1D_" + std::to_string(ghostCells) +
+                            ".h5");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -335,7 +336,7 @@ void HDF5Steps1D(const size_t ghostCells)
 
         while (h5Reader.BeginStep() == adios2::StepStatus::OK)
         {
-	    const size_t step = h5Reader.CurrentStep();
+            const size_t step = h5Reader.CurrentStep();
             std::vector<int8_t> I8;
             std::vector<int16_t> I16;
             std::vector<int32_t> I32;
@@ -778,69 +779,69 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         }
 
         adios2::Engine h5Reader = io.Open(fname, adios2::Mode::Read);
-	auto var_i8 = io.InquireVariable<int8_t>("i8");
-            EXPECT_TRUE(var_i8);
-            EXPECT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_i8.Steps(), NSteps);
-            EXPECT_EQ(var_i8.Shape()[0], mpiSize * Nz);
-            EXPECT_EQ(var_i8.Shape()[1], Ny);
-            EXPECT_EQ(var_i8.Shape()[2], Nx);
+        auto var_i8 = io.InquireVariable<int8_t>("i8");
+        EXPECT_TRUE(var_i8);
+        EXPECT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i8.Steps(), NSteps);
+        EXPECT_EQ(var_i8.Shape()[0], mpiSize * Nz);
+        EXPECT_EQ(var_i8.Shape()[1], Ny);
+        EXPECT_EQ(var_i8.Shape()[2], Nx);
 
-	auto var_i16 = io.InquireVariable<int16_t>("i16");
-            EXPECT_TRUE(var_i16);
-            EXPECT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_i16.Steps(), NSteps);
-            EXPECT_EQ(var_i16.Shape()[0], mpiSize * Nz);
-            EXPECT_EQ(var_i16.Shape()[1], Ny);
-            EXPECT_EQ(var_i16.Shape()[2], Nx);
+        auto var_i16 = io.InquireVariable<int16_t>("i16");
+        EXPECT_TRUE(var_i16);
+        EXPECT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i16.Steps(), NSteps);
+        EXPECT_EQ(var_i16.Shape()[0], mpiSize * Nz);
+        EXPECT_EQ(var_i16.Shape()[1], Ny);
+        EXPECT_EQ(var_i16.Shape()[2], Nx);
 
-            auto var_i32 = io.InquireVariable<int32_t>("i32");
-            EXPECT_TRUE(var_i32);
-            EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_i32.Steps(), NSteps);
-            EXPECT_EQ(var_i32.Shape()[0], mpiSize * Nz);
-            EXPECT_EQ(var_i32.Shape()[1], Ny);
-            EXPECT_EQ(var_i32.Shape()[2], Nx);
+        auto var_i32 = io.InquireVariable<int32_t>("i32");
+        EXPECT_TRUE(var_i32);
+        EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i32.Steps(), NSteps);
+        EXPECT_EQ(var_i32.Shape()[0], mpiSize * Nz);
+        EXPECT_EQ(var_i32.Shape()[1], Ny);
+        EXPECT_EQ(var_i32.Shape()[2], Nx);
 
-            auto var_i64 = io.InquireVariable<int64_t>("i64");
-            EXPECT_TRUE(var_i64);
-            EXPECT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_i64.Steps(), NSteps);
-            EXPECT_EQ(var_i64.Shape()[0], mpiSize * Nz);
-            EXPECT_EQ(var_i64.Shape()[1], Ny);
-            EXPECT_EQ(var_i64.Shape()[2], Nx);
+        auto var_i64 = io.InquireVariable<int64_t>("i64");
+        EXPECT_TRUE(var_i64);
+        EXPECT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i64.Steps(), NSteps);
+        EXPECT_EQ(var_i64.Shape()[0], mpiSize * Nz);
+        EXPECT_EQ(var_i64.Shape()[1], Ny);
+        EXPECT_EQ(var_i64.Shape()[2], Nx);
 
-            auto var_r32 = io.InquireVariable<float>("r32");
-            EXPECT_TRUE(var_r32);
-            EXPECT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_r32.Steps(), NSteps);
-            EXPECT_EQ(var_r32.Shape()[0], mpiSize * Nz);
-            EXPECT_EQ(var_r32.Shape()[1], Ny);
-            EXPECT_EQ(var_r32.Shape()[2], Nx);
+        auto var_r32 = io.InquireVariable<float>("r32");
+        EXPECT_TRUE(var_r32);
+        EXPECT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_r32.Steps(), NSteps);
+        EXPECT_EQ(var_r32.Shape()[0], mpiSize * Nz);
+        EXPECT_EQ(var_r32.Shape()[1], Ny);
+        EXPECT_EQ(var_r32.Shape()[2], Nx);
 
-            auto var_r64 = io.InquireVariable<double>("r64");
-            EXPECT_TRUE(var_r64);
-            EXPECT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_r64.Steps(), NSteps);
-            EXPECT_EQ(var_r64.Shape()[0], mpiSize * Nz);
-            EXPECT_EQ(var_r64.Shape()[1], Ny);
-            EXPECT_EQ(var_r64.Shape()[2], Nx);
+        auto var_r64 = io.InquireVariable<double>("r64");
+        EXPECT_TRUE(var_r64);
+        EXPECT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_r64.Steps(), NSteps);
+        EXPECT_EQ(var_r64.Shape()[0], mpiSize * Nz);
+        EXPECT_EQ(var_r64.Shape()[1], Ny);
+        EXPECT_EQ(var_r64.Shape()[2], Nx);
 
-            auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
-            EXPECT_TRUE(var_cr32);
-            EXPECT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_cr32.Steps(), NSteps);
-            EXPECT_EQ(var_cr32.Shape()[0], mpiSize * Nz);
-            EXPECT_EQ(var_cr32.Shape()[1], Ny);
-            EXPECT_EQ(var_cr32.Shape()[2], Nx);
+        auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
+        EXPECT_TRUE(var_cr32);
+        EXPECT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_cr32.Steps(), NSteps);
+        EXPECT_EQ(var_cr32.Shape()[0], mpiSize * Nz);
+        EXPECT_EQ(var_cr32.Shape()[1], Ny);
+        EXPECT_EQ(var_cr32.Shape()[2], Nx);
 
-            auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
-            EXPECT_TRUE(var_cr64);
-            EXPECT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_cr64.Steps(), NSteps);
-            EXPECT_EQ(var_cr64.Shape()[0], mpiSize * Nz);
-            EXPECT_EQ(var_cr64.Shape()[1], Ny);
-            EXPECT_EQ(var_cr64.Shape()[2], Nx);
+        auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
+        EXPECT_TRUE(var_cr64);
+        EXPECT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_cr64.Steps(), NSteps);
+        EXPECT_EQ(var_cr64.Shape()[0], mpiSize * Nz);
+        EXPECT_EQ(var_cr64.Shape()[1], Ny);
+        EXPECT_EQ(var_cr64.Shape()[2], Nx);
 
         while (h5Reader.BeginStep() == adios2::StepStatus::OK)
         {
@@ -866,32 +867,30 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
             h5Reader.Get(var_cr64, CR64);
             h5Reader.EndStep();
 
+            // EXPECT_EQ(var_i8.Min(), static_cast<int8_t>(currentStep));
+            // EXPECT_EQ(var_i8.Max(), static_cast<int8_t>(currentStep));
+            EXPECT_EQ(I8.front(), static_cast<int8_t>(currentStep));
 
-            //EXPECT_EQ(var_i8.Min(), static_cast<int8_t>(currentStep));
-            //EXPECT_EQ(var_i8.Max(), static_cast<int8_t>(currentStep));
-	    EXPECT_EQ(I8.front(), static_cast<int8_t>(currentStep));
+            // EXPECT_EQ(var_i16.Min(), static_cast<int16_t>(currentStep));
+            // EXPECT_EQ(var_i16.Max(), static_cast<int16_t>(currentStep));
+            EXPECT_EQ(I16.front(), static_cast<int16_t>(currentStep));
 
-            //EXPECT_EQ(var_i16.Min(), static_cast<int16_t>(currentStep));
-            //EXPECT_EQ(var_i16.Max(), static_cast<int16_t>(currentStep));
-	    EXPECT_EQ(I16.front(), static_cast<int16_t>(currentStep));
+            // EXPECT_EQ(var_i32.Min(), static_cast<int32_t>(currentStep));
+            // EXPECT_EQ(var_i32.Max(), static_cast<int32_t>(currentStep));
+            EXPECT_EQ(I32.front(), static_cast<int32_t>(currentStep));
 
-            //EXPECT_EQ(var_i32.Min(), static_cast<int32_t>(currentStep));
-            //EXPECT_EQ(var_i32.Max(), static_cast<int32_t>(currentStep));
-	    EXPECT_EQ(I32.front(), static_cast<int32_t>(currentStep));
+            // EXPECT_EQ(var_i64.Min(), static_cast<int64_t>(currentStep));
+            // EXPECT_EQ(var_i64.Max(), static_cast<int64_t>(currentStep));
+            EXPECT_EQ(I64.front(), static_cast<int64_t>(currentStep));
 
-            //EXPECT_EQ(var_i64.Min(), static_cast<int64_t>(currentStep));
-            //EXPECT_EQ(var_i64.Max(), static_cast<int64_t>(currentStep));
-	    EXPECT_EQ(I64.front(), static_cast<int64_t>(currentStep));
+            // EXPECT_EQ(var_r32.Min(), static_cast<float>(currentStep));
+            // EXPECT_EQ(var_r32.Max(), static_cast<float>(currentStep));
+            EXPECT_EQ(R32.front(), static_cast<float>(currentStep));
 
-            //EXPECT_EQ(var_r32.Min(), static_cast<float>(currentStep));
-            //EXPECT_EQ(var_r32.Max(), static_cast<float>(currentStep));
-	    EXPECT_EQ(R32.front(), static_cast<float>(currentStep));
+            // EXPECT_EQ(var_r64.Min(), static_cast<double>(currentStep));
+            // EXPECT_EQ(var_r64.Max(), static_cast<double>(currentStep));
 
-            //EXPECT_EQ(var_r64.Min(), static_cast<double>(currentStep));
-            //EXPECT_EQ(var_r64.Max(), static_cast<double>(currentStep));
-
-	    EXPECT_EQ(R64.front(), static_cast<double>(currentStep));
-
+            EXPECT_EQ(R64.front(), static_cast<double>(currentStep));
 
             EXPECT_EQ(CR32.front(),
                       std::complex<float>(static_cast<float>(currentStep),
@@ -900,8 +899,6 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(CR64.front(),
                       std::complex<double>(static_cast<double>(currentStep),
                                            static_cast<double>(currentStep)));
-
-
 
             const size_t dataSize = mpiSize * Nz * Ny * Nx;
             EXPECT_EQ(I8.size(), dataSize);

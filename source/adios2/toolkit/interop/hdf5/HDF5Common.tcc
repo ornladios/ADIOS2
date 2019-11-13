@@ -131,8 +131,27 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
     */
     herr_t status;
 
-    status =
-        H5Dwrite(dsetID, h5Type, memSpace, fileSpace, m_PropertyTxfID, values);
+    if (!variable.m_MemoryStart.empty())
+    {
+        auto blockSize = helper::GetTotalSize(variable.m_Count);
+        T *k = reinterpret_cast<T *>(calloc(blockSize, sizeof(T)));
+
+        adios2::Dims zero(variable.m_Start.size(), 0);
+        helper::CopyMemoryBlock(k, zero, variable.m_Count, true, values,
+                                zero, // variable.m_Start,
+                                variable.m_Count, true, false, Dims(), Dims(),
+                                variable.m_MemoryStart, variable.m_MemoryCount);
+
+        status =
+            H5Dwrite(dsetID, h5Type, memSpace, fileSpace, m_PropertyTxfID, k);
+        free(k);
+    }
+    else
+    {
+        status = H5Dwrite(dsetID, h5Type, memSpace, fileSpace, m_PropertyTxfID,
+                          values);
+    }
+
     if (status < 0)
     {
         if (m_DebugMode)
