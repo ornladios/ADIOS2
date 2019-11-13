@@ -57,7 +57,9 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     m_AmIPrimaryContact = static_cast<bool>(primaryContact);
     if (m_RankAllPeers.empty())
     {
-        throw(std::runtime_error("no readers are found"));
+        throw(std::runtime_error(
+            "No writers are found. Make sure that the writer and reader "
+            "applications are launched as one application in MPMD mode."));
     }
     if (m_Verbosity == 5)
     {
