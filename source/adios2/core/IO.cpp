@@ -11,6 +11,7 @@
 #include "IO.h"
 #include "IO.tcc"
 
+#include <mutex>
 #include <sstream>
 #include <utility> // std::pair
 
@@ -73,6 +74,145 @@ namespace adios2
 {
 namespace core
 {
+
+namespace
+{
+
+std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
+    {"bp3",
+     {IO::MakeEngine<engine::BP3Reader>, IO::MakeEngine<engine::BP3Writer>}},
+    {"bp4",
+     {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>}},
+    {"hdfmixer",
+#ifdef ADIOS2_HAVE_HDF5
+#if H5_VERSION_GE(1, 11, 0)
+     {IO::MakeEngine<engine::HDF5ReaderP>, IO::MakeEngine<engine::HDFMixer>}
+#else
+     IO::NoEngineEntry("ERROR: update HDF5 >= 1.11 to support VDS.")
+#endif
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "HDF5 library, can't use HDF5 engine\n")
+#endif
+    },
+    {"dataman",
+#ifdef ADIOS2_HAVE_DATAMAN
+     {IO::MakeEngine<engine::DataManReader>,
+      IO::MakeEngine<engine::DataManWriter>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "DataMan library, can't use DataMan engine\n")
+#endif
+    },
+    {"ssc",
+#ifdef ADIOS2_HAVE_SSC
+     {IO::MakeEngine<engine::SscReader>, IO::MakeEngine<engine::SscWriter>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "SSC library, can't use SSC engine\n")
+#endif
+    },
+    {"table",
+#ifdef ADIOS2_HAVE_TABLE
+     {IO::NoEngine("ERROR: Table engine only supports Write. It uses other "
+                   "engines as backend. Please use corresponding engines for "
+                   "Read\n"),
+      IO::MakeEngine<engine::TableWriter>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "Table library, can't use Table engine\n")
+#endif
+    },
+    {"sst",
+#ifdef ADIOS2_HAVE_SST
+     {IO::MakeEngine<engine::SstReader>, IO::MakeEngine<engine::SstWriter>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "Sst library, can't use Sst engine\n")
+#endif
+    },
+    {"effis",
+#ifdef ADIOS2_HAVE_SST
+     {IO::MakeEngine<engine::SstReader>, IO::MakeEngine<engine::SstWriter>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "Sst library, can't use Sst engine\n")
+#endif
+    },
+    {"dataspaces",
+#ifdef ADIOS2_HAVE_DATASPACES
+     {IO::MakeEngine<engine::DataSpacesReader>,
+      IO::MakeEngine<engine::DataSpacesWriter>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "DataSpaces library, can't use DataSpaces engine\n")
+#endif
+    },
+    {"hdf5",
+#ifdef ADIOS2_HAVE_HDF5
+     {IO::MakeEngine<engine::HDF5ReaderP>, IO::MakeEngine<engine::HDF5WriterP>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "HDF5 library, can't use HDF5 engine\n")
+#endif
+    },
+    {"insitumpi",
+#ifdef ADIOS2_HAVE_MPI
+     {IO::MakeEngine<engine::InSituMPIReader>,
+      IO::MakeEngine<engine::InSituMPIWriter>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "MPI, can't use InSituMPI engine\n")
+#endif
+    },
+    {"skeleton",
+     {IO::MakeEngine<engine::SkeletonReader>,
+      IO::MakeEngine<engine::SkeletonWriter>}},
+    {"inline",
+     {IO::MakeEngine<engine::InlineReader>,
+      IO::MakeEngine<engine::InlineWriter>}},
+    {"null",
+     {IO::MakeEngine<engine::NullEngine>, IO::MakeEngine<engine::NullEngine>}},
+    {"nullcore",
+     {IO::NoEngine("ERROR: nullcore engine does not support read mode"),
+      IO::MakeEngine<engine::NullCoreWriter>}},
+};
+
+// Synchronize access to the factory in case one thread is
+// looking up while another registers additional entries.
+std::mutex FactoryMutex;
+
+std::unordered_map<std::string, IO::EngineFactoryEntry>::const_iterator
+FactoryLookup(std::string const &name)
+{
+    std::lock_guard<std::mutex> factoryGuard(FactoryMutex);
+    return Factory.find(name);
+}
+
+struct ThrowError
+{
+    std::shared_ptr<Engine> operator()(IO &, const std::string &, const Mode,
+                                       helper::Comm) const
+    {
+        throw std::invalid_argument(Err);
+    }
+    std::string Err;
+};
+
+} // end anonymous namespace
+
+IO::MakeEngineFunc IO::NoEngine(std::string e) { return ThrowError{e}; }
+
+IO::EngineFactoryEntry IO::NoEngineEntry(std::string e)
+{
+    return {NoEngine(e), NoEngine(e)};
+}
+
+void IO::RegisterEngine(const std::string &engineType, EngineFactoryEntry entry)
+{
+    std::lock_guard<std::mutex> factoryGuard(FactoryMutex);
+    Factory[engineType] = std::move(entry);
+}
 
 IO::IO(ADIOS &adios, const std::string name, const bool inConfigFile,
        const std::string hostLanguage, const bool debugMode)
@@ -552,184 +692,17 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
     }
 
-    if (engineTypeLC == "bp3")
+    auto f = FactoryLookup(engineTypeLC);
+    if (f != Factory.end())
     {
         if (mode == Mode::Read)
         {
-            engine = std::make_shared<engine::BP3Reader>(*this, name, mode,
-                                                         std::move(comm));
+            engine = f->second.MakeReader(*this, name, mode, std::move(comm));
         }
         else
         {
-            engine = std::make_shared<engine::BP3Writer>(*this, name, mode,
-                                                         std::move(comm));
+            engine = f->second.MakeWriter(*this, name, mode, std::move(comm));
         }
-    }
-    else if (engineTypeLC == "bp4")
-    {
-        if (mode == Mode::Read)
-        {
-            engine = std::make_shared<engine::BP4Reader>(*this, name, mode,
-                                                         std::move(comm));
-        }
-        else
-        {
-            engine = std::make_shared<engine::BP4Writer>(*this, name, mode,
-                                                         std::move(comm));
-        }
-    }
-    else if (engineTypeLC == "hdfmixer")
-    {
-#ifdef ADIOS2_HAVE_HDF5
-#if H5_VERSION_GE(1, 11, 0)
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::HDF5ReaderP>(*this, name, mode,
-                                                           std::move(comm));
-        else
-            engine = std::make_shared<engine::HDFMixer>(*this, name, mode,
-                                                        std::move(comm));
-#else
-        throw std::invalid_argument(
-            "ERROR: update HDF5 >= 1.11 to support VDS.");
-#endif
-#else
-        throw std::invalid_argument("ERROR: this version didn't compile with "
-                                    "HDF5 library, can't use HDF5 engine\n");
-#endif
-    }
-    else if (engineTypeLC == "dataman")
-    {
-#ifdef ADIOS2_HAVE_DATAMAN
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::DataManReader>(*this, name, mode,
-                                                             std::move(comm));
-        else
-            engine = std::make_shared<engine::DataManWriter>(*this, name, mode,
-                                                             std::move(comm));
-#else
-        throw std::invalid_argument(
-            "ERROR: this version didn't compile with "
-            "DataMan library, can't use DataMan engine\n");
-#endif
-    }
-    else if (engineTypeLC == "ssc")
-    {
-#ifdef ADIOS2_HAVE_SSC
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::SscReader>(*this, name, mode,
-                                                         std::move(comm));
-        else
-            engine = std::make_shared<engine::SscWriter>(*this, name, mode,
-                                                         std::move(comm));
-#else
-        throw std::invalid_argument("ERROR: this version didn't compile with "
-                                    "SSC library, can't use SSC engine\n");
-#endif
-    }
-    else if (engineTypeLC == "table")
-    {
-#ifdef ADIOS2_HAVE_TABLE
-        if (mode == Mode::Write)
-            engine = std::make_shared<engine::TableWriter>(*this, name, mode,
-                                                           std::move(comm));
-        else
-            throw std::invalid_argument(
-                "ERROR: Table engine only supports Write. It uses other "
-                "engines as backend. Please use corresponding engines for "
-                "Read\n");
-#else
-        throw std::invalid_argument("ERROR: this version didn't compile with "
-                                    "Table library, can't use Table engine\n");
-#endif
-    }
-    else if (engineTypeLC == "sst" || engineTypeLC == "effis")
-    {
-#ifdef ADIOS2_HAVE_SST
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::SstReader>(*this, name, mode,
-                                                         std::move(comm));
-        else
-            engine = std::make_shared<engine::SstWriter>(*this, name, mode,
-                                                         std::move(comm));
-#else
-        throw std::invalid_argument("ERROR: this version didn't compile with "
-                                    "Sst library, can't use Sst engine\n");
-#endif
-    }
-    else if (engineTypeLC == "dataspaces")
-    {
-#ifdef ADIOS2_HAVE_DATASPACES
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::DataSpacesReader>(
-                *this, name, mode, std::move(comm));
-        else
-            engine = std::make_shared<engine::DataSpacesWriter>(
-                *this, name, mode, std::move(comm));
-#else
-        throw std::invalid_argument(
-            "ERROR: this version didn't compile with "
-            "DataSpaces library, can't use DataSpaces engine\n");
-#endif
-    }
-    else if (engineTypeLC == "hdf5")
-    {
-#ifdef ADIOS2_HAVE_HDF5
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::HDF5ReaderP>(*this, name, mode,
-                                                           std::move(comm));
-        else
-            engine = std::make_shared<engine::HDF5WriterP>(*this, name, mode,
-                                                           std::move(comm));
-#else
-        throw std::invalid_argument("ERROR: this version didn't compile with "
-                                    "HDF5 library, can't use HDF5 engine\n");
-#endif
-    }
-    else if (engineTypeLC == "insitumpi")
-    {
-#ifdef ADIOS2_HAVE_MPI
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::InSituMPIReader>(
-                *this, name, mode, std::move(comm));
-        else
-            engine = std::make_shared<engine::InSituMPIWriter>(
-                *this, name, mode, std::move(comm));
-#else
-        throw std::invalid_argument("ERROR: this version didn't compile with "
-                                    "MPI, can't use InSituMPI engine\n");
-#endif
-    }
-    else if (engineTypeLC == "skeleton")
-    {
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::SkeletonReader>(*this, name, mode,
-                                                              std::move(comm));
-        else
-            engine = std::make_shared<engine::SkeletonWriter>(*this, name, mode,
-                                                              std::move(comm));
-    }
-    else if (engineTypeLC == "inline")
-    {
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::InlineReader>(*this, name, mode,
-                                                            std::move(comm));
-        else
-            engine = std::make_shared<engine::InlineWriter>(*this, name, mode,
-                                                            std::move(comm));
-    }
-    else if (engineTypeLC == "null")
-    {
-        engine = std::make_shared<engine::NullEngine>(*this, name, mode,
-                                                      std::move(comm));
-    }
-    else if (engineTypeLC == "nullcore")
-    {
-        if (mode == Mode::Read)
-            throw std::invalid_argument(
-                "ERROR: nullcore engine does not support read mode");
-        else
-            engine = std::make_shared<engine::NullCoreWriter>(*this, name, mode,
-                                                              std::move(comm));
     }
     else
     {
