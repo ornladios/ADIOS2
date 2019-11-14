@@ -2256,6 +2256,7 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
 
     /* decrement the reference count for the released timestep */
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
+    CP_verbose(ParentStream, "Got the lock in release timestep\n");
     Reader->LastReleasedTimestep = Msg->Timestep;
     if ((ParentStream->Rank == 0) &&
         (ParentStream->ConfigParams->CPCommPattern == SstCPCommMin))
@@ -2268,10 +2269,13 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
         ParentStream->ReleaseList[ParentStream->ReleaseCount].Reader = Reader;
         ParentStream->ReleaseCount++;
     }
+    CP_verbose(ParentStream, "Doing dereference sent\n");
     DerefSentTimestep(ParentStream, Reader, Msg->Timestep);
+    CP_verbose(ParentStream, "Doing QueueMaint\n");
     QueueMaintenance(ParentStream);
     Reader->OldestUnreleasedTimestep = Msg->Timestep + 1;
     pthread_cond_signal(&ParentStream->DataCondition);
+    CP_verbose(ParentStream, "Releasing the lock in release timestep\n");
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);
     TAU_STOP_FUNC();
 }
