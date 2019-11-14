@@ -10,6 +10,9 @@ gtest_add_tests_helper(StreamWriteReadHighLevelAPI ${test_mpi}
 gtest_add_tests_helper(WriteReadAttributesADIOS2 ${test_mpi}
   HDF5 Engine.HDF5. ""
 )
+gtest_add_tests_helper(WriteMemorySelectionRead  ${test_mpi}
+  HDF5 Engine.HDF5. ""
+)
 
 gtest_add_tests_helper(NativeHDF5WriteRead ${test_mpi} "" Engine.HDF5. "")
 if(HDF5_C_INCLUDE_DIRS)
