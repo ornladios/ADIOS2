@@ -1850,6 +1850,7 @@ extern "C" {
         size_t dataLength;
 
         if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
+            printf("command handle send_reliable ERROR channelID %d vs %zu, or peer state %d bad\n", command->header.channelID, peer->channelCount, peer->state);
             return -1;
         }
 
@@ -1857,10 +1858,12 @@ extern "C" {
         *currentData += dataLength;
 
         if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength]) {
+            printf("command handle send_reliable ERROR Data length thing %zu vs max %zu\n", dataLength, host->maximumPacketSize);
             return -1;
         }
 
         if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8 *) command + sizeof(ENetProtocolSendReliable), dataLength, ENET_PACKET_FLAG_RELIABLE, 0) == NULL) {
+            printf("command handle send_reliable ERROR QUEUEING\n");
             return -1;
         }
 
