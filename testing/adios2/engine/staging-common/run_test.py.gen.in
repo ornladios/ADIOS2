@@ -259,18 +259,18 @@ else:
     if args.reader is None:
         args.reader = '$<TARGET_FILE:TestCommonClient>'
 
-writer_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + \
-    str(args.num_writers)
-reader_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + \
-    str(args.num_readers)
-
+writer_exec_cmd = ['@MPIEXEC_EXECUTABLE@', '@MPIEXEC_NUMPROC_FLAG@',
+    str(args.num_writers)]
+reader_exec_cmd = ['@MPIEXEC_EXECUTABLE@', '@MPIEXEC_NUMPROC_FLAG@',
+    str(args.num_readers)]
 mpmd_possible = True
 
 if (("@MPIEXEC_EXECUTABLE@" == "") or
-        ("@MPIEXEC_EXECUTABLE@" == "MPIEXEC_EXECUTABLE-NOTFOUND")):
+    ("@MPIEXEC_EXECUTABLE@" == "IGNORE") or
+    ("@MPIEXEC_EXECUTABLE@" == "MPIEXEC_EXECUTABLE-NOTFOUND")):
     # NO MPI
-    writer_exec_cmd = ''
-    reader_exec_cmd = ''
+    writer_exec_cmd = []
+    reader_exec_cmd = []
     mpmd_possible = False
 
 print("Script directory is " + script_directory)
@@ -278,7 +278,7 @@ print("current working directory is " + os.getcwd())
 
 writer_executable = os.path.abspath(
     os.path.join(script_directory, args.writer))
-writer_command_line = writer_exec_cmd.split()
+writer_command_line = writer_exec_cmd
 canonical_engine = args.engine
 if (args.engine.lower() == 'bp4_stream') :
     # the bp4_stream engine name is used to indicate this test should run in 
@@ -291,7 +291,7 @@ if args.warg is not None:
 
 reader_executable = os.path.abspath(
     os.path.join(script_directory, args.reader))
-reader_command_line = reader_exec_cmd.split()
+reader_command_line = reader_exec_cmd
 reader_command_line.extend([reader_executable, canonical_engine, args.filename])
 
 if args.rarg is not None:
