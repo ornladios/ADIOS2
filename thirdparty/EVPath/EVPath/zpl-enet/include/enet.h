@@ -2431,7 +2431,7 @@ extern "C" {
                 (peer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID &&
                 sessionID != peer->incomingSessionID)
             ) {
-                printf("INCOMING COMMAND DISCARDED PEER ID %d, Condition 1\n", peerID);
+                printf("INCOMING COMMAND DISCARDED PEER ID %d, Condition 1, peer->state %d, eq %d, outgoing peer ID %d, session ID %d, incoming sesID %d\n", peerID, peer->state, in6_equal(host->receivedAddress.host , peer->address.host), peer->outgoingPeerID, sessionID, peer->incomingSessionID);
                 return 0;
             }
         }
