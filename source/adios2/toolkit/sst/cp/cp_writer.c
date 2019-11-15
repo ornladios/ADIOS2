@@ -1259,6 +1259,8 @@ static void CloseWSRStream(CManager cm, void *WSR_Stream_v)
     SstStream ParentStream = CP_WSR_Stream->ParentStream;
 
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
+    CP_verbose(ParentStream, "Delayed task Moving Reader stream %p to status %s\n",
+               CP_WSR_Stream, SSTStreamStatusStr[PeerClosed]);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);
 }
