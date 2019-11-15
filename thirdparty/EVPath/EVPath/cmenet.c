@@ -535,6 +535,10 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     (void)conn_attr_list;
     int timeout = 5000;   /* connection time out default 5 seconds */
 
+    if (!(CM_LOCKED(svc, ecd->cm))) {
+	printf("Enet service network, CManager not locked in initiate_conn\n");
+    }
+
     if (!query_attr(attrs, CM_ENET_HOSTNAME, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & host_name)) {
 	svc->trace_out(cm, TPORT " transport found no CM_ENET_HOSTNAME attribute");
@@ -755,6 +759,14 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 
     if (!got_connection) {
         svc->trace_out(cm, "--> Connection failed because of timeout");
+        while (ecd->pending_data) {
+            svc->trace_out(cm, "ENET Handling pending data\n");
+            queued_data entry = ecd->pending_data;
+            ecd->pending_data = entry->next;
+            handle_packet(cm, svc, trans, (enet_conn_data_ptr) entry->econn_d, entry->packet);
+            free(entry);
+        }
+
         return 0;
     }
     svc->trace_out(cm, "--> Connection established\n");
@@ -769,6 +781,14 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     enet_conn_data->ecd = ecd;
     enet_conn_data->peer = peer;
     peer->data = enet_conn_data;
+    while (ecd->pending_data) {
+        svc->trace_out(cm, "ENET Handling pending data\n");
+        queued_data entry = ecd->pending_data;
+        ecd->pending_data = entry->next;
+        handle_packet(cm, svc, trans, (enet_conn_data_ptr) entry->econn_d, entry->packet);
+        free(entry);
+    }
+
     return 1;
 }
 
