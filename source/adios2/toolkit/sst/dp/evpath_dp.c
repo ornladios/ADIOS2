@@ -1013,6 +1013,8 @@ static void SendSpeculativePreloadMsgs(CP_Services Svcs,
         {
             attr_list List = attr_list_from_string(
                 WSR_Stream->ReaderContactInfo[i].ContactString);
+            printf("Doing speculative preload, attr list :");
+            dump_attr_list(list);
             CMConnection Conn = CMget_conn(cm, List);
             free_attr_list(List);
             if (!Conn)

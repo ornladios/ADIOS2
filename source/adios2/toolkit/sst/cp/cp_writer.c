@@ -1081,7 +1081,10 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
         while (List)
         {
             if (Reader->ReaderStatus != Established)
-                continue; /* do nothing if we've fallen out of established */
+            {
+                break; /* break out of while if we've fallen out of established
+                        */
+            }
             if (List->Timestep == TS)
             {
                 FFSFormatList SavedFormats = List->Msg->Formats;
@@ -1092,7 +1095,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                                "and not precious\n",
                                List->Timestep, TS);
                     List = List->Next;
-                    continue; /* do nothing timestep is expired, but not
+                    continue; /* skip timestep is expired, but not
                                  precious */
                 }
                 if (TS == Reader->StartingTimestep)
@@ -1259,7 +1262,8 @@ static void CloseWSRStream(CManager cm, void *WSR_Stream_v)
     SstStream ParentStream = CP_WSR_Stream->ParentStream;
 
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
-    CP_verbose(ParentStream, "Delayed task Moving Reader stream %p to status %s\n",
+    CP_verbose(ParentStream,
+               "Delayed task Moving Reader stream %p to status %s\n",
                CP_WSR_Stream, SSTStreamStatusStr[PeerClosed]);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);

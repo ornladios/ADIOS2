@@ -888,7 +888,7 @@ INTERFACE_NAME(connection_eq)(CManager cm, CMtrans_services svc,
     }
     if (!query_attr(attrs, CM_ENET_PORT, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & int_port_num)) {
-	printf("Conn Eq CMenet transport found no CM_ENET_PORT attribute\n");
+	printf("Conn Eq CMenet transport found no CM_ENET_PORT attribute, RETURNING FALSE\n");
 	return 0;
     }
     if (!query_attr(attrs, CM_ENET_ADDR, /* type pointer */ NULL,
