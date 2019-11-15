@@ -355,6 +355,7 @@ enet_service_network(CManager cm, void *void_trans)
             svc->connection_fail(enet_conn_data->conn);
         }
         default:
+            printf("UNKNOWN EVENT TYPE! %d\n", event.type);
             IntENET_unlock(ecd, NULL, 0);
 
 	}
@@ -752,6 +753,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
             break;
         }
         default:
+            printf("UNKNOWN EVENT TYPE! %d\n", event.type);
             ENETunlock(ecd);
 
         }
