@@ -353,6 +353,7 @@ enet_service_network(CManager cm, void *void_trans)
 	    enet_conn_data->read_buffer_len = -1;
             IntENET_unlock(ecd, NULL, 0);
             svc->connection_fail(enet_conn_data->conn);
+            break;
         }
         default:
             printf("UNKNOWN EVENT TYPE! %d\n", event.type);
