@@ -27,6 +27,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                                      enum StreamStatus NewState);
 
 static int locked = 0;
+#define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
     printf("Trying lock line %d\n", __LINE__);                                 \
