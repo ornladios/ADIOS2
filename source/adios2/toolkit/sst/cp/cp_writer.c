@@ -1081,6 +1081,10 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
         CPTimestepList List = Stream->QueuedTimesteps;
         while (List)
         {
+            CP_verbose(
+                Stream,
+                "In send queued, trying to send TS %ld, examining TS %ld\n", TS,
+                List->Timestep);
             if (Reader->ReaderStatus != Established)
             {
                 break; /* break out of while if we've fallen out of established
