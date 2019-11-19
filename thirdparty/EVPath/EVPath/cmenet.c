@@ -496,6 +496,9 @@ enet_accept_conn(enet_client_data_ptr ecd, transport_entry trans,
         enet_conn_data->remote_contact_port);
 #endif
 
+    printf("IN ENET_accept_conn, creating connection: ");
+    dump_attr_list(conn_attr_list);
+    printf("\n");
     free_attr_list(conn_attr_list);
 
     /* 
@@ -778,7 +781,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     enet_conn_data->remote_IP = htonl(host_ip);
 #else
     memcpy(&enet_conn_data->remote_IP, &host_ipv6, sizeof(enet_conn_data->remote_IP));
-    enet_conn_data->remote_IPv4 = htonl(host_ip);
+    enet_conn_data->remote_IPv4 = htonl(((enet_uint32 *)&host_ipv6.s6_addr)[3]);
 #endif
     enet_conn_data->remote_contact_port = int_port_num;
     enet_conn_data->ecd = ecd;
@@ -817,6 +820,9 @@ INTERFACE_NAME(initiate_conn)(CManager cm, CMtrans_services svc,
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
 	     (attr_value) (long)enet_conn_data->remote_contact_port);
     conn = svc->connection_create(trans, enet_conn_data, conn_attr_list);
+    printf("IN ENET_initiate_conn, creating connection: ");
+    dump_attr_list(conn_attr_list);
+    printf("\n");
     enet_conn_data->conn = conn;
     free_attr_list(conn_attr_list);
     svc->connection_addref(conn);  /* one ref count went to CM, 
