@@ -46,6 +46,12 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
     m_ReaderNproc = m_Comm.Size();
     m_RankDirectPeers =
         insitumpi::AssignPeers(m_ReaderRank, m_ReaderNproc, m_RankAllPeers);
+    if (m_RankAllPeers.empty())
+    {
+        throw(std::runtime_error(
+            "no writers are found. Make sure that the writer and reader "
+            "applications are launched as one application in MPMD mode."));
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " Open(" << m_Name

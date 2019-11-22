@@ -55,6 +55,12 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
         m_CommWorld, true, (m_BP3Serializer.m_RankMPI == 0), m_GlobalRank,
         m_RankDirectPeers);
     m_AmIPrimaryContact = static_cast<bool>(primaryContact);
+    if (m_RankAllPeers.empty())
+    {
+        throw(std::runtime_error(
+            "No writers are found. Make sure that the writer and reader "
+            "applications are launched as one application in MPMD mode."));
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " Open(" << m_Name

@@ -4,3 +4,4 @@
 #------------------------------------------------------------------------------#
 
 gtest_add_tests_helper(FunctionAssignPeers TRUE InSituMPI Engine.InSituMPI. "")
+gtest_add_tests_helper(MPMDExceptions TRUE InSituMPI Engine.InSituMPI. "")
