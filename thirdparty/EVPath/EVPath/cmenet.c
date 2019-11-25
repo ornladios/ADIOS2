@@ -171,17 +171,17 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
 static void
 IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 {
-    if (file) printf("Trying ENET Lock at %s, line %d\n", file, line);
-    pthread_mutex_lock(&ecd->enet_lock);
-    ecd->enet_locked++;
+    /* if (file) printf("Trying ENET Lock at %s, line %d\n", file, line); */
+    /* pthread_mutex_lock(&ecd->enet_lock); */
+    /* ecd->enet_locked++; */
 }
 
 static void
 IntENET_unlock(enet_client_data_ptr ecd, char *file, int line)
 {
-    if (file) printf("ENET Unlock at %s, line %d\n", file, line);
-    ecd->enet_locked--;
-    pthread_mutex_unlock(&ecd->enet_lock);
+    /* if (file) printf("ENET Unlock at %s, line %d\n", file, line); */
+    /* ecd->enet_locked--; */
+    /* pthread_mutex_unlock(&ecd->enet_lock); */
 }
 
 static int
@@ -290,6 +290,7 @@ enet_service_network(CManager cm, void *void_trans)
         }
         switch (event.type) {
 	case ENET_EVENT_TYPE_NONE:
+            IntENET_unlock(ecd, NULL, 0);
 	    break;
         case ENET_EVENT_TYPE_CONNECT: {
 	    enet_conn_data_ptr enet_connection_data = NULL;
