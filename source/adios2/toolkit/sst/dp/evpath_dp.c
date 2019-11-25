@@ -1011,11 +1011,18 @@ static void SendSpeculativePreloadMsgs(CP_Services Svcs,
     {
         if (!WSR_Stream->ReaderContactInfo[i].Conn)
         {
+            extern int CMtrace_val[];
             attr_list List = attr_list_from_string(
                 WSR_Stream->ReaderContactInfo[i].ContactString);
             printf("Doing speculative preload, attr list :");
             dump_attr_list(List);
+            int tmp = CMtrace_val[5];
+            int tmp2 = CMtrace_val[3];
+            CMtrace_val[5] = 1;
+            CMtrace_val[3] = 1;
             CMConnection Conn = CMget_conn(cm, List);
+            CMtrace_val[5] = tmp;
+            CMtrace_val[3] = tmp2;
             free_attr_list(List);
             if (!Conn)
             {
