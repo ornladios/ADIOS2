@@ -2096,6 +2096,7 @@ do_bridge_action(CManager cm, int s)
     stone = stone_struct(evp, s);
 
     if (stone->is_frozen || (stone->is_draining == 2)) return 0;
+    if (stone->is_outputting) return 0;
     stone->is_outputting = 1;
     for (a=0 ; a < stone->proto_action_count && stone->is_frozen == 0 && (stone->is_draining != 2); a++) {
 	if (stone->proto_actions[a].action_type == Action_Bridge) {
