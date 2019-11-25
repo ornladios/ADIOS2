@@ -2431,10 +2431,15 @@ extern "C" {
                 (peer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID &&
                 sessionID != peer->incomingSessionID)
             ) {
-                command = (ENetProtocol *) currentData;
-                int commandNumber = command->header.command & ENET_PROTOCOL_COMMAND_MASK;
                 printf("(PID %ld) INCOMING COMMAND DISCARDED PEER ID %d, Condition 1, peer->state %d, eq %d, outgoing peer ID %d, session ID %d, incoming sesID %d\n", (long) getpid(), peerID, peer->state, in6_equal(host->receivedAddress.host , peer->address.host), peer->outgoingPeerID, sessionID, peer->incomingSessionID);
+                currentData = host->receivedData + headerSize;
+
+                command = (ENetProtocol *) currentData;
+
+                enet_uint8 commandNumber;
+                commandNumber = command->header.command & ENET_PROTOCOL_COMMAND_MASK;
                 printf("Command number is %d\n", commandNumber);
+
                 return 0;
             }
         }
