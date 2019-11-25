@@ -568,10 +568,6 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 	printf("Enet service network, CManager not locked in enet_initiate_conn\n");
     }
 
-    if (!(CM_LOCKED(svc, ecd->cm))) {
-	printf("Enet service network, CManager not locked in initiate_conn\n");
-    }
-
     if (!query_attr(attrs, CM_ENET_HOSTNAME, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & host_name)) {
 	svc->trace_out(cm, TPORT " transport found no CM_ENET_HOSTNAME attribute");
@@ -978,6 +974,9 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
     int attr_port_num = 0;
     u_short port_num = 0;
 
+    if (!(CM_LOCKED(svc, cm))) {
+	printf("ENET non_blocking listen, CManager not locked\n");
+    }
     /* 
      *  Check to see if a bind to a specific port was requested
      */
@@ -1169,6 +1168,9 @@ INTERFACE_NAME(writev_func)(CMtrans_services svc, enet_conn_data_ptr ecd,
 		   length, ecd->peer);
 
    /* Create a reliable packet of the right size */
+    if (!(CM_LOCKED(svc, ecd->ecd->cm))) {
+	printf("ENET writev, CManager not locked\n");
+    }
     ENETlock(ecd->ecd);
     ENetPacket * packet = enet_packet_create (NULL, length, 
 					      ENET_PACKET_FLAG_RELIABLE);
