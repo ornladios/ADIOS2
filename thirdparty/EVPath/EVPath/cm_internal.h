@@ -413,6 +413,7 @@ void INT_CMCondition_set_client_data(CManager cm, int condition,
 				       void *client_data);
 void *INT_CMCondition_get_client_data(CManager cm, int condition);
 int INT_CMCondition_wait(CManager cm, int condition);
+extern void INT_CMCondition_fail(CManager cm, int condition);
 extern attr_list INT_CMget_contact_list(CManager cm);
 extern void INT_CMregister_non_CM_message_handler(int header, CMNonCMHandler handler);
 extern void *INT_CMtake_buffer(CManager cm, void *data);
