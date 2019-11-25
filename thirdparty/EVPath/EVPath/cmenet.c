@@ -171,7 +171,7 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
 static void
 IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 {
-//    if (file) printf("Trying ENET Lock at %s, line %d\n", file, line);
+    if (file) printf("Trying ENET Lock at %s, line %d\n", file, line);
     pthread_mutex_lock(&ecd->enet_lock);
     ecd->enet_locked++;
 }
@@ -179,7 +179,7 @@ IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 static void
 IntENET_unlock(enet_client_data_ptr ecd, char *file, int line)
 {
-//    if (file) printf("ENET Unlock at %s, line %d\n", file, line);
+    if (file) printf("ENET Unlock at %s, line %d\n", file, line);
     ecd->enet_locked--;
     pthread_mutex_unlock(&ecd->enet_lock);
 }
@@ -279,13 +279,13 @@ enet_service_network(CManager cm, void *void_trans)
     while (ecd->server) {
         IntENET_lock(ecd, NULL, 0);
         int ret = enet_host_service (ecd->server, & event, 0);
-        IntENET_unlock(ecd, NULL, 0);
         if (enet_host_service_warn_interval && 
             (enet_time_get() > (ecd->last_host_service_zero_return + enet_host_service_warn_interval))) {
             fprintf(stderr, "WARNING, time between zero return for enet_host_service = %d msecs\n",
                     enet_time_get() - ecd->last_host_service_zero_return);
         }
         if (ret <= 0) {
+            IntENET_unlock(ecd, NULL, 0);
             break;
         }
         switch (event.type) {
@@ -340,10 +340,12 @@ enet_service_network(CManager cm, void *void_trans)
             event.peer->data = enet_connection_data;
 	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
 
+            IntENET_unlock(ecd, NULL, 0);
             break;
 	}
         case ENET_EVENT_TYPE_RECEIVE: {
 	    enet_conn_data_ptr econn_d = (enet_conn_data_ptr) event.peer->data;
+            IntENET_unlock(ecd, NULL, 0);
             if (econn_d) {
                 handle_packet(cm, svc, trans, econn_d, event.packet);
             } else {
@@ -373,16 +375,17 @@ enet_service_network(CManager cm, void *void_trans)
 
             enet_conn_data = (enet_conn_data_ptr) event.peer->data;
 	    enet_conn_data->read_buffer_len = -1;
+            IntENET_unlock(ecd, NULL, 0);
             svc->connection_fail(enet_conn_data->conn);
             break;
         }
         default:
             printf("UNKNOWN EVENT TYPE! %d\n", event.type);
+            IntENET_unlock(ecd, NULL, 0);
             break;
         }
     }
     ecd->last_host_service_zero_return = enet_time_get();
-    IntENET_unlock(ecd, NULL, 0);
 }
 
 static
@@ -516,6 +519,9 @@ enet_accept_conn(enet_client_data_ptr ecd, transport_entry trans,
         enet_conn_data->remote_contact_port);
 #endif
 
+    printf("IN ENET_accept_conn, creating connection: ");
+    dump_attr_list(conn_attr_list);
+    printf("\n");
     free_attr_list(conn_attr_list);
 
     /* 
@@ -559,6 +565,10 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 
     if (!(CM_LOCKED(svc, ecd->cm))) {
 	printf("Enet service network, CManager not locked in enet_initiate_conn\n");
+    }
+
+    if (!(CM_LOCKED(svc, ecd->cm))) {
+	printf("Enet service network, CManager not locked in initiate_conn\n");
     }
 
     if (!query_attr(attrs, CM_ENET_HOSTNAME, /* type pointer */ NULL,
@@ -846,28 +856,28 @@ INTERFACE_NAME(connection_eq)(CManager cm, CMtrans_services svc,
     (void) trans;
     if (!query_attr(attrs, CM_ENET_HOSTNAME, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & host_name)) {
-	svc->trace_out(cm, "CMEnet transport found no CM_ENET_HOST attribute");
+	printf("CMEnet transport found no CM_ENET_HOST attribute\n");
     }
     if (!query_attr(attrs, CM_ENET_PORT, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & int_port_num)) {
-	svc->trace_out(cm, "Conn Eq CMenet transport found no CM_ENET_PORT attribute");
+	printf("Conn Eq CMenet transport found no CM_ENET_PORT attribute, RETURNING FALSE\n");
 	return 0;
     }
     if (!query_attr(attrs, CM_ENET_ADDR, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & requested_IP)) {
-	svc->trace_out(cm, "CMENET transport found no CM_ENET_ADDR attribute");
+	printf("CMENET transport found no CM_ENET_ADDR attribute\n");
     }
     if (requested_IP == -1) {
 	check_host(host_name, (void *) &requested_IP);
 	requested_IP = ntohl(requested_IP);
         struct in_addr addr;
         addr.s_addr = htonl(requested_IP);
-	svc->trace_out(cm, "IP translation for hostname %s is %s", host_name,
+	printf("IP translation for hostname %s is %s\n", host_name,
 		       inet_ntoa(addr));
     }
     /* requested IP is in host byte order */
     if (ecd->peer->state != ENET_PEER_STATE_CONNECTED) {
-        svc->trace_out(cm, "ENET Conn_eq returning FALSE, peer not connected");
+        printf("ENET Conn_eq returning FALSE, peer not connected, state %d\n", ecd->peer->state);
         return 0;
     }
     struct in_addr addr1, addr2;
@@ -877,7 +887,7 @@ INTERFACE_NAME(connection_eq)(CManager cm, CMtrans_services svc,
     addr1.s_addr = htonl(ecd->remote_IP);
 #endif
     addr2.s_addr = htonl(requested_IP);
-    svc->trace_out(cm, "ENET Conn_eq comparing IP/ports %s/%d and %s/%d",
+    printf("ENET Conn_eq comparing IP/ports %s/%d and %s/%d\n",
 		   inet_ntoa(addr1), ecd->remote_contact_port,
                    inet_ntoa(addr2), int_port_num);
 #ifdef USE_IPV6
@@ -886,10 +896,10 @@ INTERFACE_NAME(connection_eq)(CManager cm, CMtrans_services svc,
     if ((ecd->remote_IP == requested_IP) &&    /* both in host byte order */
 #endif
 	(ecd->remote_contact_port == int_port_num)) {
-	svc->trace_out(cm, "ENET Conn_eq returning TRUE");
+	printf("ENET Conn_eq returning TRUE\n");
 	return 1;
     }
-    svc->trace_out(cm, "ENET Conn_eq returning FALSE");
+        printf("ENET Conn_eq returning FALSE\n");
     return 0;
 }
 

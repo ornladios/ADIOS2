@@ -27,6 +27,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                                      enum StreamStatus NewState);
 
 static int locked = 0;
+#define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
     printf("Trying lock line %d\n", __LINE__);                                 \
@@ -1080,8 +1081,15 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
         CPTimestepList List = Stream->QueuedTimesteps;
         while (List)
         {
+            CP_verbose(
+                Stream,
+                "In send queued, trying to send TS %ld, examining TS %ld\n", TS,
+                List->Timestep);
             if (Reader->ReaderStatus != Established)
-                continue; /* do nothing if we've fallen out of established */
+            {
+                break; /* break out of while if we've fallen out of established
+                        */
+            }
             if (List->Timestep == TS)
             {
                 FFSFormatList SavedFormats = List->Msg->Formats;
@@ -1092,7 +1100,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                                "and not precious\n",
                                List->Timestep, TS);
                     List = List->Next;
-                    continue; /* do nothing timestep is expired, but not
+                    continue; /* skip timestep is expired, but not
                                  precious */
                 }
                 if (TS == Reader->StartingTimestep)
@@ -1259,6 +1267,9 @@ static void CloseWSRStream(CManager cm, void *WSR_Stream_v)
     SstStream ParentStream = CP_WSR_Stream->ParentStream;
 
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
+    CP_verbose(ParentStream,
+               "Delayed task Moving Reader stream %p to status %s\n",
+               CP_WSR_Stream, SSTStreamStatusStr[PeerClosed]);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);
 }
@@ -2256,6 +2267,7 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
 
     /* decrement the reference count for the released timestep */
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
+    CP_verbose(ParentStream, "Got the lock in release timestep\n");
     Reader->LastReleasedTimestep = Msg->Timestep;
     if ((ParentStream->Rank == 0) &&
         (ParentStream->ConfigParams->CPCommPattern == SstCPCommMin))
@@ -2268,10 +2280,13 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
         ParentStream->ReleaseList[ParentStream->ReleaseCount].Reader = Reader;
         ParentStream->ReleaseCount++;
     }
+    CP_verbose(ParentStream, "Doing dereference sent\n");
     DerefSentTimestep(ParentStream, Reader, Msg->Timestep);
+    CP_verbose(ParentStream, "Doing QueueMaint\n");
     QueueMaintenance(ParentStream);
     Reader->OldestUnreleasedTimestep = Msg->Timestep + 1;
     pthread_cond_signal(&ParentStream->DataCondition);
+    CP_verbose(ParentStream, "Releasing the lock in release timestep\n");
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);
     TAU_STOP_FUNC();
 }

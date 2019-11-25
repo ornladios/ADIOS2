@@ -1013,6 +1013,8 @@ static void SendSpeculativePreloadMsgs(CP_Services Svcs,
         {
             attr_list List = attr_list_from_string(
                 WSR_Stream->ReaderContactInfo[i].ContactString);
+            printf("Doing speculative preload, attr list :");
+            dump_attr_list(List);
             CMConnection Conn = CMget_conn(cm, List);
             free_attr_list(List);
             if (!Conn)
@@ -1024,9 +1026,12 @@ static void SendSpeculativePreloadMsgs(CP_Services Svcs,
                     i);
                 return;
             }
+            Svcs->verbose(WS_Stream->CP_Stream,
+                          "Got a connection to reader rank %d \n", i);
             WSR_Stream->ReaderContactInfo[i].Conn = Conn;
         }
         PreloadMsg.RS_Stream = WSR_Stream->ReaderContactInfo[i].RS_Stream;
+        Svcs->verbose(WS_Stream->CP_Stream, "Doing the preload write \n");
         CMwrite(WSR_Stream->ReaderContactInfo[i].Conn, WS_Stream->PreloadFormat,
                 &PreloadMsg);
     }
