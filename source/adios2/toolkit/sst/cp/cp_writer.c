@@ -1017,6 +1017,7 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
                    "READER %p, reference count is now %d\n",
                    Entry->Timestep, rank, CP_WSR_Stream, Entry->ReferenceCount);
         AddTSToSentList(Stream, CP_WSR_Stream, Entry->Timestep);
+        PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         if (Stream->DP_Interface->readerRegisterTimestep)
         {
             (Stream->DP_Interface->readerRegisterTimestep)(
@@ -1025,7 +1026,6 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
         }
 
         Entry->Msg->PreloadMode = CP_WSR_Stream->PreloadMode;
-        PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         sendOneToWSRCohort(CP_WSR_Stream,
                            Stream->CPInfo->DeliverTimestepMetadataFormat,
                            Entry->Msg, &Entry->Msg->RS_Stream);
