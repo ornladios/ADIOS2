@@ -1506,7 +1506,7 @@ extern "C" {
                     event->type = ENET_EVENT_TYPE_CONNECT;
                     event->peer = peer;
                     event->data = peer->eventData;
-
+                    printf("(PID %ld) returning event CONNECT because connection succeeded\n", (long) getpid());
                     return 1;
 
                 case ENET_PEER_STATE_ZOMBIE:
@@ -1562,6 +1562,7 @@ extern "C" {
             event->type = ENET_EVENT_TYPE_CONNECT;
             event->peer = peer;
             event->data = peer->eventData;
+            printf("(PID %ld) returning event CONNECT in protocol_notify_connect\n", (long) getpid());
         } else {
             enet_protocol_dispatch_state(host, peer, peer->state == ENET_PEER_STATE_CONNECTING ? ENET_PEER_STATE_CONNECTION_SUCCEEDED : ENET_PEER_STATE_CONNECTION_PENDING);
         }
@@ -1761,6 +1762,7 @@ extern "C" {
         incomingSessionID = command->connect.incomingSessionID == 0xFF ? peer->outgoingSessionID : command->connect.incomingSessionID;
         incomingSessionID = (incomingSessionID + 1) & (ENET_PROTOCOL_HEADER_SESSION_MASK >> ENET_PROTOCOL_HEADER_SESSION_SHIFT);
         if (incomingSessionID == peer->outgoingSessionID) {
+            printf("INCREMENTING SESSION ID\n");
             incomingSessionID = (incomingSessionID + 1)
               & (ENET_PROTOCOL_HEADER_SESSION_MASK >> ENET_PROTOCOL_HEADER_SESSION_SHIFT);
         }
@@ -4570,6 +4572,14 @@ extern "C" {
         command.connect.packetThrottleDeceleration = ENET_HOST_TO_NET_32(currentPeer->packetThrottleDeceleration);
         command.connect.connectID                  = currentPeer->connectID;
         command.connect.data                       = ENET_HOST_TO_NET_32(data);
+
+        {
+            char straddr[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, &address->host, straddr, sizeof(straddr));
+
+            printf("(PID %ld)  Sending command connect, command acknowledge to peer %s, port %d, session id %d\n", (long)getpid(), straddr,
+                   address->port, currentPeer->outgoingSessionID);
+        }
 
         enet_peer_queue_outgoing_command(currentPeer, &command, NULL, 0, 0);
 

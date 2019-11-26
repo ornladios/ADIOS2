@@ -638,6 +638,7 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 	svc->trace_out(cm, "Attempting ENET RUDP connection, USING IP = %s, port %d",
 		       inet_ntoa(sin_addr),
 		       int_port_num);
+        printf("(PID %ld) CALLING ENET_HOST_CONNECT on ADDRESS %s, port %d\n", (long)getpid(), inet_ntoa(sin_addr), int_port_num);
 #else
         char straddr[INET6_ADDRSTRLEN];
         ((enet_uint32 *)&host_ipv6.s6_addr)[0] = 0;
@@ -646,6 +647,7 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         ((enet_uint32 *)&host_ipv6.s6_addr)[3] = htonl(host_ip);
         inet_ntop(AF_INET6, &host_ipv6, straddr,
                   sizeof(straddr));
+        printf("(PID %ld) CALLING ENET_HOST_CONNECT on ADDRESS %s, port %d\n", (long)getpid(), straddr, int_port_num);
 
 	svc->trace_out(cm, "Attempting ENET RUDP connection, USING host=\"%s\", IP = %s, port %d",
 		       host_name == 0 ? "(unknown)" : host_name, 
