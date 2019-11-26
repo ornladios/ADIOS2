@@ -1481,6 +1481,7 @@ INT_CMget_ip_config_diagnostics(CManager cm)
 	 /* we will await his respone */
 	 conn->handshake_condition = INT_CMCondition_get(cm, conn);
      }
+     printf("(PID %ld) Sending a handshake write, waitcondition %d\n", (long) getpid(), conn->handshake_condition);
      actual = conn->trans->writev_func(&CMstatic_trans_svcs, 
 				       conn->transport_data, 
 				       &tmp_vec[0], 1, NULL);
@@ -1494,8 +1495,10 @@ INT_CMget_ip_config_diagnostics(CManager cm)
      }
      if ((conn->remote_format_server_ID == 0) && reliable) {
 	 CMtrace_out(conn->cm, CMLowLevelVerbose, "CM - waiting for handshake response\n");
+	 printf("(PID %ld) Waiting for handshake, waitcondition %d\n", (long) getpid(), conn->handshake_condition);
 	 INT_CMCondition_wait(cm, conn->handshake_condition);
      }
+     printf("(PID %ld) Falling out of handshake wait\n", (long) getpid());
  }
 
 static
@@ -2211,6 +2214,7 @@ timeout_conn(CManager cm, void *client_data)
 	 remote_CManager_ID = ((int *) base)[1];
      }
 
+     printf("(PID %ld) Got a handshake message\n", (long) getpid());
      CMtrace_out(conn->cm, CMLowLevelVerbose, "CM - Received CONN handshake message\n");
      if ((remote_CManager_ID & 0x80000000) == 0x80000000) {
 	 /* the other fellow already has our ID */
@@ -2235,9 +2239,11 @@ timeout_conn(CManager cm, void *client_data)
 	 }
      }
      if (do_send) {
+	 printf("(PID %ld) Responding to handshake\n", (long) getpid());
 	 CMtrace_out(conn->cm, CMLowLevelVerbose, "CM - Sending CONN handshake message\n");
 	 send_and_maybe_wait_for_handshake(conn->cm, conn);
      } else {
+	 printf("(PID %ld) Don't need to respond to handshake\n", (long) getpid());
 	 CMtrace_out(conn->cm, CMLowLevelVerbose, "CM - *NOT* Sending CONN handshake message\n");
      }
  }
