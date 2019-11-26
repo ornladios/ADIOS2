@@ -383,6 +383,9 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     pointers = (struct _CP_DP_PairInfo **)ParticipateInReaderInitDataExchange(
         Stream, dpInfo, &data_block);
 
+    extern int CMtrace_val[];
+    int tmp = CMtrace_val[3];
+    int tmp2 = CMtrace_val[5];
     if (Stream->Rank == 0)
     {
         struct _CombinedWriterInfo WriterData;
@@ -426,6 +429,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
                                     ReaderRegister.WriterResponseCondition,
                                     &response);
 
+        CMtrace_val[3] = 1;
+        CMtrace_val[5] = 1;
         if (CMwrite(rank0_to_rank0_conn, Stream->CPInfo->ReaderRegisterFormat,
                     &ReaderRegister) != 1)
         {
@@ -578,6 +583,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     memset(&Msg, 0, sizeof(Msg));
     sendOneToEachWriterRank(Stream, Stream->CPInfo->ReaderActivateFormat, &Msg,
                             &Msg.WSR_Stream);
+    CMtrace_val[3] = tmp;
+    CMtrace_val[5] = tmp2;
     CP_verbose(Stream,
                "Finish opening Stream \"%s\", starting with Step number %d\n",
                Filename, ReturnData->StartingStepNumber);
