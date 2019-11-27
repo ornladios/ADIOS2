@@ -1762,7 +1762,7 @@ extern "C" {
         incomingSessionID = command->connect.incomingSessionID == 0xFF ? peer->outgoingSessionID : command->connect.incomingSessionID;
         incomingSessionID = (incomingSessionID + 1) & (ENET_PROTOCOL_HEADER_SESSION_MASK >> ENET_PROTOCOL_HEADER_SESSION_SHIFT);
         if (incomingSessionID == peer->outgoingSessionID) {
-            printf("INCREMENTING SESSION ID\n");
+            printf("INCREMENTING INCOMING SESSION ID\n");
             incomingSessionID = (incomingSessionID + 1)
               & (ENET_PROTOCOL_HEADER_SESSION_MASK >> ENET_PROTOCOL_HEADER_SESSION_SHIFT);
         }
@@ -1771,10 +1771,12 @@ extern "C" {
         outgoingSessionID = command->connect.outgoingSessionID == 0xFF ? peer->incomingSessionID : command->connect.outgoingSessionID;
         outgoingSessionID = (outgoingSessionID + 1) & (ENET_PROTOCOL_HEADER_SESSION_MASK >> ENET_PROTOCOL_HEADER_SESSION_SHIFT);
         if (outgoingSessionID == peer->incomingSessionID) {
+            printf("INCREMENTING OUTGOING SESSION ID\n");
             outgoingSessionID = (outgoingSessionID + 1)
               & (ENET_PROTOCOL_HEADER_SESSION_MASK >> ENET_PROTOCOL_HEADER_SESSION_SHIFT);
         }
         peer->incomingSessionID = outgoingSessionID;
+        printf("(PID %ld) SETTING INCOMING SESSION ID IN HANDLE Connect ID=%d\n", (long) getpid(), peer->incomingSessionID);
 
         for (channel = peer->channels; channel < &peer->channels[channelCount]; ++channel) {
             channel->outgoingReliableSequenceNumber   = 0;
@@ -2358,6 +2360,7 @@ extern "C" {
 
         peer->outgoingPeerID    = ENET_NET_TO_HOST_16(command->verifyConnect.outgoingPeerID);
         peer->incomingSessionID = command->verifyConnect.incomingSessionID;
+        printf("(PID %ld) SETTING INCOMING SESSION ID IN Verify Connect ID=%d\n", (long) getpid(), peer->incomingSessionID);
         peer->outgoingSessionID = command->verifyConnect.outgoingSessionID;
 
         mtu = ENET_NET_TO_HOST_32(command->verifyConnect.mtu);
