@@ -1199,14 +1199,14 @@ extern "C" {
 #ifndef ENET_ATOMIC_READ
 //  On a compiler that supports none of the above?  Do without atomics...
 #define ENET_ATOMIC_READ(variable) (*(uint64_t*)(variable))
-static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr,uint64_t oldvalue,uint64_t newvalue)
+static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newvalue)
 {
    uint64_t temp = *ptr;
    if(*ptr == oldvalue)
-       *ptr = newvalue
+       *ptr = newvalue;
    return temp;
 }    
-#define ENET_ATOMIC_CAS(ptr, oldvalue, newvalue) ENET_SIMPLE_CAS((ptr), (oldvalue), (newvalue));
+#define ENET_ATOMIC_CAS(ptr, oldvalue, newvalue) ENET_SIMPLE_CAS((ptr), (oldvalue), (newvalue))
 #endif
 
 // =======================================================================//
