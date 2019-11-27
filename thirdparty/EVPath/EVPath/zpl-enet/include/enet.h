@@ -1745,6 +1745,8 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                 if (currentPeer->address.port == host->receivedAddress.port && currentPeer->connectID == command->connect.connectID) {
                     return NULL;
                 }
+
+                printf("(PID %lx) command->connect.connectID = %d\n", (long) getpid(), command->connect.connectID);
                 printf("(PID %lx) incrementing duplicate peers, using peer %p, state %d\n", (long)getpid(), currentPeer, currentPeer->state);
 
                 ++duplicatePeers;
@@ -5023,7 +5025,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
     void enet_deinitialize(void) {}
 
     enet_uint64 enet_host_random_seed(void) {
-        return (enet_uint64) time(NULL);
+        return (enet_uint64) time(NULL) + (int) getpid();
     }
 
     int enet_address_set_host_ip(ENetAddress *address, const char *name) {
