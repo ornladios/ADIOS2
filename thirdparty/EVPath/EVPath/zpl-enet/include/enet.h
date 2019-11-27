@@ -1734,15 +1734,18 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
             return NULL;
         }
 
+        printf("(PID %lx) IN protocol handle connect\n", (long)getpid());
         for (currentPeer = host->peers; currentPeer < &host->peers[host->peerCount]; ++currentPeer) {
             if (currentPeer->state == ENET_PEER_STATE_DISCONNECTED) {
                 if (peer == NULL) {
+                    printf("(PID %lx) maybe REUSING PEER %p, current state DISCONNECTED \n", (long)getpid(), currentPeer);
                     peer = currentPeer;
                 }
             } else if (currentPeer->state != ENET_PEER_STATE_CONNECTING && in6_equal(currentPeer->address.host, host->receivedAddress.host)) {
                 if (currentPeer->address.port == host->receivedAddress.port && currentPeer->connectID == command->connect.connectID) {
                     return NULL;
                 }
+                printf("(PID %lx) incrementing duplicate peers, using peer %p, state %d\n", (long)getpid(), currentPeer, currentPeer->state);
 
                 ++duplicatePeers;
             }
@@ -1843,6 +1846,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
             windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE;
         }
 
+        printf("(PID %lx) sending verify connect command incomingSessionID %d, outgoingSessionID %d \n", (long)getpid(), incomingSessionID, outgoingSessionID);
         verifyCommand.header.command                            = ENET_PROTOCOL_COMMAND_VERIFY_CONNECT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
         verifyCommand.header.channelID                          = 0xFF;
         verifyCommand.verifyConnect.outgoingPeerID              = ENET_HOST_TO_NET_16(peer->incomingPeerID);
@@ -2374,6 +2378,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         peer->incomingSessionID = command->verifyConnect.incomingSessionID;
         printf("(PID %ld) SETTING INCOMING SESSION ID IN Verify Connect ID=%d\n", (long) getpid(), peer->incomingSessionID);
         peer->outgoingSessionID = command->verifyConnect.outgoingSessionID;
+        printf("(PID %ld) SETTING INCOMING SESSION ID IN Verify Connect ID=%d\n", (long) getpid(), peer->outgoingSessionID);
 
         mtu = ENET_NET_TO_HOST_32(command->verifyConnect.mtu);
 
