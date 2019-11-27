@@ -542,6 +542,7 @@ extern
 void
 INTERFACE_NAME(shutdown_conn)(CMtrans_services svc, enet_conn_data_ptr scd)
 {
+    enet_peer_disconnect_later(scd->peer, 0) ;
     svc->connection_deref(scd->conn);
     if (scd->remote_host) free(scd->remote_host);
     free(scd);
