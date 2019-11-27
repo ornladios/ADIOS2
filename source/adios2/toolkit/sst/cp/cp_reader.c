@@ -616,9 +616,12 @@ extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
     SstStream Stream;
     struct _PeerSetupMsg *Msg = (struct _PeerSetupMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
+    CP_verbose(Stream, "Received peer setup from rank %d, conn %p\n",
+               Msg->WriterRank, conn);
     pthread_mutex_lock(&Stream->DataLock);
     if (!Stream->ConnectionsToWriter)
     {
+        CP_verbose(Stream, "Allocating connections to writer\n");
         Stream->ConnectionsToWriter =
             calloc(sizeof(CP_PeerConnection), Msg->WriterCohortSize);
     }

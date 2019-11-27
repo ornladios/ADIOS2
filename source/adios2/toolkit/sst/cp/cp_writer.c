@@ -440,11 +440,16 @@ static void SendPeerSetupMsg(WS_ReaderInfo reader, int reversePeer, int myRank)
     setup.RS_Stream = reader->Connections[reversePeer].RemoteStreamID;
     setup.WriterRank = myRank;
     setup.WriterCohortSize = Stream->CohortSize;
+    printf("Sending Peer setup message to rank %d remote stream (%p) \n",
+           reversePeer, setup.RS_Stream);
     if (CMwrite(conn, Stream->CPInfo->PeerSetupFormat, &setup) != 1)
     {
         CP_verbose(Stream,
                    "Message failed to send to reader in sendPeerSetup in "
                    "reader open\n");
+        printf("FAILED TO Send Peer setup message to rank %d remote stream "
+               "(%p) \n",
+               reversePeer, setup.RS_Stream);
     }
 }
 
