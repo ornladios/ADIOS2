@@ -335,12 +335,12 @@ enet_service_network(CManager cm, void *void_trans)
 #endif            
 
 	    enet_connection_data = enet_accept_conn(ecd, trans, &event.peer->address);
+            printf("(PID %lx) ACCEPTED CONNECTION, NEW PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), event.peer->outgoingSessionID);
 
             /* Store any relevant client information here. */
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
             event.peer->data = enet_connection_data;
 	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
-
             IntENET_unlock(ecd, NULL, 0);
             break;
 	}
@@ -542,6 +542,7 @@ extern
 void
 INTERFACE_NAME(shutdown_conn)(CMtrans_services svc, enet_conn_data_ptr scd)
 {
+    printf("(PID %lx) shutting down connection CONNECTION, old PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), scd->peer->outgoingSessionID);
     enet_peer_disconnect_later(scd->peer, 0) ;
     svc->connection_deref(scd->conn);
     if (scd->remote_host) free(scd->remote_host);
@@ -876,6 +877,7 @@ INTERFACE_NAME(connection_eq)(CManager cm, CMtrans_services svc,
 		       inet_ntoa(addr));
     }
     /* requested IP is in host byte order */
+    printf("(PID %lx) CONN EQ PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), ecd->peer->outgoingSessionID);
     if (ecd->peer->state != ENET_PEER_STATE_CONNECTED) {
         printf("ENET Conn_eq returning FALSE, peer not connected, state %d\n", ecd->peer->state);
         return 0;
@@ -1167,6 +1169,7 @@ INTERFACE_NAME(writev_func)(CMtrans_services svc, enet_conn_data_ptr ecd,
 	length += iov[i].iov_len;
     }
 
+    printf("(PID %lx) writev PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), ecd->peer->outgoingSessionID);
     svc->trace_out(ecd->ecd->cm, "CMENET vector write of %d bytes on peer %p",
 		   length, ecd->peer);
 

@@ -2378,7 +2378,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         peer->incomingSessionID = command->verifyConnect.incomingSessionID;
         printf("(PID %ld) SETTING INCOMING SESSION ID IN Verify Connect ID=%d\n", (long) getpid(), peer->incomingSessionID);
         peer->outgoingSessionID = command->verifyConnect.outgoingSessionID;
-        printf("(PID %ld) SETTING INCOMING SESSION ID IN Verify Connect ID=%d\n", (long) getpid(), peer->outgoingSessionID);
+        printf("(PID %ld) SETTING OUTGOING SESSION ID IN Verify Connect ID=%d\n", (long) getpid(), peer->outgoingSessionID);
 
         mtu = ENET_NET_TO_HOST_32(command->verifyConnect.mtu);
 
