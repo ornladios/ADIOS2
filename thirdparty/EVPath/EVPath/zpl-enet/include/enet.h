@@ -1745,10 +1745,6 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                 if (currentPeer->address.port == host->receivedAddress.port && currentPeer->connectID == command->connect.connectID) {
                     return NULL;
                 }
-
-                printf("(PID %lx) command->connect.connectID = %d\n", (long) getpid(), command->connect.connectID);
-                printf("(PID %lx) incrementing duplicate peers, using peer %p, state %d\n", (long)getpid(), currentPeer, currentPeer->state);
-
                 ++duplicatePeers;
             }
         }
@@ -1776,6 +1772,8 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         peer->packetThrottleDeceleration = ENET_NET_TO_HOST_32(command->connect.packetThrottleDeceleration);
         peer->eventData                  = ENET_NET_TO_HOST_32(command->connect.data);
 
+        printf("(PID %lx) command connect session ID = %d, peer->outgoingSessionID %d\n", (long)getpid(),
+               command->connect.incomingSessionID, peer->outgoingSessionID);
         incomingSessionID = command->connect.incomingSessionID == 0xFF ? peer->outgoingSessionID : command->connect.incomingSessionID;
         incomingSessionID = (incomingSessionID + 1) & (ENET_PROTOCOL_HEADER_SESSION_MASK >> ENET_PROTOCOL_HEADER_SESSION_SHIFT);
         if (incomingSessionID == peer->outgoingSessionID) {
