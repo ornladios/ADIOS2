@@ -4553,6 +4553,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         currentPeer->state        = ENET_PEER_STATE_CONNECTING;
         currentPeer->address      = *address;
         currentPeer->connectID    = ++host->randomSeed;
+        printf("(PID %lx) In enet_host connect, connect ID is %d, host->randomSeed is %x\n", (long)getpid(), currentPeer->connectID, host->randomSeed);
 
         if (host->outgoingBandwidth == 0) {
             currentPeer->windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE;
