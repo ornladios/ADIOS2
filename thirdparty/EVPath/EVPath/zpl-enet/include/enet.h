@@ -3150,10 +3150,20 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                     }
                 }
 
+                if (currentPeer->outgoingPeerID)
+                    printf("(PID %lx) Send outgoing, current peerID = %x\n", (long) getpid(), currentPeer->outgoingPeerID);
+                if (currentPeer->outgoingPeerID)
+                    printf("(PID %lx) headerFlags now %x\n", (long) getpid(), host->headerFlags);
                 if (currentPeer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID) {
+                    if (currentPeer->outgoingPeerID)
+                        printf("(PID %lx) mixing in outgoing sessin ID %d\n", (long) getpid(), currentPeer->outgoingPeerID);
                     host->headerFlags |= currentPeer->outgoingSessionID << ENET_PROTOCOL_HEADER_SESSION_SHIFT;
+                    if (currentPeer->outgoingPeerID)
+                        printf("(PID %lx) headerFlags now %x\n", (long) getpid(), host->headerFlags);
                 }
                 header->peerID = ENET_HOST_TO_NET_16(currentPeer->outgoingPeerID | host->headerFlags);
+                if (currentPeer->outgoingPeerID)
+                    printf("(PID %lx) header->peerID %x\n", (long) getpid(), header->peerID);
                 if (host->checksum != NULL) {
                     enet_uint32 *checksum = (enet_uint32 *) &headerData[host->buffers->dataLength];
                     *checksum = currentPeer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID ? currentPeer->connectID : 0;
