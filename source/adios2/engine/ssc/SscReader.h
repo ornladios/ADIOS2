@@ -41,10 +41,10 @@ private:
     size_t m_CurrentStep = 0;
     bool m_InitialStep = true;
 
-    ssc::VarMapVec m_GlobalWritePatternMap;
-    ssc::VarMap m_LocalReadPatternMap;
+    ssc::BlockVecVec m_GlobalWritePattern;
+    ssc::BlockVec m_LocalReadPattern;
 
-    ssc::PosMap m_AllReceivingWriterRanks;
+    ssc::RankPosMap m_AllReceivingWriterRanks;
     std::vector<char> m_Buffer;
     MPI_Win m_MpiWin;
 

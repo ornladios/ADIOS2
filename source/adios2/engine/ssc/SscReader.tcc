@@ -36,16 +36,24 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
     TAU_SCOPED_TIMER_FUNC();
     for (const auto &i : m_AllReceivingWriterRanks)
     {
-        const auto &m = m_GlobalWritePatternMap[i.first][variable.m_Name];
-        if (m.start.empty())
+        const auto &v = m_GlobalWritePattern[i.first];
+        for (const auto &b : v)
         {
-            data[0] = reinterpret_cast<T *>(m_Buffer.data() + m.posStart)[0];
-        }
-        else
-        {
-            helper::NdCopy<T>(m_Buffer.data() + m.posStart, m.start, m.count,
-                              true, true, reinterpret_cast<char *>(data),
-                              variable.m_Start, variable.m_Count, true, true);
+            if (b.name == variable.m_Name)
+            {
+                if (b.start.empty())
+                {
+                    data[0] = reinterpret_cast<T *>(m_Buffer.data() +
+                                                    b.bufferStart)[0];
+                }
+                else
+                {
+                    helper::NdCopy<T>(
+                        m_Buffer.data() + b.bufferStart, b.start, b.count, true,
+                        true, reinterpret_cast<char *>(data), variable.m_Start,
+                        variable.m_Count, true, true);
+                }
+            }
         }
     }
 }
@@ -68,24 +76,24 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
     std::vector<typename Variable<T>::Info> ret;
     for (const auto &r : m_AllReceivingWriterRanks)
     {
-        for (auto &v : m_GlobalWritePatternMap[r.first])
+        for (auto &v : m_GlobalWritePattern[r.first])
         {
-            if (v.first != variable.m_Name)
+            if (v.name != variable.m_Name)
             {
                 continue;
             }
-            if (v.second.overlapCount.empty())
+            if (v.overlapCount.empty())
             {
                 continue;
             }
             typename Variable<T>::Info b;
-            b.Start = v.second.overlapStart;
-            b.Count = v.second.overlapCount;
-            b.Shape = v.second.shape;
+            b.Start = v.overlapStart;
+            b.Count = v.overlapCount;
+            b.Shape = v.shape;
             b.IsValue = false;
-            if (v.second.shape.size() == 1)
+            if (v.shape.size() == 1)
             {
-                if (v.second.shape[0] == 1)
+                if (v.shape[0] == 1)
                 {
                     b.IsValue = true;
                 }

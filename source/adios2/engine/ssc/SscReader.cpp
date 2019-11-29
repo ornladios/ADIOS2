@@ -124,7 +124,7 @@ void SscReader::SyncWritePattern()
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
 
-    // sync
+    // sync with writers
     size_t globalSizeDst = 0;
     size_t globalSizeSrc = 0;
     MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG,
@@ -156,22 +156,24 @@ void SscReader::SyncWritePattern()
                   << j.dump(4) << std::endl;
     }
 
-    m_GlobalWritePatternMap.resize(m_WriterSize);
+    m_GlobalWritePattern.resize(m_WriterSize);
     for (int rank = 0; rank < m_WriterSize; ++rank)
     {
-        int varId = 0;
+        int blockId = 0;
         for (auto itVar = j[rank].begin(); itVar != j[rank].end(); ++itVar)
         {
             std::string type = itVar.value()["T"].get<std::string>();
             Dims shape = itVar.value()["S"].get<Dims>();
             Dims start = itVar.value()["O"].get<Dims>();
             Dims count = itVar.value()["C"].get<Dims>();
-            auto &mapRef = m_GlobalWritePatternMap[rank][itVar.key()];
-            mapRef.shape = shape;
-            mapRef.start = start;
-            mapRef.count = count;
-            mapRef.type = type;
-            mapRef.id = varId;
+            auto &blockVecRef = m_GlobalWritePattern[rank];
+            blockVecRef.emplace_back();
+            blockVecRef.back().name = itVar.key();
+            blockVecRef.back().shape = shape;
+            blockVecRef.back().start = start;
+            blockVecRef.back().count = count;
+            blockVecRef.back().type = type;
+            blockVecRef.back().blockId = blockId;
             if (rank == 0)
             {
                 if (type.empty())
@@ -182,15 +184,12 @@ void SscReader::SyncWritePattern()
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         m_IO.DefineVariable<T>(itVar.key(), shape, start, shape);              \
-        auto &mref = m_LocalReadPatternMap[itVar.key()];                       \
-        mref.type = type;                                                      \
-        mref.id = varId;                                                       \
     }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
                 else { throw(std::runtime_error("unknown data type")); }
             }
-            ++varId;
+            ++blockId;
         }
     }
 
@@ -238,29 +237,35 @@ void SscReader::SyncReadPattern()
     nlohmann::json j;
 
     // serialize
-    for (auto &var : m_LocalReadPatternMap)
+    auto variables = m_IO.GetAvailableVariables();
+    for (auto &var : variables)
     {
-        if (var.second.type.empty())
+        m_LocalReadPattern.emplace_back();
+        auto &b = m_LocalReadPattern.back();
+        std::string type = var.second["Type"];
+        if (type.empty())
         {
             throw(std::runtime_error("unknown data type"));
         }
 #define declare_type(T)                                                        \
-    else if (var.second.type == helper::GetType<T>())                          \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         auto v = m_IO.InquireVariable<T>(var.first);                           \
-        var.second.count = v->m_Count;                                         \
-        var.second.start = v->m_Start;                                         \
-        var.second.shape = v->m_Shape;                                         \
+        b.name = var.first;                                                    \
+        b.count = v->m_Count;                                                  \
+        b.start = v->m_Start;                                                  \
+        b.shape = v->m_Shape;                                                  \
+        b.type = type;                                                         \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         else { throw(std::runtime_error("unknown data type")); }
 
         auto &jref = j[var.first];
-        jref["T"] = var.second.type;
-        jref["O"] = var.second.start;
-        jref["C"] = var.second.count;
-        jref["S"] = var.second.shape;
+        jref["T"] = type;
+        jref["O"] = b.start;
+        jref["C"] = b.count;
+        jref["S"] = b.shape;
     }
 
     std::string localStr = j.dump();
@@ -324,11 +329,11 @@ void SscReader::SyncReadPattern()
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
-    ssc::CalculateOverlap(m_GlobalWritePatternMap, m_LocalReadPatternMap);
-    m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePatternMap);
-    ssc::CalculatePosition(m_GlobalWritePatternMap, m_AllReceivingWriterRanks);
+    ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
+    m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePattern);
+    ssc::CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
 
-    m_Buffer.resize(ssc::TotalDataSize(m_LocalReadPatternMap) + 1);
+    m_Buffer.resize(ssc::TotalDataSize(m_LocalReadPattern) + 1);
 }
 
 #define declare_type(T)                                                        \
