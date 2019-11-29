@@ -48,16 +48,23 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     }
 
     variable.SetData(data);
-    auto pattern = m_LocalWritePatternMap[variable.m_Name];
-    if (ssc::AreSameDims(variable.m_Start, pattern.start) and
-        ssc::AreSameDims(variable.m_Count, pattern.count) and
-        ssc::AreSameDims(variable.m_Shape, pattern.shape))
+
+    for (const auto &b : m_LocalWritePattern)
     {
-        std::memcpy(m_Buffer.data() + pattern.posStart, data, pattern.posCount);
-    }
-    else
-    {
-        throw std::runtime_error("ssc only accepts fixed IO pattern");
+        if (b.name == variable.m_Name)
+        {
+            if (ssc::AreSameDims(variable.m_Start, b.start) and
+                ssc::AreSameDims(variable.m_Count, b.count) and
+                ssc::AreSameDims(variable.m_Shape, b.shape))
+            {
+                std::memcpy(m_Buffer.data() + b.bufferStart, data,
+                            b.bufferCount);
+            }
+            else
+            {
+                throw std::runtime_error("ssc only accepts fixed IO pattern");
+            }
+        }
     }
 }
 

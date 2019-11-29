@@ -24,47 +24,47 @@ namespace engine
 {
 namespace ssc
 {
-struct VarInfo
+struct BlockInfo
 {
+    std::string name;
+    std::string type;
     Dims shape;
     Dims start;
     Dims count;
     Dims overlapStart;
     Dims overlapCount;
-    std::string type;
-    size_t id;
-    size_t posStart;
-    size_t posCount;
+    size_t blockId;
+    size_t bufferStart;
+    size_t bufferCount;
 };
-using VarMap = std::map<std::string, VarInfo>;
-using VarMapVec = std::vector<VarMap>;
-using PosMap = std::map<int, size_t>;
+using BlockVec = std::vector<BlockInfo>;
+using BlockVecVec = std::vector<BlockVec>;
+using RankPosMap = std::map<int, size_t>;
 
 void PrintDims(const Dims &dims, const std::string &label = std::string());
-void PrintVarMap(const VarMap &vm, const std::string &label = std::string());
-void PrintVarMapVec(const VarMapVec &vmv,
-                    const std::string &label = std::string());
+void PrintBlockVec(const BlockVec &bv,
+                   const std::string &label = std::string());
+void PrintBlockVecVec(const BlockVecVec &bvv,
+                      const std::string &label = std::string());
 
 size_t GetTypeSize(const std::string &type);
 
 size_t TotalDataSize(const Dims &dims, const std::string &type);
-size_t TotalDataSize(const VarMap &vm);
-size_t TotalDataSize(const VarMapVec &vmv);
-size_t TotalDataSize(const VarMapVec &vmv, const PosMap &ranks);
+size_t TotalDataSize(const BlockVec &bv);
 
-size_t TotalOverlapSize(const VarMap &vm);
-size_t TotalOverlapSize(const VarMapVec &vmv);
+size_t TotalOverlapSize(const BlockVec &bv);
+size_t TotalOverlapSize(const BlockVecVec &bvv);
 
-void CalculateOverlap(VarMapVec &mapVec, VarMap &singleMap);
-void CalculatePosition(VarMapVec &mapVec, PosMap &allOverlapRanks);
-void CalculatePosition(VarMapVec &writerMapVec, VarMapVec &readerMapVec,
-                       const int writerRank, PosMap &allOverlapRanks);
+void CalculateOverlap(BlockVecVec &globalPattern, BlockVec &localPattern);
+void CalculatePosition(BlockVecVec &mapVec, RankPosMap &allOverlapRanks);
+void CalculatePosition(BlockVecVec &writerMapVec, BlockVecVec &readerMapVec,
+                       const int writerRank, RankPosMap &allOverlapRanks);
 
-PosMap AllOverlapRanks(const VarMapVec &mapVec);
+RankPosMap AllOverlapRanks(const BlockVecVec &mapVec);
 
-VarMapVec JsonToVarMapVec(const nlohmann::json &input, const int size);
-VarMapVec JsonToVarMapVec(const std::vector<char> &input, const int size);
-VarMapVec JsonToVarMapVec(const std::string &input, const int size);
+BlockVecVec JsonToBlockVecVec(const nlohmann::json &input, const int size);
+BlockVecVec JsonToBlockVecVec(const std::vector<char> &input, const int size);
+BlockVecVec JsonToBlockVecVec(const std::string &input, const int size);
 
 bool AreSameDims(const Dims &a, const Dims &b);
 
