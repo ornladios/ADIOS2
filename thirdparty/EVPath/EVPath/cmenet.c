@@ -710,7 +710,6 @@ INTERFACE_NAME(initiate_conn_nonblocking)(CManager cm, CMtrans_services svc,
     enet_conn_data_ptr enet_conn_data = create_enet_conn_data(svc);
     attr_list conn_attr_list = create_attr_list();
     enet_conn_data_ptr ret;
-    enet_client_data_ptr ecd = (enet_client_data_ptr) trans->trans_data;
 
     enet_conn_data->conn_attr_list = conn_attr_list;
     enet_conn_data->connect_condition = connect_condition;
