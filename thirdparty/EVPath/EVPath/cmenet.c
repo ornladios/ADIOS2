@@ -171,7 +171,7 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
 static void
 IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 {
-    /* if (file) printf("Trying ENET Lock at %s, line %d\n", file, line); */
+//    if (file) printf("Trying ENET Lock at %s, line %d\n", file, line);
     pthread_mutex_lock(&ecd->enet_lock);
     ecd->enet_locked++;
 }
@@ -179,7 +179,7 @@ IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 static void
 IntENET_unlock(enet_client_data_ptr ecd, char *file, int line)
 {
-    /* if (file) printf("ENET Unlock at %s, line %d\n", file, line); */
+//    if (file) printf("ENET Unlock at %s, line %d\n", file, line);
     ecd->enet_locked--;
     pthread_mutex_unlock(&ecd->enet_lock);
 }
@@ -284,13 +284,12 @@ enet_service_network(CManager cm, void *void_trans)
             fprintf(stderr, "WARNING, time between zero return for enet_host_service = %d msecs\n",
                     enet_time_get() - ecd->last_host_service_zero_return);
         }
+        IntENET_unlock(ecd, NULL, 0);
         if (ret <= 0) {
-            IntENET_unlock(ecd, NULL, 0);
             break;
         }
         switch (event.type) {
 	case ENET_EVENT_TYPE_NONE:
-            IntENET_unlock(ecd, NULL, 0);
 	    break;
         case ENET_EVENT_TYPE_CONNECT: {
 	    enet_conn_data_ptr enet_connection_data = NULL;
@@ -333,7 +332,6 @@ enet_service_network(CManager cm, void *void_trans)
                 svc->trace_out(cm, "That was IPV4 address %s\n", inet_ntoa(addr));
             }
 #endif            
-
 	    enet_connection_data = enet_accept_conn(ecd, trans, &event.peer->address);
             printf("(PID %lx) ACCEPTED CONNECTION, NEW PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), event.peer->outgoingSessionID);
 
@@ -341,12 +339,10 @@ enet_service_network(CManager cm, void *void_trans)
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
             event.peer->data = enet_connection_data;
 	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
-            IntENET_unlock(ecd, NULL, 0);
             break;
 	}
         case ENET_EVENT_TYPE_RECEIVE: {
 	    enet_conn_data_ptr econn_d = (enet_conn_data_ptr) event.peer->data;
-            IntENET_unlock(ecd, NULL, 0);
             if (econn_d) {
                 handle_packet(cm, svc, trans, econn_d, event.packet);
             } else {
@@ -376,13 +372,11 @@ enet_service_network(CManager cm, void *void_trans)
 
             enet_conn_data = (enet_conn_data_ptr) event.peer->data;
 	    enet_conn_data->read_buffer_len = -1;
-            IntENET_unlock(ecd, NULL, 0);
             svc->connection_fail(enet_conn_data->conn);
             break;
         }
         default:
             printf("UNKNOWN EVENT TYPE! %d\n", event.type);
-            IntENET_unlock(ecd, NULL, 0);
             break;
         }
     }
@@ -529,7 +523,9 @@ enet_accept_conn(enet_client_data_ptr ecd, transport_entry trans,
      * try flushing connection verify message here to make 
      * sure it's established 
      */
+    ENETlock(ecd);
     enet_host_flush(ecd->server);
+    ENETunlock(ecd);
 
     return enet_conn_data;
 }
@@ -543,7 +539,9 @@ void
 INTERFACE_NAME(shutdown_conn)(CMtrans_services svc, enet_conn_data_ptr scd)
 {
     printf("(PID %lx) shutting down connection CONNECTION, old PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), scd->peer->outgoingSessionID);
+    ENETlock(scd->ecd);
     enet_peer_disconnect_later(scd->peer, 0) ;
+    ENETunlock(scd->ecd);
     svc->connection_deref(scd->conn);
     if (scd->remote_host) free(scd->remote_host);
     free(scd);
@@ -712,6 +710,7 @@ INTERFACE_NAME(initiate_conn_nonblocking)(CManager cm, CMtrans_services svc,
     enet_conn_data_ptr enet_conn_data = create_enet_conn_data(svc);
     attr_list conn_attr_list = create_attr_list();
     enet_conn_data_ptr ret;
+    enet_client_data_ptr ecd = (enet_client_data_ptr) trans->trans_data;
 
     enet_conn_data->conn_attr_list = conn_attr_list;
     enet_conn_data->connect_condition = connect_condition;
