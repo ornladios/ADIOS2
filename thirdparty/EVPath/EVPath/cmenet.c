@@ -171,15 +171,16 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
 static void
 IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 {
-//    if (file) printf("Trying ENET Lock at %s, line %d\n", file, line);
+    if (file) printf("(PID %lx) Trying ENET Lock at %s, line %d\n", (long) getpid(), file, line);
     pthread_mutex_lock(&ecd->enet_lock);
+    if (file) printf("GOT ENET Lock at %s, line %d\n", file, line);
     ecd->enet_locked++;
 }
 
 static void
 IntENET_unlock(enet_client_data_ptr ecd, char *file, int line)
 {
-//    if (file) printf("ENET Unlock at %s, line %d\n", file, line);
+    if (file) printf("(PID %lx) ENET Unlock at %s, line %d\n", (long) getpid(), file, line);
     ecd->enet_locked--;
     pthread_mutex_unlock(&ecd->enet_lock);
 }
