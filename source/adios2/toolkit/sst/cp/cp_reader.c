@@ -245,7 +245,8 @@ static int HasAllPeers(SstStream Stream)
     int i, StillWaiting = 0;
     if (!Stream->ConnectionsToWriter)
     {
-        CP_verbose(Stream, "Waiting for first Peer notification\n");
+        CP_verbose(Stream, "(PID %lx) Waiting for first Peer notification\n",
+                   (long)getpid());
         return 0;
     }
     i = 0;
@@ -429,8 +430,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
                                     ReaderRegister.WriterResponseCondition,
                                     &response);
 
-        CMtrace_val[3] = 1;
-        CMtrace_val[5] = 1;
+        //        CMtrace_val[3] = 1;
+        //        CMtrace_val[5] = 1;
         if (CMwrite(rank0_to_rank0_conn, Stream->CPInfo->ReaderRegisterFormat,
                     &ReaderRegister) != 1)
         {

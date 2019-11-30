@@ -3156,7 +3156,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                     printf("(PID %lx) headerFlags now %x\n", (long) getpid(), host->headerFlags);
                 if (currentPeer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID) {
                     if (currentPeer->outgoingPeerID)
-                        printf("(PID %lx) mixing in outgoing sessin ID %d\n", (long) getpid(), currentPeer->outgoingPeerID);
+                        printf("(PID %lx) mixing in outgoing session ID %d\n", (long) getpid(), currentPeer->outgoingSessionID);
                     host->headerFlags |= currentPeer->outgoingSessionID << ENET_PROTOCOL_HEADER_SESSION_SHIFT;
                     if (currentPeer->outgoingPeerID)
                         printf("(PID %lx) headerFlags now %x\n", (long) getpid(), host->headerFlags);
