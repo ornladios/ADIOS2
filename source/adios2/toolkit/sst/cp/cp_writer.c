@@ -1265,6 +1265,7 @@ void sendOneToEachReaderRank(SstStream s, CMFormat f, void *Msg,
             CP_verbose(s, "Skipping reader cohort %d\n", i);
             continue;
         }
+        SST_ASSERT_UNLOCKED();
         sendOneToWSRCohort(CP_WSR_Stream, f, Msg, RS_StreamPtr);
     }
 }
@@ -1355,6 +1356,7 @@ void SstWriterClose(SstStream Stream)
     struct _WriterCloseMsg Msg;
     struct timeval CloseTime, Diff;
     Msg.FinalTimestep = Stream->LastProvidedTimestep;
+    SST_ASSERT_UNLOCKED();
     sendOneToEachReaderRank(Stream, Stream->CPInfo->WriterCloseFormat, &Msg,
                             &Msg.RS_Stream);
 
@@ -1892,9 +1894,11 @@ extern void SstInternalProvideTimestep(
     PTHREAD_MUTEX_LOCK(&Stream->DataLock);
     Stream->WriterTimestep = Timestep;
 
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     Stream->DP_Interface->provideTimestep(&Svcs, Stream->DP_Stream, Data,
                                           LocalMetadata, Timestep,
                                           &DP_TimestepInfo);
+    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
 
     /* Md is the local contribution to MetaData */
     Md.Formats = Formats;
