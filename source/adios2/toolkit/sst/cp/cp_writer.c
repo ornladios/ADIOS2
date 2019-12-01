@@ -1037,6 +1037,7 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
         }
 
         Entry->Msg->PreloadMode = CP_WSR_Stream->PreloadMode;
+        SST_ASSERT_UNLOCKED();
         sendOneToWSRCohort(CP_WSR_Stream,
                            Stream->CPInfo->DeliverTimestepMetadataFormat,
                            Entry->Msg, &Entry->Msg->RS_Stream);
