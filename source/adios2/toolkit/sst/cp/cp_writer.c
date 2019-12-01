@@ -39,6 +39,7 @@ static int locked = 0;
     locked--;                                                                  \
     pthread_mutex_unlock(lock);
 #define SST_ASSERT_LOCKED() assert(locked)
+#define SST_ASSERT_UNLOCKED() assert(!locked)
 #else
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
     {                                                                          \
@@ -442,6 +443,7 @@ static void SendPeerSetupMsg(WS_ReaderInfo reader, int reversePeer, int myRank)
     setup.WriterCohortSize = Stream->CohortSize;
     printf("Sending Peer setup message to rank %d remote stream (%p) \n",
            reversePeer, setup.RS_Stream);
+    SST_ASSERT_UNLOCKED();
     if (CMwrite(conn, Stream->CPInfo->PeerSetupFormat, &setup) != 1)
     {
         CP_verbose(Stream,
@@ -552,6 +554,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
             CMconn_register_close_handler(reader->Connections[peer].CMconn,
                                           WriterConnCloseHandler,
                                           (void *)reader);
+            SST_ASSERT_UNLOCKED();
             if (i == 0)
             {
                 /* failure awareness for reader rank */
@@ -602,6 +605,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
                                           WriterConnCloseHandler,
                                           (void *)reader);
             /* failure awareness for reader rank */
+            SST_ASSERT_UNLOCKED();
             CP_verbose(reader->ParentStream, "Sending peer setup to rank %d\n",
                        peer);
             SendPeerSetupMsg(reader, peer, reader->ParentStream->Rank);
@@ -850,6 +854,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
                 (struct _CP_WriterInitInfo *)pointers[i]->CP_Info;
             response.DP_WriterInfo[i] = pointers[i]->DP_Info;
         }
+        SST_ASSERT_UNLOCKED();
         if (CMwrite(conn, Stream->CPInfo->WriterResponseFormat, &response) != 1)
         {
             CP_verbose(Stream,
@@ -878,6 +883,7 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
     SstStream s = CP_WSR_Stream->ParentStream;
     int j = 0;
 
+    SST_ASSERT_UNLOCKED();
     if (s->ConfigParams->CPCommPattern == SstCPCommPeer)
     {
         while (CP_WSR_Stream->Peers[j] != -1)
@@ -1635,9 +1641,12 @@ static void ActOnTSLockStatus(SstStream Stream)
                     Stream->Readers[i]->ReaderSelectionLockTimestep);
             }
             Msg.Timestep = Stream->Readers[i]->ReaderSelectionLockTimestep;
+            PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+            SST_ASSERT_UNLOCKED();
             sendOneToWSRCohort(Stream->Readers[i],
                                Stream->CPInfo->CommPatternLockedFormat, &Msg,
                                &Msg.RS_Stream);
+            PTHREAD_MUTEX_LOCK(&Stream->DataLock);
             Stream->Readers[i]->ReaderDefinitionsLocked = 2;
             Stream->Readers[i]->PreloadMode = SstPreloadLearned;
         }
@@ -2045,6 +2054,7 @@ extern void SstInternalProvideTimestep(
                    "timestep %d, one to each reader\n",
                    Timestep);
 
+        SST_ASSERT_UNLOCKED();
         sendOneToEachReaderRank(Stream,
                                 Stream->CPInfo->DeliverTimestepMetadataFormat,
                                 Msg, &Msg->RS_Stream);
