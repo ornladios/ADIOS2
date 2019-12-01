@@ -611,6 +611,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     CP_verbose(Stream, "Sending Reader Activate messages to writer\n");
     memset(&Msg, 0, sizeof(Msg));
+    SST_ASSERT_UNLOCKED();
     sendOneToEachWriterRank(Stream, Stream->CPInfo->ReaderActivateFormat, &Msg,
                             &Msg.WSR_Stream);
     CMtrace_val[3] = tmp;
@@ -703,6 +704,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
                        "Sending ReleaseTimestep message for PRIOR DISCARD "
                        "timestep %d, one to each writer\n",
                        tsm->Timestep);
+            SST_ASSERT_UNLOCKED();
             sendOneToEachWriterRank(Stream,
                                     Stream->CPInfo->ReleaseTimestepFormat, &Msg,
                                     &Msg.WSR_Stream);
@@ -1061,6 +1063,7 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
                        "PRIOR timestep %d, one to each writer\n",
                        This->MetadataMsg->Timestep);
             PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+            SST_ASSERT_UNLOCKED();
             sendOneToEachWriterRank(Stream,
                                     Stream->CPInfo->ReleaseTimestepFormat, &Msg,
                                     &Msg.WSR_Stream);
@@ -1282,6 +1285,7 @@ extern void SstReaderDefinitionLock(SstStream Stream, long EffectiveTimestep)
     memset(&Msg, 0, sizeof(Msg));
     Msg.Timestep = EffectiveTimestep;
 
+    SST_ASSERT_UNLOCKED();
     sendOneToEachWriterRank(Stream, Stream->CPInfo->LockReaderDefinitionsFormat,
                             &Msg, &Msg.WSR_Stream);
 }
@@ -1313,6 +1317,7 @@ extern void SstReleaseStep(SstStream Stream)
         Stream,
         "Sending ReleaseTimestep message for timestep %d, one to each writer\n",
         Timestep);
+    SST_ASSERT_UNLOCKED();
     sendOneToEachWriterRank(Stream, Stream->CPInfo->ReleaseTimestepFormat, &Msg,
                             &Msg.WSR_Stream);
 
@@ -1853,6 +1858,7 @@ extern void SstReaderClose(SstStream Stream)
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
     memset(&Msg, 0, sizeof(Msg));
+    SST_ASSERT_UNLOCKED();
     sendOneToEachWriterRank(Stream, Stream->CPInfo->ReaderCloseFormat, &Msg,
                             &Msg.WSR_Stream);
     if (Stream->Stats)
