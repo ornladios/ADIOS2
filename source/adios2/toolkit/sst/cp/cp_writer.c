@@ -1036,8 +1036,8 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
                 CP_WSR_Stream->PreloadMode);
         }
 
-        Entry->Msg->PreloadMode = CP_WSR_Stream->PreloadMode;
         SST_ASSERT_UNLOCKED();
+        Entry->Msg->PreloadMode = CP_WSR_Stream->PreloadMode;
         sendOneToWSRCohort(CP_WSR_Stream,
                            Stream->CPInfo->DeliverTimestepMetadataFormat,
                            Entry->Msg, &Entry->Msg->RS_Stream);
@@ -1125,7 +1125,9 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                            "reference count = %d\n",
                            TS, List->ReferenceCount);
 
+                PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
                 SendTimestepEntryToSingleReader(Stream, List, Reader, -1);
+                PTHREAD_MUTEX_LOCK(&Stream->DataLock);
                 if (TS == Reader->StartingTimestep)
                 {
                     /* restore Msg format list */
@@ -1256,6 +1258,7 @@ void sendOneToEachReaderRank(SstStream s, CMFormat f, void *Msg,
 {
     for (int i = 0; i < s->ReaderCount; i++)
     {
+        SST_ASSERT_UNLOCKED();
         WS_ReaderInfo CP_WSR_Stream = s->Readers[i];
         if (CP_WSR_Stream->ReaderStatus == Established)
         {
@@ -1266,7 +1269,6 @@ void sendOneToEachReaderRank(SstStream s, CMFormat f, void *Msg,
             CP_verbose(s, "Skipping reader cohort %d\n", i);
             continue;
         }
-        SST_ASSERT_UNLOCKED();
         sendOneToWSRCohort(CP_WSR_Stream, f, Msg, RS_StreamPtr);
     }
 }
