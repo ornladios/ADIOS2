@@ -521,6 +521,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
          *   failure awareness.
 
          */
+        sleep(1);
         getPeerArrays(WriterSize, WriterRank, ReaderSize, &reader->Peers,
                       &reverseArray);
 
