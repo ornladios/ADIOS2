@@ -542,9 +542,9 @@ void
 INTERFACE_NAME(shutdown_conn)(CMtrans_services svc, enet_conn_data_ptr scd)
 {
     printf("(PID %lx) shutting down connection CONNECTION, old PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), scd->peer->outgoingSessionID);
-    ENETlock(scd->ecd);
-    enet_peer_disconnect_later(scd->peer, 0) ;
-    ENETunlock(scd->ecd);
+//    ENETlock(scd->ecd);
+//    enet_peer_disconnect_later(scd->peer, 0) ;
+//    ENETunlock(scd->ecd);
     svc->connection_deref(scd->conn);
     if (scd->remote_host) free(scd->remote_host);
     free(scd);
