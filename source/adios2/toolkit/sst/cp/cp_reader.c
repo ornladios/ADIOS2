@@ -1031,10 +1031,12 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
                        "Sending ReleaseTimestep message for RELEASE "
                        "PRIOR timestep %d, one to each writer\n",
                        This->MetadataMsg->Timestep);
+            pthread_mutex_unlock(&Stream->DataLock);
             sendOneToEachWriterRank(Stream,
                                     Stream->CPInfo->ReleaseTimestepFormat, &Msg,
                                     &Msg.WSR_Stream);
             CMreturn_buffer(Stream->CPInfo->cm, This->MetadataMsg);
+            pthread_mutex_lock(&Stream->DataLock);
             if (Last == NULL)
             {
                 Stream->Timesteps = Next;
