@@ -388,6 +388,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
+    printf("READER main program thread PID is %lx in reader open\n",
+           (long)getpid());
     CP_validateParams(Stream, Params, 0 /* reader */);
     Stream->ConfigParams = Params;
 
@@ -416,6 +418,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     extern int CMtrace_val[];
     int tmp = CMtrace_val[3];
     int tmp2 = CMtrace_val[5];
+    printf("READER (%p) main program thread PID is %lx in reader open\n",
+           Stream, (long)getpid());
     if (Stream->Rank == 0)
     {
         struct _CombinedWriterInfo WriterData;
@@ -832,6 +836,10 @@ void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
     //                Msg->CP_WriterInfo[i]->ContactInfo,
     //                Msg->CP_WriterInfo[i]->WriterID);
     //    }
+
+    printf("READER network handler thread PID is %lx in writer response "
+           "handler\n",
+           (long)getpid());
 
     /* arrange for this message data to stay around */
     CMtake_buffer(cm, Msg);

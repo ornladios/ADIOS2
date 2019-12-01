@@ -1155,6 +1155,8 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
+    printf("WRITER main program thread PID is %lx in writer open\n",
+           (long)getpid());
     Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams);
 
     if (!Stream->DP_Interface)
@@ -2231,6 +2233,8 @@ void CP_ReaderRegisterHandler(CManager cm, CMConnection conn, void *Msg_v,
     //    }
     Stream = Msg->WriterFile;
 
+    printf("WRITER network handler PID is %lx in reader register handler\n",
+           (long)getpid());
     /* arrange for this message data to stay around */
     CMtake_buffer(cm, Msg);
 
