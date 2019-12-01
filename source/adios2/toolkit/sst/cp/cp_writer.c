@@ -19,6 +19,7 @@
 #include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "cp_internal.h"
 
+#define gettid() pthread_self()
 extern void CP_verbose(SstStream Stream, char *Format, ...);
 
 static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
@@ -1063,7 +1064,9 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
     while (Reader->ReaderStatus != Established)
     {
         /* NEED TO HANDLE FAILURE HERE */
-        CP_verbose(Stream, "Waiting for Reader ready on WSR %p.\n", Reader);
+        CP_verbose(Stream,
+                   "(PID %lx, TID %lx) Waiting for Reader ready on WSR %p.\n",
+                   (long)getpid(), (long)gettid(), Reader);
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
     }
 
@@ -1155,8 +1158,8 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
-    printf("WRITER main program thread PID is %lx in writer open\n",
-           (long)getpid());
+    printf("WRITER main program thread PID is %lx, TID %lx in writer open\n",
+           (long)getpid(), (long)gettid());
     Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams);
 
     if (!Stream->DP_Interface)
@@ -2233,8 +2236,9 @@ void CP_ReaderRegisterHandler(CManager cm, CMConnection conn, void *Msg_v,
     //    }
     Stream = Msg->WriterFile;
 
-    printf("WRITER network handler PID is %lx in reader register handler\n",
-           (long)getpid());
+    printf("WRITER network handler PID is %lx, TID %lx in reader register "
+           "handler\n",
+           (long)getpid(), (long)gettid());
     /* arrange for this message data to stay around */
     CMtake_buffer(cm, Msg);
 

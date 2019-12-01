@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include <pthread.h>
+#include <sys/types.h>
+#define gettid() pthread_self()
 
 #ifdef USE_ZPL_ENET
 #define ENET_IMPLEMENTATION
@@ -1168,7 +1170,7 @@ INTERFACE_NAME(writev_func)(CMtrans_services svc, enet_conn_data_ptr ecd,
 	length += iov[i].iov_len;
     }
 
-    printf("(PID %lx) writev PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), ecd->peer->outgoingSessionID);
+    printf("(PID %lx, TID %lx) writev PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), (long)gettid(), ecd->peer->outgoingSessionID);
     svc->trace_out(ecd->ecd->cm, "CMENET vector write of %d bytes on peer %p",
 		   length, ecd->peer);
 
