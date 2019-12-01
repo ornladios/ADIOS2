@@ -39,7 +39,7 @@ static int locked = 0;
     locked--;                                                                  \
     pthread_mutex_unlock(lock);
 #define SST_ASSERT_LOCKED() assert(locked)
-#define SST_ASSERT_UNLOCKED() assert(!locked)
+#define SST_ASSERT_UNLOCKED() /* gotta lock to really do this */
 #else
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
     {                                                                          \
@@ -52,7 +52,7 @@ static int locked = 0;
         pthread_mutex_unlock(lock);                                            \
     }
 #define SST_ASSERT_LOCKED() assert(locked)
-#define SST_ASSERT_UNLOCKED() assert(unlocked)
+#define SST_ASSERT_UNLOCKED() /* gotta lock to really do this */
 #endif
 
 static char *buildContactInfo(SstStream Stream, attr_list DPAttrs)
