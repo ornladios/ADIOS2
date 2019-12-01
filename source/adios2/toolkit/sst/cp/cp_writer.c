@@ -1125,9 +1125,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                            "reference count = %d\n",
                            TS, List->ReferenceCount);
 
-                PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
                 SendTimestepEntryToSingleReader(Stream, List, Reader, -1);
-                PTHREAD_MUTEX_LOCK(&Stream->DataLock);
                 if (TS == Reader->StartingTimestep)
                 {
                     /* restore Msg format list */
