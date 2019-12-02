@@ -19,6 +19,9 @@
 #ifndef _WIN32
 #include "adios2/toolkit/transport/file/FilePOSIX.h"
 #endif
+#ifdef ADIOS2_HAVE_IME
+#include "adios2/toolkit/transport/file/FileIME.h"
+#endif
 
 #ifdef _WIN32
 #pragma warning(disable : 4503) // length of std::function inside std::async
@@ -384,6 +387,13 @@ TransportMan::OpenFileTransport(const std::string &fileName,
                     "ERROR: " + library +
                     " transport does not support buffered I/O.");
             }
+        }
+#endif
+#ifdef ADIOS2_HAVE_IME
+        else if (library == "IME" || library == "ime")
+        {
+            transport =
+                std::make_shared<transport::FileIME>(m_Comm, m_DebugMode);
         }
 #endif
         else if (library == "NULL" || library == "null")
