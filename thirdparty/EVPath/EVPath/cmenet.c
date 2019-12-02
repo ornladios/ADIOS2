@@ -342,6 +342,9 @@ enet_service_network(CManager cm, void *void_trans)
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
             event.peer->data = enet_connection_data;
 	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
+//            IntENET_lock(ecd, NULL, 0);
+//            enet_host_flush(ecd->server);
+//            IntENET_unlock(ecd, NULL, 0);
             break;
 	}
         case ENET_EVENT_TYPE_RECEIVE: {
@@ -526,6 +529,9 @@ enet_accept_conn(enet_client_data_ptr ecd, transport_entry trans,
      * try flushing connection verify message here to make 
      * sure it's established 
      */
+//    ENETlock(ecd);
+//    enet_host_flush(ecd->server);
+//    ENETunlock(ecd);
 
     return enet_conn_data;
 }
@@ -676,6 +682,7 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
        exit (EXIT_FAILURE);
     }
     
+    enet_peer_timeout(peer, 0, 0, 5000);
     ENETunlock(ecd);
     peer->data = enet_conn_data;
     enet_conn_data->remote_host = host_name == NULL ? NULL : strdup(host_name);
@@ -760,7 +767,6 @@ INTERFACE_NAME(finalize_conn_nonblocking)(CManager cm, CMtrans_services svc,
         return NULL;
     }
 
-    enet_peer_timeout(enet_conn_data->peer, 0, 0, 5000);
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
 	     (attr_value) (long)final_conn_data->remote_contact_port);
     conn = svc->connection_create(trans, final_conn_data, conn_attr_list);
