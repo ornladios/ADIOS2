@@ -1163,7 +1163,7 @@ INTERFACE_NAME(writev_func)(CMtrans_services svc, enet_conn_data_ptr ecd,
 {
     int i;
     int length = 0;
-    static time_t last_flush_call = 0;
+//    static time_t last_flush_call = 0;
 
     (void) attrs;
     for (i = 0; i < iovcnt; i++) {
