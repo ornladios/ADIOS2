@@ -1870,7 +1870,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         size_t dataLength;
 
         if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
-            printf("command handle send_reliable ERROR channelID %d vs %zu, or peer state %d bad\n", command->header.channelID, peer->channelCount, peer->state);
+            printf("(PID %lx) command handle send_reliable ERROR channelID %d vs %zu, or peer state %d bad\n", (long)getpid(), command->header.channelID, peer->channelCount, peer->state);
             return -1;
         }
 
