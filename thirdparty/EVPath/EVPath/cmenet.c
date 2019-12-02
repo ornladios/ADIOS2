@@ -1201,18 +1201,18 @@ INTERFACE_NAME(writev_func)(CMtrans_services svc, enet_conn_data_ptr ecd,
 
     wake_enet_server_thread(ecd->ecd);
 
-    ENETlock(ecd->ecd);
-    if (last_flush_call == 0) {
-	enet_host_flush(ecd->ecd->server);
-	last_flush_call = time(NULL);
-    } else {
-	time_t now = time(NULL);
-	if (now > last_flush_call) {
-	    last_flush_call = now;
-	    enet_host_flush(ecd->ecd->server);
-	}
-    }
-    ENETunlock(ecd->ecd);
+    /* ENETlock(ecd->ecd); */
+    /* if (last_flush_call == 0) { */
+    /*     enet_host_flush(ecd->ecd->server); */
+    /*     last_flush_call = time(NULL); */
+    /* } else { */
+    /*     time_t now = time(NULL); */
+    /*     if (now > last_flush_call) { */
+    /*         last_flush_call = now; */
+    /*         enet_host_flush(ecd->ecd->server); */
+    /*     } */
+    /* } */
+    /* ENETunlock(ecd->ecd); */
     return iovcnt;
 }
 
