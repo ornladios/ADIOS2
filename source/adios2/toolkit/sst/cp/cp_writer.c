@@ -31,12 +31,14 @@ static int locked = 0;
 #define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
-    printf("(PID %ld) Trying lock line %d\n", (long)getpid(), __LINE__);       \
+    printf("(PID %lx, TID %lx) CP_WRITER Trying lock line %d\n",               \
+           (long)getpid(), (long)gettid(), __LINE__);                          \
     pthread_mutex_lock(lock);                                                  \
     locked++;                                                                  \
-    printf("(PID %ld) Got lock\n", (long)getpid());
+    printf("(PID %lx) Got lock\n", (long)getpid());
 #define PTHREAD_MUTEX_UNLOCK(lock)                                             \
-    printf("(PID %ld) UNlocking line %d\n", (long)getpid(), __LINE__);         \
+    printf("(PID %lx, TID %lx) CP_WRITER UNlocking line %d\n", (long)getpid(), \
+           (long)gettid(), __LINE__);                                          \
     locked--;                                                                  \
     pthread_mutex_unlock(lock);
 #define SST_ASSERT_LOCKED() assert(locked)

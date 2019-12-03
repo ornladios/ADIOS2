@@ -173,7 +173,7 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
 static void
 IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 {
-    if (file) printf("(PID %lx) Trying ENET Lock at %s, line %d\n", (long) getpid(), file, line);
+    if (file) printf("(PID %lx, TID %lx) Trying ENET Lock at %s, line %d\n", (long) getpid(), (long)gettid(), file, line);
     pthread_mutex_lock(&ecd->enet_lock);
     if (file) printf("GOT ENET Lock at %s, line %d\n", file, line);
     ecd->enet_locked++;
@@ -182,7 +182,7 @@ IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 static void
 IntENET_unlock(enet_client_data_ptr ecd, char *file, int line)
 {
-    if (file) printf("(PID %lx) ENET Unlock at %s, line %d\n", (long) getpid(), file, line);
+    if (file) printf("(PID %lx, TID %lx) ENET Unlock at %s, line %d\n", (long) getpid(), (long) gettid(), file, line);
     ecd->enet_locked--;
     pthread_mutex_unlock(&ecd->enet_lock);
 }
@@ -336,7 +336,7 @@ enet_service_network(CManager cm, void *void_trans)
             }
 #endif            
 	    enet_connection_data = enet_accept_conn(ecd, trans, &event.peer->address);
-            printf("(PID %lx) ACCEPTED CONNECTION, NEW PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), event.peer->outgoingSessionID);
+            printf("(PID %lx, TID %lx) ACCEPTED CONNECTION, NEW PEER HAS OUTGOING SESSION ID %d\n", (long)getpid(), (long)getpid(), event.peer->outgoingSessionID);
 
             /* Store any relevant client information here. */
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
@@ -644,7 +644,7 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 	svc->trace_out(cm, "Attempting ENET RUDP connection, USING IP = %s, port %d",
 		       inet_ntoa(sin_addr),
 		       int_port_num);
-        printf("(PID %ld) CALLING ENET_HOST_CONNECT on ADDRESS %s, port %d\n", (long)getpid(), inet_ntoa(sin_addr), int_port_num);
+        printf("(PID %lx, TID %lx) CALLING ENET_HOST_CONNECT on ADDRESS %s, port %d\n", (long)getpid(), (long)gettid(), inet_ntoa(sin_addr), int_port_num);
 #else
         char straddr[INET6_ADDRSTRLEN];
         ((enet_uint32 *)&host_ipv6.s6_addr)[0] = 0;
@@ -653,7 +653,7 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         ((enet_uint32 *)&host_ipv6.s6_addr)[3] = htonl(host_ip);
         inet_ntop(AF_INET6, &host_ipv6, straddr,
                   sizeof(straddr));
-        printf("(PID %ld) CALLING ENET_HOST_CONNECT on ADDRESS %s, port %d\n", (long)getpid(), straddr, int_port_num);
+        printf("(PID %lx, TID %lx) CALLING ENET_HOST_CONNECT on ADDRESS %s, port %d\n", (long)getpid(), (long)gettid(), straddr, int_port_num);
 
 	svc->trace_out(cm, "Attempting ENET RUDP connection, USING host=\"%s\", IP = %s, port %d",
 		       host_name == 0 ? "(unknown)" : host_name, 

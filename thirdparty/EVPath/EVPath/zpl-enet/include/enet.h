@@ -1518,7 +1518,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                     event->type = ENET_EVENT_TYPE_CONNECT;
                     event->peer = peer;
                     event->data = peer->eventData;
-                    printf("(PID %ld) returning event CONNECT because connection succeeded\n", (long) getpid());
+                    printf("(PID %lx, TID %lx) returning event CONNECT because connection succeeded\n", (long) getpid(), (long) gettid());
                     return 1;
 
                 case ENET_PEER_STATE_ZOMBIE:
@@ -1574,7 +1574,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
             event->type = ENET_EVENT_TYPE_CONNECT;
             event->peer = peer;
             event->data = peer->eventData;
-            printf("(PID %ld) returning event CONNECT in protocol_notify_connect\n", (long) getpid());
+            printf("(PID %lx, TID %lx) returning event CONNECT in protocol_notify_connect\n", (long) getpid(), (long)gettid());
         } else {
             enet_protocol_dispatch_state(host, peer, peer->state == ENET_PEER_STATE_CONNECTING ? ENET_PEER_STATE_CONNECTION_SUCCEEDED : ENET_PEER_STATE_CONNECTION_PENDING);
         }
@@ -1738,7 +1738,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         for (currentPeer = host->peers; currentPeer < &host->peers[host->peerCount]; ++currentPeer) {
             if (currentPeer->state == ENET_PEER_STATE_DISCONNECTED) {
                 if (peer == NULL) {
-                    printf("(PID %lx) maybe REUSING PEER %p, current state DISCONNECTED \n", (long)getpid(), currentPeer);
+                    printf("(PID %lx, TID %lx) maybe REUSING PEER %p, current state DISCONNECTED \n", (long)getpid(), (long)gettid(), currentPeer);
                     peer = currentPeer;
                 }
             } else if (currentPeer->state != ENET_PEER_STATE_CONNECTING && in6_equal(currentPeer->address.host, host->receivedAddress.host)) {
@@ -1772,7 +1772,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         peer->packetThrottleDeceleration = ENET_NET_TO_HOST_32(command->connect.packetThrottleDeceleration);
         peer->eventData                  = ENET_NET_TO_HOST_32(command->connect.data);
 
-        printf("(PID %lx) command connect session ID = %d, peer->outgoingSessionID %d\n", (long)getpid(),
+        printf("(PID %lx, TID %lx) command connect session ID = %d, peer->outgoingSessionID %d\n", (long)getpid(), (long)gettid(),
                command->connect.incomingSessionID, peer->outgoingSessionID);
         incomingSessionID = command->connect.incomingSessionID == 0xFF ? peer->outgoingSessionID : command->connect.incomingSessionID;
         incomingSessionID = (incomingSessionID + 1) & (ENET_PROTOCOL_HEADER_SESSION_MASK >> ENET_PROTOCOL_HEADER_SESSION_SHIFT);
@@ -1791,7 +1791,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
               & (ENET_PROTOCOL_HEADER_SESSION_MASK >> ENET_PROTOCOL_HEADER_SESSION_SHIFT);
         }
         peer->incomingSessionID = outgoingSessionID;
-        printf("(PID %ld) SETTING INCOMING SESSION ID IN HANDLE Connect ID=%d\n", (long) getpid(), peer->incomingSessionID);
+        printf("(PID %lx, TID %lx) SETTING INCOMING SESSION ID IN HANDLE Connect ID=%d\n", (long) getpid(), (long)gettid(), peer->incomingSessionID);
 
         for (channel = peer->channels; channel < &peer->channels[channelCount]; ++channel) {
             channel->outgoingReliableSequenceNumber   = 0;
@@ -1846,7 +1846,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
             windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE;
         }
 
-        printf("(PID %lx) sending verify connect command incomingSessionID %d, outgoingSessionID %d \n", (long)getpid(), incomingSessionID, outgoingSessionID);
+        printf("(PID %lx, TID %lx) sending verify connect command incomingSessionID %d, outgoingSessionID %d \n", (long)getpid(), (long)gettid(), incomingSessionID, outgoingSessionID);
         verifyCommand.header.command                            = ENET_PROTOCOL_COMMAND_VERIFY_CONNECT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
         verifyCommand.header.channelID                          = 0xFF;
         verifyCommand.verifyConnect.outgoingPeerID              = ENET_HOST_TO_NET_16(peer->incomingPeerID);
@@ -2376,9 +2376,9 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
 
         peer->outgoingPeerID    = ENET_NET_TO_HOST_16(command->verifyConnect.outgoingPeerID);
         peer->incomingSessionID = command->verifyConnect.incomingSessionID;
-        printf("(PID %ld) SETTING INCOMING SESSION ID IN Verify Connect ID=%d\n", (long) getpid(), peer->incomingSessionID);
+        printf("(PID %lx, TID %lx) SETTING INCOMING SESSION ID IN Verify Connect ID=%d\n", (long) getpid(), (long) gettid(), peer->incomingSessionID);
         peer->outgoingSessionID = command->verifyConnect.outgoingSessionID;
-        printf("(PID %ld) SETTING OUTGOING SESSION ID IN peer %p Verify Connect ID=%d\n", (long) getpid(), peer, peer->outgoingSessionID);
+        printf("(PID %lx, TID %lx) SETTING OUTGOING SESSION ID IN peer %p Verify Connect ID=%d\n", (long) getpid(), (long) gettid(), peer, peer->outgoingSessionID);
 
         mtu = ENET_NET_TO_HOST_32(command->verifyConnect.mtu);
 
@@ -2453,7 +2453,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                 (peer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID &&
                 sessionID != peer->incomingSessionID)
             ) {
-                printf("(PID %ld) INCOMING COMMAND DISCARDED PEER ID %d, Condition 1, peer->state %d, eq %d, outgoing peer ID %d, session ID %d, incoming sesID %d\n", (long) getpid(), peerID, peer->state, in6_equal(host->receivedAddress.host , peer->address.host), peer->outgoingPeerID, sessionID, peer->incomingSessionID);
+                printf("(PID %lx, TID %lx) INCOMING COMMAND DISCARDED PEER ID %d, Condition 1, peer->state %d, eq %d, outgoing peer ID %d, session ID %d, incoming sesID %d\n", (long) getpid(), (long)gettid(), peerID, peer->state, in6_equal(host->receivedAddress.host , peer->address.host), peer->outgoingPeerID, sessionID, peer->incomingSessionID);
                 currentData = host->receivedData + headerSize;
 
                 command = (ENetProtocol *) currentData;
@@ -4561,7 +4561,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         currentPeer->state        = ENET_PEER_STATE_CONNECTING;
         currentPeer->address      = *address;
         currentPeer->connectID    = ++host->randomSeed;
-        printf("(PID %lx) In enet_host connect, connect ID is %d, host->randomSeed is %x\n", (long)getpid(), currentPeer->connectID, host->randomSeed);
+        printf("(PID %lx, TID %lx) In enet_host connect, connect ID is %d, host->randomSeed is %x\n", (long)getpid(), (long)gettid(), currentPeer->connectID, host->randomSeed);
 
         if (host->outgoingBandwidth == 0) {
             currentPeer->windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE;
@@ -4608,7 +4608,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
             char straddr[INET6_ADDRSTRLEN];
             inet_ntop(AF_INET6, &address->host, straddr, sizeof(straddr));
 
-            printf("(PID %ld)  Sending command connect, command acknowledge to peer %s, port %d, session id %d\n", (long)getpid(), straddr,
+            printf("(PID %lx, TID %lx)  Sending command connect, command acknowledge to peer %s, port %d, session id %d\n", (long)getpid(), (long)gettid(), straddr,
                    address->port, currentPeer->outgoingSessionID);
         }
 

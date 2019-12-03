@@ -21,15 +21,18 @@
 #include "cp_internal.h"
 
 static int locked = 0;
+#define gettid() pthread_self()
 #define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
-    printf("(PID %ld) Trying lock line %d\n", (long)getpid(), __LINE__);       \
+    printf("(PID %lx, TID %lx) CP_READER Trying lock line %d\n",               \
+           (long)getpid(), (long)gettid(), __LINE__);                          \
     pthread_mutex_lock(lock);                                                  \
     locked++;                                                                  \
-    printf("(PID %ld) Got lock\n", (long)getpid());
+    printf("(PID %lx) CP_READER Got lock\n", (long)getpid());
 #define PTHREAD_MUTEX_UNLOCK(lock)                                             \
-    printf("(PID %ld) UNlocking line %d\n", (long)getpid(), __LINE__);         \
+    printf("(PID %lx, TID %lx) CP_READER UNlocking line %d\n", (long)getpid(), \
+           (long)gettid(), __LINE__);                                          \
     locked--;                                                                  \
     pthread_mutex_unlock(lock);
 #define SST_ASSERT_LOCKED() assert(locked)
@@ -274,8 +277,9 @@ static int HasAllPeers(SstStream Stream)
     int i, StillWaiting = 0;
     if (!Stream->ConnectionsToWriter)
     {
-        CP_verbose(Stream, "(PID %lx) Waiting for first Peer notification\n",
-                   (long)getpid());
+        CP_verbose(Stream,
+                   "(PID %lx, TID %lx) Waiting for first Peer notification\n",
+                   (long)gettid(), (long)getpid());
         return 0;
     }
     i = 0;
@@ -388,8 +392,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
-    printf("READER main program thread PID is %lx in reader open\n",
-           (long)getpid());
+    printf("READER main program thread PID %lx, TID %lx in reader open\n",
+           (long)gettid(), (long)getpid());
     CP_validateParams(Stream, Params, 0 /* reader */);
     Stream->ConfigParams = Params;
 
@@ -418,8 +422,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     extern int CMtrace_val[];
     int tmp = CMtrace_val[3];
     int tmp2 = CMtrace_val[5];
-    printf("READER (%p) main program thread PID is %lx in reader open\n",
-           Stream, (long)getpid());
+    printf("READER (%p) main program thread PID %lx, TID %lx in reader open\n",
+           Stream, (long)gettid(), (long)getpid());
     if (Stream->Rank == 0)
     {
         struct _CombinedWriterInfo WriterData;
@@ -837,9 +841,9 @@ void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
     //                Msg->CP_WriterInfo[i]->WriterID);
     //    }
 
-    printf("READER network handler thread PID is %lx in writer response "
+    printf("READER network handler thread PID %lx, TID %lx in writer response "
            "handler\n",
-           (long)getpid());
+           (long)gettid(), (long)getpid());
 
     /* arrange for this message data to stay around */
     CMtake_buffer(cm, Msg);
@@ -1220,7 +1224,8 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         CP_verbose(Stream,
                    "Waiting for metadata for a Timestep later than TS %d\n",
                    LastTimestep);
-        CP_verbose(Stream, "(PID %x) Stream status is %s\n", getpid(),
+        CP_verbose(Stream, "(PID %lx, TID %lx) Stream status is %s\n",
+                   (long)getpid(), (long)gettid(),
                    SSTStreamStatusStr[Stream->Status]);
         /* wait until we get the timestep metadata or something else changes */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
