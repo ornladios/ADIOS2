@@ -724,6 +724,8 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
                        "ignoring in PRIOR DISCARD\n",
                        tsm->Timestep);
         }
+        if (tsm == NULL)
+            printf("READER RETURN_BUFFER, tsm == %p, line %d\n", tsm, __LINE__);
         CMreturn_buffer(Stream->CPInfo->cm, tsm);
         return;
     }
@@ -1074,13 +1076,7 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
                        "Sending ReleaseTimestep message for RELEASE "
                        "PRIOR timestep %d, one to each writer\n",
                        This->MetadataMsg->Timestep);
-            PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
-            SST_ASSERT_UNLOCKED();
-            sendOneToEachWriterRank(Stream,
-                                    Stream->CPInfo->ReleaseTimestepFormat, &Msg,
-                                    &Msg.WSR_Stream);
-            CMreturn_buffer(Stream->CPInfo->cm, This->MetadataMsg);
-            PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+
             if (Last == NULL)
             {
                 Stream->Timesteps = Next;
@@ -1090,6 +1086,16 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
                 Last->Next = Next;
             }
             free(This);
+            PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+            SST_ASSERT_UNLOCKED();
+            sendOneToEachWriterRank(Stream,
+                                    Stream->CPInfo->ReleaseTimestepFormat, &Msg,
+                                    &Msg.WSR_Stream);
+            if (This->MetadataMsg == NULL)
+                printf("READER RETURN_BUFFER, metadatamsg == %p, line %d\n",
+                       This->MetadataMsg, __LINE__);
+            CMreturn_buffer(Stream->CPInfo->cm, This->MetadataMsg);
+            PTHREAD_MUTEX_LOCK(&Stream->DataLock);
         }
         else
         {
@@ -1107,9 +1113,13 @@ static void FreeTimestep(SstStream Stream, long Timestep)
      */
     struct _TimestepMetadataList *List = Stream->Timesteps;
 
+    SST_ASSERT_LOCKED();
     if (Stream->Timesteps->MetadataMsg->Timestep == Timestep)
     {
         Stream->Timesteps = List->Next;
+        if (List->MetadataMsg == NULL)
+            printf("READER RETURN_BUFFER, List->MEtadataMsg == %p, line %d\n",
+                   List->MetadataMsg, __LINE__);
         CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
         free(List);
     }
@@ -1122,6 +1132,10 @@ static void FreeTimestep(SstStream Stream, long Timestep)
             if (List->MetadataMsg->Timestep == Timestep)
             {
                 last->Next = List->Next;
+                if (List->MetadataMsg == NULL)
+                    printf("READER RETURN_BUFFER, List->MEtadataMsg == %p, "
+                           "line %d\n",
+                           List->MetadataMsg, __LINE__);
                 CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
                 free(List);
                 break;
