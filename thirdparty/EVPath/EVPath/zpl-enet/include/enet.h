@@ -1518,6 +1518,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                     event->type = ENET_EVENT_TYPE_CONNECT;
                     event->peer = peer;
                     event->data = peer->eventData;
+
                     return 1;
 
                 case ENET_PEER_STATE_ZOMBIE:
@@ -1741,6 +1742,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                 if (currentPeer->address.port == host->receivedAddress.port && currentPeer->connectID == command->connect.connectID) {
                     return NULL;
                 }
+
                 ++duplicatePeers;
             }
         }
@@ -1867,12 +1869,10 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         *currentData += dataLength;
 
         if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength]) {
-            printf("command handle send_reliable ERROR Data length thing %zu vs max %zu\n", dataLength, host->maximumPacketSize);
             return -1;
         }
 
         if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8 *) command + sizeof(ENetProtocolSendReliable), dataLength, ENET_PACKET_FLAG_RELIABLE, 0) == NULL) {
-            printf("command handle send_reliable ERROR QUEUEING\n");
             return -1;
         }
 
@@ -2441,6 +2441,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                 sessionID != peer->incomingSessionID)
             ) {
                 currentData = host->receivedData + headerSize;
+                printf("============================= POSSIBLE SESSION ID DISCARD, %d, %d\n", sessionID, peer->incomingSessionID);
 
                 command = (ENetProtocol *) currentData;
 
@@ -2454,7 +2455,6 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         if (flags & ENET_PROTOCOL_HEADER_FLAG_COMPRESSED) {
             size_t originalSize;
             if (host->compressor.context == NULL || host->compressor.decompress == NULL) {
-                printf("INCOMING COMMAND DISCARDED PEER ID %d, Condition 2\n", peerID);
                 return 0;
             }
 
@@ -2466,7 +2466,6 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
             );
 
             if (originalSize <= 0 || originalSize > sizeof(host->packetData[1]) - headerSize) {
-                printf("INCOMING COMMAND DISCARDED PEER ID %d, Condition 3\n", peerID);
                 return 0;
             }
 
@@ -2486,7 +2485,6 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
             buffer.dataLength = host->receivedDataLength;
 
             if (host->checksum(&buffer, 1) != desiredChecksum) {
-                printf("INCOMING COMMAND DISCARDED PEER ID %d, Condition 4\n", peerID);
                 return 0;
             }
         }
@@ -2531,89 +2529,76 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
             switch (commandNumber) {
                 case ENET_PROTOCOL_COMMAND_ACKNOWLEDGE:
                     if (enet_protocol_handle_acknowledge(host, event, peer, command)) {
-                        printf("handle acknowlege error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_CONNECT:
                     if (peer != NULL) {
-                        printf("command connect error 1 Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     peer = enet_protocol_handle_connect(host, header, command);
                     if (peer == NULL) {
-                        printf("command connect error 2 Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_VERIFY_CONNECT:
                     if (enet_protocol_handle_verify_connect(host, event, peer, command)) {
-                        printf("command handle verify error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_DISCONNECT:
                     if (enet_protocol_handle_disconnect(host, peer, command)) {
-                        printf("command handle disconnect error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_PING:
                     if (enet_protocol_handle_ping(host, peer, command)) {
-                        printf("command handle ping error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
                     if (enet_protocol_handle_send_reliable(host, peer, command, &currentData)) {
-                        printf("command handle send_reliable error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE:
                     if (enet_protocol_handle_send_unreliable(host, peer, command, &currentData)) {
-                        printf("command handle send_unreliable error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED:
                     if (enet_protocol_handle_send_unsequenced(host, peer, command, &currentData)) {
-                        printf("command handle send_unsequenced error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
                     if (enet_protocol_handle_send_fragment(host, peer, command, &currentData)) {
-                        printf("command handle send_fragment error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT:
                     if (enet_protocol_handle_bandwidth_limit(host, peer, command)) {
-                        printf("command handle bandedth limit error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE:
                     if (enet_protocol_handle_throttle_configure(host, peer, command)) {
-                        printf("command handle throttle conf error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
 
                 case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT:
                     if (enet_protocol_handle_send_unreliable_fragment(host, peer, command, &currentData)) {
-                        printf("command handl ssend_unreliable_fragment error Peer ID %d\n", peerID);
                         goto commandError;
                     }
                     break;
@@ -5000,7 +4985,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
     void enet_deinitialize(void) {}
 
     enet_uint64 enet_host_random_seed(void) {
-        return (enet_uint64) time(NULL) + (int) getpid();
+        return (enet_uint64) time(NULL);
     }
 
     int enet_address_set_host_ip(ENetAddress *address, const char *name) {
