@@ -482,7 +482,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
     static int first_call = 1;
     static char determined_hostname[HOST_NAME_MAX+1];
     static int determined_IP = -1;
-    static int port_range_low = 26000, port_range_high = 26100;
+    static int port_range_low = 26000, port_range_high = 36000;
     static int use_hostname = 0;
     char hostname_to_use[HOST_NAME_MAX+1];
     int IP_to_use;
