@@ -2440,14 +2440,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                 (peer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID &&
                 sessionID != peer->incomingSessionID)
             ) {
-                currentData = host->receivedData + headerSize;
                 printf("============================= POSSIBLE SESSION ID DISCARD, %d, %d\n", sessionID, peer->incomingSessionID);
-
-                command = (ENetProtocol *) currentData;
-
-                enet_uint8 commandNumber;
-                commandNumber = command->header.command & ENET_PROTOCOL_COMMAND_MASK;
-
                 return 0;
             }
         }
