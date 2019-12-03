@@ -1870,7 +1870,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         size_t dataLength;
 
         if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
-            printf("(PID %lx) command handle send_reliable ERROR channelID %d vs %zu, or peer state %d bad\n", (long)getpid(), command->header.channelID, peer->channelCount, peer->state);
+            printf("(PID %lx, TID %lx) command handle send_reliable ERROR channelID %d vs %zu, or peer state %d bad\n", (long)getpid(), (long)gettid(), command->header.channelID, peer->channelCount, peer->state);
             return -1;
         }
 
@@ -2378,7 +2378,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
         peer->incomingSessionID = command->verifyConnect.incomingSessionID;
         printf("(PID %ld) SETTING INCOMING SESSION ID IN Verify Connect ID=%d\n", (long) getpid(), peer->incomingSessionID);
         peer->outgoingSessionID = command->verifyConnect.outgoingSessionID;
-        printf("(PID %ld) SETTING OUTGOING SESSION ID IN Verify Connect ID=%d\n", (long) getpid(), peer->outgoingSessionID);
+        printf("(PID %ld) SETTING OUTGOING SESSION ID IN peer %p Verify Connect ID=%d\n", (long) getpid(), peer, peer->outgoingSessionID);
 
         mtu = ENET_NET_TO_HOST_32(command->verifyConnect.mtu);
 
@@ -3156,7 +3156,7 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                     printf("(PID %lx) headerFlags now %x\n", (long) getpid(), host->headerFlags);
                 if (currentPeer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID) {
                     if (currentPeer->outgoingPeerID)
-                        printf("(PID %lx) mixing in outgoing session ID %d\n", (long) getpid(), currentPeer->outgoingSessionID);
+                        printf("(PID %lx) peer %p mixing in outgoing session ID %d\n", (long) getpid(), currentPeer, currentPeer->outgoingSessionID);
                     host->headerFlags |= currentPeer->outgoingSessionID << ENET_PROTOCOL_HEADER_SESSION_SHIFT;
                     if (currentPeer->outgoingPeerID)
                         printf("(PID %lx) headerFlags now %x\n", (long) getpid(), host->headerFlags);
