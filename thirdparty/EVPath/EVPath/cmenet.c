@@ -340,6 +340,7 @@ enet_service_network(CManager cm, void *void_trans)
 
             /* Store any relevant client information here. */
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
+            enet_peer_timeout(peer, 0, 0, 50);
             event.peer->data = enet_connection_data;
 	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
 //            IntENET_lock(ecd, NULL, 0);
