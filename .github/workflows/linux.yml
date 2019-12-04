@@ -1,0 +1,61 @@
+name: Linux
+
+on:
+  push:
+    branches:
+    - master
+    - release*
+  pull_request:
+    branches:
+    - master
+    - release*
+    paths-ignore:
+    - 'doc/*'
+
+jobs:
+  linux:
+    strategy:
+      matrix:
+        name: [
+          el7,
+          el7_gnu8_ohpc,
+          el7_gnu8_openmpi_ohpc,
+          el7_gnu8_openmpi_ohpc_static,
+          el7_intel18_ohpc,
+          el7_intel18_openmpi_ohpc,
+          suse_pgi,
+          suse_pgi_openmpi ]
+#        include:
+#        - name: el7
+#          image: ornladios/adios2-auto:el7
+#        - name: el7_gnu8_ohpc
+#          image: ornladios/adios2-auto:el7-gnu8-ohpc
+#        - name: el7_gnu8_openmpi_ohpc
+#          image: ornladios/adios2-auto:el7-gnu8-openmpi-ohpc
+#        - name: el7_gnu8_openmpi_ohpc_static
+#          image: ornladios/adios2-auto:el7-gnu8-openmpi-ohpc
+#        - name: el7_intel18_ohpc
+#          image: ornladios/adios2-auto:el7-intel18-ohpc
+#        - name: el7_intel18_openmpi_ohpc
+#          image: ornladios/adios2-auto:el7-intel18-openmpi-ohpc
+#        - name: suse_pgi
+#          image: ornladios/adios2-auto:suse-pgi
+#        - name: suse_pgi_openmpi
+#          image: ornladios/adios2-auto:suse-pgi-openmpi
+
+    runs-on: ubuntu-latest
+#    container:
+#      image: ${{matrix.image}}
+
+    steps:
+      - uses: actions/checkout@v1
+      - bash: scripts/ci/azure/Linux-setup.sh
+        name: Setup
+      - bash: scripts/ci/azure/run.sh update
+        name: Update
+      - bash: scripts/ci/azure/run.sh configure
+        name: Configure
+      - bash: scripts/ci/azure/run.sh build
+        name: Build
+      - bash: scripts/ci/azure/run.sh test
+        name: Test
