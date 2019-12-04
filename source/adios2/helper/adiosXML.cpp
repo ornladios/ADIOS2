@@ -304,6 +304,15 @@ void ParseConfigXML(
             currentIO.SetParameters(parameters);
         }
 
+        for (const pugi::xml_node &transport : io.children("transport"))
+        {
+            const pugi::xml_attribute type = helper::XMLAttribute(
+                "type", transport, adios.m_DebugMode, hint);
+
+            const Params parameters = lf_GetParametersXML(transport);
+            currentIO.AddTransport(type.value(), parameters);
+        }
+
         for (const pugi::xml_node &variable : io.children("variable"))
         {
             lf_IOVariableXML(variable, currentIO);
