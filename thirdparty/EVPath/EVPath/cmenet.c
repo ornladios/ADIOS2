@@ -682,7 +682,7 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
        exit (EXIT_FAILURE);
     }
     
-    enet_peer_timeout(peer, 0, 0, 5000);
+    enet_peer_timeout(peer, 0, 0, 50);
     ENETunlock(ecd);
     peer->data = enet_conn_data;
     enet_conn_data->remote_host = host_name == NULL ? NULL : strdup(host_name);
