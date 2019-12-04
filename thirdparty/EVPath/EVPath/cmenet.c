@@ -340,7 +340,7 @@ enet_service_network(CManager cm, void *void_trans)
 
             /* Store any relevant client information here. */
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
-            enet_peer_timeout(event.peer, 0, 0, 50);
+            enet_peer_timeout(event.peer, 0, 0, 200);
             event.peer->data = enet_connection_data;
 	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
 //            IntENET_lock(ecd, NULL, 0);
@@ -374,12 +374,13 @@ enet_service_network(CManager cm, void *void_trans)
 #endif
         case ENET_EVENT_TYPE_DISCONNECT: {
 	    enet_conn_data_ptr enet_conn_data = (enet_conn_data_ptr) event.peer->data;
-	    svc->trace_out(cm, "Got a disconnect on connection %p\n",
-		event.peer->data);
+	    svc->trace_out(cm, "Got a disconnect on connection %p\n", event.peer->data);
 
             enet_conn_data = (enet_conn_data_ptr) event.peer->data;
 	    enet_conn_data->read_buffer_len = -1;
-            svc->connection_fail(enet_conn_data->conn);
+            if (enet_conn_data->conn) {
+                svc->connection_fail(enet_conn_data->conn);
+            }
             break;
         }
         default:
@@ -569,7 +570,7 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 #endif
     struct in_addr sin_addr;
     (void)conn_attr_list;
-    int timeout = 5000;   /* connection time out default 5 seconds */
+    int timeout = 200;
 
     if (!(CM_LOCKED(svc, ecd->cm))) {
 	printf("Enet service network, CManager not locked in enet_initiate_conn\n");
@@ -683,7 +684,7 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
        exit (EXIT_FAILURE);
     }
     
-    enet_peer_timeout(peer, 0, 0, 50);
+    enet_peer_timeout(peer, 0, 0, 200);
     ENETunlock(ecd);
     peer->data = enet_conn_data;
     enet_conn_data->remote_host = host_name == NULL ? NULL : strdup(host_name);
@@ -1016,7 +1017,31 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
 	    return NULL;
 	}
     }
-    if (port_num != 0) {
+    attr_port_num = -1;
+    if (attr_port_num == -1) {
+	/* Bind the server to the default localhost.     */
+	/* A specific host address can be specified by   */
+	/* enet_address_set_host (& address, "x.x.x.x"); */
+
+	address.port = 0;
+
+	svc->trace_out(cm, "CMEnet trying to bind selected port %d", port_num);
+        ENETlock(ecd);
+	server = enet_host_create (& address /* the address to bind the server host to */, 
+                                   MAX_CLIENTS,     /* max 4095 connections */
+				   1      /* allow up to 2 channels to be used, 0 and 1 */,
+				   0      /* assume any amount of incoming bandwidth */,
+				   0      /* assume any amount of outgoing bandwidth */);
+        address.port = server->address.port;
+        printf("LISTENING ON PORT %d\n", address.port);
+        ENETunlock(ecd);
+	if (server == NULL) {
+	    fprintf (stderr, 
+		     "An error occurred while trying to create an ENet server host.\n");
+	    return NULL;
+	}
+	ecd->server = server;
+    }  else if (port_num != 0) {
 	/* Bind the server to the default localhost.     */
 	/* A specific host address can be specified by   */
 	/* enet_address_set_host (& address, "x.x.x.x"); */
