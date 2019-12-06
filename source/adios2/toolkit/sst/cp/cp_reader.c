@@ -22,7 +22,6 @@
 
 static int locked = 0;
 #define gettid() pthread_self()
-#define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
     printf("(PID %lx, TID %lx) CP_READER Trying lock line %d\n",               \
