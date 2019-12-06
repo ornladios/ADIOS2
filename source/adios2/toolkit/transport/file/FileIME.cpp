@@ -232,7 +232,10 @@ size_t FileIME::GetSize()
     return static_cast<size_t>(fileStat.st_size);
 }
 
-void FileIME::Flush() {}
+void FileIME::Flush() {
+    ime_client_native2_fsync(m_FileDescriptor);
+    ime_client_native2_bfs_sync(m_FileDescriptor, true);
+}
 
 void FileIME::Close()
 {
