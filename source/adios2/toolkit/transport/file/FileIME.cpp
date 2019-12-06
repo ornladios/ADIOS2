@@ -28,10 +28,17 @@ namespace adios2
 namespace transport
 {
 
+std::atomic_uint FileIME::client_refcount = 0;
+
 FileIME::FileIME(helper::Comm const &comm, const bool debugMode)
 : Transport("File", "IME", comm, debugMode)
 {
-    ime_client_native2_init();
+    if (!client_refcount)
+    {
+        ime_client_native2_init();
+    }
+
+    client_refcount++;
 }
 
 FileIME::~FileIME()
@@ -39,11 +46,16 @@ FileIME::~FileIME()
     if (m_IsOpen)
     {
         ime_client_native2_fsync(m_FileDescriptor);
-        ime_client_native2_bfs_sync(m_FileDescriptor, false);
+        ime_client_native2_bfs_sync(m_FileDescriptor, true);
         ime_client_native2_close(m_FileDescriptor);
     }
 
-   ime_client_native2_finalize();
+    client_refcount--;
+
+    if (client_refcount)
+    {
+        ime_client_native2_finalize();
+    }
 }
 
 void FileIME::Open(const std::string &name, const Mode openMode)
@@ -226,7 +238,7 @@ void FileIME::Close()
 {
     ProfilerStart("close");
     ime_client_native2_fsync(m_FileDescriptor);
-    ime_client_native2_bfs_sync(m_FileDescriptor, false);
+    ime_client_native2_bfs_sync(m_FileDescriptor, true);
     const int status = ime_client_native2_close(m_FileDescriptor);
     ProfilerStop("close");
 

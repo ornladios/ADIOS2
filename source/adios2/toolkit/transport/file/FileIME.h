@@ -11,6 +11,8 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_IME_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_FILE_IME_H_
 
+#include <atomic>
+
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
 
@@ -58,6 +60,9 @@ private:
      * @param hint exception message
      */
     void CheckFile(const std::string hint) const;
+
+    /** Number of existing FileIME instances */
+    static std::atomic_uint client_refcount;
 };
 
 } // end namespace transport
