@@ -753,8 +753,8 @@ static void FailRequestsToRank(CP_Services Svcs, CManager cm,
                                Evpath_RS_Stream Stream, int FailedRank)
 {
     EvpathCompletionHandle Tmp = Stream->PendingReadRequests;
-    Svcs->verbose(Stream->CP_Stream,
-                  "Fail all pending requests on stream %p\n", Stream);
+    Svcs->verbose(Stream->CP_Stream, "Fail all pending requests on stream %p\n",
+                  Stream);
     while (Tmp != NULL)
     {
         Tmp->Failed = 1;
