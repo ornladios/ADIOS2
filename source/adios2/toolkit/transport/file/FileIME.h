@@ -36,7 +36,7 @@ public:
 
     void Open(const std::string &name, const Mode openMode) final;
 
-    void SetParameters(const Params& parameters) final;
+    void SetParameters(const Params &parameters) final;
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 

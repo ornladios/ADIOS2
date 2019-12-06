@@ -13,9 +13,9 @@
 
 #include <iostream>
 
-#include <fcntl.h>          // O_* flags
-#include <unistd.h>         // getcwd
-#include <linux/limits.h>   // PATH_MAX
+#include <fcntl.h>        // O_* flags
+#include <linux/limits.h> // PATH_MAX
+#include <unistd.h>       // getcwd
 
 extern "C" {
 #include <im_client_native2.h>
@@ -47,7 +47,8 @@ FileIME::~FileIME()
 {
     if (m_IsOpen)
     {
-        if (m_SyncToPFS) {
+        if (m_SyncToPFS)
+        {
             ime_client_native2_fsync(m_FileDescriptor);
             ime_client_native2_bfs_sync(m_FileDescriptor, true);
         }
@@ -65,7 +66,8 @@ FileIME::~FileIME()
 void FileIME::Open(const std::string &name, const Mode openMode)
 {
     m_Name = "ime://";
-    if (name[0] != '/') {
+    if (name[0] != '/')
+    {
         char tmp[PATH_MAX];
         m_Name += std::string(getcwd(tmp, PATH_MAX)) + "/";
     }
@@ -78,22 +80,24 @@ void FileIME::Open(const std::string &name, const Mode openMode)
 
     case (Mode::Write):
         ProfilerStart("open");
-        m_FileDescriptor =
-            ime_client_native2_open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        m_FileDescriptor = ime_client_native2_open(
+            m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
         ProfilerStop("open");
         break;
 
     case (Mode::Append):
         ProfilerStart("open");
         // m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
-        m_FileDescriptor = ime_client_native2_open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
+        m_FileDescriptor =
+            ime_client_native2_open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
         lseek(m_FileDescriptor, 0, SEEK_END);
         ProfilerStop("open");
         break;
 
     case (Mode::Read):
         ProfilerStart("open");
-        m_FileDescriptor = ime_client_native2_open(m_Name.c_str(), O_RDONLY, 0000);
+        m_FileDescriptor =
+            ime_client_native2_open(m_Name.c_str(), O_RDONLY, 0000);
         ProfilerStop("open");
         break;
 
@@ -108,15 +112,17 @@ void FileIME::Open(const std::string &name, const Mode openMode)
     m_IsOpen = true;
 }
 
-void FileIME::SetParameters(const Params& parameters)
+void FileIME::SetParameters(const Params &parameters)
 {
-    for (const auto &pair : parameters) {
+    for (const auto &pair : parameters)
+    {
         const std::string key = helper::LowerCase(pair.first);
         const std::string value = helper::LowerCase(pair.second);
 
-        if (key == "synctopfs") {
+        if (key == "synctopfs")
+        {
             m_SyncToPFS = helper::StringTo<bool>(value, m_DebugMode,
-                    " in Parameter key=SyncToPFS");
+                                                 " in Parameter key=SyncToPFS");
         }
     }
 }
@@ -127,7 +133,8 @@ void FileIME::Write(const char *buffer, size_t size, size_t start)
         while (size > 0)
         {
             ProfilerStart("write");
-            const auto writtenSize = ime_client_native2_write(m_FileDescriptor, buffer, size);
+            const auto writtenSize =
+                ime_client_native2_write(m_FileDescriptor, buffer, size);
             ProfilerStop("write");
 
             if (writtenSize == -1)
@@ -149,7 +156,8 @@ void FileIME::Write(const char *buffer, size_t size, size_t start)
 
     if (start != MaxSizeT)
     {
-        const auto newPosition = ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
+        const auto newPosition =
+            ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
 
         if (static_cast<size_t>(newPosition) != start)
         {
@@ -185,7 +193,8 @@ void FileIME::Read(char *buffer, size_t size, size_t start)
         while (size > 0)
         {
             ProfilerStart("read");
-            const auto readSize = ime_client_native2_read(m_FileDescriptor, buffer, size);
+            const auto readSize =
+                ime_client_native2_read(m_FileDescriptor, buffer, size);
             ProfilerStop("read");
 
             if (readSize == -1)
@@ -207,15 +216,15 @@ void FileIME::Read(char *buffer, size_t size, size_t start)
 
     if (start != MaxSizeT)
     {
-        const auto newPosition = ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
+        const auto newPosition =
+            ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
 
         if (static_cast<size_t>(newPosition) != start)
         {
             throw std::ios_base::failure(
                 "ERROR: couldn't move to start position " +
                 std::to_string(start) + " in file " + m_Name +
-                ", in call to IME lseek errno " + std::to_string(errno) +
-                "\n");
+                ", in call to IME lseek errno " + std::to_string(errno) + "\n");
         }
     }
 
@@ -249,8 +258,10 @@ size_t FileIME::GetSize()
     return static_cast<size_t>(fileStat.st_size);
 }
 
-void FileIME::Flush() {
-    if (m_SyncToPFS) {
+void FileIME::Flush()
+{
+    if (m_SyncToPFS)
+    {
         ime_client_native2_fsync(m_FileDescriptor);
         ime_client_native2_bfs_sync(m_FileDescriptor, true);
     }
@@ -259,7 +270,8 @@ void FileIME::Flush() {
 void FileIME::Close()
 {
     ProfilerStart("close");
-    if (m_SyncToPFS) {
+    if (m_SyncToPFS)
+    {
         ime_client_native2_fsync(m_FileDescriptor);
         ime_client_native2_bfs_sync(m_FileDescriptor, true);
     }
