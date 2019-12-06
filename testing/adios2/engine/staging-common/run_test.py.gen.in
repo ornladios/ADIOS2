@@ -162,7 +162,7 @@ def do_kill_writer_test(writer_cmd, reader_cmd, interval):
 def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval):
     return_code = 0
     my_env = os.environ
-#    my_env["SstVerbose"] = "1"
+    my_env["SstVerbose"] = "1"
     writer = subprocess.Popen(writer_cmd, env=my_env)
     start = time.time()
     timeout = time.time() + duration
