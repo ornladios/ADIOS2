@@ -1069,7 +1069,6 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
             {
                 Last->Next = Next;
             }
-            free(This);
             PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
             SST_ASSERT_UNLOCKED();
             sendOneToEachWriterRank(Stream,
@@ -1080,6 +1079,7 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
                        This->MetadataMsg, __LINE__);
             CMreturn_buffer(Stream->CPInfo->cm, This->MetadataMsg);
             PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+            free(This);
         }
         else
         {
