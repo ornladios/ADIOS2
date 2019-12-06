@@ -9,6 +9,8 @@
  */
 #include "FileIME.h"
 
+#include "adios2/helper/adiosFunctions.h"
+
 #include <iostream>
 
 #include <fcntl.h>          // O_* flags
@@ -45,8 +47,10 @@ FileIME::~FileIME()
 {
     if (m_IsOpen)
     {
-        ime_client_native2_fsync(m_FileDescriptor);
-        ime_client_native2_bfs_sync(m_FileDescriptor, true);
+        if (m_SyncToPFS) {
+            ime_client_native2_fsync(m_FileDescriptor);
+            ime_client_native2_bfs_sync(m_FileDescriptor, true);
+        }
         ime_client_native2_close(m_FileDescriptor);
     }
 
@@ -102,6 +106,19 @@ void FileIME::Open(const std::string &name, const Mode openMode)
               ", check permissions or path existence, in call to IME open");
 
     m_IsOpen = true;
+}
+
+void FileIME::SetParameters(const Params& parameters)
+{
+    for (const auto &pair : parameters) {
+        const std::string key = helper::LowerCase(pair.first);
+        const std::string value = helper::LowerCase(pair.second);
+
+        if (key == "synctopfs") {
+            m_SyncToPFS = helper::StringTo<bool>(value, m_DebugMode,
+                    " in Parameter key=SyncToPFS");
+        }
+    }
 }
 
 void FileIME::Write(const char *buffer, size_t size, size_t start)
@@ -233,15 +250,19 @@ size_t FileIME::GetSize()
 }
 
 void FileIME::Flush() {
-    ime_client_native2_fsync(m_FileDescriptor);
-    ime_client_native2_bfs_sync(m_FileDescriptor, true);
+    if (m_SyncToPFS) {
+        ime_client_native2_fsync(m_FileDescriptor);
+        ime_client_native2_bfs_sync(m_FileDescriptor, true);
+    }
 }
 
 void FileIME::Close()
 {
     ProfilerStart("close");
-    ime_client_native2_fsync(m_FileDescriptor);
-    ime_client_native2_bfs_sync(m_FileDescriptor, true);
+    if (m_SyncToPFS) {
+        ime_client_native2_fsync(m_FileDescriptor);
+        ime_client_native2_bfs_sync(m_FileDescriptor, true);
+    }
     const int status = ime_client_native2_close(m_FileDescriptor);
     ProfilerStop("close");
 

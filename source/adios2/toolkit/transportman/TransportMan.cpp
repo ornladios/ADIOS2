@@ -449,6 +449,8 @@ TransportMan::OpenFileTransport(const std::string &fileName,
                                 lf_GetTimeUnits(DefaultTimeUnit, parameters));
     }
 
+    transport->SetParameters(parameters);
+
     // open
     transport->Open(fileName, openMode, lf_GetAsync("false", parameters));
     return transport;

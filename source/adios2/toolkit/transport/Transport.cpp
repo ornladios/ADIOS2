@@ -72,6 +72,9 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
         "close", profiling::Timer("close", TimeUnit::Microseconds));
 }
 
+
+void Transport::SetParameters(const Params &parameters) {}
+
 void Transport::SetBuffer(char * /*buffer*/, size_t /*size*/)
 {
     std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type +

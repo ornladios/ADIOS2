@@ -36,6 +36,8 @@ public:
 
     void Open(const std::string &name, const Mode openMode) final;
 
+    void SetParameters(const Params& parameters) final;
+
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 
     void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
@@ -63,6 +65,8 @@ private:
 
     /** Number of existing FileIME instances */
     static std::atomic_uint client_refcount;
+
+    bool m_SyncToPFS = true;
 };
 
 } // end namespace transport
