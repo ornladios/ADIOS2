@@ -121,6 +121,11 @@ public:
     int Rank() const;
     int Size() const;
 
+    /**
+     * @brief Return true if the communicator is backed by MPI, false otherwise.
+     */
+    bool IsMPI() const;
+
     void Barrier(const std::string &hint = std::string()) const;
 
     /**
@@ -361,6 +366,7 @@ public:
     virtual std::unique_ptr<CommImpl> World(const std::string &hint) const = 0;
     virtual int Rank() const = 0;
     virtual int Size() const = 0;
+    virtual bool IsMPI() const = 0;
     virtual void Barrier(const std::string &hint) const = 0;
     virtual void Allgather(const void *sendbuf, size_t sendcount,
                            Datatype sendtype, void *recvbuf, size_t recvcount,

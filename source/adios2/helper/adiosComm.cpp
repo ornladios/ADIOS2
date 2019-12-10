@@ -74,6 +74,8 @@ int Comm::Rank() const { return m_Impl->Rank(); }
 
 int Comm::Size() const { return m_Impl->Size(); }
 
+bool Comm::IsMPI() const { return m_Impl->IsMPI(); }
+
 void Comm::Barrier(const std::string &hint) const { m_Impl->Barrier(hint); }
 
 std::string Comm::BroadcastFile(const std::string &fileName,

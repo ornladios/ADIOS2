@@ -125,6 +125,7 @@ public:
 
     int Rank() const override;
     int Size() const override;
+    bool IsMPI() const override;
     void Barrier(const std::string &hint) const override;
 
     void Allgather(const void *sendbuf, size_t sendcount, Datatype sendtype,
@@ -229,6 +230,8 @@ int CommImplMPI::Size() const
     CheckMPIReturn(MPI_Comm_size(m_MPIComm, &size), {});
     return size;
 }
+
+bool CommImplMPI::IsMPI() const { return true; }
 
 void CommImplMPI::Barrier(const std::string &hint) const
 {
