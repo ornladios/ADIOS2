@@ -497,7 +497,7 @@ void InSituMPIReader::AsyncRecvAllVariables()
     {                                                                          \
         core::Variable<T> *variable =                                          \
             m_IO.InquireVariable<T>(variablePair.first);                       \
-        if (m_DebugMode && variable == nullptr)                                \
+        if (variable == nullptr)                                               \
         {                                                                      \
             throw std::invalid_argument(                                       \
                 "ERROR: variable " + variablePair.first +                      \

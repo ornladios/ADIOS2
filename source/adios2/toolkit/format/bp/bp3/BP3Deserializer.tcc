@@ -95,18 +95,14 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
         const std::vector<typename core::Variable<T>::Info> blocksInfo =
             BlocksInfo(variable, stepsStart);
 
-        if (m_DebugMode)
+        if (variable.m_BlockID >= blocksInfo.size())
         {
-            if (variable.m_BlockID >= blocksInfo.size())
-            {
-                throw std::invalid_argument(
-                    "ERROR: invalid blockID " +
-                    std::to_string(variable.m_BlockID) + " from steps start " +
-                    std::to_string(stepsStart) + " in variable " +
-                    variable.m_Name +
-                    ", check argument to Variable<T>::SetBlockID, in call "
-                    "to Get\n");
-            }
+            throw std::invalid_argument(
+                "ERROR: invalid blockID " + std::to_string(variable.m_BlockID) +
+                " from steps start " + std::to_string(stepsStart) +
+                " in variable " + variable.m_Name +
+                ", check argument to Variable<T>::SetBlockID, in call "
+                "to Get\n");
         }
 
         // switch to bounding box for global array

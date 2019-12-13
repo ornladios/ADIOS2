@@ -291,7 +291,7 @@ void InSituMPIWriter::AsyncSendVariable(std::string variableName)
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
-        if (m_DebugMode && variable == nullptr)                                \
+        if (variable == nullptr)                                               \
         {                                                                      \
             throw std::invalid_argument(                                       \
                 "ERROR: variable " + variableName +                            \
