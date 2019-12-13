@@ -1054,6 +1054,12 @@ static void FreeTimestep(SstStream Stream, long Timestep)
     {
         Stream->Timesteps = List->Next;
         CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
+        if (Stream->DP_Interface->RSReleaseTimestep)
+        {
+            (Stream->DP_Interface->RSReleaseTimestep)(
+                &Svcs, Stream->DP_Stream, List->MetadataMsg->Timestep);
+        }
+
         free(List);
     }
     else
@@ -1066,6 +1072,12 @@ static void FreeTimestep(SstStream Stream, long Timestep)
             {
                 last->Next = List->Next;
                 CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
+                if (Stream->DP_Interface->RSReleaseTimestep)
+                {
+                    (Stream->DP_Interface->RSReleaseTimestep)(
+                        &Svcs, Stream->DP_Stream, List->MetadataMsg->Timestep);
+                }
+
                 free(List);
                 break;
             }
