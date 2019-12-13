@@ -16,10 +16,13 @@
 #cmakedefine HAVE_DIS_ASM_H
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
+#cmakedefine HAVE_DLFCN_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
+#cmakedefine HAVE_INTTYPES_H
+
+/* Define to 1 if you have __clear_cache is defined  */
+#cmakedefine CLEAR_CACHE_DEFINED
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #cmakedefine HAVE_MALLOC_H
