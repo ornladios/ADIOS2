@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(DILL VERSION 2.4.0 LANGUAGES C CXX)
+project(DILL VERSION 2.4.1 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -265,6 +265,9 @@ check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(stdarg.h STDC_HEADERS)
 check_include_files(malloc.h HAVE_MALLOC_H)
 check_include_files(memory.h HAVE_MEMORY_H)
+include(CheckSymbolExists)
+check_symbol_exists(__clear_cache "" CLEAR_CACHE_DEFINED)
+message(STATUS "Clear cache defined is ${CLEAR_CACHE_DEFINED}")
 
 set(NO_DISASSEMBLER TRUE)
 if(DILL_ENABLE_DISASSEMBLY)
