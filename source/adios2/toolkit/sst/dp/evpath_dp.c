@@ -753,26 +753,23 @@ static void FailRequestsToRank(CP_Services Svcs, CManager cm,
                                Evpath_RS_Stream Stream, int FailedRank)
 {
     EvpathCompletionHandle Tmp = Stream->PendingReadRequests;
-    Svcs->verbose(Stream->CP_Stream,
-                  "Fail pending requests to writer rank %d\n", FailedRank);
+    Svcs->verbose(Stream->CP_Stream, "Fail all pending requests on stream %p\n",
+                  Stream);
     while (Tmp != NULL)
     {
-        if (Tmp->Rank == FailedRank)
-        {
-            Tmp->Failed = 1;
-            Svcs->verbose(Tmp->CPStream,
-                          "Found a pending remote memory read "
-                          "to failed writer rank %d, marking as "
-                          "failed and signalling condition %d\n",
-                          Tmp->Rank, Tmp->CMcondition);
-            CMCondition_signal(cm, Tmp->CMcondition);
-            Svcs->verbose(Tmp->CPStream, "Did the signal of condition %d\n",
-                          Tmp->Rank, Tmp->CMcondition);
-        }
+        Tmp->Failed = 1;
+        Svcs->verbose(Tmp->CPStream,
+                      "Found a pending remote memory read "
+                      "to writer rank %d, marking as "
+                      "failed and signalling condition %d\n",
+                      Tmp->Rank, Tmp->CMcondition);
+        CMCondition_signal(cm, Tmp->CMcondition);
+        Svcs->verbose(Tmp->CPStream, "Did the signal of condition %d\n",
+                      Tmp->Rank, Tmp->CMcondition);
         Tmp = Tmp->Next;
     }
     Svcs->verbose(Stream->CP_Stream,
-                  "Done Failing requests to writer rank %d\n", FailedRank);
+                  "Done Failing requests to writer from stream %p\n", Stream);
 }
 
 typedef struct _EvpathPerTimestepInfo
