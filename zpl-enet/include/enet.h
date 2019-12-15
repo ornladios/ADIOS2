@@ -1,5 +1,6 @@
 /*
  *   THIS FILE HAS BEEN MODIFIED SO THAT ALL API FUNCTIONS ARE STATIC FOR INCLUDE-ONLY USAGE.
+ *   ALSO ADDED FALLBACK non-atomic ENET_ATOMIC_READ and ENET_ATOMIC_CAS 
  *   Greg Eisenhauer, Georgia Tech College of Computing. Tue Nov  5 10:59:29 EST 2019
  */
 
@@ -1195,6 +1196,19 @@ extern "C" {
     #undef AT_HAVE_ATOMICS
 
 #endif /* defined(_MSC_VER) */
+#ifndef ENET_ATOMIC_READ
+//  On a compiler that supports none of the above?  Do without atomics...
+//  Note that these are specific to uint64_t, the only current usage here.
+#define ENET_ATOMIC_READ(variable) (*(uint64_t*)(variable))
+static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newvalue)
+{
+   uint64_t temp = *ptr;
+   if(*ptr == oldvalue)
+       *ptr = newvalue;
+   return temp;
+}    
+#define ENET_ATOMIC_CAS(ptr, oldvalue, newvalue) ENET_SIMPLE_CAS((ptr), (oldvalue), (newvalue))
+#endif
 
 
 // =======================================================================//

@@ -16,6 +16,7 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <ifaddrs.h>
+#include <ctype.h>
 #endif
 #include <stdlib.h>
 #include <unistd.h>
@@ -482,7 +483,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
     static int first_call = 1;
     static char determined_hostname[HOST_NAME_MAX+1];
     static int determined_IP = -1;
-    static int port_range_low = 26000, port_range_high = 26100;
+    static int port_range_low = 0, port_range_high = 0;
     static int use_hostname = 0;
     char hostname_to_use[HOST_NAME_MAX+1];
     int IP_to_use;
@@ -549,20 +550,38 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	    inet_ntop(AF_INET, &(addr.s_addr), str, sizeof(str));
 	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG best guess IP is \"%s\"\n", str);
 	}
-	if (port_range != NULL) {
-	    if (sscanf(port_range, "%d:%d", &port_range_high, &port_range_low) != 2) {
-		printf(IPCONFIG_ENVVAR_PREFIX "PORT_RANGE spec not understood \"%s\"\n", port_range);
-	    } else {
-		if (port_range_high < port_range_low) {
-		    int tmp = port_range_high;
-		    port_range_high = port_range_low;
-		    port_range_low = tmp;
-		}
-		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG specified port range is %d:%d\n", port_range_low, port_range_high);
-	    }
-	} else {
-	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG default port range is %d:%d\n", port_range_low, port_range_high);
+	if (port_range == NULL) {
+	    // no getenv
+	    port_range = EVPATH_DEFAULT_PORT_RANGE;
 	}
+	if (port_range != NULL) {
+	    if (isalpha(port_range[0])) {
+		char *t = strdup(port_range);
+		char *lower = t;
+		for ( ; *lower; ++lower) *lower = tolower(*lower);
+		if (strcmp(t, "any") == 0) {
+		    port_range_high = -1;
+		    port_range_low = -1;
+		} else {
+		    printf(IPCONFIG_ENVVAR_PREFIX "PORT_RANGE spec not understood \"%s\"\n", port_range);
+		}
+	    } else {
+		if (sscanf(port_range, "%d:%d", &port_range_high, &port_range_low) != 2) {
+		    printf(IPCONFIG_ENVVAR_PREFIX "PORT_RANGE spec not understood \"%s\"\n", port_range);
+		} else {
+		    if (port_range_high < port_range_low) {
+			int tmp = port_range_high;
+			port_range_high = port_range_low;
+			port_range_low = tmp;
+		    }
+		}
+	    }
+	}
+	if (port_range_low == -1) {
+	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG specified port range is \"ANY\" (unspecified)\n");
+	} else {
+	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG specified port range is %d:%d\n", port_range_low, port_range_high);
+	}	    
     }
 
 
