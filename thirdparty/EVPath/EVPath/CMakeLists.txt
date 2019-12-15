@@ -41,6 +41,9 @@ endif()
 
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dill, atl, ffs")
 set(CPACK_RPM_PACKAGE_REQUIRES "dill, atl, ffs")
+set(ENABLE_SOMETHING AUTO CACHE STRING "Enable SOMETHING support")  #
+set(EVPATH_DEFAULT_PORT_RANGE  "26000:26100" CACHE STRING "Default port range for IP communication")
+mark_as_advanced(EVPATH_DEFAULT_PORT_RANGE)
 
 include(CheckFunctionExists)
 include(CheckIncludeFiles)

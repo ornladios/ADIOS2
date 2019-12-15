@@ -120,6 +120,21 @@ CMconn_fail_conditions(CMConnection conn)
     }
 }
 
+extern void
+INT_CMCondition_fail(CManager cm, int condition)
+{
+    CMControlList cl = cm->control_list;
+    CMCondition cond = CMCondition_find(cl, condition);
+    if (!cond) return;
+    cond->failed = 1;
+    CMCondition_trigger(cm, cond, cm->control_list);
+
+    if (cl->cond_polling) {
+	/* wake the server thread in case we're not him */
+	CMwake_server_thread(cm);
+    }
+}
+
 void
 CMCondition_destroy(CMControlList cl, int condition)
 {

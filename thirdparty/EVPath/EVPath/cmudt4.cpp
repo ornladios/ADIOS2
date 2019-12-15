@@ -650,6 +650,22 @@ libcmudt4_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
 		    UDT::getlasterror().getErrorMessage());
 	    return NULL;
 	}
+    } else if (port_range_high == -1) {
+	svc->trace_out(cm, "UDT4 trying to bind to any available port");
+	sock_addr.sin_port = 0;
+	if (UDT::
+	    bind(conn_sock, (struct sockaddr *) &sock_addr,
+		 sizeof sock_addr) == SOCKET_ERROR) {
+	    fprintf(stderr, "Cannot bind INET socket\n");
+	    return NULL;
+	}
+	/* begin listening for conns */
+	if (UDT::listen(conn_sock, FD_SETSIZE)) {
+	    fprintf(stderr, "listen failed %s\n",
+		    UDT::getlasterror().getErrorMessage());
+	    return NULL;
+	}
+
     } else {
 	long seedval = time(NULL) + getpid();
 	/* port num is free.  Constrain to range to standards */

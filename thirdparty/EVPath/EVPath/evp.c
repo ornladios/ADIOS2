@@ -2084,6 +2084,19 @@ write_callback_handler(CManager cm, CMConnection conn, void *client_data)
 }
 #endif
 
+/* this is called to make a store-send happen; it just
+ * runs the standard loop later.
+ */
+static void
+deferred_process_actions(CManager cm, void *client_data)
+{
+    (void)client_data;
+    CManager_lock(cm);
+    if (cm->evp) cm->evp->delay_task_pending = 0;
+    while (cm->evp && process_local_actions(cm));
+    CManager_unlock(cm);
+}
+
 static
 int
 do_bridge_action(CManager cm, int s)
@@ -2092,10 +2105,19 @@ do_bridge_action(CManager cm, int s)
     proto_action *act = NULL;
     stone_type stone;
     int a;
-    CMtrace_out(cm, EVerbose, "Process output action on stone %x\n", s);
     stone = stone_struct(evp, s);
+    CMtrace_out(cm, EVerbose, "Process output action on stone %x, frozen %d draining %d outputting %d, in_get_conn %d\n", s, stone->is_frozen, stone->is_draining, stone->is_outputting, evp->in_get_conn);
 
     if (stone->is_frozen || (stone->is_draining == 2)) return 0;
+    if (stone->is_outputting) return 0;
+    /* if we're sitting in get_conn, don't proceed to make sure we don't try get_conn again */
+    if (evp->in_get_conn) {
+        if (!evp->delay_task_pending) {
+            evp->delay_task_pending = 1;
+            (void) INT_CMadd_delayed_task(cm, 0, 100, deferred_process_actions, NULL);
+        }
+        return 0;
+    }
     stone->is_outputting = 1;
     for (a=0 ; a < stone->proto_action_count && stone->is_frozen == 0 && (stone->is_draining != 2); a++) {
 	if (stone->proto_actions[a].action_type == Action_Bridge) {
@@ -2105,7 +2127,10 @@ do_bridge_action(CManager cm, int s)
     if (act->o.bri.conn_failed) return 0;
     if (act->o.bri.conn == NULL) {
         attr_list contact_list = act->o.bri.remote_contact;
-        CMConnection conn = INT_CMget_conn(cm, contact_list);
+        CMConnection conn;
+        evp->in_get_conn++;
+        conn = INT_CMget_conn(cm, contact_list);
+        evp->in_get_conn--;
 	if (act->o.bri.conn != NULL) {
 	    /*
 	     *  INT_CMget_conn() isn't synchronous.  
@@ -2651,18 +2676,6 @@ INT_EVsend_stored(CManager cm, EVstone stone_num, EVaction action_num)
         return_event(evp, item);
         while (process_local_actions(cm));
     }
-}
-
-/* this is called to make a store-send happen; it just
- * runs the standard loop later.
- */
-static void
-deferred_process_actions(CManager cm, void *client_data)
-{
-    (void)client_data;
-    CManager_lock(cm);
-    while (cm->evp && process_local_actions(cm));
-    CManager_unlock(cm);
 }
 
 void

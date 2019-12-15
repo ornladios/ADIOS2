@@ -6,6 +6,9 @@
 /* Define to 1 if you have the <enet/enet.h> header file. */
 #cmakedefine HAVE_ENET_ENET_H
 
+/* Define to desired port range Low:High */
+#define EVPATH_DEFAULT_PORT_RANGE "@EVPATH_DEFAULT_PORT_RANGE@"
+
 /* Define to 1 if you have the enet header and libraries */
 #cmakedefine ENET_FOUND
 

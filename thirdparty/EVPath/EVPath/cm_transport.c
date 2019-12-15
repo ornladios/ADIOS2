@@ -161,6 +161,10 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	lt_dlsym(handle, "non_blocking_listen");
     transport->initiate_conn = (CMConnection(*)())
 	lt_dlsym(handle, "initiate_conn");
+    transport->initiate_conn_nonblocking = (CMTransport_NBconn_func)
+	lt_dlsym(handle, "initiate_conn_nonblocking");
+    transport->finalize_conn_nonblocking = (CMConnection(*)())
+	lt_dlsym(handle, "finalize_conn_nonblocking");
     transport->self_check = (int (*)()) lt_dlsym(handle, "self_check");
     transport->connection_eq =
 	(int (*)()) lt_dlsym(handle, "connection_eq");
