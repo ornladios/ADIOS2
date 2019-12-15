@@ -65,7 +65,7 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     if (Params->ControlTransport == NULL)
     {
         /* determine reasonable default, now "sockets" */
-        Params->ControlTransport = strdup("zplenet");
+        Params->ControlTransport = strdup("sockets");
     }
     else
     {
