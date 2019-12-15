@@ -728,6 +728,15 @@ attr_list listen_info;
 	    fprintf(stderr, "Cannot bind INET socket\n");
 	    return NULL;
 	}
+    } else if (port_range_high == -1) {
+	/* bind to any port, range unconstrained */
+	sock_addr.sin_port = 0;
+	svc->trace_out(cm, "CMSocket trying to bind to any available port");
+	if (bind(conn_sock, (struct sockaddr *) &sock_addr,
+		 sizeof sock_addr) == SOCKET_ERROR) {
+	    fprintf(stderr, "Cannot bind INET socket\n");
+	    return NULL;
+	}
     } else {
 	long seedval = time(NULL) + getpid();
 	/* port num is free.  Constrain to range to standards */

@@ -254,6 +254,8 @@ typedef struct _event_path_data {
     EVStoneCloseHandlerFunc app_stone_close_handler;
     void *app_stone_close_data;
     ev_handler_activation_ptr activation_stack;
+    int in_get_conn;
+    int delay_task_pending;
 } *event_path_data;
 
 struct _EVSource {

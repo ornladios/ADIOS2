@@ -108,7 +108,8 @@ struct CMtrans_services_s CMstatic_trans_svcs = {INT_CMmalloc, INT_CMrealloc, IN
 						 INT_CMConnection_dereference,
 						 INT_CMConnection_add_reference,
 						 INT_CMConnection_failed,
-						 CMwake_server_thread
+						 CMwake_server_thread,
+						 INT_CMCondition_signal
 };
 static void INT_CMControlList_close(CMControlList cl, CManager cm);
 static int CMcontrol_list_poll(CMControlList cl);
@@ -1497,13 +1498,47 @@ INT_CMget_ip_config_diagnostics(CManager cm)
      }
  }
 
+static
+void
+timeout_conn(CManager cm, void *client_data)
+{
+    INT_CMCondition_fail(cm, (long) client_data);
+}
+
  static
  CMConnection
  try_conn_init(CManager cm, transport_entry trans, attr_list attrs)
  {
-     CMConnection conn;
-     conn = trans->initiate_conn(cm, &CMstatic_trans_svcs,
-				 trans, attrs);
+     CMConnection conn = NULL;
+     if (trans->initiate_conn) {
+	 conn = trans->initiate_conn(cm, &CMstatic_trans_svcs,
+				     trans, attrs);
+     } else if (trans->initiate_conn_nonblocking) {
+	 int result;
+	 long wait_condition = INT_CMCondition_get(cm, NULL);
+	 CMTaskHandle task = INT_CMadd_delayed_task(cm, 5, 0, timeout_conn,
+						    (void*)wait_condition);
+	 if (CMtrace_on(cm, CMConnectionVerbose)) {
+	     char *attr_str = attr_list_to_string(attrs);
+	     CMtrace_out(cm, CMConnectionVerbose, 
+			 "CM - Try to establish connection %p - %s, wait condition %ld\n", (void*)conn,
+			 attr_str, wait_condition);
+	     INT_CMfree(attr_str);
+	 }
+	 void *client_data = trans->initiate_conn_nonblocking(cm, &CMstatic_trans_svcs,
+						 trans, attrs, wait_condition);
+	 // Upon wake, condition will have either been signaled (return 1) or failed (return 0)
+	 result = INT_CMCondition_wait(cm, wait_condition);
+	 CMtrace_out(cm, CMConnectionVerbose, 
+		     "CM - CMConnection wait returned, result %d\n", result);
+	 if (result == 1) {
+	     INT_CMremove_task(task);
+	 }
+	 conn = trans->finalize_conn_nonblocking(cm,  &CMstatic_trans_svcs,
+						 trans, client_data, result);
+     } else {
+	 assert(0);
+     }
      if (conn != NULL) {
 	 if (CMtrace_on(conn->cm, CMConnectionVerbose)) {
 	     char *attr_str = attr_list_to_string(attrs);
