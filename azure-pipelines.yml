@@ -9,57 +9,58 @@ pr:
     - master
     - release*
 
-resources:
-  containers:
-  - container: el7
-    image: ornladios/adios2-auto:el7
-  - container: el7-gnu8-ohpc
-    image: ornladios/adios2-auto:el7-gnu8-ohpc
-  - container: el7-gnu8-openmpi-ohpc
-    image: ornladios/adios2-auto:el7-gnu8-openmpi-ohpc
-  - container:  el7-intel18-ohpc
-    image: ornladios/adios2-auto:el7-intel18-ohpc
-  - container: el7-intel18-openmpi-ohpc
-    image: ornladios/adios2-auto:el7-intel18-openmpi-ohpc
-  - container:  suse-pgi
-    image: ornladios/adios2-auto:suse-pgi
-  - container:  suse-pgi-openmpi
-    image: ornladios/adios2-auto:suse-pgi-openmpi
-
 jobs:
-- job: linux
+- job: windows
   timeoutInMinutes: 90
   strategy:
     matrix:
-      el7:
-        containerResource: el7
-      el7_gnu8_ohpc:
-        containerResource: el7-gnu8-ohpc
-      el7_gnu8_openmpi_ohpc:
-        containerResource: el7-gnu8-openmpi-ohpc
-      el7_gnu8_openmpi_ohpc_static:
-        containerResource: el7-gnu8-openmpi-ohpc
-      el7_intel18_ohpc:
-        containerResource: el7-intel18-ohpc
-      el7_intel18_openmpi_ohpc:
-        containerResource: el7-intel18-openmpi-ohpc
-      suse_pgi:
-        containerResource: suse-pgi
-      suse_pgi_openmpi:
-        containerResource: suse-pgi-openmpi
-  container: $[ variables['containerResource'] ]
+      win2016_vs2017:
+        hostImage: vs2017-win2016
+      win2016_vs2017_msmpi_ninja:
+        hostImage: vs2017-win2016
+      win2019_vs2019_ninja:
+        hostImage: windows-2019
+      win2019_vs2019_msmpi:
+        hostImage: windows-2019
+
+  pool:
+    vmImage: $[ variables['hostImage'] ]
+
   steps:
-    - bash: scripts/ci/runOnAzure.sh update
+    - powershell: scripts/ci/azure/windows-setup.ps1
+      name: Setup
+    - bash: scripts/ci/azure/run.sh update
       name: Update
-    - bash: scripts/ci/runOnAzure.sh configure
+    - bash: scripts/ci/azure/run.sh configure
       name: Configure
-    - bash: scripts/ci/runOnAzure.sh build
+    - bash: scripts/ci/azure/run.sh build
       name: Build
-    - bash: scripts/ci/runOnAzure.sh test
+    - bash: scripts/ci/azure/run.sh test
       name: Test
-    - task: PublishTestResults@2
-      inputs:
-        testRunTitle: 'CTest: $(System.JobDisplayName)'
-        testResultsFormat: 'cTest'
-        testResultsFiles: '*/Testing/*/Test.xml'
-        searchFolder: '$(Build.BinariesDirectory)/'
+
+- job: macos
+  timeoutInMinutes: 90
+  strategy:
+    matrix:
+      macos1013_xcode941_make:
+        hostImage: 'macOS-10.13'
+      macos1013_xcode941_openmpi_ninja:
+        hostImage: 'macOS-10.13'
+      macos1014_xcode104_ninja:
+        hostImage: 'macOS-10.14'
+      macos1014_xcode104_openmpi_make:
+        hostImage: 'macOS-10.14'
+  pool:
+    vmImage: $[ variables['hostImage'] ]
+  steps:
+    - bash: scripts/ci/azure/macos-setup.sh
+      name: Setup
+    - bash: scripts/ci/azure/run.sh update
+      name: Update
+    - bash: scripts/ci/azure/run.sh configure
+      name: Configure
+    - bash: scripts/ci/azure/run.sh build
+      name: Build
+    - bash: scripts/ci/azure/run.sh test
+      name: Test
+

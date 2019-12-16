@@ -31,11 +31,13 @@ function(add_install_make_test name)
     set(cxx "${MPI_CXX_COMPILER}")
     set(fc "${MPI_Fortran_COMPILER}")
     set(mpiexec "${MPIEXEC_EXECUTABLE}")
+    set(mpiexec_extra_flags "${MPIEXEC_EXTRA_FLAGS}")
   else()
     set(cc "${CMAKE_C_COMPILER}")
     set(cxx "${CMAKE_CXX_COMPILER}")
     set(fc "${CMAKE_Fortran_COMPILER}")
     set(mpiexec)
+    set(mpiexec_extra_flags)
   endif()
   add_test(NAME Install.Make.${name} COMMAND "${CMAKE_COMMAND}"
     "-DADIOS2_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
@@ -48,6 +50,7 @@ function(add_install_make_test name)
     "-DTEST_CASE=${name}"
     "-DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}"
     "-DMPIEXEC_EXECUTABLE=${mpiexec}"
+    "-DMPIEXEC_EXTRA_FLAGS=${mpiexec_extra_flags}"
     "-DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/run_make.cmake"
     )

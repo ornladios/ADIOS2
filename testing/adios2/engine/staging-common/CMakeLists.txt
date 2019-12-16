@@ -6,7 +6,7 @@
 find_package(Threads REQUIRED)
 
 if(ADIOS2_HAVE_MPI)
-  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
+  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND} ${MPIEXEC_EXTRA_FLAGS})
 
   add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
   target_link_libraries(TestStagingMPMD

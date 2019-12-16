@@ -6,7 +6,7 @@
 include(ADIOSFunctions)
 
 add_test(NAME HeatTransfer.SST.BP.RDMA.MxN
-  COMMAND ${MPIEXEC_EXECUTABLE}
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:heatTransfer_write_adios2>
         ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_sst_bp_rdma.xml

@@ -10,7 +10,7 @@ target_link_libraries(Test.Utils.CWriter adios2)
 
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(Test.Utils.CWriter MPI::MPI_C)
-  set(cmd_executor ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1)
+  set(cmd_executor ${MPIEXEC_COMMAND} ${MPIEXEC_NUMPROC_FLAG} 1)
 else()
   set(cmd_executor)
 endif()
