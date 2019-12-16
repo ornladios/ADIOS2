@@ -93,15 +93,19 @@ void displayHelp()
 static char *envHelp =
     "\tThe following environment variables can impact ADIOS2_IP_CONFIG "
     "operation:\n"
-    "\t\tADIOS2_IP  		-  Publish the specified IP address for "
+    "\t\tADIOS2_IP  		-  Publish the specified IP address "
+    "for "
     "contact\n"
     "\t\tADIOS2_HOSTNAME  	-  Publish the specified hostname for contact\n"
-    "\t\tADIOS2_USE_HOSTNAME 	-  Publish a hostname preferentially over IP "
+    "\t\tADIOS2_USE_HOSTNAME 	-  Publish a hostname preferentially "
+    "over IP "
     "address\n"
     "\t\tADIOS2_INTERFACE  	-  Use the IP address associated with the "
     "specified network interface\n"
-    "\t\tADIOS2_PORT_RANGE  	-  Use a port within the specified range "
-    "\"low:high\"\n";
+    "\t\tADIOS2_PORT_RANGE  	-  Use a port within the specified "
+    "range \"low:high\",\n"
+    "\t\t                 	   or specify \"any\" to let the OS "
+    "choose\n";
 
 static void do_listen();
 static void do_connect();

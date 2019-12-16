@@ -50,14 +50,15 @@ the network configuration options.  For example:
             ADIOS2_IP_CONFIG Possible interface en0 : IPV4 192.168.1.56
             ADIOS2_IP_CONFIG Possible interface en5 : IPV4 192.168.1.17
             ADIOS2_IP_CONFIG best guess IP is "192.168.1.17"
-            ADIOS2_IP_CONFIG default port range is 26000:26100
+            ADIOS2_IP_CONFIG default port range is "any"
 
             The following environment variables can impact ADIOS2_IP_CONFIG operation:
                     ADIOS2_IP               -  Publish the specified IP address for contact
                     ADIOS2_HOSTNAME         -  Publish the specified hostname for contact
                     ADIOS2_USE_HOSTNAME     -  Publish a hostname preferentially over IP address
                     ADIOS2_INTERFACE        -  Use the IP address associated with the specified network interface
-                    ADIOS2_PORT_RANGE       -  Use a port within the specified range "low:high"
+                    ADIOS2_PORT_RANGE       -  Use a port within the specified range "low:high", 
+					       or specify "any" to let the OS choose
 
             Sst writer is listening for TCP/IP connection at IP 192.168.1.17, port 26048
 
