@@ -742,7 +742,8 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
 
     pthread_cond_signal(&Stream->DataCondition);
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
-    if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommMin) &&
+    if ((Stream->Rank == 0) &&
+        (Stream->WriterConfigParams->CPCommPattern == SstCPCommMin) &&
         (Stream->ConfigParams->AlwaysProvideLatestTimestep))
     {
         /*
@@ -766,9 +767,10 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
     SstStream Stream;
     struct _TimestepMetadataMsg *Msg = (struct _TimestepMetadataMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
-    if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
+    if ((Stream->Rank != 0) ||
+        (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer))
     {
-        /* everyone is getting this */
+        /* All ranks are getting this */
         if (Msg->Metadata == NULL)
         {
             CP_verbose(
