@@ -1158,6 +1158,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         {
             CP_verbose(Stream, "Examining metadata for Timestep %d\n",
                        Next->MetadataMsg->Timestep);
+            SST_ASSERT_LOCKED();
             if ((Next->MetadataMsg->Metadata == NULL) && (FoundTS == NULL))
             {
                 /*
@@ -1173,6 +1174,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
                 FFSMarshalInstallPreciousMetadata(Stream, Next->MetadataMsg);
                 TSMetadataList Tmp = Next;
                 Next = Next->Next;
+                SST_ASSERT_LOCKED();
                 FreeTimestep(Stream, Tmp->MetadataMsg->Timestep);
                 continue;
             }
@@ -1325,6 +1327,7 @@ extern void SstReleaseStep(SstStream Stream)
         (Stream->Rank == 0))
     {
         PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    SST_ASSERT_LOCKED();
         FreeTimestep(Stream, Timestep);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     }
