@@ -21,9 +21,9 @@
 
 namespace adios2
 {
-namespace interop
+namespace core
 {
-void RegisterHDF5Common_MPI_API();
+void RegisterMPIEngines();
 }
 namespace helper
 {
@@ -32,7 +32,7 @@ namespace
 {
 struct InitMPI
 {
-    InitMPI() { interop::RegisterHDF5Common_MPI_API(); }
+    InitMPI() { core::RegisterMPIEngines(); }
 };
 
 const MPI_Op OpToMPI[] = {

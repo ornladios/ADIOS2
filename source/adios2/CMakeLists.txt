@@ -229,6 +229,7 @@ endif()
 
 if(ADIOS2_HAVE_MPI)
   target_sources(adios2 PRIVATE
+    core/IOMPI.cpp
     helper/adiosCommMPI.h  helper/adiosCommMPI.cpp
     engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc
     engine/insitumpi/InSituMPIReader.cpp engine/insitumpi/InSituMPIReader.tcc
@@ -252,6 +253,7 @@ if(ADIOS2_HAVE_HDF5)
       )
   endif()
   if(HDF5_IS_PARALLEL)
+    set_property(SOURCE core/IOMPI.cpp APPEND PROPERTY COMPILE_DEFINITIONS ADIOS2_HAVE_HDF5_PARALLEL)
     target_sources(adios2 PRIVATE
       toolkit/interop/hdf5/HDF5CommonMPI.cpp
       )

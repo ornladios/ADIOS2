@@ -38,28 +38,9 @@
 #include "adios2/engine/dataman/DataManWriter.h"
 #endif
 
-#ifdef ADIOS2_HAVE_SSC // external dependencies
-#include "adios2/engine/ssc/SscReader.h"
-#include "adios2/engine/ssc/SscWriter.h"
-#endif
-
-#ifdef ADIOS2_HAVE_TABLE // external dependencies
-#include "adios2/engine/table/TableWriter.h"
-#endif
-
 #ifdef ADIOS2_HAVE_SST // external dependencies
 #include "adios2/engine/sst/SstReader.h"
 #include "adios2/engine/sst/SstWriter.h"
-#endif
-
-#ifdef ADIOS2_HAVE_DATASPACES // external dependencies
-#include "adios2/engine/dataspaces/DataSpacesReader.h"
-#include "adios2/engine/dataspaces/DataSpacesWriter.h"
-#endif
-
-#ifdef ADIOS2_HAVE_MPI // external dependencies
-#include "adios2/engine/insitumpi/InSituMPIReader.h"
-#include "adios2/engine/insitumpi/InSituMPIWriter.h"
 #endif
 
 namespace adios2
@@ -95,25 +76,10 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
                        "DataMan library, can't use DataMan engine\n")
 #endif
     },
-    {"ssc",
-#ifdef ADIOS2_HAVE_SSC
-     {IO::MakeEngine<engine::SscReader>, IO::MakeEngine<engine::SscWriter>}
-#else
-     IO::NoEngineEntry("ERROR: this version didn't compile with "
-                       "SSC library, can't use SSC engine\n")
-#endif
-    },
-    {"table",
-#ifdef ADIOS2_HAVE_TABLE
-     {IO::NoEngine("ERROR: Table engine only supports Write. It uses other "
-                   "engines as backend. Please use corresponding engines for "
-                   "Read\n"),
-      IO::MakeEngine<engine::TableWriter>}
-#else
-     IO::NoEngineEntry("ERROR: this version didn't compile with "
-                       "Table library, can't use Table engine\n")
-#endif
-    },
+    {"ssc", IO::NoEngineEntry("ERROR: this version didn't compile with "
+                              "SSC library, can't use SSC engine\n")},
+    {"table", IO::NoEngineEntry("ERROR: this version didn't compile with "
+                                "Table library, can't use Table engine\n")},
     {"sst",
 #ifdef ADIOS2_HAVE_SST
      {IO::MakeEngine<engine::SstReader>, IO::MakeEngine<engine::SstWriter>}
@@ -131,14 +97,8 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
 #endif
     },
     {"dataspaces",
-#ifdef ADIOS2_HAVE_DATASPACES
-     {IO::MakeEngine<engine::DataSpacesReader>,
-      IO::MakeEngine<engine::DataSpacesWriter>}
-#else
      IO::NoEngineEntry("ERROR: this version didn't compile with "
-                       "DataSpaces library, can't use DataSpaces engine\n")
-#endif
-    },
+                       "DataSpaces library, can't use DataSpaces engine\n")},
     {"hdf5",
 #ifdef ADIOS2_HAVE_HDF5
      IO_MakeEngine_HDF5()
@@ -147,15 +107,8 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
                        "HDF5 library, can't use HDF5 engine\n")
 #endif
     },
-    {"insitumpi",
-#ifdef ADIOS2_HAVE_MPI
-     {IO::MakeEngine<engine::InSituMPIReader>,
-      IO::MakeEngine<engine::InSituMPIWriter>}
-#else
-     IO::NoEngineEntry("ERROR: this version didn't compile with "
-                       "MPI, can't use InSituMPI engine\n")
-#endif
-    },
+    {"insitumpi", IO::NoEngineEntry("ERROR: this version didn't compile with "
+                                    "MPI, can't use InSituMPI engine\n")},
     {"skeleton",
      {IO::MakeEngine<engine::SkeletonReader>,
       IO::MakeEngine<engine::SkeletonWriter>}},
