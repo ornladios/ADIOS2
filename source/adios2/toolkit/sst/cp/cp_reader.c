@@ -35,20 +35,20 @@ static int locked = 0;
     locked--;                                                                  \
     pthread_mutex_unlock(lock);
 #define SST_ASSERT_LOCKED() assert(locked)
+#define SST_REAFFIRM_LOCKED_AFTER_CONDITION() locked=1
 #define SST_ASSERT_UNLOCKED() /* gotta lock to really do this */
 #else
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
     {                                                                          \
         pthread_mutex_lock(lock);                                              \
-        locked++;                                                              \
     }
 #define PTHREAD_MUTEX_UNLOCK(lock)                                             \
     {                                                                          \
-        locked--;                                                              \
         pthread_mutex_unlock(lock);                                            \
     }
-#define SST_ASSERT_LOCKED() assert(locked)
-#define SST_ASSERT_UNLOCKED() /* gotta lock to really do this */
+#define SST_REAFFIRM_LOCKED_AFTER_CONDITION()
+#define SST_ASSERT_LOCKED()
+#define SST_ASSERT_UNLOCKED()
 #endif
 
 static char *readContactInfoFile(const char *Name, SstStream Stream,
@@ -558,6 +558,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
             /* wait until we get the timestep metadata or something else changes
              */
             pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+            SST_REAFFIRM_LOCKED_AFTER_CONDITION();
         }
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     }
@@ -1020,6 +1021,7 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
         }
         /* wait until we get the timestep metadata or something else changes */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+        SST_REAFFIRM_LOCKED_AFTER_CONDITION();
     }
     /* NOTREACHED */
 }
@@ -1243,6 +1245,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
                    SSTStreamStatusStr[Stream->Status]);
         /* wait until we get the timestep metadata or something else changes */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+        SST_REAFFIRM_LOCKED_AFTER_CONDITION();
     }
     /* NOTREACHED */
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
