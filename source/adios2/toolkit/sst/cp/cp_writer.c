@@ -306,6 +306,7 @@ static void QueueMaintenance(SstStream Stream)
     SST_ASSERT_LOCKED();
     long SmallestLastReleasedTimestep = LONG_MAX;
     long ReserveCount;
+    int SomeReaderIsOpening = 0;
 
     if (Stream->Status != Established)
         return;
@@ -326,6 +327,10 @@ static void QueueMaintenance(SstStream Stream)
                 SmallestLastReleasedTimestep =
                     Stream->Readers[i]->LastReleasedTimestep;
         }
+        else if (Stream->Readers[i]->ReaderStatus == Opening)
+        {
+            SomeReaderIsOpening++;
+        }
     }
     if (SmallestLastReleasedTimestep != LONG_MAX)
     {
@@ -340,6 +345,12 @@ static void QueueMaintenance(SstStream Stream)
             Stream,
             "QueueMaintenance, smallest last released = LONG_MAX, count = %d\n",
             Stream->QueuedTimestepCount);
+    }
+    if (SomeReaderIsOpening)
+    {
+        CP_verbose(Stream, "Some Reader is in status \"Opening\", abandon "
+                           "queue maintenance until it's fully open");
+        return;
     }
     /* Count precious */
     List = Stream->QueuedTimesteps;
@@ -870,6 +881,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     if (pointers)
         free(pointers);
     Stream->NewReaderPresent = 1;
+    CP_WSR_Stream->ReaderStatus = Opening;
     CP_verbose(Stream,
                "Finish writer-side reader open protocol for reader %p, "
                "reader ready response pending\n",

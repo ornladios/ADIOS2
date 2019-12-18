@@ -51,14 +51,15 @@ typedef struct _CP_PeerConnection
 enum StreamStatus
 {
     NotOpen = 0,
+    Opening,
     Established,
     PeerClosed,
     PeerFailed,
     Closed
 };
 
-static char *SSTStreamStatusStr[] = {"NotOpen", "Established", "PeerClosed",
-                                     "PeerFailed", "Closed"};
+static char *SSTStreamStatusStr[] = {"NotOpen",    "Opening",    "Established",
+                                     "PeerClosed", "PeerFailed", "Closed"};
 
 struct _SentTimestepRec
 {
