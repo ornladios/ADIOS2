@@ -1327,7 +1327,7 @@ extern void SstReleaseStep(SstStream Stream)
         (Stream->Rank == 0))
     {
         PTHREAD_MUTEX_LOCK(&Stream->DataLock);
-    SST_ASSERT_LOCKED();
+        SST_ASSERT_LOCKED();
         FreeTimestep(Stream, Timestep);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     }
