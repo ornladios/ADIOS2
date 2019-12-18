@@ -42,19 +42,19 @@ static int locked = 0;
     pthread_mutex_unlock(lock);
 #define SST_ASSERT_LOCKED() assert(locked)
 #define SST_ASSERT_UNLOCKED() /* gotta lock to really do this */
+#define SST_REAFFIRM_LOCKED_AFTER_CONDITION() locked = 1
 #else
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
     {                                                                          \
         pthread_mutex_lock(lock);                                              \
-        locked++;                                                              \
     }
 #define PTHREAD_MUTEX_UNLOCK(lock)                                             \
     {                                                                          \
-        locked--;                                                              \
         pthread_mutex_unlock(lock);                                            \
     }
-#define SST_ASSERT_LOCKED() assert(locked)
+#define SST_ASSERT_LOCKED()
 #define SST_ASSERT_UNLOCKED() /* gotta lock to really do this */
+#define SST_REAFFIRM_LOCKED_AFTER_CONDITION()
 #endif
 
 static char *buildContactInfo(SstStream Stream, attr_list DPAttrs)
@@ -1066,6 +1066,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                    "(PID %lx, TID %lx) Waiting for Reader ready on WSR %p.\n",
                    (long)getpid(), (long)gettid(), Reader);
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+        SST_REAFFIRM_LOCKED_AFTER_CONDITION();
     }
 
     /* LOCK */
@@ -1214,6 +1215,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
             if (Stream->ReadRequestQueue == NULL)
             {
                 pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+                SST_REAFFIRM_LOCKED_AFTER_CONDITION();
             }
             assert(Stream->ReadRequestQueue);
             PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
@@ -1418,6 +1420,7 @@ void SstWriterClose(SstStream Stream)
             }
             /* NEED TO HANDLE FAILURE HERE */
             pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+            SST_REAFFIRM_LOCKED_AFTER_CONDITION();
         }
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     }
@@ -1974,6 +1977,7 @@ extern void SstInternalProvideTimestep(
             {
                 CP_verbose(Stream, "Blocking on QueueFull condition\n");
                 pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+                SST_REAFFIRM_LOCKED_AFTER_CONDITION();
             }
         }
         TimestepMetaData.PendingReaderCount = 0;
