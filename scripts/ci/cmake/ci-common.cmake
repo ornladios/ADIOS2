@@ -15,6 +15,7 @@ if(NOT CTEST_BUILD_FLAGS)
   endif()
 endif()
 if(NOT CTEST_TEST_ARGS)
+  message("Parallel test level: ${N2CPUS}")
   set(CTEST_TEST_ARGS PARALLEL_LEVEL ${N2CPUS})
 endif()
 

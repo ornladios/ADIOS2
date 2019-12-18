@@ -84,5 +84,9 @@ if(NOT dashboard_model)
   set(dashboard_model Experimental)
 endif()
 
+if(CMAKE_VERSION VERSION_GREATER 3.16.20191201)
+  set(CTEST_TEST_ARGS REPEAT "UNTIL_PASS:5")
+endif()
+
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 include(${CMAKE_CURRENT_LIST_DIR}/common.cmake)

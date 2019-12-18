@@ -29,13 +29,16 @@ RUN yum -y install \
   lmod-ohpc intel-compilers-devel-ohpc \
   python-numpy-intel-ohpc hdf5-intel-ohpc
 
-# Cleanup headers and packages
-RUN yum clean all
-
 # Install the CMake binary
 WORKDIR /opt/cmake
-RUN curl -L https://cmake.org/files/v3.15/cmake-3.15.2-Linux-x86_64.tar.gz | \
-    tar --strip-components=1 -xz
+RUN yum install -y openssl-devel && \
+    git clone https://gitlab.kitware.com/cmake/cmake.git source && \
+    mkdir build && \
+    cd build && \
+    ../source/bootstrap --prefix=/opt/cmake --parallel=$(grep -c '^processor' /proc/cpuinfo) && \
+    make -j$(grep -c '^processor' /proc/cpuinfo) install && \
+    cd .. && \
+    rm -rf source build
 ENV PATH=/opt/cmake/bin:${PATH}
 
 # Install ZFP

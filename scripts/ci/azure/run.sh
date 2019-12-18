@@ -37,6 +37,9 @@ CTEST_STEP_ARGS="${CTEST_STEP_ARGS} -Ddashboard_do_${STEP}=ON"
 if [ -x /opt/cmake/bin/ctest ]
 then
   CTEST=/opt/cmake/bin/ctest
+elif [ -s /Applications/CMake.app/Contents/bin/ctest ]
+then
+  CTEST=/Applications/CMake.app/Contents/bin/ctest
 else
   CTEST=ctest
 fi

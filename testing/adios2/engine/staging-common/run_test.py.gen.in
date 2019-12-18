@@ -96,9 +96,11 @@ def do_simple_test(writer_cmd, reader_cmd, reader_delay, file_test):
 def do_simple_mpmd_test(writer_cmd, reader_cmd):
     return_code = 0
 
+    mpiexec_cmd = ['@MPIEXEC_EXECUTABLE@']
+    if '@MPIEXEC_EXTRA_FLAGS@':
+        mpiexec_cmd.extend('@MPIEXEC_EXTRA_FLAGS@'.split(';'))
     print("TestDriver:  Doing MPMD simple \n")
-    reader_cmd.pop(0)
-    mpmd_cmd = writer_cmd + [":"] + reader_cmd
+    mpmd_cmd = mpiexec_cmd + writer_cmd[len(mpiexec_cmd):] + [":"] + reader_cmd[len(mpiexec_cmd):]
     print("TestDriver: MPMD command line : " + " ".join(mpmd_cmd))
 
     mpmd = subprocess.Popen(mpmd_cmd)
@@ -261,13 +263,13 @@ else:
 
 writer_exec_cmd = ['@MPIEXEC_EXECUTABLE@']
 reader_exec_cmd = ['@MPIEXEC_EXECUTABLE@']
-if '@MPIEXEC_EXTRA_FLAGS@'
-    writer_exec_cmd.extend('@MPIEXEC_EXTRA_FLAGS@'.split(' ')
-    reader_exec_cmd.extend('@MPIEXEC_EXTRA_FLAGS@'.split(' ')
-writer_exec_cmd.extend(
-    '@MPIEXEC_NUMPROC_FLAG@'.split(' ') + str(args.num_writers))
-reader_exec_cmd.extend(
-    '@MPIEXEC_NUMPROC_FLAG@'.split(' ') + str(args.num_readers))
+if '@MPIEXEC_EXTRA_FLAGS@':
+    writer_exec_cmd.extend('@MPIEXEC_EXTRA_FLAGS@'.split(';'))
+    reader_exec_cmd.extend('@MPIEXEC_EXTRA_FLAGS@'.split(';'))
+writer_exec_cmd.extend('@MPIEXEC_NUMPROC_FLAG@'.split(' '))
+writer_exec_cmd.append(str(args.num_writers))
+reader_exec_cmd.extend('@MPIEXEC_NUMPROC_FLAG@'.split(' '))
+reader_exec_cmd.append(str(args.num_readers))
 mpmd_possible = True
 
 if (("@MPIEXEC_EXECUTABLE@" == "") or

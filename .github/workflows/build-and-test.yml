@@ -62,3 +62,31 @@ jobs:
       run: scripts/ci/gh-actions/run.sh build
     - name: Test
       run: scripts/ci/gh-actions/run.sh test
+
+  macos:
+    runs-on: macos-latest
+    env:
+      GH_YML_JOBNAME: ${{ matrix.jobname }}
+      GH_YML_OS: macOS
+
+    strategy:
+      fail-fast: false
+      matrix:
+        jobname: [
+          macos1015-xcode111-ninja,
+          macos1015-xcode111-openmpi-ninja ]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Setup
+      run: scripts/ci/gh-actions/macos-setup.sh
+    - name: Update
+      run: scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: scripts/ci/gh-actions/run.sh build
+    - name: Test
+      run: scripts/ci/gh-actions/run.sh test

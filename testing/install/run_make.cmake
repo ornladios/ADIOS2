@@ -16,6 +16,7 @@ set(ENV{PATH} "${ADIOS2_BINARY_DIR}/testing/install/install/${CMAKE_INSTALL_BIND
 if(CMAKE_OSX_SYSROOT)
   set(isysroot "-isysroot ${CMAKE_OSX_SYSROOT}")
 endif()
+string(REPLACE ";" " " MPIEXEC_EXTRA_FLAGS "${MPIEXEC_EXTRA_FLAGS}")
 execute_process(
   COMMAND "${MAKE_COMMAND}"
     "CC=${CMAKE_C_COMPILER}"

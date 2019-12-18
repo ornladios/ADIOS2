@@ -31,14 +31,14 @@ add_test(NAME Engine.Skeleton.Reader
 SetupTestPipeline(Engine.Skeleton "Writer;Reader" TRUE)
 
 add_test(NAME Engine.Skeleton.Writer.Validate
-  COMMAND ${DIFF_COMMAND} -uw
+  COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/TestSkeletonWriterExpectedOutput.txt
     TestSkeletonWriterOutput.txt
 )
 SetupTestPipeline(Engine.Skeleton "Writer;Writer.Validate" FALSE)
 
 add_test(NAME Engine.Skeleton.Reader.Validate
-  COMMAND ${DIFF_COMMAND} -uw
+  COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/TestSkeletonReaderExpectedOutput.txt
     TestSkeletonReaderOutput.txt
 )

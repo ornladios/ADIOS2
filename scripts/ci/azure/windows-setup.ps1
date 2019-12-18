@@ -25,6 +25,9 @@ function main () {
         }
     }
 
+    # Install CMake nightly
+    Install-MSI -MsiUrl "https://cmake.org/files/dev/cmake-3.16.20191218-g8262562-win64-x64.msi" -MsiName "cmake-3.16.20191218-g8262562-win64-x64.msi" -ArgumentList "ADD_CMAKE_TO_PATH=System"
+
     # Install Ninja
     if($jobName -match "ninja") {
         Write-Host "Installing Ninja"

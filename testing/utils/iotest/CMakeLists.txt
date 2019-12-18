@@ -26,7 +26,7 @@ add_test(NAME Utils.IOTest.Pipe2.BP.Write.Dump
 )
 
 add_test(NAME Utils.IOTest.Pipe2.BP.Write.Validate
-  COMMAND ${DIFF_COMMAND} -uw
+  COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.BP.Write.bpls.txt
     IOTest.Pipe2.BP.Write.bpls.txt
 )
@@ -57,7 +57,7 @@ add_test(NAME Utils.IOTest.Pipe2.BP.Read.Dump
 )
 
 add_test(NAME Utils.IOTest.Pipe2.BP.Read.Validate
-  COMMAND ${DIFF_COMMAND} -uw
+  COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.BP.Read.bpls.txt
     IOTest.Pipe2.BP.Read.bpls.txt
 )
@@ -89,7 +89,7 @@ if(ADIOS2_HAVE_HDF5)
   )
 
   add_test(NAME Utils.IOTest.Pipe2.HDF5.Write.Validate
-    COMMAND ${DIFF_COMMAND} -uw
+    COMMAND ${DIFF_COMMAND} -u -w
       ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.HDF5.Write.bpls.txt
       IOTest.Pipe2.HDF5.Write.bpls.txt
   )
@@ -120,7 +120,7 @@ if(ADIOS2_HAVE_HDF5)
   )
 
   add_test(NAME Utils.IOTest.Pipe2.HDF5.Read.Validate
-    COMMAND ${DIFF_COMMAND} -uw
+    COMMAND ${DIFF_COMMAND} -u -w
       ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.HDF5.Read.bpls.txt
       IOTest.Pipe2.HDF5.Read.bpls.txt
   )
@@ -159,7 +159,7 @@ if(MPIEXEC_MAX_NUMPROCS GREATER 1)
   )
 
   add_test(NAME Utils.IOTest.Pipe2.InSituMPI.Validate
-    COMMAND ${DIFF_COMMAND} -uw
+    COMMAND ${DIFF_COMMAND} -u -w
       ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.InSituMPI.bpls.txt
       IOTest.Pipe2.InSituMPI.bpls.txt
   )
@@ -194,7 +194,7 @@ if(MPIEXEC_MAX_NUMPROCS GREATER 1)
     )
 
     add_test(NAME Utils.IOTest.Pipe2.SST.Validate
-      COMMAND ${DIFF_COMMAND} -uw
+      COMMAND ${DIFF_COMMAND} -u -w
         ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.SST.bpls.txt
         IOTest.Pipe2.SST.bpls.txt
     )

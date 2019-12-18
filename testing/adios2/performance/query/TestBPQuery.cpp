@@ -48,13 +48,15 @@ void WriteXmlQuery1D(const std::string &queryFile, const std::string &ioName,
 
 void LoadTestData(QueryTestData &input, int step, int rank, int dataSize)
 {
+    input.m_IntData.clear();
     input.m_IntData.reserve(dataSize);
+    input.m_DoubleData.clear();
     input.m_DoubleData.reserve(dataSize);
 
     for (auto i = 0; i < dataSize; i++)
     {
-        input.m_IntData[i] = step * 1000 + rank * 100 + i;
-        input.m_DoubleData[i] = step * 100 + rank * 10 + i * 0.01;
+        input.m_IntData.push_back(step * 1000 + rank * 100 + i);
+        input.m_DoubleData.push_back(step * 100 + rank * 10 + i * 0.01);
     }
 }
 

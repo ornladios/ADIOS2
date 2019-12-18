@@ -2,7 +2,7 @@ FROM centos:centos7
 
 # Install core dev packages
 RUN yum -y install make curl file git valgrind vim bison flex sudo gdb \
-        pkgconfig bison flex pkgconfig bzip2 bzip2-libs \
+        pkgconfig bison flex pkgconfig bzip2 bzip2-libs gcc gcc-c++ \
         zlib-devel bzip2-devel libpng-devel libfabric-devel libffi-devel
 RUN yum -y install epel-release && \
     yum -y install zeromq-devel blosc-devel python34-devel libzstd libzstd-devel
@@ -20,10 +20,16 @@ RUN yum -y install lmod-ohpc \
         gnu8-compilers-ohpc openmpi3-gnu8-ohpc \
         python34-numpy-gnu8-ohpc python34-mpi4py-gnu8-openmpi3-ohpc
 
-# Install the CMake binary
+# Install the CMake
 WORKDIR /opt/cmake
-RUN curl -L https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.tar.gz | \
-    tar -C /opt/cmake --strip-components=1 -xzv
+RUN yum install -y openssl-devel && \
+    git clone https://gitlab.kitware.com/cmake/cmake.git source && \
+    mkdir build && \
+    cd build && \
+    ../source/bootstrap --prefix=/opt/cmake --parallel=$(grep -c '^processor' /proc/cpuinfo) && \
+    make -j$(grep -c '^processor' /proc/cpuinfo) install && \
+    cd .. && \
+    rm -rf source build
 ENV PATH=/opt/cmake/bin:${PATH}
 
 # Install HDF5 1.10.4 (the current 1.10.5 has a parallel close bug affecting

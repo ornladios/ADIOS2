@@ -24,14 +24,20 @@ RUN export \
       PGI_MPI_GPU_SUPPORT=false \
   && ./install
 
-RUN zypper in -y environment-modules \
+RUN zypper ref && zypper in -y environment-modules \
   && echo 'export MODULEPATH=/opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.sh \
   && echo 'setenv MODULEPATH /opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.csh
 
 # Install the CMake binary
 WORKDIR /opt/cmake
-RUN curl -L https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.tar.gz | \
-      tar -C /opt/cmake --strip-components=1 -xzv
+RUN zypper in -y libopenssl-devel && \
+    git clone https://gitlab.kitware.com/cmake/cmake.git source && \
+    mkdir build && \
+    cd build && \
+    ../source/bootstrap --prefix=/opt/cmake --parallel=$(grep -c '^processor' /proc/cpuinfo) && \
+    make -j$(grep -c '^processor' /proc/cpuinfo) install && \
+    cd .. && \
+    rm -rf source build
 ENV PATH=/opt/cmake/bin:${PATH}
 
 # Install ZFP

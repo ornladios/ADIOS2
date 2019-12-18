@@ -31,12 +31,15 @@ CTEST_STEP_ARGS="${CTEST_STEP_ARGS} -Ddashboard_do_${STEP}=ON"
 if [ -x /opt/cmake/bin/ctest ]
 then
   CTEST=/opt/cmake/bin/ctest
+elif [ -s /Applications/CMake.app/Contents/bin/ctest ]
+then
+  CTEST=/Applications/CMake.app/Contents/bin/ctest
 else
   CTEST=ctest
 fi
 
 # OpenMPI specific setup
-if [[ "${JOBNAME}" =~ openmpi ]]
+if [[ "${GH_YML_JOBNAME}" =~ openmpi ]]
 then
   # Workaround to quiet some warnings from OpenMPI
   export OMPI_MCA_btl_base_warn_component_unused=0

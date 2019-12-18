@@ -5,7 +5,7 @@
 
 gtest_add_tests_helper(ManyVars ${test_mpi} "" Performance. "")
 
-if(ADIOS2_HAVE_MPI)
+if(ADIOS2_HAVE_MPI AND NOT WIN32) # Doesn't reliably work on windows
   # Pure C code, not added to test, 
   # just for executing manually for performance studies
   add_executable(PerfManyVars PerfManyVars.c)
