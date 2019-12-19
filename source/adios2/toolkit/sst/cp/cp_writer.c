@@ -423,12 +423,14 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
                                        "operations, peer likely failed\n");
         CP_PeerFailCloseWSReader(WSreader, PeerFailed);
     }
-    else if (WSreader->ReaderStatus == Opening) 
+    else if (WSreader->ReaderStatus == Opening)
     {
-       /* ignore this.  We expect a close after the connection is marked closed
+        /* ignore this.  We expect a close after the connection is marked closed
          */
-        CP_verbose(ParentWriterStream, "Writer-side Rank received a "
-                                       "connection-close event in state opening, handling failure\n");
+        CP_verbose(
+            ParentWriterStream,
+            "Writer-side Rank received a "
+            "connection-close event in state opening, handling failure\n");
         /* main thread will be waiting for this */
         pthread_cond_signal(&ParentWriterStream->DataCondition);
     }
@@ -1089,10 +1091,9 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
         SST_REAFFIRM_LOCKED_AFTER_CONDITION();
     }
 
-    if (Reader->ReaderStatus != Established) {
-        CP_verbose(Stream,
-                   "Reader WSR %p, Failed during startup.\n",
-                   Reader);
+    if (Reader->ReaderStatus != Established)
+    {
+        CP_verbose(Stream, "Reader WSR %p, Failed during startup.\n", Reader);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     }
     /* LOCK */
