@@ -44,8 +44,10 @@ adios2_error String2CAPI(const std::string &s, char *buf, size_t *size);
     MACRO(adios2_type_uint64_t)                                                \
     MACRO(adios2_type_float)                                                   \
     MACRO(adios2_type_double)                                                  \
+    MACRO(adios2_type_long_double)                                             \
     MACRO(adios2_type_float_complex)                                           \
-    MACRO(adios2_type_double_complex)
+    MACRO(adios2_type_double_complex)                                          \
+    MACRO(adios2_type_long_double_complex)
 
 // calls MACRO for all adios2_type attribute types except for adios2_type_string
 #define ADIOS2_FOREACH_C_ATTRIBUTE_TYPE_1ARG(MACRO)                            \
@@ -58,6 +60,10 @@ adios2_error String2CAPI(const std::string &s, char *buf, size_t *size);
     MACRO(adios2_type_uint32_t)                                                \
     MACRO(adios2_type_uint64_t)                                                \
     MACRO(adios2_type_float)                                                   \
-    MACRO(adios2_type_double)
+    MACRO(adios2_type_double)                                                  \
+    MACRO(adios2_type_long_double)                                             \
+    MACRO(adios2_type_float_complex)                                           \
+    MACRO(adios2_type_double_complex)                                          \
+    MACRO(adios2_type_long_double_complex)
 
 #endif /* ADIOS2_BINDINGS_C_C_ADIOS2_C_INTERNAL_H_ */

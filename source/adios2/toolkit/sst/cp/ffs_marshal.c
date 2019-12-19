@@ -174,6 +174,10 @@ static char *TranslateADIOS2Type2FFS(const char *Type)
     {
         return strdup("complex8");
     }
+    else if (strcmp(Type, "double complex") == 0)
+    {
+        return strdup("complex16");
+    }
     else if (strcmp(Type, "int8_t") == 0)
     {
         return strdup("integer");
@@ -273,6 +277,10 @@ static char *TranslateFFSType2ADIOS(const char *Type, int size)
     else if (strcmp(Type, "complex8") == 0)
     {
         return strdup("double complex");
+    }
+    else if (strcmp(Type, "complex16") == 0)
+    {
+        return strdup("long double complex");
     }
     return strdup(Type);
 }

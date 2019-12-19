@@ -88,8 +88,10 @@ typedef enum
     adios2_type_string = 0,
     adios2_type_float = 1,
     adios2_type_double = 2,
+    adios2_type_long_double = 13,
     adios2_type_float_complex = 3,
     adios2_type_double_complex = 4,
+    adios2_type_long_double_complex = 14,
 
     adios2_type_int8_t = 5,
     adios2_type_int16_t = 6,

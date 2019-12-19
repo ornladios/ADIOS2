@@ -28,11 +28,15 @@ module adios2_parameters_mod
     integer, parameter :: adios2_type_dp    = 2
     integer, parameter :: adios2_type_double_precision = 2
 
+    ! long dp missing?
+
     integer, parameter :: adios2_type_complex4 = 3
     integer, parameter :: adios2_type_complex = 3
 
     integer, parameter :: adios2_type_complex8 = 4
     integer, parameter :: adios2_type_complex_dp = 4
+
+    ! add complex_dlp?
 
     integer, parameter :: adios2_type_integer1 = 5
     integer, parameter :: adios2_type_integer2 = 6

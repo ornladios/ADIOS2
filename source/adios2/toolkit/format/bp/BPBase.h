@@ -367,10 +367,11 @@ protected:
         type_double = 6,      //!< type_double
         type_long_double = 7, //!< type_long_double
 
-        type_string = 9,          //!< type_string
-        type_complex = 10,        //!< type_complex
-        type_double_complex = 11, //!< type_double_complex
-        type_string_array = 12,   //!< type_string_array
+        type_string = 9,               //!< type_string
+        type_complex = 10,             //!< type_complex
+        type_double_complex = 11,      //!< type_double_complex
+        type_string_array = 12,        //!< type_string_array
+        type_long_double_complex = 13, //!< type_long_double_complex
     };
 
     /** Maps C++ type to DataTypes enum */

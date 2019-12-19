@@ -33,6 +33,7 @@ Fixed-width types from `<cinttypes> and <cstdint> <https://en.cppreference.com/w
    long double               -> platform dependent
    std::complex<float>       -> always  64-bit = 8 bytes = 2 * float
    std::complex<double>      -> always 128-bit = 16 bytes = 2 * double
+   std::complex<long double> -> platform dependent = 2 * long double
 
 .. tip::
 

@@ -166,6 +166,13 @@ inline void DataManReader::AccumulateMinMax<std::complex<double>>(
 {
 }
 
+template <>
+inline void DataManReader::AccumulateMinMax<std::complex<long double>>(
+    std::complex<long double> &min, std::complex<long double> &max,
+    const std::vector<char> &minVec, const std::vector<char> &maxVec) const
+{
+}
+
 template <typename T>
 void DataManReader::AccumulateMinMax(T &min, T &max,
                                      const std::vector<char> &minVec,

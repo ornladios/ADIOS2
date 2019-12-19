@@ -576,7 +576,7 @@ void HDF5Common::CreateVar(core::IO &io, hid_t datasetId,
     }
     else if (H5Tequal(m_DefH5TypeComplexLongDouble, h5Type))
     {
-        // TODO:AddVar<std::complex<long double>>(io, name, datasetId, ts);
+        AddVar<std::complex<long double>>(io, name, datasetId, ts);
     }
 
     // H5Tclose(h5Type);

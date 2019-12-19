@@ -375,6 +375,7 @@ mxClassID adiostypeToMatlabClass(adios2_type adiostype,
     case adios2_type_double_complex: /*  16 bytes */
         *complexity = mxCOMPLEX;
         return mxDOUBLE_CLASS;
+        /* add long double complex ? */
 
     default:
         mexErrMsgIdAndTxt("MATLAB:adiosopenc.c:dimensionTooLarge",

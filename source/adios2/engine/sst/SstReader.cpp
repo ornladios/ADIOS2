@@ -114,7 +114,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         Reader->m_IO.DefineAttribute<T>(attrName, *(T *)data);                 \
     }
 
-            ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
             else
             {
