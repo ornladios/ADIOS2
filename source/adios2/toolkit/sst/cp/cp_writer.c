@@ -858,6 +858,8 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
         Stream, &combined_init, Stream->CPInfo->PerRankWriterInfoFormat,
         &ret_data_block);
 
+    CP_WSR_Stream->ReaderStatus = Opening;
+
     if (Stream->Rank == 0)
     {
         struct _WriterResponseMsg response;
@@ -892,7 +894,6 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     if (pointers)
         free(pointers);
     Stream->NewReaderPresent = 1;
-    CP_WSR_Stream->ReaderStatus = Opening;
     CP_verbose(Stream,
                "Finish writer-side reader open protocol for reader %p, "
                "reader ready response pending\n",
