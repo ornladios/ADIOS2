@@ -423,6 +423,15 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
                                        "operations, peer likely failed\n");
         CP_PeerFailCloseWSReader(WSreader, PeerFailed);
     }
+    else if (WSreader->ReaderStatus == Opening) 
+    {
+       /* ignore this.  We expect a close after the connection is marked closed
+         */
+        CP_verbose(ParentWriterStream, "Writer-side Rank received a "
+                                       "connection-close event in state opening, handling failure\n");
+        /* main thread will be waiting for this */
+        pthread_cond_signal(&ParentWriterStream->DataCondition);
+    }
     else if ((WSreader->ReaderStatus == PeerClosed) ||
              (WSreader->ReaderStatus == Closed))
     {
@@ -1071,9 +1080,8 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
 {
     SstStream Stream = Reader->ParentStream;
     PTHREAD_MUTEX_LOCK(&Stream->DataLock);
-    while (Reader->ReaderStatus != Established)
+    while (Reader->ReaderStatus == Opening)
     {
-        /* NEED TO HANDLE FAILURE HERE */
         CP_verbose(Stream,
                    "(PID %lx, TID %lx) Waiting for Reader ready on WSR %p.\n",
                    (long)getpid(), (long)gettid(), Reader);
@@ -1081,6 +1089,12 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
         SST_REAFFIRM_LOCKED_AFTER_CONDITION();
     }
 
+    if (Reader->ReaderStatus != Established) {
+        CP_verbose(Stream,
+                   "Reader WSR %p, Failed during startup.\n",
+                   Reader);
+        PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+    }
     /* LOCK */
     /* LastReleased is set to OldestItemTS - 1 */
     /* foreach item in queue */
