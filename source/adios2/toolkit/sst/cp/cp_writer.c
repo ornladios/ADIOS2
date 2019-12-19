@@ -804,6 +804,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     CP_WSR_Stream->Connections = connections_to_reader;
     CP_WSR_Stream->ReaderDefinitionsLocked = 0;
     CP_WSR_Stream->ReaderSelectionLockTimestep = -1;
+    CP_WSR_Stream->ReaderStatus = Opening;
     if (ReturnData->SpecPreload == SpecPreloadOn)
     {
 
@@ -857,8 +858,6 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     pointers = (struct _CP_DP_PairInfo **)CP_consolidateDataToRankZero(
         Stream, &combined_init, Stream->CPInfo->PerRankWriterInfoFormat,
         &ret_data_block);
-
-    CP_WSR_Stream->ReaderStatus = Opening;
 
     if (Stream->Rank == 0)
     {
