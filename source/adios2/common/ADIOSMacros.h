@@ -52,7 +52,7 @@
 
 #define ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(MACRO)                           \
     MACRO(std::string)                                                         \
-    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(MACRO)
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)
 
 #define ADIOS2_FOREACH_STDTYPE_1ARG(MACRO)                                     \
     MACRO(std::string)                                                         \
@@ -147,7 +147,9 @@
     MACRO(unsigned long long int)                                              \
     MACRO(float)                                                               \
     MACRO(double)                                                              \
-    MACRO(long double)
+    MACRO(long double)                                                         \
+    MACRO(std::complex<float>)                                                 \
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(MACRO)                    \
     MACRO(char)                                                                \
@@ -163,7 +165,9 @@
     MACRO(unsigned long long int)                                              \
     MACRO(float)                                                               \
     MACRO(double)                                                              \
-    MACRO(long double)
+    MACRO(long double)                                                         \
+    MACRO(std::complex<float>)                                                 \
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_NUMERIC_ATTRIBUTE_TYPE_1ARG(MACRO)                      \
     MACRO(short)                                                               \
@@ -176,7 +180,9 @@
     MACRO(unsigned long long int)                                              \
     MACRO(float)                                                               \
     MACRO(double)                                                              \
-    MACRO(long double)
+    MACRO(long double)                                                         \
+    MACRO(std::complex<float>)                                                 \
+    MACRO(std::complex<double>)
 
 /**
  <pre>
@@ -214,7 +220,9 @@
     MACRO(uint64_t, uint64)                                                    \
     MACRO(float, float)                                                        \
     MACRO(double, double)                                                      \
-    MACRO(long double, ldouble)
+    MACRO(long double, ldouble)                                                \
+    MACRO(std::complex<float>, cfloat)                                         \
+    MACRO(std::complex<double>, cdouble)
 
 #define ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(MACRO)                           \
     MACRO(int8_t, int8)                                                        \
@@ -232,9 +240,7 @@
     MACRO(std::complex<double>, cdouble)
 
 #define ADIOS2_FOREACH_STDTYPE_2ARGS(MACRO)                                    \
-    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)                              \
-    MACRO(std::complex<float>, cfloat)                                         \
-    MACRO(std::complex<double>, cdouble)
+    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)
 
 #define ADIOS2_FOREACH_COMPLEX_TYPE_2ARGS(MACRO)                               \
     MACRO(std::complex<float>, CFloat)                                         \
