@@ -86,11 +86,15 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                                      adios2::ConstantDims);
             io.DefineVariable<double>("r64", shape, start, count,
                                       adios2::ConstantDims);
+            io.DefineVariable<long double>("r128", shape, start, count,
+                                           adios2::ConstantDims);
 
             io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
                                                    adios2::ConstantDims);
             io.DefineVariable<std::complex<double>>("cr64", shape, start, count,
                                                     adios2::ConstantDims);
+            io.DefineVariable<std::complex<long double>>(
+                "cr128", shape, start, count, adios2::ConstantDims);
         }
 
         adios2::Engine h5Writer = io.Open(fname, adios2::Mode::Write);
@@ -128,12 +132,15 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
             {
                 h5Writer.Put<float>("r32", currentTestData.R32.data());
                 h5Writer.Put<double>("r64", currentTestData.R64.data());
+                h5Writer.Put<long double>("r128", currentTestData.R128.data());
             }
 
             h5Writer.Put<std::complex<float>>("cr32",
                                               currentTestData.CR32.data());
             h5Writer.Put<std::complex<double>>("cr64",
                                                currentTestData.CR64.data());
+            h5Writer.Put<std::complex<long double>>(
+                "cr128", currentTestData.CR128.data());
 
             h5Writer.EndStep();
         }
@@ -159,8 +166,10 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
         std::array<uint64_t, Nx> U64;
         std::array<float, Nx> R32;
         std::array<double, Nx> R64;
+        std::array<long double, Nx> R128;
         std::array<std::complex<float>, Nx> CR32;
         std::array<std::complex<double>, Nx> CR64;
+        std::array<std::complex<long double>, Nx> CR128;
 
         const adios2::Dims start{mpiRank * Nx};
         const adios2::Dims count{Nx};
@@ -188,8 +197,11 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             auto var_r32 = io.InquireVariable<float>("r32");
             auto var_r64 = io.InquireVariable<double>("r64");
+            auto var_r128 = io.InquireVariable<long double>("r128");
             auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
             auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
+            auto var_cr128 =
+                io.InquireVariable<std::complex<long double>>("cr128");
 
             if (currentStep == 0)
             {
@@ -286,11 +298,13 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
             {
                 EXPECT_FALSE(var_r32);
                 EXPECT_FALSE(var_r64);
+                EXPECT_FALSE(var_r128);
             }
             else
             {
                 EXPECT_TRUE(var_r32);
                 EXPECT_TRUE(var_r64);
+                EXPECT_TRUE(var_r128);
 
                 ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
                 ASSERT_EQ(var_r32.Steps(), NSteps - 1);
@@ -300,15 +314,22 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                 ASSERT_EQ(var_r64.Steps(), NSteps - 1);
                 ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
 
+                ASSERT_EQ(var_r128.ShapeID(), adios2::ShapeID::GlobalArray);
+                ASSERT_EQ(var_r128.Steps(), NSteps - 1);
+                ASSERT_EQ(var_r128.Shape()[0], mpiSize * Nx);
+
                 var_r32.SetSelection(sel);
                 var_r64.SetSelection(sel);
+                var_r128.SetSelection(sel);
 
                 h5Reader.Get(var_r32, R32.data());
                 h5Reader.Get(var_r64, R64.data());
+                h5Reader.Get(var_r128, R128.data());
             }
 
             EXPECT_TRUE(var_cr32);
             EXPECT_TRUE(var_cr64);
+            EXPECT_TRUE(var_cr128);
 
             ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
             ASSERT_EQ(var_cr32.Steps(), NSteps);
@@ -318,11 +339,17 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
             ASSERT_EQ(var_cr64.Steps(), NSteps);
             ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Nx);
 
+            ASSERT_EQ(var_cr128.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_cr128.Steps(), NSteps);
+            ASSERT_EQ(var_cr128.Shape()[0], mpiSize * Nx);
+
             var_cr32.SetSelection(sel);
             var_cr64.SetSelection(sel);
+            var_cr128.SetSelection(sel);
 
             h5Reader.Get(var_cr32, CR32.data());
             h5Reader.Get(var_cr64, CR64.data());
+            h5Reader.Get(var_cr128, CR128.data());
 
             h5Reader.EndStep();
 
@@ -353,11 +380,15 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                     EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 if (var_r64)
                     EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
+                if (var_r128)
+                    EXPECT_EQ(R128[i], currentTestData.R128[i]) << msg;
 
                 if (var_cr32)
                     EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
                 if (var_cr64)
                     EXPECT_EQ(CR64[i], currentTestData.CR64[i]) << msg;
+                if (var_cr128)
+                    EXPECT_EQ(CR128[i], currentTestData.CR128[i]) << msg;
             }
             ++t;
         }
@@ -433,6 +464,8 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
                                      adios2::ConstantDims);
             io.DefineVariable<double>("r64", shape, start, count,
                                       adios2::ConstantDims);
+            io.DefineVariable<long double>("r128", shape, start, count,
+                                           adios2::ConstantDims);
         }
 
         adios2::Engine h5Writer = io.Open(fname, adios2::Mode::Write);
@@ -455,6 +488,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
             h5Writer.Put<uint64_t>("u64", currentTestData.U64.data());
             h5Writer.Put<float>("r32", currentTestData.R32.data());
             h5Writer.Put<double>("r64", currentTestData.R64.data());
+            h5Writer.Put<long double>("r128", currentTestData.R128.data());
             h5Writer.EndStep();
         }
 
@@ -541,6 +575,13 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
             ASSERT_EQ(var_r64.Shape()[0], Ny);
             ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
+            auto var_r128 = io.InquireVariable<long double>("r128");
+            EXPECT_TRUE(var_r128);
+            ASSERT_EQ(var_r128.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r128.Steps(), NSteps);
+            ASSERT_EQ(var_r128.Shape()[0], Ny);
+            ASSERT_EQ(var_r128.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
             std::array<int8_t, Nx * Ny> I8;
             std::array<int16_t, Nx * Ny> I16;
             std::array<int32_t, Nx * Ny> I32;
@@ -551,6 +592,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
             std::array<uint64_t, Nx * Ny> U64;
             std::array<float, Nx * Ny> R32;
             std::array<double, Nx * Ny> R64;
+            std::array<long double, Nx * Ny> R128;
 
             const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
             const adios2::Dims count{Ny, Nx};
@@ -569,6 +611,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
 
             var_r32.SetSelection(sel);
             var_r64.SetSelection(sel);
+            var_r128.SetSelection(sel);
 
             const size_t currentStep = h5Reader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
@@ -588,6 +631,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
 
             h5Reader.Get(var_r32, R32.data());
             h5Reader.Get(var_r64, R64.data());
+            h5Reader.Get(var_r128, R128.data());
 
             h5Reader.PerformGets();
             h5Reader.EndStep();
@@ -608,6 +652,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
                 EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
                 EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
+                EXPECT_EQ(R128[i], currentTestData.R128[i]) << msg;
             }
             ++t;
         }
@@ -682,6 +727,8 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
                                      adios2::ConstantDims);
             io.DefineVariable<double>("r64", shape, start, count,
                                       adios2::ConstantDims);
+            io.DefineVariable<long double>("r128", shape, start, count,
+                                           adios2::ConstantDims);
         }
 
         adios2::Engine h5Writer = io.Open(fname, adios2::Mode::Write);
@@ -704,6 +751,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
             h5Writer.Put<uint64_t>("u64", currentTestData.U64.data());
             h5Writer.Put<float>("r32", currentTestData.R32.data());
             h5Writer.Put<double>("r64", currentTestData.R64.data());
+            h5Writer.Put<long double>("r128", currentTestData.R128.data());
             h5Writer.EndStep();
         }
 
@@ -791,6 +839,13 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
             ASSERT_EQ(var_r64.Shape()[0], Ny);
             ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
+            auto var_r128 = io.InquireVariable<long double>("r128");
+            EXPECT_TRUE(var_r128);
+            ASSERT_EQ(var_r128.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r128.Steps(), NSteps);
+            ASSERT_EQ(var_r128.Shape()[0], Ny);
+            ASSERT_EQ(var_r128.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
             // If the size of the array is smaller than the data
             // the result is weird... double and uint64_t would get
             // completely garbage data
@@ -804,6 +859,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
             std::array<uint64_t, Nx * Ny> U64;
             std::array<float, Nx * Ny> R32;
             std::array<double, Nx * Ny> R64;
+            std::array<long double, Nx * Ny> R128;
 
             const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
             const adios2::Dims count{Ny, Nx};
@@ -822,6 +878,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
 
             var_r32.SetSelection(sel);
             var_r64.SetSelection(sel);
+            var_r128.SetSelection(sel);
 
             const size_t currentStep = h5Reader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
@@ -841,6 +898,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
 
             h5Reader.Get(var_r32, R32.data());
             h5Reader.Get(var_r64, R64.data());
+            h5Reader.Get(var_r128, R128.data());
 
             h5Reader.PerformGets();
 
@@ -862,6 +920,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
                 EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
                 EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
+                EXPECT_EQ(R128[i], currentTestData.R128[i]) << msg;
             }
             ++t;
         }
@@ -907,6 +966,8 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
 
         io.DefineVariable<float>("r32", shape, start, count,
                                  adios2::ConstantDims);
+        io.DefineVariable<long double>("r128", shape, start, count,
+                                       adios2::ConstantDims);
 
         adios2::Engine h5Writer = io.Open(fnameFloat, adios2::Mode::Write);
 
@@ -916,6 +977,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
             h5Writer.BeginStep();
             h5Writer.Put<float>("r32", currentTestData.R32.data());
+            h5Writer.Put<long double>("r128", currentTestData.R128.data());
             h5Writer.EndStep();
         }
 
@@ -937,6 +999,12 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
             EXPECT_TRUE(varR32);
             reader.EndStep();
 
+            reader.BeginStep();
+            adios2::Variable<long double> varR128 =
+                io.InquireVariable<long double>("r128");
+            EXPECT_TRUE(varR128);
+            reader.EndStep();
+
             if (step == 0)
             {
                 adios2::Variable<double> varR64 = io.DefineVariable<double>(
@@ -948,6 +1016,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
             writer.BeginStep();
             writer.Put<float>("r32", currentTestData.R32.data());
             writer.Put<double>("r64", currentTestData.R64.data());
+            writer.Put<long double>("r128", currentTestData.R128.data());
             writer.EndStep();
         }
 
@@ -966,7 +1035,10 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
             adios2::Variable<float> varR32 = io.InquireVariable<float>("r32");
             EXPECT_TRUE(varR32);
             adios2::Variable<double> varR64 = io.InquireVariable<double>("r64");
-            EXPECT_TRUE(varR32);
+            EXPECT_TRUE(varR64);
+            adios2::Variable<long double> varR128 =
+                io.InquireVariable<long double>("r128");
+            EXPECT_TRUE(varR128);
             reader.EndStep();
         }
         reader.Close();
