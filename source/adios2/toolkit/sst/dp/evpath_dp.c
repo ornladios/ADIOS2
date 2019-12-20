@@ -722,18 +722,23 @@ static void EvpathProvideWriterDataToReader(CP_Services Svcs,
 static void AddRequestToList(CP_Services Svcs, Evpath_RS_Stream Stream,
                              EvpathCompletionHandle Handle)
 {
+    pthread_mutex_lock(&Stream->DataLock);
     Handle->Next = Stream->PendingReadRequests;
     Stream->PendingReadRequests = Handle;
+    pthread_mutex_unlock(&Stream->DataLock);
 }
 
 static void RemoveRequestFromList(CP_Services Svcs, Evpath_RS_Stream Stream,
                                   EvpathCompletionHandle Handle)
 {
-    EvpathCompletionHandle Tmp = Stream->PendingReadRequests;
+    EvpathCompletionHandle Tmp;
 
+    pthread_mutex_lock(&Stream->DataLock);
+    Tmp = Stream->PendingReadRequests;
     if (Stream->PendingReadRequests == Handle)
     {
         Stream->PendingReadRequests = Handle->Next;
+        pthread_mutex_unlock(&Stream->DataLock);
         return;
     }
 
@@ -743,31 +748,41 @@ static void RemoveRequestFromList(CP_Services Svcs, Evpath_RS_Stream Stream,
     }
 
     if (Tmp == NULL)
+    {
+        pthread_mutex_unlock(&Stream->DataLock);
         return;
+    }
 
     // Tmp->Next must be the handle to remove
     Tmp->Next = Tmp->Next->Next;
+    pthread_mutex_unlock(&Stream->DataLock);
 }
 
 static void FailRequestsToRank(CP_Services Svcs, CManager cm,
                                Evpath_RS_Stream Stream, int FailedRank)
 {
-    EvpathCompletionHandle Tmp = Stream->PendingReadRequests;
+    EvpathCompletionHandle Tmp;
     Svcs->verbose(Stream->CP_Stream, "Fail all pending requests on stream %p\n",
                   Stream);
+    pthread_mutex_lock(&Stream->DataLock);
+    Tmp = Stream->PendingReadRequests;
     while (Tmp != NULL)
     {
-        Tmp->Failed = 1;
-        Svcs->verbose(Tmp->CPStream,
-                      "Found a pending remote memory read "
-                      "to writer rank %d, marking as "
-                      "failed and signalling condition %d\n",
-                      Tmp->Rank, Tmp->CMcondition);
-        CMCondition_signal(cm, Tmp->CMcondition);
-        Svcs->verbose(Tmp->CPStream, "Did the signal of condition %d\n",
-                      Tmp->Rank, Tmp->CMcondition);
+        if (Tmp->Failed != 1)
+        {
+            Tmp->Failed = 1;
+            Svcs->verbose(Tmp->CPStream,
+                          "Found a pending remote memory read "
+                          "to writer rank %d, marking as "
+                          "failed and signalling condition %d\n",
+                          Tmp->Rank, Tmp->CMcondition);
+            CMCondition_signal(cm, Tmp->CMcondition);
+            Svcs->verbose(Tmp->CPStream, "Did the signal of condition %d\n",
+                          Tmp->Rank, Tmp->CMcondition);
+        }
         Tmp = Tmp->Next;
     }
+    pthread_mutex_unlock(&Stream->DataLock);
     Svcs->verbose(Stream->CP_Stream,
                   "Done Failing requests to writer from stream %p\n", Stream);
 }

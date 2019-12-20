@@ -42,19 +42,19 @@ static int locked = 0;
     pthread_mutex_unlock(lock);
 #define SST_ASSERT_LOCKED() assert(locked)
 #define SST_ASSERT_UNLOCKED() /* gotta lock to really do this */
+#define SST_REAFFIRM_LOCKED_AFTER_CONDITION() locked = 1
 #else
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
     {                                                                          \
         pthread_mutex_lock(lock);                                              \
-        locked++;                                                              \
     }
 #define PTHREAD_MUTEX_UNLOCK(lock)                                             \
     {                                                                          \
-        locked--;                                                              \
         pthread_mutex_unlock(lock);                                            \
     }
-#define SST_ASSERT_LOCKED() assert(locked)
+#define SST_ASSERT_LOCKED()
 #define SST_ASSERT_UNLOCKED() /* gotta lock to really do this */
+#define SST_REAFFIRM_LOCKED_AFTER_CONDITION()
 #endif
 
 static char *buildContactInfo(SstStream Stream, attr_list DPAttrs)
@@ -306,6 +306,7 @@ static void QueueMaintenance(SstStream Stream)
     SST_ASSERT_LOCKED();
     long SmallestLastReleasedTimestep = LONG_MAX;
     long ReserveCount;
+    int SomeReaderIsOpening = 0;
 
     if (Stream->Status != Established)
         return;
@@ -326,6 +327,10 @@ static void QueueMaintenance(SstStream Stream)
                 SmallestLastReleasedTimestep =
                     Stream->Readers[i]->LastReleasedTimestep;
         }
+        else if (Stream->Readers[i]->ReaderStatus == Opening)
+        {
+            SomeReaderIsOpening++;
+        }
     }
     if (SmallestLastReleasedTimestep != LONG_MAX)
     {
@@ -340,6 +345,12 @@ static void QueueMaintenance(SstStream Stream)
             Stream,
             "QueueMaintenance, smallest last released = LONG_MAX, count = %d\n",
             Stream->QueuedTimestepCount);
+    }
+    if (SomeReaderIsOpening)
+    {
+        CP_verbose(Stream, "Some Reader is in status \"Opening\", abandon "
+                           "queue maintenance until it's fully open");
+        return;
     }
     /* Count precious */
     List = Stream->QueuedTimesteps;
@@ -411,6 +422,17 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
                                        "connection-close event during normal "
                                        "operations, peer likely failed\n");
         CP_PeerFailCloseWSReader(WSreader, PeerFailed);
+    }
+    else if (WSreader->ReaderStatus == Opening)
+    {
+        /* ignore this.  We expect a close after the connection is marked closed
+         */
+        CP_verbose(
+            ParentWriterStream,
+            "Writer-side Rank received a "
+            "connection-close event in state opening, handling failure\n");
+        /* main thread will be waiting for this */
+        pthread_cond_signal(&ParentWriterStream->DataCondition);
     }
     else if ((WSreader->ReaderStatus == PeerClosed) ||
              (WSreader->ReaderStatus == Closed))
@@ -782,6 +804,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     CP_WSR_Stream->Connections = connections_to_reader;
     CP_WSR_Stream->ReaderDefinitionsLocked = 0;
     CP_WSR_Stream->ReaderSelectionLockTimestep = -1;
+    CP_WSR_Stream->ReaderStatus = Opening;
     if (ReturnData->SpecPreload == SpecPreloadOn)
     {
 
@@ -1059,15 +1082,20 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
 {
     SstStream Stream = Reader->ParentStream;
     PTHREAD_MUTEX_LOCK(&Stream->DataLock);
-    while (Reader->ReaderStatus != Established)
+    while (Reader->ReaderStatus == Opening)
     {
-        /* NEED TO HANDLE FAILURE HERE */
         CP_verbose(Stream,
                    "(PID %lx, TID %lx) Waiting for Reader ready on WSR %p.\n",
                    (long)getpid(), (long)gettid(), Reader);
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+        SST_REAFFIRM_LOCKED_AFTER_CONDITION();
     }
 
+    if (Reader->ReaderStatus != Established)
+    {
+        CP_verbose(Stream, "Reader WSR %p, Failed during startup.\n", Reader);
+        PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+    }
     /* LOCK */
     /* LastReleased is set to OldestItemTS - 1 */
     /* foreach item in queue */
@@ -1214,6 +1242,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
             if (Stream->ReadRequestQueue == NULL)
             {
                 pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+                SST_REAFFIRM_LOCKED_AFTER_CONDITION();
             }
             assert(Stream->ReadRequestQueue);
             PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
@@ -1418,6 +1447,7 @@ void SstWriterClose(SstStream Stream)
             }
             /* NEED TO HANDLE FAILURE HERE */
             pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+            SST_REAFFIRM_LOCKED_AFTER_CONDITION();
         }
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     }
@@ -1974,6 +2004,7 @@ extern void SstInternalProvideTimestep(
             {
                 CP_verbose(Stream, "Blocking on QueueFull condition\n");
                 pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+                SST_REAFFIRM_LOCKED_AFTER_CONDITION();
             }
         }
         TimestepMetaData.PendingReaderCount = 0;

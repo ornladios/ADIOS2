@@ -137,7 +137,9 @@ def do_kill_writer_test(writer_cmd, reader_cmd, interval):
     return_code = 0
     print("TestDriver: Starting kill_writer test protocol")
     sys.stdout.flush()
-    writer = subprocess.Popen(writer_cmd)
+    my_env = os.environ
+#    my_env["SstVerbose"] = "1"
+    writer = subprocess.Popen(writer_cmd, env=my_env)
     reader = subprocess.Popen(reader_cmd)
     print("TestDriver: Waiting " + str(interval) + " seconds")
     sys.stdout.flush()
@@ -162,7 +164,7 @@ def do_kill_writer_test(writer_cmd, reader_cmd, interval):
 def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval):
     return_code = 0
     my_env = os.environ
-#    my_env["SstVerbose"] = "1"
+#    my_env["SstCPVerbose"] = "1"
     writer = subprocess.Popen(writer_cmd, env=my_env)
     start = time.time()
     timeout = time.time() + duration
