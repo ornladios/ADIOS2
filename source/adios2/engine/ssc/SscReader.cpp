@@ -11,6 +11,7 @@
 #include "SscReader.tcc"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosJSONcomplex.h"
 #include "nlohmann/json.hpp"
 
 namespace adios2

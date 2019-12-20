@@ -10,6 +10,7 @@
 
 #include "SscWriter.tcc"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosJSONcomplex.h"
 #include "nlohmann/json.hpp"
 
 namespace adios2

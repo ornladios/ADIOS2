@@ -47,6 +47,8 @@ struct SmallTestData
         {0.1f, 1.1f, 2.1f, 3.1f, 4.1f, 5.1f, 6.1f, 7.1f, 8.1f, 9.1f}};
     std::array<double, 10> R64 = {
         {10.2, 11.2, 12.2, 13.2, 14.2, 15.2, 16.2, 17.2, 18.2, 19.2}};
+    std::array<long double, 10> R128 = {
+        {410.2, 411.2, 412.2, 413.2, 414.2, 415.2, 416.2, 417.2, 418.2, 419.2}};
 
     std::array<std::complex<float>, 10> CR32 = {
         {std::complex<float>(0.1f, 1.1f), std::complex<float>(1.1f, 2.1f),
@@ -77,6 +79,8 @@ SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
     std::for_each(in.U64.begin(), in.U64.end(), [&](uint64_t &v) { v += j; });
     std::for_each(in.R32.begin(), in.R32.end(), [&](float &v) { v += j; });
     std::for_each(in.R64.begin(), in.R64.end(), [&](double &v) { v += j; });
+    std::for_each(in.R128.begin(), in.R128.end(),
+                  [&](long double &v) { v += j; });
 
     std::for_each(in.CR32.begin(), in.CR32.end(), [&](std::complex<float> &v) {
         v.real(v.real() + static_cast<float>(j));
@@ -103,6 +107,8 @@ void UpdateSmallTestData(SmallTestData &in, int step, int rank, int size)
     std::for_each(in.U64.begin(), in.U64.end(), [&](uint64_t &v) { v += j; });
     std::for_each(in.R32.begin(), in.R32.end(), [&](float &v) { v += j; });
     std::for_each(in.R64.begin(), in.R64.end(), [&](double &v) { v += j; });
+    std::for_each(in.R128.begin(), in.R128.end(),
+                  [&](long double &v) { v += j; });
 
     std::for_each(in.CR32.begin(), in.CR32.end(), [&](std::complex<float> &v) {
         v.real(v.real() + static_cast<float>(j));
