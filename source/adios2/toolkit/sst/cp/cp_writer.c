@@ -1231,6 +1231,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
         (globalNetinfoCallback)(0, CP_GetContactString(Stream, DPAttrs),
                                 IPDiagString);
     }
+    free_attr_list(DPAttrs);
     while (Stream->RendezvousReaderCount > 0)
     {
         WS_ReaderInfo reader;
@@ -2036,6 +2037,7 @@ extern void SstInternalProvideTimestep(
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &TimestepMetaData, Stream->CPInfo->ReturnMetadataInfoFormat,
             &data_block2);
+        free(TimestepMetaData.ReleaseList);
         if (Stream->FreeMetadataUpcall)
         {
             Stream->FreeMetadataUpcall(Stream->UpcallWriter, Msg->Metadata,

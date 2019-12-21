@@ -464,6 +464,11 @@ static FMField ReleaseTimestepList[] = {
      FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
+static FMStructDescRec ReleaseTimestepStructs[] = {
+    {"ReleaseTimestep", ReleaseTimestepList, sizeof(struct _ReleaseTimestepMsg),
+     NULL},
+    {NULL, NULL, 0, NULL}};
+
 static FMField LockReaderDefinitionsList[] = {
     {"WSR_Stream", "integer", sizeof(void *),
      FMOffset(struct _LockReaderDefinitionsMsg *, WSR_Stream)},
@@ -471,12 +476,22 @@ static FMField LockReaderDefinitionsList[] = {
      FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
+static FMStructDescRec LockReaderDefinitionsStructs[] = {
+    {"LockReaderDefinitions", LockReaderDefinitionsList,
+     sizeof(struct _LockReaderDefinitionsMsg), NULL},
+    {NULL, NULL, 0, NULL}};
+
 static FMField CommPatternLockedList[] = {
     {"RS_Stream", "integer", sizeof(void *),
      FMOffset(struct _CommPatternLockedMsg *, RS_Stream)},
     {"Timestep", "integer", sizeof(int),
      FMOffset(struct _CommPatternLockedMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
+
+static FMStructDescRec CommPatternLockedStructs[] = {
+    {"CommPatternLocked", CommPatternLockedList,
+     sizeof(struct _CommPatternLockedMsg), NULL},
+    {NULL, NULL, 0, NULL}};
 
 static FMField PeerSetupList[] = {
     {"RS_Stream", "integer", sizeof(void *),
@@ -487,10 +502,19 @@ static FMField PeerSetupList[] = {
      FMOffset(struct _PeerSetupMsg *, WriterCohortSize)},
     {NULL, NULL, 0, 0}};
 
+static FMStructDescRec PeerSetupStructs[] = {
+    {"PeerSetup", PeerSetupList, sizeof(struct _PeerSetupMsg), NULL},
+    {NULL, NULL, 0, NULL}};
+
 static FMField ReaderActivateList[] = {
     {"WSR_Stream", "integer", sizeof(void *),
      FMOffset(struct _ReaderActivateMsg *, WSR_Stream)},
     {NULL, NULL, 0, 0}};
+
+static FMStructDescRec ReaderActivateStructs[] = {
+    {"ReaderActivate", ReaderActivateList, sizeof(struct _ReaderActivateMsg),
+     NULL},
+    {NULL, NULL, 0, NULL}};
 
 static FMField WriterCloseList[] = {
     {"RS_Stream", "integer", sizeof(void *),
@@ -499,10 +523,18 @@ static FMField WriterCloseList[] = {
      FMOffset(struct _WriterCloseMsg *, FinalTimestep)},
     {NULL, NULL, 0, 0}};
 
+static FMStructDescRec WriterCloseStructs[] = {
+    {"WriterClose", WriterCloseList, sizeof(struct _WriterCloseMsg), NULL},
+    {NULL, NULL, 0, NULL}};
+
 static FMField ReaderCloseList[] = {
     {"WSR_Stream", "integer", sizeof(void *),
      FMOffset(struct _ReaderCloseMsg *, WSR_Stream)},
     {NULL, NULL, 0, 0}};
+
+static FMStructDescRec ReaderCloseStructs[] = {
+    {"ReaderClose", ReaderCloseList, sizeof(struct _ReaderCloseMsg), NULL},
+    {NULL, NULL, 0, NULL}};
 
 static void replaceFormatNameInFieldList(FMStructDescList l, char *orig,
                                          char *repl, int repl_size)
@@ -847,7 +879,7 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
                        NULL);
     AddCustomStruct(CPInfo, FullReaderRegisterStructs);
 
-    /*gse*/ CombinedReaderStructs =
+    CombinedReaderStructs =
         combineCpDpFormats(CP_DP_ReaderArrayStructs, CP_ReaderInitStructs,
                            DPInfo->ReaderContactFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedReaderStructs);
@@ -856,7 +888,7 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
     FFSset_fixed_target(CPInfo->ffs_c, CombinedReaderStructs);
     AddCustomStruct(CPInfo, CombinedReaderStructs);
 
-    /*gse*/ PerRankWriterStructs =
+    PerRankWriterStructs =
         combineCpDpFormats(CP_DP_WriterPairStructs, CP_WriterInitStructs,
                            DPInfo->WriterContactFormats);
     f = FMregister_data_format(CPInfo->fm_c, PerRankWriterStructs);
@@ -865,7 +897,7 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
     FFSset_fixed_target(CPInfo->ffs_c, PerRankWriterStructs);
     AddCustomStruct(CPInfo, PerRankWriterStructs);
 
-    /*gse*/ FullWriterResponseStructs =
+    FullWriterResponseStructs =
         combineCpDpFormats(CP_WriterResponseStructs, CP_WriterInitStructs,
                            DPInfo->WriterContactFormats);
     CPInfo->WriterResponseFormat =
@@ -874,7 +906,7 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
                        NULL);
     AddCustomStruct(CPInfo, FullWriterResponseStructs);
 
-    /*gse*/ CombinedWriterStructs =
+    CombinedWriterStructs =
         combineCpDpFormats(CP_DP_WriterArrayStructs, CP_WriterInitStructs,
                            DPInfo->WriterContactFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedWriterStructs);
@@ -883,7 +915,7 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
     FFSset_fixed_target(CPInfo->ffs_c, CombinedWriterStructs);
     AddCustomStruct(CPInfo, CombinedWriterStructs);
 
-    /*gse*/ CombinedMetadataStructs = combineCpDpFormats(
+    CombinedMetadataStructs = combineCpDpFormats(
         MetaDataPlusDPInfoStructs, NULL, DPInfo->TimestepInfoFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
     CPInfo->PerRankMetadataFormat =
@@ -891,7 +923,7 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
     AddCustomStruct(CPInfo, CombinedMetadataStructs);
 
-    /*gse*/ CombinedTimestepMetadataStructs = combineCpDpFormats(
+    CombinedTimestepMetadataStructs = combineCpDpFormats(
         TimestepMetadataStructs, NULL, DPInfo->TimestepInfoFormats);
     CPInfo->DeliverTimestepMetadataFormat =
         CMregister_format(CPInfo->cm, CombinedTimestepMetadataStructs);
@@ -899,7 +931,7 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
                        CP_TimestepMetadataHandler, NULL);
     AddCustomStruct(CPInfo, CombinedTimestepMetadataStructs);
 
-    /*gse*/ CombinedMetadataStructs = combineCpDpFormats(
+    CombinedMetadataStructs = combineCpDpFormats(
         TimestepMetadataDistributionStructs, NULL, DPInfo->TimestepInfoFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
     CPInfo->TimestepDistributionFormat =
@@ -907,7 +939,7 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
     AddCustomStruct(CPInfo, CombinedMetadataStructs);
 
-    /*gse*/ CombinedMetadataStructs = combineCpDpFormats(
+    CombinedMetadataStructs = combineCpDpFormats(
         ReturnMetadataInfoStructs, NULL, DPInfo->TimestepInfoFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
     CPInfo->ReturnMetadataInfoFormat =
@@ -915,37 +947,30 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
     AddCustomStruct(CPInfo, CombinedMetadataStructs);
 
-    CPInfo->PeerSetupFormat = CMregister_simple_format(
-        CPInfo->cm, "PeerSetup", PeerSetupList, sizeof(struct _PeerSetupMsg));
+    CPInfo->PeerSetupFormat = CMregister_format(CPInfo->cm, PeerSetupStructs);
     CMregister_handler(CPInfo->PeerSetupFormat, CP_PeerSetupHandler, NULL);
 
-    CPInfo->ReaderActivateFormat = CMregister_simple_format(
-        CPInfo->cm, "ReaderActivate", ReaderActivateList,
-        sizeof(struct _ReaderActivateMsg));
+    CPInfo->ReaderActivateFormat =
+        CMregister_format(CPInfo->cm, ReaderActivateStructs);
     CMregister_handler(CPInfo->ReaderActivateFormat, CP_ReaderActivateHandler,
                        NULL);
-    CPInfo->ReleaseTimestepFormat = CMregister_simple_format(
-        CPInfo->cm, "ReleaseTimestep", ReleaseTimestepList,
-        sizeof(struct _ReleaseTimestepMsg));
+    CPInfo->ReleaseTimestepFormat =
+        CMregister_format(CPInfo->cm, ReleaseTimestepStructs);
     CMregister_handler(CPInfo->ReleaseTimestepFormat, CP_ReleaseTimestepHandler,
                        NULL);
-    CPInfo->LockReaderDefinitionsFormat = CMregister_simple_format(
-        CPInfo->cm, "LockReaderDefinitions", LockReaderDefinitionsList,
-        sizeof(struct _LockReaderDefinitionsMsg));
+    CPInfo->LockReaderDefinitionsFormat =
+        CMregister_format(CPInfo->cm, LockReaderDefinitionsStructs);
     CMregister_handler(CPInfo->LockReaderDefinitionsFormat,
                        CP_LockReaderDefinitionsHandler, NULL);
-    CPInfo->CommPatternLockedFormat = CMregister_simple_format(
-        CPInfo->cm, "CommPatternLocked", CommPatternLockedList,
-        sizeof(struct _CommPatternLockedMsg));
+    CPInfo->CommPatternLockedFormat =
+        CMregister_format(CPInfo->cm, CommPatternLockedStructs);
     CMregister_handler(CPInfo->CommPatternLockedFormat,
                        CP_CommPatternLockedHandler, NULL);
     CPInfo->WriterCloseFormat =
-        CMregister_simple_format(CPInfo->cm, "WriterClose", WriterCloseList,
-                                 sizeof(struct _WriterCloseMsg));
+        CMregister_format(CPInfo->cm, WriterCloseStructs);
     CMregister_handler(CPInfo->WriterCloseFormat, CP_WriterCloseHandler, NULL);
     CPInfo->ReaderCloseFormat =
-        CMregister_simple_format(CPInfo->cm, "ReaderClose", ReaderCloseList,
-                                 sizeof(struct _ReaderCloseMsg));
+        CMregister_format(CPInfo->cm, ReaderCloseStructs);
     CMregister_handler(CPInfo->ReaderCloseFormat, CP_ReaderCloseHandler, NULL);
 }
 
@@ -1005,6 +1030,8 @@ extern void SstStreamDestroy(SstStream Stream)
 
     FFSFormatList FFSList = Stream->PreviousFormats;
     Stream->PreviousFormats = NULL;
+    free(Stream->ReleaseList);
+    free(Stream->LockDefnsList);
     while (FFSList)
     {
         FFSFormatList Tmp = FFSList->Next;
@@ -1052,6 +1079,14 @@ extern void SstStreamDestroy(SstStream Stream)
         free(Stream->ConfigParams->DataTransport);
     if (Stream->ConfigParams->DataTransport)
         free(Stream->ConfigParams->ControlTransport);
+    if (Stream->ConfigParams->NetworkInterface)
+        free(Stream->ConfigParams->NetworkInterface);
+    if (Stream->ConfigParams->ControlInterface)
+        free(Stream->ConfigParams->ControlInterface);
+    if (Stream->ConfigParams->DataInterface)
+        free(Stream->ConfigParams->DataInterface);
+    if (Stream->ConfigParams->ControlModule)
+        free(Stream->ConfigParams->ControlModule);
 
     if (Stream->Filename)
     {
@@ -1126,6 +1161,7 @@ extern char *CP_GetContactString(SstStream Stream, attr_list DPAttrs)
     }
     char *ret = attr_list_to_string(ContactList);
     free_attr_list(ListenList);
+    free_attr_list(ContactList);
     return ret;
 }
 
