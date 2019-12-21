@@ -54,17 +54,30 @@ HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
 {
     m_DefH5TypeComplexFloat =
         H5Tcreate(H5T_COMPOUND, sizeof(std::complex<float>));
-    H5Tinsert(m_DefH5TypeComplexFloat, "freal", 0, H5T_NATIVE_FLOAT);
-    H5Tinsert(m_DefH5TypeComplexFloat, "fimg", H5Tget_size(H5T_NATIVE_FLOAT),
+    H5Tinsert(m_DefH5TypeComplexFloat, "r", 0, H5T_NATIVE_FLOAT);
+    H5Tinsert(m_DefH5TypeComplexFloat, "i", H5Tget_size(H5T_NATIVE_FLOAT),
               H5T_NATIVE_FLOAT);
 
     m_DefH5TypeComplexDouble =
         H5Tcreate(H5T_COMPOUND, sizeof(std::complex<double>));
-    H5Tinsert(m_DefH5TypeComplexDouble, "dreal", 0, H5T_NATIVE_DOUBLE);
-    H5Tinsert(m_DefH5TypeComplexDouble, "dimg", H5Tget_size(H5T_NATIVE_DOUBLE),
+    H5Tinsert(m_DefH5TypeComplexDouble, "r", 0, H5T_NATIVE_DOUBLE);
+    H5Tinsert(m_DefH5TypeComplexDouble, "i", H5Tget_size(H5T_NATIVE_DOUBLE),
               H5T_NATIVE_DOUBLE);
 
+    m_DefH5TypeComplexLongDouble =
+        H5Tcreate(H5T_COMPOUND, sizeof(std::complex<long double>));
+    H5Tinsert(m_DefH5TypeComplexLongDouble, "r", 0, H5T_NATIVE_LDOUBLE);
+    H5Tinsert(m_DefH5TypeComplexLongDouble, "i",
+              H5Tget_size(H5T_NATIVE_LDOUBLE), H5T_NATIVE_LDOUBLE);
+
     m_PropertyTxfID = H5Pcreate(H5P_DATASET_XFER);
+}
+
+HDF5Common::~HDF5Common()
+{
+    H5Tclose(m_DefH5TypeComplexLongDouble);
+    H5Tclose(m_DefH5TypeComplexDouble);
+    H5Tclose(m_DefH5TypeComplexFloat);
 }
 
 void HDF5Common::ParseParameters(core::IO &io)
@@ -565,6 +578,10 @@ void HDF5Common::CreateVar(core::IO &io, hid_t datasetId,
     else if (H5Tequal(m_DefH5TypeComplexDouble, h5Type))
     {
         AddVar<std::complex<double>>(io, name, datasetId, ts);
+    }
+    else if (H5Tequal(m_DefH5TypeComplexLongDouble, h5Type))
+    {
+        // TODO:AddVar<std::complex<long double>>(io, name, datasetId, ts);
     }
 
     // H5Tclose(h5Type);
