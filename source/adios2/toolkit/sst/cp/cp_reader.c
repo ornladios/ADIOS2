@@ -314,7 +314,7 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
     {
         char *Writer0Contact =
             readContactInfo(Filename, Stream, Params->OpenTimeoutSecs);
-        char *CMContactString;
+        char *CMContactString = NULL;
         CMConnection conn = NULL;
         attr_list WriterRank0Contact;
 
@@ -355,7 +355,8 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
             SMPI_Bcast(CMContactString, DataSize, MPI_CHAR, 0, Stream->mpiComm);
             RetVal = attr_list_from_string(CMContactString);
         }
-        free(CMContactString);
+        if (CMContactString)
+            free(CMContactString);
     }
     else
     {

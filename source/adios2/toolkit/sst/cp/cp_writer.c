@@ -2037,15 +2037,16 @@ extern void SstInternalProvideTimestep(
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &TimestepMetaData, Stream->CPInfo->ReturnMetadataInfoFormat,
             &data_block2);
-        free(TimestepMetaData.ReleaseList);
         if (Stream->FreeMetadataUpcall)
         {
             Stream->FreeMetadataUpcall(Stream->UpcallWriter, Msg->Metadata,
                                        Msg->AttributeData, MetadataFreeValue);
         }
-        free(TimestepMetaData.ReleaseList);
         free(TimestepMetaData.ReaderStatus);
-        free(TimestepMetaData.LockDefnsList);
+        if (TimestepMetaData.ReleaseList)
+            free(TimestepMetaData.ReleaseList);
+        if (TimestepMetaData.LockDefnsList)
+            free(TimestepMetaData.LockDefnsList);
         free(TimestepMetaData.Msg.Metadata);
         free(TimestepMetaData.Msg.AttributeData);
     }
