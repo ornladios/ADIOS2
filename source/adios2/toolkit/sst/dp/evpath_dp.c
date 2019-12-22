@@ -300,6 +300,11 @@ static void EvpathDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 {
     Evpath_RS_Stream RS_Stream = (Evpath_RS_Stream)RS_Stream_v;
     DiscardPriorPreloaded(Svcs, RS_Stream, -1);
+    for (int i = 0; i < RS_Stream->WriterCohortSize; i++)
+    {
+        free(RS_Stream->WriterContactInfo[i].ContactString);
+    }
+    free(RS_Stream->WriterContactInfo);
     free(RS_Stream);
 }
 

@@ -314,7 +314,7 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
     {
         char *Writer0Contact =
             readContactInfo(Filename, Stream, Params->OpenTimeoutSecs);
-        char *CMContactString;
+        char *CMContactString = NULL;
         CMConnection conn = NULL;
         attr_list WriterRank0Contact;
 
@@ -355,6 +355,8 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
             SMPI_Bcast(CMContactString, DataSize, MPI_CHAR, 0, Stream->mpiComm);
             RetVal = attr_list_from_string(CMContactString);
         }
+        if (CMContactString)
+            free(CMContactString);
     }
     else
     {
@@ -413,6 +415,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->DP_Stream = Stream->DP_Interface->initReader(
         &Svcs, Stream, &dpInfo, Stream->ConfigParams, WriterContactAttributes);
 
+    free_attr_list(WriterContactAttributes);
+
     pointers = (struct _CP_DP_PairInfo **)ParticipateInReaderInitDataExchange(
         Stream, dpInfo, &data_block);
 
@@ -453,6 +457,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
                 (CP_ReaderInitInfo)pointers[i]->CP_Info;
             ReaderRegister.DP_ReaderInfo[i] = pointers[i]->DP_Info;
         }
+        free(pointers);
+
         /* the response value is set in the handler */
         struct _WriterResponseMsg *response = NULL;
         CMCondition_set_client_data(Stream->CPInfo->cm,
@@ -597,7 +603,6 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         {
             CMConnection conn = rank0_to_rank0_conn;
             Stream->ConnectionsToWriter[0].CMconn = conn;
-            CMConnection_add_reference(conn);
             CMconn_register_close_handler(conn, ReaderConnCloseHandler,
                                           (void *)Stream);
         }
