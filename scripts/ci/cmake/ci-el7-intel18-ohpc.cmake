@@ -14,8 +14,6 @@ set(ENV{CFLAGS} -Werror)
 set(ENV{CXXFLAGS} -Werror)
 set(ENV{FFLAGS} "-warn errors")
 
-set(ENV{CMAKE_PREFIX_PATH} "/opt/libfabric/1.6.0:$ENV{CMAKE_PREFIX_PATH}")
-
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc:BOOL=ON

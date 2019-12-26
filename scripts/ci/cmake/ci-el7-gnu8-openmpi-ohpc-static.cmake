@@ -19,8 +19,6 @@ set(ENV{CFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 set(ENV{CXXFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 set(ENV{FFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 
-set(ENV{CMAKE_PREFIX_PATH} "/opt/libfabric/1.6.0:/opt/hdf5/1.10.4:$ENV{CMAKE_PREFIX_PATH}")
-
 set(dashboard_cache "
 BUILD_SHARED_LIBS:BOOL=OFF
 CMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
@@ -36,6 +34,7 @@ ADIOS2_USE_SZ:BOOL=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
 ADIOS2_USE_ZFP:BOOL=ON
 
+MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
 MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python3.4
 ")

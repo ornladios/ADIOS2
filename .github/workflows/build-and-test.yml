@@ -1,0 +1,92 @@
+name: GitHub Actions
+
+on: 
+  push: 
+    branches: 
+    - master 
+    - release* 
+  pull_request: 
+    branches: 
+    - master 
+    - release* 
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    env:
+      GH_YML_JOBNAME: ${{ matrix.jobname }}
+      GH_YML_OS: Linux
+
+    strategy:
+      fail-fast: false
+      matrix:
+        jobname: [
+          el7,
+          el7-gnu8-ohpc,
+          el7-gnu8-openmpi-ohpc,
+          el7-gnu8-openmpi-ohpc-static,
+          el7-intel18-ohpc,
+          el7-intel18-openmpi-ohpc,
+          suse-pgi,
+          suse-pgi-openmpi ]
+        include:
+        - jobname: el7
+          container: ornladios/adios2:el7
+        - jobname: el7-gnu8-ohpc
+          container: ornladios/adios2:el7-gnu8-ohpc
+        - jobname: el7-gnu8-openmpi-ohpc
+          container: ornladios/adios2:el7-gnu8-openmpi-ohpc
+        - jobname: el7-gnu8-openmpi-ohpc-static
+          container: ornladios/adios2:el7-gnu8-openmpi-ohpc
+        - jobname: el7-intel18-ohpc
+          container: ornladios/adios2:el7-intel18-ohpc
+        - jobname: el7-intel18-openmpi-ohpc
+          container: ornladios/adios2:el7-intel18-openmpi-ohpc
+        - jobname: suse-pgi
+          container: ornladios/adios2:suse-pgi
+        - jobname: suse-pgi-openmpi
+          container: ornladios/adios2:suse-pgi-openmpi
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Setup
+      run: scripts/ci/gh-actions/linux-setup.sh
+    - name: Update
+      run: scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: scripts/ci/gh-actions/run.sh build
+    - name: Test
+      run: scripts/ci/gh-actions/run.sh test
+
+  macos:
+    runs-on: macos-latest
+    env:
+      GH_YML_JOBNAME: ${{ matrix.jobname }}
+      GH_YML_OS: macOS
+
+    strategy:
+      fail-fast: false
+      matrix:
+        jobname: [
+          macos1015-xcode111-ninja,
+          macos1015-xcode111-openmpi-ninja ]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Setup
+      run: scripts/ci/gh-actions/macos-setup.sh
+    - name: Update
+      run: scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: scripts/ci/gh-actions/run.sh build
+    - name: Test
+      run: scripts/ci/gh-actions/run.sh test
