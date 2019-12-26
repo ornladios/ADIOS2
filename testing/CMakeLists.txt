@@ -4,9 +4,16 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_MPI)
+  set(MPIEXEC_EXTRA_FLAGS "" CACHE STRING
+      "Extra flags to set after mpiexec and before the num_procs flag"
+  )
+  mark_as_advanced(MPIEXEC_EXTRA_FLAGS)
+  separate_arguments(MPIEXEC_EXTRA_FLAGS)
+
   set(NUM_TEST_PROCS ${MPIEXEC_MAX_NUMPROCS})
   set(MPIEXEC_COMMAND
-    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${NUM_TEST_PROCS}
+    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
+    ${MPIEXEC_NUMPROC_FLAG} ${NUM_TEST_PROCS}
   )
   set(test_mpi TRUE)
 else()

@@ -361,8 +361,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
             if (m_DebugMode)
             {
                 throw std::invalid_argument(
-                    "ERROR: invalid IO AddTransport library " + library +
-                    ", only POSIX, stdio, fstream are supported\n");
+                    "ERROR: invalid IO AddTransport library " + library);
             }
         }
     };

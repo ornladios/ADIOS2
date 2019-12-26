@@ -1863,9 +1863,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    const size_t Nx0 =
-        static_cast<size_t>(std::pow(2 - static_cast<size_t>(mpiRank), 2)) + 1;
+    const size_t Nx0 = static_cast<size_t>(std::pow(2 - mpiRank, 2)) + 1;
     const size_t Nx1 = 5;
+
     // data for block 0 and block 1 per rank
     std::vector<float> data(Nx0 * Nx1);
     const float startBlock = static_cast<float>(3 * mpiRank + 1);

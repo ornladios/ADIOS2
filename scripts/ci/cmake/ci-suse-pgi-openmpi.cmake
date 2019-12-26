@@ -8,7 +8,6 @@ find_package(EnvModules REQUIRED)
 
 env_module(purge)
 env_module(load pgi)
-env_module(load openmpi)
 
 set(ENV{CC}  pgcc)
 set(ENV{CXX} pgc++)

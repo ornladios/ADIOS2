@@ -12,6 +12,7 @@ if(ADIOS2_HAVE_Table)
   )
   gtest_add_tests(TARGET Test.Engine.Table.SingleRank
     TEST_PREFIX Engine.Table.
-    EXEC_WRAPPER ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1
+    EXEC_WRAPPER
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS} ${MPIEXEC_NUMPROC_FLAG} 1
   )
 endif()

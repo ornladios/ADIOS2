@@ -15,7 +15,7 @@
         </engine>
         <transport type="File">
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
-            <parameter key="Library" value="POSIX"/>
+            <parameter key="Library" value="stdio"/>
         </transport>
     </io>
 
@@ -29,7 +29,7 @@
         </engine>
         <transport type="File">
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
-            <parameter key="Library" value="POSIX"/>
+            <parameter key="Library" value="stdio"/>
         </transport>
     </io>
 </adios-config>

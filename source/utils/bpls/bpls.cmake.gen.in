@@ -8,7 +8,9 @@ if(ERROR_FILE)
 endif()
 
 if(@ADIOS2_HAVE_MPI@)
-  set(cmd_executor @MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ 1)
+  set(cmd_executor
+    @MPIEXEC_EXECUTABLE@ @MPIEXEC_EXTRA_FLAGS@ @MPIEXEC_NUMPROC_FLAG@ 1
+  )
 else()
   set(cmd_executor)
 endif()

@@ -6,7 +6,7 @@
 include(ADIOSFunctions)
 
 add_test(NAME HeatTransfer.SST.BP.MxN
-  COMMAND ${MPIEXEC_EXECUTABLE}
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:heatTransfer_write_adios2>
         ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_sst_bp.xml
@@ -28,7 +28,7 @@ add_test(NAME HeatTransfer.SST.BP.MxN.Dump
 )
 
 add_test(NAME HeatTransfer.SST.BP.MxN.Validate
-  COMMAND ${DIFF_COMMAND} -uw
+  COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     Dump.txt
 )
