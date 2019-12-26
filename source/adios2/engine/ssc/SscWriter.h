@@ -46,7 +46,6 @@ private:
 
     ssc::BlockVecVec m_GlobalWritePattern;
     ssc::BlockVecVec m_GlobalReadPattern;
-    ssc::BlockVec m_LocalWritePattern;
 
     ssc::RankPosMap m_AllSendingReaderRanks;
     std::vector<char> m_Buffer;
@@ -73,10 +72,14 @@ private:
     void DoClose(const int transportIndex = -1) final;
 
     template <class T>
-    void PutSyncCommon(Variable<T> &variable, const T *values);
+    void PutDeferredCommon(Variable<T> &variable, const T *values);
 
     template <class T>
-    void PutDeferredCommon(Variable<T> &variable, const T *values);
+    bool HasBlock(const Variable<T> &variable);
+
+    void CalculatePosition(ssc::BlockVecVec &writerMapVec,
+                           ssc::BlockVecVec &readerMapVec, const int writerRank,
+                           ssc::RankPosMap &allOverlapRanks);
 
     int m_Verbosity = 0;
 };

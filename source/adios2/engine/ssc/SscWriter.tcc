@@ -22,11 +22,19 @@ namespace engine
 {
 
 template <class T>
-void SscWriter::PutSyncCommon(Variable<T> &variable, const T *data)
+bool SscWriter::HasBlock(const Variable<T> &variable)
 {
-    TAU_SCOPED_TIMER_FUNC();
-    PutDeferredCommon(variable, data);
-    PerformPuts();
+    for (const auto &b : m_GlobalWritePattern[m_WriterRank])
+    {
+        if (b.name == variable.m_Name and
+            ssc::AreSameDims(variable.m_Start, b.start) and
+            ssc::AreSameDims(variable.m_Count, b.count) and
+            ssc::AreSameDims(variable.m_Shape, b.shape))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 template <class T>
@@ -47,24 +55,40 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         variable.m_Shape.push_back(1);
     }
 
+    if (m_CurrentStep == 0)
+    {
+        if (not HasBlock(variable))
+        {
+            m_GlobalWritePattern[m_WriterRank].emplace_back();
+            auto &b = m_GlobalWritePattern[m_WriterRank].back();
+            b.name = variable.m_Name;
+            b.type = helper::GetType<T>();
+            b.shape = variable.m_Shape;
+            b.start = variable.m_Start;
+            b.count = variable.m_Count;
+            b.bufferStart = m_Buffer.size();
+            b.bufferCount = ssc::TotalDataSize(b.count, b.type);
+            m_Buffer.resize(b.bufferStart + b.bufferCount);
+        }
+    }
+
     variable.SetData(data);
 
-    for (const auto &b : m_LocalWritePattern)
+    bool found = false;
+    for (const auto &b : m_GlobalWritePattern[m_WriterRank])
     {
-        if (b.name == variable.m_Name)
+        if (b.name == variable.m_Name and
+            ssc::AreSameDims(variable.m_Start, b.start) and
+            ssc::AreSameDims(variable.m_Count, b.count) and
+            ssc::AreSameDims(variable.m_Shape, b.shape))
         {
-            if (ssc::AreSameDims(variable.m_Start, b.start) and
-                ssc::AreSameDims(variable.m_Count, b.count) and
-                ssc::AreSameDims(variable.m_Shape, b.shape))
-            {
-                std::memcpy(m_Buffer.data() + b.bufferStart, data,
-                            b.bufferCount);
-            }
-            else
-            {
-                throw std::runtime_error("ssc only accepts fixed IO pattern");
-            }
+            std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
+            found = true;
         }
+    }
+    if (not found)
+    {
+        throw std::runtime_error("ssc only accepts fixed IO pattern");
     }
 }
 

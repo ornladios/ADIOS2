@@ -31,6 +31,9 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     m_WriterSize = m_Comm.Size();
     m_ReaderSize = m_WorldSize - m_WriterSize;
 
+    m_GlobalWritePattern.resize(m_WriterSize);
+    m_GlobalReadPattern.resize(m_ReaderSize);
+
     SyncMpiPattern();
 }
 
@@ -47,10 +50,6 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if (m_InitialStep)
     {
         m_InitialStep = false;
-        SyncWritePattern();
-        SyncReadPattern();
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
-                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
     else
     {
@@ -76,12 +75,20 @@ void SscWriter::EndStep()
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
+    if (m_CurrentStep == 0)
+    {
+        SyncWritePattern();
+        SyncReadPattern();
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
+                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+    }
+
     MPI_Win_fence(0, m_MpiWin);
     for (const auto &i : m_AllSendingReaderRanks)
     {
         MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
-                m_ReaderMasterWorldRank + i.first, i.second, m_Buffer.size(),
-                MPI_CHAR, m_MpiWin);
+                m_ReaderMasterWorldRank + i.first, i.second.first + 1,
+                m_Buffer.size(), MPI_CHAR, m_MpiWin);
     }
     MPI_Win_fence(0, m_MpiWin);
 }
@@ -125,63 +132,18 @@ void SscWriter::SyncWritePattern()
 
     // serialize local writer rank metadata
     nlohmann::json j;
-    auto variables = m_IO.GetAvailableVariables();
     size_t blockIndex = 0;
     size_t position = 0;
-    for (auto &i : variables)
+
+    for (const auto &b : m_GlobalWritePattern[m_WriterRank])
     {
-        std::string type = i.second["Type"];
-        Dims start;
-        Dims count;
-        Dims shape;
-
-        if (type.empty())
-        {
-            throw(std::runtime_error("unknown data type"));
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        auto var = m_IO.InquireVariable<T>(i.first);                           \
-        shape = var->m_Shape;                                                  \
-        start = var->m_Start;                                                  \
-        count = var->m_Count;                                                  \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-        else { throw(std::runtime_error("unknown data type")); }
-
-        if (start.empty())
-        {
-            start.push_back(0);
-        }
-        if (count.empty())
-        {
-            count.push_back(1);
-        }
-        if (shape.empty())
-        {
-            shape.push_back(1);
-        }
-
-        auto &jref = j[i.first];
-        jref["T"] = type;
-        jref["S"] = shape;
-        jref["O"] = start;
-        jref["C"] = count;
-
-        m_LocalWritePattern.emplace_back();
-        auto &b = m_LocalWritePattern.back();
-        b.name = i.first;
-        b.type = type;
-        b.shape = shape;
-        b.start = start;
-        b.count = count;
-        b.blockId = blockIndex;
-        b.bufferStart = position;
-        b.bufferCount = ssc::TotalDataSize(count, type);
-        position += b.bufferCount;
-        ++blockIndex;
+        auto &jref = j[b.name];
+        jref["T"] = b.type;
+        jref["S"] = b.shape;
+        jref["O"] = b.start;
+        jref["C"] = b.count;
+        jref["X"] = b.bufferStart;
+        jref["Y"] = b.bufferCount;
     }
     std::string localStr = j.dump();
 
@@ -273,9 +235,9 @@ void SscWriter::SyncWritePattern()
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
-    m_GlobalWritePattern = ssc::JsonToBlockVecVec(globalVec, m_WriterSize);
+    ssc::JsonToBlockVecVec(globalVec, m_GlobalWritePattern);
 
-    m_Buffer.resize(ssc::TotalDataSize(m_LocalWritePattern));
+    m_Buffer.resize(ssc::TotalDataSize(m_GlobalWritePattern[m_WriterRank]));
 }
 
 void SscWriter::SyncReadPattern()
@@ -302,17 +264,69 @@ void SscWriter::SyncReadPattern()
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
-    m_GlobalReadPattern = ssc::JsonToBlockVecVec(globalVec, m_ReaderSize);
-    ssc::CalculateOverlap(m_GlobalReadPattern, m_LocalWritePattern);
+    ssc::JsonToBlockVecVec(globalVec, m_GlobalReadPattern);
+    ssc::CalculateOverlap(m_GlobalReadPattern,
+                          m_GlobalWritePattern[m_WriterRank]);
     m_AllSendingReaderRanks = ssc::AllOverlapRanks(m_GlobalReadPattern);
-    ssc::CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern,
-                           m_WriterRank, m_AllSendingReaderRanks);
+    CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,
+                      m_AllSendingReaderRanks);
+
+    if (m_Verbosity >= 10)
+    {
+        ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
+        ssc::PrintBlockVec(m_GlobalWritePattern[m_WriterRank],
+                           "Local Write Pattern");
+    }
+
+    if (m_WriterRank == 0)
+    {
+        ssc::PrintBlockVec(m_GlobalWritePattern[m_WriterRank],
+                           "Local Write Pattern");
+    }
+}
+
+void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
+                                  ssc::BlockVecVec &readerVecVec,
+                                  const int writerRank,
+                                  ssc::RankPosMap &allOverlapRanks)
+{
+    for (auto &overlapRank : allOverlapRanks)
+    {
+        auto &readerRankMap = readerVecVec[overlapRank.first];
+        CalculateOverlap(writerVecVec, readerRankMap);
+        auto currentReaderOverlapWriterRanks = AllOverlapRanks(writerVecVec);
+        size_t bufferPosition = 0;
+        for (size_t rank = 0; rank < writerVecVec.size(); ++rank)
+        {
+            bool hasOverlap = false;
+            for (const auto r : currentReaderOverlapWriterRanks)
+            {
+                if (r.first == rank)
+                {
+                    hasOverlap = true;
+                    break;
+                }
+            }
+            if (hasOverlap)
+            {
+                currentReaderOverlapWriterRanks[rank].first = bufferPosition;
+                auto &bv = writerVecVec[rank];
+                size_t currentRankTotalSize = TotalDataSize(bv);
+                currentReaderOverlapWriterRanks[rank].second =
+                    currentRankTotalSize;
+                bufferPosition += currentRankTotalSize;
+            }
+        }
+        allOverlapRanks[overlapRank.first] =
+            currentReaderOverlapWriterRanks[writerRank];
+    }
 }
 
 #define declare_type(T)                                                        \
     void SscWriter::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
-        PutSyncCommon(variable, data);                                         \
+        PutDeferredCommon(variable, data);                                     \
+        PerformPuts();                                                         \
     }                                                                          \
     void SscWriter::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
@@ -337,8 +351,7 @@ void SscWriter::DoClose(const int transportIndex)
         for (int i = 0; i < m_ReaderSize; ++i)
         {
             MPI_Put(m_Buffer.data(), 1, MPI_CHAR, m_ReaderMasterWorldRank + i,
-                    ssc::TotalDataSize(m_GlobalReadPattern[i]), 1, MPI_CHAR,
-                    m_MpiWin);
+                    0, 1, MPI_CHAR, m_MpiWin);
         }
     }
     MPI_Win_fence(0, m_MpiWin);

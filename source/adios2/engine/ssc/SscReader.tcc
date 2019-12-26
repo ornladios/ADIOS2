@@ -41,17 +41,19 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         {
             if (b.name == variable.m_Name)
             {
-                if (b.start.empty())
+                if (b.start.size() == 1 and b.count.size() == 1 and
+                    b.shape.size() == 1 and b.start[0] == 0 and
+                    b.count[0] == 1 and b.shape[0] == 1)
                 {
                     data[0] = reinterpret_cast<T *>(m_Buffer.data() +
-                                                    b.bufferStart)[0];
+                                                    b.bufferStart + 1)[0];
                 }
                 else
                 {
                     helper::NdCopy<T>(
-                        m_Buffer.data() + b.bufferStart, b.start, b.count, true,
-                        true, reinterpret_cast<char *>(data), variable.m_Start,
-                        variable.m_Count, true, true);
+                        m_Buffer.data() + b.bufferStart + 1, b.start, b.count,
+                        true, true, reinterpret_cast<char *>(data),
+                        variable.m_Start, variable.m_Count, true, true);
                 }
             }
         }
