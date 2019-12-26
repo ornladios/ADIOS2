@@ -31,6 +31,8 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     m_ReaderSize = m_Comm.Size();
     m_WriterSize = m_WorldSize - m_ReaderSize;
 
+    m_GlobalWritePattern.resize(m_WriterSize);
+
     SyncMpiPattern();
     SyncWritePattern();
 }
@@ -63,7 +65,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     MPI_Win_fence(0, m_MpiWin);
     MPI_Win_fence(0, m_MpiWin);
 
-    if (*m_Buffer.rbegin() == 1)
+    if (m_Buffer[0] == 1)
     {
         return StepStatus::EndOfStream;
     }
@@ -150,30 +152,23 @@ void SscReader::SyncWritePattern()
         throw(std::runtime_error("reader received corrupted metadata"));
     }
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscReader::SyncWritePattern obtained metadata: "
-                  << j.dump(4) << std::endl;
-    }
-
     m_GlobalWritePattern.resize(m_WriterSize);
     for (int rank = 0; rank < m_WriterSize; ++rank)
     {
-        int blockId = 0;
         for (auto itVar = j[rank].begin(); itVar != j[rank].end(); ++itVar)
         {
             std::string type = itVar.value()["T"].get<std::string>();
             Dims shape = itVar.value()["S"].get<Dims>();
             Dims start = itVar.value()["O"].get<Dims>();
-            Dims count = itVar.value()["C"].get<Dims>();
             auto &blockVecRef = m_GlobalWritePattern[rank];
             blockVecRef.emplace_back();
             blockVecRef.back().name = itVar.key();
             blockVecRef.back().shape = shape;
             blockVecRef.back().start = start;
-            blockVecRef.back().count = count;
+            blockVecRef.back().count = itVar.value()["C"].get<Dims>();
             blockVecRef.back().type = type;
-            blockVecRef.back().blockId = blockId;
+            blockVecRef.back().bufferStart = itVar.value()["X"].get<size_t>();
+            blockVecRef.back().bufferCount = itVar.value()["Y"].get<size_t>();
             if (rank == 0)
             {
                 if (type.empty())
@@ -189,7 +184,6 @@ void SscReader::SyncWritePattern()
 #undef declare_type
                 else { throw(std::runtime_error("unknown data type")); }
             }
-            ++blockId;
         }
     }
 
@@ -266,6 +260,8 @@ void SscReader::SyncReadPattern()
         jref["O"] = b.start;
         jref["C"] = b.count;
         jref["S"] = b.shape;
+        jref["X"] = 0;
+        jref["Y"] = 0;
     }
 
     std::string localStr = j.dump();
@@ -331,9 +327,50 @@ void SscReader::SyncReadPattern()
 
     ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
     m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePattern);
-    ssc::CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
+    CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
 
-    m_Buffer.resize(ssc::TotalDataSize(m_LocalReadPattern) + 1);
+    size_t totalDataSize = 0;
+    for (auto i : m_AllReceivingWriterRanks)
+    {
+        totalDataSize += i.second.second;
+    }
+
+    m_Buffer.resize(totalDataSize + 1);
+
+    if (m_Verbosity >= 10)
+    {
+        ssc::PrintBlockVec(m_LocalReadPattern, "Local Read Pattern");
+    }
+}
+
+void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
+                                  ssc::RankPosMap &allRanks)
+{
+    size_t bufferPosition = 0;
+    for (size_t rank = 0; rank < bvv.size(); ++rank)
+    {
+        bool hasOverlap = false;
+        for (const auto r : allRanks)
+        {
+            if (r.first == rank)
+            {
+                hasOverlap = true;
+                break;
+            }
+        }
+        if (hasOverlap)
+        {
+            allRanks[rank].first = bufferPosition;
+            auto &bv = bvv[rank];
+            for (auto &b : bv)
+            {
+                b.bufferStart += bufferPosition;
+            }
+            size_t currentRankTotalSize = TotalDataSize(bv);
+            allRanks[rank].second = currentRankTotalSize;
+            bufferPosition += currentRankTotalSize;
+        }
+    }
 }
 
 #define declare_type(T)                                                        \

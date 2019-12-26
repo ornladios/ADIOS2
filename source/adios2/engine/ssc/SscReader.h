@@ -86,6 +86,9 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
+    void CalculatePosition(ssc::BlockVecVec &mapVec,
+                           ssc::RankPosMap &allOverlapRanks);
+
     int m_Verbosity = 0;
 };
 

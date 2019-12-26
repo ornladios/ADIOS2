@@ -33,38 +33,34 @@ struct BlockInfo
     Dims count;
     Dims overlapStart;
     Dims overlapCount;
-    size_t blockId;
     size_t bufferStart;
     size_t bufferCount;
 };
 using BlockVec = std::vector<BlockInfo>;
 using BlockVecVec = std::vector<BlockVec>;
-using RankPosMap = std::map<int, size_t>;
+using RankPosMap = std::map<int, std::pair<size_t, size_t>>;
 
 void PrintDims(const Dims &dims, const std::string &label = std::string());
+void PrintBlock(const BlockInfo &b, const std::string &label = std::string());
 void PrintBlockVec(const BlockVec &bv,
                    const std::string &label = std::string());
 void PrintBlockVecVec(const BlockVecVec &bvv,
                       const std::string &label = std::string());
+void PrintRankPosMap(const RankPosMap &m,
+                     const std::string &label = std::string());
 
 size_t GetTypeSize(const std::string &type);
 
 size_t TotalDataSize(const Dims &dims, const std::string &type);
 size_t TotalDataSize(const BlockVec &bv);
 
-size_t TotalOverlapSize(const BlockVec &bv);
-size_t TotalOverlapSize(const BlockVecVec &bvv);
-
 void CalculateOverlap(BlockVecVec &globalPattern, BlockVec &localPattern);
-void CalculatePosition(BlockVecVec &mapVec, RankPosMap &allOverlapRanks);
-void CalculatePosition(BlockVecVec &writerMapVec, BlockVecVec &readerMapVec,
-                       const int writerRank, RankPosMap &allOverlapRanks);
 
 RankPosMap AllOverlapRanks(const BlockVecVec &mapVec);
 
-BlockVecVec JsonToBlockVecVec(const nlohmann::json &input, const int size);
-BlockVecVec JsonToBlockVecVec(const std::vector<char> &input, const int size);
-BlockVecVec JsonToBlockVecVec(const std::string &input, const int size);
+void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output);
+void JsonToBlockVecVec(const std::vector<char> &input, BlockVecVec &output);
+void JsonToBlockVecVec(const std::string &input, BlockVecVec &output);
 
 bool AreSameDims(const Dims &a, const Dims &b);
 

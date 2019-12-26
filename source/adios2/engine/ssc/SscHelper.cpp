@@ -52,31 +52,6 @@ size_t TotalDataSize(const BlockVec &bv)
     return s;
 }
 
-size_t TotalOverlapSize(const BlockVec &bv)
-{
-    size_t s = 0;
-    for (const auto &b : bv)
-    {
-        if (not b.overlapCount.empty())
-        {
-            s +=
-                std::accumulate(b.overlapCount.begin(), b.overlapCount.end(),
-                                GetTypeSize(b.type), std::multiplies<size_t>());
-        }
-    }
-    return s;
-}
-
-size_t TotalOverlapSize(const BlockVecVec &bvv)
-{
-    size_t s = 0;
-    for (const auto &bv : bvv)
-    {
-        s += TotalOverlapSize(bv);
-    }
-    return s;
-}
-
 void CalculateOverlap(BlockVecVec &globalVecVec, BlockVec &localVec)
 {
     for (auto &rankBlockVec : globalVecVec)
@@ -150,69 +125,19 @@ RankPosMap AllOverlapRanks(const BlockVecVec &bvv)
         }
         if (hasOverlap)
         {
-            ret[rank] = 0;
+            ret[rank].first = 0;
         }
         ++rank;
     }
     return ret;
 }
 
-void CalculatePosition(BlockVecVec &bvv, RankPosMap &allRanks)
+void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
 {
-    int rank = 0;
-    size_t pos = 0;
-    for (auto &bv : bvv)
-    {
-        bool hasOverlap = false;
-        for (const auto r : allRanks)
-        {
-            if (r.first == rank)
-            {
-                hasOverlap = true;
-                break;
-            }
-        }
-        if (hasOverlap)
-        {
-            allRanks[rank] = pos;
-            for (auto &b : bv)
-            {
-                b.bufferStart = pos;
-                b.bufferCount = 0;
-                if (not b.count.empty())
-                {
-                    b.bufferCount += std::accumulate(
-                        b.count.begin(), b.count.end(), GetTypeSize(b.type),
-                        std::multiplies<size_t>());
-                    pos += b.bufferCount;
-                }
-            }
-        }
-        ++rank;
-    }
-}
-
-void CalculatePosition(BlockVecVec &writerMapVec, BlockVecVec &readerMapVec,
-                       const int writerRank, RankPosMap &allOverlapRanks)
-{
-    for (auto &rank : allOverlapRanks)
-    {
-        auto &readerRankMap = readerMapVec[rank.first];
-        CalculateOverlap(writerMapVec, readerRankMap);
-        auto currentReaderOverlapWriterRanks = AllOverlapRanks(writerMapVec);
-        CalculatePosition(writerMapVec, currentReaderOverlapWriterRanks);
-        allOverlapRanks[rank.first] =
-            currentReaderOverlapWriterRanks[writerRank];
-    }
-}
-
-BlockVecVec JsonToBlockVecVec(const nlohmann::json &input, const int size)
-{
-    BlockVecVec output(size);
-    for (int i = 0; i < size; ++i)
+    for (int i = 0; i < output.size(); ++i)
     {
         auto &rankj = input[i];
-        int varIndex = 0;
+        output[i].clear();
         for (auto it = rankj.begin(); it != rankj.end(); ++it)
         {
             output[i].emplace_back();
@@ -222,14 +147,13 @@ BlockVecVec JsonToBlockVecVec(const nlohmann::json &input, const int size)
             b.start = it.value()["O"].get<Dims>();
             b.count = it.value()["C"].get<Dims>();
             b.shape = it.value()["S"].get<Dims>();
-            b.blockId = varIndex;
-            ++varIndex;
+            b.bufferStart = it.value()["X"].get<size_t>();
+            b.bufferCount = it.value()["Y"].get<size_t>();
         }
     }
-    return output;
 }
 
-BlockVecVec JsonToBlockVecVec(const std::string &input, const int size)
+void JsonToBlockVecVec(const std::string &input, BlockVecVec &output)
 {
     nlohmann::json j;
     try
@@ -240,10 +164,10 @@ BlockVecVec JsonToBlockVecVec(const std::string &input, const int size)
     {
         throw(std::runtime_error("corrupted json string"));
     }
-    return JsonToBlockVecVec(j, size);
+    JsonToBlockVecVec(j, output);
 }
 
-BlockVecVec JsonToBlockVecVec(const std::vector<char> &input, const int size)
+void JsonToBlockVecVec(const std::vector<char> &input, BlockVecVec &output)
 {
     nlohmann::json j;
     try
@@ -254,7 +178,7 @@ BlockVecVec JsonToBlockVecVec(const std::vector<char> &input, const int size)
     {
         throw(std::runtime_error("corrupted json char vector"));
     }
-    return JsonToBlockVecVec(j, size);
+    JsonToBlockVecVec(j, output);
 }
 
 bool AreSameDims(const Dims &a, const Dims &b)
@@ -283,14 +207,27 @@ void PrintDims(const Dims &dims, const std::string &label)
     std::cout << std::endl;
 }
 
+void PrintBlock(const BlockInfo &b, const std::string &label)
+{
+    std::cout << label << std::endl;
+    std::cout << b.name << std::endl;
+    std::cout << "    Type : " << b.type << std::endl;
+    PrintDims(b.shape, "    Shape : ");
+    PrintDims(b.start, "    Start : ");
+    PrintDims(b.count, "    Count : ");
+    PrintDims(b.overlapStart, "    Overlap Start : ");
+    PrintDims(b.overlapCount, "    Overlap Count : ");
+    std::cout << "    Position Start : " << b.bufferStart << std::endl;
+    std::cout << "    Position Count : " << b.bufferCount << std::endl;
+}
+
 void PrintBlockVec(const BlockVec &bv, const std::string &label)
 {
-    std::cout << label;
+    std::cout << label << std::endl;
     for (const auto &i : bv)
     {
         std::cout << i.name << std::endl;
         std::cout << "    Type : " << i.type << std::endl;
-        std::cout << "    ID : " << i.blockId << std::endl;
         PrintDims(i.shape, "    Shape : ");
         PrintDims(i.start, "    Start : ");
         PrintDims(i.count, "    Count : ");
@@ -303,7 +240,7 @@ void PrintBlockVec(const BlockVec &bv, const std::string &label)
 
 void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label)
 {
-    std::cout << label;
+    std::cout << label << std::endl;
     size_t rank = 0;
     for (const auto &bv : bvv)
     {
@@ -312,7 +249,6 @@ void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label)
         {
             std::cout << "    " << i.name << std::endl;
             std::cout << "        Type : " << i.type << std::endl;
-            std::cout << "        ID : " << i.blockId << std::endl;
             PrintDims(i.shape, "        Shape : ");
             PrintDims(i.start, "        Start : ");
             PrintDims(i.count, "        Count : ");
@@ -324,6 +260,17 @@ void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label)
                       << std::endl;
         }
         ++rank;
+    }
+}
+
+void PrintRankPosMap(const RankPosMap &m, const std::string &label)
+{
+    std::cout << label << std::endl;
+    for (const auto &rank : m)
+    {
+        std::cout << "Rank = " << rank.first
+                  << ", bufferStart = " << rank.second.first
+                  << ", bufferCount = " << rank.second.second << std::endl;
     }
 }
 

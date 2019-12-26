@@ -101,36 +101,42 @@ void GenData(std::vector<T> &data, const size_t step, const Dims &start,
 
 template <class T>
 void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape)
+                const Dims &count, const Dims &shape,
+                const std::string &varName)
 {
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
+    if (print_lines < 32)
+    {
+        std::cout << "Verifying Variable " << varName << " for Step " << step
+                  << std::endl;
+        PrintData(data, step, start, count);
+        ++print_lines;
+    }
     std::vector<std::complex<T>> tmpdata(size);
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
-    if (print_lines < 32)
-    {
-        PrintData(data, step, start, count);
-        ++print_lines;
-    }
 }
 
 template <class T>
 void VerifyData(const T *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape)
+                const Dims &count, const Dims &shape,
+                const std::string &varName)
 {
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
-    bool compressed = false;
-    std::vector<T> tmpdata(size);
     if (print_lines < 32)
     {
+        std::cout << "Verifying Variable " << varName << " for Step " << step
+                  << std::endl;
         PrintData(data, step, start, count);
         ++print_lines;
     }
+    bool compressed = false;
+    std::vector<T> tmpdata(size);
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
@@ -304,16 +310,26 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
             ASSERT_EQ(i, currentStep);
 
-            VerifyData(myChars.data(), currentStep, start, count, shape);
-            VerifyData(myUChars.data(), currentStep, start, count, shape);
-            VerifyData(myShorts.data(), currentStep, start, count, shape);
-            VerifyData(myUShorts.data(), currentStep, start, count, shape);
-            VerifyData(myInts.data(), currentStep, start, count, shape);
-            VerifyData(myUInts.data(), currentStep, start, count, shape);
-            VerifyData(myFloats.data(), currentStep, start, count, shape);
-            VerifyData(myDoubles.data(), currentStep, start, count, shape);
-            VerifyData(myComplexes.data(), currentStep, start, count, shape);
-            VerifyData(myDComplexes.data(), currentStep, start, count, shape);
+            VerifyData(myChars.data(), currentStep, start, count, shape,
+                       "bpChars");
+            VerifyData(myUChars.data(), currentStep, start, count, shape,
+                       "bpUChars");
+            VerifyData(myShorts.data(), currentStep, start, count, shape,
+                       "bpShorts");
+            VerifyData(myUShorts.data(), currentStep, start, count, shape,
+                       "bpUShorts");
+            VerifyData(myInts.data(), currentStep, start, count, shape,
+                       "bpInts");
+            VerifyData(myUInts.data(), currentStep, start, count, shape,
+                       "bpUInts");
+            VerifyData(myFloats.data(), currentStep, start, count, shape,
+                       "bpFloats");
+            VerifyData(myDoubles.data(), currentStep, start, count, shape,
+                       "bpDoubles");
+            VerifyData(myComplexes.data(), currentStep, start, count, shape,
+                       "bpComplexes");
+            VerifyData(myDComplexes.data(), currentStep, start, count, shape,
+                       "bpDComplexes");
             dataManReader.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
@@ -350,7 +366,7 @@ TEST_F(SscEngineTest, TestSscBase)
     Dims shape = {10, (size_t)mpiSize * 2};
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
-    size_t steps = 200;
+    size_t steps = 100;
 
     if (mpiGroup == 0)
     {
