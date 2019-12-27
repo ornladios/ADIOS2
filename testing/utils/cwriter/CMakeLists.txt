@@ -10,7 +10,7 @@ target_link_libraries(Test.Utils.CWriter adios2)
 
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(Test.Utils.CWriter MPI::MPI_C)
-  set(cmd_executor ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1)
+  set(cmd_executor ${MPIEXEC_COMMAND} ${MPIEXEC_NUMPROC_FLAG} 1)
 else()
   set(cmd_executor)
 endif()
@@ -33,7 +33,7 @@ add_test(NAME Utils.CWriter.Bpls.h.Dump
 
 if(ADIOS2_HAVE_MPI)
   add_test(NAME Utils.CWriter.Bpls.h.Validate
-    COMMAND ${DIFF_COMMAND} -uw
+    COMMAND ${DIFF_COMMAND} -u -w
       ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsh.expected.txt
       TestUtilsCWriter.bplsh.result.txt
   )
@@ -64,7 +64,7 @@ add_test(NAME Utils.CWriter.Bpls.la.Dump
 
 if(ADIOS2_HAVE_MPI)
   add_test(NAME Utils.CWriter.Bpls.la.Validate
-    COMMAND ${DIFF_COMMAND} -uw
+    COMMAND ${DIFF_COMMAND} -u -w
       ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsla.expected.txt
       TestUtilsCWriter.bplsla.result.txt
   )
@@ -89,7 +89,7 @@ add_test(NAME Utils.CWriter.Bpls.Al.Dump
 
 if(ADIOS2_HAVE_MPI)
   add_test(NAME Utils.CWriter.Bpls.Al.Validate
-    COMMAND ${DIFF_COMMAND} -uw
+    COMMAND ${DIFF_COMMAND} -u -w
       ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsAl.expected.txt
       TestUtilsCWriter.bplsAl.result.txt
   )
@@ -111,7 +111,7 @@ add_test(NAME Utils.CWriter.Bpls.ldDav.Dump
 
 if(ADIOS2_HAVE_MPI)
   add_test(NAME Utils.CWriter.Bpls.ldDav.Validate
-    COMMAND ${DIFF_COMMAND} -uw
+    COMMAND ${DIFF_COMMAND} -u -w
       ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsldDav.expected.txt
       TestUtilsCWriter.bplsldDav.result.txt
   )
@@ -134,7 +134,7 @@ add_test(NAME Utils.CWriter.Bpls.ldDavvv.Dump
 
 if(ADIOS2_HAVE_MPI)
   add_test(NAME Utils.CWriter.Bpls.ldDavvv.Validate
-    COMMAND ${DIFF_COMMAND} -uw
+    COMMAND ${DIFF_COMMAND} -u -w
       ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsldDavvv.expected.txt
       TestUtilsCWriter.bplsldDavvv.result.txt
   )
@@ -162,7 +162,7 @@ add_test(NAME Utils.CWriter.Bpls.ldvarI16.Dump
 
 if(ADIOS2_HAVE_MPI)
   add_test(NAME Utils.CWriter.Bpls.ldvarI16.Validate
-    COMMAND ${DIFF_COMMAND} -uw
+    COMMAND ${DIFF_COMMAND} -u -w
       ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsldvarI16.expected.txt
       TestUtilsCWriter.bplsldvarI16.result.txt
   )

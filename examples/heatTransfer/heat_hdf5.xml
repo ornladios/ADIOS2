@@ -41,7 +41,7 @@
         <transport type="File">
             
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
-            <parameter key="Library" value="POSIX"/>
+            <parameter key="Library" value="stdio"/>
             
             <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
                  Minutes, Hours. open/close always in Microseconds -->
@@ -73,7 +73,7 @@
         <transport type="File">
             
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
-            <parameter key="Library" value="POSIX"/>
+            <parameter key="Library" value="stdio"/>
             
             <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
                  Minutes, Hours. open/close always in Microseconds -->
@@ -105,7 +105,7 @@
         <transport type="File">
             
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
-            <parameter key="Library" value="POSIX"/>
+            <parameter key="Library" value="stdio"/>
             
             <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
                  Minutes, Hours. open/close always in Microseconds -->

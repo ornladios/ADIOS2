@@ -181,6 +181,8 @@ struct MyData
     size_t Count(int b) const { return m_Selections[b].second[0]; }
     const Box &Selection(int b) const { return m_Selections[b]; }
     Block &operator[](int b) { return m_Blocks[b]; }
+    T *Begin(int b) { return &(*m_Blocks[b].begin()); }
+    T *End(int b) { return Begin(b) + Count(b); }
 
 private:
     std::vector<Block> m_Blocks;
@@ -205,6 +207,8 @@ struct MyDataView
     size_t Count(int b) const { return m_Selections[b].second[0]; }
     const Box &Selection(int b) const { return m_Selections[b]; }
     Block operator[](int b) { return m_Blocks[b]; }
+    T *Begin(int b) { return m_Blocks[b]; }
+    T *End(int b) { return m_Blocks[b] + Count(b); }
 
 private:
     std::vector<Block> m_Blocks;
@@ -246,8 +250,7 @@ public:
     template <class MyData>
     void PopulateBlock(MyData &myData, int b)
     {
-        std::iota(&myData[b][0], &myData[b][myData.Count(b)],
-                  DataType(myData.Start(b)));
+        std::iota(myData.Begin(b), myData.End(b), DataType(myData.Start(b)));
     }
 
     void GenerateOutput(std::string filename, std::string enginename)

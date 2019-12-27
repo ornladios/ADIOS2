@@ -1,3 +1,14 @@
+# Disable warnings in thirdparty code
+if(CMAKE_C_COMPILER_ID MATCHES
+    "^(GNU|Clang|AppleClang|XLClang|XL|VisualAge|SunPro|HP|Intel)$")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
+endif()
+if(CMAKE_CXX_COMPILER_ID MATCHES
+    "^(GNU|Clang|AppleClang|XLClang|XL|VisualAge|SunPro|HP|Intel)$")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+endif()
+
+
 function(message_start_thirdparty)
   get_filename_component(tp_base "${CMAKE_CURRENT_LIST_DIR}" NAME_WE)
   message("")
