@@ -49,6 +49,10 @@ with adios2.open("types_np_local.bp", "w", comm) as fw:
         fw.write("varU64", data.U64, shape, start, count)
         fw.write("varR32", data.R32, shape, start, count)
         fw.write("varR64", data.R64, shape, start, count)
+        fw.write("varR128", data.R128, shape, start, count)
+        fw.write("varC32", data.C32, shape, start, count)
+        fw.write("varC64", data.C64, shape, start, count)
+        fw.write("varC128", data.C128, shape, start, count)
         fw.end_step()
 
 
@@ -75,6 +79,10 @@ with adios2.open("types_np_local.bp", "r", comm) as fr:
             indataU64 = fr_step.read("varU64", b)
             indataR32 = fr_step.read("varR32", b)
             indataR64 = fr_step.read("varR64", b)
+            indataR128 = fr_step.read("varR128", b)
+            indataC32 = fr_step.read("varC32", b)
+            indataC64 = fr_step.read("varC64", b)
+            indataC128 = fr_step.read("varC128", b)
 
             check_array(indataI8, data.I8, 'I8')
             check_array(indataI16, data.I16, 'I16')
@@ -86,3 +94,7 @@ with adios2.open("types_np_local.bp", "r", comm) as fr:
             check_array(indataU64, data.U64, 'U64')
             check_array(indataR32, data.R32, 'R32')
             check_array(indataR64, data.R64, 'R64')
+            check_array(indataR128, data.R128, 'R128')
+            check_array(indataC32, data.C32, 'C32')
+            check_array(indataC64, data.C64, 'C64')
+            check_array(indataC128, data.C128, 'C128')

@@ -42,10 +42,17 @@ varU64 = bpIO.DefineVariable(
 
 varR32 = bpIO.DefineVariable(
     "varR32", data.R32, [], [], [data.R32.size], adios2.ConstantDims)
-
 varR64 = bpIO.DefineVariable(
     "varR64", data.R64, [], [], [data.R64.size], adios2.ConstantDims)
+varR128 = bpIO.DefineVariable(
+    "varR128", data.R128, [], [], [data.R128.size], adios2.ConstantDims)
 
+varC32 = bpIO.DefineVariable(
+    "varC32", data.C32, [], [], [data.C32.size], adios2.ConstantDims)
+varC64 = bpIO.DefineVariable(
+    "varC64", data.C64, [], [], [data.C64.size], adios2.ConstantDims)
+varC128 = bpIO.DefineVariable(
+    "varC128", data.C128, [], [], [data.C128.size], adios2.ConstantDims)
 
 # ADIOS Engine
 bpFileWriter = bpIO.Open("npTypes.bp", adios2.Mode.Write)
@@ -62,5 +69,10 @@ bpFileWriter.Put(varU64, data.U64)
 
 bpFileWriter.Put(varR32, data.R32)
 bpFileWriter.Put(varR64, data.R64)
+bpFileWriter.Put(varR128, data.R128)
+
+bpFileWriter.Put(varC32, data.C32)
+bpFileWriter.Put(varC64, data.C64)
+bpFileWriter.Put(varC128, data.C128)
 
 bpFileWriter.Close()

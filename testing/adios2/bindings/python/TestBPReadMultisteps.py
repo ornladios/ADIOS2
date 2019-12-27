@@ -63,12 +63,21 @@ varU64 = ioWriter.DefineVariable(
 
 varR32 = ioWriter.DefineVariable(
     "varR32", data.R32, shape, start, count, adios2.ConstantDims)
-
 varR64 = ioWriter.DefineVariable(
     "varR64", data.R64, shape, start, count, adios2.ConstantDims)
+varR128 = ioWriter.DefineVariable(
+    "varR128", data.R128, shape, start, count, adios2.ConstantDims)
+
+varC32 = ioWriter.DefineVariable(
+    "varC32", data.C32, shape, start, count, adios2.ConstantDims)
+varC64 = ioWriter.DefineVariable(
+    "varC64", data.C64, shape, start, count, adios2.ConstantDims)
+varC128 = ioWriter.DefineVariable(
+    "varC128", data.C128, shape, start, count, adios2.ConstantDims)
 
 attString = ioWriter.DefineAttribute("attrString", ["hello attribute"])
 attI8 = ioWriter.DefineAttribute("attrI8", data.I8)
+attC64 = ioWriter.DefineAttribute("attrC64", data.C64)
 
 # ADIOS Engine
 writer = ioWriter.Open("npTypes.bp", adios2.Mode.Write)
@@ -85,6 +94,10 @@ for i in range(0, 3):
     npu64 = np.full((Nx), i, dtype=np.uint64)
     npr32 = np.full((Nx), i, dtype=np.float32)
     npr64 = np.full((Nx), i, dtype=np.float64)
+    npr128 = np.full((Nx), i, dtype=np.longdouble)
+    npc32 = np.full((Nx), i, dtype=np.csingle)
+    npc64 = np.full((Nx), i, dtype=np.cdouble)
+    npc128 = np.full((Nx), i, dtype=np.clongdouble)
 
     writer.BeginStep()
     writer.Put(varI8, npi8)
@@ -99,6 +112,11 @@ for i in range(0, 3):
 
     writer.Put(varR32, npr32)
     writer.Put(varR64, npr64)
+    writer.Put(varR128, npr128)
+
+    writer.Put(varC32, npc32)
+    writer.Put(varC64, npc64)
+    writer.Put(varC128, npc128)
     writer.EndStep()
 
 writer.Close()
@@ -110,6 +128,7 @@ reader = ioReader.Open("npTypes.bp", adios2.Mode.Read)
 
 attrString = ioReader.InquireAttribute("attrString")
 attrI8 = ioReader.InquireAttribute("attrI8")
+attrC64 = ioReader.InquireAttribute("attrC64")
 
 varI8 = ioReader.InquireVariable("varI8")
 varI16 = ioReader.InquireVariable("varI16")
@@ -121,9 +140,14 @@ varU32 = ioReader.InquireVariable("varU32")
 varU64 = ioReader.InquireVariable("varU64")
 varR32 = ioReader.InquireVariable("varR32")
 varR64 = ioReader.InquireVariable("varR64")
+varR128 = ioReader.InquireVariable("varR128")
+varC32 = ioReader.InquireVariable("varC32")
+varC64 = ioReader.InquireVariable("varC64")
+varC128 = ioReader.InquireVariable("varC128")
 
 check_object(attrString, "attrString")
 check_object(attrString, "attrI8")
+check_object(attrString, "attrC64")
 
 check_object(varI8, "varI8")
 check_object(varI16, "varI16")
@@ -135,12 +159,17 @@ check_object(varU32, "varU32")
 check_object(varU64, "varU64")
 check_object(varR32, "varR32")
 check_object(varR64, "varR64")
+check_object(varR128, "varR128")
+check_object(varC32, "varCR32")
+check_object(varC64, "varC64")
+check_object(varC128, "varC128")
 
 
-attr_names = ["attrString", "attrI8"]
+attr_names = ["attrString", "attrI8", "attrC64"]
 var_names = ["varStr", "varI8", "varI16", "varI32", "varI64",
              "varU8", "varU16", "varU32", "varU64",
-                      "varR32", "varR64"]
+                      "varR32", "varR64", "varR128",
+                      "varC32", "varC64", "varC128"]
 
 attributesInfo = ioReader.AvailableAttributes()
 for name, info in attributesInfo.items():
@@ -221,6 +250,30 @@ if varR64 is not None:
     inR64 = np.zeros((3, size * Nx), dtype=np.float64)
     reader.Get(varR64, inR64)
 
+if varR128 is not None:
+    varR128.SetSelection([[0], [size * Nx]])
+    varR128.SetStepSelection([0, 3])
+    inR128 = np.zeros((3, size * Nx), dtype=np.longdouble)
+    reader.Get(varR128, inR128)
+
+if varC32 is not None:
+    varC32.SetSelection([[0], [size * Nx]])
+    varC32.SetStepSelection([0, 3])
+    inC32 = np.zeros((3, size * Nx), dtype=np.csingle)
+    reader.Get(varC32, inC32)
+
+if varC64 is not None:
+    varC64.SetSelection([[0], [size * Nx]])
+    varC64.SetStepSelection([0, 3])
+    inC64 = np.zeros((3, size * Nx), dtype=np.cdouble)
+    reader.Get(varC64, inC64)
+
+if varC128 is not None:
+    varC128.SetSelection([[0], [size * Nx]])
+    varC128.SetStepSelection([0, 3])
+    inC128 = np.zeros((3, size * Nx), dtype=np.clongdouble)
+    reader.Get(varC128, inC128)
+
 reader.PerformGets()
 
 for i in range(0, 3):
@@ -254,6 +307,18 @@ for i in range(0, 3):
 
         if(inR64[i][j] != i):
             raise ValueError('failed reading R64')
+
+        if(inR128[i][j] != i):
+            raise ValueError('failed reading R128')
+
+        if(inC32[i][j] != i):
+            raise ValueError('failed reading C32')
+
+        if(inC64[i][j] != i):
+            raise ValueError('failed reading C64')
+
+        if(inC128[i][j] != i):
+            raise ValueError('failed reading C128')
 
 
 # here tests reader data

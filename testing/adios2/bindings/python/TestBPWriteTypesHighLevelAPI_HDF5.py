@@ -43,6 +43,10 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
             fw.write("gvarU64", np.array(data.U64[0]))
             fw.write("gvarR32", np.array(data.R32[0]))
             fw.write("gvarR64", np.array(data.R64[0]))
+            fw.write("gvarR128", np.array(data.R128[0]))
+            fw.write("gvarC32", np.array(data.C32[0]))
+            fw.write("gvarC64", np.array(data.C64[0]))
+            fw.write("gvarC128", np.array(data.C128[0]))
 
             # single value attributes
             fw.write_attribute("attrStr", "Testing single string attribute")
@@ -56,6 +60,10 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
             fw.write_attribute("attrU64", np.array(data.U64[0]))
             fw.write_attribute("attrR32", np.array(data.R32[0]))
             fw.write_attribute("attrR64", np.array(data.R64[0]))
+            fw.write_attribute("attrR128", np.array(data.R128[0]))
+            fw.write_attribute("attrC32", np.array(data.C32[0]))
+            fw.write_attribute("attrC64", np.array(data.C64[0]))
+            fw.write_attribute("attrC128", np.array(data.C128[0]))
 
             fw.write_attribute(
                 "attrStrArray", ["string1", "string2", "string3"])
@@ -69,6 +77,10 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
             fw.write_attribute("attrU64Array", data.U64)
             fw.write_attribute("attrR32Array", data.R32)
             fw.write_attribute("attrR64Array", data.R64)
+            fw.write_attribute("attrR128Array", data.R128)
+            fw.write_attribute("attrC32Array", data.C32)
+            fw.write_attribute("attrC64Array", data.C64)
+            fw.write_attribute("attrC128Array", data.C128)
 
         fw.write("steps", "Step:" + str(i))
         fw.write("varI8", data.I8, shape, start, count)
@@ -81,6 +93,10 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
         fw.write("varU64", data.U64, shape, start, count)
         fw.write("varR32", data.R32, shape, start, count)
         fw.write("varR64", data.R64, shape, start, count)
+        fw.write("varR128", data.R128, shape, start, count)
+        fw.write("varC32", data.C32, shape, start, count)
+        fw.write("varC64", data.C64, shape, start, count)
+        fw.write("varC128", data.C128, shape, start, count)
 
         if(rank == 0 and i == 0):
             fw.write_attribute("varattrStrArray", [
@@ -96,6 +112,10 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
             fw.write_attribute("varattrR32Array", data.R32, "varR32")
             fw.write_attribute("varattrR64Array", data.R64, "varR64")
             fw.write_attribute("varattrR64Value", data.R64, "varR64")
+            fw.write_attribute("varattrR128Array", data.R128, "varR128")
+            fw.write_attribute("varattrC32Array", data.C32, "varC32")
+            fw.write_attribute("varattrC64Array", data.C64, "varC64")
+            fw.write_attribute("varattrC128Array", data.C128, "varC128")
 
         fw.end_step()
 
@@ -131,6 +151,10 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inU64 = fr_step.read("gvarU64")
             inR32 = fr_step.read("gvarR32")
             inR64 = fr_step.read("gvarR64")
+            inR128 = fr_step.read("gvarR128")
+            inC32 = fr_step.read("gvarC32")
+            inC64 = fr_step.read("gvarC64")
+            inC128 = fr_step.read("gvarC128")
 
             if(inTag[0] != "Testing ADIOS2 high-level API"):
                 print("InTag: " + str(inTag))
@@ -166,6 +190,18 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             if(inR64 != data.R64[0]):
                 raise ValueError('gvarR64 read failed')
 
+            if(inR128 != data.R128[0]):
+                raise ValueError('gvarR128 read failed')
+
+            if(inC32 != data.C32[0]):
+                raise ValueError('gvarC32 read failed')
+
+            if(inC64 != data.C64[0]):
+                raise ValueError('gvarC64 read failed')
+
+            if(inC128 != data.C128[0]):
+                raise ValueError('gvarC128 read failed')
+
             # attributes
             inTag = fr_step.read_attribute_string("attrStr")
             inI8 = fr_step.read_attribute("attrI8")
@@ -178,6 +214,10 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inU64 = fr_step.read_attribute("attrU64")
             inR32 = fr_step.read_attribute("attrR32")
             inR64 = fr_step.read_attribute("attrR64")
+            inR128 = fr_step.read_attribute("attrR128")
+            inC32 = fr_step.read_attribute("attrC32")
+            inC64 = fr_step.read_attribute("attrC64")
+            inC128 = fr_step.read_attribute("attrC128")
 
             if(inTag[0] != "Testing single string attribute"):
                 raise ValueError('attr string read failed')
@@ -212,6 +252,18 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             if(inR64[0] != data.R64[0]):
                 raise ValueError('attrR64 read failed')
 
+            if(inR128[0] != data.R128[0]):
+                raise ValueError('attrR128 read failed')
+
+            if(inC32[0] != data.C32[0]):
+                raise ValueError('attrC32 read failed')
+
+            if(inC64[0] != data.C64[0]):
+                raise ValueError('attrC64 read failed')
+
+            if(inC128[0] != data.C128[0]):
+                raise ValueError('attrC128 read failed')
+
             # Array attribute
             inTag = fr_step.read_attribute_string("attrStrArray")
             inI8 = fr_step.read_attribute("attrI8Array")
@@ -224,6 +276,10 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inU64 = fr_step.read_attribute("attrU64Array")
             inR32 = fr_step.read_attribute("attrR32Array")
             inR64 = fr_step.read_attribute("attrR64Array")
+            inR128 = fr_step.read_attribute("attrR128Array")
+            inC32 = fr_step.read_attribute("attrC32Array")
+            inC64 = fr_step.read_attribute("attrC64Array")
+            inC128 = fr_step.read_attribute("attrC128Array")
 
             if(inTag != ["string1", "string2", "string3"]):
                 raise ValueError('attrStrArray read failed')
@@ -258,6 +314,18 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             if((inR64 == data.R64).all() is False):
                 raise ValueError('attrR64 array read failed')
 
+            if((inR128 == data.R128).all() is False):
+                raise ValueError('attrR128 array read failed')
+
+            if((inC32 == data.C32).all() is False):
+                raise ValueError('attrC32 array read failed')
+
+            if((inC64 == data.C64).all() is False):
+                raise ValueError('attrC64 array read failed')
+
+            if((inC128 == data.C128).all() is False):
+                raise ValueError('attrC128 array read failed')
+
             inTags = fr_step.read_attribute_string("varattrStrArray", "steps")
             inI8 = fr_step.read_attribute("varattrI8Array", "varI8")
             in16 = fr_step.read_attribute("varattrI16Array", "varI16")
@@ -269,6 +337,10 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inU64 = fr_step.read_attribute("varattrU64Array", "varU64")
             inR32 = fr_step.read_attribute("varattrR32Array", "varR32")
             inR64 = fr_step.read_attribute("varattrR64Array", "varR64")
+            inR128 = fr_step.read_attribute("varattrR128Array", "varR128")
+            inC32 = fr_step.read_attribute("varattrC32Array", "varC32")
+            inC64 = fr_step.read_attribute("varattrC64Array", "varC64")
+            inC128 = fr_step.read_attribute("varattrC128Array", "varC128")
 
             if(inTags != ["varattr1", "varattr2", "varattr3"]):
                 print(inTags)
@@ -304,6 +376,18 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             if((inR64 == data.R64).all() is False):
                 raise ValueError('var attrR64 array read failed')
 
+            if((inR128 == data.R128).all() is False):
+                raise ValueError('var attrR128 array read failed')
+
+            if((inC32 == data.C32).all() is False):
+                raise ValueError('var attrC32 array read failed')
+
+            if((inC64 == data.C64).all() is False):
+                raise ValueError('var attrC64 array read failed')
+
+            if((inC128 == data.C128).all() is False):
+                raise ValueError('var attrC128 array read failed')
+
         stepStr = "Step:" + str(step)
 
         instepStr = fr_step.read_string("steps")
@@ -321,6 +405,10 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
         indataU64 = fr_step.read("varU64", start, count)
         indataR32 = fr_step.read("varR32", start, count)
         indataR64 = fr_step.read("varR64", start, count)
+        indataR128 = fr_step.read("varR128", start, count)
+        indataC32 = fr_step.read("varC32", start, count)
+        indataC64 = fr_step.read("varC64", start, count)
+        indataC128 = fr_step.read("varC128", start, count)
         fr_step.end_step()
 
         if((indataI8 == data.I8).all() is False):
@@ -352,3 +440,15 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
 
         if((indataR64 == data.R64).all() is False):
             raise ValueError('R64 array read failed')
+
+        if((indataR128 == data.R128).all() is False):
+            raise ValueError('R128 array read failed')
+
+        if((indataC32 == data.C32).all() is False):
+            raise ValueError('C32 array read failed')
+
+        if((indataC64 == data.C64).all() is False):
+            raise ValueError('C64 array read failed')
+
+        if((indataC128 == data.C128).all() is False):
+            raise ValueError('C128 array read failed')
