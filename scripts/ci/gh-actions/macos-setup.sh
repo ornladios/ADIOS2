@@ -28,8 +28,17 @@ brew install gcc
 echo "Installing blosc compression"
 brew install c-blosc
 
+echo "Installing python"
+brew install python
+
+echo "Installling numpy"
+brew install numpy
+
 if [[ "$GH_YML_JOBNAME" =~ .*openmpi.* ]]
 then
   echo "Installing OpenMPI"
   brew install openmpi
+
+  echo "Installing mpi4py"
+  brew install mpi4py
 fi

@@ -34,6 +34,9 @@ function main () {
         choco install -y ninja
     }
 
+    # Install numpy
+    pip3 install numpy
+
     # Install MS-MPI
     if($jobName -match "msmpi") {
         Write-Host "Installing MS-MPI"
@@ -43,6 +46,8 @@ function main () {
         Write-Host "##vso[task.setvariable variable=MSMPI_INC;]C:\Program Files (x86)\Microsoft SDKs\MPI\Include"
         Write-Host "##vso[task.setvariable variable=MSMPI_LIB32;]C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x86"
         Write-Host "##vso[task.setvariable variable=MSMPI_LIB64;]C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x64"
+
+        pip3 install mpi4py
     }
 }
 
