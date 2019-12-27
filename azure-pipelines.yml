@@ -46,9 +46,9 @@ jobs:
         hostImage: 'macOS-10.13'
       macos1013_xcode941_openmpi_ninja:
         hostImage: 'macOS-10.13'
-      macos1014_xcode104_ninja:
+      macos1014_xcode103_ninja:
         hostImage: 'macOS-10.14'
-      macos1014_xcode104_openmpi_make:
+      macos1014_xcode103_openmpi_make:
         hostImage: 'macOS-10.14'
   pool:
     vmImage: $[ variables['hostImage'] ]
