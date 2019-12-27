@@ -241,8 +241,10 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       integer, parameter :: adios2_type_character = 0
       integer, parameter :: adios2_type_real = 2
       integer, parameter :: adios2_type_dp = 3
+      integer, parameter :: adios2_type_ldp = 9
       integer, parameter :: adios2_type_complex = 4
       integer, parameter :: adios2_type_complex_dp = 5
+      integer, parameter :: adios2_type_complex_ldp = 10
       
       integer, parameter :: adios2_type_integer1 = 6
       integer, parameter :: adios2_type_integer2 = 7

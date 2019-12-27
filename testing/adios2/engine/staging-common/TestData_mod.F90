@@ -18,8 +18,10 @@ module sst_test_data
     integer(kind=8), dimension(10) :: data_I64
     real(kind=4), dimension(10) :: data_R32
     real(kind=8), dimension(10) :: data_R64
+    real(kind=16), dimension(10) :: data_R128
     complex(kind=4), dimension(10) :: data_C32
     complex(kind=8), dimension(10) :: data_C64
+    complex(kind=16), dimension(10) :: data_C128
     real (kind=8), dimension(2, 10) :: data_R64_2d
     real (kind=8), dimension(10, 2) :: data_R64_2d_rev
     real (kind=8) :: data_scalar_R64
@@ -29,9 +31,11 @@ module sst_test_data
     integer(kind=4), dimension(:), allocatable :: in_I32
     integer(kind=8), dimension(:), allocatable :: in_I64
     real(kind=4), dimension(:), allocatable :: in_R32
-    real(kind=8), dimension(:), allocatable :: in_R64 
+    real(kind=8), dimension(:), allocatable :: in_R64
+    real(kind=16), dimension(:), allocatable :: in_R128
     complex(kind=4), dimension(:), allocatable :: in_C32
-    complex(kind=8), dimension(:), allocatable :: in_C64 
+    complex(kind=8), dimension(:), allocatable :: in_C64
+    complex(kind=16), dimension(:), allocatable :: in_C128
     real (kind=8), dimension(:,:), allocatable :: in_R64_2d 
     real (kind=8), dimension(:,:), allocatable :: in_R64_2d_rev 
     real (kind=8) :: in_scalar_R64
@@ -51,8 +55,10 @@ module sst_test_data
          data_I64(i) = (j + 10 * (i-1));
          data_R32(i) = (j + 10 * (i-1));
          data_R64(i) = (j + 10 * (i-1));
+         data_R128(i) = (j + 10 * (i-1));
          data_C32(i) = cmplx(-(j + 10 * (i-1)), (j + 10 * (i-1)));
          data_C64(i) = cmplx(-(j + 10 * (i-1)), (j + 10 * (i-1)));
+         data_C128(i) = cmplx(-(j + 10 * (i-1)), (j + 10 * (i-1)));
          data_R64_2d(1,i) = (j + 10 * (i-1));
          data_R64_2d(2,i) = 10000 + (j + 10 * (i-1));
          data_R64_2d_rev(i,1) = (j + 10 * (i-1));
@@ -86,6 +92,9 @@ module sst_test_data
          end if
          if (in_R64(i) /= (i - 1 + start)* 10 + step) then
             stop 'data_R64 value failed'
+         end if
+         if (in_R128(i) /= (i - 1 + start)* 10 + step) then
+            stop 'data_R128 value failed'
          end if
          if (in_R64_2d(1, i) /= (i - 1 + start)* 10 + step) then
             stop 'data_R64 value failed'

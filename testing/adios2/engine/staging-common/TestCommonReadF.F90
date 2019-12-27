@@ -137,6 +137,15 @@ program TestSstRead
   if (ndims /= 1) stop 'r64 ndims is not 1'
   if (shape_in(1) /= nx*writerSize) stop 'r64 shape_in read failed'
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  call adios2_inquire_variable(variables(13), ioRead, "r128", ierr)
+  if (variables(13)%name /= 'r128') stop 'r128 not recognized'
+  if (variables(13)%type /= adios2_type_ldp) stop 'r128 type not recognized'
+  call adios2_variable_shape(shape_in, ndims, variables(13), ierr)
+  if (ndims /= 1) stop 'r128 ndims is not 1'
+  if (shape_in(1) /= nx*writerSize) stop 'r128 shape_in read failed'
+#endif
+
   call adios2_inquire_variable(variables(7), ioRead, "r64_2d", ierr)
   if (variables(7)%name /= 'r64_2d') stop 'r64_2d not recognized'
   if (variables(7)%type /= adios2_type_dp) stop 'r64_2d type not recognized'
@@ -167,6 +176,15 @@ program TestSstRead
   if (ndims /= 1) stop 'c64 ndims is not 1'
   if (shape_in(1) /= nx*writerSize) stop 'c64 shape_in read failed'
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  call adios2_inquire_variable(variables(14), ioRead, "c128", ierr)
+  if (variables(14)%name /= 'c128') stop 'c128 not recognized'
+  if (variables(14)%type /= adios2_type_complex_ldp) stop 'c128 type not recognized'
+  call adios2_variable_shape(shape_in, ndims, variables(14), ierr)
+  if (ndims /= 1) stop 'c128 ndims is not 1'
+  if (shape_in(1) /= nx*writerSize) stop 'c128 shape_in read failed'
+#endif
+
   call adios2_inquire_variable(variables(12), ioRead, "scalar_r64", ierr)
   if (variables(12)%name /= 'scalar_r64') stop 'scalar_r64 not recognized'
   if (variables(12)%type /= adios2_type_dp) stop 'scalar_r64 type not recognized'
@@ -183,8 +201,14 @@ program TestSstRead
   allocate (in_I64(myLength));
   allocate (in_R32(myLength));
   allocate (in_R64(myLength));
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  allocate (in_R128(myLength));
+#endif
   allocate (in_C32(myLength));
   allocate (in_C64(myLength));
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  allocate (in_C128(myLength));
+#endif
   allocate (in_R64_2d(2, myLength));
   allocate (in_R64_2d_rev(myLength, 2));
 
@@ -211,6 +235,10 @@ program TestSstRead
   call adios2_set_selection(variables(8), 2, start_dims3, count_dims3, ierr)
   call adios2_set_selection(variables(10), 1, start_dims, count_dims, ierr)
   call adios2_set_selection(variables(11), 1, start_dims, count_dims, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  call adios2_set_selection(variables(13), 1, start_dims, count_dims, ierr)
+  call adios2_set_selection(variables(14), 1, start_dims, count_dims, ierr)
+#endif
 
   call adios2_get(sstReader, variables(1), in_I8, ierr)
   call adios2_get(sstReader, variables(2), in_I16, ierr)
@@ -218,10 +246,16 @@ program TestSstRead
   call adios2_get(sstReader, variables(4), in_I64, ierr)
   call adios2_get(sstReader, variables(5), in_R32, ierr)
   call adios2_get(sstReader, variables(6), in_R64, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  call adios2_get(sstReader, variables(13), in_R128, ierr)
+#endif
   call adios2_get(sstReader, variables(7), in_R64_2d, ierr)
   call adios2_get(sstReader, variables(8), in_R64_2d_rev, ierr)
   call adios2_get(sstReader, variables(10), in_C32, ierr)
   call adios2_get(sstReader, variables(11), in_C64, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  call adios2_get(sstReader, variables(14), in_C128, ierr)
+#endif
   call adios2_get(sstReader, variables(12), in_scalar_R64, ierr)
 
   call adios2_end_step(sstReader, ierr)

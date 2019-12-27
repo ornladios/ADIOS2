@@ -9,7 +9,7 @@ program TestBPWriteVariableAttributes
     type(adios2_io) :: ioWrite, ioRead
     type(adios2_engine) :: bpWriter, bpReader
     type(adios2_variable) :: var
-    type(adios2_attribute), dimension(14) :: attributes
+    type(adios2_attribute), dimension(16) :: attributes
     type(adios2_attribute) :: failed_att
 
     integer :: ierr, i
@@ -62,6 +62,11 @@ program TestBPWriteVariableAttributes
     call adios2_define_attribute(attributes(7), ioWrite, 'att_r64', &
                                  data_R64(1), var%name, '/', ierr)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_define_attribute(attributes(15), ioWrite, 'att_r128', &
+                                 data_R128(1), var%name, '/', ierr)
+#endif
+
     ! arrays
     call adios2_define_attribute(attributes(8), ioWrite, 'att_Strings_array', &
                                  data_Strings, 3, var%name, '/', ierr)
@@ -84,8 +89,16 @@ program TestBPWriteVariableAttributes
 
     call adios2_define_attribute(attributes(14), ioWrite, 'att_r64_array', &
                                  data_R64, 3, var%name, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_define_attribute(attributes(16), ioWrite, 'att_r128_array', &
+                                 data_R128, 3, var%name, ierr)
+#endif
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    do i=1,16
+#else
     do i=1,14
+#endif
         if( attributes(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_attribute'
     end do
 

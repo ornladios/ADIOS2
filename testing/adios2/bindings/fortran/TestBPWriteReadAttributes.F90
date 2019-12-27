@@ -7,7 +7,7 @@ program TestBPWriteAttributes
     type(adios2_adios) :: adios
     type(adios2_io) :: ioWrite, ioRead
     type(adios2_engine) :: bpWriter, bpReader
-    type(adios2_attribute), dimension(14) :: attributes, attributes_in
+    type(adios2_attribute), dimension(16) :: attributes, attributes_in
 
     integer :: ierr, i
     character(len=:), allocatable :: attrName
@@ -18,6 +18,9 @@ program TestBPWriteAttributes
     integer(kind=8):: i64_value
     real :: r32_value
     real(kind=8):: r64_value
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    real(kind=16):: r128_value
+#endif
 
     character(len=15), dimension(3):: iString_array
     integer(kind=1), dimension(3):: i8_array
@@ -26,6 +29,9 @@ program TestBPWriteAttributes
     integer(kind=8), dimension(3):: i64_array
     real, dimension(3) :: r32_array
     real(kind=8), dimension(3):: r64_array
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    real(kind=16), dimension(3):: r128_array
+#endif
 
 
     ! Launch MPI
@@ -64,6 +70,11 @@ program TestBPWriteAttributes
     call adios2_define_attribute(attributes(7), ioWrite, 'att_r64', &
                                  data_R64(1), ierr)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_define_attribute(attributes(15), ioWrite, 'att_r128', &
+                                 data_R128(1), ierr)
+#endif
+
     ! arrays
     call adios2_define_attribute(attributes(8), ioWrite, 'att_Strings_array', &
                                  data_Strings, 3, ierr)
@@ -85,6 +96,11 @@ program TestBPWriteAttributes
 
     call adios2_define_attribute(attributes(14), ioWrite, 'att_r64_array', &
                                  data_R64, 3, ierr)
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_define_attribute(attributes(16), ioWrite, 'att_r128_array', &
+                                 data_R128, 3, ierr)
+#endif
 
     do i=1,14
         if( attributes(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_attribute'
@@ -114,6 +130,9 @@ program TestBPWriteAttributes
     call adios2_inquire_attribute(attributes_in(5), ioRead, 'att_i64', ierr)
     call adios2_inquire_attribute(attributes_in(6), ioRead, 'att_r32', ierr)
     call adios2_inquire_attribute(attributes_in(7), ioRead, 'att_r64', ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_inquire_attribute(attributes_in(15), ioRead, 'att_r128', ierr)
+#endif
 
     if(attributes_in(1)%valid .eqv. .false.) stop 'attribute iString not found'
     if(attributes_in(1)%type /= adios2_type_string) stop 'attribute iString wrong type'
@@ -164,6 +183,15 @@ program TestBPWriteAttributes
     call adios2_attribute_data( r64_value, attributes_in(7), ierr)
     if( r64_value /=  data_R64(1) ) stop 'attribute r64 data error'
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    if(attributes_in(15)%valid .eqv. .false.) stop 'attribute r128 not found'
+    if(attributes_in(15)%type /= adios2_type_ldp) stop 'attribute r128 wrong type'
+    if(attributes_in(15)%length /= 1) stop 'attribute r128 length is not 1'
+    if(attributes_in(15)%is_value .eqv. .false.) stop 'attribute r128 must be value'
+    call adios2_attribute_data( r128_value, attributes_in(15), ierr)
+    if( r128_value /=  data_R128(1) ) stop 'attribute r128 data error'
+#endif
+
     ! Array
     call adios2_inquire_attribute(attributes_in(8), ioRead, 'att_Strings_array', ierr)
     call adios2_inquire_attribute(attributes_in(9), ioRead, 'att_i8_array', ierr)
@@ -172,6 +200,9 @@ program TestBPWriteAttributes
     call adios2_inquire_attribute(attributes_in(12), ioRead, 'att_i64_array', ierr)
     call adios2_inquire_attribute(attributes_in(13), ioRead, 'att_r32_array', ierr)
     call adios2_inquire_attribute(attributes_in(14), ioRead, 'att_r64_array', ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_inquire_attribute(attributes_in(16), ioRead, 'att_r128_array', ierr)
+#endif
 
     if(attributes_in(8)%valid .eqv. .false.) stop 'attribute string array not found'
     if(attributes_in(8)%type /= adios2_type_string) stop 'attribute string array wrong type'
@@ -235,6 +266,17 @@ program TestBPWriteAttributes
     do i=1,3
        if( r64_array(i) /=  data_R64(i) ) stop 'attribute r64 array data error'
     end do
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    if(attributes_in(16)%valid .eqv. .false.) stop 'attribute r128 array not found'
+    if(attributes_in(16)%type /= adios2_type_ldp) stop 'attribute r128 array wrong type'
+    if(attributes_in(16)%length /= 3) stop 'attribute r128 array length is not 3'
+    if(attributes_in(16)%is_value .eqv. .true.) stop 'attribute r128 array must be array'
+    call adios2_attribute_data( r128_array, attributes_in(16), ierr)
+    do i=1,3
+       if( r128_array(i) /=  data_R128(i) ) stop 'attribute r128 array data error'
+    end do
+#endif
 
     call adios2_close(bpReader, ierr)
 

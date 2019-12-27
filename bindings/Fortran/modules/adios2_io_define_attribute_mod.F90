@@ -19,6 +19,9 @@ module adios2_io_define_attribute_mod
         module procedure adios2_define_attribute_string
         module procedure adios2_define_attribute_real
         module procedure adios2_define_attribute_dp
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_define_attribute_ldp
+#endif
         module procedure adios2_define_attribute_integer1
         module procedure adios2_define_attribute_integer2
         module procedure adios2_define_attribute_integer4
@@ -28,6 +31,9 @@ module adios2_io_define_attribute_mod
         module procedure adios2_define_attribute_string_1d
         module procedure adios2_define_attribute_real_1d
         module procedure adios2_define_attribute_dp_1d
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_define_attribute_ldp_1d
+#endif
         module procedure adios2_define_attribute_integer1_1d
         module procedure adios2_define_attribute_integer2_1d
         module procedure adios2_define_attribute_integer4_1d
@@ -38,6 +44,9 @@ module adios2_io_define_attribute_mod
         module procedure adios2_define_variable_attribute_string
         module procedure adios2_define_variable_attribute_real
         module procedure adios2_define_variable_attribute_dp
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_define_variable_attribute_ldp
+#endif
         module procedure adios2_define_variable_attribute_integer1
         module procedure adios2_define_variable_attribute_integer2
         module procedure adios2_define_variable_attribute_integer4
@@ -47,6 +56,9 @@ module adios2_io_define_attribute_mod
         module procedure adios2_define_variable_attribute_string_1d
         module procedure adios2_define_variable_attribute_real_1d
         module procedure adios2_define_variable_attribute_dp_1d
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_define_variable_attribute_ldp_1d
+#endif
         module procedure adios2_define_variable_attribute_integer1_1d
         module procedure adios2_define_variable_attribute_integer2_1d
         module procedure adios2_define_variable_attribute_integer4_1d
@@ -56,6 +68,9 @@ module adios2_io_define_attribute_mod
         module procedure adios2_def_var_att_sep_string
         module procedure adios2_def_var_att_sep_real
         module procedure adios2_def_var_att_sep_dp
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_def_var_att_sep_ldp
+#endif
         module procedure adios2_def_var_att_sep_integer1
         module procedure adios2_def_var_att_sep_integer2
         module procedure adios2_def_var_att_sep_integer4
@@ -65,6 +80,9 @@ module adios2_io_define_attribute_mod
         module procedure adios2_def_var_att_sep_string_1d
         module procedure adios2_def_var_att_sep_real_1d
         module procedure adios2_def_var_att_sep_dp_1d
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_def_var_att_sep_ldp_1d
+#endif
         module procedure adios2_def_var_att_sep_integer1_1d
         module procedure adios2_def_var_att_sep_integer2_1d
         module procedure adios2_def_var_att_sep_integer4_1d
@@ -131,6 +149,27 @@ contains
             attribute%length = 1
         end if
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_define_attribute_ldp(attribute, io, name, value, ierr)
+        type(adios2_attribute), intent(out) :: attribute
+        type(adios2_io), intent(in) :: io
+        character*(*), intent(in) :: name
+        real(kind=16), intent(in):: value
+        integer, intent(out) :: ierr
+
+        call adios2_define_vattr_f2c(attribute%f2c, io%f2c, &
+                                     TRIM(ADJUSTL(name))//char(0), &
+                                     adios2_type_ldp, value, char(0), char(0), ierr)
+        if (ierr == 0) then
+            attribute%valid = .true.
+            attribute%is_value = .true.
+            attribute%name = name
+            attribute%type = adios2_type_ldp
+            attribute%length = 1
+        end if
+    end subroutine
+#endif
 
     subroutine adios2_define_attribute_integer1(attribute, io, name, value, ierr)
         type(adios2_attribute), intent(out) :: attribute
@@ -283,6 +322,29 @@ contains
             attribute%length = length
         end if
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_define_attribute_ldp_1d(attribute, io, name, data, &
+                                             length, ierr)
+        type(adios2_attribute), intent(out) :: attribute
+        type(adios2_io), intent(in) :: io
+        character*(*), intent(in) :: name
+        real(kind=16), dimension(:), intent(in):: data
+        integer, intent(in) :: length
+        integer, intent(out) :: ierr
+
+        call adios2_define_vattr_array_f2c(attribute%f2c, io%f2c, &
+                                           TRIM(ADJUSTL(name))//char(0), &
+                                           adios2_type_ldp, data, length, char(0), char(0), ierr)
+        if (ierr == 0) then
+            attribute%valid = .true.
+            attribute%is_value = .false.
+            attribute%name = name
+            attribute%type = adios2_type_ldp
+            attribute%length = length
+        end if
+    end subroutine
+#endif
 
     subroutine adios2_define_attribute_integer1_1d(attribute, io, name, &
                                                    data, length, ierr)
@@ -451,6 +513,34 @@ contains
             attribute%length = 1
         end if
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_define_variable_attribute_ldp(attribute, io, name, &
+                                                   value, variable_name, &
+                                                   separator, ierr)
+        type(adios2_attribute), intent(out) :: attribute
+        type(adios2_io), intent(in) :: io
+        character*(*), intent(in) :: name
+        real(kind=16), intent(in):: value
+        character*(*), intent(in):: variable_name
+        character*(*), intent(in):: separator
+        integer, intent(out) :: ierr
+
+        call adios2_define_vattr_f2c(attribute%f2c, io%f2c, &
+                                     TRIM(ADJUSTL(name))//char(0), &
+                                     adios2_type_ldp, value, &
+                                     TRIM(ADJUSTL(variable_name))//char(0), &
+                                     TRIM(ADJUSTL(separator))//char(0), &
+                                     ierr)
+        if (ierr == 0) then
+            attribute%valid = .true.
+            attribute%is_value = .true.
+            attribute%name = TRIM(variable_name)//TRIM(separator)//TRIM(name)
+            attribute%type = adios2_type_ldp
+            attribute%length = 1
+        end if
+    end subroutine
+#endif
 
     subroutine adios2_define_variable_attribute_integer1(attribute, io, name, &
                                                          value, variable_name, &
@@ -654,6 +744,37 @@ contains
             attribute%length = length
         end if
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_define_variable_attribute_ldp_1d(attribute, io, &
+                                                      name, data, &
+                                                      length, &
+                                                      variable_name, &
+                                                      separator, ierr)
+        type(adios2_attribute), intent(out) :: attribute
+        type(adios2_io), intent(in) :: io
+        character*(*), intent(in) :: name
+        real(kind=16), dimension(:), intent(in):: data
+        integer, intent(in) :: length
+        character*(*), intent(in):: variable_name
+        character*(*), intent(in):: separator
+        integer, intent(out) :: ierr
+
+        call adios2_define_vattr_array_f2c(attribute%f2c, io%f2c, &
+                                           TRIM(ADJUSTL(name))//char(0), &
+                                           adios2_type_ldp, data, length, &
+                                           TRIM(ADJUSTL(variable_name))//char(0), &
+                                           TRIM(ADJUSTL(separator))//char(0), &
+                                           ierr)
+        if (ierr == 0) then
+            attribute%valid = .true.
+            attribute%is_value = .false.
+            attribute%name = TRIM(variable_name)//TRIM(separator)//TRIM(name)
+            attribute%type = adios2_type_ldp
+            attribute%length = length
+        end if
+    end subroutine
+#endif
 
     subroutine adios2_define_variable_attribute_integer1_1d(attribute, io, &
                                                             name, data, &
@@ -860,6 +981,36 @@ contains
             attribute%length = 1
         end if
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_def_var_att_sep_ldp(attribute, io, name, &
+                                         value, variable_name, &
+                                         ierr)
+        type(adios2_attribute), intent(out) :: attribute
+        type(adios2_io), intent(in) :: io
+        character*(*), intent(in) :: name
+        real(kind=16), intent(in):: value
+        character*(*), intent(in):: variable_name
+        integer, intent(out) :: ierr
+        !local
+        character(len=1):: separator
+        separator = '/'
+
+        call adios2_define_vattr_f2c(attribute%f2c, io%f2c, &
+                                     TRIM(ADJUSTL(name))//char(0), &
+                                     adios2_type_ldp, value, &
+                                     TRIM(ADJUSTL(variable_name))//char(0), &
+                                     TRIM(ADJUSTL(separator))//char(0), &
+                                     ierr)
+        if (ierr == 0) then
+            attribute%valid = .true.
+            attribute%is_value = .true.
+            attribute%name = TRIM(variable_name)//TRIM(separator)//TRIM(name)
+            attribute%type = adios2_type_ldp
+            attribute%length = 1
+        end if
+    end subroutine
+#endif
 
     subroutine adios2_def_var_att_sep_integer1(attribute, io, name, &
                                                value, variable_name, &
@@ -1076,6 +1227,39 @@ contains
             attribute%length = length
         end if
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_def_var_att_sep_ldp_1d(attribute, io, &
+                                            name, data, &
+                                            length, &
+                                            variable_name, &
+                                            ierr)
+        type(adios2_attribute), intent(out) :: attribute
+        type(adios2_io), intent(in) :: io
+        character*(*), intent(in) :: name
+        real(kind=16), dimension(:), intent(in):: data
+        integer, intent(in) :: length
+        character*(*), intent(in):: variable_name
+        integer, intent(out) :: ierr
+        !local
+        character(len=1):: separator
+        separator = '/'
+
+        call adios2_define_vattr_array_f2c(attribute%f2c, io%f2c, &
+                                           TRIM(ADJUSTL(name))//char(0), &
+                                           adios2_type_ldp, data, length, &
+                                           TRIM(ADJUSTL(variable_name))//char(0), &
+                                           TRIM(ADJUSTL(separator))//char(0), &
+                                           ierr)
+        if (ierr == 0) then
+            attribute%valid = .true.
+            attribute%is_value = .false.
+            attribute%name = TRIM(variable_name)//TRIM(separator)//TRIM(name)
+            attribute%type = adios2_type_ldp
+            attribute%length = length
+        end if
+    end subroutine
+#endif
 
     subroutine adios2_def_var_att_sep_integer1_1d(attribute, io, &
                                                   name, data, &
