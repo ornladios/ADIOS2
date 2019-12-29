@@ -44,12 +44,22 @@ else
   CTEST=ctest
 fi
 
+# macOS tmpdir issues
+# See https://github.com/open-mpi/ompi/issues/6518
+if [[ "{AGENT_OS}" =~ "Darwin" ]]
+then
+  export TMPDIR=/tmp
+fi
+
 # OpenMPI specific setup
 if [[ "${SYSTEM_JOBNAME}" =~ openmpi ]]
 then
   # Workaround to quiet some warnings from OpenMPI
   export OMPI_MCA_btl_base_warn_component_unused=0
   export OMPI_MCA_btl_vader_single_copy_mechanism=none
+
+  # https://github.com/open-mpi/ompi/issues/6518
+  export OMPI_MCA_btl=self,tcp
 
   # Enable overscription in OpenMPI
   export OMPI_MCA_rmaps_base_oversubscribe=1
