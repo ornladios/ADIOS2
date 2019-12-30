@@ -76,7 +76,6 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 
     /* SZ parameters */
     int use_configfile = 0;
-    int use_zchecker = 0;
     std::string sz_configfile = "sz.config";
 
     Params::const_iterator it;
@@ -235,7 +234,9 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
         else if ((it->first == "zchecker") || (it->first == "zcheck") ||
                  (it->first == "z-checker") || (it->first == "z-check"))
         {
-            use_zchecker = (it->second == "") ? 1 : std::stof(it->second);
+            // TODO:
+            // Z-checker is not currently implemented
+            // use_zchecker = (it->second == "") ? 1 : std::stof(it->second);
         }
         else
         {
