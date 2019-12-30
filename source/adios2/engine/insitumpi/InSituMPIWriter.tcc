@@ -135,7 +135,8 @@ void InSituMPIWriter::AsyncSendVariable(
                     const size_t blockStart = seek.first;
                     const size_t blockSize = seek.second - seek.first;
 
-                    MPI_Isend(blockInfo.Data + blockStart, blockSize, MPI_CHAR,
+                    MPI_Isend(blockInfo.Data + blockStart,
+                              static_cast<int>(blockSize), MPI_CHAR,
                               m_RankAllPeers[readerPair.first],
                               insitumpi::MpiTags::Data, m_CommWorld,
                               &m_MPIRequests.back());

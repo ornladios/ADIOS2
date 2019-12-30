@@ -706,8 +706,8 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         }
                         std::cout << std::endl;
                     }
-                    auto cmd =
-                        std::make_shared<CommandRead>(streamName, groupName, d);
+                    auto cmd = std::make_shared<CommandRead>(
+                        streamName, groupName, static_cast<float>(d));
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                     cfg.condMap[streamName] = adios2::StepStatus::OK;

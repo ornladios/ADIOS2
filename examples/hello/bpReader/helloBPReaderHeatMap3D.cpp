@@ -52,14 +52,14 @@ int main(int argc, char *argv[])
     std::vector<unsigned int> temperatures(Nx * Ny * Nz);
     for (unsigned int i = 0; i < count[0]; ++i)
     {
-        const unsigned int iGlobal = start[0] + i;
+        const unsigned int iGlobal = static_cast<unsigned int>(start[0] + i);
 
         for (unsigned int j = 0; j < count[1]; ++j)
         {
             for (unsigned int k = 0; k < count[2]; ++k)
             {
-                const unsigned int value =
-                    iGlobal * shape[1] * shape[2] + j * shape[2] + k;
+                const unsigned int value = static_cast<unsigned int>(
+                    iGlobal * shape[1] * shape[2] + j * shape[2] + k);
 
                 const std::size_t linearIndex =
                     i * count[1] * count[2] + j * count[2] + k;

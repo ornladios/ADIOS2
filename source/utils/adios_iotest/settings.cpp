@@ -208,7 +208,7 @@ int Settings::processArguments(int argc, char *argv[], MPI_Comm worldComm)
 
         int wrank;
         MPI_Comm_rank(worldComm, &wrank);
-        MPI_Comm_split(worldComm, appId, wrank, &appComm);
+        MPI_Comm_split(worldComm, static_cast<int>(appId), wrank, &appComm);
 
         int rank, nproc;
         MPI_Comm_rank(appComm, &rank);

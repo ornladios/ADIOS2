@@ -18,7 +18,7 @@
 #include <string>
 
 template <class T>
-void printData(double *xy, T *size, T *offset, int rank, int steps)
+void printData(double *xy, T *size, T *offset, int rank, size_t steps)
 {
     std::ofstream myfile;
     std::string filename = "data." + std::to_string(rank);

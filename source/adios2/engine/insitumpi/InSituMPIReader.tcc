@@ -130,7 +130,7 @@ void InSituMPIReader::AsyncRecvVariable(
                 const auto &seek = sfi.Seeks;
                 const size_t blockSize = seek.second - seek.first;
                 m_MPIRequests.emplace_back();
-                const int index = m_MPIRequests.size() - 1;
+                const int index = static_cast<int>(m_MPIRequests.size()) - 1;
                 size_t elementOffset, dummy;
 
                 // Do we read a contiguous piece from the source?
@@ -154,7 +154,8 @@ void InSituMPIReader::AsyncRecvVariable(
                     char *ptr = reinterpret_cast<char *>(ptrT);
                     m_OngoingReceives.emplace_back(sfi, &variable.m_Name, ptr);
                     MPI_Irecv(m_OngoingReceives[index].inPlaceDataArray,
-                              blockSize, MPI_CHAR, m_RankAllPeers[writerRank],
+                              static_cast<int>(blockSize), MPI_CHAR,
+                              m_RankAllPeers[writerRank],
                               insitumpi::MpiTags::Data, m_CommWorld,
                               m_MPIRequests.data() + index);
                     if (m_Verbosity == 5)
@@ -174,9 +175,9 @@ void InSituMPIReader::AsyncRecvVariable(
                         blockSize);
                     MPI_Irecv(
                         m_OngoingReceives[index].temporaryDataArray.data(),
-                        blockSize, MPI_CHAR, m_RankAllPeers[writerRank],
-                        insitumpi::MpiTags::Data, m_CommWorld,
-                        m_MPIRequests.data() + index);
+                        static_cast<int>(blockSize), MPI_CHAR,
+                        m_RankAllPeers[writerRank], insitumpi::MpiTags::Data,
+                        m_CommWorld, m_MPIRequests.data() + index);
                     if (m_Verbosity == 5)
                     {
                         std::cout << "InSituMPI Reader " << m_ReaderRank

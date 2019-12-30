@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     {
         for (size_t j = 0; j < ny; ++j)
         {
-            data[i * ny + j] = rank * nx * ny + i * ny + j;
+            data[i * ny + j] = static_cast<float>(rank * nx * ny + i * ny + j);
         }
     }
 

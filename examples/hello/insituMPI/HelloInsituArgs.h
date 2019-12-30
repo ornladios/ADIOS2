@@ -46,6 +46,10 @@ public:
     HelloInsituArgs(bool isWriter, int argc, char *argv[], int rank, int nproc);
 
     void DecomposeArray(int NX, int NY);
+    void DecomposeArray(size_t NX, size_t NY)
+    {
+        DecomposeArray(static_cast<int>(NX), static_cast<int>(NY));
+    }
 };
 
 #endif /* HELLOINSITUARGS_H_s */

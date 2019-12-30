@@ -145,8 +145,8 @@ int main(int argc, char *argv[])
                 // nor add new variables
                 reader.LockReaderSelections();
 
-                unsigned int gndx = vTin.Shape()[0];
-                unsigned int gndy = vTin.Shape()[1];
+                unsigned int gndx = static_cast<unsigned int>(vTin.Shape()[0]);
+                unsigned int gndy = static_cast<unsigned int>(vTin.Shape()[1]);
 
                 if (rank == 0)
                 {

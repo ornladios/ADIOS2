@@ -167,7 +167,7 @@ void InSituMPIWriter::PerformPuts()
 
             // store length long enough to survive Isend() completion
             // so don't move this into the next if branch
-            unsigned long mdLen = m_BP3Serializer.m_Metadata.m_Position;
+            size_t mdLen = m_BP3Serializer.m_Metadata.m_Position;
 
             // Send the metadata to all reader peers, asynchronously
             // we don't care about keeping these requests because
@@ -201,9 +201,9 @@ void InSituMPIWriter::PerformPuts()
                 MPI_Isend(&mdLen, 1, MPI_UNSIGNED_LONG, peerRank,
                           insitumpi::MpiTags::MetadataLength, m_CommWorld,
                           &request);
-                MPI_Isend(m_BP3Serializer.m_Metadata.m_Buffer.data(), mdLen,
-                          MPI_CHAR, peerRank, insitumpi::MpiTags::Metadata,
-                          m_CommWorld, &request);
+                MPI_Isend(m_BP3Serializer.m_Metadata.m_Buffer.data(),
+                          static_cast<int>(mdLen), MPI_CHAR, peerRank,
+                          insitumpi::MpiTags::Metadata, m_CommWorld, &request);
             }
         }
 
@@ -443,7 +443,8 @@ void InSituMPIWriter::ReceiveReadSchedule(
     // Writer root receives nReaderPerWriter from reader root
     if (m_WriterRank == 0)
     {
-        MPI_Recv(nReaderPerWriter.data(), nReaderPerWriter.size(), MPI_INT,
+        MPI_Recv(nReaderPerWriter.data(),
+                 static_cast<int>(nReaderPerWriter.size()), MPI_INT,
                  m_RankDirectPeers[0], insitumpi::MpiTags::NumReaderPerWriter,
                  m_CommWorld, MPI_STATUS_IGNORE);
     }
