@@ -56,9 +56,17 @@ add_executable(TestCommonServer TestCommonServer.cpp)
 add_executable(TestCommonClient TestCommonClient.cpp)
 if(ADIOS2_HAVE_Fortran)
   add_library(TestCommonData_f OBJECT TestData_mod.F90)
-
-  add_executable(TestCommonWrite_f TestCommonWriteF.F90 $<TARGET_OBJECTS:TestCommonData_f>)
-  add_executable(TestCommonRead_f TestCommonReadF.F90 $<TARGET_OBJECTS:TestCommonData_f>)
+  add_executable(TestCommonWrite_f
+    TestCommonWriteF.F90
+    $<TARGET_OBJECTS:TestCommonData_f>
+  )
+  add_executable(TestCommonRead_f
+    TestCommonReadF.F90
+    $<TARGET_OBJECTS:TestCommonData_f>
+  )
+  set_target_properties(TestCommonWrite_f TestCommonRead_f PROPERTIES
+    LINKER_LANGUAGE Fortran
+  )
   target_link_libraries(TestCommonWrite_f adios2_f)
   target_link_libraries(TestCommonRead_f adios2_f)
 endif()
