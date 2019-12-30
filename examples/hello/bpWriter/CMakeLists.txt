@@ -23,7 +23,9 @@ endif()
 if(ADIOS2_HAVE_Fortran)
   add_executable(hello_bpWriter_f helloBPWriter.F90)
   target_link_libraries(hello_bpWriter_f adios2_f)
-  set_property(TARGET hello_bpWriter_f PROPERTY LINKER_LANGUAGE Fortran)
+  set_target_properties(hello_bpWriter_f PROPERTIES
+    LINKER_LANGUAGE Fortran
+  )
 endif()
 
 if(ADIOS2_HAVE_MPI)

@@ -25,9 +25,8 @@ if(ADIOS2_HAVE_Fortran)
   target_compile_definitions(with_Fortran PRIVATE WITH_ADIOS2)
   target_link_libraries(with_Fortran adios2::adios2_f)
 
-  set_target_properties(without_Fortran with_Fortran
-    PROPERTIES
-      LINKER_LANGUAGE Fortran
+  set_target_properties(without_Fortran with_Fortran PROPERTIES
+    LINKER_LANGUAGE Fortran
   )
 endif()
 

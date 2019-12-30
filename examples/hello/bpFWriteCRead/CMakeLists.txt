@@ -12,11 +12,11 @@ if(ADIOS2_HAVE_MPI)
   
   if(ADIOS2_HAVE_Fortran)
     add_executable(FWriter FWriter.f90)
-    target_link_libraries(FWriter adios2_f MPI::MPI_Fortran)
-    set_property(TARGET FWriter PROPERTY LINKER_LANGUAGE Fortran)
-    
     add_executable(FReader FReader.f90)
+    target_link_libraries(FWriter adios2_f MPI::MPI_Fortran)
     target_link_libraries(FReader adios2_f MPI::MPI_Fortran)
-    set_property(TARGET FReader PROPERTY LINKER_LANGUAGE Fortran)
+    set_target_properties(FWriter FReader PROPERTIES
+      LINKER_LANGUAGE Fortran
+    )
   endif()
 endif()
