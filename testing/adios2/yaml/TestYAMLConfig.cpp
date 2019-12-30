@@ -37,7 +37,7 @@ TEST_F(YAMLConfigTest, TwoIOs)
         adios2::IO io = adios.DeclareIO("Test IO 1");
         const adios2::Params params = io.Parameters();
         ASSERT_EQ(params.size(), 5);
-        EXPECT_THROW(params.at("DoesNotExist"), std::out_of_range);
+        EXPECT_THROW((void)params.at("DoesNotExist"), std::out_of_range);
         EXPECT_EQ(params.at("Threads"), "1");
         EXPECT_EQ(params.at("ProfileUnits"), "Microseconds");
         EXPECT_EQ(params.at("MaxBufferSize"), "20Mb");
