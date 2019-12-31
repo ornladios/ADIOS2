@@ -153,7 +153,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         /* Have timeout: do a collective wait for a step within timeout.
            Make sure every writer comes to the same conclusion */
         int haveStepMsg = 0;
-        uint64_t nanoTO = timeoutSeconds * 1000000000.0;
+        uint64_t nanoTO = static_cast<uint64_t>(timeoutSeconds * 1e9);
         if (nanoTO < 1)
         {
             nanoTO = 1; // avoid 0
@@ -377,7 +377,8 @@ int InSituMPIReader::Statistics(uint64_t bytesInPlace, uint64_t bytesCopied)
 {
     if (bytesInPlace == 0)
         return 0;
-    return ((bytesInPlace + bytesCopied) * 100) / bytesInPlace;
+    return static_cast<int>(((bytesInPlace + bytesCopied) * 100) /
+                            bytesInPlace);
 }
 
 void InSituMPIReader::EndStep()
@@ -412,8 +413,8 @@ void InSituMPIReader::SendReadSchedule(
     TAU_SCOPED_TIMER("InSituMPIReader::SendReadSchedule");
     // Serialized schedules, one per-writer
     std::map<int, std::vector<char>> serializedSchedules =
-        insitumpi::SerializeLocalReadSchedule(m_RankAllPeers.size(),
-                                              variablesSubFileInfo);
+        insitumpi::SerializeLocalReadSchedule(
+            static_cast<int>(m_RankAllPeers.size()), variablesSubFileInfo);
 
     // Writer ID -> number of peer readers
     std::vector<int> nReaderPerWriter(m_RankAllPeers.size());
@@ -441,7 +442,8 @@ void InSituMPIReader::SendReadSchedule(
     // Reader root sends nReaderPerWriter to writer root
     if (m_ReaderRootRank == m_ReaderRank)
     {
-        MPI_Send(nReaderPerWriter.data(), nReaderPerWriter.size(), MPI_INT,
+        MPI_Send(nReaderPerWriter.data(),
+                 static_cast<int>(nReaderPerWriter.size()), MPI_INT,
                  m_WriteRootGlobalRank, insitumpi::MpiTags::NumReaderPerWriter,
                  m_CommWorld);
     }
@@ -456,7 +458,7 @@ void InSituMPIReader::SendReadSchedule(
     {
         const auto peerID = schedulePair.first;
         const auto &schedule = schedulePair.second;
-        rsLengths[i] = schedule.size();
+        rsLengths[i] = static_cast<int>(schedule.size());
 
         if (m_Verbosity == 5)
         {
@@ -514,7 +516,7 @@ void InSituMPIReader::AsyncRecvAllVariables()
 void InSituMPIReader::ProcessReceives()
 {
     TAU_SCOPED_TIMER("InSituMPIReader::ProcessReceives");
-    const int nRequests = m_OngoingReceives.size();
+    const int nRequests = static_cast<int>(m_OngoingReceives.size());
 
     TAU_START("InSituMPIReader::CompleteRequests");
     insitumpi::CompleteRequests(m_MPIRequests, false, m_ReaderRank);

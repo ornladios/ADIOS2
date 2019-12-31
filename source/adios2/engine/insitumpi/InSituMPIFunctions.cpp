@@ -122,7 +122,7 @@ std::vector<int> FindPeers(const MPI_Comm comm, const std::string &name,
 std::vector<int> AssignPeers(const int rank, const int nproc,
                              const std::vector<int> &allPeers)
 {
-    int nAllPeers = allPeers.size();
+    int nAllPeers = static_cast<int>(allPeers.size());
 
     std::vector<int> directPeers;
 
@@ -254,8 +254,8 @@ std::vector<MPI_Status> CompleteRequests(std::vector<MPI_Request> &requests,
 {
     std::vector<MPI_Status> statuses(requests.size());
 
-    const auto ierr =
-        MPI_Waitall(requests.size(), requests.data(), statuses.data());
+    const auto ierr = MPI_Waitall(static_cast<int>(requests.size()),
+                                  requests.data(), statuses.data());
 
     if (ierr == MPI_ERR_IN_STATUS)
     {

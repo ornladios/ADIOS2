@@ -244,7 +244,7 @@ public:
             reader.Get(vMyArray, myArray.data());
             reader.Get(vMyScalar, myIncomingScalar);
             reader.EndStep();
-            float expectedScalarValue = 1.5 * (step + 1);
+            float expectedScalarValue = 1.5f * (step + 1);
             EXPECT_EQ(myIncomingScalar, expectedScalarValue)
                 << "Error in read, did not receive the expected value:"
                 << " rank " << rank << ", step " << step;
@@ -261,8 +261,8 @@ public:
         std::cout << "test " << p.npx_w << "x" << p.npy_w << " writers "
                   << p.npx_r << "x" << p.npy_r << " readers " << std::endl;
 
-        int nwriters = p.npx_w * p.npy_w;
-        int nreaders = p.npx_r * p.npy_r;
+        size_t nwriters = p.npx_w * p.npy_w;
+        size_t nreaders = p.npx_r * p.npy_r;
         if (nwriters + nreaders > numprocs)
         {
             if (!wrank)

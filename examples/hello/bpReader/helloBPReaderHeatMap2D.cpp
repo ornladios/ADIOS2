@@ -47,11 +47,12 @@ int main(int argc, char *argv[])
     std::vector<unsigned int> temperatures(Nx * Ny);
     for (unsigned int i = 0; i < Nx; ++i)
     {
-        const unsigned int iGlobal = start[0] + i;
+        const unsigned int iGlobal = static_cast<unsigned int>(start[0] + i);
 
         for (unsigned int j = 0; j < Ny; ++j)
         {
-            const unsigned int value = iGlobal * shape[1] + j;
+            const unsigned int value =
+                static_cast<unsigned int>(iGlobal * shape[1] + j);
             temperatures[i * Ny + j] = value;
         }
     }

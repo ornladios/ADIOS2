@@ -65,7 +65,7 @@ adios2::Params ParseEngineParams(std::string Input)
 static unsigned int ParseUintParam(const std::string &optionName, char *arg)
 {
     char *end;
-    int retval = std::strtoll(arg, &end, 10);
+    long retval = std::strtol(arg, &end, 10);
     if (end[0] || errno == ERANGE)
     {
         throw std::invalid_argument("Invalid value given for " + optionName +
@@ -76,7 +76,7 @@ static unsigned int ParseUintParam(const std::string &optionName, char *arg)
         throw std::invalid_argument("Negative value given for " + optionName +
                                     ": " + std::string(arg));
     }
-    return (unsigned int)retval;
+    return static_cast<unsigned int>(retval);
 }
 
 class Common : public ::testing::Test
@@ -163,7 +163,7 @@ TEST_F(Common, NewAttributeEveryStep)
         for (size_t step = 0; step < steps; ++step)
         {
             writer.BeginStep(adios2::StepMode::Append);
-            const double d = step + 1;
+            const double d = static_cast<double>(step + 1);
             if (rank == 0)
                 writer.Put<double>(var, &d);
             const std::string aname = "a" + std::to_string(step);
@@ -253,7 +253,7 @@ TEST_F(Common, NewAttributeEveryStep)
             reader.Get(var, d);
             reader.EndStep();
 
-            double expectedScalarValue = step + 1;
+            double expectedScalarValue = static_cast<double>(step + 1);
 
             EXPECT_EQ(d[0], expectedScalarValue)
                 << "Error in read, did not receive the expected values for "

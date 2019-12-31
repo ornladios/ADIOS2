@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         for (unsigned int t = 0; t < 100; ++t)
         {
             /** values to time step */
-            myFloats.assign(myFloats.size(), t);
+            myFloats.assign(myFloats.size(), static_cast<float>(t));
             /** Write variable for buffering */
             bpWriter.Put<float>(bpFloats, myFloats.data());
         }

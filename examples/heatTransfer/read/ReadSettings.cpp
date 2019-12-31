@@ -19,7 +19,7 @@
 static unsigned int convertToUint(std::string varName, char *arg)
 {
     char *end;
-    int retval = std::strtoll(arg, &end, 10);
+    long retval = std::strtol(arg, &end, 10);
     if (end[0] || errno == ERANGE)
     {
         throw std::invalid_argument("Invalid value given for " + varName +
@@ -30,7 +30,7 @@ static unsigned int convertToUint(std::string varName, char *arg)
         throw std::invalid_argument("Negative value given for " + varName +
                                     ": " + std::string(arg));
     }
-    return (unsigned int)retval;
+    return static_cast<unsigned int>(retval);
 }
 
 ReadSettings::ReadSettings(int argc, char *argv[], int rank, int nproc)

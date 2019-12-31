@@ -26,7 +26,7 @@ void decompRowMajor(const size_t ndim, const size_t rank, const size_t *decomp,
     // pos[k] = rank / prod(decomp[i], i=k+1..n-1) % decomp[k]
 
     size_t prod = 1;
-    for (int k = ndim - 1; k >= 0; --k)
+    for (int k = static_cast<int>(ndim) - 1; k >= 0; --k)
     {
         pos[k] = rank / prod % decomp[k];
         prod *= decomp[k];

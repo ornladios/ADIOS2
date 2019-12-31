@@ -94,7 +94,8 @@ SerializeLocalReadSchedule(const int nWriters,
         // <writer, <steps, <SubFileInfo>>>
         for (const auto &subFileIndexPair : variableNamePair.second)
         {
-            const size_t subFileIndex = subFileIndexPair.first; // writer
+            const int subFileIndex =
+                static_cast<int>(subFileIndexPair.first); // writer
             // <steps, <SubFileInfo>>  but there is only one step
             for (const auto &stepPair : subFileIndexPair.second)
             {
