@@ -110,6 +110,7 @@ public:
      * @param debugMode true: extra exception checks
      */
     HDF5Common(const bool debugMode);
+    ~HDF5Common();
 
     static const std::string ATTRNAME_NUM_STEPS;
     static const std::string ATTRNAME_GIVEN_ADIOSNAME;
@@ -176,6 +177,7 @@ public:
     hid_t m_FileId = -1;
     hid_t m_GroupId = -1;
 
+    hid_t m_DefH5TypeComplexLongDouble;
     hid_t m_DefH5TypeComplexDouble;
     hid_t m_DefH5TypeComplexFloat;
     hid_t m_DefH5TypeBlockStat;

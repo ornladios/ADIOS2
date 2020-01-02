@@ -325,6 +325,11 @@ hid_t HDF5Common::GetHDF5Type<std::complex<double>>()
 {
     return m_DefH5TypeComplexDouble;
 }
+template <>
+hid_t HDF5Common::GetHDF5Type<std::complex<long double>>()
+{
+    return m_DefH5TypeComplexLongDouble;
+}
 
 } // end namespace interop
 } // end namespace adios
