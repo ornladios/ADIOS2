@@ -75,9 +75,7 @@ HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
 
 HDF5Common::~HDF5Common()
 {
-    H5Tclose(m_DefH5TypeComplexLongDouble);
-    H5Tclose(m_DefH5TypeComplexDouble);
-    H5Tclose(m_DefH5TypeComplexFloat);
+    Close();
 }
 
 void HDF5Common::ParseParameters(core::IO &io)
@@ -600,6 +598,12 @@ void HDF5Common::Close()
     {
         H5Gclose(m_GroupId);
     }
+    
+    // close defined types
+    // although H5Fclose will clean them anyways.
+    H5Tclose(m_DefH5TypeComplexLongDouble);
+    H5Tclose(m_DefH5TypeComplexDouble);
+    H5Tclose(m_DefH5TypeComplexFloat);
 
     H5Pclose(m_PropertyTxfID);
     H5Fclose(m_FileId);
