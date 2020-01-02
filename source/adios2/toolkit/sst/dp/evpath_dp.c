@@ -64,6 +64,7 @@ typedef struct _Evpath_RS_Stream
 
     /* queued timestep info */
     struct _RSTimestepEntry *QueuedTimesteps;
+    struct _EvpathReaderContactInfo *MyContactInfo;
 } * Evpath_RS_Stream;
 
 typedef struct _Evpath_WSR_Stream
@@ -290,6 +291,7 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
 
     Contact->ContactString = EvpathContactString;
     Contact->RS_Stream = Stream;
+    Stream->MyContactInfo = Contact;
 
     *ReaderContactInfoPtr = Contact;
 
@@ -305,6 +307,8 @@ static void EvpathDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
         free(RS_Stream->WriterContactInfo[i].ContactString);
     }
     free(RS_Stream->WriterContactInfo);
+    free(RS_Stream->MyContactInfo->ContactString);
+    free(RS_Stream->MyContactInfo);
     free(RS_Stream);
 }
 
