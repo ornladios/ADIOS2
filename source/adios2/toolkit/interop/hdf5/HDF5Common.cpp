@@ -73,10 +73,7 @@ HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
     m_PropertyTxfID = H5Pcreate(H5P_DATASET_XFER);
 }
 
-HDF5Common::~HDF5Common()
-{
-    Close();
-}
+HDF5Common::~HDF5Common() { Close(); }
 
 void HDF5Common::ParseParameters(core::IO &io)
 {
@@ -598,7 +595,7 @@ void HDF5Common::Close()
     {
         H5Gclose(m_GroupId);
     }
-    
+
     // close defined types
     // although H5Fclose will clean them anyways.
     H5Tclose(m_DefH5TypeComplexLongDouble);
