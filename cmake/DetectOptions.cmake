@@ -204,8 +204,7 @@ if(PythonFull_FOUND)
 endif()
 
 # Sst
-if(ADIOS2_USE_SST AND NOT MSVC)
-  set(ADIOS2_HAVE_SST TRUE)
+if(ADIOS2_USE_SST)
   find_package(LIBFABRIC 1.6)
   if(LIBFABRIC_FOUND)
     set(ADIOS2_SST_HAVE_LIBFABRIC TRUE)
@@ -219,6 +218,7 @@ if(ADIOS2_USE_SST AND NOT MSVC)
     find_package(Boost OPTIONAL_COMPONENTS thread log filesystem system)
     set(ADIOS2_SST_HAVE_NVSTREAM TRUE)
   endif()
+  set(ADIOS2_HAVE_SST TRUE)
 endif()
 
 #SysV IPC
