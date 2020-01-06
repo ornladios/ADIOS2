@@ -31,9 +31,15 @@ jobs:
     docker:
       - image: ornladios/adios2:fedora-sanitizers
 
+  "fedora-asan":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:fedora-sanitizers
+
 workflows:
   version: 2
   sanitizers:
     jobs:
       - "fedora-ubsan"
       - "fedora-openmpi-ubsan"
+      - "fedora-asan"
