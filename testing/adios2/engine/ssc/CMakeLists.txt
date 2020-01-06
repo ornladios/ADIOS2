@@ -9,6 +9,9 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(Base TRUE Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBase "" TRUE)
 
+  gtest_add_tests_helper(Unbalanced TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscUnbalanced "" TRUE)
+
   gtest_add_tests_helper(NoAttributes TRUE Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscNoAttributes "" TRUE)
 
