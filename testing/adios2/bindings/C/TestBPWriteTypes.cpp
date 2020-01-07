@@ -344,6 +344,10 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
 
         adios2_close(engineH);
 
+        for (auto i = 0; i < 4; ++i)
+        {
+            delete[] dataArray[i];
+        }
         delete[] dataArray;
     }
 }
