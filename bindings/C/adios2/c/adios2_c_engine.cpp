@@ -607,6 +607,12 @@ adios2_error adios2_close_by_index(adios2_engine *engine,
         }
 
         engineCpp->Close(transport_index);
+
+        // erase Engine object from IO
+        adios2::core::IO &io = engineCpp->GetIO();
+        const std::string name = engineCpp->m_Name;
+        io.RemoveEngine(name);
+
         return adios2_error_none;
     }
     catch (...)
