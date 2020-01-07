@@ -1095,6 +1095,8 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
                 }
                 tmp = tmp->Next;
             }
+            free(WSR_Stream->ReaderRequests);
+            WSR_Stream->ReaderRequests = NULL;
         }
     }
 }
