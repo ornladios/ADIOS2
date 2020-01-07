@@ -779,6 +779,8 @@ Engine &IO::GetEngine(const std::string &name)
     return *itEngine->second.get();
 }
 
+void IO::RemoveEngine(const std::string &name) { m_Engines.erase(name); }
+
 void IO::FlushAll()
 {
     TAU_SCOPED_TIMER("IO::FlushAll");

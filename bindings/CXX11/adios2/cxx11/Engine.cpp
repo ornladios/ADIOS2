@@ -140,6 +140,12 @@ void Engine::Close(const int transportIndex)
         return;
     }
     m_Engine->Close(transportIndex);
+
+    // erase Engine object from IO
+    core::IO &io = m_Engine->GetIO();
+    const std::string name = m_Engine->m_Name;
+    io.RemoveEngine(name);
+    m_Engine = nullptr;
 }
 
 size_t Engine::Steps() const

@@ -415,6 +415,14 @@ public:
     Engine &GetEngine(const std::string &name);
 
     /**
+     * Called from bindings Close function, not exposed in APIs.
+     * Thin wrapper around map erase. Expected to call destructor on Engine in
+     * map value.
+     * @param name Engine name to be erased, must be created with Open
+     */
+    void RemoveEngine(const std::string &name);
+
+    /**
      * Flushes all engines created with the current IO object using Open.
      * If no engine is created it does nothing.
      * @exception std::runtime_error if any engine Flush fails
