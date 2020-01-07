@@ -22,10 +22,10 @@ test: adios_fortran_test adios_fortran_test_2
 	$(mpiexec) ./adios_fortran_test_2
 
 adios_fortran_test: main.o
-	$(FC) -o adios_fortran_test main.o $(ADIOS_F_LD_FLAGS)
+	$(FC) $(FFLAGS) -o adios_fortran_test main.o $(ADIOS_F_LD_FLAGS)
 
 main.o: $(main_f90)
-	$(FC) -o main.o -c $(main_f90) $(ADIOS_F_FLAGS)
+	$(FC) $(FFLAGS) -o main.o -c $(main_f90) $(ADIOS_F_FLAGS)
 
 adios_fortran_test_2: $(main_f90)
-	$(FC) -o adios_fortran_test_2 $(main_f90) $(ADIOS_F_ALL_FLAGS)
+	$(FC) $(FFLAGS) -o adios_fortran_test_2 $(main_f90) $(ADIOS_F_ALL_FLAGS)
