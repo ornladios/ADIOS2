@@ -1559,10 +1559,10 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
      */
     MBase->BitField = NULL;
     FMfree_var_rec_elements(Info->MetaFormat, Stream->M);
-    MBase->BitField = tmp;
     FMfree_var_rec_elements(Info->DataFormat, Stream->D);
     memset(Stream->M, 0, Stream->MetadataSize);
     memset(Stream->D, 0, Stream->DataSize);
+    MBase->BitField = tmp;
 
     // Call SstInternalProvideStep with Metadata block, Data block and (any new)
     // formatID and formatBody
