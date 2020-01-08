@@ -1321,7 +1321,8 @@ static int *reversePeerArray(int MySize, int MyRank, int PeerSize,
         {
             if (their_peers[j] == MyRank)
             {
-                ReversePeers = malloc((PeerCount + 2) * sizeof(int));
+                ReversePeers =
+                    realloc(ReversePeers, (PeerCount + 2) * sizeof(int));
                 ReversePeers[PeerCount] = i;
                 PeerCount++;
                 if (j == 0)
