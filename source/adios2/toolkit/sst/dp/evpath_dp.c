@@ -259,7 +259,7 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
     SMPI_Comm_rank(comm, &Stream->Rank);
 
     set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"),
-                    "sockets");
+                    strdup("sockets"));
 
     if (Params->DataInterface)
     {
@@ -275,6 +275,9 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
     attr_list ContactList = CMget_specific_contact_list(CM, ListenAttrs);
 
     EvpathContactString = attr_list_to_string(ContactList);
+
+    free_attr_list(ContactList);
+    free_attr_list(ListenAttrs);
 
     /*
      * add a handler for read reply messages
