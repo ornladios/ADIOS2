@@ -117,16 +117,16 @@ static void AddNameToExitList(const char *FileName)
 static void RemoveNameFromExitList(const char *FileName)
 {
     struct NameListEntry **LastPtr = &FileNameList;
-    struct NameListEntry *List = FileNameList;
-    while (List)
+    while (*LastPtr)
     {
-        if (strcmp(FileName, List->FileName) == 0)
+        if (strcmp(FileName, (*LastPtr)->FileName) == 0)
         {
-            *LastPtr = List->Next;
-            free(List);
+            struct NameListEntry *Tmp = *LastPtr;
+            *LastPtr = (*LastPtr)->Next;
+            free(Tmp);
             return;
         }
-        List = List->Next;
+        LastPtr = &(*LastPtr)->Next;
     }
 }
 
