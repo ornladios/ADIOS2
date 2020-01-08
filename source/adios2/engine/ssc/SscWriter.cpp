@@ -137,7 +137,9 @@ void SscWriter::SyncWritePattern()
 
     for (const auto &b : m_GlobalWritePattern[m_WriterRank])
     {
-        auto &jref = j[b.name];
+        j.emplace_back();
+        auto &jref = j.back();
+        jref["N"] = b.name;
         jref["T"] = b.type;
         jref["S"] = b.shape;
         jref["O"] = b.start;
@@ -274,12 +276,6 @@ void SscWriter::SyncReadPattern()
     if (m_Verbosity >= 10)
     {
         ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
-        ssc::PrintBlockVec(m_GlobalWritePattern[m_WriterRank],
-                           "Local Write Pattern");
-    }
-
-    if (m_WriterRank == 0)
-    {
         ssc::PrintBlockVec(m_GlobalWritePattern[m_WriterRank],
                            "Local Write Pattern");
     }
