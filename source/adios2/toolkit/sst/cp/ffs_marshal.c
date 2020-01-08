@@ -1689,6 +1689,7 @@ static void LoadFormats(SstStream Stream, FFSFormatList Formats)
         load_external_format_FMcontext(
             FMContext_from_FFS(Stream->ReaderFFSContext), FormatID,
             Entry->FormatIDRepLen, FormatServerRep);
+        free(FormatID);
         Entry = Entry->Next;
     }
 }
