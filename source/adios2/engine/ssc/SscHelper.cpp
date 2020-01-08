@@ -138,17 +138,17 @@ void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
     {
         auto &rankj = input[i];
         output[i].clear();
-        for (auto it = rankj.begin(); it != rankj.end(); ++it)
+        for (const auto &j : rankj)
         {
             output[i].emplace_back();
             auto &b = output[i].back();
-            b.name = it.key();
-            b.type = it.value()["T"].get<std::string>();
-            b.start = it.value()["O"].get<Dims>();
-            b.count = it.value()["C"].get<Dims>();
-            b.shape = it.value()["S"].get<Dims>();
-            b.bufferStart = it.value()["X"].get<size_t>();
-            b.bufferCount = it.value()["Y"].get<size_t>();
+            b.name = j["N"].get<std::string>();
+            b.type = j["T"].get<std::string>();
+            b.start = j["O"].get<Dims>();
+            b.count = j["C"].get<Dims>();
+            b.shape = j["S"].get<Dims>();
+            b.bufferStart = j["X"].get<size_t>();
+            b.bufferCount = j["Y"].get<size_t>();
         }
     }
 }

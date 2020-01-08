@@ -143,6 +143,33 @@ void SscReader::SyncWritePattern()
     MPI_Win_free(&win);
 
     // deserialize
+
+    m_GlobalWritePattern.resize(m_WriterSize);
+    ssc::JsonToBlockVecVec(globalVec, m_GlobalWritePattern);
+
+    for (const auto &blockVec : m_GlobalWritePattern)
+    {
+        for (const auto &b : blockVec)
+        {
+            if (b.type.empty())
+            {
+                throw(std::runtime_error("unknown data type"));
+            }
+#define declare_type(T)                                                        \
+    else if (b.type == helper::GetType<T>())                                   \
+    {                                                                          \
+        auto v = m_IO.InquireVariable<T>(b.name);                              \
+        if (not v)                                                             \
+        {                                                                      \
+            m_IO.DefineVariable<T>(b.name, b.shape, b.start, b.shape);         \
+        }                                                                      \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            else { throw(std::runtime_error("unknown data type")); }
+        }
+    }
+
     nlohmann::json j;
     try
     {
@@ -150,42 +177,7 @@ void SscReader::SyncWritePattern()
     }
     catch (...)
     {
-        throw(std::runtime_error("reader received corrupted metadata"));
-    }
-
-    m_GlobalWritePattern.resize(m_WriterSize);
-    for (int rank = 0; rank < m_WriterSize; ++rank)
-    {
-        for (auto itVar = j[rank].begin(); itVar != j[rank].end(); ++itVar)
-        {
-            std::string type = itVar.value()["T"].get<std::string>();
-            Dims shape = itVar.value()["S"].get<Dims>();
-            Dims start = itVar.value()["O"].get<Dims>();
-            auto &blockVecRef = m_GlobalWritePattern[rank];
-            blockVecRef.emplace_back();
-            blockVecRef.back().name = itVar.key();
-            blockVecRef.back().shape = shape;
-            blockVecRef.back().start = start;
-            blockVecRef.back().count = itVar.value()["C"].get<Dims>();
-            blockVecRef.back().type = type;
-            blockVecRef.back().bufferStart = itVar.value()["X"].get<size_t>();
-            blockVecRef.back().bufferCount = itVar.value()["Y"].get<size_t>();
-            if (rank == 0)
-            {
-                if (type.empty())
-                {
-                    throw(std::runtime_error("unknown data type"));
-                }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        m_IO.DefineVariable<T>(itVar.key(), shape, start, shape);              \
-    }
-                ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-                else { throw(std::runtime_error("unknown data type")); }
-            }
-        }
+        throw(std::runtime_error("corrupted json string"));
     }
 
     for (const auto &attributeJson : j[m_WriterSize])
@@ -256,7 +248,9 @@ void SscReader::SyncReadPattern()
 #undef declare_type
         else { throw(std::runtime_error("unknown data type")); }
 
-        auto &jref = j[var.first];
+        j.emplace_back();
+        auto &jref = j.back();
+        jref["N"] = var.first;
         jref["T"] = type;
         jref["O"] = b.start;
         jref["C"] = b.count;
