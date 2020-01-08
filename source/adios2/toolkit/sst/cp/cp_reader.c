@@ -1400,7 +1400,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
             long LatestTimestep;
         };
         struct _GlobalOpInfo my_info;
-        struct _GlobalOpInfo *global_info;
+        struct _GlobalOpInfo *global_info = NULL;
         long NextTimestep;
 
         if (Stream->Rank == 0)
@@ -1431,6 +1431,8 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                     Smallest = global_info[i].LatestTimestep;
                 }
             }
+
+            free(global_info);
 
             /*
              * Several situations are possible here, depending upon
