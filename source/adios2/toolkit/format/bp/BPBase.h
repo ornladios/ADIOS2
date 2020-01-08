@@ -306,6 +306,9 @@ public:
     void ResetBuffer(Buffer &buffer, const bool resetAbsolutePosition = false,
                      const bool zeroInitialize = true);
 
+    /** Delete buffer memory manually */
+    void DeleteBuffers();
+
 protected:
     const bool m_DebugMode = false;
 

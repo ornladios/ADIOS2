@@ -402,13 +402,13 @@ void BP4Serializer::SerializeDataBuffer(core::IO &io) noexcept
     if (attributesSizeInData)
     {
         attributesSizeInData += 12; // count + length + end ID
-        ResizeBuffer(position + attributesSizeInData + 4,
-                     "when writing Attributes in rank=0\n ");
+        m_Data.Resize(position + attributesSizeInData + 4,
+                      "when writing Attributes in rank=0\n");
         PutAttributes(io);
     }
     else
     {
-        ResizeBuffer(position + 12 + 4, "for empty Attributes\n");
+        m_Data.Resize(position + 12 + 4, "for empty Attributes\n");
         // Attribute index header for zero attributes: 0, 0LL
         // Resize() already takes care of this
         position += 12;

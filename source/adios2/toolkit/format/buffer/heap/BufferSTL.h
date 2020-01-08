@@ -40,6 +40,8 @@ public:
 
     template <class T>
     size_t Align() const noexcept;
+
+    void Delete();
 };
 
 #define declare_template_instantiation(T)                                      \

@@ -45,5 +45,11 @@ size_t Buffer::GetAvailableSize() const
     return 0;
 }
 
+void Buffer::Delete()
+{
+    throw std::invalid_argument("ERROR: buffer memory of type " + m_Type +
+                                " can't call Delete\n");
+}
+
 } // end namespace format
 } // end namespace adios2

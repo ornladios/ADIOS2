@@ -255,6 +255,8 @@ void BP3Writer::DoClose(const int transportIndex)
     {
         WriteProfilingJSONFile();
     }
+
+    m_BP3Serializer.DeleteBuffers();
 }
 
 void BP3Writer::WriteProfilingJSONFile()

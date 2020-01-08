@@ -272,6 +272,14 @@ void BPBase::ResetBuffer(Buffer &buffer, const bool resetAbsolutePosition,
     m_Profiler.Stop("buffering");
 }
 
+void BPBase::DeleteBuffers()
+{
+    m_Profiler.Start("buffering");
+    m_Data.Delete();
+    m_Metadata.Delete();
+    m_Profiler.Stop("buffering");
+}
+
 // PROTECTED
 std::vector<uint8_t>
 BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
