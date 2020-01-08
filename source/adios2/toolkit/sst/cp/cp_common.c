@@ -997,6 +997,13 @@ extern void SstStreamDestroy(SstStream Stream)
                Stream->Filename);
     pthread_mutex_lock(&Stream->DataLock);
     Stream->Status = Closed;
+    struct _TimestepMetadataList *Next = Stream->Timesteps;
+    while (Next)
+    {
+        Next = Next->Next;
+        free(Stream->Timesteps);
+        Stream->Timesteps = Next;
+    }
     if (Stream->Role == ReaderRole)
     {
         Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
