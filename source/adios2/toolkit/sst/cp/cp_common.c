@@ -1367,6 +1367,10 @@ extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
         {
             *reverseArray = reverse;
         }
+        else
+        {
+            free(reverse);
+        }
     }
 }
 
