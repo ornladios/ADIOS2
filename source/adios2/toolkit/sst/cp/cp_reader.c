@@ -83,6 +83,7 @@ redo:
         }
         if (TimeoutRemaining <= 0)
         {
+            free(FileName);
             return NULL;
         }
         WriterInfo = fopen(FileName, "r");
@@ -410,7 +411,12 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         Stream, Filename, Params, comm, &rank0_to_rank0_conn, &WriterFileID);
 
     if (WriterContactAttributes == NULL)
+    {
+        SstStreamDestroy(Stream);
+        free(Stream);
+        free(Filename);
         return NULL;
+    }
 
     Stream->DP_Stream = Stream->DP_Interface->initReader(
         &Svcs, Stream, &dpInfo, Stream->ConfigParams, WriterContactAttributes);
