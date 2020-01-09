@@ -130,7 +130,14 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
     }
 }
 
-SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
+SstWriter::~SstWriter()
+{
+    SstStreamDestroy(m_Output);
+    if (m_BP3Serializer)
+    {
+        delete m_BP3Serializer;
+    }
+}
 
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
@@ -273,6 +280,7 @@ void SstWriter::EndStep()
         SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
                            m_WriterStep, lf_FreeBlocks, newblock, NULL, NULL,
                            NULL);
+        m_BP3Serializer = nullptr;
     }
     else
     {

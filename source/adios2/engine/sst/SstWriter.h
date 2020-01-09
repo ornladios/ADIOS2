@@ -61,7 +61,7 @@ private:
         _SstData metadata;
         format::BP3Serializer *serializer;
     };
-    format::BP3Serializer *m_BP3Serializer;
+    format::BP3Serializer *m_BP3Serializer = nullptr;
 
     SstStream m_Output;
     long m_WriterStep = -1;
