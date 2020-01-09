@@ -5,7 +5,7 @@
 
 # BPLS
 add_executable(bpls ./bpls/bpls.cpp)
-target_link_libraries(bpls adios2 adios2sys_interface pugixml)
+target_link_libraries(bpls adios2 adios2sys pugixml)
 install(TARGETS bpls EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
