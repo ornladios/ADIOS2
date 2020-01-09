@@ -1004,13 +1004,16 @@ extern void SstStreamDestroy(SstStream Stream)
         free(Stream->Timesteps);
         Stream->Timesteps = Next;
     }
-    if (Stream->Role == ReaderRole)
+    if (Stream->DP_Stream)
     {
-        Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
-    }
-    else
-    {
-        Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
+        if (Stream->Role == ReaderRole)
+        {
+            Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
+        }
+        else
+        {
+            Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
+        }
     }
     if (Stream->Readers)
     {
