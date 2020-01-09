@@ -152,7 +152,8 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     {
         // initialize BP serializer, deleted in
         // SstWriter::EndStep()::lf_FreeBlocks()
-        m_BP3Serializer = new format::BP3Serializer(m_Comm, m_DebugMode);
+        m_BP3Serializer = std::unique_ptr<format::BP3Serializer>(
+            new format::BP3Serializer(m_Comm, m_DebugMode));
         m_BP3Serializer->Init(m_IO.m_Parameters,
                               "in call to BP3::Open for writing");
         m_BP3Serializer->m_MetadataSet.TimeStep = 1;
@@ -268,7 +269,7 @@ void SstWriter::EndStep()
         newblock->metadata.block = m_BP3Serializer->m_Metadata.m_Buffer.data();
         newblock->data.DataSize = m_BP3Serializer->m_Data.m_Position;
         newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
-        newblock->serializer = m_BP3Serializer;
+        newblock->serializer = m_BP3Serializer.release();
         TAU_STOP("Marshaling overhead");
         SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
                            m_WriterStep, lf_FreeBlocks, newblock, NULL, NULL,
