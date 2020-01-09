@@ -1589,6 +1589,10 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     SstInternalProvideTimestep(Stream, &MetaDataRec, &DataRec, Timestep,
                                Formats, FreeTSInfo, TSInfo, &AttributeRec,
                                FreeAttrInfo, AttributeEncodeBuffer);
+    if (AttributeEncodeBuffer)
+    {
+        free_FFSBuffer(AttributeEncodeBuffer);
+    }
     while (Formats)
     {
         struct FFSFormatBlock *Tmp = Formats->Next;
