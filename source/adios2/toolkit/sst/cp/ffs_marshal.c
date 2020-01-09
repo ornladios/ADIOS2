@@ -1671,7 +1671,7 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
         int j = 0;
         while (FieldList[i].field_name)
         {
-            char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
+            char *FieldName;
             void *field_data = (char *)BaseData + FieldList[i].field_offset;
 
             char *Type;
@@ -1680,6 +1680,8 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
                              &ElemSize);
             Stream->AttrSetupUpcall(Stream->SetupUpcallReader, FieldName, Type,
                                     field_data);
+            free(Type);
+            free(FieldName);
             i++;
         }
     }
