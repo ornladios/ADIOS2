@@ -1343,9 +1343,12 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 int ElementSize = Reqs->VarRec->ElementSize;
                 int DimCount = Reqs->VarRec->DimCount;
                 size_t *GlobalDimensions = Reqs->VarRec->GlobalDims;
+                size_t *GlobalDimensionsFree = NULL;
                 size_t *RankOffset = Reqs->VarRec->PerWriterStart[i];
+                size_t *RankOffsetFree = NULL;
                 size_t *RankSize = Reqs->VarRec->PerWriterCounts[i];
                 size_t *SelOffset = Reqs->Start;
+                size_t *SelOffsetFree = NULL;
                 size_t *SelSize = Reqs->Count;
                 char *Type = Reqs->VarRec->Type;
                 void *IncomingData = Reqs->VarRec->PerWriterIncomingData[i];
@@ -1355,11 +1358,14 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 if (Reqs->RequestType == Local)
                 {
                     RankOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                    RankOffsetFree = RankOffset;
                     GlobalDimensions =
                         calloc(DimCount, sizeof(GlobalDimensions[0]));
+                    GlobalDimensionsFree = GlobalDimensions;
                     if (SelOffset == NULL)
                     {
                         SelOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                        SelOffsetFree = SelOffset;
                     }
                     for (int i = 0; i < DimCount; i++)
                     {
@@ -1393,6 +1399,9 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                         ElementSize, DimCount, GlobalDimensions, RankOffset,
                         RankSize, SelOffset, SelSize, IncomingData, Reqs->Data);
                 }
+                free(SelOffsetFree);
+                free(GlobalDimensionsFree);
+                free(RankOffsetFree);
                 if (FreeIncoming)
                 {
                     /* free uncompressed  */
