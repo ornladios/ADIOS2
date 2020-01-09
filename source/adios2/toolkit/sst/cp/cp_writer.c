@@ -1363,8 +1363,8 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     if (NewState == PeerFailed)
     {
         DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
-        CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0, CloseWSRStream,
-                           CP_WSR_Stream);
+        CMfree(CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0,
+                                  CloseWSRStream, CP_WSR_Stream));
     }
     CP_verbose(ParentStream, "Moving Reader stream %p to status %s\n",
                CP_WSR_Stream, SSTStreamStatusStr[NewState]);
