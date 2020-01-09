@@ -389,7 +389,7 @@ void BP4Writer::DoClose(const int transportIndex)
         m_FileMetadataIndexManager.CloseFiles();
     }
 
-    m_BP4Serializer.DeleteBuffers();
+    // m_BP4Serializer.DeleteBuffers();
 }
 
 void BP4Writer::WriteProfilingJSONFile()

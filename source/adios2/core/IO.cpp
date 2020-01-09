@@ -701,7 +701,6 @@ void IO::RemoveEngine(const std::string &name)
     auto itEngine = m_Engines.find(name);
     if (itEngine != m_Engines.end())
     {
-        itEngine->second.reset();
         m_Engines.erase(itEngine);
     }
 }
