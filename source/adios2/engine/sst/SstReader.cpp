@@ -50,6 +50,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     );
     if (!m_Input)
     {
+        delete[] cstr;
         throw std::runtime_error(
             "ERROR: SstReader did not find active "
             "Writer contact info in file \"" +
