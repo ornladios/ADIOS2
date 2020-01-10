@@ -12,6 +12,9 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(Unbalanced TRUE Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscUnbalanced "" TRUE)
 
+  gtest_add_tests_helper(WriterMultiblock TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscWriterMultiblock "" TRUE)
+
   gtest_add_tests_helper(NoAttributes TRUE Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscNoAttributes "" TRUE)
 
