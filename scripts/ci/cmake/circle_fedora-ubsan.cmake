@@ -14,23 +14,20 @@ set(CTEST_UPDATE_VERSION_ONLY TRUE)
 set(CTEST_SOURCE_DIRECTORY "$ENV{CIRCLE_WORKING_DIRECTORY}/source")
 set(CTEST_DASHBOARD_ROOT "$ENV{HOME}")
 
-set(ENV{CC}  gcc)
-set(ENV{CXX} g++)
+set(ENV{CC}  clang)
+set(ENV{CXX} clang++)
 set(ENV{FC}  gfortran)
-set(ENV{CFLAGS} -fsanitize=undefined -fno-sanitize-recover=all -pthread)
-set(ENV{CXXFLAGS} -fsanitize=undefined -fno-sanitize-recover=all -pthread)
-set(ENV{FFLAGS} -fsanitize=undefined -fno-sanitize-recover=all -pthread)
+set(ENV{CFLAGS} "-fsanitize=undefined -fno-sanitize-recover=all -pthread")
+set(ENV{CXXFLAGS} "-fsanitize=undefined -fno-sanitize-recover=all -pthread -stdlib=libc++ -nostdinc++ -I/usr/include/c++/v1")
+set(ENV{FFLAGS} "-fsanitize=undefined -fno-sanitize-recover=all -pthread")
 set(ENV{UBSAN_OPTIONS} "print_stacktrace=1")
 
 set(dashboard_cache "
-ADIOS2_USE_BZip2:STRING=ON
-ADIOS2_USE_DataMan:STRING=ON
-ADIOS2_USE_Fortran:STRING=ON
 ADIOS2_USE_HDF5:STRING=ON
 ADIOS2_USE_MPI:STRING=OFF
-ADIOS2_USE_Python:STRING=ON
-ADIOS2_USE_ZFP:STRING=OFF
-ADIOS2_USE_ZeroMQ:STRING=ON
+
+HDF5_C_COMPILER_EXECUTABLE:FILEPATH=/usr/bin/h5cc
+HDF5_DIFF_EXECUTABLE:FILEPATH=/usr/bin/h5diff
 ")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../dashboard/adios_common.cmake)
