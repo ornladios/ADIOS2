@@ -31,12 +31,12 @@ jobs:
   "fedora-ubsan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2-auto:fedora-ubsan
+      - image: ornladios/adios2:fedora-sanitizers
 
   "fedora-openmpi-ubsan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2-auto:fedora-openmpi-ubsan
+      - image: ornladios/adios2:fedora-sanitizers
 
 workflows:
   version: 2
