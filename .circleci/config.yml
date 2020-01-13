@@ -1,29 +1,22 @@
 defaults: &defaults
-  working_directory: /home/adios2
   steps:
     - checkout:
-        path: /home/adios2/source
+        path: source
+    - run:
+        name: CDash
+        command: bash source/scripts/ci/circle/postCDashStatus.sh
     - run:
         name: Update
-        command: bash source/scripts/ci/runOnCircle.sh update
+        command: bash source/scripts/ci/circle/run.sh update
     - run:
         name: Configure
-        command: bash source/scripts/ci/runOnCircle.sh configure
+        command: bash source/scripts/ci/circle/run.sh configure
     - run:
         name: Build
-        command: bash source/scripts/ci/runOnCircle.sh build
+        command: bash source/scripts/ci/circle/run.sh build
     - run:
         name: Test
-        command: |
-          ulimit -c unlimited
-          bash source/scripts/ci/runOnCircle.sh test
-    - run:
-        command: |
-          mkdir -p /tmp/core_dumps
-          find . -name '*core*' | xargs bash -c 'for F in $@; do if file -b "$F" | grep -q "core file"; then cp -v --parents "$F" /tmp/core_dumps; fi; done'
-        when: on_fail
-    - store_artifacts:
-        path: /tmp/core_dumps
+        command: bash source/scripts/ci/circle/run.sh test
 
 version: 2
 
@@ -40,7 +33,7 @@ jobs:
 
 workflows:
   version: 2
-  build:
+  sanitizers:
     jobs:
       - "fedora-ubsan"
       - "fedora-openmpi-ubsan"
