@@ -50,6 +50,8 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 9. **SubStreams**: (MPI-only) users can select how many sub-streams (``M`` sub-files) are produced during a run, ranges between 1 and the number of mpi processes from ``MPI_Size`` (``N``), adios2 will internally aggregate data buffers (``N-to-M``) to output the required number of sub-files. If Substream is out of bounds it will pick either 1 (``SubStreams`` < ``1 -> N-to-1``) or ``N`` ((``SubStreams`` > ``N -> N-to-N``) and ADIOS2 will issue a WARNING message. Use for performance tuning.
 
+10. **Node-Local**: For distributed file system. Every writer process must make sure the .bp/ directory is created on the local file system. Required for using local disk/SSD/NVMe in a cluster.
+  
 ==================== ===================== ===========================================================
  **Key**              **Value Format**      **Default** and Examples
 ==================== ===================== ===========================================================
@@ -62,6 +64,7 @@ This engine allows the user to fine tune the buffering operations through the fo
  BufferGrowthFactor   float > 1             **1.05**, 1.01, 1.5, 2
  FlushStepsCount      integer > 1           **1**, 5, 1000, 50000
  SubStreams           integer >= 1          **MPI_Size (N-to-N)**, ``MPI_Size``/2, ... , 2, (N-to-1) 1
+ Node-Local           string On/Off         **Off**, On
 ==================== ===================== ===========================================================
 
 
