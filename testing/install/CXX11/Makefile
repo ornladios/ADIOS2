@@ -14,10 +14,10 @@ test: adios_cxx11_test adios_cxx11_test_2
 	./adios_cxx11_test_2
 
 adios_cxx11_test: main.o
-	$(CXX) $(CXXFLAGS) -o adios_cxx11_test main.o $(ADIOS_CXX_LD_FLAGS)
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o adios_cxx11_test main.o $(ADIOS_CXX_LD_FLAGS)
 
 main.o: main.cxx
 	$(CXX) $(CXXFLAGS) $(ISYSROOT) -o main.o -c main.cxx $(ADIOS_CXX_FLAGS)
 
 adios_cxx11_test_2: main.cxx
-	$(CXX) $(CXXFLAGS) $(ISYSROOT) -o adios_cxx11_test_2 main.cxx $(ADIOS_CXX_ALL_FLAGS)
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_cxx11_test_2 main.cxx $(ADIOS_CXX_ALL_FLAGS)
