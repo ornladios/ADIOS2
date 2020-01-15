@@ -617,8 +617,11 @@ static void EvpathDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
             free(WS_Stream->Readers[i]->WriterContactInfo);
             free(WS_Stream->Readers[i]->ReaderContactInfo->ContactString);
             if (WS_Stream->Readers[i]->ReaderContactInfo->Conn)
-                CMConnection_close(
+            {
+                CMConnection_dereference(
                     WS_Stream->Readers[i]->ReaderContactInfo->Conn);
+                WS_Stream->Readers[i]->ReaderContactInfo->Conn = NULL;
+            }
             free(WS_Stream->Readers[i]->ReaderContactInfo);
             free(WS_Stream->Readers[i]);
         }
