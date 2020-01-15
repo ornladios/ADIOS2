@@ -1344,8 +1344,10 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         return;
     }
 
-    if ((NewState == PeerClosed) || (NewState == Closed))
+    if ((NewState == PeerClosed) || (NewState == Closed) ||
+        (NewState == PeerFailed))
     {
+        // enter this on fail or deliberate close
         CP_verbose(ParentStream,
                    "In PeerFailCloseWSReader, releasing sent timesteps\n");
         DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
@@ -1355,16 +1357,16 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         {
             if (CP_WSR_Stream->Connections[i].CMconn)
             {
-                CMConnection_close(CP_WSR_Stream->Connections[i].CMconn);
+                CMConnection_dereference(CP_WSR_Stream->Connections[i].CMconn);
                 CP_WSR_Stream->Connections[i].CMconn = NULL;
             }
         }
-    }
-    if (NewState == PeerFailed)
-    {
-        DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
-        CMfree(CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0,
-                                  CloseWSRStream, CP_WSR_Stream));
+        if (NewState == PeerFailed)
+        {
+            // move to fully closed state later
+            CMfree(CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0,
+                                      CloseWSRStream, CP_WSR_Stream));
+        }
     }
     CP_verbose(ParentStream, "Moving Reader stream %p to status %s\n",
                CP_WSR_Stream, SSTStreamStatusStr[NewState]);
