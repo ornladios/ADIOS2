@@ -22,10 +22,10 @@ test: adios_c_test adios_c_test_2
 	$(mpiexec) ./adios_c_test_2
 
 adios_c_test: main.o
-	$(CXX) $(CXXFLAGS) -o adios_c_test main.o $(ADIOS_C_LD_FLAGS)
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o adios_c_test main.o $(ADIOS_C_LD_FLAGS)
 
 main.o: $(main_c)
 	$(CC) $(CFLAGS) $(ISYSROOT) -o main.o -c $(main_c) $(ADIOS_C_FLAGS)
 
 adios_c_test_2: $(main_c)
-	$(CXX) $(CXXFLAGS) $(ISYSROOT) -o adios_c_test_2 $(main_c) $(ADIOS_C_ALL_FLAGS)
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_c_test_2 $(main_c) $(ADIOS_C_ALL_FLAGS)

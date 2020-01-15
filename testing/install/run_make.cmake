@@ -25,6 +25,7 @@ execute_process(
     "CFLAGS=${CMAKE_C_FLAGS}"
     "CXXFLAGS=${CMAKE_CXX_FLAGS}"
     "FFLAGS=${CMAKE_Fortran_FLAGS}"
+    "LDFLAGS=${CMAKE_EXE_LINKER_FLAGS}"
     "MPIEXEC=${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}"
     "ADIOS2_HAVE_MPI=${have_mpi}"
     "ISYSROOT=${isysroot}"
