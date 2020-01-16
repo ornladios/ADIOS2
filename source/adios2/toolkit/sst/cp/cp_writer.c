@@ -1393,6 +1393,7 @@ void SstWriterClose(SstStream Stream)
 {
     struct _WriterCloseMsg Msg;
     struct timeval CloseTime, Diff;
+    memset(&Msg, 0, sizeof(Msg));
     Msg.FinalTimestep = Stream->LastProvidedTimestep;
     SST_ASSERT_UNLOCKED();
     sendOneToEachReaderRank(Stream, Stream->CPInfo->WriterCloseFormat, &Msg,
@@ -2010,6 +2011,7 @@ extern void SstInternalProvideTimestep(
                 SST_REAFFIRM_LOCKED_AFTER_CONDITION();
             }
         }
+        memset(&TimestepMetaData, 0, sizeof(TimestepMetaData));
         TimestepMetaData.PendingReaderCount = 0;
         while (ArrivingReader)
         {
