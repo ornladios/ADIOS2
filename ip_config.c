@@ -565,6 +565,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 		} else {
 		    printf(IPCONFIG_ENVVAR_PREFIX "PORT_RANGE spec not understood \"%s\"\n", port_range);
 		}
+		free(t);
 	    } else {
 		if (sscanf(port_range, "%d:%d", &port_range_high, &port_range_low) != 2) {
 		    printf(IPCONFIG_ENVVAR_PREFIX "PORT_RANGE spec not understood \"%s\"\n", port_range);
