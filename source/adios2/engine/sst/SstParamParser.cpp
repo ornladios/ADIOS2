@@ -10,6 +10,8 @@ using namespace adios2::core;
 
 void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
 {
+    std::memset(&Params, 0, sizeof(Params));
+
     auto lf_SetBoolParameter = [&](const std::string key, int &parameter) {
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
