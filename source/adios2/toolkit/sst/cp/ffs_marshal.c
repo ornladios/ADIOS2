@@ -1502,7 +1502,7 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     }
     if (Info->AttributeFields)
     {
-        struct FFSFormatBlock *Block = malloc(sizeof(*Block));
+        struct FFSFormatBlock *Block = calloc(1, sizeof(*Block));
         FMFormat Format = FMregister_simple_format(
             Info->LocalFMContext, "Attributes", Info->AttributeFields,
             FMstruct_size_field_list(Info->AttributeFields, sizeof(char *)));
