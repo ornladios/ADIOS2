@@ -67,11 +67,41 @@ inline void CopyEndianReverse<std::complex<double>>(const char *src,
 #endif
 
 template <class T>
+void InsertToBufferSafe(std::vector<char> &buffer, const T *source,
+                        const size_t elements) noexcept
+{
+    size_t position = buffer.size();
+    buffer.resize(position + elements * sizeof(T), 0);
+    T *dest = reinterpret_cast<T *>(buffer.data() + position);
+    for (size_t i = 0; i < elements; ++i)
+        dest[i] = source[i];
+}
+
+template <class T>
 void InsertToBuffer(std::vector<char> &buffer, const T *source,
                     const size_t elements) noexcept
 {
     const char *src = reinterpret_cast<const char *>(source);
     buffer.insert(buffer.end(), src, src + elements * sizeof(T));
+}
+
+template <>
+inline void InsertToBuffer(std::vector<char> &buffer,
+                           const long double *source,
+                           const size_t elements) noexcept
+{
+    InsertToBufferSafe<long double>(buffer, source, elements);
+}
+
+template <class T>
+void CopyToBufferSafe(std::vector<char> &buffer, size_t &position,
+                      const T *source, const size_t elements) noexcept
+{
+    T *dest = reinterpret_cast<T *>(buffer.data() + position);
+    std::memset(buffer.data() + position, 0, elements * sizeof(T));
+    for (size_t i = 0; i < elements; ++i)
+        dest[i] = source[i];
+    position += elements * sizeof(T);
 }
 
 template <class T>
@@ -81,6 +111,14 @@ void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
     const char *src = reinterpret_cast<const char *>(source);
     std::copy(src, src + elements * sizeof(T), buffer.begin() + position);
     position += elements * sizeof(T);
+}
+
+template <>
+inline void CopyToBuffer(std::vector<char> &buffer, size_t &position,
+                         const long double *source,
+                         const size_t elements) noexcept
+{
+    CopyToBufferSafe<long double>(buffer, position, source, elements);
 }
 
 template <class T>

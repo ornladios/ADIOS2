@@ -30,6 +30,17 @@ void CopyEndianReverse(const char *src, const size_t payloadStride, T *dest);
 #endif
 
 /**
+ * Inserts source at the end of a buffer updating buffer.size() in a
+ * memory-safe manner (meant for data structures that have padding bits).
+ * @param buffer data destination calls insert()
+ * @param source pointer to source data
+ * @param elements number of elements of source type
+ */
+template <class T>
+void InsertToBufferSafe(std::vector<char> &buffer, const T *source,
+                        const size_t elements = 1) noexcept;
+
+/**
  * Inserts source at the end of a buffer updating buffer.size()
  * @param buffer data destination calls insert()
  * @param source pointer to source data
@@ -38,6 +49,29 @@ void CopyEndianReverse(const char *src, const size_t payloadStride, T *dest);
 template <class T>
 void InsertToBuffer(std::vector<char> &buffer, const T *source,
                     const size_t elements = 1) noexcept;
+
+/**
+ * Wrapper around InsertToBufferSafe() for long double.
+ * @param buffer data destination calls insert()
+ * @param source pointer to source data
+ * @param elements number of elements of source type
+ */
+template <>
+void InsertToBuffer(std::vector<char> &buffer, const long double *source,
+                    const size_t elements) noexcept;
+
+/**
+ * Copies data to a specific location in the buffer updating position in a
+ * memory-safe manner (meant for data structures that have padding bits).
+ * Does not update vec.size().
+ * @param buffer data destination used in std::copy
+ * @param position starting position in buffer (in terms of T not bytes)
+ * @param source pointer to source data
+ * @param elements number of elements of source type
+ */
+template <class T>
+void CopyToBufferSafe(std::vector<char> &buffer, size_t &position,
+                      const T *source, const size_t elements = 1) noexcept;
 
 /**
  * Copies data to a specific location in the buffer updating position
@@ -50,6 +84,18 @@ void InsertToBuffer(std::vector<char> &buffer, const T *source,
 template <class T>
 void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
                   const size_t elements = 1) noexcept;
+
+/**
+ * Wrapper around CopyToBufferSafe() for long double.
+ * @param buffer data destination used in std::copy
+ * @param position starting position in buffer (in terms of T not bytes)
+ * @param source pointer to source data
+ * @param elements number of elements of source type
+ */
+template <>
+void CopyToBuffer(std::vector<char> &buffer, size_t &position,
+                  const long double *source,
+                  const size_t elements) noexcept;
 
 /**
  * Copies data to a specific location in the buffer updating position using
