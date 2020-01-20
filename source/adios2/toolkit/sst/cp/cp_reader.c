@@ -1369,20 +1369,32 @@ extern void SstReleaseStep(SstStream Stream)
 
 static void NotifyDPArrivedMetadataPeer(SstStream Stream)
 {
+    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
     struct _TimestepMetadataList *TS;
     TS = Stream->Timesteps;
+    CP_DP_Interface DP_Interface = Stream->DP_Interface;
+    void *DP_Stream = Stream->DP_Stream;
     while (TS)
     {
         if ((TS->MetadataMsg->Metadata != NULL) &&
             (TS->MetadataMsg->Timestep > Stream->LastDPNotifiedTimestep))
         {
-            Stream->DP_Interface->timestepArrived(&Svcs, Stream->DP_Stream,
-                                                  TS->MetadataMsg->Timestep,
-                                                  TS->MetadataMsg->PreloadMode);
+            int Timestep = TS->MetadataMsg->Timestep;
+            SstPreloadModeType PreloadMode = TS->MetadataMsg->PreloadMode;
+
+            if (DP_Interface->timestepArrived != NULL)
+            {
+                PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+                DP_Interface->timestepArrived(&Svcs, DP_Stream, Timestep,
+                                              PreloadMode);
+                PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+            }
+
             Stream->LastDPNotifiedTimestep = TS->MetadataMsg->Timestep;
         }
         TS = TS->Next;
     }
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 }
 
 /*
