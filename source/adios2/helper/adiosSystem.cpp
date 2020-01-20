@@ -48,10 +48,16 @@ bool IsLittleEndian() noexcept
 
 std::string LocalTimeDate() noexcept
 {
+    struct tm now_tm;
+    char buf[30];
+
     std::time_t now =
         std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-    return std::string(ctime(&now));
+    localtime_r(&now, &now_tm);
+    strftime(buf, sizeof(buf), "%a %b %d %H:%M:%S %Y\n", &now_tm);
+
+    return std::string(buf);
 }
 
 bool IsRowMajor(const std::string hostLanguage) noexcept
