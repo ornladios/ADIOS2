@@ -21,11 +21,19 @@
 
 namespace adios2
 {
+namespace interop
+{
+void RegisterHDF5Common_MPI_API();
+}
 namespace helper
 {
 
 namespace
 {
+struct InitMPI
+{
+    InitMPI() { interop::RegisterHDF5Common_MPI_API(); }
+};
 
 const MPI_Op OpToMPI[] = {
     MPI_OP_NULL, MPI_MAX,    MPI_MIN,    MPI_SUM,     MPI_PROD,
@@ -532,6 +540,7 @@ Comm::Status CommReqImplMPI::Wait(const std::string &hint)
 
 Comm CommFromMPI(MPI_Comm mpiComm)
 {
+    static InitMPI const initMPI;
     if (mpiComm == MPI_COMM_NULL)
     {
         return CommDummy();

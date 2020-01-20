@@ -14,20 +14,31 @@
 #include <complex>
 #include <ios>
 #include <iostream>
+#include <mutex>
 #include <stdexcept>
 #include <vector>
 
 #include "adios2/helper/adiosFunctions.h" // IsRowMajor
 #include <cstring>                        // strlen
 
-#ifdef ADIOS2_HAVE_MPI
-#include "adios2/helper/adiosCommMPI.h"
-#endif
-
 namespace adios2
 {
 namespace interop
 {
+
+std::mutex HDF5Common_MPI_API_Mutex;
+HDF5Common::MPI_API const *HDF5Common_MPI_API;
+
+namespace
+{
+
+HDF5Common::MPI_API const *GetHDF5Common_MPI_API()
+{
+    std::lock_guard<std::mutex> guard(HDF5Common_MPI_API_Mutex);
+    return HDF5Common_MPI_API;
+}
+
+} // end anonymous namespace
 
 const std::string HDF5Common::ATTRNAME_NUM_STEPS = "NumSteps";
 const std::string HDF5Common::ATTRNAME_GIVEN_ADIOSNAME = "ADIOSName";
@@ -77,14 +88,15 @@ HDF5Common::~HDF5Common() { Close(); }
 
 void HDF5Common::ParseParameters(core::IO &io)
 {
-#ifdef ADIOS2_HAVE_MPI
-    auto itKey = io.m_Parameters.find(PARAMETER_COLLECTIVE);
-    if (itKey != io.m_Parameters.end())
+    if (m_MPI)
     {
-        if (itKey->second == "yes" || itKey->second == "true")
-            H5Pset_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
+        auto itKey = io.m_Parameters.find(PARAMETER_COLLECTIVE);
+        if (itKey != io.m_Parameters.end())
+        {
+            if (itKey->second == "yes" || itKey->second == "true")
+                m_MPI->set_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
+        }
     }
-#endif
 
     m_ChunkVarNames.clear();
     m_ChunkPID = -1;
@@ -129,23 +141,13 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm,
     m_WriteMode = toWrite;
     m_PropertyListId = H5Pcreate(H5P_FILE_ACCESS);
 
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Comm mpiComm = helper::CommAsMPI(comm);
-    if (mpiComm != MPI_COMM_NULL)
+    if (MPI_API const *mpi = GetHDF5Common_MPI_API())
     {
-        MPI_Comm_rank(mpiComm, &m_CommRank);
-        MPI_Comm_size(mpiComm, &m_CommSize);
-        if (m_CommSize != 1)
+        if (mpi && mpi->init(comm, m_PropertyListId, &m_CommRank, &m_CommSize))
         {
-            H5Pset_fapl_mpio(m_PropertyListId, mpiComm, MPI_INFO_NULL);
+            m_MPI = mpi;
         }
     }
-    else
-    {
-        m_CommRank = 0;
-        m_CommSize = 1;
-    }
-#endif
 
     // std::string ts0 = "/AdiosStep0";
     std::string ts0;

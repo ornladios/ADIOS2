@@ -250,6 +250,11 @@ if(ADIOS2_HAVE_HDF5)
       engine/mixer/HDFMixerWriter.cpp
       )
   endif()
+  if(HDF5_IS_PARALLEL)
+    target_sources(adios2 PRIVATE
+      toolkit/interop/hdf5/HDF5CommonMPI.cpp
+      )
+  endif()
 
   target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
 
