@@ -57,14 +57,6 @@
 #include "adios2/engine/dataspaces/DataSpacesWriter.h"
 #endif
 
-#ifdef ADIOS2_HAVE_HDF5 // external dependencies
-#include "adios2/engine/hdf5/HDF5ReaderP.h"
-#include "adios2/engine/hdf5/HDF5WriterP.h"
-#if H5_VERSION_GE(1, 11, 0)
-#include "adios2/engine/mixer/HDFMixer.h"
-#endif
-#endif
-
 #ifdef ADIOS2_HAVE_MPI // external dependencies
 #include "adios2/engine/insitumpi/InSituMPIReader.h"
 #include "adios2/engine/insitumpi/InSituMPIWriter.h"
@@ -74,6 +66,9 @@ namespace adios2
 {
 namespace core
 {
+
+IO::EngineFactoryEntry IO_MakeEngine_HDFMixer();
+IO::EngineFactoryEntry IO_MakeEngine_HDF5();
 
 namespace
 {
@@ -85,11 +80,7 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
      {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>}},
     {"hdfmixer",
 #ifdef ADIOS2_HAVE_HDF5
-#if H5_VERSION_GE(1, 11, 0)
-     {IO::MakeEngine<engine::HDF5ReaderP>, IO::MakeEngine<engine::HDFMixer>}
-#else
-     IO::NoEngineEntry("ERROR: update HDF5 >= 1.11 to support VDS.")
-#endif
+     IO_MakeEngine_HDFMixer()
 #else
      IO::NoEngineEntry("ERROR: this version didn't compile with "
                        "HDF5 library, can't use HDF5 engine\n")
@@ -150,7 +141,7 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
     },
     {"hdf5",
 #ifdef ADIOS2_HAVE_HDF5
-     {IO::MakeEngine<engine::HDF5ReaderP>, IO::MakeEngine<engine::HDF5WriterP>}
+     IO_MakeEngine_HDF5()
 #else
      IO::NoEngineEntry("ERROR: this version didn't compile with "
                        "HDF5 library, can't use HDF5 engine\n")

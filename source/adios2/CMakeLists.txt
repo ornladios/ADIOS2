@@ -239,6 +239,7 @@ endif()
 
 if(ADIOS2_HAVE_HDF5)
   target_sources(adios2 PRIVATE
+    core/IOHDF5.cpp
     engine/hdf5/HDF5ReaderP.cpp
     engine/hdf5/HDF5WriterP.cpp
     toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
