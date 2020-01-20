@@ -2237,15 +2237,18 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     struct _ReaderCloseMsg *Msg = (struct _ReaderCloseMsg *)Msg_v;
 
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
+    PTHREAD_MUTEX_LOCK(&CP_WSR_Stream->ParentStream->DataLock);
     if ((CP_WSR_Stream->ParentStream == NULL) ||
         (CP_WSR_Stream->ParentStream->Status != Established))
+    {
+        PTHREAD_MUTEX_UNLOCK(&CP_WSR_Stream->ParentStream->DataLock);
         return;
+    }
 
     CP_verbose(CP_WSR_Stream->ParentStream,
                "Reader Close message received for stream %p.  Setting state to "
                "PeerClosed and releasing timesteps.\n",
                CP_WSR_Stream);
-    PTHREAD_MUTEX_LOCK(&CP_WSR_Stream->ParentStream->DataLock);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
     PTHREAD_MUTEX_UNLOCK(&CP_WSR_Stream->ParentStream->DataLock);
     TAU_STOP_FUNC();
