@@ -319,7 +319,7 @@ void BP3Writer::WriteCollectiveMetadataFile(const bool isFinal)
         if (!isFinal)
         {
             m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
-            m_FileMetadataManager.m_Transports.clear();
+            m_FileMetadataManager.ClearTransports();
         }
     }
 }

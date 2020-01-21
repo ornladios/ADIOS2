@@ -33,15 +33,6 @@ class TransportMan
 
 public:
     /**
-     * Contains all transports
-     * <pre>
-     * key : unique id
-     * value : object derived from Transport base class
-     * </pre>
-     */
-    std::unordered_map<size_t, std::shared_ptr<Transport>> m_Transports;
-
-    /**
      * Unique base constructor
      * @param comm
      * @param debugMode
@@ -90,9 +81,11 @@ public:
      * @param openMode
      * @param parameters
      * @param profile
+     * @param overwrite
      */
     void OpenFileID(const std::string &name, const size_t id, const Mode mode,
-                    const Params &parameters, const bool profile);
+                    const Params &parameters, const bool profile,
+                    const bool overwrite);
 
     /**
      * Gets each transport base name from either baseName at Open or name
@@ -165,6 +158,11 @@ public:
      */
     void CloseFiles(const int transportIndex = -1);
 
+    /**
+     * Clear all transports.
+     */
+    void ClearTransports();
+
     /** Checks if all transports are closed */
     bool AllTransportsClosed() const noexcept;
 
@@ -173,15 +171,23 @@ public:
     void SeekToFileBegin(const int transportIndex = 0);
 
 protected:
+    std::unordered_map<size_t, std::shared_ptr<Transport>> m_Transports;
+    mutable std::mutex m_TransportsMutex;
+
     helper::Comm const &m_Comm;
     const bool m_DebugMode = false;
 
-    std::shared_ptr<Transport> OpenFileTransport(const std::string &fileName,
-                                                 const Mode openMode,
-                                                 const Params &parameters,
-                                                 const bool profile);
+    std::unique_lock<std::mutex> LockTransports() const;
 
-    void CheckFile(
+    std::shared_ptr<Transport> OpenFileTransportInternal(
+        const std::string &fileName, const Mode openMode,
+        const Params &parameters, const bool profile);
+
+    void OpenFileIDInternal(const std::string &name, const size_t id,
+                            const Mode mode, const Params &parameters,
+                            const bool profile, const bool overwrite);
+
+    void CheckFileInternal(
         std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator
             itTransport,
         const std::string hint) const;

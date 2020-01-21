@@ -79,19 +79,14 @@ void BP3Reader::ReadVariableBlocks(Variable<T> &variable)
                     continue;
                 }
 
-                // check if subfile is already opened
-                if (m_SubFileManager.m_Transports.count(
-                        subStreamBoxInfo.SubStreamID) == 0)
-                {
-                    const std::string subFileName =
-                        m_BP3Deserializer.GetBPSubFileName(
-                            m_Name, subStreamBoxInfo.SubStreamID,
-                            m_BP3Deserializer.m_Minifooter.HasSubFiles, true);
+                const std::string subFileName =
+                    m_BP3Deserializer.GetBPSubFileName(
+                        m_Name, subStreamBoxInfo.SubStreamID,
+                        m_BP3Deserializer.m_Minifooter.HasSubFiles, true);
 
-                    m_SubFileManager.OpenFileID(
-                        subFileName, subStreamBoxInfo.SubStreamID, Mode::Read,
-                        {{"transport", "File"}}, profile);
-                }
+                m_SubFileManager.OpenFileID(
+                    subFileName, subStreamBoxInfo.SubStreamID, Mode::Read,
+                    {{"transport", "File"}}, profile, false);
 
                 char *buffer = nullptr;
                 size_t payloadSize = 0, payloadStart = 0;

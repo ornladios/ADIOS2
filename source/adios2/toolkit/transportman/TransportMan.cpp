@@ -75,6 +75,7 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
                              const std::vector<Params> &parametersVector,
                              const bool profile)
 {
+    auto lock = LockTransports();
     for (size_t i = 0; i < fileNames.size(); ++i)
     {
         const Params &parameters = parametersVector[i];
@@ -82,9 +83,8 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
 
         if (type == "File" || type == "file")
         {
-            std::shared_ptr<Transport> file =
-                OpenFileTransport(fileNames[i], openMode, parameters, profile);
-            m_Transports.insert({i, file});
+            OpenFileIDInternal(fileNames[i], i, openMode, parameters, profile,
+                               true);
         }
     }
 }
@@ -96,19 +96,7 @@ std::future<void> TransportMan::OpenFilesAsync(
     auto lf_OpenFiles =
         [&](const std::vector<std::string> &fileNames, const Mode openMode,
             const std::vector<Params> &parametersVector, const bool profile) {
-            for (size_t i = 0; i < fileNames.size(); ++i)
-            {
-                const Params &parameters = parametersVector[i];
-                const std::string type = parameters.at("transport");
-
-                if (type == "File" || type == "file")
-                {
-                    std::shared_ptr<Transport> file = OpenFileTransport(
-                        fileNames[i], openMode, parameters, profile);
-                    // TODO might need mutex for multiple files
-                    m_Transports.insert({i, file});
-                }
-            }
+            OpenFiles(fileNames, openMode, parametersVector, profile);
         };
 
     return std::async(std::launch::async, lf_OpenFiles, std::move(fileNames),
@@ -117,11 +105,10 @@ std::future<void> TransportMan::OpenFilesAsync(
 
 void TransportMan::OpenFileID(const std::string &name, const size_t id,
                               const Mode mode, const Params &parameters,
-                              const bool profile)
+                              const bool profile, const bool overwrite)
 {
-    std::shared_ptr<Transport> file =
-        OpenFileTransport(name, mode, parameters, profile);
-    m_Transports.insert({id, file});
+    auto lock = LockTransports();
+    OpenFileIDInternal(name, id, mode, parameters, profile, overwrite);
 }
 
 std::vector<std::string> TransportMan::GetFilesBaseNames(
@@ -170,6 +157,7 @@ std::vector<std::string> TransportMan::GetFilesBaseNames(
 
 std::vector<std::string> TransportMan::GetTransportsTypes() noexcept
 {
+    auto lock = LockTransports();
     std::vector<std::string> types;
     types.reserve(m_Transports.size());
 
@@ -184,6 +172,7 @@ std::vector<std::string> TransportMan::GetTransportsTypes() noexcept
 std::vector<profiling::IOChrono *>
 TransportMan::GetTransportsProfilers() noexcept
 {
+    auto lock = LockTransports();
     std::vector<profiling::IOChrono *> profilers;
     profilers.reserve(m_Transports.size());
 
@@ -198,6 +187,7 @@ TransportMan::GetTransportsProfilers() noexcept
 void TransportMan::WriteFiles(const char *buffer, const size_t size,
                               const int transportIndex)
 {
+    auto lock = LockTransports();
     if (transportIndex == -1)
     {
         for (auto &transportPair : m_Transports)
@@ -213,8 +203,8 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to WriteFiles with index " +
-                                   std::to_string(transportIndex));
+        CheckFileInternal(itTransport, ", in call to WriteFiles with index " +
+                                           std::to_string(transportIndex));
         itTransport->second->Write(buffer, size);
     }
 }
@@ -222,50 +212,53 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
 void TransportMan::WriteFileAt(const char *buffer, const size_t size,
                                const size_t start, const int transportIndex)
 {
-
+    auto lock = LockTransports();
     auto itTransport = m_Transports.find(transportIndex);
-    CheckFile(itTransport, ", in call to WriteFileAt with index " +
-                               std::to_string(transportIndex));
+    CheckFileInternal(itTransport, ", in call to WriteFileAt with index " +
+                                       std::to_string(transportIndex));
     itTransport->second->Write(buffer, size, start);
 }
 
 void TransportMan::SeekToFileEnd(const int transportIndex)
 {
-
+    auto lock = LockTransports();
     auto itTransport = m_Transports.find(transportIndex);
-    CheckFile(itTransport, ", in call to SeekToFileEnd with index " +
-                               std::to_string(transportIndex));
+    CheckFileInternal(itTransport, ", in call to SeekToFileEnd with index " +
+                                       std::to_string(transportIndex));
     itTransport->second->SeekToEnd();
 }
 
 void TransportMan::SeekToFileBegin(const int transportIndex)
 {
-
+    auto lock = LockTransports();
     auto itTransport = m_Transports.find(transportIndex);
-    CheckFile(itTransport, ", in call to SeekToFileBegin with index " +
-                               std::to_string(transportIndex));
+    CheckFileInternal(itTransport, ", in call to SeekToFileBegin with index " +
+                                       std::to_string(transportIndex));
     itTransport->second->SeekToBegin();
 }
 
 size_t TransportMan::GetFileSize(const size_t transportIndex) const
 {
+    auto lock = LockTransports();
     auto itTransport = m_Transports.find(transportIndex);
-    CheckFile(itTransport, ", in call to GetFileSize with index " +
-                               std::to_string(transportIndex));
+    CheckFileInternal(itTransport, ", in call to GetFileSize with index " +
+                                       std::to_string(transportIndex));
     return itTransport->second->GetSize();
 }
 
 void TransportMan::ReadFile(char *buffer, const size_t size, const size_t start,
                             const size_t transportIndex)
 {
+    auto lock = LockTransports();
     auto itTransport = m_Transports.find(transportIndex);
-    CheckFile(itTransport, ", in call to ReadFile with index " +
-                               std::to_string(transportIndex));
+    CheckFileInternal(itTransport, ", in call to ReadFile with index " +
+                                       std::to_string(transportIndex));
     itTransport->second->Read(buffer, size, start);
 }
 
 void TransportMan::FlushFiles(const int transportIndex)
 {
+    auto lock = LockTransports();
     if (transportIndex == -1)
     {
         for (auto &transportPair : m_Transports)
@@ -281,14 +274,15 @@ void TransportMan::FlushFiles(const int transportIndex)
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to FlushFiles with index " +
-                                   std::to_string(transportIndex));
+        CheckFileInternal(itTransport, ", in call to FlushFiles with index " +
+                                           std::to_string(transportIndex));
         itTransport->second->Flush();
     }
 }
 
 void TransportMan::CloseFiles(const int transportIndex)
 {
+    auto lock = LockTransports();
     if (transportIndex == -1)
     {
         for (auto &transportPair : m_Transports)
@@ -304,33 +298,44 @@ void TransportMan::CloseFiles(const int transportIndex)
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to CloseFiles with index " +
-                                   std::to_string(transportIndex));
+        CheckFileInternal(itTransport, ", in call to CloseFiles with index " +
+                                           std::to_string(transportIndex));
         itTransport->second->Close();
     }
 }
 
+void TransportMan::ClearTransports()
+{
+    auto lock = LockTransports();
+    m_Transports.clear();
+}
+
 bool TransportMan::AllTransportsClosed() const noexcept
 {
-    bool allClose = true;
+    auto lock = LockTransports();
     for (const auto &transportPair : m_Transports)
     {
         const auto &transport = transportPair.second;
 
         if (transport->m_IsOpen)
         {
-            allClose = false;
-            break;
+            return false;
         }
     }
-    return allClose;
+    return true;
+}
+
+std::unique_lock<std::mutex> TransportMan::LockTransports() const
+{
+    return std::unique_lock<std::mutex>(m_TransportsMutex);
 }
 
 // PRIVATE
 std::shared_ptr<Transport>
-TransportMan::OpenFileTransport(const std::string &fileName,
-                                const Mode openMode, const Params &parameters,
-                                const bool profile)
+TransportMan::OpenFileTransportInternal(const std::string &fileName,
+                                        const Mode openMode,
+                                        const Params &parameters,
+                                        const bool profile)
 {
     auto lf_SetFileTransport = [&](const std::string library,
                                    std::shared_ptr<Transport> &transport) {
@@ -399,7 +404,21 @@ TransportMan::OpenFileTransport(const std::string &fileName,
     return transport;
 }
 
-void TransportMan::CheckFile(
+void TransportMan::OpenFileIDInternal(const std::string &name, const size_t id,
+                                      const Mode mode,
+                                      const Params &parameters,
+                                      const bool profile, const bool overwrite)
+{
+    auto ins = m_Transports.insert({id, std::shared_ptr<Transport>()});
+    if (ins.second || overwrite)
+    {
+        std::shared_ptr<Transport> file =
+            OpenFileTransportInternal(name, mode, parameters, profile);
+        ins.first->second = file;
+    }
+}
+
+void TransportMan::CheckFileInternal(
     std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator
         itTransport,
     const std::string hint) const
