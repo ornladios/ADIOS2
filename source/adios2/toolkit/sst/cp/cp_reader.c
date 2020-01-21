@@ -1211,10 +1211,10 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         }
         if (FoundTS)
         {
-            PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
             CP_verbose(Stream, "Returning metadata for Timestep %d\n",
                        FoundTS->MetadataMsg->Timestep);
             Stream->CurrentWorkingTimestep = FoundTS->MetadataMsg->Timestep;
+            PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
             return FoundTS;
         }
         /* didn't find a good next timestep, check Stream status */
@@ -1858,7 +1858,9 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         {
             Mdata->DP_TimestepInfo = MetadataMsg->DP_TimestepInfo;
         }
+        PTHREAD_MUTEX_LOCK(&Stream->DataLock);
         Stream->CurrentWorkingTimestep = MetadataMsg->Timestep;
+        PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         Mdata->FreeBlock = free_block;
         Stream->CurrentMetadata = Mdata;
 
