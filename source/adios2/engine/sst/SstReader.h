@@ -62,6 +62,7 @@ private:
     SstMarshalMethod m_WriterMarshalMethod;
     bool m_DefinitionsNotified = false;
     bool m_BetweenStepPairs = false;
+    std::mutex m_IOAttrMutex;
 
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;

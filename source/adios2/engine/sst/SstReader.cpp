@@ -79,6 +79,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
                               const char *type, void *data) {
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
+        std::unique_lock<std::mutex> lock(Reader->m_IOAttrMutex);
         if (attrName == NULL)
         {
             // if attrName is NULL, prepare for attr reinstallation
@@ -255,7 +256,10 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         break;
     }
     m_IO.RemoveAllVariables();
-    m_IO.RemoveAllAttributes();
+    {
+        std::unique_lock<std::mutex> lock(m_IOAttrMutex);
+        m_IO.RemoveAllAttributes();
+    }
     result = SstAdvanceStep(m_Input, timeout_sec);
     if (result == SstEndOfStream)
     {
