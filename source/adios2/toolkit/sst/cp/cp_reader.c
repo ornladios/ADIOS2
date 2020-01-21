@@ -681,7 +681,10 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
                                        struct _TimestepMetadataMsg *tsm,
                                        CMConnection conn)
 {
-    if (tsm->Timestep < Stream->DiscardPriorTimestep)
+    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    long DiscardPriorTimestep = Stream->DiscardPriorTimestep;
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+    if (tsm->Timestep < DiscardPriorTimestep)
     {
         struct _ReleaseTimestepMsg Msg;
         memset(&Msg, 0, sizeof(Msg));
