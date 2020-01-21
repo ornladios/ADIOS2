@@ -1293,7 +1293,10 @@ void sendOneToEachReaderRank(SstStream s, CMFormat f, void *Msg,
     {
         SST_ASSERT_UNLOCKED();
         WS_ReaderInfo CP_WSR_Stream = s->Readers[i];
-        if (CP_WSR_Stream->ReaderStatus == Established)
+        PTHREAD_MUTEX_LOCK(&s->DataLock);
+        enum StreamStatus ReaderStatus = CP_WSR_Stream->ReaderStatus;
+        PTHREAD_MUTEX_UNLOCK(&s->DataLock);
+        if (ReaderStatus == Established)
         {
             CP_verbose(s, "Working on reader cohort %d\n", i);
         }
