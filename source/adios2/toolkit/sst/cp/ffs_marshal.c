@@ -718,11 +718,13 @@ void SstReaderInitFFSCallback(SstStream Stream, void *Reader,
                               AttrSetupUpcallFunc AttrCallback,
                               ArrayBlocksInfoUpcallFunc BlocksInfoCallback)
 {
+    pthread_mutex_lock(&Stream->DataLock);
     Stream->VarSetupUpcall = VarCallback;
     Stream->ArraySetupUpcall = ArrayCallback;
     Stream->AttrSetupUpcall = AttrCallback;
     Stream->ArrayBlocksInfoUpcall = BlocksInfoCallback;
     Stream->SetupUpcallReader = Reader;
+    pthread_mutex_unlock(&Stream->DataLock);
 }
 
 extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
