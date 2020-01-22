@@ -138,7 +138,8 @@ exclude_patterns = [
     'engines/hdf5.rst',
     'engines/bp3.rst',
     'engines/sst.rst',
-    'engines/inline.rst'
+    'engines/inline.rst',
+    'engines/null.rst',
     # 'engines/engines.rst',
     # 'faq/faq.rst',
 ]
