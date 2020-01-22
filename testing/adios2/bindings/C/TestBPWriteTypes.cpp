@@ -239,7 +239,7 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         EXPECT_EQ(typeStrArray, "string");
 
         char **dataArray = new char *[4];
-        for (auto i = 0; i < 4; ++i)
+        for (int i = 0; i < 4; ++i)
         {
             dataArray[i] = new char[30]();
         }
@@ -344,6 +344,10 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
 
         adios2_close(engineH);
 
+        for (size_t i = 0; i < 4; ++i)
+        {
+            delete[] dataArray[i];
+        }
         delete[] dataArray;
     }
 }
