@@ -162,13 +162,13 @@ void HeatTransfer::exchange(MPI_Comm comm)
         //          << m_s.rank_left << std::endl;
         for (unsigned int i = 0; i < m_s.ndx + 2; ++i)
             send_x[i] = m_TCurrent[i][1];
-        MPI_Send(send_x, m_s.ndx + 2, MPI_REAL8, m_s.rank_left, tag, comm);
+        MPI_Send(send_x, m_s.ndx + 2, MPI_DOUBLE, m_s.rank_left, tag, comm);
     }
     if (m_s.rank_right >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from right from rank "
         //          << m_s.rank_right << std::endl;
-        MPI_Recv(recv_x, m_s.ndx + 2, MPI_REAL8, m_s.rank_right, tag, comm,
+        MPI_Recv(recv_x, m_s.ndx + 2, MPI_DOUBLE, m_s.rank_right, tag, comm,
                  &status);
         for (unsigned int i = 0; i < m_s.ndx + 2; ++i)
             m_TCurrent[i][m_s.ndy + 1] = recv_x[i];
@@ -182,13 +182,13 @@ void HeatTransfer::exchange(MPI_Comm comm)
         //          << m_s.rank_right << std::endl;
         for (unsigned int i = 0; i < m_s.ndx + 2; ++i)
             send_x[i] = m_TCurrent[i][m_s.ndy];
-        MPI_Send(send_x, m_s.ndx + 2, MPI_REAL8, m_s.rank_right, tag, comm);
+        MPI_Send(send_x, m_s.ndx + 2, MPI_DOUBLE, m_s.rank_right, tag, comm);
     }
     if (m_s.rank_left >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from left from rank "
         //          << m_s.rank_left << std::endl;
-        MPI_Recv(recv_x, m_s.ndx + 2, MPI_REAL8, m_s.rank_left, tag, comm,
+        MPI_Recv(recv_x, m_s.ndx + 2, MPI_DOUBLE, m_s.rank_left, tag, comm,
                  &status);
         for (unsigned int i = 0; i < m_s.ndx + 2; ++i)
             m_TCurrent[i][0] = recv_x[i];
@@ -200,14 +200,14 @@ void HeatTransfer::exchange(MPI_Comm comm)
     {
         // std::cout << "Rank " << m_s.rank << " send down to rank "
         //          << m_s.rank_down << std::endl;
-        MPI_Send(m_TCurrent[m_s.ndx], m_s.ndy + 2, MPI_REAL8, m_s.rank_down,
+        MPI_Send(m_TCurrent[m_s.ndx], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_down,
                  tag, comm);
     }
     if (m_s.rank_up >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from above from rank "
         //          << m_s.rank_up << std::endl;
-        MPI_Recv(m_TCurrent[0], m_s.ndy + 2, MPI_REAL8, m_s.rank_up, tag, comm,
+        MPI_Recv(m_TCurrent[0], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_up, tag, comm,
                  &status);
     }
 
@@ -218,13 +218,13 @@ void HeatTransfer::exchange(MPI_Comm comm)
         // std::cout << "Rank " << m_s.rank << " send up to rank " <<
         // m_s.rank_up
         //          << std::endl;
-        MPI_Send(m_TCurrent[1], m_s.ndy + 2, MPI_REAL8, m_s.rank_up, tag, comm);
+        MPI_Send(m_TCurrent[1], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_up, tag, comm);
     }
     if (m_s.rank_down >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from below from rank "
         //          << m_s.rank_down << std::endl;
-        MPI_Recv(m_TCurrent[m_s.ndx + 1], m_s.ndy + 2, MPI_REAL8, m_s.rank_down,
+        MPI_Recv(m_TCurrent[m_s.ndx + 1], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_down,
                  tag, comm, &status);
     }
 
