@@ -240,33 +240,67 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 if(ADIOS2_HAVE_HDF5)
-  target_sources(adios2 PRIVATE
+  add_library(adios2_hdf5 OBJECT
     core/IOHDF5.cpp
     engine/hdf5/HDF5ReaderP.cpp
     engine/hdf5/HDF5WriterP.cpp
     toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
     )
   if(NOT HDF5_VERSION VERSION_LESS 1.11)
-    target_sources(adios2 PRIVATE
+    target_sources(adios2_hdf5 PRIVATE
       engine/mixer/HDFMixer.cpp
       engine/mixer/HDFMixer.tcc
       engine/mixer/HDFMixerWriter.cpp
       )
   endif()
+  target_link_libraries(adios2 PRIVATE adios2_hdf5)
+  set_property(TARGET adios2_hdf5 PROPERTY EXPORT_NAME hdf5)
+
+  set(adios2_hdf5_objs adios2_hdf5)
   if(HDF5_IS_PARALLEL)
+    list(APPEND adios2_hdf5_objs adios2_hdf5_mpi)
     set_property(SOURCE core/IOMPI.cpp APPEND PROPERTY COMPILE_DEFINITIONS ADIOS2_HAVE_HDF5_PARALLEL)
-    target_sources(adios2 PRIVATE
+    add_library(adios2_hdf5_mpi OBJECT
       toolkit/interop/hdf5/HDF5CommonMPI.cpp
       )
+    target_link_libraries(adios2 PRIVATE adios2_hdf5_mpi)
+    set_property(TARGET adios2_hdf5_mpi PROPERTY EXPORT_NAME hdf5_mpi)
   endif()
 
-  target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
+  foreach(lib IN LISTS adios2_hdf5_objs)
+    target_link_libraries(${lib} PRIVATE ${HDF5_C_LIBRARIES})
+    if(HDF5_IS_PARALLEL)
+      target_link_libraries(${lib} PRIVATE $<BUILD_INTERFACE:MPI::MPI_C>)
+    endif()
+    if(BUILD_SHARED_LIBS)
+      set_property(TARGET ${lib} PROPERTY POSITION_INDEPENDENT_CODE 1)
+    else()
+      # When this is included in a static library we must export the
+      # target so that consumers know the link dependencies.
+      install(TARGETS ${lib} EXPORT adios2Exports)
+    endif()
+    target_include_directories(${lib} PRIVATE
+      ${ADIOS2_SOURCE_DIR}/source
+      ${ADIOS2_BINARY_DIR}/source
+      )
 
-  if(HDF5_C_INCLUDE_DIRS)
-    target_include_directories(adios2 PRIVATE ${HDF5_C_INCLUDE_DIRS})
-  else()
-    target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
-  endif()
+    if(HDF5_C_INCLUDE_DIRS)
+      target_include_directories(${lib} PRIVATE ${HDF5_C_INCLUDE_DIRS})
+    else()
+      target_include_directories(${lib} PRIVATE ${HDF5_INCLUDE_DIRS})
+    endif()
+
+    if(CMAKE_VERSION VERSION_LESS 3.14)
+      # CMake < 3.14 forgets to propagate private dependencies of object
+      # libraries.  Propagate them the same way CMake >= 3.14 do.
+      # FIXME: Drop this workaround when we require CMake 3.14.
+      get_property(deps TARGET ${lib} PROPERTY LINK_LIBRARIES)
+      foreach(dep ${deps})
+        target_link_libraries(${lib} INTERFACE "$<LINK_ONLY:${dep}>")
+      endforeach()
+    endif()
+  endforeach()
+
 endif()
 
 # Set library version information
