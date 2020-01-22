@@ -14,6 +14,7 @@
 #include "BP3Serializer.h"
 
 #include <algorithm> // std::all_of, std::fill_n
+#include <array>
 
 #include "adios2/helper/adiosFunctions.h"
 
