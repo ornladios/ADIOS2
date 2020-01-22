@@ -1,7 +1,7 @@
 FROM fedora:latest
 
 # Install core dev packages
-RUN dnf -y install git make curl file patch vim llvm clang
+RUN dnf -y install git make curl file patch vim llvm clang findutils
 
 # Install CMake nightly
 RUN mkdir -p /opt/cmake && \
@@ -143,3 +143,19 @@ RUN git clone --branch v1.17.1 \
     ninja install && \
     cd .. && \
     rm -rf source build
+
+# Build and install OpenMPI
+WORKDIR /opt/openmpi
+RUN curl --output openmpi-4.0.2.tar.bz2 \
+        https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.bz2 && \
+    /opt/cmake/bin/cmake -E tar xf openmpi-4.0.2.tar.bz2 && \
+    mkdir -p build && \
+    cd build && \
+    ../openmpi-4.0.2/configure \
+        --prefix=/opt/openmpi/4.0.2/tsan \
+        --enable-mpi-cxx \
+        CC="/usr/bin/clang -fsanitize=thread" \
+        CXX="/usr/bin/clang++ -fsanitize=thread -nostdinc++ -isystem /opt/llvm/9.0.0/libcxx-tsan/include/c++/v1 -stdlib=libc++ -L/opt/llvm/9.0.0/libcxx-tsan/lib -Wl,-rpath,/opt/llvm/9.0.0/libcxx-tsan/lib -Wno-unused-command-line-argument" && \
+    make -j4 install && \
+    cd .. && \
+    rm -rf openmpi-4.0.2 build openmpi-4.0.2.tar.bz2
