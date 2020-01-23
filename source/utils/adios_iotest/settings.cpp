@@ -24,7 +24,7 @@ struct option options[] = {{"help", no_argument, NULL, 'h'},
                            {"strong-scaling", no_argument, NULL, 's'},
                            {"weak-scaling", no_argument, NULL, 'w'},
                            {"timer", no_argument, NULL, 't'},
-#ifdef ADIOS2_HAVE_HDF5
+#ifdef ADIOS2_HAVE_HDF5_PARALLEL
                            {"hdf5", no_argument, NULL, 'H'},
 #endif
                            {NULL, 0, NULL, 0}};
@@ -53,7 +53,7 @@ void Settings::displayHelp()
         << "  -s OR -w:  strong or weak scaling. \n"
         << "             Dimensions in config are treated accordingly\n"
         << "  -x file    ADIOS configuration XML file\n"
-#ifdef ADIOS2_HAVE_HDF5
+#ifdef ADIOS2_HAVE_HDF5_PARALLEL
         << "  --hdf5     Use native Parallel HDF5 instead of ADIOS for I/O\n"
 #endif
         << "  -v         increase verbosity\n"
@@ -105,7 +105,7 @@ int Settings::processArgs(int argc, char *argv[])
                 displayHelp();
             }
             return 1;
-#ifdef ADIOS2_HAVE_HDF5
+#ifdef ADIOS2_HAVE_HDF5_PARALLEL
         case 'H':
             iolib = IOLib::HDF5;
             break;

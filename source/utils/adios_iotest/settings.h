@@ -22,7 +22,7 @@
 enum class IOLib
 {
     ADIOS
-#ifdef ADIOS2_HAVE_HDF5
+#ifdef ADIOS2_HAVE_HDF5_PARALLEL
     ,
     HDF5
 #endif
