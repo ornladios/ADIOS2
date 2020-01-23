@@ -49,7 +49,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
     adios2::ADIOS adios(true);
@@ -190,7 +190,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
     const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
                               "ADIOS2BPWriteAttributeReadArrayTypes.h5";
 
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -216,7 +216,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
         generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
     adios2::ADIOS adios(true);
@@ -391,7 +391,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
     const std::string separator = "/";
 
 // Write test data using BP
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
     adios2::ADIOS adios(true);
@@ -538,7 +538,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
     const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
                               "BPWriteAttributeReadArrayTypesVar.h5";
 
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -563,7 +563,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
         generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
     adios2::ADIOS adios(true);
@@ -724,7 +724,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -732,7 +732,7 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     MPI_Finalize();
 #endif
 
