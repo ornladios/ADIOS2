@@ -1789,7 +1789,7 @@ iteration_statement:
 	FOR LPAREN expression_opt SEMI expression_opt SEMI expression_opt RPAREN statement
 	{ 
 	    $$ = cod_new_iteration_statement();
-	    $$->node.selection_statement.lx_srcpos = $1.lx_srcpos;
+	    $$->node.iteration_statement.lx_srcpos = $1.lx_srcpos;
 	    $$->node.iteration_statement.init_expr = $3;
 	    $$->node.iteration_statement.test_expr = $5;
 	    $$->node.iteration_statement.iter_expr = $7;
@@ -1799,7 +1799,7 @@ iteration_statement:
 	WHILE LPAREN expression RPAREN statement
 	{ 
 	    $$ = cod_new_iteration_statement();
-	    $$->node.selection_statement.lx_srcpos = $1.lx_srcpos;
+	    $$->node.iteration_statement.lx_srcpos = $1.lx_srcpos;
 	    $$->node.iteration_statement.init_expr = NULL;
 	    $$->node.iteration_statement.test_expr = $3;
 	    $$->node.iteration_statement.iter_expr = NULL;
@@ -1809,7 +1809,7 @@ iteration_statement:
 	DO statement WHILE LPAREN expression RPAREN SEMI
 	{ 
 	    $$ = cod_new_iteration_statement();
-	    $$->node.selection_statement.lx_srcpos = $1.lx_srcpos;
+	    $$->node.iteration_statement.lx_srcpos = $1.lx_srcpos;
 	    $$->node.iteration_statement.init_expr = NULL;
 	    $$->node.iteration_statement.test_expr = NULL;
 	    $$->node.iteration_statement.post_test_expr = $5;
