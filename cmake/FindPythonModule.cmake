@@ -119,10 +119,12 @@ set( PythonModule_${module_NAME}_PATH
   endif()
 
   include(FindPackageHandleStandardArgs)
+  set(FPHSA_NAME_MISMATCHED TRUE)
   find_package_handle_standard_args(PythonModule_${module_NAME}
     FOUND_VAR PythonModule_${module_NAME}_FOUND
     REQUIRED_VARS ${required_vars}
   )
+  unset(FPHSA_NAME_MISMATCHED)
 endif()
 
 if(PythonModule_${module_NAME}_FOUND AND
