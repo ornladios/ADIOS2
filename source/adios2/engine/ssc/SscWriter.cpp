@@ -48,8 +48,8 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 
 
     //MPI_Comm_size( m_Comm, &lsize);
-    // MPI_Gather(sendarray, 100, MPI_INT, rbuf, 100, MPI_INT,  root = 0, m_Comm);
-    MPI_Gather(m_WriterRank, 1, MPI_INT, rbuf, 1, MPI_INT, 0, m_Comm);
+    // MPI_Gather(sendarray, 100, MPI_INT, rbuf, 100, MPI_INT,  root = 0,
+    m_Comm); MPI_Gather(m_WriterRank, 1, MPI_INT, rbuf, 1, MPI_INT, 0, m_Comm);
 
     */
     SyncMpiPattern();
@@ -139,30 +139,23 @@ void SscWriter::SyncMpiPattern()
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
-
     std::vector<int> lrbuf;
     std::vector<int> grbuf;
-    int m_AppID = 0;
-    int m_AppSize = 0;  //Total number of applications.
-    std::vector<std::vector<int>> m_WriterGlobalMpiInfo;
-    std::vector<std::vector<int>> m_ReaderGlobalMpiInfo;
 
-
-    // Process m_WorldRank == 0 to gather all the local rank m_WriterRank, and find out all the m_WriterRank == 0
+    // Process m_WorldRank == 0 to gather all the local rank m_WriterRank, and
+    // find out all the m_WriterRank == 0
     if (m_WorldRank == 0)
     {
         grbuf.resize(m_WorldSize);
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Gather( &m_WriterRank, 1, MPI_INT, grbuf.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Gather(&m_WriterRank, 1, MPI_INT, grbuf.data(), 1, MPI_INT, 0,
+               MPI_COMM_WORLD);
 
-
-    std::vector<int> AppStart;  // m_WorldRank of the local rank 0 process
+    std::vector<int> AppStart; // m_WorldRank of the local rank 0 process
     if (m_WorldRank == 0)
     {
-        for ( int i = 0; i < m_WorldSize; ++i )
+        for (int i = 0; i < m_WorldSize; ++i)
         {
             if (grbuf[i] == 0)
             {
@@ -172,11 +165,13 @@ void SscWriter::SyncMpiPattern()
         m_AppSize = AppStart.size();
     }
 
-
-    //Each local rank 0 process send their type (0 for writer, 1 for reader) to the world rank 0 process
-    //The AppStart are re-ordered to put all writers ahead of all the readers.
-    std::vector<int> AppType;  // Vector to record the type of the local rank 0 process
-    if (m_WriterRank == 0) // Send type from each local rank 0 process to the world rank 0 process
+    // Each local rank 0 process send their type (0 for writer, 1 for reader) to
+    // the world rank 0 process The AppStart are re-ordered to put all writers
+    // ahead of all the readers.
+    std::vector<int>
+        AppType; // Vector to record the type of the local rank 0 process
+    if (m_WriterRank == 0) // Send type from each local rank 0 process to the
+                           // world rank 0 process
     {
         if (m_WorldRank == 0) // App_ID
         {
@@ -190,7 +185,8 @@ void SscWriter::SyncMpiPattern()
                 else
                 {
                     int tmp = 1;
-                    MPI_Recv(&tmp, 1, MPI_INT, AppStart[i], 96, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    MPI_Recv(&tmp, 1, MPI_INT, AppStart[i], 96, MPI_COMM_WORLD,
+                             MPI_STATUS_IGNORE);
                     AppType[i] = tmp;
                 }
             }
@@ -198,7 +194,7 @@ void SscWriter::SyncMpiPattern()
         else
         {
             int tmp = 0; // type 0 for writer
-            MPI_Send( &tmp, 1, MPI_INT, 0, 96, MPI_COMM_WORLD); //
+            MPI_Send(&tmp, 1, MPI_INT, 0, 96, MPI_COMM_WORLD); //
         }
     }
 
@@ -224,7 +220,6 @@ void SscWriter::SyncMpiPattern()
         AppStart.insert(AppStart.end(), AppReader.begin(), AppReader.end());
     }
 
-
     // Send the m_AppSize and m_AppID to each local rank 0 process
     if (m_WriterRank == 0) // Send m_AppID to each local rank 0 process
     {
@@ -232,29 +227,31 @@ void SscWriter::SyncMpiPattern()
         {
             for (int i = 0; i < m_AppSize; ++i)
             {
-                MPI_Send( &i, 1, MPI_INT, AppStart[i], 99, MPI_COMM_WORLD); //
+                MPI_Send(&i, 1, MPI_INT, AppStart[i], 99, MPI_COMM_WORLD); //
             }
         }
         else
         {
-            MPI_Recv(&m_AppID, 1, MPI_INT, 0, 99, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&m_AppID, 1, MPI_INT, 0, 99, MPI_COMM_WORLD,
+                     MPI_STATUS_IGNORE);
         }
     }
 
-    m_Comm.Bcast(&m_AppID , sizeof(int), 0);  // Local rank 0 process broadcast the m_AppID within the local communicator.
+    m_Comm.Bcast(&m_AppID, 1, 0); // Local rank 0 process broadcast the m_AppID
+                                  // within the local communicator.
 
-    MPI_Bcast( &m_AppSize, 1, MPI_INT, 0, MPI_COMM_WORLD); // Bcast the m_AppSize
+    MPI_Bcast(&m_AppSize, 1, MPI_INT, 0, MPI_COMM_WORLD); // Bcast the m_AppSize
 
-
-    // In each local communicator, each local rank 0 process gathers the world rank of all the rest local processes.
+    // In each local communicator, each local rank 0 process gathers the world
+    // rank of all the rest local processes.
     if (m_WriterRank == 0)
     {
         lrbuf.resize(m_WriterSize);
     }
     m_Comm.Gather(&m_WorldRank, 1, lrbuf.data(), 1, 0);
 
-
-    // Send the WorldRank vector of each local communicator to the m_WorldRank == 0 process.
+    // Send the WorldRank vector of each local communicator to the m_WorldRank
+    // == 0 process.
     int WriterInfoSize = 0;
     int ReaderInfoSize = 0;
     if (m_WriterRank == 0)
@@ -271,11 +268,14 @@ void SscWriter::SyncMpiPattern()
                 else
                 {
                     int j_writersize;
-                    MPI_Recv( &j_writersize, 1, MPI_INT, AppStart[i], 96, MPI_COMM_WORLD, MPI_STATUS_IGNORE); //
+                    MPI_Recv(&j_writersize, 1, MPI_INT, AppStart[i], 96,
+                             MPI_COMM_WORLD, MPI_STATUS_IGNORE); //
                     ++WriterInfoSize;
 
                     m_WriterGlobalMpiInfo[i].resize(j_writersize);
-                    MPI_Recv( m_WriterGlobalMpiInfo[i].data(), j_writersize, MPI_INT, AppStart[i], 98, MPI_COMM_WORLD, MPI_STATUS_IGNORE); //
+                    MPI_Recv(m_WriterGlobalMpiInfo[i].data(), j_writersize,
+                             MPI_INT, AppStart[i], 98, MPI_COMM_WORLD,
+                             MPI_STATUS_IGNORE); //
                 }
             }
 
@@ -289,30 +289,36 @@ void SscWriter::SyncMpiPattern()
                 else
                 {
                     int j_readersize;
-                    MPI_Recv( &j_readersize, 1, MPI_INT, AppStart[i], 95, MPI_COMM_WORLD, MPI_STATUS_IGNORE); //
+                    MPI_Recv(&j_readersize, 1, MPI_INT, AppStart[i], 95,
+                             MPI_COMM_WORLD, MPI_STATUS_IGNORE); //
                     ++ReaderInfoSize;
 
-                    m_ReaderGlobalMpiInfo[i-m_WriterGlobalMpiInfo.size()].resize(j_readersize);
-                    MPI_Recv( m_ReaderGlobalMpiInfo[i-m_WriterGlobalMpiInfo.size()].data(), j_readersize, MPI_INT, AppStart[i], 97, MPI_COMM_WORLD, MPI_STATUS_IGNORE); //
+                    m_ReaderGlobalMpiInfo[i - m_WriterGlobalMpiInfo.size()]
+                        .resize(j_readersize);
+                    MPI_Recv(
+                        m_ReaderGlobalMpiInfo[i - m_WriterGlobalMpiInfo.size()]
+                            .data(),
+                        j_readersize, MPI_INT, AppStart[i], 97, MPI_COMM_WORLD,
+                        MPI_STATUS_IGNORE); //
                 }
             }
         }
         else
         {
             MPI_Send(&m_WriterSize, 1, MPI_INT, 0, 96, MPI_COMM_WORLD);
-            MPI_Send(lrbuf.data(), lrbuf.size(), MPI_INT, 0, 98, MPI_COMM_WORLD);
+            MPI_Send(lrbuf.data(), lrbuf.size(), MPI_INT, 0, 98,
+                     MPI_COMM_WORLD);
         }
     }
 
-
-    // Broadcast m_WriterGlobalMpiInfo and m_ReaderGlobalMpiInfo to all the processes.
-    MPI_Bcast(&WriterInfoSize, 1, MPI_INT, 0, MPI_COMM_WORLD); // Broadcast writerinfo size
+    // Broadcast m_WriterGlobalMpiInfo and m_ReaderGlobalMpiInfo to all the
+    // processes.
+    MPI_Bcast(&WriterInfoSize, 1, MPI_INT, 0,
+              MPI_COMM_WORLD); // Broadcast writerinfo size
     MPI_Bcast(&ReaderInfoSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (m_WorldRank != 0)
-    {
-        m_WriterGlobalMpiInfo.resize(WriterInfoSize);
-        m_ReaderGlobalMpiInfo.resize(ReaderInfoSize);
-    }
+
+    m_WriterGlobalMpiInfo.resize(WriterInfoSize);
+    m_ReaderGlobalMpiInfo.resize(ReaderInfoSize);
 
     for (int i = 0; i < WriterInfoSize; ++i)
     {
@@ -322,8 +328,10 @@ void SscWriter::SyncMpiPattern()
             ilen = m_WriterGlobalMpiInfo[i].size();
         }
         MPI_Bcast(&ilen, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
         m_WriterGlobalMpiInfo[i].resize(ilen);
-        MPI_Bcast(m_WriterGlobalMpiInfo[i].data(), ilen, MPI_INT, 0, MPI_COMM_WORLD); // Broadcast readerinfo size
+        MPI_Bcast(m_WriterGlobalMpiInfo[i].data(), ilen, MPI_INT, 0,
+                  MPI_COMM_WORLD); // Broadcast readerinfo size
     }
 
     for (int i = 0; i < ReaderInfoSize; ++i)
@@ -335,36 +343,39 @@ void SscWriter::SyncMpiPattern()
         }
         MPI_Bcast(&ilen, 1, MPI_INT, 0, MPI_COMM_WORLD);
         m_ReaderGlobalMpiInfo[i].resize(ilen);
-        MPI_Bcast(m_ReaderGlobalMpiInfo[i].data(), ilen, MPI_INT, 0, MPI_COMM_WORLD); // Broadcast readerinfo size
+        MPI_Bcast(m_ReaderGlobalMpiInfo[i].data(), ilen, MPI_INT, 0,
+                  MPI_COMM_WORLD); // Broadcast readerinfo size
     }
 
-
-    std::cout << "WorldRank " << m_WorldRank << std::endl;
-    std::cout << "AppID " << m_AppID << std::endl;
-    std::cout << "AppSize " << m_AppSize << std::endl;
-    std::cout << "m_WriterGlobalMpiInfo have:" << std::endl;
-    for (int i = 0; i < m_WriterGlobalMpiInfo.size(); ++i)
+    if (m_Verbosity >= 10)
     {
-        std::cout << "Vector " << i << ": ";
-        for (int j = 0; j < m_WriterGlobalMpiInfo[i].size(); ++j)
+        std::cout << "WorldRank " << m_WorldRank << std::endl;
+        std::cout << "AppID " << m_AppID << std::endl;
+        std::cout << "AppSize " << m_AppSize << std::endl;
+        std::cout << "m_WriterGlobalMpiInfo have:" << std::endl;
+        for (int i = 0; i < m_WriterGlobalMpiInfo.size(); ++i)
         {
-            std::cout << m_WriterGlobalMpiInfo[i][j] << "  ";
+            std::cout << "Vector " << i << ": ";
+            for (int j = 0; j < m_WriterGlobalMpiInfo[i].size(); ++j)
+            {
+                std::cout << m_WriterGlobalMpiInfo[i][j] << "  ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << "m_ReaderGlobalMpiInfo have:" << std::endl;
+        for (int i = 0; i < m_ReaderGlobalMpiInfo.size(); ++i)
+        {
+            std::cout << "Vector " << i << ": ";
+            for (int j = 0; j < m_ReaderGlobalMpiInfo[i].size(); ++j)
+            {
+                std::cout << m_ReaderGlobalMpiInfo[i][j] << "  ";
+            }
+            std::cout << std::endl;
         }
         std::cout << std::endl;
-    }
-
-    std::cout << "m_ReaderGlobalMpiInfo have:" << std::endl;
-    for (int i = 0; i < m_ReaderGlobalMpiInfo.size(); ++i)
-    {
-        std::cout << "Vector " << i << ": ";
-        for (int j = 0; j < m_ReaderGlobalMpiInfo[i].size(); ++j)
-        {
-            std::cout << m_ReaderGlobalMpiInfo[i][j] << "  ";
-        }
         std::cout << std::endl;
     }
-    std::cout << std::endl;
-    std::cout << std::endl;
 }
 
 void SscWriter::SyncWritePattern()
