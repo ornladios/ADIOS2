@@ -36,22 +36,6 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     m_GlobalWritePattern.resize(m_WriterSize);
     m_GlobalReadPattern.resize(m_ReaderSize);
 
-    /*
-    int lsize;
-    int *rbuf;
-    ...
-    if (m_WriterRank == 0)
-    {
-        MPI_Comm_size(m_Comm, &lsize);
-        rbuf = (int*)malloc(lsize*1*sizeof(int));
-    }
-
-
-    //MPI_Comm_size( m_Comm, &lsize);
-    // MPI_Gather(sendarray, 100, MPI_INT, rbuf, 100, MPI_INT,  root = 0,
-    m_Comm); MPI_Gather(m_WriterRank, 1, MPI_INT, rbuf, 1, MPI_INT, 0, m_Comm);
-
-    */
     SyncMpiPattern();
 }
 
