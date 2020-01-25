@@ -289,8 +289,6 @@ void SstWriter::Init()
 {
     SstParamParser Parser;
 
-    memset(&Params, 0,
-           sizeof(Params)); // to avoid uninit byte errs in transmission
     Parser.ParseParams(m_IO, Params);
 
 #define set_params(Param, Type, Typedecl, Default) m_##Param = Params.Param;
