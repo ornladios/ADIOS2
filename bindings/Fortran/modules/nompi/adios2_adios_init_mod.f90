@@ -48,7 +48,7 @@ contains
         integer debug_mode
 
         debug_mode = adios2_LogicalToInt(adios2_debug_mode)
-        call adios2_init_config_f2c(adios%f2c, config_file, debug_mode, ierr)
+        call adios2_init_config_serial_f2c(adios%f2c, config_file, debug_mode, ierr)
         if( ierr == 0 ) adios%valid = .true.
 
     end subroutine

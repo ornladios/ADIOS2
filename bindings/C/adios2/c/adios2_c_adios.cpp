@@ -24,9 +24,10 @@ extern "C" {
 #ifdef ADIOS2_HAVE_MPI
 
 // to be called from other languages, hidden from the public apis
-adios2_adios *adios2_init_config_glue(const char *config_file, MPI_Comm comm,
-                                      const adios2_debug_mode debug_mode,
-                                      const char *host_language)
+adios2_adios *adios2_init_config_glue_mpi(const char *config_file,
+                                          MPI_Comm comm,
+                                          const adios2_debug_mode debug_mode,
+                                          const char *host_language)
 {
     adios2_adios *adios = nullptr;
 
@@ -48,22 +49,22 @@ adios2_adios *adios2_init_config_glue(const char *config_file, MPI_Comm comm,
     return adios;
 }
 
-adios2_adios *adios2_init(MPI_Comm comm, const adios2_debug_mode debug_mode)
+adios2_adios *adios2_init_mpi(MPI_Comm comm, const adios2_debug_mode debug_mode)
 {
     return adios2_init_config("", comm, debug_mode);
 }
 
-adios2_adios *adios2_init_config(const char *config_file, MPI_Comm comm,
-                                 const adios2_debug_mode debug_mode)
+adios2_adios *adios2_init_config_mpi(const char *config_file, MPI_Comm comm,
+                                     const adios2_debug_mode debug_mode)
 {
-    return adios2_init_config_glue(config_file, comm, debug_mode, "C");
+    return adios2_init_config_glue_mpi(config_file, comm, debug_mode, "C");
 }
 
-#else
+#endif
 
-adios2_adios *adios2_init_config_glue(const char *config_file,
-                                      const adios2_debug_mode debug_mode,
-                                      const char *host_language)
+adios2_adios *adios2_init_config_glue_serial(const char *config_file,
+                                             const adios2_debug_mode debug_mode,
+                                             const char *host_language)
 {
     adios2_adios *adios = nullptr;
     try
@@ -83,17 +84,16 @@ adios2_adios *adios2_init_config_glue(const char *config_file,
     return adios;
 }
 
-adios2_adios *adios2_init(const adios2_debug_mode debug_mode)
+adios2_adios *adios2_init_serial(const adios2_debug_mode debug_mode)
 {
-    return adios2_init_config("", debug_mode);
+    return adios2_init_config_serial("", debug_mode);
 }
 
-adios2_adios *adios2_init_config(const char *config_file,
-                                 const adios2_debug_mode debug_mode)
+adios2_adios *adios2_init_config_serial(const char *config_file,
+                                        const adios2_debug_mode debug_mode)
 {
-    return adios2_init_config_glue("", debug_mode, "C");
+    return adios2_init_config_glue_serial("", debug_mode, "C");
 }
-#endif
 
 adios2_io *adios2_declare_io(adios2_adios *adios, const char *name)
 {

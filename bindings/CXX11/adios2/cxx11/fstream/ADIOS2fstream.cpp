@@ -34,8 +34,8 @@ fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                                           ioInConfigFile, "C++"))
 {
 }
+#endif
 
-#else
 fstream::fstream(const std::string &name, const openmode mode,
                  const std::string engineType)
 : m_Stream(
@@ -50,7 +50,6 @@ fstream::fstream(const std::string &name, const openmode mode,
                                           ioInConfigFile, "C++"))
 {
 }
-#endif
 
 #ifdef ADIOS2_HAVE_MPI
 void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
@@ -70,7 +69,8 @@ void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
         name, ToMode(mode), helper::CommFromMPI(comm), configFile,
         ioInConfigFile, "C++");
 }
-#else
+#endif
+
 void fstream::open(const std::string &name, const openmode mode,
                    const std::string engineType)
 {
@@ -87,7 +87,6 @@ void fstream::open(const std::string &name, const openmode mode,
     m_Stream = std::make_shared<core::Stream>(name, ToMode(mode), configFile,
                                               ioInConfigFile, "C++");
 }
-#endif
 
 fstream::operator bool() const noexcept
 {

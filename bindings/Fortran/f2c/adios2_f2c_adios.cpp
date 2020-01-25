@@ -21,56 +21,58 @@ extern "C" {
 #ifdef ADIOS2_HAVE_MPI_F
 
 // this function is not exposed in the public APIs
-extern adios2_adios *adios2_init_config_glue(const char *config_file,
-                                             MPI_Comm comm,
-                                             const adios2_debug_mode debug_mode,
-                                             const char *host_language);
+extern adios2_adios *
+adios2_init_config_glue_mpi(const char *config_file, MPI_Comm comm,
+                            const adios2_debug_mode debug_mode,
+                            const char *host_language);
 
-void FC_GLOBAL(adios2_init_config_f2c,
-               ADIOS2_INIT_CONFIG_F2C)(adios2_adios **adios,
-                                       const char *config_file, MPI_Fint *comm,
-                                       const int *debug_mode, int *ierr)
+void FC_GLOBAL(adios2_init_config_mpi_f2c,
+               ADIOS2_INIT_CONFIG_MPI_F2C)(adios2_adios **adios,
+                                           const char *config_file,
+                                           MPI_Fint *comm,
+                                           const int *debug_mode, int *ierr)
 {
-    *adios = adios2_init_config_glue(
+    *adios = adios2_init_config_glue_mpi(
         config_file, MPI_Comm_f2c(*comm),
         static_cast<adios2_debug_mode>(*debug_mode), "Fortran");
     *ierr = (*adios == NULL) ? static_cast<int>(adios2_error_exception)
                              : static_cast<int>(adios2_error_none);
 }
 
-void FC_GLOBAL(adios2_init_f2c,
-               ADIOS2_INIT_F2C)(adios2_adios **adios, MPI_Fint *comm,
-                                const int *debug_mode, int *ierr)
+void FC_GLOBAL(adios2_init_mpi_f2c,
+               ADIOS2_INIT_MPI_F2C)(adios2_adios **adios, MPI_Fint *comm,
+                                    const int *debug_mode, int *ierr)
 {
-    FC_GLOBAL(adios2_init_config_f2c, ADIOS2_INIT_CONFIG_F2C)
+    FC_GLOBAL(adios2_init_config_mpi_f2c, ADIOS2_INIT_CONFIG_MPI_F2C)
     (adios, "", comm, debug_mode, ierr);
 }
-#else
+
+#endif
 
 // this function is not exposed in the public APIs
-extern adios2_adios *adios2_init_config_glue(const char *config_file,
-                                             const adios2_debug_mode debug_mode,
-                                             const char *host_language);
+extern adios2_adios *
+adios2_init_config_glue_serial(const char *config_file,
+                               const adios2_debug_mode debug_mode,
+                               const char *host_language);
 
-void FC_GLOBAL(adios2_init_config_f2c,
-               ADIOS2_INIT_CONFIG_F2C)(adios2_adios **adios,
-                                       const char *config_file,
-                                       const int *debug_mode, int *ierr)
+void FC_GLOBAL(adios2_init_config_serial_f2c,
+               ADIOS2_INIT_CONFIG_SERIAL_F2C)(adios2_adios **adios,
+                                              const char *config_file,
+                                              const int *debug_mode, int *ierr)
 {
-    *adios = adios2_init_config_glue(
+    *adios = adios2_init_config_glue_serial(
         config_file, static_cast<adios2_debug_mode>(*debug_mode), "Fortran");
     *ierr = (*adios == NULL) ? static_cast<int>(adios2_error_exception)
                              : static_cast<int>(adios2_error_none);
 }
 
-void FC_GLOBAL(adios2_init_f2c, ADIOS2_INIT_F2C)(adios2_adios **adios,
-                                                 const int *debug_mode,
-                                                 int *ierr)
+void FC_GLOBAL(adios2_init_serial_f2c,
+               ADIOS2_INIT_SERIAL_F2C)(adios2_adios **adios,
+                                       const int *debug_mode, int *ierr)
 {
-    FC_GLOBAL(adios2_init_config_f2c, ADIOS2_INIT_CONFIG_F2C)
+    FC_GLOBAL(adios2_init_config_serial_f2c, ADIOS2_INIT_CONFIG_SERIAL_F2C)
     (adios, "", debug_mode, ierr);
 }
-#endif
 
 void FC_GLOBAL(adios2_declare_io_f2c,
                ADIOS2_DECLARE_IO_F2C)(adios2_io **io, adios2_adios **adios,
