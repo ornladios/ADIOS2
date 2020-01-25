@@ -52,6 +52,7 @@ public:
 
     int Rank() const override;
     int Size() const override;
+    bool IsMPI() const override;
     void Barrier(const std::string &hint) const override;
 
     void Allgather(const void *sendbuf, size_t sendcount, Datatype sendtype,
@@ -121,6 +122,8 @@ std::unique_ptr<CommImpl> CommImplDummy::World(const std::string &) const
 int CommImplDummy::Rank() const { return 0; }
 
 int CommImplDummy::Size() const { return 1; }
+
+bool CommImplDummy::IsMPI() const { return false; }
 
 void CommImplDummy::Barrier(const std::string &) const {}
 

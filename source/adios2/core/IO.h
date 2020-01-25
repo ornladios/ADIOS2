@@ -459,6 +459,47 @@ public:
     template <class T>
     std::map<unsigned int, Attribute<T>> &GetAttributeMap() noexcept;
 
+    using MakeEngineFunc = std::function<std::shared_ptr<Engine>(
+        IO &, const std::string &, const Mode, helper::Comm)>;
+    struct EngineFactoryEntry
+    {
+        MakeEngineFunc MakeReader;
+        MakeEngineFunc MakeWriter;
+    };
+
+    /**
+     * Create a MakeEngineFunc that throws a std::invalid_argument
+     * exception with the given error string.  This is useful when
+     * an engine lacks support for either reading or writing.
+     */
+    static MakeEngineFunc NoEngine(std::string e);
+
+    /**
+     * Create an EngineFactoryEntry that throws a std::invalid_argument
+     * exception with the given error string for both reader and writer.
+     * This is useful when compiling without support for some engines.
+     */
+    static EngineFactoryEntry NoEngineEntry(std::string e);
+
+    /**
+     * Create an engine of type T.  This is intended to be used when
+     * creating instances of EngineFactoryEntry for RegisterEngine.
+     */
+    template <typename T>
+    static std::shared_ptr<Engine> MakeEngine(IO &io, const std::string &name,
+                                              const Mode mode,
+                                              helper::Comm comm)
+    {
+        return std::make_shared<T>(io, name, mode, std::move(comm));
+    }
+
+    /**
+     * Register an engine factory entry to create a reader or writer
+     * for an engine of the given engine type (named in lower case).
+     */
+    static void RegisterEngine(const std::string &engineType,
+                               EngineFactoryEntry entry);
+
 private:
     /** true: exist in config file (XML) */
     const bool m_InConfigFile = false;

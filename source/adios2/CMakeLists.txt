@@ -229,6 +229,7 @@ endif()
 
 if(ADIOS2_HAVE_MPI)
   target_sources(adios2 PRIVATE
+    core/IOMPI.cpp
     helper/adiosCommMPI.h  helper/adiosCommMPI.cpp
     engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc
     engine/insitumpi/InSituMPIReader.cpp engine/insitumpi/InSituMPIReader.tcc
@@ -238,30 +239,33 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 if(ADIOS2_HAVE_HDF5)
+  target_sources(adios2 PRIVATE
+    core/IOHDF5.cpp
+    engine/hdf5/HDF5ReaderP.cpp
+    engine/hdf5/HDF5WriterP.cpp
+    toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
+    )
+  if(NOT HDF5_VERSION VERSION_LESS 1.11)
+    target_sources(adios2 PRIVATE
+      engine/mixer/HDFMixer.cpp
+      engine/mixer/HDFMixer.tcc
+      engine/mixer/HDFMixerWriter.cpp
+      )
+  endif()
+  if(HDF5_IS_PARALLEL)
+    set_property(SOURCE core/IOMPI.cpp APPEND PROPERTY COMPILE_DEFINITIONS ADIOS2_HAVE_HDF5_PARALLEL)
+    target_sources(adios2 PRIVATE
+      toolkit/interop/hdf5/HDF5CommonMPI.cpp
+      )
+  endif()
+
+  target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
+
   if(HDF5_C_INCLUDE_DIRS)
     target_include_directories(adios2 PRIVATE ${HDF5_C_INCLUDE_DIRS})
   else()
     target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
   endif()
-
-  if(HDF5_VERSION VERSION_LESS 1.11)
-    target_sources(adios2 PRIVATE
-      engine/hdf5/HDF5ReaderP.cpp
-      engine/hdf5/HDF5WriterP.cpp
-      toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
-    )  
-  else()
-    target_sources(adios2 PRIVATE
-      engine/hdf5/HDF5ReaderP.cpp
-      engine/hdf5/HDF5WriterP.cpp
-      engine/mixer/HDFMixer.cpp	
-      engine/mixer/HDFMixer.tcc
-      engine/mixer/HDFMixerWriter.cpp
-      toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
-    )
-  endif()
-
-  target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
 endif()
 
 # Set library version information

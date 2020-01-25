@@ -21,11 +21,19 @@
 
 namespace adios2
 {
+namespace core
+{
+void RegisterMPIEngines();
+}
 namespace helper
 {
 
 namespace
 {
+struct InitMPI
+{
+    InitMPI() { core::RegisterMPIEngines(); }
+};
 
 const MPI_Op OpToMPI[] = {
     MPI_OP_NULL, MPI_MAX,    MPI_MIN,    MPI_SUM,     MPI_PROD,
@@ -117,6 +125,7 @@ public:
 
     int Rank() const override;
     int Size() const override;
+    bool IsMPI() const override;
     void Barrier(const std::string &hint) const override;
 
     void Allgather(const void *sendbuf, size_t sendcount, Datatype sendtype,
@@ -221,6 +230,8 @@ int CommImplMPI::Size() const
     CheckMPIReturn(MPI_Comm_size(m_MPIComm, &size), {});
     return size;
 }
+
+bool CommImplMPI::IsMPI() const { return true; }
 
 void CommImplMPI::Barrier(const std::string &hint) const
 {
@@ -532,6 +543,7 @@ Comm::Status CommReqImplMPI::Wait(const std::string &hint)
 
 Comm CommFromMPI(MPI_Comm mpiComm)
 {
+    static InitMPI const initMPI;
     if (mpiComm == MPI_COMM_NULL)
     {
         return CommDummy();

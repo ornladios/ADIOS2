@@ -194,6 +194,12 @@ public:
 
     bool m_IsGeneratedByAdios = false;
 
+    struct MPI_API
+    {
+        bool (*init)(helper::Comm const &comm, hid_t id, int *rank, int *size);
+        herr_t (*set_dxpl_mpio)(hid_t dxpl_id, H5FD_mpio_xfer_t xfer_mode);
+    };
+
 private:
     void ReadInStringAttr(core::IO &io, const std::string &attrName,
                           hid_t attrId, hid_t h5Type, hid_t sid);
@@ -210,6 +216,7 @@ private:
     bool m_WriteMode = false;
     unsigned int m_NumAdiosSteps = 0;
 
+    MPI_API const *m_MPI = nullptr;
     int m_CommRank = 0;
     int m_CommSize = 1;
 
