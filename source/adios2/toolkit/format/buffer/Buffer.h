@@ -48,6 +48,9 @@ public:
                        const bool zeroInitialize);
 
     virtual size_t GetAvailableSize() const;
+
+    /** Deletes buffer memory manually */
+    virtual void Delete();
 };
 
 } // end namespace format

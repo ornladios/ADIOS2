@@ -24,13 +24,6 @@ void BP4Writer::PutCommon(Variable<T> &variable,
                           typename Variable<T>::Span &span,
                           const size_t /*bufferID*/, const T &value)
 {
-    // if first timestep Write create a new pg index
-    if (!m_BP4Serializer.m_MetadataSet.DataPGIsOpen)
-    {
-        m_BP4Serializer.PutProcessGroupIndex(
-            m_IO.m_Name, m_IO.m_HostLanguage,
-            m_FileDataManager.GetTransportsTypes());
-    }
     const typename Variable<T>::Info &blockInfo =
         variable.SetBlockInfo(nullptr, CurrentStep());
     m_BP4Serializer.m_DeferredVariables.insert(variable.m_Name);
@@ -42,6 +35,14 @@ void BP4Writer::PutCommon(Variable<T> &variable,
     const format::BP4Serializer::ResizeResult resizeResult =
         m_BP4Serializer.ResizeBuffer(dataSize, "in call to variable " +
                                                    variable.m_Name + " Put");
+
+    // if first timestep Write create a new pg index
+    if (!m_BP4Serializer.m_MetadataSet.DataPGIsOpen)
+    {
+        m_BP4Serializer.PutProcessGroupIndex(
+            m_IO.m_Name, m_IO.m_HostLanguage,
+            m_FileDataManager.GetTransportsTypes());
+    }
 
     if (m_DebugMode &&
         resizeResult == format::BP4Serializer::ResizeResult::Flush)
@@ -65,14 +66,6 @@ template <class T>
 void BP4Writer::PutSyncCommon(Variable<T> &variable,
                               const typename Variable<T>::Info &blockInfo)
 {
-    // if first timestep Write create a new pg index
-    if (!m_BP4Serializer.m_MetadataSet.DataPGIsOpen)
-    {
-        m_BP4Serializer.PutProcessGroupIndex(
-            m_IO.m_Name, m_IO.m_HostLanguage,
-            m_FileDataManager.GetTransportsTypes());
-    }
-
     const size_t dataSize =
         helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
         m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name, blockInfo.Count);
@@ -80,6 +73,14 @@ void BP4Writer::PutSyncCommon(Variable<T> &variable,
     const format::BP4Base::ResizeResult resizeResult =
         m_BP4Serializer.ResizeBuffer(dataSize, "in call to variable " +
                                                    variable.m_Name + " Put");
+
+    // if first timestep Write create a new pg index
+    if (!m_BP4Serializer.m_MetadataSet.DataPGIsOpen)
+    {
+        m_BP4Serializer.PutProcessGroupIndex(
+            m_IO.m_Name, m_IO.m_HostLanguage,
+            m_FileDataManager.GetTransportsTypes());
+    }
 
     if (resizeResult == format::BP4Base::ResizeResult::Flush)
     {

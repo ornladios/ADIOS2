@@ -14,6 +14,7 @@
 #include "BP3Serializer.h"
 
 #include <algorithm> // std::all_of, std::fill_n
+#include <array>
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -370,9 +371,9 @@ void BP3Serializer::PutVariableMetadataInData(
     if (span != nullptr)
     {
         const size_t padLengthPosition = position;
-        uint8_t zero = 0;
+        constexpr std::array<uint8_t, 5> zeros = {0, 0, 0, 0, 0};
         // skip 1 for paddingLength and 4 for VMD] ending
-        helper::CopyToBuffer(buffer, position, &zero, 5);
+        helper::CopyToBuffer(buffer, position, zeros.data(), 5);
         // here check for the next aligned pointer
         const size_t extraBytes = m_Data.Align<T>();
         const std::string pad = std::string(extraBytes, '\0') + "VMD]";

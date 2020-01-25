@@ -39,6 +39,7 @@ bp3_bp4_gtest_add_tests_helper(WriteReadLocalVariablesSelHighLevel)
 bp3_bp4_gtest_add_tests_helper(ChangingShape)
 bp3_bp4_gtest_add_tests_helper(WriteReadBlockInfo)
 bp3_bp4_gtest_add_tests_helper(WriteReadVariableSpan)
+bp3_bp4_gtest_add_tests_helper(TimeAggregation)
 
 if(ADIOS2_HAVE_MPI)
   bp3_bp4_gtest_add_tests_helper(WriteAggregateRead) 
@@ -53,6 +54,4 @@ gtest_add_tests_helper(WriteNull ${test_mpi} BP Engine.BP. .BP3
 gtest_add_tests_helper(WriteAppendReadADIOS2 ${test_mpi} BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 )
-gtest_add_tests_helper(TimeAggregationADIOS2 ${test_mpi} BP Engine.BP. .BP4
-  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
-)
+

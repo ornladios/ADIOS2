@@ -696,7 +696,14 @@ Engine &IO::GetEngine(const std::string &name)
     return *itEngine->second.get();
 }
 
-void IO::RemoveEngine(const std::string &name) { m_Engines.erase(name); }
+void IO::RemoveEngine(const std::string &name)
+{
+    auto itEngine = m_Engines.find(name);
+    if (itEngine != m_Engines.end())
+    {
+        m_Engines.erase(itEngine);
+    }
+}
 
 void IO::FlushAll()
 {

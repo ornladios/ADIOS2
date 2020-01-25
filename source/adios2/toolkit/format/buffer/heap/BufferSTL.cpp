@@ -66,5 +66,7 @@ size_t BufferSTL::GetAvailableSize() const
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+void BufferSTL::Delete() { std::vector<char>().swap(m_Buffer); }
+
 } // end namespace format
 } // end namespace adios2

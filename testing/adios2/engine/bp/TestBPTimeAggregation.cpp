@@ -21,8 +21,7 @@ void TimeAggregation1D8(const std::string flushstepscount)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPTimeAggregation1D8_" + flushstepscount +
-                            ".bp");
+    const std::string fname = "BPTimeAggregation1D8_" + flushstepscount + ".bp";
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -331,8 +330,8 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname("ADIOS2BPTimeAggregation2D2x4_" + flushstepscount +
-                            ".bp");
+    const std::string fname =
+        "BPTimeAggregation2D2x4_" + flushstepscount + ".bp";
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -645,10 +644,10 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
     }
 }
 
-class BPTestTimeAggregationADIOS2 : public ::testing::TestWithParam<std::string>
+class BPTestTimeAggregation : public ::testing::TestWithParam<std::string>
 {
 public:
-    BPTestTimeAggregationADIOS2() = default;
+    BPTestTimeAggregation() = default;
 
     SmallTestData m_TestData;
 
@@ -656,17 +655,17 @@ public:
     virtual void TearDown() {}
 };
 
-TEST_P(BPTestTimeAggregationADIOS2, ADIOS2BPTimeAggregation1D8)
+TEST_P(BPTestTimeAggregation, BPTimeAggregation1D8)
 {
     TimeAggregation1D8(GetParam());
 }
 
-TEST_P(BPTestTimeAggregationADIOS2, ADIOS2BPTimeAggregation2D4x2)
+TEST_P(BPTestTimeAggregation, BPTimeAggregation2D4x2)
 {
     TimeAggregation2D4x2(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(FlushStepsCount, BPTestTimeAggregationADIOS2,
+INSTANTIATE_TEST_CASE_P(FlushStepsCount, BPTestTimeAggregation,
                         ::testing::Values("1", "2", "3", "6", "8", "10"));
 
 int main(int argc, char **argv)

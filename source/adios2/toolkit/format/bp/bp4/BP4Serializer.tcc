@@ -17,6 +17,7 @@
 #include "BP4Serializer.h"
 
 #include <algorithm> // std::all_of
+#include <array>
 #include <iostream>
 
 #include "adios2/helper/adiosFunctions.h"
@@ -436,11 +437,10 @@ size_t BP4Serializer::PutVariableMetadataInData(
                                      position);
 
     // here align pointer for span
-
     const size_t padLengthPosition = position;
-    uint8_t zero = 0;
+    constexpr std::array<uint8_t, 5> zeros = {0, 0, 0, 0, 0};
     // skip 1 for paddingLength and 4 for VMD] ending
-    helper::CopyToBuffer(buffer, position, &zero, 5);
+    helper::CopyToBuffer(buffer, position, zeros.data(), 5);
     // here check for the next aligned pointer
     const size_t extraBytes = span == nullptr ? 0 : m_Data.Align<T>();
     const std::string pad =
