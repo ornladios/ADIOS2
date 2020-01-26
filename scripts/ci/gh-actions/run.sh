@@ -6,7 +6,7 @@ then
   GH_PR_NUMBER=$(expr "${GITHUB_REF}" : 'refs/pull/\([^/]*\)')
   export CI_BUILD_NAME="pr${GH_PR_NUMBER}_${GITHUB_HEAD_REF}_${GH_YML_JOBNAME}"
 else
-  export CI_BUILD_NAME="${GITHUB_HEAD_REF}_${GH_YML_JOBNAME}"
+  export CI_BUILD_NAME="${GITHUB_REF#refs/heads/}_${GH_YML_JOBNAME}"
 fi
 if [[ "${GH_YML_OS}" =~ "Windows" ]]
 then
