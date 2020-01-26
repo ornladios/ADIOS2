@@ -25,7 +25,7 @@ if(ADIOS2_SST_HAVE_LIBFABRIC)
   endif()
 endif()
 
-if(ADIOS2_SST_HAVE_NVSTREAM)
+if(ADIOS2_SST_HAVE_NVStream)
   target_sources(sst PRIVATE dp/nvstream_dp.c dp/nvswrapper.cpp)
   target_link_libraries(sst PRIVATE NVStream::NVStream ${Boost_LIBRARIES})
   set(CMAKE_REQUIRED_INCLUDES ${NVSTREAM_INCLUDE_DIRS})
@@ -50,11 +50,11 @@ set(SST_CONFIG_OPTS
   LIBFABRIC
   FI_GNI
   CRAY_DRC
-  NVSTREAM
+  NVStream
 )
 include(SSTFunctions)
 GenerateSSTHeaderConfig(${SST_CONFIG_OPTS})
-install(FILES ${PROJECT_BINARY_DIR}/source/adios2/toolkit/sst/SSTConfig.h
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/SSTConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/toolkit/sst
 )
 
