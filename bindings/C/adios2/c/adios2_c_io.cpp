@@ -9,16 +9,13 @@
  */
 
 #include "adios2_c_io.h"
+#include "adios2_c_io.tcc"
 
 #include <vector>
 
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 #include "adios2_c_internal.h"
-
-#ifdef ADIOS2_HAVE_MPI
-#include "adios2/helper/adiosCommMPI.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -674,34 +671,6 @@ adios2_error adios2_remove_all_attributes(adios2_io *io)
     }
 }
 
-namespace
-{
-
-adios2::Mode adios2_ToOpenMode(const adios2_mode modeC)
-{
-    adios2::Mode mode = adios2::Mode::Undefined;
-    switch (modeC)
-    {
-
-    case adios2_mode_write:
-        mode = adios2::Mode::Write;
-        break;
-
-    case adios2_mode_read:
-        mode = adios2::Mode::Read;
-        break;
-
-    case adios2_mode_append:
-        mode = adios2::Mode::Append;
-        break;
-
-    default:
-        break;
-    }
-    return mode;
-}
-} // end anonymous namespace
-
 adios2_engine *adios2_open(adios2_io *io, const char *name,
                            const adios2_mode mode)
 {
@@ -720,28 +689,6 @@ adios2_engine *adios2_open(adios2_io *io, const char *name,
     }
     return engine;
 }
-
-#ifdef ADIOS2_HAVE_MPI
-adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
-                                    const adios2_mode mode, MPI_Comm comm)
-{
-    adios2_engine *engine = nullptr;
-    try
-    {
-        adios2::helper::CheckForNullptr(
-            io, "for adios2_io, in call to adios2_open");
-        engine = reinterpret_cast<adios2_engine *>(
-            &reinterpret_cast<adios2::core::IO *>(io)->Open(
-                name, adios2_ToOpenMode(mode),
-                adios2::helper::CommFromMPI(comm)));
-    }
-    catch (...)
-    {
-        adios2::helper::ExceptionToError("adios2_open_new_comm");
-    }
-    return engine;
-}
-#endif
 
 adios2_error adios2_flush_all_engines(adios2_io *io)
 {
