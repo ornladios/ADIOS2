@@ -50,7 +50,7 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
                       */
         /*
                 hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
-        #ifdef ADIOS2_HAVE_MPI
+        #if ADIOS2_USE_MPI
                 H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
         #endif
         */
@@ -125,7 +125,7 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
         //  Create property list for collective dataset write.
 
         hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
-    #ifdef ADIOS2_HAVE_MPI
+    #if ADIOS2_USE_MPI
         H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
     #endif
     */
