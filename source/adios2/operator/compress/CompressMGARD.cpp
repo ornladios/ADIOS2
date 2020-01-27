@@ -146,7 +146,7 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
     void *dataPtr = mgard_decompress(
         mgardType, quantizer,
         reinterpret_cast<unsigned char *>(const_cast<void *>(bufferIn)),
-        static_cast<int>(sizeIn), r[0], r[1], r[2], 0);
+        static_cast<int>(sizeIn), r[0], r[1], r[2], 0.0);
 
     const size_t dataSizeBytes = helper::GetTotalSize(dimensions) * elementSize;
     std::memcpy(dataOut, dataPtr, dataSizeBytes);
