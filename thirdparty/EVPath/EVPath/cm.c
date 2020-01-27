@@ -1445,15 +1445,16 @@ INT_CMget_ip_config_diagnostics(CManager cm)
  transport_is_reliable(CMConnection conn)
  {
      attr_list list;
-     int ret;
+     int ret = 0;
      if (conn->trans->get_transport_characteristics == NULL) {
 	 return 0; /* don't know */
      }
      list = conn->trans->get_transport_characteristics(conn->trans, &CMstatic_trans_svcs, 
 						       conn->trans->trans_data);
-     if (!get_int_attr(list, CM_TRANSPORT_RELIABLE, &ret)) {
-	 return 0; /* don't know */
-     }
+     (void) get_int_attr(list, CM_TRANSPORT_RELIABLE, &ret);
+
+     free_attr_list(list);
+
      return ret;
  }
 

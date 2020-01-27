@@ -15,9 +15,6 @@
 #include <sys/times.h>
 #endif
 #include <sys/socket.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
@@ -55,6 +52,7 @@
 #include <atl.h>
 #include "evpath.h"
 #include "cm_transport.h"
+#include "ev_select.h"
 #include <pthread.h>
 #include <sched.h>
 #define thr_thread_t pthread_t
@@ -966,8 +964,8 @@ int filedes[2];
 	struct timeval stTimeOut;	/* for select() timeout (none) */
 	int wRet;
 
-	FD_ZERO((fd_set FAR*)&(stXcptFDS));
-	FD_ZERO((fd_set FAR*)&(stWriteFDS));
+	EVPATH_FD_ZERO((fd_set FAR*)&(stXcptFDS));
+	EVPATH_FD_ZERO((fd_set FAR*)&(stWriteFDS));
 	FD_SET(sock1, (fd_set FAR*)&(stWriteFDS));
 	FD_SET(sock1, (fd_set FAR*)&(stXcptFDS));
 	stTimeOut.tv_sec  = 10;

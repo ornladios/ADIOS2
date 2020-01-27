@@ -685,6 +685,7 @@ free_udp_data(CManager cm, void *utdv)
 {
     udp_transport_data_ptr utd = (udp_transport_data_ptr) utdv;
     CMtrans_services svc = utd->svc;
+    free_attr_list(utd->characteristics);
     svc->free_func(utd);
 }
 
@@ -734,6 +735,7 @@ extern attr_list
 libcmudp_LTX_get_transport_characteristics(transport_entry trans, CMtrans_services svc,
 					   udp_transport_data_ptr utd)
 {
+    add_ref_attr_list(utd->characteristics);
     return utd->characteristics;
 }
 extern transport_entry

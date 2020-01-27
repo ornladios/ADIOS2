@@ -17,9 +17,6 @@
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
@@ -68,6 +65,7 @@
 #include "evpath.h"
 #include "cm_transport.h"
 #include "cm_internal.h"
+#include "ev_select.h"
 
 #include <stdlib.h>
 
@@ -2599,7 +2597,7 @@ libcmfabric_LTX_initialize(CManager cm, CMtrans_services svc)
     svc->add_shutdown_task(cm, free_fabric_data, (void *) fabd, FREE_TASK);
     
     fabd->wake_read_fd = -1;
-    FD_ZERO(&fabd->readset);
+    EVPATH_FD_ZERO(&fabd->readset);
     fabd->nfds = 0;
     return (void *) fabd;
 }
