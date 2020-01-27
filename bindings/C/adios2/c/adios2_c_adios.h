@@ -13,7 +13,7 @@
 
 #include "adios2_c_types.h"
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #define adios2_init adios2_init_mpi
 #define adios2_init_config adios2_init_config_mpi
 

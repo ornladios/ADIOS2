@@ -18,7 +18,7 @@
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h"
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include "adios2/helper/adiosCommMPI.h"
 #endif
 
@@ -29,7 +29,7 @@ namespace adios2
 namespace py11
 {
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 File::File(const std::string &name, const std::string mode, MPI_Comm comm,
            const std::string engineType)
 : m_Name(name), m_Mode(mode),

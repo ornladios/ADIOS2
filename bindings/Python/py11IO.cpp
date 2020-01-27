@@ -13,7 +13,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include "adios2/helper/adiosCommMPI.h"
 #include <mpi4py/mpi4py.h>
 #endif
@@ -247,7 +247,7 @@ Engine IO::Open(const std::string &name, const int mode)
     return Engine(&m_IO->Open(name, static_cast<adios2::Mode>(mode)));
 }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 Engine IO::Open(const std::string &name, const int mode, MPI4PY_Comm comm)
 {
     helper::CheckForNullptr(m_IO,

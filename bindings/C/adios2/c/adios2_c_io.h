@@ -13,7 +13,7 @@
 
 #include "adios2_c_types.h"
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -290,7 +290,7 @@ adios2_error adios2_remove_all_attributes(adios2_io *io);
 adios2_engine *adios2_open(adios2_io *io, const char *name,
                            const adios2_mode mode);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 /**
  * Open an Engine to start heavy-weight input/output operations.
  * MPI Collective function as it calls MPI_Comm_dup

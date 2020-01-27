@@ -18,7 +18,7 @@ namespace adios2
 namespace py11
 {
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 
 /**
  * MPI4PY_Comm provides automatic conversion of Python mpi4py communicators to

@@ -16,7 +16,7 @@
 #include "Operator.h"
 #include "Variable.h"
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -257,7 +257,7 @@ public:
      */
     Engine Open(const std::string &name, const Mode mode);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     /**
      * Open an Engine to start heavy-weight input/output operations.
      * This version allows passing a MPI communicator different from the one
