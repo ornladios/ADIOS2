@@ -119,6 +119,18 @@ if(UNIX)
   target_sources(adios2 PRIVATE toolkit/transport/file/FilePOSIX.cpp)
 endif()
 
+if(ADIOS2_HAVE_MPI)
+  target_sources(adios2 PRIVATE
+    core/IOMPI.cpp
+    helper/adiosCommMPI.h  helper/adiosCommMPI.cpp
+    helper/adiosMpiHandshake.h  helper/adiosMpiHandshake.cpp
+    engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc
+    engine/insitumpi/InSituMPIReader.cpp engine/insitumpi/InSituMPIReader.tcc
+    engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
+  )
+  target_link_libraries(adios2 PUBLIC MPI::MPI_C)
+endif()
+
 if(ADIOS2_HAVE_SysVShMem)
   target_sources(adios2 PRIVATE toolkit/format/buffer/ipc/BufferSystemV.cpp)
   
@@ -225,18 +237,6 @@ endif()
 if(ADIOS2_HAVE_PNG)
   target_sources(adios2 PRIVATE operator/compress/CompressPNG.cpp)
   target_link_libraries(adios2 PRIVATE PNG::PNG)
-endif()
-
-if(ADIOS2_HAVE_MPI)
-  target_sources(adios2 PRIVATE
-    core/IOMPI.cpp
-    helper/adiosCommMPI.h  helper/adiosCommMPI.cpp
-    helper/adiosMpiHandshake.h  helper/adiosMpiHandshake.cpp
-    engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc
-    engine/insitumpi/InSituMPIReader.cpp engine/insitumpi/InSituMPIReader.tcc
-    engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
-  )
-  target_link_libraries(adios2 PUBLIC MPI::MPI_C)
 endif()
 
 if(ADIOS2_HAVE_HDF5)
