@@ -18,16 +18,25 @@ function(setup_version BASE)
         OUTPUT_VARIABLE out
         ERROR_QUIET
       )
-      if(res EQUAL 0 AND out MATCHES "[^-]*-([^-]*)-g[a-f0-9]*")
+      if(res EQUAL 0 AND out MATCHES "[^-]*-([^-]*)-g([a-f0-9]*)")
         set(ver_tweak ${CMAKE_MATCH_1})
+        set(ver_gitsha ${CMAKE_MATCH_2})
       endif()  
     endif()
   endif()
+
   if(ver_tweak)
     set(ADIOS2_VERSION ${BASE}.${ver_tweak} PARENT_SCOPE)
   else()
     set(ADIOS2_VERSION ${BASE} PARENT_SCOPE)
   endif()
+
+  if(ver_gitsha)
+    set(ADIOS2_VERSION_GIT_SHA ${ver_gitsha} PARENT_SCOPE)
+  else()
+    unset(ADIOS2_VERSION_GIT_SHA PARENT_SCOPE)
+  endif()
+
   set(ADIOS2_LIBRARY_VERSION ${BASE} PARENT_SCOPE)
 endfunction()
 

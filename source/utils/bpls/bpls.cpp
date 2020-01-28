@@ -18,6 +18,7 @@
 #endif
 
 #include "bpls.h"
+#include "verinfo.h"
 
 #include <cinttypes>
 #include <cstdio>
@@ -180,7 +181,12 @@ void display_help()
         "doing.\n"
         "                               Use multiple -v to increase logging "
         "level.\n"
-        "Typical use: bpls -lav <file>\n");
+        "  --version                  Print version information; compatible "
+        " with\n"
+        "                               --verbose for additional information, "
+        "i.e.\n"
+        "                               -v --version.\n"
+        "\nTypical use: bpls -lav <file>\n");
 }
 
 bool option_help_was_called = false;
@@ -197,6 +203,42 @@ int optioncb_help(const char *argument, const char *value, void *call_data)
 int optioncb_verbose(const char *argument, const char *value, void *call_data)
 {
     verbose++;
+    return 1;
+}
+
+int optioncb_version(const char *argument, const char *value, void *call_data)
+{
+    if (verbose == 0)
+    {
+        printf(ADIOS2_VERSION_STR "\n");
+        option_help_was_called = true;
+        return 1;
+    }
+
+    printf("blps: ADIOS file introspection utility\n");
+    printf("\nBuild configuration:\n");
+    if (strlen(ADIOS_INFO_VER_GIT) > 0)
+    {
+        printf("ADIOS version: %s (%s)\n", ADIOS2_VERSION_STR,
+               ADIOS_INFO_VER_GIT);
+    }
+    else
+    {
+        printf("ADIOS version: %s\n", ADIOS2_VERSION_STR);
+    }
+    if (strlen(ADIOS_INFO_COMPILER_WRAP) > 0)
+    {
+        printf("C++ Compiler:  %s %s (%s)\n", ADIOS_INFO_COMPILER_ID,
+               ADIOS_INFO_COMPILER_VER, ADIOS_INFO_COMPILER_WRAP);
+    }
+    else
+    {
+        printf("C++ Compiler:  %s %s\n", ADIOS_INFO_COMPILER_ID,
+               ADIOS_INFO_COMPILER_VER);
+    }
+    printf("Target OS:     %s\n", ADIOS_INFO_SYSTEM);
+    printf("Target Arch:   %s\n", ADIOS_INFO_ARCH);
+    option_help_was_called = true;
     return 1;
 }
 
@@ -284,11 +326,14 @@ int bplsMain(int argc, char *argv[])
     arg.Initialize(argc, argv);
     typedef adios2sys::CommandLineArguments argT;
     arg.StoreUnusedArguments(true);
-    arg.AddCallback("--help", argT::NO_ARGUMENT, optioncb_help, &arg, "Help");
-    arg.AddCallback("-h", argT::NO_ARGUMENT, optioncb_help, &arg, "");
+    arg.AddCallback("-v", argT::NO_ARGUMENT, optioncb_verbose, nullptr, "");
     arg.AddCallback("--verbose", argT::NO_ARGUMENT, optioncb_verbose, nullptr,
                     "Print information about what bpls is doing");
-    arg.AddCallback("-v", argT::NO_ARGUMENT, optioncb_verbose, nullptr, "");
+    arg.AddCallback("--help", argT::NO_ARGUMENT, optioncb_help, &arg, "Help");
+    arg.AddCallback("-h", argT::NO_ARGUMENT, optioncb_help, &arg, "");
+    arg.AddCallback("--version", argT::NO_ARGUMENT, optioncb_version, &arg,
+                    "Print version information (add -verbose for additional"
+                    " information)");
     arg.AddBooleanArgument("--dump", &dump,
                            "Dump matched variables/attributes");
     arg.AddBooleanArgument("-d", &dump, "");
