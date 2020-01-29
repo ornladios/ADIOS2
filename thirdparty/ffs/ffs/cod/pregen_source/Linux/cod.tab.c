@@ -243,7 +243,7 @@ cod_dup_list(sm_list list)
     return ret_list;
 }
 
-#line 247 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:339  */
+#line 247 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -263,8 +263,8 @@ cod_dup_list(sm_list list)
 
 /* In a future release of Bison, this section will be replaced
    by #include "cod.tab.h".  */
-#ifndef YY_YY_USERS_EISEN_PROG_KORVO_BUILD_BUILD_AREA_FFS_DARWIN10_13_COD_TAB_H_INCLUDED
-# define YY_YY_USERS_EISEN_PROG_KORVO_BUILD_BUILD_AREA_FFS_DARWIN10_13_COD_TAB_H_INCLUDED
+#ifndef YY_YY_HOME_EISEN_PROG_GTKORVO_BUILD_AREA_FFS_UB18_64_COD_TAB_H_INCLUDED
+# define YY_YY_HOME_EISEN_PROG_GTKORVO_BUILD_AREA_FFS_UB18_64_COD_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -376,7 +376,7 @@ union YYSTYPE
     sm_list list;
     char *string;
 
-#line 380 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:355  */
+#line 380 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -389,11 +389,11 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_USERS_EISEN_PROG_KORVO_BUILD_BUILD_AREA_FFS_DARWIN10_13_COD_TAB_H_INCLUDED  */
+#endif /* !YY_YY_HOME_EISEN_PROG_GTKORVO_BUILD_AREA_FFS_UB18_64_COD_TAB_H_INCLUDED  */
 
 /* Copy the second part of user declarations.  */
 
-#line 397 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:358  */
+#line 397 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -1872,7 +1872,7 @@ yyreduce:
     {
 	    yyparse_value = (sm_ref)(yyvsp[0].list);
 	}
-#line 1876 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1876 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 3:
@@ -1880,7 +1880,7 @@ yyreduce:
     {
 	    yyparse_value = (yyvsp[0].reference);
 	}
-#line 1884 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1884 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 4:
@@ -1890,13 +1890,13 @@ yyreduce:
 	    (yyval.reference)->node.identifier.id = (yyvsp[0].info).string;
 	    (yyval.reference)->node.identifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 1894 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1894 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
 #line 359 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.reference) = (yyvsp[-1].reference); }
-#line 1900 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1900 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
@@ -1907,7 +1907,7 @@ yyreduce:
 	    (yyval.reference)->node.element_ref.expression = (yyvsp[-1].reference);
 	    (yyval.reference)->node.element_ref.array_ref = (yyvsp[-3].reference);
 	}
-#line 1911 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1911 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
@@ -1918,7 +1918,7 @@ yyreduce:
 	    (yyval.reference)->node.field_ref.lx_field = (yyvsp[0].info).string;
 	    (yyval.reference)->node.field_ref.struct_ref = (yyvsp[-2].reference);
 	}
-#line 1922 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1922 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
@@ -1929,7 +1929,7 @@ yyreduce:
 	    (yyval.reference)->node.subroutine_call.arguments = (yyvsp[-1].list);
 	    (yyval.reference)->node.subroutine_call.sm_func_ref = (yyvsp[-3].reference);
 	}
-#line 1933 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1933 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
@@ -1940,7 +1940,7 @@ yyreduce:
 	    (yyval.reference)->node.subroutine_call.arguments = NULL;
 	    (yyval.reference)->node.subroutine_call.sm_func_ref = (yyvsp[-2].reference);
 	}
-#line 1944 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1944 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
@@ -1951,7 +1951,7 @@ yyreduce:
 	    (yyval.reference)->node.field_ref.lx_field = (yyvsp[0].info).string;
 	    (yyval.reference)->node.field_ref.struct_ref = (yyvsp[-2].reference);
 	}
-#line 1955 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1955 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
@@ -1963,7 +1963,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = NULL;
 	    (yyval.reference)->node.operator.left = (yyvsp[-1].reference);
 	}
-#line 1967 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1967 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
@@ -1975,7 +1975,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = NULL;
 	    (yyval.reference)->node.operator.left = (yyvsp[-1].reference);
 	}
-#line 1979 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1979 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
@@ -1985,7 +1985,7 @@ yyreduce:
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 1989 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 1989 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
@@ -2000,7 +2000,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 2004 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2004 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
@@ -2012,7 +2012,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2016 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2016 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
@@ -2024,7 +2024,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2028 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2028 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
@@ -2036,7 +2036,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2040 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2040 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
@@ -2048,7 +2048,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2052 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2052 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
@@ -2066,7 +2066,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = cast;
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2070 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2070 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
@@ -2074,7 +2074,7 @@ yyreduce:
     {
 	    (yyval.info).op = op_address;
 	}
-#line 2078 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2078 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 24:
@@ -2082,7 +2082,7 @@ yyreduce:
     {
 	    (yyval.info).op = op_deref;
 	}
-#line 2086 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2086 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
@@ -2090,7 +2090,7 @@ yyreduce:
     {
 	    (yyval.info).op = op_plus;
 	}
-#line 2094 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2094 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
@@ -2098,7 +2098,7 @@ yyreduce:
     {
 	    (yyval.info).op = op_minus;
 	}
-#line 2102 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2102 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
@@ -2106,7 +2106,7 @@ yyreduce:
     {
 	    (yyval.info).op = op_not;
 	}
-#line 2110 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2110 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 28:
@@ -2114,7 +2114,7 @@ yyreduce:
     {
 	    (yyval.info).op = op_log_neg;
 	  }
-#line 2118 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2118 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 30:
@@ -2125,7 +2125,7 @@ yyreduce:
 	    (yyval.reference)->node.cast.type_spec = (yyvsp[-2].list);
 	    (yyval.reference)->node.cast.expression = (yyvsp[0].reference);
 	}
-#line 2129 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2129 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 32:
@@ -2137,7 +2137,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2141 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2141 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 33:
@@ -2149,7 +2149,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2153 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2153 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 34:
@@ -2161,7 +2161,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2165 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2165 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 36:
@@ -2173,7 +2173,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2177 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2177 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 37:
@@ -2185,7 +2185,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2189 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2189 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 39:
@@ -2197,7 +2197,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2201 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2201 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 40:
@@ -2209,7 +2209,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2213 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2213 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 42:
@@ -2221,7 +2221,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2225 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2225 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 43:
@@ -2233,7 +2233,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2237 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2237 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 44:
@@ -2245,7 +2245,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2249 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2249 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 45:
@@ -2257,7 +2257,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2261 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2261 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 47:
@@ -2269,7 +2269,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2273 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2273 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 48:
@@ -2281,7 +2281,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2285 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2285 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 50:
@@ -2293,7 +2293,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2297 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2297 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 52:
@@ -2305,7 +2305,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2309 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2309 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 54:
@@ -2317,7 +2317,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2321 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2321 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 56:
@@ -2329,7 +2329,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2333 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2333 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 58:
@@ -2341,7 +2341,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2345 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2345 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 60:
@@ -2353,79 +2353,79 @@ yyreduce:
 	    (yyval.reference)->node.conditional_operator.e1 = (yyvsp[-2].reference);
 	    (yyval.reference)->node.conditional_operator.e2 = (yyvsp[0].reference);
 	}
-#line 2357 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2357 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 61:
 #line 728 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_eq;}
-#line 2363 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2363 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 62:
 #line 730 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_mult;}
-#line 2369 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2369 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 63:
 #line 732 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_div;}
-#line 2375 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2375 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 64:
 #line 734 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_modulus;}
-#line 2381 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2381 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 65:
 #line 736 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_plus;}
-#line 2387 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2387 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 66:
 #line 738 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_minus;}
-#line 2393 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2393 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 67:
 #line 740 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_left_shift;}
-#line 2399 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2399 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 68:
 #line 742 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_right_shift;}
-#line 2405 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2405 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 69:
 #line 744 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_arith_and;}
-#line 2411 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2411 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 70:
 #line 746 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_arith_xor;}
-#line 2417 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2417 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 71:
 #line 748 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_arith_or;}
-#line 2423 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2423 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 72:
 #line 753 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.reference) = (yyvsp[0].reference);}
-#line 2429 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2429 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 73:
@@ -2437,13 +2437,13 @@ yyreduce:
 	    (yyval.reference)->node.assignment_expression.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.assignment_expression.op = (yyvsp[-1].info).op;
 	}
-#line 2441 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2441 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 74:
 #line 767 "cod/cod.y" /* yacc.c:1646  */
     {(yyval.reference) = (yyvsp[0].reference);}
-#line 2447 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2447 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 75:
@@ -2454,7 +2454,7 @@ yyreduce:
 	    (yyval.reference)->node.comma_expression.left = (yyvsp[-2].reference);
 	    (yyval.reference)->node.comma_expression.right = (yyvsp[0].reference);
 	}
-#line 2458 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2458 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 77:
@@ -2464,7 +2464,7 @@ yyreduce:
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 2468 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2468 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 78:
@@ -2480,7 +2480,7 @@ yyreduce:
 	    tmp->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 2484 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2484 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 79:
@@ -2491,7 +2491,7 @@ yyreduce:
 		     YYACCEPT;
 		 }
 	     }
-#line 2495 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2495 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 80:
@@ -2523,7 +2523,7 @@ yyreduce:
 		    YYACCEPT;
 		}
 	    }
-#line 2527 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2527 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 81:
@@ -2583,7 +2583,7 @@ yyreduce:
 		}
 		(void)(yyvsp[-1].reference);
 	    }
-#line 2587 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2587 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 82:
@@ -2591,7 +2591,7 @@ yyreduce:
     {
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 2595 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2595 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 83:
@@ -2601,7 +2601,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2605 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2605 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 84:
@@ -2612,7 +2612,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2616 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2616 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 85:
@@ -2622,7 +2622,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2626 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2626 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 86:
@@ -2633,7 +2633,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2637 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2637 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 87:
@@ -2643,7 +2643,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2647 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2647 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 88:
@@ -2654,7 +2654,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2658 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2658 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 90:
@@ -2671,7 +2671,7 @@ yyreduce:
 		    tmp->node.declaration.init_value = (yyvsp[0].reference);
 		}
 	    }
-#line 2675 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2675 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 91:
@@ -2681,7 +2681,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = TYPEDEF;
 	}
-#line 2685 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2685 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 92:
@@ -2691,7 +2691,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = STATIC;
 	}
-#line 2695 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2695 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 93:
@@ -2701,7 +2701,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = EXTERN_TOKEN;
 	}
-#line 2705 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2705 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 94:
@@ -2711,7 +2711,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = CHAR;
 	}
-#line 2715 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2715 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 95:
@@ -2721,7 +2721,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = SHORT;
 	}
-#line 2725 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2725 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 96:
@@ -2731,7 +2731,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = INT;
 	}
-#line 2735 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2735 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 97:
@@ -2741,7 +2741,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = LONG;
 	}
-#line 2745 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2745 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 98:
@@ -2751,7 +2751,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = FLOAT;
 	}
-#line 2755 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2755 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 99:
@@ -2761,7 +2761,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = DOUBLE;
 	}
-#line 2765 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2765 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 100:
@@ -2771,7 +2771,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = VOID;
 	}
-#line 2775 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2775 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 101:
@@ -2781,7 +2781,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = SIGNED;
 	}
-#line 2785 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2785 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 102:
@@ -2791,7 +2791,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = UNSIGNED;
 	}
-#line 2795 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2795 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 103:
@@ -2801,7 +2801,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = STRING;
 	}
-#line 2805 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2805 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 104:
@@ -2811,7 +2811,7 @@ yyreduce:
 	    (yyval.reference)->node.identifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.identifier.id = (yyvsp[0].info).string;
 	}
-#line 2815 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2815 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 105:
@@ -2819,7 +2819,7 @@ yyreduce:
     {
 	    (yyval.reference) = (yyvsp[0].reference);
 	}
-#line 2823 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2823 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 106:
@@ -2827,7 +2827,7 @@ yyreduce:
     {
 	    (yyval.reference) = (yyvsp[0].reference);
 	}
-#line 2831 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2831 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 107:
@@ -2835,7 +2835,7 @@ yyreduce:
     {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, (yyvsp[-3].info).string, (yyvsp[-1].list));
 	}
-#line 2839 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2839 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 108:
@@ -2843,7 +2843,7 @@ yyreduce:
     {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, strdup("anon"), (yyvsp[-1].list));
 	}
-#line 2847 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2847 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 109:
@@ -2851,7 +2851,7 @@ yyreduce:
     {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, (yyvsp[0].info).string, NULL);
 	}
-#line 2855 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2855 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 111:
@@ -2859,7 +2859,7 @@ yyreduce:
     {
             yyerror("UNIONs not supported!");
 	}
-#line 2863 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2863 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 113:
@@ -2872,13 +2872,13 @@ yyreduce:
 	    tmp->next =(yyvsp[0].list);
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 2876 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2876 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 114:
 #line 1070 "cod/cod.y" /* yacc.c:1646  */
     { }
-#line 2882 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2882 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 115:
@@ -2930,7 +2930,7 @@ yyreduce:
 		}
 	    }
 	}
-#line 2934 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2934 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 116:
@@ -2940,7 +2940,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2944 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2944 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 117:
@@ -2955,7 +2955,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 2959 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2959 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 119:
@@ -2966,7 +2966,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2970 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2970 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 120:
@@ -2976,7 +2976,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2980 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2980 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 121:
@@ -2987,7 +2987,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2991 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 2991 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 122:
@@ -2997,7 +2997,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 3001 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3001 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 123:
@@ -3009,7 +3009,7 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-3].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3013 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3013 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 124:
@@ -3021,7 +3021,7 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-4].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3025 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3025 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 125:
@@ -3033,7 +3033,7 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-4].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3037 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3037 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 126:
@@ -3045,7 +3045,7 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-5].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3049 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3049 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 127:
@@ -3057,7 +3057,7 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3061 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3061 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 128:
@@ -3068,7 +3068,7 @@ yyreduce:
 	    tmp->next = NULL;
 	    (yyval.list) = tmp;
 	}
-#line 3072 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3072 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 129:
@@ -3079,7 +3079,7 @@ yyreduce:
 	    tmp->next = (yyvsp[-2].list);
 	    (yyval.list) = tmp;
 	}
-#line 3083 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3083 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 130:
@@ -3089,7 +3089,7 @@ yyreduce:
 	    (yyval.reference)->node.enumerator.id = (yyvsp[-2].info).string;
 	    (yyval.reference)->node.enumerator.const_expression = (yyvsp[0].reference);
 	}
-#line 3093 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3093 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 131:
@@ -3099,7 +3099,7 @@ yyreduce:
 	    (yyval.reference)->node.enumerator.id = (yyvsp[0].info).string;
 	    (yyval.reference)->node.enumerator.const_expression = NULL;
 	}
-#line 3103 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3103 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 132:
@@ -3109,7 +3109,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = CONST;
 	}
-#line 3113 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3113 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 134:
@@ -3125,7 +3125,7 @@ yyreduce:
 		cod_print((yyval.reference));
 	    }
 	}
-#line 3129 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3129 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 135:
@@ -3139,7 +3139,7 @@ yyreduce:
 		(yyval.reference)->node.declaration.is_subroutine = 0;
 		(yyval.reference)->node.declaration.params = NULL;
 	    }
-#line 3143 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3143 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 136:
@@ -3147,7 +3147,7 @@ yyreduce:
     {
 	    (yyval.reference) = (yyvsp[-1].reference);
 	}
-#line 3151 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3151 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 137:
@@ -3161,7 +3161,7 @@ yyreduce:
 		(yyval.reference)->node.declaration.is_subroutine = 1;
 		(yyval.reference)->node.declaration.params = (yyvsp[-1].list);
 	}
-#line 3165 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3165 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 138:
@@ -3175,7 +3175,7 @@ yyreduce:
 		(yyval.reference)->node.declaration.is_subroutine = 1;
 		(yyval.reference)->node.declaration.params = NULL;
 	}
-#line 3179 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3179 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 139:
@@ -3187,7 +3187,7 @@ yyreduce:
 		(yyval.reference)->node.array_type_decl.element_ref = (yyvsp[-3].reference);
 		(yyval.reference)->node.array_type_decl.sm_dynamic_size = NULL;
 	}
-#line 3191 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3191 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 140:
@@ -3199,7 +3199,7 @@ yyreduce:
 		(yyval.reference)->node.array_type_decl.element_ref = (yyvsp[-2].reference);
 		(yyval.reference)->node.array_type_decl.sm_dynamic_size = NULL;
 	}
-#line 3203 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3203 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 141:
@@ -3212,7 +3212,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = NULL;
 	}
-#line 3216 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3216 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 142:
@@ -3225,7 +3225,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3229 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3229 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 143:
@@ -3238,7 +3238,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3242 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3242 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 144:
@@ -3257,7 +3257,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[-1].list);
 	}
-#line 3261 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3261 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 145:
@@ -3273,7 +3273,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = NULL;
 	}
-#line 3277 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3277 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 146:
@@ -3289,7 +3289,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3293 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3293 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 147:
@@ -3305,7 +3305,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3309 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3309 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 148:
@@ -3327,7 +3327,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[-1].list);
 	}
-#line 3331 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3331 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 149:
@@ -3337,7 +3337,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 3341 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3341 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 150:
@@ -3352,7 +3352,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 3356 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3356 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 152:
@@ -3369,7 +3369,7 @@ yyreduce:
 	    id->node.declaration.id = strdup("...");
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 3373 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3373 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 153:
@@ -3379,7 +3379,7 @@ yyreduce:
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 3383 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3383 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 154:
@@ -3394,7 +3394,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 3398 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3398 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 155:
@@ -3408,7 +3408,7 @@ yyreduce:
 	    (yyval.reference)->node.declaration.params = NULL;
 	    (yyval.reference)->node.declaration.type_spec = (yyvsp[0].list);
 	}
-#line 3412 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3412 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 156:
@@ -3450,7 +3450,7 @@ yyreduce:
 		    printf("unexpected node in parameter_declaration");
 		}
 	}
-#line 3454 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3454 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 158:
@@ -3463,7 +3463,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 3467 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3467 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 160:
@@ -3472,7 +3472,7 @@ yyreduce:
 	    (yyval.reference) = cod_new_initializer_list();
 	    (yyval.reference)->node.initializer_list.initializers = (yyvsp[-1].list);
 	}
-#line 3476 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3476 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 161:
@@ -3481,13 +3481,13 @@ yyreduce:
 	    (yyval.reference) = cod_new_initializer_list();
 	    (yyval.reference)->node.initializer_list.initializers = (yyvsp[-2].list);
 	}
-#line 3485 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3485 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 162:
 #line 1561 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.reference) = (yyvsp[0].reference);}
-#line 3491 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3491 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 163:
@@ -3500,7 +3500,7 @@ yyreduce:
 	    (yyval.list)->node = initializer;
 	    (yyval.list)->next = NULL;
 	}
-#line 3504 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3504 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 164:
@@ -3513,7 +3513,7 @@ yyreduce:
 	    (yyval.list)->node = initializer;
 	    (yyval.list)->next = NULL;
 	}
-#line 3517 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3517 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 165:
@@ -3531,7 +3531,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-3].list);
 	}
-#line 3535 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3535 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 166:
@@ -3549,13 +3549,13 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 3553 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3553 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 167:
 #line 1612 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list);}
-#line 3559 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3559 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 168:
@@ -3565,7 +3565,7 @@ yyreduce:
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 3569 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3569 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 169:
@@ -3580,7 +3580,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 3584 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3584 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 170:
@@ -3590,7 +3590,7 @@ yyreduce:
 	    (yyval.reference)->node.designator.expression = (yyvsp[-1].reference);
 	    (yyval.reference)->node.designator.id = NULL;
 	}
-#line 3594 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3594 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 171:
@@ -3600,7 +3600,7 @@ yyreduce:
 	    (yyval.reference)->node.designator.expression = NULL;
 	    (yyval.reference)->node.designator.id = (yyvsp[0].info).string;
 	}
-#line 3604 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3604 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 172:
@@ -3611,7 +3611,7 @@ yyreduce:
 	    tmp->next = NULL;
 	    (yyval.list) = tmp;
 	}
-#line 3615 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3615 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 173:
@@ -3619,7 +3619,7 @@ yyreduce:
     {
 	    (yyval.list) = (yyvsp[0].list);
 	   }
-#line 3623 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3623 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 174:
@@ -3627,7 +3627,7 @@ yyreduce:
     {
 	      (yyval.list) = NULL;
 	  }
-#line 3631 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3631 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 175:
@@ -3638,7 +3638,7 @@ yyreduce:
 	    tmp->next = NULL;
 	    (yyval.list) = cod_append_list((yyvsp[-1].list), tmp);
 	}
-#line 3642 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3642 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 176:
@@ -3646,7 +3646,7 @@ yyreduce:
     {
 	    (yyval.list) = cod_append_list((yyvsp[-1].list), (yyvsp[0].list));
 	}
-#line 3650 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3650 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 183:
@@ -3656,7 +3656,7 @@ yyreduce:
 	    (yyval.reference)->node.label_statement.name =  (yyvsp[-2].info).string;
 	    (yyval.reference)->node.label_statement.statement = (yyvsp[0].reference);
 	}
-#line 3660 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3660 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 184:
@@ -3664,7 +3664,7 @@ yyreduce:
     {
 	    (yyval.reference) = cod_new_compound_statement();
 	}
-#line 3668 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3668 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 185:
@@ -3675,13 +3675,13 @@ yyreduce:
 	    (yyval.reference)->node.compound_statement.decls = (yyvsp[-1].list);
 	    cod_remove_defined_types(yycontext, count);
 	}
-#line 3679 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3679 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 186:
 #line 1702 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 3685 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3685 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 187:
@@ -3698,7 +3698,7 @@ yyreduce:
 		(yyval.list) = (yyvsp[-1].list);
 	    }
 	}
-#line 3702 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3702 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 188:
@@ -3708,7 +3708,7 @@ yyreduce:
 	    (yyval.reference)->node.return_statement.expression = (yyvsp[-1].reference);
 	    (yyval.reference)->node.return_statement.lx_srcpos = (yyvsp[-2].info).lx_srcpos;
 	}
-#line 3712 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3712 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 189:
@@ -3718,7 +3718,7 @@ yyreduce:
 	    (yyval.reference)->node.return_statement.expression = NULL;
 	    (yyval.reference)->node.return_statement.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	}
-#line 3722 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3722 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 190:
@@ -3729,7 +3729,7 @@ yyreduce:
 	    (yyval.reference)->node.jump_statement.goto_target = NULL;
 	    (yyval.reference)->node.jump_statement.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	}
-#line 3733 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3733 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 191:
@@ -3740,7 +3740,7 @@ yyreduce:
 	    (yyval.reference)->node.jump_statement.goto_target = NULL;
 	    (yyval.reference)->node.jump_statement.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	}
-#line 3744 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3744 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 192:
@@ -3751,7 +3751,7 @@ yyreduce:
 	    (yyval.reference)->node.jump_statement.goto_target = (yyvsp[-1].info).string;
 	    (yyval.reference)->node.jump_statement.lx_srcpos = (yyvsp[-2].info).lx_srcpos;
 	}
-#line 3755 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3755 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 193:
@@ -3759,7 +3759,7 @@ yyreduce:
     {
 	    (yyval.reference) = NULL;
 	}
-#line 3763 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3763 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 194:
@@ -3768,7 +3768,7 @@ yyreduce:
 	    (yyval.reference) = cod_new_expression_statement();
 	    (yyval.reference)->node.expression_statement.expression = (yyvsp[-1].reference);
 	}
-#line 3772 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3772 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 195:
@@ -3780,7 +3780,7 @@ yyreduce:
 	    (yyval.reference)->node.selection_statement.then_part = (yyvsp[0].reference);
 	    (yyval.reference)->node.selection_statement.else_part = NULL;
 	}
-#line 3784 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3784 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 196:
@@ -3792,7 +3792,7 @@ yyreduce:
 	    (yyval.reference)->node.selection_statement.then_part = (yyvsp[-2].reference);
 	    (yyval.reference)->node.selection_statement.else_part = (yyvsp[0].reference);
 	}
-#line 3796 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3796 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 197:
@@ -3805,7 +3805,7 @@ yyreduce:
 	    (yyval.reference)->node.iteration_statement.iter_expr = (yyvsp[-2].reference);
 	    (yyval.reference)->node.iteration_statement.statement = (yyvsp[0].reference);
 	}
-#line 3809 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3809 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 198:
@@ -3818,7 +3818,7 @@ yyreduce:
 	    (yyval.reference)->node.iteration_statement.iter_expr = NULL;
 	    (yyval.reference)->node.iteration_statement.statement = (yyvsp[0].reference);
 	}
-#line 3822 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3822 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 199:
@@ -3832,13 +3832,13 @@ yyreduce:
 	    (yyval.reference)->node.iteration_statement.iter_expr = NULL;
 	    (yyval.reference)->node.iteration_statement.statement = (yyvsp[-5].reference);
 	}
-#line 3836 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3836 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 200:
 #line 1823 "cod/cod.y" /* yacc.c:1646  */
     { (yyval.reference) = NULL; }
-#line 3842 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3842 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 202:
@@ -3849,7 +3849,7 @@ yyreduce:
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3853 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3853 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 203:
@@ -3860,7 +3860,7 @@ yyreduce:
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3864 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3864 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 204:
@@ -3871,7 +3871,7 @@ yyreduce:
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3875 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3875 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 205:
@@ -3882,7 +3882,7 @@ yyreduce:
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3886 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3886 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
   case 206:
@@ -3893,11 +3893,11 @@ yyreduce:
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3897 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3897 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 3901 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.c" /* yacc.c:1646  */
+#line 3901 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -7180,7 +7180,7 @@ possibly_set_sizes_to_match(cod_parse_context context, sm_ref decl, sm_ref init_
 	(init_value->node.constant.token == string_constant)) {
 	/* init value is a string, set the array size to strlen + 1 */
 	sm_ref size_expr = cod_new_constant();
-	char *str = malloc(20); /* plenty */
+	char *str = malloc(40); /* plenty */
 	size_expr->node.constant.token = integer_constant;
 	sprintf(str, "%ld\n", (long) strlen(init_value->node.constant.const_val) + 1);
 	size_expr->node.constant.const_val = str;
@@ -7199,7 +7199,7 @@ possibly_set_sizes_to_match(cod_parse_context context, sm_ref decl, sm_ref init_
 	    items = items->next;
 	}
 	sm_ref size_expr = cod_new_constant();
-	char *str = malloc(20); /* plenty */
+	char *str = malloc(40); /* plenty */
 	size_expr->node.constant.token = integer_constant;
 	sprintf(str, "%ld\n", size);
 	size_expr->node.constant.const_val = str;

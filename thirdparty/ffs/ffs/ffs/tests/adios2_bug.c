@@ -801,7 +801,7 @@ main(int argc, char **argv)
     FillMetadataMsg(1 /* CohortSize */, &TimestepMetaData.Msg, &pointers);
 
     if (verbose) {
-        printf("Before, TimestepMetaData.Metadata[0].DataSize = %ld  block %p \n", TimestepMetaData.Msg.Metadata[0].DataSize, TimestepMetaData.Msg.Metadata[0].block);
+        printf("Before, TimestepMetaData.Metadata[0].DataSize = %zu  block %p \n", TimestepMetaData.Msg.Metadata[0].DataSize, TimestepMetaData.Msg.Metadata[0].block);
 
         printf("&TimestepMetaData = %p\n", &TimestepMetaData);
         printf("TimestepMetaData.ReaderCount = %d, ReaderStatus = %p\n", TimestepMetaData.ReaderCount, TimestepMetaData.ReaderStatus);
@@ -809,7 +809,7 @@ main(int argc, char **argv)
         printf("TimestepMetaData.Msg.CohortSize = %d, Timestep = %d, Formats = %p\n", TimestepMetaData.Msg.CohortSize, TimestepMetaData.Msg.Timestep, TimestepMetaData.Msg.Formats);
         printf("TimestepMetaData.Msg.Metadata = %p\n", TimestepMetaData.Msg.Metadata);
         if (TimestepMetaData.Msg.Metadata)
-            printf("TimestepMetaData.Msg.Metadata[0].block = %p, .size = %ld\n", TimestepMetaData.Msg.Metadata[0].block, TimestepMetaData.Msg.Metadata[0].DataSize);
+            printf("TimestepMetaData.Msg.Metadata[0].block = %p, .size = %zu\n", TimestepMetaData.Msg.Metadata[0].block, TimestepMetaData.Msg.Metadata[0].DataSize);
     }
     ReturnData = CP_distributeDataFromRankZero(ffs_c, &TimestepMetaData,
                                              ReturnMetadataInfoFormat, &RetDataBlock);
@@ -821,8 +821,8 @@ main(int argc, char **argv)
         printf("ReturnData->Msg.CohortSize = %d, Timestep = %d, Formats = %p\n", ReturnData->Msg.CohortSize, ReturnData->Msg.Timestep, ReturnData->Msg.Formats);
         printf("ReturnData->Msg.Metadata = %p\n", ReturnData->Msg.Metadata);
         if (ReturnData->Msg.Metadata)
-            printf("ReturnData->Msg.Metadata[0].block = %p, .size = %ld\n", ReturnData->Msg.Metadata[0].block, ReturnData->Msg.Metadata[0].DataSize);
-        printf("After, ReturnData.Metadata[0](%p).DataSize = %ld  block %p \n", ReturnData->Msg.Metadata, ReturnData->Msg.Metadata[0].DataSize, ReturnData->Msg.Metadata[0].block);
+            printf("ReturnData->Msg.Metadata[0].block = %p, .size = %zu\n", ReturnData->Msg.Metadata[0].block, ReturnData->Msg.Metadata[0].DataSize);
+        printf("After, ReturnData.Metadata[0](%p).DataSize = %zu  block %p \n", ReturnData->Msg.Metadata, ReturnData->Msg.Metadata[0].DataSize, ReturnData->Msg.Metadata[0].block);
         printf("After, ReturnData.Metadata[0].block[0] = 0x%0x \n", *(int*)ReturnData->Msg.Metadata[0].block);
     }
     if(*(int*)ReturnData->Msg.Metadata[0].block != 0xdeadbeef) {fprintf(stderr, "BAD VALUE\n"); exit(1);}

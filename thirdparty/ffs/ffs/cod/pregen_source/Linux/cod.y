@@ -4915,7 +4915,7 @@ possibly_set_sizes_to_match(cod_parse_context context, sm_ref decl, sm_ref init_
 	(init_value->node.constant.token == string_constant)) {
 	/* init value is a string, set the array size to strlen + 1 */
 	sm_ref size_expr = cod_new_constant();
-	char *str = malloc(20); /* plenty */
+	char *str = malloc(40); /* plenty */
 	size_expr->node.constant.token = integer_constant;
 	sprintf(str, "%ld\n", (long) strlen(init_value->node.constant.const_val) + 1);
 	size_expr->node.constant.const_val = str;
@@ -4934,7 +4934,7 @@ possibly_set_sizes_to_match(cod_parse_context context, sm_ref decl, sm_ref init_
 	    items = items->next;
 	}
 	sm_ref size_expr = cod_new_constant();
-	char *str = malloc(20); /* plenty */
+	char *str = malloc(40); /* plenty */
 	size_expr->node.constant.token = integer_constant;
 	sprintf(str, "%ld\n", size);
 	size_expr->node.constant.const_val = str;
