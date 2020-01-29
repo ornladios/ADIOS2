@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_USERS_EISEN_PROG_KORVO_BUILD_BUILD_AREA_FFS_DARWIN10_13_COD_TAB_H_INCLUDED
-# define YY_YY_USERS_EISEN_PROG_KORVO_BUILD_BUILD_AREA_FFS_DARWIN10_13_COD_TAB_H_INCLUDED
+#ifndef YY_YY_HOME_EISEN_PROG_GTKORVO_BUILD_AREA_FFS_UB18_64_COD_TAB_H_INCLUDED
+# define YY_YY_HOME_EISEN_PROG_GTKORVO_BUILD_AREA_FFS_UB18_64_COD_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -143,7 +143,7 @@ union YYSTYPE
     sm_list list;
     char *string;
 
-#line 147 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/cod.tab.h" /* yacc.c:1909  */
+#line 147 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -156,4 +156,4 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_USERS_EISEN_PROG_KORVO_BUILD_BUILD_AREA_FFS_DARWIN10_13_COD_TAB_H_INCLUDED  */
+#endif /* !YY_YY_HOME_EISEN_PROG_GTKORVO_BUILD_AREA_FFS_UB18_64_COD_TAB_H_INCLUDED  */

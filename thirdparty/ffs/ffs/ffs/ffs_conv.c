@@ -36,6 +36,16 @@
 #endif
 #include "assert.h"
 
+#ifdef __has_feature
+#if __has_feature(thread_sanitizer)
+#define NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#endif
+#endif
+
+#ifndef NO_SANITIZE_THREAD
+#define NO_SANITIZE_THREAD
+#endif
+
 static MAX_INTEGER_TYPE get_big_int(FMFieldPtr iofield, void *data);
 static MAX_FLOAT_TYPE get_big_float(FMFieldPtr iofield, void *data);
 static MAX_UNSIGNED_TYPE get_big_unsigned(FMFieldPtr iofield, void *data);
@@ -891,7 +901,13 @@ get_static_array_element_count(FMVarInfoList var)
     return count;
 }
 
-static int debug_code_generation = -1;
+static int _debug_code_generation = -1;
+
+static inline int NO_SANITIZE_THREAD debug_code_generation(void)
+{
+    return _debug_code_generation;
+}
+
 typedef struct conv_status {
     void *src;
     void *dest;
@@ -1166,7 +1182,7 @@ void *src_string_base;
     }
     if (conv->conv_func) {
 	struct run_time_conv_status rtcs;
-	if (debug_code_generation) {
+	if (debug_code_generation()) {
 	    int i;
 	    int limit = 30;
 	    int *tmp = (int *) (((char *) src_string_base) -
@@ -1991,8 +2007,18 @@ IOConversionPtr conv;
 extern void
 new_generate_conversion_code(dill_stream c, ConvStatus conv_status, IOConversionPtr conv, dill_reg *args, int assume_align, int register_args);
 
-static int ffs_conversion_generation = -1;
-static int generation_verbose = -1;
+static int _ffs_conversion_generation = -1;
+static int _generation_verbose = -1;
+
+static inline int NO_SANITIZE_THREAD ffs_conversion_generation(void)
+{
+    return _ffs_conversion_generation;
+}
+
+static inline int NO_SANITIZE_THREAD generation_verbose(void)
+{
+    return _generation_verbose;
+}
 
 #define gen_fatal(str) do {fprintf(stderr, "%s\n", str); exit(1);} while (0)
 
@@ -2037,6 +2063,37 @@ int ffs_putreg(void *vs, int reg, int type)
 }
 
 
+static void NO_SANITIZE_THREAD read_generation_environment_variables(void)
+{
+    if (_ffs_conversion_generation == -1) {
+	char *gen_string = getenv("FFS_CONVERSION_GENERATION");
+	int tmp = FFS_CONVERSION_GENERATION_DEFAULT;
+	if (gen_string != NULL) {
+#ifdef MODULE
+	    tmp = strtol(gen_string, NULL, 10);
+	    if ((tmp == LONG_MIN) || (tmp == LONG_MAX) || (tmp == 0)) {
+#else
+	    if (sscanf(gen_string, "%d", &tmp) != 1) {
+#endif
+		if (*gen_string == 0) {
+		    /* empty string, just turn on generation */
+		    tmp = 1;
+		} else {
+		    printf("Unable to parse FFS_CONVERSION_GENERATION environment variable \"%s\".\n", gen_string);
+		}
+	    }
+	}
+	_ffs_conversion_generation = tmp;
+    }
+    if (_debug_code_generation == -1)
+	_debug_code_generation =
+	    (getenv("FFS_CONVERSION_DEBUG") != NULL);
+    if (_generation_verbose == -1)
+	_generation_verbose =
+	    (getenv("FFS_CONVERSION_VERBOSE") != NULL);
+}
+
+
 extern
  conv_routine
 generate_conversion(conv, src_alignment, dest_alignment)
@@ -2052,34 +2109,10 @@ int dest_alignment;
     char *format_name = conv->ioformat->body->format_name;
     int count = 0, register_args = 1;
     struct conv_status cs;
-    if (ffs_conversion_generation == -1) {
-	char *gen_string = getenv("FFS_CONVERSION_GENERATION");
-	ffs_conversion_generation = FFS_CONVERSION_GENERATION_DEFAULT;
-	if (gen_string != NULL) {
-#ifdef MODULE
-	    ffs_conversion_generation = strtol(gen_string, NULL, 10);
-            if ((ffs_conversion_generation == LONG_MIN) ||
-                (ffs_conversion_generation == LONG_MAX) || 
-                (ffs_conversion_generation == 0)) {
-#else
-	    if (sscanf(gen_string, "%d", &ffs_conversion_generation) != 1) {
-#endif
-		if (*gen_string == 0) {
-		    /* empty string, just turn on generation */
-		    ffs_conversion_generation = 1;
-		} else {
-		    printf("Unable to parse FFS_CONVERSION_GENERATION environment variable \"%s\".\n", gen_string);
-		}
-	    }
-	}
-	debug_code_generation =
-	    (getenv("FFS_CONVERSION_DEBUG") != NULL);
-	generation_verbose =
-	    (getenv("FFS_CONVERSION_VERBOSE") != NULL);
-    }
-    if (!ffs_conversion_generation)
+    read_generation_environment_variables();
+    if (!ffs_conversion_generation())
 	return NULL;
-    if (generation_verbose) {
+    if (generation_verbose()) {
 	printf("For format %s ===================\n", format_name);
 	dump_IOConversion(conv);
     }
@@ -2156,7 +2189,7 @@ int dest_alignment;
 	    }
 	}
     }
-    if (debug_code_generation) {
+    if (debug_code_generation()) {
 	if (register_args) {
 	    dill_reg src_pointer_base, dest_pointer_base, dest_offset_adjust;	    dill_scallv(c, (void*)printf, "printf", "%P%P%p%p%p",
 		     "convert for %s called with src= %lx, dest %lx, rt_conv_status =%lx\n",
@@ -2246,7 +2279,7 @@ int dest_alignment;
 	conv->free_func = (void(*)(void*))&dill_free_handle;
 	conversion_routine = (void(*)()) dill_get_fp(conversion_handle);
     }
-    if (generation_verbose) {
+    if (generation_verbose()) {
 	dill_dump(c);
     }
     dill_free_stream(c);
@@ -2733,7 +2766,7 @@ int data_already_copied;
 			      new_dest, rt_conv_status);
 	    REG_DEBUG(("Putting %d and %d for new src & dest\n", 
 		       new_src, new_dest));
-	    if (debug_code_generation) {
+	    if (debug_code_generation()) {
 /*	        VCALL2V(printf, "%P%p",
 	    "After subroutine call, new src_string_base is %lx\n", src_string_base);*/
 	    }
@@ -2830,7 +2863,7 @@ int data_already_copied;
 #endif
 
 	    if (((conv->subconversion == NULL)) &&
-		!debug_code_generation) {
+		!debug_code_generation()) {
 		if (!ffs_getreg(c, &loop_var, DILL_I, DILL_TEMP))
 		    gen_fatal("gen field convert out of registers BB \n");
 		loop_var_type = DILL_TEMP;
@@ -2889,7 +2922,7 @@ int data_already_copied;
 		}
 	    }
 
-	    if (debug_code_generation) {
+	    if (debug_code_generation()) {
 		dill_scallv(c, (void*)printf, "printf", "%P%S%p",
 			    "format %s, field Initial loopvar = %x\n", conv_status->global_conv->ioformat->body->format_name, loop_var);
 	    }
@@ -2930,7 +2963,7 @@ int data_already_copied;
 		dill_addpi(c, src_addr, src_addr, tmp_spec.size);
 		dill_addpi(c, dest_addr, dest_addr, conv->dest_size);
 	    }		
-	    if (debug_code_generation) {
+	    if (debug_code_generation()) {
 		dill_scallv(c, (void*)printf, "printf", "%P%p%p%p",
 			    "loopvar = %x, src %x, dest %x\n", loop_var,
 			    src_addr, dest_addr);
