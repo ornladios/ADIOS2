@@ -3,9 +3,16 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/verinfo.h.in
+  ${PROJECT_BINARY_DIR}/verinfo.h
+  @ONLY
+)
+
 # BPLS
 add_executable(bpls ./bpls/bpls.cpp)
 target_link_libraries(bpls adios2 adios2sys_interface pugixml)
+target_include_directories(bpls PRIVATE ${PROJECT_BINARY_DIR})
 install(TARGETS bpls EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
