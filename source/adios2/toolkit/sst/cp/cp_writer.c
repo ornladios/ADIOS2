@@ -553,9 +553,12 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
             if (reader->ParentStream->ConnectionUsleepMultiplier != 0)
                 usleep(WriterRank *
                        reader->ParentStream->ConnectionUsleepMultiplier);
-            reader->Connections[peer].CMconn =
-                CMget_conn(reader->ParentStream->CPInfo->cm,
-                           reader->Connections[peer].ContactList);
+            if (!reader->Connections[peer].CMconn)
+            {
+                reader->Connections[peer].CMconn =
+                    CMget_conn(reader->ParentStream->CPInfo->cm,
+                               reader->Connections[peer].ContactList);
+            }
 
             if (!reader->Connections[peer].CMconn)
             {
@@ -640,10 +643,12 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
          * Reader Peers */
         if (Stream->Rank == 0)
         {
-            reader->Connections[0].CMconn =
-                CMget_conn(reader->ParentStream->CPInfo->cm,
-                           reader->Connections[0].ContactList);
-
+            if (!reader->Connections[0].CMconn)
+            {
+                reader->Connections[0].CMconn =
+                    CMget_conn(reader->ParentStream->CPInfo->cm,
+                               reader->Connections[0].ContactList);
+            }
             if (!reader->Connections[0].CMconn)
             {
                 CP_error(reader->ParentStream, "Connection failed in "

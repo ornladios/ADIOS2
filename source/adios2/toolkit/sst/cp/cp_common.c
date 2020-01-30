@@ -1022,11 +1022,21 @@ extern void SstStreamDestroy(SstStream Stream)
             CP_PeerConnection *connections_to_reader =
                 Stream->Readers[i]->Connections;
 
-            for (int j = 0; j < Stream->Readers[i]->ReaderCohortSize; j++)
+            if (connections_to_reader)
             {
-                free_attr_list(connections_to_reader[j].ContactList);
+                for (int j = 0; j < Stream->Readers[i]->ReaderCohortSize; j++)
+                {
+                    if (connections_to_reader[j].CMconn)
+                    {
+                        CMConnection_dereference(
+                            connections_to_reader[j].CMconn);
+                        connections_to_reader[j].CMconn = NULL;
+                    }
+                    free_attr_list(connections_to_reader[j].ContactList);
+                }
+                free(Stream->Readers[i]->Connections);
+                Stream->Readers[i]->Connections = NULL;
             }
-            free(Stream->Readers[i]->Connections);
             if (Stream->Readers[i]->Peers)
             {
                 free(Stream->Readers[i]->Peers);
@@ -1074,11 +1084,15 @@ extern void SstStreamDestroy(SstStream Stream)
             free_attr_list(Stream->ConnectionsToWriter[i].ContactList);
             if (Stream->ConnectionsToWriter[i].CMconn)
             {
-                CMConnection_close(Stream->ConnectionsToWriter[i].CMconn);
+                CMConnection_dereference(Stream->ConnectionsToWriter[i].CMconn);
+                Stream->ConnectionsToWriter[i].CMconn = NULL;
             }
         }
         if (Stream->ConnectionsToWriter)
+        {
             free(Stream->ConnectionsToWriter);
+            Stream->ConnectionsToWriter = NULL;
+        }
         free(Stream->Peers);
     }
     else if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)

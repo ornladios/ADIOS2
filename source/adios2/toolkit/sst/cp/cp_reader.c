@@ -189,6 +189,8 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
     SstStream Stream = (SstStream)client_data;
     int FailedPeerRank = -1;
     CP_verbose(Stream, "Reader-side close handler invoked\n");
+    if (!Stream->ConnectionsToWriter)
+        return;
     for (int i = 0; i < Stream->WriterCohortSize; i++)
     {
         if (Stream->ConnectionsToWriter[i].CMconn == ClosedConn)
