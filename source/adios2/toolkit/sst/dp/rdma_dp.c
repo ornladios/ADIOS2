@@ -373,7 +373,6 @@ typedef struct _RdmaCompletionHandle
     size_t Length;
     int Rank;
     int Pending;
-    double StartWTime;
 } * RdmaCompletionHandle;
 
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
@@ -637,7 +636,6 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
 
     do
     {
-        ret->StartWTime = MPI_Wtime();
         rc = fi_read(Fabric->signal, Buffer, Length, LocalDesc, SrcAddress,
                      (uint64_t)Addr, Info->Key, ret);
     } while (rc == -EAGAIN);
