@@ -196,6 +196,11 @@ public:
                    size_t recvcount,
                    const std::string &hint = std::string()) const;
 
+    template <typename TSend, typename TRecv>
+    void Allgatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                    const size_t *recvcounts, const size_t *displs,
+                    const std::string &hint = std::string()) const;
+
     template <typename T>
     void Allreduce(const T *sendbuf, T *recvbuf, size_t count, Op op,
                    const std::string &hint = std::string()) const;
@@ -372,6 +377,11 @@ public:
                            Datatype sendtype, void *recvbuf, size_t recvcount,
                            Datatype recvtype,
                            const std::string &hint) const = 0;
+    virtual void Allgatherv(const void *sendbuf, size_t sendcount,
+                            Datatype sendtype, void *recvbuf,
+                            const size_t *recvcounts, const size_t *displs,
+                            Datatype recvtype,
+                            const std::string &hint) const = 0;
 
     virtual void Allreduce(const void *sendbuf, void *recvbuf, size_t count,
                            Datatype datatype, Comm::Op op,

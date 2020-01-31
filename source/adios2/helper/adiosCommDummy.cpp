@@ -59,6 +59,11 @@ public:
                    void *recvbuf, size_t recvcount, Datatype recvtype,
                    const std::string &hint) const override;
 
+    void Allgatherv(const void *sendbuf, size_t sendcount, Datatype sendtype,
+                    void *recvbuf, const size_t *recvcounts,
+                    const size_t *displs, Datatype recvtype,
+                    const std::string &hint) const override;
+
     void Allreduce(const void *sendbuf, void *recvbuf, size_t count,
                    Datatype datatype, Comm::Op op,
                    const std::string &hint) const override;
@@ -132,6 +137,20 @@ void CommImplDummy::Allgather(const void *sendbuf, size_t sendcount,
                               size_t recvcount, Datatype recvtype,
                               const std::string &hint) const
 {
+    CommImplDummy::Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                          recvtype, 0, hint);
+}
+
+void CommImplDummy::Allgatherv(const void *sendbuf, size_t sendcount,
+                               Datatype sendtype, void *recvbuf,
+                               const size_t *recvcounts, const size_t *displs,
+                               Datatype recvtype, const std::string &hint) const
+{
+    const size_t recvcount = recvcounts[0];
+    if (recvcount != sendcount)
+    {
+        return CommDummyError("send and recv counts differ");
+    }
     CommImplDummy::Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
                           recvtype, 0, hint);
 }

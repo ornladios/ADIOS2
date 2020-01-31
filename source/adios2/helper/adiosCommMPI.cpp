@@ -132,6 +132,11 @@ public:
                    void *recvbuf, size_t recvcount, Datatype recvtype,
                    const std::string &hint) const override;
 
+    void Allgatherv(const void *sendbuf, size_t sendcount, Datatype sendtype,
+                    void *recvbuf, const size_t *recvcounts,
+                    const size_t *displs, Datatype recvtype,
+                    const std::string &hint) const override;
+
     void Allreduce(const void *sendbuf, void *recvbuf, size_t count,
                    Datatype datatype, Comm::Op op,
                    const std::string &hint) const override;
@@ -246,6 +251,29 @@ void CommImplMPI::Allgather(const void *sendbuf, size_t sendcount,
                                  ToMPI(sendtype), recvbuf,
                                  static_cast<int>(recvcount), ToMPI(recvtype),
                                  m_MPIComm),
+                   hint);
+}
+
+void CommImplMPI::Allgatherv(const void *sendbuf, size_t sendcount,
+                             Datatype sendtype, void *recvbuf,
+                             const size_t *recvcounts, const size_t *displs,
+                             Datatype recvtype, const std::string &hint) const
+{
+    std::vector<int> countsInt;
+    std::vector<int> displsInt;
+    {
+        auto cast = [](size_t sz) -> int { return int(sz); };
+        const int size = this->Size();
+        countsInt.reserve(size);
+        std::transform(recvcounts, recvcounts + size,
+                       std::back_inserter(countsInt), cast);
+        displsInt.reserve(size);
+        std::transform(displs, displs + size, std::back_inserter(displsInt),
+                       cast);
+    }
+    CheckMPIReturn(MPI_Allgatherv(sendbuf, static_cast<int>(sendcount),
+                                  ToMPI(sendtype), recvbuf, countsInt.data(),
+                                  displsInt.data(), ToMPI(recvtype), m_MPIComm),
                    hint);
 }
 

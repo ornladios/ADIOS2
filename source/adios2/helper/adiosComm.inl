@@ -165,6 +165,16 @@ void Comm::Allgather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
                              hint);
 }
 
+template <typename TSend, typename TRecv>
+void Comm::Allgatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                      const size_t *recvcounts, const size_t *displs,
+                      const std::string &hint) const
+{
+    return m_Impl->Allgatherv(
+        sendbuf, sendcount, CommImpl::GetDatatype<TSend>(), recvbuf, recvcounts,
+        displs, CommImpl::GetDatatype<TRecv>(), hint);
+}
+
 template <typename T>
 void Comm::Allreduce(const T *sendbuf, T *recvbuf, size_t count, Op op,
                      const std::string &hint) const
