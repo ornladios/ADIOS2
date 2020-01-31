@@ -997,13 +997,23 @@ extern void SstStreamDestroy(SstStream Stream)
                Stream->Filename);
     pthread_mutex_lock(&Stream->DataLock);
     Stream->Status = Closed;
-    if (Stream->Role == ReaderRole)
+    struct _TimestepMetadataList *Next = Stream->Timesteps;
+    while (Next)
     {
-        Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
+        Next = Next->Next;
+        free(Stream->Timesteps);
+        Stream->Timesteps = Next;
     }
-    else
+    if (Stream->DP_Stream)
     {
-        Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
+        if (Stream->Role == ReaderRole)
+        {
+            Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
+        }
+        else
+        {
+            Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
+        }
     }
     if (Stream->Readers)
     {
@@ -1012,11 +1022,21 @@ extern void SstStreamDestroy(SstStream Stream)
             CP_PeerConnection *connections_to_reader =
                 Stream->Readers[i]->Connections;
 
-            for (int j = 0; j < Stream->Readers[i]->ReaderCohortSize; j++)
+            if (connections_to_reader)
             {
-                free_attr_list(connections_to_reader[j].ContactList);
+                for (int j = 0; j < Stream->Readers[i]->ReaderCohortSize; j++)
+                {
+                    if (connections_to_reader[j].CMconn)
+                    {
+                        CMConnection_dereference(
+                            connections_to_reader[j].CMconn);
+                        connections_to_reader[j].CMconn = NULL;
+                    }
+                    free_attr_list(connections_to_reader[j].ContactList);
+                }
+                free(Stream->Readers[i]->Connections);
+                Stream->Readers[i]->Connections = NULL;
             }
-            free(Stream->Readers[i]->Connections);
             if (Stream->Readers[i]->Peers)
             {
                 free(Stream->Readers[i]->Peers);
@@ -1064,11 +1084,15 @@ extern void SstStreamDestroy(SstStream Stream)
             free_attr_list(Stream->ConnectionsToWriter[i].ContactList);
             if (Stream->ConnectionsToWriter[i].CMconn)
             {
-                CMConnection_close(Stream->ConnectionsToWriter[i].CMconn);
+                CMConnection_dereference(Stream->ConnectionsToWriter[i].CMconn);
+                Stream->ConnectionsToWriter[i].CMconn = NULL;
             }
         }
         if (Stream->ConnectionsToWriter)
+        {
             free(Stream->ConnectionsToWriter);
+            Stream->ConnectionsToWriter = NULL;
+        }
         free(Stream->Peers);
     }
     else if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)
@@ -1321,7 +1345,8 @@ static int *reversePeerArray(int MySize, int MyRank, int PeerSize,
         {
             if (their_peers[j] == MyRank)
             {
-                ReversePeers = malloc((PeerCount + 2) * sizeof(int));
+                ReversePeers =
+                    realloc(ReversePeers, (PeerCount + 2) * sizeof(int));
                 ReversePeers[PeerCount] = i;
                 PeerCount++;
                 if (j == 0)
@@ -1365,6 +1390,10 @@ extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
         if (reverseArray)
         {
             *reverseArray = reverse;
+        }
+        else
+        {
+            free(reverse);
         }
     }
 }

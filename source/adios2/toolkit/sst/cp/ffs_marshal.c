@@ -1343,9 +1343,12 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 int ElementSize = Reqs->VarRec->ElementSize;
                 int DimCount = Reqs->VarRec->DimCount;
                 size_t *GlobalDimensions = Reqs->VarRec->GlobalDims;
+                size_t *GlobalDimensionsFree = NULL;
                 size_t *RankOffset = Reqs->VarRec->PerWriterStart[i];
+                size_t *RankOffsetFree = NULL;
                 size_t *RankSize = Reqs->VarRec->PerWriterCounts[i];
                 size_t *SelOffset = Reqs->Start;
+                size_t *SelOffsetFree = NULL;
                 size_t *SelSize = Reqs->Count;
                 char *Type = Reqs->VarRec->Type;
                 void *IncomingData = Reqs->VarRec->PerWriterIncomingData[i];
@@ -1355,11 +1358,14 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 if (Reqs->RequestType == Local)
                 {
                     RankOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                    RankOffsetFree = RankOffset;
                     GlobalDimensions =
                         calloc(DimCount, sizeof(GlobalDimensions[0]));
+                    GlobalDimensionsFree = GlobalDimensions;
                     if (SelOffset == NULL)
                     {
                         SelOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                        SelOffsetFree = SelOffset;
                     }
                     for (int i = 0; i < DimCount; i++)
                     {
@@ -1393,6 +1399,9 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                         ElementSize, DimCount, GlobalDimensions, RankOffset,
                         RankSize, SelOffset, SelSize, IncomingData, Reqs->Data);
                 }
+                free(SelOffsetFree);
+                free(GlobalDimensionsFree);
+                free(RankOffsetFree);
                 if (FreeIncoming)
                 {
                     /* free uncompressed  */
@@ -1559,10 +1568,10 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
      */
     MBase->BitField = NULL;
     FMfree_var_rec_elements(Info->MetaFormat, Stream->M);
-    MBase->BitField = tmp;
     FMfree_var_rec_elements(Info->DataFormat, Stream->D);
     memset(Stream->M, 0, Stream->MetadataSize);
     memset(Stream->D, 0, Stream->DataSize);
+    MBase->BitField = tmp;
 
     // Call SstInternalProvideStep with Metadata block, Data block and (any new)
     // formatID and formatBody
@@ -1580,6 +1589,10 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     SstInternalProvideTimestep(Stream, &MetaDataRec, &DataRec, Timestep,
                                Formats, FreeTSInfo, TSInfo, &AttributeRec,
                                FreeAttrInfo, AttributeEncodeBuffer);
+    if (AttributeEncodeBuffer)
+    {
+        free_FFSBuffer(AttributeEncodeBuffer);
+    }
     while (Formats)
     {
         struct FFSFormatBlock *Tmp = Formats->Next;
@@ -1662,7 +1675,7 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
         int j = 0;
         while (FieldList[i].field_name)
         {
-            char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
+            char *FieldName;
             void *field_data = (char *)BaseData + FieldList[i].field_offset;
 
             char *Type;
@@ -1671,6 +1684,8 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
                              &ElemSize);
             Stream->AttrSetupUpcall(Stream->SetupUpcallReader, FieldName, Type,
                                     field_data);
+            free(Type);
+            free(FieldName);
             i++;
         }
     }
@@ -1689,6 +1704,7 @@ static void LoadFormats(SstStream Stream, FFSFormatList Formats)
         load_external_format_FMcontext(
             FMContext_from_FFS(Stream->ReaderFFSContext), FormatID,
             Entry->FormatIDRepLen, FormatServerRep);
+        free(FormatID);
         Entry = Entry->Next;
     }
 }

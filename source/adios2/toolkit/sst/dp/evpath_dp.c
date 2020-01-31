@@ -259,7 +259,7 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
     SMPI_Comm_rank(comm, &Stream->Rank);
 
     set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"),
-                    "sockets");
+                    strdup("sockets"));
 
     if (Params->DataInterface)
     {
@@ -275,6 +275,9 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
     attr_list ContactList = CMget_specific_contact_list(CM, ListenAttrs);
 
     EvpathContactString = attr_list_to_string(ContactList);
+
+    free_attr_list(ContactList);
+    free_attr_list(ListenAttrs);
 
     /*
      * add a handler for read reply messages
@@ -614,8 +617,11 @@ static void EvpathDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
             free(WS_Stream->Readers[i]->WriterContactInfo);
             free(WS_Stream->Readers[i]->ReaderContactInfo->ContactString);
             if (WS_Stream->Readers[i]->ReaderContactInfo->Conn)
-                CMConnection_close(
+            {
+                CMConnection_dereference(
                     WS_Stream->Readers[i]->ReaderContactInfo->Conn);
+                WS_Stream->Readers[i]->ReaderContactInfo->Conn = NULL;
+            }
             free(WS_Stream->Readers[i]->ReaderContactInfo);
             free(WS_Stream->Readers[i]);
         }
@@ -1095,6 +1101,8 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
                 }
                 tmp = tmp->Next;
             }
+            free(WSR_Stream->ReaderRequests);
+            WSR_Stream->ReaderRequests = NULL;
         }
     }
 }

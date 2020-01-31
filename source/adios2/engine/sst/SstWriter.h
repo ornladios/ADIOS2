@@ -17,6 +17,8 @@
 #include "adios2/toolkit/format/bp/bp3/BP3Serializer.h"
 #include "adios2/toolkit/sst/sst.h"
 
+#include <memory>
+
 namespace adios2
 {
 namespace core
@@ -61,7 +63,7 @@ private:
         _SstData metadata;
         format::BP3Serializer *serializer;
     };
-    format::BP3Serializer *m_BP3Serializer;
+    std::unique_ptr<format::BP3Serializer> m_BP3Serializer;
 
     SstStream m_Output;
     long m_WriterStep = -1;

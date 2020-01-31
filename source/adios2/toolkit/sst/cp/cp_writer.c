@@ -117,16 +117,16 @@ static void AddNameToExitList(const char *FileName)
 static void RemoveNameFromExitList(const char *FileName)
 {
     struct NameListEntry **LastPtr = &FileNameList;
-    struct NameListEntry *List = FileNameList;
-    while (List)
+    while (*LastPtr)
     {
-        if (strcmp(FileName, List->FileName) == 0)
+        if (strcmp(FileName, (*LastPtr)->FileName) == 0)
         {
-            *LastPtr = List->Next;
-            free(List);
+            struct NameListEntry *Tmp = *LastPtr;
+            *LastPtr = (*LastPtr)->Next;
+            free(Tmp);
             return;
         }
-        List = List->Next;
+        LastPtr = &(*LastPtr)->Next;
     }
 }
 
@@ -553,9 +553,12 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
             if (reader->ParentStream->ConnectionUsleepMultiplier != 0)
                 usleep(WriterRank *
                        reader->ParentStream->ConnectionUsleepMultiplier);
-            reader->Connections[peer].CMconn =
-                CMget_conn(reader->ParentStream->CPInfo->cm,
-                           reader->Connections[peer].ContactList);
+            if (!reader->Connections[peer].CMconn)
+            {
+                reader->Connections[peer].CMconn =
+                    CMget_conn(reader->ParentStream->CPInfo->cm,
+                               reader->Connections[peer].ContactList);
+            }
 
             if (!reader->Connections[peer].CMconn)
             {
@@ -640,10 +643,12 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
          * Reader Peers */
         if (Stream->Rank == 0)
         {
-            reader->Connections[0].CMconn =
-                CMget_conn(reader->ParentStream->CPInfo->cm,
-                           reader->Connections[0].ContactList);
-
+            if (!reader->Connections[0].CMconn)
+            {
+                reader->Connections[0].CMconn =
+                    CMget_conn(reader->ParentStream->CPInfo->cm,
+                               reader->Connections[0].ContactList);
+            }
             if (!reader->Connections[0].CMconn)
             {
                 CP_error(reader->ParentStream, "Connection failed in "
@@ -1344,8 +1349,10 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         return;
     }
 
-    if ((NewState == PeerClosed) || (NewState == Closed))
+    if ((NewState == PeerClosed) || (NewState == Closed) ||
+        (NewState == PeerFailed))
     {
+        // enter this on fail or deliberate close
         CP_verbose(ParentStream,
                    "In PeerFailCloseWSReader, releasing sent timesteps\n");
         DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
@@ -1355,16 +1362,16 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         {
             if (CP_WSR_Stream->Connections[i].CMconn)
             {
-                CMConnection_close(CP_WSR_Stream->Connections[i].CMconn);
+                CMConnection_dereference(CP_WSR_Stream->Connections[i].CMconn);
                 CP_WSR_Stream->Connections[i].CMconn = NULL;
             }
         }
-    }
-    if (NewState == PeerFailed)
-    {
-        DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
-        CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0, CloseWSRStream,
-                           CP_WSR_Stream);
+        if (NewState == PeerFailed)
+        {
+            // move to fully closed state later
+            CMfree(CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0,
+                                      CloseWSRStream, CP_WSR_Stream));
+        }
     }
     CP_verbose(ParentStream, "Moving Reader stream %p to status %s\n",
                CP_WSR_Stream, SSTStreamStatusStr[NewState]);

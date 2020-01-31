@@ -83,6 +83,7 @@ redo:
         }
         if (TimeoutRemaining <= 0)
         {
+            free(FileName);
             return NULL;
         }
         WriterInfo = fopen(FileName, "r");
@@ -188,6 +189,8 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
     SstStream Stream = (SstStream)client_data;
     int FailedPeerRank = -1;
     CP_verbose(Stream, "Reader-side close handler invoked\n");
+    if (!Stream->ConnectionsToWriter)
+        return;
     for (int i = 0; i < Stream->WriterCohortSize; i++)
     {
         if (Stream->ConnectionsToWriter[i].CMconn == ClosedConn)
@@ -410,7 +413,12 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         Stream, Filename, Params, comm, &rank0_to_rank0_conn, &WriterFileID);
 
     if (WriterContactAttributes == NULL)
+    {
+        SstStreamDestroy(Stream);
+        free(Stream);
+        free(Filename);
         return NULL;
+    }
 
     Stream->DP_Stream = Stream->DP_Interface->initReader(
         &Svcs, Stream, &dpInfo, Stream->ConfigParams, WriterContactAttributes);
@@ -1400,7 +1408,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
             long LatestTimestep;
         };
         struct _GlobalOpInfo my_info;
-        struct _GlobalOpInfo *global_info;
+        struct _GlobalOpInfo *global_info = NULL;
         long NextTimestep;
 
         if (Stream->Rank == 0)
@@ -1431,6 +1439,8 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                     Smallest = global_info[i].LatestTimestep;
                 }
             }
+
+            free(global_info);
 
             /*
              * Several situations are possible here, depending upon

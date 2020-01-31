@@ -3,15 +3,15 @@
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
-set(UBSAN_FLAGS "-fsanitize=undefined -fno-sanitize-recover=all -pthread")
-set(ENV{CFLAGS}   "${UBSAN_FLAGS}")
-set(ENV{CXXFLAGS} "${UBSAN_FLAGS}")
-set(ENV{FFLAGS}   "${UBSAN_FLAGS}")
-set(ENV{UBSAN_OPTIONS} "print_stacktrace=1")
+set(ASAN_FLAGS "-fsanitize=address -pthread")
+set(ENV{CFLAGS}   "${ASAN_FLAGS}")
+set(ENV{CXXFLAGS} "${ASAN_FLAGS}")
+set(ENV{FFLAGS}   "${ASAN_FLAGS}")
 
 set(dashboard_cache "
 ADIOS2_USE_HDF5:STRING=ON
 ADIOS2_USE_MPI:STRING=OFF
+ADIOS2_USE_Python:STRING=OFF
 
 HDF5_C_COMPILER_EXECUTABLE:FILEPATH=/usr/bin/h5cc
 HDF5_DIFF_EXECUTABLE:FILEPATH=/usr/bin/h5diff
@@ -19,7 +19,7 @@ HDF5_DIFF_EXECUTABLE:FILEPATH=/usr/bin/h5diff
 
 set(dashboard_track "Analysis")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_BUILD_FLAGS "-k -j2")
+set(CTEST_BUILD_FLAGS "-k -j4")
 
 set(ADIOS_TEST_REPEAT 0)
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")

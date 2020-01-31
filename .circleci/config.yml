@@ -25,9 +25,14 @@ jobs:
     <<: *defaults
     docker:
       - image: ornladios/adios2:fedora-ubsan
+  "fedora-asan":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:fedora-asan
 
 workflows:
   version: 2
   sanitizers:
     jobs:
       - "fedora-ubsan"
+      - "fedora-asan"

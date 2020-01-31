@@ -27,6 +27,16 @@ public:
     // Worker(const pugi::xml_node queryNode, MPI_Comm comm);
     // will add Worker(jsonNode&, MPI_Comm comm);
 
+    Worker(const Worker &other) = delete;
+
+    Worker(Worker &&other)
+    {
+        this->m_QueryFile = other.m_QueryFile;
+        this->m_SourceReader = other.m_SourceReader;
+        this->m_Query = other.m_Query;
+        other.m_Query = nullptr;
+    }
+
     virtual ~Worker();
 
     adios2::core::Engine *GetSourceReader() { return m_SourceReader; }
@@ -74,11 +84,6 @@ public:
     {
         ParseJson();
     }
-    ~JsonWorker()
-    {
-        if (m_Query != nullptr)
-            delete m_Query;
-    }
 
 private:
     void ParseJson();
@@ -94,11 +99,6 @@ public:
         ParseMe();
     }
 
-    ~XmlWorker()
-    {
-        if (m_Query != nullptr)
-            delete m_Query;
-    }
     void ParseMe();
     void Close() { std::cout << " .. closing in xml " << std::endl; }
 
