@@ -78,8 +78,19 @@ template <class T>
 void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
                   const size_t elements) noexcept
 {
-    const char *src = reinterpret_cast<const char *>(source);
-    std::copy(src, src + elements * sizeof(T), buffer.begin() + position);
+    // if alignment is appropriate, use type-specific copy
+    // otherwise use raw bytes
+    auto dest = buffer.begin() + position;
+    if ((reinterpret_cast<uintptr_t>(&(*dest)) % alignof(T) == 0) &&
+        (reinterpret_cast<uintptr_t>(source) % alignof(T) == 0))
+    {
+        std::copy(source, source + elements, reinterpret_cast<T *>(&(*dest)));
+    }
+    else
+    {
+        std::copy(reinterpret_cast<const char *>(source),
+                  reinterpret_cast<const char *>(source + elements), dest);
+    }
     position += elements * sizeof(T);
 }
 
