@@ -28,6 +28,12 @@ public:
     T m_DataSingleValue;        ///< holds data for single value attributes
 
     /**
+     * Copy constructor (enforces zero-padding)
+     * @param other
+     */
+    Attribute<T>(const Attribute<T> &other);
+
+    /**
      * Data array constructor
      * @param name
      * @param data
