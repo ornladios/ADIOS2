@@ -96,6 +96,7 @@ void SscReader::EndStep()
 
 void SscReader::SyncMpiPattern()
 {
+    TAU_SCOPED_TIMER_FUNC();
     int readerMasterWorldRank = 0;
     int writerMasterWorldRank = 0;
     if (m_ReaderRank == 0)
@@ -361,6 +362,7 @@ void SscReader::SyncMpiPattern()
 
 void SscReader::SyncWritePattern()
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::SyncWritePattern, World Rank " << m_WorldRank
@@ -455,6 +457,7 @@ void SscReader::SyncWritePattern()
 
 void SscReader::SyncReadPattern()
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::SyncReadPattern, World Rank " << m_WorldRank
@@ -581,6 +584,7 @@ void SscReader::SyncReadPattern()
 void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
                                   ssc::RankPosMap &allRanks)
 {
+    TAU_SCOPED_TIMER_FUNC();
     size_t bufferPosition = 0;
     for (size_t rank = 0; rank < bvv.size(); ++rank)
     {
