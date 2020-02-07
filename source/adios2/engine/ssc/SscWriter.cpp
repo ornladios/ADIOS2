@@ -101,6 +101,7 @@ void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
 
 void SscWriter::SyncMpiPattern()
 {
+    TAU_SCOPED_TIMER_FUNC();
     int readerMasterWorldRank = 0;
     int writerMasterWorldRank = 0;
     if (m_WriterRank == 0)
@@ -364,6 +365,7 @@ void SscWriter::SyncMpiPattern()
 
 void SscWriter::SyncWritePattern()
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "SscWriter::SyncWritePattern, World Rank " << m_WorldRank
@@ -484,6 +486,7 @@ void SscWriter::SyncWritePattern()
 
 void SscWriter::SyncReadPattern()
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "SscWriter::SyncReadPattern, World Rank " << m_WorldRank
@@ -526,6 +529,7 @@ void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
                                   const int writerRank,
                                   ssc::RankPosMap &allOverlapRanks)
 {
+    TAU_SCOPED_TIMER_FUNC();
     for (auto &overlapRank : allOverlapRanks)
     {
         auto &readerRankMap = readerVecVec[overlapRank.first];
