@@ -50,6 +50,7 @@ private:
     ssc::RankPosMap m_AllSendingReaderRanks;
     std::vector<char> m_Buffer;
     MPI_Win m_MpiWin;
+    std::string m_MpiMode = "OneSidedPush";
 
     int m_WorldRank;
     int m_WorldSize;
@@ -66,6 +67,8 @@ private:
     void SyncMpiPattern();
     void SyncWritePattern();
     void SyncReadPattern();
+    void PutOneSidedPush();
+    void PutTwoSided();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \

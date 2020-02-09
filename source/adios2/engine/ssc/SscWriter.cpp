@@ -68,6 +68,32 @@ size_t SscWriter::CurrentStep() const
 
 void SscWriter::PerformPuts() { TAU_SCOPED_TIMER_FUNC(); }
 
+void SscWriter::PutOneSidedPush()
+{
+    TAU_SCOPED_TIMER_FUNC();
+
+    if (m_CurrentStep == 0)
+    {
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
+                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+    }
+
+    MPI_Win_fence(0, m_MpiWin);
+    for (const auto &i : m_AllSendingReaderRanks)
+    {
+        MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
+                m_ReaderMasterWorldRank + i.first, i.second.first + 1,
+                m_Buffer.size(), MPI_CHAR, m_MpiWin);
+    }
+    MPI_Win_fence(0, m_MpiWin);
+}
+
+void SscWriter::PutTwoSided()
+{
+    TAU_SCOPED_TIMER_FUNC();
+
+}
+
 void SscWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -81,18 +107,17 @@ void SscWriter::EndStep()
     {
         SyncWritePattern();
         SyncReadPattern();
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
-                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
 
-    MPI_Win_fence(0, m_MpiWin);
-    for (const auto &i : m_AllSendingReaderRanks)
+    if(m_MpiMode == "OneSidedPush")
     {
-        MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
-                m_ReaderMasterWorldRank + i.first, i.second.first + 1,
-                m_Buffer.size(), MPI_CHAR, m_MpiWin);
+        PutOneSidedPush();
     }
-    MPI_Win_fence(0, m_MpiWin);
+    else if(m_MpiMode == "TwoSided")
+    {
+        PutTwoSided();
+    }
+
 }
 
 void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }

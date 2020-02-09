@@ -40,6 +40,26 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 
 SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
 
+void SscReader::GetOneSidedPush()
+{
+    TAU_SCOPED_TIMER_FUNC();
+
+    if (m_CurrentStep == 0)
+    {
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
+                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+    }
+
+    MPI_Win_fence(0, m_MpiWin);
+    MPI_Win_fence(0, m_MpiWin);
+}
+
+void SscReader::GetTwoSided()
+{
+    TAU_SCOPED_TIMER_FUNC();
+
+}
+
 StepStatus SscReader::BeginStep(const StepMode stepMode,
                                 const float timeoutSeconds)
 {
@@ -55,16 +75,20 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     {
         m_InitialStep = false;
         SyncReadPattern();
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
-                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
     else
     {
         ++m_CurrentStep;
     }
 
-    MPI_Win_fence(0, m_MpiWin);
-    MPI_Win_fence(0, m_MpiWin);
+    if(m_MpiMode == "OneSidedPush")
+    {
+        GetOneSidedPush();
+    }
+    else if(m_MpiMode == "TwoSided")
+    {
+        GetTwoSided();
+    }
 
     if (m_Buffer[0] == 1)
     {
