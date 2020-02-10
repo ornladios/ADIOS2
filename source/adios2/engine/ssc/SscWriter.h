@@ -50,7 +50,9 @@ private:
     ssc::RankPosMap m_AllSendingReaderRanks;
     std::vector<char> m_Buffer;
     MPI_Win m_MpiWin;
-    std::string m_MpiMode = "OneSidedPush";
+    MPI_Group m_MpiAllWritersGroup;
+    MPI_Comm m_MpiAllWritersComm;
+    std::string m_MpiMode = "OneSidedPostPush";
 
     int m_WorldRank;
     int m_WorldSize;
@@ -63,11 +65,14 @@ private:
     int m_AppSize = 0;
     std::vector<std::vector<int>> m_WriterGlobalMpiInfo;
     std::vector<std::vector<int>> m_ReaderGlobalMpiInfo;
+    std::vector<int> m_AllWriterRanks;
+    std::vector<int> m_AllReaderRanks;
 
     void SyncMpiPattern();
     void SyncWritePattern();
     void SyncReadPattern();
-    void PutOneSidedPush();
+    void PutOneSidedFencePush();
+    void PutOneSidedPostPush();
     void PutTwoSided();
 
 #define declare_type(T)                                                        \

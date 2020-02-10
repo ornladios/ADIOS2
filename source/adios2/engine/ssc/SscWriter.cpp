@@ -68,7 +68,35 @@ size_t SscWriter::CurrentStep() const
 
 void SscWriter::PerformPuts() { TAU_SCOPED_TIMER_FUNC(); }
 
-void SscWriter::PutOneSidedPush()
+
+void SscWriter::PutOneSidedPostPush()
+{
+    TAU_SCOPED_TIMER_FUNC();
+
+    if (m_CurrentStep == 0)
+    {
+        MPI_Win_create(NULL, 0, sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+    }
+
+    ssc::PrintRankPosMap(m_AllSendingReaderRanks, "from writer" + std::to_string(m_WriterRank));
+
+    std::cout << "=====1 " << std::endl;
+    MPI_Win_start(m_MpiAllWritersGroup,0,m_MpiWin);
+    std::cout << "=====2 " << std::endl;
+    for (const auto &i : m_AllSendingReaderRanks)
+    {
+        std::cout << "writer rank" << m_WriterRank << " send to reader rank " << i.first << std::endl;
+        MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
+                m_ReaderMasterWorldRank + i.first, i.second.first + 1,
+                m_Buffer.size(), MPI_CHAR, m_MpiWin);
+    }
+    std::cout << "=====3 " << std::endl;
+    MPI_Win_complete(m_MpiWin);
+    std::cout << "=====4 " << std::endl;
+
+}
+
+void SscWriter::PutOneSidedFencePush()
 {
     TAU_SCOPED_TIMER_FUNC();
 
@@ -112,9 +140,13 @@ void SscWriter::EndStep()
         SyncReadPattern();
     }
 
-    if(m_MpiMode == "OneSidedPush")
+    if(m_MpiMode == "OneSidedFencePush")
     {
-        PutOneSidedPush();
+        PutOneSidedFencePush();
+    }
+    else if(m_MpiMode == "OneSidedPostPush")
+    {
+        PutOneSidedPostPush();
     }
     else if(m_MpiMode == "TwoSided")
     {
@@ -359,6 +391,35 @@ void SscWriter::SyncMpiPattern()
         MPI_Bcast(m_ReaderGlobalMpiInfo[i].data(), ilen, MPI_INT, 0,
                   MPI_COMM_WORLD); // Broadcast readerinfo size
     }
+
+    for (const auto &app : m_WriterGlobalMpiInfo)
+    {
+        for (int rank : app)
+        {
+            m_AllWriterRanks.push_back(rank);
+        }
+    }
+
+    for (const auto &app : m_ReaderGlobalMpiInfo)
+    {
+        for (int rank : app)
+        {
+            m_AllReaderRanks.push_back(rank);
+        }
+    }
+
+    std::cout << "================ ";
+    for(auto i:m_AllWriterRanks)
+    {
+        std::cout <<i << ",";
+    }
+    std::cout << std::endl;
+
+    MPI_Group worldGroup;
+    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
+    MPI_Group_incl(worldGroup, m_AllWriterRanks.size(), m_AllWriterRanks.data(), &m_MpiAllWritersGroup);
+    MPI_Comm_create_group(MPI_COMM_WORLD, m_MpiAllWritersGroup, 0, &m_MpiAllWritersComm);
+
 
     if (m_Verbosity >= 10)
     {

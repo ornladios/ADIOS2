@@ -40,7 +40,19 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 
 SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
 
-void SscReader::GetOneSidedPush()
+void SscReader::GetOneSidedPostPush()
+{
+    TAU_SCOPED_TIMER_FUNC();
+    if (m_CurrentStep == 0)
+    {
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
+                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+    }
+    MPI_Win_post(m_MpiAllReadersGroup,0,m_MpiWin);
+    MPI_Win_wait(m_MpiWin);
+}
+
+void SscReader::GetOneSidedFencePush()
 {
     TAU_SCOPED_TIMER_FUNC();
 
@@ -49,8 +61,6 @@ void SscReader::GetOneSidedPush()
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
                        MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
-
-    ssc::PrintRankPosMap(m_AllReceivingWriterRanks, "from reader" + std::to_string(m_ReaderRank));
 
     MPI_Win_fence(0, m_MpiWin);
     MPI_Win_fence(0, m_MpiWin);
@@ -83,9 +93,13 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
         ++m_CurrentStep;
     }
 
-    if(m_MpiMode == "OneSidedPush")
+    if(m_MpiMode == "OneSidedFencePush")
     {
-        GetOneSidedPush();
+        GetOneSidedFencePush();
+    }
+    else if(m_MpiMode == "OneSidedPostPush")
+    {
+        GetOneSidedPostPush();
     }
     else if(m_MpiMode == "TwoSided")
     {
@@ -354,6 +368,34 @@ void SscReader::SyncMpiPattern()
         MPI_Bcast(m_ReaderGlobalMpiInfo[i].data(), ilen, MPI_INT, 0,
                   MPI_COMM_WORLD); // Broadcast readerinfo size
     }
+
+    for (const auto &app : m_WriterGlobalMpiInfo)
+    {
+        for (int rank : app)
+        {
+            m_AllWriterRanks.push_back(rank);
+        }
+    }
+
+    for (const auto &app : m_ReaderGlobalMpiInfo)
+    {
+        for (int rank : app)
+        {
+            m_AllReaderRanks.push_back(rank);
+        }
+    }
+
+    std::cout << "================ ";
+    for(auto i:m_AllReaderRanks)
+    {
+        std::cout <<i << ",";
+    }
+    std::cout << std::endl;
+
+    MPI_Group worldGroup;
+    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
+    MPI_Group_incl(worldGroup, m_AllReaderRanks.size(), m_AllReaderRanks.data(), &m_MpiAllReadersGroup);
+    MPI_Comm_create_group(MPI_COMM_WORLD, m_MpiAllReadersGroup, 0, &m_MpiAllReadersComm);
 
     if (m_Verbosity >= 10)
     {
