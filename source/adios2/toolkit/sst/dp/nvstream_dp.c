@@ -197,7 +197,7 @@ static DP_RS_Stream NvstreamInitReader(CP_Services Svcs, void *CP_Stream,
         malloc(sizeof(struct _NvstreamReaderContactInfo));
     CManager cm = Svcs->getCManager(CP_Stream);
     char *NvstreamContactString;
-    MPI_Comm comm = Svcs->getMPIComm(CP_Stream);
+    SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     CMFormat F;
     CManager CM = Svcs->getCManager(CP_Stream);
     attr_list ListenAttrs = create_attr_list();
@@ -377,7 +377,7 @@ static DP_WS_Stream NvstreamInitWriter(CP_Services Svcs, void *CP_Stream,
 {
     Nvstream_WS_Stream Stream = malloc(sizeof(struct _Nvstream_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
-    MPI_Comm comm = Svcs->getMPIComm(CP_Stream);
+    SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     CMFormat F;
 
     memset(Stream, 0, sizeof(struct _Nvstream_WS_Stream));
@@ -430,7 +430,7 @@ static DP_WSR_Stream NvstreamInitWriterPerReader(CP_Services Svcs,
     Nvstream_WS_Stream WS_Stream = (Nvstream_WS_Stream)WS_Stream_v;
     Nvstream_WSR_Stream WSR_Stream = malloc(sizeof(*WSR_Stream));
     NvstreamWriterContactInfo ContactInfo;
-    MPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
+    SMPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
     int Rank;
     NvstreamReaderContactInfo *providedReaderInfo =
         (NvstreamReaderContactInfo *)providedReaderInfo_v;

@@ -307,7 +307,7 @@ static int HasAllPeers(SstStream Stream)
 }
 
 attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
-                        MPI_Comm comm, CMConnection *conn_p,
+                        SMPI_Comm comm, CMConnection *conn_p,
                         void **WriterFileID_p)
 {
     int DataSize = 0;
@@ -352,10 +352,11 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
             DataSize = 0;
             *conn_p = NULL;
         }
-        SMPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
+        SMPI_Bcast(&DataSize, 1, SMPI_INT, 0, Stream->mpiComm);
         if (DataSize != 0)
         {
-            SMPI_Bcast(CMContactString, DataSize, MPI_CHAR, 0, Stream->mpiComm);
+            SMPI_Bcast(CMContactString, DataSize, SMPI_CHAR, 0,
+                       Stream->mpiComm);
             RetVal = attr_list_from_string(CMContactString);
         }
         if (CMContactString)
@@ -363,11 +364,11 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
     }
     else
     {
-        SMPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
+        SMPI_Bcast(&DataSize, 1, SMPI_INT, 0, Stream->mpiComm);
         if (DataSize != 0)
         {
             char *Buffer = malloc(DataSize);
-            SMPI_Bcast(Buffer, DataSize, MPI_CHAR, 0, Stream->mpiComm);
+            SMPI_Bcast(Buffer, DataSize, SMPI_CHAR, 0, Stream->mpiComm);
             RetVal = attr_list_from_string(Buffer);
             free(Buffer);
         }
@@ -375,7 +376,7 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
     return RetVal;
 }
 
-SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
+SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 {
     SstStream Stream;
     void *dpInfo;
@@ -1422,8 +1423,8 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         my_info.LatestTimestep = MaxQueuedMetadata(Stream);
         my_info.timeout_sec = timeout_sec;
         my_info.mode = mode;
-        SMPI_Gather(&my_info, sizeof(my_info), MPI_CHAR, global_info,
-                    sizeof(my_info), MPI_CHAR, 0, Stream->mpiComm);
+        SMPI_Gather(&my_info, sizeof(my_info), SMPI_CHAR, global_info,
+                    sizeof(my_info), SMPI_CHAR, 0, Stream->mpiComm);
         if (Stream->Rank == 0)
         {
             long Biggest = -1;
@@ -1512,11 +1513,11 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                 /* force everyone to return failed */
                 NextTimestep = -3;
             }
-            SMPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
+            SMPI_Bcast(&NextTimestep, 1, SMPI_LONG, 0, Stream->mpiComm);
         }
         else
         {
-            SMPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
+            SMPI_Bcast(&NextTimestep, 1, SMPI_LONG, 0, Stream->mpiComm);
         }
         if (NextTimestep == -2)
         {

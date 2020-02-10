@@ -660,7 +660,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
     {
         RecvCounts = malloc(Stream->CohortSize * sizeof(int));
     }
-    SMPI_Gather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT, 0,
+    SMPI_Gather(&DataSize, 1, SMPI_INT, RecvCounts, 1, SMPI_INT, 0,
                 Stream->mpiComm);
 
     /*
@@ -694,8 +694,8 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
      * can gather the data
      */
 
-    SMPI_Gatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
-                 MPI_CHAR, 0, Stream->mpiComm);
+    SMPI_Gatherv(Buffer, DataSize, SMPI_CHAR, RecvBuffer, RecvCounts, Displs,
+                 SMPI_CHAR, 0, Stream->mpiComm);
     free_FFSBuffer(Buf);
 
     if (Stream->Rank == 0)
@@ -733,17 +733,17 @@ void *CP_distributeDataFromRankZero(SstStream Stream, void *root_info,
         FFSBuffer Buf = create_FFSBuffer();
         char *tmp =
             FFSencode(Buf, FMFormat_of_original(Type), root_info, &DataSize);
-        SMPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
-        SMPI_Bcast(tmp, DataSize, MPI_CHAR, 0, Stream->mpiComm);
+        SMPI_Bcast(&DataSize, 1, SMPI_INT, 0, Stream->mpiComm);
+        SMPI_Bcast(tmp, DataSize, SMPI_CHAR, 0, Stream->mpiComm);
         Buffer = malloc(DataSize);
         memcpy(Buffer, tmp, DataSize);
         free_FFSBuffer(Buf);
     }
     else
     {
-        SMPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
+        SMPI_Bcast(&DataSize, 1, SMPI_INT, 0, Stream->mpiComm);
         Buffer = malloc(DataSize);
-        SMPI_Bcast(Buffer, DataSize, MPI_CHAR, 0, Stream->mpiComm);
+        SMPI_Bcast(Buffer, DataSize, SMPI_CHAR, 0, Stream->mpiComm);
     }
 
     FFSContext context = Stream->CPInfo->ffs_c;
@@ -770,7 +770,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 
     RecvCounts = malloc(Stream->CohortSize * sizeof(int));
 
-    SMPI_Allgather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT,
+    SMPI_Allgather(&DataSize, 1, SMPI_INT, RecvCounts, 1, SMPI_INT,
                    Stream->mpiComm);
 
     /*
@@ -802,8 +802,8 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
      * can gather the data
      */
 
-    SMPI_Allgatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
-                    MPI_CHAR, Stream->mpiComm);
+    SMPI_Allgatherv(Buffer, DataSize, SMPI_CHAR, RecvBuffer, RecvCounts, Displs,
+                    SMPI_CHAR, Stream->mpiComm);
     free_FFSBuffer(Buf);
 
     FFSContext context = Stream->CPInfo->ffs_c;
@@ -1301,7 +1301,7 @@ static void DP_verbose(SstStream Stream, char *Format, ...);
 static CManager CP_getCManager(SstStream Stream);
 static int CP_sendToPeer(SstStream Stream, CP_PeerCohort cohort, int rank,
                          CMFormat Format, void *data);
-static MPI_Comm CP_getMPIComm(SstStream Stream);
+static SMPI_Comm CP_getMPIComm(SstStream Stream);
 
 struct _CP_Services Svcs = {
     (CP_VerboseFunc)DP_verbose, (CP_GetCManagerFunc)CP_getCManager,
@@ -1460,7 +1460,7 @@ extern void CP_error(SstStream s, char *Format, ...)
 
 static CManager CP_getCManager(SstStream Stream) { return Stream->CPInfo->cm; }
 
-static MPI_Comm CP_getMPIComm(SstStream Stream) { return Stream->mpiComm; }
+static SMPI_Comm CP_getMPIComm(SstStream Stream) { return Stream->mpiComm; }
 
 extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
                                    void *client_data);

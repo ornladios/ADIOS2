@@ -121,7 +121,7 @@ struct _SstStream
 {
     CP_GlobalInfo CPInfo;
 
-    MPI_Comm mpiComm;
+    SMPI_Comm mpiComm;
     enum StreamRole Role;
 
     /* params */

@@ -60,6 +60,14 @@
 #include "mpidummy.h"
 #endif
 
+#define SMPI_Comm MPI_Comm
+#define SMPI_INT MPI_INT
+#define SMPI_LONG MPI_LONG
+#define SMPI_CHAR MPI_CHAR
+#define SMPI_BYTE MPI_BYTE
+#define SMPI_MAX MPI_MAX
+#define SMPI_LAND MPI_LAND
+
 #ifdef __cplusplus
 extern "C" {
 #endif
