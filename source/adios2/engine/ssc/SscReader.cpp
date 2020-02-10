@@ -50,6 +50,8 @@ void SscReader::GetOneSidedPush()
                        MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
 
+    ssc::PrintRankPosMap(m_AllReceivingWriterRanks, "from reader" + std::to_string(m_ReaderRank));
+
     MPI_Win_fence(0, m_MpiWin);
     MPI_Win_fence(0, m_MpiWin);
 }

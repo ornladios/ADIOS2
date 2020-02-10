@@ -78,9 +78,12 @@ void SscWriter::PutOneSidedPush()
                        MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
 
+    ssc::PrintRankPosMap(m_AllSendingReaderRanks, "from writer" + std::to_string(m_WriterRank));
+
     MPI_Win_fence(0, m_MpiWin);
     for (const auto &i : m_AllSendingReaderRanks)
     {
+        std::cout << "writer rank" << m_WriterRank << " send to reader rank " << i.first << std::endl;
         MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
                 m_ReaderMasterWorldRank + i.first, i.second.first + 1,
                 m_Buffer.size(), MPI_CHAR, m_MpiWin);
