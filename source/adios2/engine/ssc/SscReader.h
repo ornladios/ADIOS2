@@ -48,8 +48,7 @@ private:
     std::vector<char> m_Buffer;
     MPI_Win m_MpiWin;
     MPI_Group m_MpiAllWritersGroup;
-//    std::string m_MpiMode = "TwoSided";
-    std::string m_MpiMode = "OneSidedPostPush";
+    std::string m_MpiMode = "TwoSided";
 
     int m_WorldRank;
     int m_WorldSize;

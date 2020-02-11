@@ -320,7 +320,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 TEST_F(SscEngineTest, TestSsc7d)
 {
     std::string filename = "TestSsc7d";
-    adios2::Params engineParams = {{"Port", "12306"}, {"Verbose", "0"}};
+    adios2::Params engineParams = {};
 
     int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);

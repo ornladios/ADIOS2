@@ -9,6 +9,12 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(Base TRUE Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBase "" TRUE)
 
+  gtest_add_tests_helper(BaseOneSidedFencePush TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBaseOneSidedFencePush "" TRUE)
+
+  gtest_add_tests_helper(BaseOneSidedPostPush TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBaseOneSidedPostPush "" TRUE)
+
   gtest_add_tests_helper(Unbalanced TRUE Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscUnbalanced "" TRUE)
 

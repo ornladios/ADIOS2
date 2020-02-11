@@ -32,8 +32,13 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     m_ReaderSize = m_Comm.Size();
     m_WriterSize = m_WorldSize - m_ReaderSize;
 
-    m_GlobalWritePattern.resize(m_WriterSize);
+    auto it = m_IO.m_Parameters.find("MpiMode");
+    if(it != m_IO.m_Parameters.end())
+    {
+        m_MpiMode = it->second;
+    }
 
+    m_GlobalWritePattern.resize(m_WriterSize);
     SyncMpiPattern();
     SyncWritePattern();
 }
@@ -61,7 +66,7 @@ void SscReader::GetTwoSided()
     for (const auto &i : m_AllReceivingWriterRanks)
     {
         requests.emplace_back();
-        MPI_Irecv(m_Buffer.data() + i.second.first + i.first, i.second.second, MPI_CHAR, i.first, 0, MPI_COMM_WORLD, &requests.back());
+        MPI_Irecv(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR, i.first, 0, MPI_COMM_WORLD, &requests.back());
     }
     for(auto &r : requests)
     {

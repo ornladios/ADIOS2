@@ -33,11 +33,15 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     m_WriterSize = m_Comm.Size();
     m_ReaderSize = m_WorldSize - m_WriterSize;
 
+    auto it = m_IO.m_Parameters.find("MpiMode");
+    if(it != m_IO.m_Parameters.end())
+    {
+        m_MpiMode = it->second;
+    }
+
     m_GlobalWritePattern.resize(m_WriterSize);
     m_GlobalReadPattern.resize(m_ReaderSize);
-
     m_Buffer.resize(1);
-
     SyncMpiPattern();
 }
 
@@ -644,12 +648,13 @@ void SscWriter::DoClose(const int transportIndex)
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
+    m_Buffer[0] = 1;
+
     if(m_MpiMode == "OneSidedFencePush")
     {
         MPI_Win_fence(0, m_MpiWin);
         if (m_WriterRank == 0)
         {
-            m_Buffer[0] = 1;
             for (int i = 0; i < m_ReaderSize; ++i)
             {
                 MPI_Put(m_Buffer.data(), 1, MPI_CHAR, m_ReaderMasterWorldRank + i, 0, 1, MPI_CHAR, m_MpiWin);
@@ -660,7 +665,6 @@ void SscWriter::DoClose(const int transportIndex)
     else if(m_MpiMode == "OneSidedPostPush")
     {
         MPI_Win_start(m_MpiAllReadersGroup,0,m_MpiWin);
-        m_Buffer[0] = 1;
         for (const auto &i : m_AllSendingReaderRanks)
         {
             MPI_Put(m_Buffer.data(), 1, MPI_CHAR, m_ReaderMasterWorldRank + i.first, 0, 1, MPI_CHAR, m_MpiWin);
