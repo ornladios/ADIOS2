@@ -43,10 +43,6 @@ SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
 void SscReader::GetOneSidedPostPush()
 {
     TAU_SCOPED_TIMER_FUNC();
-    if (m_CurrentStep == 0)
-    {
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
-    }
     MPI_Win_post(m_MpiAllWritersGroup,0,m_MpiWin);
     MPI_Win_wait(m_MpiWin);
 }
@@ -54,12 +50,6 @@ void SscReader::GetOneSidedPostPush()
 void SscReader::GetOneSidedFencePush()
 {
     TAU_SCOPED_TIMER_FUNC();
-
-    if (m_CurrentStep == 0)
-    {
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
-    }
-
     MPI_Win_fence(0, m_MpiWin);
     MPI_Win_fence(0, m_MpiWin);
 }
@@ -67,7 +57,17 @@ void SscReader::GetOneSidedFencePush()
 void SscReader::GetTwoSided()
 {
     TAU_SCOPED_TIMER_FUNC();
-
+    std::vector<MPI_Request> requests;
+    for (const auto &i : m_AllReceivingWriterRanks)
+    {
+        requests.emplace_back();
+        MPI_Irecv(m_Buffer.data() + i.second.first + i.first, i.second.second, MPI_CHAR, i.first, 0, MPI_COMM_WORLD, &requests.back());
+    }
+    for(auto &r : requests)
+    {
+        MPI_Status s;
+        MPI_Wait(&r,&s);
+    }
 }
 
 StepStatus SscReader::BeginStep(const StepMode stepMode,
@@ -85,6 +85,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     {
         m_InitialStep = false;
         SyncReadPattern();
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
     else
     {
@@ -631,7 +632,7 @@ void SscReader::SyncReadPattern()
         totalDataSize += i.second.second;
     }
 
-    m_Buffer.resize(totalDataSize + 1);
+    m_Buffer.resize(totalDataSize);
 
     if (m_Verbosity >= 10)
     {
@@ -643,7 +644,9 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
                                   ssc::RankPosMap &allRanks)
 {
     TAU_SCOPED_TIMER_FUNC();
+
     size_t bufferPosition = 0;
+
     for (size_t rank = 0; rank < bvv.size(); ++rank)
     {
         bool hasOverlap = false;
@@ -655,7 +658,7 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
                 break;
             }
         }
-        if (hasOverlap)
+        if(hasOverlap)
         {
             allRanks[rank].first = bufferPosition;
             auto &bv = bvv[rank];
@@ -664,8 +667,12 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
                 b.bufferStart += bufferPosition;
             }
             size_t currentRankTotalSize = TotalDataSize(bv);
-            allRanks[rank].second = currentRankTotalSize;
-            bufferPosition += currentRankTotalSize;
+            allRanks[rank].second = currentRankTotalSize + 1;
+            bufferPosition += currentRankTotalSize + 1;
+        }
+        else
+        {
+            bvv[rank].clear();
         }
     }
 }
