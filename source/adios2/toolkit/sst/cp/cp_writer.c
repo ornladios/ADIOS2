@@ -739,7 +739,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     reader_data_t ReturnData;
     void *free_block = NULL;
     int WriterResponseCondition = -1;
-    CMConnection conn;
+    CMConnection conn = NULL;
     long MyStartingTimestep, GlobalStartingTimestep;
     WS_ReaderInfo CP_WSR_Stream = malloc(sizeof(*CP_WSR_Stream));
 
@@ -793,6 +793,13 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
         connections_to_reader[i].ContactList = attrs;
         connections_to_reader[i].RemoteStreamID =
             ReturnData->CP_ReaderInfo[i]->ReaderID;
+        if ((i == 0) && (conn != NULL))
+        {
+            // reuse existing connection to reader rank 0
+            // (only not NULL if this is writer rank 0)
+            CMConnection_add_reference(conn);
+            connections_to_reader[i].CMconn = conn;
+        }
     }
 
     per_reader_Stream = Stream->DP_Interface->initWriterPerReader(
