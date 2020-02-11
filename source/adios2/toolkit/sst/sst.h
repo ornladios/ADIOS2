@@ -91,6 +91,7 @@ extern SstStream SstWriterOpen(const char *filename, SstParams Params,
                                SMPI_Comm comm);
 
 extern void SstStreamDestroy(SstStream Stream);
+extern void SstStreamDestroyInternal(SstStream Stream);
 
 typedef void (*DataFreeFunc)(void *Data);
 extern void SstProvideTimestep(SstStream s, SstData LocalMetadata,

@@ -988,7 +988,7 @@ extern void AddToLastCallFreeList(void *Block)
     CPInfo->LastCallFreeCount++;
 }
 
-extern void SstStreamDestroy(SstStream Stream)
+extern void SstStreamDestroyInternal(SstStream Stream)
 {
     /*
      * StackStream is only used to access verbosity info
@@ -997,7 +997,6 @@ extern void SstStreamDestroy(SstStream Stream)
     struct _SstStream StackStream = *Stream;
     CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
                Stream->Filename);
-    pthread_mutex_lock(&Stream->DataLock);
     Stream->Status = Closed;
     struct _TimestepMetadataList *Next = Stream->Timesteps;
     while (Next)
@@ -1161,8 +1160,15 @@ extern void SstStreamDestroy(SstStream Stream)
     CP_verbose(&StackStream, "SstStreamDestroy successful, returning\n");
 }
 
+extern void SstStreamDestroy(SstStream Stream)
+{
+    pthread_mutex_lock(&Stream->DataLock);
+    SstStreamDestroyInternal(Stream);
+}
+
 extern char *CP_GetContactString(SstStream Stream, attr_list DPAttrs)
 {
+    CP_GlobalInfo CPInfo = Stream->CPInfo;
     attr_list ListenList = create_attr_list(), ContactList;
     set_string_attr(ListenList, CM_TRANSPORT_ATOM,
                     strdup(Stream->ConfigParams->ControlTransport));
@@ -1176,7 +1182,9 @@ extern char *CP_GetContactString(SstStream Stream, attr_list DPAttrs)
         set_string_attr(ListenList, IP_INTERFACE_ATOM,
                         strdup(Stream->ConfigParams->NetworkInterface));
     }
-    ContactList = CMget_specific_contact_list(Stream->CPInfo->cm, ListenList);
+    pthread_mutex_unlock(&Stream->DataLock);
+    ContactList = CMget_specific_contact_list(CPInfo->cm, ListenList);
+    pthread_mutex_lock(&Stream->DataLock);
     if (strcmp(Stream->ConfigParams->ControlTransport, "enet") == 0)
     {
         set_int_attr(ContactList, CM_ENET_CONN_TIMEOUT, 60000); /* 60 seconds */
@@ -1280,6 +1288,8 @@ SstStream CP_newStream()
     memset(Stream, 0, sizeof(*Stream));
     pthread_mutex_init(&Stream->DataLock, NULL);
     pthread_cond_init(&Stream->DataCondition, NULL);
+
+    pthread_mutex_lock(&Stream->DataLock);
     Stream->WriterTimestep = -1; // Filled in by ProvideTimestep
     Stream->ReaderTimestep = -1; // first beginstep will get us timestep 0
     Stream->LastReleasedTimestep = -1;
