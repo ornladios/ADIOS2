@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.12)
 
 # Fail immediately if not using an out-of-source build
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
@@ -17,9 +17,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/cmake/ADIOSFunctions.cmake)
 setup_version(2.5.0)
 
 project(ADIOS2 VERSION ${ADIOS2_VERSION})
-if(POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW)
-endif()
 
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
