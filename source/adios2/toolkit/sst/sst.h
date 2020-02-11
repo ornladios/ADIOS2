@@ -10,7 +10,7 @@
 #ifndef SST_H_
 #define SST_H_
 
-#include "mpiwrap.h"
+#include "sst_comm_fwd.h"
 
 #ifdef __cplusplus
 extern "C" {

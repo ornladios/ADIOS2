@@ -4,7 +4,7 @@
 #include <sst_data.h>
 
 #include "adios2/common/ADIOSConfig.h"
-#include "mpiwrap.h"
+#include "sst_comm.h"
 #include <evpath.h>
 
 /*!

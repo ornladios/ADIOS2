@@ -649,7 +649,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
 {
     FFSBuffer Buf = create_FFSBuffer();
     int DataSize;
-    int *RecvCounts = NULL;
+    size_t *RecvCounts = NULL;
     char *Buffer;
 
     struct _CP_DP_init_info **Pointers = NULL;
@@ -658,9 +658,10 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
 
     if (Stream->Rank == 0)
     {
-        RecvCounts = malloc(Stream->CohortSize * sizeof(int));
+        RecvCounts = malloc(Stream->CohortSize * sizeof(*RecvCounts));
     }
-    SMPI_Gather(&DataSize, 1, SMPI_INT, RecvCounts, 1, SMPI_INT, 0,
+    size_t DataSz = DataSize;
+    SMPI_Gather(&DataSz, 1, SMPI_SIZE_T, RecvCounts, 1, SMPI_SIZE_T, 0,
                 Stream->mpiComm);
 
     /*
@@ -668,13 +669,13 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
      * and displacements for each rank
      */
 
-    int *Displs = NULL;
+    size_t *Displs = NULL;
     char *RecvBuffer = NULL;
 
     if (Stream->Rank == 0)
     {
         int TotalLen = 0;
-        Displs = malloc(Stream->CohortSize * sizeof(int));
+        Displs = malloc(Stream->CohortSize * sizeof(*Displs));
 
         Displs[0] = 0;
         TotalLen = (RecvCounts[0] + 7) & ~7;
@@ -761,16 +762,17 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 {
     FFSBuffer Buf = create_FFSBuffer();
     int DataSize;
-    int *RecvCounts;
+    size_t *RecvCounts;
     char *Buffer;
 
     struct _CP_DP_init_info **Pointers = NULL;
 
     Buffer = FFSencode(Buf, FMFormat_of_original(Type), LocalInfo, &DataSize);
 
-    RecvCounts = malloc(Stream->CohortSize * sizeof(int));
+    RecvCounts = malloc(Stream->CohortSize * sizeof(*RecvCounts));
 
-    SMPI_Allgather(&DataSize, 1, SMPI_INT, RecvCounts, 1, SMPI_INT,
+    size_t DataSz = DataSize;
+    SMPI_Allgather(&DataSz, 1, SMPI_SIZE_T, RecvCounts, 1, SMPI_SIZE_T,
                    Stream->mpiComm);
 
     /*
@@ -778,12 +780,12 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
      * and displacements for each rank
      */
 
-    int *Displs;
+    size_t *Displs;
     char *RecvBuffer = NULL;
     int i;
 
     int TotalLen = 0;
-    Displs = malloc(Stream->CohortSize * sizeof(int));
+    Displs = malloc(Stream->CohortSize * sizeof(*Displs));
 
     Displs[0] = 0;
     TotalLen = (RecvCounts[0] + 7) & ~7;
