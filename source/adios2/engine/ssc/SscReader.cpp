@@ -45,10 +45,9 @@ void SscReader::GetOneSidedPostPush()
     TAU_SCOPED_TIMER_FUNC();
     if (m_CurrentStep == 0)
     {
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
-                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
-    MPI_Win_post(m_MpiAllReadersGroup,0,m_MpiWin);
+    MPI_Win_post(m_MpiAllWritersGroup,0,m_MpiWin);
     MPI_Win_wait(m_MpiWin);
 }
 
@@ -58,8 +57,7 @@ void SscReader::GetOneSidedFencePush()
 
     if (m_CurrentStep == 0)
     {
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
-                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
 
     MPI_Win_fence(0, m_MpiWin);
@@ -385,17 +383,9 @@ void SscReader::SyncMpiPattern()
         }
     }
 
-    std::cout << "================ ";
-    for(auto i:m_AllReaderRanks)
-    {
-        std::cout <<i << ",";
-    }
-    std::cout << std::endl;
-
     MPI_Group worldGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, m_AllReaderRanks.size(), m_AllReaderRanks.data(), &m_MpiAllReadersGroup);
-    MPI_Comm_create_group(MPI_COMM_WORLD, m_MpiAllReadersGroup, 0, &m_MpiAllReadersComm);
+    MPI_Group_incl(worldGroup, m_AllWriterRanks.size(), m_AllWriterRanks.data(), &m_MpiAllWritersGroup);
 
     if (m_Verbosity >= 10)
     {

@@ -47,8 +47,7 @@ private:
     ssc::RankPosMap m_AllReceivingWriterRanks;
     std::vector<char> m_Buffer;
     MPI_Win m_MpiWin;
-    MPI_Group m_MpiAllReadersGroup;
-    MPI_Comm m_MpiAllReadersComm;
+    MPI_Group m_MpiAllWritersGroup;
     std::string m_MpiMode = "OneSidedPostPush";
 
     int m_WorldRank;

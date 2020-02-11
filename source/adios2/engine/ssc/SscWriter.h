@@ -50,8 +50,7 @@ private:
     ssc::RankPosMap m_AllSendingReaderRanks;
     std::vector<char> m_Buffer;
     MPI_Win m_MpiWin;
-    MPI_Group m_MpiAllWritersGroup;
-    MPI_Comm m_MpiAllWritersComm;
+    MPI_Group m_MpiAllReadersGroup;
     std::string m_MpiMode = "OneSidedPostPush";
 
     int m_WorldRank;

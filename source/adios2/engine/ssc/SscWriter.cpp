@@ -72,49 +72,29 @@ void SscWriter::PerformPuts() { TAU_SCOPED_TIMER_FUNC(); }
 void SscWriter::PutOneSidedPostPush()
 {
     TAU_SCOPED_TIMER_FUNC();
-
     if (m_CurrentStep == 0)
     {
         MPI_Win_create(NULL, 0, sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
-
-    ssc::PrintRankPosMap(m_AllSendingReaderRanks, "from writer" + std::to_string(m_WriterRank));
-
-    std::cout << "=====1 " << std::endl;
-    MPI_Win_start(m_MpiAllWritersGroup,0,m_MpiWin);
-    std::cout << "=====2 " << std::endl;
+    MPI_Win_start(m_MpiAllReadersGroup,0,m_MpiWin);
     for (const auto &i : m_AllSendingReaderRanks)
     {
-        std::cout << "writer rank" << m_WriterRank << " send to reader rank " << i.first << std::endl;
-        MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
-                m_ReaderMasterWorldRank + i.first, i.second.first + 1,
-                m_Buffer.size(), MPI_CHAR, m_MpiWin);
+        MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, m_ReaderMasterWorldRank + i.first, i.second.first + 1, m_Buffer.size(), MPI_CHAR, m_MpiWin);
     }
-    std::cout << "=====3 " << std::endl;
     MPI_Win_complete(m_MpiWin);
-    std::cout << "=====4 " << std::endl;
-
 }
 
 void SscWriter::PutOneSidedFencePush()
 {
     TAU_SCOPED_TIMER_FUNC();
-
     if (m_CurrentStep == 0)
     {
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char),
-                       MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
     }
-
-    ssc::PrintRankPosMap(m_AllSendingReaderRanks, "from writer" + std::to_string(m_WriterRank));
-
     MPI_Win_fence(0, m_MpiWin);
     for (const auto &i : m_AllSendingReaderRanks)
     {
-        std::cout << "writer rank" << m_WriterRank << " send to reader rank " << i.first << std::endl;
-        MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
-                m_ReaderMasterWorldRank + i.first, i.second.first + 1,
-                m_Buffer.size(), MPI_CHAR, m_MpiWin);
+        MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, m_ReaderMasterWorldRank + i.first, i.second.first + 1, m_Buffer.size(), MPI_CHAR, m_MpiWin);
     }
     MPI_Win_fence(0, m_MpiWin);
 }
@@ -408,18 +388,9 @@ void SscWriter::SyncMpiPattern()
         }
     }
 
-    std::cout << "================ ";
-    for(auto i:m_AllWriterRanks)
-    {
-        std::cout <<i << ",";
-    }
-    std::cout << std::endl;
-
     MPI_Group worldGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, m_AllWriterRanks.size(), m_AllWriterRanks.data(), &m_MpiAllWritersGroup);
-    MPI_Comm_create_group(MPI_COMM_WORLD, m_MpiAllWritersGroup, 0, &m_MpiAllWritersComm);
-
+    MPI_Group_incl(worldGroup, m_AllReaderRanks.size(), m_AllReaderRanks.data(), &m_MpiAllReadersGroup);
 
     if (m_Verbosity >= 10)
     {
@@ -593,8 +564,7 @@ void SscWriter::SyncReadPattern()
     MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     MPI_Win_fence(0, win);
-    MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR,
-            m_ReaderMasterWorldRank, 0, globalVec.size(), MPI_CHAR, win);
+    MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR, m_ReaderMasterWorldRank, 0, globalVec.size(), MPI_CHAR, win);
     MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 
@@ -673,17 +643,34 @@ void SscWriter::DoClose(const int transportIndex)
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
-    MPI_Win_fence(0, m_MpiWin);
-    if (m_WriterRank == 0)
+    if(m_MpiMode == "OneSidedFencePush")
     {
-        m_Buffer[0] = 1;
-        for (int i = 0; i < m_ReaderSize; ++i)
+        MPI_Win_fence(0, m_MpiWin);
+        if (m_WriterRank == 0)
         {
-            MPI_Put(m_Buffer.data(), 1, MPI_CHAR, m_ReaderMasterWorldRank + i,
-                    0, 1, MPI_CHAR, m_MpiWin);
+            m_Buffer[0] = 1;
+            for (int i = 0; i < m_ReaderSize; ++i)
+            {
+                MPI_Put(m_Buffer.data(), 1, MPI_CHAR, m_ReaderMasterWorldRank + i, 0, 1, MPI_CHAR, m_MpiWin);
+            }
         }
+        MPI_Win_fence(0, m_MpiWin);
     }
-    MPI_Win_fence(0, m_MpiWin);
+    else if(m_MpiMode == "OneSidedPostPush")
+    {
+        MPI_Win_start(m_MpiAllReadersGroup,0,m_MpiWin);
+        m_Buffer[0] = 1;
+        for (const auto &i : m_AllSendingReaderRanks)
+        {
+            MPI_Put(m_Buffer.data(), 1, MPI_CHAR, m_ReaderMasterWorldRank + i.first, 0, 1, MPI_CHAR, m_MpiWin);
+        }
+        MPI_Win_complete(m_MpiWin);
+    }
+    else if(m_MpiMode == "TwoSided")
+    {
+
+    }
+
     MPI_Win_free(&m_MpiWin);
 }
 
