@@ -62,7 +62,9 @@ void CalculateOverlap(BlockVecVec &globalVecVec, BlockVec &localVec)
             {
                 if (lBlock.name == gBlock.name)
                 {
-                    if (gBlock.start.size() != gBlock.count.size() || lBlock.start.size() != lBlock.count.size() || gBlock.start.size() != lBlock.start.size())
+                    if (gBlock.start.size() != gBlock.count.size() ||
+                        lBlock.start.size() != lBlock.count.size() ||
+                        gBlock.start.size() != lBlock.start.size())
                     {
                         continue;
                     }
@@ -70,7 +72,10 @@ void CalculateOverlap(BlockVecVec &globalVecVec, BlockVec &localVec)
                     gBlock.overlapCount.resize(gBlock.count.size());
                     for (size_t i = 0; i < gBlock.start.size(); ++i)
                     {
-                        if (gBlock.start[i] + gBlock.count[i] <= lBlock.start[i] or lBlock.start[i] + lBlock.count[i] <= gBlock.start[i])
+                        if (gBlock.start[i] + gBlock.count[i] <=
+                                lBlock.start[i] or
+                            lBlock.start[i] + lBlock.count[i] <=
+                                gBlock.start[i])
                         {
                             gBlock.overlapStart.clear();
                             gBlock.overlapCount.clear();
@@ -84,13 +89,18 @@ void CalculateOverlap(BlockVecVec &globalVecVec, BlockVec &localVec)
                         {
                             gBlock.overlapStart[i] = gBlock.start[i];
                         }
-                        if (gBlock.start[i] + gBlock.count[i] < lBlock.start[i] + lBlock.count[i])
+                        if (gBlock.start[i] + gBlock.count[i] <
+                            lBlock.start[i] + lBlock.count[i])
                         {
-                            gBlock.overlapCount[i] = gBlock.start[i] + gBlock.count[i] - gBlock.overlapStart[i];
+                            gBlock.overlapCount[i] = gBlock.start[i] +
+                                                     gBlock.count[i] -
+                                                     gBlock.overlapStart[i];
                         }
                         else
                         {
-                            gBlock.overlapCount[i] = lBlock.start[i] + lBlock.count[i] - gBlock.overlapStart[i];
+                            gBlock.overlapCount[i] = lBlock.start[i] +
+                                                     lBlock.count[i] -
+                                                     gBlock.overlapStart[i];
                         }
                     }
                 }

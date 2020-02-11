@@ -33,7 +33,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     m_WriterSize = m_WorldSize - m_ReaderSize;
 
     auto it = m_IO.m_Parameters.find("MpiMode");
-    if(it != m_IO.m_Parameters.end())
+    if (it != m_IO.m_Parameters.end())
     {
         m_MpiMode = it->second;
     }
@@ -48,7 +48,7 @@ SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
 void SscReader::GetOneSidedPostPush()
 {
     TAU_SCOPED_TIMER_FUNC();
-    MPI_Win_post(m_MpiAllWritersGroup,0,m_MpiWin);
+    MPI_Win_post(m_MpiAllWritersGroup, 0, m_MpiWin);
     MPI_Win_wait(m_MpiWin);
 }
 
@@ -66,12 +66,13 @@ void SscReader::GetTwoSided()
     for (const auto &i : m_AllReceivingWriterRanks)
     {
         requests.emplace_back();
-        MPI_Irecv(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR, i.first, 0, MPI_COMM_WORLD, &requests.back());
+        MPI_Irecv(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
+                  i.first, 0, MPI_COMM_WORLD, &requests.back());
     }
-    for(auto &r : requests)
+    for (auto &r : requests)
     {
         MPI_Status s;
-        MPI_Wait(&r,&s);
+        MPI_Wait(&r, &s);
     }
 }
 
@@ -90,22 +91,23 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     {
         m_InitialStep = false;
         SyncReadPattern();
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
+                       MPI_COMM_WORLD, &m_MpiWin);
     }
     else
     {
         ++m_CurrentStep;
     }
 
-    if(m_MpiMode == "OneSidedFencePush")
+    if (m_MpiMode == "OneSidedFencePush")
     {
         GetOneSidedFencePush();
     }
-    else if(m_MpiMode == "OneSidedPostPush")
+    else if (m_MpiMode == "OneSidedPostPush")
     {
         GetOneSidedPostPush();
     }
-    else if(m_MpiMode == "TwoSided")
+    else if (m_MpiMode == "TwoSided")
     {
         GetTwoSided();
     }
@@ -391,7 +393,8 @@ void SscReader::SyncMpiPattern()
 
     MPI_Group worldGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, m_AllWriterRanks.size(), m_AllWriterRanks.data(), &m_MpiAllWritersGroup);
+    MPI_Group_incl(worldGroup, m_AllWriterRanks.size(), m_AllWriterRanks.data(),
+                   &m_MpiAllWritersGroup);
 
     if (m_Verbosity >= 10)
     {
@@ -663,7 +666,7 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
                 break;
             }
         }
-        if(hasOverlap)
+        if (hasOverlap)
         {
             allRanks[rank].first = bufferPosition;
             auto &bv = bvv[rank];
