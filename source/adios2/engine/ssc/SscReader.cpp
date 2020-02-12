@@ -558,6 +558,15 @@ void SscReader::SyncReadPattern()
 #undef declare_type
         else { throw(std::runtime_error("unknown data type")); }
 
+        for (const auto &d : b.count)
+        {
+            if (d == 0)
+            {
+                throw(std::runtime_error(
+                    "SetSelection count dimensions cannot be 0"));
+            }
+        }
+
         j.emplace_back();
         auto &jref = j.back();
         jref["N"] = var.first;
