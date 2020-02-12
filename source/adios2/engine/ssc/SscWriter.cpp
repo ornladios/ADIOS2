@@ -406,34 +406,9 @@ void SscWriter::SyncMpiPattern()
     MPI_Group_incl(worldGroup, m_AllReaderRanks.size(), m_AllReaderRanks.data(),
                    &m_MpiAllReadersGroup);
 
-    if (m_Verbosity >= 10)
+    if (m_Verbosity >= 10 and m_WorldRank == 0)
     {
-        std::cout << "WorldRank " << m_WorldRank << std::endl;
-        std::cout << "AppID " << m_AppID << std::endl;
-        std::cout << "AppSize " << m_AppSize << std::endl;
-        std::cout << "m_WriterGlobalMpiInfo have:" << std::endl;
-        for (int i = 0; i < m_WriterGlobalMpiInfo.size(); ++i)
-        {
-            std::cout << "Vector " << i << ": ";
-            for (int j = 0; j < m_WriterGlobalMpiInfo[i].size(); ++j)
-            {
-                std::cout << m_WriterGlobalMpiInfo[i][j] << "  ";
-            }
-            std::cout << std::endl;
-        }
-
-        std::cout << "m_ReaderGlobalMpiInfo have:" << std::endl;
-        for (int i = 0; i < m_ReaderGlobalMpiInfo.size(); ++i)
-        {
-            std::cout << "Vector " << i << ": ";
-            for (int j = 0; j < m_ReaderGlobalMpiInfo[i].size(); ++j)
-            {
-                std::cout << m_ReaderGlobalMpiInfo[i][j] << "  ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
+        ssc::PrintMpiInfo(m_WriterGlobalMpiInfo, m_ReaderGlobalMpiInfo);
     }
 }
 

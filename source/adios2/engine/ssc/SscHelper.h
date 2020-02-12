@@ -39,6 +39,7 @@ struct BlockInfo
 using BlockVec = std::vector<BlockInfo>;
 using BlockVecVec = std::vector<BlockVec>;
 using RankPosMap = std::map<int, std::pair<size_t, size_t>>;
+using MpiInfo = std::vector<std::vector<int>>;
 
 void PrintDims(const Dims &dims, const std::string &label = std::string());
 void PrintBlock(const BlockInfo &b, const std::string &label = std::string());
@@ -48,6 +49,7 @@ void PrintBlockVecVec(const BlockVecVec &bvv,
                       const std::string &label = std::string());
 void PrintRankPosMap(const RankPosMap &m,
                      const std::string &label = std::string());
+void PrintMpiInfo(const MpiInfo &writersInfo, const MpiInfo &readersInfo);
 
 size_t GetTypeSize(const std::string &type);
 

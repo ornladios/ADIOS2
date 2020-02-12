@@ -274,6 +274,33 @@ void PrintRankPosMap(const RankPosMap &m, const std::string &label)
     }
 }
 
+void PrintMpiInfo(const MpiInfo &writersInfo, const MpiInfo &readersInfo)
+{
+    std::cout << "All writer apps and ranks:" << std::endl;
+    for (int i = 0; i < writersInfo.size(); ++i)
+    {
+        std::cout << "Vector " << i << ": ";
+        for (int j = 0; j < writersInfo[i].size(); ++j)
+        {
+            std::cout << writersInfo[i][j] << "  ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "ALl reader apps and ranks:" << std::endl;
+    for (int i = 0; i < readersInfo.size(); ++i)
+    {
+        std::cout << "Vector " << i << ": ";
+        for (int j = 0; j < readersInfo[i].size(); ++j)
+        {
+            std::cout << readersInfo[i][j] << "  ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
+}
+
 } // end namespace ssc
 } // end namespace engine
 } // end namespace core
