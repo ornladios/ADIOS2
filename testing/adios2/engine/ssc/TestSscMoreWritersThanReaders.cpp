@@ -328,11 +328,12 @@ TEST_F(SscEngineTest, TestSscMoreWritersThanReaders)
     MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
     int mpiGroup;
     int writers = 6;
-    if(worldRank < writers)
+    if (worldRank < writers)
     {
         mpiGroup = 0;
     }
-    else{
+    else
+    {
         mpiGroup = 1;
     }
 
