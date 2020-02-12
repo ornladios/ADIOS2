@@ -29,4 +29,11 @@ if(ADIOS2_HAVE_MPI)
 
   gtest_add_tests_helper(7d TRUE Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSsc7d "" TRUE)
+
+  gtest_add_tests_helper(MoreReadersThanWriters TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMoreReadersThanWriters "" TRUE)
+
+  gtest_add_tests_helper(MoreWritersThanReaders TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMoreWritersThanReaders "" TRUE)
+
 endif()
