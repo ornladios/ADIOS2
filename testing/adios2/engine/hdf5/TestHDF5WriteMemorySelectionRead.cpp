@@ -249,12 +249,12 @@ void HDF5Steps1D(const size_t ghostCells)
     // Number of steps
     const size_t NSteps = 3;
 
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
     adios2::ADIOS adios(true);
@@ -331,7 +331,7 @@ void HDF5Steps1D(const size_t ghostCells)
         }
         h5Writer.Close();
     }
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     // Reader
@@ -485,12 +485,12 @@ void HDF5Steps2D4x2(const size_t ghostCells)
     // Number of steps
     const size_t NSteps = 3;
 
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
     adios2::ADIOS adios(true);
@@ -567,7 +567,7 @@ void HDF5Steps2D4x2(const size_t ghostCells)
         }
         h5Writer.Close();
     }
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     // Reader
@@ -733,12 +733,12 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
     // Number of steps
     const size_t NSteps = 3;
 
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
     adios2::ADIOS adios(true);
@@ -825,7 +825,7 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         }
         h5Writer.Close();
     }
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     // Reader
@@ -1042,7 +1042,7 @@ INSTANTIATE_TEST_CASE_P(ghostCells, HDF5WriteMemSelReadVector,
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -1058,7 +1058,7 @@ int main(int argc, char **argv)
 
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#ifdef TEST_HDF5_MPI
     MPI_Finalize();
 #endif
 

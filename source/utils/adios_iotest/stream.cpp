@@ -10,7 +10,7 @@
 #include "adiosStream.h"
 #include "stream.h"
 
-#ifdef ADIOS2_HAVE_HDF5
+#ifdef ADIOS2_HAVE_HDF5_PARALLEL
 #include "hdf5Stream.h"
 #endif
 
@@ -65,7 +65,7 @@ std::shared_ptr<Stream> openStream(const std::string &streamName,
         sp = std::make_shared<adiosStream>(s);
         break;
     }
-#ifdef ADIOS2_HAVE_HDF5
+#ifdef ADIOS2_HAVE_HDF5_PARALLEL
     case IOLib::HDF5:
     {
         auto s = hdf5Stream(streamName, mode, comm);

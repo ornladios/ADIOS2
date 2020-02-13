@@ -291,7 +291,7 @@ endif()
 #
 #   Setup tests for HDF5 engine
 #
-if(NOT MSVC AND ADIOS2_HAVE_HDF5)    # not on windows and only if we have HDF5
+if(NOT MSVC AND ADIOS2_HAVE_HDF5 AND (NOT ADIOS2_HAVE_MPI OR HDF5_IS_PARALLEL))    # not on windows and only if we have HDF5
     set (HDF5_TESTS ${ALL_SIMPLE_TESTS})
     # Delayed reader not worth testing on file engines
     list (FILTER HDF5_TESTS EXCLUDE REGEX "DelayedReader")

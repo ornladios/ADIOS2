@@ -68,7 +68,7 @@ SetupTestPipeline(
   FALSE
 )
 
-if(ADIOS2_HAVE_HDF5)
+if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
   #------------------------------------------
   #  Pipe2 HDF5 Write
   #------------------------------------------

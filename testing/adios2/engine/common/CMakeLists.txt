@@ -20,7 +20,7 @@ gtest_add_tests_helper(Common ${test_mpi} "" Engine. .File
   EXTRA_ARGS "File" "1"
 )
                 
-if(ADIOS2_HAVE_HDF5)
+if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
   gtest_add_tests_helper(Common ${test_mpi} "" Engine. .HDF5
     EXTRA_ARGS "HDF5" "1"
   )
