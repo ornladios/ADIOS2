@@ -146,11 +146,20 @@ else
   echo ADIOS2_Fortran_LDFLAGS="" >> adios2.flags
 fi
 
-echo "Writing ${adios2_DIR}/@CMAKE_INSTALL_BINDIR@/adios2-config"
+if [[ "@CMAKE_INSTALL_BINDIR@" == /* ]]
+then
+  # absolute path
+  BINDIR="@CMAKE_INSTALL_BINDIR@"
+else
+  # relative path
+  BINDIR="${adios2_DIR}/@CMAKE_INSTALL_BINDIR@"
+fi
+
+echo "Writing ${BINDIR}/adios2-config"
 cat \
   "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.pre.sh" \
   adios2.flags \
-  "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.post.sh" > "${adios2_DIR}/@CMAKE_INSTALL_BINDIR@/adios2-config"
-chmod +x "${adios2_DIR}/@CMAKE_INSTALL_BINDIR@/adios2-config"
+  "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.post.sh" > "${BINDIR}/adios2-config"
+chmod +x "${BINDIR}/adios2-config"
 popd 
 rm -rf ${BUILD_DIR}
