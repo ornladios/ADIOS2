@@ -35,13 +35,13 @@ Python Write example
       for i in range(0, NSteps):
       
          if(rank == 0 and i == 0):
-            fw.write("size", np.array([size]))
+            fh.write("size", np.array([size]))
          
-         fw.write("physical_time", np.array([physical_time]) )
+         fh.write("physical_time", np.array([physical_time]) )
          # temperature and pressure are numpy arrays
-         fw.write("temperature", temperature, shape, start, count)
+         fh.write("temperature", temperature, shape, start, count)
          # advances to next step
-         fw.write("pressure", pressure, shape, start, count, end_step=True)
+         fh.write("pressure", pressure, shape, start, count, end_step=True)
 
 
 Python Read "step-by-step" example
@@ -79,14 +79,14 @@ Python Read "step-by-step" example
                 print("\n")
             
             # track current step
-            step = fh_step.current_step()
+            step = fstep.current_step()
             if( step == 0 ):
-               size_in = fh_step.read("size") 
+               size_in = fstep.read("size") 
             
             # read variables return a numpy array with corresponding selection
-            physical_time = fh_step.read("physical_time")
-            temperature = fh_step.read("temperature", start, count)
-            pressure = fh_step.read("pressure", start, count)
+            physical_time = fstep.read("physical_time")
+            temperature = fstep.read("temperature", start, count)
+            pressure = fstep.read("pressure", start, count)
 
 .. caution::
    
