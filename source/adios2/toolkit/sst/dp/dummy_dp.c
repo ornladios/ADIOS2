@@ -173,7 +173,7 @@ static DP_RS_Stream DummyInitReader(CP_Services Svcs, void *CP_Stream,
         malloc(sizeof(struct _DummyReaderContactInfo));
     CManager cm = Svcs->getCManager(CP_Stream);
     char *DummyContactString = malloc(64);
-    MPI_Comm comm = Svcs->getMPIComm(CP_Stream);
+    SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     CMFormat F;
 
     memset(Stream, 0, sizeof(*Stream));
@@ -184,7 +184,7 @@ static DP_RS_Stream DummyInitReader(CP_Services Svcs, void *CP_Stream,
      */
     Stream->CP_Stream = CP_Stream;
 
-    MPI_Comm_rank(comm, &Stream->Rank);
+    SMPI_Comm_rank(comm, &Stream->Rank);
 
     sprintf(DummyContactString, "Reader Rank %d, test contact", Stream->Rank);
 
@@ -300,12 +300,12 @@ static DP_WS_Stream DummyInitWriter(CP_Services Svcs, void *CP_Stream)
 {
     Dummy_WS_Stream Stream = malloc(sizeof(struct _Dummy_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
-    MPI_Comm comm = Svcs->getMPIComm(CP_Stream);
+    SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     CMFormat F;
 
     memset(Stream, 0, sizeof(struct _Dummy_WS_Stream));
 
-    MPI_Comm_rank(comm, &Stream->Rank);
+    SMPI_Comm_rank(comm, &Stream->Rank);
 
     /*
      * save the CP_stream value of later use
@@ -336,13 +336,13 @@ static DP_WSR_Stream DummyInitWriterPerReader(CP_Services Svcs,
     Dummy_WS_Stream WS_Stream = (Dummy_WS_Stream)WS_Stream_v;
     Dummy_WSR_Stream WSR_Stream = malloc(sizeof(*WSR_Stream));
     DummyWriterContactInfo ContactInfo;
-    MPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
+    SMPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
     int Rank;
     char *DummyContactString = malloc(64);
     DummyReaderContactInfo *providedReaderInfo =
         (DummyReaderContactInfo *)providedReaderInfo_v;
 
-    MPI_Comm_rank(comm, &Rank);
+    SMPI_Comm_rank(comm, &Rank);
     sprintf(DummyContactString, "Writer Rank %d, test contact", Rank);
 
     WSR_Stream->WS_Stream = WS_Stream; /* pointer to writer struct */

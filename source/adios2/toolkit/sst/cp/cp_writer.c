@@ -821,7 +821,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
                                  ReturnData->CP_ReaderInfo);
 
     int GlobalSuccess = 0;
-    SMPI_Allreduce(&MySuccess, &GlobalSuccess, 1, MPI_INT, MPI_LAND,
+    SMPI_Allreduce(&MySuccess, &GlobalSuccess, 1, SMPI_INT, SMPI_LAND,
                    Stream->mpiComm);
 
     if (!GlobalSuccess)
@@ -851,8 +851,8 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     if (MyStartingTimestep == -1)
         MyStartingTimestep = 0;
 
-    SMPI_Allreduce(&MyStartingTimestep, &GlobalStartingTimestep, 1, MPI_LONG,
-                   MPI_MAX, Stream->mpiComm);
+    SMPI_Allreduce(&MyStartingTimestep, &GlobalStartingTimestep, 1, SMPI_LONG,
+                   SMPI_MAX, Stream->mpiComm);
 
     CP_verbose(Stream,
                "My oldest timestep was %ld, global oldest timestep was %ld\n",
@@ -1173,7 +1173,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 }
 
-SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
+SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 {
     SstStream Stream;
 
@@ -1273,12 +1273,12 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
             if (Stream->Rank == 0)
             {
                 waitForReaderResponseAndSendQueued(reader);
-                SMPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
+                SMPI_Bcast(&reader->ReaderStatus, 1, SMPI_INT, 0,
                            Stream->mpiComm);
             }
             else
             {
-                SMPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
+                SMPI_Bcast(&reader->ReaderStatus, 1, SMPI_INT, 0,
                            Stream->mpiComm);
             }
         }
@@ -2152,12 +2152,12 @@ extern void SstInternalProvideTimestep(
             if (Stream->Rank == 0)
             {
                 waitForReaderResponseAndSendQueued(reader);
-                SMPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
+                SMPI_Bcast(&reader->ReaderStatus, 1, SMPI_INT, 0,
                            Stream->mpiComm);
             }
             else
             {
-                SMPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
+                SMPI_Bcast(&reader->ReaderStatus, 1, SMPI_INT, 0,
                            Stream->mpiComm);
             }
         }

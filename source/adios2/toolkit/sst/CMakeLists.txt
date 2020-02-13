@@ -2,16 +2,18 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
-add_library(sst
+add_library(sst OBJECT
   dp/dp.c
   dp/evpath_dp.c
   cp/cp_reader.c
   cp/cp_writer.c
   cp/cp_common.c
   cp/ffs_marshal.c
-  mpidummy.cpp
-  mpiwrap.cpp
+  sst_comm.cpp
 )
+if(BUILD_SHARED_LIBS)
+  set_property(TARGET sst PROPERTY POSITION_INDEPENDENT_CODE 1)
+endif()
 
 target_link_libraries(sst PRIVATE taustubs)
 
@@ -70,13 +72,13 @@ target_include_directories(sst PRIVATE
 )
 target_link_libraries(sst PRIVATE adios2::thirdparty::EVPath)
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(sst PUBLIC MPI::MPI_C)
+  target_link_libraries(sst PRIVATE MPI::MPI_C)
 endif()
 
-install(TARGETS sst EXPORT adios2Exports
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+if(NOT BUILD_SHARED_LIBS)
+  # When sst is included in a static library we must export the
+  # target so that consumers know the link dependencies.
+  install(TARGETS sst EXPORT adios2Exports)
+endif()
 
 add_subdirectory(util)

@@ -19,12 +19,6 @@
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
-#ifdef ADIOS2_HAVE_MPI
-#include "adios2/helper/adiosCommMPI.h"
-#else
-#include "adios2/toolkit/sst/mpiwrap.h"
-#endif
-
 namespace adios2
 {
 namespace core
@@ -41,13 +35,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 
     Init();
 
-    m_Input = SstReaderOpen(cstr, &Params,
-#ifdef ADIOS2_HAVE_MPI
-                            CommAsMPI(m_Comm)
-#else
-                            MPI_COMM_NULL
-#endif
-    );
+    m_Input = SstReaderOpen(cstr, &Params, &m_Comm);
     if (!m_Input)
     {
         delete[] cstr;

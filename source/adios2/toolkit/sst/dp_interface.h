@@ -4,7 +4,7 @@
 #include <sst_data.h>
 
 #include "adios2/common/ADIOSConfig.h"
-#include "mpiwrap.h"
+#include "sst_comm.h"
 #include <evpath.h>
 
 /*!
@@ -386,7 +386,7 @@ struct _CP_DP_Interface
 
 typedef void (*CP_VerboseFunc)(void *CP_Stream, char *Format, ...);
 typedef CManager (*CP_GetCManagerFunc)(void *CP_stream);
-typedef MPI_Comm (*CP_GetMPICommFunc)(void *CP_Stream);
+typedef SMPI_Comm (*CP_GetMPICommFunc)(void *CP_Stream);
 typedef int (*CP_SendToPeerFunc)(void *CP_Stream, CP_PeerCohort PeerCohort,
                                  int Rank, CMFormat Format, void *Data);
 struct _CP_Services

@@ -332,7 +332,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
 {
     Rdma_RS_Stream Stream = malloc(sizeof(struct _Rdma_RS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
-    MPI_Comm comm = Svcs->getMPIComm(CP_Stream);
+    SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     FabricState Fabric;
 
     memset(Stream, 0, sizeof(*Stream));
@@ -342,7 +342,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
      */
     Stream->CP_Stream = CP_Stream;
 
-    MPI_Comm_rank(comm, &Stream->Rank);
+    SMPI_Comm_rank(comm, &Stream->Rank);
 
     *ReaderContactInfoPtr = NULL;
 
@@ -373,7 +373,6 @@ typedef struct _RdmaCompletionHandle
     size_t Length;
     int Rank;
     int Pending;
-    double StartWTime;
 } * RdmaCompletionHandle;
 
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
@@ -381,13 +380,13 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
 {
     Rdma_WS_Stream Stream = malloc(sizeof(struct _Rdma_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
-    MPI_Comm comm = Svcs->getMPIComm(CP_Stream);
+    SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     FabricState Fabric;
     int rc;
 
     memset(Stream, 0, sizeof(struct _Rdma_WS_Stream));
 
-    MPI_Comm_rank(comm, &Stream->Rank);
+    SMPI_Comm_rank(comm, &Stream->Rank);
 
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
     Fabric = Stream->Fabric;
@@ -409,8 +408,8 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
         }
     }
 
-    MPI_Bcast(&Fabric->credential, sizeof(Fabric->credential), MPI_BYTE, 0,
-              comm);
+    SMPI_Bcast(&Fabric->credential, sizeof(Fabric->credential), SMPI_BYTE, 0,
+               comm);
     rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
     if (rc != DRC_SUCCESS)
     {
@@ -472,10 +471,10 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
     Rdma_WSR_Stream WSR_Stream = malloc(sizeof(*WSR_Stream));
     FabricState Fabric = WS_Stream->Fabric;
     RdmaWriterContactInfo ContactInfo;
-    MPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
+    SMPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
     int Rank;
 
-    MPI_Comm_rank(comm, &Rank);
+    SMPI_Comm_rank(comm, &Rank);
 
     WSR_Stream->WS_Stream = WS_Stream; /* pointer to writer struct */
     WSR_Stream->PeerCohort = PeerCohort;
@@ -637,7 +636,6 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
 
     do
     {
-        ret->StartWTime = MPI_Wtime();
         rc = fi_read(Fabric->signal, Buffer, Length, LocalDesc, SrcAddress,
                      (uint64_t)Addr, Info->Key, ret);
     } while (rc == -EAGAIN);

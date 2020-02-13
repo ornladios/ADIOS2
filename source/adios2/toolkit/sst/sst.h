@@ -10,7 +10,7 @@
 #ifndef SST_H_
 #define SST_H_
 
-#include "mpiwrap.h"
+#include "sst_comm_fwd.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,7 +88,7 @@ typedef enum
  *  Writer-side operations
  */
 extern SstStream SstWriterOpen(const char *filename, SstParams Params,
-                               MPI_Comm comm);
+                               SMPI_Comm comm);
 
 extern void SstStreamDestroy(SstStream Stream);
 
@@ -108,7 +108,7 @@ extern void SstWriterDefinitionLock(SstStream stream, long EffectiveTimestep);
  *  Reader-side operations
  */
 extern SstStream SstReaderOpen(const char *filename, SstParams Params,
-                               MPI_Comm comm);
+                               SMPI_Comm comm);
 extern void SstReaderGetParams(SstStream stream,
                                SstMarshalMethod *WriterMarshalMethod);
 extern SstFullMetadata SstGetCurMetadata(SstStream stream);

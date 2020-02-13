@@ -52,6 +52,10 @@ to any interfaces.
 
 #include "cp_internal.h"
 
+extern int SMPI_Init(int *argc, char ***argv);
+
+extern SMPI_Comm SMPI_COMM_WORLD;
+
 static atom_t TRANSPORT = -1;
 static atom_t IP_PORT = -1;
 static atom_t IP_HOSTNAME = -1;
@@ -169,7 +173,7 @@ int main(int argc, char **argv)
         displayHelp();
         return 1;
     }
-    MPI_Init(&argc, &argv);
+    SMPI_Init(&argc, &argv);
     init_atoms();
     if (connect)
     {
@@ -313,7 +317,7 @@ static void do_connect()
         Params.RegistrationMethod = SstRegisterFile;
     }
 
-    reader = SstReaderOpen("SstConnToolTemp", &Params, MPI_COMM_WORLD);
+    reader = SstReaderOpen("SstConnToolTemp", &Params, SMPI_COMM_WORLD);
     if (reader)
     {
         printf("Connection success, all is well!\n");
@@ -343,7 +347,7 @@ static void do_listen()
     SSTSetNetworkCallback(ConnToolCallback);
     Params.RendezvousReaderCount = 1;
     //    Params.ControlTransport = "enet";
-    writer = SstWriterOpen("SstConnToolTemp", &Params, MPI_COMM_WORLD);
+    writer = SstWriterOpen("SstConnToolTemp", &Params, SMPI_COMM_WORLD);
     printf("Connection success, all is well!\n");
     SstWriterClose(writer);
 }
