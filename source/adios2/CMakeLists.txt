@@ -13,7 +13,7 @@ target_include_directories(taustubs PRIVATE
       $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
 )
 
-add_library(adios2
+add_library(adios2_core
   common/ADIOSTypes.cpp
   
   core/Attribute.cpp 
@@ -105,18 +105,20 @@ add_library(adios2
   toolkit/aggregator/mpi/MPIAggregator.cpp
   toolkit/aggregator/mpi/MPIChain.cpp
 )
-target_include_directories(adios2
+set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
+
+target_include_directories(adios2_core
   PUBLIC
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(adios2 PRIVATE adios2sys_interface pugixml_private taustubs yaml-cpp)
-target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
-target_compile_features(adios2 PUBLIC ${ADIOS2_CXX11_FEATURES})
+target_link_libraries(adios2_core PRIVATE adios2sys_interface pugixml_private taustubs yaml-cpp)
+target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+target_compile_features(adios2_core PUBLIC ${ADIOS2_CXX11_FEATURES})
 
 if(UNIX)
-  target_sources(adios2 PRIVATE toolkit/transport/file/FilePOSIX.cpp)
+  target_sources(adios2_core PRIVATE toolkit/transport/file/FilePOSIX.cpp)
 endif()
 
 if(ADIOS2_HAVE_MPI)
@@ -129,44 +131,43 @@ if(ADIOS2_HAVE_MPI)
     engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
   )
   set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
-  target_link_libraries(adios2 INTERFACE adios2_core_mpi)
-  target_link_libraries(adios2_core_mpi PRIVATE adios2 PUBLIC MPI::MPI_C PRIVATE taustubs)
+  target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_C PRIVATE taustubs)
   target_compile_definitions(adios2_core_mpi PUBLIC ADIOS2_USE_MPI)
 endif()
 
 if(ADIOS2_HAVE_SysVShMem)
-  target_sources(adios2 PRIVATE toolkit/format/buffer/ipc/BufferSystemV.cpp)
+  target_sources(adios2_core PRIVATE toolkit/format/buffer/ipc/BufferSystemV.cpp)
   
-  target_sources(adios2 PRIVATE toolkit/transport/shm/ShmSystemV.cpp)
+  target_sources(adios2_core PRIVATE toolkit/transport/shm/ShmSystemV.cpp)
 endif()
 
 if(ADIOS2_HAVE_ZeroMQ)
-    target_sources(adios2 PRIVATE
+    target_sources(adios2_core PRIVATE
         toolkit/zmq/zmqreqrep/ZmqReqRep.cpp
         toolkit/zmq/zmqpubsub/ZmqPubSub.cpp
         )
-    target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
+    target_link_libraries(adios2_core PRIVATE ZeroMQ::ZMQ)
 endif()
 
 #if (ADIOS2_HAVE_JSON)
 if (ADIOS2_HAVE_DataMan)
-    target_sources(adios2 PRIVATE
+    target_sources(adios2_core PRIVATE
 	toolkit/query/JsonWorker.cpp			
    	)
-    target_link_libraries(adios2 PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_Table)
-    target_sources(adios2 PRIVATE
+    target_sources(adios2_core PRIVATE
         toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
     )
-    target_link_libraries(adios2 PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE nlohmann_json)
 endif()
 
 
 if(ADIOS2_HAVE_DataMan)
-    target_sources(adios2 PRIVATE
+    target_sources(adios2_core PRIVATE
         engine/dataman/DataManCommon.cpp
         engine/dataman/DataManReader.cpp
         engine/dataman/DataManReader.tcc
@@ -185,11 +186,11 @@ if(ADIOS2_HAVE_SSC)
         )
     target_link_libraries(adios2_core_mpi PRIVATE nlohmann_json)
     # SSC also activates code in main core library that uses nlohmann_json.
-    target_link_libraries(adios2 PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_Table)
-    target_sources(adios2 PRIVATE
+    target_sources(adios2_core PRIVATE
         engine/table/TableWriter.cpp
         engine/table/TableWriter.tcc
     )
@@ -197,12 +198,12 @@ endif()
 
 if(ADIOS2_HAVE_SST)
   add_subdirectory(toolkit/sst)
-  target_sources(adios2 PRIVATE
+  target_sources(adios2_core PRIVATE
     engine/sst/SstReader.cpp
     engine/sst/SstWriter.cpp
     engine/sst/SstParamParser.cpp
   )
-  target_link_libraries(adios2 PRIVATE sst)
+  target_link_libraries(adios2_core PRIVATE sst)
 endif()
 
 if(ADIOS2_HAVE_DataSpaces)
@@ -215,33 +216,33 @@ if(ADIOS2_HAVE_DataSpaces)
 endif()
 
 if(ADIOS2_HAVE_Blosc)
-  target_sources(adios2 PRIVATE operator/compress/CompressBlosc.cpp)
-  target_link_libraries(adios2 PRIVATE Blosc::Blosc)
+  target_sources(adios2_core PRIVATE operator/compress/CompressBlosc.cpp)
+  target_link_libraries(adios2_core PRIVATE Blosc::Blosc)
 endif()
 
 if(ADIOS2_HAVE_BZip2)
-  target_sources(adios2 PRIVATE operator/compress/CompressBZIP2.cpp)
-  target_link_libraries(adios2 PRIVATE BZip2::BZip2)
+  target_sources(adios2_core PRIVATE operator/compress/CompressBZIP2.cpp)
+  target_link_libraries(adios2_core PRIVATE BZip2::BZip2)
 endif()
 
 if(ADIOS2_HAVE_ZFP)
-  target_sources(adios2 PRIVATE operator/compress/CompressZFP.cpp)
-  target_link_libraries(adios2 PRIVATE zfp::zfp)
+  target_sources(adios2_core PRIVATE operator/compress/CompressZFP.cpp)
+  target_link_libraries(adios2_core PRIVATE zfp::zfp)
 endif()
 
 if(ADIOS2_HAVE_SZ)
-  target_sources(adios2 PRIVATE operator/compress/CompressSZ.cpp)
-  target_link_libraries(adios2 PRIVATE SZ::SZ)
+  target_sources(adios2_core PRIVATE operator/compress/CompressSZ.cpp)
+  target_link_libraries(adios2_core PRIVATE SZ::SZ)
 endif()
 
 if(ADIOS2_HAVE_MGARD)
-  target_sources(adios2 PRIVATE operator/compress/CompressMGARD.cpp)
-  target_link_libraries(adios2 PRIVATE MGARD::MGARD)
+  target_sources(adios2_core PRIVATE operator/compress/CompressMGARD.cpp)
+  target_link_libraries(adios2_core PRIVATE MGARD::MGARD)
 endif()
 
 if(ADIOS2_HAVE_PNG)
-  target_sources(adios2 PRIVATE operator/compress/CompressPNG.cpp)
-  target_link_libraries(adios2 PRIVATE PNG::PNG)
+  target_sources(adios2_core PRIVATE operator/compress/CompressPNG.cpp)
+  target_link_libraries(adios2_core PRIVATE PNG::PNG)
 endif()
 
 if(ADIOS2_HAVE_HDF5)
@@ -258,7 +259,7 @@ if(ADIOS2_HAVE_HDF5)
       engine/mixer/HDFMixerWriter.cpp
       )
   endif()
-  target_link_libraries(adios2 PRIVATE adios2_hdf5)
+  target_link_libraries(adios2_core PRIVATE adios2_hdf5)
   set_property(TARGET adios2_hdf5 PROPERTY EXPORT_NAME hdf5)
 
   set(adios2_hdf5_objs adios2_hdf5)
@@ -315,9 +316,15 @@ else()
   set(maybe_adios2_core_mpi)
 endif()
 
+# The main "adios2" target provides all interfaces.
+add_library(adios2 INTERFACE)
+target_link_libraries(adios2 INTERFACE
+  ${maybe_adios2_core_mpi} adios2_core
+  )
+
 # Set library version information
 set_target_properties(
-  adios2 ${maybe_adios2_core_mpi}
+  adios2_core ${maybe_adios2_core_mpi}
   PROPERTIES
   VERSION ${ADIOS2_LIBRARY_VERSION}
   SOVERSION ${ADIOS2_VERSION_MAJOR}
@@ -328,7 +335,7 @@ install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
 )
 
 # Library installation
-install(TARGETS adios2 ${maybe_adios2_core_mpi} taustubs EXPORT adios2Exports
+install(TARGETS adios2 adios2_core ${maybe_adios2_core_mpi} taustubs EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

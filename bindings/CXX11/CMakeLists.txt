@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-target_sources(adios2 PRIVATE
+target_sources(adios2_core PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/ADIOS.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Attribute.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Engine.cpp
@@ -25,7 +25,7 @@ if(ADIOS2_HAVE_MPI)
     )
 endif()
 
-target_include_directories(adios2
+target_include_directories(adios2_core
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )

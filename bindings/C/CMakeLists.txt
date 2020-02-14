@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 
-target_sources(adios2 PRIVATE 
+target_sources(adios2_core PRIVATE
 ${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_adios.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_io.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_engine.cpp
@@ -12,7 +12,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_variable.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_attribute.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_operator.cpp
 )
-target_include_directories(adios2
+target_include_directories(adios2_core
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
