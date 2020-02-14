@@ -93,11 +93,13 @@ if(NOT TARGET adios2::adios2)
   include("${CMAKE_CURRENT_LIST_DIR}/adios2-targets.cmake")
   # Filter our usage requirements to avoid non-enabled languages.
   if(NOT CMAKE_C_COMPILER_LOADED)
-    # Since C is not available, use MPI through MPI_CXX instead.
-    get_property(_adios2_link_libs TARGET adios2::adios2 PROPERTY INTERFACE_LINK_LIBRARIES)
-    string(REGEX REPLACE "MPI::MPI_C(;|>|$)" "MPI::MPI_CXX\\1" _adios2_link_libs "${_adios2_link_libs}")
-    set_property(TARGET adios2::adios2 PROPERTY INTERFACE_LINK_LIBRARIES "${_adios2_link_libs}")
-    unset(_adios2_link_libs)
+    if(TARGET adios2::core_mpi)
+      # Since C is not available, use MPI through MPI_CXX instead.
+      get_property(_adios2_link_libs TARGET adios2::core_mpi PROPERTY INTERFACE_LINK_LIBRARIES)
+      string(REGEX REPLACE "MPI::MPI_C(;|>|$)" "MPI::MPI_CXX\\1" _adios2_link_libs "${_adios2_link_libs}")
+      set_property(TARGET adios2::core_mpi PROPERTY INTERFACE_LINK_LIBRARIES "${_adios2_link_libs}")
+      unset(_adios2_link_libs)
+    endif()
   endif()
   if(NOT CMAKE_CXX_COMPILER_LOADED)
     # Avoid requiring compile features for non-enabled languages.

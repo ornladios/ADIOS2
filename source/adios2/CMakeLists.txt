@@ -120,7 +120,7 @@ if(UNIX)
 endif()
 
 if(ADIOS2_HAVE_MPI)
-  target_sources(adios2 PRIVATE
+  add_library(adios2_core_mpi
     core/IOMPI.cpp
     helper/adiosCommMPI.h  helper/adiosCommMPI.cpp
     helper/adiosMpiHandshake.h  helper/adiosMpiHandshake.cpp
@@ -128,7 +128,10 @@ if(ADIOS2_HAVE_MPI)
     engine/insitumpi/InSituMPIReader.cpp engine/insitumpi/InSituMPIReader.tcc
     engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
   )
-  target_link_libraries(adios2 PUBLIC MPI::MPI_C)
+  set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
+  target_link_libraries(adios2 INTERFACE adios2_core_mpi)
+  target_link_libraries(adios2_core_mpi PRIVATE adios2 PUBLIC MPI::MPI_C PRIVATE taustubs)
+  target_compile_definitions(adios2_core_mpi PUBLIC ADIOS2_USE_MPI)
 endif()
 
 if(ADIOS2_HAVE_SysVShMem)
@@ -173,13 +176,15 @@ if(ADIOS2_HAVE_DataMan)
 endif()
 
 if(ADIOS2_HAVE_SSC)
-    target_sources(adios2 PRIVATE
+    target_sources(adios2_core_mpi PRIVATE
         engine/ssc/SscReader.cpp
         engine/ssc/SscReader.tcc
         engine/ssc/SscWriter.cpp
         engine/ssc/SscWriter.tcc
         engine/ssc/SscHelper.cpp
         )
+    target_link_libraries(adios2_core_mpi PRIVATE nlohmann_json)
+    # SSC also activates code in main core library that uses nlohmann_json.
     target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
@@ -201,12 +206,12 @@ if(ADIOS2_HAVE_SST)
 endif()
 
 if(ADIOS2_HAVE_DataSpaces)
-  target_sources(adios2 PRIVATE
+  target_sources(adios2_core_mpi PRIVATE
      toolkit/dataspaces/ds_writer.c
      engine/dataspaces/DataSpacesWriter.cpp engine/dataspaces/DataSpacesWriter.tcc 
      engine/dataspaces/DataSpacesReader.cpp engine/dataspaces/DataSpacesReader.tcc 
   )
-  target_link_libraries(adios2 PRIVATE DataSpaces::DataSpaces)
+  target_link_libraries(adios2_core_mpi PRIVATE DataSpaces::DataSpaces)
 endif()
 
 if(ADIOS2_HAVE_Blosc)
@@ -263,7 +268,8 @@ if(ADIOS2_HAVE_HDF5)
     add_library(adios2_hdf5_mpi OBJECT
       toolkit/interop/hdf5/HDF5CommonMPI.cpp
       )
-    target_link_libraries(adios2 PRIVATE adios2_hdf5_mpi)
+    target_compile_definitions(adios2_hdf5_mpi PRIVATE ADIOS2_USE_MPI)
+    target_link_libraries(adios2_core_mpi PRIVATE adios2_hdf5_mpi)
     set_property(TARGET adios2_hdf5_mpi PROPERTY EXPORT_NAME hdf5_mpi)
   endif()
 
@@ -303,8 +309,16 @@ if(ADIOS2_HAVE_HDF5)
 
 endif()
 
+if(ADIOS2_HAVE_MPI)
+  set(maybe_adios2_core_mpi adios2_core_mpi)
+else()
+  set(maybe_adios2_core_mpi)
+endif()
+
 # Set library version information
-set_target_properties(adios2 PROPERTIES
+set_target_properties(
+  adios2 ${maybe_adios2_core_mpi}
+  PROPERTIES
   VERSION ${ADIOS2_LIBRARY_VERSION}
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
@@ -314,7 +328,7 @@ install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
 )
 
 # Library installation
-install(TARGETS adios2 taustubs EXPORT adios2Exports
+install(TARGETS adios2 ${maybe_adios2_core_mpi} taustubs EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

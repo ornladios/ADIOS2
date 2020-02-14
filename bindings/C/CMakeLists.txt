@@ -18,7 +18,7 @@ target_include_directories(adios2
 )
 
 if(ADIOS2_HAVE_MPI)
-  target_sources(adios2 PRIVATE
+  target_sources(adios2_core_mpi PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_adios_mpi.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_io_mpi.cpp
     )
