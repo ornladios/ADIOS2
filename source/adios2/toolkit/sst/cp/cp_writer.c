@@ -499,7 +499,6 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
                 attr_list_from_string(reader_info[i]->ContactInfo);
         }
         reader->Connections[i].RemoteStreamID = reader_info[i]->ReaderID;
-        reader->Connections[i].CMconn = NULL;
     }
     if (Stream->ConfigParams->CPCommPattern == SstCPCommPeer)
     {
@@ -799,6 +798,12 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
             // (only not NULL if this is writer rank 0)
             CMConnection_add_reference(conn);
             connections_to_reader[i].CMconn = conn;
+            CMconn_register_close_handler(conn, WriterConnCloseHandler,
+                                          (void *)CP_WSR_Stream);
+        }
+        else
+        {
+            connections_to_reader[i].CMconn = NULL;
         }
     }
 
