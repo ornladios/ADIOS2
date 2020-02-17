@@ -120,7 +120,8 @@ void SscWriter::EndStep()
     if (m_Verbosity >= 5)
     {
         std::cout << "SscWriter::EndStep, World Rank " << m_WorldRank
-                  << ", Writer Rank " << m_WriterRank << std::endl;
+                  << ", Writer Rank " << m_WriterRank << ", Step "
+                  << m_CurrentStep << std::endl;
     }
 
     if (m_CurrentStep == 0)
