@@ -111,7 +111,6 @@ target_include_directories(adios2_core
   PUBLIC
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 target_link_libraries(adios2_core PRIVATE adios2sys_interface pugixml_private taustubs yaml-cpp)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
@@ -132,7 +131,7 @@ if(ADIOS2_HAVE_MPI)
   )
   set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
   target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_C PRIVATE taustubs)
-  target_compile_definitions(adios2_core_mpi PUBLIC ADIOS2_USE_MPI)
+  target_compile_definitions(adios2_core_mpi PUBLIC "$<BUILD_INTERFACE:ADIOS2_USE_MPI>")
 endif()
 
 if(ADIOS2_HAVE_SysVShMem)
@@ -311,9 +310,11 @@ if(ADIOS2_HAVE_HDF5)
 endif()
 
 if(ADIOS2_HAVE_MPI)
+  set(maybe_adios2_c_mpi adios2_c_mpi)
   set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
   set(maybe_adios2_core_mpi adios2_core_mpi)
 else()
+  set(maybe_adios2_c_mpi)
   set(maybe_adios2_cxx11_mpi)
   set(maybe_adios2_core_mpi)
 endif()
@@ -321,6 +322,7 @@ endif()
 # The main "adios2" target provides all interfaces.
 add_library(adios2 INTERFACE)
 target_link_libraries(adios2 INTERFACE
+  ${maybe_adios2_c_mpi} adios2_c
   ${maybe_adios2_cxx11_mpi} adios2_cxx11
   ${maybe_adios2_core_mpi} adios2_core
   )
