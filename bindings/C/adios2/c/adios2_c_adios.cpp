@@ -13,53 +13,8 @@
 #include "adios2/core/ADIOS.h"
 #include "adios2/helper/adiosFunctions.h"
 
-#ifdef ADIOS2_HAVE_MPI
-#include "adios2/helper/adiosCommMPI.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifdef ADIOS2_HAVE_MPI
-
-// to be called from other languages, hidden from the public apis
-adios2_adios *adios2_init_config_glue_mpi(const char *config_file,
-                                          MPI_Comm comm,
-                                          const adios2_debug_mode debug_mode,
-                                          const char *host_language)
-{
-    adios2_adios *adios = nullptr;
-
-    try
-    {
-        adios2::helper::CheckForNullptr(
-            config_file,
-            "for config_file, in call to adios2_init or adios2_init_config");
-        const bool debugBool =
-            (debug_mode == adios2_debug_mode_on) ? true : false;
-        adios = reinterpret_cast<adios2_adios *>(new adios2::core::ADIOS(
-            config_file, adios2::helper::CommFromMPI(comm), debugBool,
-            host_language));
-    }
-    catch (...)
-    {
-        adios2::helper::ExceptionToError("adios2_init or adios2_init_config");
-    }
-    return adios;
-}
-
-adios2_adios *adios2_init_mpi(MPI_Comm comm, const adios2_debug_mode debug_mode)
-{
-    return adios2_init_config("", comm, debug_mode);
-}
-
-adios2_adios *adios2_init_config_mpi(const char *config_file, MPI_Comm comm,
-                                     const adios2_debug_mode debug_mode)
-{
-    return adios2_init_config_glue_mpi(config_file, comm, debug_mode, "C");
-}
-
 #endif
 
 adios2_adios *adios2_init_config_glue_serial(const char *config_file,

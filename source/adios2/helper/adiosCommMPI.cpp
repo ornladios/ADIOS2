@@ -378,7 +378,6 @@ Comm::Status CommImplMPI::Recv(void *buf, size_t count, Datatype datatype,
                    hint);
 
     Comm::Status status;
-#ifdef ADIOS2_HAVE_MPI
     status.Source = mpiStatus.MPI_SOURCE;
     status.Tag = mpiStatus.MPI_TAG;
     {
@@ -387,7 +386,6 @@ Comm::Status CommImplMPI::Recv(void *buf, size_t count, Datatype datatype,
                        hint);
         status.Count = mpiCount;
     }
-#endif
     return status;
 }
 
@@ -514,7 +512,6 @@ Comm::Status CommReqImplMPI::Wait(const std::string &hint)
         return status;
     }
 
-#ifdef ADIOS2_HAVE_MPI
     std::vector<MPI_Request> mpiRequests = std::move(m_MPIReqs);
     std::vector<MPI_Status> mpiStatuses(mpiRequests.size());
 
@@ -564,7 +561,6 @@ Comm::Status CommReqImplMPI::Wait(const std::string &hint)
             break;
         }
     }
-#endif
 
     return status;
 }

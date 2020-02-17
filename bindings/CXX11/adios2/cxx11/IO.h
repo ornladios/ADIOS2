@@ -250,8 +250,6 @@ public:
 
     /**
      * Open an Engine to start heavy-weight input/output operations.
-     * This version reuses the ADIOS object communicator
-     * MPI Collective function as it calls MPI_Comm_dup
      * @param name unique engine identifier
      * @param mode adios2::Mode::Write, adios2::Mode::Read, or
      *             adios2::Mode::Append (not yet support)

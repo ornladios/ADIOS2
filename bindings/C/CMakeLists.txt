@@ -20,6 +20,13 @@ if(NOT MSVC)
   target_compile_features(adios2 PRIVATE ${ADIOS2_C99_FEATURES})
 endif()
 
+if(ADIOS2_HAVE_MPI)
+  target_sources(adios2 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_adios_mpi.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_io_mpi.cpp
+    )
+endif()
+
 install(
   FILES adios2_c.h 
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}

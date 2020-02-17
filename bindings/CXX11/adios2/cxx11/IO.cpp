@@ -13,10 +13,6 @@
 
 #include "adios2/core/IO.h"
 
-#ifdef ADIOS2_HAVE_MPI
-#include "adios2/helper/adiosCommMPI.h"
-#endif
-
 namespace adios2
 {
 
@@ -106,15 +102,6 @@ void IO::RemoveAllAttributes()
     helper::CheckForNullptr(m_IO, "in call to IO::RemoveAllAttributes");
     m_IO->RemoveAllAttributes();
 }
-
-#ifdef ADIOS2_HAVE_MPI
-Engine IO::Open(const std::string &name, const Mode mode, MPI_Comm comm)
-{
-    helper::CheckForNullptr(m_IO,
-                            "for engine " + name + ", in call to IO::Open");
-    return Engine(&m_IO->Open(name, mode, helper::CommFromMPI(comm)));
-}
-#endif
 
 Engine IO::Open(const std::string &name, const Mode mode)
 {

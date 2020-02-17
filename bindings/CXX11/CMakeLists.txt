@@ -17,6 +17,13 @@ target_sources(adios2 PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Variable.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/fstream/ADIOS2fstream.cpp
 )
+if(ADIOS2_HAVE_MPI)
+  target_sources(adios2 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/ADIOSMPI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/IOMPI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/fstream/ADIOS2fstreamMPI.cpp
+    )
+endif()
 
 target_include_directories(adios2
   PUBLIC
