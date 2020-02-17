@@ -15,8 +15,11 @@ add_executable(with_CXX foo.cxx main.cxx)
 
 target_compile_definitions(with_C PRIVATE WITH_ADIOS2)
 target_compile_definitions(with_CXX PRIVATE WITH_ADIOS2)
+if(ADIOS2_HAVE_MPI)
+  target_link_libraries(with_CXX adios2::cxx11_mpi)
+endif()
 target_link_libraries(with_C adios2::adios2)
-target_link_libraries(with_CXX adios2::adios2)
+target_link_libraries(with_CXX adios2::cxx11)
 
 if(ADIOS2_HAVE_Fortran)
   enable_language(Fortran)

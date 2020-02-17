@@ -5,6 +5,10 @@
 
 #include <adios2.h>
 
+#if ADIOS2_USE_MPI
+#error "ADIOS2_USE_MPI is true for source not using ADIOS2 MPI bindings"
+#endif
+
 int main(void)
 {
     adios2::ADIOS adios;

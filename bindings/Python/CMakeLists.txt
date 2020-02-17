@@ -8,10 +8,21 @@ Python_add_library(adios2py MODULE
   py11File.cpp py11File.tcc
   py11glue.cpp
 )
-target_link_libraries(adios2py PRIVATE adios2 pybind11 Python::NumPy)
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(adios2py PRIVATE Python::mpi4py)
+  set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
+  set(maybe_adios2_core_mpi adios2_core_mpi)
+  set(maybe_mpi4py Python::mpi4py)
+else()
+  set(maybe_adios2_cxx11_mpi)
+  set(maybe_adios2_core_mpi)
+  set(maybe_mpi4py)
 endif()
+target_link_libraries(adios2py PRIVATE
+  ${maybe_adios2_cxx11_mpi} adios2_cxx11
+  ${maybe_adios2_core_mpi} adios2_core
+  pybind11
+  ${maybe_mpi4py} Python::NumPy
+  )
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
   ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/__init__.py

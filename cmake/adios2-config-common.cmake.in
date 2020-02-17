@@ -102,11 +102,11 @@ if(NOT TARGET adios2::core)
     endif()
   endif()
   if(NOT CMAKE_CXX_COMPILER_LOADED)
-    # Avoid requiring compile features for non-enabled languages.
-    get_property(_adios2_cxx_features TARGET adios2::core PROPERTY INTERFACE_COMPILE_FEATURES)
-    list(FILTER _adios2_cxx_features EXCLUDE REGEX "^cxx_")
-    set_property(TARGET adios2::core PROPERTY INTERFACE_COMPILE_FEATURES "${_adios2_cxx_features}")
-    unset(_adios2_cxx_features)
+    # Since CXX is not available, take out CXX bindings from legacy library.
+    get_property(_adios2_link_libs TARGET adios2::adios2 PROPERTY INTERFACE_LINK_LIBRARIES)
+    list(FILTER _adios2_link_libs EXCLUDE REGEX "^adios2::(cxx11|cxx11_mpi)$")
+    set_property(TARGET adios2::adios2 PROPERTY INTERFACE_LINK_LIBRARIES "${_adios2_link_libs}")
+    unset(_adios2_link_libs)
   endif()
 endif()
 

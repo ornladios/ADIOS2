@@ -115,7 +115,7 @@ target_include_directories(adios2_core
 )
 target_link_libraries(adios2_core PRIVATE adios2sys_interface pugixml_private taustubs yaml-cpp)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
-target_compile_features(adios2_core PUBLIC ${ADIOS2_CXX11_FEATURES})
+target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 
 if(UNIX)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FilePOSIX.cpp)
@@ -311,14 +311,17 @@ if(ADIOS2_HAVE_HDF5)
 endif()
 
 if(ADIOS2_HAVE_MPI)
+  set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
   set(maybe_adios2_core_mpi adios2_core_mpi)
 else()
+  set(maybe_adios2_cxx11_mpi)
   set(maybe_adios2_core_mpi)
 endif()
 
 # The main "adios2" target provides all interfaces.
 add_library(adios2 INTERFACE)
 target_link_libraries(adios2 INTERFACE
+  ${maybe_adios2_cxx11_mpi} adios2_cxx11
   ${maybe_adios2_core_mpi} adios2_core
   )
 

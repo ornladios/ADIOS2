@@ -3,31 +3,58 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-target_sources(adios2_core PRIVATE
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/ADIOS.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Attribute.cpp 
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Engine.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Engine.tcc
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/IO.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/IO.tcc
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Operator.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Query.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Types.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Types.tcc
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Variable.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/fstream/ADIOS2fstream.cpp
+add_library(adios2_cxx11
+  adios2/cxx11/ADIOS.cpp
+  adios2/cxx11/Attribute.cpp
+  adios2/cxx11/Engine.cpp
+  adios2/cxx11/Engine.tcc
+  adios2/cxx11/IO.cpp
+  adios2/cxx11/IO.tcc
+  adios2/cxx11/Operator.cpp
+  adios2/cxx11/Query.cpp
+  adios2/cxx11/Types.cpp
+  adios2/cxx11/Types.tcc
+  adios2/cxx11/Variable.cpp
+  adios2/cxx11/fstream/ADIOS2fstream.cpp
 )
-if(ADIOS2_HAVE_MPI)
-  target_sources(adios2_core_mpi PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/ADIOSMPI.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/IOMPI.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/fstream/ADIOS2fstreamMPI.cpp
-    )
-endif()
+set_property(TARGET adios2_cxx11 PROPERTY EXPORT_NAME cxx11)
+target_link_libraries(adios2_cxx11 PRIVATE adios2_core pugixml)
+target_compile_features(adios2_cxx11 INTERFACE ${ADIOS2_CXX11_FEATURES})
 
-target_include_directories(adios2_core
+target_include_directories(adios2_cxx11
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  INTERFACE
+    $<BUILD_INTERFACE:$<TARGET_PROPERTY:adios2_core,INTERFACE_INCLUDE_DIRECTORIES>>
+)
+
+if(ADIOS2_HAVE_MPI)
+  add_library(adios2_cxx11_mpi
+    adios2/cxx11/ADIOSMPI.cpp
+    adios2/cxx11/IOMPI.cpp
+    adios2/cxx11/fstream/ADIOS2fstreamMPI.cpp
+  )
+  set_property(TARGET adios2_cxx11_mpi PROPERTY EXPORT_NAME cxx11_mpi)
+  target_link_libraries(adios2_cxx11_mpi PUBLIC adios2_cxx11 PRIVATE adios2_core_mpi PUBLIC MPI::MPI_CXX)
+  set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
+  target_compile_definitions(adios2_cxx11_mpi INTERFACE ADIOS2_USE_MPI)
+else()
+  set(maybe_adios2_cxx11_mpi)
+endif()
+
+# Set library version information
+set_target_properties(
+  adios2_cxx11 ${maybe_adios2_cxx11_mpi}
+  PROPERTIES
+  VERSION ${ADIOS2_LIBRARY_VERSION}
+  SOVERSION ${ADIOS2_VERSION_MAJOR}
+)
+
+install(TARGETS adios2_cxx11 ${maybe_adios2_cxx11_mpi} EXPORT adios2Exports
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(
