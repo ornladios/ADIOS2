@@ -57,9 +57,6 @@ private:
     int m_WorldSize;
     int m_WriterRank;
     int m_WriterSize;
-    int m_ReaderSize;
-    int m_WriterMasterWorldRank;
-    int m_ReaderMasterWorldRank;
     int m_AppID = 0;
     int m_AppSize = 0;
     std::vector<std::vector<int>> m_WriterGlobalMpiInfo;

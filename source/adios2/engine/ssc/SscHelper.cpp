@@ -136,19 +136,22 @@ void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
 {
     for (int i = 0; i < output.size(); ++i)
     {
-        auto &rankj = input[i];
-        output[i].clear();
-        for (const auto &j : rankj)
+        if (input[i] != nullptr)
         {
-            output[i].emplace_back();
-            auto &b = output[i].back();
-            b.name = j["N"].get<std::string>();
-            b.type = j["T"].get<std::string>();
-            b.start = j["O"].get<Dims>();
-            b.count = j["C"].get<Dims>();
-            b.shape = j["S"].get<Dims>();
-            b.bufferStart = j["X"].get<size_t>();
-            b.bufferCount = j["Y"].get<size_t>();
+            auto &rankj = input[i]["Variables"];
+            output[i].clear();
+            for (const auto &j : rankj)
+            {
+                output[i].emplace_back();
+                auto &b = output[i].back();
+                b.name = j["Name"].get<std::string>();
+                b.type = j["Type"].get<std::string>();
+                b.start = j["Start"].get<Dims>();
+                b.count = j["Count"].get<Dims>();
+                b.shape = j["Shape"].get<Dims>();
+                b.bufferStart = j["BufferStart"].get<size_t>();
+                b.bufferCount = j["BufferCount"].get<size_t>();
+            }
         }
     }
 }
@@ -272,6 +275,32 @@ void PrintRankPosMap(const RankPosMap &m, const std::string &label)
                   << ", bufferStart = " << rank.second.first
                   << ", bufferCount = " << rank.second.second << std::endl;
     }
+}
+
+void PrintMpiInfo(const MpiInfo &writersInfo, const MpiInfo &readersInfo)
+{
+    int s = 0;
+    for (int i = 0; i < writersInfo.size(); ++i)
+    {
+        std::cout << "App " << s << " Writer App " << i << " Wrold Ranks : ";
+        for (int j = 0; j < writersInfo[i].size(); ++j)
+        {
+            std::cout << writersInfo[i][j] << "  ";
+        }
+        std::cout << std::endl;
+        ++s;
+    }
+    for (int i = 0; i < readersInfo.size(); ++i)
+    {
+        std::cout << "App " << s << " Reader App " << i << " Wrold Ranks : ";
+        for (int j = 0; j < readersInfo[i].size(); ++j)
+        {
+            std::cout << readersInfo[i][j] << "  ";
+        }
+        std::cout << std::endl;
+        ++s;
+    }
+    std::cout << std::endl;
 }
 
 } // end namespace ssc

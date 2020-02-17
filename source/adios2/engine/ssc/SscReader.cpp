@@ -30,7 +30,6 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     MPI_Comm_size(MPI_COMM_WORLD, &m_WorldSize);
     m_ReaderRank = m_Comm.Rank();
     m_ReaderSize = m_Comm.Size();
-    m_WriterSize = m_WorldSize - m_ReaderSize;
 
     auto it = m_IO.m_Parameters.find("MpiMode");
     if (it != m_IO.m_Parameters.end())
@@ -38,7 +37,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
         m_MpiMode = it->second;
     }
 
-    m_GlobalWritePattern.resize(m_WriterSize);
+    m_GlobalWritePattern.resize(m_WorldSize);
     SyncMpiPattern();
     SyncWritePattern();
 }
@@ -142,27 +141,16 @@ void SscReader::EndStep()
 
 void SscReader::SyncMpiPattern()
 {
-    TAU_SCOPED_TIMER_FUNC();
-    int readerMasterWorldRank = 0;
-    int writerMasterWorldRank = 0;
-    if (m_ReaderRank == 0)
-    {
-        readerMasterWorldRank = m_WorldRank;
-    }
-    MPI_Allreduce(&readerMasterWorldRank, &m_ReaderMasterWorldRank, 1, MPI_INT,
-                  MPI_MAX, MPI_COMM_WORLD);
-    MPI_Allreduce(&writerMasterWorldRank, &m_WriterMasterWorldRank, 1, MPI_INT,
-                  MPI_MAX, MPI_COMM_WORLD);
-
-    if (m_WorldSize == m_ReaderSize)
-    {
-        throw(std::runtime_error("no writers are found"));
-    }
-
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::SyncMpiPattern, World Rank " << m_WorldRank
                   << ", Reader Rank " << m_ReaderRank << std::endl;
+    }
+
+    TAU_SCOPED_TIMER_FUNC();
+    if (m_WorldSize == m_ReaderSize)
+    {
+        throw(std::runtime_error("no writers are found"));
     }
 
     std::vector<int> lrbuf;
@@ -396,34 +384,9 @@ void SscReader::SyncMpiPattern()
     MPI_Group_incl(worldGroup, m_AllWriterRanks.size(), m_AllWriterRanks.data(),
                    &m_MpiAllWritersGroup);
 
-    if (m_Verbosity >= 10)
+    if (m_Verbosity >= 10 and m_WorldRank == 0)
     {
-        std::cout << "WorldRank " << m_WorldRank << std::endl;
-        std::cout << "AppID " << m_AppID << std::endl;
-        std::cout << "AppSize " << m_AppSize << std::endl;
-        std::cout << "m_WriterGlobalMpiInfo have:" << std::endl;
-        for (int i = 0; i < m_WriterGlobalMpiInfo.size(); ++i)
-        {
-            std::cout << "Vector " << i << ": ";
-            for (int j = 0; j < m_WriterGlobalMpiInfo[i].size(); ++j)
-            {
-                std::cout << m_WriterGlobalMpiInfo[i][j] << "  ";
-            }
-            std::cout << std::endl;
-        }
-
-        std::cout << "m_ReaderGlobalMpiInfo have:" << std::endl;
-        for (int i = 0; i < m_ReaderGlobalMpiInfo.size(); ++i)
-        {
-            std::cout << "Vector " << i << ": ";
-            for (int j = 0; j < m_ReaderGlobalMpiInfo[i].size(); ++j)
-            {
-                std::cout << m_ReaderGlobalMpiInfo[i][j] << "  ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
+        ssc::PrintMpiInfo(m_WriterGlobalMpiInfo, m_ReaderGlobalMpiInfo);
     }
 }
 
@@ -436,25 +399,43 @@ void SscReader::SyncWritePattern()
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
 
-    // sync with writers
-    size_t globalSizeDst = 0;
-    size_t globalSizeSrc = 0;
-    MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG,
-                  MPI_MAX, MPI_COMM_WORLD);
-    std::vector<char> globalVec(globalSizeDst);
+    // aggregate global write pattern
+    size_t localSize = 0;
+    size_t maxLocalSize;
+    MPI_Allreduce(&localSize, &maxLocalSize, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX,
+                  MPI_COMM_WORLD);
+    std::vector<char> localVec(maxLocalSize, '\0');
+    std::vector<char> globalVec(maxLocalSize * m_WorldSize);
+    MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
+                  maxLocalSize, MPI_CHAR, MPI_COMM_WORLD);
 
-    MPI_Win win;
-    MPI_Win_create(NULL, 0, sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-    MPI_Win_fence(0, win);
-    MPI_Get(globalVec.data(), globalVec.size(), MPI_CHAR, 0, 0,
-            globalVec.size(), MPI_CHAR, win);
-    MPI_Win_fence(0, win);
-    MPI_Win_free(&win);
+    // deserialize global metadata Json
+    nlohmann::json globalJson;
+    try
+    {
+        for (size_t i = 0; i < m_WorldSize; ++i)
+        {
+            if (globalVec[i * maxLocalSize] == '\0')
+            {
+                globalJson[i] = nullptr;
+            }
+            else
+            {
+                globalJson[i] = nlohmann::json::parse(
+                    globalVec.begin() + i * maxLocalSize,
+                    globalVec.begin() + (i + 1) * maxLocalSize);
+            }
+        }
+    }
+    catch (std::exception &e)
+    {
+        throw(std::runtime_error(
+            std::string("corrupted global write pattern metadata, ") +
+            std::string(e.what())));
+    }
 
-    // deserialize
-
-    m_GlobalWritePattern.resize(m_WriterSize);
-    ssc::JsonToBlockVecVec(globalVec, m_GlobalWritePattern);
+    // deserialize variables metadata
+    ssc::JsonToBlockVecVec(globalJson, m_GlobalWritePattern);
 
     for (const auto &blockVec : m_GlobalWritePattern)
     {
@@ -479,46 +460,49 @@ void SscReader::SyncWritePattern()
         }
     }
 
-    nlohmann::json j;
-    try
+    for (int i = 0; i < m_WorldSize; ++i)
     {
-        j = nlohmann::json::parse(globalVec);
-    }
-    catch (...)
-    {
-        throw(std::runtime_error("corrupted json string"));
-    }
-
-    for (const auto &attributeJson : j[m_WriterSize])
-    {
-        const std::string type(attributeJson["T"].get<std::string>());
-        if (type.empty())
+        if (globalJson[i] == nullptr)
         {
+            continue;
         }
+        auto &attributesJson = globalJson[i]["Attributes"];
+        if (attributesJson == nullptr)
+        {
+            continue;
+        }
+        for (const auto &attributeJson : attributesJson)
+        {
+            const std::string type(attributeJson["Type"].get<std::string>());
+            if (type.empty())
+            {
+            }
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         const auto &attributesDataMap = m_IO.GetAttributesDataMap();           \
         auto it =                                                              \
-            attributesDataMap.find(attributeJson["N"].get<std::string>());     \
+            attributesDataMap.find(attributeJson["Name"].get<std::string>());  \
         if (it == attributesDataMap.end())                                     \
         {                                                                      \
-            if (attributeJson["S"].get<bool>())                                \
+            if (attributeJson["IsSingleValue"].get<bool>())                    \
             {                                                                  \
-                m_IO.DefineAttribute<T>(attributeJson["N"].get<std::string>(), \
-                                        attributeJson["V"].get<T>());          \
+                m_IO.DefineAttribute<T>(                                       \
+                    attributeJson["Name"].get<std::string>(),                  \
+                    attributeJson["Value"].get<T>());                          \
             }                                                                  \
             else                                                               \
             {                                                                  \
                 m_IO.DefineAttribute<T>(                                       \
-                    attributeJson["N"].get<std::string>(),                     \
-                    attributeJson["V"].get<std::vector<T>>().data(),           \
-                    attributeJson["V"].get<std::vector<T>>().size());          \
+                    attributeJson["Name"].get<std::string>(),                  \
+                    attributeJson["Array"].get<std::vector<T>>().data(),       \
+                    attributeJson["Array"].get<std::vector<T>>().size());      \
             }                                                                  \
         }                                                                      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
+        }
     }
 }
 
@@ -531,7 +515,7 @@ void SscReader::SyncReadPattern()
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
 
-    nlohmann::json j;
+    nlohmann::json readPatternJson;
 
     // serialize
     auto variables = m_IO.GetAvailableVariables();
@@ -567,77 +551,54 @@ void SscReader::SyncReadPattern()
             }
         }
 
-        j.emplace_back();
-        auto &jref = j.back();
-        jref["N"] = var.first;
-        jref["T"] = type;
-        jref["O"] = b.start;
-        jref["C"] = b.count;
-        jref["S"] = b.shape;
-        jref["X"] = 0;
-        jref["Y"] = 0;
+        readPatternJson["Variables"].emplace_back();
+        auto &jref = readPatternJson["Variables"].back();
+        jref["Name"] = var.first;
+        jref["Type"] = type;
+        jref["Start"] = b.start;
+        jref["Count"] = b.count;
+        jref["Shape"] = b.shape;
+        jref["BufferStart"] = 0;
+        jref["BufferCount"] = 0;
     }
 
-    std::string localStr = j.dump();
+    std::string localStr = readPatternJson.dump();
 
-    // aggregate global read pattern across all readers
+    // aggregate global read pattern
     size_t localSize = localStr.size();
     size_t maxLocalSize;
-    m_Comm.Allreduce(&localSize, &maxLocalSize, 1, helper::Comm::Op::Max);
+    MPI_Allreduce(&localSize, &maxLocalSize, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX,
+                  MPI_COMM_WORLD);
     std::vector<char> localVec(maxLocalSize, '\0');
     std::memcpy(localVec.data(), localStr.c_str(), localStr.size());
-    std::vector<char> globalVec(maxLocalSize * m_ReaderSize);
-    m_Comm.GatherArrays(localVec.data(), maxLocalSize, globalVec.data(), 0);
+    std::vector<char> globalVec(maxLocalSize * m_WorldSize);
+    MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
+                  maxLocalSize, MPI_CHAR, MPI_COMM_WORLD);
 
-    std::string globalStr;
-    if (m_ReaderRank == 0)
+    // deserialize global metadata Json
+    nlohmann::json globalJson;
+    try
     {
-        nlohmann::json globalJson;
-        try
+        for (size_t i = 0; i < m_WorldSize; ++i)
         {
-            for (size_t i = 0; i < m_ReaderSize; ++i)
+            if (globalVec[i * maxLocalSize] == '\0')
+            {
+                globalJson[i] = nullptr;
+            }
+            else
             {
                 globalJson[i] = nlohmann::json::parse(
                     globalVec.begin() + i * maxLocalSize,
                     globalVec.begin() + (i + 1) * maxLocalSize);
             }
         }
-        catch (...)
-        {
-            throw(std::runtime_error(
-                "reader received corrupted aggregated read pattern"));
-        }
-        globalStr = globalJson.dump();
     }
-
-    size_t globalSizeSrc = globalStr.size();
-    size_t globalSizeDst = 0;
-    MPI_Allreduce(&globalSizeSrc, &globalSizeDst, 1, MPI_UNSIGNED_LONG_LONG,
-                  MPI_MAX, MPI_COMM_WORLD);
-
-    if (globalStr.size() < globalSizeDst)
+    catch (std::exception &e)
     {
-        globalStr.resize(globalSizeDst);
+        throw(std::runtime_error(
+            std::string("corrupted global read pattern metadata, ") +
+            std::string(e.what())));
     }
-
-    globalVec.resize(globalSizeDst);
-    std::memcpy(globalVec.data(), globalStr.data(), globalStr.size());
-
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscReader::SyncReadPattern, World Rank " << m_WorldRank
-                  << ", Reader Rank " << m_ReaderRank
-                  << ", serialized global read pattern: " << globalStr
-                  << std::endl;
-    }
-
-    // sync with writers
-    MPI_Win win;
-    MPI_Win_create(globalVec.data(), globalVec.size(), sizeof(char),
-                   MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-    MPI_Win_fence(0, win);
-    MPI_Win_fence(0, win);
-    MPI_Win_free(&win);
 
     ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
     m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePattern);
