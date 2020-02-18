@@ -31,19 +31,30 @@ namespace adios2
 namespace helper
 {
 
-std::vector<std::string> AvailableIpAddresses() noexcept
+#if defined(__clang__)
+#if __has_feature(memory_sanitizer)
+// Memory Sanitizer fails to recognize that if_nameindex initializes
+// the memory in the array behind the pointer it returns.
+__attribute__((no_sanitize("memory")))
+#endif
+#endif
+std::vector<std::string>
+AvailableIpAddresses() noexcept
 {
     std::vector<std::string> ips;
     int socket_handler = -1;
-    struct if_nameindex *p = 0;
-    struct if_nameindex *head = 0;
     if ((socket_handler = socket(PF_INET, SOCK_DGRAM, 0)) < 0)
     {
         return ips;
     }
-    head = if_nameindex();
-    p = if_nameindex();
-    while ((p != NULL) && (p->if_name != NULL))
+    struct if_nameindex *head = if_nameindex();
+    if (!head)
+    {
+        close(socket_handler);
+        return ips;
+    }
+    for (struct if_nameindex *p = head;
+         !(p->if_index == 0 && p->if_name == NULL); ++p)
     {
         struct ifreq req;
         strncpy(req.ifr_name, p->if_name, IFNAMSIZ);
@@ -51,9 +62,9 @@ std::vector<std::string> AvailableIpAddresses() noexcept
         {
             if (errno == EADDRNOTAVAIL)
             {
-                ++p;
                 continue;
             }
+            if_freenameindex(head);
             close(socket_handler);
             return ips;
         }
@@ -63,7 +74,6 @@ std::vector<std::string> AvailableIpAddresses() noexcept
         {
             ips.emplace_back(ip);
         }
-        ++p;
     }
     if_freenameindex(head);
     close(socket_handler);
