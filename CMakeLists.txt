@@ -156,8 +156,9 @@ install(FILES ${PROJECT_BINARY_DIR}/source/adios2/common/ADIOSConfig.h
 #------------------------------------------------------------------------------#
 # Some specialized shared library and RPATH handling
 #------------------------------------------------------------------------------#
-set(ADIOS2_RUN_INSTALL_TEST TRUE)
-if(BUILD_SHARED_LIBS)
+option(ADIOS2_RUN_INSTALL_TEST "Enable / disable the install test" TRUE)
+mark_as_advanced(ADIOS2_RUN_INSTALL_TEST)
+if(BUILD_SHARED_LIBS AND ADIOS2_RUN_INSTALL_TEST)
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
   string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_LIBDIR}")
 
@@ -171,6 +172,7 @@ if(BUILD_SHARED_LIBS)
       else()
         set(CMAKE_INSTALL_NAME_DIR
           "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+        message(STATUS "Skipping install tests due to platform specific rpath oddities")
         set(ADIOS2_RUN_INSTALL_TEST FALSE)
       endif()
     else()
