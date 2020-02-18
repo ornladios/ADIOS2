@@ -17,10 +17,6 @@
 #include "adios2/engine/ssc/SscWriter.h"
 #endif
 
-#ifdef ADIOS2_HAVE_TABLE // external dependencies
-#include "adios2/engine/table/TableWriter.h"
-#endif
-
 #ifdef ADIOS2_HAVE_DATASPACES // external dependencies
 #include "adios2/engine/dataspaces/DataSpacesReader.h"
 #include "adios2/engine/dataspaces/DataSpacesWriter.h"
@@ -52,16 +48,6 @@ std::shared_ptr<Engine> MakeEngineMPI(IO &io, const std::string &name,
     }
     return IO::MakeEngine<T>(io, name, mode, std::move(comm));
 }
-struct ThrowError
-{
-    std::shared_ptr<Engine> operator()(IO &, const std::string &, const Mode,
-                                       helper::Comm) const
-    {
-        throw std::invalid_argument(Err);
-    }
-    std::string Err;
-};
-
 }
 
 void RegisterMPIEngines()
@@ -74,16 +60,6 @@ void RegisterMPIEngines()
     IO::RegisterEngine(
         "ssc", IO::EngineFactoryEntry{MakeEngineMPI<engine::SscReader>,
                                       MakeEngineMPI<engine::SscWriter>});
-#endif
-#ifdef ADIOS2_HAVE_TABLE
-    IO::RegisterEngine(
-        "table",
-        IO::EngineFactoryEntry{
-            ThrowError{
-                "ERROR: Table engine only supports Write. It uses other "
-                "engines as backend. Please use corresponding engines for "
-                "Read\n"},
-            MakeEngineMPI<engine::TableWriter>});
 #endif
 #ifdef ADIOS2_HAVE_DATASPACES
     IO::RegisterEngine(
