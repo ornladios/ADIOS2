@@ -89,6 +89,7 @@ private:
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
+    size_t CurrentStep() const final;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \

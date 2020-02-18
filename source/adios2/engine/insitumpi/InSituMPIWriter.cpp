@@ -345,6 +345,12 @@ void InSituMPIWriter::EndStep()
     }
 }
 
+size_t InSituMPIWriter::CurrentStep() const
+{
+    TAU_SCOPED_TIMER_FUNC();
+    return m_CurrentStep;
+}
+
 // PRIVATE
 
 #define declare_type(T)                                                        \
