@@ -11,15 +11,16 @@
 #ifndef ADIOS2_ENGINE_TABLEWRITER_H_
 #define ADIOS2_ENGINE_TABLEWRITER_H_
 
+#include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
+#include "adios2/core/IO.h"
+#include "adios2/core/Variable.h"
 #include "adios2/engine/bp3/BP3Writer.h"
 #include "adios2/engine/bp4/BP4Writer.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
-
-#include "../../bindings/CXX11/adios2.h"
 
 namespace adios2
 {
@@ -73,9 +74,9 @@ private:
     size_t m_AppID;
     std::thread m_ReplyThread;
     bool m_IsRowMajor;
-    adios2::ADIOS m_SubAdios;
-    adios2::IO m_SubIO;
-    std::shared_ptr<adios2::Engine> m_SubEngine;
+    ADIOS m_SubAdios;
+    IO &m_SubIO;
+    Engine *m_SubEngine = nullptr;
 
     void Init() final;
     void InitParameters() final;

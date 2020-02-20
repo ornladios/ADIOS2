@@ -43,6 +43,10 @@
 #include "adios2/engine/sst/SstWriter.h"
 #endif
 
+#ifdef ADIOS2_HAVE_TABLE // external dependencies
+#include "adios2/engine/table/TableWriter.h"
+#endif
+
 namespace adios2
 {
 namespace core
@@ -78,8 +82,17 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
     },
     {"ssc", IO::NoEngineEntry("ERROR: this version didn't compile with "
                               "SSC library, can't use SSC engine\n")},
-    {"table", IO::NoEngineEntry("ERROR: this version didn't compile with "
-                                "Table library, can't use Table engine\n")},
+    {"table",
+#ifdef ADIOS2_HAVE_TABLE
+     {IO::NoEngine("ERROR: Table engine only supports Write. It uses other "
+                   "engines as backend. Please use corresponding engines for "
+                   "Read\n"),
+      IO::MakeEngine<engine::TableWriter>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "Table library, can't use Table engine\n")
+#endif
+    },
     {"sst",
 #ifdef ADIOS2_HAVE_SST
      {IO::MakeEngine<engine::SstReader>, IO::MakeEngine<engine::SstWriter>}

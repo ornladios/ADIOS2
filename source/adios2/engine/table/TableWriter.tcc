@@ -28,10 +28,10 @@ void TableWriter::PutSyncCommon<std::string>(Variable<std::string> &variable,
     auto var = m_SubIO.InquireVariable<std::string>(variable.m_Name);
     if (not var)
     {
-        var = m_SubIO.DefineVariable<std::string>(variable.m_Name,
-                                                  {LocalValueDim});
+        var = &m_SubIO.DefineVariable<std::string>(variable.m_Name,
+                                                   {LocalValueDim});
     }
-    m_SubEngine->Put(var, data, Mode::Sync);
+    m_SubEngine->Put(*var, data, Mode::Sync);
 }
 
 template <>
@@ -41,10 +41,10 @@ void TableWriter::PutDeferredCommon<std::string>(
     auto var = m_SubIO.InquireVariable<std::string>(variable.m_Name);
     if (not var)
     {
-        var = m_SubIO.DefineVariable<std::string>(variable.m_Name,
-                                                  {LocalValueDim});
+        var = &m_SubIO.DefineVariable<std::string>(variable.m_Name,
+                                                   {LocalValueDim});
     }
-    m_SubEngine->Put(var, data, Mode::Deferred);
+    m_SubEngine->Put(*var, data, Mode::Deferred);
 }
 
 template <class T>
