@@ -63,6 +63,7 @@ size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
 
     zfp_field_free(field);
     zfp_stream_close(stream);
+    free(bitstream);
     return sizeOut;
 }
 
