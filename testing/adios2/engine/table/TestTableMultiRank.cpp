@@ -242,7 +242,7 @@ TEST_F(TableEngineTest, TestTableMultiRank)
     adios2::Params engineParams = {{"Verbose", "0"},
                                    {"RowsPerAggregatorBuffer", "400"}};
 
-    size_t rows = 10000;
+    size_t rows = 1000;
     Dims shape = {rows, 1, 128};
     Dims start = {0, 0, 0};
     Dims count = {1, 1, 128};
