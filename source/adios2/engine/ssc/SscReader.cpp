@@ -58,6 +58,30 @@ void SscReader::GetOneSidedFencePush()
     MPI_Win_fence(0, m_MpiWin);
 }
 
+void SscReader::GetOneSidedPostPull()
+{
+    TAU_SCOPED_TIMER_FUNC();
+    MPI_Win_start(m_MpiAllWritersGroup, 0, m_MpiWin);
+    for (const auto &i : m_AllReceivingWriterRanks)
+    {
+        MPI_Get(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
+                i.first, 0, i.second.second, MPI_CHAR, m_MpiWin);
+    }
+    MPI_Win_complete(m_MpiWin);
+}
+
+void SscReader::GetOneSidedFencePull()
+{
+    TAU_SCOPED_TIMER_FUNC();
+    MPI_Win_fence(0, m_MpiWin);
+    for (const auto &i : m_AllReceivingWriterRanks)
+    {
+        MPI_Get(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
+                i.first, 0, i.second.second, MPI_CHAR, m_MpiWin);
+    }
+    MPI_Win_fence(0, m_MpiWin);
+}
+
 void SscReader::GetTwoSided()
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -98,7 +122,11 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
         ++m_CurrentStep;
     }
 
-    if (m_MpiMode == "OneSidedFencePush")
+    if (m_MpiMode == "TwoSided")
+    {
+        GetTwoSided();
+    }
+    else if (m_MpiMode == "OneSidedFencePush")
     {
         GetOneSidedFencePush();
     }
@@ -106,9 +134,13 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     {
         GetOneSidedPostPush();
     }
-    else if (m_MpiMode == "TwoSided")
+    else if (m_MpiMode == "OneSidedFencePull")
     {
-        GetTwoSided();
+        GetOneSidedFencePull();
+    }
+    else if (m_MpiMode == "OneSidedPostPull")
+    {
+        GetOneSidedPostPull();
     }
 
     if (m_Buffer[0] == 1)

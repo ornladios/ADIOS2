@@ -349,10 +349,10 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     print_lines = 0;
 }
 
-TEST_F(SscEngineTest, TestSscBaseOneSidedPostPush)
+TEST_F(SscEngineTest, TestSscOneSidedFencePush)
 {
-    std::string filename = "TestSscBase";
-    adios2::Params engineParams = {{"MpiMode", "OneSidedPostPush"}};
+    std::string filename = "TestSscOneSidedFencePush";
+    adios2::Params engineParams = {{"MpiMode", "OneSidedFencePush"}};
 
     int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
