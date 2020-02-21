@@ -1,20 +1,18 @@
 # Client maintainer: chuck.atkins@kitware.com
 
-set(ENV{CC}  gcc)
-set(ENV{CXX} g++)
-set(ENV{FC}  gfortran)
-set(ASAN_FLAGS "-fsanitize=address -pthread")
+set(ENV{CC}  clang)
+set(ENV{CXX} clang++)
+set(ASAN_FLAGS "-fsanitize=address -fno-omit-frame-pointer -pthread")
 set(ENV{CFLAGS}   "${ASAN_FLAGS}")
 set(ENV{CXXFLAGS} "${ASAN_FLAGS}")
 set(ENV{FFLAGS}   "${ASAN_FLAGS}")
 
 set(dashboard_cache "
+ADIOS2_USE_Fortran:STRING=OFF
 ADIOS2_USE_HDF5:STRING=ON
 ADIOS2_USE_MPI:STRING=OFF
 ADIOS2_USE_Python:STRING=OFF
-
-HDF5_C_COMPILER_EXECUTABLE:FILEPATH=/usr/bin/h5cc
-HDF5_DIFF_EXECUTABLE:FILEPATH=/usr/bin/h5diff
+ADIOS2_USE_ZFP:STRING=ON
 ")
 
 set(dashboard_track "Analysis")
