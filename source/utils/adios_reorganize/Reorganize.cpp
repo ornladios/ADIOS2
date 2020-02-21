@@ -154,11 +154,29 @@ void Reorganize::Run()
             rStream.BeginStep(adios2::StepMode::Read, 10.0);
         if (status == adios2::StepStatus::NotReady)
         {
-            if (!m_Rank)
+            if (handleAsStream)
             {
-                std::cout << " No new steps arrived in a while " << std::endl;
+                if (!m_Rank)
+                {
+                    std::cout << " No new steps arrived in a while "
+                              << std::endl;
+                }
+                continue;
             }
-            continue;
+            else
+            {
+                if (!m_Rank)
+                {
+                    std::cout
+                        << " Timeout waiting for next step. If this is "
+                           "a live stream through file, use a different "
+                           "reading engine, like FileStream or BP4. "
+                           "If it is an unclosed BP file, you may manually "
+                           "close it with using adios_deactive_bp.sh."
+                        << std::endl;
+                }
+                break;
+            }
         }
         else if (status != adios2::StepStatus::OK)
         {
@@ -245,7 +263,24 @@ void Reorganize::ParseArguments()
     wmethodparams = parseParams(wmethodparam_str);
 }
 
-void Reorganize::ProcessParameters() const {}
+void Reorganize::ProcessParameters()
+{
+    if (rmethodname.empty())
+    {
+        handleAsStream = false;
+        return;
+    }
+    std::string s(rmethodname);
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    if (s == "file" || s == "bpfile" || s == "bp3" || s == "hdf5")
+    {
+        handleAsStream = false;
+    }
+    else
+    {
+        handleAsStream = true;
+    }
+}
 
 void Reorganize::PrintUsage() const noexcept
 {
