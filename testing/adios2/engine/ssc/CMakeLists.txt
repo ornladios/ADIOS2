@@ -9,11 +9,17 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(Base TRUE Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBase "" TRUE)
 
-  gtest_add_tests_helper(BaseOneSidedFencePush TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBaseOneSidedFencePush "" TRUE)
+  gtest_add_tests_helper(OneSidedFencePush TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedFencePush "" TRUE)
 
-  gtest_add_tests_helper(BaseOneSidedPostPush TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBaseOneSidedPostPush "" TRUE)
+  gtest_add_tests_helper(OneSidedPostPush TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedPostPush "" TRUE)
+
+  gtest_add_tests_helper(OneSidedFencePull TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedFencePull "" TRUE)
+
+  gtest_add_tests_helper(OneSidedPostPull TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedPostPull "" TRUE)
 
   gtest_add_tests_helper(Unbalanced TRUE Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscUnbalanced "" TRUE)

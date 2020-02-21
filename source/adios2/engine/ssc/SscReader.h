@@ -66,6 +66,8 @@ private:
     void SyncReadPattern();
     void GetOneSidedFencePush();
     void GetOneSidedPostPush();
+    void GetOneSidedFencePull();
+    void GetOneSidedPostPull();
     void GetTwoSided();
 
 #define declare_type(T)                                                        \
