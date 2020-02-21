@@ -153,6 +153,7 @@ extern char *FFS_ZFPCompress(SstStream Stream, const size_t DimCount,
     size_t sizeOut = zfp_compress(stream, field);
     zfp_field_free(field);
     zfp_stream_close(stream);
+    stream_close(bitstream);
     *ByteCountP = sizeOut;
     return bufferOut;
 }
