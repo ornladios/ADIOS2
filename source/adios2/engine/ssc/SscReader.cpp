@@ -442,18 +442,17 @@ void SscReader::SyncWritePattern()
                   maxLocalSize, MPI_CHAR, MPI_COMM_WORLD);
 
     // deserialize global metadata Json
-    nlohmann::json globalJson;
     try
     {
         for (size_t i = 0; i < m_WorldSize; ++i)
         {
             if (globalVec[i * maxLocalSize] == '\0')
             {
-                globalJson[i] = nullptr;
+                m_GlobalWritePatternJson[i] = nullptr;
             }
             else
             {
-                globalJson[i] = nlohmann::json::parse(
+                m_GlobalWritePatternJson[i] = nlohmann::json::parse(
                     globalVec.begin() + i * maxLocalSize,
                     globalVec.begin() + (i + 1) * maxLocalSize);
             }
@@ -467,7 +466,7 @@ void SscReader::SyncWritePattern()
     }
 
     // deserialize variables metadata
-    ssc::JsonToBlockVecVec(globalJson, m_GlobalWritePattern);
+    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
 
     for (const auto &blockVec : m_GlobalWritePattern)
     {
@@ -494,11 +493,11 @@ void SscReader::SyncWritePattern()
 
     for (int i = 0; i < m_WorldSize; ++i)
     {
-        if (globalJson[i] == nullptr)
+        if (m_GlobalWritePatternJson[i] == nullptr)
         {
             continue;
         }
-        auto &attributesJson = globalJson[i]["Attributes"];
+        auto &attributesJson = m_GlobalWritePatternJson[i]["Attributes"];
         if (attributesJson == nullptr)
         {
             continue;

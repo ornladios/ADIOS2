@@ -56,7 +56,7 @@ size_t GetTypeSize(const std::string &type);
 size_t TotalDataSize(const Dims &dims, const std::string &type);
 size_t TotalDataSize(const BlockVec &bv);
 
-void CalculateOverlap(BlockVecVec &globalPattern, BlockVec &localPattern);
+void CalculateOverlap(BlockVecVec &globalPattern, const BlockVec &localPattern);
 
 RankPosMap AllOverlapRanks(const BlockVecVec &mapVec);
 
