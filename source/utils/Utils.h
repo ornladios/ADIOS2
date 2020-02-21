@@ -35,7 +35,7 @@ protected:
     Params m_Parameters;
 
     virtual void ParseArguments() = 0;
-    virtual void ProcessParameters() const = 0;
+    virtual void ProcessParameters() = 0;
     virtual void PrintUsage() const noexcept = 0;
     virtual void PrintExamples() const noexcept = 0;
     virtual void SetParameters(const std::string argument,

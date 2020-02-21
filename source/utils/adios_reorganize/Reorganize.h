@@ -48,7 +48,7 @@ private:
     std::string m_FileName;
 
     void ParseArguments() final;
-    void ProcessParameters() const final;
+    void ProcessParameters() final;
     void PrintUsage() const noexcept final;
     void PrintExamples() const noexcept final;
     void SetParameters(const std::string argument, const bool isLong) final;
@@ -93,6 +93,12 @@ private:
 
     uint64_t write_total = 0;   // data size read/written by one processor
     uint64_t largest_block = 0; // the largest variable block one process reads
+
+    // Timeout handling:
+    // BPFile, BP3, File, "" (default), HDF5 is handled as file, stop at timeout
+    // BP4, FileStream and everything else is handled as stream, wait forever
+    // for stream termination
+    bool handleAsStream = true;
 
     int decomp_values[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
