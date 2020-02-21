@@ -19,6 +19,10 @@ module adios2_variable_max_mod
         module procedure adios2_variable_max_dp
         module procedure adios2_variable_max_complex
         module procedure adios2_variable_max_complex_dp
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_variable_max_ldp
+        module procedure adios2_variable_max_complex_ldp
+#endif
         module procedure adios2_variable_max_integer1
         module procedure adios2_variable_max_integer2
         module procedure adios2_variable_max_integer4
@@ -54,6 +58,21 @@ contains
 
     end subroutine
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_variable_max_ldp(maximum, variable, ierr)
+        real(kind=16), intent(out) :: maximum
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(out) :: ierr
+
+        call adios2_variable_check_type(variable, adios2_type_ldp, &
+                                        'variable_max', ierr)
+        if (ierr == 0) then
+            call adios2_variable_max_f2c(maximum, variable%f2c, ierr)
+        end if
+
+    end subroutine
+#endif
+
     subroutine adios2_variable_max_complex(maximum, variable, ierr)
         complex, intent(out) :: maximum
         type(adios2_variable), intent(in) :: variable
@@ -79,6 +98,21 @@ contains
         end if
 
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_variable_max_complex_ldp(maximum, variable, ierr)
+        complex(kind=16), intent(out) :: maximum
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(out) :: ierr
+
+        call adios2_variable_check_type(variable, adios2_type_complex_ldp, &
+                                        'variable_max', ierr)
+        if (ierr == 0) then
+            call adios2_variable_max_f2c(maximum, variable%f2c, ierr)
+        end if
+
+    end subroutine
+#endif
 
     subroutine adios2_variable_max_integer1(maximum, variable, ierr)
         integer(kind=1), intent(out) :: maximum

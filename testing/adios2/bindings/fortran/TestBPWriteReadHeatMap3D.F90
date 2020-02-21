@@ -8,7 +8,7 @@ program TestBPWriteReadHeatMap3D
   type(adios2_adios) :: adios
   type(adios2_io) :: ioPut, ioGet
   type(adios2_engine) :: bpWriter, bpReader
-  type(adios2_variable), dimension(6) :: var_temperatures, var_temperaturesIn
+  type(adios2_variable), dimension(7) :: var_temperatures, var_temperaturesIn
 
   integer(kind=1), dimension(:, :, :), allocatable :: temperatures_i1, &
                                                       sel_temperatures_i1
@@ -27,6 +27,11 @@ program TestBPWriteReadHeatMap3D
 
   real(kind=8), dimension(:, :, :), allocatable :: temperatures_r8, &
                                                    sel_temperatures_r8
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  real(kind=16), dimension(:, :, :), allocatable :: temperatures_r16, &
+                                                    sel_temperatures_r16
+#endif
 
   integer(kind=8), dimension(3) :: ishape, istart, icount
   integer(kind=8), dimension(3) :: sel_start, sel_count
@@ -52,6 +57,9 @@ program TestBPWriteReadHeatMap3D
   allocate (temperatures_i8(in1, in2, in3))
   allocate (temperatures_r4(in1, in2, in3))
   allocate (temperatures_r8(in1, in2, in3))
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  allocate (temperatures_r16(in1, in2, in3))
+#endif
 
   temperatures_i1 = 1
   temperatures_i2 = 1
@@ -59,6 +67,9 @@ program TestBPWriteReadHeatMap3D
   temperatures_i8 = 1_8
   temperatures_r4 = 1.0
   temperatures_r8 = 1.0_8
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  temperatures_r16 = 1.0_16
+#endif
 
   ! Start adios2 Writer
   call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
@@ -94,6 +105,13 @@ program TestBPWriteReadHeatMap3D
                               3, ishape, istart, icount, &
                               adios2_constant_dims, ierr)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  call adios2_define_variable(var_temperatures(7), ioPut, &
+                              'temperatures_r16', adios2_type_ldp, &
+                              3, ishape, istart, icount, &
+                              adios2_constant_dims, ierr)
+#endif
+
   call adios2_open(bpWriter, ioPut, 'HeatMap3D_f.bp', adios2_mode_write, &
                    ierr)
 
@@ -103,6 +121,9 @@ program TestBPWriteReadHeatMap3D
   call adios2_put(bpWriter, var_temperatures(4), temperatures_i8, ierr)
   call adios2_put(bpWriter, var_temperatures(5), temperatures_r4, ierr)
   call adios2_put(bpWriter, var_temperatures(6), temperatures_r8, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  call adios2_put(bpWriter, var_temperatures(7), temperatures_r16, ierr)
+#endif
 
   call adios2_close(bpWriter, ierr)
 
@@ -112,6 +133,9 @@ program TestBPWriteReadHeatMap3D
   if (allocated(temperatures_i8)) deallocate (temperatures_i8)
   if (allocated(temperatures_r4)) deallocate (temperatures_r4)
   if (allocated(temperatures_r8)) deallocate (temperatures_r8)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  if (allocated(temperatures_r16)) deallocate (temperatures_r16)
+#endif
 
   ! Start adios2 Reader in rank 0
   if (irank == 0) then
@@ -133,6 +157,10 @@ program TestBPWriteReadHeatMap3D
                                  'temperatures_r4', ierr)
     call adios2_inquire_variable(var_temperaturesIn(6), ioGet, &
                                  'temperatures_r8', ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_inquire_variable(var_temperaturesIn(7), ioGet, &
+                                 'temperatures_r16', ierr)
+#endif
 
     sel_start = (/0, 0, 0/)
     sel_count = (/ishape(1), ishape(2), ishape(3)/)
@@ -143,6 +171,9 @@ program TestBPWriteReadHeatMap3D
     allocate (sel_temperatures_i8(ishape(1), ishape(2), ishape(3)))
     allocate (sel_temperatures_r4(ishape(1), ishape(2), ishape(3)))
     allocate (sel_temperatures_r8(ishape(1), ishape(2), ishape(3)))
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    allocate (sel_temperatures_r16(ishape(1), ishape(2), ishape(3)))
+#endif
 
     sel_temperatures_i1 = 0
     sel_temperatures_i2 = 0
@@ -150,6 +181,9 @@ program TestBPWriteReadHeatMap3D
     sel_temperatures_i8 = 0_8
     sel_temperatures_r4 = 0.0_4
     sel_temperatures_r8 = 0.0_8
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    sel_temperatures_r16 = 0.0_16
+#endif
 
     call adios2_set_selection(var_temperaturesIn(1), 3, sel_start, sel_count, &
                               ierr)
@@ -163,6 +197,10 @@ program TestBPWriteReadHeatMap3D
                               ierr)
     call adios2_set_selection(var_temperaturesIn(6), 3, sel_start, sel_count, &
                               ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_set_selection(var_temperaturesIn(7), 3, sel_start, sel_count, &
+                              ierr)
+#endif
 
     call adios2_get(bpReader, var_temperaturesIn(1), sel_temperatures_i1, ierr)
     call adios2_get(bpReader, var_temperaturesIn(2), sel_temperatures_i2, ierr)
@@ -170,6 +208,9 @@ program TestBPWriteReadHeatMap3D
     call adios2_get(bpReader, var_temperaturesIn(4), sel_temperatures_i8, ierr)
     call adios2_get(bpReader, var_temperaturesIn(5), sel_temperatures_r4, ierr)
     call adios2_get(bpReader, var_temperaturesIn(6), sel_temperatures_r8, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_get(bpReader, var_temperaturesIn(7), sel_temperatures_r16, ierr)
+#endif
 
     call adios2_close(bpReader, ierr)
 
@@ -191,6 +232,9 @@ program TestBPWriteReadHeatMap3D
     if (sum(sel_temperatures_i8) /= 500*isize) stop 'Test failed integer*8'
     if (sum(sel_temperatures_r4) /= 500*isize) stop 'Test failed real*4'
     if (sum(sel_temperatures_r8) /= 500*isize) stop 'Test failed real*8'
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    if (sum(sel_temperatures_r16) /= 500*isize) stop 'Test failed real*16'
+#endif
 
     if (allocated(sel_temperatures_i1)) deallocate (sel_temperatures_i1)
     if (allocated(sel_temperatures_i2)) deallocate (sel_temperatures_i2)
@@ -198,6 +242,9 @@ program TestBPWriteReadHeatMap3D
     if (allocated(sel_temperatures_i8)) deallocate (sel_temperatures_i8)
     if (allocated(sel_temperatures_r4)) deallocate (sel_temperatures_r4)
     if (allocated(sel_temperatures_r8)) deallocate (sel_temperatures_r8)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    if (allocated(sel_temperatures_r16)) deallocate (sel_temperatures_r16)
+#endif
 
   end if
 

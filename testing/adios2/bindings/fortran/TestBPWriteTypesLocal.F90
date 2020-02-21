@@ -9,7 +9,7 @@
 
      type(adios2_adios) :: adios
      type(adios2_io) :: ioWrite, ioRead, ioDummy
-     type(adios2_variable), dimension(13) :: variables
+     type(adios2_variable), dimension(15) :: variables
      type(adios2_engine) :: bpWriter, bpReader
 
      ! read handlers
@@ -26,6 +26,9 @@
      real(kind=4), dimension(10) :: R32, inR32
      real(kind=8), dimension(10) :: R64, inR64
      real(kind=8), dimension(10) :: changingR64, inchangingR64
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     real(kind=16), dimension(10) :: R128, inR128
+#endif
 
      ! Program starts
 
@@ -79,6 +82,13 @@
                                  adios2_null_dims, adios2_null_dims, count_dims, &
                                  .false., ierr)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     call adios2_define_variable(variables(14), ioWrite, "var_R128", &
+                                 adios2_type_ldp, 1, &
+                                 adios2_null_dims, adios2_null_dims, count_dims, &
+                                 .false., ierr)
+#endif
+
      ! Global variables
      call adios2_define_variable(variables(7), ioWrite, "gvar_I8", &
                                  adios2_type_integer1, ierr)
@@ -97,6 +107,11 @@
 
      call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
                                  adios2_type_dp, ierr)
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     call adios2_define_variable(variables(15), ioWrite, "gvar_R128", &
+                                 adios2_type_ldp, ierr)
+#endif
 
      call adios2_define_variable(variables(13), ioWrite, "var_changingR64", &
                                  adios2_type_dp, 1, &
@@ -133,6 +148,9 @@
              call adios2_put(bpWriter, variables(10), data_I64(1), ierr)
              call adios2_put(bpWriter, variables(11), data_R32(1), ierr)
              call adios2_put(bpWriter, variables(12), data_R64(1), ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+             call adios2_put(bpWriter, variables(14), data_R128(1), ierr)
+#endif
          end if
 
          do i = 1, inx
@@ -142,6 +160,9 @@
              I64(i) = data_I64(i) + irank + current_step
              R32(i) = data_R32(i) + irank + current_step
              R64(i) = data_R64(i) + irank + current_step
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+             R128(i) = data_R128(i) + irank + current_step
+#endif
          end do
 
          ! changing count
@@ -159,6 +180,9 @@
          call adios2_put(bpWriter, variables(5), R32, ierr)
          call adios2_put(bpWriter, variables(6), R64, ierr)
          call adios2_put(bpWriter, variables(13), changingR64, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+         call adios2_put(bpWriter, variables(14), R128, ierr)
+#endif
 
          call adios2_end_step(bpWriter, ierr)
      end do
@@ -206,15 +230,23 @@
 
              call adios2_inquire_variable(variables(11), ioRead, "gvar_R32", ierr)
              if (variables(11)%name /= 'gvar_R32') stop 'gvar_R32 name not recognized'
-             if (variables(11)%type /= adios2_type_real) stop 'gvar_I64 type not recognized'
+             if (variables(11)%type /= adios2_type_real) stop 'gvar_R64 type not recognized'
              call adios2_variable_steps(steps_count, variables(11), ierr)
              if (steps_count /= 1) stop 'gvar_R32 steps_count is not 1'
 
              call adios2_inquire_variable(variables(12), ioRead, "gvar_R64", ierr)
              if (variables(12)%name /= 'gvar_R64') stop 'gvar_R64 name not recognized'
-             if (variables(12)%type /= adios2_type_dp) stop 'gvar_I64 type not recognized'
+             if (variables(12)%type /= adios2_type_dp) stop 'gvar_R64 type not recognized'
              call adios2_variable_steps(steps_count, variables(12), ierr)
              if (steps_count /= 1) stop 'gvar_R64 steps_count is not 1'
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+             call adios2_inquire_variable(variables(15), ioRead, "gvar_R128", ierr)
+             if (variables(15)%name /= 'gvar_R128') stop 'gvar_R128 name not recognized'
+             if (variables(15)%type /= adios2_type_ldp) stop 'gvar_R128 type not recognized'
+             call adios2_variable_steps(steps_count, variables(15), ierr)
+             if (steps_count /= 1) stop 'gvar_R128 steps_count is not 1'
+#endif
          end if
 
          call adios2_inquire_variable(variables(1), ioRead, "var_I8", ierr)
@@ -259,6 +291,14 @@
          call adios2_variable_steps(steps_count, variables(13), ierr)
          if (steps_count /= 3) stop 'var_changingR64 steps_count is not 3'
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+         call adios2_inquire_variable(variables(14), ioRead, "var_R128", ierr)
+         if (variables(14)%name /= 'var_R64') stop 'var_R128 not recognized'
+         if (variables(14)%type /= adios2_type_ldp) stop 'var_R128 type not recognized'
+         call adios2_variable_steps(steps_count, variables(14), ierr)
+         if (steps_count /= 3) stop 'var_R128 steps_count is not 3'
+#endif
+
          do block_id = 0, isize - 1
 
              call adios2_set_block_selection(variables(1), block_id, ierr)
@@ -268,6 +308,9 @@
              call adios2_set_block_selection(variables(5), block_id, ierr)
              call adios2_set_block_selection(variables(6), block_id, ierr)
              call adios2_set_block_selection(variables(13), block_id, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+             call adios2_set_block_selection(variables(14), block_id, ierr)
+#endif
 
              call adios2_get(bpReader, variables(1), inI8, ierr)
              call adios2_get(bpReader, variables(2), inI16, ierr)
@@ -276,6 +319,9 @@
              call adios2_get(bpReader, variables(5), inR32, ierr)
              call adios2_get(bpReader, variables(6), inR64, ierr)
              call adios2_get(bpReader, variables(13), inchangingR64, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+             call adios2_get(bpReader, variables(14), inR128, ierr)
+#endif
              call adios2_perform_gets(bpReader, ierr)
 
              do i = 1, inx
@@ -285,6 +331,9 @@
                  I64(i) = data_I64(i) + block_id + current_step
                  R32(i) = data_R32(i) + block_id + current_step
                  R64(i) = data_R64(i) + block_id + current_step
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+                 R128(i) = data_R128(i) + block_id + current_step
+#endif
              end do
 
              do i = 1, inx
@@ -294,6 +343,9 @@
                  if (I64(i) /= inI64(i)) stop 'Error reading var_I64'
                  if (R32(i) /= inR32(i)) stop 'Error reading var_R32'
                  if (R64(i) /= inR64(i)) stop 'Error reading var_R64'
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+                 if (R128(i) /= inR128(i)) stop 'Error reading var_R128'
+#endif
 
                  if( i < current_step) then
                      if (R64(i) /= inchangingR64(i)) stop 'Error reading var_changingR64'

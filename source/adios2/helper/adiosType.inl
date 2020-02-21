@@ -95,6 +95,11 @@ inline std::string GetType<std::complex<double>>() noexcept
 {
     return "double complex";
 }
+template <>
+inline std::string GetType<std::complex<long double>>() noexcept
+{
+    return "long double complex";
+}
 
 template <class T>
 bool IsTypeAlias(

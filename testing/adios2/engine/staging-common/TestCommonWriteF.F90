@@ -143,6 +143,13 @@ program TestSstWrite
        shape_dims, start_dims, count_dims, &
        adios2_constant_dims, ierr)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  call adios2_define_variable(variables(13), ioWrite, "r128", &
+       adios2_type_ldp, 1, &
+       shape_dims, start_dims, count_dims, &
+       adios2_constant_dims, ierr)
+#endif
+
   call adios2_define_variable(variables(7), ioWrite, "r64_2d", &
        adios2_type_dp, 2, &
        shape_dims2, start_dims2, count_dims2, &
@@ -168,6 +175,13 @@ program TestSstWrite
        shape_dims, start_dims, count_dims, &
        adios2_constant_dims, ierr)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+  call adios2_define_variable(variables(14), ioWrite, "c128", &
+       adios2_type_complex_ldp, 1, &
+       shape_dims, start_dims, count_dims, &
+       adios2_constant_dims, ierr)
+#endif
+
   call adios2_open(sstWriter, ioWrite, filename, adios2_mode_write, ierr)
 
   !Put array contents to bp buffer, based on var1 metadata
@@ -182,12 +196,18 @@ program TestSstWrite
      call adios2_put(sstWriter, variables(4), data_I64, ierr)
      call adios2_put(sstWriter, variables(5), data_R32, ierr)
      call adios2_put(sstWriter, variables(6), data_R64, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     call adios2_put(sstWriter, variables(13), data_R128, ierr)
+#endif
      call adios2_put(sstWriter, variables(7), data_R64_2d, ierr)
      call adios2_put(sstWriter, variables(8), data_R64_2d_rev, ierr)
      localtime = 0    ! should be time(), but non-portable and value is unused
      call adios2_put(sstWriter, variables(9), loc(localtime), ierr)
      call adios2_put(sstWriter, variables(10), data_C32, ierr)
      call adios2_put(sstWriter, variables(11), data_C64, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     call adios2_put(sstWriter, variables(14), data_C128, ierr)
+#endif
      call adios2_end_step(sstWriter, ierr)
   end do
 

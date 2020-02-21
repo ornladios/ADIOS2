@@ -8,6 +8,10 @@ module adios2_functions_allocate_mod
         module procedure adios2_allocate_dp_1d
         module procedure adios2_allocate_complex_1d
         module procedure adios2_allocate_complex_dp_1d
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_allocate_ldp_1d
+        module procedure adios2_allocate_complex_ldp_1d
+#endif
         module procedure adios2_allocate_integer1_1d
         module procedure adios2_allocate_integer2_1d
         module procedure adios2_allocate_integer4_1d
@@ -18,6 +22,10 @@ module adios2_functions_allocate_mod
         module procedure adios2_allocate_dp_2d
         module procedure adios2_allocate_complex_2d
         module procedure adios2_allocate_complex_dp_2d
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_allocate_ldp_2d
+        module procedure adios2_allocate_complex_ldp_2d
+#endif
         module procedure adios2_allocate_integer1_2d
         module procedure adios2_allocate_integer2_2d
         module procedure adios2_allocate_integer4_2d
@@ -28,6 +36,10 @@ module adios2_functions_allocate_mod
         module procedure adios2_allocate_dp_3d
         module procedure adios2_allocate_complex_3d
         module procedure adios2_allocate_complex_dp_3d
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_allocate_ldp_3d
+        module procedure adios2_allocate_complex_ldp_3d
+#endif
         module procedure adios2_allocate_integer1_3d
         module procedure adios2_allocate_integer2_3d
         module procedure adios2_allocate_integer4_3d
@@ -38,6 +50,10 @@ module adios2_functions_allocate_mod
         module procedure adios2_allocate_dp_4d
         module procedure adios2_allocate_complex_4d
         module procedure adios2_allocate_complex_dp_4d
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_allocate_ldp_4d
+        module procedure adios2_allocate_complex_ldp_4d
+#endif
         module procedure adios2_allocate_integer1_4d
         module procedure adios2_allocate_integer2_4d
         module procedure adios2_allocate_integer4_4d
@@ -48,6 +64,10 @@ module adios2_functions_allocate_mod
         module procedure adios2_allocate_dp_5d
         module procedure adios2_allocate_complex_5d
         module procedure adios2_allocate_complex_dp_5d
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_allocate_ldp_5d
+        module procedure adios2_allocate_complex_ldp_5d
+#endif
         module procedure adios2_allocate_integer1_5d
         module procedure adios2_allocate_integer2_5d
         module procedure adios2_allocate_integer4_5d
@@ -58,6 +78,10 @@ module adios2_functions_allocate_mod
         module procedure adios2_allocate_dp_6d
         module procedure adios2_allocate_complex_6d
         module procedure adios2_allocate_complex_dp_6d
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_allocate_ldp_6d
+        module procedure adios2_allocate_complex_ldp_6d
+#endif
         module procedure adios2_allocate_integer1_6d
         module procedure adios2_allocate_integer2_6d
         module procedure adios2_allocate_integer4_6d
@@ -88,6 +112,18 @@ contains
 
     end subroutine
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_ldp_1d(array, shp, ierr)
+        real(kind=16), dimension(:), allocatable, intent(out):: array
+        integer(kind=8), dimension(1), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1)), stat=ierr)
+
+    end subroutine
+#endif
+
     subroutine adios2_allocate_complex_1d(array, shp, ierr)
         complex, dimension(:), allocatable, intent(out):: array
         integer(kind=8), dimension(1), intent(in):: shp
@@ -107,6 +143,18 @@ contains
         allocate (array(shp(1)), stat=ierr)
 
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_complex_ldp_1d(array, shp, ierr)
+        complex(kind=16), dimension(:), allocatable, intent(out):: array
+        integer(kind=8), dimension(1), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1)), stat=ierr)
+
+    end subroutine
+#endif
 
     subroutine adios2_allocate_integer1_1d(array, shp, ierr)
         integer(kind=1), dimension(:), allocatable, intent(out):: array
@@ -169,6 +217,18 @@ contains
 
     end subroutine
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_ldp_2d(array, shp, ierr)
+        real(kind=16), dimension(:, :), allocatable, intent(out):: array
+        integer(kind=8), dimension(2), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1), shp(2)), stat=ierr)
+
+    end subroutine
+#endif
+
     subroutine adios2_allocate_complex_2d(array, shp, ierr)
         complex, dimension(:, :), allocatable, intent(out):: array
         integer(kind=8), dimension(2), intent(in):: shp
@@ -188,6 +248,18 @@ contains
         allocate (array(shp(1), shp(2)), stat=ierr)
 
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_complex_ldp_2d(array, shp, ierr)
+        complex(kind=16), dimension(:, :), allocatable, intent(out):: array
+        integer(kind=8), dimension(2), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1), shp(2)), stat=ierr)
+
+    end subroutine
+#endif
 
     subroutine adios2_allocate_integer1_2d(array, shp, ierr)
         integer(kind=1), dimension(:, :), allocatable, intent(out):: array
@@ -250,6 +322,18 @@ contains
 
     end subroutine
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_ldp_3d(array, shp, ierr)
+        real(kind=16), dimension(:, :, :), allocatable, intent(out):: array
+        integer(kind=8), dimension(3), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1), shp(2), shp(3)), stat=ierr)
+
+    end subroutine
+#endif
+
     subroutine adios2_allocate_complex_3d(array, shp, ierr)
         complex, dimension(:, :, :), allocatable, intent(out):: array
         integer(kind=8), dimension(3), intent(in):: shp
@@ -269,6 +353,18 @@ contains
         allocate (array(shp(1), shp(2), shp(3)), stat=ierr)
 
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_complex_ldp_3d(array, shp, ierr)
+        complex(kind=16), dimension(:, :, :), allocatable, intent(out):: array
+        integer(kind=8), dimension(3), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1), shp(2), shp(3)), stat=ierr)
+
+    end subroutine
+#endif
 
     subroutine adios2_allocate_integer1_3d(array, shp, ierr)
         integer(kind=1), dimension(:, :, :), allocatable, intent(out):: array
@@ -331,6 +427,18 @@ contains
 
     end subroutine
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_ldp_4d(array, shp, ierr)
+        real(kind=16), dimension(:, :, :, :), allocatable, intent(out):: array
+        integer(kind=8), dimension(4), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1), shp(2), shp(3), shp(4)), stat=ierr)
+
+    end subroutine
+#endif
+
     subroutine adios2_allocate_complex_4d(array, shp, ierr)
         complex, dimension(:, :, :, :), allocatable, intent(out):: array
         integer(kind=8), dimension(4), intent(in):: shp
@@ -350,6 +458,18 @@ contains
         allocate (array(shp(1), shp(2), shp(3), shp(4)), stat=ierr)
 
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_complex_ldp_4d(array, shp, ierr)
+        complex(kind=16), dimension(:, :, :, :), allocatable, intent(out):: array
+        integer(kind=8), dimension(4), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1), shp(2), shp(3), shp(4)), stat=ierr)
+
+    end subroutine
+#endif
 
     subroutine adios2_allocate_integer1_4d(array, shp, ierr)
         integer(kind=1), dimension(:, :, :, :), allocatable, intent(out):: array
@@ -412,6 +532,18 @@ contains
 
     end subroutine
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_ldp_5d(array, shp, ierr)
+        real(kind=16), dimension(:, :, :, :, :), allocatable, intent(out):: array
+        integer(kind=8), dimension(5), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1), shp(2), shp(3), shp(4), shp(5)), stat=ierr)
+
+    end subroutine
+#endif
+
     subroutine adios2_allocate_complex_5d(array, shp, ierr)
         complex, dimension(:, :, :, :, :), allocatable, intent(out):: array
         integer(kind=8), dimension(5), intent(in):: shp
@@ -431,6 +563,18 @@ contains
         allocate (array(shp(1), shp(2), shp(3), shp(4), shp(5)), stat=ierr)
 
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_complex_ldp_5d(array, shp, ierr)
+        complex(kind=16), dimension(:, :, :, :, :), allocatable, intent(out):: array
+        integer(kind=8), dimension(5), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1), shp(2), shp(3), shp(4), shp(5)), stat=ierr)
+
+    end subroutine
+#endif
 
     subroutine adios2_allocate_integer1_5d(array, shp, ierr)
         integer(kind=1), dimension(:, :, :, :, :), allocatable, intent(out):: array
@@ -493,6 +637,18 @@ contains
 
     end subroutine
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_ldp_6d(array, shp, ierr)
+        real(kind=16), dimension(:, :, :, :, :, :), allocatable, intent(out):: array
+        integer(kind=8), dimension(6), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1), shp(2), shp(3), shp(4), shp(5), shp(6)), stat=ierr)
+
+    end subroutine
+#endif
+
     subroutine adios2_allocate_complex_6d(array, shp, ierr)
         complex, dimension(:, :, :, :, :, :), allocatable, intent(out):: array
         integer(kind=8), dimension(6), intent(in):: shp
@@ -512,6 +668,18 @@ contains
         allocate (array(shp(1), shp(2), shp(3), shp(4), shp(5), shp(6)), stat=ierr)
 
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_allocate_complex_ldp_6d(array, shp, ierr)
+        complex(kind=16), dimension(:, :, :, :, :, :), allocatable, intent(out):: array
+        integer(kind=8), dimension(6), intent(in):: shp
+        integer, intent(out):: ierr
+
+        if (allocated(array)) deallocate (array)
+        allocate (array(shp(1), shp(2), shp(3), shp(4), shp(5), shp(6)), stat=ierr)
+
+    end subroutine
+#endif
 
     subroutine adios2_allocate_integer1_6d(array, shp, ierr)
         integer(kind=1), dimension(:, :, :, :, :, :), allocatable, intent(out):: array

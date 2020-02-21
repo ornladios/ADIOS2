@@ -133,6 +133,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<double> myDoubles(datasize);
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
+    std::vector<std::complex<long double>> myLDComplexes(datasize);
     auto bpChars =
         dataManIO.DefineVariable<char>("bpChars", shape, start, count);
     auto bpUChars = dataManIO.DefineVariable<unsigned char>("bpUChars", shape,
@@ -152,6 +153,8 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         "bpComplexes", shape, start, count);
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
+    auto bpLDComplexes = dataManIO.DefineVariable<std::complex<long double>>(
+        "bpLDComplexes", shape, start, count);
     adios2::Engine dataManWriter = dataManIO.Open(name, adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
     {
@@ -166,6 +169,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         GenData(myDoubles, i, start, count, shape);
         GenData(myComplexes, i, start, count, shape);
         GenData(myDComplexes, i, start, count, shape);
+        GenData(myLDComplexes, i, start, count, shape);
         dataManWriter.Put(bpChars, myChars.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
@@ -176,6 +180,8 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         dataManWriter.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpDComplexes, myDComplexes.data(),
+                          adios2::Mode::Sync);
+        dataManWriter.Put(bpLDComplexes, myLDComplexes.data(),
                           adios2::Mode::Sync);
         dataManWriter.EndStep();
     }
@@ -204,6 +210,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<double> myDoubles(datasize);
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
+    std::vector<std::complex<long double>> myLDComplexes(datasize);
 
     while (true)
     {
@@ -220,7 +227,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 }
                 std::cout << std::endl;
             }
-            ASSERT_EQ(vars.size(), 10);
+            ASSERT_EQ(vars.size(), 11);
             size_t currentStep = dataManReader.CurrentStep();
             //            ASSERT_EQ(i, currentStep);
             adios2::Variable<char> bpChars =
@@ -243,6 +250,9 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<float>>("bpComplexes");
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
+            adios2::Variable<std::complex<long double>> bpLDComplexes =
+                dataManIO.InquireVariable<std::complex<long double>>(
+                    "bpLDComplexes");
             auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
 
             bpChars.SetSelection({start, count});
@@ -255,6 +265,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             bpDoubles.SetSelection({start, count});
             bpComplexes.SetSelection({start, count});
             bpDComplexes.SetSelection({start, count});
+            bpLDComplexes.SetSelection({start, count});
 
             dataManReader.Get(bpChars, myChars.data(), adios2::Mode::Sync);
             dataManReader.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
@@ -268,6 +279,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                               adios2::Mode::Sync);
             dataManReader.Get(bpDComplexes, myDComplexes.data(),
                               adios2::Mode::Sync);
+            dataManReader.Get(bpLDComplexes, myLDComplexes.data(),
+                              adios2::Mode::Sync);
             VerifyData(myChars.data(), currentStep, start, count, shape);
             VerifyData(myUChars.data(), currentStep, start, count, shape);
             VerifyData(myShorts.data(), currentStep, start, count, shape);
@@ -278,6 +291,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             VerifyData(myDoubles.data(), currentStep, start, count, shape);
             VerifyData(myComplexes.data(), currentStep, start, count, shape);
             VerifyData(myDComplexes.data(), currentStep, start, count, shape);
+            VerifyData(myLDComplexes.data(), currentStep, start, count, shape);
             dataManReader.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)

@@ -39,10 +39,13 @@ Nx = 8
 
 # list of tested attributes and variables
 attr_names = ["attrString", "attrI8", "attrI16", "attrI32", "attrI64",
-              "attrU8", "attrU16", "attrU32", "attrU64", "attrR32", "attrR64"]
+              "attrU8", "attrU16", "attrU32", "attrU64",
+              "attrR32", "attrR64", "attrR128",
+              "attrC32", "attrC64", "attrC128"]
 var_names = ["varStr", "varI8", "varI16", "varI32", "varI64",
              "varU8", "varU16", "varU32", "varU64",
-                      "varR32", "varR64"]
+                      "varR32", "varR64", "varR128",
+                      "varC32", "varC64", "varC128"]
 
 # Start ADIOS
 adios = adios2.ADIOS(comm)
@@ -78,9 +81,17 @@ varU64 = ioWriter.DefineVariable(
 
 varR32 = ioWriter.DefineVariable(
     "varR32", data.R32, shape, start, count, adios2.ConstantDims)
-
 varR64 = ioWriter.DefineVariable(
     "varR64", data.R64, shape, start, count, adios2.ConstantDims)
+varR128 = ioWriter.DefineVariable(
+    "varR128", data.R128, shape, start, count, adios2.ConstantDims)
+
+varC32 = ioWriter.DefineVariable(
+    "varC32", data.C32, shape, start, count, adios2.ConstantDims)
+varC64 = ioWriter.DefineVariable(
+    "varC64", data.C64, shape, start, count, adios2.ConstantDims)
+varC128 = ioWriter.DefineVariable(
+    "varC128", data.C128, shape, start, count, adios2.ConstantDims)
 
 attString = ioWriter.DefineAttribute("attrString", ["one", "two", "three"])
 attI8 = ioWriter.DefineAttribute("attrI8", data.I8)
@@ -93,6 +104,10 @@ attU32 = ioWriter.DefineAttribute("attrU32", data.U32)
 attU64 = ioWriter.DefineAttribute("attrU64", data.U64)
 attR32 = ioWriter.DefineAttribute("attrR32", data.R32)
 attR64 = ioWriter.DefineAttribute("attrR64", data.R64)
+attR128 = ioWriter.DefineAttribute("attrR128", data.R128)
+attC32 = ioWriter.DefineAttribute("attrC32", data.C32)
+attC64 = ioWriter.DefineAttribute("attrC64", data.C64)
+attC128 = ioWriter.DefineAttribute("attrC128", data.C128)
 
 ioWriter.SetEngine("BPFile")
 ioParams = {}
@@ -138,6 +153,11 @@ for i in range(0, nsteps):
 
     writer.Put(varR32, data.R32)
     writer.Put(varR64, data.R64)
+    writer.Put(varR128, data.R128)
+
+    writer.Put(varC32, data.C32)
+    writer.Put(varC64, data.C64)
+    writer.Put(varC128, data.C128)
     writer.EndStep()
 
 writer.Close()
@@ -158,6 +178,10 @@ attrU32 = ioReader.InquireAttribute("attrU32")
 attrU64 = ioReader.InquireAttribute("attrU64")
 attrR32 = ioReader.InquireAttribute("attrR32")
 attrR64 = ioReader.InquireAttribute("attrR64")
+attrR128 = ioReader.InquireAttribute("attrR128")
+attrC32 = ioReader.InquireAttribute("attrC32")
+attrC64 = ioReader.InquireAttribute("attrC64")
+attrC128 = ioReader.InquireAttribute("attrC128")
 
 check_object(attrString, "attrString")
 check_object(attrI8, "attrI8")
@@ -170,6 +194,10 @@ check_object(attrU32, "attrU32")
 check_object(attrU64, "attrU64")
 check_object(attrR32, "attrR32")
 check_object(attrR64, "attrR64")
+check_object(attrR128, "attrR128")
+check_object(attrC32, "attrC32")
+check_object(attrC64, "attrC64")
+check_object(attrC128, "attrC128")
 
 attrStringData = attrString.DataString()
 if(attrStringData[0] != "one"):
@@ -189,6 +217,10 @@ attrU32Data = attrU32.Data()
 attrU64Data = attrU64.Data()
 attrR32Data = attrR32.Data()
 attrR64Data = attrR64.Data()
+attrR128Data = attrR128.Data()
+attrC32Data = attrC32.Data()
+attrC64Data = attrC64.Data()
+attrC128Data = attrC128.Data()
 
 check_array(attrI8Data, data.I8, 'I8')
 check_array(attrI16Data, data.I16, 'I16')
@@ -200,6 +232,10 @@ check_array(attrU32Data, data.U32, 'U32')
 check_array(attrU64Data, data.U64, 'U64')
 check_array(attrR32Data, data.R32, 'R32')
 check_array(attrR64Data, data.R64, 'R64')
+check_array(attrR128Data, data.R128, 'R128')
+check_array(attrC32Data, data.C32, 'C32')
+check_array(attrC64Data, data.C64, 'C64')
+check_array(attrC128Data, data.C128, 'C128')
 
 attributesInfo = ioReader.AvailableAttributes()
 for name, info in attributesInfo.items():
@@ -221,6 +257,10 @@ varU32 = ioReader.InquireVariable("varU32")
 varU64 = ioReader.InquireVariable("varU64")
 varR32 = ioReader.InquireVariable("varR32")
 varR64 = ioReader.InquireVariable("varR64")
+varR128 = ioReader.InquireVariable("varR128")
+varC32 = ioReader.InquireVariable("varC32")
+varC64 = ioReader.InquireVariable("varC64")
+varC128 = ioReader.InquireVariable("varC128")
 
 check_object(varStr, "varStr")
 check_object(varI8, "varI8")
@@ -233,6 +273,10 @@ check_object(varU32, "varU32")
 check_object(varU64, "varU64")
 check_object(varR32, "varR32")
 check_object(varR64, "varR64")
+check_object(varR128, "varR128")
+check_object(varC32, "varC32")
+check_object(varC64, "varC64")
+check_object(varC128, "varC128")
 
 variablesInfo = ioReader.AvailableVariables()
 for name, info in variablesInfo.items():

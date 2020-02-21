@@ -20,21 +20,21 @@ set(F2C
 set(MODULES 
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_functions_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_functions_allocate_mod.f90  
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_parameters_mod.f90 
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_functions_allocate_mod.F90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_parameters_mod.F90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_adios_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_attribute_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_attribute_data_mod.f90 
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_mod.f90 
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_attribute_data_mod.F90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_variable_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_attribute_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_mod.f90 
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_attribute_mod.F90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_begin_step_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_put_mod.f90 
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_get_mod.f90 
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_put_mod.F90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_get_mod.F90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_min_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_max_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_min_mod.F90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_max_mod.F90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_operator_mod.f90
 )
 
@@ -61,6 +61,32 @@ else()
    )
 endif()
 
+# feature check: real(kind=16) types are not supported with PGI
+function(_Fortran_has_real16 success)
+  if(NOT ${success})
+    set(scratch_directory
+      ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/fortran)
+    set(test_file ${scratch_directory}/cmake_real16_test.f90)
+    file(WRITE ${test_file}
+      "program fortran_real16_hello\n"
+      "  real(kind=16) :: x\n"
+      "end\n")
+    try_compile(${success} ${scratch_directory} ${test_file})
+    if(${success})
+        message(STATUS "Fortran: real(kind=16) supported")
+        set(${success} TRUE PARENT_SCOPE)
+    else()
+        set(${success} FALSE PARENT_SCOPE)
+        message(STATUS "Fortran: real(kind=16) NOT supported")
+    endif()
+  endif()
+endfunction()
+
+set(ADIOS2_HAVE_Fortran_REAL16 FALSE)
+_Fortran_has_real16(ADIOS2_HAVE_Fortran_REAL16)
+if(Fortran_HAS_REAL16)
+  target_compile_definitions(adios2_f PUBLIC ADIOS2_HAVE_Fortran_REAL16)
+endif()
 
 install(
   TARGETS adios2_f EXPORT adios2Exports

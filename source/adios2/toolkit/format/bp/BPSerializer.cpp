@@ -337,7 +337,7 @@ void BPSerializer::UpdateOffsetsInMetadata()
             currentPosition, TypeTraits<T>::type_enum, buffer);                \
         break;                                                                 \
     }
-                ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(make_case)
+                ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(make_case)
 #undef make_case
 
             default:
@@ -872,7 +872,7 @@ BPSerializer::SerialElementIndex &BPSerializer::GetSerialElementIndex(
     template void BPSerializer::PutAttributeInIndex(                           \
         const core::Attribute<T> &attribute, const Stats<T> &stats) noexcept;
 
-ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \

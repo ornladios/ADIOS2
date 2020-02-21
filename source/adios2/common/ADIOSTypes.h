@@ -135,6 +135,7 @@ using std::uint64_t;
 // Complex
 using cfloat = std::complex<float>;
 using cdouble = std::complex<double>;
+using cldouble = std::complex<long double>;
 
 // Limit, using uint64_t to make it portable
 constexpr uint64_t MaxU64 = std::numeric_limits<uint64_t>::max();

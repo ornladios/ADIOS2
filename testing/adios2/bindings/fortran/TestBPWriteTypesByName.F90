@@ -9,7 +9,7 @@
 
      type(adios2_adios) :: adios
      type(adios2_io) :: ioWrite, ioRead
-     type(adios2_variable), dimension(12) :: variables
+     type(adios2_variable), dimension(14) :: variables
      type(adios2_engine) :: bpWriter, bpReader
 
      ! read handlers
@@ -68,6 +68,13 @@
                                  shape_dims, start_dims, count_dims, &
                                  adios2_constant_dims, ierr)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     call adios2_define_variable(variables(13), ioWrite, "var_R128", &
+                                 adios2_type_ldp, 1, &
+                                 shape_dims, start_dims, count_dims, &
+                                 adios2_constant_dims, ierr)
+#endif
+
      ! Global variables
      call adios2_define_variable(variables(7), ioWrite, "gvar_I8", &
                                  adios2_type_integer1,  ierr)
@@ -87,6 +94,11 @@
      call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
                                  adios2_type_dp,  ierr)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     call adios2_define_variable(variables(14), ioWrite, "gvar_R128", &
+                                 adios2_type_ldp,  ierr)
+#endif
+
      ! Open myVector_f.bp in write mode, this launches an engine
      call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
 
@@ -101,6 +113,9 @@
            call adios2_put(bpWriter, "gvar_I64", data_I64(1), ierr)
            call adios2_put(bpWriter, "gvar_R32", data_R32(1), ierr)
            call adios2_put(bpWriter, "gvar_R64", data_R64(1), ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+           call adios2_put(bpWriter, "gvar_R128", data_R128(1), ierr)
+#endif
          end if
 
          call adios2_put(bpWriter, "var_I8", data_I8, ierr)
@@ -109,6 +124,9 @@
          call adios2_put(bpWriter, "var_I64", data_I64, ierr)
          call adios2_put(bpWriter, "var_R32", data_R32, ierr)
          call adios2_put(bpWriter, "var_R64", data_R64, ierr)
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+         call adios2_put(bpWriter, "var_R128", data_R128, ierr)
+#endif
          call adios2_end_step(bpWriter, ierr)
      end do
 
@@ -162,6 +180,15 @@
      call adios2_variable_shape( shape_in, ndims,  variables(6), ierr)
      if (ndims /= 1) stop 'var_R64 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_R64 shape_in read failed'
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     call adios2_inquire_variable(variables(13), ioRead, "var_R128", ierr)
+     if (variables(13)%name /= 'var_R128') stop 'var_R128 not recognized'
+     if (variables(13)%type /= adios2_type_ldp) stop 'var_R128 type not recognized'
+     call adios2_variable_shape( shape_in, ndims,  variables(13), ierr)
+     if (ndims /= 1) stop 'var_R128 ndims is not 1'
+     if (shape_in(1) /= isize*inx) stop 'var_R128 shape_in read failed'
+#endif
 
      call adios2_close(bpReader, ierr)
 

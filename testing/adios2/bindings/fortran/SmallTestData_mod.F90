@@ -34,4 +34,9 @@ module small_test_data
     real(kind=8), parameter, dimension(10) :: data_R64 = &
                                               (/10.2, 11.2, 12.2, 13.2, 14.2, 15.2, 16.2, 17.2, 18.2, 19.2/)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    real(kind=16), parameter, dimension(10) :: data_R128 = &
+                                              (/410.2, 411.2, 412.2, 413.2, 414.2, 415.2, 416.2, 417.2, 418.2, 419.2/)
+#endif
+
 end module

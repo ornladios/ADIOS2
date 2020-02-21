@@ -2,7 +2,7 @@
 ! Distributed under the OSI-approved Apache License, Version 2.0.  See
 !  accompanying file Copyright.txt for details.
 !
-!  adios2_engine_put_deferred_by_name.f90 : implementation of
+!  adios2_engine_put_deferred_by_name.F90 : implementation of
 !  adios2_put_deferred subroutines
 !
 !   Created on: Feb 21, 2018
@@ -50,6 +50,19 @@ subroutine adios2_put_deferred_by_name_dp(engine, name, data, ierr)
 
 end subroutine
 
+subroutine adios2_put_deferred_by_name_ldp(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    real(kind=16), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
 subroutine adios2_put_deferred_by_name_complex(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
@@ -67,6 +80,19 @@ subroutine adios2_put_deferred_by_name_complex_dp(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
     complex(kind=8), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
+subroutine adios2_put_deferred_by_name_complex_ldp(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    complex(kind=16), intent(in):: data
     integer, intent(out):: ierr
 
     if(trim(engine%type) == "NULL") return
@@ -155,6 +181,19 @@ subroutine adios2_put_deferred_by_name_dp_1d(engine, name, data, ierr)
 
 end subroutine
 
+subroutine adios2_put_deferred_by_name_ldp_1d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    real(kind=16), dimension(:), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
 subroutine adios2_put_deferred_by_name_complex_1d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
@@ -172,6 +211,19 @@ subroutine adios2_put_deferred_by_name_complex_dp_1d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
     complex(kind=8), dimension(:), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
+subroutine adios2_put_deferred_by_name_complex_ldp_1d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    complex(kind=16), dimension(:), intent(in):: data
     integer, intent(out):: ierr
 
     if(trim(engine%type) == "NULL") return
@@ -260,6 +312,19 @@ subroutine adios2_put_deferred_by_name_dp_2d(engine, name, data, ierr)
 
 end subroutine
 
+subroutine adios2_put_deferred_by_name_ldp_2d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    real(kind=16), dimension(:, :), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
 subroutine adios2_put_deferred_by_name_complex_2d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
@@ -277,6 +342,19 @@ subroutine adios2_put_deferred_by_name_complex_dp_2d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
     complex(kind=8), dimension(:, :), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
+subroutine adios2_put_deferred_by_name_complex_ldp_2d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    complex(kind=16), dimension(:, :), intent(in):: data
     integer, intent(out):: ierr
 
     if(trim(engine%type) == "NULL") return
@@ -365,6 +443,19 @@ subroutine adios2_put_deferred_by_name_dp_3d(engine, name, data, ierr)
 
 end subroutine
 
+subroutine adios2_put_deferred_by_name_ldp_3d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    real(kind=16), dimension(:, :, :), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
 subroutine adios2_put_deferred_by_name_complex_3d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
@@ -382,6 +473,19 @@ subroutine adios2_put_deferred_by_name_complex_dp_3d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
     complex(kind=8), dimension(:, :, :), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
+subroutine adios2_put_deferred_by_name_complex_ldp_3d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    complex(kind=16), dimension(:, :, :), intent(in):: data
     integer, intent(out):: ierr
 
     if(trim(engine%type) == "NULL") return
@@ -470,6 +574,19 @@ subroutine adios2_put_deferred_by_name_dp_4d(engine, name, data, ierr)
 
 end subroutine
 
+subroutine adios2_put_deferred_by_name_ldp_4d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    real(kind=16), dimension(:, :, :, :), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
 subroutine adios2_put_deferred_by_name_complex_4d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
@@ -487,6 +604,19 @@ subroutine adios2_put_deferred_by_name_complex_dp_4d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
     complex(kind=8), dimension(:, :, :, :), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
+subroutine adios2_put_deferred_by_name_complex_ldp_4d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    complex(kind=16), dimension(:, :, :, :), intent(in):: data
     integer, intent(out):: ierr
 
     if(trim(engine%type) == "NULL") return
@@ -575,6 +705,19 @@ subroutine adios2_put_deferred_by_name_dp_5d(engine, name, data, ierr)
 
 end subroutine
 
+subroutine adios2_put_deferred_by_name_ldp_5d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    real(kind=16), dimension(:, :, :, :, :), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
 subroutine adios2_put_deferred_by_name_complex_5d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
@@ -592,6 +735,19 @@ subroutine adios2_put_deferred_by_name_complex_dp_5d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
     complex(kind=8), dimension(:, :, :, :, :), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
+subroutine adios2_put_deferred_by_name_complex_ldp_5d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    complex(kind=16), dimension(:, :, :, :, :), intent(in):: data
     integer, intent(out):: ierr
 
     if(trim(engine%type) == "NULL") return
@@ -680,6 +836,19 @@ subroutine adios2_put_deferred_by_name_dp_6d(engine, name, data, ierr)
 
 end subroutine
 
+subroutine adios2_put_deferred_by_name_ldp_6d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    real(kind=16), dimension(:, :, :, :, :, :), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
 subroutine adios2_put_deferred_by_name_complex_6d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
@@ -697,6 +866,19 @@ subroutine adios2_put_deferred_by_name_complex_dp_6d(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
     complex(kind=8), dimension(:, :, :, :, :, :), intent(in):: data
+    integer, intent(out):: ierr
+
+    if(trim(engine%type) == "NULL") return
+    call adios2_put_by_name_f2c(engine%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         data, adios2_mode_deferred, ierr)
+
+end subroutine
+
+subroutine adios2_put_deferred_by_name_complex_ldp_6d(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    complex(kind=16), dimension(:, :, :, :, :, :), intent(in):: data
     integer, intent(out):: ierr
 
     if(trim(engine%type) == "NULL") return

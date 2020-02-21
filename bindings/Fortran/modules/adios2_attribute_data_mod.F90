@@ -18,6 +18,9 @@ module adios2_attribute_data_mod
         module procedure adios2_attribute_data_string
         module procedure adios2_attribute_data_real
         module procedure adios2_attribute_data_dp
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_attribute_data_ldp
+#endif
         module procedure adios2_attribute_data_integer1
         module procedure adios2_attribute_data_integer2
         module procedure adios2_attribute_data_integer4
@@ -27,6 +30,9 @@ module adios2_attribute_data_mod
         module procedure adios2_attribute_data_string_1d
         module procedure adios2_attribute_data_real_1d
         module procedure adios2_attribute_data_dp_1d
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+        module procedure adios2_attribute_data_ldp_1d
+#endif
         module procedure adios2_attribute_data_integer1_1d
         module procedure adios2_attribute_data_integer2_1d
         module procedure adios2_attribute_data_integer4_1d
@@ -76,6 +82,21 @@ contains
         end if
 
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_attribute_data_ldp(data, attribute, ierr)
+        real(kind=16), intent(out):: data
+        type(adios2_attribute), intent(in):: attribute
+        integer, intent(out):: ierr
+
+        call adios2_attribute_check_type(attribute, adios2_type_ldp, &
+                                        'attribute_data', ierr)
+        if (ierr == 0) then
+            call adios2_attribute_value_f2c(data, attribute%f2c, ierr)
+        end if
+
+    end subroutine
+#endif
 
     subroutine adios2_attribute_data_integer1(data, attribute, ierr)
         integer(kind=1), intent(out):: data
@@ -181,6 +202,23 @@ contains
         end if
 
     end subroutine
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    subroutine adios2_attribute_data_ldp_1d(data, attribute, ierr)
+        real(kind=16), dimension(:), intent(out):: data
+        type(adios2_attribute), intent(in):: attribute
+        integer, intent(out):: ierr
+        ! local
+        integer :: length
+
+        call adios2_attribute_check_type(attribute, adios2_type_ldp, &
+                                        'attribute_data', ierr)
+        if (ierr == 0) then
+            call adios2_attribute_data_f2c(data, length, attribute%f2c, ierr)
+        end if
+
+    end subroutine
+#endif
 
     subroutine adios2_attribute_data_integer1_1d(data, attribute, ierr)
         integer(kind=1), dimension(:), intent(out):: data

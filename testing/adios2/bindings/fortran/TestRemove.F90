@@ -13,7 +13,7 @@ program TestRemove
     ! low-level
     type(adios2_adios) :: adios
     type(adios2_io) :: ioWrite, ioRead
-    type(adios2_variable), dimension(12) :: variables
+    type(adios2_variable), dimension(14) :: variables
     type(adios2_engine) :: bpWriter, bpReader
 
 #ifdef USE_MPI
@@ -76,6 +76,13 @@ program TestRemove
                                  shape_dims, start_dims, count_dims, &
                                  adios2_constant_dims, ierr)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     call adios2_define_variable(variables(13), ioWrite, "var_R128", &
+                                 adios2_type_ldp, 1, &
+                                 shape_dims, start_dims, count_dims, &
+                                 adios2_constant_dims, ierr)
+#endif
+
      ! Global variables
      call adios2_define_variable(variables(7), ioWrite, "gvar_I8", &
                                  adios2_type_integer1,  ierr)
@@ -95,18 +102,29 @@ program TestRemove
      call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
                                  adios2_type_dp,  ierr)
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     call adios2_define_variable(variables(14), ioWrite, "gvar_R128", &
+                                 adios2_type_ldp,  ierr)
+#endif
+
      if (variables(1)%valid .eqv. .false. ) stop 'var_I8 not defined'
      if (variables(2)%valid .eqv. .false. ) stop 'var_I16 not defined'
      if (variables(3)%valid .eqv. .false. ) stop 'var_I32 not defined'
      if (variables(4)%valid .eqv. .false. ) stop 'var_I64 not defined'
      if (variables(5)%valid .eqv. .false. ) stop 'var_R32 not defined'
      if (variables(6)%valid .eqv. .false. ) stop 'var_R64 not defined'
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     if (variables(13)%valid .eqv. .false. ) stop 'var_R128 not defined'
+#endif
      if (variables(7)%valid .eqv. .false. ) stop 'gvar_I8 not defined'
      if (variables(8)%valid .eqv. .false. ) stop 'gvar_I16 not defined'
      if (variables(9)%valid .eqv. .false. ) stop 'gvar_I32 not defined'
      if (variables(10)%valid .eqv. .false. ) stop 'gvar_I64 not defined'
      if (variables(11)%valid .eqv. .false. ) stop 'gvar_R32 not defined'
      if (variables(12)%valid .eqv. .false. ) stop 'gvar_IR64 not defined'
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+     if (variables(14)%valid .eqv. .false. ) stop 'gvar_R128 not defined'
+#endif
 
     ! remove piece
     call adios2_remove_variable(res, ioWrite, "gvar_R64", ierr)
@@ -136,6 +154,11 @@ program TestRemove
     call adios2_inquire_variable(variables(6), ioWrite, "var_R64", ierr)
     if (variables(6)%valid .eqv. .true.) stop 'var_R64 found'
 
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_inquire_variable(variables(13), ioWrite, "var_R128", ierr)
+    if (variables(13)%valid .eqv. .true.) stop 'var_R128 found'
+#endif
+
     call adios2_inquire_variable(variables(7), ioWrite, "gvar_I8", ierr)
     if (variables(7)%valid .eqv. .true.) stop 'gvar_I8 found'
 
@@ -150,6 +173,11 @@ program TestRemove
 
     call adios2_inquire_variable(variables(11), ioWrite, "gvar_R32", ierr)
     if (variables(11)%valid .eqv. .true.) stop 'gvar_R32 found'
+
+#ifdef ADIOS2_HAVE_Fortran_REAL16
+    call adios2_inquire_variable(variables(14), ioWrite, "gvar_R128", ierr)
+    if (variables(14)%valid .eqv. .true.) stop 'gvar_R128 found'
+#endif
 
     call adios2_remove_io(res, adios, 'ioWrite', ierr)
     if( res .neqv. .true. ) stop 'could not remove ioWrite'

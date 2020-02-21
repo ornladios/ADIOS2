@@ -34,5 +34,6 @@ uint64_t data_U64[10] = {9223372036854775808UL, 9223372036854775809UL,
 
 float data_R32[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 double data_R64[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+long double data_R128[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 #endif /* TESTING_ADIOS2_BINDINGS_C_SMALLTESTDATA_C_H_ */
