@@ -144,28 +144,31 @@ void SscWriter::EndStep()
         SyncReadPattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
                        MPI_COMM_WORLD, &m_MpiWin);
-    }
-
-    if (m_MpiMode == "TwoSided")
-    {
-        PutTwoSided();
-    }
-    else if (m_MpiMode == "OneSidedFencePush")
-    {
-        PutOneSidedFencePush();
-    }
-    else if (m_MpiMode == "OneSidedPostPush")
-    {
-        PutOneSidedPostPush();
-    }
-    else if (m_MpiMode == "OneSidedFencePull")
-    {
-        PutOneSidedFencePull();
-    }
-    else if (m_MpiMode == "OneSidedPostPull")
-    {
         PutOneSidedPostPull();
     }
+    else{
+        if (m_MpiMode == "TwoSided")
+        {
+            PutTwoSided();
+        }
+        else if (m_MpiMode == "OneSidedFencePush")
+        {
+            PutOneSidedFencePush();
+        }
+        else if (m_MpiMode == "OneSidedPostPush")
+        {
+            PutOneSidedPostPush();
+        }
+        else if (m_MpiMode == "OneSidedFencePull")
+        {
+            PutOneSidedFencePull();
+        }
+        else if (m_MpiMode == "OneSidedPostPull")
+        {
+            PutOneSidedPostPull();
+        }
+    }
+
 }
 
 void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }

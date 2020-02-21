@@ -114,34 +114,34 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     {
         m_InitialStep = false;
         SyncReadPattern();
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
-                       MPI_COMM_WORLD, &m_MpiWin);
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+        MPI_Win_start(m_MpiAllWritersGroup, 0, m_MpiWin);
     }
     else
     {
         ++m_CurrentStep;
+        if (m_MpiMode == "TwoSided")
+        {
+            GetTwoSided();
+        }
+        else if (m_MpiMode == "OneSidedFencePush")
+        {
+            GetOneSidedFencePush();
+        }
+        else if (m_MpiMode == "OneSidedPostPush")
+        {
+            GetOneSidedPostPush();
+        }
+        else if (m_MpiMode == "OneSidedFencePull")
+        {
+            GetOneSidedFencePull();
+        }
+        else if (m_MpiMode == "OneSidedPostPull")
+        {
+            GetOneSidedPostPull();
+        }
     }
 
-    if (m_MpiMode == "TwoSided")
-    {
-        GetTwoSided();
-    }
-    else if (m_MpiMode == "OneSidedFencePush")
-    {
-        GetOneSidedFencePush();
-    }
-    else if (m_MpiMode == "OneSidedPostPush")
-    {
-        GetOneSidedPostPush();
-    }
-    else if (m_MpiMode == "OneSidedFencePull")
-    {
-        GetOneSidedFencePull();
-    }
-    else if (m_MpiMode == "OneSidedPostPull")
-    {
-        GetOneSidedPostPull();
-    }
 
     if (m_Buffer[0] == 1)
     {
@@ -162,6 +162,10 @@ size_t SscReader::CurrentStep() const
 void SscReader::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
+    if(m_CurrentStep == 0)
+    {
+        MPI_Win_complete(m_MpiWin);
+    }
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::EndStep, World Rank " << m_WorldRank
