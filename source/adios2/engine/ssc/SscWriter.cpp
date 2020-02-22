@@ -121,11 +121,8 @@ void SscWriter::PutTwoSided()
         MPI_Isend(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, i.first, 0,
                   MPI_COMM_WORLD, &requests.back());
     }
-    for (auto &r : requests)
-    {
-        MPI_Status s;
-        MPI_Wait(&r, &s);
-    }
+    MPI_Status statuses[requests.size()];
+    MPI_Waitall(requests.size(), requests.data(), statuses);
 }
 
 void SscWriter::EndStep()
@@ -141,30 +138,36 @@ void SscWriter::EndStep()
     if (m_CurrentStep == 0)
     {
         SyncWritePattern();
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
+                       MPI_COMM_WORLD, &m_MpiWin);
+        PutOneSidedFencePull();
+        MPI_Win_free(&m_MpiWin);
         SyncReadPattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
                        MPI_COMM_WORLD, &m_MpiWin);
     }
-
-    if (m_MpiMode == "TwoSided")
+    else
     {
-        PutTwoSided();
-    }
-    else if (m_MpiMode == "OneSidedFencePush")
-    {
-        PutOneSidedFencePush();
-    }
-    else if (m_MpiMode == "OneSidedPostPush")
-    {
-        PutOneSidedPostPush();
-    }
-    else if (m_MpiMode == "OneSidedFencePull")
-    {
-        PutOneSidedFencePull();
-    }
-    else if (m_MpiMode == "OneSidedPostPull")
-    {
-        PutOneSidedPostPull();
+        if (m_MpiMode == "TwoSided")
+        {
+            PutTwoSided();
+        }
+        else if (m_MpiMode == "OneSidedFencePush")
+        {
+            PutOneSidedFencePush();
+        }
+        else if (m_MpiMode == "OneSidedPostPush")
+        {
+            PutOneSidedPostPush();
+        }
+        else if (m_MpiMode == "OneSidedFencePull")
+        {
+            PutOneSidedFencePull();
+        }
+        else if (m_MpiMode == "OneSidedPostPull")
+        {
+            PutOneSidedPostPull();
+        }
     }
 }
 
@@ -648,11 +651,8 @@ void SscWriter::DoClose(const int transportIndex)
             MPI_Isend(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, MPI_COMM_WORLD,
                       &requests.back());
         }
-        for (auto &r : requests)
-        {
-            MPI_Status s;
-            MPI_Wait(&r, &s);
-        }
+        MPI_Status statuses[requests.size()];
+        MPI_Waitall(requests.size(), requests.data(), statuses);
     }
     else if (m_MpiMode == "OneSidedFencePush")
     {

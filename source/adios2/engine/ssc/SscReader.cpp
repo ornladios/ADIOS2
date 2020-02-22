@@ -37,6 +37,8 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
         m_MpiMode = it->second;
     }
 
+    m_Buffer.resize(1);
+
     m_GlobalWritePattern.resize(m_WorldSize);
     SyncMpiPattern();
     SyncWritePattern();
@@ -92,11 +94,8 @@ void SscReader::GetTwoSided()
         MPI_Irecv(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
                   i.first, 0, MPI_COMM_WORLD, &requests.back());
     }
-    for (auto &r : requests)
-    {
-        MPI_Status s;
-        MPI_Wait(&r, &s);
-    }
+    MPI_Status statuses[requests.size()];
+    MPI_Waitall(requests.size(), requests.data(), statuses);
 }
 
 StepStatus SscReader::BeginStep(const StepMode stepMode,
@@ -113,34 +112,32 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     if (m_InitialStep)
     {
         m_InitialStep = false;
-        SyncReadPattern();
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
-                       MPI_COMM_WORLD, &m_MpiWin);
+        MPI_Win_create(NULL, 0, 1, MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
+        MPI_Win_fence(0, m_MpiWin);
     }
     else
     {
         ++m_CurrentStep;
-    }
-
-    if (m_MpiMode == "TwoSided")
-    {
-        GetTwoSided();
-    }
-    else if (m_MpiMode == "OneSidedFencePush")
-    {
-        GetOneSidedFencePush();
-    }
-    else if (m_MpiMode == "OneSidedPostPush")
-    {
-        GetOneSidedPostPush();
-    }
-    else if (m_MpiMode == "OneSidedFencePull")
-    {
-        GetOneSidedFencePull();
-    }
-    else if (m_MpiMode == "OneSidedPostPull")
-    {
-        GetOneSidedPostPull();
+        if (m_MpiMode == "TwoSided")
+        {
+            GetTwoSided();
+        }
+        else if (m_MpiMode == "OneSidedFencePush")
+        {
+            GetOneSidedFencePush();
+        }
+        else if (m_MpiMode == "OneSidedPostPush")
+        {
+            GetOneSidedPostPush();
+        }
+        else if (m_MpiMode == "OneSidedFencePull")
+        {
+            GetOneSidedFencePull();
+        }
+        else if (m_MpiMode == "OneSidedPostPull")
+        {
+            GetOneSidedPostPull();
+        }
     }
 
     if (m_Buffer[0] == 1)
@@ -162,6 +159,14 @@ size_t SscReader::CurrentStep() const
 void SscReader::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
+    if (m_CurrentStep == 0)
+    {
+        MPI_Win_fence(0, m_MpiWin);
+        MPI_Win_free(&m_MpiWin);
+        SyncReadPattern();
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
+                       MPI_COMM_WORLD, &m_MpiWin);
+    }
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::EndStep, World Rank " << m_WorldRank
@@ -442,18 +447,17 @@ void SscReader::SyncWritePattern()
                   maxLocalSize, MPI_CHAR, MPI_COMM_WORLD);
 
     // deserialize global metadata Json
-    nlohmann::json globalJson;
     try
     {
         for (size_t i = 0; i < m_WorldSize; ++i)
         {
             if (globalVec[i * maxLocalSize] == '\0')
             {
-                globalJson[i] = nullptr;
+                m_GlobalWritePatternJson[i] = nullptr;
             }
             else
             {
-                globalJson[i] = nlohmann::json::parse(
+                m_GlobalWritePatternJson[i] = nlohmann::json::parse(
                     globalVec.begin() + i * maxLocalSize,
                     globalVec.begin() + (i + 1) * maxLocalSize);
             }
@@ -467,7 +471,7 @@ void SscReader::SyncWritePattern()
     }
 
     // deserialize variables metadata
-    ssc::JsonToBlockVecVec(globalJson, m_GlobalWritePattern);
+    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
 
     for (const auto &blockVec : m_GlobalWritePattern)
     {
@@ -494,11 +498,11 @@ void SscReader::SyncWritePattern()
 
     for (int i = 0; i < m_WorldSize; ++i)
     {
-        if (globalJson[i] == nullptr)
+        if (m_GlobalWritePatternJson[i] == nullptr)
         {
             continue;
         }
-        auto &attributesJson = globalJson[i]["Attributes"];
+        auto &attributesJson = m_GlobalWritePatternJson[i]["Attributes"];
         if (attributesJson == nullptr)
         {
             continue;
@@ -547,54 +551,7 @@ void SscReader::SyncReadPattern()
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
 
-    nlohmann::json readPatternJson;
-
-    // serialize
-    auto variables = m_IO.GetAvailableVariables();
-    for (auto &var : variables)
-    {
-        m_LocalReadPattern.emplace_back();
-        auto &b = m_LocalReadPattern.back();
-        std::string type = var.second["Type"];
-        if (type.empty())
-        {
-            throw(std::runtime_error("unknown data type"));
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        auto v = m_IO.InquireVariable<T>(var.first);                           \
-        b.name = var.first;                                                    \
-        b.count = v->m_Count;                                                  \
-        b.start = v->m_Start;                                                  \
-        b.shape = v->m_Shape;                                                  \
-        b.type = type;                                                         \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-        else { throw(std::runtime_error("unknown data type")); }
-
-        for (const auto &d : b.count)
-        {
-            if (d == 0)
-            {
-                throw(std::runtime_error(
-                    "SetSelection count dimensions cannot be 0"));
-            }
-        }
-
-        readPatternJson["Variables"].emplace_back();
-        auto &jref = readPatternJson["Variables"].back();
-        jref["Name"] = var.first;
-        jref["Type"] = type;
-        jref["Start"] = b.start;
-        jref["Count"] = b.count;
-        jref["Shape"] = b.shape;
-        jref["BufferStart"] = 0;
-        jref["BufferCount"] = 0;
-    }
-
-    std::string localStr = readPatternJson.dump();
+    std::string localStr = m_LocalReadPatternJson.dump();
 
     // aggregate global read pattern
     size_t localSize = localStr.size();
@@ -632,16 +589,15 @@ void SscReader::SyncReadPattern()
             std::string(e.what())));
     }
 
+    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
     ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
     m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePattern);
     CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
-
     size_t totalDataSize = 0;
     for (auto i : m_AllReceivingWriterRanks)
     {
         totalDataSize += i.second.second;
     }
-
     m_Buffer.resize(totalDataSize);
 
     if (m_Verbosity >= 10)

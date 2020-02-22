@@ -52,7 +52,7 @@ size_t TotalDataSize(const BlockVec &bv)
     return s;
 }
 
-void CalculateOverlap(BlockVecVec &globalVecVec, BlockVec &localVec)
+void CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
 {
     for (auto &rankBlockVec : globalVecVec)
     {
