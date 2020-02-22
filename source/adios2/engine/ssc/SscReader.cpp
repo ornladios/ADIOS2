@@ -551,53 +551,6 @@ void SscReader::SyncReadPattern()
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
 
-    /*
-    // serialize
-    auto variables = m_IO.GetAvailableVariables();
-    for (auto &var : variables)
-    {
-        m_LocalReadPattern.emplace_back();
-        auto &b = m_LocalReadPattern.back();
-        std::string type = var.second["Type"];
-        if (type.empty())
-        {
-            throw(std::runtime_error("unknown data type"));
-        }
-#define declare_type(T)                                                        \
-        else if (type == helper::GetType<T>()) \
-        { \
-            auto v = m_IO.InquireVariable<T>(var.first); \
-            b.name = var.first; \
-            b.count = v->m_Count; \
-            b.start = v->m_Start; \
-            b.shape = v->m_Shape; \
-            b.type = type; \
-        }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-        else { throw(std::runtime_error("unknown data type")); }
-
-        for (const auto &d : b.count)
-        {
-            if (d == 0)
-            {
-                throw(std::runtime_error(
-                    "SetSelection count dimensions cannot be 0"));
-            }
-        }
-
-        m_LocalReadPatternJson["Variables"].emplace_back();
-        auto &jref = m_LocalReadPatternJson["Variables"].back();
-        jref["Name"] = var.first;
-        jref["Type"] = type;
-        jref["Start"] = b.start;
-        jref["Count"] = b.count;
-        jref["Shape"] = b.shape;
-        jref["BufferStart"] = 0;
-        jref["BufferCount"] = 0;
-    }
-    */
-
     std::string localStr = m_LocalReadPatternJson.dump();
 
     // aggregate global read pattern
