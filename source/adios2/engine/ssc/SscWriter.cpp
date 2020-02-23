@@ -140,7 +140,7 @@ void SscWriter::EndStep()
         SyncWritePattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
                        MPI_COMM_WORLD, &m_MpiWin);
-        PutOneSidedFencePull();
+        PutOneSidedPostPull();
         MPI_Win_free(&m_MpiWin);
         SyncReadPattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
