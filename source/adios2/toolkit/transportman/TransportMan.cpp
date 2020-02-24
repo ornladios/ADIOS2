@@ -75,6 +75,7 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
                              const std::vector<Params> &parametersVector,
                              const bool profile)
 {
+    WaitForAsync();
     for (size_t i = 0; i < fileNames.size(); ++i)
     {
         const Params &parameters = parametersVector[i];
@@ -89,10 +90,12 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
     }
 }
 
-std::future<void> TransportMan::OpenFilesAsync(
-    const std::vector<std::string> &fileNames, const Mode openMode,
-    const std::vector<Params> &parametersVector, const bool profile)
+void TransportMan::OpenFilesAsync(const std::vector<std::string> &fileNames,
+                                  const Mode openMode,
+                                  const std::vector<Params> &parametersVector,
+                                  const bool profile)
 {
+    WaitForAsync();
     auto lf_OpenFiles =
         [&](const std::vector<std::string> &fileNames, const Mode openMode,
             const std::vector<Params> &parametersVector, const bool profile) {
@@ -111,14 +114,16 @@ std::future<void> TransportMan::OpenFilesAsync(
             }
         };
 
-    return std::async(std::launch::async, lf_OpenFiles, std::move(fileNames),
-                      openMode, std::cref(parametersVector), profile);
+    m_FutureOpenFiles =
+        std::async(std::launch::async, lf_OpenFiles, std::move(fileNames),
+                   openMode, std::cref(parametersVector), profile);
 }
 
 void TransportMan::OpenFileID(const std::string &name, const size_t id,
                               const Mode mode, const Params &parameters,
                               const bool profile)
 {
+    WaitForAsync();
     std::shared_ptr<Transport> file =
         OpenFileTransport(name, mode, parameters, profile);
     m_Transports.insert({id, file});
@@ -170,6 +175,7 @@ std::vector<std::string> TransportMan::GetFilesBaseNames(
 
 std::vector<std::string> TransportMan::GetTransportsTypes() noexcept
 {
+    WaitForAsync();
     std::vector<std::string> types;
     types.reserve(m_Transports.size());
 
@@ -184,6 +190,7 @@ std::vector<std::string> TransportMan::GetTransportsTypes() noexcept
 std::vector<profiling::IOChrono *>
 TransportMan::GetTransportsProfilers() noexcept
 {
+    WaitForAsync();
     std::vector<profiling::IOChrono *> profilers;
     profilers.reserve(m_Transports.size());
 
@@ -198,6 +205,7 @@ TransportMan::GetTransportsProfilers() noexcept
 void TransportMan::WriteFiles(const char *buffer, const size_t size,
                               const int transportIndex)
 {
+    WaitForAsync();
     if (transportIndex == -1)
     {
         for (auto &transportPair : m_Transports)
@@ -222,7 +230,7 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
 void TransportMan::WriteFileAt(const char *buffer, const size_t size,
                                const size_t start, const int transportIndex)
 {
-
+    WaitForAsync();
     auto itTransport = m_Transports.find(transportIndex);
     CheckFile(itTransport, ", in call to WriteFileAt with index " +
                                std::to_string(transportIndex));
@@ -231,7 +239,7 @@ void TransportMan::WriteFileAt(const char *buffer, const size_t size,
 
 void TransportMan::SeekToFileEnd(const int transportIndex)
 {
-
+    WaitForAsync();
     auto itTransport = m_Transports.find(transportIndex);
     CheckFile(itTransport, ", in call to SeekToFileEnd with index " +
                                std::to_string(transportIndex));
@@ -240,7 +248,7 @@ void TransportMan::SeekToFileEnd(const int transportIndex)
 
 void TransportMan::SeekToFileBegin(const int transportIndex)
 {
-
+    WaitForAsync();
     auto itTransport = m_Transports.find(transportIndex);
     CheckFile(itTransport, ", in call to SeekToFileBegin with index " +
                                std::to_string(transportIndex));
@@ -249,6 +257,7 @@ void TransportMan::SeekToFileBegin(const int transportIndex)
 
 size_t TransportMan::GetFileSize(const size_t transportIndex) const
 {
+    WaitForAsync();
     auto itTransport = m_Transports.find(transportIndex);
     CheckFile(itTransport, ", in call to GetFileSize with index " +
                                std::to_string(transportIndex));
@@ -258,6 +267,7 @@ size_t TransportMan::GetFileSize(const size_t transportIndex) const
 void TransportMan::ReadFile(char *buffer, const size_t size, const size_t start,
                             const size_t transportIndex)
 {
+    WaitForAsync();
     auto itTransport = m_Transports.find(transportIndex);
     CheckFile(itTransport, ", in call to ReadFile with index " +
                                std::to_string(transportIndex));
@@ -266,6 +276,7 @@ void TransportMan::ReadFile(char *buffer, const size_t size, const size_t start,
 
 void TransportMan::FlushFiles(const int transportIndex)
 {
+    WaitForAsync();
     if (transportIndex == -1)
     {
         for (auto &transportPair : m_Transports)
@@ -289,6 +300,7 @@ void TransportMan::FlushFiles(const int transportIndex)
 
 void TransportMan::CloseFiles(const int transportIndex)
 {
+    WaitForAsync();
     if (transportIndex == -1)
     {
         for (auto &transportPair : m_Transports)
@@ -313,6 +325,7 @@ void TransportMan::CloseFiles(const int transportIndex)
 bool TransportMan::AllTransportsClosed() const noexcept
 {
     bool allClose = true;
+    WaitForAsync();
     for (const auto &transportPair : m_Transports)
     {
         const auto &transport = transportPair.second;
@@ -418,6 +431,15 @@ void TransportMan::CheckFile(
                                         itTransport->second->m_Library +
                                         ", must be file " + hint + "\n");
         }
+    }
+}
+
+void TransportMan::WaitForAsync() const
+{
+    // Ensure any prior OpenFilesAsync is complete
+    if (m_FutureOpenFiles.valid())
+    {
+        m_FutureOpenFiles.get();
     }
 }
 

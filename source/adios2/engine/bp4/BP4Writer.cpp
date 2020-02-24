@@ -190,7 +190,7 @@ void BP4Writer::InitTransports()
     {
         if (m_BP4Serializer.m_Parameters.AsyncTasks)
         {
-            m_FutureOpenFiles = m_FileDataManager.OpenFilesAsync(
+            m_FileDataManager.OpenFilesAsync(
                 bpSubStreamNames, m_OpenMode, m_IO.m_TransportsParameters,
                 m_BP4Serializer.m_Profiler.m_IsActive);
         }
@@ -294,10 +294,6 @@ void BP4Writer::InitBPBuffer()
 
             if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
             {
-                if (m_FutureOpenFiles.valid())
-                {
-                    m_FutureOpenFiles.get();
-                }
                 m_BP4Serializer.m_PreDataFileLength =
                     m_FileDataManager.GetFileSize(0);
             }
@@ -577,11 +573,6 @@ void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
         dataSize = m_BP4Serializer.CloseStream(m_IO, false);
     }
 
-    if (m_FutureOpenFiles.valid())
-    {
-        m_FutureOpenFiles.get();
-    }
-
     m_FileDataManager.WriteFiles(m_BP4Serializer.m_Data.m_Buffer.data(),
                                  dataSize, transportIndex);
 
@@ -611,11 +602,6 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
                     m_BP4Serializer.m_Data);
             if (bufferSTL.m_Position > 0)
             {
-                if (m_FutureOpenFiles.valid())
-                {
-                    m_FutureOpenFiles.get();
-                }
-
                 m_FileDataManager.WriteFiles(
                     bufferSTL.Data(), bufferSTL.m_Position, transportIndex);
 

@@ -188,7 +188,7 @@ void BP3Writer::InitTransports()
     {
         if (m_BP3Serializer.m_Parameters.AsyncTasks)
         {
-            m_FutureOpenFiles = m_FileDataManager.OpenFilesAsync(
+            m_FileDataManager.OpenFilesAsync(
                 bpSubStreamNames, m_OpenMode, m_IO.m_TransportsParameters,
                 m_BP3Serializer.m_Profiler.m_IsActive);
         }
@@ -341,11 +341,6 @@ void BP3Writer::WriteData(const bool isFinal, const int transportIndex)
         m_BP3Serializer.CloseStream(m_IO);
     }
 
-    if (m_FutureOpenFiles.valid())
-    {
-        m_FutureOpenFiles.get();
-    }
-
     m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
                                  dataSize, transportIndex);
 
@@ -373,11 +368,6 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
             const format::Buffer &bufferSTL =
                 m_BP3Serializer.m_Aggregator.GetConsumerBuffer(
                     m_BP3Serializer.m_Data);
-
-            if (m_FutureOpenFiles.valid())
-            {
-                m_FutureOpenFiles.get();
-            }
 
             m_FileDataManager.WriteFiles(bufferSTL.Data(), bufferSTL.m_Position,
                                          transportIndex);
