@@ -49,6 +49,10 @@ target_link_libraries(adios2_f PRIVATE adios2)
 
 
 if(ADIOS2_HAVE_MPI)
+  target_sources(adios2_f PRIVATE
+    f2c/adios2_f2c_adios_mpi.cpp
+    f2c/adios2_f2c_io_mpi.cpp
+  )
   target_compile_definitions(adios2_f PUBLIC ADIOS2_HAVE_MPI_F)
   target_link_libraries(adios2_f PRIVATE MPI::MPI_Fortran MPI::MPI_C)
 endif()
