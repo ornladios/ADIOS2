@@ -51,7 +51,7 @@ program helloInsituMPIWriter
     count_dims = (/ ndx, ndy /)
 
     ! Create adios handler passing the communicator, config file, debug mode and error flag
-    call adios2_init_config(adios, xmlfile, comm, adios2_debug_mode_on, ierr)
+    call adios2_init(adios, xmlfile, comm, adios2_debug_mode_on, ierr)
 
     ! Declare an IO process configuration inside adios, 
     ! Engine choice and parameters for 'writer' come from the config file
