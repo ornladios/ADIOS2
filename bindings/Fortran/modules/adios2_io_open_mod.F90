@@ -4,9 +4,6 @@
 !
 !  adios2_io_open_mod.f90 : ADIOS2 Fortran bindings for IO class open function
 !
-!   Created on: Mar 13, 2017
-!       Author: William F Godoy godoywf@ornl.gov
-!
 
 module adios2_io_open_mod
     use adios2_parameters_mod
@@ -14,7 +11,9 @@ module adios2_io_open_mod
 
     interface adios2_open
         module procedure adios2_open_old_comm
+#ifdef ADIOS2_HAVE_MPI_F
         module procedure adios2_open_new_comm
+#endif
     end interface
 
 contains
@@ -38,6 +37,8 @@ contains
 
     end subroutine
 
+#ifdef ADIOS2_HAVE_MPI_F
+
     subroutine adios2_open_new_comm(engine, io, name, adios2_mode, comm, ierr)
         type(adios2_engine), intent(out) :: engine
         type(adios2_io), intent(in) :: io
@@ -58,5 +59,7 @@ contains
         end if
 
     end subroutine
+
+#endif
 
 end module
