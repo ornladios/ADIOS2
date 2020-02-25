@@ -77,11 +77,14 @@ public:
      * @param openMode
      * @param parametersVector
      * @param profile
-     * @return
+     *
+     *   Opens happen asynchronously, but any future call waits for their
+     * completion
      */
-    std::future<void> OpenFilesAsync(
-        const std::vector<std::string> &fileNames, const Mode openMode,
-        const std::vector<Params> &parametersVector, const bool profile);
+    void OpenFilesAsync(const std::vector<std::string> &fileNames,
+                        const Mode openMode,
+                        const std::vector<Params> &parametersVector,
+                        const bool profile);
 
     /**
      * Used for sub-files defined by index
@@ -175,6 +178,7 @@ public:
 protected:
     helper::Comm const &m_Comm;
     const bool m_DebugMode = false;
+    mutable std::future<void> m_FutureOpenFiles;
 
     std::shared_ptr<Transport> OpenFileTransport(const std::string &fileName,
                                                  const Mode openMode,
@@ -185,6 +189,8 @@ protected:
         std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator
             itTransport,
         const std::string hint) const;
+
+    void WaitForAsync() const;
 };
 
 } // end namespace transport
