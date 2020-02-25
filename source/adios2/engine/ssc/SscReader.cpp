@@ -36,6 +36,19 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     {
         m_MpiMode = it->second;
     }
+    it = m_IO.m_Parameters.find("Verbose");
+    if (it != m_IO.m_Parameters.end())
+    {
+        try
+        {
+            m_Verbosity = std::stoi(it->second);
+        }
+        catch (...)
+        {
+            std::cerr << "Engine parameter Verbose can only be integer numbers"
+                      << std::endl;
+        }
+    }
 
     m_Buffer.resize(1);
 
