@@ -14,32 +14,32 @@ module adios2_adios_init_mod
     implicit none
 
     interface adios2_init
-        module procedure adios2_init_nompi
-        module procedure adios2_init_nompi_debug
-        module procedure adios2_init_config
-        module procedure adios2_init_config_debug
+        module procedure adios2_init_serial
+        module procedure adios2_init_debug_serial
+        module procedure adios2_init_config_serial
+        module procedure adios2_init_config_debug_serial
     end interface
 
 contains
 
-    subroutine adios2_init_nompi(adios, adios2_debug_mode, ierr)
+    subroutine adios2_init_serial(adios, adios2_debug_mode, ierr)
         type(adios2_adios), intent(out) :: adios
         logical, value, intent(in) :: adios2_debug_mode
         integer, intent(out) :: ierr
 
-        call adios2_init_config(adios, char(0), adios2_debug_mode, ierr)
+        call adios2_init_config_serial(adios, char(0), adios2_debug_mode, ierr)
 
     end subroutine
 
-    subroutine adios2_init_nompi_debug(adios, ierr)
+    subroutine adios2_init_debug_serial(adios, ierr)
         type(adios2_adios), intent(out) :: adios
         integer, intent(out) :: ierr
 
-        call adios2_init_config(adios, char(0), .true., ierr)
+        call adios2_init_config_serial(adios, char(0), .true., ierr)
 
     end subroutine
 
-    subroutine adios2_init_config(adios, config_file, adios2_debug_mode, ierr)
+    subroutine adios2_init_config_serial(adios, config_file, adios2_debug_mode, ierr)
         type(adios2_adios), intent(out) :: adios
         character*(*), intent(in) :: config_file
         logical, value, intent(in) :: adios2_debug_mode
@@ -53,12 +53,12 @@ contains
 
     end subroutine
 
-    subroutine adios2_init_config_debug(adios, config_file, ierr)
+    subroutine adios2_init_config_debug_serial(adios, config_file, ierr)
         type(adios2_adios), intent(out) :: adios
         character*(*), intent(in) :: config_file
         integer, intent(out) :: ierr
 
-        call adios2_init_config(adios, config_file, .true., ierr)
+        call adios2_init_config_serial(adios, config_file, .true., ierr)
 
     end subroutine
 
