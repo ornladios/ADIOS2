@@ -96,7 +96,7 @@ program TestSstWrite
   !Create adios handler passing the communicator, debug mode and error flag
   call adios2_init(adios, testComm, adios2_debug_mode_on, ierr)
 #else
-  call adios2_init_nompi(adios, adios2_debug_mode_on, ierr)
+  call adios2_init(adios, adios2_debug_mode_on, ierr)
 #endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!WRITER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

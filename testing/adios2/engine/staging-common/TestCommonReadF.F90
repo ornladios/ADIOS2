@@ -77,8 +77,8 @@ program TestSstRead
   irank = 0;
   isize = 1;
 
-  !Create adios handler passing the communicator, debug mode and error flag
-  call adios2_init_nompi(adios, adios2_debug_mode_on, ierr)
+  !Create adios handler passing the debug mode and error flag
+  call adios2_init(adios, adios2_debug_mode_on, ierr)
 #endif
   !!!!!!!!!!!!!!!!!!!!!!!!! READER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! Declare io reader
