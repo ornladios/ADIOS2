@@ -13,14 +13,14 @@
 #   PythonModule_${module_NAME}_FOUND - System has the module in question
 #
 # and the following imported targets:
-#   PythonModule::${module_NAME}
+#   Python::${module_NAME}
 #
 # This is intented to be called by specifying components for the module name
 # and any additional header files and libraries that may be needed to interface
 # with it.
 #
 # For example, say you want to search for mpi4py but you also need it's header
-# files to use for interfacing with your own python bibndings that use MPI.
+# files to use for interfacing with your own python bindings that use MPI.
 # You would call:
 #
 # find_package(PythonModule REQUIRED COMPONENTS mpi4py mpi4py/mpi4py.h)
@@ -70,12 +70,14 @@ set( PythonModule_${module_NAME}_PATH
   CACHE PATH \"Python module ${module_NAME}\" FORCE)
 ")
     else()
-      include(CMakeFindDependencyMacro)
-      find_dependency(PythonInterp)
-      if(PythonInterp_FOUND)
+      if(NOT Python_Interpreter_FOUND)
+        include(CMakeFindDependencyMacro)
+        find_dependency(Python COMPONENTS Interpreter)
+      endif()
+      if(Python_Interpreter_FOUND)
         execute_process(
           COMMAND
-            ${PYTHON_EXECUTABLE}
+            ${Python_EXECUTABLE}
               -c "import ${module_NAME}; print(${module_NAME}.__path__[0])"
           RESULT_VARIABLE result
           OUTPUT_VARIABLE output
@@ -130,7 +132,7 @@ endif()
 if(PythonModule_${module_NAME}_FOUND AND
   NOT TARGET ${module_NAME})
   add_library(${module_NAME} INTERFACE)
-  add_library(PythonModule::${module_NAME} ALIAS ${module_NAME})
+  add_library(Python::${module_NAME} ALIAS ${module_NAME})
   foreach(inc_var IN LISTS include_vars)
     target_include_directories(${module_NAME} INTERFACE ${${inc_var}})
   endforeach()

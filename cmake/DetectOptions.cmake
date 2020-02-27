@@ -9,6 +9,27 @@
 # them, otherwise we disable it.  If explicitly ON then a failure to find
 # dependencies is an error,
 
+# Helper function to strip a common prefix off an input string
+function(string_strip_prefix in0 in1 outVar)
+  string(LENGTH "${in0}" len0)
+  string(LENGTH "${in1}" len1)
+  set(lenMax ${len0})
+  if(len1 LESS len0)
+    set(lenMax ${len1})
+  endif()
+  set(idxNoPfx 0)
+  foreach(len RANGE 1 ${lenMax})
+    string(SUBSTRING "${in0}" 1 ${len} sub0)
+    string(SUBSTRING "${in1}" 1 ${len} sub1)
+    set(idxNoPfx ${len})
+    if(NOT (sub0 STREQUAL sub1))
+      break()
+    endif()
+  endforeach()
+  string(SUBSTRING "${in0}" ${idxNoPfx} ${len0} outTmp)
+  set(${outVar} "${outTmp}" PARENT_SCOPE)
+endfunction()
+
 # Blosc
 if(ADIOS2_USE_Blosc STREQUAL AUTO)
   find_package(Blosc 1.7)
@@ -167,6 +188,8 @@ elseif(ADIOS2_USE_HDF5)
 endif()
 
 # Python
+
+# Not supported on PGI
 if(CMAKE_CXX_COMPILER_ID STREQUAL PGI)
   if(ADIOS2_USE_Python STREQUAL ON)
     message(FATAL_ERROR "Python bindings are not supported with the PGI compiler")
@@ -175,24 +198,54 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL PGI)
     set(ADIOS2_USE_Python OFF)
   endif()
 endif()
-if(ADIOS2_USE_Python)
-  if(NOT (ADIOS2_USE_Python STREQUAL AUTO))
-    set(python_find_args REQUIRED)
-  endif()
-  if(BUILD_SHARED_LIBS)
-    set(Python_ADDITIONAL_VERSIONS "3;2.7"
-      CACHE STRING "Python versions to search for"
-    )
-    mark_as_advanced(Python_ADDITIONAL_VERSIONS)
-    list(APPEND python_find_args COMPONENTS Interp Libs numpy)
-    if(ADIOS2_HAVE_MPI)
-      list(APPEND python_find_args "mpi4py\\\;mpi4py/mpi4py.h")
-    endif()
-    find_package(PythonFull ${python_find_args})
+
+# Not supported without shared libs
+if(NOT SHARED_LIBS_SUPPORTED)
+  if(ADIOS2_USE_Python STREQUAL ON)
+    message(FATAL_ERROR "Python bindings are not supported without shared library support")
+  elseif(ADIOS2_USE_Python STREQUAL AUTO)
+    message(WARNING "Disabling python bindings since no shared library support was detected.")
+    set(ADIOS2_USE_Python OFF)
   endif()
 endif()
-if(PythonFull_FOUND)
-  set(ADIOS2_HAVE_Python ON)
+
+if(ADIOS2_USE_Python STREQUAL AUTO)
+  find_package(Python COMPONENTS Interpreter Development NumPy)
+  if(Python_FOUND AND ADIOS2_HAVE_MPI)
+    find_package(PythonModule COMPONENTS mpi4py mpi4py/mpi4py.h)
+  endif()
+elseif(ADIOS2_USE_Python)
+  find_package(Python REQUIRED COMPONENTS Interpreter Development NumPy)
+  if(ADIOS2_HAVE_MPI)
+    find_package(PythonModule REQUIRED COMPONENTS mpi4py mpi4py/mpi4py.h)
+  endif()
+endif()
+if(Python_FOUND)
+  if(ADIOS2_HAVE_MPI)
+    if(PythonModule_mpi4py_FOUND)
+      set(ADIOS2_HAVE_Python ON)
+    endif()
+  else()
+    set(ADIOS2_HAVE_Python ON)
+  endif()
+endif()
+if(ADIOS2_HAVE_Python)
+  # Setup output directories
+  string_strip_prefix(
+    "${Python_SITEARCH}" "${Python_EXECUTABLE}" CMAKE_INSTALL_PYTHONDIR_DEFAULT
+  )
+  set(CMAKE_INSTALL_PYTHONDIR "${CMAKE_INSTALL_PYTHONDIR_DEFAULT}"
+    CACHE PATH "Install directory for python modules"
+  )
+  mark_as_advanced(CMAKE_INSTALL_PYTHONDIR)
+  set(CMAKE_PYTHON_OUTPUT_DIRECTORY
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}
+  )
+endif()
+
+# Even if no python support, we still want the interpreter for tests
+if(NOT Python_Interpreter_FOUND)
+  find_package(Python REQUIRED COMPONENTS Interpreter)
 endif()
 
 # Sst

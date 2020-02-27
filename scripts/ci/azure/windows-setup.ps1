@@ -44,6 +44,16 @@ function main () {
         Write-Host "##vso[task.setvariable variable=MSMPI_LIB32;]C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x86"
         Write-Host "##vso[task.setvariable variable=MSMPI_LIB64;]C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x64"
     }
+
+    # Install Numpy
+    #Write-Host "Installing NumPy"
+    #choco install -y numpy
+
+    # Install mpi4py
+    #if($jobName -match "msmpi") {
+    #    Write-Host "Installing mpi4py"
+    #    pip install mpi4py
+    #}
 }
 
 main
