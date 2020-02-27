@@ -160,7 +160,8 @@ int main(int argc, char *argv[])
         {
             if (!settings.myRank)
             {
-                std::cout << "Step " << step << ": " << std::endl;
+                std::cout << "App " + std::to_string(settings.appId) + " Step "
+                          << step << ": " << std::endl;
             }
             for (const auto cmd : cfg.commands)
             {

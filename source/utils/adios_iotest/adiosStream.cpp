@@ -206,10 +206,14 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
         MPI_Allreduce(&readTime, &minReadTime, 1, MPI_DOUBLE, MPI_MIN, comm);
         if (settings.myRank == 0)
         {
-            std::cout << "        Max read time = " << maxReadTime << std::endl;
-            std::cout << "        Min read time = " << minReadTime << std::endl;
+            std::cout << "    App " << settings.appId
+                      << ": Max read time = " << maxReadTime << std::endl;
+            std::cout << "    App " << settings.appId
+                      << ": Min read time = " << minReadTime << std::endl;
             std::ofstream rd_perf_log;
-            rd_perf_log.open("read_perf.txt", std::ios::app);
+            rd_perf_log.open("read_perf_" + std::to_string(settings.appId) +
+                                 ".txt",
+                             std::ios::app);
             rd_perf_log << std::to_string(maxReadTime) + ", " +
                                std::to_string(minReadTime) + "\n";
             rd_perf_log.close();
@@ -251,8 +255,8 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
         std::cout << std::endl;
     }
 
-    const double div =
-        pow(10.0, static_cast<double>(settings.ndigits(cfg.nSteps - 1)));
+    size_t s = (cfg.nSteps > 0 ? cfg.nSteps : 1000);
+    const double div = pow(10.0, static_cast<double>(settings.ndigits(s - 1)));
     double myValue = static_cast<double>(settings.myRank) +
                      static_cast<double>(step - 1) / div;
 
@@ -314,12 +318,14 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
         MPI_Allreduce(&writeTime, &minWriteTime, 1, MPI_DOUBLE, MPI_MIN, comm);
         if (settings.myRank == 0)
         {
-            std::cout << "        Max write time = " << maxWriteTime
-                      << std::endl;
-            std::cout << "        Min write time = " << minWriteTime
-                      << std::endl;
+            std::cout << "    App " << settings.appId
+                      << ": Max write time = " << maxWriteTime << std::endl;
+            std::cout << "    App " << settings.appId
+                      << ": Min write time = " << minWriteTime << std::endl;
             std::ofstream wr_perf_log;
-            wr_perf_log.open("write_perf.txt", std::ios::app);
+            wr_perf_log.open("write_perf_" + std::to_string(settings.appId) +
+                                 ".txt",
+                             std::ios::app);
             wr_perf_log << std::to_string(maxWriteTime) + ", " +
                                std::to_string(minWriteTime) + "\n";
             wr_perf_log.close();
