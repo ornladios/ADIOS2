@@ -212,6 +212,11 @@ void SstWriter::FFSMarshalAttributes()
 void SstWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
+    if (!m_BetweenStepPairs)
+    {
+        throw std::logic_error(
+            "ERROR: EndStep() is called without a successful BeginStep()");
+    }
     m_BetweenStepPairs = false;
     if (m_WriterDefinitionsLocked && !m_DefinitionsNotified)
     {
