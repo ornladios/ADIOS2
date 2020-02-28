@@ -28,7 +28,7 @@ contains
 
     subroutine adios2_init_serial(adios, adios2_debug_mode, ierr)
         type(adios2_adios), intent(out) :: adios
-        logical, value, intent(in) :: adios2_debug_mode
+        logical, intent(in) :: adios2_debug_mode
         integer, intent(out) :: ierr
 
         call adios2_init_config_serial(adios, char(0), adios2_debug_mode, ierr)
@@ -46,7 +46,7 @@ contains
     subroutine adios2_init_config_serial(adios, config_file, adios2_debug_mode, ierr)
         type(adios2_adios), intent(out) :: adios
         character*(*), intent(in) :: config_file
-        logical, value, intent(in) :: adios2_debug_mode
+        logical, intent(in) :: adios2_debug_mode
         integer, intent(out) :: ierr
         ! local
         integer debug_mode
@@ -71,7 +71,7 @@ contains
     subroutine adios2_init_mpi(adios, comm, adios2_debug_mode, ierr)
         type(adios2_adios), intent(out) :: adios
         integer, intent(in) :: comm
-        logical, value, intent(in) :: adios2_debug_mode
+        logical, intent(in) :: adios2_debug_mode
         integer, intent(out) :: ierr
 
         call adios2_init_config_mpi(adios, char(0), comm, adios2_debug_mode, ierr)
@@ -92,7 +92,7 @@ contains
         type(adios2_adios), intent(out) :: adios
         character*(*), intent(in) :: config_file
         integer, intent(in) :: comm
-        logical, value, intent(in) :: adios2_debug_mode
+        logical, intent(in) :: adios2_debug_mode
         integer, intent(out) :: ierr
         ! local
         integer debug_mode
