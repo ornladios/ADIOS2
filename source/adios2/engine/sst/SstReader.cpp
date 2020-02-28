@@ -348,6 +348,11 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
+    if (!m_BetweenStepPairs)
+    {
+        throw std::logic_error(
+            "ERROR: EndStep() is called without a successful BeginStep()");
+    }
     m_BetweenStepPairs = false;
     TAU_SCOPED_TIMER_FUNC();
     if (m_ReaderSelectionsLocked && !m_DefinitionsNotified)
