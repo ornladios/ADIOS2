@@ -55,7 +55,8 @@ enum StreamStatus
     Established,
     PeerClosed,
     PeerFailed,
-    Closed
+    Closed,
+    Destroyed
 };
 
 static char *SSTStreamStatusStr[] = {"NotOpen",    "Opening",    "Established",
