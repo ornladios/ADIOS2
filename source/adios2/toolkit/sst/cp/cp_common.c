@@ -998,7 +998,7 @@ extern void SstStreamDestroy(SstStream Stream)
     CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
                Stream->Filename);
     pthread_mutex_lock(&Stream->DataLock);
-    Stream->Status = Closed;
+    Stream->Status = Destroyed;
     struct _TimestepMetadataList *Next = Stream->Timesteps;
     while (Next)
     {
@@ -1139,7 +1139,6 @@ extern void SstStreamDestroy(SstStream Stream)
         CP_verbose(
             Stream,
             "Reference count now zero, Destroying process SST info cache\n");
-        // wait .1 sec for last messages
         CManager_close(CPInfo->cm);
         if (CPInfo->ffs_c)
             free_FFSContext(CPInfo->ffs_c);
