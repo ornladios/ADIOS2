@@ -1,4 +1,4 @@
-pybind11_add_module(adios2py MODULE
+Python_add_library(adios2py MODULE
   py11ADIOS.cpp
   py11IO.cpp
   py11Variable.cpp
@@ -8,31 +8,13 @@ pybind11_add_module(adios2py MODULE
   py11File.cpp py11File.tcc
   py11glue.cpp
 )
-target_link_libraries(adios2py PRIVATE adios2)
+target_link_libraries(adios2py PRIVATE adios2 pybind11 Python::NumPy)
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(adios2py PRIVATE PythonModule::mpi4py)
+  target_link_libraries(adios2py PRIVATE Python::mpi4py)
 endif()
 
-if(WIN32)
-  set(CMAKE_INSTALL_PYTHONDIR_DEFAULT
-    "${CMAKE_INSTALL_LIBDIR}\\site-packages"
-  )
-else()
-  set(CMAKE_INSTALL_PYTHONDIR_DEFAULT
-    "${CMAKE_INSTALL_LIBDIR}/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages"
-  )
-endif()
-set(CMAKE_INSTALL_PYTHONDIR "${CMAKE_INSTALL_PYTHONDIR_DEFAULT}"
-  CACHE PATH "Install directory for python modules"
-)
-mark_as_advanced(CMAKE_INSTALL_PYTHONDIR)
-
-set(CMAKE_PYTHON_OUTPUT_DIRECTORY
-  "${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}"
-  CACHE PATH "Build directory for python modules"
-)
-mark_as_advanced(CMAKE_PYTHON_OUTPUT_DIRECTORY)
 set_target_properties(adios2py PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
   OUTPUT_NAME adios2
   ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}
