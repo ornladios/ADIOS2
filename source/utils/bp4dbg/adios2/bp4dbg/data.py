@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import numpy as np
 from os import fstat
-import bp4dbg_utils
+from .utils import *
 
 
 def ReadEncodedString(f, ID, limit, lensize=2):

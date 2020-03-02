@@ -3,7 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 from os import fstat
-import bp4dbg_utils
+from .utils import *
 
 
 def ReadIndex(f, fileSize):

@@ -4,10 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 import argparse
 from os.path import basename, exists, isdir
 import glob
-from bp4dbg_data import DumpData
-from bp4dbg_idxtable import DumpIndexTable
-from bp4dbg_metadata import DumpMetaData
-
+from adios2.bp4dbg import *
 
 def SetupArgs():
     parser = argparse.ArgumentParser()
