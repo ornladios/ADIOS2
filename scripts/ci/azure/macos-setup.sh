@@ -17,7 +17,7 @@ echo "Installing CMake Nightly"
 curl -L https://cmake.org/files/dev/cmake-3.16.20191218-g8262562-Darwin-x86_64.tar.gz | sudo tar -C /Applications --strip-components=1 -xzv
 
 echo "Installing Kitware Ninja"
-curl -L https://github.com/Kitware/ninja/releases/download/v1.9.0.g99df1.kitware.dyndep-1.jobserver-1/ninja-1.9.0.g99df1.kitware.dyndep-1.jobserver-1_x86_64-apple-darwin.tar.gz | tar -C /usr/local/bin --strip-components=1 -xzv
+brew install ninja
 
 echo "Installing GCC"
 brew install gcc
