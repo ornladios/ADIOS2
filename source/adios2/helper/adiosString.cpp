@@ -338,6 +338,11 @@ size_t StringToByteUnits(const std::string &input, const bool debugMode,
         units = "b";
         unitsLength = 1;
     }
+    else
+    {
+        units = "b";
+        unitsLength = 0;
+    }
 
     const std::string number(input.substr(0, input.size() - unitsLength));
     const size_t factor = BytesFactor(units, debugMode);
