@@ -7,7 +7,7 @@
  *  Created on: Jul 25, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
-
+#include <sstream>
 #include "CompressZFP.h"
 
 #include "adios2/helper/adiosFunctions.h"
@@ -244,11 +244,15 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions,
             (hasRate && hasPrecision) ||
             !(hasAccuracy || hasRate || hasPrecision))
         {
-            throw std::invalid_argument("ERROR: zfp parameters accuracy, "
-                                        "rate, and precision are mutually "
-                                        "exclusive, only one of them is "
-                                        "mandatory, from "
-                                        "operator CompressZfp\n");
+            std::ostringstream oss;
+            oss << "\nError: Requisite parameters to zfp not found.";
+            oss << " The key must be one and only one of 'accuracy', 'rate', or 'precision', case sensitive.";
+            oss << " The key and value provided are ";
+            for (auto & p : parameters)
+            {
+                oss << "(" << p.first << ", " << p.second << ").";
+            }
+            throw std::invalid_argument(oss.str());
         }
     }
 
