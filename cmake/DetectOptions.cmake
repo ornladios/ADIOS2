@@ -229,7 +229,13 @@ if(Python_FOUND)
     set(ADIOS2_HAVE_Python ON)
   endif()
 endif()
-if(ADIOS2_HAVE_Python)
+
+# Even if no python support, we still want the interpreter for tests
+if(NOT Python_Interpreter_FOUND)
+  find_package(Python REQUIRED COMPONENTS Interpreter)
+endif()
+
+if(Python_Interpreter_FOUND)
   # Setup output directories
   string_strip_prefix(
     "${Python_SITEARCH}" "${Python_EXECUTABLE}" CMAKE_INSTALL_PYTHONDIR_DEFAULT
@@ -241,11 +247,6 @@ if(ADIOS2_HAVE_Python)
   set(CMAKE_PYTHON_OUTPUT_DIRECTORY
     ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}
   )
-endif()
-
-# Even if no python support, we still want the interpreter for tests
-if(NOT Python_Interpreter_FOUND)
-  find_package(Python REQUIRED COMPONENTS Interpreter)
 endif()
 
 # Sst
