@@ -1,7 +1,6 @@
-#include <fstream>
 #include <adios2.h>
+#include <fstream>
 #include <gtest/gtest.h>
-
 
 TEST(ADIOS2ReadNonBPFile, ShortBadFile)
 {
@@ -23,17 +22,18 @@ TEST(ADIOS2ReadNonBPFile, LongBadFile)
 
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("Test");
-    //auto bpReader = io.Open("foo.bp", adios2::Mode::Read);
+    // auto bpReader = io.Open("foo.bp", adios2::Mode::Read);
     EXPECT_THROW(io.Open("foo.bp", adios2::Mode::Read), std::exception);
     std::remove("foo.bp");
 }
 
 TEST(ADIOS2ReadNonBPFile, LongBadFileWithValidEndianness)
 {
-    std::ofstream of("foo.bp",  std::ios::out | std::ios::binary);
+    std::ofstream of("foo.bp", std::ios::out | std::ios::binary);
     char a = 0x00;
-    for (size_t i = 0; i < 100; ++i) {
-        of.write(static_cast<char*>(&a), 1);
+    for (size_t i = 0; i < 100; ++i)
+    {
+        of.write(static_cast<char *>(&a), 1);
     }
     of.close();
 

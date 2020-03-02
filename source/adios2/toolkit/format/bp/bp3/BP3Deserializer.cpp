@@ -75,9 +75,11 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
     if (endianness > 1)
     {
-        std::string err = "The endianness flag in the .bp file was neither zero nor one ("
-                         + std::to_string(endianness)
-                         + "), this indicates the the file is either corrupted, or not a .bp file.";
+        std::string err =
+            "The endianness flag in the .bp file was neither zero nor one (" +
+            std::to_string(endianness) +
+            "), this indicates the the file is either corrupted, or not a .bp "
+            "file.";
         throw std::runtime_error(err);
     }
     m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
@@ -187,8 +189,7 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
         {
 
 #define make_case(T)                                                           \
-    case (TypeTraits<T>::type_enum):                                           \
-    {                                                                          \
+    case (TypeTraits<T>::type_enum): {                                         \
         DefineVariableInEngineIO<T>(header, engine, buffer, position);         \
         break;                                                                 \
     }
@@ -281,15 +282,13 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
         {
 
 #define make_case(T)                                                           \
-    case (TypeTraits<T>::type_enum):                                           \
-    {                                                                          \
+    case (TypeTraits<T>::type_enum): {                                         \
         DefineAttributeInEngineIO<T>(header, engine, buffer, position);        \
         break;                                                                 \
     }
             ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(make_case)
 #undef make_case
-        case (type_string_array):
-        {
+        case (type_string_array): {
             DefineAttributeInEngineIO<std::string>(header, engine, buffer,
                                                    position);
             break;

@@ -179,11 +179,12 @@ void BP3Reader::InitBuffer()
         {
             if (m_DebugMode)
             {
-                std::string err = "The size of the input file " +  m_Name
-                                   + "(" + std::to_string(fileSize)
-                                   + " bytes) is less than the minimum BP3 header size, which is "
-                                   + std::to_string(miniFooterSize) + " bytes."
-                                   + " It is unlikely that this is a .bp file.";
+                std::string err = "The size of the input file " + m_Name + "(" +
+                                  std::to_string(fileSize) +
+                                  " bytes) is less than the minimum BP3 header "
+                                  "size, which is " +
+                                  std::to_string(miniFooterSize) + " bytes." +
+                                  " It is unlikely that this is a .bp file.";
                 throw std::logic_error(err);
             }
         }
