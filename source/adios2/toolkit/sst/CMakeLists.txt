@@ -81,4 +81,14 @@ if(NOT BUILD_SHARED_LIBS)
   install(TARGETS sst EXPORT adios2Exports)
 endif()
 
+if(CMAKE_VERSION VERSION_LESS 3.14)
+  # CMake < 3.14 forgets to propagate private dependencies of object libraries.
+  # Propagate them the same way CMake >= 3.14 do.
+  # FIXME: Drop this workaround when we require CMake 3.14.
+  get_property(sst_deps TARGET sst PROPERTY LINK_LIBRARIES)
+  foreach(dep ${sst_deps})
+    target_link_libraries(sst INTERFACE "$<LINK_ONLY:${dep}>")
+  endforeach()
+endif()
+
 add_subdirectory(util)
