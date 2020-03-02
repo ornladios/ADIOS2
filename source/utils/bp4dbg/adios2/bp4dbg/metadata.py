@@ -2,8 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import numpy as np
 from os import fstat
-import bp4dbg_utils
-
+from .utils import *
 
 def ReadEncodedStringFromBuffer(buf, pos, ID, limit, lenbytes=2):
     # 'lenbytes' bytes length + string without \0
