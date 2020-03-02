@@ -73,6 +73,15 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     const size_t bufferSize = buffer.size();
     size_t position = bufferSize - 4;
     const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
+    if (endianness > 1)
+    {
+        std::string err =
+            "The endianness flag in the .bp file was neither zero nor one (" +
+            std::to_string(endianness) +
+            "), this indicates the the file is either corrupted, or not a .bp "
+            "file.";
+        throw std::runtime_error(err);
+    }
     m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
 #ifndef ADIOS2_HAVE_ENDIAN_REVERSE
     if (m_DebugMode)

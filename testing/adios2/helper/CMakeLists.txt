@@ -6,3 +6,4 @@
 gtest_add_tests_helper(Strings FALSE Helper Helper. "")
 gtest_add_tests_helper(DivideBlock FALSE "" Helper. "")
 gtest_add_tests_helper(MinMaxs FALSE "" Helper. "")
+gtest_add_tests_helper(ReadNonBPFile FALSE "" Helper. "")
