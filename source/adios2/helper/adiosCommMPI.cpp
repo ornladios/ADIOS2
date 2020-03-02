@@ -198,7 +198,9 @@ void CommImplMPI::Free(const std::string &hint)
     if (m_MPIComm != MPI_COMM_NULL && m_MPIComm != MPI_COMM_WORLD &&
         m_MPIComm != MPI_COMM_SELF)
     {
-        CheckMPIReturn(MPI_Comm_free(&m_MPIComm), hint);
+        MPI_Comm mpiComm = m_MPIComm;
+        m_MPIComm = MPI_COMM_NULL; // prevent freeing a second time
+        CheckMPIReturn(MPI_Comm_free(&mpiComm), hint);
     }
 }
 
