@@ -23,8 +23,8 @@ install:
 env:
   matrix:
     - BUILD_MATRIX_ENTRY=format
-    - BUILD_MATRIX_ENTRY=analyze
-    - BUILD_MATRIX_ENTRY=check
+    # - BUILD_MATRIX_ENTRY=analyze
+    # - BUILD_MATRIX_ENTRY=check
 script:
   - git reset --hard ${TRAVIS_PULL_REQUEST_SHA}
   - ${TRAVIS_BUILD_DIR}/scripts/travis/run.sh
