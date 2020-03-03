@@ -59,11 +59,6 @@ private:
     int m_ReaderSize;
 
     helper::MpiHandshake m_MpiHandshake;
-
-    int m_AppID = 0;
-    int m_AppSize = 0;
-    std::vector<std::vector<int>> m_WriterGlobalMpiInfo;
-    std::vector<std::vector<int>> m_ReaderGlobalMpiInfo;
     std::vector<int> m_AllWriterRanks;
     std::vector<int> m_AllReaderRanks;
 
@@ -106,8 +101,8 @@ private:
                            ssc::RankPosMap &allOverlapRanks);
 
     int m_Verbosity = 0;
-    int m_MaxStreamsPerApp = 4;
     int m_MaxFilenameLength = 128;
+    int m_RendezvousStreamCount = 1;
     int m_RendezvousAppCount = 2;
 };
 
