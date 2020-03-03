@@ -5,3 +5,7 @@
 
 add_subdirectory(manyvars)
 add_subdirectory(query)
+
+if(ADIOS2_BUILD_LARGE_TESTS)
+  add_subdirectory(largevar)
+endif()

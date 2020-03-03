@@ -221,8 +221,13 @@ else()
 endif()
 unset(BUILD_TESTING)
 option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree" 
-       ${ADIOS2_BUILD_TESTING_DEFAULT})
-       
+  ${ADIOS2_BUILD_TESTING_DEFAULT}
+)
+cmake_dependent_option(ADIOS2_BUILD_LARGE_TESTS "Build long running tests" OFF
+  "ADIOS2_BUILD_TESTING" OFF
+)
+
+
 include(CTest)
 set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})
 if(BUILD_TESTING)
