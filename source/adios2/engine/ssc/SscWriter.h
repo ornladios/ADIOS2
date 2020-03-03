@@ -96,6 +96,9 @@ private:
                            ssc::RankPosMap &allOverlapRanks);
 
     int m_Verbosity = 0;
+    int m_MaxStreamsPerApp = 4;
+    int m_MaxFilenameLength = 128;
+    int m_RendezvousAppCount = 2;
 };
 
 } // end namespace engine

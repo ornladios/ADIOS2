@@ -32,24 +32,11 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     m_WriterRank = m_Comm.Rank();
     m_WriterSize = m_Comm.Size();
 
-    auto it = m_IO.m_Parameters.find("MpiMode");
-    if (it != m_IO.m_Parameters.end())
-    {
-        m_MpiMode = it->second;
-    }
-    it = m_IO.m_Parameters.find("Verbose");
-    if (it != m_IO.m_Parameters.end())
-    {
-        try
-        {
-            m_Verbosity = std::stoi(it->second);
-        }
-        catch (...)
-        {
-            std::cerr << "Engine parameter Verbose can only be integer numbers"
-                      << std::endl;
-        }
-    }
+    ssc::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
+    ssc::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    ssc::GetParameter(m_IO.m_Parameters, "MaxStreamsPerApp", m_MaxStreamsPerApp);
+    ssc::GetParameter(m_IO.m_Parameters, "MaxFilenameLength", m_MaxFilenameLength);
+    ssc::GetParameter(m_IO.m_Parameters, "RendezvousAppCount", m_RendezvousAppCount);
 
     m_GlobalWritePattern.resize(m_WorldSize);
     m_GlobalReadPattern.resize(m_WorldSize);
@@ -192,7 +179,7 @@ void SscWriter::SyncMpiPattern()
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    m_MpiHandshake.Start(4, 128, 2, 'w', m_Name, CommAsMPI(m_Comm) );
+    m_MpiHandshake.Start(m_MaxStreamsPerApp, m_MaxFilenameLength, m_RendezvousAppCount, 'w', m_Name, CommAsMPI(m_Comm) );
     m_MpiHandshake.Wait(m_Name);
     m_MpiHandshake.PrintMaps();
 
