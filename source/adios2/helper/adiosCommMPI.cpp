@@ -567,17 +567,29 @@ Comm::Status CommReqImplMPI::Wait(const std::string &hint)
     return status;
 }
 
-Comm CommFromMPI(MPI_Comm mpiComm)
+Comm CommWithMPI(MPI_Comm mpiComm)
 {
     static InitMPI const initMPI;
     if (mpiComm == MPI_COMM_NULL)
     {
         return CommDummy();
     }
-    MPI_Comm newComm;
-    MPI_Comm_dup(mpiComm, &newComm);
-    auto comm = std::unique_ptr<CommImpl>(new CommImplMPI(newComm));
+    auto comm = std::unique_ptr<CommImpl>(new CommImplMPI(mpiComm));
     return CommImpl::MakeComm(std::move(comm));
+}
+
+Comm CommDupMPI(MPI_Comm mpiComm)
+{
+    MPI_Comm newComm;
+    if (mpiComm != MPI_COMM_NULL)
+    {
+        MPI_Comm_dup(mpiComm, &newComm);
+    }
+    else
+    {
+        newComm = MPI_COMM_NULL;
+    }
+    return CommWithMPI(newComm);
 }
 
 MPI_Comm CommAsMPI(Comm const &comm)

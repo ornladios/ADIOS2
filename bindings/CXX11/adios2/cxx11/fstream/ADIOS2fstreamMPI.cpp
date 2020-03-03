@@ -16,7 +16,7 @@ namespace adios2
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string engineType)
 : m_Stream(std::make_shared<core::Stream>(
-      name, ToMode(mode), helper::CommFromMPI(comm), engineType, "C++"))
+      name, ToMode(mode), helper::CommDupMPI(comm), engineType, "C++"))
 {
 }
 
@@ -24,7 +24,7 @@ fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string &configFile,
                  const std::string ioInConfigFile)
 : m_Stream(std::make_shared<core::Stream>(name, ToMode(mode),
-                                          helper::CommFromMPI(comm), configFile,
+                                          helper::CommDupMPI(comm), configFile,
                                           ioInConfigFile, "C++"))
 {
 }
@@ -34,7 +34,7 @@ void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
 {
     CheckOpen(name);
     m_Stream = std::make_shared<core::Stream>(
-        name, ToMode(mode), helper::CommFromMPI(comm), engineType, "C++");
+        name, ToMode(mode), helper::CommDupMPI(comm), engineType, "C++");
 }
 
 void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
@@ -43,7 +43,7 @@ void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
 {
     CheckOpen(name);
     m_Stream = std::make_shared<core::Stream>(
-        name, ToMode(mode), helper::CommFromMPI(comm), configFile,
+        name, ToMode(mode), helper::CommDupMPI(comm), configFile,
         ioInConfigFile, "C++");
 }
 

@@ -29,7 +29,7 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
         engine = reinterpret_cast<adios2_engine *>(
             &reinterpret_cast<adios2::core::IO *>(io)->Open(
                 name, adios2_ToOpenMode(mode),
-                adios2::helper::CommFromMPI(comm)));
+                adios2::helper::CommDupMPI(comm)));
     }
     catch (...)
     {

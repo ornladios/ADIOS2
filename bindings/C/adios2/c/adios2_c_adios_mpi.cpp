@@ -30,7 +30,7 @@ adios2_adios *adios2_init_config_glue_mpi(const char *config_file,
         const bool debugBool =
             (debug_mode == adios2_debug_mode_on) ? true : false;
         adios = reinterpret_cast<adios2_adios *>(new adios2::core::ADIOS(
-            config_file, adios2::helper::CommFromMPI(comm), debugBool,
+            config_file, adios2::helper::CommDupMPI(comm), debugBool,
             host_language));
     }
     catch (...)

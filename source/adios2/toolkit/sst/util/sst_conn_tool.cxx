@@ -7,7 +7,7 @@
 #ifdef ADIOS2_HAVE_MPI
 #include "adios2/helper/adiosCommMPI.h"
 static adios2::helper::Comm CommWorld =
-    adios2::helper::CommFromMPI(MPI_COMM_WORLD);
+    adios2::helper::CommWithMPI(MPI_COMM_WORLD);
 #else
 #include "adios2/helper/adiosCommDummy.h"
 static adios2::helper::Comm CommWorld = adios2::helper::CommDummy();

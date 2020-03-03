@@ -52,7 +52,7 @@ Reorganize::Reorganize(int argc, char *argv[])
 {
 #ifdef ADIOS2_HAVE_MPI
     {
-        auto commWorld = helper::CommFromMPI(MPI_COMM_WORLD);
+        auto commWorld = helper::CommWithMPI(MPI_COMM_WORLD);
         m_Comm = commWorld.Split(m_CommSplitColor, 0);
     }
 #else
