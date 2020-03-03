@@ -23,7 +23,7 @@ This component is created by passing:
 .. note::
 
    Unexpected system failures and runtime errors are always checked by throwing ``std::runtime_error``.
-   Keep in mind that Segmentation Faults are NOT runtime exceptions. We try to keep user interactions as friendly as possible, please report any bugs on github: https://github.com/ornladios/ADIOS2/issues
+   Keep in mind that Segmentation Faults are NOT runtime exceptions. We try to keep user interactions as friendly as possible, please report any bugs on GitHub: https://github.com/ornladios/ADIOS2/issues
 
 
 ``adios2::ADIOS`` objects can be created in MPI and non-MPI (serial) mode.

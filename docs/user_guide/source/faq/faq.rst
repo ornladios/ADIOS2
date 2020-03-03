@@ -50,7 +50,7 @@ Use the :ref:`C bindings`. C++11 is a brand new language standard and many new (
 Why are C and Fortran APIs missing functionality?
 -------------------------------------------------
 
-Because language instrinsics are NOT THE SAME. For example, C++ and Python support key/value pair structures natively, *e.g.* ``std::map`` and dictionaries, respectively.
+Because language intrinsics are NOT THE SAME. For example, C++ and Python support key/value pair structures natively, *e.g.* ``std::map`` and dictionaries, respectively.
 Fortran and C only support arrays natively.
 Use the right language (tool) for the right task.
 

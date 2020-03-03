@@ -71,7 +71,7 @@ The most common signature is the one that passes a ``Variable<T>`` object for th
 
       void Put(Variable<T> variable, const T* data, const adios2::Mode = adios2::Mode::Deferred);
 
-Optionally, adios2 Engines can provide direct access to its buffer memory using an overload that returns a piece of memory to a variable block, basically a zero-copy. Variable<T>::Span is based on a subset of the upcoming `C++20 std::span <https://en.cppreference.com/w/cpp/container/span>`_, which is non-owning and typed contiguous memory piece (it helps to review what std::span is, formely known as array_view). Spans act as a 1D memory container meant to be filled out by the application. It is safely used as any other STL sequence container, with iterators ``begin()`` and ``end()``, ``operator[]`` and ``at()``, while also providing ``data()`` and ``size()`` functions to manipulate the internal pointer.
+Optionally, adios2 Engines can provide direct access to its buffer memory using an overload that returns a piece of memory to a variable block, basically a zero-copy. Variable<T>::Span is based on a subset of the upcoming `C++20 std::span <https://en.cppreference.com/w/cpp/container/span>`_, which is non-owning and typed contiguous memory piece (it helps to review what std::span is, formerly known as array_view). Spans act as a 1D memory container meant to be filled out by the application. It is safely used as any other STL sequence container, with iterators ``begin()`` and ``end()``, ``operator[]`` and ``at()``, while also providing ``data()`` and ``size()`` functions to manipulate the internal pointer.
 
 Variable<T>::Span is helpful in situations in which temporaries are needed to create contiguous pieces of memory from non-contiguous pieces (``e.g.`` tables, arrays without ghost-cells), or just to save memory as the returned Variable<T>::Span can be used for computation, thus avoiding an extra copy from user memory into the adios buffer. 
 Variable<T>::Span combines a hybrid Sync and Deferred mode, in which the initial value and memory allocations are Sync, while data population and metadata collection are done at EndStep/PerformPuts/Close. Memory contracts are explained later in this chapter followed by examples.
@@ -537,7 +537,7 @@ Engine Polymorphism has a two-fold goal:
 
 1. Each Engine implements an orthogonal IO scenario targeting a use case (e.g. Files, WAN, InSitu MPI, etc) using a simple, unified API.
 
-2. Allow developers to build their own custom system solution based on their particular requirements in the own playground space. Resusable toolkit objects are available inside ADIOS2 for common tasks: bp buffering, transport management, transports, etc.
+2. Allow developers to build their own custom system solution based on their particular requirements in the own playground space. Reusable toolkit objects are available inside ADIOS2 for common tasks: bp buffering, transport management, transports, etc.
 
 A class that extends Engine must be thought of as a solution to a range of IO applications. Each engine must provide a list of supported parameters, set in the IO object creating this engine using ``IO::SetParameters, IO::SetParameter``, and supported transports (and their parameters) in ``IO::AddTransport``. Each Engine's particular options are documented in :ref:`Supported Engines`.
 

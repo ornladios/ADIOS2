@@ -29,7 +29,7 @@ C++11 Write example
    
    adios2::fstream oStream("cfd.bp", adios2::fstream::out, MPI_COMM_WORLD);
 
-   // NSteps from aplication
+   // NSteps from application
    for (std::size_t step = 0; step < NSteps; ++step)
    {
        if(rank == 0 && step == 0) // global variable
