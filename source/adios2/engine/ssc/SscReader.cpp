@@ -10,6 +10,7 @@
 
 #include "SscReader.tcc"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosJSONcomplex.h"
 #include "nlohmann/json.hpp"
@@ -191,13 +192,18 @@ void SscReader::EndStep()
 
 void SscReader::SyncMpiPattern()
 {
+    TAU_SCOPED_TIMER_FUNC();
+
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::SyncMpiPattern, World Rank " << m_WorldRank
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
 
-    TAU_SCOPED_TIMER_FUNC();
+    m_MpiHandshake.Start(4, 128, 2, 'r', m_Name, CommAsMPI(m_Comm) );
+    m_MpiHandshake.Wait(m_Name);
+    m_MpiHandshake.PrintMaps();
+
     if (m_WorldSize == m_ReaderSize)
     {
         throw(std::runtime_error("no writers are found"));

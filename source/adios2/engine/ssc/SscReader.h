@@ -14,6 +14,7 @@
 #include "SscHelper.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include "adios2/helper/adiosMpiHandshake.h"
 #include <mpi.h>
 #include <queue>
 
@@ -56,6 +57,9 @@ private:
     int m_WorldSize;
     int m_ReaderRank;
     int m_ReaderSize;
+
+    helper::MpiHandshake m_MpiHandshake;
+
     int m_AppID = 0;
     int m_AppSize = 0;
     std::vector<std::vector<int>> m_WriterGlobalMpiInfo;

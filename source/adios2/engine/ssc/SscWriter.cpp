@@ -10,10 +10,10 @@
 
 #include "SscWriter.tcc"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosJSONcomplex.h"
 #include "nlohmann/json.hpp"
 
-#include "adios2/helper/adiosCommMPI.h"
 
 namespace adios2
 {
@@ -191,6 +191,10 @@ void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
 void SscWriter::SyncMpiPattern()
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    m_MpiHandshake.Start(4, 128, 2, 'w', m_Name, CommAsMPI(m_Comm) );
+    m_MpiHandshake.Wait(m_Name);
+    m_MpiHandshake.PrintMaps();
 
     if (m_Verbosity >= 5)
     {
