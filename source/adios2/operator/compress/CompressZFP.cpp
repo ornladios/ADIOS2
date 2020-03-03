@@ -246,7 +246,7 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions,
             std::ostringstream oss;
             oss << "\nError: Requisite parameters to zfp not found.";
             oss << " The key must be one and only one of 'accuracy', 'rate', "
-                   "or 'precision', case sensitive.";
+                   "or 'precision'.";
             oss << " The key and value provided are ";
             for (auto &p : parameters)
             {

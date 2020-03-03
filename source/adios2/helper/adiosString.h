@@ -177,6 +177,14 @@ size_t StringToByteUnits(const std::string &input, const bool debugMode,
 std::string LowerCase(const std::string &input);
 
 /**
+ * Transforms parameter map to LowerCase.
+ * @param params parameter map
+ * @return parameter map with keys and values lower case.
+ */
+
+Params LowerCaseParams(const Params &params);
+
+/**
  * Extract inputs subset that matches a prefix input
  * @param prefix input prefix
  * @param inputs input names
