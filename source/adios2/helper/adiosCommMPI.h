@@ -23,9 +23,14 @@ namespace helper
 {
 
 /**
+ * @brief Create a communicator by taking ownership of a MPI communicator.
+ */
+Comm CommWithMPI(MPI_Comm mpiComm);
+
+/**
  * @brief Create a communicator by duplicating a MPI communicator.
  */
-Comm CommFromMPI(MPI_Comm mpiComm);
+Comm CommDupMPI(MPI_Comm mpiComm);
 
 /**
  * @brief Get the underlying raw MPI communicator.

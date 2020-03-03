@@ -254,7 +254,7 @@ Engine IO::Open(const std::string &name, const int mode, MPI4PY_Comm comm)
                             "for engine " + name + ", in call to IO::Open");
 
     return Engine(&m_IO->Open(name, static_cast<adios2::Mode>(mode),
-                              helper::CommFromMPI(comm)));
+                              helper::CommDupMPI(comm)));
 }
 #endif
 
