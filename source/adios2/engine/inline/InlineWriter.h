@@ -47,21 +47,10 @@ public:
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
-    void AddReadVariable(const std::string &name)
-    {
-        m_ReadVariables.insert(name);
-    }
-
 private:
     int m_Verbosity = 0;
     int m_WriterRank;       // my rank in the writers' comm
     int m_CurrentStep = -1; // steps start from 0
-
-    // EndStep must call PerformPuts if necessary
-    bool m_NeedPerformPuts = false;
-
-    // track which variables have been read, so their blockinfo can be cleared.
-    std::set<std::string> m_ReadVariables;
 
     void Init() final;
     void InitParameters() final;
@@ -88,7 +77,7 @@ private:
      */
     template <class T>
     void PutSyncCommon(Variable<T> &variable,
-                       const typename Variable<T>::Info &blockInfo);
+                       typename Variable<T>::Info &blockInfo);
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);

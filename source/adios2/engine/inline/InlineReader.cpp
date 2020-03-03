@@ -12,6 +12,7 @@
 #include "InlineReader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include <iostream>
 
@@ -26,6 +27,7 @@ InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
                            helper::Comm comm)
 : Engine("InlineReader", io, name, mode, std::move(comm))
 {
+    TAU_SCOPED_TIMER("InlineReader::Open");
     m_EndMessage = " in call to IO Open InlineReader " + m_Name + "\n";
     m_ReaderRank = m_Comm.Rank();
     Init();
@@ -38,22 +40,18 @@ InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
     }
 }
 
-InlineReader::~InlineReader()
-{
-    /* m_Inline deconstructor does close and finalize */
-    if (m_Verbosity == 5)
-    {
-        std::cout << "Inline Reader " << m_ReaderRank << " deconstructor on "
-                  << m_Name << "\n";
-    }
-}
-
 StepStatus InlineReader::BeginStep(const StepMode mode,
                                    const float timeoutSeconds)
 {
-    // step info should be received from the writer side in BeginStep()
-    // so this forced increase should not be here
-    ++m_CurrentStep;
+    TAU_SCOPED_TIMER("InlineReader::BeginStep");
+    // Reader should be on same step as writer
+    const auto &writer =
+        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
+    m_CurrentStep = writer.CurrentStep();
+    if (m_CurrentStep == -1)
+    {
+        return StepStatus::EndOfStream;
+    }
 
     if (m_Verbosity == 5)
     {
@@ -61,35 +59,35 @@ StepStatus InlineReader::BeginStep(const StepMode mode,
                   << "   BeginStep() new step " << m_CurrentStep << "\n";
     }
 
-    // m_IO Variables and Attributes should be defined at this point
-    // so that the application can inquire them and start getting data
-
     return StepStatus::OK;
 }
 
 void InlineReader::PerformGets()
 {
+    TAU_SCOPED_TIMER("InlineReader::PerformGets");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << "     PerformGets()\n";
     }
-    m_NeedPerformGets = false;
 }
 
-size_t InlineReader::CurrentStep() const { return m_CurrentStep; }
+size_t InlineReader::CurrentStep() const
+{
+    // Reader should be on same step as writer
+    // added here since it's not really necessary to use beginstep/endstep for
+    // this engine's reader so this ensures we do report the correct step
+    const auto &writer =
+        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
+    return writer.CurrentStep();
+}
 
 void InlineReader::EndStep()
 {
-    // EndStep should call PerformGets() if there are unserved GetDeferred()
-    // requests
-    if (m_NeedPerformGets)
-    {
-        PerformGets();
-    }
-
+    TAU_SCOPED_TIMER("InlineReader::EndStep");
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Reader " << m_ReaderRank << "   EndStep()\n";
+        std::cout << "Inline Reader " << m_ReaderRank << " EndStep() Step "
+                  << m_CurrentStep << std::endl;
     }
 }
 
@@ -98,15 +96,18 @@ void InlineReader::EndStep()
 #define declare_type(T)                                                        \
     void InlineReader::DoGetSync(Variable<T> &variable, T *data)               \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::DoGetSync");                           \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void InlineReader::DoGetDeferred(Variable<T> &variable, T *data)           \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::DoGetDeferred");                       \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
     typename Variable<T>::Info *InlineReader::DoGetBlockSync(                  \
         Variable<T> &variable)                                                 \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::DoGetBlockSync");                      \
         return GetBlockSyncCommon(variable);                                   \
     }
 
@@ -121,12 +122,14 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     InlineReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const      \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::AllStepsBlockInfo");                   \
         return std::map<size_t, std::vector<typename Variable<T>::Info>>();    \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::Info> InlineReader::DoBlocksInfo(        \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::DoBlocksInfo");                        \
         return variable.m_BlocksInfo;                                          \
     }
 
@@ -147,7 +150,6 @@ void InlineReader::InitParameters()
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 
         std::string value(pair.second);
-        // std::transform(value.begin(), value.end(), value.begin(), ::tolower);
 
         if (key == "verbose")
         {
@@ -180,6 +182,7 @@ void InlineReader::InitTransports()
 
 void InlineReader::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("InlineReader::DoClose");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << " Close(" << m_Name

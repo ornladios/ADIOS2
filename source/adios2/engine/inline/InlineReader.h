@@ -42,7 +42,7 @@ public:
     InlineReader(IO &adios, const std::string &name, const Mode mode,
                  helper::Comm comm);
 
-    ~InlineReader();
+    ~InlineReader() = default;
     StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;
     void PerformGets() final;
@@ -55,9 +55,6 @@ private:
 
     // step info should be received from the writer side in BeginStep()
     int m_CurrentStep = -1;
-
-    // EndStep must call PerformGets if necessary
-    bool m_NeedPerformGets = false;
 
     std::string m_WriterID;
 

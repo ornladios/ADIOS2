@@ -12,6 +12,7 @@
 #include "InlineWriter.tcc"
 
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include <iostream>
 
@@ -26,6 +27,7 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
                            helper::Comm comm)
 : Engine("InlineWriter", io, name, mode, std::move(comm))
 {
+    TAU_SCOPED_TIMER("InlineWriter::Open");
     m_EndMessage = " in call to InlineWriter " + m_Name + " Open\n";
     m_WriterRank = m_Comm.Rank();
     Init();
@@ -38,6 +40,7 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("InlineWriter::BeginStep");
     m_CurrentStep++; // 0 is the first step
     if (m_Verbosity == 5)
     {
@@ -45,14 +48,12 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
                   << "   BeginStep() new step " << m_CurrentStep << "\n";
     }
 
-    // Need to clear block info from previous step at this point.
-    if (m_ReadVariables.empty())
+    // m_BlocksInfo for all variables should be cleared at this point,
+    // whether they were read in the last step or not.
+    auto availVars = m_IO.GetAvailableVariables();
+    for (auto &varPair : availVars)
     {
-        return StepStatus::OK;
-    }
-
-    for (const std::string &name : m_ReadVariables)
-    {
+        const auto &name = varPair.first;
         const std::string type = m_IO.InquireVariableType(name);
 
         if (type == "compound")
@@ -68,44 +69,34 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 #undef declare_type
     }
 
-    m_ReadVariables.clear();
-
     return StepStatus::OK;
 }
 
-size_t InlineWriter::CurrentStep() const
-{
-    if (m_Verbosity == 5)
-    {
-        std::cout << "Inline Writer " << m_WriterRank
-                  << "   CurrentStep() returns " << m_CurrentStep << "\n";
-    }
-    return m_CurrentStep;
-}
+size_t InlineWriter::CurrentStep() const { return m_CurrentStep; }
 
 /* PutDeferred = PutSync, so nothing to be done in PerformPuts */
 void InlineWriter::PerformPuts()
 {
+    TAU_SCOPED_TIMER("InlineWriter::PerformPuts");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << "     PerformPuts()\n";
     }
-    m_NeedPerformPuts = false;
 }
 
 void InlineWriter::EndStep()
 {
-    if (m_NeedPerformPuts)
-    {
-        PerformPuts();
-    }
+    TAU_SCOPED_TIMER("InlineWriter::EndStep");
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Writer " << m_WriterRank << "   EndStep()\n";
+        std::cout << "Inline Writer " << m_WriterRank << " EndStep() Step "
+                  << m_CurrentStep << std::endl;
     }
 }
-void InlineWriter::Flush(const int transportIndex)
+
+void InlineWriter::Flush(const int)
 {
+    TAU_SCOPED_TIMER("InlineWriter::Flush");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << "   Flush()\n";
@@ -117,11 +108,12 @@ void InlineWriter::Flush(const int transportIndex)
 #define declare_type(T)                                                        \
     void InlineWriter::DoPutSync(Variable<T> &variable, const T *data)         \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineWriter::DoPutSync");                           \
         PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
-        /*reader uses: variable.m_BlocksInfo.clear();*/                        \
     }                                                                          \
     void InlineWriter::DoPutDeferred(Variable<T> &variable, const T *data)     \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineWriter::DoPutDeferred");                       \
         PutDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -165,11 +157,14 @@ void InlineWriter::InitTransports()
 
 void InlineWriter::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("InlineWriter::DoClose");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << " Close(" << m_Name
                   << ")\n";
     }
+    // end of stream
+    m_CurrentStep = -1;
 }
 
 } // end namespace engine
