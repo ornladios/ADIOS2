@@ -12,6 +12,7 @@
 #include "InlineWriter.tcc"
 
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include <iostream>
 
@@ -26,6 +27,7 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
                            helper::Comm comm)
 : Engine("InlineWriter", io, name, mode, std::move(comm))
 {
+    TAU_SCOPED_TIMER("InlineWriter::Open");
     m_EndMessage = " in call to InlineWriter " + m_Name + " Open\n";
     m_WriterRank = m_Comm.Rank();
     Init();
@@ -38,6 +40,7 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("InlineWriter::BeginStep");
     m_CurrentStep++; // 0 is the first step
     if (m_Verbosity == 5)
     {
@@ -74,6 +77,7 @@ size_t InlineWriter::CurrentStep() const { return m_CurrentStep; }
 /* PutDeferred = PutSync, so nothing to be done in PerformPuts */
 void InlineWriter::PerformPuts()
 {
+    TAU_SCOPED_TIMER("InlineWriter::PerformPuts");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << "     PerformPuts()\n";
@@ -82,6 +86,7 @@ void InlineWriter::PerformPuts()
 
 void InlineWriter::EndStep()
 {
+    TAU_SCOPED_TIMER("InlineWriter::EndStep");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << " EndStep() Step "
@@ -91,6 +96,7 @@ void InlineWriter::EndStep()
 
 void InlineWriter::Flush(const int)
 {
+    TAU_SCOPED_TIMER("InlineWriter::Flush");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << "   Flush()\n";
@@ -102,10 +108,12 @@ void InlineWriter::Flush(const int)
 #define declare_type(T)                                                        \
     void InlineWriter::DoPutSync(Variable<T> &variable, const T *data)         \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineWriter::DoPutSync");                           \
         PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
     }                                                                          \
     void InlineWriter::DoPutDeferred(Variable<T> &variable, const T *data)     \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineWriter::DoPutDeferred");                       \
         PutDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -149,6 +157,7 @@ void InlineWriter::InitTransports()
 
 void InlineWriter::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("InlineWriter::DoClose");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << " Close(" << m_Name

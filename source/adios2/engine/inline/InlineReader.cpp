@@ -12,6 +12,7 @@
 #include "InlineReader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include <iostream>
 
@@ -26,6 +27,7 @@ InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
                            helper::Comm comm)
 : Engine("InlineReader", io, name, mode, std::move(comm))
 {
+    TAU_SCOPED_TIMER("InlineReader::Open");
     m_EndMessage = " in call to IO Open InlineReader " + m_Name + "\n";
     m_ReaderRank = m_Comm.Rank();
     Init();
@@ -41,6 +43,7 @@ InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
 StepStatus InlineReader::BeginStep(const StepMode mode,
                                    const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("InlineReader::BeginStep");
     // Reader should be on same step as writer
     const auto &writer =
         dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
@@ -61,6 +64,7 @@ StepStatus InlineReader::BeginStep(const StepMode mode,
 
 void InlineReader::PerformGets()
 {
+    TAU_SCOPED_TIMER("InlineReader::PerformGets");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << "     PerformGets()\n";
@@ -79,6 +83,7 @@ size_t InlineReader::CurrentStep() const
 
 void InlineReader::EndStep()
 {
+    TAU_SCOPED_TIMER("InlineReader::EndStep");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << " EndStep() Step "
@@ -91,15 +96,18 @@ void InlineReader::EndStep()
 #define declare_type(T)                                                        \
     void InlineReader::DoGetSync(Variable<T> &variable, T *data)               \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::DoGetSync");                           \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void InlineReader::DoGetDeferred(Variable<T> &variable, T *data)           \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::DoGetDeferred");                       \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
     typename Variable<T>::Info *InlineReader::DoGetBlockSync(                  \
         Variable<T> &variable)                                                 \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::DoGetBlockSync");                      \
         return GetBlockSyncCommon(variable);                                   \
     }
 
@@ -114,12 +122,14 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     InlineReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const      \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::AllStepsBlockInfo");                   \
         return std::map<size_t, std::vector<typename Variable<T>::Info>>();    \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::Info> InlineReader::DoBlocksInfo(        \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::DoBlocksInfo");                        \
         return variable.m_BlocksInfo;                                          \
     }
 
@@ -172,6 +182,7 @@ void InlineReader::InitTransports()
 
 void InlineReader::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("InlineReader::DoClose");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << " Close(" << m_Name
