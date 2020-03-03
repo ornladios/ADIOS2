@@ -7,7 +7,7 @@ Building, Testing, and Installing ADIOS 2
    Always do a fresh build from scratch if your source is updated with considerable changes *e.g.* `git pull` 
 
 
-To build ADIOS 2, clone the repository and invoke the canonical CMake build sequence:
+To build ADIOS v2.x, clone the repository and invoke the canonical CMake build sequence:
 
 .. code-block:: bash
 
@@ -122,20 +122,26 @@ Example: Enable Fortran, disable Python bindings and ZeroMQ functionality
 
 
 Notes:
-   * The ``ADIOS2_USE_HDF5`` option requires the use of a matching serial or parallel version depending on whether ``ADIOS2_USE_MPI`` is enabled. Similary, enabling MPI and Python bindings require ``mpi4py``.
 
-   * Optional ROOT suffix to a dependency can guide ``cmake`` into finding a particular dependency:
+  To provide search paths to CMake for dependency searching:
+
+  - Use a ``PackageName_ROOT`` variable to provide the location of a specific package.
+  - Add an install prefix to the ``CMAKE_PREFIX_PATH`` which is searched for all packages.
+  - Both the ``PackageName_ROOT`` and ``CMAKE_PREFIX_PATH`` can be used as either environment variables or CMake variables (passed via -D), where the CMake variable takes prescedence.
 
 .. code-block:: bash
 
+    # Several dependencies are installed under /opt/foo/bar and then a
+    # single dependency (HDF5 in this case) is installed in /opt/hdf5/1.12.0
+    $ export CMAKE_PREFIX_PATH=/opt/foo/bar
     $ cmake -DHDF5_ROOT=/opt/hdf5/1.12.0 ../ADIOS2
 
-Example: the following configuration will build, test and install under /opt/adios2/2.4.0 an optimized (Release) version of ADIOS2.
+Example: the following configuration will build, test and install under /opt/adios2/2.5.0 an optimized (Release) version of ADIOS2.
 
 .. code-block:: bash
 
     $ cd build
-    $ cmake -DADIOS2_USE_Fortran=ON -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.4.0 -DCMAKE_BUILD_Type=Release ../ADIOS2
+    $ cmake -DADIOS2_USE_Fortran=ON -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.5.0 -DCMAKE_BUILD_Type=Release ../ADIOS2
     $ make -j16
     $ ctest
     $ make install
