@@ -10,10 +10,8 @@ int main(int argc, char *argv[])
 {
     int rank = 0;
 #ifdef ADIOS2_HAVE_MPI
-    int size = 1;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
     adios2::ADIOS ad;
     try

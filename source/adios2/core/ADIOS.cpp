@@ -17,6 +17,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
+#include <adios2sys/SystemTools.hxx>
 
 // OPERATORS
 
@@ -65,8 +66,7 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
 {
     if (!configFile.empty())
     {
-        std::ifstream f(configFile.c_str());
-        if (!f.good())
+        if (!adios2sys::SystemTools::FileExists(configFile))
         {
             throw std::logic_error("Config file " + configFile +
                                    " passed to ADIOS does not exist.");
