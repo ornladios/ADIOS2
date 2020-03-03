@@ -38,31 +38,23 @@ InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
     }
 }
 
-InlineReader::~InlineReader()
-{
-    /* m_Inline deconstructor does close and finalize */
-    if (m_Verbosity == 5)
-    {
-        std::cout << "Inline Reader " << m_ReaderRank << " deconstructor on "
-                  << m_Name << "\n";
-    }
-}
-
 StepStatus InlineReader::BeginStep(const StepMode mode,
                                    const float timeoutSeconds)
 {
-    // step info should be received from the writer side in BeginStep()
-    // so this forced increase should not be here
-    ++m_CurrentStep;
+    // Reader should be on same step as writer
+    const auto &writer =
+        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
+    m_CurrentStep = writer.CurrentStep();
+    if (m_CurrentStep == -1)
+    {
+        return StepStatus::EndOfStream;
+    }
 
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank
                   << "   BeginStep() new step " << m_CurrentStep << "\n";
     }
-
-    // m_IO Variables and Attributes should be defined at this point
-    // so that the application can inquire them and start getting data
 
     return StepStatus::OK;
 }
@@ -73,23 +65,24 @@ void InlineReader::PerformGets()
     {
         std::cout << "Inline Reader " << m_ReaderRank << "     PerformGets()\n";
     }
-    m_NeedPerformGets = false;
 }
 
-size_t InlineReader::CurrentStep() const { return m_CurrentStep; }
+size_t InlineReader::CurrentStep() const
+{
+    // Reader should be on same step as writer
+    // added here since it's not really necessary to use beginstep/endstep for
+    // this engine's reader so this ensures we do report the correct step
+    const auto &writer =
+        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
+    return writer.CurrentStep();
+}
 
 void InlineReader::EndStep()
 {
-    // EndStep should call PerformGets() if there are unserved GetDeferred()
-    // requests
-    if (m_NeedPerformGets)
-    {
-        PerformGets();
-    }
-
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Reader " << m_ReaderRank << "   EndStep()\n";
+        std::cout << "Inline Reader " << m_ReaderRank << " EndStep() Step "
+                  << m_CurrentStep << std::endl;
     }
 }
 
@@ -147,7 +140,6 @@ void InlineReader::InitParameters()
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 
         std::string value(pair.second);
-        // std::transform(value.begin(), value.end(), value.begin(), ::tolower);
 
         if (key == "verbose")
         {

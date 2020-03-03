@@ -160,19 +160,13 @@ template <class T>
 typename Variable<T>::Info *Engine::Get(Variable<T> &variable,
                                         const Mode launch)
 {
-    if (m_DebugMode)
-    {
-        // CommonChecks<T>(variable, nullptr, {{Mode::Read}}, "in call to Get");
-    }
-
+    typename Variable<T>::Info *info = nullptr;
     switch (launch)
     {
     case Mode::Deferred:
-        // TODO different? Should use DoGetDeferred?
-        return DoGetBlockSync(variable);
     case Mode::Sync:
-        // TODO should use DoGetSync()?
-        return DoGetBlockSync(variable);
+        info = DoGetBlockSync(variable);
+        break;
     default:
         if (m_DebugMode)
         {
@@ -182,7 +176,12 @@ typename Variable<T>::Info *Engine::Get(Variable<T> &variable,
                 "GetBlock\n");
         }
     }
-    return nullptr;
+    if (m_DebugMode)
+    {
+        CommonChecks<T>(variable, info->Data, {{Mode::Read}}, "in call to Get");
+    }
+
+    return info;
 }
 
 template <class T>

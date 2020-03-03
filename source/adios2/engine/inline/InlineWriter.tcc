@@ -23,16 +23,13 @@ namespace engine
 
 template <class T>
 void InlineWriter::PutSyncCommon(Variable<T> &variable,
-                                 const typename Variable<T>::Info &blockInfo)
+                                 typename Variable<T>::Info &blockInfo)
 {
-    auto &info = variable.m_BlocksInfo.back();
-    info.BlockID = variable.m_BlocksInfo.size() - 1;
-    // passed in blockInfo has current blockInfo.Data member.
-    if (blockInfo.Shape.size() == 0 && blockInfo.Count.size() == 0 &&
-        blockInfo.StepsCount == 1)
+    if (variable.m_ShapeID == ShapeID::GlobalValue ||
+        variable.m_ShapeID == ShapeID::LocalValue)
     {
-        info.IsValue = true;
-        info.Value = blockInfo.Data[0];
+        blockInfo.IsValue = true;
+        blockInfo.Value = blockInfo.Data[0];
     }
     if (m_Verbosity == 5)
     {
@@ -45,15 +42,11 @@ template <class T>
 void InlineWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     variable.SetBlockInfo(data, CurrentStep());
-    auto &info = variable.m_BlocksInfo.back();
-    info.BlockID = variable.m_BlocksInfo.size() - 1;
-
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << "     PutDeferred("
                   << variable.m_Name << ")\n";
     }
-    m_NeedPerformPuts = true;
 }
 
 } // end namespace engine

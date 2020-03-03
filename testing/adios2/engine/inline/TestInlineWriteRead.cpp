@@ -42,6 +42,15 @@ typename adios2::Variable<T>::Info setSelection(adios2::Variable<T> &var_i8,
     return info;
 }
 
+template <class T>
+void testBlocksInfo(adios2::Variable<T> &var, size_t step,
+                    adios2::Engine &inlineReader)
+{
+    var.SetStepSelection({step, 1});
+    auto blocksInfo = inlineReader.BlocksInfo(var, step);
+    ASSERT_EQ(blocksInfo.size(), 1);
+}
+
 TEST_F(InlineWriteRead, InlineWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
@@ -239,6 +248,16 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
 
             std::string IString;
 
+            auto writerStep = inlineWriter.CurrentStep();
+            auto readerStep = inlineReader.CurrentStep();
+            ASSERT_EQ(writerStep, readerStep);
+
+            // Test skipping a step on the read side
+            if (step == 1)
+            {
+                continue;
+            }
+
             inlineReader.Get(var_iString, IString);
             auto info_i8 = setSelection<int8_t>(var_i8, step, inlineReader);
             auto info_i16 = setSelection<int16_t>(var_i16, step, inlineReader);
@@ -254,6 +273,19 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
                 setSelection<std::complex<float>>(var_cr32, step, inlineReader);
             auto info_cr64 = setSelection<std::complex<double>>(var_cr64, step,
                                                                 inlineReader);
+
+            testBlocksInfo<int8_t>(var_i8, step, inlineReader);
+            setSelection<int16_t>(var_i16, step, inlineReader);
+            setSelection<int32_t>(var_i32, step, inlineReader);
+            setSelection<int64_t>(var_i64, step, inlineReader);
+            setSelection<uint8_t>(var_u8, step, inlineReader);
+            setSelection<uint16_t>(var_u16, step, inlineReader);
+            setSelection<uint32_t>(var_u32, step, inlineReader);
+            setSelection<uint64_t>(var_u64, step, inlineReader);
+            setSelection<float>(var_r32, step, inlineReader);
+            setSelection<double>(var_r64, step, inlineReader);
+            setSelection<std::complex<float>>(var_cr32, step, inlineReader);
+            setSelection<std::complex<double>>(var_cr64, step, inlineReader);
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(

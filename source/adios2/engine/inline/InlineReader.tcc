@@ -23,9 +23,8 @@ namespace core
 namespace engine
 {
 
-template <>
-inline void InlineReader::GetSyncCommon(Variable<std::string> &variable,
-                                        std::string *data)
+template <class T>
+inline void InlineReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     variable.m_Data = data;
     auto blockInfo = variable.m_BlocksInfo.back();
@@ -45,22 +44,6 @@ inline void InlineReader::GetSyncCommon(Variable<std::string> &variable,
 }
 
 template <class T>
-inline void InlineReader::GetSyncCommon(Variable<T> &variable, T *data)
-{
-    variable.m_Data = data;
-    auto blockInfo = variable.m_BlocksInfo.back();
-    if (blockInfo.IsValue)
-    {
-        *data = blockInfo.Value;
-    }
-    if (m_Verbosity == 5)
-    {
-        std::cout << "Inline Reader " << m_ReaderRank << "     GetSync("
-                  << variable.m_Name << ")\n";
-    }
-}
-
-template <class T>
 void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     // returns immediately
@@ -69,18 +52,16 @@ void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
         std::cout << "Inline Reader " << m_ReaderRank << "     GetDeferred("
                   << variable.m_Name << ")\n";
     }
-    m_NeedPerformGets = true;
 }
 
 template <class T>
 inline typename Variable<T>::Info *
 InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 {
-    InlineWriter &writer =
-        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
-    writer.AddReadVariable(variable.m_Name);
     if (m_DebugMode)
     {
+        InlineWriter &writer =
+            dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
         if (variable.m_BlockID >= variable.m_BlocksInfo.size())
         {
             throw std::invalid_argument(
