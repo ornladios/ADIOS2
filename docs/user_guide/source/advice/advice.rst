@@ -9,7 +9,7 @@ The goal is to provide specific advice and good practices about the use of ADIOS
 
 2. Use ``MPI_COMM_SELF`` to run MPI compiled versions of ADIOS 2 in "serial" mode
 
-3. Use a runtime configuration file in the ``ADIOS`` constructor or ``adios2_init`` when targetting multiple engines
+3. Use a runtime configuration file in the ``ADIOS`` constructor or ``adios2_init`` when targeting multiple engines
 
 4. Check object validity when developing (similar to ``fstream``):
 
@@ -45,7 +45,7 @@ The goal is to provide specific advice and good practices about the use of ADIOS
 
 7. Define your data structure: set of variables and attributes before developing. Data hierarchies/models can be built on top of ADIOS 2.
 
-8. Read the documentation for :ref:`Supported Engines` before targetting development for a particular engine
+8. Read the documentation for :ref:`Supported Engines` before targeting development for a particular engine
 
 9. MPI development: treat ``ADIOS`` constructor/destructor (``adios2_init``/``adios2_finalize``) and Engine ``Open`` and ``Close`` always as collective functions. For the most part, ADIOS 2 API functionality is local, but other Engine functions might follow other rules, :ref:`Supported Engines`.  
 

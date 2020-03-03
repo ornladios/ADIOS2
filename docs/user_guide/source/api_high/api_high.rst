@@ -18,7 +18,7 @@ See each language section in this chapter for a write/read example.
 
 .. note::
 
-   The simpified APIs are based on language native file IO interface. Hence ``write`` and ``read`` calls are always synchronized and variables data memory is ready to use immediatley after these calls.
+   The simplified APIs are based on language native file IO interface. Hence ``write`` and ``read`` calls are always synchronized and variables data memory is ready to use immediately after these calls.
 
 
 Currently ADIOS2 support bindings for the following languages and their minimum standards:

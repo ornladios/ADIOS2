@@ -66,5 +66,5 @@ The following figure depicts the components hierarchy from the application's poi
 
 * **Engine**: Engines define the actual system executing the heavy IO tasks at Open, BeginStep, Put, Get, EndStep and Close. Due to polymorphism, new IO system solutions can be developed quickly reusing internal components and reusing the same API. If IO.SetEngine is not called, the default engine is the binary-pack bp file reader and writer: **BPFile**.
 
-* **Operator**: (under development) this component defines possible operations to be applied on adios2 self-describing data. This higher level abstraction is needed to provide support for: Callback functions, Transforms, Analytics funcions, Data Models functionality, etc. Any required task will be executed within the Engine. One or many operators can be associated with any of the adios2 objects or a group of them.
+* **Operator**: (under development) this component defines possible operations to be applied on adios2 self-describing data. This higher level abstraction is needed to provide support for: Callback functions, Transforms, Analytics functions, Data Models functionality, etc. Any required task will be executed within the Engine. One or many operators can be associated with any of the adios2 objects or a group of them.
 

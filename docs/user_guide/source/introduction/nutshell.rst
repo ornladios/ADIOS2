@@ -1,7 +1,7 @@
 **ADIOS2** is the latest implementation of the `Adaptable Input Output System <https://csmd.ornl.gov/software/adios2>`_.
 This brand new architecture continues the performance legacy of ADIOS1, and extends its capabilities to address the extreme challenges of scientific data IO.
 
-The `ADIOS2 repo is hosted at github <https://github.com/ornladios/ADIOS2>`_.
+The `ADIOS2 repo is hosted at GitHub <https://github.com/ornladios/ADIOS2>`_.
 
 The ADIOS2 infrastructure is developed as a multi-institutional collaboration
 between
@@ -16,7 +16,7 @@ The key aspects ADIOS2 are
 
 #. **Modular architecture:** ADIOS2 takes advantage of the major features
    of C++11. The architecture utilizes a balanced combination of runtime
-   polymorphism and template metaprogramming to expose intuitive abstractions for a broad range of IO applications.
+   polymorphism and template meta-programming to expose intuitive abstractions for a broad range of IO applications.
 
 
 #. **Community:** By maintaining coding standards, collaborative
@@ -24,7 +24,7 @@ The key aspects ADIOS2 are
 
 
 #. **Sustainability:** Continuous integration and unit testing ensure that ADIOS2 evolves responsibly.
-   Bug reports are triaged and fixed in a timely manner and can be reported on `Github <https://github.com/ornladios/ADIOS2/issues>`_.
+   Bug reports are triaged and fixed in a timely manner and can be reported on `GitHub <https://github.com/ornladios/ADIOS2/issues>`_.
 
 
 #. **Language Support:** In addition to the native C++, bindings for Python, C, Fortran and Matlab are provided.
@@ -44,7 +44,7 @@ What ADIOS2 is and isn't
 
 - **MPI-based**: out-of-box MPI-based, non-MPI is optional at build time.
 
-- **Group-based**: ADIOS2 favors a deferred/prefetch/grouped variables transport mode by default. Sync mode, one variable at a time, is the special case.
+- **Group-based**: ADIOS2 favors a deferred/pre-fetch/grouped variables transport mode by default. Sync mode, one variable at a time, is the special case.
 
 - **Step-based**: to resemble actual production of data in "steps" of variable groups, for either streaming or random-access (file) media
 

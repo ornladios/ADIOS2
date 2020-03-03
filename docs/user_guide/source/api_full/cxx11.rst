@@ -22,7 +22,7 @@ ADIOS2 components classes
 -------------------------
 
 ADIOS2 C++ bindings objects are mapped 1-to-1 to the ADIOS components described in the :ref:`Components Overview` section.
-Only the ``adios2::ADIOS`` object is "owned" by the developer's program using adios2, all other components are light-weigth objects that point internally to a component that lives inside the ``adios2::ADIOS`` "factory" object.
+Only the ``adios2::ADIOS`` object is "owned" by the developer's program using adios2, all other components are light-weight objects that point internally to a component that lives inside the ``adios2::ADIOS`` "factory" object.
  
 .. code-block:: c++
    

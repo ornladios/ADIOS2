@@ -455,7 +455,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! io that spawns an engine based on its configuration
       type(adios2_io), intent(in) :: io
       
-      ! unique engine identifier within io, file name for default bpfile engine 
+      ! unique engine identifier within io, file name for default BPFile engine 
       character*(*), intent(in) :: name
       
       ! Optional MPI communicator, only in MPI library
