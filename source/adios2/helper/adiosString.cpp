@@ -357,6 +357,22 @@ std::string LowerCase(const std::string &input)
     return output;
 }
 
+// The design decision is that user-supplied parameters are case-insensitive.
+// Make sure that they are converted to lowercase internally.
+Params LowerCaseParams(const Params &params)
+{
+    // Keys cannot be changed in maps, so if we get an uppercase key, we have to
+    // copy the entire map.
+    Params lower_case_params;
+    for (auto &p : params)
+    {
+        // The values cannot be changed to lower case, because third-party
+        // libraries (like PNG) require arguments like "PNG_COLOR_TYPE_" . .
+        lower_case_params.insert({LowerCase(p.first), p.second});
+    }
+    return lower_case_params;
+}
+
 std::set<std::string>
 PrefixMatches(const std::string &prefix,
               const std::set<std::string> &inputs) noexcept

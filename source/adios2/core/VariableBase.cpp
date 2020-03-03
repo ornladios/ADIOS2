@@ -21,6 +21,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
+#include "adios2/helper/adiosString.h"
 
 namespace adios2
 {
@@ -218,7 +219,8 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 size_t VariableBase::AddOperation(Operator &op,
                                   const Params &parameters) noexcept
 {
-    m_Operations.push_back(Operation{&op, parameters, Params()});
+    m_Operations.push_back(
+        Operation{&op, helper::LowerCaseParams(parameters), Params()});
     return m_Operations.size() - 1;
 }
 

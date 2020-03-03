@@ -30,6 +30,7 @@
 
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
+#include "adios2/helper/adiosString.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include <adios2sys/SystemTools.hxx> // FileIsDirectory()
 
@@ -560,7 +561,8 @@ std::string IO::InquireAttributeType(const std::string &name,
 size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
 {
     TAU_SCOPED_TIMER("IO::other");
-    m_Operations.push_back(Operation{&op, parameters, Params()});
+    m_Operations.push_back(
+        Operation{&op, helper::LowerCaseParams(parameters), Params()});
     return m_Operations.size() - 1;
 }
 
