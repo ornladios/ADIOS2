@@ -11,7 +11,8 @@
 #include "ADIOS.h"
 
 #include <algorithm> // std::transform
-#include <ios>       //std::ios_base::failure
+#include <fstream>
+#include <ios> //std::ios_base::failure
 
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosCommDummy.h"
@@ -64,6 +65,12 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
 {
     if (!configFile.empty())
     {
+        std::ifstream f(configFile.c_str());
+        if (!f.good())
+        {
+            throw std::logic_error("Config file " + configFile +
+                                   " passed to ADIOS does not exist.");
+        }
         if (helper::EndsWith(configFile, ".xml"))
         {
             XMLInit(configFile);
