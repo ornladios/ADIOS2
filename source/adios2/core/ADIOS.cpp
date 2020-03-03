@@ -11,11 +11,13 @@
 #include "ADIOS.h"
 
 #include <algorithm> // std::transform
-#include <ios>       //std::ios_base::failure
+#include <fstream>
+#include <ios> //std::ios_base::failure
 
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
+#include <adios2sys/SystemTools.hxx>
 
 // OPERATORS
 
@@ -64,6 +66,11 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
 {
     if (!configFile.empty())
     {
+        if (!adios2sys::SystemTools::FileExists(configFile))
+        {
+            throw std::logic_error("Config file " + configFile +
+                                   " passed to ADIOS does not exist.");
+        }
         if (helper::EndsWith(configFile, ".xml"))
         {
             XMLInit(configFile);

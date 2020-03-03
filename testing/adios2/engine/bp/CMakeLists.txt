@@ -40,9 +40,10 @@ bp3_bp4_gtest_add_tests_helper(ChangingShape)
 bp3_bp4_gtest_add_tests_helper(WriteReadBlockInfo)
 bp3_bp4_gtest_add_tests_helper(WriteReadVariableSpan)
 bp3_bp4_gtest_add_tests_helper(TimeAggregation)
+bp3_bp4_gtest_add_tests_helper(NoXMLRecovery)
 
 if(ADIOS2_HAVE_MPI)
-  bp3_bp4_gtest_add_tests_helper(WriteAggregateRead) 
+  bp3_bp4_gtest_add_tests_helper(WriteAggregateRead)
 endif()
 
 # BP3 only for now
