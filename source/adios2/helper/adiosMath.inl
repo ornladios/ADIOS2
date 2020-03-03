@@ -207,6 +207,14 @@ inline void GetMinMax(const std::complex<double> *values, const size_t size,
     GetMinMaxComplex(values, size, min, max);
 }
 
+template <>
+inline void GetMinMax(const std::complex<long double> *values, const size_t size,
+                      std::complex<long double> &min,
+                      std::complex<long double> &max) noexcept
+{
+    GetMinMaxComplex(values, size, min, max);
+}
+
 template <class T>
 void GetMinMaxComplex(const std::complex<T> *values, const size_t size,
                       std::complex<T> &min, std::complex<T> &max) noexcept

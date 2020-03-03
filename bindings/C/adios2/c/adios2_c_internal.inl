@@ -40,8 +40,10 @@ make_MapAdios2Type(adios2_type_uint32_t, uint32_t)
 make_MapAdios2Type(adios2_type_uint64_t, uint64_t)
 make_MapAdios2Type(adios2_type_float, float)
 make_MapAdios2Type(adios2_type_double, double)
+make_MapAdios2Type(adios2_type_long_double, long double)
 make_MapAdios2Type(adios2_type_float_complex, std::complex<float>)
 make_MapAdios2Type(adios2_type_double_complex, std::complex<double>)
+make_MapAdios2Type(adios2_type_long_double_complex, std::complex<long double>)
 /* clang-format on */
 #undef make_MapAdios2Type
 

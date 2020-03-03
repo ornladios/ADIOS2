@@ -171,7 +171,7 @@ QueryVar *XmlWorker::ParseVarNode(const pugi::xml_node &node,
             return q;                                                          \
         }                                                                      \
     }
-    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     return nullptr;
 } //  parse_var_node

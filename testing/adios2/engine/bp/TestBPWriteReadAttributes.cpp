@@ -47,6 +47,7 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
     const std::string r128_Single = std::string("r128_Single_") + zero;
     const std::string cr32_Single = std::string("cr32_Single_") + zero;
     const std::string cr64_Single = std::string("cr64_Single_") + zero;
+    const std::string cr128_Single = std::string("cr128_Single_") + zero;
 
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
@@ -88,6 +89,8 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
                                                 currentTestData.CR32.front());
         io.DefineAttribute<std::complex<double>>(cr64_Single,
                                                  currentTestData.CR64.front());
+        io.DefineAttribute<std::complex<long double>>(
+            cr128_Single, currentTestData.CR128.front());
 
         if (!engineName.empty())
         {
@@ -136,6 +139,8 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
             ioRead.InquireAttribute<std::complex<float>>(cr32_Single);
         auto attr_cr64 =
             ioRead.InquireAttribute<std::complex<double>>(cr64_Single);
+        auto attr_cr128 =
+            ioRead.InquireAttribute<std::complex<long double>>(cr128_Single);
 
         EXPECT_TRUE(attr_s1);
         ASSERT_EQ(attr_s1.Name(), s1_Single);
@@ -227,6 +232,13 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
         ASSERT_EQ(attr_cr64.Type(), adios2::GetType<std::complex<double>>());
         ASSERT_EQ(attr_cr64.Data().front(), currentTestData.CR64.front());
 
+        EXPECT_TRUE(attr_cr128);
+        ASSERT_EQ(attr_cr128.Name(), cr128_Single);
+        ASSERT_EQ(attr_cr128.Data().size() == 1, true);
+        ASSERT_EQ(attr_cr128.Type(),
+                  adios2::GetType<std::complex<long double>>());
+        ASSERT_EQ(attr_cr128.Data().front(), currentTestData.CR128.front());
+
         bpRead.Close();
     }
 }
@@ -258,6 +270,7 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
     const std::string r128_Array = std::string("r128_Array_") + zero;
     const std::string cr32_Array = std::string("cr32_Array_") + zero;
     const std::string cr64_Array = std::string("cr64_Array_") + zero;
+    const std::string cr128_Array = std::string("cr128_Array_") + zero;
 
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
@@ -309,6 +322,9 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
         io.DefineAttribute<std::complex<double>>(cr64_Array,
                                                  currentTestData.CR64.data(),
                                                  currentTestData.CR64.size());
+        io.DefineAttribute<std::complex<long double>>(
+            cr128_Array, currentTestData.CR128.data(),
+            currentTestData.CR128.size());
 
         if (!engineName.empty())
         {
@@ -356,6 +372,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
             ioRead.InquireAttribute<std::complex<float>>(cr32_Array);
         auto attr_cr64 =
             ioRead.InquireAttribute<std::complex<double>>(cr64_Array);
+        auto attr_cr128 =
+            ioRead.InquireAttribute<std::complex<long double>>(cr128_Array);
 
         EXPECT_TRUE(attr_s1);
         ASSERT_EQ(attr_s1.Name(), s1_Array);
@@ -427,6 +445,12 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
         ASSERT_EQ(attr_cr64.Data().size() == 1, false);
         ASSERT_EQ(attr_cr64.Type(), adios2::GetType<std::complex<double>>());
 
+        EXPECT_TRUE(attr_cr128);
+        ASSERT_EQ(attr_cr128.Name(), cr128_Array);
+        ASSERT_EQ(attr_cr128.Data().size() == 1, false);
+        ASSERT_EQ(attr_cr128.Type(),
+                  adios2::GetType<std::complex<long double>>());
+
         auto I8 = attr_i8.Data();
         auto I16 = attr_i16.Data();
         auto I32 = attr_i32.Data();
@@ -475,6 +499,7 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
     const std::string r128_Single = std::string("r128_Single_") + zero;
     const std::string cr32_Single = std::string("cr32_Single_") + zero;
     const std::string cr64_Single = std::string("cr64_Single_") + zero;
+    const std::string cr128_Single = std::string("cr128_Single_") + zero;
 
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
@@ -531,6 +556,8 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
             cr32_Single, currentTestData.CR32.front(), var.Name());
         io.DefineAttribute<std::complex<double>>(
             cr64_Single, currentTestData.CR64.front(), var.Name());
+        io.DefineAttribute<std::complex<long double>>(
+            cr128_Single, currentTestData.CR128.front(), var.Name());
 
         adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
         engine.Put(var, 10);
@@ -575,6 +602,8 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
             cr32_Single, var.Name());
         auto attr_cr64 = ioRead.InquireAttribute<std::complex<double>>(
             cr64_Single, var.Name());
+        auto attr_cr128 = ioRead.InquireAttribute<std::complex<long double>>(
+            cr128_Single, var.Name());
 
         EXPECT_TRUE(attr_s1);
         ASSERT_EQ(attr_s1.Name(), var.Name() + separator + s1_Single);
@@ -660,6 +689,13 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
         ASSERT_EQ(attr_cr64.Type(), adios2::GetType<std::complex<double>>());
         ASSERT_EQ(attr_cr64.Data().front(), currentTestData.CR64.front());
 
+        EXPECT_TRUE(attr_cr128);
+        ASSERT_EQ(attr_cr128.Name(), var.Name() + separator + cr128_Single);
+        ASSERT_EQ(attr_cr128.Data().size() == 1, true);
+        ASSERT_EQ(attr_cr128.Type(),
+                  adios2::GetType<std::complex<long double>>());
+        ASSERT_EQ(attr_cr128.Data().front(), currentTestData.CR128.front());
+
         bpRead.Close();
     }
 }
@@ -691,6 +727,7 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
     const std::string r128_Array = std::string("r128_Array_") + zero;
     const std::string cr32_Array = std::string("cr32_Array_") + zero;
     const std::string cr64_Array = std::string("cr64_Array_") + zero;
+    const std::string cr128_Array = std::string("cr128_Array_") + zero;
 
     const std::string separator = "/";
 
@@ -743,6 +780,9 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
         io.DefineAttribute<std::complex<double>>(
             cr64_Array, currentTestData.CR64.data(),
             currentTestData.CR64.size(), var.Name());
+        io.DefineAttribute<std::complex<long double>>(
+            cr128_Array, currentTestData.CR128.data(),
+            currentTestData.CR128.size(), var.Name());
 
         if (!engineName.empty())
         {
@@ -796,6 +836,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
             cr32_Array, var.Name());
         auto attr_cr64 = ioRead.InquireAttribute<std::complex<double>>(
             cr64_Array, var.Name());
+        auto attr_cr128 = ioRead.InquireAttribute<std::complex<long double>>(
+            cr128_Array, var.Name());
 
         EXPECT_TRUE(attr_s1);
         ASSERT_EQ(attr_s1.Name(), var.Name() + separator + s1_Array);
@@ -866,6 +908,12 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
         ASSERT_EQ(attr_cr64.Name(), var.Name() + separator + cr64_Array);
         ASSERT_EQ(attr_cr64.Data().size() == 1, false);
         ASSERT_EQ(attr_cr64.Type(), adios2::GetType<std::complex<double>>());
+
+        EXPECT_TRUE(attr_cr128);
+        ASSERT_EQ(attr_cr128.Name(), var.Name() + separator + cr128_Array);
+        ASSERT_EQ(attr_cr128.Data().size() == 1, false);
+        ASSERT_EQ(attr_cr128.Type(),
+                  adios2::GetType<std::complex<long double>>());
 
         auto I8 = attr_i8.Data();
         auto I16 = attr_i16.Data();

@@ -44,6 +44,13 @@ inline void DataManSerializer::CalculateMinMax<std::complex<double>>(
 {
 }
 
+template <>
+inline void DataManSerializer::CalculateMinMax<std::complex<long double>>(
+    const std::complex<long double> *data, const Dims &count,
+    nlohmann::json &metaj)
+{
+}
+
 template <typename T>
 void DataManSerializer::CalculateMinMax(const T *data, const Dims &count,
                                         nlohmann::json &metaj)

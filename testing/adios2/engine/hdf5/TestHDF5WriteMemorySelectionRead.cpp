@@ -277,10 +277,14 @@ void HDF5Steps1D(const size_t ghostCells)
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
+        auto var_r128 =
+            io.DefineVariable<long double>("r128", shape, start, count);
         auto var_cr32 =
             io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
         auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
                                                                 start, count);
+        auto var_cr128 = io.DefineVariable<std::complex<long double>>(
+            "cr128", shape, start, count);
 
         const adios2::Dims memoryStart = {ghostCells};
         const adios2::Dims memoryCount = {Nx + 2 * ghostCells};
@@ -291,8 +295,10 @@ void HDF5Steps1D(const size_t ghostCells)
         var_i64.SetMemorySelection({memoryStart, memoryCount});
         var_r32.SetMemorySelection({memoryStart, memoryCount});
         var_r64.SetMemorySelection({memoryStart, memoryCount});
+        var_r128.SetMemorySelection({memoryStart, memoryCount});
         var_cr32.SetMemorySelection({memoryStart, memoryCount});
         var_cr64.SetMemorySelection({memoryStart, memoryCount});
+        var_cr128.SetMemorySelection({memoryStart, memoryCount});
 
         std::vector<int8_t> dataI8(Nx + 2 * ghostCells, -1);
         std::vector<int16_t> dataI16(Nx + 2 * ghostCells, -1);
@@ -300,10 +306,13 @@ void HDF5Steps1D(const size_t ghostCells)
         std::vector<int64_t> dataI64(Nx + 2 * ghostCells, -1);
         std::vector<float> dataR32(Nx + 2 * ghostCells, -1.f);
         std::vector<double> dataR64(Nx + 2 * ghostCells, -1.);
+        std::vector<long double> dataR128(Nx + 2 * ghostCells, -1.);
         std::vector<std::complex<float>> dataCR32(Nx + 2 * ghostCells,
                                                   {-1.f, -1.f});
         std::vector<std::complex<double>> dataCR64(Nx + 2 * ghostCells,
                                                    {-1., -1.});
+        std::vector<std::complex<long double>> dataCR128(Nx + 2 * ghostCells,
+                                                         {-1., -1.});
 
         adios2::Engine h5Writer = io.Open(fname, adios2::Mode::Write);
 
@@ -315,8 +324,10 @@ void HDF5Steps1D(const size_t ghostCells)
             AssignStep1D(i, dataI64, ghostCells);
             AssignStep1D(i, dataR32, ghostCells);
             AssignStep1D(i, dataR64, ghostCells);
+            AssignStep1D(i, dataR128, ghostCells);
             AssignStep1D(i, dataCR32, ghostCells);
             AssignStep1D(i, dataCR64, ghostCells);
+            AssignStep1D(i, dataCR128, ghostCells);
 
             h5Writer.BeginStep();
             h5Writer.Put(var_i8, dataI8.data());
@@ -325,8 +336,10 @@ void HDF5Steps1D(const size_t ghostCells)
             h5Writer.Put(var_i64, dataI64.data());
             h5Writer.Put(var_r32, dataR32.data());
             h5Writer.Put(var_r64, dataR64.data());
+            h5Writer.Put(var_r128, dataR128.data());
             h5Writer.Put(var_cr32, dataCR32.data());
             h5Writer.Put(var_cr64, dataCR64.data());
+            h5Writer.Put(var_cr128, dataCR128.data());
             h5Writer.EndStep();
         }
         h5Writer.Close();
@@ -381,6 +394,12 @@ void HDF5Steps1D(const size_t ghostCells)
         ASSERT_EQ(var_r64.Steps(), NSteps);
         ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
 
+        auto var_r128 = io.InquireVariable<long double>("r128");
+        EXPECT_TRUE(var_r128);
+        ASSERT_EQ(var_r128.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_r128.Steps(), NSteps);
+        ASSERT_EQ(var_r128.Shape()[0], mpiSize * Nx);
+
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         EXPECT_TRUE(var_cr32);
         ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -393,6 +412,12 @@ void HDF5Steps1D(const size_t ghostCells)
         ASSERT_EQ(var_cr64.Steps(), NSteps);
         ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Nx);
 
+        auto var_cr128 = io.InquireVariable<std::complex<long double>>("cr128");
+        EXPECT_TRUE(var_cr128);
+        ASSERT_EQ(var_cr128.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_cr128.Steps(), NSteps);
+        ASSERT_EQ(var_cr128.Shape()[0], mpiSize * Nx);
+
         while (h5Reader.BeginStep() == adios2::StepStatus::OK)
         {
             const size_t step = h5Reader.CurrentStep();
@@ -402,8 +427,10 @@ void HDF5Steps1D(const size_t ghostCells)
             std::vector<int64_t> I64;
             std::vector<float> R32;
             std::vector<double> R64;
+            std::vector<long double> R128;
             std::vector<std::complex<float>> CR32;
             std::vector<std::complex<double>> CR64;
+            std::vector<std::complex<long double>> CR128;
 
             h5Reader.Get(var_i8, I8);
             h5Reader.Get(var_i16, I16);
@@ -411,8 +438,10 @@ void HDF5Steps1D(const size_t ghostCells)
             h5Reader.Get(var_i64, I64);
             h5Reader.Get(var_r32, R32);
             h5Reader.Get(var_r64, R64);
+            h5Reader.Get(var_r128, R128);
             h5Reader.Get(var_cr32, CR32);
             h5Reader.Get(var_cr64, CR64);
+            h5Reader.Get(var_cr128, CR128);
             h5Reader.EndStep();
 
             EXPECT_EQ(I8.size(), mpiSize * Nx);
@@ -421,8 +450,10 @@ void HDF5Steps1D(const size_t ghostCells)
             EXPECT_EQ(I64.size(), mpiSize * Nx);
             EXPECT_EQ(R32.size(), mpiSize * Nx);
             EXPECT_EQ(R64.size(), mpiSize * Nx);
+            EXPECT_EQ(R128.size(), mpiSize * Nx);
             EXPECT_EQ(CR32.size(), mpiSize * Nx);
             EXPECT_EQ(CR64.size(), mpiSize * Nx);
+            EXPECT_EQ(CR128.size(), mpiSize * Nx);
 
             EXPECT_EQ(I8.front(), static_cast<int8_t>(step));
             EXPECT_EQ(I16.front(), static_cast<int16_t>(step));
@@ -430,12 +461,16 @@ void HDF5Steps1D(const size_t ghostCells)
             EXPECT_EQ(I64.front(), static_cast<int64_t>(step));
             EXPECT_EQ(R32.front(), static_cast<float>(step));
             EXPECT_EQ(R64.front(), static_cast<double>(step));
+            EXPECT_EQ(R128.front(), static_cast<long double>(step));
             EXPECT_EQ(CR32.front(),
                       std::complex<float>(static_cast<float>(step),
                                           static_cast<float>(step)));
             EXPECT_EQ(CR64.front(),
                       std::complex<double>(static_cast<double>(step),
                                            static_cast<double>(step)));
+            EXPECT_EQ(CR128.front(), std::complex<long double>(
+                                         static_cast<long double>(step),
+                                         static_cast<long double>(step)));
 
             EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(),
                                          std::not_equal_to<int8_t>()),
@@ -455,6 +490,9 @@ void HDF5Steps1D(const size_t ghostCells)
             EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(),
                                          std::not_equal_to<double>()),
                       R64.end());
+            EXPECT_EQ(std::adjacent_find(R128.begin(), R128.end(),
+                                         std::not_equal_to<long double>()),
+                      R128.end());
             EXPECT_EQ(
                 std::adjacent_find(CR32.begin(), CR32.end(),
                                    std::not_equal_to<std::complex<float>>()),
@@ -463,6 +501,10 @@ void HDF5Steps1D(const size_t ghostCells)
                 std::adjacent_find(CR64.begin(), CR64.end(),
                                    std::not_equal_to<std::complex<double>>()),
                 CR64.end());
+            EXPECT_EQ(std::adjacent_find(
+                          CR128.begin(), CR128.end(),
+                          std::not_equal_to<std::complex<long double>>()),
+                      CR128.end());
         }
 
         h5Reader.Close();
@@ -513,10 +555,14 @@ void HDF5Steps2D4x2(const size_t ghostCells)
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
+        auto var_r128 =
+            io.DefineVariable<long double>("r128", shape, start, count);
         auto var_cr32 =
             io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
         auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
                                                                 start, count);
+        auto var_cr128 = io.DefineVariable<std::complex<long double>>(
+            "cr128", shape, start, count);
 
         const adios2::Dims memoryStart = {ghostCellsY, ghostCellsX};
         const adios2::Dims memoryCount = {Ny + 2 * ghostCellsY,
@@ -528,8 +574,10 @@ void HDF5Steps2D4x2(const size_t ghostCells)
         var_i64.SetMemorySelection({memoryStart, memoryCount});
         var_r32.SetMemorySelection({memoryStart, memoryCount});
         var_r64.SetMemorySelection({memoryStart, memoryCount});
+        var_r128.SetMemorySelection({memoryStart, memoryCount});
         var_cr32.SetMemorySelection({memoryStart, memoryCount});
         var_cr64.SetMemorySelection({memoryStart, memoryCount});
+        var_cr128.SetMemorySelection({memoryStart, memoryCount});
 
         const size_t dataSize = (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
         std::vector<int8_t> dataI8(dataSize, -1);
@@ -538,8 +586,10 @@ void HDF5Steps2D4x2(const size_t ghostCells)
         std::vector<int64_t> dataI64(dataSize, -1);
         std::vector<float> dataR32(dataSize, -1.f);
         std::vector<double> dataR64(dataSize, -1.);
+        std::vector<long double> dataR128(dataSize, -1.);
         std::vector<std::complex<float>> dataCR32(dataSize, {-1.f, -1.f});
         std::vector<std::complex<double>> dataCR64(dataSize, {-1., -1.});
+        std::vector<std::complex<long double>> dataCR128(dataSize, {-1., -1.});
 
         adios2::Engine h5Writer = io.Open(fname, adios2::Mode::Write);
 
@@ -551,8 +601,10 @@ void HDF5Steps2D4x2(const size_t ghostCells)
             AssignStep2D(i, dataI64, Nx, Ny, ghostCellsX, ghostCellsY);
             AssignStep2D(i, dataR32, Nx, Ny, ghostCellsX, ghostCellsY);
             AssignStep2D(i, dataR64, Nx, Ny, ghostCellsX, ghostCellsY);
+            AssignStep2D(i, dataR128, Nx, Ny, ghostCellsX, ghostCellsY);
             AssignStep2D(i, dataCR32, Nx, Ny, ghostCellsX, ghostCellsY);
             AssignStep2D(i, dataCR64, Nx, Ny, ghostCellsX, ghostCellsY);
+            AssignStep2D(i, dataCR128, Nx, Ny, ghostCellsX, ghostCellsY);
 
             h5Writer.BeginStep();
             h5Writer.Put(var_i8, dataI8.data());
@@ -561,8 +613,10 @@ void HDF5Steps2D4x2(const size_t ghostCells)
             h5Writer.Put(var_i64, dataI64.data());
             h5Writer.Put(var_r32, dataR32.data());
             h5Writer.Put(var_r64, dataR64.data());
+            h5Writer.Put(var_r128, dataR128.data());
             h5Writer.Put(var_cr32, dataCR32.data(), adios2::Mode::Sync);
             h5Writer.Put(var_cr64, dataCR64.data(), adios2::Mode::Sync);
+            h5Writer.Put(var_cr128, dataCR128.data(), adios2::Mode::Sync);
             h5Writer.EndStep();
         }
         h5Writer.Close();
@@ -623,6 +677,13 @@ void HDF5Steps2D4x2(const size_t ghostCells)
         ASSERT_EQ(var_r64.Shape()[0], mpiSize * Ny);
         ASSERT_EQ(var_r64.Shape()[1], Nx);
 
+        auto var_r128 = io.InquireVariable<long double>("r128");
+        EXPECT_TRUE(var_r128);
+        ASSERT_EQ(var_r128.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_r128.Steps(), NSteps);
+        ASSERT_EQ(var_r128.Shape()[0], mpiSize * Ny);
+        ASSERT_EQ(var_r128.Shape()[1], Nx);
+
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         EXPECT_TRUE(var_cr32);
         ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -637,6 +698,13 @@ void HDF5Steps2D4x2(const size_t ghostCells)
         ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Ny);
         ASSERT_EQ(var_cr64.Shape()[1], Nx);
 
+        auto var_cr128 = io.InquireVariable<std::complex<long double>>("cr128");
+        EXPECT_TRUE(var_cr128);
+        ASSERT_EQ(var_cr128.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_cr128.Steps(), NSteps);
+        ASSERT_EQ(var_cr128.Shape()[0], mpiSize * Ny);
+        ASSERT_EQ(var_cr128.Shape()[1], Nx);
+
         while (h5Reader.BeginStep() == adios2::StepStatus::OK)
         {
             const size_t step = h5Reader.CurrentStep();
@@ -647,8 +715,10 @@ void HDF5Steps2D4x2(const size_t ghostCells)
             std::vector<int64_t> I64;
             std::vector<float> R32;
             std::vector<double> R64;
+            std::vector<long double> R128;
             std::vector<std::complex<float>> CR32;
             std::vector<std::complex<double>> CR64;
+            std::vector<std::complex<long double>> CR128;
 
             h5Reader.Get(var_i8, I8);
             h5Reader.Get(var_i16, I16);
@@ -656,8 +726,10 @@ void HDF5Steps2D4x2(const size_t ghostCells)
             h5Reader.Get(var_i64, I64);
             h5Reader.Get(var_r32, R32);
             h5Reader.Get(var_r64, R64);
+            h5Reader.Get(var_r128, R128);
             h5Reader.Get(var_cr32, CR32);
             h5Reader.Get(var_cr64, CR64);
+            h5Reader.Get(var_cr128, CR128);
             h5Reader.EndStep();
 
             const size_t dataSize = mpiSize * Ny * Nx;
@@ -667,8 +739,10 @@ void HDF5Steps2D4x2(const size_t ghostCells)
             EXPECT_EQ(I64.size(), dataSize);
             EXPECT_EQ(R32.size(), dataSize);
             EXPECT_EQ(R64.size(), dataSize);
+            EXPECT_EQ(R128.size(), dataSize);
             EXPECT_EQ(CR32.size(), dataSize);
             EXPECT_EQ(CR64.size(), dataSize);
+            EXPECT_EQ(CR128.size(), dataSize);
 
             EXPECT_EQ(I8.front(), static_cast<int8_t>(step));
             EXPECT_EQ(I16.front(), static_cast<int16_t>(step));
@@ -676,12 +750,16 @@ void HDF5Steps2D4x2(const size_t ghostCells)
             EXPECT_EQ(I64.front(), static_cast<int64_t>(step));
             EXPECT_EQ(R32.front(), static_cast<float>(step));
             EXPECT_EQ(R64.front(), static_cast<double>(step));
+            EXPECT_EQ(R128.front(), static_cast<long double>(step));
             EXPECT_EQ(CR32.front(),
                       std::complex<float>(static_cast<float>(step),
                                           static_cast<float>(step)));
             EXPECT_EQ(CR64.front(),
                       std::complex<double>(static_cast<double>(step),
                                            static_cast<double>(step)));
+            EXPECT_EQ(CR128.front(), std::complex<long double>(
+                                         static_cast<long double>(step),
+                                         static_cast<long double>(step)));
 
             EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(),
                                          std::not_equal_to<int8_t>()),
@@ -701,6 +779,9 @@ void HDF5Steps2D4x2(const size_t ghostCells)
             EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(),
                                          std::not_equal_to<double>()),
                       R64.end());
+            EXPECT_EQ(std::adjacent_find(R128.begin(), R128.end(),
+                                         std::not_equal_to<long double>()),
+                      R128.end());
             EXPECT_EQ(
                 std::adjacent_find(CR32.begin(), CR32.end(),
                                    std::not_equal_to<std::complex<float>>()),
@@ -709,6 +790,10 @@ void HDF5Steps2D4x2(const size_t ghostCells)
                 std::adjacent_find(CR64.begin(), CR64.end(),
                                    std::not_equal_to<std::complex<double>>()),
                 CR64.end());
+            EXPECT_EQ(std::adjacent_find(
+                          CR128.begin(), CR128.end(),
+                          std::not_equal_to<std::complex<long double>>()),
+                      CR128.end());
         }
 
         h5Reader.Close();
@@ -761,10 +846,14 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
+        auto var_r128 =
+            io.DefineVariable<long double>("r128", shape, start, count);
         auto var_cr32 =
             io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
         auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
                                                                 start, count);
+        auto var_cr128 = io.DefineVariable<std::complex<long double>>(
+            "cr128", shape, start, count);
 
         const adios2::Dims memoryStart = {ghostCellsZ, ghostCellsY,
                                           ghostCellsX};
@@ -777,8 +866,10 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         var_i64.SetMemorySelection({memoryStart, memoryCount});
         var_r32.SetMemorySelection({memoryStart, memoryCount});
         var_r64.SetMemorySelection({memoryStart, memoryCount});
+        var_r128.SetMemorySelection({memoryStart, memoryCount});
         var_cr32.SetMemorySelection({memoryStart, memoryCount});
         var_cr64.SetMemorySelection({memoryStart, memoryCount});
+        var_cr128.SetMemorySelection({memoryStart, memoryCount});
 
         const size_t dataSize = (Nz + 2 * ghostCellsZ) *
                                 (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
@@ -788,8 +879,10 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         std::vector<int64_t> dataI64(dataSize, -1);
         std::vector<float> dataR32(dataSize, -1.f);
         std::vector<double> dataR64(dataSize, -1.);
+        std::vector<long double> dataR128(dataSize, -1.);
         std::vector<std::complex<float>> dataCR32(dataSize, {-1.f, -1.f});
         std::vector<std::complex<double>> dataCR64(dataSize, {-1., -1.});
+        std::vector<std::complex<long double>> dataCR128(dataSize, {-1., -1.});
 
         adios2::Engine h5Writer = io.Open(fname, adios2::Mode::Write);
 
@@ -807,9 +900,13 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
                          ghostCellsZ);
             AssignStep3D(i, dataR64, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
                          ghostCellsZ);
+            AssignStep3D(i, dataR128, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
+                         ghostCellsZ);
             AssignStep3D(i, dataCR32, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
                          ghostCellsZ);
             AssignStep3D(i, dataCR64, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
+                         ghostCellsZ);
+            AssignStep3D(i, dataCR128, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
                          ghostCellsZ);
 
             h5Writer.BeginStep();
@@ -819,8 +916,10 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
             h5Writer.Put(var_i64, dataI64.data());
             h5Writer.Put(var_r32, dataR32.data());
             h5Writer.Put(var_r64, dataR64.data());
+            h5Writer.Put(var_r128, dataR128.data());
             h5Writer.Put(var_cr32, dataCR32.data());
             h5Writer.Put(var_cr64, dataCR64.data());
+            h5Writer.Put(var_cr128, dataCR128.data());
             h5Writer.EndStep();
         }
         h5Writer.Close();
@@ -886,6 +985,14 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         EXPECT_EQ(var_r64.Shape()[1], Ny);
         EXPECT_EQ(var_r64.Shape()[2], Nx);
 
+        auto var_r128 = io.InquireVariable<long double>("r128");
+        EXPECT_TRUE(var_r128);
+        EXPECT_EQ(var_r128.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_r128.Steps(), NSteps);
+        EXPECT_EQ(var_r128.Shape()[0], mpiSize * Nz);
+        EXPECT_EQ(var_r128.Shape()[1], Ny);
+        EXPECT_EQ(var_r128.Shape()[2], Nx);
+
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         EXPECT_TRUE(var_cr32);
         EXPECT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -902,6 +1009,14 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         EXPECT_EQ(var_cr64.Shape()[1], Ny);
         EXPECT_EQ(var_cr64.Shape()[2], Nx);
 
+        auto var_cr128 = io.InquireVariable<std::complex<long double>>("cr128");
+        EXPECT_TRUE(var_cr128);
+        EXPECT_EQ(var_cr128.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_cr128.Steps(), NSteps);
+        EXPECT_EQ(var_cr128.Shape()[0], mpiSize * Nz);
+        EXPECT_EQ(var_cr128.Shape()[1], Ny);
+        EXPECT_EQ(var_cr128.Shape()[2], Nx);
+
         while (h5Reader.BeginStep() == adios2::StepStatus::OK)
         {
             const size_t currentStep = h5Reader.CurrentStep();
@@ -913,8 +1028,10 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
             std::vector<int64_t> I64;
             std::vector<float> R32;
             std::vector<double> R64;
+            std::vector<long double> R128;
             std::vector<std::complex<float>> CR32;
             std::vector<std::complex<double>> CR64;
+            std::vector<std::complex<long double>> CR128;
 
             h5Reader.Get(var_i8, I8);
             h5Reader.Get(var_i16, I16);
@@ -922,8 +1039,10 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
             h5Reader.Get(var_i64, I64);
             h5Reader.Get(var_r32, R32);
             h5Reader.Get(var_r64, R64);
+            h5Reader.Get(var_r128, R128);
             h5Reader.Get(var_cr32, CR32);
             h5Reader.Get(var_cr64, CR64);
+            h5Reader.Get(var_cr128, CR128);
             h5Reader.EndStep();
 
             // EXPECT_EQ(var_i8.Min(), static_cast<int8_t>(currentStep));
@@ -951,6 +1070,8 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
 
             EXPECT_EQ(R64.front(), static_cast<double>(currentStep));
 
+            EXPECT_EQ(R128.front(), static_cast<long double>(currentStep));
+
             EXPECT_EQ(CR32.front(),
                       std::complex<float>(static_cast<float>(currentStep),
                                           static_cast<float>(currentStep)));
@@ -959,6 +1080,11 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
                       std::complex<double>(static_cast<double>(currentStep),
                                            static_cast<double>(currentStep)));
 
+            EXPECT_EQ(CR128.front(),
+                      std::complex<long double>(
+                          static_cast<long double>(currentStep),
+                          static_cast<long double>(currentStep)));
+
             const size_t dataSize = mpiSize * Nz * Ny * Nx;
             EXPECT_EQ(I8.size(), dataSize);
             EXPECT_EQ(I16.size(), dataSize);
@@ -966,8 +1092,10 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(I64.size(), dataSize);
             EXPECT_EQ(R32.size(), dataSize);
             EXPECT_EQ(R64.size(), dataSize);
+            EXPECT_EQ(R128.size(), dataSize);
             EXPECT_EQ(CR32.size(), dataSize);
             EXPECT_EQ(CR64.size(), dataSize);
+            EXPECT_EQ(CR128.size(), dataSize);
 
             EXPECT_EQ(I8.front(), static_cast<int8_t>(step));
             EXPECT_EQ(I16.front(), static_cast<int16_t>(step));
@@ -975,12 +1103,16 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(I64.front(), static_cast<int64_t>(step));
             EXPECT_EQ(R32.front(), static_cast<float>(step));
             EXPECT_EQ(R64.front(), static_cast<double>(step));
+            EXPECT_EQ(R128.front(), static_cast<long double>(step));
             EXPECT_EQ(CR32.front(),
                       std::complex<float>(static_cast<float>(step),
                                           static_cast<float>(step)));
             EXPECT_EQ(CR64.front(),
                       std::complex<double>(static_cast<double>(step),
                                            static_cast<double>(step)));
+            EXPECT_EQ(CR128.front(), std::complex<long double>(
+                                         static_cast<long double>(step),
+                                         static_cast<long double>(step)));
 
             EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(),
                                          std::not_equal_to<int8_t>()),
@@ -1000,6 +1132,9 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(),
                                          std::not_equal_to<double>()),
                       R64.end());
+            EXPECT_EQ(std::adjacent_find(R128.begin(), R128.end(),
+                                         std::not_equal_to<long double>()),
+                      R128.end());
             EXPECT_EQ(
                 std::adjacent_find(CR32.begin(), CR32.end(),
                                    std::not_equal_to<std::complex<float>>()),
@@ -1008,6 +1143,10 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
                 std::adjacent_find(CR64.begin(), CR64.end(),
                                    std::not_equal_to<std::complex<double>>()),
                 CR64.end());
+            EXPECT_EQ(std::adjacent_find(
+                          CR128.begin(), CR128.end(),
+                          std::not_equal_to<std::complex<long double>>()),
+                      CR128.end());
         }
 
         h5Reader.Close();

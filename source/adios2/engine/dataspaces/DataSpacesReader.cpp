@@ -203,6 +203,8 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
             AddVar<std::complex<float>>(m_IO, adiosName, shape);
         else if (adiosVarType == "double complex")
             AddVar<std::complex<double>>(m_IO, adiosName, shape);
+        else if (adiosVarType == "long double complex")
+            AddVar<std::complex<long double>>(m_IO, adiosName, shape);
         else
             AddVar<std::string>(m_IO, adiosName,
                                 shape); // used string for last value
