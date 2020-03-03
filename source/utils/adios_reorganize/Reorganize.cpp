@@ -197,7 +197,7 @@ void Reorganize::Run()
         const core::DataMap &variables = io.GetVariablesDataMap();
         const core::DataMap &attributes = io.GetAttributesDataMap();
 
-        print0("File info:");
+        print0("____________________\n\nFile info:");
         print0("  current step:   ", curr_step);
         print0("  # of variables: ", variables.size());
         print0("  # of attributes: ", attributes.size());
@@ -489,42 +489,43 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
 
         varinfo[varidx].v = variable;
 
-        if (variable == nullptr)
+        if (variable != nullptr)
         {
-            std::cerr << "rank " << m_Rank << ": ERROR: Variable " << name
-                      << " inquiry failed" << std::endl;
-            return 1;
-        }
 
-        // print variable type and dimensions
-        if (!m_Rank)
-        {
-            std::cout << "    " << type << " " << name;
-            if (variable->GetShape().size() > 0)
+            // print variable type and dimensions
+            if (!m_Rank)
             {
-                std::cout << "[" << variable->GetShape()[0];
-                for (size_t j = 1; j < variable->GetShape().size(); j++)
+                std::cout << "    " << type << " " << name;
+                if (variable->GetShape().size() > 0)
                 {
-                    std::cout << ", " << variable->GetShape()[j];
+                    std::cout << "[" << variable->GetShape()[0];
+                    for (size_t j = 1; j < variable->GetShape().size(); j++)
+                    {
+                        std::cout << ", " << variable->GetShape()[j];
+                    }
+                    std::cout << "]" << std::endl;
                 }
-                std::cout << "]" << std::endl;
+                else
+                {
+                    print0("\tscalar");
+                }
             }
-            else
+
+            // determine subset we will write
+            size_t sum_count =
+                Decompose(m_Size, m_Rank, varinfo[varidx], decomp_values);
+            varinfo[varidx].writesize = sum_count * variable->m_ElementSize;
+
+            if (varinfo[varidx].writesize != 0)
             {
-                print0("\tscalar\n");
+                write_total += varinfo[varidx].writesize;
+                if (largest_block < varinfo[varidx].writesize)
+                    largest_block = varinfo[varidx].writesize;
             }
         }
-
-        // determine subset we will write
-        size_t sum_count =
-            Decompose(m_Size, m_Rank, varinfo[varidx], decomp_values);
-        varinfo[varidx].writesize = sum_count * variable->m_ElementSize;
-
-        if (varinfo[varidx].writesize != 0)
+        else
         {
-            write_total += varinfo[varidx].writesize;
-            if (largest_block < varinfo[varidx].writesize)
-                largest_block = varinfo[varidx].writesize;
+            print0("    Not available in this step");
         }
         ++varidx;
     }
@@ -575,18 +576,20 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
      */
     for (size_t varidx = 0; varidx < nvars; ++varidx)
     {
-        const std::string &name = varinfo[varidx].v->m_Name;
-        assert(varinfo[varidx].readbuf == nullptr);
-        if (varinfo[varidx].writesize != 0)
+        if (varinfo[varidx].v != nullptr)
         {
-            // read variable subset
-            std::cout << "rank " << m_Rank << ": Read variable " << name
-                      << std::endl;
-            const std::string &type = variables.at(name).first;
-            if (type == "compound")
+            const std::string &name = varinfo[varidx].v->m_Name;
+            assert(varinfo[varidx].readbuf == nullptr);
+            if (varinfo[varidx].writesize != 0)
             {
-                // not supported
-            }
+                // read variable subset
+                std::cout << "rank " << m_Rank << ": Read variable " << name
+                          << std::endl;
+                const std::string &type = variables.at(name).first;
+                if (type == "compound")
+                {
+                    // not supported
+                }
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
@@ -605,8 +608,9 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                            reinterpret_cast<T *>(varinfo[varidx].readbuf));    \
         }                                                                      \
     }
-            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
+            }
         }
     }
     rStream.EndStep(); // read in data into allocated pointers
@@ -617,17 +621,19 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
     wStream.BeginStep();
     for (size_t varidx = 0; varidx < nvars; ++varidx)
     {
-        const std::string &name = varinfo[varidx].v->m_Name;
-        if (varinfo[varidx].writesize != 0)
+        if (varinfo[varidx].v != nullptr)
         {
-            // Write variable subset
-            std::cout << "rank " << m_Rank << ": Write variable " << name
-                      << std::endl;
-            const std::string &type = variables.at(name).first;
-            if (type == "compound")
+            const std::string &name = varinfo[varidx].v->m_Name;
+            if (varinfo[varidx].writesize != 0)
             {
-                // not supported
-            }
+                // Write variable subset
+                std::cout << "rank " << m_Rank << ": Write variable " << name
+                          << std::endl;
+                const std::string &type = variables.at(name).first;
+                if (type == "compound")
+                {
+                    // not supported
+                }
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
@@ -645,8 +651,9 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                            reinterpret_cast<T *>(varinfo[varidx].readbuf));    \
         }                                                                      \
     }
-            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
+            }
         }
     }
     wStream.EndStep(); // write output buffer to file
