@@ -32,6 +32,11 @@ html/
 docs/api_doxygen/CXX11/xml/
 docs/api_doxygen/C/xml/
 
+# readthedocs generated:
+docs/bin/
+docs/lib/
+docs/pyvenv.cfg
+
 # Visual Studio
 .vs/
 CMakeSettings.json
