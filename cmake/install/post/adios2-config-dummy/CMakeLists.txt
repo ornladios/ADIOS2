@@ -27,7 +27,10 @@ if(ADIOS2_HAVE_Fortran)
   add_executable(without_Fortran foo.F90 main.f90)
   add_executable(with_Fortran foo.F90 main.f90)
   target_compile_definitions(with_Fortran PRIVATE WITH_ADIOS2)
-  target_link_libraries(with_Fortran adios2::adios2_f)
+  if(ADIOS2_HAVE_MPI)
+    target_link_libraries(with_Fortran adios2::fortran_mpi)
+  endif()
+  target_link_libraries(with_Fortran adios2::fortran)
 
   set_target_properties(without_Fortran with_Fortran PROPERTIES
     LINKER_LANGUAGE Fortran
