@@ -3,6 +3,7 @@
 
 [![GitHub (pre-)release](https://img.shields.io/github/release/ornladios/adios2/all.svg)]()
 [![Spack Version](https://img.shields.io/spack/v/adios2.svg)](https://spack.readthedocs.io/en/latest/package_list.html#adios2)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/adios2)](https://anaconda.org/conda-forge/adios2)
 
 [![Circle CI](https://circleci.com/gh/ornladios/ADIOS2.svg?style=shield)](https://circleci.com/gh/ornladios/ADIOS2)
 [![Travis CI](https://api.travis-ci.com/ornladios/ADIOS2.svg)](https://travis-ci.com/ornladios/ADIOS2)
