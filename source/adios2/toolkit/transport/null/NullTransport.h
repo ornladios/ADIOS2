@@ -34,7 +34,8 @@ public:
 
     virtual ~NullTransport();
 
-    void Open(const std::string &name, const Mode openMode) override;
+    void Open(const std::string &name, const Mode openMode,
+              const bool async = false) override;
 
     void SetBuffer(char *buffer, size_t size) override;
 

@@ -58,11 +58,14 @@ public:
     void InitProfiler(const Mode openMode, const TimeUnit timeUnit);
 
     /**
-     * Opens transport, required before SetBuffer, Write, Read, Flush, Close
+     * Opens transport, possibly asynchronously, required before SetBuffer,
+     * Write, Read, Flush, Close
      * @param name
      * @param openMode
+     * @param async
      */
-    virtual void Open(const std::string &name, const Mode openMode) = 0;
+    virtual void Open(const std::string &name, const Mode openMode,
+                      const bool async = false) = 0;
 
     /**
      * If OS buffered (FILE* or fstream), sets the buffer size

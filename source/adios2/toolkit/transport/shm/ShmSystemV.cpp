@@ -47,7 +47,8 @@ ShmSystemV::~ShmSystemV() // this might not be correct
     }
 }
 
-void ShmSystemV::Open(const std::string &name, const Mode openMode)
+void ShmSystemV::Open(const std::string &name, const Mode openMode,
+                      const bool async)
 {
     m_Name = name;
     CheckName();

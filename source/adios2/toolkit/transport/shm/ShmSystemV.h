@@ -40,7 +40,8 @@ public:
 
     ~ShmSystemV();
 
-    void Open(const std::string &name, const Mode openMode) final;
+    void Open(const std::string &name, const Mode openMode,
+              const bool async = false) final;
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 

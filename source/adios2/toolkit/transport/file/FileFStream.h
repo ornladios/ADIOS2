@@ -12,6 +12,7 @@
 #define ADIOS2_TOOLKIT_TRANSPORT_FILE_FILESTREAM_H_
 
 #include <fstream>
+#include <future> //std::async, std::future
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/helper/adiosComm.h"
@@ -31,7 +32,8 @@ public:
 
     ~FileFStream() = default;
 
-    void Open(const std::string &name, const Mode openMode) final;
+    void Open(const std::string &name, const Mode openMode,
+              const bool async = false) final;
 
     void SetBuffer(char *buffer, size_t size) final;
 
@@ -52,12 +54,15 @@ public:
 private:
     /** file stream using fstream library */
     std::fstream m_FileStream;
+    bool m_IsOpening = false;
+    std::future<void> m_OpenFuture;
 
     /**
      * Check if m_FileStream is false after an operation
      * @param hint exception message
      */
     void CheckFile(const std::string hint) const;
+    void WaitForOpen();
 };
 
 } // end namespace transport
