@@ -37,8 +37,28 @@ FileStdio::~FileStdio()
     }
 }
 
-void FileStdio::Open(const std::string &name, const Mode openMode)
+void FileStdio::WaitForOpen()
 {
+    if (m_IsOpening)
+    {
+        if (m_OpenFuture.valid())
+        {
+            m_File = m_OpenFuture.get();
+        }
+        m_IsOpening = false;
+        CheckFile(
+            "couldn't open file " + m_Name +
+            ", check permissions or path existence, in call to POSIX open");
+        m_IsOpen = true;
+    }
+}
+
+void FileStdio::Open(const std::string &name, const Mode openMode,
+                     const bool async)
+{
+    auto lf_AsyncOpenWrite = [&](const std::string &name) -> FILE * {
+        return std::fopen(name.c_str(), "wb");
+    };
     m_Name = name;
     CheckName();
     m_OpenMode = openMode;
@@ -46,7 +66,16 @@ void FileStdio::Open(const std::string &name, const Mode openMode)
     switch (m_OpenMode)
     {
     case (Mode::Write):
-        m_File = std::fopen(name.c_str(), "wb");
+        if (async)
+        {
+            m_IsOpening = true;
+            m_OpenFuture =
+                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+        }
+        else
+        {
+            m_File = std::fopen(name.c_str(), "wb");
+        }
         break;
     case (Mode::Append):
         m_File = std::fopen(name.c_str(), "rwb");
@@ -61,9 +90,13 @@ void FileStdio::Open(const std::string &name, const Mode openMode)
                   ", in call to stdio fopen");
     }
 
-    CheckFile("couldn't open file " + m_Name +
-              ", check permissions or path existence, in call to stdio open");
-    m_IsOpen = true;
+    if (!m_IsOpening)
+    {
+        CheckFile(
+            "couldn't open file " + m_Name +
+            ", check permissions or path existence, in call to stdio open");
+        m_IsOpen = true;
+    }
 }
 
 void FileStdio::SetBuffer(char *buffer, size_t size)
@@ -98,6 +131,7 @@ void FileStdio::Write(const char *buffer, size_t size, size_t start)
         }
     };
 
+    WaitForOpen();
     if (start != MaxSizeT)
     {
         const auto status =
@@ -151,6 +185,7 @@ void FileStdio::Read(char *buffer, size_t size, size_t start)
         }
     };
 
+    WaitForOpen();
     if (start != MaxSizeT)
     {
         const auto status =
@@ -182,6 +217,7 @@ void FileStdio::Read(char *buffer, size_t size, size_t start)
 
 size_t FileStdio::GetSize()
 {
+    WaitForOpen();
     const auto currentPosition = ftell(m_File);
     if (currentPosition == -1L)
     {
@@ -204,6 +240,7 @@ size_t FileStdio::GetSize()
 
 void FileStdio::Flush()
 {
+    WaitForOpen();
     ProfilerStart("write");
     const int status = std::fflush(m_File);
     ProfilerStop("write");
@@ -217,6 +254,7 @@ void FileStdio::Flush()
 
 void FileStdio::Close()
 {
+    WaitForOpen();
     ProfilerStart("close");
     const int status = std::fclose(m_File);
     ProfilerStop("close");
@@ -240,6 +278,7 @@ void FileStdio::CheckFile(const std::string hint) const
 
 void FileStdio::SeekToEnd()
 {
+    WaitForOpen();
     const auto status = std::fseek(m_File, 0, SEEK_END);
     if (status == -1)
     {
@@ -251,6 +290,7 @@ void FileStdio::SeekToEnd()
 
 void FileStdio::SeekToBegin()
 {
+    WaitForOpen();
     const auto status = std::fseek(m_File, 0, SEEK_SET);
     if (status == -1)
     {

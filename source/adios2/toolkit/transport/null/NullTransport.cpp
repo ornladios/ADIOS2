@@ -31,7 +31,8 @@ NullTransport::NullTransport(helper::Comm const &comm, const bool debugMode)
 
 NullTransport::~NullTransport() = default;
 
-void NullTransport::Open(const std::string &name, const Mode openMode)
+void NullTransport::Open(const std::string &name, const Mode openMode,
+                         const bool async)
 {
     if (Impl->IsOpen)
     {

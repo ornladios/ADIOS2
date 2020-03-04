@@ -72,21 +72,6 @@ public:
                    const bool profile);
 
     /**
-     * Async version of OpenFiles
-     * @param fileNames
-     * @param openMode
-     * @param parametersVector
-     * @param profile
-     *
-     *   Opens happen asynchronously, but any future call waits for their
-     * completion
-     */
-    void OpenFilesAsync(const std::vector<std::string> &fileNames,
-                        const Mode openMode,
-                        const std::vector<Params> &parametersVector,
-                        const bool profile);
-
-    /**
      * Used for sub-files defined by index
      * @param name
      * @param id
@@ -178,7 +163,6 @@ public:
 protected:
     helper::Comm const &m_Comm;
     const bool m_DebugMode = false;
-    mutable std::future<void> m_FutureOpenFiles;
 
     std::shared_ptr<Transport> OpenFileTransport(const std::string &fileName,
                                                  const Mode openMode,

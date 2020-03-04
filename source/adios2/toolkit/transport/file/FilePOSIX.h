@@ -11,6 +11,8 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEDESCRIPTOR_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEDESCRIPTOR_H_
 
+#include <future> //std::async, std::future
+
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
 
@@ -32,7 +34,8 @@ public:
 
     ~FilePOSIX();
 
-    void Open(const std::string &name, const Mode openMode) final;
+    void Open(const std::string &name, const Mode openMode,
+              const bool async = false) final;
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 
@@ -52,12 +55,15 @@ public:
 private:
     /** POSIX file handle returned by Open */
     int m_FileDescriptor = -1;
+    bool m_IsOpening = false;
+    std::future<int> m_OpenFuture;
 
     /**
      * Check if m_FileDescriptor is -1 after an operation
      * @param hint exception message
      */
     void CheckFile(const std::string hint) const;
+    void WaitForOpen();
 };
 
 } // end namespace transport

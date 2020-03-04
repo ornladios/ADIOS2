@@ -37,8 +37,32 @@ FilePOSIX::~FilePOSIX()
     }
 }
 
-void FilePOSIX::Open(const std::string &name, const Mode openMode)
+void FilePOSIX::WaitForOpen()
 {
+    if (m_IsOpening)
+    {
+        if (m_OpenFuture.valid())
+        {
+            m_FileDescriptor = m_OpenFuture.get();
+        }
+        m_IsOpening = false;
+        CheckFile(
+            "couldn't open file " + m_Name +
+            ", check permissions or path existence, in call to POSIX open");
+        m_IsOpen = true;
+    }
+}
+
+void FilePOSIX::Open(const std::string &name, const Mode openMode,
+                     const bool async)
+{
+    auto lf_AsyncOpenWrite = [&](const std::string &name) -> int {
+        ProfilerStart("open");
+        int FD = open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        ProfilerStop("open");
+        return FD;
+    };
+
     m_Name = name;
     CheckName();
     m_OpenMode = openMode;
@@ -46,10 +70,19 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode)
     {
 
     case (Mode::Write):
-        ProfilerStart("open");
-        m_FileDescriptor =
-            open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
-        ProfilerStop("open");
+        if (async)
+        {
+            m_IsOpening = true;
+            m_OpenFuture =
+                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+        }
+        else
+        {
+            ProfilerStart("open");
+            m_FileDescriptor =
+                open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            ProfilerStop("open");
+        }
         break;
 
     case (Mode::Append):
@@ -71,10 +104,13 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode)
                   ", in call to POSIX open");
     }
 
-    CheckFile("couldn't open file " + m_Name +
-              ", check permissions or path existence, in call to POSIX open");
-
-    m_IsOpen = true;
+    if (!m_IsOpening)
+    {
+        CheckFile(
+            "couldn't open file " + m_Name +
+            ", check permissions or path existence, in call to POSIX open");
+        m_IsOpen = true;
+    }
 }
 
 void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
@@ -103,6 +139,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         }
     };
 
+    WaitForOpen();
     if (start != MaxSizeT)
     {
         const auto newPosition = lseek(m_FileDescriptor, start, SEEK_SET);
@@ -161,6 +198,8 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
         }
     };
 
+    WaitForOpen();
+
     if (start != MaxSizeT)
     {
         const auto newPosition = lseek(m_FileDescriptor, start, SEEK_SET);
@@ -197,6 +236,7 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
 size_t FilePOSIX::GetSize()
 {
     struct stat fileStat;
+    WaitForOpen();
     if (fstat(m_FileDescriptor, &fileStat) == -1)
     {
         throw std::ios_base::failure("ERROR: couldn't get size of file " +
@@ -209,6 +249,7 @@ void FilePOSIX::Flush() {}
 
 void FilePOSIX::Close()
 {
+    WaitForOpen();
     ProfilerStart("close");
     const int status = close(m_FileDescriptor);
     ProfilerStop("close");
@@ -232,6 +273,7 @@ void FilePOSIX::CheckFile(const std::string hint) const
 
 void FilePOSIX::SeekToEnd()
 {
+    WaitForOpen();
     const int status = lseek(m_FileDescriptor, 0, SEEK_END);
     if (status == -1)
     {
@@ -243,6 +285,7 @@ void FilePOSIX::SeekToEnd()
 
 void FilePOSIX::SeekToBegin()
 {
+    WaitForOpen();
     const int status = lseek(m_FileDescriptor, 0, SEEK_SET);
     if (status == -1)
     {
