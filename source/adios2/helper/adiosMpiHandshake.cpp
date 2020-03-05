@@ -72,7 +72,7 @@ void MpiHandshake::Test()
                             existed = true;
                         }
                     }
-                    if (not existed)
+                    if (!existed)
                     {
                         ranks.push_back(rank);
                     }
@@ -88,7 +88,7 @@ void MpiHandshake::Test()
                             existed = true;
                         }
                     }
-                    if (not existed)
+                    if (!existed)
                     {
                         ranks.push_back(rank);
                     }
@@ -199,7 +199,7 @@ void MpiHandshake::Start(const size_t maxStreamsPerApp,
 void MpiHandshake::Wait(const std::string &filename)
 {
     bool finished = false;
-    while (not finished)
+    while (!finished)
     {
         finished = Check(filename);
     }
@@ -228,7 +228,7 @@ void MpiHandshake::Finalize()
                 MPI_Status status;
                 int success;
                 MPI_Test(&r, &success, &status);
-                if (not success)
+                if (!success)
                 {
                     MPI_Cancel(&r);
                 }
