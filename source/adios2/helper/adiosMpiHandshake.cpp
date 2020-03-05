@@ -6,6 +6,7 @@
  */
 
 #include "adiosMpiHandshake.h"
+#include <cstring>
 #include <iostream>
 
 namespace adios2
