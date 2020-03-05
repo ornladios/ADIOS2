@@ -37,8 +37,9 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
                       m_MaxFilenameLength);
     ssc::GetParameter(m_IO.m_Parameters, "RendezvousAppCount",
                       m_RendezvousAppCount);
-    ssc::GetParameter(m_IO.m_Parameters, "RendezvousStreamCount",
-                      m_RendezvousStreamCount);
+    ssc::GetParameter(m_IO.m_Parameters, "MaxStreamsPerApp",
+                      m_MaxStreamsPerApp);
+    ssc::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs", m_OpenTimeoutSecs);
 
     m_GlobalWritePattern.resize(m_WorldSize);
     m_GlobalReadPattern.resize(m_WorldSize);
@@ -189,10 +190,9 @@ void SscWriter::SyncMpiPattern()
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
-    m_MpiHandshake.Start(m_RendezvousStreamCount, m_MaxFilenameLength,
-                         m_RendezvousAppCount, 'w', m_Name, CommAsMPI(m_Comm));
-    m_MpiHandshake.Wait(m_Name);
-    m_MpiHandshake.PrintMaps();
+    m_MpiHandshake.Handshake(m_Name, 'w', m_OpenTimeoutSecs, m_MaxStreamsPerApp,
+                             m_MaxFilenameLength, m_RendezvousAppCount,
+                             CommAsMPI(m_Comm));
 
     for (const auto &app : m_MpiHandshake.GetWriterMap(m_Name))
     {
@@ -209,8 +209,6 @@ void SscWriter::SyncMpiPattern()
             m_AllReaderRanks.push_back(rank);
         }
     }
-
-    m_MpiHandshake.Finalize();
 
     MPI_Group worldGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);

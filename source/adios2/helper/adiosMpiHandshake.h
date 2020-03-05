@@ -26,12 +26,12 @@ namespace helper
 class MpiHandshake
 {
 public:
-    static void Start(const size_t maxStreamsPerApp,
-                      const size_t maxFilenameLength,
-                      const size_t appsForThisStream, const char mode,
-                      const std::string &filename, MPI_Comm localComm);
-    static void Wait(const std::string &filename);
-    static void Finalize();
+    static void Handshake(const std::string &filename, const char mode,
+                          const int timeoutSeconds,
+                          const size_t maxStreamsPerApp,
+                          const size_t maxFilenameLength,
+                          const size_t RendezvousAppCountForStream,
+                          MPI_Comm localComm);
     static const std::map<int, std::vector<int>> &
     GetWriterMap(const std::string &filename);
     static const std::map<int, std::vector<int>> &
@@ -48,7 +48,7 @@ private:
     static size_t m_MaxStreamsPerApp;
     static size_t m_MaxFilenameLength;
     static size_t m_ItemSize;
-    static std::map<std::string, size_t> m_AppsForStreams;
+    static std::map<std::string, size_t> m_RendezvousAppCounts;
     static size_t m_StreamID;
     static int m_WorldSize;
     static int m_WorldRank;
