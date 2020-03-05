@@ -2,7 +2,7 @@
 ! Distributed under the OSI-approved Apache License, Version 2.0.  See
 !  accompanying file Copyright.txt for details.
 !
-!  adios2_adios_init_mod_mpi.f90 : ADIOS2 Fortran bindings for ADIOS
+!  adios2_adios_init_mod_mpi.F90 : ADIOS2 Fortran bindings for ADIOS
 !                                  class Init functions (MPI variants)
 !
 
