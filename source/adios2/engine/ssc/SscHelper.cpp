@@ -318,7 +318,8 @@ bool GetParameter(const Params &params, const std::string &key, int &value)
         }
         catch (...)
         {
-            std::string error = "Engine parameter " + key + " can only be integer numbers";
+            std::string error =
+                "Engine parameter " + key + " can only be integer numbers";
             std::cerr << error << std::endl;
             return false;
         }
@@ -326,7 +327,8 @@ bool GetParameter(const Params &params, const std::string &key, int &value)
     return true;
 }
 
-bool GetParameter(const Params &params, const std::string &key, std::string &value)
+bool GetParameter(const Params &params, const std::string &key,
+                  std::string &value)
 {
     auto it = params.find(key);
     if (it == params.end())

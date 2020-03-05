@@ -13,8 +13,8 @@
 
 #include "SscHelper.h"
 #include "adios2/core/Engine.h"
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include "adios2/helper/adiosMpiHandshake.h"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include <mpi.h>
 #include <queue>
 

@@ -14,7 +14,6 @@
 #include "adios2/helper/adiosJSONcomplex.h"
 #include "nlohmann/json.hpp"
 
-
 namespace adios2
 {
 namespace core
@@ -34,9 +33,12 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 
     ssc::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
     ssc::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
-    ssc::GetParameter(m_IO.m_Parameters, "MaxFilenameLength", m_MaxFilenameLength);
-    ssc::GetParameter(m_IO.m_Parameters, "RendezvousAppCount", m_RendezvousAppCount);
-    ssc::GetParameter(m_IO.m_Parameters, "RendezvousStreamCount", m_RendezvousStreamCount);
+    ssc::GetParameter(m_IO.m_Parameters, "MaxFilenameLength",
+                      m_MaxFilenameLength);
+    ssc::GetParameter(m_IO.m_Parameters, "RendezvousAppCount",
+                      m_RendezvousAppCount);
+    ssc::GetParameter(m_IO.m_Parameters, "RendezvousStreamCount",
+                      m_RendezvousStreamCount);
 
     m_GlobalWritePattern.resize(m_WorldSize);
     m_GlobalReadPattern.resize(m_WorldSize);
@@ -60,7 +62,8 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if (m_Verbosity >= 5)
     {
         std::cout << "SscWriter::BeginStep, World Rank " << m_WorldRank
-                  << ", Writer Rank " << m_WriterRank  << ", Step "<< m_CurrentStep << std::endl;
+                  << ", Writer Rank " << m_WriterRank << ", Step "
+                  << m_CurrentStep << std::endl;
     }
 
     return StepStatus::OK;
@@ -186,7 +189,8 @@ void SscWriter::SyncMpiPattern()
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
-    m_MpiHandshake.Start(m_RendezvousStreamCount, m_MaxFilenameLength, m_RendezvousAppCount, 'w', m_Name, CommAsMPI(m_Comm) );
+    m_MpiHandshake.Start(m_RendezvousStreamCount, m_MaxFilenameLength,
+                         m_RendezvousAppCount, 'w', m_Name, CommAsMPI(m_Comm));
     m_MpiHandshake.Wait(m_Name);
     m_MpiHandshake.PrintMaps();
 
@@ -206,9 +210,12 @@ void SscWriter::SyncMpiPattern()
         }
     }
 
+    m_MpiHandshake.Finalize();
+
     MPI_Group worldGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, m_AllReaderRanks.size(), m_AllReaderRanks.data(), &m_MpiAllReadersGroup);
+    MPI_Group_incl(worldGroup, m_AllReaderRanks.size(), m_AllReaderRanks.data(),
+                   &m_MpiAllReadersGroup);
 }
 
 void SscWriter::SyncWritePattern()
@@ -473,7 +480,6 @@ void SscWriter::DoClose(const int transportIndex)
     }
 
     MPI_Win_free(&m_MpiWin);
-    m_MpiHandshake.Finalize();
 }
 
 } // end namespace engine

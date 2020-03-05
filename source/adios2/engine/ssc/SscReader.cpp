@@ -34,9 +34,12 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 
     ssc::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
     ssc::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
-    ssc::GetParameter(m_IO.m_Parameters, "MaxFilenameLength", m_MaxFilenameLength);
-    ssc::GetParameter(m_IO.m_Parameters, "RendezvousAppCount", m_RendezvousAppCount);
-    ssc::GetParameter(m_IO.m_Parameters, "RendezvousStreamCount", m_RendezvousStreamCount);
+    ssc::GetParameter(m_IO.m_Parameters, "MaxFilenameLength",
+                      m_MaxFilenameLength);
+    ssc::GetParameter(m_IO.m_Parameters, "RendezvousAppCount",
+                      m_RendezvousAppCount);
+    ssc::GetParameter(m_IO.m_Parameters, "RendezvousStreamCount",
+                      m_RendezvousStreamCount);
 
     m_Buffer.resize(1);
 
@@ -104,7 +107,6 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 {
     TAU_SCOPED_TIMER_FUNC();
 
-
     if (m_InitialStep)
     {
         m_InitialStep = false;
@@ -139,7 +141,8 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::BeginStep, World Rank " << m_WorldRank
-                  << ", Reader Rank " << m_ReaderRank << ", Step "<< m_CurrentStep << std::endl;
+                  << ", Reader Rank " << m_ReaderRank << ", Step "
+                  << m_CurrentStep << std::endl;
     }
 
     if (m_Buffer[0] == 1)
@@ -188,7 +191,8 @@ void SscReader::SyncMpiPattern()
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
 
-    m_MpiHandshake.Start(m_RendezvousStreamCount, m_MaxFilenameLength, m_RendezvousAppCount, 'r', m_Name, CommAsMPI(m_Comm) );
+    m_MpiHandshake.Start(m_RendezvousStreamCount, m_MaxFilenameLength,
+                         m_RendezvousAppCount, 'r', m_Name, CommAsMPI(m_Comm));
     m_MpiHandshake.Wait(m_Name);
     m_MpiHandshake.PrintMaps();
 
@@ -208,11 +212,12 @@ void SscReader::SyncMpiPattern()
         }
     }
 
+    m_MpiHandshake.Finalize();
+
     MPI_Group worldGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
     MPI_Group_incl(worldGroup, m_AllWriterRanks.size(), m_AllWriterRanks.data(),
                    &m_MpiAllWritersGroup);
-
 }
 
 void SscReader::SyncWritePattern()
@@ -462,7 +467,6 @@ void SscReader::DoClose(const int transportIndex)
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
     MPI_Win_free(&m_MpiWin);
-    m_MpiHandshake.Finalize();
 }
 
 } // end namespace engine
