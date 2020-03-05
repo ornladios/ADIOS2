@@ -8,6 +8,9 @@ include(FortranCInterface)
 FortranCInterface_HEADER(FC.h MACRO_NAMESPACE "FC_")
 FortranCInterface_VERIFY(CXX QUIET)
 
+# Check whether the compiler supports Fortran submodule constructs we need.
+adios2_check_fortran_submodules(ADIOS2_HAVE_FORTRAN_SUBMODULES)
+
 add_library(adios2_f
   f2c/adios2_f2c_adios.cpp
   f2c/adios2_f2c_attribute.cpp
@@ -49,6 +52,9 @@ target_include_directories(adios2_f
 
 target_link_libraries(adios2_f PRIVATE adios2)
 
+if(ADIOS2_HAVE_FORTRAN_SUBMODULES)
+  target_compile_definitions(adios2_f PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_FORTRAN_SUBMODULES>")
+endif()
 
 if(ADIOS2_HAVE_MPI)
   target_compile_definitions(adios2_f PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_MPI_F>")
@@ -71,7 +77,7 @@ install(
 install(
   DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/fortran
-  FILES_MATCHING 
-    PATTERN "adios2*.mod" 
+  FILES_MATCHING
+    PATTERN "adios2*.mod"
     PATTERN "CMakeFiles" EXCLUDE
 )
