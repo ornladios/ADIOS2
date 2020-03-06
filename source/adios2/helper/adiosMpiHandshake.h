@@ -73,6 +73,7 @@ public:
     static const std::map<int, std::vector<int>> &
     GetReaderMap(const std::string &filename);
     static void PrintMaps();
+    static void PrintMaps(const int printRank);
 
 private:
     static void Test();

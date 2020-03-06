@@ -238,6 +238,44 @@ MpiHandshake::GetReaderMap(const std::string &filename)
     return m_ReadersMap[filename];
 }
 
+void MpiHandshake::PrintMaps(const int printRank)
+{
+    if (m_WorldRank == printRank)
+    {
+        std::cout << "Writers: " << std::endl;
+        for (const auto &stream : m_WritersMap)
+        {
+            std::cout << "    Stream " << stream.first << std::endl;
+            for (const auto &app : stream.second)
+            {
+                std::cout << "        App Master Rank " << app.first
+                          << std::endl;
+                std::cout << "            ";
+                for (const auto &rank : app.second)
+                {
+                    std::cout << rank << ", ";
+                }
+                std::cout << std::endl;
+            }
+        }
+        std::cout << "Readers: " << std::endl;
+        for (const auto &stream : m_ReadersMap)
+        {
+            std::cout << "    Stream " << stream.first << std::endl;
+            for (const auto &app : stream.second)
+            {
+                std::cout << "        App Master Rank " << app.first
+                          << std::endl;
+                std::cout << "            ";
+                for (const auto &rank : app.second)
+                {
+                    std::cout << rank << ", ";
+                }
+                std::cout << std::endl;
+            }
+        }
+    }
+}
 void MpiHandshake::PrintMaps()
 {
     for (int printRank = 0; printRank < m_WorldSize; ++printRank)
