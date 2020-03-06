@@ -231,6 +231,7 @@ if(ADIOS2_HAVE_MPI)
   target_sources(adios2 PRIVATE
     core/IOMPI.cpp
     helper/adiosCommMPI.h  helper/adiosCommMPI.cpp
+    helper/adiosMpiHandshake.h  helper/adiosMpiHandshake.cpp
     engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc
     engine/insitumpi/InSituMPIReader.cpp engine/insitumpi/InSituMPIReader.tcc
     engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp

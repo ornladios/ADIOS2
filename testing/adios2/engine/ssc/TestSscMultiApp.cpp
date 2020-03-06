@@ -500,7 +500,7 @@ void Reader2(const Dims &shape, const Dims &start, const Dims &count,
 TEST_F(SscEngineTest, TestSscMultiApp)
 {
     std::string filename = "TestSscMultiApp";
-    adios2::Params engineParams = {};
+    adios2::Params engineParams = {{"RendezvousAppCount", "4"}};
 
     int worldRank, worldSize;
     Dims start, count, shape;

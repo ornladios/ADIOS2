@@ -13,6 +13,7 @@
 
 #include "SscHelper.h"
 #include "adios2/core/Engine.h"
+#include "adios2/helper/adiosMpiHandshake.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include <mpi.h>
 #include <queue>
@@ -57,10 +58,8 @@ private:
     int m_WorldSize;
     int m_WriterRank;
     int m_WriterSize;
-    int m_AppID = 0;
-    int m_AppSize = 0;
-    std::vector<std::vector<int>> m_WriterGlobalMpiInfo;
-    std::vector<std::vector<int>> m_ReaderGlobalMpiInfo;
+
+    helper::MpiHandshake m_MpiHandshake;
     std::vector<int> m_AllWriterRanks;
     std::vector<int> m_AllReaderRanks;
 
@@ -92,6 +91,10 @@ private:
                            ssc::RankPosMap &allOverlapRanks);
 
     int m_Verbosity = 0;
+    int m_MaxFilenameLength = 128;
+    int m_MaxStreamsPerApp = 1;
+    int m_RendezvousAppCount = 2;
+    int m_OpenTimeoutSecs = 10;
 };
 
 } // end namespace engine
