@@ -199,3 +199,29 @@ function(SetupTestPipeline basename pipeline do_setup)
   endforeach()
 endfunction()
 
+macro(adios2_check_fortran_submodules var)
+  include(CheckFortranSourceCompiles)
+  CHECK_Fortran_SOURCE_COMPILES([[
+module foo
+  interface bar
+    module subroutine bar_integer(x)
+      integer, intent(in) :: x
+    end subroutine
+    module subroutine bar_real(x)
+      real, intent(in) :: x
+    end subroutine
+  end interface
+end module
+submodule ( foo ) sub
+contains
+  module subroutine bar_integer(x)
+    integer, intent(in) :: x
+  end subroutine
+  module subroutine bar_real(x)
+    real, intent(in) :: x
+  end subroutine
+end submodule
+program main
+end program
+]] ${var} SRC_EXT F90)
+endmacro()
