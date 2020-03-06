@@ -2,20 +2,34 @@
 ! Distributed under the OSI-approved Apache License, Version 2.0.  See
 !  accompanying file Copyright.txt for details.
 !
-!  adios2_io_open_mod_mpi.f90 : ADIOS2 Fortran bindings for IO
+!  adios2_io_open_mod_mpi.F90 : ADIOS2 Fortran bindings for IO
 !                               class open function (MPI variants)
 !
 
+#ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
+# define ADIOS2_MODULE_PROCEDURE module &
+#else
+# define ADIOS2_MODULE_PROCEDURE
+#endif
+
+#ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
+submodule ( adios2_io_open_mod ) mpi
+#else
 module adios2_io_open_mod_mpi
+#endif
+
     use adios2_parameters_mod
     implicit none
 
+#ifndef ADIOS2_HAVE_FORTRAN_SUBMODULES
     interface adios2_open
         module procedure adios2_open_new_comm
     end interface
+#endif
 
 contains
 
+    ADIOS2_MODULE_PROCEDURE
     subroutine adios2_open_new_comm(engine, io, name, adios2_mode, comm, ierr)
         type(adios2_engine), intent(out) :: engine
         type(adios2_io), intent(in) :: io
@@ -37,4 +51,8 @@ contains
 
     end subroutine
 
+#ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
+end submodule
+#else
 end module
+#endif

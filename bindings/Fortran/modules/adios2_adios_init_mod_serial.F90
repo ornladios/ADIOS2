@@ -2,24 +2,38 @@
 ! Distributed under the OSI-approved Apache License, Version 2.0.  See
 !  accompanying file Copyright.txt for details.
 !
-!  adios2_adios_init_mod_serial.f90 : ADIOS2 Fortran bindings for ADIOS
+!  adios2_adios_init_mod_serial.F90 : ADIOS2 Fortran bindings for ADIOS
 !                                     class Init functions (serial variants)
 !
 
+#ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
+# define ADIOS2_MODULE_PROCEDURE module &
+#else
+# define ADIOS2_MODULE_PROCEDURE
+#endif
+
+#ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
+submodule ( adios2_adios_init_mod ) serial
+#else
 module adios2_adios_init_mod_serial
+#endif
+
     use adios2_parameters_mod
     use adios2_functions_mod
     implicit none
 
+#ifndef ADIOS2_HAVE_FORTRAN_SUBMODULES
     interface adios2_init
         module procedure adios2_init_serial
         module procedure adios2_init_debug_serial
         module procedure adios2_init_config_serial
         module procedure adios2_init_config_debug_serial
     end interface
+#endif
 
 contains
 
+    ADIOS2_MODULE_PROCEDURE
     subroutine adios2_init_serial(adios, adios2_debug_mode, ierr)
         type(adios2_adios), intent(out) :: adios
         logical, intent(in) :: adios2_debug_mode
@@ -29,6 +43,7 @@ contains
 
     end subroutine
 
+    ADIOS2_MODULE_PROCEDURE
     subroutine adios2_init_debug_serial(adios, ierr)
         type(adios2_adios), intent(out) :: adios
         integer, intent(out) :: ierr
@@ -37,6 +52,7 @@ contains
 
     end subroutine
 
+    ADIOS2_MODULE_PROCEDURE
     subroutine adios2_init_config_serial(adios, config_file, adios2_debug_mode, ierr)
         type(adios2_adios), intent(out) :: adios
         character*(*), intent(in) :: config_file
@@ -51,6 +67,7 @@ contains
 
     end subroutine
 
+    ADIOS2_MODULE_PROCEDURE
     subroutine adios2_init_config_debug_serial(adios, config_file, ierr)
         type(adios2_adios), intent(out) :: adios
         character*(*), intent(in) :: config_file
@@ -60,4 +77,8 @@ contains
 
     end subroutine
 
+#ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
+end submodule
+#else
 end module
+#endif
