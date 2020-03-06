@@ -26,12 +26,48 @@ namespace helper
 class MpiHandshake
 {
 public:
+    /**
+     * Start the handshake operations and wait until the rendezvous conditions
+     * are reached, or timeout.
+     *
+     * @param filename: name of the staging stream, must be within the length of
+     * maxFilenameLength
+     *
+     * @param mode: 'r' or 'w', read or write
+     *
+     * @param timeoutSeconds: timeout for the handshake, will throw exception
+     * when reaching this timeout
+     *
+     * @param maxStreamsPerApp: the maximum number of streams that all apps
+     * sharing this MPI_COMM_WORLD can possibly open. It is required that this
+     * number is consistent across all ranks. This is used for pre-allocating
+     * the vectors holding MPI requests and must be specified correctly,
+     * otherwise strange errors could occur. This class does not provide any
+     * mechanism to check whether this number being passed is actually correct
+     * or not accross all ranks, because implementing this logic for an
+     * arbitrary communication pattern is overly expensive, if not impossible.
+     *
+     * @param maxFilenameLength: the maximum possible length of filename that
+     * all apps sharing this MPI_COMM_WORLD could possibly define. It is
+     * required that this number is consistent across all ranks. This is used
+     * for pre-allocating the buffer for aggregating the global MPI information.
+     * An exception will be thrown if any filename on any rank is found to be
+     * longer than this.
+     *
+     * @param rendezvousAppCountForStream: the number of apps, including both
+     * writers and readers, that will work on this stream. The function will
+     * block until it receives the MPI handshake information from all these
+     * apps, or until timeoutSeconds is passed.
+     *
+     * @param localComm: local MPI communicator for the app
+     */
     static void Handshake(const std::string &filename, const char mode,
                           const int timeoutSeconds,
                           const size_t maxStreamsPerApp,
                           const size_t maxFilenameLength,
-                          const size_t RendezvousAppCountForStream,
+                          const size_t rendezvousAppCountForStream,
                           MPI_Comm localComm);
+
     static const std::map<int, std::vector<int>> &
     GetWriterMap(const std::string &filename);
     static const std::map<int, std::vector<int>> &

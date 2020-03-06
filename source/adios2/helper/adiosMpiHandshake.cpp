@@ -10,6 +10,7 @@
 #include <chrono>
 #include <cstring>
 #include <iostream>
+#include <thread>
 
 namespace adios2
 {
@@ -193,12 +194,13 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
 
     // wait and check if required RendezvousAppCount reached
 
-    auto start_time = std::chrono::system_clock::now();
+    auto startTime = std::chrono::system_clock::now();
     while (!Check(filename))
     {
-        auto now_time = std::chrono::system_clock::now();
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+        auto nowTime = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            now_time - start_time);
+            nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
             throw(std::runtime_error("Mpi handshake timeout"));
