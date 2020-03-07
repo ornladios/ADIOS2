@@ -3,6 +3,9 @@
  * accompanying file Copyright.txt for details.
  *
  * adiosMpiHandshake.cpp
+ *
+ *  Created on: Mar 1, 2020
+ *      Author: Jason Wang
  */
 
 #include "adiosMpiHandshake.h"
@@ -203,7 +206,8 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
             nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
-            throw(std::runtime_error("Mpi handshake timeout"));
+            PrintMaps(0);
+            throw(std::runtime_error("Mpi handshake timeout on Rank" + std::to_string(m_WorldRank)));
         }
     }
 
@@ -248,8 +252,7 @@ void MpiHandshake::PrintMaps(const int printRank)
             std::cout << "    Stream " << stream.first << std::endl;
             for (const auto &app : stream.second)
             {
-                std::cout << "        App Master Rank " << app.first
-                          << std::endl;
+                std::cout << "        App Master Rank " << app.first << std::endl;
                 std::cout << "            ";
                 for (const auto &rank : app.second)
                 {
@@ -264,8 +267,7 @@ void MpiHandshake::PrintMaps(const int printRank)
             std::cout << "    Stream " << stream.first << std::endl;
             for (const auto &app : stream.second)
             {
-                std::cout << "        App Master Rank " << app.first
-                          << std::endl;
+                std::cout << "        App Master Rank " << app.first << std::endl;
                 std::cout << "            ";
                 for (const auto &rank : app.second)
                 {

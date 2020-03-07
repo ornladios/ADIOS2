@@ -48,4 +48,7 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(MultiApp TRUE Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMultiApp "" TRUE)
 
+  gtest_add_tests_helper(XgcPattern TRUE Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgcPattern "" TRUE)
+
 endif()
