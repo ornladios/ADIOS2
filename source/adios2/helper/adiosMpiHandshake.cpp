@@ -92,6 +92,8 @@ void MpiHandshake::Test()
 
 bool MpiHandshake::Check(const std::string &filename)
 {
+    int m_Verbosity = 1;
+
     Test();
 
     // check if RendezvousAppCount reached
@@ -99,6 +101,15 @@ bool MpiHandshake::Check(const std::string &filename)
     if (m_WritersMap[filename].size() + m_ReadersMap[filename].size() !=
         m_RendezvousAppCounts[filename])
     {
+        if (m_Verbosity >= 10)
+        {
+            std::cout << "MpiHandshake Rank " << m_WorldRank << " Stream "
+                      << filename << ": " << m_WritersMap[filename].size()
+                      << " writers and " << m_ReadersMap[filename].size()
+                      << " readers found out of "
+                      << m_RendezvousAppCounts[filename]
+                      << " total rendezvous apps" << std::endl;
+        }
         return false;
     }
 
@@ -206,8 +217,8 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
             nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
-            PrintMaps(0);
-            throw(std::runtime_error("Mpi handshake timeout on Rank" + std::to_string(m_WorldRank)));
+            throw(std::runtime_error("Mpi handshake timeout on Rank" +
+                                     std::to_string(m_WorldRank)));
         }
     }
 
@@ -242,39 +253,35 @@ MpiHandshake::GetReaderMap(const std::string &filename)
     return m_ReadersMap[filename];
 }
 
-void MpiHandshake::PrintMaps(const int printRank)
+void MpiHandshake::PrintMaps(const int printRank, const std::string &filename)
 {
     if (m_WorldRank == printRank)
     {
-        std::cout << "Writers: " << std::endl;
-        for (const auto &stream : m_WritersMap)
+        std::cout << "Printing MPI handshake map for Stream " << filename
+                  << " from Rank " << printRank << std::endl;
+        std::cout << "    Writers: " << std::endl;
+
+        for (const auto &app : m_WritersMap[filename])
         {
-            std::cout << "    Stream " << stream.first << std::endl;
-            for (const auto &app : stream.second)
+            std::cout << "        App Master Rank " << app.first << std::endl;
+            std::cout << "            ";
+            for (const auto &rank : app.second)
             {
-                std::cout << "        App Master Rank " << app.first << std::endl;
-                std::cout << "            ";
-                for (const auto &rank : app.second)
-                {
-                    std::cout << rank << ", ";
-                }
-                std::cout << std::endl;
+                std::cout << rank << ", ";
             }
+            std::cout << std::endl;
         }
-        std::cout << "Readers: " << std::endl;
-        for (const auto &stream : m_ReadersMap)
+
+        std::cout << "    Readers: " << std::endl;
+        for (const auto &app : m_ReadersMap[filename])
         {
-            std::cout << "    Stream " << stream.first << std::endl;
-            for (const auto &app : stream.second)
+            std::cout << "        App Master Rank " << app.first << std::endl;
+            std::cout << "            ";
+            for (const auto &rank : app.second)
             {
-                std::cout << "        App Master Rank " << app.first << std::endl;
-                std::cout << "            ";
-                for (const auto &rank : app.second)
-                {
-                    std::cout << rank << ", ";
-                }
-                std::cout << std::endl;
+                std::cout << rank << ", ";
             }
+            std::cout << std::endl;
         }
     }
 }

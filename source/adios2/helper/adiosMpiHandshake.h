@@ -100,7 +100,7 @@ private:
     static bool Check(const std::string &filename);
     static size_t PlaceInBuffer(const size_t stream, const int rank);
     static void PrintMaps();
-    static void PrintMaps(const int printRank);
+    static void PrintMaps(const int printRank, const std::string &filename);
 
     static std::vector<char> m_Buffer;
     static std::vector<std::vector<MPI_Request>> m_SendRequests;
