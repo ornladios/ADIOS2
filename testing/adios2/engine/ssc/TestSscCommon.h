@@ -1,7 +1,12 @@
+#include <adios2.h>
+#include <gtest/gtest.h>
+#include <iostream>
+#include <numeric>
 
 using namespace adios2;
 
-int print_lines = 0;
+int printed_lines = 0;
+int to_print_lines = 0;
 
 template <class T>
 void PrintData(const T *data, const size_t step, const Dims &start,
@@ -87,10 +92,10 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
-    if (print_lines < 32)
+    if (printed_lines < to_print_lines)
     {
         PrintData(data, step, start, count);
-        ++print_lines;
+        ++printed_lines;
     }
 }
 
@@ -102,10 +107,10 @@ void VerifyData(const T *data, size_t step, const Dims &start,
                                   std::multiplies<size_t>());
     bool compressed = false;
     std::vector<T> tmpdata(size);
-    if (print_lines < 32)
+    if (printed_lines < to_print_lines)
     {
         PrintData(data, step, start, count, rank);
-        ++print_lines;
+        ++printed_lines;
     }
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)

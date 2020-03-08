@@ -49,21 +49,9 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
     auto x_to_g_var =
         x_to_g_io.DefineVariable<float>("x_to_g", shape, start, count);
 
-    std::cout << " ======================== " << std::endl;
-    std::cout << " before handshake on xgc " << worldRank << std::endl;
-
     adios2::Engine x_to_g_engine =
         x_to_g_io.Open("x_to_g", adios2::Mode::Write);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " x_to_g handshake finished on xgc rank " << worldRank
-              << std::endl;
-
-    /*
     adios2::Engine g_to_x_engine = g_to_x_io.Open("g_to_x", adios2::Mode::Read);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " g_to_x handshake finished on xgc rank " << worldRank <<
-    std::endl;
-    */
 
     for (int i = 0; i < steps; ++i)
     {
@@ -72,23 +60,20 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
         x_to_g_engine.Put(x_to_g_var, x_to_g_data.data(), adios2::Mode::Sync);
         x_to_g_engine.EndStep();
 
-        /*
         g_to_x_engine.BeginStep();
-        auto g_to_x_var = x_to_g_io.InquireVariable<float>("g_to_x");
-        g_to_x_data.resize(std::accumulate(g_to_x_var.Shape().begin(),
-        g_to_x_var.Shape().end(), 1, std::multiplies<size_t>()));
+        auto g_to_x_var = g_to_x_io.InquireVariable<float>("g_to_x");
+        auto readShape = g_to_x_var.Shape();
+        g_to_x_data.resize(std::accumulate(readShape.begin(), readShape.end(),
+                                           1, std::multiplies<size_t>()));
         g_to_x_engine.Get(g_to_x_var, g_to_x_data.data(), adios2::Mode::Sync);
-        VerifyData(g_to_x_data.data(), i, Dims(g_to_x_var.Shape().size(), 0),
-        g_to_x_var.Shape(), g_to_x_var.Shape(), mpiRank);
+        VerifyData(g_to_x_data.data(), i, Dims(readShape.size(), 0), readShape,
+                   readShape, mpiRank);
         g_to_x_engine.EndStep();
-        */
     }
 
     x_to_g_engine.Close();
-    /*
     g_to_x_engine.BeginStep();
     g_to_x_engine.Close();
-    */
 }
 
 void gene(const Dims &shape, const Dims &start, const Dims &count,
@@ -107,20 +92,9 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
     auto g_to_x_var =
         g_to_x_io.DefineVariable<float>("g_to_x", shape, start, count);
 
-    std::cout << " ======================== " << std::endl;
-    std::cout << " before handshake on gene " << worldRank << std::endl;
-
     adios2::Engine x_to_g_engine = x_to_g_io.Open("x_to_g", adios2::Mode::Read);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " x_to_g handshake finished on gene rank " << worldRank
-              << std::endl;
-
-    /*
-    adios2::Engine g_to_x_engine = g_to_x_io.Open("g_to_x",
-    adios2::Mode::Write); std::cout << " ======================== " <<
-    std::endl; std::cout << " g_to_x handshake finished on gene rank " <<
-    worldRank << std::endl;
-    */
+    adios2::Engine g_to_x_engine =
+        g_to_x_io.Open("g_to_x", adios2::Mode::Write);
 
     size_t datasize = std::accumulate(shape.begin(), shape.end(), 1,
                                       std::multiplies<size_t>());
@@ -139,17 +113,15 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
                    readShape, mpiRank);
         x_to_g_engine.EndStep();
 
-        /*
         g_to_x_engine.BeginStep();
         GenData(g_to_x_data, i, start, count, shape);
         g_to_x_engine.Put(g_to_x_var, g_to_x_data.data(), adios2::Mode::Sync);
         g_to_x_engine.EndStep();
-        */
     }
 
     x_to_g_engine.BeginStep();
     x_to_g_engine.Close();
-    //    g_to_x_engine.Close();
+    g_to_x_engine.Close();
 }
 
 TEST_F(SscEngineTest, TestSscXgc2Way)
@@ -189,7 +161,6 @@ TEST_F(SscEngineTest, TestSscXgc2Way)
                                        {"MaxStreamsPerApp", "2"},
                                        {"OpenTimeoutSecs", "3"},
                                        {"Verbose", "0"}};
-        std::cout << "Rank " << worldRank << " launched xgc" << std::endl;
         xgc(shape, start, count, steps, engineParams);
     }
 
@@ -202,7 +173,6 @@ TEST_F(SscEngineTest, TestSscXgc2Way)
                                        {"MaxStreamsPerApp", "2"},
                                        {"OpenTimeoutSecs", "3"},
                                        {"Verbose", "0"}};
-        std::cout << "Rank " << worldRank << " launched gene" << std::endl;
         gene(shape, start, shape, steps, engineParams);
     }
 

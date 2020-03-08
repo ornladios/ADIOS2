@@ -46,7 +46,6 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 
     m_GlobalWritePattern.resize(m_WorldSize);
     SyncMpiPattern();
-    SyncWritePattern();
 }
 
 SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
@@ -111,6 +110,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     if (m_InitialStep)
     {
         m_InitialStep = false;
+        SyncWritePattern();
         MPI_Win_create(NULL, 0, 1, MPI_INFO_NULL, MPI_COMM_WORLD, &m_MpiWin);
         MPI_Win_start(m_MpiAllWritersGroup, 0, m_MpiWin);
     }
