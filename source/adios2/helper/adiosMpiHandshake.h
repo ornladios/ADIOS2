@@ -95,6 +95,33 @@ public:
     static const std::map<int, std::vector<int>> &
     GetReaderMap(const std::string &filename);
 
+    /**
+     * Get the MPI communicator for the stream, containing all writer ranks and reader ranks that work on the stream filename
+     *
+     * @param filename: name of the staging stream
+     *
+     * @return the communicator for the stream
+     */
+    static MPI_Comm GetStreamComm(const std::string &filename);
+
+    /**
+     * Get the MPI group for all readers in the stream filename
+     *
+     * @param filename: name of the staging stream
+     *
+     * @return the MPI group
+     */
+    static MPI_Group GetAllReadersGroup(const std::string &filename);
+
+    /**
+     * Get the MPI group for all writers in the stream filename
+     *
+     * @param filename: name of the staging stream
+     *
+     * @return the MPI group
+     */
+    static MPI_Group GetAllWritersGroup(const std::string &filename);
+
 private:
     static void Test();
     static bool Check(const std::string &filename);

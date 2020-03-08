@@ -196,37 +196,9 @@ void SscWriter::SyncMpiPattern()
                              m_MaxFilenameLength, m_RendezvousAppCount,
                              CommAsMPI(m_Comm));
 
-    std::vector<int> allWorkerRanks;
-    std::vector<int> allReaderRanks;
+    m_MpiAllReadersGroup = m_MpiHandshake.GetAllReadersGroup(m_Name);
 
-    for (const auto &app : m_MpiHandshake.GetWriterMap(m_Name))
-    {
-        for (int rank : app.second)
-        {
-            allWorkerRanks.push_back(rank);
-        }
-    }
-
-    for (const auto &app : m_MpiHandshake.GetReaderMap(m_Name))
-    {
-        for (int rank : app.second)
-        {
-            allWorkerRanks.push_back(rank);
-            allReaderRanks.push_back(rank);
-        }
-    }
-
-    MPI_Group worldGroup;
-    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, allReaderRanks.size(), allReaderRanks.data(),
-                   &m_MpiAllReadersGroup);
-
-    std::sort(allWorkerRanks.begin(), allWorkerRanks.end());
-    MPI_Group allWorkersGroup;
-    MPI_Group_incl(worldGroup, allWorkerRanks.size(), allWorkerRanks.data(),
-                   &allWorkersGroup);
-    MPI_Comm_create_group(MPI_COMM_WORLD, allWorkersGroup, 0, &m_StreamComm);
-    MPI_Barrier(m_StreamComm);
+    m_StreamComm = m_MpiHandshake.GetStreamComm(m_Name);
 }
 
 void SscWriter::SyncWritePattern()
