@@ -91,12 +91,12 @@ void coupler(const Dims &shape, const Dims &start, const Dims &count,
     {
         x_to_c_engine.BeginStep();
         auto x_to_c_var = x_to_c_io.InquireVariable<float>("x_to_c");
-        x_to_c_data.resize(std::accumulate(x_to_c_var.Shape().begin(),
-                                           x_to_c_var.Shape().end(), 1,
-                                           std::multiplies<size_t>()));
+        auto readShape = x_to_c_var.Shape();
+        x_to_c_data.resize(std::accumulate(readShape.begin(), readShape.end(),
+                                           1, std::multiplies<size_t>()));
         x_to_c_engine.Get(x_to_c_var, x_to_c_data.data(), adios2::Mode::Sync);
-        VerifyData(x_to_c_data.data(), i, Dims(x_to_c_var.Shape().size(), 0),
-                   x_to_c_var.Shape(), x_to_c_var.Shape(), mpiRank);
+        VerifyData(x_to_c_data.data(), i, Dims(readShape.size(), 0), readShape,
+                   readShape, mpiRank);
         x_to_c_engine.EndStep();
 
         c_to_g_engine.BeginStep();
@@ -106,12 +106,12 @@ void coupler(const Dims &shape, const Dims &start, const Dims &count,
 
         g_to_c_engine.BeginStep();
         auto g_to_c_var = g_to_c_io.InquireVariable<float>("g_to_c");
-        g_to_c_data.resize(std::accumulate(g_to_c_var.Shape().begin(),
-                                           g_to_c_var.Shape().end(), 1,
-                                           std::multiplies<size_t>()));
+        readShape = g_to_c_var.Shape();
+        g_to_c_data.resize(std::accumulate(readShape.begin(), readShape.end(),
+                                           1, std::multiplies<size_t>()));
         g_to_c_engine.Get(g_to_c_var, g_to_c_data.data(), adios2::Mode::Sync);
-        VerifyData(g_to_c_data.data(), i, Dims(g_to_c_var.Shape().size(), 0),
-                   g_to_c_var.Shape(), g_to_c_var.Shape(), mpiRank);
+        VerifyData(g_to_c_data.data(), i, Dims(readShape.size(), 0), readShape,
+                   readShape, mpiRank);
         g_to_c_engine.EndStep();
 
         c_to_x_engine.BeginStep();
@@ -244,16 +244,16 @@ TEST_F(SscEngineTest, TestSscXgc3Way)
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
     MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
 
-    if (worldSize < 6)
+    if (worldSize < 4)
     {
         return;
     }
 
-    if (worldRank == 0 or worldRank == 1)
+    if (worldRank == 0)
     {
         mpiGroup = 0;
     }
-    else if (worldRank == 2 or worldRank == 3)
+    else if (worldRank == 1)
     {
         mpiGroup = 1;
     }
@@ -276,7 +276,8 @@ TEST_F(SscEngineTest, TestSscXgc3Way)
         count = {1, 10};
         adios2::Params engineParams = {{"RendezvousAppCount", "2"},
                                        {"MaxStreamsPerApp", "4"},
-                                       {"OpenTimeoutSecs", "3"}};
+                                       {"OpenTimeoutSecs", "3"},
+                                       {"Verbose", "10"}};
         std::cout << "Rank " << worldRank << " launched coupler" << std::endl;
         coupler(shape, start, count, steps, engineParams);
     }
@@ -288,7 +289,8 @@ TEST_F(SscEngineTest, TestSscXgc3Way)
         count = {1, 10};
         adios2::Params engineParams = {{"RendezvousAppCount", "2"},
                                        {"MaxStreamsPerApp", "4"},
-                                       {"OpenTimeoutSecs", "3"}};
+                                       {"OpenTimeoutSecs", "3"},
+                                       {"Verbose", "10"}};
         std::cout << "Rank " << worldRank << " launched gene" << std::endl;
         gene(shape, start, shape, steps, engineParams);
     }
@@ -300,7 +302,8 @@ TEST_F(SscEngineTest, TestSscXgc3Way)
         count = {1, 10};
         adios2::Params engineParams = {{"RendezvousAppCount", "2"},
                                        {"MaxStreamsPerApp", "4"},
-                                       {"OpenTimeoutSecs", "3"}};
+                                       {"OpenTimeoutSecs", "3"},
+                                       {"Verbose", "10"}};
         std::cout << "Rank " << worldRank << " launched xgc" << std::endl;
         xgc(shape, start, count, steps, engineParams);
     }

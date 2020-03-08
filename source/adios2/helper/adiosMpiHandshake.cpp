@@ -218,7 +218,8 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
         if (duration.count() > timeoutSeconds)
         {
             throw(std::runtime_error("Mpi handshake timeout on Rank" +
-                                     std::to_string(m_WorldRank)));
+                                     std::to_string(m_WorldRank) +
+                                     " for Stream " + filename));
         }
     }
 

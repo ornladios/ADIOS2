@@ -51,16 +51,15 @@ private:
     std::vector<char> m_Buffer;
     MPI_Win m_MpiWin;
     MPI_Group m_MpiAllWritersGroup;
+    MPI_Comm m_StreamComm;
     std::string m_MpiMode = "TwoSided";
 
-    int m_WorldRank;
-    int m_WorldSize;
+    int m_StreamRank;
+    int m_StreamSize;
     int m_ReaderRank;
     int m_ReaderSize;
 
     helper::MpiHandshake m_MpiHandshake;
-    std::vector<int> m_AllWriterRanks;
-    std::vector<int> m_AllReaderRanks;
 
     void SyncMpiPattern();
     void SyncWritePattern();

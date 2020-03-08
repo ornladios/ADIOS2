@@ -24,7 +24,7 @@ namespace engine
 template <class T>
 bool SscWriter::HasBlock(const Variable<T> &variable)
 {
-    for (const auto &b : m_GlobalWritePattern[m_WorldRank])
+    for (const auto &b : m_GlobalWritePattern[m_StreamRank])
     {
         if (b.name == variable.m_Name and
             ssc::AreSameDims(variable.m_Start, b.start) and
@@ -59,8 +59,8 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     {
         if (not HasBlock(variable))
         {
-            m_GlobalWritePattern[m_WorldRank].emplace_back();
-            auto &b = m_GlobalWritePattern[m_WorldRank].back();
+            m_GlobalWritePattern[m_StreamRank].emplace_back();
+            auto &b = m_GlobalWritePattern[m_StreamRank].back();
             b.name = variable.m_Name;
             b.type = helper::GetType<T>();
             b.shape = variable.m_Shape;
@@ -75,7 +75,7 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     variable.SetData(data);
 
     bool found = false;
-    for (const auto &b : m_GlobalWritePattern[m_WorldRank])
+    for (const auto &b : m_GlobalWritePattern[m_StreamRank])
     {
         if (b.name == variable.m_Name and
             ssc::AreSameDims(variable.m_Start, b.start) and
