@@ -56,11 +56,13 @@ void MpiHandshake::Test()
                 size_t offset = PlaceInBuffer(stream, rank);
                 char mode = m_Buffer[offset];
                 offset += sizeof(char);
-                int appMasterRank =
-                    reinterpret_cast<int *>(m_Buffer.data() + offset)[0];
+                int appMasterRank;
+                std::memcpy(&appMasterRank, m_Buffer.data() + offset,
+                            sizeof(appMasterRank));
                 offset += sizeof(int);
-                int appSize =
-                    reinterpret_cast<int *>(m_Buffer.data() + offset)[0];
+                int appSize;
+                std::memcpy(&appSize, m_Buffer.data() + offset,
+                            sizeof(appSize));
                 offset += sizeof(int);
                 std::string filename = m_Buffer.data() + offset;
                 m_AppsSize[appMasterRank] = appSize;
