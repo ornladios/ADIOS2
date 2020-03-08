@@ -96,8 +96,8 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
                     b.shape.size() == 1 and b.start[0] == 0 and
                     b.count[0] == 1 and b.shape[0] == 1)
                 {
-                    data[0] = reinterpret_cast<T *>(m_Buffer.data() +
-                                                    b.bufferStart)[0];
+                    std::memcpy(data, m_Buffer.data() + b.bufferStart,
+                                sizeof(T));
                 }
                 else
                 {
