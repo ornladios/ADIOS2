@@ -12,9 +12,6 @@ enable_language(C)
 enable_language(CXX)
 
 set(ADIOS2_HAVE_Fortran @ADIOS2_HAVE_Fortran@)
-if(ADIOS2_HAVE_Fortran)
-  enable_language(Fortran)
-endif()
 
 set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
 if(ADIOS2_HAVE_MPI)
