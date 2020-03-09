@@ -256,46 +256,6 @@ MpiHandshake::GetReaderMap(const std::string &filename)
     return m_ReadersMap[filename];
 }
 
-MPI_Group MpiHandshake::GetAllReadersGroup(const std::string &filename)
-{
-    std::vector<int> allReaderRanks;
-
-    for (const auto &app : GetReaderMap(filename))
-    {
-        for (int rank : app.second)
-        {
-            allReaderRanks.push_back(rank);
-        }
-    }
-
-    MPI_Group worldGroup;
-    MPI_Group allReadersGroup;
-    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, allReaderRanks.size(), allReaderRanks.data(),
-                   &allReadersGroup);
-    return allReadersGroup;
-}
-
-MPI_Group MpiHandshake::GetAllWritersGroup(const std::string &filename)
-{
-
-    std::vector<int> allWriterRanks;
-    for (const auto &app : GetWriterMap(filename))
-    {
-        for (int rank : app.second)
-        {
-            allWriterRanks.push_back(rank);
-        }
-    }
-
-    MPI_Group worldGroup;
-    MPI_Group allWritersGroup;
-    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, allWriterRanks.size(), allWriterRanks.data(),
-                   &allWritersGroup);
-    return allWritersGroup;
-}
-
 void MpiHandshake::PrintMaps(const int printRank, const std::string &filename)
 {
     if (m_WorldRank == printRank)

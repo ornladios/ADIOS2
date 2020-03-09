@@ -197,13 +197,14 @@ void SscReader::SyncMpiPattern()
                              m_MaxFilenameLength, m_RendezvousAppCount,
                              CommAsMPI(m_Comm));
 
-    m_MpiAllWritersGroup = m_MpiHandshake.GetAllWritersGroup(m_Name);
     std::vector<int> allStreamRanks;
+    std::vector<int> allWriterRanks;
 
     for (const auto &app : m_MpiHandshake.GetWriterMap(m_Name))
     {
         for (int rank : app.second)
         {
+            allWriterRanks.push_back(rank);
             allStreamRanks.push_back(rank);
         }
     }
@@ -217,6 +218,10 @@ void SscReader::SyncMpiPattern()
     }
 
     MPI_Group worldGroup;
+    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
+    MPI_Group_incl(worldGroup, allWriterRanks.size(), allWriterRanks.data(),
+                   &m_MpiAllWritersGroup);
+
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
     std::sort(allStreamRanks.begin(), allStreamRanks.end());
     MPI_Group allWorkersGroup;

@@ -235,6 +235,13 @@ if(ADIOS2_HAVE_MPI)
     endforeach()
 endif()
 
+if(ADIOS2_HAVE_SSC)
+    set (SSC_TESTS "1x1;TimeoutOnOpen;1x1.Attrs;2x1;1x2;2x1ZeroDataVar;2x1ZeroDataR64")
+    foreach(test ${SSC_TESTS})
+        add_common_test(${test} SSC)
+    endforeach()
+endif()
+
 #
 #   Setup tests for BP engines
 #
