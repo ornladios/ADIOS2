@@ -62,30 +62,15 @@ void coupler(const Dims &shape, const Dims &start, const Dims &count,
     auto c_to_g_var =
         c_to_g_io.DefineVariable<float>("c_to_g", shape, start, count);
 
-    std::cout << " ======================== coupler before handshake "
-              << std::endl;
-
     adios2::Engine x_to_c_engine = x_to_c_io.Open("x_to_c", adios2::Mode::Read);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " x_to_c handshake finished on coupler rank " << worldRank
-              << std::endl;
 
     adios2::Engine c_to_x_engine =
         c_to_x_io.Open("c_to_x", adios2::Mode::Write);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " c_to_x handshake finished on coupler rank " << worldRank
-              << std::endl;
 
     adios2::Engine c_to_g_engine =
         c_to_g_io.Open("c_to_g", adios2::Mode::Write);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " c_to_g handshake finished on coupler rank " << worldRank
-              << std::endl;
 
     adios2::Engine g_to_c_engine = g_to_c_io.Open("g_to_c", adios2::Mode::Read);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " g_to_c handshake finished on coupler rank " << worldRank
-              << std::endl;
 
     for (int i = 0; i < steps; ++i)
     {
@@ -152,13 +137,7 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
 
     adios2::Engine x_to_c_engine =
         x_to_c_io.Open("x_to_c", adios2::Mode::Write);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " x_to_c handshake finished on xgc rank " << worldRank
-              << std::endl;
     adios2::Engine c_to_x_engine = c_to_x_io.Open("c_to_x", adios2::Mode::Read);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " c_to_x handshake finished on xgc rank " << worldRank
-              << std::endl;
 
     for (int i = 0; i < steps; ++i)
     {
@@ -168,13 +147,13 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
         x_to_c_engine.EndStep();
 
         c_to_x_engine.BeginStep();
-        auto c_to_x_var = x_to_c_io.InquireVariable<float>("c_to_x");
-        c_to_x_data.resize(std::accumulate(c_to_x_var.Shape().begin(),
-                                           c_to_x_var.Shape().end(), 1,
-                                           std::multiplies<size_t>()));
+        auto c_to_x_var = c_to_x_io.InquireVariable<float>("c_to_x");
+        auto readShape = c_to_x_var.Shape();
+        c_to_x_data.resize(std::accumulate(readShape.begin(), readShape.end(),
+                                           1, std::multiplies<size_t>()));
         c_to_x_engine.Get(c_to_x_var, c_to_x_data.data(), adios2::Mode::Sync);
-        VerifyData(c_to_x_data.data(), i, Dims(c_to_x_var.Shape().size(), 0),
-                   c_to_x_var.Shape(), c_to_x_var.Shape(), mpiRank);
+        VerifyData(c_to_x_data.data(), i, Dims(readShape.size(), 0), readShape,
+                   readShape, mpiRank);
         c_to_x_engine.EndStep();
     }
 
@@ -200,14 +179,8 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
         g_to_c_io.DefineVariable<float>("g_to_c", shape, start, count);
 
     adios2::Engine c_to_g_engine = c_to_g_io.Open("c_to_g", adios2::Mode::Read);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " c_to_g handshake finished on gene rank " << worldRank
-              << std::endl;
     adios2::Engine g_to_c_engine =
         g_to_c_io.Open("g_to_c", adios2::Mode::Write);
-    std::cout << " ======================== " << std::endl;
-    std::cout << " g_to_c handshake finished on gene rank " << worldRank
-              << std::endl;
 
     size_t datasize = std::accumulate(shape.begin(), shape.end(), 1,
                                       std::multiplies<size_t>());
@@ -218,12 +191,12 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
     {
         c_to_g_engine.BeginStep(StepMode::Read, 5);
         auto c_to_g_var = c_to_g_io.InquireVariable<float>("c_to_g");
-        c_to_g_data.resize(std::accumulate(c_to_g_var.Shape().begin(),
-                                           c_to_g_var.Shape().end(), 1,
-                                           std::multiplies<size_t>()));
+        auto readShape = c_to_g_var.Shape();
+        c_to_g_data.resize(std::accumulate(readShape.begin(), readShape.end(),
+                                           1, std::multiplies<size_t>()));
         c_to_g_engine.Get(c_to_g_var, c_to_g_data.data(), adios2::Mode::Sync);
-        VerifyData(c_to_g_data.data(), i, Dims(shape.size(), 0), shape, shape,
-                   mpiRank);
+        VerifyData(c_to_g_data.data(), i, Dims(readShape.size(), 0), readShape,
+                   readShape, mpiRank);
         c_to_g_engine.EndStep();
 
         g_to_c_engine.BeginStep();
@@ -277,8 +250,7 @@ TEST_F(SscEngineTest, TestSscXgc3Way)
         adios2::Params engineParams = {{"RendezvousAppCount", "2"},
                                        {"MaxStreamsPerApp", "4"},
                                        {"OpenTimeoutSecs", "3"},
-                                       {"Verbose", "10"}};
-        std::cout << "Rank " << worldRank << " launched coupler" << std::endl;
+                                       {"Verbose", "0"}};
         coupler(shape, start, count, steps, engineParams);
     }
 
@@ -290,8 +262,7 @@ TEST_F(SscEngineTest, TestSscXgc3Way)
         adios2::Params engineParams = {{"RendezvousAppCount", "2"},
                                        {"MaxStreamsPerApp", "4"},
                                        {"OpenTimeoutSecs", "3"},
-                                       {"Verbose", "10"}};
-        std::cout << "Rank " << worldRank << " launched gene" << std::endl;
+                                       {"Verbose", "0"}};
         gene(shape, start, shape, steps, engineParams);
     }
 
@@ -303,8 +274,7 @@ TEST_F(SscEngineTest, TestSscXgc3Way)
         adios2::Params engineParams = {{"RendezvousAppCount", "2"},
                                        {"MaxStreamsPerApp", "4"},
                                        {"OpenTimeoutSecs", "3"},
-                                       {"Verbose", "10"}};
-        std::cout << "Rank " << worldRank << " launched xgc" << std::endl;
+                                       {"Verbose", "0"}};
         xgc(shape, start, count, steps, engineParams);
     }
 

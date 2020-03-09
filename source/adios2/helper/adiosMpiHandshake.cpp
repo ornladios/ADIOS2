@@ -278,7 +278,8 @@ MPI_Comm MpiHandshake::GetStreamComm(const std::string &filename)
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
     std::sort(allStreamRanks.begin(), allStreamRanks.end());
     MPI_Group allWorkersGroup;
-    MPI_Group_incl(worldGroup, allStreamRanks.size(), allStreamRanks.data(), &allWorkersGroup);
+    MPI_Group_incl(worldGroup, allStreamRanks.size(), allStreamRanks.data(),
+                   &allWorkersGroup);
     MPI_Comm streamComm;
     MPI_Comm_create_group(MPI_COMM_WORLD, allWorkersGroup, 0, &streamComm);
     return streamComm;
@@ -299,7 +300,8 @@ MPI_Group MpiHandshake::GetAllReadersGroup(const std::string &filename)
     MPI_Group worldGroup;
     MPI_Group allReadersGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, allReaderRanks.size(), allReaderRanks.data(), &allReadersGroup);
+    MPI_Group_incl(worldGroup, allReaderRanks.size(), allReaderRanks.data(),
+                   &allReadersGroup);
     return allReadersGroup;
 }
 
@@ -318,7 +320,8 @@ MPI_Group MpiHandshake::GetAllWritersGroup(const std::string &filename)
     MPI_Group worldGroup;
     MPI_Group allWritersGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, allWriterRanks.size(), allWriterRanks.data(), &allWritersGroup);
+    MPI_Group_incl(worldGroup, allWriterRanks.size(), allWriterRanks.data(),
+                   &allWritersGroup);
     return allWritersGroup;
 }
 

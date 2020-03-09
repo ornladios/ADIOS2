@@ -197,7 +197,6 @@ void SscReader::SyncMpiPattern()
                              m_MaxFilenameLength, m_RendezvousAppCount,
                              CommAsMPI(m_Comm));
 
-
     m_MpiAllWritersGroup = m_MpiHandshake.GetAllWritersGroup(m_Name);
     m_StreamComm = m_MpiHandshake.GetStreamComm(m_Name);
 }
