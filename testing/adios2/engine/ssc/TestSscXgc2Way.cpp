@@ -3,23 +3,18 @@
  * accompanying file Copyright.txt for details.
  */
 
+#include "TestSscCommon.h"
 #include <adios2.h>
 #include <gtest/gtest.h>
-#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
-#endif
-#include "TestSscCommon.h"
 #include <numeric>
 #include <thread>
 
 using namespace adios2;
 int mpiRank = 0;
 int mpiSize = 1;
-int worldRank, worldSize;
 int mpiGroup;
 MPI_Comm mpiComm;
-
-char runMode;
 
 class SscEngineTest : public ::testing::Test
 {
@@ -128,6 +123,7 @@ TEST_F(SscEngineTest, TestSscXgc2Way)
 {
 
     Dims start, count, shape;
+    int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
     MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
 
@@ -182,9 +178,7 @@ TEST_F(SscEngineTest, TestSscXgc2Way)
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
-    int worldRank, worldSize;
-    MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+
     ::testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
 
