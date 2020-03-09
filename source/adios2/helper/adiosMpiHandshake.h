@@ -3,6 +3,9 @@
  * accompanying file Copyright.txt for details.
  *
  * adiosMpiHandshake.h
+ *
+ *  Created on: Mar 1, 2020
+ *      Author: Jason Wang
  */
 
 #ifndef ADIOS2_HELPER_ADIOSMPIHANDSHAKE_H_
@@ -68,17 +71,55 @@ public:
                           const size_t rendezvousAppCountForStream,
                           MPI_Comm localComm);
 
+    /**
+     * Get the writer map of all apps participating the stream.
+     *
+     * @param filename: name of the staging stream
+     *
+     * @return map of all writer apps participating the stream. Key is the world
+     * rank of the master rank of the local communicator of a participating
+     * writer app. Value is a vector of all world ranks of this writer app
+     */
     static const std::map<int, std::vector<int>> &
     GetWriterMap(const std::string &filename);
+
+    /**
+     * Get the reader map of all apps participating the stream.
+     *
+     * @param filename: name of the staging stream
+     *
+     * @return map of all reader apps participating the stream. Key is the world
+     * rank of the master rank of the local communicator of a participating
+     * reader app. Value is a vector of all world ranks of this reader app
+     */
     static const std::map<int, std::vector<int>> &
     GetReaderMap(const std::string &filename);
-    static void PrintMaps();
-    static void PrintMaps(const int printRank);
+
+    /**
+     * Get the MPI group for all readers in the stream filename
+     *
+     * @param filename: name of the staging stream
+     *
+     * @return the MPI group
+     */
+    static MPI_Group GetAllReadersGroup(const std::string &filename);
+
+    /**
+     * Get the MPI group for all writers in the stream filename
+     *
+     * @param filename: name of the staging stream
+     *
+     * @return the MPI group
+     */
+    static MPI_Group GetAllWritersGroup(const std::string &filename);
 
 private:
     static void Test();
     static bool Check(const std::string &filename);
     static size_t PlaceInBuffer(const size_t stream, const int rank);
+    static void PrintMaps();
+    static void PrintMaps(const int printRank, const std::string &filename);
+
     static std::vector<char> m_Buffer;
     static std::vector<std::vector<MPI_Request>> m_SendRequests;
     static std::vector<std::vector<MPI_Request>> m_RecvRequests;

@@ -3,11 +3,10 @@
  * accompanying file Copyright.txt for details.
  */
 
+#include "TestSscCommon.h"
 #include <adios2.h>
 #include <gtest/gtest.h>
-#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
-#endif
 #include <numeric>
 #include <thread>
 
@@ -15,137 +14,12 @@ using namespace adios2;
 int mpiRank = 0;
 int mpiSize = 1;
 MPI_Comm mpiComm;
-size_t print_lines = 0;
-
-char runMode;
 
 class SscEngineTest : public ::testing::Test
 {
 public:
     SscEngineTest() = default;
 };
-
-void PrintData(const char *data, const size_t step, const Dims &start,
-               const Dims &count)
-{
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
-    std::cout << "Rank: " << mpiRank << " Step: " << step << " Size:" << size
-              << "\n";
-    size_t printsize = 128;
-
-    if (size < printsize)
-    {
-        printsize = size;
-    }
-    int s = 0;
-    for (size_t i = 0; i < printsize; ++i)
-    {
-        ++s;
-        std::cout << (int)(data[i]) << " ";
-        if (s == count[1])
-        {
-            std::cout << std::endl;
-            s = 0;
-        }
-    }
-
-    std::cout << "]" << std::endl;
-}
-
-template <class T>
-void PrintData(const T *data, const size_t step, const Dims &start,
-               const Dims &count)
-{
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
-    std::cout << "Rank: " << mpiRank << " Step: " << step << " Size:" << size
-              << "\n";
-    size_t printsize = 128;
-
-    if (size < printsize)
-    {
-        printsize = size;
-    }
-    int s = 0;
-    for (size_t i = 0; i < printsize; ++i)
-    {
-        ++s;
-        std::cout << data[i] << " ";
-        if (s == count[1])
-        {
-            std::cout << std::endl;
-            s = 0;
-        }
-    }
-
-    std::cout << "]" << std::endl;
-}
-
-template <class T>
-void GenData(std::vector<T> &data, const size_t step, const Dims &start,
-             const Dims &count, const Dims &shape)
-{
-    if (start.size() == 2)
-    {
-        for (size_t i = 0; i < count[0]; ++i)
-        {
-            for (size_t j = 0; j < count[1]; ++j)
-            {
-                data[i * count[1] + j] =
-                    (i + start[1]) * shape[1] + j + start[0] + step;
-            }
-        }
-    }
-}
-
-template <class T>
-void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape,
-                const std::string &varName)
-{
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
-    if (print_lines < 32)
-    {
-        std::cout << "Verifying Variable " << varName << " for Step " << step
-                  << std::endl;
-        PrintData(data, step, start, count);
-        ++print_lines;
-    }
-    std::vector<std::complex<T>> tmpdata(size);
-    GenData(tmpdata, step, start, count, shape);
-    for (size_t i = 0; i < size; ++i)
-    {
-        ASSERT_EQ(data[i], tmpdata[i]);
-    }
-}
-
-template <class T>
-void VerifyData(const T *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape,
-                const std::string &varName)
-{
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
-    if (print_lines < 32)
-    {
-        std::cout << "Verifying Variable " << varName << " for Step " << step
-                  << std::endl;
-        PrintData(data, step, start, count);
-        ++print_lines;
-    }
-    bool compressed = false;
-    std::vector<T> tmpdata(size);
-    GenData(tmpdata, step, start, count, shape);
-    for (size_t i = 0; i < size; ++i)
-    {
-        if (!compressed)
-        {
-            ASSERT_EQ(data[i], tmpdata[i]);
-        }
-    }
-}
 
 void Writer(const Dims &shape, const Dims &start, const Dims &count,
             const size_t steps, const adios2::Params &engineParams,
@@ -248,15 +122,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         if (status == adios2::StepStatus::OK)
         {
             const auto &vars = dataManIO.AvailableVariables();
-            if (print_lines == 0)
-            {
-                std::cout << "All available variables : ";
-                for (const auto &var : vars)
-                {
-                    std::cout << var.first << ", ";
-                }
-                std::cout << std::endl;
-            }
             ASSERT_EQ(vars.size(), 11);
             size_t currentStep = dataManReader.CurrentStep();
             adios2::Variable<char> bpChars =
@@ -311,25 +176,25 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             ASSERT_EQ(i, currentStep);
 
             VerifyData(myChars.data(), currentStep, start, count, shape,
-                       "bpChars");
+                       mpiRank);
             VerifyData(myUChars.data(), currentStep, start, count, shape,
-                       "bpUChars");
+                       mpiRank);
             VerifyData(myShorts.data(), currentStep, start, count, shape,
-                       "bpShorts");
+                       mpiRank);
             VerifyData(myUShorts.data(), currentStep, start, count, shape,
-                       "bpUShorts");
+                       mpiRank);
             VerifyData(myInts.data(), currentStep, start, count, shape,
-                       "bpInts");
+                       mpiRank);
             VerifyData(myUInts.data(), currentStep, start, count, shape,
-                       "bpUInts");
+                       mpiRank);
             VerifyData(myFloats.data(), currentStep, start, count, shape,
-                       "bpFloats");
+                       mpiRank);
             VerifyData(myDoubles.data(), currentStep, start, count, shape,
-                       "bpDoubles");
+                       mpiRank);
             VerifyData(myComplexes.data(), currentStep, start, count, shape,
-                       "bpComplexes");
+                       mpiRank);
             VerifyData(myDComplexes.data(), currentStep, start, count, shape,
-                       "bpDComplexes");
+                       mpiRank);
             dataManReader.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
@@ -346,7 +211,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     ASSERT_EQ(110, attInt.Data()[0]);
     ASSERT_NE(111, attInt.Data()[0]);
     dataManReader.Close();
-    print_lines = 0;
 }
 
 TEST_F(SscEngineTest, TestSscOneSidedPostPush)

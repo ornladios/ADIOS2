@@ -26,10 +26,6 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 : Engine("SscWriter", io, name, mode, std::move(comm))
 {
     TAU_SCOPED_TIMER_FUNC();
-    MPI_Comm_rank(MPI_COMM_WORLD, &m_WorldRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &m_WorldSize);
-    m_WriterRank = m_Comm.Rank();
-    m_WriterSize = m_Comm.Size();
 
     ssc::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
     ssc::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
@@ -41,10 +37,16 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
                       m_MaxStreamsPerApp);
     ssc::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs", m_OpenTimeoutSecs);
 
-    m_GlobalWritePattern.resize(m_WorldSize);
-    m_GlobalReadPattern.resize(m_WorldSize);
     m_Buffer.resize(1);
+
     SyncMpiPattern();
+    m_WriterRank = m_Comm.Rank();
+    m_WriterSize = m_Comm.Size();
+    MPI_Comm_rank(m_StreamComm, &m_StreamRank);
+    MPI_Comm_size(m_StreamComm, &m_StreamSize);
+
+    m_GlobalWritePattern.resize(m_StreamSize);
+    m_GlobalReadPattern.resize(m_StreamSize);
 }
 
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -62,7 +64,7 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::BeginStep, World Rank " << m_WorldRank
+        std::cout << "SscWriter::BeginStep, World Rank " << m_StreamRank
                   << ", Writer Rank " << m_WriterRank << ", Step "
                   << m_CurrentStep << std::endl;
     }
@@ -124,7 +126,7 @@ void SscWriter::PutTwoSided()
     {
         requests.emplace_back();
         MPI_Isend(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, i.first, 0,
-                  MPI_COMM_WORLD, &requests.back());
+                  m_StreamComm, &requests.back());
     }
     MPI_Status statuses[requests.size()];
     MPI_Waitall(requests.size(), requests.data(), statuses);
@@ -135,7 +137,7 @@ void SscWriter::EndStep()
     TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::EndStep, World Rank " << m_WorldRank
+        std::cout << "SscWriter::EndStep, World Rank " << m_StreamRank
                   << ", Writer Rank " << m_WriterRank << ", Step "
                   << m_CurrentStep << std::endl;
     }
@@ -144,12 +146,12 @@ void SscWriter::EndStep()
     {
         SyncWritePattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
-                       MPI_COMM_WORLD, &m_MpiWin);
+                       m_StreamComm, &m_MpiWin);
         PutOneSidedPostPull();
         MPI_Win_free(&m_MpiWin);
         SyncReadPattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
-                       MPI_COMM_WORLD, &m_MpiWin);
+                       m_StreamComm, &m_MpiWin);
     }
     else
     {
@@ -186,7 +188,7 @@ void SscWriter::SyncMpiPattern()
 
     if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::SyncMpiPattern, World Rank " << m_WorldRank
+        std::cout << "SscWriter::SyncMpiPattern, World Rank " << m_StreamRank
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
@@ -194,11 +196,15 @@ void SscWriter::SyncMpiPattern()
                              m_MaxFilenameLength, m_RendezvousAppCount,
                              CommAsMPI(m_Comm));
 
+    m_MpiAllReadersGroup = m_MpiHandshake.GetAllReadersGroup(m_Name);
+
+    std::vector<int> allStreamRanks;
+
     for (const auto &app : m_MpiHandshake.GetWriterMap(m_Name))
     {
         for (int rank : app.second)
         {
-            m_AllWriterRanks.push_back(rank);
+            allStreamRanks.push_back(rank);
         }
     }
 
@@ -206,14 +212,17 @@ void SscWriter::SyncMpiPattern()
     {
         for (int rank : app.second)
         {
-            m_AllReaderRanks.push_back(rank);
+            allStreamRanks.push_back(rank);
         }
     }
 
     MPI_Group worldGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, m_AllReaderRanks.size(), m_AllReaderRanks.data(),
-                   &m_MpiAllReadersGroup);
+    std::sort(allStreamRanks.begin(), allStreamRanks.end());
+    MPI_Group allWorkersGroup;
+    MPI_Group_incl(worldGroup, allStreamRanks.size(), allStreamRanks.data(),
+                   &allWorkersGroup);
+    MPI_Comm_create_group(MPI_COMM_WORLD, allWorkersGroup, 0, &m_StreamComm);
 }
 
 void SscWriter::SyncWritePattern()
@@ -221,13 +230,13 @@ void SscWriter::SyncWritePattern()
     TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::SyncWritePattern, World Rank " << m_WorldRank
+        std::cout << "SscWriter::SyncWritePattern, World Rank " << m_StreamRank
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
     // serialize local writer rank variables metadata
     nlohmann::json localRankMetaJ;
-    for (const auto &b : m_GlobalWritePattern[m_WorldRank])
+    for (const auto &b : m_GlobalWritePattern[m_StreamRank])
     {
         localRankMetaJ["Variables"].emplace_back();
         auto &jref = localRankMetaJ["Variables"].back();
@@ -278,18 +287,18 @@ void SscWriter::SyncWritePattern()
     size_t localSize = localStr.size();
     size_t maxLocalSize;
     MPI_Allreduce(&localSize, &maxLocalSize, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX,
-                  MPI_COMM_WORLD);
+                  m_StreamComm);
     std::vector<char> localVec(maxLocalSize, '\0');
     std::memcpy(localVec.data(), localStr.data(), localStr.size());
-    std::vector<char> globalVec(maxLocalSize * m_WorldSize, '\0');
+    std::vector<char> globalVec(maxLocalSize * m_StreamSize, '\0');
     MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
-                  maxLocalSize, MPI_CHAR, MPI_COMM_WORLD);
+                  maxLocalSize, MPI_CHAR, m_StreamComm);
 
     // deserialize global metadata Json
     nlohmann::json globalJson;
     try
     {
-        for (size_t i = 0; i < m_WorldSize; ++i)
+        for (size_t i = 0; i < m_StreamSize; ++i)
         {
             if (globalVec[i * maxLocalSize] == '\0')
             {
@@ -319,24 +328,24 @@ void SscWriter::SyncReadPattern()
     TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::SyncReadPattern, World Rank " << m_WorldRank
+        std::cout << "SscWriter::SyncReadPattern, World Rank " << m_StreamRank
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
     size_t localSize = 0;
     size_t maxLocalSize;
     MPI_Allreduce(&localSize, &maxLocalSize, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX,
-                  MPI_COMM_WORLD);
+                  m_StreamComm);
     std::vector<char> localVec(maxLocalSize, '\0');
-    std::vector<char> globalVec(maxLocalSize * m_WorldSize);
+    std::vector<char> globalVec(maxLocalSize * m_StreamSize);
     MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
-                  maxLocalSize, MPI_CHAR, MPI_COMM_WORLD);
+                  maxLocalSize, MPI_CHAR, m_StreamComm);
 
     // deserialize global metadata Json
     nlohmann::json globalJson;
     try
     {
-        for (size_t i = 0; i < m_WorldSize; ++i)
+        for (size_t i = 0; i < m_StreamSize; ++i)
         {
             if (globalVec[i * maxLocalSize] == '\0')
             {
@@ -359,7 +368,7 @@ void SscWriter::SyncReadPattern()
 
     ssc::JsonToBlockVecVec(globalJson, m_GlobalReadPattern);
     ssc::CalculateOverlap(m_GlobalReadPattern,
-                          m_GlobalWritePattern[m_WorldRank]);
+                          m_GlobalWritePattern[m_StreamRank]);
     m_AllSendingReaderRanks = ssc::AllOverlapRanks(m_GlobalReadPattern);
     CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,
                       m_AllSendingReaderRanks);
@@ -428,7 +437,7 @@ void SscWriter::DoClose(const int transportIndex)
     TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
-        std::cout << "SscWriter::DoClose, World Rank " << m_WorldRank
+        std::cout << "SscWriter::DoClose, World Rank " << m_StreamRank
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
@@ -440,7 +449,7 @@ void SscWriter::DoClose(const int transportIndex)
         for (const auto &i : m_AllSendingReaderRanks)
         {
             requests.emplace_back();
-            MPI_Isend(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, MPI_COMM_WORLD,
+            MPI_Isend(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, m_StreamComm,
                       &requests.back());
         }
         MPI_Status statuses[requests.size()];
