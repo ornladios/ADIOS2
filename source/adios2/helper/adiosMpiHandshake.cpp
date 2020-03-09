@@ -254,37 +254,6 @@ MpiHandshake::GetReaderMap(const std::string &filename)
     return m_ReadersMap[filename];
 }
 
-MPI_Comm MpiHandshake::GetStreamComm(const std::string &filename)
-{
-    std::vector<int> allStreamRanks;
-
-    for (const auto &app : GetWriterMap(filename))
-    {
-        for (int rank : app.second)
-        {
-            allStreamRanks.push_back(rank);
-        }
-    }
-
-    for (const auto &app : GetReaderMap(filename))
-    {
-        for (int rank : app.second)
-        {
-            allStreamRanks.push_back(rank);
-        }
-    }
-
-    MPI_Group worldGroup;
-    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    std::sort(allStreamRanks.begin(), allStreamRanks.end());
-    MPI_Group allWorkersGroup;
-    MPI_Group_incl(worldGroup, allStreamRanks.size(), allStreamRanks.data(),
-                   &allWorkersGroup);
-    MPI_Comm streamComm;
-    MPI_Comm_create_group(MPI_COMM_WORLD, allWorkersGroup, 0, &streamComm);
-    return streamComm;
-}
-
 MPI_Group MpiHandshake::GetAllReadersGroup(const std::string &filename)
 {
     std::vector<int> allReaderRanks;

@@ -96,16 +96,6 @@ public:
     GetReaderMap(const std::string &filename);
 
     /**
-     * Get the MPI communicator for the stream, containing all writer ranks and
-     * reader ranks that work on the stream filename
-     *
-     * @param filename: name of the staging stream
-     *
-     * @return the communicator for the stream
-     */
-    static MPI_Comm GetStreamComm(const std::string &filename);
-
-    /**
      * Get the MPI group for all readers in the stream filename
      *
      * @param filename: name of the staging stream

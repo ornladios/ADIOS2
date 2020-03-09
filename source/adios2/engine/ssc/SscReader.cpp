@@ -198,7 +198,31 @@ void SscReader::SyncMpiPattern()
                              CommAsMPI(m_Comm));
 
     m_MpiAllWritersGroup = m_MpiHandshake.GetAllWritersGroup(m_Name);
-    m_StreamComm = m_MpiHandshake.GetStreamComm(m_Name);
+    std::vector<int> allStreamRanks;
+
+    for (const auto &app : m_MpiHandshake.GetWriterMap(m_Name))
+    {
+        for (int rank : app.second)
+        {
+            allStreamRanks.push_back(rank);
+        }
+    }
+
+    for (const auto &app : m_MpiHandshake.GetReaderMap(m_Name))
+    {
+        for (int rank : app.second)
+        {
+            allStreamRanks.push_back(rank);
+        }
+    }
+
+    MPI_Group worldGroup;
+    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
+    std::sort(allStreamRanks.begin(), allStreamRanks.end());
+    MPI_Group allWorkersGroup;
+    MPI_Group_incl(worldGroup, allStreamRanks.size(), allStreamRanks.data(),
+                   &allWorkersGroup);
+    MPI_Comm_create_group(MPI_COMM_WORLD, allWorkersGroup, 0, &m_StreamComm);
 }
 
 void SscReader::SyncWritePattern()
