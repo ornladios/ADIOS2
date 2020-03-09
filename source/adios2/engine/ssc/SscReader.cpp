@@ -439,10 +439,6 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
             allRanks[rank].second = currentRankTotalSize + 1;
             bufferPosition += currentRankTotalSize + 1;
         }
-        else
-        {
-            bvv[rank].clear();
-        }
     }
 }
 
