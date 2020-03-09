@@ -127,21 +127,18 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
 {
     TAU_SCOPED_TIMER_FUNC();
     std::vector<typename Variable<T>::Info> ret;
-    for (const auto &r : m_AllReceivingWriterRanks)
+
+    for (const auto &r : m_GlobalWritePattern)
     {
-        for (auto &v : m_GlobalWritePattern[r.first])
+        for (auto &v : r)
         {
             if (v.name != variable.m_Name)
             {
                 continue;
             }
-            if (v.overlapCount.empty())
-            {
-                continue;
-            }
             typename Variable<T>::Info b;
-            b.Start = v.overlapStart;
-            b.Count = v.overlapCount;
+            b.Start = v.start;
+            b.Count = v.count;
             b.Shape = v.shape;
             b.IsValue = false;
             if (v.shape.size() == 1)
