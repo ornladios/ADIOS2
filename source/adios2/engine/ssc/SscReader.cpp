@@ -291,6 +291,8 @@ void SscReader::SyncWritePattern()
         if (not v)                                                             \
         {                                                                      \
             m_IO.DefineVariable<T>(b.name, b.shape, b.start, b.shape);         \
+            v = m_IO.InquireVariable<T>(b.name);                               \
+            v->m_ShapeID = ssc::StringToShapeId(b.shapeID);                    \
         }                                                                      \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

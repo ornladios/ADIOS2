@@ -28,6 +28,7 @@ struct BlockInfo
 {
     std::string name;
     std::string type;
+    std::string shapeID;
     Dims shape;
     Dims start;
     Dims count;
@@ -40,6 +41,9 @@ using BlockVec = std::vector<BlockInfo>;
 using BlockVecVec = std::vector<BlockVec>;
 using RankPosMap = std::map<int, std::pair<size_t, size_t>>;
 using MpiInfo = std::vector<std::vector<int>>;
+
+std::string ShapeIdToString(const ShapeID shapeid);
+ShapeID StringToShapeId(const std::string &shapeid);
 
 void PrintDims(const Dims &dims, const std::string &label = std::string());
 void PrintBlock(const BlockInfo &b, const std::string &label = std::string());

@@ -109,6 +109,62 @@ void CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
     }
 }
 
+std::string ShapeIdToString(const ShapeID shapeid)
+{
+    if (shapeid == ShapeID::GlobalValue)
+    {
+        return "GV";
+    }
+    else if (shapeid == ShapeID::GlobalArray)
+    {
+        return "GA";
+    }
+    else if (shapeid == ShapeID::JoinedArray)
+    {
+        return "JA";
+    }
+    else if (shapeid == ShapeID::LocalValue)
+    {
+        return "LV";
+    }
+    else if (shapeid == ShapeID::LocalArray)
+    {
+        return "LA";
+    }
+    else
+    {
+        return "U";
+    }
+}
+
+ShapeID StringToShapeId(const std::string &shapeid)
+{
+    if (shapeid == "GV")
+    {
+        return ShapeID::GlobalValue;
+    }
+    else if (shapeid == "GA")
+    {
+        return ShapeID::GlobalArray;
+    }
+    else if (shapeid == "JA")
+    {
+        return ShapeID::JoinedArray;
+    }
+    else if (shapeid == "LV")
+    {
+        return ShapeID::LocalValue;
+    }
+    else if (shapeid == "LA")
+    {
+        return ShapeID::LocalArray;
+    }
+    else
+    {
+        return ShapeID::Unknown;
+    }
+}
+
 RankPosMap AllOverlapRanks(const BlockVecVec &bvv)
 {
     RankPosMap ret;
@@ -149,6 +205,7 @@ void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
                 b.start = j["Start"].get<Dims>();
                 b.count = j["Count"].get<Dims>();
                 b.shape = j["Shape"].get<Dims>();
+                b.shapeID = j["ShapeID"].get<std::string>();
                 b.bufferStart = j["BufferStart"].get<size_t>();
                 b.bufferCount = j["BufferCount"].get<size_t>();
             }

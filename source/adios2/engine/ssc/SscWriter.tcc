@@ -69,6 +69,7 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
             b.bufferStart = m_Buffer.size();
             b.bufferCount = ssc::TotalDataSize(b.count, b.type);
             m_Buffer.resize(b.bufferStart + b.bufferCount);
+            b.shapeID = ssc::ShapeIdToString(variable.m_ShapeID);
         }
     }
 

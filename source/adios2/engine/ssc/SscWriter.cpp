@@ -247,6 +247,7 @@ void SscWriter::SyncWritePattern()
         jref["Name"] = b.name;
         jref["Type"] = b.type;
         jref["Shape"] = b.shape;
+        jref["ShapeID"] = b.shapeID;
         jref["Start"] = b.start;
         jref["Count"] = b.count;
         jref["BufferStart"] = b.bufferStart;
