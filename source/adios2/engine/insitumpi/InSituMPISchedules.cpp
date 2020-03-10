@@ -207,15 +207,16 @@ WriteScheduleMap DeserializeReadSchedule(
 LocalReadScheduleMap
 DeserializeReadSchedule(const std::vector<char> &buffer) noexcept
 {
+    const bool isLittleEndian = helper::IsLittleEndian();
     LocalReadScheduleMap map;
     size_t pos = 0;
-    int nVars = helper::ReadValue<int>(buffer, pos);
+    int nVars = helper::ReadValue<int>(buffer, pos, isLittleEndian);
     for (int i = 0; i < nVars; i++)
     {
-        int nameLen = helper::ReadValue<int>(buffer, pos);
+        int nameLen = helper::ReadValue<int>(buffer, pos, isLittleEndian);
         std::vector<char> name(nameLen + 1, '\0');
         helper::CopyFromBuffer(buffer, pos, name.data(), nameLen);
-        int nSubFileInfos = helper::ReadValue<int>(buffer, pos);
+        int nSubFileInfos = helper::ReadValue<int>(buffer, pos, isLittleEndian);
         std::vector<helper::SubFileInfo> sfis;
         sfis.reserve(nSubFileInfos);
         for (int j = 0; j < nSubFileInfos; j++)
@@ -240,8 +241,9 @@ helper::SubFileInfo DeserializeSubFileInfo(const std::vector<char> &buffer,
 Box<Dims> DeserializeBoxDims(const std::vector<char> &buffer,
                              size_t &position) noexcept
 {
+    const bool isLittleEndian = helper::IsLittleEndian();
     Box<Dims> box;
-    int nDims = helper::ReadValue<int>(buffer, position);
+    int nDims = helper::ReadValue<int>(buffer, position, isLittleEndian);
     std::vector<size_t> start(nDims);
     std::vector<size_t> count(nDims);
     helper::CopyFromBuffer(buffer, position, start.data(), nDims);
