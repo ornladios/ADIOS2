@@ -74,7 +74,7 @@ if(NOT @BUILD_SHARED_LIBS@)
       find_dependency(LIBFABRIC)
     endif()
 
-    find_dependency(EVPath COMPONENTS C)
+    find_dependency(EVPath)
     add_library(adios2::thirdparty::EVPath INTERFACE IMPORTED)
     set_target_properties(adios2::thirdparty::EVPath PROPERTIES
       INTERFACE_LINK_LIBRARIES EVPath::EVPath
