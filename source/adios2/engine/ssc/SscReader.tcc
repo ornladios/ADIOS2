@@ -92,20 +92,10 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         {
             if (b.name == variable.m_Name)
             {
-                if (b.start.size() == 1 and b.count.size() == 1 and
-                    b.shape.size() == 1 and b.start[0] == 0 and
-                    b.count[0] == 1 and b.shape[0] == 1)
-                {
-                    std::memcpy(data, m_Buffer.data() + b.bufferStart,
-                                sizeof(T));
-                }
-                else
-                {
-                    helper::NdCopy<T>(
-                        m_Buffer.data() + b.bufferStart, b.start, b.count, true,
-                        true, reinterpret_cast<char *>(data), variable.m_Start,
-                        variable.m_Count, true, true);
-                }
+                helper::NdCopy<T>(
+                    m_Buffer.data() + b.bufferStart, b.start, b.count, true,
+                    true, reinterpret_cast<char *>(data), variable.m_Start,
+                    variable.m_Count, true, true);
             }
         }
     }
