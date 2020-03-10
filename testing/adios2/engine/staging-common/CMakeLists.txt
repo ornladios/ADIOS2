@@ -236,7 +236,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 if(ADIOS2_HAVE_SSC)
-    set (SSC_TESTS "1x1;TimeoutOnOpen;1x1.Attrs;2x1;1x2;2x1ZeroDataVar;2x1ZeroDataR64")
+    set (SSC_TESTS "1x1;1x1.Attrs;TimeoutOnOpen;2x1;1x2;3x5;5x3;3x5LockGeometry;2x1ZeroDataVar;2x1ZeroDataR64")
     foreach(test ${SSC_TESTS})
         add_common_test(${test} SSC)
     endforeach()
