@@ -35,14 +35,27 @@ template <class T>
 void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    variable.SetData(data);
+
+    Dims vStart = variable.m_Start;
+    Dims vCount = variable.m_Count;
+    Dims vShape = variable.m_Shape;
+    if (!helper::IsRowMajor(m_IO.m_HostLanguage))
+    {
+        std::reverse(vStart.begin(), vStart.end());
+        std::reverse(vCount.begin(), vCount.end());
+        std::reverse(vShape.begin(), vShape.end());
+    }
+
     if (m_CurrentStep == 0)
     {
         m_LocalReadPattern.emplace_back();
         auto &b = m_LocalReadPattern.back();
         b.name = variable.m_Name;
-        b.count = variable.m_Count;
-        b.start = variable.m_Start;
-        b.shape = variable.m_Shape;
+        b.count = vCount;
+        b.start = vStart;
+        b.shape = vShape;
         b.type = helper::GetType<T>();
 
         for (const auto &d : b.count)
@@ -58,9 +71,9 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         auto &jref = m_LocalReadPatternJson["Variables"].back();
         jref["Name"] = variable.m_Name;
         jref["Type"] = helper::GetType<T>();
-        jref["Start"] = variable.m_Start;
-        jref["Count"] = variable.m_Count;
-        jref["Shape"] = variable.m_Shape;
+        jref["Start"] = vStart;
+        jref["Count"] = vCount;
+        jref["Shape"] = vShape;
         jref["BufferStart"] = 0;
         jref["BufferCount"] = 0;
 
@@ -93,10 +106,10 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         {
             if (b.name == variable.m_Name)
             {
-                helper::NdCopy<T>(
-                    m_Buffer.data() + b.bufferStart, b.start, b.count, true,
-                    true, reinterpret_cast<char *>(data), variable.m_Start,
-                    variable.m_Count, true, true);
+                helper::NdCopy<T>(m_Buffer.data() + b.bufferStart, b.start,
+                                  b.count, true, true,
+                                  reinterpret_cast<char *>(data), vStart,
+                                  vCount, true, true);
             }
         }
     }
