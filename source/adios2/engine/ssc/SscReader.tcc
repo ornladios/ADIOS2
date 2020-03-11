@@ -144,10 +144,16 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
             b.Start = v.start;
             b.Count = v.count;
             b.Shape = v.shape;
-            b.IsValue = false;
-            if (v.shape.size() == 1)
+            if (!helper::IsRowMajor(m_IO.m_HostLanguage))
             {
-                if (v.shape[0] == 1)
+                std::reverse(b.Start.begin(), b.Start.end());
+                std::reverse(b.Count.begin(), b.Count.end());
+                std::reverse(b.Shape.begin(), b.Shape.end());
+            }
+            b.IsValue = false;
+            if (b.Shape.size() == 1)
+            {
+                if (b.Shape[0] == 1)
                 {
                     b.IsValue = true;
                 }
