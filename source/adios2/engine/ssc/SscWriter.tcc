@@ -41,34 +41,6 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         variable.m_Shape.push_back(1);
     }
 
-    if (m_CurrentStep == 0)
-    {
-        bool found = false;
-        for (const auto &b : m_GlobalWritePattern[m_StreamRank])
-        {
-            if (b.name == variable.m_Name and
-                ssc::AreSameDims(variable.m_Start, b.start) and
-                ssc::AreSameDims(variable.m_Count, b.count) and
-                ssc::AreSameDims(variable.m_Shape, b.shape))
-            {
-                found = true;
-            }
-        }
-        if (not found)
-        {
-            m_GlobalWritePattern[m_StreamRank].emplace_back();
-            auto &b = m_GlobalWritePattern[m_StreamRank].back();
-            b.name = variable.m_Name;
-            b.type = helper::GetType<T>();
-            b.shape = variable.m_Shape;
-            b.start = variable.m_Start;
-            b.count = variable.m_Count;
-            b.bufferStart = m_Buffer.size();
-            b.bufferCount = ssc::TotalDataSize(b.count, b.type);
-            m_Buffer.resize(b.bufferStart + b.bufferCount);
-        }
-    }
-
     bool found = false;
     for (const auto &b : m_GlobalWritePattern[m_StreamRank])
     {
@@ -81,9 +53,27 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
             found = true;
         }
     }
+
     if (not found)
     {
-        throw std::runtime_error("ssc only accepts fixed IO pattern");
+        if (m_CurrentStep == 0)
+        {
+            m_GlobalWritePattern[m_StreamRank].emplace_back();
+            auto &b = m_GlobalWritePattern[m_StreamRank].back();
+            b.name = variable.m_Name;
+            b.type = helper::GetType<T>();
+            b.shape = variable.m_Shape;
+            b.start = variable.m_Start;
+            b.count = variable.m_Count;
+            b.bufferStart = m_Buffer.size();
+            b.bufferCount = ssc::TotalDataSize(b.count, b.type);
+            m_Buffer.resize(b.bufferStart + b.bufferCount);
+            std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
+        }
+        else
+        {
+            throw std::runtime_error("ssc only accepts fixed IO pattern");
+        }
     }
 }
 
