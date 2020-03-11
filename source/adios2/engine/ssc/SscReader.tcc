@@ -13,6 +13,7 @@
 
 #include "SscReader.h"
 #include "adios2/helper/adiosMemory.h"
+#include "adios2/helper/adiosSystem.h"
 #include <iostream>
 
 namespace adios2

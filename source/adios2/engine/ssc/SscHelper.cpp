@@ -10,6 +10,7 @@
 
 #include "SscHelper.h"
 #include "adios2/common/ADIOSMacros.h"
+#include "adios2/helper/adiosJSONcomplex.h"
 #include "adios2/helper/adiosType.h"
 #include <iostream>
 #include <numeric>
@@ -130,6 +131,84 @@ RankPosMap AllOverlapRanks(const BlockVecVec &bvv)
         ++rank;
     }
     return ret;
+}
+
+void BlockVecToJson(const BlockVec &input, nlohmann::json &output)
+{
+    for (const auto &b : input)
+    {
+        output["Variables"].emplace_back();
+        auto &jref = output["Variables"].back();
+        jref["Name"] = b.name;
+        jref["Type"] = b.type;
+        jref["Shape"] = b.shape;
+        jref["Start"] = b.start;
+        jref["Count"] = b.count;
+        jref["BufferStart"] = b.bufferStart;
+        jref["BufferCount"] = b.bufferCount;
+    }
+}
+
+void AttributeMapToJson(IO &input, nlohmann::json &output)
+{
+    const auto &attributeMap = input.GetAttributesDataMap();
+    auto &attributesJson = output["Attributes"];
+    for (const auto &attributePair : attributeMap)
+    {
+        const std::string name(attributePair.first);
+        const std::string type(attributePair.second.first);
+        if (type.empty())
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        const auto &attribute = input.InquireAttribute<T>(name);               \
+        nlohmann::json attributeJson;                                          \
+        attributeJson["Name"] = attribute->m_Name;                             \
+        attributeJson["Type"] = attribute->m_Type;                             \
+        attributeJson["IsSingleValue"] = attribute->m_IsSingleValue;           \
+        if (attribute->m_IsSingleValue)                                        \
+        {                                                                      \
+            attributeJson["Value"] = attribute->m_DataSingleValue;             \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            attributeJson["Array"] = attribute->m_DataArray;                   \
+        }                                                                      \
+        output["Attributes"].emplace_back(std::move(attributeJson));           \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    }
+}
+
+void LocalJsonToGlobalJson(const std::vector<char> &input,
+                           const size_t maxLocalSize, const int streamSize,
+                           nlohmann::json &output)
+{
+    try
+    {
+        for (size_t i = 0; i < streamSize; ++i)
+        {
+            if (input[i * maxLocalSize] == '\0')
+            {
+                output[i] = nullptr;
+            }
+            else
+            {
+                output[i] = nlohmann::json::parse(
+                    input.begin() + i * maxLocalSize,
+                    input.begin() + (i + 1) * maxLocalSize);
+            }
+        }
+    }
+    catch (std::exception &e)
+    {
+        throw(std::runtime_error(
+            std::string("corrupted global write pattern metadata, ") +
+            std::string(e.what())));
+    }
 }
 
 void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)

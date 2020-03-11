@@ -250,28 +250,8 @@ void SscReader::SyncWritePattern()
                   maxLocalSize, MPI_CHAR, m_StreamComm);
 
     // deserialize global metadata Json
-    try
-    {
-        for (size_t i = 0; i < m_StreamSize; ++i)
-        {
-            if (globalVec[i * maxLocalSize] == '\0')
-            {
-                m_GlobalWritePatternJson[i] = nullptr;
-            }
-            else
-            {
-                m_GlobalWritePatternJson[i] = nlohmann::json::parse(
-                    globalVec.begin() + i * maxLocalSize,
-                    globalVec.begin() + (i + 1) * maxLocalSize);
-            }
-        }
-    }
-    catch (std::exception &e)
-    {
-        throw(std::runtime_error(
-            std::string("corrupted global write pattern metadata, ") +
-            std::string(e.what())));
-    }
+    ssc::LocalJsonToGlobalJson(globalVec, maxLocalSize, m_StreamSize,
+                               m_GlobalWritePatternJson);
 
     // deserialize variables metadata
     ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);

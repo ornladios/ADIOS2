@@ -11,8 +11,6 @@
 #include "SscWriter.tcc"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosCommMPI.h"
-#include "adios2/helper/adiosJSONcomplex.h"
-#include "nlohmann/json.hpp"
 
 namespace adios2
 {
@@ -238,51 +236,13 @@ void SscWriter::SyncWritePattern()
                   << ", Writer Rank " << m_WriterRank << std::endl;
     }
 
-    // serialize local writer rank variables metadata
     nlohmann::json localRankMetaJ;
-    for (const auto &b : m_GlobalWritePattern[m_StreamRank])
-    {
-        localRankMetaJ["Variables"].emplace_back();
-        auto &jref = localRankMetaJ["Variables"].back();
-        jref["Name"] = b.name;
-        jref["Type"] = b.type;
-        jref["Shape"] = b.shape;
-        jref["Start"] = b.start;
-        jref["Count"] = b.count;
-        jref["BufferStart"] = b.bufferStart;
-        jref["BufferCount"] = b.bufferCount;
-    }
 
-    // serialize local writer rank attributes metadata
-    auto &attributesJson = localRankMetaJ["Attributes"];
-    const auto &attributeMap = m_IO.GetAttributesDataMap();
-    for (const auto &attributePair : attributeMap)
+    ssc::BlockVecToJson(m_GlobalWritePattern[m_StreamRank], localRankMetaJ);
+
+    if (m_WriterRank == 0)
     {
-        const std::string name(attributePair.first);
-        const std::string type(attributePair.second.first);
-        if (type.empty())
-        {
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        const auto &attribute = m_IO.InquireAttribute<T>(name);                \
-        nlohmann::json attributeJson;                                          \
-        attributeJson["Name"] = attribute->m_Name;                             \
-        attributeJson["Type"] = attribute->m_Type;                             \
-        attributeJson["IsSingleValue"] = attribute->m_IsSingleValue;           \
-        if (attribute->m_IsSingleValue)                                        \
-        {                                                                      \
-            attributeJson["Value"] = attribute->m_DataSingleValue;             \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            attributeJson["Array"] = attribute->m_DataArray;                   \
-        }                                                                      \
-        attributesJson.emplace_back(std::move(attributeJson));                 \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
+        ssc::AttributeMapToJson(m_IO, localRankMetaJ);
     }
 
     std::string localStr = localRankMetaJ.dump();
@@ -300,28 +260,8 @@ void SscWriter::SyncWritePattern()
 
     // deserialize global metadata Json
     nlohmann::json globalJson;
-    try
-    {
-        for (size_t i = 0; i < m_StreamSize; ++i)
-        {
-            if (globalVec[i * maxLocalSize] == '\0')
-            {
-                globalJson[i] = nullptr;
-            }
-            else
-            {
-                globalJson[i] = nlohmann::json::parse(
-                    globalVec.begin() + i * maxLocalSize,
-                    globalVec.begin() + (i + 1) * maxLocalSize);
-            }
-        }
-    }
-    catch (std::exception &e)
-    {
-        throw(std::runtime_error(
-            std::string("corrupted global write pattern metadata, ") +
-            std::string(e.what())));
-    }
+    ssc::LocalJsonToGlobalJson(globalVec, maxLocalSize, m_StreamSize,
+                               globalJson);
 
     // deserialize variables metadata
     ssc::JsonToBlockVecVec(globalJson, m_GlobalWritePattern);
