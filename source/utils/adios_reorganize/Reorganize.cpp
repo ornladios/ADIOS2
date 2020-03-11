@@ -553,9 +553,9 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
                 {
                     print0(
                         "ERROR: adios_reorganize does not support Local Arrays "
-                        "except for the case if there is only 1 written block. "
-                        "This one has ",
-                        nBlocks);
+                        "except when there is only 1 written block in each "
+                        "step. This one has ",
+                        nBlocks, " blocks in this step ");
                     return 1;
                 }
             }
