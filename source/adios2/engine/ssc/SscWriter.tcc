@@ -22,25 +22,11 @@ namespace engine
 {
 
 template <class T>
-bool SscWriter::HasBlock(const Variable<T> &variable)
-{
-    for (const auto &b : m_GlobalWritePattern[m_StreamRank])
-    {
-        if (b.name == variable.m_Name and
-            ssc::AreSameDims(variable.m_Start, b.start) and
-            ssc::AreSameDims(variable.m_Count, b.count) and
-            ssc::AreSameDims(variable.m_Shape, b.shape))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-template <class T>
 void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    variable.SetData(data);
 
     if (variable.m_Start.empty())
     {
@@ -57,7 +43,18 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 
     if (m_CurrentStep == 0)
     {
-        if (not HasBlock(variable))
+        bool found = false;
+        for (const auto &b : m_GlobalWritePattern[m_StreamRank])
+        {
+            if (b.name == variable.m_Name and
+                ssc::AreSameDims(variable.m_Start, b.start) and
+                ssc::AreSameDims(variable.m_Count, b.count) and
+                ssc::AreSameDims(variable.m_Shape, b.shape))
+            {
+                found = true;
+            }
+        }
+        if (not found)
         {
             m_GlobalWritePattern[m_StreamRank].emplace_back();
             auto &b = m_GlobalWritePattern[m_StreamRank].back();
@@ -71,8 +68,6 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
             m_Buffer.resize(b.bufferStart + b.bufferCount);
         }
     }
-
-    variable.SetData(data);
 
     bool found = false;
     for (const auto &b : m_GlobalWritePattern[m_StreamRank])
