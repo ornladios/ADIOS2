@@ -270,7 +270,14 @@ void SscReader::SyncWritePattern()
         auto v = m_IO.InquireVariable<T>(b.name);                              \
         if (not v)                                                             \
         {                                                                      \
-            m_IO.DefineVariable<T>(b.name, b.shape, b.start, b.shape);         \
+            Dims vStart = b.start;                                             \
+            Dims vShape = b.shape;                                             \
+            if (!helper::IsRowMajor(m_IO.m_HostLanguage))                      \
+            {                                                                  \
+                std::reverse(vStart.begin(), vStart.end());                    \
+                std::reverse(vShape.begin(), vShape.end());                    \
+            }                                                                  \
+            m_IO.DefineVariable<T>(b.name, vShape, vStart, vShape);            \
         }                                                                      \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
