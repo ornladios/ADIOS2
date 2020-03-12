@@ -364,7 +364,29 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
         return writesize;
     }
 
+    /* Handle local array: only one block for now */
+    if (vi.v->m_ShapeID == adios2::ShapeID::LocalArray)
+    {
+        if (rank == 0)
+        {
+            writesize = 1;
+            for (int i = 0; i < vi.v->m_Count.size(); i++)
+            {
+                writesize *= vi.v->m_Count[i];
+                // vi.start.push_back(0);
+                vi.count.push_back(vi.v->m_Count[i]);
+            }
+        }
+        else
+        {
+            writesize = 0;
+        }
+        return writesize;
+    }
+
     size_t ndim = vi.v->GetShape().size();
+
+    /* Scalars */
     if (ndim == 0)
     {
         // scalars -> rank 0 writes them
@@ -375,6 +397,7 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
         return writesize;
     }
 
+    /* Global Arrays */
     /* calculate this process' position in the n-dim space
     0 1 2
     3 4 5
@@ -474,6 +497,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
         const std::string &type(variablePair.second.first);
         core::VariableBase *variable = nullptr;
         print0("Get info on variable ", varidx, ": ", name);
+        size_t nBlocks = 1;
 
         if (type == "compound")
         {
@@ -482,7 +506,14 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        variable = io.InquireVariable<T>(variablePair.first);                  \
+        core::Variable<T> *v = io.InquireVariable<T>(variablePair.first);      \
+        if (v->m_ShapeID == adios2::ShapeID::LocalArray)                       \
+        {                                                                      \
+                                                                               \
+            auto blocks = rStream.BlocksInfo(*v, rStream.CurrentStep());       \
+            nBlocks = blocks.size();                                           \
+        }                                                                      \
+        variable = v;                                                          \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -496,7 +527,11 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
             if (!m_Rank)
             {
                 std::cout << "    " << type << " " << name;
-                if (variable->GetShape().size() > 0)
+            }
+            // if (variable->GetShape().size() > 0)
+            if (variable->m_ShapeID == adios2::ShapeID::GlobalArray)
+            {
+                if (!m_Rank)
                 {
                     std::cout << "[" << variable->GetShape()[0];
                     for (size_t j = 1; j < variable->GetShape().size(); j++)
@@ -505,10 +540,29 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
                     }
                     std::cout << "]" << std::endl;
                 }
-                else
+            }
+
+            else if (variable->m_ShapeID == adios2::ShapeID::GlobalValue)
+            {
+                print0("\tscalar");
+            }
+            else if (variable->m_ShapeID == adios2::ShapeID::LocalArray)
+            {
+                print0("\t local array ");
+                if (nBlocks > 1)
                 {
-                    print0("\tscalar");
+                    print0(
+                        "ERROR: adios_reorganize does not support Local Arrays "
+                        "except when there is only 1 written block in each "
+                        "step. This one has ",
+                        nBlocks, " blocks in this step ");
+                    return 1;
                 }
+            }
+            else
+            {
+                print0("\n *** Unidentified object ", name, " ***\n");
+                return 1;
             }
 
             // determine subset we will write
@@ -562,13 +616,13 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
     size_t nvars = variables.size();
     if (nvars != varinfo.size())
     {
-        std::cerr
-            << "ERROR rank " << m_Rank
-            << ": Invalid program state, number "
-               "of variables ("
-            << nvars
-            << ") to read does not match the number of processed variables ("
-            << varinfo.size() << ")" << std::endl;
+        std::cerr << "ERROR rank " << m_Rank
+                  << ": Invalid program state, number "
+                     "of variables ("
+                  << nvars
+                  << ") to read does not match the number of processed "
+                     "variables ("
+                  << varinfo.size() << ")" << std::endl;
     }
 
     /*
@@ -638,6 +692,12 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         if (varinfo[varidx].count.size() == 0)                                 \
+        {                                                                      \
+            wStream.Put<T>(name,                                               \
+                           reinterpret_cast<T *>(varinfo[varidx].readbuf),     \
+                           adios2::Mode::Sync);                                \
+        }                                                                      \
+        else if (varinfo[varidx].v->m_ShapeID == adios2::ShapeID::LocalArray)  \
         {                                                                      \
             wStream.Put<T>(name,                                               \
                            reinterpret_cast<T *>(varinfo[varidx].readbuf),     \
