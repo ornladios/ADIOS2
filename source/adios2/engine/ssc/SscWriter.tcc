@@ -12,6 +12,7 @@
 #define ADIOS2_ENGINE_SSCWRITER_TCC_
 
 #include "SscWriter.h"
+#include "adios2/helper/adiosSystem.h"
 #include <iostream>
 
 namespace adios2
@@ -22,73 +23,67 @@ namespace engine
 {
 
 template <class T>
-bool SscWriter::HasBlock(const Variable<T> &variable)
-{
-    for (const auto &b : m_GlobalWritePattern[m_StreamRank])
-    {
-        if (b.name == variable.m_Name and
-            ssc::AreSameDims(variable.m_Start, b.start) and
-            ssc::AreSameDims(variable.m_Count, b.count) and
-            ssc::AreSameDims(variable.m_Shape, b.shape))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-template <class T>
 void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    if (variable.m_Start.empty())
-    {
-        variable.m_Start.push_back(0);
-    }
-    if (variable.m_Count.empty())
-    {
-        variable.m_Count.push_back(1);
-    }
-    if (variable.m_Shape.empty())
-    {
-        variable.m_Shape.push_back(1);
-    }
-
-    if (m_CurrentStep == 0)
-    {
-        if (not HasBlock(variable))
-        {
-            m_GlobalWritePattern[m_StreamRank].emplace_back();
-            auto &b = m_GlobalWritePattern[m_StreamRank].back();
-            b.name = variable.m_Name;
-            b.type = helper::GetType<T>();
-            b.shape = variable.m_Shape;
-            b.start = variable.m_Start;
-            b.count = variable.m_Count;
-            b.bufferStart = m_Buffer.size();
-            b.bufferCount = ssc::TotalDataSize(b.count, b.type);
-            m_Buffer.resize(b.bufferStart + b.bufferCount);
-        }
-    }
-
     variable.SetData(data);
+
+    Dims vStart = variable.m_Start;
+    Dims vCount = variable.m_Count;
+    Dims vShape = variable.m_Shape;
+    if (!helper::IsRowMajor(m_IO.m_HostLanguage))
+    {
+        std::reverse(vStart.begin(), vStart.end());
+        std::reverse(vCount.begin(), vCount.end());
+        std::reverse(vShape.begin(), vShape.end());
+    }
+
+    if (vStart.empty())
+    {
+        vStart.push_back(0);
+    }
+    if (vCount.empty())
+    {
+        vCount.push_back(1);
+    }
+    if (vShape.empty())
+    {
+        vShape.push_back(1);
+    }
 
     bool found = false;
     for (const auto &b : m_GlobalWritePattern[m_StreamRank])
     {
-        if (b.name == variable.m_Name and
-            ssc::AreSameDims(variable.m_Start, b.start) and
-            ssc::AreSameDims(variable.m_Count, b.count) and
-            ssc::AreSameDims(variable.m_Shape, b.shape))
+        if (b.name == variable.m_Name and ssc::AreSameDims(vStart, b.start) and
+            ssc::AreSameDims(vCount, b.count) and
+            ssc::AreSameDims(vShape, b.shape))
         {
             std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
             found = true;
         }
     }
+
     if (not found)
     {
-        throw std::runtime_error("ssc only accepts fixed IO pattern");
+        if (m_CurrentStep == 0)
+        {
+            m_GlobalWritePattern[m_StreamRank].emplace_back();
+            auto &b = m_GlobalWritePattern[m_StreamRank].back();
+            b.name = variable.m_Name;
+            b.type = helper::GetType<T>();
+            b.shape = vShape;
+            b.start = vStart;
+            b.count = vCount;
+            b.bufferStart = m_Buffer.size();
+            b.bufferCount = ssc::TotalDataSize(b.count, b.type);
+            m_Buffer.resize(b.bufferStart + b.bufferCount);
+            std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
+        }
+        else
+        {
+            throw std::runtime_error("ssc only accepts fixed IO pattern");
+        }
     }
 }
 

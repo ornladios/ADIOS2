@@ -12,6 +12,7 @@
 #define ADIOS2_ENGINE_SSCHELPER_H_
 
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/core/IO.h"
 #include "nlohmann/json.hpp"
 #include <map>
 #include <vector>
@@ -59,6 +60,12 @@ size_t TotalDataSize(const BlockVec &bv);
 void CalculateOverlap(BlockVecVec &globalPattern, const BlockVec &localPattern);
 
 RankPosMap AllOverlapRanks(const BlockVecVec &mapVec);
+
+void BlockVecToJson(const BlockVec &input, nlohmann::json &output);
+void AttributeMapToJson(IO &input, nlohmann::json &output);
+void LocalJsonToGlobalJson(const std::vector<char> &input,
+                           const size_t maxLocalSize, const int streamSize,
+                           nlohmann::json &output);
 
 void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output);
 void JsonToBlockVecVec(const std::vector<char> &input, BlockVecVec &output);

@@ -13,6 +13,7 @@
 
 #include "SscReader.h"
 #include "adios2/helper/adiosMemory.h"
+#include "adios2/helper/adiosSystem.h"
 #include <iostream>
 
 namespace adios2
@@ -34,14 +35,27 @@ template <class T>
 void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    variable.SetData(data);
+
+    Dims vStart = variable.m_Start;
+    Dims vCount = variable.m_Count;
+    Dims vShape = variable.m_Shape;
+    if (!helper::IsRowMajor(m_IO.m_HostLanguage))
+    {
+        std::reverse(vStart.begin(), vStart.end());
+        std::reverse(vCount.begin(), vCount.end());
+        std::reverse(vShape.begin(), vShape.end());
+    }
+
     if (m_CurrentStep == 0)
     {
         m_LocalReadPattern.emplace_back();
         auto &b = m_LocalReadPattern.back();
         b.name = variable.m_Name;
-        b.count = variable.m_Count;
-        b.start = variable.m_Start;
-        b.shape = variable.m_Shape;
+        b.count = vCount;
+        b.start = vStart;
+        b.shape = vShape;
         b.type = helper::GetType<T>();
 
         for (const auto &d : b.count)
@@ -57,9 +71,9 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         auto &jref = m_LocalReadPatternJson["Variables"].back();
         jref["Name"] = variable.m_Name;
         jref["Type"] = helper::GetType<T>();
-        jref["Start"] = variable.m_Start;
-        jref["Count"] = variable.m_Count;
-        jref["Shape"] = variable.m_Shape;
+        jref["Start"] = vStart;
+        jref["Count"] = vCount;
+        jref["Shape"] = vShape;
         jref["BufferStart"] = 0;
         jref["BufferCount"] = 0;
 
@@ -92,20 +106,10 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         {
             if (b.name == variable.m_Name)
             {
-                if (b.start.size() == 1 and b.count.size() == 1 and
-                    b.shape.size() == 1 and b.start[0] == 0 and
-                    b.count[0] == 1 and b.shape[0] == 1)
-                {
-                    std::memcpy(data, m_Buffer.data() + b.bufferStart,
-                                sizeof(T));
-                }
-                else
-                {
-                    helper::NdCopy<T>(
-                        m_Buffer.data() + b.bufferStart, b.start, b.count, true,
-                        true, reinterpret_cast<char *>(data), variable.m_Start,
-                        variable.m_Count, true, true);
-                }
+                helper::NdCopy<T>(m_Buffer.data() + b.bufferStart, b.start,
+                                  b.count, true, true,
+                                  reinterpret_cast<char *>(data), vStart,
+                                  vCount, true, true);
             }
         }
     }
@@ -140,10 +144,16 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
             b.Start = v.start;
             b.Count = v.count;
             b.Shape = v.shape;
-            b.IsValue = false;
-            if (v.shape.size() == 1)
+            if (!helper::IsRowMajor(m_IO.m_HostLanguage))
             {
-                if (v.shape[0] == 1)
+                std::reverse(b.Start.begin(), b.Start.end());
+                std::reverse(b.Count.begin(), b.Count.end());
+                std::reverse(b.Shape.begin(), b.Shape.end());
+            }
+            b.IsValue = false;
+            if (b.Shape.size() == 1)
+            {
+                if (b.Shape[0] == 1)
                 {
                     b.IsValue = true;
                 }

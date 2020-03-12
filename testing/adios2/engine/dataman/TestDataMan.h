@@ -22,6 +22,7 @@ int mpiRank = 0;
 int mpiSize = 1;
 
 size_t print_lines = 0;
+size_t to_print_lines = 0;
 
 template <class T>
 void GenData(std::vector<std::complex<T>> &data, const size_t step)
@@ -67,7 +68,7 @@ void VerifyData(const std::complex<T> *data, const size_t size, size_t step)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
-    if (print_lines < 100)
+    if (print_lines < to_print_lines)
     {
         PrintData(data, size, step);
         ++print_lines;
@@ -83,7 +84,7 @@ void VerifyData(const T *data, const size_t size, size_t step)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
-    if (print_lines < 100)
+    if (print_lines < to_print_lines)
     {
         PrintData(data, size, step);
         ++print_lines;

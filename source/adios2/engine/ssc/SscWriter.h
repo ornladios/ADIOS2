@@ -82,9 +82,6 @@ private:
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
-    template <class T>
-    bool HasBlock(const Variable<T> &variable);
-
     void CalculatePosition(ssc::BlockVecVec &writerMapVec,
                            ssc::BlockVecVec &readerMapVec, const int writerRank,
                            ssc::RankPosMap &allOverlapRanks);
