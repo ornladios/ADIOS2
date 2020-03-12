@@ -116,6 +116,11 @@ set (FtoC.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommo
 set (CtoF.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -r $<TARGET_FILE:TestCommonRead_f>")
 set (FtoF.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWrite_f> -r $<TARGET_FILE:TestCommonRead_f>")
 
+# MPI Fortran tests, Fortran to C, C to Fortran and Fortran to Fortran
+set (FtoC.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWrite_f>")
+set (CtoF.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -r $<TARGET_FILE:TestCommonRead_f>")
+set (FtoF.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWrite_f> -r $<TARGET_FILE:TestCommonRead_f>")
+
 # Tests for ZFP compression (where supported by an engine param)
 set (ZFPCompression.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
 set (ZFPCompression.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
