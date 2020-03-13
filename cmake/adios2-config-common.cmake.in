@@ -47,6 +47,11 @@ if(NOT @BUILD_SHARED_LIBS@)
     find_dependency(MGARD)
   endif()
 
+  set(ADIOS2_HAVE_PNG @ADIOS2_HAVE_PNG@)
+  if(ADIOS2_HAVE_PNG)
+    find_dependency(PNG)
+  endif()
+
   set(ADIOS2_HAVE_DataSpaces @ADIOS2_HAVE_DataSpaces@)
   if(ADIOS2_HAVE_DataSpaces)
     find_dependency(DataSpaces)
@@ -69,7 +74,7 @@ if(NOT @BUILD_SHARED_LIBS@)
       find_dependency(LIBFABRIC)
     endif()
 
-    find_dependency(EVPath COMPONENTS C)
+    find_dependency(EVPath)
     add_library(adios2::thirdparty::EVPath INTERFACE IMPORTED)
     set_target_properties(adios2::thirdparty::EVPath PROPERTIES
       INTERFACE_LINK_LIBRARIES EVPath::EVPath
