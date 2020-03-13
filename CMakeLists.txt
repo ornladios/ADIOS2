@@ -216,6 +216,15 @@ if (HAVE_SYS_EPOLL_H)
    set(CM_DEFAULT_SELECT "epoll")
 endif()
 set(CM_DEFAULT_TRANSPORT "sockets")
+
+# This is a dummy interace library to allow the transport modules to depend on
+# the EVPath headers without causing an unnecessary link dependency
+add_library(evpath_headers INTERFACE)
+set_target_properties(evpath_headers PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES
+    "${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_BINARY_DIR};$<TARGET_PROPERTY:ffs::ffs,INTERFACE_INCLUDE_DIRECTORIES>;$<TARGET_PROPERTY:atl::atl,INTERACE_INCLUDE_DIRECTORIES>"
+)
+
 set(EVPATH_TRANSPORT_TARGETS)
 if(EVPATH_TRANSPORT_MODULES)
   target_link_libraries(EVPath PRIVATE ${CMAKE_DL_LIBS})
@@ -230,10 +239,10 @@ if(EVPATH_TRANSPORT_MODULES)
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}${M})
   endforeach()
 
-  target_link_libraries(cmselect evpath atl::atl)
-  target_link_libraries(cmsockets evpath atl::atl)
-  target_link_libraries(cmudp evpath atl::atl)
-  target_link_libraries(cmmulticast evpath atl::atl)
+  target_link_libraries(cmselect PRIVATE evpath_headers atl::atl)
+  target_link_libraries(cmsockets PRIVATE evpath_headers atl::atl)
+  target_link_libraries(cmudp PRIVATE evpath_headers atl::atl)
+  target_link_libraries(cmmulticast PRIVATE evpath_headers atl::atl)
 
   list(APPEND EVPATH_TRANSPORT_TARGETS cmselect cmsockets cmudp cmmulticast)
 
@@ -241,7 +250,7 @@ if(EVPATH_TRANSPORT_MODULES)
      add_library(cmepoll MODULE cmepoll.c)
      set_target_properties(cmepoll PROPERTIES
      	  OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmepoll)
-     target_link_libraries(cmepoll evpath atl::atl)
+     target_link_libraries(cmepoll PRIVATE evpath_headers atl::atl)
      list(APPEND EVPATH_TRANSPORT_TARGETS cmepoll)
   endif()
 else()
@@ -277,7 +286,7 @@ if(ENET_FOUND)
     set_target_properties(cmenet PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmenet)
 
-    target_link_libraries(cmenet evpath enet::enet)
+    target_link_libraries(cmenet PRIVATE evpath_headers atl::atl enet::enet)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmenet)
   else()
     target_sources(EVPath PRIVATE cmenet.c)
@@ -303,7 +312,7 @@ if(EVPATH_USE_ZPL_ENET)
     set_target_properties(cmzplenet PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmzplenet)
 
-    target_link_libraries(cmzplenet evpath)
+    target_link_libraries(cmzplenet PRIVATE evpath_headers atl::atl)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmzplenet)
   else()
     target_sources(EVPath PRIVATE cmzplenet.c)
@@ -335,7 +344,7 @@ if(UDT4_FOUND)
     set_target_properties(cmudt4 PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmudt4)
 
-    target_link_libraries(cmudt4 evpath udt4::udt4)
+    target_link_libraries(cmudt4 PRIVATE evpath_headers atl::atl udt4::udt4)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmudt4)
   else()
     target_sources(EVPath PRIVATE cmudt4.cpp)
@@ -363,7 +372,8 @@ if(LIBFABRIC_FOUND)
     add_library(cmfabric MODULE cmfabric.c ip_config.c)
     set_target_properties(cmfabric PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmfabric)
-    target_link_libraries(cmfabric evpath atl::atl libfabric::libfabric)
+    target_link_libraries(cmfabric PRIVATE
+      evpath_headers atl::atl libfabric::libfabric)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmfabric)
   else()
     if(NOT BUILD_SHARED_LIBS)
@@ -419,7 +429,8 @@ if(IBVERBS_FOUND)
     add_library(cmib MODULE cmib.c)
     set_target_properties(cmib PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmib)
-    target_link_libraries(cmib evpath ${IBVERBS_LIBRARIES})
+    target_link_libraries(cmib PRIVATE
+      evpath_headers atl::atl ${IBVERBS_LIBRARIES})
     list(APPEND EVPATH_TRANSPORT_TARGETS cmib)
   else()
     target_sources(EVPath PRIVATE cmib.c)
@@ -457,7 +468,8 @@ if(IBVERBS_FOUND)
       add_library(cmnnti MODULE cmnnti.c)
       set_target_properties(cmnnti PROPERTIES
         OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmnnti)
-      target_link_libraries(cmnnti evpath nnti::nnti enet::enet atl::atl)
+      target_link_libraries(cmnnti PRIVATE
+        evpath_headers atl::atl nnti::nnti enet::enet)
       list(APPEND EVPATH_TRANSPORT_TARGETS cmnnti)
     else()
       if(NOT BUILD_SHARED_LIBS)
