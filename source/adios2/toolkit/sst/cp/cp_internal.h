@@ -145,6 +145,7 @@ struct _SstStream
 
     pthread_mutex_t DataLock;
     pthread_cond_t DataCondition;
+    int Locked;
     SstParams ConfigParams;
 
     /* WRITER-SIDE FIELDS */
