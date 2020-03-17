@@ -22,4 +22,5 @@ list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
 
 # Exclude flaky tests for now
 list(APPEND CTEST_CUSTOM_TESTS_IGNORE
+  "^[^I]"
 )
