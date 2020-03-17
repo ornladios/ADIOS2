@@ -60,6 +60,20 @@ then
   export OMPI_MCA_hwloc_base_binding_policy=none
 fi
 
+echo "**********Mem Begin**********"
+free
+echo "**********Mem End************"
+
+echo "**********CPU Begin**********"
+lscpu
+echo "-----"
+cat /proc/cpuinfo
+echo "**********CPU End************"
+
+echo "**********Filesystem Begin**********"
+df -h
+echo "**********Filesystem End************"
+
 echo "**********Env Begin**********"
 env | sort
 echo "**********Env End************"
