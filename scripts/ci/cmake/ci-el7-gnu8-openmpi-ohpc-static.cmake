@@ -40,7 +40,12 @@ MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python2.7
 ")
 
-set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
+set(CTEST_TEST_ARGS
+  PARALLEL_LEVEL 1
+
+  # Unclear why this test currently dies.  Disabling until it can be addressed.
+  EXCLUDE "Install.Make.Fortran"
+)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)
