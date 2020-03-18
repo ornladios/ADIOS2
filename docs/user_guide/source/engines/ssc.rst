@@ -2,58 +2,38 @@
 SSC Strong Staging Coupler
 **************************
 
-The DataMan engine is designed for data transfers over the wide area network. To use this engine, you can either specify it in your xml config file, with tag ``<engine type=DataMan>`` or set it in your application code:
-
-.. code-block:: c++
-
- adios2::IO datamanIO = adios.DeclareIO("ioName");
- datamanIO.SetEngine("DataMan");
- adios2::Engine datamanReader = datamanIO.Open(filename, adios2::Mode::Write);
-
-On the reader side you need to do instead:
-
-.. code-block:: c++
-
- adios2::IO datamanIO = adios.DeclareIO("ioName");
- datamanIO.SetEngine("DataMan");
- adios2::Engine datamanReader = datamanIO.Open(filename, adios2::Mode::Read);
-
-.. note::
- The DataMan engine currently does not support data staging within a cluster.
+The SSC engine is designed specifically for strong code coupling. Currently SSC only supports fixed IO pattern, which means once the first step is finished, users are not allowed to write or read a data block with a *start* and *count* that have not been written or read in the first step. SSC uses a combination of one sided MPI and two sided MPI methods. In any cases, all user applications are required to be launched within a single mpirun or mpiexec command, using the MPMD mode.
 
 The DataMan engine takes the following parameters:
 
-1. ``IPAddress``: No default value. The IP address of the host where the writer application runs.
-   This parameter is compulsory in wide area network data staging.
+1. ``RendezvousAppCount``: Default **2**. The number of applications, including both writers and readers, that will work on this stream. The SSC engine's open function will block until all these applications reach the open call. If there are multiple applications in a workflow, this parameter needs to be set respectively for every application. For example, in a three-app coupling scenario:
+   App 0 writes Stream A to App 1;
+   App 1 writes Stream B to App 0;
+   App 2 writes Stream C to App 1;
+   App 1 writes Stream D to App 2,
+the parameter RendezvousAppCount for engine instances of every stream should be all set to 2, because for each of the streams, two applications will work on it.
 
-2. ``Port``: Default **50001**. The port number on the writer host that will be used for data transfers.
+In another example, where
+   App 0 writes Stream A to App 1 and App 2;
+   App 1 writes Stream B to App 2,
+the parameter RendezvousAppCount for engine instances of Stream A and B should be set to 3 and 2 respectively, because three applications will work on Stream A, while two applications will work on Stream B.
 
-3. ``Timeout``: Default **5**. Timeout in seconds to wait for every send / receive operation.
-   Packages not sent or received within this time are considered lost.
+2. ``MaxStreamsPerApp``: Default **1**. The maximum number of streams that all applications sharing this MPI_COMM_WORLD can possibly open. It is required that this number is consistent across all ranks from all applications. This is used for pre-allocating the vectors holding MPI handshake informations and due to the fundamental communication mechanism of MPI, this information must be set statically through engine parameters, and the SSC engine cannot provide any mechanism to check if this parameter is set correctly. If this parameter is wrongly set, the SSC engine's open function will either exit early than expected without gathering all applications' handshake information, or it will block until timeout. It may cause other unpredictable errors too.
 
-4. ``AlwaysProvideLatestTimestep``: Default **TRUE**.
-This is a boolean parameter that affects what
-of the available timesteps will be provided to the reader engine.  If
-AlwaysProvideLatestTimestep is **TRUE**, then if there are multiple
-timesteps available to the reader, older timesteps will be skipped and
-the reader will see only the newest available upon BeginStep.
-This value is interpreted by only by the DataMan Reader engine.
-If AlwaysProvideLatestTimestep is **FALSE**, then the reader engine
-will be provided with the oldest step that has not been processed.
+3. ``OpenTimeoutSecs``: Default **10**. Timeout in seconds for opening a stream. The SSC engine's open function will block until the RendezvousAppCount is reached, or timeout, whichever comes first. If it reaches the timeout, SSC will throw an exception.
 
-5. ``OneToOneMode``: Default **FALSE**. It is recommended that this parameter is set to TRUE when
-   there is only one writer process and only one reader process. This will explicitly tell both the
-   writer engine and the reader engine that it only needs to connect to a single writer or reader,
-   and thus saves the handshake overhead.
+4. ``MaxFilenameLength``: Default **128**. The maximum length of filenames across all ranks from all applications. It is used for allocating the handshake buffer. Due to the limitation of MPI communication, this number must be set statically. The default number should work for most use cases. SSC will throw an exception if any rank opens a stream with a filename longer than this number.
+
+5. ``MpiMode``: Default **TwoSided**. MPI communication modes to use. Besides the default TwoSided mode using two sided MPI communications, MPI_Isend and MPI_Irecv, for data transport, there are four one sided MPI modes: OneSidedFencePush, OneSidedPostPush, OneSidedFencePull, and OneSidedPostPull. Modes with **Push** are based on the push model and use MPI_Put for data transport, while modes with **Pull** are based on the pull model and use MPI_Get. Modes with **Fence** use MPI_Win_fence for synchronization, while modes with **Post** use MPI_Win_start, MPI_Win_complete, MPI_Win_post and MPI_Win_wait.
 
 =============================== ================== ================================================
  **Key**                         **Value Format**   **Default** and Examples
 =============================== ================== ================================================
- IPAddress                       string             **N/A**, 22.195.18.29
- Port                            integer            **50001**, 22000, 33000
- Timeout                         integer            **5**, 10, 30
- AlwaysProvideLatestTimestep     boolean            **TRUE**, false
- OneToOneMode                    boolean            **FALSE**, true
+ RendezvousAppCount                     integer             **2**, 3, 5, 10
+ MaxStreamsPerApp                       integer             **1**, 2, 4, 8
+ OpenTimeoutSecs                        integer             **10**, 2, 20, 200
+ MaxFilenameLength                      integer             **128**, 32, 64, 512
+ MpiMode                                string             **TwoSided**, OneSidedFencePush, OneSidedPostPush, OneSidedFencePull, OneSidedPostPull
 =============================== ================== ================================================
 
 
