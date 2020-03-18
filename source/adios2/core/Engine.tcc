@@ -157,6 +157,8 @@ typename Variable<T>::Info *Engine::Get(Variable<T> &variable,
     switch (launch)
     {
     case Mode::Deferred:
+        info = DoGetBlockDeferred(variable);
+        break;
     case Mode::Sync:
         info = DoGetBlockSync(variable);
         break;

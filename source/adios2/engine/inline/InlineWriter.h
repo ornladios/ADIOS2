@@ -47,10 +47,16 @@ public:
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
+    bool IsInsideStep() const;
+
 private:
     int m_Verbosity = 0;
     int m_WriterRank; // my rank in the writers' comm
     size_t m_CurrentStep = static_cast<size_t>(-1); // steps start from 0
+    bool m_InsideStep = false;
+    bool m_ResetVariables = false; // used when PerformPuts is being used
+
+    std::string m_ReaderID;
 
     void Init() final;
     void InitParameters() final;
@@ -76,11 +82,12 @@ private:
      * @param values
      */
     template <class T>
-    void PutSyncCommon(Variable<T> &variable,
-                       typename Variable<T>::Info &blockInfo);
+    void PutSyncCommon(Variable<T> &variable, const T *data);
 
     template <class T>
-    void PutDeferredCommon(Variable<T> &variable, const T *values);
+    void PutDeferredCommon(Variable<T> &variable, const T *data);
+
+    void ResetVariables();
 };
 
 } // end namespace engine

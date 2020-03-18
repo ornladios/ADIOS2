@@ -124,6 +124,10 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
     typename Variable<T>::Info *Engine::DoGetBlockSync(Variable<T> &v)         \
     {                                                                          \
         return nullptr;                                                        \
+    }                                                                          \
+    typename Variable<T>::Info *Engine::DoGetBlockDeferred(Variable<T> &v)     \
+    {                                                                          \
+        return nullptr;                                                        \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

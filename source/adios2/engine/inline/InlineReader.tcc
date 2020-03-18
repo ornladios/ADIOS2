@@ -26,6 +26,11 @@ namespace engine
 template <class T>
 inline void InlineReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
+    if (m_Verbosity == 5)
+    {
+        std::cout << "Inline Reader " << m_ReaderRank << "     GetSync("
+                  << variable.m_Name << ")\n";
+    }
     variable.m_Data = data;
     auto blockInfo = variable.m_BlocksInfo.back();
     if (blockInfo.IsValue)
@@ -36,22 +41,14 @@ inline void InlineReader::GetSyncCommon(Variable<T> &variable, T *data)
     {
         *data = blockInfo.Data[0];
     }
-    if (m_Verbosity == 5)
-    {
-        std::cout << "Inline Reader " << m_ReaderRank << "     GetSync("
-                  << variable.m_Name << ")\n";
-    }
 }
 
 template <class T>
 void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    // returns immediately
-    if (m_Verbosity == 5)
-    {
-        std::cout << "Inline Reader " << m_ReaderRank << "     GetDeferred("
-                  << variable.m_Name << ")\n";
-    }
+    throw std::runtime_error(
+        "ERROR: ADIOS Inline Engine: GetBlockDeferredCommon "
+        "should be used instead of GetDeferredCommon.");
 }
 
 template <class T>
@@ -71,6 +68,31 @@ InlineReader::GetBlockSyncCommon(Variable<T> &variable)
         std::cout << "Inline Reader " << m_ReaderRank << "     GetBlockSync("
                   << variable.m_Name << ")\n";
     }
+    // Sync is okay when reading. Just need to make sure the pointer is
+    // available now.
+    variable.m_BlocksInfo[variable.m_BlockID].BufferP =
+        variable.m_BlocksInfo[variable.m_BlockID].Data;
+    return &variable.m_BlocksInfo[variable.m_BlockID];
+}
+
+template <class T>
+inline typename Variable<T>::Info *
+InlineReader::GetBlockDeferredCommon(Variable<T> &variable)
+{
+    InlineWriter &writer =
+        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
+    if (variable.m_BlockID >= variable.m_BlocksInfo.size())
+    {
+        throw std::invalid_argument(
+            "ERROR: selected BlockID " + std::to_string(variable.m_BlockID) +
+            " is above range of available blocks in GetBlockSync\n");
+    }
+    if (m_Verbosity == 5)
+    {
+        std::cout << "Inline Reader " << m_ReaderRank
+                  << "     GetBlockDeferred(" << variable.m_Name << ")\n";
+    }
+    m_DeferredVariables.push_back(variable.m_Name);
     return &variable.m_BlocksInfo[variable.m_BlockID];
 }
 

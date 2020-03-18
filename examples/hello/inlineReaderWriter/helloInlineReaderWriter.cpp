@@ -131,7 +131,9 @@ int main(int argc, char *argv[])
         /// WRITE
         {
             inlineIO.SetEngine("Inline");
-            inlineIO.SetParameters({{"verbose", "4"}});
+            inlineIO.SetParameters({{"verbose", "4"},
+                                    {"writerID", "myWriteID"},
+                                    {"readerID", "myReadID"}});
 
             /** global array: name, { shape (total dimensions) }, { start
              * (local) },
@@ -167,10 +169,6 @@ int main(int argc, char *argv[])
             /** Engine derived class, spawned to start IO operations */
             adios2::Engine inlineWriter =
                 inlineIO.Open("myWriteID", adios2::Mode::Write);
-
-            inlineIO.SetEngine("Inline");
-            inlineIO.SetParameters(
-                {{"verbose", "4"}, {"writerID", "myWriteID"}});
 
             adios2::Engine inlineReader =
                 inlineIO.Open("myReadID", adios2::Mode::Read);

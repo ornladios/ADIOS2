@@ -9,6 +9,7 @@
  */
 
 #include "InlineWriter.h"
+#include "InlineReader.h"
 #include "InlineWriter.tcc"
 
 #include "adios2/helper/adiosFunctions.h"
@@ -41,6 +42,19 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER("InlineWriter::BeginStep");
+    if (m_InsideStep)
+    {
+        throw std::runtime_error("InlineWriter::BeginStep was called but the "
+                                 "writer is already inside a step");
+    }
+    const auto &reader =
+        dynamic_cast<InlineReader &>(m_IO.GetEngine(m_ReaderID));
+    if (reader.IsInsideStep())
+    {
+        m_InsideStep = false;
+        return StepStatus::NotReady;
+    }
+    m_InsideStep = true;
     if (m_CurrentStep == static_cast<size_t>(-1))
     {
         m_CurrentStep = 0; // 0 is the first step
@@ -57,6 +71,13 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
     // m_BlocksInfo for all variables should be cleared at this point,
     // whether they were read in the last step or not.
+    ResetVariables();
+
+    return StepStatus::OK;
+}
+
+void InlineWriter::ResetVariables()
+{
     auto availVars = m_IO.GetAvailableVariables();
     for (auto &varPair : availVars)
     {
@@ -75,13 +96,11 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
-
-    return StepStatus::OK;
+    m_ResetVariables = false;
 }
 
 size_t InlineWriter::CurrentStep() const { return m_CurrentStep; }
 
-/* PutDeferred = PutSync, so nothing to be done in PerformPuts */
 void InlineWriter::PerformPuts()
 {
     TAU_SCOPED_TIMER("InlineWriter::PerformPuts");
@@ -89,16 +108,23 @@ void InlineWriter::PerformPuts()
     {
         std::cout << "Inline Writer " << m_WriterRank << "     PerformPuts()\n";
     }
+    m_ResetVariables = true;
 }
 
 void InlineWriter::EndStep()
 {
     TAU_SCOPED_TIMER("InlineWriter::EndStep");
+    if (!m_InsideStep)
+    {
+        throw std::runtime_error("InlineWriter::EndStep() cannot be called "
+                                 "without a call to BeginStep() first");
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << " EndStep() Step "
                   << m_CurrentStep << std::endl;
     }
+    m_InsideStep = false;
 }
 
 void InlineWriter::Flush(const int)
@@ -110,13 +136,15 @@ void InlineWriter::Flush(const int)
     }
 }
 
+bool InlineWriter::IsInsideStep() const { return m_InsideStep; }
+
 // PRIVATE
 
 #define declare_type(T)                                                        \
     void InlineWriter::DoPutSync(Variable<T> &variable, const T *data)         \
     {                                                                          \
         TAU_SCOPED_TIMER("InlineWriter::DoPutSync");                           \
-        PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
+        PutSyncCommon(variable, data);                                         \
     }                                                                          \
     void InlineWriter::DoPutDeferred(Variable<T> &variable, const T *data)     \
     {                                                                          \
@@ -140,7 +168,6 @@ void InlineWriter::InitParameters()
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 
         std::string value(pair.second);
-        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
 
         if (key == "verbose")
         {
@@ -150,6 +177,15 @@ void InlineWriter::InitParameters()
                     "ERROR: Method verbose argument must be an "
                     "integer in the range [0,5], in call to "
                     "Open or Engine constructor\n");
+        }
+        else if (key == "readerid")
+        {
+            m_ReaderID = value;
+            if (m_Verbosity == 5)
+            {
+                std::cout << "Inline Writer " << m_WriterRank
+                          << " Init() readerID " << m_ReaderID << "\n";
+            }
         }
     }
 }
