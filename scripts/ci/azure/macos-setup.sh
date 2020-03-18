@@ -8,6 +8,9 @@ case "$SYSTEM_JOBNAME" in
   *xcode103*)
     sudo xcode-select --switch /Applications/Xcode_10.3.app
     ;;
+  *xcode111*)
+    sudo xcode-select --switch /Applications/Xcode_11.1.app
+    ;;
   *)
     echo "  Unknown macOS image.  Using defaults."
     ;;
