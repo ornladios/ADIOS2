@@ -164,7 +164,7 @@ endif()
 set (SIMPLE_MPI_TESTS "")
 set (SIMPLE_MPI_FORTRAN_TESTS "")
 if (ADIOS2_HAVE_MPI)
-  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;3x5LockGeometry;2x1.Local;1x2.Local;3x5.Local;5x3.Local;2x1ZeroDataVar;2x1ZeroDataR64")
+  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;3x5LockGeometry;2x1.Local;1x2.Local;3x5.Local;5x3.Local;1x1.LocalVarying;5x3.LocalVarying;2x1ZeroDataVar;2x1ZeroDataR64")
   list (APPEND SPECIAL_TESTS "2x1.NoPreload;2x3.ForcePreload")
   if (ADIOS2_HAVE_Fortran)
     set (SIMPLE_MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
@@ -218,6 +218,8 @@ if(ADIOS2_HAVE_MPI)
     list (REMOVE_ITEM INSITU_TESTS "TimeoutOnOpen" "1x1.Modes" "1x1.Attrs")
     # Local Vars don't work for InSitu
     list (FILTER INSITU_TESTS EXCLUDE REGEX ".*Local$")
+    # Local Vars don't work for InSitu
+    list (FILTER INSITU_TESTS EXCLUDE REGEX ".*LocalVarying$")
     # Multiple streams don't work for InSitu
     list (FILTER INSITU_TESTS EXCLUDE REGEX "x1.Shared")
     # Fortran Destination doesn't work for InSitu

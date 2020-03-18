@@ -32,6 +32,8 @@ int DelayWhileHoldingStep = 0;
 int LongFirstDelay = 0;
 int FirstTimestepMustBeZero = 0;
 int LockGeometry = 0;
+bool VaryingDataSize = false;
+
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
 
@@ -208,6 +210,10 @@ static void ParseArgs(int argc, char **argv)
         {
             IncreasingDelay = 1;
             Latest = 1;
+        }
+        else if (std::string(argv[1]) == "--varying_data_size")
+        {
+            VaryingDataSize = true;
         }
         else if (std::string(argv[1]) == "--long_first_delay")
         {

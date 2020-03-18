@@ -84,7 +84,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
-
         ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::LocalArray);
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
@@ -141,20 +140,78 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         long unsigned int hisLength = (long unsigned int)Nx;
 
         var_i8.SetBlockSelection(rankToRead);
+        if (VaryingDataSize)
+        {
+            ASSERT_EQ(
+                engine.BlocksInfo(var_i8, currentStep).at(rankToRead).Count[0],
+                hisLength - currentStep - rankToRead);
+        }
+        else
+        {
+            ASSERT_EQ(
+                engine.BlocksInfo(var_i8, currentStep).at(rankToRead).Count[0],
+                hisLength);
+        }
         var_i16.SetBlockSelection(rankToRead);
+        ASSERT_EQ(
+            engine.BlocksInfo(var_i16, currentStep).at(rankToRead).Count[0],
+            hisLength);
         var_i32.SetBlockSelection(rankToRead);
+        ASSERT_EQ(
+            engine.BlocksInfo(var_i32, currentStep).at(rankToRead).Count[0],
+            hisLength);
         var_i64.SetBlockSelection(rankToRead);
+        ASSERT_EQ(
+            engine.BlocksInfo(var_i64, currentStep).at(rankToRead).Count[0],
+            hisLength);
 
         var_r32.SetBlockSelection(rankToRead);
+        ASSERT_EQ(
+            engine.BlocksInfo(var_r32, currentStep).at(rankToRead).Count[0],
+            hisLength);
         var_r64.SetBlockSelection(rankToRead);
+        ASSERT_EQ(
+            engine.BlocksInfo(var_r64, currentStep).at(rankToRead).Count[0],
+            hisLength);
+
         if (var_c32)
+        {
             var_c32.SetBlockSelection(rankToRead);
+            ASSERT_EQ(
+                engine.BlocksInfo(var_c32, currentStep).at(rankToRead).Count[0],
+                hisLength);
+        }
         if (var_c64)
+        {
             var_c64.SetBlockSelection(rankToRead);
+            ASSERT_EQ(
+                engine.BlocksInfo(var_c64, currentStep).at(rankToRead).Count[0],
+                hisLength);
+        }
         if (var_r64_2d)
+        {
             var_r64_2d.SetBlockSelection(rankToRead);
+            ASSERT_EQ(engine.BlocksInfo(var_r64_2d, currentStep)
+                          .at(rankToRead)
+                          .Count[0],
+                      hisLength);
+            ASSERT_EQ(engine.BlocksInfo(var_r64_2d, currentStep)
+                          .at(rankToRead)
+                          .Count[1],
+                      2);
+        }
         if (var_r64_2d_rev)
+        {
             var_r64_2d_rev.SetBlockSelection(rankToRead);
+            ASSERT_EQ(engine.BlocksInfo(var_r64_2d_rev, currentStep)
+                          .at(rankToRead)
+                          .Count[0],
+                      2);
+            ASSERT_EQ(engine.BlocksInfo(var_r64_2d_rev, currentStep)
+                          .at(rankToRead)
+                          .Count[1],
+                      hisLength);
+        }
 
         const adios2::Dims start_time{0};
         const adios2::Dims count_time{1};
@@ -192,7 +249,9 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         engine.Get(var_time, (int64_t *)&write_time);
         engine.EndStep();
 
-        EXPECT_EQ(validateCommonTestData(hisStart, hisLength, t, !var_c32), 0);
+        EXPECT_EQ(validateCommonTestData(hisStart, hisLength, t, !var_c32,
+                                         VaryingDataSize, rankToRead),
+                  0);
         write_times.push_back(write_time);
         ++t;
     }
