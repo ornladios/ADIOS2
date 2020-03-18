@@ -46,6 +46,7 @@ set(CTEST_TEST_ARGS
   # Unclear why this test currently dies.  Disabling until it can be addressed.
   EXCLUDE "Install.Make.Fortran"
 )
+set(CTEST_BUILD_FLAGS "-k -j1")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)
