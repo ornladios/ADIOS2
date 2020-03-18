@@ -8,13 +8,14 @@ endif()
 
 include(CMakeFindDependencyMacro)
 
-enable_language(C)
-enable_language(CXX)
+if(NOT @BUILD_SHARED_LIBS@)
+  # Ensure C is enabled for use by package dependencies found below.
+  enable_language(C)
+  # Ensure CXX is enabled so we can link against the C++ runtime library.
+  enable_language(CXX)
+endif()
 
 set(ADIOS2_HAVE_Fortran @ADIOS2_HAVE_Fortran@)
-if(ADIOS2_HAVE_Fortran)
-  enable_language(Fortran)
-endif()
 
 set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
 if(ADIOS2_HAVE_MPI)
@@ -90,6 +91,21 @@ find_package_handle_standard_args(${CMAKE_FIND_PACKAGE_NAME} CONFIG_MODE)
 
 if(NOT TARGET adios2::adios2)
   include("${CMAKE_CURRENT_LIST_DIR}/adios2-targets.cmake")
+  # Filter our usage requirements to avoid non-enabled languages.
+  if(NOT CMAKE_C_COMPILER_LOADED)
+    # Since C is not available, use MPI through MPI_CXX instead.
+    get_property(_adios2_link_libs TARGET adios2::adios2 PROPERTY INTERFACE_LINK_LIBRARIES)
+    string(REGEX REPLACE "MPI::MPI_C(;|>|$)" "MPI::MPI_CXX\\1" _adios2_link_libs "${_adios2_link_libs}")
+    set_property(TARGET adios2::adios2 PROPERTY INTERFACE_LINK_LIBRARIES "${_adios2_link_libs}")
+    unset(_adios2_link_libs)
+  endif()
+  if(NOT CMAKE_CXX_COMPILER_LOADED)
+    # Avoid requiring compile features for non-enabled languages.
+    get_property(_adios2_cxx_features TARGET adios2::adios2 PROPERTY INTERFACE_COMPILE_FEATURES)
+    list(FILTER _adios2_cxx_features EXCLUDE REGEX "^cxx_")
+    set_property(TARGET adios2::adios2 PROPERTY INTERFACE_COMPILE_FEATURES "${_adios2_cxx_features}")
+    unset(_adios2_cxx_features)
+  endif()
 endif()
 
 # backwards compatibility for things that still use package variables
