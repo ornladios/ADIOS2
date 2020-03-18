@@ -20,6 +20,7 @@ Parameters are passed at:
 .. include:: bp3.rst
 .. include:: hdf5.rst
 .. include:: sst.rst
+.. include:: ssc.rst
 .. include:: dataman.rst
 .. include:: inline.rst
 .. include:: insitu_mpi.rst
