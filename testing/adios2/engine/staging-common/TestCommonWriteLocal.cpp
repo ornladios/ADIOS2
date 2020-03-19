@@ -50,6 +50,13 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     // Declare 1D variables (NumOfProcesses * Nx)
     // The local process' part (start, count) can be defined now or later
     // before Write().
+
+    /* we'll be dropping the size for some vars */
+    if (VaryingDataSize)
+    {
+        assert(Nx > NSteps + mpiSize);
+    }
+
     {
         adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
         adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
@@ -117,13 +124,17 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         auto var_time = io.InquireVariable<int64_t>("time");
 
         // // Make a 1D selection to describe the local dimensions of the
-        // // variable we write and its offsets in the global spaces
+        // // variable we write
+        adios2::Box<adios2::Dims> sel_shrinking({}, {Nx - step - mpiRank});
         // adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
         // adios2::Box<adios2::Dims> sel2({mpiRank * Nx, 0}, {Nx, 2});
         // adios2::Box<adios2::Dims> sel3({0, mpiRank * Nx}, {2, Nx});
         // adios2::Box<adios2::Dims> sel_time(
         //     {static_cast<unsigned long>(mpiRank)}, {1});
-        // var_i8.SetSelection(sel);
+        if (VaryingDataSize)
+        {
+            var_i8.SetSelection(sel_shrinking);
+        }
         // var_i16.SetSelection(sel);
         // var_i32.SetSelection(sel);
         // var_i64.SetSelection(sel);

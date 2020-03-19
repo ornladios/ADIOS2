@@ -172,7 +172,8 @@ void generateCommonTestData(int step, int rank, int size, int Nx, int r64_Nx)
 }
 
 int validateCommonTestData(int start, int length, size_t step,
-                           int missing_end_data)
+                           int missing_end_data, bool varying = false,
+                           int writerRank = 0)
 {
     int failures = 0;
     if (in_scalar_R64 != 1.5 * (step + 1))
@@ -184,13 +185,16 @@ int validateCommonTestData(int start, int length, size_t step,
     }
     for (int i = 0; i < length; i++)
     {
-        if (in_I8[i] != (int8_t)((i + start) * 10 + step))
+        if ((!varying) || (i < length - step - writerRank))
         {
-            std::cout << "Expected 0x" << std::hex
-                      << (int8_t)((i + start) * 10 + step) << ", got 0x"
-                      << std::hex << in_I8[i] << " for in_I8[" << i
-                      << "](global[" << i + start << "])" << std::endl;
-            failures++;
+            if (in_I8[i] != (int8_t)((i + start) * 10 + step))
+            {
+                std::cout << "Expected 0x" << std::hex
+                          << (int8_t)((i + start) * 10 + step) << ", got 0x"
+                          << std::hex << in_I8[i] << " for in_I8[" << i
+                          << "](global[" << i + start << "])" << std::endl;
+                failures++;
+            }
         }
         if (in_I16[i] != (int16_t)((i + start) * 10 + step))
         {

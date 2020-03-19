@@ -81,6 +81,8 @@ set (2x1.Local_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -w $<TARGET_FILE:TestComm
 set (1x2.Local_CMD "run_test.py.$<CONFIG> -nw 1 -nr 2  -w $<TARGET_FILE:TestCommonWriteLocal> -r $<TARGET_FILE:TestCommonReadLocal>")
 set (3x5.Local_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWriteLocal> -r $<TARGET_FILE:TestCommonReadLocal>")
 set (5x3.Local_CMD "run_test.py.$<CONFIG> -nw 5 -nr 3  -w $<TARGET_FILE:TestCommonWriteLocal> -r $<TARGET_FILE:TestCommonReadLocal>")
+set (1x1.LocalVarying_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteLocal> --warg=--nx --warg=20 --warg=--varying_data_size -r $<TARGET_FILE:TestCommonReadLocal> --rarg=--nx --rarg=20 --rarg=--varying_data_size ")
+set (5x3.LocalVarying_CMD "run_test.py.$<CONFIG> -nw 5 -nr 3  -w $<TARGET_FILE:TestCommonWriteLocal> --warg=--nx --warg=20 --warg=--varying_data_size -r $<TARGET_FILE:TestCommonReadLocal> --rarg=--nx --rarg=20 --rarg=--varying_data_size ")
 set (DelayedReader_3x5_CMD "run_test.py.$<CONFIG> -rd 5 -nw 3 -nr 5")
 set (FtoC.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWrite_f>")
 set (FtoF.3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5  -w $<TARGET_FILE:TestCommonWrite_f> -r $<TARGET_FILE:TestCommonRead_f>")
