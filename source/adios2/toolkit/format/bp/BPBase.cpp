@@ -43,9 +43,15 @@ BPBase::BPBase(helper::Comm const &comm, const bool debugMode)
     m_Profiler.m_IsActive = true; // default
 }
 
-void BPBase::Init(const Params &parameters, const std::string hint)
+void BPBase::Init(const Params &parameters, const std::string hint,
+                  const std::string engineType)
 {
     // Parse Parameters
+    struct Parameters parsedParameters;
+    bool profilePresent = false;
+    bool profileValue;
+    bool subStreamsPresent = false;
+    int32_t subStreamsValue;
     for (const auto &parameter : parameters)
     {
         const std::string key = helper::LowerCase(parameter.first);
@@ -53,53 +59,55 @@ void BPBase::Init(const Params &parameters, const std::string hint)
 
         if (key == "profile")
         {
-            m_Profiler.m_IsActive = helper::StringTo<bool>(
+            profilePresent = true;
+            profileValue = helper::StringTo<bool>(
                 value, m_DebugMode, " in Parameter key=Profile " + hint);
         }
         else if (key == "profileunits")
         {
-            m_Parameters.ProfileUnit =
+            parsedParameters.ProfileUnit =
                 helper::StringToTimeUnit(value, m_DebugMode, hint);
         }
         else if (key == "opentimeoutsecs")
         {
-            m_Parameters.OpenTimeoutSecs = helper::StringTo<float>(
+            parsedParameters.OpenTimeoutSecs = helper::StringTo<float>(
                 value, m_DebugMode,
                 " in Parameter key=OpenTimeOutSecs " + hint);
 
-            if (m_Parameters.OpenTimeoutSecs < 0.0)
+            if (parsedParameters.OpenTimeoutSecs < 0.0)
             {
-                m_Parameters.OpenTimeoutSecs =
+                parsedParameters.OpenTimeoutSecs =
                     std::numeric_limits<float>::max() / 10000;
             }
         }
         else if (key == "beginsteppollingfrequencysecs")
         {
-            m_Parameters.BeginStepPollingFrequencySecs =
+            parsedParameters.BeginStepPollingFrequencySecs =
                 helper::StringTo<float>(value, m_DebugMode,
                                         " in Parameter key=OpenTimeOutSecs " +
                                             hint);
 
-            if (m_Parameters.BeginStepPollingFrequencySecs < 0.0)
+            if (parsedParameters.BeginStepPollingFrequencySecs < 0.0)
             {
-                m_Parameters.BeginStepPollingFrequencySecs = 1.0; // a second
+                parsedParameters.BeginStepPollingFrequencySecs =
+                    1.0; // a second
             }
-            m_Parameters.BeginStepPollingFrequencyIsSet = true;
+            parsedParameters.BeginStepPollingFrequencyIsSet = true;
         }
         else if (key == "buffergrowthfactor")
         {
-            m_Parameters.GrowthFactor = helper::StringTo<float>(
+            parsedParameters.GrowthFactor = helper::StringTo<float>(
                 value, m_DebugMode,
                 " in Parameter key=BufferGrowthFactor " + hint);
         }
         else if (key == "initialbuffersize")
         {
             // it will resize m_Data
-            m_Parameters.InitialBufferSize = helper::StringToByteUnits(
+            parsedParameters.InitialBufferSize = helper::StringToByteUnits(
                 value, m_DebugMode,
                 "for Parameter key=InitialBufferSize, in call to Open");
 
-            if (m_DebugMode && m_Parameters.InitialBufferSize <
+            if (m_DebugMode && parsedParameters.InitialBufferSize <
                                    DefaultInitialBufferSize) // 16384b
             {
                 throw std::invalid_argument(
@@ -110,28 +118,28 @@ void BPBase::Init(const Params &parameters, const std::string hint)
         }
         else if (key == "maxbuffersize")
         {
-            m_Parameters.MaxBufferSize = helper::StringToByteUnits(
+            parsedParameters.MaxBufferSize = helper::StringToByteUnits(
                 value, m_DebugMode,
                 "for Parameter key=MaxBufferSize, in call to Open");
         }
         else if (key == "threads")
         {
-            m_Parameters.Threads =
+            parsedParameters.Threads =
                 static_cast<unsigned int>(helper::StringTo<uint32_t>(
                     value, m_DebugMode, " in Parameter key=Threads " + hint));
         }
         else if (key == "asynctasks")
         {
-            m_Parameters.AsyncTasks = helper::StringTo<bool>(
+            parsedParameters.AsyncTasks = helper::StringTo<bool>(
                 value, m_DebugMode, " in Parameter key=AsyncTasks " + hint);
         }
         else if (key == "statslevel")
         {
-            m_Parameters.StatsLevel =
+            parsedParameters.StatsLevel =
                 static_cast<unsigned int>(helper::StringTo<uint32_t>(
                     value, m_DebugMode,
                     " in Parameter key=StatsLevel " + hint));
-            if (m_DebugMode && m_Parameters.StatsLevel > 5)
+            if (m_DebugMode && parsedParameters.StatsLevel > 5)
             {
                 throw std::invalid_argument(
                     "ERROR: value for Parameter key=StatsLevel must be "
@@ -141,18 +149,18 @@ void BPBase::Init(const Params &parameters, const std::string hint)
         }
         else if (key == "statsblocksize")
         {
-            m_Parameters.StatsBlockSize = helper::StringToSizeT(
+            parsedParameters.StatsBlockSize = helper::StringToSizeT(
                 value, m_DebugMode, " in Parameter key=StatsBlockSize " + hint);
         }
         else if (key == "collectivemetadata")
         {
-            m_Parameters.CollectiveMetadata = helper::StringTo<bool>(
+            parsedParameters.CollectiveMetadata = helper::StringTo<bool>(
                 value, m_DebugMode,
                 " in Parameter key=CollectiveMetadata " + hint);
         }
         else if (key == "flushstepscount")
         {
-            m_Parameters.FlushStepsCount = helper::StringToSizeT(
+            parsedParameters.FlushStepsCount = helper::StringToSizeT(
                 value, m_DebugMode,
                 " in Parameter key=FlushStepsCount " + hint);
         }
@@ -172,16 +180,50 @@ void BPBase::Init(const Params &parameters, const std::string hint)
 
             if (subStreams < m_SizeMPI)
             {
-                m_Aggregator.Init(subStreams, m_Comm);
+                subStreamsPresent = true;
+                subStreamsValue = subStreams;
             }
         }
         else if (key == "node-local")
         {
-            m_Parameters.NodeLocal = helper::StringTo<bool>(
+            parsedParameters.NodeLocal = helper::StringTo<bool>(
                 value, m_DebugMode, " in Parameter key=node-local " + hint);
         }
     }
-
+    if (!engineType.empty())
+    {
+        const std::string lowerEngineType = helper::LowerCase(engineType);
+        if (lowerEngineType == "sst")
+        {
+            // Copy over only parameters known to work with SST
+            m_Parameters.InitialBufferSize = parsedParameters.InitialBufferSize;
+            m_Parameters.MaxBufferSize = parsedParameters.MaxBufferSize;
+            m_Parameters.StatsBlockSize = parsedParameters.StatsBlockSize;
+            m_Parameters.GrowthFactor = parsedParameters.GrowthFactor;
+            // OpenTimeoutSecs is ignored for SST
+            // BeginStepPollingFrequencySecs is inoperative for SST
+            m_Parameters.StatsLevel =
+                parsedParameters.StatsLevel; // shouldn't hurt
+            m_Parameters.Threads = parsedParameters.Threads;
+            m_Parameters.ProfileUnit = parsedParameters.ProfileUnit;
+            // AsyncTasks has no impact on SST
+            // CollectiveMetadata might break SST
+            // NodeLocal has an unknown effect on SST
+            // SubStreams break SST
+        }
+    }
+    else
+    {
+        if (profilePresent)
+        {
+            m_Profiler.m_IsActive = profileValue;
+        }
+        m_Parameters = parsedParameters;
+        if (subStreamsPresent)
+        {
+            m_Aggregator.Init(subStreamsValue, m_Comm);
+        }
+    }
     // set timers if active
     if (m_Profiler.m_IsActive)
     {

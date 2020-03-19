@@ -143,7 +143,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
         m_BP3Serializer = std::unique_ptr<format::BP3Serializer>(
             new format::BP3Serializer(m_Comm, m_DebugMode));
         m_BP3Serializer->Init(m_IO.m_Parameters,
-                              "in call to BP3::Open for writing");
+                              "in call to BP3::Open for writing", "sst");
         m_BP3Serializer->m_MetadataSet.TimeStep = 1;
         m_BP3Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
     }
