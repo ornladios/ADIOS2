@@ -204,7 +204,7 @@ size_t VariableBase::GetAvailableStepsCount() const
 
 void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 {
-    if (m_DebugMode && boxSteps.second == 0)
+    if (boxSteps.second == 0)
     {
         throw std::invalid_argument("ERROR: boxSteps.second count argument "
                                     " can't be zero, from variable " +
@@ -228,15 +228,12 @@ void VariableBase::SetOperationParameter(const size_t operationID,
                                          const std::string key,
                                          const std::string value)
 {
-    if (m_DebugMode)
+    if (operationID >= m_Operations.size())
     {
-        if (operationID >= m_Operations.size())
-        {
-            throw std::invalid_argument(
-                "ERROR: invalid operationID " + std::to_string(operationID) +
-                ", check returned id from AddOperation, in call to "
-                "SetOperationParameter\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: invalid operationID " + std::to_string(operationID) +
+            ", check returned id from AddOperation, in call to "
+            "SetOperationParameter\n");
     }
 
     m_Operations[operationID].Parameters[key] = value;
@@ -274,7 +271,7 @@ bool VariableBase::IsValidStep(const size_t step) const noexcept
 
 void VariableBase::CheckRandomAccessConflict(const std::string hint) const
 {
-    if (m_DebugMode && m_RandomAccess && !m_FirstStreamingStep)
+    if (m_RandomAccess && !m_FirstStreamingStep)
     {
         throw std::invalid_argument("ERROR: can't mix streaming and "
                                     "random-access (call to SetStepSelection)"
@@ -422,7 +419,7 @@ void VariableBase::InitShapeType()
             else
             {
 
-                if (m_DebugMode && m_ConstantDims)
+                if (m_ConstantDims)
                 {
                     throw std::invalid_argument(
                         "ERROR: isConstantShape (true) argument is invalid "
@@ -494,14 +491,11 @@ void VariableBase::InitShapeType()
         }
         else
         {
-            if (m_DebugMode)
-            {
-                throw std::invalid_argument(
-                    "ERROR: if the "
-                    "shape is empty, start must be empty as well, in call to "
-                    "DefineVariable " +
-                    m_Name + "\n");
-            }
+            throw std::invalid_argument(
+                "ERROR: if the "
+                "shape is empty, start must be empty as well, in call to "
+                "DefineVariable " +
+                m_Name + "\n");
         }
     }
 
