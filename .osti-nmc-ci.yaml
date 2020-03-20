@@ -54,7 +54,6 @@ stages:
     - bash scripts/ci/osti-nmc/run.sh configure
     - bash scripts/ci/osti-nmc/run.sh build || true
     - bash scripts/ci/osti-nmc/run.sh test || true
-    # - bash scripts/ci/osti-nmc/run.sh submit
 
 inspect:p9:
   extends:
@@ -71,132 +70,17 @@ main:p9:
     - .p9-test-job
     - .run-main-step
 
-### ---
-### stages:
-###   - inspect/dependencies
-###   - build
-###   - test
-###   - submit
-###   - clean
-###
-### .nmc-job:
-###   tags: [slurm, nmc]
-###
-### .x86_64-job:
-###   extends: .nmc-job
-###   variables:
-###     NMC_FE1_SLURM_PARAMETERS: "\
-###       --nodes=1 --partition=ecp-x86_64 --time=00:05:00"
-###     CI_ENVIRONMENT: x86_64
-###
-### .p9-job:
-###   extends: .nmc-job
-###   variables:
-###     NMC_FE1_SLURM_PARAMETERS: "\
-###       --nodes=1 --partition=ecp-p9-4v100 --time=00:05:00"
-###     CI_ENVIRONMENT: p9
-###
-### .x86_64-test-job:
-###   extends: .x86_64-job
-###   variables:
-###     NMC_FE1_SLURM_PARAMETERS: "\
-###       --nodes=2 --ntasks-per-node=2 --partition=ecp-x86_64 --time=06:00:00"
-###
-### .p9-test-job:
-###   extends: .p9-job
-###   variables:
-###     NMC_FE1_SLURM_PARAMETERS: "\
-###       --nodes=2 --ntasks-per-node=2 --partition=ecp-p9-4v100 --time=06:00:00"
-###
-### .inspect-environment:
-###   stage: inspect/dependencies
-###   script:
-###     - ls -lah
-###     - mount
-###     - df -h
-###     - free -h
-###     - module avail
-###   allow_failure: true
-###
-### .get-dependencies:
-###   stage: inspect/dependencies
-###   script:
-###     - bash scripts/ci/osti-nmc/setup.sh
-###
-### .run-build-step:
-###   stage: build
-###   script:
-###     - bash scripts/ci/osti-nmc/run.sh update
-###     - bash scripts/ci/osti-nmc/run.sh configure
-###     - bash scripts/ci/osti-nmc/run.sh build
-###   artifacts:
-###     paths:
-###       - .ci-bin-dir
-###       - .ci-bin-root
-###     when: always
-###   allow_failure: true
-###
-### .run-test-step:
-###   stage: test
-###   script:
-###     - bash scripts/ci/osti-nmc/run.sh test
-###   artifacts:
-###     paths:
-###       - .ci-bin-dir
-###       - .ci-bin-root
-###     when: always
-###   allow_failure: true
-###
-### .submit-to-cdash:
-###   stage: submit
-###   script:
-###     - bash scripts/ci/osti-nmc/run.sh submit
-###   artifacts:
-###     paths:
-###       - .ci-bin-dir
-###       - .ci-bin-root
-###     when: always
-###   allow_failure: true
-###   when: always
-###
-### .clean-up:
-###   stage: clean
-###   script:
-###     - bash scripts/ci/osti-nmc/clean.sh
-###   when: always
-###
-### inspect:p9:
-###   extends:
-###     - .p9-job
-###     - .inspect-environment
-###
-### dependencies:p9:
-###   extends:
-###     - .p9-job
-###     - .get-dependencies
-###
-### build:p9:
-###   extends:
-###     - .p9-job
-###     - .run-build-step
-###
-### test:p9:
-###   extends:
-###     - .p9-test-job
-###     - .run-test-step
-###   dependencies:
-###     - build:p9
-###
-### submit:p9:
-###   extends:
-###     - .p9-job
-###     - .submit-to-cdash
-###   dependencies:
-###     - test:p9
-###
-### clean:p9:
-###   extends:
-###     - .p9-job
-###     - .clean-up
-###   dependencies:
-###     - submit:p9
+inspect:x86_64:
+  extends:
+    - .x86_64-job
+    - .inspect-environment
+
+dependencies:x86_64:
+  extends:
+    - .x86_64-job
+    - .get-dependencies
+
+main:x86_64:
+  extends:
+    - .x86_64-test-job
+    - .run-main-step
