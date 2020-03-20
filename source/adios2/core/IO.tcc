@@ -33,7 +33,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
                                 const bool constantDims)
 {
     TAU_SCOPED_TIMER("IO::DefineVariable");
-    if (m_DebugMode)
+
     {
         auto itVariable = m_Variables.find(name);
         if (!IsEnd(itVariable, m_Variables))
@@ -103,15 +103,12 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                                   const std::string separator)
 {
     TAU_SCOPED_TIMER("IO::DefineAttribute");
-    if (m_DebugMode)
+    if (!variableName.empty() && InquireVariableType(variableName).empty())
     {
-        if (!variableName.empty() && InquireVariableType(variableName).empty())
-        {
-            throw std::invalid_argument(
-                "ERROR: variable " + variableName +
-                " doesn't exist, can't associate attribute " + name +
-                ", in call to DefineAttribute");
-        }
+        throw std::invalid_argument(
+            "ERROR: variable " + variableName +
+            " doesn't exist, can't associate attribute " + name +
+            ", in call to DefineAttribute");
     }
 
     const std::string globalName =
@@ -140,15 +137,12 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
                                   const std::string separator)
 {
     TAU_SCOPED_TIMER("IO::DefineAttribute");
-    if (m_DebugMode)
+    if (!variableName.empty() && InquireVariableType(variableName).empty())
     {
-        if (!variableName.empty() && InquireVariableType(variableName).empty())
-        {
-            throw std::invalid_argument(
-                "ERROR: variable " + variableName +
-                " doesn't exist, can't associate attribute " + name +
-                ", in call to DefineAttribute");
-        }
+        throw std::invalid_argument(
+            "ERROR: variable " + variableName +
+            " doesn't exist, can't associate attribute " + name +
+            ", in call to DefineAttribute");
     }
 
     const std::string globalName =

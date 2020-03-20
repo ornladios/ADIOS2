@@ -290,16 +290,12 @@ void IO::SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value)
 {
     TAU_SCOPED_TIMER("IO::other");
-    if (m_DebugMode)
+    if (transportIndex >= m_TransportsParameters.size())
     {
-        if (transportIndex >= m_TransportsParameters.size())
-        {
-            throw std::invalid_argument(
-                "ERROR: transportIndex is larger than "
-                "transports created with AddTransport, for key: " +
-                key + ", value: " + value +
-                "in call to SetTransportParameter\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: transportIndex is larger than "
+            "transports created with AddTransport, for key: " +
+            key + ", value: " + value + "in call to SetTransportParameter\n");
     }
 
     m_TransportsParameters[transportIndex][key] = value;
@@ -580,7 +576,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
     }
 
-    if (m_DebugMode && isEngineFound)
+    if (isEngineFound)
     {
         if (isEngineActive) // check if active
         {
@@ -665,25 +661,19 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     }
     else
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument("ERROR: engine " + m_EngineType +
-                                        " not supported, IO SetEngine must add "
-                                        "a supported engine, in call to "
-                                        "Open\n");
-        }
+        throw std::invalid_argument("ERROR: engine " + m_EngineType +
+                                    " not supported, IO SetEngine must add "
+                                    "a supported engine, in call to "
+                                    "Open\n");
     }
 
     auto itEngine = m_Engines.emplace(name, std::move(engine));
 
-    if (m_DebugMode)
+    if (!itEngine.second)
     {
-        if (!itEngine.second)
-        {
-            throw std::invalid_argument(
-                "ERROR: engine of type " + m_EngineType + " and name " + name +
-                " could not be created, in call to Open\n");
-        }
+        throw std::invalid_argument("ERROR: engine of type " + m_EngineType +
+                                    " and name " + name +
+                                    " could not be created, in call to Open\n");
     }
     // return a reference
     return *itEngine.first->second.get();
@@ -698,14 +688,11 @@ Engine &IO::GetEngine(const std::string &name)
 {
     TAU_SCOPED_TIMER("IO::other");
     auto itEngine = m_Engines.find(name);
-    if (m_DebugMode)
+    if (itEngine == m_Engines.end())
     {
-        if (itEngine == m_Engines.end())
-        {
-            throw std::invalid_argument(
-                "ERROR: engine name " + name +
-                " could not be found, in call to GetEngine\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: engine name " + name +
+            " could not be found, in call to GetEngine\n");
     }
     // return a reference
     return *itEngine->second.get();
