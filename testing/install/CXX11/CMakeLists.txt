@@ -10,14 +10,16 @@ find_package(adios2 REQUIRED)
 
 if(ADIOS2_HAVE_MPI)
   find_package(MPI REQUIRED)
+  set(src main_mpi.cxx)
   set(mpilib MPI::MPI_CXX)
   set(mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS})
 else()
+  set(src main_nompi.cxx)
   set(mpilib)
   set(mpiexec)
 endif()
 
-add_executable(adios_cxx11_test main.cxx)
+add_executable(adios_cxx11_test ${src})
 target_link_libraries(adios_cxx11_test adios2::adios2 ${mpilib})
 
 enable_testing()
