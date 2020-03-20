@@ -314,7 +314,7 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 
         m_BP3Deserializer = new format::BP3Deserializer(m_Comm, m_DebugMode);
         m_BP3Deserializer->Init(m_IO.m_Parameters,
-                                "in call to BP3::Open for reading");
+                                "in call to BP3::Open for reading", "sst");
 
         m_BP3Deserializer->m_Metadata.Resize(
             (*m_CurrentStepMetaData->WriterMetadata)->DataSize,
