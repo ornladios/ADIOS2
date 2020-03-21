@@ -114,22 +114,14 @@ msg = '';
 if ischar(varargin{1})
     args.File = varargin{1};
     %
-    % Verify existence of filename
+    % Verify existence of filename/dirname
     %
-    fid = fopen(args.File);    
-    if (fid == -1)
-        % Look for filename with extensions.
-        fid = fopen([args.File '.bp']);
-    end
-
-    if (fid == -1)
+    a = exist(args.File);
+    % a is 2 for existing file, 7 for existing directory
+    if (a ~= 2 && a ~= 7)
         error('MATLAB:adios:open', ...
-              'Couldn''t open file (%s).', ...
-              args.File)
-    else
-        % Get full filename 
-        args.File = fopen(fid);
-        fclose(fid);
+              'Couldn''t open file/dir (%d %s).', ...
+              a, args.File)
     end
     varargin = {varargin{2:end}};
 else
