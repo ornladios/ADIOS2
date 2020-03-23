@@ -16,9 +16,6 @@ target_include_directories(adios2
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
-if(NOT MSVC)
-  target_compile_features(adios2 PRIVATE ${ADIOS2_C99_FEATURES})
-endif()
 
 if(ADIOS2_HAVE_MPI)
   target_sources(adios2 PRIVATE

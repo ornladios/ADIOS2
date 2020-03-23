@@ -16,7 +16,7 @@
 
 #include <adios2.h>
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi4py/mpi4py.h>
 #endif
 
@@ -28,7 +28,7 @@
 #include "py11Operator.h"
 #include "py11Variable.h"
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 
 namespace pybind11
 {
@@ -78,7 +78,7 @@ public:
 
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 
 adios2::py11::File Open(const std::string &name, const std::string mode,
                         adios2::py11::MPI4PY_Comm comm,
@@ -152,7 +152,7 @@ PYBIND11_MODULE(adios2, m)
         .value("OtherError", adios2::StepStatus::OtherError)
         .export_values();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     m.def("open", &Open, pybind11::arg("name"), pybind11::arg("mode"),
           pybind11::arg("comm"), pybind11::arg("engine_type") = "BPFile", R"md(
           Simple API MPI open, based on python IO. 
@@ -229,7 +229,7 @@ PYBIND11_MODULE(adios2, m)
                  const bool opBool = adios ? true : false;
                  return opBool;
              })
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         .def(pybind11::init<const adios2::py11::MPI4PY_Comm, const bool>(),
              "adios2 module starting point, constructs an ADIOS class object",
              pybind11::arg("comm"), pybind11::arg("debugMode") = true)
@@ -349,7 +349,7 @@ PYBIND11_MODULE(adios2, m)
         .def("Open", (adios2::py11::Engine(adios2::py11::IO::*)(
                          const std::string &, const int)) &
                          adios2::py11::IO::Open)
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         .def("Open", (adios2::py11::Engine(adios2::py11::IO::*)(
                          const std::string &, const int,
                          adios2::py11::MPI4PY_Comm comm)) &

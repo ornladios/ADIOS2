@@ -9,8 +9,8 @@
 #define ADIOS2_HELPER_ADIOSCOMMMPI_H_
 
 #include "adios2/common/ADIOSConfig.h"
-#ifndef ADIOS2_HAVE_MPI
-#error "Do not include adiosCommMPI.h without ADIOS2_HAVE_MPI."
+#if !ADIOS2_USE_MPI
+#error "Do not include adiosCommMPI.h without ADIOS2_USE_MPI."
 #endif
 
 #include "adiosComm.h"

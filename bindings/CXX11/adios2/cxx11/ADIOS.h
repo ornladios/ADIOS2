@@ -18,7 +18,7 @@
 #include "IO.h"
 #include "Operator.h"
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -40,7 +40,7 @@ class ADIOS
 {
 
 public:
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     /**
      * Starting point for MPI apps. Creates an ADIOS object.
      * MPI Collective Operation as it call MPI_Comm_dup

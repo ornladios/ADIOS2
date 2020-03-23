@@ -71,9 +71,6 @@ target_include_directories(sst PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
 target_link_libraries(sst PRIVATE adios2::thirdparty::EVPath)
-if(ADIOS2_HAVE_MPI)
-  target_link_libraries(sst PRIVATE MPI::MPI_C)
-endif()
 
 if(NOT BUILD_SHARED_LIBS)
   # When sst is included in a static library we must export the

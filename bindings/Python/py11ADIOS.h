@@ -28,7 +28,7 @@ class ADIOS
 {
 
 public:
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     ADIOS(const std::string &configFile, MPI4PY_Comm comm,
           const bool debugMode = true);
     ADIOS(MPI4PY_Comm comm, const bool debugMode = true);

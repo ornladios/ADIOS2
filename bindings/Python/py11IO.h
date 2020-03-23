@@ -87,7 +87,7 @@ public:
 
     Engine Open(const std::string &name, const int openMode);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     Engine Open(const std::string &name, const int openMode, MPI4PY_Comm comm);
 #endif
 

@@ -25,8 +25,16 @@
  *     Id: @CMAKE_Fortran_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@
  */
 
-/* Everything past this line is programatically generated */
+/* Everything between here and the note below is programatically generated */
 
 @ADIOS2_CONFIG_DEFINES@
+
+/* Everything between here and the note above is programatically generated */
+
+#ifdef ADIOS2_HAVE_MPI
+#  define ADIOS2_USE_MPI 1
+#else
+#  define ADIOS2_USE_MPI 0
+#endif
 
 #endif /* ADIOSCONFIG_H_ */
