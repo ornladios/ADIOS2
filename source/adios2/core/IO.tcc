@@ -113,12 +113,38 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
 
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
-    if (m_DebugMode)
-    {
-        CheckAttributeCommon(globalName);
-    }
+    // if (m_DebugMode)
+    // {
+    //     CheckAttributeCommon(globalName);
+    // }
 
     auto &attributeMap = GetAttributeMap<T>();
+    auto itExistingAttribute = m_Attributes.find(globalName);
+    if (!IsEnd(itExistingAttribute, m_Attributes))
+    {
+        // std::cout << "attribute " << globalName << " has already been
+        // defined!"
+        //           << std::endl;
+        // std::cout << "index of defined attribute in attributeMap is "
+        //           << itExistingAttribute->second.second << std::endl;
+        // std::cout << "value of existing attribute is "
+        //           << attributeMap.at(itExistingAttribute->second.second)
+        //                  .GetInfo()["Value"]
+        //           << std::endl;
+        if (helper::ValueToString(value) ==
+            attributeMap.at(itExistingAttribute->second.second)
+                .GetInfo()["Value"])
+        {
+            return attributeMap.at(itExistingAttribute->second.second);
+        }
+        else
+        {
+            throw std::invalid_argument(
+                "ERROR: attribute " + globalName +
+                " has been defined and its value cannot be changed, in call to "
+                "DefineAttribute\n");
+        }
+    }
     const unsigned int newIndex =
         attributeMap.empty() ? 0 : attributeMap.rbegin()->first + 1;
 
@@ -148,12 +174,42 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
-    if (m_DebugMode)
-    {
-        CheckAttributeCommon(globalName);
-    }
+    // if (m_DebugMode)
+    // {
+    //     CheckAttributeCommon(globalName);
+    // }
 
     auto &attributeMap = GetAttributeMap<T>();
+    auto itExistingAttribute = m_Attributes.find(globalName);
+    if (!IsEnd(itExistingAttribute, m_Attributes))
+    {
+        // std::cout << "attribute " << globalName << " has already been
+        // defined!"
+        //           << std::endl;
+        // std::cout << "index of defined attribute in attributeMap is "
+        //           << itExistingAttribute->second.second << std::endl;
+        // std::cout << "value of existing attribute is "
+        //           << attributeMap.at(itExistingAttribute->second.second)
+        //                  .GetInfo()["Value"]
+        //           << std::endl;
+        std::string arrayValues(
+            "{ " +
+            helper::VectorToCSV(std::vector<T>(array, array + elements)) +
+            " }");
+        // std::cout << "new value is " << arrayValues << std::endl;
+        if (attributeMap.at(itExistingAttribute->second.second)
+                .GetInfo()["Value"] == arrayValues)
+        {
+            return attributeMap.at(itExistingAttribute->second.second);
+        }
+        else
+        {
+            throw std::invalid_argument(
+                "ERROR: attribute " + globalName +
+                " has been defined and its value cannot be changed, in call to "
+                "DefineAttribute\n");
+        }
+    }
     const unsigned int newIndex =
         attributeMap.empty() ? 0 : attributeMap.rbegin()->first + 1;
 

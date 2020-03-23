@@ -36,6 +36,29 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
     const std::string fname("ADIOS2BPWriteAppendRead2D2x4Test.bp");
 
+    const std::string zero = std::to_string(0);
+    const std::string s1_Single = std::string("s1_Single_") + zero;
+    const std::string s1_Array = std::string("s1_Array_") + zero;
+    const std::string i8_Single = std::string("i8_Single_") + zero;
+    const std::string i16_Single = std::string("i16_Single_") + zero;
+    const std::string i32_Single = std::string("i32_Single_") + zero;
+    const std::string i32_Array = std::string("i32_Array_") + zero;
+    const std::string i64_Single = std::string("i64_Single_") + zero;
+    const std::string u8_Single = std::string("u8_Single_") + zero;
+    const std::string u16_Single = std::string("u16_Single_") + zero;
+    const std::string u32_Single = std::string("u32_Single_") + zero;
+    const std::string u32_Array = std::string("u32_Array_") + zero;
+    const std::string u64_Single = std::string("u64_Single_") + zero;
+    const std::string r32_Single = std::string("r32_Single_") + zero;
+    const std::string r32_Array = std::string("r32_Array_") + zero;
+    const std::string r64_Single = std::string("r64_Single_") + zero;
+    const std::string r128_Single = std::string("r128_Single_") + zero;
+    const std::string cr32_Single = std::string("cr32_Single_") + zero;
+    const std::string cr32_Array = std::string("cr32_Array_") + zero;
+    const std::string cr64_Single = std::string("cr64_Single_") + zero;
+    SmallTestData attributeTestData =
+        generateNewSmallTestData(m_TestData, 0, 0, 0);
+
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
     const std::size_t Nx = 4;
@@ -87,6 +110,54 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+        }
+
+        {
+
+            // Declare Single Value Attributes
+            io.DefineAttribute<std::string>(s1_Single, attributeTestData.S1);
+            io.DefineAttribute<std::string>(s1_Array,
+                                            attributeTestData.S1array.data(),
+                                            attributeTestData.S1array.size());
+
+            io.DefineAttribute<int8_t>(i8_Single, attributeTestData.I8.front());
+            io.DefineAttribute<int16_t>(i16_Single,
+                                        attributeTestData.I16.front());
+            io.DefineAttribute<int32_t>(i32_Single,
+                                        attributeTestData.I32.front());
+            io.DefineAttribute<int32_t>(i32_Array, attributeTestData.I32.data(),
+                                        attributeTestData.I32.size());
+            io.DefineAttribute<int64_t>(i64_Single,
+                                        attributeTestData.I64.front());
+
+            io.DefineAttribute<uint8_t>(u8_Single,
+                                        attributeTestData.U8.front());
+            io.DefineAttribute<uint16_t>(u16_Single,
+                                         attributeTestData.U16.front());
+            io.DefineAttribute<uint32_t>(u32_Single,
+                                         attributeTestData.U32.front());
+            io.DefineAttribute<uint32_t>(u32_Array,
+                                         attributeTestData.U32.data(),
+                                         attributeTestData.U32.size());
+            io.DefineAttribute<uint64_t>(u64_Single,
+                                         attributeTestData.U64.front());
+
+            io.DefineAttribute<float>(r32_Single,
+                                      attributeTestData.R32.front());
+            io.DefineAttribute<float>(r32_Array, attributeTestData.R32.data(),
+                                      attributeTestData.R32.size());
+            io.DefineAttribute<double>(r64_Single,
+                                       attributeTestData.R64.front());
+            io.DefineAttribute<long double>(r128_Single,
+                                            attributeTestData.R128.front());
+
+            io.DefineAttribute<std::complex<float>>(
+                cr32_Single, attributeTestData.CR32.front());
+            io.DefineAttribute<std::complex<float>>(
+                cr32_Array, attributeTestData.CR32.data(),
+                attributeTestData.CR32.size());
+            io.DefineAttribute<std::complex<double>>(
+                cr64_Single, attributeTestData.CR64.front());
         }
 
         if (!engineName.empty())
@@ -192,6 +263,54 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
+        {
+
+            // Declare Single Value Attributes
+            io.DefineAttribute<std::string>(s1_Single, attributeTestData.S1);
+            io.DefineAttribute<std::string>(s1_Array,
+                                            attributeTestData.S1array.data(),
+                                            attributeTestData.S1array.size());
+
+            io.DefineAttribute<int8_t>(i8_Single, attributeTestData.I8.front());
+            io.DefineAttribute<int16_t>(i16_Single,
+                                        attributeTestData.I16.front());
+            io.DefineAttribute<int32_t>(i32_Single,
+                                        attributeTestData.I32.front());
+            io.DefineAttribute<int32_t>(i32_Array, attributeTestData.I32.data(),
+                                        attributeTestData.I32.size());
+            io.DefineAttribute<int64_t>(i64_Single,
+                                        attributeTestData.I64.front());
+
+            io.DefineAttribute<uint8_t>(u8_Single,
+                                        attributeTestData.U8.front());
+            io.DefineAttribute<uint16_t>(u16_Single,
+                                         attributeTestData.U16.front());
+            io.DefineAttribute<uint32_t>(u32_Single,
+                                         attributeTestData.U32.front());
+            io.DefineAttribute<uint32_t>(u32_Array,
+                                         attributeTestData.U32.data(),
+                                         attributeTestData.U32.size());
+            io.DefineAttribute<uint64_t>(u64_Single,
+                                         attributeTestData.U64.front());
+
+            io.DefineAttribute<float>(r32_Single,
+                                      attributeTestData.R32.front());
+            io.DefineAttribute<float>(r32_Array, attributeTestData.R32.data(),
+                                      attributeTestData.R32.size());
+            io.DefineAttribute<double>(r64_Single,
+                                       attributeTestData.R64.front());
+            io.DefineAttribute<long double>(r128_Single,
+                                            attributeTestData.R128.front());
+
+            io.DefineAttribute<std::complex<float>>(
+                cr32_Single, attributeTestData.CR32.front());
+            io.DefineAttribute<std::complex<float>>(
+                cr32_Array, attributeTestData.CR32.data(),
+                attributeTestData.CR32.size());
+            io.DefineAttribute<std::complex<double>>(
+                cr64_Single, attributeTestData.CR64.front());
+        }
+
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
@@ -279,6 +398,147 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
         }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        auto attr_s1 = io.InquireAttribute<std::string>(s1_Single);
+        auto attr_s1a = io.InquireAttribute<std::string>(s1_Array);
+        auto attr_i8 = io.InquireAttribute<int8_t>(i8_Single);
+        auto attr_i16 = io.InquireAttribute<int16_t>(i16_Single);
+        auto attr_i32 = io.InquireAttribute<int32_t>(i32_Single);
+        auto attr_i32a = io.InquireAttribute<int32_t>(i32_Array);
+        auto attr_i64 = io.InquireAttribute<int64_t>(i64_Single);
+
+        auto attr_u8 = io.InquireAttribute<uint8_t>(u8_Single);
+        auto attr_u16 = io.InquireAttribute<uint16_t>(u16_Single);
+        auto attr_u32 = io.InquireAttribute<uint32_t>(u32_Single);
+        auto attr_u32a = io.InquireAttribute<uint32_t>(u32_Array);
+        auto attr_u64 = io.InquireAttribute<uint64_t>(u64_Single);
+
+        auto attr_r32 = io.InquireAttribute<float>(r32_Single);
+        auto attr_r32a = io.InquireAttribute<float>(r32_Array);
+        auto attr_r64 = io.InquireAttribute<double>(r64_Single);
+        auto attr_r128 = io.InquireAttribute<long double>(r128_Single);
+
+        auto attr_cr32 = io.InquireAttribute<std::complex<float>>(cr32_Single);
+        auto attr_cr32a = io.InquireAttribute<std::complex<float>>(cr32_Array);
+        auto attr_cr64 = io.InquireAttribute<std::complex<double>>(cr64_Single);
+
+        EXPECT_TRUE(attr_s1);
+        ASSERT_EQ(attr_s1.Name(), s1_Single);
+        ASSERT_EQ(attr_s1.Data().size() == 1, true);
+        ASSERT_EQ(attr_s1.Type(), adios2::GetType<std::string>());
+        ASSERT_EQ(attr_s1.Data().front(), attributeTestData.S1);
+
+        EXPECT_TRUE(attr_s1a);
+        ASSERT_EQ(attr_s1a.Name(), s1_Array);
+        ASSERT_EQ(attr_s1a.Data().size() == 1, true);
+        ASSERT_EQ(attr_s1a.Type(), adios2::GetType<std::string>());
+        ASSERT_EQ(attr_s1a.Data()[0], attributeTestData.S1array[0]);
+
+        EXPECT_TRUE(attr_i8);
+        ASSERT_EQ(attr_i8.Name(), i8_Single);
+        ASSERT_EQ(attr_i8.Data().size() == 1, true);
+        ASSERT_EQ(attr_i8.Type(), adios2::GetType<int8_t>());
+        ASSERT_EQ(attr_i8.Data().front(), attributeTestData.I8.front());
+
+        EXPECT_TRUE(attr_i16);
+        ASSERT_EQ(attr_i16.Name(), i16_Single);
+        ASSERT_EQ(attr_i16.Data().size() == 1, true);
+        ASSERT_EQ(attr_i16.Type(), adios2::GetType<int16_t>());
+        ASSERT_EQ(attr_i16.Data().front(), attributeTestData.I16.front());
+
+        EXPECT_TRUE(attr_i32);
+        ASSERT_EQ(attr_i32.Name(), i32_Single);
+        ASSERT_EQ(attr_i32.Data().size() == 1, true);
+        ASSERT_EQ(attr_i32.Type(), adios2::GetType<int32_t>());
+        ASSERT_EQ(attr_i32.Data().front(), attributeTestData.I32.front());
+
+        EXPECT_TRUE(attr_i32a);
+        ASSERT_EQ(attr_i32a.Name(), i32_Array);
+        ASSERT_EQ(attr_i32a.Data().size() == attributeTestData.I32.size(),
+                  true);
+        ASSERT_EQ(attr_i32a.Type(), adios2::GetType<int32_t>());
+        ASSERT_EQ(attr_i32a.Data()[0], attributeTestData.I32[0]);
+
+        EXPECT_TRUE(attr_i64);
+        ASSERT_EQ(attr_i64.Name(), i64_Single);
+        ASSERT_EQ(attr_i64.Data().size() == 1, true);
+        ASSERT_EQ(attr_i64.Type(), adios2::GetType<int64_t>());
+        ASSERT_EQ(attr_i64.Data().front(), attributeTestData.I64.front());
+
+        EXPECT_TRUE(attr_u8);
+        ASSERT_EQ(attr_u8.Name(), u8_Single);
+        ASSERT_EQ(attr_u8.Data().size() == 1, true);
+        ASSERT_EQ(attr_u8.Type(), adios2::GetType<uint8_t>());
+        ASSERT_EQ(attr_u8.Data().front(), attributeTestData.U8.front());
+
+        EXPECT_TRUE(attr_u16);
+        ASSERT_EQ(attr_u16.Name(), u16_Single);
+        ASSERT_EQ(attr_u16.Data().size() == 1, true);
+        ASSERT_EQ(attr_u16.Type(), adios2::GetType<uint16_t>());
+        ASSERT_EQ(attr_u16.Data().front(), attributeTestData.U16.front());
+
+        EXPECT_TRUE(attr_u32);
+        ASSERT_EQ(attr_u32.Name(), u32_Single);
+        ASSERT_EQ(attr_u32.Data().size() == 1, true);
+        ASSERT_EQ(attr_u32.Type(), adios2::GetType<uint32_t>());
+        ASSERT_EQ(attr_u32.Data().front(), attributeTestData.U32.front());
+
+        EXPECT_TRUE(attr_u32a);
+        ASSERT_EQ(attr_u32a.Name(), u32_Array);
+        ASSERT_EQ(attr_u32a.Data().size() == attributeTestData.U32.size(),
+                  true);
+        ASSERT_EQ(attr_u32a.Type(), adios2::GetType<uint32_t>());
+        ASSERT_EQ(attr_u32a.Data()[0], attributeTestData.U32[0]);
+
+        EXPECT_TRUE(attr_u64);
+        ASSERT_EQ(attr_u64.Name(), u64_Single);
+        ASSERT_EQ(attr_u64.Data().size() == 1, true);
+        ASSERT_EQ(attr_u64.Type(), adios2::GetType<uint64_t>());
+        ASSERT_EQ(attr_u64.Data().front(), attributeTestData.U64.front());
+
+        EXPECT_TRUE(attr_r32);
+        ASSERT_EQ(attr_r32.Name(), r32_Single);
+        ASSERT_EQ(attr_r32.Data().size() == 1, true);
+        ASSERT_EQ(attr_r32.Type(), adios2::GetType<float>());
+        ASSERT_EQ(attr_r32.Data().front(), attributeTestData.R32.front());
+
+        EXPECT_TRUE(attr_r32a);
+        ASSERT_EQ(attr_r32a.Name(), r32_Array);
+        ASSERT_EQ(attr_r32a.Data().size() == attributeTestData.R32.size(),
+                  true);
+        ASSERT_EQ(attr_r32a.Type(), adios2::GetType<float>());
+        ASSERT_EQ(attr_r32a.Data()[0], attributeTestData.R32[0]);
+
+        EXPECT_TRUE(attr_r64);
+        ASSERT_EQ(attr_r64.Name(), r64_Single);
+        ASSERT_EQ(attr_r64.Data().size() == 1, true);
+        ASSERT_EQ(attr_r64.Type(), adios2::GetType<double>());
+        ASSERT_EQ(attr_r64.Data().front(), attributeTestData.R64.front());
+
+        EXPECT_TRUE(attr_r128);
+        ASSERT_EQ(attr_r128.Name(), r128_Single);
+        ASSERT_EQ(attr_r128.Data().size() == 1, true);
+        ASSERT_EQ(attr_r128.Type(), adios2::GetType<long double>());
+        ASSERT_EQ(attr_r128.Data().front(), attributeTestData.R128.front());
+
+        EXPECT_TRUE(attr_cr32);
+        ASSERT_EQ(attr_cr32.Name(), cr32_Single);
+        ASSERT_EQ(attr_cr32.Data().size() == 1, true);
+        ASSERT_EQ(attr_cr32.Type(), adios2::GetType<std::complex<float>>());
+        ASSERT_EQ(attr_cr32.Data().front(), attributeTestData.CR32.front());
+
+        EXPECT_TRUE(attr_cr32a);
+        ASSERT_EQ(attr_cr32a.Name(), cr32_Array);
+        ASSERT_EQ(attr_cr32a.Data().size() == attributeTestData.CR32.size(),
+                  true);
+        ASSERT_EQ(attr_cr32a.Type(), adios2::GetType<std::complex<float>>());
+        ASSERT_EQ(attr_cr32a.Data()[0], attributeTestData.CR32[0]);
+
+        EXPECT_TRUE(attr_cr64);
+        ASSERT_EQ(attr_cr64.Name(), cr64_Single);
+        ASSERT_EQ(attr_cr64.Data().size() == 1, true);
+        ASSERT_EQ(attr_cr64.Type(), adios2::GetType<std::complex<double>>());
+        ASSERT_EQ(attr_cr64.Data().front(), attributeTestData.CR64.front());
 
         EXPECT_EQ(bpReader.Steps(), 2 * NSteps);
         auto var_iString = io.InquireVariable<std::string>("iString");
