@@ -113,7 +113,7 @@ void DataManWriter::EndStep()
         m_FastSerializer.PutAttributes(m_IO);
     }
 
-    m_FastSerializer.AttachAttributes();
+    m_FastSerializer.AttachAttributesToLocalPack();
     const auto buf = m_FastSerializer.GetLocalPack();
     m_SerializerBufferSize = buf->size();
     m_DataPublisher.PushBufferQueue(buf);

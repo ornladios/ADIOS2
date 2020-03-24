@@ -89,8 +89,8 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     for (auto i : aggregatorIndices)
     {
         auto serializer = m_Serializers[i];
-        serializer->PutVar(variable, m_Name, CurrentStep(), m_MpiRank, "",
-                           Params());
+        serializer->PutData(variable, m_Name, CurrentStep(), m_MpiRank, "",
+                            Params());
         if (serializer->LocalBufferSize() > m_SerializerBufferSize / 2)
         {
             if (m_MpiSize > 1)

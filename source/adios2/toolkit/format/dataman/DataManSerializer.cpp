@@ -249,11 +249,6 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t stepRequested,
         }
     }
 
-    if (stepProvided > -1 and appID > -1)
-    {
-        ProtectStep(stepProvided, appID);
-    }
-
     return ret;
 }
 
@@ -274,7 +269,7 @@ void DataManSerializer::PutAggregatedMetadata(VecPtr input,
     if (input->size() > 0)
     {
         nlohmann::json metaJ = DeserializeJson(input->data(), input->size());
-        JsonToDataManVarMap(metaJ, nullptr);
+        JsonToVarMap(metaJ, nullptr);
 
         if (m_Verbosity >= 100)
         {
@@ -403,14 +398,14 @@ void DataManSerializer::GetAttributes(core::IO &io)
     }
 }
 
-void DataManSerializer::AttachAttributes()
+void DataManSerializer::AttachAttributesToLocalPack()
 {
     TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l1(m_StaticDataJsonMutex);
     m_MetadataJson["S"] = m_StaticDataJson["S"];
 }
 
-void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
+void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
 {
     TAU_SCOPED_TIMER_FUNC();
 
@@ -463,7 +458,7 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
                 catch (std::exception &e)
                 {
                     throw(std::runtime_error(
-                        "DataManSerializer::JsonToDataManVarMap missing "
+                        "DataManSerializer::JsonToVarMap missing "
                         "compulsory properties in JSON metadata"));
                 }
 
@@ -548,9 +543,8 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
     }
     if (m_Verbosity >= 5)
     {
-        std::cout
-            << "DataManSerializer::JsonToDataManVarMap Total buffered steps = "
-            << m_DataManVarMap.size() << ": ";
+        std::cout << "DataManSerializer::JsonToVarMap Total buffered steps = "
+                  << m_DataManVarMap.size() << ": ";
         for (const auto &i : m_DataManVarMap)
         {
             std::cout << i.first << ", ";
@@ -570,7 +564,7 @@ int DataManSerializer::PutPack(const VecPtr data)
         (reinterpret_cast<const uint64_t *>(data->data()))[0];
     uint64_t metaSize = (reinterpret_cast<const uint64_t *>(data->data()))[1];
     nlohmann::json j = DeserializeJson(data->data() + metaPosition, metaSize);
-    JsonToDataManVarMap(j, data);
+    JsonToVarMap(j, data);
     return 0;
 }
 
@@ -587,17 +581,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
         {
             if (it->first <= step)
             {
-                if (not IsStepProtected(it->first))
-                {
-                    its.push_back(it);
-                }
-                else
-                {
-                    Log(5,
-                        "DataManSerializer::Erase() trying to erase step " +
-                            std::to_string(it->first) + ", but it is protected",
-                        true, true);
-                }
+                its.push_back(it);
             }
         }
         for (auto it : its)
@@ -616,10 +600,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
             {
                 if (stoull(it.key()) < step)
                 {
-                    if (not IsStepProtected(stoull(it.key())))
-                    {
-                        jits.push_back(it);
-                    }
+                    jits.push_back(it);
                 }
             }
             for (auto it : jits)
@@ -630,25 +611,13 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     }
     else
     {
-        if (not IsStepProtected(step))
+        m_DataManVarMap.erase(step);
+        if (m_AggregatedMetadataJson != nullptr)
         {
-            m_DataManVarMap.erase(step);
-            if (m_AggregatedMetadataJson != nullptr)
-            {
-                m_AggregatedMetadataJson.erase(std::to_string(step));
-            }
-            Log(5,
-                "DataManSerializer::Erase() erased step " +
-                    std::to_string(step),
-                true, true);
+            m_AggregatedMetadataJson.erase(std::to_string(step));
         }
-        else
-        {
-            Log(5,
-                "DataManSerializer::Erase() trying to erase step " +
-                    std::to_string(step) + ", but it is protected",
-                true, true);
-        }
+        Log(5, "DataManSerializer::Erase() erased step " + std::to_string(step),
+            true, true);
     }
 }
 
@@ -858,12 +827,12 @@ VecPtr DataManSerializer::GenerateReply(
         tmpBuffer.reserve(std::accumulate(ovlpCount.begin(), ovlpCount.end(),  \
                                           sizeof(T),                           \
                                           std::multiplies<size_t>()));         \
-        GetVar(reinterpret_cast<T *>(tmpBuffer.data()), variable, ovlpStart,   \
-               ovlpCount, step);                                               \
-        PutVar(reinterpret_cast<T *>(tmpBuffer.data()), variable, var.shape,   \
-               ovlpStart, ovlpCount, ovlpStart, ovlpCount, var.doid, step,     \
-               var.rank, var.address, compressionParamsVar, replyLocalBuffer,  \
-               replyMetaJ);                                                    \
+        GetData(reinterpret_cast<T *>(tmpBuffer.data()), variable, ovlpStart,  \
+                ovlpCount, step);                                              \
+        PutData(reinterpret_cast<T *>(tmpBuffer.data()), variable, var.shape,  \
+                ovlpStart, ovlpCount, ovlpStart, ovlpCount, var.doid, step,    \
+                var.rank, var.address, compressionParamsVar, replyLocalBuffer, \
+                replyMetaJ);                                                   \
     }
                     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -1049,49 +1018,6 @@ nlohmann::json DataManSerializer::DeserializeJson(const char *start,
     }
 
     return message;
-}
-
-void DataManSerializer::ProtectStep(const int64_t step, const int64_t id)
-{
-    TAU_SCOPED_TIMER_FUNC();
-    std::lock_guard<std::mutex> l(m_ProtectedStepsMutex);
-    m_ProtectedStepsToAggregate[id].push_back(step);
-    auto &idVec = m_ProtectedStepsToAggregate[id];
-    while (idVec.size() > 3)
-    {
-        idVec.erase(idVec.begin());
-    }
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Rank ";
-        std::cout << m_MpiRank;
-        std::cout << " Step ";
-        std::cout << step;
-        std::cout << " is protected for App ";
-        std::cout << id;
-        std::cout << ". All protected steps to be aggregated are: ";
-        for (auto i : m_ProtectedStepsToAggregate[id])
-        {
-            std::cout << i << ", ";
-        }
-        std::cout << std::endl;
-    }
-}
-
-bool DataManSerializer::IsStepProtected(const int64_t step)
-{
-    TAU_SCOPED_TIMER_FUNC();
-    std::lock_guard<std::mutex> l(m_ProtectedStepsMutex);
-    bool ret = false;
-    for (const auto &stepVecPair : m_ProtectedStepsAggregated)
-    {
-        for (const auto &stepProtected : stepVecPair.second)
-            if (stepProtected == step)
-            {
-                ret = true;
-            }
-    }
-    return ret;
 }
 
 void DataManSerializer::SetDestination(const std::string &dest)

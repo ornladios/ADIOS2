@@ -34,7 +34,7 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
     {
         while (true)
         {
-            int ret = m_FastSerializer.GetVar(
+            int ret = m_FastSerializer.GetData(
                 data, variable.m_Name, variable.m_Start, variable.m_Count,
                 m_CurrentStep, variable.m_MemoryStart, variable.m_MemoryCount);
             if (ret == 0)
@@ -56,8 +56,8 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
         while (true)
         {
             int ret =
-                m_FastSerializer.GetVar(data, variable.m_Name, start, count,
-                                        m_CurrentStep, memstart, memcount);
+                m_FastSerializer.GetData(data, variable.m_Name, start, count,
+                                         m_CurrentStep, memstart, memcount);
             if (ret == 0)
             {
                 break;
