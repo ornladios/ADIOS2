@@ -80,18 +80,15 @@ Dims Variable<T>::DoCount() const
         const std::vector<typename Variable<T>::Info> blocksInfo =
             m_Engine->BlocksInfo<T>(*this, step);
 
-        if (m_DebugMode)
+        if (m_BlockID > blocksInfo.size())
         {
-            if (m_BlockID > blocksInfo.size())
-            {
-                throw std::invalid_argument(
-                    "ERROR: blockID " + std::to_string(m_BlockID) +
-                    " from SetBlockSelection is out of bounds for available "
-                    "blocks size " +
-                    std::to_string(blocksInfo.size()) + " for variable " +
-                    m_Name + " for step " + std::to_string(step) +
-                    ", in call to Variable<T>::Count()");
-            }
+            throw std::invalid_argument(
+                "ERROR: blockID " + std::to_string(m_BlockID) +
+                " from SetBlockSelection is out of bounds for available "
+                "blocks size " +
+                std::to_string(blocksInfo.size()) + " for variable " + m_Name +
+                " for step " + std::to_string(step) +
+                ", in call to Variable<T>::Count()");
         }
 
         return blocksInfo[m_BlockID].Count;
@@ -129,7 +126,7 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
 
         if (m_ShapeID == ShapeID::LocalArray)
         {
-            if (m_DebugMode && m_BlockID >= blocksInfo.size())
+            if (m_BlockID >= blocksInfo.size())
             {
                 throw std::invalid_argument(
                     "ERROR: BlockID " + std::to_string(m_BlockID) +
@@ -182,24 +179,20 @@ template <class T>
 std::vector<std::vector<typename Variable<T>::Info>>
 Variable<T>::DoAllStepsBlocksInfo() const
 {
-    if (m_DebugMode && m_Engine == nullptr)
+    if (m_Engine == nullptr)
     {
-        if (m_Engine == nullptr)
-        {
-            throw std::invalid_argument(
-                "ERROR: from variable " + m_Name +
-                " function is only valid in read mode, in "
-                "call to Variable<T>::AllBlocksInfo\n");
-        }
+        throw std::invalid_argument("ERROR: from variable " + m_Name +
+                                    " function is only valid in read mode, in "
+                                    "call to Variable<T>::AllBlocksInfo\n");
+    }
 
-        if (!m_FirstStreamingStep)
-        {
-            throw std::invalid_argument("ERROR: from variable " + m_Name +
-                                        " function is not valid in "
-                                        "random-access read mode "
-                                        "(BeginStep/EndStep), in "
-                                        "call to Variable<T>::AllBlocksInfo\n");
-        }
+    if (!m_FirstStreamingStep)
+    {
+        throw std::invalid_argument("ERROR: from variable " + m_Name +
+                                    " function is not valid in "
+                                    "random-access read mode "
+                                    "(BeginStep/EndStep), in "
+                                    "call to Variable<T>::AllBlocksInfo\n");
     }
 
     return m_Engine->AllRelativeStepsBlocksInfo(*this);
@@ -209,16 +202,13 @@ template <class T>
 void Variable<T>::CheckRandomAccess(const size_t step,
                                     const std::string hint) const
 {
-    if (m_DebugMode)
+    if (!m_FirstStreamingStep && step != DefaultSizeT)
     {
-        if (!m_FirstStreamingStep && step != DefaultSizeT)
-        {
-            throw std::invalid_argument(
-                "ERROR: can't pass a step input in "
-                "streaming (BeginStep/EndStep)"
-                "mode for variable " +
-                m_Name + ", in call to Variable<T>::" + hint + "\n");
-        }
+        throw std::invalid_argument("ERROR: can't pass a step input in "
+                                    "streaming (BeginStep/EndStep)"
+                                    "mode for variable " +
+                                    m_Name +
+                                    ", in call to Variable<T>::" + hint + "\n");
     }
 }
 

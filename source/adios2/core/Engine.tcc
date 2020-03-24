@@ -58,13 +58,10 @@ void Engine::Put(Variable<T> &variable, const T *data, const Mode launch)
         DoPutSync(variable, data);
         break;
     default:
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid, in call to "
-                "Put\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: invalid launch Mode for variable " + variable.m_Name +
+            ", only Mode::Deferred and Mode::Sync are valid, in call to "
+            "Put\n");
     }
 }
 
@@ -109,13 +106,10 @@ void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
         DoGetSync(variable, data);
         break;
     default:
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid, in call to "
-                "Get\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: invalid launch Mode for variable " + variable.m_Name +
+            ", only Mode::Deferred and Mode::Sync are valid, in call to "
+            "Get\n");
     }
 }
 
@@ -168,13 +162,10 @@ typename Variable<T>::Info *Engine::Get(Variable<T> &variable,
         info = DoGetBlockSync(variable);
         break;
     default:
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid, in call to "
-                "GetBlock\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: invalid launch Mode for variable " + variable.m_Name +
+            ", only Mode::Deferred and Mode::Sync are valid, in call to "
+            "GetBlock\n");
     }
     if (m_DebugMode)
     {
@@ -228,14 +219,11 @@ Variable<T> &Engine::FindVariable(const std::string &variableName,
                                   const std::string hint)
 {
     Variable<T> *variable = m_IO.InquireVariable<T>(variableName);
-    if (m_DebugMode)
+    if (variable == nullptr)
     {
-        if (variable == nullptr)
-        {
-            throw std::invalid_argument("ERROR: variable " + variableName +
-                                        " not found in IO " + m_IO.m_Name +
-                                        ", " + hint + "\n");
-        }
+        throw std::invalid_argument("ERROR: variable " + variableName +
+                                    " not found in IO " + m_IO.m_Name + ", " +
+                                    hint + "\n");
     }
     return *variable;
 }
