@@ -31,6 +31,12 @@ case ${BUILD_MATRIX_ENTRY} in
       exit 1;
     fi
     ;;
+  docker*)
+    echo "Building ${BUILD_MATRIX_ENTRY}"
+    if ! ${SOURCE_DIR}/scripts/travis/run-docker.sh; then
+      exit 1;
+    fi
+    ;;
   *)
     echo "Error: BUILD_MATRIX_ENTRY is undefined or set to an unknown value"
     exit 1;
