@@ -23,6 +23,10 @@ install:
 env:
   matrix:
     - BUILD_MATRIX_ENTRY=format
+    - BUILD_MATRIX_ENTRY=docker-ubuntu1804
+    - BUILD_MATRIX_ENTRY=docker-ubuntu1910
+    - BUILD_MATRIX_ENTRY=docker-centos7
+    - BUILD_MATRIX_ENTRY=docker-centos8
     # - BUILD_MATRIX_ENTRY=analyze
     # - BUILD_MATRIX_ENTRY=check
 script:
