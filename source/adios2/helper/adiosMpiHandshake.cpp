@@ -184,9 +184,9 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     {
         for (size_t stream = 0; stream < maxStreamsPerApp; ++stream)
         {
-            MPI_Irecv(m_Buffer.data() + PlaceInBuffer(stream, rank), m_ItemSize,
-                      MPI_CHAR, rank, rank, MPI_COMM_WORLD,
-                      &m_RecvRequests[rank][stream]);
+            MPI_Irecv(m_Buffer.data() + PlaceInBuffer(stream, rank),
+                      static_cast<int>(m_ItemSize), MPI_CHAR, rank, rank,
+                      MPI_COMM_WORLD, &m_RecvRequests[rank][stream]);
         }
     }
 
@@ -204,8 +204,9 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
 
     for (int rank = 0; rank < m_WorldSize; ++rank)
     {
-        MPI_Isend(buffer.data(), m_ItemSize, MPI_CHAR, rank, m_WorldRank,
-                  MPI_COMM_WORLD, &m_SendRequests[rank][m_StreamID]);
+        MPI_Isend(buffer.data(), static_cast<int>(m_ItemSize), MPI_CHAR, rank,
+                  m_WorldRank, MPI_COMM_WORLD,
+                  &m_SendRequests[rank][m_StreamID]);
     }
 
     // wait and check if required RendezvousAppCount reached

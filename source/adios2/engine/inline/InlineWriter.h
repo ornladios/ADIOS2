@@ -49,8 +49,8 @@ public:
 
 private:
     int m_Verbosity = 0;
-    int m_WriterRank;       // my rank in the writers' comm
-    int m_CurrentStep = -1; // steps start from 0
+    int m_WriterRank; // my rank in the writers' comm
+    size_t m_CurrentStep = static_cast<size_t>(-1); // steps start from 0
 
     void Init() final;
     void InitParameters() final;

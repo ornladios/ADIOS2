@@ -2,8 +2,8 @@
 
 set(ENV{CC}  cl)
 set(ENV{CXX} cl)
-#set(ENV{CFLAGS} /WX)
-#set(ENV{CXXFLAGS} /WX)
+set(ENV{CFLAGS} /WX)
+set(ENV{CXXFLAGS} /WX)
 
 include(ProcessorCount)
 ProcessorCount(NCPUS)

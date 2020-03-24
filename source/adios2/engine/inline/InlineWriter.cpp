@@ -41,7 +41,14 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER("InlineWriter::BeginStep");
-    m_CurrentStep++; // 0 is the first step
+    if (m_CurrentStep == static_cast<size_t>(-1))
+    {
+        m_CurrentStep = 0; // 0 is the first step
+    }
+    else
+    {
+        ++m_CurrentStep;
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank
@@ -164,7 +171,7 @@ void InlineWriter::DoClose(const int transportIndex)
                   << ")\n";
     }
     // end of stream
-    m_CurrentStep = -1;
+    m_CurrentStep = static_cast<size_t>(-1);
 }
 
 } // end namespace engine
