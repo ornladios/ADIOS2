@@ -17,7 +17,6 @@
 #include "adios2/helper/adiosJSONcomplex.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
-#include <mutex>
 #include <unordered_map>
 
 #include <nlohmann/json.hpp>
@@ -210,11 +209,9 @@ private:
              const bool endline);
 
     // local rank single step data and metadata pack buffer, used in writer,
-    // only accessed from writer app API thread, does not need mutex
     VecPtr m_LocalBuffer;
 
     // local rank single step JSON metadata, used in writer, only accessed from
-    // writer app API thread, do not need mutex
     nlohmann::json m_MetadataJson;
 
     // temporary compression buffer, made class member only for saving costs for
@@ -222,32 +219,22 @@ private:
     std::vector<char> m_CompressBuffer;
 
     // global aggregated buffer for metadata and data buffer, used in writer
-    // (Staging engine) and reader (all engines), needs mutex for accessing
-    DmvVecPtrMap m_DataManVarMap;
-    std::mutex m_DataManVarMapMutex;
-
-    std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsToAggregate;
-    std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsAggregated;
-    std::mutex m_ProtectedStepsMutex;
+    // (Staging engine) and reader (all engines)
+    DmvVecPtrMap m_VarMap;
 
     // used to count buffers that have been put into deserializer, asynchronous
     // engines such as dataman use this to tell if a certain step has received
     // all blocks from all writers
     std::unordered_map<size_t, int> m_DeserializedBlocksForStep;
-    std::mutex m_DeserializedBlocksForStepMutex;
 
-    // Aggregated metadata json, used in writer, accessed from API thread and
-    // reply thread, needs mutex
+    // Aggregated metadata json, used in writer
     nlohmann::json m_AggregatedMetadataJson;
-    std::mutex m_AggregatedMetadataJsonMutex;
 
-    // for global variables and attributes, needs mutex
+    // for global variables and attributes
     nlohmann::json m_StaticDataJson;
-    std::mutex m_StaticDataJsonMutex;
     bool m_StaticDataFinished = false;
 
     // for generating deferred requests, only accessed from reader main thread,
-    // does not need mutex
     DeferredRequestMapPtr m_DeferredRequestsToSend;
 
     // string, msgpack, cbor, ubjson

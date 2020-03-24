@@ -60,13 +60,6 @@ void DataManSerializer::AggregateMetadata()
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    m_ProtectedStepsMutex.lock();
-    for (const auto &idMap : m_ProtectedStepsToAggregate)
-    {
-        m_MetadataJson["P"][std::to_string(idMap.first)] = idMap.second;
-    }
-    m_ProtectedStepsMutex.unlock();
-
     auto localJsonPack = SerializeJson(m_MetadataJson);
     unsigned int size = localJsonPack->size();
     unsigned int maxSize;
@@ -94,84 +87,20 @@ void DataManSerializer::AggregateMetadata()
         for (auto stepMapIt = metaj.begin(); stepMapIt != metaj.end();
              ++stepMapIt)
         {
-            if (stepMapIt.key() == "P")
+            for (auto rankMapIt = stepMapIt.value().begin();
+                 rankMapIt != stepMapIt.value().end(); ++rankMapIt)
             {
-                std::lock_guard<std::mutex> l(m_ProtectedStepsMutex);
-                for (auto appidMapIt = stepMapIt.value().begin();
-                     appidMapIt != stepMapIt.value().end(); ++appidMapIt)
-                {
-                    auto stepVecToAdd = appidMapIt->get<std::vector<size_t>>();
-                    auto &stepVecExisted =
-                        m_ProtectedStepsAggregated[stoull(appidMapIt.key())];
-                    for (const auto &protectedStep : stepVecToAdd)
-                    {
-                        auto it =
-                            std::find(stepVecExisted.begin(),
-                                      stepVecExisted.end(), protectedStep);
-                        if (it == stepVecExisted.end())
-                        {
-                            stepVecExisted.push_back(protectedStep);
-                        }
-                    }
-                    std::sort(stepVecExisted.begin(), stepVecExisted.end());
-                }
-                if (m_Verbosity >= 5)
-                {
-                    std::cout << "Rank ";
-                    std::cout << m_MpiRank;
-                    std::cout << " All protected steps aggregated before "
-                                 "reducing are: ";
-                    for (const auto &stepVecPair : m_ProtectedStepsAggregated)
-                    {
-                        for (const auto &step : stepVecPair.second)
-                        {
-                            std::cout << step << ", ";
-                        }
-                    }
-                    std::cout << std::endl;
-                }
-                for (auto &stepVecPair : m_ProtectedStepsAggregated)
-                {
-                    while (stepVecPair.second.size() > 3)
-                    {
-                        stepVecPair.second.erase(stepVecPair.second.begin());
-                    }
-                }
-                if (m_Verbosity >= 5)
-                {
-                    std::cout << "Rank ";
-                    std::cout << m_MpiRank;
-                    std::cout << " All protected steps aggregated after "
-                                 "reducing are: ";
-                    for (const auto &stepVecPair : m_ProtectedStepsAggregated)
-                    {
-                        for (const auto &step : stepVecPair.second)
-                        {
-                            std::cout << step << ", ";
-                        }
-                    }
-                    std::cout << std::endl;
-                }
-            }
-            else
-            {
-                for (auto rankMapIt = stepMapIt.value().begin();
-                     rankMapIt != stepMapIt.value().end(); ++rankMapIt)
-                {
-                    aggMetadata[stepMapIt.key()][rankMapIt.key()] =
-                        rankMapIt.value();
-                }
+                aggMetadata[stepMapIt.key()][rankMapIt.key()] =
+                    rankMapIt.value();
             }
         }
     }
 
-    m_AggregatedMetadataJsonMutex.lock();
     for (auto stepMapIt = aggMetadata.begin(); stepMapIt != aggMetadata.end();
          ++stepMapIt)
     {
         m_AggregatedMetadataJson[stepMapIt.key()] = stepMapIt.value();
     }
-    m_AggregatedMetadataJsonMutex.unlock();
 }
 
 VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t stepRequested,
@@ -180,8 +109,6 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t stepRequested,
 {
 
     TAU_SCOPED_TIMER_FUNC();
-
-    std::lock_guard<std::mutex> l(m_AggregatedMetadataJsonMutex);
 
     VecPtr ret = nullptr;
 
@@ -354,9 +281,7 @@ void DataManSerializer::PutAttributes(core::IO &io)
             staticVar["Y"] = "bool";
             staticVar["V"] = true;
             staticVar["G"] = true;
-            m_StaticDataJsonMutex.lock();
             m_StaticDataJson["S"].emplace_back(std::move(staticVar));
-            m_StaticDataJsonMutex.unlock();
         }
         m_StaticDataFinished = true;
     }
@@ -365,7 +290,6 @@ void DataManSerializer::PutAttributes(core::IO &io)
 void DataManSerializer::GetAttributes(core::IO &io)
 {
     TAU_SCOPED_TIMER_FUNC();
-    std::lock_guard<std::mutex> lStaticDataJson(m_StaticDataJsonMutex);
     for (const auto &staticVar : m_StaticDataJson["S"])
     {
         const std::string type(staticVar["Y"].get<std::string>());
@@ -401,7 +325,6 @@ void DataManSerializer::GetAttributes(core::IO &io)
 void DataManSerializer::AttachAttributesToLocalPack()
 {
     TAU_SCOPED_TIMER_FUNC();
-    std::lock_guard<std::mutex> l1(m_StaticDataJsonMutex);
     m_MetadataJson["S"] = m_StaticDataJson["S"];
 }
 
@@ -409,24 +332,15 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    // the mutex has to be locked here through the entire function. Otherwise
-    // reader engine could get incomplete step metadata. This function only
-    // deals with JSON metadata and data buffer already in allocated shared
-    // pointers, so it should be cheap to lock.
-    std::lock_guard<std::mutex> lDataManVarMapMutex(m_DataManVarMapMutex);
-
     for (auto stepMapIt = metaJ.begin(); stepMapIt != metaJ.end(); ++stepMapIt)
     {
         if (stepMapIt.key() == "S")
         {
-            m_StaticDataJsonMutex.lock();
             m_StaticDataJson["S"] = stepMapIt.value();
-            m_StaticDataJsonMutex.unlock();
             continue;
         }
 
         size_t step = stoull(stepMapIt.key());
-        m_DeserializedBlocksForStepMutex.lock();
         auto blocksForStepIt = m_DeserializedBlocksForStep.find(step);
         if (blocksForStepIt == m_DeserializedBlocksForStep.end())
         {
@@ -436,7 +350,6 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
         {
             ++m_DeserializedBlocksForStep[step];
         }
-        m_DeserializedBlocksForStepMutex.unlock();
 
         for (auto rankMapIt = stepMapIt.value().begin();
              rankMapIt != stepMapIt.value().end(); ++rankMapIt)
@@ -532,20 +445,20 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
                     }
                 }
 
-                if (m_DataManVarMap[var.step] == nullptr)
+                if (m_VarMap[var.step] == nullptr)
                 {
-                    m_DataManVarMap[var.step] =
+                    m_VarMap[var.step] =
                         std::make_shared<std::vector<DataManVar>>();
                 }
-                m_DataManVarMap[var.step]->emplace_back(std::move(var));
+                m_VarMap[var.step]->emplace_back(std::move(var));
             }
         }
     }
     if (m_Verbosity >= 5)
     {
         std::cout << "DataManSerializer::JsonToVarMap Total buffered steps = "
-                  << m_DataManVarMap.size() << ": ";
-        for (const auto &i : m_DataManVarMap)
+                  << m_VarMap.size() << ": ";
+        for (const auto &i : m_VarMap)
         {
             std::cout << i.first << ", ";
         }
@@ -571,13 +484,10 @@ int DataManSerializer::PutPack(const VecPtr data)
 void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
 {
     TAU_SCOPED_TIMER_FUNC();
-    std::lock_guard<std::mutex> l1(m_DataManVarMapMutex);
-    std::lock_guard<std::mutex> l2(m_AggregatedMetadataJsonMutex);
     if (allPreviousSteps)
     {
         std::vector<DmvVecPtrMap::iterator> its;
-        for (auto it = m_DataManVarMap.begin(); it != m_DataManVarMap.end();
-             ++it)
+        for (auto it = m_VarMap.begin(); it != m_VarMap.end(); ++it)
         {
             if (it->first <= step)
             {
@@ -586,7 +496,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
         }
         for (auto it : its)
         {
-            m_DataManVarMap.erase(it);
+            m_VarMap.erase(it);
             Log(5,
                 "DataManSerializer::Erase() erased step " +
                     std::to_string(it->first),
@@ -611,7 +521,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     }
     else
     {
-        m_DataManVarMap.erase(step);
+        m_VarMap.erase(step);
         if (m_AggregatedMetadataJson != nullptr)
         {
             m_AggregatedMetadataJson.erase(std::to_string(step));
@@ -624,16 +534,14 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
 DmvVecPtrMap DataManSerializer::GetFullMetadataMap()
 {
     TAU_SCOPED_TIMER_FUNC();
-    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-    return m_DataManVarMap;
+    return m_VarMap;
 }
 
 DmvVecPtr DataManSerializer::GetStepMetadata(const size_t step)
 {
     TAU_SCOPED_TIMER_FUNC();
-    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-    auto it = m_DataManVarMap.find(step);
-    if (it != m_DataManVarMap.end())
+    auto it = m_VarMap.find(step);
+    if (it != m_VarMap.end())
     {
         return it->second;
     }
@@ -648,9 +556,8 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
     TAU_SCOPED_TIMER_FUNC();
     DmvVecPtr varVec;
 
-    m_DataManVarMapMutex.lock();
-    auto stepVecIt = m_DataManVarMap.find(step);
-    if (stepVecIt == m_DataManVarMap.end())
+    auto stepVecIt = m_VarMap.find(step);
+    if (stepVecIt == m_VarMap.end())
     {
         // aggregated metadata does not have this step
         std::cout << "aggregated metadata does not have Step " << step
@@ -661,7 +568,6 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
     {
         varVec = stepVecIt->second;
     }
-    m_DataManVarMapMutex.unlock();
 
     std::unordered_map<std::string, nlohmann::json> jmap;
 
@@ -765,20 +671,19 @@ VecPtr DataManSerializer::GenerateReply(
         DmvVecPtr varVec;
 
         {
-            std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-            auto itVarVec = m_DataManVarMap.find(step);
-            if (itVarVec == m_DataManVarMap.end())
+            auto itVarVec = m_VarMap.find(step);
+            if (itVarVec == m_VarMap.end())
             {
                 Log(1,
                     "DataManSerializer::GenerateReply() received staging "
-                    "request but DataManVarMap does not have Step " +
+                    "request but VarMap does not have Step " +
                         std::to_string(step),
                     true, true);
                 if (m_Verbosity >= 1)
                 {
                     std::string msg =
                         "DataManSerializer::GenerateReply() current steps are ";
-                    for (auto s : m_DataManVarMap)
+                    for (auto s : m_VarMap)
                     {
                         msg += std::to_string(s.first) + ", ";
                     }
@@ -793,7 +698,7 @@ VecPtr DataManSerializer::GenerateReply(
                 {
                     Log(1,
                         "DataManSerializer::GenerateReply() received "
-                        "staging request but DataManVarMap contains a "
+                        "staging request but VarMap contains a "
                         "nullptr for Step " +
                             std::to_string(step),
                         true, true);
@@ -920,23 +825,6 @@ bool DataManSerializer::CalculateOverlap(const Dims &inStart,
     return true;
 }
 
-/*
-size_t DataManSerializer::MinStep()
-{
-    TAU_SCOPED_TIMER_FUNC();
-    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-    size_t minStep = std::numeric_limits<size_t>::max();
-    for (const auto &i : m_DataManVarMap)
-    {
-        if (minStep > i.first)
-        {
-            minStep = i.first;
-        }
-    }
-    return minStep;
-}
-*/
-
 size_t DataManSerializer::LocalBufferSize() { return m_LocalBuffer->size(); }
 
 VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
@@ -1030,7 +918,6 @@ std::string DataManSerializer::GetDestination() { return m_Destination; }
 bool DataManSerializer::StepHasMinimumBlocks(const size_t step,
                                              const int requireMinimumBlocks)
 {
-    std::lock_guard<std::mutex> l(m_DeserializedBlocksForStepMutex);
     auto it = m_DeserializedBlocksForStep.find(step);
     if (it != m_DeserializedBlocksForStep.end())
     {
@@ -1051,13 +938,12 @@ DmvVecPtr DataManSerializer::GetEarliestLatestStep(
     auto start_time = std::chrono::system_clock::now();
     while (true)
     {
-        std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
 
         bool hasStep = false;
         size_t latestStep = 0;
         size_t earliestStep = std::numeric_limits<size_t>::max();
 
-        for (const auto &i : m_DataManVarMap)
+        for (const auto &i : m_VarMap)
         {
             if (latestStep < i.first)
             {
@@ -1100,7 +986,7 @@ DmvVecPtr DataManSerializer::GetEarliestLatestStep(
 
             if (hasCompleteStep)
             {
-                return m_DataManVarMap[currentStep];
+                return m_VarMap[currentStep];
             }
         }
 

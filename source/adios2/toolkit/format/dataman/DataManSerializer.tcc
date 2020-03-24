@@ -382,9 +382,7 @@ void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute)
         staticVar["G"] = attribute.m_DataArray;
     }
 
-    m_StaticDataJsonMutex.lock();
     m_StaticDataJson["S"].emplace_back(std::move(staticVar));
-    m_StaticDataJsonMutex.unlock();
 }
 
 template <class T>
@@ -398,9 +396,8 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
     DmvVecPtr vec = nullptr;
 
     {
-        std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-        const auto &i = m_DataManVarMap.find(step);
-        if (i == m_DataManVarMap.end())
+        const auto &i = m_VarMap.find(step);
+        if (i == m_VarMap.end())
         {
             return -1; // step not found
         }
