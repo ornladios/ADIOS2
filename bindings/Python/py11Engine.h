@@ -32,13 +32,11 @@ class Engine
     friend class IO;
 
 public:
-
     struct Info
     {
         Dims Start;
         Dims Count;
     };
-
 
     Engine() = default;
 
@@ -75,7 +73,8 @@ public:
     void LockWriterDefinitions() const;
     void LockReaderSelections() const;
 
-    std::vector<std::map<std::string,std::string>> BlocksInfo(std::string &string, const size_t step) const;
+    std::vector<std::map<std::string, std::string>>
+    BlocksInfo(std::string &string, const size_t step) const;
 
 private:
     Engine(core::Engine *engine);

@@ -492,9 +492,7 @@ PYBIND11_MODULE(adios2, m)
         .def("LockReaderSelections",
              &adios2::py11::Engine::LockReaderSelections)
 
-	.def("BlocksInfo",
-	     &adios2::py11::Engine::BlocksInfo); 
-
+        .def("BlocksInfo", &adios2::py11::Engine::BlocksInfo);
 
     pybind11::class_<adios2::py11::Operator>(m, "Operator")
         // Python 2

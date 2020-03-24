@@ -281,39 +281,40 @@ void Engine::LockReaderSelections() const
     m_Engine->LockReaderSelections();
 }
 
-std::vector<std::map<std::string,std::string>> Engine::BlocksInfo(std::string &var_name, const size_t step) const
+std::vector<std::map<std::string, std::string>>
+Engine::BlocksInfo(std::string &var_name, const size_t step) const
 {
-    std::vector<std::map<std::string,std::string>> rv;
+    std::vector<std::map<std::string, std::string>> rv;
 
     // Grab the specified variable object and get its type string
     std::string var_type = m_Engine->GetIO().InquireVariableType(var_name);
 
-    // Use the macro incantation to call the right instantiation of core::BlocksInfo<>()
-    // Note that we are flatting the Dims type items, and returning everything
-    // as a dictionary of strings.
+    // Use the macro incantation to call the right instantiation of
+    // core::BlocksInfo<>() Note that we are flatting the Dims type items, and
+    // returning everything as a dictionary of strings.
     if (false)
     {
     }
 #define GET_BLOCKS_INFO(T)                                                     \
-    else if (var_type == helper::GetType<T>() )                                \
+    else if (var_type == helper::GetType<T>())                                 \
     {                                                                          \
         auto variable = m_Engine->GetIO().InquireVariable<T>(var_name);        \
-	auto infoVec = m_Engine->BlocksInfo<T> (*variable, step);              \
-	for (auto &info : infoVec)                                             \
-	{                                                                      \
-            std::map<std::string,std::string> info_map;                        \
+        auto infoVec = m_Engine->BlocksInfo<T>(*variable, step);               \
+        for (auto &info : infoVec)                                             \
+        {                                                                      \
+            std::map<std::string, std::string> info_map;                       \
             std::stringstream start_ss;                                        \
-            for(size_t i = 0; i < info.Start.size(); ++i)                      \
+            for (size_t i = 0; i < info.Start.size(); ++i)                     \
             {                                                                  \
-                if(i != 0)                                                     \
+                if (i != 0)                                                    \
                     start_ss << ",";                                           \
                 start_ss << info.Start[i];                                     \
             }                                                                  \
             info_map["Start"] = start_ss.str();                                \
             std::stringstream count_ss;                                        \
-            for(size_t i = 0; i < info.Count.size(); ++i)                      \
+            for (size_t i = 0; i < info.Count.size(); ++i)                     \
             {                                                                  \
-                if(i != 0)                                                     \
+                if (i != 0)                                                    \
                     count_ss << ",";                                           \
                 count_ss << info.Count[i];                                     \
             }                                                                  \
@@ -337,7 +338,6 @@ std::vector<std::map<std::string,std::string>> Engine::BlocksInfo(std::string &v
 
     return rv;
 }
-
 
 } // end namespace py11
 } // end namespace adios2

@@ -1,25 +1,25 @@
 #
-# Distributed under the OSI-approved Apache License, Version 2.0.  See
-# accompanying file Copyright.txt for details.
+#Distributed under the OSI - approved Apache License, Version 2.0. See
+#accompanying file Copyright.txt for details.
 #
-# TestBPWriteRead2D.py
+#TestBPWriteRead2D.py
 #
 #
-#  Created on: Mar 3rd, 2019
-#      Author: Kai Germaschewski <kai.germaschewski@unh.edu>
-#              William F Godoy godoywf@ornl.gov
+#Created on : Mar 3rd, 2019
+#Author : Kai Germaschewski < kai.germaschewski @unh.edu>
+#William F Godoy godoywf @ornl.gov
 #
 
 from mpi4py import MPI
 import numpy as np
 import adios2
 
-# MPI
+#MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-# User data
+#User data
 Nx = 10
 Ny = 10
 
@@ -33,8 +33,8 @@ for i in range(0, Nx):
     for j in range(0, Ny):
         temperatures[i, j] = (start[0] + i) * shape[1] + (j + start[1])
 
-# print(temperatures)
-# ADIOS2 read
+#print(temperatures)
+#ADIOS2 read
 adios = adios2.ADIOS(comm)
 ioWrite = adios.DeclareIO("ioWriter")
 
@@ -47,7 +47,7 @@ obpStream.Close()
 
 
 if rank == 0:
-    # ADIOS2 read
+#ADIOS2 read
     ioRead = adios.DeclareIO("ioReader")
     ibpStream = ioRead.Open('HeatMap2D_py.bp', adios2.Mode.Read, MPI.COMM_SELF)
     var_inTemperature = ioRead.InquireVariable("temperature2D")
@@ -57,4 +57,3 @@ if rank == 0:
     assert info[0]['Start'] == '0,0'
     assert info[0]['Count'] == '10,10'
     assert info[0]['WriterID'] == '0'
-
