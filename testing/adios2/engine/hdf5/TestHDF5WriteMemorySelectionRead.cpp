@@ -27,38 +27,14 @@ inline void AssignStep1D(const size_t step, std::vector<T> &vector,
                   [step](T &value) { value = static_cast<T>(step); });
 }
 
-template <>
-void AssignStep1D(const size_t step, std::vector<std::complex<float>> &vector,
+template <typename Float>
+void AssignStep1D(const size_t step, std::vector<std::complex<Float>> &vector,
                   const size_t ghostCells)
 {
     std::for_each(vector.begin() + ghostCells, vector.end() - ghostCells,
-                  [step](std::complex<float> &value) {
-                      value = std::complex<float>(static_cast<float>(step),
-                                                  static_cast<float>(step));
-                  });
-}
-
-template <>
-void AssignStep1D(const size_t step, std::vector<std::complex<double>> &vector,
-                  const size_t ghostCells)
-{
-    std::for_each(vector.begin() + ghostCells, vector.end() - ghostCells,
-                  [step](std::complex<double> &value) {
-                      value = std::complex<double>(static_cast<double>(step),
-                                                   static_cast<double>(step));
-                  });
-}
-
-template <>
-void AssignStep1D(const size_t step,
-                  std::vector<std::complex<long double>> &vector,
-                  const size_t ghostCells)
-{
-    std::for_each(vector.begin() + ghostCells, vector.end() - ghostCells,
-                  [step](std::complex<long double> &value) {
-                      value = std::complex<long double>(
-                          static_cast<long double>(step),
-                          static_cast<long double>(step));
+                  [step](std::complex<Float> &value) {
+                      value = std::complex<Float>(static_cast<Float>(step),
+                                                  static_cast<Float>(step));
                   });
 }
 
@@ -79,8 +55,8 @@ inline void AssignStep2D(const size_t step, std::vector<T> &vector,
     }
 }
 
-template <>
-void AssignStep2D(const size_t step, std::vector<std::complex<float>> &vector,
+template <typename Float>
+void AssignStep2D(const size_t step, std::vector<std::complex<Float>> &vector,
                   const size_t Nx, const size_t Ny, const size_t ghostCellsX,
                   const size_t ghostCellsY)
 {
@@ -91,45 +67,8 @@ void AssignStep2D(const size_t step, std::vector<std::complex<float>> &vector,
         for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
         {
             const size_t index = indexJ + i;
-            vector[index] = std::complex<float>(static_cast<float>(step),
-                                                static_cast<float>(step));
-        }
-    }
-}
-
-template <>
-void AssignStep2D(const size_t step, std::vector<std::complex<double>> &vector,
-                  const size_t Nx, const size_t Ny, const size_t ghostCellsX,
-                  const size_t ghostCellsY)
-{
-    for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
-    {
-        const size_t indexJ = j * (Nx + 2 * ghostCellsX);
-
-        for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
-        {
-            const size_t index = indexJ + i;
-            vector[index] = std::complex<double>(static_cast<double>(step),
-                                                 static_cast<double>(step));
-        }
-    }
-}
-
-template <>
-void AssignStep2D(const size_t step,
-                  std::vector<std::complex<long double>> &vector,
-                  const size_t Nx, const size_t Ny, const size_t ghostCellsX,
-                  const size_t ghostCellsY)
-{
-    for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
-    {
-        const size_t indexJ = j * (Nx + 2 * ghostCellsX);
-
-        for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
-        {
-            const size_t index = indexJ + i;
-            vector[index] = std::complex<long double>(
-                static_cast<long double>(step), static_cast<long double>(step));
+            vector[index] = std::complex<Float>(static_cast<Float>(step),
+                                                static_cast<Float>(step));
         }
     }
 }
@@ -158,8 +97,8 @@ inline void AssignStep3D(const size_t step, std::vector<T> &vector,
     }
 }
 
-template <>
-void AssignStep3D(const size_t step, std::vector<std::complex<float>> &vector,
+template <typename Float>
+void AssignStep3D(const size_t step, std::vector<std::complex<Float>> &vector,
                   const size_t Nx, const size_t Ny, const size_t Nz,
                   const size_t ghostCellsX, const size_t ghostCellsY,
                   const size_t ghostCellsZ)
@@ -176,60 +115,8 @@ void AssignStep3D(const size_t step, std::vector<std::complex<float>> &vector,
             for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
             {
                 const size_t index = indexK + indexJ + i;
-                vector[index] = std::complex<float>(static_cast<float>(step),
-                                                    static_cast<float>(step));
-            }
-        }
-    }
-}
-
-template <>
-void AssignStep3D(const size_t step, std::vector<std::complex<double>> &vector,
-                  const size_t Nx, const size_t Ny, const size_t Nz,
-                  const size_t ghostCellsX, const size_t ghostCellsY,
-                  const size_t ghostCellsZ)
-{
-    for (size_t k = ghostCellsZ; k < Nz + ghostCellsZ; ++k)
-    {
-        const size_t indexK =
-            k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
-
-        for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
-        {
-            const size_t indexJ = j * (Nx + 2 * ghostCellsX);
-
-            for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
-            {
-                const size_t index = indexK + indexJ + i;
-                vector[index] = std::complex<double>(static_cast<double>(step),
-                                                     static_cast<double>(step));
-            }
-        }
-    }
-}
-
-template <>
-void AssignStep3D(const size_t step,
-                  std::vector<std::complex<long double>> &vector,
-                  const size_t Nx, const size_t Ny, const size_t Nz,
-                  const size_t ghostCellsX, const size_t ghostCellsY,
-                  const size_t ghostCellsZ)
-{
-    for (size_t k = ghostCellsZ; k < Nz + ghostCellsZ; ++k)
-    {
-        const size_t indexK =
-            k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
-
-        for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
-        {
-            const size_t indexJ = j * (Nx + 2 * ghostCellsX);
-
-            for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
-            {
-                const size_t index = indexK + indexJ + i;
-                vector[index] =
-                    std::complex<long double>(static_cast<long double>(step),
-                                              static_cast<long double>(step));
+                vector[index] = std::complex<Float>(static_cast<Float>(step),
+                                                    static_cast<Float>(step));
             }
         }
     }
