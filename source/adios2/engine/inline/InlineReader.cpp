@@ -48,7 +48,7 @@ StepStatus InlineReader::BeginStep(const StepMode mode,
     const auto &writer =
         dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
     m_CurrentStep = writer.CurrentStep();
-    if (m_CurrentStep == -1)
+    if (m_CurrentStep == static_cast<size_t>(-1))
     {
         return StepStatus::EndOfStream;
     }

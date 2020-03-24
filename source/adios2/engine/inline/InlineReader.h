@@ -54,7 +54,7 @@ private:
     int m_ReaderRank; // my rank in the readers' comm
 
     // step info should be received from the writer side in BeginStep()
-    int m_CurrentStep = -1;
+    size_t m_CurrentStep = static_cast<size_t>(-1);
 
     std::string m_WriterID;
 
