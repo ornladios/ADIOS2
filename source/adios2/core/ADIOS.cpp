@@ -117,14 +117,11 @@ IO &ADIOS::DeclareIO(const std::string name)
         }
         else
         {
-            if (m_DebugMode)
-            {
-                throw std::invalid_argument(
-                    "ERROR: IO with name " + name +
-                    " previously declared with DeclareIO, name must be "
-                    "unique,"
-                    " in call to DeclareIO\n");
-            }
+            throw std::invalid_argument(
+                "ERROR: IO with name " + name +
+                " previously declared with DeclareIO, name must be "
+                "unique,"
+                " in call to DeclareIO\n");
         }
     }
 
@@ -248,15 +245,12 @@ Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
     }
     else
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: Operator " + name + " of type " + type +
-                " is not supported by ADIOS2, in call to DefineOperator\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: Operator " + name + " of type " + type +
+            " is not supported by ADIOS2, in call to DefineOperator\n");
     }
 
-    if (m_DebugMode && !operatorPtr)
+    if (!operatorPtr)
     {
         throw std::invalid_argument(
             "ERROR: Operator " + name + " of type " + type +
