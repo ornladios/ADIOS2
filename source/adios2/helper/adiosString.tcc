@@ -35,12 +35,9 @@ bool StringTo(const std::string &input, const bool debugMode,
     }
     else
     {
-        if (debugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: invalid input value: " + input +
-                " for on/off or true/false bool conversion " + hint + "\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: invalid input value: " + input +
+            " for on/off or true/false bool conversion " + hint + "\n");
     }
     return result;
 }
@@ -49,120 +46,96 @@ template <>
 int32_t StringTo(const std::string &input, const bool debugMode,
                  const std::string &hint)
 {
-    if (debugMode)
+    try
     {
-        try
-        {
-            const int32_t out = std::stoi(input);
-            return out;
-        }
-        catch (...)
-        {
-            std::throw_with_nested(std::invalid_argument(
-                "ERROR: could not cast " + input + " to int32_t " + hint));
-        }
+        const int32_t out = std::stoi(input);
+        return out;
     }
-    return std::stoi(input);
+    catch (...)
+    {
+        std::throw_with_nested(std::invalid_argument(
+            "ERROR: could not cast " + input + " to int32_t " + hint));
+    }
 }
 
 template <>
 uint32_t StringTo(const std::string &input, const bool debugMode,
                   const std::string &hint)
 {
-    if (debugMode)
+    try
     {
-        try
-        {
-            const uint32_t out = static_cast<uint32_t>(std::stoul(input));
-            return out;
-        }
-        catch (...)
-        {
-            std::throw_with_nested(std::invalid_argument(
-                "ERROR: could not cast " + input + " to uint32_t " + hint));
-        }
+        const uint32_t out = static_cast<uint32_t>(std::stoul(input));
+        return out;
     }
-    return std::stoul(input);
+    catch (...)
+    {
+        std::throw_with_nested(std::invalid_argument(
+            "ERROR: could not cast " + input + " to uint32_t " + hint));
+    }
 }
 
 template <>
 int64_t StringTo(const std::string &input, const bool debugMode,
                  const std::string &hint)
 {
-    if (debugMode)
+    try
     {
-        try
-        {
-            const int64_t out = std::stoll(input);
-            return out;
-        }
-        catch (...)
-        {
-            std::throw_with_nested(std::invalid_argument(
-                "ERROR: could not cast " + input + " to int64_t " + hint));
-        }
+        const int64_t out = std::stoll(input);
+        return out;
     }
-    return std::stoll(input);
+    catch (...)
+    {
+        std::throw_with_nested(std::invalid_argument(
+            "ERROR: could not cast " + input + " to int64_t " + hint));
+    }
 }
 
 template <>
 uint64_t StringTo(const std::string &input, const bool debugMode,
                   const std::string &hint)
 {
-    if (debugMode)
+    try
     {
-        try
-        {
-            const uint64_t out = std::stoull(input);
-            return out;
-        }
-        catch (...)
-        {
-            std::throw_with_nested(std::invalid_argument(
-                "ERROR: could not cast " + input + " to uint64_t " + hint));
-        }
+        const uint64_t out = std::stoull(input);
+        return out;
     }
-    return std::stoull(input);
+    catch (...)
+    {
+        std::throw_with_nested(std::invalid_argument(
+            "ERROR: could not cast " + input + " to uint64_t " + hint));
+    }
 }
 
 template <>
 float StringTo(const std::string &input, const bool debugMode,
                const std::string &hint)
 {
-    if (debugMode)
+    try
     {
-        try
-        {
-            const float out = std::stof(input);
-            return out;
-        }
-        catch (...)
-        {
-            std::throw_with_nested(std::invalid_argument(
-                "ERROR: could not cast " + input + " to float " + hint));
-        }
+        const float out = std::stof(input);
+        return out;
     }
-    return std::stof(input);
+    catch (...)
+    {
+        std::throw_with_nested(std::invalid_argument(
+            "ERROR: could not cast " + input + " to float " + hint));
+    }
 }
 
 template <>
 double StringTo(const std::string &input, const bool debugMode,
                 const std::string &hint)
 {
-    if (debugMode)
+    try
     {
-        try
-        {
-            const double out = std::stod(input);
-            return out;
-        }
-        catch (...)
-        {
-            std::throw_with_nested(std::invalid_argument(
-                "ERROR: could not cast " + input + " to double " + hint));
-        }
+        const double out = std::stod(input);
+        return out;
     }
-    return std::stod(input);
+    catch (...)
+    {
+        std::throw_with_nested(std::invalid_argument(
+            "ERROR: could not cast " + input + " to double " + hint));
+    }
 }
 
 } // end namespace helper

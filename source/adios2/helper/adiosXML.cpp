@@ -37,16 +37,13 @@ pugi::xml_document XMLDocument(const std::string &xmlContents,
     auto parse_result = document.load_buffer_inplace(
         const_cast<char *>(xmlContents.data()), xmlContents.size());
 
-    if (debugMode)
+    if (!parse_result)
     {
-        if (!parse_result)
-        {
-            throw std::invalid_argument(
-                "ERROR: XML: parse error in XML string, description: " +
-                std::string(parse_result.description()) +
-                ", check with any XML editor if format is ill-formed, " + hint +
-                "\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: XML: parse error in XML string, description: " +
+            std::string(parse_result.description()) +
+            ", check with any XML editor if format is ill-formed, " + hint +
+            "\n");
     }
     return document;
 }
@@ -59,26 +56,23 @@ pugi::xml_node XMLNode(const std::string nodeName,
 {
     const pugi::xml_node node = xmlDocument.child(nodeName.c_str());
 
-    if (debugMode)
+    if (isMandatory && !node)
     {
-        if (isMandatory && !node)
-        {
-            throw std::invalid_argument("ERROR: XML: no <" + nodeName +
-                                        "> element found, " + hint);
-        }
+        throw std::invalid_argument("ERROR: XML: no <" + nodeName +
+                                    "> element found, " + hint);
+    }
 
-        if (isUnique)
+    if (isUnique)
+    {
+        const size_t nodes =
+            std::distance(xmlDocument.children(nodeName.c_str()).begin(),
+                          xmlDocument.children(nodeName.c_str()).end());
+        if (nodes > 1)
         {
-            const size_t nodes =
-                std::distance(xmlDocument.children(nodeName.c_str()).begin(),
-                              xmlDocument.children(nodeName.c_str()).end());
-            if (nodes > 1)
-            {
-                throw std::invalid_argument("ERROR: XML only one <" + nodeName +
-                                            "> element can exist inside " +
-                                            std::string(xmlDocument.name()) +
-                                            ", " + hint + "\n");
-            }
+            throw std::invalid_argument("ERROR: XML only one <" + nodeName +
+                                        "> element can exist inside " +
+                                        std::string(xmlDocument.name()) + ", " +
+                                        hint + "\n");
         }
     }
     return node;
@@ -91,27 +85,24 @@ pugi::xml_node XMLNode(const std::string nodeName,
 {
     const pugi::xml_node node = upperNode.child(nodeName.c_str());
 
-    if (debugMode)
+    if (isMandatory && !node)
     {
-        if (isMandatory && !node)
-        {
-            throw std::invalid_argument(
-                "ERROR: XML: no <" + nodeName + "> element found, inside <" +
-                std::string(upperNode.name()) + "> element " + hint);
-        }
+        throw std::invalid_argument(
+            "ERROR: XML: no <" + nodeName + "> element found, inside <" +
+            std::string(upperNode.name()) + "> element " + hint);
+    }
 
-        if (isUnique)
+    if (isUnique)
+    {
+        const size_t nodes =
+            std::distance(upperNode.children(nodeName.c_str()).begin(),
+                          upperNode.children(nodeName.c_str()).end());
+        if (nodes > 1)
         {
-            const size_t nodes =
-                std::distance(upperNode.children(nodeName.c_str()).begin(),
-                              upperNode.children(nodeName.c_str()).end());
-            if (nodes > 1)
-            {
-                throw std::invalid_argument("ERROR: XML only one <" + nodeName +
-                                            "> element can exist inside <" +
-                                            std::string(upperNode.name()) +
-                                            "> element, " + hint + "\n");
-            }
+            throw std::invalid_argument("ERROR: XML only one <" + nodeName +
+                                        "> element can exist inside <" +
+                                        std::string(upperNode.name()) +
+                                        "> element, " + hint + "\n");
         }
     }
     return node;
@@ -124,16 +115,13 @@ pugi::xml_attribute XMLAttribute(const std::string attributeName,
 {
     const pugi::xml_attribute attribute = node.attribute(attributeName.c_str());
 
-    if (debugMode)
+    if (isMandatory && !attribute)
     {
-        if (isMandatory && !attribute)
-        {
-            const std::string nodeName(node.name());
+        const std::string nodeName(node.name());
 
-            throw std::invalid_argument("ERROR: XML: No attribute " +
-                                        attributeName + " found on <" +
-                                        nodeName + "> element" + hint);
-        }
+        throw std::invalid_argument("ERROR: XML: No attribute " +
+                                    attributeName + " found on <" + nodeName +
+                                    "> element" + hint);
     }
     return attribute;
 }
@@ -152,13 +140,10 @@ void ParseConfigXML(
             configXML,
             "when parsing configXML file, in call to the ADIOS constructor"));
 
-        if (adios.m_DebugMode)
+        if (fileContents.empty())
         {
-            if (fileContents.empty())
-            {
-                throw std::invalid_argument(
-                    "ERROR: config xml file is empty, " + hint + "\n");
-            }
+            throw std::invalid_argument("ERROR: config xml file is empty, " +
+                                        hint + "\n");
         }
         return fileContents;
     };
@@ -212,28 +197,25 @@ void ParseConfigXML(
             const pugi::xml_attribute opType = helper::XMLAttribute(
                 "type", operation, adios.m_DebugMode, hint, false);
 
-            if (adios.m_DebugMode)
+            if (opName && opType)
             {
-                if (opName && opType)
-                {
-                    throw std::invalid_argument(
-                        "ERROR: operator (" + std::string(opName.value()) +
-                        ") and type (" + std::string(opType.value()) +
-                        ") attributes can't coexist in <operation> element "
-                        "inside <variable name=\"" +
-                        variableName + "\"> element, " + hint + "\n");
-                }
+                throw std::invalid_argument(
+                    "ERROR: operator (" + std::string(opName.value()) +
+                    ") and type (" + std::string(opType.value()) +
+                    ") attributes can't coexist in <operation> element "
+                    "inside <variable name=\"" +
+                    variableName + "\"> element, " + hint + "\n");
+            }
 
-                if (!opName && !opType)
-                {
-                    throw std::invalid_argument(
-                        "ERROR: <operation> element "
-                        "inside <variable name=\"" +
-                        variableName +
-                        "\"> element requires either operator "
-                        "(existing) or type (supported) attribute, " +
-                        hint + "\n");
-                }
+            if (!opName && !opType)
+            {
+                throw std::invalid_argument(
+                    "ERROR: <operation> element "
+                    "inside <variable name=\"" +
+                    variableName +
+                    "\"> element requires either operator "
+                    "(existing) or type (supported) attribute, " +
+                    hint + "\n");
             }
 
             core::Operator *op = nullptr;
@@ -241,16 +223,13 @@ void ParseConfigXML(
             if (opName)
             {
                 auto itOperator = operators.find(std::string(opName.value()));
-                if (adios.m_DebugMode)
+                if (itOperator == operators.end())
                 {
-                    if (itOperator == operators.end())
-                    {
-                        throw std::invalid_argument(
-                            "ERROR: operator " + std::string(opName.value()) +
-                            " not previously defined, from variable " +
-                            variableName + " inside io " + currentIO.m_Name +
-                            ", " + hint + "\n");
-                    }
+                    throw std::invalid_argument(
+                        "ERROR: operator " + std::string(opName.value()) +
+                        " not previously defined, from variable " +
+                        variableName + " inside io " + currentIO.m_Name + ", " +
+                        hint + "\n");
                 }
                 op = itOperator->second.get();
             }

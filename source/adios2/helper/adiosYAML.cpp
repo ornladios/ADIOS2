@@ -29,21 +29,18 @@ YAML::Node YAMLNode(const std::string nodeName, const YAML::Node &upperNode,
 {
     const YAML::Node node = upperNode[nodeName];
 
-    if (debugMode)
+    if (isMandatory && !node)
     {
-        if (isMandatory && !node)
-        {
-            throw std::invalid_argument(
-                "ERROR: YAML: no " + nodeName +
-                " node found, (is your node key lower case?), " + hint);
-        }
-        if (node && node.Type() != nodeType)
-        {
-            throw std::invalid_argument("ERROR: YAML: node " + nodeName +
-                                        " is the wrong type, review adios2 "
-                                        "config YAML specs for the node, " +
-                                        hint);
-        }
+        throw std::invalid_argument(
+            "ERROR: YAML: no " + nodeName +
+            " node found, (is your node key lower case?), " + hint);
+    }
+    if (node && node.Type() != nodeType)
+    {
+        throw std::invalid_argument("ERROR: YAML: node " + nodeName +
+                                    " is the wrong type, review adios2 "
+                                    "config YAML specs for the node, " +
+                                    hint);
     }
     return node;
 }
@@ -57,7 +54,7 @@ Params YAMLNodeMapToParams(const YAML::Node &node, const bool debugMode,
         const std::string key = itParam->first.as<std::string>();
         const std::string value = itParam->second.as<std::string>();
         auto it = parameters.emplace(key, value);
-        if (debugMode && !it.second)
+        if (!it.second)
         {
             throw std::invalid_argument(
                 "ERROR: YAML: found duplicated key : " + key +
@@ -199,7 +196,7 @@ void ParseConfigYAML(
         adios.GetComm().BroadcastFile(configFileYAML, hint);
     const YAML::Node document = YAML::Load(fileContents);
 
-    if (adios.m_DebugMode && !document)
+    if (!document)
     {
         throw std::invalid_argument(
             "ERROR: YAML: parser error in file " + configFileYAML +

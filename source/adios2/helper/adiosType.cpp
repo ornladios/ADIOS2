@@ -130,15 +130,11 @@ TimeUnit StringToTimeUnit(const std::string timeUnitString,
     }
     else
     {
-        if (debugMode)
-        {
-            throw std::invalid_argument("ERROR: invalid value " +
-                                        timeUnitString +
-                                        " in Parameter key=ProfileUnits, "
-                                        " must be Microseconds, Milliseconds, "
-                                        "Seconds, Minutes or Hours " +
-                                        hint + "\n");
-        }
+        throw std::invalid_argument("ERROR: invalid value " + timeUnitString +
+                                    " in Parameter key=ProfileUnits, "
+                                    " must be Microseconds, Milliseconds, "
+                                    "Seconds, Minutes or Hours " +
+                                    hint + "\n");
     }
     return timeUnit;
 }
@@ -164,12 +160,8 @@ size_t BytesFactor(const std::string units, const bool debugMode)
     }
     else
     {
-        if (debugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: units " + units +
-                " not supported in call to BytesFactor\n");
-        }
+        throw std::invalid_argument("ERROR: units " + units +
+                                    " not supported in call to BytesFactor\n");
     }
     return factor;
 }

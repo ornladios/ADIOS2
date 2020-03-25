@@ -55,15 +55,12 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
                                const bool debugMode) {
         auto equalPosition = parameter.find(delimKeyValue);
 
-        if (debugMode)
+        if (equalPosition == parameter.npos)
         {
-            if (equalPosition == parameter.npos)
-            {
-                throw std::invalid_argument(
-                    "ERROR: wrong format for IO parameter " + parameter +
-                    ", format must be key" + delimKeyValue +
-                    "value for each entry \n");
-            }
+            throw std::invalid_argument(
+                "ERROR: wrong format for IO parameter " + parameter +
+                ", format must be key" + delimKeyValue +
+                "value for each entry \n");
         }
 
         field = parameter.substr(0, equalPosition);
@@ -80,20 +77,16 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
         lf_Trim(field);
         lf_Trim(value);
 
-        if (debugMode)
+        if (value.length() == 0)
         {
-            if (value.length() == 0)
-            {
-                throw std::invalid_argument(
-                    "ERROR: empty value in IO parameter " + parameter +
-                    ", format must be key" + delimKeyValue + "value \n");
-            }
-            if (parametersOutput.count(field) == 1)
-            {
-                throw std::invalid_argument(
-                    "ERROR: parameter " + field +
-                    " already exists, must be unique\n");
-            }
+            throw std::invalid_argument("ERROR: empty value in IO parameter " +
+                                        parameter + ", format must be key" +
+                                        delimKeyValue + "value \n");
+        }
+        if (parametersOutput.count(field) == 1)
+        {
+            throw std::invalid_argument("ERROR: parameter " + field +
+                                        " already exists, must be unique\n");
         }
 
         parametersOutput[field] = value;
@@ -117,7 +110,7 @@ Params BuildParametersMap(const std::string &input, const char delimKeyValue,
     while (std::getline(inputSS, parameter, delimItem))
     {
         const size_t position = parameter.find(delimKeyValue);
-        if (debugMode && position == parameter.npos)
+        if (position == parameter.npos)
         {
             throw std::invalid_argument(
                 "ERROR: wrong format for IO parameter " + parameter +
@@ -129,20 +122,17 @@ Params BuildParametersMap(const std::string &input, const char delimKeyValue,
         lf_Trim(key);
         std::string value = parameter.substr(position + 1);
         lf_Trim(value);
-        if (debugMode)
+        if (value.length() == 0)
         {
-            if (value.length() == 0)
-            {
-                throw std::invalid_argument(
-                    "ERROR: empty value in IO parameter " + parameter +
-                    ", format must be key" + delimKeyValue + "value \n");
-            }
-            if (parametersOutput.count(key) == 1)
-            {
-                throw std::invalid_argument(
-                    "ERROR: key " + key +
-                    " appears multiple times in the parameters string\n");
-            }
+            throw std::invalid_argument("ERROR: empty value in IO parameter " +
+                                        parameter + ", format must be key" +
+                                        delimKeyValue + "value \n");
+        }
+        if (parametersOutput.count(key) == 1)
+        {
+            throw std::invalid_argument(
+                "ERROR: key " + key +
+                " appears multiple times in the parameters string\n");
         }
 
         parametersOutput[key] = value;
@@ -226,7 +216,7 @@ std::string GetParameter(const std::string key, const Params &params,
     auto itParameter = params.find(key);
     if (itParameter == params.end())
     {
-        if (debugMode && isMandatory)
+        if (isMandatory)
         {
             throw std::invalid_argument("ERROR: mandatory parameter " + key +
                                         " not found, " + hint);
