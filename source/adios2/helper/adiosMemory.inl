@@ -542,25 +542,17 @@ template <class T>
 void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
             const std::string hint, T value)
 {
-    if (debugMode)
+    try
     {
-        try
-        {
-            // avoid power of 2 capacity growth
-            vec.reserve(dataSize);
-            vec.resize(dataSize, value);
-        }
-        catch (...)
-        {
-            std::throw_with_nested(std::runtime_error(
-                "ERROR: buffer overflow when resizing to " +
-                std::to_string(dataSize) + " bytes, " + hint + "\n"));
-        }
-    }
-    else
-    {
+        // avoid power of 2 capacity growth
         vec.reserve(dataSize);
         vec.resize(dataSize, value);
+    }
+    catch (...)
+    {
+        std::throw_with_nested(std::runtime_error(
+            "ERROR: buffer overflow when resizing to " +
+            std::to_string(dataSize) + " bytes, " + hint + "\n"));
     }
 }
 
