@@ -21,27 +21,34 @@
 #include "cp_internal.h"
 
 #define gettid() pthread_self()
+#define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define STREAM_MUTEX_LOCK(Stream)                                              \
-    printf("(PID %lx, TID %lx) CP_READER Trying lock line %d\n",               \
+    {printf("(PID %lx, TID %lx) CP_READER Trying lock line %d\n",       \
            (long)getpid(), (long)gettid(), __LINE__);                          \
     pthread_mutex_lock(&Stream->DataLock);                                     \
     Stream->Locked++;                                                          \
     printf("(PID %lx, TID %lx) CP_READER Got lock\n", (long)getpid(),          \
-           (long)gettid());
+           (long)gettid());}
 
 #define STREAM_MUTEX_UNLOCK(Stream)                                            \
-    printf("(PID %lx, TID %lx) CP_READER UNlocking line %d\n", (long)getpid(), \
+    {printf("(PID %lx, TID %lx) CP_READER UNlocking line %d\n", (long)getpid(), \
            (long)gettid(), __LINE__);                                          \
     Stream->Locked--;                                                          \
-    pthread_mutex_unlock(&Stream->DataLock);
+    pthread_mutex_unlock(&Stream->DataLock);}
 #define STREAM_CONDITION_WAIT(Stream)                                          \
+    {printf("(PID %lx, TID %lx) CP_READER Dropping Condition Lock line %d\n", (long)getpid(), \
+           (long)gettid(), __LINE__);                                          \
     Stream->Locked = 0;                                                        \
     pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);              \
-    Stream->Locked = 1;
+    printf("(PID %lx, TID %lx) CP_READER Acquired Condition Lock line %d\n", (long)getpid(), \
+           (long)gettid(), __LINE__);                                          \
+    Stream->Locked = 1;}
 #define STREAM_CONDITION_SIGNAL(Stream)                                        \
     {                                                                          \
         assert(Stream->Locked == 1);                                           \
+        printf("(PID %lx, TID %lx) CP_READER Signalling Condition line %d\n", (long)getpid(), \
+           (long)gettid(), __LINE__);                                          \
         pthread_cond_signal(&Stream->DataCondition);                           \
     }
 
@@ -198,19 +205,24 @@ static char *readContactInfo(const char *Name, SstStream Stream, int Timeout)
         return NULL;
         break;
     }
+    return NULL;
 }
 
+// ReaderConnCloseHandler is called by the network handler thread in
+// response to the failure of a network connection to the writer.
 extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                                    void *client_data)
 {
     TAU_START_FUNC();
     SstStream Stream = (SstStream)client_data;
     int FailedPeerRank = -1;
+    STREAM_MUTEX_LOCK(Stream);
     CP_verbose(Stream, "Reader-side close handler invoked\n");
-    if (Stream->Status == Destroyed)
+    if ((Stream->Status == Destroyed) || (!Stream->ConnectionsToWriter))
+    {
+        STREAM_MUTEX_UNLOCK(Stream);
         return;
-    if (!Stream->ConnectionsToWriter)
-        return;
+    }
     for (int i = 0; i < Stream->WriterCohortSize; i++)
     {
         if (Stream->ConnectionsToWriter[i].CMconn == ClosedConn)
@@ -229,30 +241,34 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
         CP_verbose(Stream, "Reader-side Rank received a "
                            "connection-close event during normal "
                            "operations, peer likely failed\n");
-        STREAM_MUTEX_LOCK(Stream);
         Stream->Status = PeerFailed;
         STREAM_CONDITION_SIGNAL(Stream);
-        STREAM_MUTEX_UNLOCK(Stream);
         CP_verbose(
             Stream,
             "The close was for connection to writer peer %d, notifying DP\n",
             FailedPeerRank);
+        STREAM_MUTEX_UNLOCK(Stream);
         /* notify DP of failure.  This should terminate any waits currently
          * pending in the DP for that rank */
         Stream->DP_Interface->notifyConnFailure(&Svcs, Stream->DP_Stream,
                                                 FailedPeerRank);
     }
-    else if ((Stream->Status == PeerClosed) || (Stream->Status == PeerFailed) ||
-             (Stream->Status == Closed))
+    else if (Stream->Status == PeerClosed)
     {
         /* ignore this.  We expect a close after the connection is marked closed
          */
         CP_verbose(Stream, "Reader-side Rank received a "
                            "connection-close event after close, "
                            "not unexpected\n");
-        Stream->DP_Interface->notifyConnFailure(&Svcs, Stream->DP_Stream,
-                                                FailedPeerRank);
+        STREAM_MUTEX_UNLOCK(Stream);
+        // Don't notify DP, because this is part of normal shutdown and we don't want to kill pending reads
     }
+    else if (Stream->Status == PeerFailed) {
+        CP_verbose(Stream, "Reader-side Rank received a "
+                   "connection-close event after PeerFailed, already notified DP \n");
+                   // Don't notify DP, because we already have */
+        STREAM_MUTEX_UNLOCK(Stream);
+        }
     else
     {
         fprintf(stderr, "Got an unexpected connection close event\n");
@@ -261,10 +277,13 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                    "connection-close event in unexpected "
                    "status %s\n",
                    SSTStreamStatusStr[Stream->Status]);
+        STREAM_MUTEX_UNLOCK(Stream);
     }
     TAU_STOP_FUNC();
 }
 
+//  SstCurrentStep is only called by the main program thread and
+//  needs no locking as it only accesses data set by the main thread
 extern long SstCurrentStep(SstStream Stream) { return Stream->ReaderTimestep; }
 
 static void releasePriorTimesteps(SstStream Stream, long Latest);
@@ -396,6 +415,11 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
     return RetVal;
 }
 
+//  SstReaderOpen is an SST reader entry point, called only by the
+//  main program thread It must be called by all ranks, and as it
+//  creates the only shared data structure, no locking is necessary
+//  prior to the CMCondition_wait() that is triggered in response to
+//  reader regsitration.
 SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 {
     SstStream Stream;
@@ -577,6 +601,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         CP_verbose(Stream,
                    "Writer is using Peer-based Communication pattern (peer)\n");
     }
+    STREAM_MUTEX_LOCK(Stream);
     Stream->ReaderTimestep = ReturnData->StartingStepNumber - 1;
 
     if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
@@ -587,14 +612,12 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         getPeerArrays(Stream->CohortSize, Stream->Rank,
                       Stream->WriterCohortSize, &Stream->Peers, NULL);
 
-        STREAM_MUTEX_LOCK(Stream);
         while (!HasAllPeers(Stream))
         {
             /* wait until we get the timestep metadata or something else changes
              */
             STREAM_CONDITION_WAIT(Stream);
         }
-        STREAM_MUTEX_UNLOCK(Stream);
     }
     else
     {
@@ -635,12 +658,18 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
                                           (void *)Stream);
         }
     }
+    Stream->Status = Established;
+    gettimeofday(&Stop, NULL);
+    timersub(&Stop, &Start, &Diff);
+    Stream->OpenTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
+    gettimeofday(&Stream->ValidStartTime, NULL);
+    Stream->Filename = Filename;
+    Stream->ParamsBlock = free_block;
+    STREAM_MUTEX_UNLOCK(Stream);
+    AddToLastCallFreeList(Stream);
     Stream->DP_Interface->provideWriterDataToReader(
         &Svcs, Stream->DP_Stream, ReturnData->WriterCohortSize,
         Stream->ConnectionsToWriter, ReturnData->DP_WriterInfo);
-    STREAM_MUTEX_LOCK(Stream);
-    Stream->Status = Established;
-    STREAM_MUTEX_UNLOCK(Stream);
     CP_verbose(Stream, "Sending Reader Activate messages to writer\n");
     memset(&Msg, 0, sizeof(Msg));
     sendOneToEachWriterRank(Stream, Stream->CPInfo->ReaderActivateFormat, &Msg,
@@ -648,17 +677,14 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     CP_verbose(Stream,
                "Finish opening Stream \"%s\", starting with Step number %d\n",
                Filename, ReturnData->StartingStepNumber);
-    gettimeofday(&Stop, NULL);
-    timersub(&Stop, &Start, &Diff);
-    Stream->OpenTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
-    gettimeofday(&Stream->ValidStartTime, NULL);
-    Stream->Filename = Filename;
-    Stream->ParamsBlock = free_block;
-    AddToLastCallFreeList(Stream);
 
     return Stream;
 }
 
+//  SstReaderGetParams is an SST entry point only called by the main
+//  program thread.  It can only be called after initialization and
+//  only accesses data installed durinig initialization, it needs no
+//  locking.
 extern void SstReaderGetParams(SstStream Stream,
                                SstMarshalMethod *WriterMarshalMethod)
 {
@@ -666,8 +692,9 @@ extern void SstReaderGetParams(SstStream Stream,
 }
 
 /*
- * CP_PeerSetupHandler receives incoming PeerSetup messages to setup the
- * reader-side Peer list
+ * CP_PeerSetupHandler is called by the network handler thread in
+ * response to incoming PeerSetup messages to setup the reader-side
+ * Peer list
  */
 extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
                                 void *client_data, attr_list attrs)
@@ -676,9 +703,9 @@ extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
     SstStream Stream;
     struct _PeerSetupMsg *Msg = (struct _PeerSetupMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
+    STREAM_MUTEX_LOCK(Stream);
     CP_verbose(Stream, "Received peer setup from rank %d, conn %p\n",
                Msg->WriterRank, conn);
-    STREAM_MUTEX_LOCK(Stream);
     if (!Stream->ConnectionsToWriter)
     {
         CP_verbose(Stream, "Allocating connections to writer\n");
@@ -702,13 +729,13 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
                                        struct _TimestepMetadataMsg *tsm,
                                        CMConnection conn)
 {
+    STREAM_ASSERT_LOCKED(Stream);
     if (tsm->Timestep < Stream->DiscardPriorTimestep)
     {
         struct _ReleaseTimestepMsg Msg;
         memset(&Msg, 0, sizeof(Msg));
         Msg.Timestep = tsm->Timestep;
 
-        STREAM_MUTEX_LOCK(Stream);
         /*
          * before discarding, install any precious metadata from this message
          */
@@ -716,7 +743,6 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         {
             FFSMarshalInstallPreciousMetadata(Stream, tsm);
         }
-        STREAM_MUTEX_UNLOCK(Stream);
 
         /*
          * send each writer rank a release for this timestep (actually goes to
@@ -750,7 +776,6 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         return;
     }
 
-    STREAM_MUTEX_LOCK(Stream);
     struct _TimestepMetadataList *New = malloc(sizeof(struct _RequestQueue));
     New->MetadataMsg = tsm;
     New->Next = NULL;
@@ -773,7 +798,6 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
                tsm->Timestep);
 
     STREAM_CONDITION_SIGNAL(Stream);
-    STREAM_MUTEX_UNLOCK(Stream);
     if ((Stream->Rank == 0) &&
         (Stream->WriterConfigParams->CPCommPattern == SstCPCommMin) &&
         (Stream->ConfigParams->AlwaysProvideLatestTimestep))
@@ -792,6 +816,8 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
     }
 }
 
+// CP_TimestepMetadataHandler is called by the network handler thread
+// to handle incoming TimestepMetadata messages
 void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
                                 void *client_data, attr_list attrs)
 {
@@ -799,6 +825,7 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
     SstStream Stream;
     struct _TimestepMetadataMsg *Msg = (struct _TimestepMetadataMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
+    STREAM_MUTEX_LOCK(Stream);
     if ((Stream->Rank != 0) ||
         (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer))
     {
@@ -810,7 +837,6 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
                 "Received a message that timestep %d has been discarded\n",
                 Msg->Timestep);
 
-            STREAM_MUTEX_LOCK(Stream);
             /*
              * before discarding, install any precious metadata from this
              * message
@@ -844,9 +870,16 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
 
         queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
     }
+    STREAM_MUTEX_UNLOCK(Stream);
     TAU_STOP_FUNC();
 }
 
+// CP_WriterResponseHandler is called by the network handler thread to
+// handle WriterResponse messages.  One of these will be sent to rank0
+// reader from rank0 writer in response to the ReaderRegister message.
+// It will find rank0 writer in CMCondition_wait().  It's only action
+// is to associate the incoming response message to the CMcondition
+// we're waiting on,m so no locking is necessary.
 void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
                               void *client_data, attr_list attrs)
 {
@@ -879,6 +912,12 @@ void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
     TAU_STOP_FUNC();
 }
 
+// CP_WriterCloseHandler is called by the network handler thread to
+// handle WriterResponse messages.  One of these will be sent to rank0
+// reader from rank0 writer in response to the ReaderRegister message.
+// It will find rank0 writer in CMCondition_wait().  It's only action
+// is to associate the incoming response message to the CMcondition
+// we're waiting on, so no locking is necessary.
 extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
                                   void *client_data, attr_list attrs)
 {
@@ -886,12 +925,12 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     WriterCloseMsg Msg = (WriterCloseMsg)Msg_v;
     SstStream Stream = (SstStream)Msg->RS_Stream;
 
+    STREAM_MUTEX_LOCK(Stream);
     CP_verbose(Stream,
                "Received a writer close message. "
                "Timestep %d was the final timestep.\n",
                Msg->FinalTimestep);
 
-    STREAM_MUTEX_LOCK(Stream);
     Stream->FinalTimestep = Msg->FinalTimestep;
     Stream->Status = PeerClosed;
     /* wake anyone that might be waiting */
@@ -900,6 +939,10 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     TAU_STOP_FUNC();
 }
 
+// CP_CommPatternLockedHandler is called by the network handler thread
+// to handle CommPatternLocked messages.  It can only be called
+// post-registration and won't be called after Close.  Lock to protect
+// against race conditions in determining comm lock scenario.
 extern void CP_CommPatternLockedHandler(CManager cm, CMConnection conn,
                                         void *Msg_v, void *client_data,
                                         attr_list attrs)
@@ -907,12 +950,12 @@ extern void CP_CommPatternLockedHandler(CManager cm, CMConnection conn,
     CommPatternLockedMsg Msg = (CommPatternLockedMsg)Msg_v;
     SstStream Stream = (SstStream)Msg->RS_Stream;
 
+    STREAM_MUTEX_LOCK(Stream);
     CP_verbose(
         Stream,
         "Received a CommPatternLocked message, beginning with Timestep %d.\n",
         Msg->Timestep);
 
-    STREAM_MUTEX_LOCK(Stream);
     Stream->CommPatternLocked = 1;
     Stream->CommPatternLockedTimestep = Msg->Timestep;
     STREAM_MUTEX_UNLOCK(Stream);
@@ -922,12 +965,11 @@ static long MaxQueuedMetadata(SstStream Stream)
 {
     struct _TimestepMetadataList *Next;
     long MaxTimestep = -1;
-    STREAM_MUTEX_LOCK(Stream);
+    STREAM_ASSERT_LOCKED(Stream);
     Next = Stream->Timesteps;
     if (Next == NULL)
     {
         CP_verbose(Stream, "MaxQueued Timestep returning -1\n");
-        STREAM_MUTEX_UNLOCK(Stream);
         return -1;
     }
     while (Next)
@@ -938,7 +980,6 @@ static long MaxQueuedMetadata(SstStream Stream)
         }
         Next = Next->Next;
     }
-    STREAM_MUTEX_UNLOCK(Stream);
     CP_verbose(Stream, "MaxQueued Timestep returning %ld\n", MaxTimestep);
     return MaxTimestep;
 }
@@ -947,12 +988,11 @@ static long NextQueuedMetadata(SstStream Stream)
 {
     struct _TimestepMetadataList *Next;
     long MinTimestep = LONG_MAX;
-    STREAM_MUTEX_LOCK(Stream);
+    STREAM_ASSERT_LOCKED(Stream);
     Next = Stream->Timesteps;
     if (Next == NULL)
     {
         CP_verbose(Stream, "NextQueued Timestep returning -1\n");
-        STREAM_MUTEX_UNLOCK(Stream);
         return -1;
     }
     while (Next)
@@ -963,11 +1003,11 @@ static long NextQueuedMetadata(SstStream Stream)
         }
         Next = Next->Next;
     }
-    STREAM_MUTEX_UNLOCK(Stream);
     CP_verbose(Stream, "NextQueued Timestep returning %ld\n", MinTimestep);
     return MinTimestep;
 }
 
+// A delayed task to wake the stream after a specific time period
 static void triggerDataCondition(CManager cm, void *vStream)
 {
     SstStream Stream = (SstStream)vStream;
@@ -986,7 +1026,7 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
     int timeout_int_usec = ((timeout_secs - floorf(timeout_secs)) * 1000000);
     CMTaskHandle TimeoutTask = NULL;
 
-    STREAM_MUTEX_LOCK(Stream);
+    STREAM_ASSERT_LOCKED(Stream);
     gettimeofday(&start, NULL);
     Next = Stream->Timesteps;
     CP_verbose(
@@ -995,7 +1035,6 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
         timeout_secs, start.tv_sec, start.tv_usec);
     if (Next)
     {
-        STREAM_MUTEX_UNLOCK(Stream);
         CP_verbose(Stream, "Returning from wait with timeout, NO TIMEOUT\n");
     }
     end.tv_sec = start.tv_sec + timeout_int_sec;
@@ -1013,7 +1052,6 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
     // special case
     if (timeout_secs == 0.0)
     {
-        STREAM_MUTEX_UNLOCK(Stream);
         CP_verbose(
             Stream,
             "Returning from wait With no data after zero timeout poll\n");
@@ -1029,14 +1067,12 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
         if (Next)
         {
             CMremove_task(TimeoutTask);
-            STREAM_MUTEX_UNLOCK(Stream);
             CP_verbose(Stream,
                        "Returning from wait with timeout, NO TIMEOUT\n");
             return;
         }
         if (Stream->Status != Established)
         {
-            STREAM_MUTEX_UNLOCK(Stream);
             CP_verbose(Stream, "Returning from wait with timeout, STREAM NO "
                                "LONGER ESTABLISHED\n");
             return;
@@ -1046,7 +1082,6 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
                    now.tv_sec, now.tv_usec, end.tv_sec, end.tv_usec);
         if (timercmp(&now, &end, >))
         {
-            STREAM_MUTEX_UNLOCK(Stream);
             CP_verbose(Stream, "Returning from wait after timing out\n");
             return;
         }
@@ -1059,8 +1094,7 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
 static void releasePriorTimesteps(SstStream Stream, long Latest)
 {
     struct _TimestepMetadataList *Next, *Last;
-    TSMetadataList FoundTS = NULL;
-    STREAM_MUTEX_LOCK(Stream);
+    STREAM_ASSERT_LOCKED(Stream);
     CP_verbose(Stream, "Releasing any timestep earlier than %d\n", Latest);
     Next = Stream->Timesteps;
     Last = NULL;
@@ -1120,7 +1154,6 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
             Next = Next->Next;
         }
     }
-    STREAM_MUTEX_UNLOCK(Stream);
 }
 
 static void FreeTimestep(SstStream Stream, long Timestep)
@@ -1178,7 +1211,6 @@ static void FreeTimestep(SstStream Stream, long Timestep)
 static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
 {
     TSMetadataList FoundTS = NULL;
-    STREAM_MUTEX_LOCK(Stream);
     CP_verbose(Stream, "Wait for next metadata after last timestep %d\n",
                LastTimestep);
     while (1)
@@ -1226,7 +1258,6 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         }
         if (FoundTS)
         {
-            STREAM_MUTEX_UNLOCK(Stream);
             CP_verbose(Stream, "Returning metadata for Timestep %d\n",
                        FoundTS->MetadataMsg->Timestep);
             Stream->CurrentWorkingTimestep = FoundTS->MetadataMsg->Timestep;
@@ -1237,7 +1268,6 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
             ((Stream->FinalTimestep != INT_MAX) &&
              (Stream->FinalTimestep >= LastTimestep)))
         {
-            STREAM_MUTEX_UNLOCK(Stream);
             CP_verbose(Stream,
                        "Stream Final Timestep is %d, last timestep was %d\n",
                        Stream->FinalTimestep, LastTimestep);
@@ -1274,14 +1304,19 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         STREAM_CONDITION_WAIT(Stream);
     }
     /* NOTREACHED */
-    STREAM_MUTEX_UNLOCK(Stream);
 }
 
+//  SstGetCurMetadata is an SST entry point only called by the main
+//  program thread.  Only accesses the CurrentMetadata field which is
+//  touched only by other subroutines called by the main program
+//  thread, it needs no locking.
 extern SstFullMetadata SstGetCurMetadata(SstStream Stream)
 {
     return Stream->CurrentMetadata;
 }
 
+//  SstReadRemotememory is only called by the main
+//  program thread.
 extern void *SstReadRemoteMemory(SstStream Stream, int Rank, long Timestep,
                                  size_t Offset, size_t Length, void *Buffer,
                                  void *DP_TimestepInfo)
@@ -1332,9 +1367,10 @@ static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
     }
 }
 
+//  SstReaderDefinitionLock is only called by the main
+//  program thread.
 extern void SstReaderDefinitionLock(SstStream Stream, long EffectiveTimestep)
 {
-    long Timestep = Stream->ReaderTimestep;
     struct _LockReaderDefinitionsMsg Msg;
 
     memset(&Msg, 0, sizeof(Msg));
@@ -1344,6 +1380,9 @@ extern void SstReaderDefinitionLock(SstStream Stream, long EffectiveTimestep)
                             &Msg, &Msg.WSR_Stream);
 }
 
+//  SstReleaseStep is only called by the main program thread.  It
+//  locks to protect the timestep list before freeing the local
+//  representation of the resleased timestep.
 extern void SstReleaseStep(SstStream Stream)
 {
     long Timestep = Stream->ReaderTimestep;
@@ -1528,7 +1567,9 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         }
         else
         {
+            STREAM_MUTEX_UNLOCK(Stream);
             SMPI_Bcast(&NextTimestep, 1, SMPI_LONG, 0, Stream->mpiComm);
+            STREAM_MUTEX_LOCK(Stream);
         }
         if (NextTimestep == -2)
         {
@@ -1546,6 +1587,10 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
             CP_verbose(Stream,
                        "SstAdvanceStep returning EndOfStream at timestep %d\n",
                        Stream->ReaderTimestep);
+            STREAM_MUTEX_UNLOCK(Stream);
+            Stream->DP_Interface->notifyConnFailure(&Svcs, Stream->DP_Stream,
+                                                    0);
+            STREAM_MUTEX_LOCK(Stream);
             return SstFatalError;
         }
         if (NextTimestep == -1)
@@ -1793,9 +1838,12 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     }
     else
     {
+        
+            STREAM_MUTEX_UNLOCK(Stream);
         ReturnData = CP_distributeDataFromRankZero(
             Stream, NULL, Stream->CPInfo->CombinedWriterInfoFormat,
             &free_block);
+            STREAM_MUTEX_LOCK(Stream);
     }
     ret = ReturnData->ReturnValue;
 
@@ -1822,11 +1870,13 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         Stream->CommPatternLockedTimestep =
             ReturnData->CommPatternLockedTimestep;
         Stream->CommPatternLocked = 2;
+            STREAM_MUTEX_UNLOCK(Stream);
         if (Stream->DP_Interface->RSreadPatternLocked)
         {
             Stream->DP_Interface->RSreadPatternLocked(
                 &Svcs, Stream->DP_Stream, Stream->CommPatternLockedTimestep);
         }
+            STREAM_MUTEX_LOCK(Stream);
     }
     if (MetadataMsg)
     {
@@ -1869,9 +1919,12 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     return ret;
 }
 
+// SstAdvanceStep is only called by the main program thread.  
 extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
 {
 
+    SstStatusValue result;
+    STREAM_MUTEX_LOCK(Stream);
     if (Stream->CurrentMetadata != NULL)
     {
         if (Stream->CurrentMetadata->FreeBlock)
@@ -1893,14 +1946,18 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
     }
     if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
     {
-        return SstAdvanceStepPeer(Stream, mode, timeout_sec);
+        result = SstAdvanceStepPeer(Stream, mode, timeout_sec);
     }
     else
     {
-        return SstAdvanceStepMin(Stream, mode, timeout_sec);
+        result = SstAdvanceStepMin(Stream, mode, timeout_sec);
     }
+    STREAM_MUTEX_UNLOCK(Stream);
+    return result;
 }
 
+//  SstReaderClose is only called by the main program thread and
+//  needs no locking as it only accesses data set by the main thread
 extern void SstReaderClose(SstStream Stream)
 {
     /* need to have a reader-side shutdown protocol, but for now, just sleep for
@@ -1930,6 +1987,8 @@ extern void SstReaderClose(SstStream Stream)
     }
 }
 
+//  SstWaitForCompletion is only called by the main program thread and
+//  needs no locking
 extern SstStatusValue SstWaitForCompletion(SstStream Stream, void *handle)
 {
     if (Stream->DP_Interface->waitForCompletion(&Svcs, handle) != 1)
