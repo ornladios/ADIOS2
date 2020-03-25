@@ -24,31 +24,39 @@
 #define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define STREAM_MUTEX_LOCK(Stream)                                              \
-    {printf("(PID %lx, TID %lx) CP_READER Trying lock line %d\n",       \
-           (long)getpid(), (long)gettid(), __LINE__);                          \
-    pthread_mutex_lock(&Stream->DataLock);                                     \
-    Stream->Locked++;                                                          \
-    printf("(PID %lx, TID %lx) CP_READER Got lock\n", (long)getpid(),          \
-           (long)gettid());}
+    {                                                                          \
+        printf("(PID %lx, TID %lx) CP_READER Trying lock line %d\n",           \
+               (long)getpid(), (long)gettid(), __LINE__);                      \
+        pthread_mutex_lock(&Stream->DataLock);                                 \
+        Stream->Locked++;                                                      \
+        printf("(PID %lx, TID %lx) CP_READER Got lock\n", (long)getpid(),      \
+               (long)gettid());                                                \
+    }
 
 #define STREAM_MUTEX_UNLOCK(Stream)                                            \
-    {printf("(PID %lx, TID %lx) CP_READER UNlocking line %d\n", (long)getpid(), \
-           (long)gettid(), __LINE__);                                          \
-    Stream->Locked--;                                                          \
-    pthread_mutex_unlock(&Stream->DataLock);}
+    {                                                                          \
+        printf("(PID %lx, TID %lx) CP_READER UNlocking line %d\n",             \
+               (long)getpid(), (long)gettid(), __LINE__);                      \
+        Stream->Locked--;                                                      \
+        pthread_mutex_unlock(&Stream->DataLock);                               \
+    }
 #define STREAM_CONDITION_WAIT(Stream)                                          \
-    {printf("(PID %lx, TID %lx) CP_READER Dropping Condition Lock line %d\n", (long)getpid(), \
-           (long)gettid(), __LINE__);                                          \
-    Stream->Locked = 0;                                                        \
-    pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);              \
-    printf("(PID %lx, TID %lx) CP_READER Acquired Condition Lock line %d\n", (long)getpid(), \
-           (long)gettid(), __LINE__);                                          \
-    Stream->Locked = 1;}
+    {                                                                          \
+        printf(                                                                \
+            "(PID %lx, TID %lx) CP_READER Dropping Condition Lock line %d\n",  \
+            (long)getpid(), (long)gettid(), __LINE__);                         \
+        Stream->Locked = 0;                                                    \
+        pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);          \
+        printf(                                                                \
+            "(PID %lx, TID %lx) CP_READER Acquired Condition Lock line %d\n",  \
+            (long)getpid(), (long)gettid(), __LINE__);                         \
+        Stream->Locked = 1;                                                    \
+    }
 #define STREAM_CONDITION_SIGNAL(Stream)                                        \
     {                                                                          \
         assert(Stream->Locked == 1);                                           \
-        printf("(PID %lx, TID %lx) CP_READER Signalling Condition line %d\n", (long)getpid(), \
-           (long)gettid(), __LINE__);                                          \
+        printf("(PID %lx, TID %lx) CP_READER Signalling Condition line %d\n",  \
+               (long)getpid(), (long)gettid(), __LINE__);                      \
         pthread_cond_signal(&Stream->DataCondition);                           \
     }
 
@@ -261,14 +269,18 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                            "connection-close event after close, "
                            "not unexpected\n");
         STREAM_MUTEX_UNLOCK(Stream);
-        // Don't notify DP, because this is part of normal shutdown and we don't want to kill pending reads
+        // Don't notify DP, because this is part of normal shutdown and we don't
+        // want to kill pending reads
     }
-    else if (Stream->Status == PeerFailed) {
-        CP_verbose(Stream, "Reader-side Rank received a "
-                   "connection-close event after PeerFailed, already notified DP \n");
-                   // Don't notify DP, because we already have */
+    else if (Stream->Status == PeerFailed)
+    {
+        CP_verbose(
+            Stream,
+            "Reader-side Rank received a "
+            "connection-close event after PeerFailed, already notified DP \n");
+        // Don't notify DP, because we already have */
         STREAM_MUTEX_UNLOCK(Stream);
-        }
+    }
     else
     {
         fprintf(stderr, "Got an unexpected connection close event\n");
@@ -1838,12 +1850,12 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     }
     else
     {
-        
-            STREAM_MUTEX_UNLOCK(Stream);
+
+        STREAM_MUTEX_UNLOCK(Stream);
         ReturnData = CP_distributeDataFromRankZero(
             Stream, NULL, Stream->CPInfo->CombinedWriterInfoFormat,
             &free_block);
-            STREAM_MUTEX_LOCK(Stream);
+        STREAM_MUTEX_LOCK(Stream);
     }
     ret = ReturnData->ReturnValue;
 
@@ -1870,13 +1882,13 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         Stream->CommPatternLockedTimestep =
             ReturnData->CommPatternLockedTimestep;
         Stream->CommPatternLocked = 2;
-            STREAM_MUTEX_UNLOCK(Stream);
+        STREAM_MUTEX_UNLOCK(Stream);
         if (Stream->DP_Interface->RSreadPatternLocked)
         {
             Stream->DP_Interface->RSreadPatternLocked(
                 &Svcs, Stream->DP_Stream, Stream->CommPatternLockedTimestep);
         }
-            STREAM_MUTEX_LOCK(Stream);
+        STREAM_MUTEX_LOCK(Stream);
     }
     if (MetadataMsg)
     {
@@ -1919,7 +1931,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     return ret;
 }
 
-// SstAdvanceStep is only called by the main program thread.  
+// SstAdvanceStep is only called by the main program thread.
 extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
 {
 
