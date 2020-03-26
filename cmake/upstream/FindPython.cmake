@@ -93,6 +93,13 @@ This module will set the following variables in your project
 
   Information returned by
   ``distutils.sysconfig.get_python_lib(plat_specific=True,standard_lib=False)``.
+``Python_SOABI``
+  Extension suffix for modules.
+
+  Information returned by
+  ``distutils.sysconfig.get_config_flag('SOABI')`` or computed from
+  ``distutils.sysconfig.get_config_flag('EXT_SUFFIX')`` or
+  ``python-config --extension-suffix``.
 ``Python_Compiler_FOUND``
   System has the Python compiler.
 ``Python_COMPILER``
@@ -184,8 +191,7 @@ Hints
 
 ``Python_FIND_STRATEGY``
   This variable defines how lookup will be done.
-  The ``Python_FIND_STRATEGY`` variable can be set to empty or one of the
-  following:
+  The ``Python_FIND_STRATEGY`` variable can be set to one of the following:
 
   * ``VERSION``: Try to find the most recent version in all specified
     locations.
@@ -198,8 +204,7 @@ Hints
 ``Python_FIND_REGISTRY``
   On Windows the ``Python_FIND_REGISTRY`` variable determine the order
   of preference between registry and environment variables.
-  the ``Python_FIND_REGISTRY`` variable can be set to empty or one of the
-  following:
+  the ``Python_FIND_REGISTRY`` variable can be set to one of the following:
 
   * ``FIRST``: Try to use registry before environment variables.
     This is the default.
@@ -209,8 +214,8 @@ Hints
 ``Python_FIND_FRAMEWORK``
   On macOS the ``Python_FIND_FRAMEWORK`` variable determine the order of
   preference between Apple-style and unix-style package components.
-  This variable can be set to empty or take same values as
-  :variable:`CMAKE_FIND_FRAMEWORK` variable.
+  This variable can take same values as :variable:`CMAKE_FIND_FRAMEWORK`
+  variable.
 
   .. note::
 
@@ -220,11 +225,11 @@ Hints
   variable will be used, if any.
 
 ``Python_FIND_VIRTUALENV``
-  This variable defines the handling of virtual environments. It is meaningfull
-  only when a virtual environment is active (i.e. the ``activate`` script has
-  been evaluated). In this case, it takes precedence over
-  ``Python_FIND_REGISTRY`` and ``CMAKE_FIND_FRAMEWORK`` variables.
-  The ``Python_FIND_VIRTUALENV`` variable can be set to empty or one of the
+  This variable defines the handling of virtual environments managed by
+  ``virtualenv`` or ``conda``. It is meaningful only when a virtual environment
+  is active (i.e. the ``activate`` script has been evaluated). In this case, it
+  takes precedence over ``Python_FIND_REGISTRY`` and ``CMAKE_FIND_FRAMEWORK``
+  variables.  The ``Python_FIND_VIRTUALENV`` variable can be set to one of the
   following:
 
   * ``FIRST``: The virtual environment is used before any other standard
@@ -281,6 +286,22 @@ setting the following variables:
   If more than one artifact is specified, it is the user's responsability to
   ensure the consistency of the various artifacts.
 
+By default, this module supports multiple calls in different directories of a
+project with different version/component requirements while providing correct
+and consistent results for each call. To support this behavior, ``CMake`` cache
+is not used in the traditional way which can be problematic for interactive
+specification. So, to enable also interactive specification, module behavior
+can be controled with the following variable:
+
+``Python_ARTIFACTS_INTERACTIVE``
+  Selects the behavior of the module. This is a boolean variable:
+
+  * If set to ``TRUE``: Create CMake cache entries for the above artifact
+    specification variables so that users can edit them interactively.
+    This disables support for multiple version/component requirements.
+  * If set to ``FALSE`` or undefined: Enable multiple version/component
+    requirements.
+
 Commands
 ^^^^^^^^
 
@@ -290,9 +311,13 @@ This module defines the command ``Python_add_library`` (when
 when library type is ``MODULE``, to target ``Python::Module`` and takes care of
 Python module naming rules::
 
-  Python_add_library (my_module MODULE src1.cpp)
+  Python_add_library (<name> [STATIC | SHARED | MODULE [WITH_SOABI]]
+                      <source1> [<source2> ...])
 
-If library type is not specified, ``MODULE`` is assumed.
+If the library type is not specified, ``MODULE`` is assumed.
+
+For ``MODULE`` library type, if option ``WITH_SOABI`` is specified, the
+module suffix will include the ``Python_SOABI`` value, if any.
 #]=======================================================================]
 
 
