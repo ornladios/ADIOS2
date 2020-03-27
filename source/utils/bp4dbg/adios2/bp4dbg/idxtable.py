@@ -51,7 +51,7 @@ def DumpIndexTable(fileName):
     status = False
     with open(fileName, "rb") as f:
         fileSize = fstat(f.fileno()).st_size
-        status = bp4dbg_utils.ReadHeader(f, fileSize, "Index Table")
+        status = ReadHeader(f, fileSize, "Index Table")
         if (status):
             status = ReadIndex(f, fileSize)
     return status

@@ -40,11 +40,6 @@ def ReadEncodedStringArrayFromBuffer(buf, pos, ID, limit, nStrings):
     return True, s, pos
 
 
-def ReadHeader(f):
-    # There is no header at this time in data.*\
-    print("Header info: There is no header in data.*")
-
-
 def ReadDimensionCharacteristics(buf, pos):
     ndim = np.frombuffer(buf, dtype=np.uint8, count=1, offset=pos)[0]
     pos = pos + 1
@@ -112,7 +107,7 @@ def bDataToNumpyArray(cData, typeName, nElements, startPos=0):
 def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
                                     fileOffset, isVarCharacteristics):
     cStartPosition = pos
-    dataTypeName = bp4dbg_utils.GetTypeName(typeID)
+    dataTypeName = GetTypeName(typeID)
     print("        Block {0}: ".format(idx))
     print("            Starting offset : {0}".format(fileOffset))
     # 1 byte NCharacteristics
@@ -134,10 +129,10 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
         # 1 byte TYPE
         cID = np.frombuffer(buf, dtype=np.uint8, count=1, offset=pos)[0]
         pos = pos + 1
-        cName = bp4dbg_utils.GetCharacteristicName(cID)
+        cName = GetCharacteristicName(cID)
         print("                Type           : {0} ({1}) ".format(
             cName, cID))
-        cLen = bp4dbg_utils.GetCharacteristicDataLength(cID, typeID)
+        cLen = GetCharacteristicDataLength(cID, typeID)
 
         if cName == 'dimensions':
             status, pos, ndim, lgo = ReadDimensionCharacteristics(buf, pos)
@@ -186,7 +181,7 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
                     print("                Value          : {0}"
                           "  ({1} bytes)".format(data[0], cLen))
                 else:  # attribute value characteristics are different
-                    dataTypeSize = bp4dbg_utils.GetTypeSize(typeID)
+                    dataTypeSize = GetTypeSize(typeID)
                     nBytes = int(nElems * dataTypeSize)
                     cData = buf[pos:pos + nBytes]
                     pos = pos + nBytes
@@ -257,7 +252,7 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
             typeID = buf[pos]
             pos = pos + 1
             print("                Pre-type       : {0} ({1}) ".format(
-                bp4dbg_utils.GetTypeName(typeID), typeID))
+                GetTypeName(typeID), typeID))
 
             # Pre-transform dimenstions
             status, pos, ndim, lgo = ReadDimensionCharacteristics(buf, pos)
@@ -423,7 +418,7 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
     typeID = buf[pos]
     pos = pos + 1
     print("        Type            : {0} ({1}) ".format(
-        bp4dbg_utils.GetTypeName(typeID), typeID))
+        GetTypeName(typeID), typeID))
 
     # 8 byte Number of Characteristics Sets
     cSets = np.frombuffer(buf, dtype=np.uint64, count=1, offset=pos)[0]
@@ -491,7 +486,7 @@ def ReadAttrMD(buf, idx, pos, limit, attrStartOffset):
     typeID = buf[pos]
     pos = pos + 1
     print("        Type            : {0} ({1}) ".format(
-        bp4dbg_utils.GetTypeName(typeID), typeID))
+        GetTypeName(typeID), typeID))
 
     # 8 byte Number of Characteristics Sets
     cSets = np.frombuffer(buf, dtype=np.uint64, count=1, offset=pos)[0]
@@ -604,7 +599,7 @@ def DumpMetaData(fileName):
     print("========================================================")
     with open(fileName, "rb") as f:
         fileSize = fstat(f.fileno()).st_size
-        status = bp4dbg_utils.ReadHeader(f, fileSize, "Metadata")
+        status = ReadHeader(f, fileSize, "Metadata")
         step = 0
         while (f.tell() < fileSize - 12 and status):
             status = ReadMetadataStep(f, fileSize, step)
