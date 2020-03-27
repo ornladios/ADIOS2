@@ -57,18 +57,15 @@ size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
                                      m_DebugMode, hint);
         helper::SetParameterValueInt("workFactor", parameters, workFactor,
                                      m_DebugMode, hint);
-        if (m_DebugMode)
-        {
 
-            if (blockSize100k < 1 || blockSize100k > 9)
-            {
-                throw std::invalid_argument(
-                    "ERROR: BlockSize100K must be an "
-                    "integer between 1 (less "
-                    "compression, less memory) and 9 "
-                    "(more compression, more memory) inclusive, " +
-                    hint);
-            }
+        if (blockSize100k < 1 || blockSize100k > 9)
+        {
+            throw std::invalid_argument(
+                "ERROR: BlockSize100K must be an "
+                "integer between 1 (less "
+                "compression, less memory) and 9 "
+                "(more compression, more memory) inclusive, " +
+                hint);
         }
     }
 
@@ -100,11 +97,8 @@ size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
                                      blockSize100k, verbosity, workFactor);
 
         const std::string bStr = std::to_string(b);
-        if (m_DebugMode)
-        {
-            CheckStatus(status,
-                        "in call to ADIOS2 BZIP2 Compress batch " + bStr);
-        }
+
+        CheckStatus(status, "in call to ADIOS2 BZIP2 Compress batch " + bStr);
 
         // record metadata info
         info["OriginalOffset_" + bStr] = std::to_string(sourceOffset);
@@ -168,11 +162,10 @@ size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
 
         int status = BZ2_bzBuffToBuffDecompress(dest, &destLen, source,
                                                 sourceLen, small, verbosity);
-        if (m_DebugMode)
-        {
-            CheckStatus(status, "in call to ADIOS2 BZIP2 Decompress\n");
-            // TODO verify size of decompressed buffer
-        }
+
+        CheckStatus(status, "in call to ADIOS2 BZIP2 Decompress\n");
+        // TODO verify size of decompressed buffer
+
         expectedSizeOut += static_cast<size_t>(destLen);
     }
 

@@ -34,24 +34,21 @@ BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode,
 StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER("BP3Reader::BeginStep");
-    if (m_DebugMode)
+    if (mode != StepMode::Read)
     {
-        if (mode != StepMode::Read)
-        {
-            throw std::invalid_argument(
-                "ERROR: mode is not supported yet, "
-                "only Read is valid for "
-                "engine BP3 with adios2::Mode::Read, in call to "
-                "BeginStep\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: mode is not supported yet, "
+            "only Read is valid for "
+            "engine BP3 with adios2::Mode::Read, in call to "
+            "BeginStep\n");
+    }
 
-        if (!m_BP3Deserializer.m_DeferredVariables.empty())
-        {
-            throw std::invalid_argument(
-                "ERROR: existing variables subscribed with "
-                "GetDeferred, did you forget to call "
-                "PerformGets() or EndStep()?, in call to BeginStep\n");
-        }
+    if (!m_BP3Deserializer.m_DeferredVariables.empty())
+    {
+        throw std::invalid_argument(
+            "ERROR: existing variables subscribed with "
+            "GetDeferred, did you forget to call "
+            "PerformGets() or EndStep()?, in call to BeginStep\n");
     }
 
     if (m_FirstStep)
@@ -123,14 +120,11 @@ void BP3Reader::PerformGets()
 // PRIVATE
 void BP3Reader::Init()
 {
-    if (m_DebugMode)
+    if (m_OpenMode != Mode::Read)
     {
-        if (m_OpenMode != Mode::Read)
-        {
-            throw std::invalid_argument(
-                "ERROR: BPFileReader only supports OpenMode::Read from" +
-                m_Name + " " + m_EndMessage);
-        }
+        throw std::invalid_argument(
+            "ERROR: BPFileReader only supports OpenMode::Read from" + m_Name +
+            " " + m_EndMessage);
     }
 
     InitTransports();
@@ -177,16 +171,13 @@ void BP3Reader::InitBuffer()
             m_BP3Deserializer.m_MetadataSet.MiniFooterSize;
         if (fileSize < miniFooterSize)
         {
-            if (m_DebugMode)
-            {
-                std::string err = "The size of the input file " + m_Name + "(" +
-                                  std::to_string(fileSize) +
-                                  " bytes) is less than the minimum BP3 header "
-                                  "size, which is " +
-                                  std::to_string(miniFooterSize) + " bytes." +
-                                  " It is unlikely that this is a .bp file.";
-                throw std::logic_error(err);
-            }
+            std::string err = "The size of the input file " + m_Name + "(" +
+                              std::to_string(fileSize) +
+                              " bytes) is less than the minimum BP3 header "
+                              "size, which is " +
+                              std::to_string(miniFooterSize) + " bytes." +
+                              " It is unlikely that this is a .bp file.";
+            throw std::logic_error(err);
         }
         const size_t miniFooterStart =
             helper::GetDistance(fileSize, miniFooterSize, m_DebugMode,

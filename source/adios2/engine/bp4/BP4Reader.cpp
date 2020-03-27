@@ -37,23 +37,20 @@ BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
 StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER("BP4Reader::BeginStep");
-    if (m_DebugMode)
+    if (mode != StepMode::Read)
     {
-        if (mode != StepMode::Read)
-        {
-            throw std::invalid_argument("ERROR: mode is not supported yet, "
-                                        "only Read is valid for "
-                                        "engine BP4Reader, in call to "
-                                        "BeginStep\n");
-        }
+        throw std::invalid_argument("ERROR: mode is not supported yet, "
+                                    "only Read is valid for "
+                                    "engine BP4Reader, in call to "
+                                    "BeginStep\n");
+    }
 
-        if (!m_BP4Deserializer.m_DeferredVariables.empty())
-        {
-            throw std::invalid_argument(
-                "ERROR: existing variables subscribed with "
-                "GetDeferred, did you forget to call "
-                "PerformGets() or EndStep()?, in call to BeginStep\n");
-        }
+    if (!m_BP4Deserializer.m_DeferredVariables.empty())
+    {
+        throw std::invalid_argument(
+            "ERROR: existing variables subscribed with "
+            "GetDeferred, did you forget to call "
+            "PerformGets() or EndStep()?, in call to BeginStep\n");
     }
 
     // used to inquire for variables in streaming mode
@@ -146,14 +143,11 @@ void BP4Reader::PerformGets()
 // PRIVATE
 void BP4Reader::Init()
 {
-    if (m_DebugMode)
+    if (m_OpenMode != Mode::Read)
     {
-        if (m_OpenMode != Mode::Read)
-        {
-            throw std::invalid_argument("ERROR: BPFileReader only "
-                                        "supports OpenMode::Read from" +
-                                        m_Name + " " + m_EndMessage);
-        }
+        throw std::invalid_argument("ERROR: BPFileReader only "
+                                    "supports OpenMode::Read from" +
+                                    m_Name + " " + m_EndMessage);
     }
 
     m_BP4Deserializer.Init(m_IO.m_Parameters, "in call to BP4::Open to write");

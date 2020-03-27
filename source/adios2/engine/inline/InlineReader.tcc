@@ -58,17 +58,13 @@ template <class T>
 inline typename Variable<T>::Info *
 InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 {
-    if (m_DebugMode)
+    InlineWriter &writer =
+        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
+    if (variable.m_BlockID >= variable.m_BlocksInfo.size())
     {
-        InlineWriter &writer =
-            dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
-        if (variable.m_BlockID >= variable.m_BlocksInfo.size())
-        {
-            throw std::invalid_argument(
-                "ERROR: selected BlockID " +
-                std::to_string(variable.m_BlockID) +
-                " is above range of available blocks in GetBlockSync\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: selected BlockID " + std::to_string(variable.m_BlockID) +
+            " is above range of available blocks in GetBlockSync\n");
     }
     if (m_Verbosity == 5)
     {

@@ -44,7 +44,7 @@ void BP3Writer::PutCommon(Variable<T> &variable,
             m_FileDataManager.GetTransportsTypes());
     }
 
-    if (m_DebugMode && resizeResult == format::BP3Base::ResizeResult::Flush)
+    if (resizeResult == format::BP3Base::ResizeResult::Flush)
     {
         throw std::invalid_argument(
             "ERROR: returning a Span can't trigger "

@@ -123,12 +123,9 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
             }
             else
             {
-                if (m_DebugMode)
-                {
-                    throw std::invalid_argument(
-                        "ERROR: ADIOS2 operator unknown SZ parameter szMode: " +
-                        it->second + "\n");
-                }
+                throw std::invalid_argument(
+                    "ERROR: ADIOS2 operator unknown SZ parameter szMode: " +
+                    it->second + "\n");
             }
             sz.szMode = szMode;
         }
@@ -161,13 +158,10 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
             }
             else
             {
-                if (m_DebugMode)
-                {
-                    throw std::invalid_argument("ERROR: ADIOS2 operator "
-                                                "unknown SZ parameter "
-                                                "errorBoundMode: " +
-                                                it->second + "\n");
-                }
+                throw std::invalid_argument("ERROR: ADIOS2 operator "
+                                            "unknown SZ parameter "
+                                            "errorBoundMode: " +
+                                            it->second + "\n");
             }
             sz.errorBoundMode = errorBoundMode;
         }
@@ -204,13 +198,10 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
             }
             else
             {
-                if (m_DebugMode)
-                {
-                    throw std::invalid_argument("ERROR: ADIOS2 operator "
-                                                "unknown SZ parameter "
-                                                "pwr_type: " +
-                                                it->second + "\n");
-                }
+                throw std::invalid_argument("ERROR: ADIOS2 operator "
+                                            "unknown SZ parameter "
+                                            "pwr_type: " +
+                                            it->second + "\n");
             }
             sz.pwr_type = pwr_type;
         }
@@ -266,13 +257,9 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     }
     else
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: ADIOS2 SZ Compression only support "
-                "double or float, type: " +
-                varType + " is unsupported\n");
-        }
+        throw std::invalid_argument("ERROR: ADIOS2 SZ Compression only support "
+                                    "double or float, type: " +
+                                    varType + " is unsupported\n");
     }
 
     // r[0] is the fastest changing dimension and r[4] is the lowest changing
