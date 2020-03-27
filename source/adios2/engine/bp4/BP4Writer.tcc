@@ -44,8 +44,7 @@ void BP4Writer::PutCommon(Variable<T> &variable,
             m_FileDataManager.GetTransportsTypes());
     }
 
-    if (m_DebugMode &&
-        resizeResult == format::BP4Serializer::ResizeResult::Flush)
+    if (resizeResult == format::BP4Serializer::ResizeResult::Flush)
     {
         throw std::invalid_argument(
             "ERROR: returning a Span can't trigger "

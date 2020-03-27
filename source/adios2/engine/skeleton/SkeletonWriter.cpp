@@ -122,14 +122,11 @@ void SkeletonWriter::InitParameters()
         if (key == "verbose")
         {
             m_Verbosity = std::stoi(value);
-            if (m_DebugMode)
-            {
-                if (m_Verbosity < 0 || m_Verbosity > 5)
-                    throw std::invalid_argument(
-                        "ERROR: Method verbose argument must be an "
-                        "integer in the range [0,5], in call to "
-                        "Open or Engine constructor\n");
-            }
+            if (m_Verbosity < 0 || m_Verbosity > 5)
+                throw std::invalid_argument(
+                    "ERROR: Method verbose argument must be an "
+                    "integer in the range [0,5], in call to "
+                    "Open or Engine constructor\n");
         }
     }
 }
