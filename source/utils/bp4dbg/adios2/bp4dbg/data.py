@@ -42,7 +42,6 @@ def ReadEncodedStringArray(f, ID, limit, nStrings):
     return True, s
 
 
-
 def readDataToNumpyArray(f, typeName, nElements):
     if typeName == 'byte':
         return np.fromfile(f, dtype=np.int8, count=nElements)
