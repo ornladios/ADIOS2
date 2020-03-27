@@ -110,6 +110,7 @@ typedef struct _Evpath_WS_Stream
     CManager cm;
     void *CP_Stream;
     int Rank;
+    pthread_mutex_t DataLock;
 
     TimestepList Timesteps;
     CMFormat ReadReplyFormat;
@@ -342,7 +343,7 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
     Evpath_WSR_Stream WSR_Stream = ReadRequestMsg->WS_Stream;
 
     Evpath_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
-    TimestepList tmp = WS_Stream->Timesteps;
+    TimestepList tmp;
     CP_Services Svcs = (CP_Services)client_Data;
     int RequestingRank = ReadRequestMsg->RequestingRank;
 
@@ -352,6 +353,8 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
                   "offset %d, length %d\n",
                   RequestingRank, ReadRequestMsg->Timestep,
                   ReadRequestMsg->Offset, ReadRequestMsg->Length);
+    pthread_mutex_lock(&WS_Stream->DataLock);
+    tmp = WS_Stream->Timesteps;
     while (tmp != NULL)
     {
         if (tmp->Timestep == ReadRequestMsg->Timestep)
@@ -374,7 +377,9 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
                 attr_list List = attr_list_from_string(
                     WSR_Stream->ReaderContactInfo[RequestingRank]
                         .ContactString);
+                pthread_mutex_unlock(&WS_Stream->DataLock);
                 CMConnection Conn = CMget_conn(cm, List);
+                pthread_mutex_lock(&WS_Stream->DataLock);
                 free_attr_list(List);
                 if (!Conn)
                 {
@@ -388,6 +393,7 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
                 }
                 WSR_Stream->ReaderContactInfo[RequestingRank].Conn = Conn;
             }
+            pthread_mutex_unlock(&WS_Stream->DataLock);
             CMwrite(WSR_Stream->ReaderContactInfo[RequestingRank].Conn,
                     WS_Stream->ReadReplyFormat, &ReadReplyMsg);
 
@@ -396,6 +402,7 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
         }
         tmp = tmp->Next;
     }
+    pthread_mutex_unlock(&WS_Stream->DataLock);
     /*
      * Shouldn't ever get here because we should never get a request for a
      * timestep that we don't have.
@@ -583,6 +590,8 @@ static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream,
     CMFormat F;
 
     memset(Stream, 0, sizeof(struct _Evpath_WS_Stream));
+
+    pthread_mutex_init(&Stream->DataLock, NULL);
 
     SMPI_Comm_rank(comm, &Stream->Rank);
 
@@ -925,6 +934,7 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     return ret;
 }
 
+// reader-side routine, called from the main program
 static int EvpathWaitForCompletion(CP_Services Svcs, void *Handle_v)
 {
     EvpathCompletionHandle Handle = (EvpathCompletionHandle)Handle_v;
@@ -961,6 +971,7 @@ static int EvpathWaitForCompletion(CP_Services Svcs, void *Handle_v)
     return Ret;
 }
 
+// reader-side routine, called from the network handler thread
 static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
                                     int FailedPeerRank)
 {
@@ -975,6 +986,7 @@ static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
 }
 
+// writer-side routine, called from the main program
 static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
                                            DP_WSR_Stream WSRStream_v,
                                            long Timestep,
@@ -983,7 +995,10 @@ static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
     Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)WSRStream_v;
     Evpath_WS_Stream WS_Stream =
         WSR_Stream->WS_Stream; /* pointer to writer struct */
-    TimestepList Entry = WS_Stream->Timesteps;
+    TimestepList Entry;
+
+    pthread_mutex_lock(&WS_Stream->DataLock);
+    Entry = WS_Stream->Timesteps;
 
     while (Entry)
     {
@@ -998,6 +1013,7 @@ static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
         fprintf(
             stderr,
             "Didn't find timestep in per reader register, shouldn't happen\n");
+        pthread_mutex_unlock(&WS_Stream->DataLock);
         return;
     }
     /* go ahead and record read patterns, just in case we need them */
@@ -1029,8 +1045,10 @@ static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
             WSR_Stream, Timestep);
         SendSpeculativePreloadMsgs(Svcs, WSR_Stream, Entry);
     }
+    pthread_mutex_unlock(&WS_Stream->DataLock);
 }
 
+// reader-side routine, called from the network handler thread
 static void EvpathRSTimestepArrived(CP_Services Svcs, DP_RS_Stream RS_Stream_v,
                                     long Timestep,
                                     SstPreloadModeType PreloadMode)
@@ -1043,6 +1061,7 @@ static void EvpathRSTimestepArrived(CP_Services Svcs, DP_RS_Stream RS_Stream_v,
         Timestep, PreloadMode);
 }
 
+// reader-side routine, called from either thread
 static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
                             TimestepList TS)
 {
@@ -1113,6 +1132,7 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
         WSR_Stream->WS_Stream; /* pointer to writer struct */
     TimestepList tmp;
 
+    pthread_mutex_lock(&WS_Stream->DataLock);
     tmp = WS_Stream->Timesteps;
     if ((!WSR_Stream->ReaderRequests) &&
         (Timestep >= WSR_Stream->ReadPatternLockTimestep))
@@ -1152,6 +1172,7 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
             WSR_Stream->ReaderRequests = NULL;
         }
     }
+    pthread_mutex_unlock(&WS_Stream->DataLock);
 }
 
 static void EvpathWSRReadPatternLocked(CP_Services Svcs,
@@ -1173,7 +1194,7 @@ static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                                   struct _SstData *LocalMetadata, long Timestep,
                                   void **TimestepInfoPtr)
 {
-    Evpath_WS_Stream Stream = (Evpath_WS_Stream)Stream_v;
+    Evpath_WS_Stream WS_Stream = (Evpath_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));
     // struct _EvpathPerTimestepInfo *Info = NULL;
     //        malloc(sizeof(struct _EvpathPerTimestepInfo));
@@ -1191,21 +1212,25 @@ static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     Entry->Data = *Data;
     Entry->Timestep = Timestep;
 
-    Entry->Next = Stream->Timesteps;
-    Stream->Timesteps = Entry;
+    pthread_mutex_lock(&WS_Stream->DataLock);
+    Entry->Next = WS_Stream->Timesteps;
+    WS_Stream->Timesteps = Entry;
+    pthread_mutex_unlock(&WS_Stream->DataLock);
     *TimestepInfoPtr = NULL;
 }
 
 static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                                   long Timestep)
 {
-    Evpath_WS_Stream Stream = (Evpath_WS_Stream)Stream_v;
-    TimestepList List = Stream->Timesteps;
+    Evpath_WS_Stream WS_Stream = (Evpath_WS_Stream)Stream_v;
+    TimestepList List;
 
-    Svcs->verbose(Stream->CP_Stream, "Releasing timestep %ld\n", Timestep);
-    if (Stream->Timesteps->Timestep == Timestep)
+    Svcs->verbose(WS_Stream->CP_Stream, "Releasing timestep %ld\n", Timestep);
+    pthread_mutex_lock(&WS_Stream->DataLock);
+    List = WS_Stream->Timesteps;
+    if (WS_Stream->Timesteps && (WS_Stream->Timesteps->Timestep == Timestep))
     {
-        Stream->Timesteps = List->Next;
+        WS_Stream->Timesteps = List->Next;
         if (List->DP_TimestepInfo && List->DP_TimestepInfo->CheckString)
             free(List->DP_TimestepInfo->CheckString);
         if (List->DP_TimestepInfo)
@@ -1252,6 +1277,7 @@ static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                 }
 
                 free(List);
+                pthread_mutex_unlock(&WS_Stream->DataLock);
                 return;
             }
             last = List;
@@ -1265,6 +1291,7 @@ static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                 Timestep);
         assert(0);
     }
+    pthread_mutex_unlock(&WS_Stream->DataLock);
 }
 
 static FMField EvpathReaderContactList[] = {
