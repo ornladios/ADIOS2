@@ -61,16 +61,14 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
     };
 
     const std::size_t ndims = dimensions.size();
-    if (m_DebugMode)
+
+    if (ndims != 3 && ndims != 2)
     {
-        if (ndims != 3 && ndims != 2)
-        {
-            throw std::invalid_argument(
-                "ERROR: image number of dimensions " + std::to_string(ndims) +
-                " is invalid, must be 2 {height,width*bytes_per_pixel} or 3"
-                " {height,width,bytes_per_pixel]} , in call to ADIOS2 PNG "
-                " compression\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: image number of dimensions " + std::to_string(ndims) +
+            " is invalid, must be 2 {height,width*bytes_per_pixel} or 3"
+            " {height,width,bytes_per_pixel]} , in call to ADIOS2 PNG "
+            " compression\n");
     }
 
     // defaults
@@ -88,30 +86,26 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
         {
             compressionLevel = static_cast<int>(helper::StringTo<int32_t>(
                 value, m_DebugMode, "when setting PNG level parameter\n"));
-            if (m_DebugMode)
+
+            if (compressionLevel < 1 || compressionLevel > 9)
             {
-                if (compressionLevel < 1 || compressionLevel > 9)
-                {
-                    throw std::invalid_argument(
-                        "ERROR: compression_level must be an "
-                        "integer between 1 (less "
-                        "compression, less memory) and 9 "
-                        "(more compression, more memory) inclusive, in call to "
-                        "ADIOS2 PNG Compress\n");
-                }
+                throw std::invalid_argument(
+                    "ERROR: compression_level must be an "
+                    "integer between 1 (less "
+                    "compression, less memory) and 9 "
+                    "(more compression, more memory) inclusive, in call to "
+                    "ADIOS2 PNG Compress\n");
             }
         }
         else if (key == "color_type")
         {
             auto itColorType = m_ColorTypes.find(value);
-            if (m_DebugMode)
+
+            if (itColorType == m_ColorTypes.end())
             {
-                if (itColorType == m_ColorTypes.end())
-                {
-                    throw std::invalid_argument(
-                        "ERROR: invalid color_type, see PNG_COLOR_TYPE_* for "
-                        "available types, in call to ADIOS2 PNG Compress\n");
-                }
+                throw std::invalid_argument(
+                    "ERROR: invalid color_type, see PNG_COLOR_TYPE_* for "
+                    "available types, in call to ADIOS2 PNG Compress\n");
             }
 
             colorTypeStr = itColorType->first;
@@ -124,17 +118,13 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
         }
     }
 
-    if (m_DebugMode)
+    if (m_BitDepths.at(colorTypeStr).count(static_cast<int32_t>(bitDepth)) == 0)
     {
-        if (m_BitDepths.at(colorTypeStr)
-                .count(static_cast<int32_t>(bitDepth)) == 0)
-        {
-            throw std::invalid_argument(
-                "ERROR: bit_depth " + std::to_string(bitDepth) +
-                " and color_type " + colorTypeStr +
-                " combination is not allowed by libpng, in call to ADIOS2 PNG "
-                "compression\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: bit_depth " + std::to_string(bitDepth) +
+            " and color_type " + colorTypeStr +
+            " combination is not allowed by libpng, in call to ADIOS2 PNG "
+            "compression\n");
     }
 
     png_structp pngWrite = png_create_write_struct(PNG_LIBPNG_VER_STRING,
@@ -151,7 +141,7 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
                  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
                  PNG_FILTER_TYPE_DEFAULT);
 
-    if (m_DebugMode && setjmp(png_jmpbuf(pngWrite)))
+    if (setjmp(png_jmpbuf(pngWrite)))
     {
         throw std::invalid_argument(
             "ERROR: libpng detected an error in ADIOS2 PNG Compress\n");
@@ -191,7 +181,7 @@ size_t CompressPNG::Decompress(const void *bufferIn, const size_t sizeIn,
 
     int result = png_image_begin_read_from_memory(&image, bufferIn, sizeIn);
 
-    if (m_DebugMode && result == 0)
+    if (result == 0)
     {
         throw std::runtime_error(
             "ERROR: png_image_begin_read_from_memory failed in call "
@@ -200,7 +190,7 @@ size_t CompressPNG::Decompress(const void *bufferIn, const size_t sizeIn,
 
     // TODO might be needed from parameters?
     result = png_image_finish_read(&image, nullptr, dataOut, 0, nullptr);
-    if (m_DebugMode && result == 0)
+    if (result == 0)
     {
         throw std::runtime_error(
             "ERROR: png_image_finish_read_from_memory failed in call "

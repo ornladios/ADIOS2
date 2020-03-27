@@ -34,14 +34,11 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
                                Params &info) const
 {
     const size_t ndims = dimensions.size();
-    if (m_DebugMode)
+
+    if (ndims > 3)
     {
-        if (ndims > 3)
-        {
-            throw std::invalid_argument(
-                "ERROR: ADIOS2 MGARD compression: no more "
-                "than 3-dimensions is supported.\n");
-        }
+        throw std::invalid_argument("ERROR: ADIOS2 MGARD compression: no more "
+                                    "than 3-dimensions is supported.\n");
     }
 
     // set type
@@ -52,12 +49,9 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
     }
     else
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: ADIOS2 operator "
-                "MGARD only supports double precision, in call to Put\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: ADIOS2 operator "
+            "MGARD only supports double precision, in call to Put\n");
     }
 
     int r[3];
@@ -124,12 +118,9 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
     }
     else
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: ADIOS2 operator "
-                "MGARD only supports double precision, in call to Get\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: ADIOS2 operator "
+            "MGARD only supports double precision, in call to Get\n");
     }
 
     const size_t ndims = dimensions.size();
