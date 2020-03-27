@@ -21,7 +21,6 @@
 #include "cp_internal.h"
 
 #define gettid() pthread_self()
-#define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define STREAM_MUTEX_LOCK(Stream)                                              \
     {                                                                          \
@@ -241,16 +240,31 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
 
     if (Stream->Status == Established)
     {
-        /*
-         * tag our reader instance as failed.
-         * If any instance is failed, we should remove all, but that requires a
-         * global operation, so prep.
-         */
-        CP_verbose(Stream, "Reader-side Rank received a "
-                           "connection-close event during normal "
-                           "operations, peer likely failed\n");
-        Stream->Status = PeerFailed;
-        STREAM_CONDITION_SIGNAL(Stream);
+        if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommMin) &&
+            (Stream->Rank != 0))
+        {
+            CP_verbose(Stream, "Reader-side Rank received a "
+                               "connection-close event during normal "
+                               "operations, but might be part of shutdown  "
+                               "Don't change stream status.\n");
+            /* if this happens and *is* a failure, we'll get the status from
+             * rank 0 later */
+        }
+        else
+        {
+            /*
+             * tag our reader instance as failed, IFF this came from someone we
+             * should have gotten a CLOSE from. I.E. a reverse peer
+             */
+            CP_verbose(Stream, "Reader-side Rank received a "
+                               "connection-close event during normal "
+                               "operations, peer likely failed\n");
+            if (FailedPeerRank == Stream->FailureContactRank)
+            {
+                Stream->Status = PeerFailed;
+                STREAM_CONDITION_SIGNAL(Stream);
+            }
+        }
         CP_verbose(
             Stream,
             "The close was for connection to writer peer %d, notifying DP\n",
@@ -730,6 +744,7 @@ extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
     {
         Stream->ConnectionsToWriter[Msg->WriterRank].CMconn = conn;
         CMConnection_add_reference(conn);
+        Stream->FailureContactRank == Msg->WriterRank;
     }
     CMconn_register_close_handler(conn, ReaderConnCloseHandler, (void *)Stream);
     STREAM_CONDITION_SIGNAL(Stream);
