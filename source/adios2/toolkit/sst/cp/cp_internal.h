@@ -201,6 +201,7 @@ struct _SstStream
     long DiscardPriorTimestep; /* timesteps numerically less than this will be
                                   discarded with prejudice */
     long LastDPNotifiedTimestep;
+    int FailureContactRank;
 
     /* reader side marshal info */
     FFSContext ReaderFFSContext;
