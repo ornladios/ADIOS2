@@ -22,8 +22,6 @@
 #define gettid() pthread_self()
 extern void CP_verbose(SstStream Stream, char *Format, ...);
 
-static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
-                                    void **WS_StreamPtr);
 static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                                      enum StreamStatus NewState);
 
@@ -255,7 +253,6 @@ static void RemoveQueueEntries(SstStream Stream)
     int AnythingRemoved = 0;
     CPTimestepList List = Stream->QueuedTimesteps;
     CPTimestepList Last = NULL;
-    CPTimestepList Prev = NULL;
 
     while (List)
     {
@@ -730,7 +727,7 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
 
 static void UntagPreciousTimesteps(SstStream Stream)
 {
-    CPTimestepList Last = NULL, List;
+    CPTimestepList List;
     STREAM_ASSERT_LOCKED(Stream);
     List = Stream->QueuedTimesteps;
     while (List)
@@ -749,8 +746,7 @@ static void UntagPreciousTimesteps(SstStream Stream)
 
 static void SubRefTimestep(SstStream Stream, long Timestep, int SetLast)
 {
-    CPTimestepList Last = NULL, List;
-    int AnythingRemoved = 0;
+    CPTimestepList List;
     List = Stream->QueuedTimesteps;
     STREAM_ASSERT_LOCKED(Stream);
     while (List)
@@ -1308,7 +1304,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         }
         SMPI_Barrier(Stream->mpiComm);
 
-        struct timeval Start, Stop, Diff;
+        struct timeval Start;
         gettimeofday(&Start, NULL);
         reader = WriterParticipateInReaderOpen(Stream);
         if (!reader)
@@ -1979,13 +1975,10 @@ extern void SstInternalProvideTimestep(
     void *data_block1, *data_block2;
     MetadataPlusDPInfo *pointers;
     ReturnMetadataInfo ReturnData;
-    struct _ReturnMetadataInfo TimestepMetaData;
     struct _TimestepMetadataMsg *Msg = malloc(sizeof(*Msg));
     void *DP_TimestepInfo = NULL;
     struct _MetadataPlusDPInfo Md;
     CPTimestepList Entry = calloc(1, sizeof(struct _CPTimestepEntry));
-    int GlobalOpRequested = 0;
-    int GlobalOpRequired = 0;
     int PendingReaderCount = 0;
 
     memset(Msg, 0, sizeof(*Msg));
@@ -2373,7 +2366,6 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
     struct _ReleaseTimestepMsg *Msg = (struct _ReleaseTimestepMsg *)Msg_v;
     WS_ReaderInfo Reader = (WS_ReaderInfo)Msg->WSR_Stream;
     SstStream ParentStream = Reader->ParentStream;
-    CPTimestepList Entry = NULL;
     int ReaderNum = -1;
 
     for (int i = 0; i < ParentStream->ReaderCount; i++)
@@ -2422,7 +2414,6 @@ extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
     struct _ReleaseTimestepMsg *Msg = (struct _ReleaseTimestepMsg *)Msg_v;
     WS_ReaderInfo Reader = (WS_ReaderInfo)Msg->WSR_Stream;
     SstStream ParentStream = Reader->ParentStream;
-    CPTimestepList Entry = NULL;
     int ReaderNum = -1;
 
     for (int i = 0; i < ParentStream->ReaderCount; i++)

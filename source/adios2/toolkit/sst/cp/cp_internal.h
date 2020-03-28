@@ -59,8 +59,7 @@ enum StreamStatus
     Destroyed
 };
 
-static char *SSTStreamStatusStr[] = {"NotOpen",    "Opening",    "Established",
-                                     "PeerClosed", "PeerFailed", "Closed"};
+extern char *SSTStreamStatusStr[];
 
 struct _SentTimestepRec
 {

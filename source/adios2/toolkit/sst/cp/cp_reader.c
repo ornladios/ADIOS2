@@ -744,7 +744,7 @@ extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
     {
         Stream->ConnectionsToWriter[Msg->WriterRank].CMconn = conn;
         CMConnection_add_reference(conn);
-        Stream->FailureContactRank == Msg->WriterRank;
+        Stream->FailureContactRank = Msg->WriterRank;
     }
     CMconn_register_close_handler(conn, ReaderConnCloseHandler, (void *)Stream);
     STREAM_CONDITION_SIGNAL(Stream);
