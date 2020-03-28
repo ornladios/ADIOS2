@@ -27,7 +27,7 @@ ShmSystemV::ShmSystemV(const unsigned int projectID, const size_t size,
 : Transport("Shm", "SystemV", comm, debugMode), m_ProjectID(projectID),
   m_Size(size), m_RemoveAtClose(removeAtClose)
 {
-    if (m_DebugMode && projectID == 0)
+    if (projectID == 0)
     {
         throw std::invalid_argument(
             "ERROR: projectID can't be zero, in shared memory segment\n");
@@ -171,7 +171,7 @@ void ShmSystemV::CheckBuffer(const std::string hint) const
 void ShmSystemV::CheckSizes(const size_t start, const size_t size,
                             const std::string hint) const
 {
-    if (m_DebugMode && start + size > m_Size)
+    if (start + size > m_Size)
     {
         throw std::invalid_argument(
             "ERROR: final position (start + size) = (" + std::to_string(start) +

@@ -46,35 +46,32 @@ size_t VariableBase::TotalSize() const noexcept
 
 void VariableBase::SetShape(const adios2::Dims &shape)
 {
-    if (m_DebugMode)
+    if (m_Type == helper::GetType<std::string>())
     {
-        if (m_Type == helper::GetType<std::string>())
-        {
-            throw std::invalid_argument("ERROR: string variable " + m_Name +
-                                        " is always LocalValue, can't change "
-                                        "shape, in call to SetShape\n");
-        }
+        throw std::invalid_argument("ERROR: string variable " + m_Name +
+                                    " is always LocalValue, can't change "
+                                    "shape, in call to SetShape\n");
+    }
 
-        if (m_SingleValue)
-        {
-            throw std::invalid_argument(
-                "ERROR: selection is not valid for single value variable " +
-                m_Name + ", in call to SetShape\n");
-        }
+    if (m_SingleValue)
+    {
+        throw std::invalid_argument(
+            "ERROR: selection is not valid for single value variable " +
+            m_Name + ", in call to SetShape\n");
+    }
 
-        if (m_ConstantDims)
-        {
-            throw std::invalid_argument(
-                "ERROR: selection is not valid for constant shape variable " +
-                m_Name + ", in call to SetShape\n");
-        }
+    if (m_ConstantDims)
+    {
+        throw std::invalid_argument(
+            "ERROR: selection is not valid for constant shape variable " +
+            m_Name + ", in call to SetShape\n");
+    }
 
-        if (m_ShapeID == ShapeID::LocalArray)
-        {
-            throw std::invalid_argument("ERROR: can't assign shape dimensions "
-                                        "to local array variable " +
-                                        m_Name + ", in call to SetShape\n");
-        }
+    if (m_ShapeID == ShapeID::LocalArray)
+    {
+        throw std::invalid_argument("ERROR: can't assign shape dimensions "
+                                    "to local array variable " +
+                                    m_Name + ", in call to SetShape\n");
     }
 
     m_Shape = shape;

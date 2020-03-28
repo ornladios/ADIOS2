@@ -98,18 +98,14 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
         const std::vector<typename core::Variable<T>::Info> blocksInfo =
             BlocksInfo(variable, stepsStart);
 
-        if (m_DebugMode)
+        if (variable.m_BlockID >= blocksInfo.size())
         {
-            if (variable.m_BlockID >= blocksInfo.size())
-            {
-                throw std::invalid_argument(
-                    "ERROR: invalid blockID " +
-                    std::to_string(variable.m_BlockID) + " from steps start " +
-                    std::to_string(stepsStart) + " in variable " +
-                    variable.m_Name +
-                    ", check argument to Variable<T>::SetBlockID, in call "
-                    "to Get\n");
-            }
+            throw std::invalid_argument(
+                "ERROR: invalid blockID " + std::to_string(variable.m_BlockID) +
+                " from steps start " + std::to_string(stepsStart) +
+                " in variable " + variable.m_Name +
+                ", check argument to Variable<T>::SetBlockID, in call "
+                "to Get\n");
         }
 
         // switch to bounding box for global array
@@ -448,19 +444,16 @@ void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
                                        ? variable.m_Count.front()
                                        : 1;
 
-        if (m_DebugMode)
+        if (blocksStart + blocksCount > positions.size())
         {
-            if (blocksStart + blocksCount > positions.size())
-            {
-                throw std::invalid_argument(
-                    "ERROR: selection Start {" + std::to_string(blocksStart) +
-                    "} and Count {" + std::to_string(blocksCount) +
-                    "} (requested) is out of bounds of (available) Shape {" +
-                    std::to_string(positions.size()) + "} for relative step " +
-                    std::to_string(s) +
-                    " , when reading 1D global array variable " +
-                    variable.m_Name + ", in call to Get");
-            }
+            throw std::invalid_argument(
+                "ERROR: selection Start {" + std::to_string(blocksStart) +
+                "} and Count {" + std::to_string(blocksCount) +
+                "} (requested) is out of bounds of (available) Shape {" +
+                std::to_string(positions.size()) + "} for relative step " +
+                std::to_string(s) +
+                " , when reading 1D global array variable " + variable.m_Name +
+                ", in call to Get");
         }
 
         for (size_t b = blocksStart; b < blocksStart + blocksCount; ++b)
