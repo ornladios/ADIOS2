@@ -13,6 +13,9 @@
 
 #include "cp_internal.h"
 
+char *SSTStreamStatusStr[] = {"NotOpen",    "Opening",    "Established",
+                              "PeerClosed", "PeerFailed", "Closed"};
+
 void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 {
     if (Params->RendezvousReaderCount >= 0)

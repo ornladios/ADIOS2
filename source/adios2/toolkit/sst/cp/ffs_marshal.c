@@ -499,7 +499,7 @@ extern void FFSFreeMarshalData(SstStream Stream)
 }
 
 #if !defined(ADIOS2_HAVE_ZFP)
-#define ZFPcompressionPossible(Type, DimCount) 0
+#define ZFPcompressionPossible(Type, DimCount) ((void)Type, 0)
 #endif
 
 static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
@@ -987,6 +987,7 @@ static SstStatusValue WaitForReadRequests(SstStream Stream)
     return SstSuccess;
 }
 
+#ifdef NOTUSED
 static void MapLocalToGlobalIndex(size_t Dims, const size_t *LocalIndex,
                                   const size_t *LocalOffsets,
                                   size_t *GlobalIndex)
@@ -996,6 +997,7 @@ static void MapLocalToGlobalIndex(size_t Dims, const size_t *LocalIndex,
         GlobalIndex[i] = LocalIndex[i] + LocalOffsets[i];
     }
 }
+#endif
 
 static void MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex,
                                   const size_t *LocalOffsets,
@@ -1352,7 +1354,6 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 size_t *SelSize = Reqs->Count;
                 char *Type = Reqs->VarRec->Type;
                 void *IncomingData = Reqs->VarRec->PerWriterIncomingData[i];
-                size_t IncomingSize = Reqs->VarRec->PerWriterIncomingSize[i];
                 int FreeIncoming = 0;
 
                 if (Reqs->RequestType == Local)
@@ -1381,6 +1382,8 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                      * replace old IncomingData with uncompressed, and free
                      * afterwards
                      */
+                    size_t IncomingSize =
+                        Reqs->VarRec->PerWriterIncomingSize[i];
                     FreeIncoming = 1;
                     IncomingData =
                         FFS_ZFPDecompress(Stream, DimCount, Type, IncomingData,
@@ -1672,7 +1675,6 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
         FormatList = format_list_of_FMFormat(FMFormat_of_original(FFSformat));
         FieldList = FormatList[0].field_list;
         int i = 0;
-        int j = 0;
         while (FieldList[i].field_name)
         {
             char *FieldName;
@@ -2019,7 +2021,6 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
                           const size_t *Offsets, const void *Data)
 {
 
-    struct FFSWriterMarshalBase *Info;
     struct FFSMetadataInfoStruct *MBase;
 
     FFSWriterRec Rec = LookupWriterRec(Stream, Variable);
@@ -2027,7 +2028,6 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
     {
         Rec = CreateWriterRec(Stream, Variable, Name, Type, ElemSize, DimCount);
     }
-    Info = (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
 
     MBase = Stream->M;
     FFSBitfieldSet(MBase, Rec->FieldID);
