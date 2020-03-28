@@ -77,16 +77,13 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL,
         const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
         m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
 #ifndef ADIOS2_HAVE_ENDIAN_REVERSE
-        if (m_DebugMode)
+        if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
         {
-            if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
-            {
-                throw std::runtime_error(
-                    "ERROR: reader found BigEndian bp file, "
-                    "this version of ADIOS2 wasn't compiled "
-                    "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
-                    "explicitly, in call to Open\n");
-            }
+            throw std::runtime_error(
+                "ERROR: reader found BigEndian bp file, "
+                "this version of ADIOS2 wasn't compiled "
+                "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
+                "explicitly, in call to Open\n");
         }
 #endif
 

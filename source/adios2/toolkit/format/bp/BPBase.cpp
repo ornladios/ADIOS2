@@ -107,8 +107,8 @@ void BPBase::Init(const Params &parameters, const std::string hint,
                 value, m_DebugMode,
                 "for Parameter key=InitialBufferSize, in call to Open");
 
-            if (m_DebugMode && parsedParameters.InitialBufferSize <
-                                   DefaultInitialBufferSize) // 16384b
+            if (parsedParameters.InitialBufferSize <
+                DefaultInitialBufferSize) // 16384b
             {
                 throw std::invalid_argument(
                     "ERROR: wrong value for Parameter key=InitialBufferSize, "
@@ -139,7 +139,7 @@ void BPBase::Init(const Params &parameters, const std::string hint,
                 static_cast<unsigned int>(helper::StringTo<uint32_t>(
                     value, m_DebugMode,
                     " in Parameter key=StatsLevel " + hint));
-            if (m_DebugMode && parsedParameters.StatsLevel > 5)
+            if (parsedParameters.StatsLevel > 5)
             {
                 throw std::invalid_argument(
                     "ERROR: value for Parameter key=StatsLevel must be "

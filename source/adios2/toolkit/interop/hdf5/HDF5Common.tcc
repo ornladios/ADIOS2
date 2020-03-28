@@ -154,11 +154,8 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
 
     if (status < 0)
     {
-        if (m_DebugMode)
-        {
-            throw std::ios_base::failure(
-                "ERROR: HDF5 file Write failed, in call to Write\n");
-        }
+        throw std::ios_base::failure(
+            "ERROR: HDF5 file Write failed, in call to Write\n");
     }
 
     size_t valuesSize = adios2::helper::GetTotalSize(variable.m_Count);

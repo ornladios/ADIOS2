@@ -329,11 +329,8 @@ TransportMan::OpenFileTransport(const std::string &fileName,
         }
         else
         {
-            if (m_DebugMode)
-            {
-                throw std::invalid_argument(
-                    "ERROR: invalid IO AddTransport library " + library);
-            }
+            throw std::invalid_argument(
+                "ERROR: invalid IO AddTransport library " + library);
         }
     };
 
@@ -383,20 +380,16 @@ void TransportMan::CheckFile(
         itTransport,
     const std::string hint) const
 {
-    if (m_DebugMode)
+    if (itTransport == m_Transports.end())
     {
-        if (itTransport == m_Transports.end())
-        {
-            throw std::invalid_argument("ERROR: invalid transport " + hint +
-                                        "\n");
-        }
+        throw std::invalid_argument("ERROR: invalid transport " + hint + "\n");
+    }
 
-        if (itTransport->second->m_Type != "File")
-        {
-            throw std::invalid_argument("ERROR: invalid type " +
-                                        itTransport->second->m_Library +
-                                        ", must be file " + hint + "\n");
-        }
+    if (itTransport->second->m_Type != "File")
+    {
+        throw std::invalid_argument("ERROR: invalid type " +
+                                    itTransport->second->m_Library +
+                                    ", must be file " + hint + "\n");
     }
 }
 

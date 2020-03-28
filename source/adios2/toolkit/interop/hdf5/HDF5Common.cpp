@@ -165,14 +165,11 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm,
             m_GroupId = H5Gcreate2(m_FileId, ts0.c_str(), H5P_DEFAULT,
                                    H5P_DEFAULT, H5P_DEFAULT);
 
-            if (m_DebugMode)
+            if (m_GroupId < 0)
             {
-                if (m_GroupId < 0)
-                {
-                    throw std::ios_base::failure(
-                        "ERROR: Unable to create HDF5 group " + ts0 +
-                        " in call to Open\n");
-                }
+                throw std::ios_base::failure(
+                    "ERROR: Unable to create HDF5 group " + ts0 +
+                    " in call to Open\n");
             }
         }
     }
@@ -197,11 +194,8 @@ void HDF5Common::WriteAdiosSteps()
 {
     if (m_FileId < 0)
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument("ERROR: invalid HDF5 file to record "
-                                        "steps, in call to Write\n");
-        }
+        throw std::invalid_argument("ERROR: invalid HDF5 file to record "
+                                    "steps, in call to Write\n");
     }
 
     if (!m_WriteMode)
@@ -235,11 +229,8 @@ unsigned int HDF5Common::GetNumAdiosSteps()
 
     if (m_FileId < 0)
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: invalid HDF5 file to read step attribute.\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: invalid HDF5 file to read step attribute.\n");
     }
 
     if (!m_IsGeneratedByAdios)
@@ -702,13 +693,10 @@ void HDF5Common::CheckWriteGroup()
     m_GroupId = H5Gcreate2(m_FileId, stepName.c_str(), H5P_DEFAULT, H5P_DEFAULT,
                            H5P_DEFAULT);
 
-    if (m_DebugMode)
+    if (m_GroupId < 0)
     {
-        if (m_GroupId < 0)
-        {
-            throw std::ios_base::failure(
-                "ERROR: HDF5: Unable to create group " + stepName);
-        }
+        throw std::ios_base::failure("ERROR: HDF5: Unable to create group " +
+                                     stepName);
     }
 }
 

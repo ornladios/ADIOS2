@@ -77,22 +77,16 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
 
 void Transport::SetBuffer(char * /*buffer*/, size_t /*size*/)
 {
-    if (m_DebugMode)
-    {
-        std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type +
-                              " using library " + m_Library +
-                              " doesn't implement the SetBuffer function\n");
-    }
+    std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type +
+                          " using library " + m_Library +
+                          " doesn't implement the SetBuffer function\n");
 }
 
 void Transport::Flush()
 {
-    if (m_DebugMode)
-    {
-        std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type +
-                              " using library " + m_Library +
-                              " doesn't implement the Flush function\n");
-    }
+    std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type +
+                          " using library " + m_Library +
+                          " doesn't implement the Flush function\n");
 }
 
 size_t Transport::GetSize() { return 0; }
@@ -115,7 +109,7 @@ void Transport::ProfilerStop(const std::string process) noexcept
 
 void Transport::CheckName() const
 {
-    if (m_DebugMode && m_Name.empty())
+    if (m_Name.empty())
     {
         throw std::invalid_argument("ERROR: name can't be empty for " +
                                     m_Library + " transport \n");
