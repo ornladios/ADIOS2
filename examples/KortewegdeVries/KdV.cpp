@@ -129,8 +129,8 @@ void KdV(int64_t N, Real dt, Real t_max, Real delta = 0.022)
         if (std::abs(p) > std::sqrt(std::numeric_limits<Real>::epsilon()) ||
             std::isnan(p))
         {
-            std::cout << "Solution diverged at t = " << (j + 1) * dt << "\n";
-            std::cout << "Momentum = " << p << "\n";
+            std::cerr << "\nSolution diverged at t = " << (j + 1) * dt << "\n";
+            std::cerr << "Momentum = " << p << "\n";
             return;
         }
         // The stability condition is very severe this iteration: We have to
@@ -179,5 +179,5 @@ int main(int argc, char **argv)
 
     double dx = 1.0 / N;
     double dt = 27 * dx * dx * dx / 4;
-    KdV<double>(N, dt, t_max);
+    KdV<double>(N, dt, t_max, delta);
 }
