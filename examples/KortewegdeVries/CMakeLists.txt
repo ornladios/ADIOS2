@@ -3,16 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(basics)
-add_subdirectory(hello)
-add_subdirectory(query)
-add_subdirectory(useCases)
-add_subdirectory(KortewegdeVries)
+add_executable(KdV KdV.cpp)
+target_link_libraries(KdV adios2)
 
-if(ADIOS2_HAVE_MPI)
-  add_subdirectory(heatTransfer)
-endif()
-
-if(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL)
-  add_subdirectory(experimental)
-endif()
