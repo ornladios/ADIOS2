@@ -17,7 +17,10 @@ case "$SYSTEM_JOBNAME" in
 esac
 
 echo "Installing CMake Nightly"
-curl -L https://cmake.org/files/dev/cmake-3.16.20191218-g8262562-Darwin-x86_64.tar.gz | sudo tar -C /Applications --strip-components=1 -xzv
+curl -L https://cmake.org/files/dev/cmake-3.16.20191218-g8262562-Darwin-x86_64.tar.gz | sudo tar -C /Applications --strip-components=1 -xz
+
+echo "Removing all existing brew packages"
+brew remove --force $(brew list)
 
 echo "Installing Kitware Ninja"
 brew install ninja

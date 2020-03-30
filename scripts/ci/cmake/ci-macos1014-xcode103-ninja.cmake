@@ -6,6 +6,7 @@ set(ENV{FC}  gfortran)
 set(dashboard_cache "
 ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_MPI:BOOL=OFF
+ADIOS2_USE_Python:BOOL=ON
 ")
 
 set(ENV{MACOSX_DEPLOYMENT_TARGET} "10.14")
