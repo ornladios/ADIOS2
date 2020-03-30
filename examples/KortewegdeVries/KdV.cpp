@@ -15,7 +15,7 @@ void display_progress(double progress)
   int barWidth = 70;
   
   std::cout << "\033[0;32m[";
-  int pos = barWidth * progress;
+  int pos = static_cast<int>(barWidth * progress);
   for (int i = 0; i < barWidth; ++i) {
     if (i < pos) std::cout << "=";
     else if (i == pos) std::cout << ">";
@@ -32,7 +32,7 @@ void display_progress(double progress)
 template<typename Real>
 Real momentum(std::vector<Real> const & u) {
     Real p = 0;
-    for (int64_t i = 0; i < u.size(); ++i) {
+    for (size_t i = 0; i < u.size(); ++i) {
         p += u[i];
     }
     return p;
@@ -56,7 +56,7 @@ void KdV(int64_t N, Real dt, Real t_max, Real delta = 0.022) {
 
     Real dx = Real(2)/(N);
 
-    int64_t M = std::ceil(t_max/dt);
+    int64_t M = static_cast<int64_t>(std::ceil(t_max/dt));
     std::cout << "Solving the initial value problem for the KdV equation ∂tu + u∂ₓu + δ²∂ₓ³u = 0 using δ = " << delta  << ".\n";
     std::cout << "Initial conditions: u(x,0) = cos(πx) for xϵ[0,2].\n";
     std::cout << "Using ∆x = " << dx << ", ∆t = " << dt << " and t_max = " << t_max << "\n";
