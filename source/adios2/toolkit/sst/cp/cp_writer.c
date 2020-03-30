@@ -26,7 +26,6 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                                      enum StreamStatus NewState);
 
 #define gettid() pthread_self()
-#define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define STREAM_MUTEX_LOCK(Stream)                                              \
     printf("(PID %lx, TID %lx) CP_WRITER Trying lock line %d\n",               \
@@ -437,14 +436,15 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
     WS_ReaderInfo WSreader = (WS_ReaderInfo)client_data;
     SstStream ParentWriterStream = WSreader->ParentStream;
 
+    STREAM_MUTEX_LOCK(ParentWriterStream);
     if (ParentWriterStream->Status == Destroyed)
     {
         CP_verbose(ParentWriterStream,
                    "Writer-side Rank received a "
                    "connection-close event on destroyed stream %p, ignored\n");
+        STREAM_MUTEX_UNLOCK(ParentWriterStream);
         return;
     }
-    STREAM_MUTEX_LOCK(ParentWriterStream);
     if (WSreader->ReaderStatus == Established)
     {
         /*
@@ -485,6 +485,9 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
                    "connection-close event in unexpected "
                    "state %s\n",
                    SSTStreamStatusStr[WSreader->ReaderStatus]);
+        STREAM_MUTEX_UNLOCK(ParentWriterStream);
+        TAU_STOP_FUNC();
+        return;
     }
     QueueMaintenance(ParentWriterStream);
     STREAM_MUTEX_UNLOCK(ParentWriterStream);
@@ -2286,15 +2289,18 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     struct _ReaderCloseMsg *Msg = (struct _ReaderCloseMsg *)Msg_v;
 
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
+    STREAM_MUTEX_LOCK(CP_WSR_Stream->ParentStream);
     if ((CP_WSR_Stream->ParentStream == NULL) ||
         (CP_WSR_Stream->ParentStream->Status != Established))
+    {
+        STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
         return;
+    }
 
     CP_verbose(CP_WSR_Stream->ParentStream,
                "Reader Close message received for stream %p.  Setting state to "
                "PeerClosed and releasing timesteps.\n",
                CP_WSR_Stream);
-    STREAM_MUTEX_LOCK(CP_WSR_Stream->ParentStream);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
     STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
     TAU_STOP_FUNC();
