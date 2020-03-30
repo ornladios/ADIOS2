@@ -997,10 +997,11 @@ extern void SstStreamDestroy(SstStream Stream)
      * StackStream is only used to access verbosity info
      * in a safe way after all streams have been destroyed
      */
-    struct _SstStream StackStream = *Stream;
+    struct _SstStream StackStream;
+    pthread_mutex_lock(&Stream->DataLock);
     CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
                Stream->Filename);
-    pthread_mutex_lock(&Stream->DataLock);
+    StackStream = *Stream;
     Stream->Status = Destroyed;
     struct _TimestepMetadataList *Next = Stream->Timesteps;
     while (Next)
