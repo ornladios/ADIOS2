@@ -6,6 +6,9 @@ if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
+set(ADIOS2_HAVE_Fortran @ADIOS2_HAVE_Fortran@)
+set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
+
 include(CMakeFindDependencyMacro)
 
 if(NOT @BUILD_SHARED_LIBS@)
@@ -15,9 +18,6 @@ if(NOT @BUILD_SHARED_LIBS@)
   enable_language(CXX)
 endif()
 
-set(ADIOS2_HAVE_Fortran @ADIOS2_HAVE_Fortran@)
-
-set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
 if(ADIOS2_HAVE_MPI)
   find_dependency(MPI)
 endif()
