@@ -49,6 +49,8 @@ cmake --version
 which ctest
 ${CTEST} --version
 export FI_PROVIDER=tcp
+echo ${CTEST} -VV -N
+${CTEST} -VV -N
 echo ${CTEST} -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF ${CTEST_STEP_ARGS}
 ${CTEST} -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF ${CTEST_STEP_ARGS}
 RET=$?
