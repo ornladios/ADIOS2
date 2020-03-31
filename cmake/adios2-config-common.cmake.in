@@ -2,12 +2,44 @@ if(POLICY CMP0028)
   cmake_policy(SET CMP0028 NEW)
 endif()
 
+if(POLICY CMP0057)
+  cmake_policy(SET CMP0057 NEW)
+endif()
+
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
 set(ADIOS2_HAVE_Fortran @ADIOS2_HAVE_Fortran@)
 set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
+
+# Add default find components.
+set(_ADIOS2_FIND_COMPONENTS_DEFAULT "")
+if(NOT ";${${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS};" MATCHES ";(C|CXX|Fortran);")
+  # No language components were requested.  Add enabled languages by default.
+  foreach(lang C CXX Fortran)
+    if(CMAKE_${lang}_COMPILER_LOADED)
+      list(APPEND _ADIOS2_FIND_COMPONENTS_DEFAULT "${lang}")
+    endif()
+  endforeach()
+endif()
+if(NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS)
+  # No components were requested.  Add MPI by default if available.
+  if(ADIOS2_HAVE_MPI)
+    list(APPEND _ADIOS2_FIND_COMPONENTS_DEFAULT "MPI")
+  endif()
+endif()
+list(APPEND ${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS ${_ADIOS2_FIND_COMPONENTS_DEFAULT})
+unset(_ADIOS2_FIND_COMPONENTS_DEFAULT)
+
+# Language components require the corresponding language to be enabled.
+set(${CMAKE_FIND_PACKAGE_NAME}_C_FOUND ${CMAKE_C_COMPILER_LOADED})
+set(${CMAKE_FIND_PACKAGE_NAME}_CXX_FOUND ${CMAKE_CXX_COMPILER_LOADED})
+if(ADIOS2_HAVE_Fortran)
+  set(${CMAKE_FIND_PACKAGE_NAME}_Fortran_FOUND ${CMAKE_Fortran_COMPILER_LOADED})
+else()
+  set(${CMAKE_FIND_PACKAGE_NAME}_Fortran_FOUND FALSE)
+endif()
 
 include(CMakeFindDependencyMacro)
 
@@ -18,8 +50,11 @@ if(NOT @BUILD_SHARED_LIBS@)
   enable_language(CXX)
 endif()
 
-if(ADIOS2_HAVE_MPI)
+if(ADIOS2_HAVE_MPI AND "MPI" IN_LIST ${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS)
   find_dependency(MPI)
+  set(${CMAKE_FIND_PACKAGE_NAME}_MPI_FOUND ${MPI_FOUND})
+else()
+  set(${CMAKE_FIND_PACKAGE_NAME}_MPI_FOUND FALSE)
 endif()
 
 if(NOT @BUILD_SHARED_LIBS@)
@@ -87,7 +122,7 @@ endif()
 include("${CMAKE_CURRENT_LIST_DIR}/adios2-config-version.cmake")
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(${CMAKE_FIND_PACKAGE_NAME} CONFIG_MODE)
+find_package_handle_standard_args(${CMAKE_FIND_PACKAGE_NAME} CONFIG_MODE HANDLE_COMPONENTS)
 
 if(NOT TARGET adios2::core)
   include("${CMAKE_CURRENT_LIST_DIR}/adios2-targets.cmake")
