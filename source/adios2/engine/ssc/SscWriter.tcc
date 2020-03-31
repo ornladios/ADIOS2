@@ -32,57 +32,70 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     Dims vStart = variable.m_Start;
     Dims vCount = variable.m_Count;
     Dims vShape = variable.m_Shape;
-    if (!helper::IsRowMajor(m_IO.m_HostLanguage))
-    {
-        std::reverse(vStart.begin(), vStart.end());
-        std::reverse(vCount.begin(), vCount.end());
-        std::reverse(vShape.begin(), vShape.end());
-    }
 
-    if (vStart.empty())
+    if (vStart.empty() && vCount.empty() && !vShape.empty() &&
+        vShape[0] == LocalValueDim)
     {
-        vStart.push_back(0);
+        // local single value
+        throw(std::runtime_error(
+            "local single value is not yet supported in SSC"));
     }
-    if (vCount.empty())
+    else if (vStart.empty() && !vCount.empty() && vShape.empty())
     {
-        vCount.push_back(1);
+        // local array
+        throw(std::runtime_error("local array is not yet supported in SSC"));
     }
-    if (vShape.empty())
+    else if (vStart.empty() && vCount.empty() && vShape.empty())
     {
-        vShape.push_back(1);
+        // global single value
+        throw(std::runtime_error(
+            "global single value is not yet supported in SSC"));
     }
-
-    bool found = false;
-    for (const auto &b : m_GlobalWritePattern[m_StreamRank])
+    else if (!vStart.empty() && !vCount.empty() && !vShape.empty())
     {
-        if (b.name == variable.m_Name and ssc::AreSameDims(vStart, b.start) and
-            ssc::AreSameDims(vCount, b.count) and
-            ssc::AreSameDims(vShape, b.shape))
+        // global array
+        if (!helper::IsRowMajor(m_IO.m_HostLanguage))
         {
-            std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
-            found = true;
+            std::reverse(vStart.begin(), vStart.end());
+            std::reverse(vCount.begin(), vCount.end());
+            std::reverse(vShape.begin(), vShape.end());
         }
-    }
 
-    if (not found)
-    {
-        if (m_CurrentStep == 0)
+        bool found = false;
+        for (const auto &b : m_GlobalWritePattern[m_StreamRank])
         {
-            m_GlobalWritePattern[m_StreamRank].emplace_back();
-            auto &b = m_GlobalWritePattern[m_StreamRank].back();
-            b.name = variable.m_Name;
-            b.type = helper::GetType<T>();
-            b.shape = vShape;
-            b.start = vStart;
-            b.count = vCount;
-            b.bufferStart = m_Buffer.size();
-            b.bufferCount = ssc::TotalDataSize(b.count, b.type);
-            m_Buffer.resize(b.bufferStart + b.bufferCount);
-            std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
+            if (b.name == variable.m_Name and
+                ssc::AreSameDims(vStart, b.start) and
+                ssc::AreSameDims(vCount, b.count) and
+                ssc::AreSameDims(vShape, b.shape))
+            {
+                std::memcpy(m_Buffer.data() + b.bufferStart, data,
+                            b.bufferCount);
+                found = true;
+            }
         }
-        else
+
+        if (not found)
         {
-            throw std::runtime_error("ssc only accepts fixed IO pattern");
+            if (m_CurrentStep == 0)
+            {
+                m_GlobalWritePattern[m_StreamRank].emplace_back();
+                auto &b = m_GlobalWritePattern[m_StreamRank].back();
+                b.name = variable.m_Name;
+                b.type = helper::GetType<T>();
+                b.shape = vShape;
+                b.start = vStart;
+                b.count = vCount;
+                b.bufferStart = m_Buffer.size();
+                b.bufferCount = ssc::TotalDataSize(b.count, b.type);
+                m_Buffer.resize(b.bufferStart + b.bufferCount);
+                std::memcpy(m_Buffer.data() + b.bufferStart, data,
+                            b.bufferCount);
+            }
+            else
+            {
+                throw std::runtime_error("ssc only accepts fixed IO pattern");
+            }
         }
     }
 }
