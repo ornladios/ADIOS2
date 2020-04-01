@@ -1260,10 +1260,11 @@ void HDF5Common::ReadAttrToIO(core::IO &io)
     hsize_t numAttrs;
     // herr_t ret = H5Gget_num_objs(m_FileId, &numObj);
     H5O_info_t oinfo;
-#ifdef H5_USE_110_API
-    herr_t ret = H5Oget_info(m_FileId, &oinfo);
-#else
+
+#if H5_VERSION_GE(1, 11, 0)
     herr_t ret = H5Oget_info(m_FileId, &oinfo, H5O_INFO_ALL);
+#else
+    herr_t ret = H5Oget_info(m_FileId, &oinfo);
 #endif
     if (ret >= 0)
     {
@@ -1313,12 +1314,12 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
                                     std::string const &pathFromRoot)
 {
     hsize_t numAttrs;
-    // herr_t ret = H5Gget_num_objs(m_FileId, &numObj);
+
     H5O_info_t oinfo;
-#ifdef H5_USE_110_API
-    herr_t ret = H5Oget_info(datasetId, &oinfo);
+#if H5_VERSION_GE(1, 11, 0)
+    herr_t ret = H5Oget_info(datasetId, &oinfo, H5O_INFO_ALL);
 #else
-    herr_t ret = H5Oget_info(m_FileId, &oinfo, H5O_INFO_ALL);
+    herr_t ret = H5Oget_info(datasetId, &oinfo);
 #endif
     if (ret >= 0)
     {
