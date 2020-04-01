@@ -33,29 +33,6 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     Dims vCount = variable.m_Count;
     Dims vShape = variable.m_Shape;
 
-    /*
-    if (variable.m_ShapeID == ShapeID::LocalValue)
-    {
-        throw(std::runtime_error(
-            "local single value is not yet supported in SSC"));
-    }
-    else if (variable.m_ShapeID == ShapeID::LocalArray)
-    {
-        // local array
-        throw(std::runtime_error("local array is not yet supported in SSC"));
-    }
-    else if (variable.m_ShapeID == ShapeID::GlobalValue)
-    {
-        // global single value
-        throw(std::runtime_error(
-            "global single value is not yet supported in SSC"));
-    }
-    else if (variable.m_ShapeID == ShapeID::GlobalArray)
-    {
-    }
-    */
-    // global array
-
     if (!helper::IsRowMajor(m_IO.m_HostLanguage))
     {
         std::reverse(vStart.begin(), vStart.end());

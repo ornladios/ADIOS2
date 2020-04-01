@@ -40,7 +40,6 @@ size_t GetTypeSize(const std::string &type)
 size_t TotalDataSize(const Dims &dims, const std::string &type,
                      const ShapeID &shapeId)
 {
-
     if (shapeId == ShapeID::GlobalArray || shapeId == ShapeID::LocalArray)
     {
         return std::accumulate(dims.begin(), dims.end(), GetTypeSize(type),

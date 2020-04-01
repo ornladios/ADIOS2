@@ -277,7 +277,22 @@ void SscReader::SyncWritePattern()
                 std::reverse(vStart.begin(), vStart.end());                    \
                 std::reverse(vShape.begin(), vShape.end());                    \
             }                                                                  \
-            m_IO.DefineVariable<T>(b.name, vShape, vStart, vShape);            \
+            if (b.shapeId == ShapeID::GlobalValue)                             \
+            {                                                                  \
+                m_IO.DefineVariable<T>(b.name);                                \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::GlobalArray)                        \
+            {                                                                  \
+                m_IO.DefineVariable<T>(b.name, vShape, vStart, vShape);        \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::LocalValue)                         \
+            {                                                                  \
+                m_IO.DefineVariable<T>(b.name, {adios2::LocalValueDim});       \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::LocalArray)                         \
+            {                                                                  \
+                m_IO.DefineVariable<T>(b.name, {}, {}, vShape);                \
+            }                                                                  \
         }                                                                      \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
