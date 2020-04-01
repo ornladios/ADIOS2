@@ -169,12 +169,19 @@ void BP4Writer::InitTransports()
 
     // only consumers will interact with transport managers
     std::vector<std::string> bpSubStreamNames;
+    std::string baseName = m_Name;
+    if (!m_BP4Serializer.m_Parameters.BurstBufferPath.empty())
+    {
+        baseName = m_BP4Serializer.RemoveTrailingSlash(
+                       m_BP4Serializer.m_Parameters.BurstBufferPath) +
+                   PathSeparator + m_Name;
+    }
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
     {
         // Names passed to IO AddTransport option with key "Name"
         const std::vector<std::string> transportsNames =
-            m_FileDataManager.GetFilesBaseNames(m_Name,
+            m_FileDataManager.GetFilesBaseNames(baseName,
                                                 m_IO.m_TransportsParameters);
 
         // /path/name.bp.dir/name.bp.rank
@@ -204,7 +211,7 @@ void BP4Writer::InitTransports()
     {
         const std::vector<std::string> transportsNames =
             m_FileMetadataManager.GetFilesBaseNames(
-                m_Name, m_IO.m_TransportsParameters);
+                baseName, m_IO.m_TransportsParameters);
 
         const std::vector<std::string> bpMetadataFileNames =
             m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
@@ -413,7 +420,14 @@ void BP4Writer::WriteProfilingJSONFile()
     {
         // std::cout << "write profiling file!" << std::endl;
         transport::FileFStream profilingJSONStream(m_Comm, m_DebugMode);
-        auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_Name});
+        std::string baseName = m_Name;
+        if (!m_BP4Serializer.m_Parameters.BurstBufferPath.empty())
+        {
+            baseName = m_BP4Serializer.RemoveTrailingSlash(
+                           m_BP4Serializer.m_Parameters.BurstBufferPath) +
+                       PathSeparator + m_Name;
+        }
+        auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({baseName});
         profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
                                  Mode::Write);
         profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());

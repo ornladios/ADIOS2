@@ -201,6 +201,13 @@ public:
 
         /** true: BeginStepPollingFrequency parameter is set */
         bool BeginStepPollingFrequencyIsSet = false;
+
+        /** Burst buffer base path */
+        std::string BurstBufferPath;
+
+        /** Drain the file from Burst Buffer to the original path
+         *  Relevant only if BurstBufferPath is set */
+        bool BurstBufferDrain = true;
     };
 
     /** Return type of the ResizeBuffer function. */
