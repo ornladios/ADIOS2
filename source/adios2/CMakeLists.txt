@@ -269,7 +269,6 @@ if(ADIOS2_HAVE_HDF5)
 
   foreach(lib IN LISTS adios2_hdf5_objs)
     target_link_libraries(${lib} PRIVATE ${HDF5_C_LIBRARIES})
-    message(STATUS HDF5_VERSION)
     if(HDF5_VERSION VERSION_LESS_EQUAL 1.11.0)
       target_compile_definitions(${lib} PRIVATE H5_USE_110_API)
     endif()
