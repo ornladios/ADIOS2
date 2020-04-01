@@ -1319,7 +1319,7 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
     herr_t ret = H5Oget_info(datasetId, &oinfo);
 #else
     herr_t ret = H5Oget_info(m_FileId, &oinfo, H5O_INFO_ALL);
-#endif    
+#endif
     if (ret >= 0)
     {
         numAttrs = oinfo.num_attrs;
