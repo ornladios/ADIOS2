@@ -104,6 +104,9 @@ add_library(adios2
 
   toolkit/aggregator/mpi/MPIAggregator.cpp
   toolkit/aggregator/mpi/MPIChain.cpp
+
+  toolkit/burstbuffer/FileDrainer.cpp
+  toolkit/burstbuffer/FileDrainerSingleThread.cpp
 )
 target_include_directories(adios2
   PUBLIC
