@@ -37,10 +37,24 @@ size_t GetTypeSize(const std::string &type)
     else { throw(std::runtime_error("unknown data type")); }
 }
 
-size_t TotalDataSize(const Dims &dims, const std::string &type)
+size_t TotalDataSize(const Dims &dims, const std::string &type,
+                     const ShapeID &shapeId)
 {
-    return std::accumulate(dims.begin(), dims.end(), GetTypeSize(type),
-                           std::multiplies<size_t>());
+
+    if (shapeId == ShapeID::GlobalArray || shapeId == ShapeID::LocalArray)
+    {
+        return std::accumulate(dims.begin(), dims.end(), GetTypeSize(type),
+                               std::multiplies<size_t>());
+    }
+    else if (shapeId == ShapeID::GlobalValue || shapeId == ShapeID::LocalValue)
+    {
+        return GetTypeSize(type);
+    }
+    else
+    {
+        throw(std::runtime_error("ShapeID not supported"));
+    }
+    return 0;
 }
 
 size_t TotalDataSize(const BlockVec &bv)
@@ -48,7 +62,7 @@ size_t TotalDataSize(const BlockVec &bv)
     size_t s = 0;
     for (const auto &b : bv)
     {
-        s += TotalDataSize(b.count, b.type);
+        s += TotalDataSize(b.count, b.type, b.shapeId);
     }
     return s;
 }
@@ -141,6 +155,7 @@ void BlockVecToJson(const BlockVec &input, nlohmann::json &output)
         auto &jref = output["Variables"].back();
         jref["Name"] = b.name;
         jref["Type"] = b.type;
+        jref["ShapeID"] = b.shapeId;
         jref["Shape"] = b.shape;
         jref["Start"] = b.start;
         jref["Count"] = b.count;
@@ -225,6 +240,7 @@ void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
                 auto &b = output[i].back();
                 b.name = j["Name"].get<std::string>();
                 b.type = j["Type"].get<std::string>();
+                b.shapeId = j["ShapeID"].get<ShapeID>();
                 b.start = j["Start"].get<Dims>();
                 b.count = j["Count"].get<Dims>();
                 b.shape = j["Shape"].get<Dims>();
