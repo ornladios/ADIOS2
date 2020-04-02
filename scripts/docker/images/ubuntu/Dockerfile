@@ -25,7 +25,8 @@ ARG ubuntu_ver=18.04
 FROM ubuntu:${ubuntu_ver}
 
 # Install system dependencies
-RUN apt update -y &&\
+RUN apt update -y && \
+    apt upgrade -y && \
     apt install -y software-properties-common \
         sudo curl vim git gdb build-essential gfortran pkg-config \
         openmpi-bin libopenmpi-dev python3-dev python3-numpy python3-mpi4py \
