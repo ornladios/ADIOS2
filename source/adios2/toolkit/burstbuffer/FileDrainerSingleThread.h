@@ -24,12 +24,20 @@ class FileDrainerSingleThread : public FileDrainer
 {
 
 public:
-    /* This will create a thread to continuously run and idle if there
-       are no operations given.
-       Finish() will complete all work then join the thread */
+    static const size_t defaultBufferSize = 4194304; // 4MB
+
     FileDrainerSingleThread();
 
     ~FileDrainerSingleThread();
+
+    void SetBufferSize(size_t bufferSizeBytes);
+
+    /** Create thread.
+     * This will create a thread to continuously run and idle if there
+     *  are no operations given.
+     *  Finish() will complete all work then join the thread
+     */
+    void Start();
 
     /** Tell thread to terminate when all draining has finished. */
     void Finish();
@@ -37,9 +45,8 @@ public:
     /** Join the thread. Main thread will block until thread terminates */
     void Join();
 
-    static const size_t bufferSize = 4194304; // 4MB
-
 private:
+    size_t bufferSize = defaultBufferSize;
     std::thread th; // created by constructor
     bool finish = false;
     std::mutex finishMutex;

@@ -10,6 +10,8 @@
 
 #include "FileDrainer.h"
 
+#include <cerrno>
+#include <cstring>
 #include <fcntl.h>     // open
 #include <stddef.h>    // write output
 #include <sys/stat.h>  // open, fstat
@@ -25,6 +27,28 @@ namespace adios2
 namespace burstbuffer
 {
 
+FileDrainOperation::FileDrainOperation(DrainOperation op,
+                                       std::string &fromFileName,
+                                       std::string &toFileName,
+                                       size_t countBytes, size_t fromOffset,
+                                       size_t toOffset, const void *data)
+: op(op), fromFileName(fromFileName), toFileName(toFileName),
+  countBytes(countBytes), fromOffset(fromOffset), toOffset(toOffset)
+{
+    if (data)
+    {
+        dataToWrite.resize(countBytes);
+        std::memcpy(dataToWrite.data(), data, countBytes);
+    };
+}
+
+/*FileDrainOperation::FileDrainOperation(std::string &toFileName,
+                                       size_t countBytes, size_t toOffset, )
+: op(DrainOperation::Write), fromFileName(""), toFileName(toFileName),
+  countBytes(countBytes), append(false), fromOffset(0), toOffset(toOffset){
+
+};*/
+
 FileDrainer::FileDrainer() {}
 
 FileDrainer::~FileDrainer() {}
@@ -33,6 +57,67 @@ void FileDrainer::AddOperation(FileDrainOperation &operation)
 {
     std::lock_guard<std::mutex> lockGuard(operationsMutex);
     operations.push(operation);
+}
+
+void FileDrainer::AddOperation(DrainOperation op, std::string &fromFileName,
+                               std::string &toFileName, size_t fromOffset,
+                               size_t toOffset, size_t countBytes,
+                               const void *data)
+{
+    FileDrainOperation operation(op, fromFileName, toFileName, countBytes,
+                                 fromOffset, toOffset, data);
+    std::lock_guard<std::mutex> lockGuard(operationsMutex);
+    operations.push(operation);
+}
+
+void FileDrainer::AddOperationSeekFrom(std::string &fromFileName,
+                                       size_t fromOffset)
+{
+    std::string emptyStr;
+    AddOperation(DrainOperation::SeekFrom, fromFileName, emptyStr, fromOffset,
+                 0, 0);
+}
+
+void FileDrainer::AddOperationSeekTo(std::string &toFileName, size_t toOffset)
+{
+    std::string emptyStr;
+    AddOperation(DrainOperation::SeekTo, emptyStr, toFileName, 0, toOffset, 0);
+}
+
+void FileDrainer::AddOperationSeekEnd(std::string &toFileName)
+{
+    std::string emptyStr;
+    AddOperation(DrainOperation::SeekEnd, emptyStr, toFileName, 0, 0, 0);
+}
+void FileDrainer::AddOperationCopy(std::string &fromFileName,
+                                   std::string &toFileName, size_t fromOffset,
+                                   size_t toOffset, size_t countBytes)
+{
+    AddOperation(DrainOperation::Copy, fromFileName, toFileName, fromOffset,
+                 toOffset, countBytes);
+}
+void FileDrainer::AddOperationCopyAppend(std::string &fromFileName,
+                                         std::string &toFileName,
+                                         size_t countBytes)
+{
+    AddOperation(DrainOperation::CopyAppend, fromFileName, toFileName, 0, 0,
+                 countBytes);
+}
+
+void FileDrainer::AddOperationWriteAt(std::string &toFileName, size_t toOffset,
+                                      size_t countBytes, const void *data)
+{
+    std::string emptyStr;
+    AddOperation(DrainOperation::WriteAt, emptyStr, toFileName, 0, toOffset,
+                 countBytes, data);
+}
+
+void FileDrainer::AddOperationWrite(std::string &toFileName, size_t countBytes,
+                                    const void *data)
+{
+    std::string emptyStr;
+    AddOperation(DrainOperation::Write, emptyStr, toFileName, 0, 0, countBytes,
+                 data);
 }
 
 int FileDrainer::GetFileDescriptor(const std::string &path, const Mode mode)
@@ -57,12 +142,12 @@ int FileDrainer::Open(const std::string &path, const Mode mode)
     switch (mode)
     {
     case (Mode::Write):
+        fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        break;
     case (Mode::Append):
-
         fd = open(path.c_str(), O_RDWR | O_CREAT, 0777);
         lseek(fd, 0, SEEK_END);
         break;
-
     case (Mode::Read):
     default:
         fd = open(path.c_str(), O_RDONLY);
@@ -95,14 +180,16 @@ void FileDrainer::CloseAll()
     }
 }
 
-void FileDrainer::Seek(int fd, size_t offset, const std::string &path)
+void FileDrainer::Seek(int fd, size_t offset, const std::string &path,
+                       int whence)
 {
-    const auto newPosition = lseek(fd, offset, SEEK_SET);
+    const auto newPosition = lseek(fd, offset, whence);
     if (newPosition == -1)
     {
         throw std::ios_base::failure(
             "FileDrainer couldn't seek in file " + path +
-            " to offset = " + std::to_string(offset) + "\n");
+            " to offset = " + std::to_string(offset) +
+            " errno: " + std::to_string(errno) + std::strerror(errno) + "\n");
     }
 }
 

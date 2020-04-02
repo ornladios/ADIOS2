@@ -14,6 +14,7 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp/bp4/BP4Serializer.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
@@ -58,6 +59,29 @@ private:
 
     /* transport manager for managing the metadata index file */
     transportman::TransportMan m_FileMetadataIndexManager;
+
+    /*
+     *  Burst buffer variables
+     */
+    /** true if burst buffer is used */
+    bool m_UseBB = false;
+    /** File drainer thread if burst buffer is used */
+    burstbuffer::FileDrainerSingleThread m_FileDrainer;
+    /** m_Name modified with burst buffer path if BB is used,
+     * == m_Name otherwise.
+     * m_Name is a constant of Engine and is the user provided target path
+     */
+    std::string m_BBName;
+    /* Name of subfiles to directly write to (for all transports)
+     * This is either original target or burst buffer if used */
+    std::vector<std::string> m_SubStreamNames;
+    /* Name of subfiles on target if burst buffer is used (for all transports)
+     */
+    std::vector<std::string> m_DrainSubStreamNames;
+    std::vector<std::string> m_MetadataFileNames;
+    std::vector<std::string> m_DrainMetadataFileNames;
+    std::vector<std::string> m_MetadataIndexFileNames;
+    std::vector<std::string> m_DrainMetadataIndexFileNames;
 
     void Init() final;
 

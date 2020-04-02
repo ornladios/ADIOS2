@@ -32,7 +32,7 @@ BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
 : Engine("BP4Writer", io, name, mode, std::move(comm)),
   m_BP4Serializer(m_Comm, m_DebugMode), m_FileDataManager(m_Comm, m_DebugMode),
   m_FileMetadataManager(m_Comm, m_DebugMode),
-  m_FileMetadataIndexManager(m_Comm, m_DebugMode)
+  m_FileMetadataIndexManager(m_Comm, m_DebugMode), m_FileDrainer()
 {
     TAU_SCOPED_TIMER("BP4Writer::Open");
     m_IO.m_ReadStreaming = false;
@@ -155,6 +155,18 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void BP4Writer::InitParameters()
 {
     m_BP4Serializer.Init(m_IO.m_Parameters, "in call to BP4::Open to write");
+    m_UseBB = !(m_BP4Serializer.m_Parameters.BurstBufferPath.empty());
+    if (m_UseBB && m_OpenMode == Mode::Append)
+    {
+        if (m_BP4Serializer.m_RankMPI == 0)
+        {
+            std::cerr
+                << "WARNING: Burst buffer cannot be used with Append mode "
+                   "for target "
+                << m_Name << std::endl;
+        }
+        m_UseBB = false;
+    }
 }
 
 void BP4Writer::InitTransports()
@@ -168,29 +180,45 @@ void BP4Writer::InitTransports()
     }
 
     // only consumers will interact with transport managers
-    std::vector<std::string> bpSubStreamNames;
-    std::string baseName = m_Name;
-    if (!m_BP4Serializer.m_Parameters.BurstBufferPath.empty())
+    m_BBName = m_Name;
+    if (m_UseBB)
     {
-        baseName = m_BP4Serializer.RemoveTrailingSlash(
+        m_BBName = m_BP4Serializer.RemoveTrailingSlash(
                        m_BP4Serializer.m_Parameters.BurstBufferPath) +
                    PathSeparator + m_Name;
+        /* start up BB thread */
+        m_FileDrainer.Start();
     }
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
     {
         // Names passed to IO AddTransport option with key "Name"
         const std::vector<std::string> transportsNames =
-            m_FileDataManager.GetFilesBaseNames(baseName,
+            m_FileDataManager.GetFilesBaseNames(m_BBName,
                                                 m_IO.m_TransportsParameters);
 
         // /path/name.bp.dir/name.bp.rank
-        bpSubStreamNames = m_BP4Serializer.GetBPSubStreamNames(transportsNames);
+        m_SubStreamNames = m_BP4Serializer.GetBPSubStreamNames(transportsNames);
+        if (m_UseBB)
+        {
+            const std::vector<std::string> drainTransportNames =
+                m_FileDataManager.GetFilesBaseNames(
+                    m_Name, m_IO.m_TransportsParameters);
+            m_DrainSubStreamNames =
+                m_BP4Serializer.GetBPSubStreamNames(drainTransportNames);
+        }
     }
 
+    /* Create the directories either on target or burst buffer if used */
     m_BP4Serializer.m_Profiler.Start("mkdir");
-    m_FileDataManager.MkDirsBarrier(bpSubStreamNames,
+    m_FileDataManager.MkDirsBarrier(m_SubStreamNames,
                                     m_BP4Serializer.m_Parameters.NodeLocal);
+    if (m_UseBB)
+    {
+        /* Create the directories on target anyway by main thread */
+        m_FileDataManager.MkDirsBarrier(m_DrainSubStreamNames,
+                                        m_BP4Serializer.m_Parameters.NodeLocal);
+    }
     m_BP4Serializer.m_Profiler.Stop("mkdir");
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
@@ -202,7 +230,8 @@ void BP4Writer::InitTransports()
                 m_IO.m_TransportsParameters[i]["asynctasks"] = "true";
             }
         }
-        m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
+
+        m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
                                     m_IO.m_TransportsParameters,
                                     m_BP4Serializer.m_Profiler.m_IsActive);
     }
@@ -211,21 +240,33 @@ void BP4Writer::InitTransports()
     {
         const std::vector<std::string> transportsNames =
             m_FileMetadataManager.GetFilesBaseNames(
-                baseName, m_IO.m_TransportsParameters);
+                m_BBName, m_IO.m_TransportsParameters);
 
-        const std::vector<std::string> bpMetadataFileNames =
+        m_MetadataFileNames =
             m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
 
-        m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,
+        m_FileMetadataManager.OpenFiles(m_MetadataFileNames, m_OpenMode,
                                         m_IO.m_TransportsParameters,
                                         m_BP4Serializer.m_Profiler.m_IsActive);
 
-        std::vector<std::string> metadataIndexFileNames =
+        m_MetadataIndexFileNames =
             m_BP4Serializer.GetBPMetadataIndexFileNames(transportsNames);
 
         m_FileMetadataIndexManager.OpenFiles(
-            metadataIndexFileNames, m_OpenMode, m_IO.m_TransportsParameters,
+            m_MetadataIndexFileNames, m_OpenMode, m_IO.m_TransportsParameters,
             m_BP4Serializer.m_Profiler.m_IsActive);
+
+        if (m_UseBB)
+        {
+            const std::vector<std::string> drainTransportNames =
+                m_FileDataManager.GetFilesBaseNames(
+                    m_Name, m_IO.m_TransportsParameters);
+            m_DrainMetadataFileNames =
+                m_BP4Serializer.GetBPMetadataFileNames(drainTransportNames);
+            m_DrainMetadataIndexFileNames =
+                m_BP4Serializer.GetBPMetadataIndexFileNames(
+                    drainTransportNames);
+        }
 
         if (m_OpenMode != Mode::Append ||
             m_FileMetadataIndexManager.GetFileSize(0) == 0)
@@ -239,6 +280,17 @@ void BP4Writer::InitTransports()
                 m_BP4Serializer.m_MetadataIndex.m_Buffer.data(),
                 m_BP4Serializer.m_MetadataIndex.m_Position);
             m_FileMetadataIndexManager.FlushFiles();
+            if (m_UseBB)
+            {
+                for (int i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+                {
+                    m_FileDrainer.AddOperationWrite(
+                        m_DrainMetadataIndexFileNames[i],
+                        m_BP4Serializer.m_MetadataIndex.m_Position,
+                        m_BP4Serializer.m_MetadataIndex.m_Buffer.data());
+                    // Note:: the content is buffered safely inside drain thread
+                }
+            }
             /* clear the metadata index buffer*/
             m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_MetadataIndex, true);
         }
@@ -390,6 +442,11 @@ void BP4Writer::DoClose(const int transportIndex)
         m_FileMetadataIndexManager.CloseFiles();
     }
 
+    if (m_BP4Serializer.m_Aggregator.m_IsConsumer && m_UseBB)
+    {
+        /* Signal the BB thread that no more work is coming */
+        m_FileDrainer.Finish();
+    }
     // m_BP4Serializer.DeleteBuffers();
 }
 
@@ -462,6 +519,16 @@ void BP4Writer::UpdateActiveFlag(const bool active)
         &activeChar, 1, m_BP4Serializer.m_ActiveFlagPosition, 0);
     m_FileMetadataIndexManager.FlushFiles();
     m_FileMetadataIndexManager.SeekToFileEnd();
+    if (m_UseBB)
+    {
+        for (int i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+        {
+            m_FileDrainer.AddOperationWriteAt(
+                m_DrainMetadataIndexFileNames[i],
+                m_BP4Serializer.m_ActiveFlagPosition, 1, &activeChar);
+            m_FileDrainer.AddOperationSeekEnd(m_DrainMetadataIndexFileNames[i]);
+        }
+    }
 }
 
 void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
@@ -550,6 +617,17 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
         m_BP4Serializer.m_MetadataSet.MetadataFileLength +=
             m_BP4Serializer.m_Metadata.m_Position;
+
+        if (m_UseBB)
+        {
+            for (int i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+            {
+                m_FileDrainer.AddOperationWrite(
+                    m_DrainMetadataIndexFileNames[i],
+                    m_BP4Serializer.m_MetadataIndex.m_Position,
+                    m_BP4Serializer.m_MetadataIndex.m_Buffer.data());
+            }
+        }
 
         if (isFinal)
         {
