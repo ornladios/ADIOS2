@@ -40,9 +40,13 @@ fi
 
 # macOS tmpdir issues
 # See https://github.com/open-mpi/ompi/issues/6518
-if [[ "{GH_YML_OS}" =~ "macOS" ]]
+if [[ "${GH_YML_OS}" =~ "macOS" ]]
 then
   export TMPDIR=/tmp
+elif [[ "${GH_YML_OS}" = "linux" ]]
+then
+  export TMPDIR="${CI_ROOT_DIR}/tmp"
+  mkdir -p "${TMPDIR}"
 fi
 
 # OpenMPI specific setup
