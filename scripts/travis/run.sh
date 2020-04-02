@@ -19,18 +19,6 @@ case ${BUILD_MATRIX_ENTRY} in
       exit 1;
     fi
     ;;
-  analyze)
-    echo "Running static analysis (clang-analyzer)"
-    if ! ${SOURCE_DIR}/scripts/travis/run-sa.sh; then
-      exit 1;
-    fi
-    ;;
-  check)
-    echo "Running static analysis (cppcheck)"
-    if ! ${SOURCE_DIR}/scripts/travis/run-cppcheck.sh; then
-      exit 1;
-    fi
-    ;;
   docker*)
     echo "Building ${BUILD_MATRIX_ENTRY}"
     if ! ${SOURCE_DIR}/scripts/travis/run-docker.sh; then

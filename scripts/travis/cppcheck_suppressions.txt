@@ -1,9 +1,0 @@
-
-// This file can be edited with regular expressions (1 per line) to
-// be used in avoiding processing matching files with clang-analyze.
-// If a file path matches one of the regular expressions in this file,
-// we will not analyze it.  Most bash regular expressions should be
-// fine here.  Also, comments and blank lines are allowed and ignored.
-
-// Ignore any thirdparty files:
-.*/thirdparty/.*
