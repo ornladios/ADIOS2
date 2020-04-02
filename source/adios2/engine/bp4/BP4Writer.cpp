@@ -223,6 +223,14 @@ void BP4Writer::InitTransports()
         m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
                                     m_IO.m_TransportsParameters,
                                     m_BP4Serializer.m_Profiler.m_IsActive);
+
+        if (m_UseBB)
+        {
+            for (const auto &name : m_DrainSubStreamNames)
+            {
+                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
+            }
+        }
     }
 
     if (m_BP4Serializer.m_RankMPI == 0)
@@ -669,6 +677,14 @@ void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
                                  dataSize, transportIndex);
 
     m_FileDataManager.FlushFiles(transportIndex);
+    if (m_UseBB)
+    {
+        for (int i = 0; i < m_SubStreamNames.size(); ++i)
+        {
+            m_FileDrainer.AddOperationCopy(m_SubStreamNames[i],
+                                           m_DrainSubStreamNames[i], dataSize);
+        }
+    }
 }
 
 void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
@@ -698,6 +714,15 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
                     bufferSTL.Data(), bufferSTL.m_Position, transportIndex);
 
                 m_FileDataManager.FlushFiles(transportIndex);
+                if (m_UseBB)
+                {
+                    for (int i = 0; i < m_SubStreamNames.size(); ++i)
+                    {
+                        m_FileDrainer.AddOperationCopy(m_SubStreamNames[i],
+                                                       m_DrainSubStreamNames[i],
+                                                       bufferSTL.m_Position);
+                    }
+                }
             }
         }
 

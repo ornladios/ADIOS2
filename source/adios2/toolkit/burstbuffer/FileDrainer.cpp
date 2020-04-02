@@ -71,21 +71,6 @@ void FileDrainer::AddOperation(DrainOperation op,
     operations.push(operation);
 }
 
-void FileDrainer::AddOperationSeekFrom(const std::string &fromFileName,
-                                       size_t fromOffset)
-{
-    std::string emptyStr;
-    AddOperation(DrainOperation::SeekFrom, fromFileName, emptyStr, fromOffset,
-                 0, 0);
-}
-
-void FileDrainer::AddOperationSeekTo(const std::string &toFileName,
-                                     size_t toOffset)
-{
-    std::string emptyStr;
-    AddOperation(DrainOperation::SeekTo, emptyStr, toFileName, 0, toOffset, 0);
-}
-
 void FileDrainer::AddOperationSeekEnd(const std::string &toFileName)
 {
     std::string emptyStr;

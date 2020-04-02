@@ -25,18 +25,16 @@ namespace burstbuffer
 
 enum class DrainOperation
 {
-    SeekFrom, // DO NOT USE: Seek to fromOffset in file fromFileName
-    SeekTo,   // Seek to toOffset in file toFileName
-    SeekEnd,  // Seek to the end of target file toFileName (for future
-              // copyAppend). Seeking to End of fromFile is not allowed
-              // since another thread is writing to it
-    CopyAt,   // DO NOT USE: Copy countBytes from fromOffset to toOffset (does
-              // seek)
-    Copy,     // Copy countBytes (without seek)
-    WriteAt,  // Write data from memory to toFileName directly at offset
-    Write,    // Write data from memory to toFileName directly (without seek)
-    Create,   // Open file for writing (creat) - only toFile
-    Open      // Open file for append - only toFile
+    SeekEnd, // Seek to the end of target file toFileName (for future
+             // copyAppend). Seeking to End of fromFile is not allowed
+             // since another thread is writing to it
+    CopyAt,  // DO NOT USE: Copy countBytes from fromOffset to toOffset (does
+             // seek)
+    Copy,    // Copy countBytes (without seek)
+    WriteAt, // Write data from memory to toFileName directly at offset
+    Write,   // Write data from memory to toFileName directly (without seek)
+    Create,  // Open file for writing (creat) - only toFile
+    Open     // Open file for append - only toFile
 
 };
 
@@ -71,9 +69,6 @@ public:
                       size_t toOffset, size_t countBytes,
                       const void *data = nullptr);
 
-    void AddOperationSeekFrom(const std::string &fromFileName,
-                              size_t fromOffset);
-    void AddOperationSeekTo(const std::string &toFileName, size_t toOffset);
     void AddOperationSeekEnd(const std::string &toFileName);
     void AddOperationCopyAt(const std::string &fromFileName,
                             const std::string &toFileName, size_t fromOffset,

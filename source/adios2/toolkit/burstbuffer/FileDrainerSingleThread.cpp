@@ -144,22 +144,6 @@ void FileDrainerSingleThread::DrainThread()
             }
             break;
         }
-        case DrainOperation::SeekFrom:
-        {
-            std::cout << "Drain SeekFrom in file " << fdo.fromFileName << " to "
-                      << fdo.fromOffset << std::endl;
-            int fdr = GetFileDescriptor(fdo.fromFileName, Mode::Read);
-            Seek(fdr, fdo.fromOffset, fdo.fromFileName);
-            break;
-        }
-        case DrainOperation::SeekTo:
-        {
-            std::cout << "Drain SeekTo in file " << fdo.toFileName << " to "
-                      << fdo.toOffset << std::endl;
-            int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
-            Seek(fdw, fdo.toOffset, fdo.toFileName);
-            break;
-        }
         case DrainOperation::SeekEnd:
         {
             std::cout << "Drain Seek to End of file " << fdo.toFileName
