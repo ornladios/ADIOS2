@@ -30,10 +30,13 @@ enum class DrainOperation
     SeekEnd,  // Seek to the end of target file toFileName (for future
               // copyAppend). Seeking to End of fromFile is not allowed
               // since another thread is writing to it
-    Copy, // DO NOT USE: Copy countBytes from fromOffset to toOffset (does seek)
-    CopyAppend, // Copy countBytes (without seek)
-    WriteAt,    // Write data from memory to toFileName directly at offset
-    Write       // Write data from memory to toFileName directly (without seek)
+    CopyAt,   // DO NOT USE: Copy countBytes from fromOffset to toOffset (does
+              // seek)
+    Copy,     // Copy countBytes (without seek)
+    WriteAt,  // Write data from memory to toFileName directly at offset
+    Write,    // Write data from memory to toFileName directly (without seek)
+    Create,   // Open file for writing (creat) - only toFile
+    Open      // Open file for append - only toFile
 
 };
 
@@ -47,14 +50,9 @@ struct FileDrainOperation
     size_t toOffset;
     std::vector<char> dataToWrite; // memory to write with Write operation
 
-    FileDrainOperation(DrainOperation op, std::string &fromFileName,
-                       std::string &toFileName, size_t countBytes,
+    FileDrainOperation(DrainOperation op, const std::string &fromFileName,
+                       const std::string &toFileName, size_t countBytes,
                        size_t fromOffset, size_t toOffset, const void *data);
-
-    /*FileDrainOperation(std::string &toFileName, size_t countBytes,
-                       size_t toOffset, const void *data);
-    FileDrainOperation(std::string &toFileName, size_t countBytes,
-                       const void *data);*/
 };
 
 class FileDrainer
@@ -68,23 +66,25 @@ public:
     virtual ~FileDrainer();
 
     void AddOperation(FileDrainOperation &operation);
-    void AddOperation(DrainOperation op, std::string &fromFileName,
-                      std::string &toFileName, size_t fromOffset,
+    void AddOperation(DrainOperation op, const std::string &fromFileName,
+                      const std::string &toFileName, size_t fromOffset,
                       size_t toOffset, size_t countBytes,
                       const void *data = nullptr);
 
-    void AddOperationSeekFrom(std::string &fromFileName, size_t fromOffset);
-    void AddOperationSeekTo(std::string &toFileName, size_t toOffset);
-    void AddOperationSeekEnd(std::string &toFileName);
-    void AddOperationCopy(std::string &fromFileName, std::string &toFileName,
-                          size_t fromOffset, size_t toOffset,
-                          size_t countBytes);
-    void AddOperationCopyAppend(std::string &fromFileName,
-                                std::string &toFileName, size_t countBytes);
-    void AddOperationWriteAt(std::string &toFileName, size_t toOffset,
+    void AddOperationSeekFrom(const std::string &fromFileName,
+                              size_t fromOffset);
+    void AddOperationSeekTo(const std::string &toFileName, size_t toOffset);
+    void AddOperationSeekEnd(const std::string &toFileName);
+    void AddOperationCopyAt(const std::string &fromFileName,
+                            const std::string &toFileName, size_t fromOffset,
+                            size_t toOffset, size_t countBytes);
+    void AddOperationCopy(const std::string &fromFileName,
+                          const std::string &toFileName, size_t countBytes);
+    void AddOperationWriteAt(const std::string &toFileName, size_t toOffset,
                              size_t countBytes, const void *data);
-    void AddOperationWrite(std::string &toFileName, size_t countBytes,
+    void AddOperationWrite(const std::string &toFileName, size_t countBytes,
                            const void *data);
+    void AddOperationOpen(const std::string &toFileName, Mode mode);
 
     /** Create thread */
     virtual void Start() = 0;

@@ -156,17 +156,6 @@ void BP4Writer::InitParameters()
 {
     m_BP4Serializer.Init(m_IO.m_Parameters, "in call to BP4::Open to write");
     m_UseBB = !(m_BP4Serializer.m_Parameters.BurstBufferPath.empty());
-    if (m_UseBB && m_OpenMode == Mode::Append)
-    {
-        if (m_BP4Serializer.m_RankMPI == 0)
-        {
-            std::cerr
-                << "WARNING: Burst buffer cannot be used with Append mode "
-                   "for target "
-                << m_Name << std::endl;
-        }
-        m_UseBB = false;
-    }
 }
 
 void BP4Writer::InitTransports()
@@ -266,6 +255,10 @@ void BP4Writer::InitTransports()
             m_DrainMetadataIndexFileNames =
                 m_BP4Serializer.GetBPMetadataIndexFileNames(
                     drainTransportNames);
+            for (const auto &name : m_DrainMetadataFileNames)
+            {
+                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
+            }
         }
 
         if (m_OpenMode != Mode::Append ||
@@ -282,11 +275,10 @@ void BP4Writer::InitTransports()
             m_FileMetadataIndexManager.FlushFiles();
             if (m_UseBB)
             {
-                for (int i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+                for (const auto &name : m_DrainMetadataIndexFileNames)
                 {
                     m_FileDrainer.AddOperationWrite(
-                        m_DrainMetadataIndexFileNames[i],
-                        m_BP4Serializer.m_MetadataIndex.m_Position,
+                        name, m_BP4Serializer.m_MetadataIndex.m_Position,
                         m_BP4Serializer.m_MetadataIndex.m_Buffer.data());
                     // Note:: the content is buffered safely inside drain thread
                 }
@@ -477,18 +469,18 @@ void BP4Writer::WriteProfilingJSONFile()
     {
         // std::cout << "write profiling file!" << std::endl;
         transport::FileFStream profilingJSONStream(m_Comm, m_DebugMode);
-        std::string baseName = m_Name;
-        if (!m_BP4Serializer.m_Parameters.BurstBufferPath.empty())
-        {
-            baseName = m_BP4Serializer.RemoveTrailingSlash(
-                           m_BP4Serializer.m_Parameters.BurstBufferPath) +
-                       PathSeparator + m_Name;
-        }
-        auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({baseName});
+        auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
         profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
                                  Mode::Write);
         profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
         profilingJSONStream.Close();
+        if (m_UseBB)
+        {
+            auto bpTargetNames = m_BP4Serializer.GetBPBaseNames({m_Name});
+            std::string targetProfiler(bpTargetNames[0] + "/profiling.json");
+            m_FileDrainer.AddOperationWrite(
+                targetProfiler, profilingJSON.size(), profilingJSON.data());
+        }
     }
 }
 
@@ -559,6 +551,16 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
             m_BP4Serializer.m_Metadata.m_Buffer.data(),
             m_BP4Serializer.m_Metadata.m_Position);
         m_FileMetadataManager.FlushFiles();
+
+        if (m_UseBB)
+        {
+            for (int i = 0; i < m_MetadataFileNames.size(); ++i)
+            {
+                m_FileDrainer.AddOperationCopy(
+                    m_MetadataFileNames[i], m_DrainMetadataFileNames[i],
+                    m_BP4Serializer.m_Metadata.m_Position);
+            }
+        }
 
         std::time_t currentTimeStamp = std::time(nullptr);
 

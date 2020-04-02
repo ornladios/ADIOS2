@@ -98,29 +98,29 @@ void FileDrainerSingleThread::DrainThread()
         switch (fdo.op)
         {
 
+        case DrainOperation::CopyAt:
         case DrainOperation::Copy:
-        case DrainOperation::CopyAppend:
         {
             int fdr = GetFileDescriptor(fdo.fromFileName, Mode::Read);
             Mode wMode =
-                (fdo.op == DrainOperation::Copy ? Mode::Write : Mode::Append);
+                (fdo.op == DrainOperation::CopyAt ? Mode::Write : Mode::Append);
             int fdw = GetFileDescriptor(fdo.toFileName, wMode);
 
-            std::cout << "Drain Copy operation from " << fdo.fromFileName
-                      << " -> " << fdo.toFileName << " " << fdo.countBytes
-                      << " bytes ";
-            if (fdo.op == DrainOperation::Copy)
+            std::cout << "Drain Copy from " << fdo.fromFileName
+                      << " (fd=" << fdr << ") -> " << fdo.toFileName
+                      << " (fd=" << fdw << ") " << fdo.countBytes << " bytes ";
+            if (fdo.op == DrainOperation::CopyAt)
             {
                 std::cout << ", offsets: from " << fdo.fromOffset << " to "
                           << fdo.toOffset;
             }
-            std::cout << ", fdr= " << fdr << " fdw = " << fdw << std::endl;
+            std::cout << std::endl;
 
             if (fdr != errorState && fdw != errorState)
             {
                 try
                 {
-                    if (fdo.op == DrainOperation::Copy)
+                    if (fdo.op == DrainOperation::CopyAt)
                     {
                         Seek(fdr, fdo.fromOffset, fdo.fromFileName);
                         Seek(fdw, fdo.toOffset, fdo.toFileName);
@@ -172,7 +172,7 @@ void FileDrainerSingleThread::DrainThread()
         {
             std::cout << "Drain Write to file " << fdo.toFileName << " "
                       << fdo.countBytes
-                      << "bytes of data from memory to offset " << fdo.toOffset
+                      << " bytes of data from memory to offset " << fdo.toOffset
                       << std::endl;
             int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
             Seek(fdw, fdo.toOffset, fdo.toFileName);
@@ -182,12 +182,27 @@ void FileDrainerSingleThread::DrainThread()
         case DrainOperation::Write:
         {
             std::cout << "Drain Write to file " << fdo.toFileName << " "
-                      << fdo.countBytes << "bytes of data from memory (no seek)"
-                      << std::endl;
+                      << fdo.countBytes
+                      << " bytes of data from memory (no seek)" << std::endl;
             int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
             Write(fdw, fdo.countBytes, fdo.dataToWrite.data(), fdo.toFileName);
             break;
         }
+        case DrainOperation::Create:
+        {
+            std::cout << "Drain Create new file " << fdo.toFileName
+                      << std::endl;
+            GetFileDescriptor(fdo.toFileName, Mode::Write);
+            break;
+        }
+        case DrainOperation::Open:
+        {
+            std::cout << "Drain Open file " << fdo.toFileName << " for append "
+                      << std::endl;
+            GetFileDescriptor(fdo.toFileName, Mode::Append);
+            break;
+        }
+
         default:
             break;
         }

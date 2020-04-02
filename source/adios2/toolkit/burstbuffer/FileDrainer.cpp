@@ -28,8 +28,8 @@ namespace burstbuffer
 {
 
 FileDrainOperation::FileDrainOperation(DrainOperation op,
-                                       std::string &fromFileName,
-                                       std::string &toFileName,
+                                       const std::string &fromFileName,
+                                       const std::string &toFileName,
                                        size_t countBytes, size_t fromOffset,
                                        size_t toOffset, const void *data)
 : op(op), fromFileName(fromFileName), toFileName(toFileName),
@@ -59,8 +59,9 @@ void FileDrainer::AddOperation(FileDrainOperation &operation)
     operations.push(operation);
 }
 
-void FileDrainer::AddOperation(DrainOperation op, std::string &fromFileName,
-                               std::string &toFileName, size_t fromOffset,
+void FileDrainer::AddOperation(DrainOperation op,
+                               const std::string &fromFileName,
+                               const std::string &toFileName, size_t fromOffset,
                                size_t toOffset, size_t countBytes,
                                const void *data)
 {
@@ -70,7 +71,7 @@ void FileDrainer::AddOperation(DrainOperation op, std::string &fromFileName,
     operations.push(operation);
 }
 
-void FileDrainer::AddOperationSeekFrom(std::string &fromFileName,
+void FileDrainer::AddOperationSeekFrom(const std::string &fromFileName,
                                        size_t fromOffset)
 {
     std::string emptyStr;
@@ -78,46 +79,68 @@ void FileDrainer::AddOperationSeekFrom(std::string &fromFileName,
                  0, 0);
 }
 
-void FileDrainer::AddOperationSeekTo(std::string &toFileName, size_t toOffset)
+void FileDrainer::AddOperationSeekTo(const std::string &toFileName,
+                                     size_t toOffset)
 {
     std::string emptyStr;
     AddOperation(DrainOperation::SeekTo, emptyStr, toFileName, 0, toOffset, 0);
 }
 
-void FileDrainer::AddOperationSeekEnd(std::string &toFileName)
+void FileDrainer::AddOperationSeekEnd(const std::string &toFileName)
 {
     std::string emptyStr;
     AddOperation(DrainOperation::SeekEnd, emptyStr, toFileName, 0, 0, 0);
 }
-void FileDrainer::AddOperationCopy(std::string &fromFileName,
-                                   std::string &toFileName, size_t fromOffset,
-                                   size_t toOffset, size_t countBytes)
+void FileDrainer::AddOperationCopyAt(const std::string &fromFileName,
+                                     const std::string &toFileName,
+                                     size_t fromOffset, size_t toOffset,
+                                     size_t countBytes)
 {
-    AddOperation(DrainOperation::Copy, fromFileName, toFileName, fromOffset,
+    AddOperation(DrainOperation::CopyAt, fromFileName, toFileName, fromOffset,
                  toOffset, countBytes);
 }
-void FileDrainer::AddOperationCopyAppend(std::string &fromFileName,
-                                         std::string &toFileName,
-                                         size_t countBytes)
+void FileDrainer::AddOperationCopy(const std::string &fromFileName,
+                                   const std::string &toFileName,
+                                   size_t countBytes)
 {
-    AddOperation(DrainOperation::CopyAppend, fromFileName, toFileName, 0, 0,
+    AddOperation(DrainOperation::Copy, fromFileName, toFileName, 0, 0,
                  countBytes);
 }
 
-void FileDrainer::AddOperationWriteAt(std::string &toFileName, size_t toOffset,
-                                      size_t countBytes, const void *data)
+void FileDrainer::AddOperationWriteAt(const std::string &toFileName,
+                                      size_t toOffset, size_t countBytes,
+                                      const void *data)
 {
     std::string emptyStr;
     AddOperation(DrainOperation::WriteAt, emptyStr, toFileName, 0, toOffset,
                  countBytes, data);
 }
 
-void FileDrainer::AddOperationWrite(std::string &toFileName, size_t countBytes,
-                                    const void *data)
+void FileDrainer::AddOperationWrite(const std::string &toFileName,
+                                    size_t countBytes, const void *data)
 {
     std::string emptyStr;
     AddOperation(DrainOperation::Write, emptyStr, toFileName, 0, 0, countBytes,
                  data);
+}
+
+void FileDrainer::AddOperationOpen(const std::string &toFileName, Mode mode)
+{
+    std::string emptyStr;
+    if (mode == Mode::Write)
+    {
+        AddOperation(DrainOperation::Create, emptyStr, toFileName, 0, 0, 0);
+    }
+    else if (mode == Mode::Append)
+    {
+        AddOperation(DrainOperation::Open, emptyStr, toFileName, 0, 0, 0);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "ADIOS Coding ERROR: FileDrainer::AddOperationOpen() only supports "
+            "Write and Append modes\n");
+    }
 }
 
 int FileDrainer::GetFileDescriptor(const std::string &path, const Mode mode)
