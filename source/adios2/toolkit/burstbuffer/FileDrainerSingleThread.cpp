@@ -106,15 +106,19 @@ void FileDrainerSingleThread::DrainThread()
                 (fdo.op == DrainOperation::CopyAt ? Mode::Write : Mode::Append);
             int fdw = GetFileDescriptor(fdo.toFileName, wMode);
 
-            std::cout << "Drain Copy from " << fdo.fromFileName
-                      << " (fd=" << fdr << ") -> " << fdo.toFileName
-                      << " (fd=" << fdw << ") " << fdo.countBytes << " bytes ";
-            if (fdo.op == DrainOperation::CopyAt)
+            if (m_Verbose)
             {
-                std::cout << ", offsets: from " << fdo.fromOffset << " to "
-                          << fdo.toOffset;
+                std::cout << "Drain " << m_Rank << ": Copy from "
+                          << fdo.fromFileName << " (fd=" << fdr << ") -> "
+                          << fdo.toFileName << " (fd=" << fdw << ") "
+                          << fdo.countBytes << " bytes ";
+                if (fdo.op == DrainOperation::CopyAt)
+                {
+                    std::cout << ", offsets: from " << fdo.fromOffset << " to "
+                              << fdo.toOffset;
+                }
+                std::cout << std::endl;
             }
-            std::cout << std::endl;
 
             if (fdr != errorState && fdw != errorState)
             {
@@ -146,18 +150,24 @@ void FileDrainerSingleThread::DrainThread()
         }
         case DrainOperation::SeekEnd:
         {
-            std::cout << "Drain Seek to End of file " << fdo.toFileName
-                      << std::endl;
+            if (m_Verbose)
+            {
+                std::cout << "Drain " << m_Rank << ": Seek to End of file "
+                          << fdo.toFileName << std::endl;
+            }
             int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
             Seek(fdw, 0, fdo.toFileName, SEEK_END);
             break;
         }
         case DrainOperation::WriteAt:
         {
-            std::cout << "Drain Write to file " << fdo.toFileName << " "
-                      << fdo.countBytes
-                      << " bytes of data from memory to offset " << fdo.toOffset
-                      << std::endl;
+            if (m_Verbose)
+            {
+                std::cout << "Drain " << m_Rank << ": Write to file "
+                          << fdo.toFileName << " " << fdo.countBytes
+                          << " bytes of data from memory to offset "
+                          << fdo.toOffset << std::endl;
+            }
             int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
             Seek(fdw, fdo.toOffset, fdo.toFileName);
             Write(fdw, fdo.countBytes, fdo.dataToWrite.data(), fdo.toFileName);
@@ -165,24 +175,34 @@ void FileDrainerSingleThread::DrainThread()
         }
         case DrainOperation::Write:
         {
-            std::cout << "Drain Write to file " << fdo.toFileName << " "
-                      << fdo.countBytes
-                      << " bytes of data from memory (no seek)" << std::endl;
+            if (m_Verbose)
+            {
+                std::cout << "Drain " << m_Rank << ": Write to file "
+                          << fdo.toFileName << " " << fdo.countBytes
+                          << " bytes of data from memory (no seek)"
+                          << std::endl;
+            }
             int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
             Write(fdw, fdo.countBytes, fdo.dataToWrite.data(), fdo.toFileName);
             break;
         }
         case DrainOperation::Create:
         {
-            std::cout << "Drain Create new file " << fdo.toFileName
-                      << std::endl;
+            if (m_Verbose)
+            {
+                std::cout << "Drain " << m_Rank << ": Create new file "
+                          << fdo.toFileName << std::endl;
+            }
             GetFileDescriptor(fdo.toFileName, Mode::Write);
             break;
         }
         case DrainOperation::Open:
         {
-            std::cout << "Drain Open file " << fdo.toFileName << " for append "
-                      << std::endl;
+            if (m_Verbose)
+            {
+                std::cout << "Drain " << m_Rank << "Open file "
+                          << fdo.toFileName << " for append " << std::endl;
+            }
             GetFileDescriptor(fdo.toFileName, Mode::Append);
             break;
         }

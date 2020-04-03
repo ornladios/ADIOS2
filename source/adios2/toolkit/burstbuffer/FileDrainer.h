@@ -56,9 +56,6 @@ struct FileDrainOperation
 class FileDrainer
 {
 public:
-    /** rank of process just for stdout/stderr messages */
-    int m_Rank = 0;
-
     FileDrainer();
 
     virtual ~FileDrainer();
@@ -90,11 +87,18 @@ public:
     /** Join the thread. Main thread will block until thread terminates */
     virtual void Join() = 0;
 
+    /** turn on verbosity. set rank to differentiate between the output of
+     * processes */
+    void SetVerbose(int verboseLevel, int rank);
+
 protected:
     std::queue<FileDrainOperation> operations;
     std::mutex operationsMutex;
     std::map<std::string, int> fileDescriptorMap;
 
+    /** rank of process just for stdout/stderr messages */
+    int m_Rank = 0;
+    int m_Verbose = 0;
     static const int errorState = -1;
 
     int GetFileDescriptor(const std::string &path, const Mode mode);

@@ -172,9 +172,11 @@ void BP4Writer::InitTransports()
     m_BBName = m_Name;
     if (m_UseBB)
     {
-        m_BBName = m_BP4Serializer.RemoveTrailingSlash(
-                       m_BP4Serializer.m_Parameters.BurstBufferPath) +
+        m_BBName = m_BP4Serializer.m_Parameters.BurstBufferPath +
                    PathSeparator + m_Name;
+        m_FileDrainer.SetVerbose(
+            m_BP4Serializer.m_Parameters.BurstBufferVerbose,
+            m_BP4Serializer.m_RankMPI);
         /* start up BB thread */
         m_FileDrainer.Start();
     }

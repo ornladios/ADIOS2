@@ -183,12 +183,20 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         }
         else if (key == "burstbufferpath")
         {
-            parsedParameters.BurstBufferPath = value;
+            parsedParameters.BurstBufferPath =
+                helper::RemoveTrailingSlash(value);
         }
         else if (key == "burstbufferdrain")
         {
             parsedParameters.BurstBufferDrain = helper::StringTo<bool>(
                 value, " in Parameter key=BurstBufferDrain " + hint);
+        }
+        else if (key == "burstbufferverbose")
+        {
+            parsedParameters.BurstBufferVerbose =
+                static_cast<int>(helper::StringTo<int32_t>(
+                    value, m_DebugMode,
+                    " in Parameter key=BurstBufferVerbose " + hint));
         }
     }
     if (!engineType.empty())

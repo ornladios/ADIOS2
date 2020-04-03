@@ -251,5 +251,11 @@ void FileDrainer::Write(int fd, size_t count, const char *buffer,
     }
 }
 
+void FileDrainer::SetVerbose(int verboseLevel, int rank)
+{
+    m_Verbose = verboseLevel;
+    m_Rank = rank;
+}
+
 } // end namespace burstbuffer
 } // end namespace adios2
