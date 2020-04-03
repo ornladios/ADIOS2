@@ -174,11 +174,6 @@ void BP4Writer::InitTransports()
     {
         m_BBName = m_BP4Serializer.m_Parameters.BurstBufferPath +
                    PathSeparator + m_Name;
-        m_FileDrainer.SetVerbose(
-            m_BP4Serializer.m_Parameters.BurstBufferVerbose,
-            m_BP4Serializer.m_RankMPI);
-        /* start up BB thread */
-        m_FileDrainer.Start();
     }
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
@@ -197,6 +192,11 @@ void BP4Writer::InitTransports()
                     m_Name, m_IO.m_TransportsParameters);
             m_DrainSubStreamNames =
                 m_BP4Serializer.GetBPSubStreamNames(drainTransportNames);
+            /* start up BB thread */
+            m_FileDrainer.SetVerbose(
+                m_BP4Serializer.m_Parameters.BurstBufferVerbose,
+                m_BP4Serializer.m_RankMPI);
+            m_FileDrainer.Start();
         }
     }
 
