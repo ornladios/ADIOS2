@@ -202,8 +202,8 @@ void BP4Writer::InitTransports()
 
     /* Create the directories either on target or burst buffer if used */
     m_BP4Serializer.m_Profiler.Start("mkdir");
-    m_FileDataManager.MkDirsBarrier(m_SubStreamNames,
-                                    m_BP4Serializer.m_Parameters.NodeLocal);
+    m_FileDataManager.MkDirsBarrier(
+        m_SubStreamNames, m_BP4Serializer.m_Parameters.NodeLocal || m_UseBB);
     if (m_UseBB)
     {
         /* Create the directories on target anyway by main thread */
