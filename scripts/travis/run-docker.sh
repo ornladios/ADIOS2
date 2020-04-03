@@ -16,22 +16,26 @@ cd ${SOURCE_DIR}
 
 case ${BUILD_MATRIX_ENTRY} in
   docker-ubuntu1804)
-    if ! docker build --build-arg adios_ver=${COMMITISH} --build-arg ubuntu_ver=18.04 scripts/docker/images/ubuntu ; then
+    IMAGENAME=ornladios/adios2:ubuntu1804
+    if ! docker build --build-arg adios_ver=${COMMITISH} --build-arg ubuntu_ver=18.04 -t ${IMAGENAME} scripts/docker/images/ubuntu ; then
       exit 1;
     fi
     ;;
   docker-ubuntu1910)
-    if ! docker build --build-arg adios_ver=${COMMITISH} --build-arg ubuntu_ver=19.10 scripts/docker/images/ubuntu ; then
+    IMAGENAME=ornladios/adios2:ubuntu1910
+    if ! docker build --build-arg adios_ver=${COMMITISH} --build-arg ubuntu_ver=19.10 -t ${IMAGENAME} scripts/docker/images/ubuntu ; then
       exit 1;
     fi
     ;;
   docker-centos7)
-    if ! docker build --build-arg adios_ver=${COMMITISH} scripts/docker/images/centos7 ; then
+    IMAGENAME=ornladios/adios2:centos7
+    if ! docker build --build-arg adios_ver=${COMMITISH} -t ${IMAGENAME} scripts/docker/images/centos7 ; then
       exit 1;
     fi
     ;;
   docker-centos8)
-    if ! docker build --build-arg adios_ver=${COMMITISH} scripts/docker/images/centos8 ; then
+    IMAGENAME=ornladios/adios2:centos8
+    if ! docker build --build-arg adios_ver=${COMMITISH} -t ${IMAGENAME} scripts/docker/images/centos8 ; then
       exit 1;
     fi
     ;;
@@ -40,5 +44,11 @@ case ${BUILD_MATRIX_ENTRY} in
     exit 1;
     ;;
 esac
+
+if [[ -z "${TRAVIS_PULL_REQUEST_SHA}" && "${TRAVIS_BRANCH}" = "master" ]]
+then
+  echo "${DOCKERHUM_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+  docker push ${IMAGENAME}
+fi
 
 exit 0

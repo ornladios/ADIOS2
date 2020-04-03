@@ -20,7 +20,8 @@
 FROM centos:centos7
 
 # Install system dependencies
-RUN yum install -y epel-release && \
+RUN yum upgrade -y && \
+    yum install -y epel-release && \
     yum install -y https://centos7.iuscommunity.org/ius-release.rpm && \
     yum install -y \
         sudo curl vim git2u-all gdb gcc gcc-c++ gcc-gfortran make pkg-config \

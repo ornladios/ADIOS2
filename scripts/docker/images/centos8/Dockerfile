@@ -20,6 +20,7 @@ FROM centos:centos8
 
 # Install system dependencies
 RUN sed 's|enabled=0|enabled=1|' -i /etc/yum.repos.d/CentOS-PowerTools.repo && \
+    yum upgrade -y && \
     yum install -y epel-release && \
     yum install -y \
         sudo curl vim git gdb gcc gcc-c++ gcc-gfortran make pkg-config \
