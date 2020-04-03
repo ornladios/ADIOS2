@@ -49,20 +49,32 @@ void FileDrainerSingleThread::Finish()
     finishMutex.unlock();
 }
 
-void FileDrainerSingleThread::Join()
-{
-    if (th.joinable())
-    {
-        Finish();
-        th.join();
-    }
-}
-
 typedef std::chrono::duration<double> Seconds;
 typedef std::chrono::time_point<
     std::chrono::steady_clock,
     std::chrono::duration<double, std::chrono::steady_clock::period>>
     TimePoint;
+
+void FileDrainerSingleThread::Join()
+{
+    if (th.joinable())
+    {
+        const auto tTotalStart = std::chrono::steady_clock::now();
+        Seconds timeTotal = Seconds(0.0);
+
+        Finish();
+        th.join();
+
+        const auto tTotalEnd = std::chrono::steady_clock::now();
+        timeTotal = tTotalEnd - tTotalStart;
+        if (m_Verbose)
+        {
+            std::cout << "Drain " << m_Rank
+                      << ": Waited for thread to join = " << timeTotal.count()
+                      << " seconds" << std::endl;
+        }
+    }
+}
 
 /*
  * This function is running in a separate thread from all other member function

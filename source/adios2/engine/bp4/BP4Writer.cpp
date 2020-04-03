@@ -693,6 +693,7 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 {
     TAU_SCOPED_TIMER("BP4Writer::AggregateWriteData");
     m_BP4Serializer.CloseStream(m_IO, false);
+    size_t totalBytesWritten = 0;
 
     // async?
     for (int r = 0; r < m_BP4Serializer.m_Aggregator.m_Size; ++r)
@@ -716,15 +717,8 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
                     bufferSTL.Data(), bufferSTL.m_Position, transportIndex);
 
                 m_FileDataManager.FlushFiles(transportIndex);
-                if (m_UseBB)
-                {
-                    for (int i = 0; i < m_SubStreamNames.size(); ++i)
-                    {
-                        m_FileDrainer.AddOperationCopy(m_SubStreamNames[i],
-                                                       m_DrainSubStreamNames[i],
-                                                       bufferSTL.m_Position);
-                    }
-                }
+
+                totalBytesWritten += bufferSTL.m_Position;
             }
         }
 
@@ -733,6 +727,16 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
         m_BP4Serializer.m_Aggregator.Wait(dataRequests, r);
         m_BP4Serializer.m_Aggregator.SwapBuffers(r);
+    }
+
+    if (m_UseBB)
+    {
+        for (int i = 0; i < m_SubStreamNames.size(); ++i)
+        {
+            m_FileDrainer.AddOperationCopy(m_SubStreamNames[i],
+                                           m_DrainSubStreamNames[i],
+                                           totalBytesWritten);
+        }
     }
 
     m_BP4Serializer.UpdateOffsetsInMetadata();
