@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
     timeEnd = MPI_Wtime();
     if (!settings.myRank)
     {
-        std::cout << "ADIOS IOTEST test loop time " << timeEnd - timeStart
+        std::cout << "ADIOS IOTEST test time " << timeEnd - timeStart
                   << "  seconds " << std::endl;
     }
 
