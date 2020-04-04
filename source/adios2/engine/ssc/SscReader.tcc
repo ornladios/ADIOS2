@@ -82,14 +82,6 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
         m_AllReceivingWriterRanks =
             ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
-        if (variable.m_ShapeID == ShapeID::LocalValue ||
-            variable.m_ShapeID == ShapeID::GlobalValue)
-        {
-            if (m_AllReceivingWriterRanks.empty())
-            {
-                m_AllReceivingWriterRanks[0].first = 0;
-            }
-        }
         CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
         size_t totalDataSize = 0;
         for (auto i : m_AllReceivingWriterRanks)
@@ -104,10 +96,6 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
             MPI_Rget(m_Buffer.data() + i.second.first, i.second.second,
                      MPI_CHAR, i.first, 0, i.second.second, MPI_CHAR, m_MpiWin,
                      &requests.back());
-            std::cout << "Step " << m_CurrentStep << " Rank " << m_ReaderRank
-                      << " =============== getting buffer from rank " << i.first
-                      << " at buffer " << i.second.first << " for "
-                      << i.second.second << std::endl;
         }
         MPI_Status statuses[requests.size()];
         MPI_Waitall(requests.size(), requests.data(), statuses);
