@@ -31,7 +31,7 @@ namespace helper
 namespace
 {
 pugi::xml_document XMLDocument(const std::string &xmlContents,
-                               const bool debugMode, const std::string hint)
+                               const std::string hint)
 {
     pugi::xml_document document;
     auto parse_result = document.load_buffer_inplace(
@@ -50,8 +50,7 @@ pugi::xml_document XMLDocument(const std::string &xmlContents,
 
 pugi::xml_node XMLNode(const std::string nodeName,
                        const pugi::xml_document &xmlDocument,
-                       const bool debugMode, const std::string hint,
-                       const bool isMandatory = true,
+                       const std::string hint, const bool isMandatory = true,
                        const bool isUnique = false)
 {
     const pugi::xml_node node = xmlDocument.child(nodeName.c_str());
@@ -79,8 +78,8 @@ pugi::xml_node XMLNode(const std::string nodeName,
 }
 
 pugi::xml_node XMLNode(const std::string nodeName,
-                       const pugi::xml_node &upperNode, const bool debugMode,
-                       const std::string hint, const bool isMandatory = true,
+                       const pugi::xml_node &upperNode, const std::string hint,
+                       const bool isMandatory = true,
                        const bool isUnique = false)
 {
     const pugi::xml_node node = upperNode.child(nodeName.c_str());
@@ -110,7 +109,7 @@ pugi::xml_node XMLNode(const std::string nodeName,
 
 pugi::xml_attribute XMLAttribute(const std::string attributeName,
                                  const pugi::xml_node &node,
-                                 const bool debugMode, const std::string hint,
+                                 const std::string hint,
                                  const bool isMandatory = true)
 {
     const pugi::xml_attribute attribute = node.attribute(attributeName.c_str());
@@ -156,10 +155,10 @@ void ParseConfigXML(
         for (const pugi::xml_node paramNode : node.children("parameter"))
         {
             const pugi::xml_attribute key =
-                XMLAttribute("key", paramNode, adios.m_DebugMode, errorMessage);
+                XMLAttribute("key", paramNode, errorMessage);
 
-            const pugi::xml_attribute value = helper::XMLAttribute(
-                "value", paramNode, adios.m_DebugMode, errorMessage);
+            const pugi::xml_attribute value =
+                helper::XMLAttribute("value", paramNode, errorMessage);
 
             parameters.emplace(key.value(), value.value());
         }
@@ -168,10 +167,10 @@ void ParseConfigXML(
 
     auto lf_OperatorXML = [&](const pugi::xml_node &operatorNode) {
         const pugi::xml_attribute name =
-            helper::XMLAttribute("name", operatorNode, adios.m_DebugMode, hint);
+            helper::XMLAttribute("name", operatorNode, hint);
 
         const pugi::xml_attribute type =
-            helper::XMLAttribute("type", operatorNode, adios.m_DebugMode, hint);
+            helper::XMLAttribute("type", operatorNode, hint);
 
         std::string typeLowerCase = std::string(type.value());
         std::transform(typeLowerCase.begin(), typeLowerCase.end(),
@@ -185,17 +184,16 @@ void ParseConfigXML(
     // node is the variable node
     auto lf_IOVariableXML = [&](const pugi::xml_node &node,
                                 core::IO &currentIO) {
-        const std::string variableName = std::string(
-            helper::XMLAttribute("name", node, adios.m_DebugMode, hint)
-                .value());
+        const std::string variableName =
+            std::string(helper::XMLAttribute("name", node, hint).value());
 
         for (const pugi::xml_node &operation : node.children("operation"))
         {
-            const pugi::xml_attribute opName = helper::XMLAttribute(
-                "operator", operation, adios.m_DebugMode, hint, false);
+            const pugi::xml_attribute opName =
+                helper::XMLAttribute("operator", operation, hint, false);
 
-            const pugi::xml_attribute opType = helper::XMLAttribute(
-                "type", operation, adios.m_DebugMode, hint, false);
+            const pugi::xml_attribute opType =
+                helper::XMLAttribute("type", operation, hint, false);
 
             if (opName && opType)
             {
@@ -261,7 +259,7 @@ void ParseConfigXML(
 
     auto lf_IOXML = [&](const pugi::xml_node &io) {
         const pugi::xml_attribute ioName =
-            helper::XMLAttribute("name", io, adios.m_DebugMode, hint);
+            helper::XMLAttribute("name", io, hint);
 
         // Build the IO object
         auto itCurrentIO = ios.emplace(
@@ -271,12 +269,12 @@ void ParseConfigXML(
 
         // must be unique per io
         const pugi::xml_node &engine =
-            helper::XMLNode("engine", io, adios.m_DebugMode, hint, false, true);
+            helper::XMLNode("engine", io, hint, false, true);
 
         if (engine)
         {
             const pugi::xml_attribute type =
-                helper::XMLAttribute("type", engine, adios.m_DebugMode, hint);
+                helper::XMLAttribute("type", engine, hint);
             currentIO.SetEngine(type.value());
 
             const Params parameters = lf_GetParametersXML(engine);
@@ -285,8 +283,8 @@ void ParseConfigXML(
 
         for (const pugi::xml_node &transport : io.children("transport"))
         {
-            const pugi::xml_attribute type = helper::XMLAttribute(
-                "type", transport, adios.m_DebugMode, hint);
+            const pugi::xml_attribute type =
+                helper::XMLAttribute("type", transport, hint);
 
             const Params parameters = lf_GetParametersXML(transport);
             currentIO.AddTransport(type.value(), parameters);
@@ -300,12 +298,11 @@ void ParseConfigXML(
 
     // BODY OF FUNCTION
     const std::string fileContents = lf_FileContents(configFileXML);
-    const pugi::xml_document document =
-        helper::XMLDocument(fileContents, adios.m_DebugMode, hint);
+    const pugi::xml_document document = helper::XMLDocument(fileContents, hint);
 
     // must be unique
-    const pugi::xml_node config = helper::XMLNode(
-        "adios-config", document, adios.m_DebugMode, hint, true);
+    const pugi::xml_node config =
+        helper::XMLNode("adios-config", document, hint, true);
 
     for (const pugi::xml_node &op : config.children("operator"))
     {

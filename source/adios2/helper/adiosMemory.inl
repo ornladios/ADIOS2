@@ -539,8 +539,8 @@ void CopyContiguousMemory(const char *src, const size_t payloadStride, T *dest,
 }
 
 template <class T>
-void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
-            const std::string hint, T value)
+void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint,
+            T value)
 {
     try
     {

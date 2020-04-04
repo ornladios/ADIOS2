@@ -36,24 +36,20 @@ std::string FileToString(const std::string &fileName, const std::string hint);
 /**
  * Transforms a vector to a map of parameters
  * @param parameters vector of parameters with format "field=value"
- * @param debugMode true=check parameters format, false=no checks
  * @return a map with unique key=field, value=corresponding value
  */
 Params BuildParametersMap(const std::vector<std::string> &parameters,
-                          const char delimKeyValue = '=',
-                          const bool debugMode = false);
+                          const char delimKeyValue = '=');
 
 /**
  * Transforms a string to a map of parameters
  * @param parameters string of parameters with format "key=value,
  * key2=value2, ..."
- * @param debugMode true=check parameters format, false=no checks
  * @return a map with unique key/value pairs
  */
 Params BuildParametersMap(const std::string &input,
                           const char delimKeyValue = '=',
-                          const char delimItem = ',',
-                          const bool debugMode = false);
+                          const char delimItem = ',');
 
 /**
  * Add name extension if not existing at the end of name
@@ -96,23 +92,20 @@ void SetParameterValue(const std::string key, const Params &parameters,
                        std::string &value) noexcept;
 
 std::string GetParameter(const std::string key, const adios2::Params &params,
-                         const bool isMandatory, const bool debugMode,
-                         const std::string hint);
+                         const bool isMandatory, const std::string hint);
 /**
  * Sets int value if found in parameters for input key
  * @param key input
  * @param parameters map with key: field, value: value
  * @param value to be modified if key is found in parameters
- * @param debugMode check for string conversion
  * @param hint passed for extra debugging info if exception is thrown
  */
 void SetParameterValueInt(const std::string key, const Params &parameters,
-                          int &value, const bool debugMode,
-                          const std::string &hint);
+                          int &value, const std::string &hint);
 
 template <class T>
 void SetParameterValue(const std::string key, const Params &parameters,
-                       T &value, const bool debugMode, const std::string &hint);
+                       T &value, const std::string &hint);
 
 /**
  * Returns a single string with dimension values
@@ -137,37 +130,31 @@ std::string GlobalName(const std::string &localName, const std::string &prefix,
 
 /**
  * function that casts a string to a fixed width type verifying validity of the
- * cast with exceptions in debugMode. ONly int32_t, uint32_t, int64_t, uint64_t,
+ * cast with exceptions. ONly int32_t, uint32_t, int64_t, uint64_t,
  * float, double are supported
  * @param input to be converted
- * @param debugMode check for string conversion
  * @param hint passed for extra debugging info if exception is thrown
  * @return cast input string to output value of type T
  */
 template <class T>
-T StringTo(const std::string &input, const bool debugMode,
-           const std::string &hint);
+T StringTo(const std::string &input, const std::string &hint);
 
 /**
  * function that casts a string to a size_t value safely. Calls uint32_t or
  * uint64_t depending on sizeof(size_t)
  * @param input to be converted
- * @param debugMode check for string conversion
  * @param hint passed for extra debugging info if exception is thrown
  * @return cast input string to output value of type size_t
  */
-size_t StringToSizeT(const std::string &input, const bool debugMode,
-                     const std::string &hint);
+size_t StringToSizeT(const std::string &input, const std::string &hint);
 
 /**
  * Convert a string (e.g. 16Kb) to byte units. Last 2 characters must
  * @param input
- * @param debugMode
  * @param hint
  * @return
  */
-size_t StringToByteUnits(const std::string &input, const bool debugMode,
-                         const std::string &hint);
+size_t StringToByteUnits(const std::string &input, const std::string &hint);
 
 /**
  * Transforms string to LowerCase
