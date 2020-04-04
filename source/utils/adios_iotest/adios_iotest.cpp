@@ -77,6 +77,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    double timeStart, timeEnd;
+    MPI_Barrier(settings.appComm);
+    timeStart = MPI_Wtime();
+
     try
     {
         /* writing to one stream using two groups is not supported.
@@ -306,6 +310,14 @@ int main(int argc, char *argv[])
 
         /* Yell and quit */
         MPI_Abort(settings.appComm, -1);
+    }
+
+    MPI_Barrier(settings.appComm);
+    timeEnd = MPI_Wtime();
+    if (!settings.myRank)
+    {
+        std::cout << "ADIOS IOTEST test loop time " << timeEnd - timeStart
+                  << "  seconds " << std::endl;
     }
 
     MPI_Finalize();
