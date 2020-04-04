@@ -296,4 +296,22 @@ int validateCommonTestData(int start, int length, size_t step,
     return failures;
 }
 
+int validateCommonTestDataR64(int start, int length, size_t step,
+                              int missing_end_data, bool varying = false,
+                              int writerRank = 0)
+{
+    int failures = 0;
+    for (int i = 0; i < length; i++)
+    {
+        if (in_R64[i] != (double)((i + start) * 10 + step))
+        {
+            std::cout << "Expected " << (double)((i + start) * 10 + step)
+                      << ", got " << in_R64[i] << " for in_R64[" << i
+                      << "](global[" << i + start << "])" << std::endl;
+            failures++;
+        }
+    }
+    return failures;
+}
+
 #endif // TESTING_ADIOS2_ENGINE_COMMON_TESTDATA_H_
