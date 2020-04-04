@@ -84,8 +84,7 @@ RankPosMap CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
                     }
                     else if (gBlock.shapeId == ShapeID::GlobalArray)
                     {
-                        gBlock.overlapStart.resize(gBlock.start.size());
-                        gBlock.overlapCount.resize(gBlock.count.size());
+                        bool hasOverlap = true;
                         for (size_t i = 0; i < gBlock.start.size(); ++i)
                         {
                             if (gBlock.start[i] + gBlock.count[i] <=
@@ -93,32 +92,13 @@ RankPosMap CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
                                 lBlock.start[i] + lBlock.count[i] <=
                                     gBlock.start[i])
                             {
-                                gBlock.overlapStart.clear();
-                                gBlock.overlapCount.clear();
+                                hasOverlap = false;
                                 break;
                             }
+                        }
+                        if (hasOverlap)
+                        {
                             ret[rank].first = 0;
-                            if (gBlock.start[i] < lBlock.start[i])
-                            {
-                                gBlock.overlapStart[i] = lBlock.start[i];
-                            }
-                            else
-                            {
-                                gBlock.overlapStart[i] = gBlock.start[i];
-                            }
-                            if (gBlock.start[i] + gBlock.count[i] <
-                                lBlock.start[i] + lBlock.count[i])
-                            {
-                                gBlock.overlapCount[i] = gBlock.start[i] +
-                                                         gBlock.count[i] -
-                                                         gBlock.overlapStart[i];
-                            }
-                            else
-                            {
-                                gBlock.overlapCount[i] = lBlock.start[i] +
-                                                         lBlock.count[i] -
-                                                         gBlock.overlapStart[i];
-                            }
                         }
                     }
                     else if (gBlock.shapeId == ShapeID::LocalValue)
@@ -301,8 +281,6 @@ void PrintBlock(const BlockInfo &b, const std::string &label)
     PrintDims(b.shape, "    Shape : ");
     PrintDims(b.start, "    Start : ");
     PrintDims(b.count, "    Count : ");
-    PrintDims(b.overlapStart, "    Overlap Start : ");
-    PrintDims(b.overlapCount, "    Overlap Count : ");
     std::cout << "    Position Start : " << b.bufferStart << std::endl;
     std::cout << "    Position Count : " << b.bufferCount << std::endl;
 }
@@ -317,8 +295,6 @@ void PrintBlockVec(const BlockVec &bv, const std::string &label)
         PrintDims(i.shape, "    Shape : ");
         PrintDims(i.start, "    Start : ");
         PrintDims(i.count, "    Count : ");
-        PrintDims(i.overlapStart, "    Overlap Start : ");
-        PrintDims(i.overlapCount, "    Overlap Count : ");
         std::cout << "    Position Start : " << i.bufferStart << std::endl;
         std::cout << "    Position Count : " << i.bufferCount << std::endl;
     }
@@ -338,8 +314,6 @@ void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label)
             PrintDims(i.shape, "        Shape : ");
             PrintDims(i.start, "        Start : ");
             PrintDims(i.count, "        Count : ");
-            PrintDims(i.overlapStart, "        Overlap Start : ");
-            PrintDims(i.overlapCount, "        Overlap Count : ");
             std::cout << "        Position Start : " << i.bufferStart
                       << std::endl;
             std::cout << "        Position Count : " << i.bufferCount

@@ -34,8 +34,6 @@ inline void SscReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    //    std::cout << " =================== Getting variable " <<
-    //    variable.m_Name << std::endl;
     TAU_SCOPED_TIMER_FUNC();
 
     variable.SetData(data);
@@ -84,8 +82,6 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
         m_AllReceivingWriterRanks =
             ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
-        // m_AllReceivingWriterRanks =
-        // ssc::AllOverlapRanks(m_GlobalWritePattern);
         if (variable.m_ShapeID == ShapeID::LocalValue ||
             variable.m_ShapeID == ShapeID::GlobalValue)
         {
@@ -108,10 +104,10 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
             MPI_Rget(m_Buffer.data() + i.second.first, i.second.second,
                      MPI_CHAR, i.first, 0, i.second.second, MPI_CHAR, m_MpiWin,
                      &requests.back());
-            //            std::cout << "Step " << m_CurrentStep << " Rank " <<
-            //            m_ReaderRank << " =============== getting buffer from
-            //            rank " << i.first << " at buffer " << i.second.first
-            //            << " for " << i.second.second << std::endl;
+            std::cout << "Step " << m_CurrentStep << " Rank " << m_ReaderRank
+                      << " =============== getting buffer from rank " << i.first
+                      << " at buffer " << i.second.first << " for "
+                      << i.second.second << std::endl;
         }
         MPI_Status statuses[requests.size()];
         MPI_Waitall(requests.size(), requests.data(), statuses);
@@ -122,17 +118,8 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         const auto &v = m_GlobalWritePattern[i.first];
         for (const auto &b : v)
         {
-            if (m_CurrentStep == 0 && m_ReaderRank == 1 &&
-                variable.m_Name == "scalar_r64")
-                std::cout << " Rank " << m_ReaderRank
-                          << " ========================== b.name = " << b.name
-                          << " variable.m_Name = " << variable.m_Name
-                          << std::endl;
             if (b.name == variable.m_Name)
             {
-                if (b.name == "scalar_r64" or variable.m_Name == "scalar_r64")
-                {
-                }
                 if (b.shapeId == ShapeID::GlobalArray ||
                     b.shapeId == ShapeID::LocalArray)
                 {
@@ -140,36 +127,12 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
                                       b.count, true, true,
                                       reinterpret_cast<char *>(data), vStart,
                                       vCount, true, true);
-                    /*
-                    if(b.name == "c32")
-                    {
-                    std::cout << " Rank " << m_ReaderRank << " ===============
-                    copying array " << b.name << ": from : "; for(size_t i=0;
-                    i<b.bufferCount/sizeof(T); ++i)
-                    {
-                        std::cout << ((T*)(m_Buffer.data() + b.bufferStart))[i]
-                    << ", ";
-                    }
-                    std::cout << "   to : ";
-                    for(size_t i=0; i<b.bufferCount/sizeof(T); ++i)
-                    {
-                        std::cout << data[i] << ", ";
-                    }
-                    std::cout << std::endl;
-
-                    }
-                    */
                 }
                 else if (b.shapeId == ShapeID::GlobalValue ||
                          b.shapeId == ShapeID::LocalValue)
                 {
                     std::memcpy(data, m_Buffer.data() + b.bufferStart,
                                 b.bufferCount);
-                    std::cout
-                        << "Step " << m_CurrentStep << " Rank " << m_ReaderRank
-                        << " =============== copying value " << b.name << " = "
-                        << data[0] << " at buffer " << b.bufferStart << " for "
-                        << b.bufferCount << std::endl;
                 }
                 else
                 {

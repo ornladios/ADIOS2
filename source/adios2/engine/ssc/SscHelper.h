@@ -33,8 +33,6 @@ struct BlockInfo
     Dims shape;
     Dims start;
     Dims count;
-    Dims overlapStart;
-    Dims overlapCount;
     size_t bufferStart;
     size_t bufferCount;
 };
