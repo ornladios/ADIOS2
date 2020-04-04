@@ -66,8 +66,10 @@ size_t TotalDataSize(const BlockVec &bv)
     return s;
 }
 
-void CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
+RankPosMap CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
 {
+    RankPosMap ret;
+    int rank = 0;
     for (auto &rankBlockVec : globalVecVec)
     {
         for (auto &gBlock : rankBlockVec)
@@ -76,70 +78,57 @@ void CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
             {
                 if (lBlock.name == gBlock.name)
                 {
-                    if (gBlock.start.size() != gBlock.count.size() ||
-                        lBlock.start.size() != lBlock.count.size() ||
-                        gBlock.start.size() != lBlock.start.size())
+                    if (gBlock.shapeId == ShapeID::GlobalValue)
                     {
-                        continue;
+                        ret[rank].first = 0;
                     }
-                    gBlock.overlapStart.resize(gBlock.start.size());
-                    gBlock.overlapCount.resize(gBlock.count.size());
-                    for (size_t i = 0; i < gBlock.start.size(); ++i)
+                    else if (gBlock.shapeId == ShapeID::GlobalArray)
                     {
-                        if (gBlock.start[i] + gBlock.count[i] <=
-                                lBlock.start[i] or
-                            lBlock.start[i] + lBlock.count[i] <=
-                                gBlock.start[i])
+                        gBlock.overlapStart.resize(gBlock.start.size());
+                        gBlock.overlapCount.resize(gBlock.count.size());
+                        for (size_t i = 0; i < gBlock.start.size(); ++i)
                         {
-                            gBlock.overlapStart.clear();
-                            gBlock.overlapCount.clear();
-                            break;
+                            if (gBlock.start[i] + gBlock.count[i] <=
+                                    lBlock.start[i] or
+                                lBlock.start[i] + lBlock.count[i] <=
+                                    gBlock.start[i])
+                            {
+                                gBlock.overlapStart.clear();
+                                gBlock.overlapCount.clear();
+                                break;
+                            }
+                            ret[rank].first = 0;
+                            if (gBlock.start[i] < lBlock.start[i])
+                            {
+                                gBlock.overlapStart[i] = lBlock.start[i];
+                            }
+                            else
+                            {
+                                gBlock.overlapStart[i] = gBlock.start[i];
+                            }
+                            if (gBlock.start[i] + gBlock.count[i] <
+                                lBlock.start[i] + lBlock.count[i])
+                            {
+                                gBlock.overlapCount[i] = gBlock.start[i] +
+                                                         gBlock.count[i] -
+                                                         gBlock.overlapStart[i];
+                            }
+                            else
+                            {
+                                gBlock.overlapCount[i] = lBlock.start[i] +
+                                                         lBlock.count[i] -
+                                                         gBlock.overlapStart[i];
+                            }
                         }
-                        if (gBlock.start[i] < lBlock.start[i])
-                        {
-                            gBlock.overlapStart[i] = lBlock.start[i];
-                        }
-                        else
-                        {
-                            gBlock.overlapStart[i] = gBlock.start[i];
-                        }
-                        if (gBlock.start[i] + gBlock.count[i] <
-                            lBlock.start[i] + lBlock.count[i])
-                        {
-                            gBlock.overlapCount[i] = gBlock.start[i] +
-                                                     gBlock.count[i] -
-                                                     gBlock.overlapStart[i];
-                        }
-                        else
-                        {
-                            gBlock.overlapCount[i] = lBlock.start[i] +
-                                                     lBlock.count[i] -
-                                                     gBlock.overlapStart[i];
-                        }
+                    }
+                    else if (gBlock.shapeId == ShapeID::LocalValue)
+                    {
+                    }
+                    else if (gBlock.shapeId == ShapeID::LocalArray)
+                    {
                     }
                 }
             }
-        }
-    }
-}
-
-RankPosMap AllOverlapRanks(const BlockVecVec &bvv)
-{
-    RankPosMap ret;
-    int rank = 0;
-    for (const auto &bv : bvv)
-    {
-        bool hasOverlap = false;
-        for (const auto &b : bv)
-        {
-            if (not b.overlapCount.empty())
-            {
-                hasOverlap = true;
-            }
-        }
-        if (hasOverlap)
-        {
-            ret[rank].first = 0;
         }
         ++rank;
     }

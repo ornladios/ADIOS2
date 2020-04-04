@@ -59,9 +59,8 @@ size_t TotalDataSize(const Dims &dims, const std::string &type,
                      const ShapeID &shapeId);
 size_t TotalDataSize(const BlockVec &bv);
 
-void CalculateOverlap(BlockVecVec &globalPattern, const BlockVec &localPattern);
-
-RankPosMap AllOverlapRanks(const BlockVecVec &mapVec);
+RankPosMap CalculateOverlap(BlockVecVec &globalPattern,
+                            const BlockVec &localPattern);
 
 void BlockVecToJson(const BlockVec &input, nlohmann::json &output);
 void AttributeMapToJson(IO &input, nlohmann::json &output);

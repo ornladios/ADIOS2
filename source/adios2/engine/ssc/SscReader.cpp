@@ -395,8 +395,10 @@ void SscReader::SyncReadPattern()
     }
 
     ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
-    ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
-    m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePattern);
+    m_AllReceivingWriterRanks =
+        ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
+    //    m_AllReceivingWriterRanks =
+    //    ssc::AllOverlapRanks(m_GlobalWritePattern);
     CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
     size_t totalDataSize = 0;
     for (auto i : m_AllReceivingWriterRanks)
@@ -437,11 +439,14 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
             {
                 b.bufferStart += bufferPosition;
             }
-            size_t currentRankTotalSize = TotalDataSize(bv);
+            size_t currentRankTotalSize = ssc::TotalDataSize(bv);
             allRanks[rank].second = currentRankTotalSize + 1;
             bufferPosition += currentRankTotalSize + 1;
         }
     }
+    //    std::cout << "Step " << m_CurrentStep << " Rank " << m_ReaderRank <<
+    //    "allReceivingWriterRanks " << allRanks.size() << " --------------
+    //    bufferPosition " <<  bufferPosition << std::endl;
 }
 
 #define declare_type(T)                                                        \
