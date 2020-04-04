@@ -47,7 +47,7 @@ esac
 
 if [[ -z "${TRAVIS_PULL_REQUEST_SHA}" && "${TRAVIS_BRANCH}" = "master" ]]
 then
-  echo "${DOCKERHUM_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+  docker login --username="${DOCKERHUB_USERNAME}" --password="${DOCKERHUB_PASSWORD}"
   docker push ${IMAGENAME}
 fi
 
