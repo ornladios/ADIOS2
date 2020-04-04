@@ -37,10 +37,23 @@ size_t GetTypeSize(const std::string &type)
     else { throw(std::runtime_error("unknown data type")); }
 }
 
-size_t TotalDataSize(const Dims &dims, const std::string &type)
+size_t TotalDataSize(const Dims &dims, const std::string &type,
+                     const ShapeID &shapeId)
 {
-    return std::accumulate(dims.begin(), dims.end(), GetTypeSize(type),
-                           std::multiplies<size_t>());
+    if (shapeId == ShapeID::GlobalArray || shapeId == ShapeID::LocalArray)
+    {
+        return std::accumulate(dims.begin(), dims.end(), GetTypeSize(type),
+                               std::multiplies<size_t>());
+    }
+    else if (shapeId == ShapeID::GlobalValue || shapeId == ShapeID::LocalValue)
+    {
+        return GetTypeSize(type);
+    }
+    else
+    {
+        throw(std::runtime_error("ShapeID not supported"));
+    }
+    return 0;
 }
 
 size_t TotalDataSize(const BlockVec &bv)
@@ -48,13 +61,15 @@ size_t TotalDataSize(const BlockVec &bv)
     size_t s = 0;
     for (const auto &b : bv)
     {
-        s += TotalDataSize(b.count, b.type);
+        s += TotalDataSize(b.count, b.type, b.shapeId);
     }
     return s;
 }
 
-void CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
+RankPosMap CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
 {
+    RankPosMap ret;
+    int rank = 0;
     for (auto &rankBlockVec : globalVecVec)
     {
         for (auto &gBlock : rankBlockVec)
@@ -63,70 +78,37 @@ void CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
             {
                 if (lBlock.name == gBlock.name)
                 {
-                    if (gBlock.start.size() != gBlock.count.size() ||
-                        lBlock.start.size() != lBlock.count.size() ||
-                        gBlock.start.size() != lBlock.start.size())
+                    if (gBlock.shapeId == ShapeID::GlobalValue)
                     {
-                        continue;
+                        ret[rank].first = 0;
                     }
-                    gBlock.overlapStart.resize(gBlock.start.size());
-                    gBlock.overlapCount.resize(gBlock.count.size());
-                    for (size_t i = 0; i < gBlock.start.size(); ++i)
+                    else if (gBlock.shapeId == ShapeID::GlobalArray)
                     {
-                        if (gBlock.start[i] + gBlock.count[i] <=
-                                lBlock.start[i] or
-                            lBlock.start[i] + lBlock.count[i] <=
-                                gBlock.start[i])
+                        bool hasOverlap = true;
+                        for (size_t i = 0; i < gBlock.start.size(); ++i)
                         {
-                            gBlock.overlapStart.clear();
-                            gBlock.overlapCount.clear();
-                            break;
+                            if (gBlock.start[i] + gBlock.count[i] <=
+                                    lBlock.start[i] or
+                                lBlock.start[i] + lBlock.count[i] <=
+                                    gBlock.start[i])
+                            {
+                                hasOverlap = false;
+                                break;
+                            }
                         }
-                        if (gBlock.start[i] < lBlock.start[i])
+                        if (hasOverlap)
                         {
-                            gBlock.overlapStart[i] = lBlock.start[i];
+                            ret[rank].first = 0;
                         }
-                        else
-                        {
-                            gBlock.overlapStart[i] = gBlock.start[i];
-                        }
-                        if (gBlock.start[i] + gBlock.count[i] <
-                            lBlock.start[i] + lBlock.count[i])
-                        {
-                            gBlock.overlapCount[i] = gBlock.start[i] +
-                                                     gBlock.count[i] -
-                                                     gBlock.overlapStart[i];
-                        }
-                        else
-                        {
-                            gBlock.overlapCount[i] = lBlock.start[i] +
-                                                     lBlock.count[i] -
-                                                     gBlock.overlapStart[i];
-                        }
+                    }
+                    else if (gBlock.shapeId == ShapeID::LocalValue)
+                    {
+                    }
+                    else if (gBlock.shapeId == ShapeID::LocalArray)
+                    {
                     }
                 }
             }
-        }
-    }
-}
-
-RankPosMap AllOverlapRanks(const BlockVecVec &bvv)
-{
-    RankPosMap ret;
-    int rank = 0;
-    for (const auto &bv : bvv)
-    {
-        bool hasOverlap = false;
-        for (const auto &b : bv)
-        {
-            if (not b.overlapCount.empty())
-            {
-                hasOverlap = true;
-            }
-        }
-        if (hasOverlap)
-        {
-            ret[rank].first = 0;
         }
         ++rank;
     }
@@ -141,6 +123,7 @@ void BlockVecToJson(const BlockVec &input, nlohmann::json &output)
         auto &jref = output["Variables"].back();
         jref["Name"] = b.name;
         jref["Type"] = b.type;
+        jref["ShapeID"] = b.shapeId;
         jref["Shape"] = b.shape;
         jref["Start"] = b.start;
         jref["Count"] = b.count;
@@ -225,6 +208,7 @@ void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
                 auto &b = output[i].back();
                 b.name = j["Name"].get<std::string>();
                 b.type = j["Type"].get<std::string>();
+                b.shapeId = j["ShapeID"].get<ShapeID>();
                 b.start = j["Start"].get<Dims>();
                 b.count = j["Count"].get<Dims>();
                 b.shape = j["Shape"].get<Dims>();
@@ -297,8 +281,6 @@ void PrintBlock(const BlockInfo &b, const std::string &label)
     PrintDims(b.shape, "    Shape : ");
     PrintDims(b.start, "    Start : ");
     PrintDims(b.count, "    Count : ");
-    PrintDims(b.overlapStart, "    Overlap Start : ");
-    PrintDims(b.overlapCount, "    Overlap Count : ");
     std::cout << "    Position Start : " << b.bufferStart << std::endl;
     std::cout << "    Position Count : " << b.bufferCount << std::endl;
 }
@@ -313,8 +295,6 @@ void PrintBlockVec(const BlockVec &bv, const std::string &label)
         PrintDims(i.shape, "    Shape : ");
         PrintDims(i.start, "    Start : ");
         PrintDims(i.count, "    Count : ");
-        PrintDims(i.overlapStart, "    Overlap Start : ");
-        PrintDims(i.overlapCount, "    Overlap Count : ");
         std::cout << "    Position Start : " << i.bufferStart << std::endl;
         std::cout << "    Position Count : " << i.bufferCount << std::endl;
     }
@@ -334,8 +314,6 @@ void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label)
             PrintDims(i.shape, "        Shape : ");
             PrintDims(i.start, "        Start : ");
             PrintDims(i.count, "        Count : ");
-            PrintDims(i.overlapStart, "        Overlap Start : ");
-            PrintDims(i.overlapCount, "        Overlap Count : ");
             std::cout << "        Position Start : " << i.bufferStart
                       << std::endl;
             std::cout << "        Position Count : " << i.bufferCount

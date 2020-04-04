@@ -29,11 +29,10 @@ struct BlockInfo
 {
     std::string name;
     std::string type;
+    ShapeID shapeId;
     Dims shape;
     Dims start;
     Dims count;
-    Dims overlapStart;
-    Dims overlapCount;
     size_t bufferStart;
     size_t bufferCount;
 };
@@ -54,12 +53,12 @@ void PrintMpiInfo(const MpiInfo &writersInfo, const MpiInfo &readersInfo);
 
 size_t GetTypeSize(const std::string &type);
 
-size_t TotalDataSize(const Dims &dims, const std::string &type);
+size_t TotalDataSize(const Dims &dims, const std::string &type,
+                     const ShapeID &shapeId);
 size_t TotalDataSize(const BlockVec &bv);
 
-void CalculateOverlap(BlockVecVec &globalPattern, const BlockVec &localPattern);
-
-RankPosMap AllOverlapRanks(const BlockVecVec &mapVec);
+RankPosMap CalculateOverlap(BlockVecVec &globalPattern,
+                            const BlockVec &localPattern);
 
 void BlockVecToJson(const BlockVec &input, nlohmann::json &output);
 void AttributeMapToJson(IO &input, nlohmann::json &output);

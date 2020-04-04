@@ -311,9 +311,8 @@ void SscWriter::SyncReadPattern()
     }
 
     ssc::JsonToBlockVecVec(globalJson, m_GlobalReadPattern);
-    ssc::CalculateOverlap(m_GlobalReadPattern,
-                          m_GlobalWritePattern[m_StreamRank]);
-    m_AllSendingReaderRanks = ssc::AllOverlapRanks(m_GlobalReadPattern);
+    m_AllSendingReaderRanks = ssc::CalculateOverlap(
+        m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
     CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,
                       m_AllSendingReaderRanks);
 
@@ -334,8 +333,8 @@ void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
     for (auto &overlapRank : allOverlapRanks)
     {
         auto &readerRankMap = readerVecVec[overlapRank.first];
-        CalculateOverlap(writerVecVec, readerRankMap);
-        auto currentReaderOverlapWriterRanks = AllOverlapRanks(writerVecVec);
+        auto currentReaderOverlapWriterRanks =
+            CalculateOverlap(writerVecVec, readerRankMap);
         size_t bufferPosition = 0;
         for (size_t rank = 0; rank < writerVecVec.size(); ++rank)
         {

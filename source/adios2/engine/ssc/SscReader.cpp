@@ -277,7 +277,22 @@ void SscReader::SyncWritePattern()
                 std::reverse(vStart.begin(), vStart.end());                    \
                 std::reverse(vShape.begin(), vShape.end());                    \
             }                                                                  \
-            m_IO.DefineVariable<T>(b.name, vShape, vStart, vShape);            \
+            if (b.shapeId == ShapeID::GlobalValue)                             \
+            {                                                                  \
+                m_IO.DefineVariable<T>(b.name);                                \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::GlobalArray)                        \
+            {                                                                  \
+                m_IO.DefineVariable<T>(b.name, vShape, vStart, vShape);        \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::LocalValue)                         \
+            {                                                                  \
+                m_IO.DefineVariable<T>(b.name, {adios2::LocalValueDim});       \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::LocalArray)                         \
+            {                                                                  \
+                m_IO.DefineVariable<T>(b.name, {}, {}, vShape);                \
+            }                                                                  \
         }                                                                      \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -380,8 +395,8 @@ void SscReader::SyncReadPattern()
     }
 
     ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
-    ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
-    m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePattern);
+    m_AllReceivingWriterRanks =
+        ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
     CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
     size_t totalDataSize = 0;
     for (auto i : m_AllReceivingWriterRanks)
@@ -422,7 +437,7 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
             {
                 b.bufferStart += bufferPosition;
             }
-            size_t currentRankTotalSize = TotalDataSize(bv);
+            size_t currentRankTotalSize = ssc::TotalDataSize(bv);
             allRanks[rank].second = currentRankTotalSize + 1;
             bufferPosition += currentRankTotalSize + 1;
         }

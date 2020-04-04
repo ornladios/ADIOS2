@@ -32,24 +32,12 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     Dims vStart = variable.m_Start;
     Dims vCount = variable.m_Count;
     Dims vShape = variable.m_Shape;
+
     if (!helper::IsRowMajor(m_IO.m_HostLanguage))
     {
         std::reverse(vStart.begin(), vStart.end());
         std::reverse(vCount.begin(), vCount.end());
         std::reverse(vShape.begin(), vShape.end());
-    }
-
-    if (vStart.empty())
-    {
-        vStart.push_back(0);
-    }
-    if (vCount.empty())
-    {
-        vCount.push_back(1);
-    }
-    if (vShape.empty())
-    {
-        vShape.push_back(1);
     }
 
     bool found = false;
@@ -72,11 +60,12 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
             auto &b = m_GlobalWritePattern[m_StreamRank].back();
             b.name = variable.m_Name;
             b.type = helper::GetType<T>();
+            b.shapeId = variable.m_ShapeID;
             b.shape = vShape;
             b.start = vStart;
             b.count = vCount;
             b.bufferStart = m_Buffer.size();
-            b.bufferCount = ssc::TotalDataSize(b.count, b.type);
+            b.bufferCount = ssc::TotalDataSize(b.count, b.type, b.shapeId);
             m_Buffer.resize(b.bufferStart + b.bufferCount);
             std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
         }

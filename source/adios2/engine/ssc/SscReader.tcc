@@ -41,6 +41,7 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
     Dims vStart = variable.m_Start;
     Dims vCount = variable.m_Count;
     Dims vShape = variable.m_Shape;
+
     if (!helper::IsRowMajor(m_IO.m_HostLanguage))
     {
         std::reverse(vStart.begin(), vStart.end());
@@ -71,6 +72,7 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         auto &jref = m_LocalReadPatternJson["Variables"].back();
         jref["Name"] = variable.m_Name;
         jref["Type"] = helper::GetType<T>();
+        jref["ShapeID"] = variable.m_ShapeID;
         jref["Start"] = vStart;
         jref["Count"] = vCount;
         jref["Shape"] = vShape;
@@ -78,8 +80,8 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         jref["BufferCount"] = 0;
 
         ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
-        ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
-        m_AllReceivingWriterRanks = ssc::AllOverlapRanks(m_GlobalWritePattern);
+        m_AllReceivingWriterRanks =
+            ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
         CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
         size_t totalDataSize = 0;
         for (auto i : m_AllReceivingWriterRanks)
@@ -106,10 +108,24 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         {
             if (b.name == variable.m_Name)
             {
-                helper::NdCopy<T>(m_Buffer.data() + b.bufferStart, b.start,
-                                  b.count, true, true,
-                                  reinterpret_cast<char *>(data), vStart,
-                                  vCount, true, true);
+                if (b.shapeId == ShapeID::GlobalArray ||
+                    b.shapeId == ShapeID::LocalArray)
+                {
+                    helper::NdCopy<T>(m_Buffer.data() + b.bufferStart, b.start,
+                                      b.count, true, true,
+                                      reinterpret_cast<char *>(data), vStart,
+                                      vCount, true, true);
+                }
+                else if (b.shapeId == ShapeID::GlobalValue ||
+                         b.shapeId == ShapeID::LocalValue)
+                {
+                    std::memcpy(data, m_Buffer.data() + b.bufferStart,
+                                b.bufferCount);
+                }
+                else
+                {
+                    throw(std::runtime_error("ShapeID not supported"));
+                }
             }
         }
     }
