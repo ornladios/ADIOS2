@@ -149,7 +149,7 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;NoReaderNoWait;TimeoutOnOpen;1x1.Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
+set (SIMPLE_TESTS "1x1;NoReaderNoWait;TimeoutOnOpen;1x1.NoData;2x2.NoData;2x2.HalfNoData;1x1.Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
 set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (SIMPLE_FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
@@ -204,6 +204,9 @@ LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${BP_SST_TESTS})
 # Zero Data tests are unreliable with SST and BP marshaling
 list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
 
+# NoData tests don't work with FFS
+list (FILTER SST_TESTS EXCLUDE REGEX ".*NoData.*FFS")
+
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
@@ -255,6 +258,8 @@ if(NOT MSVC)    # not on windows
     list (FILTER BP_TESTS EXCLUDE REGEX "DelayedReader")
     # SharedVars fail with BP*
     list (FILTER BP_TESTS EXCLUDE REGEX ".*SharedVar$")
+    # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
+    list (FILTER BP_TESTS EXCLUDE REGEX ".*NoData$")
     foreach(test ${BP_TESTS})
         add_common_test(${test} BP4)
     endforeach()
@@ -293,6 +298,8 @@ if(NOT MSVC)    # not on windows
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Local.BPS$")
     # Fortran scalar reads don't work for BP4 streaming
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
+    # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*NoData.BPS$")
     foreach(test ${BP4_STREAM_TESTS})
         add_common_test(${test} BP4_stream)
     endforeach()
@@ -309,6 +316,8 @@ if(NOT MSVC AND ADIOS2_HAVE_HDF5 AND (NOT ADIOS2_HAVE_MPI OR HDF5_IS_PARALLEL)) 
     list (FILTER HDF5_TESTS EXCLUDE REGEX ".*Local")
     # Oddly, some multi-writer tests fail
     list (FILTER HDF5_TESTS EXCLUDE REGEX "[2345]x")
+    # The nobody-writes-data-in-a-timestep tests don't work with HDF5
+    list (FILTER HDF5_TESTS EXCLUDE REGEX ".*NoData$")
     foreach(test ${HDF5_TESTS})
         add_common_test(${test} HDF5)
     endforeach()

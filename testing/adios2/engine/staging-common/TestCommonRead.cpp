@@ -72,52 +72,104 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         const size_t currentStep = engine.CurrentStep();
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-        size_t writerSize;
+        size_t writerSize = 0;
 
         auto scalar_r64 = io.InquireVariable<double>("scalar_r64");
-        EXPECT_TRUE(scalar_r64);
+        if (!NoData)
+            EXPECT_TRUE(scalar_r64);
+        else
+            EXPECT_FALSE(scalar_r64);
 
         auto var_time = io.InquireVariable<int64_t>("time");
-        EXPECT_TRUE(var_time);
-        ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
-        writerSize = var_time.Shape()[0];
+        if (NoData)
+        {
+            EXPECT_FALSE(var_time);
+        }
+        else
+        {
+            EXPECT_TRUE(var_time);
+            ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
+            writerSize = var_time.Shape()[0];
+        }
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
-        EXPECT_TRUE(var_i8);
-        ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-        /* take the first size as something that gives us writer size */
-        Nx = var_i8.Shape()[0] / writerSize;
+        if (NoData)
+        {
+            EXPECT_FALSE(var_time);
+        }
+        else
+        {
+            EXPECT_TRUE(var_i8);
+            ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+            /* take the first size as something that gives us writer size */
+            Nx = var_i8.Shape()[0] / writerSize;
+        }
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
-        EXPECT_TRUE(var_i16);
-        ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i16.Shape()[0], writerSize * Nx);
+        if (NoData)
+        {
+            EXPECT_FALSE(var_time);
+        }
+        else
+        {
+            EXPECT_TRUE(var_i16);
+            ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i16.Shape()[0], writerSize * Nx);
+        }
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
-        EXPECT_TRUE(var_i32);
-        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i32.Shape()[0], writerSize * Nx);
+        if (NoData)
+        {
+            EXPECT_FALSE(var_time);
+        }
+        else
+        {
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Shape()[0], writerSize * Nx);
+        }
 
         auto var_i64 = io.InquireVariable<int64_t>("i64");
-        EXPECT_TRUE(var_i64);
-        ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i64.Shape()[0], writerSize * Nx);
+        if (NoData)
+        {
+            EXPECT_FALSE(var_time);
+        }
+        else
+        {
+            EXPECT_TRUE(var_i64);
+            ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i64.Shape()[0], writerSize * Nx);
+        }
 
         auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Shape()[0], writerSize * Nx);
+        if (NoData)
+        {
+            EXPECT_FALSE(var_time);
+        }
+        else
+        {
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Shape()[0], writerSize * Nx);
+        }
 
         auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Shape()[0], writerSize * Nx);
+        if (NoData)
+        {
+            EXPECT_FALSE(var_time);
+        }
+        else
+        {
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Shape()[0], writerSize * Nx);
+        }
 
         auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
         auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
         auto var_r64_2d = io.InquireVariable<double>("r64_2d");
         auto var_r64_2d_rev = io.InquireVariable<double>("r64_2d_rev");
-        if (var_c32)
+        if (var_c32 && !NoData)
         {
             EXPECT_TRUE(var_c32);
             ASSERT_EQ(var_c32.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -145,33 +197,35 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             EXPECT_FALSE(var_r64_2d_rev);
         }
 
-        const std::vector<adios2::Variable<int8_t>::Info> i8Info =
-            engine.BlocksInfo(var_i8, engine.CurrentStep());
-        const std::vector<adios2::Variable<int16_t>::Info> i16Info =
-            engine.BlocksInfo(var_i16, engine.CurrentStep());
-        const std::vector<adios2::Variable<int32_t>::Info> i32Info =
-            engine.BlocksInfo(var_i32, engine.CurrentStep());
-        const std::vector<adios2::Variable<int64_t>::Info> i64Info =
-            engine.BlocksInfo(var_i64, engine.CurrentStep());
-        const std::vector<adios2::Variable<float>::Info> r32Info =
-            engine.BlocksInfo(var_r32, engine.CurrentStep());
-        const std::vector<adios2::Variable<double>::Info> r64Info =
-            engine.BlocksInfo(var_r64, engine.CurrentStep());
-        EXPECT_EQ(i8Info.size(), writerSize);
-        EXPECT_EQ(i16Info.size(), writerSize);
-        EXPECT_EQ(i32Info.size(), writerSize);
-        EXPECT_EQ(i64Info.size(), writerSize);
-        EXPECT_EQ(r32Info.size(), writerSize);
-        EXPECT_EQ(r64Info.size(), writerSize);
-
-        for (size_t i = 0; i < writerSize; ++i)
+        if (!NoData)
         {
-            EXPECT_FALSE(i8Info[0].IsValue);
-            EXPECT_FALSE(i16Info[0].IsValue);
-            EXPECT_FALSE(i32Info[0].IsValue);
-            EXPECT_FALSE(i64Info[0].IsValue);
-            EXPECT_FALSE(r32Info[0].IsValue);
-            EXPECT_FALSE(r64Info[0].IsValue);
+            const std::vector<adios2::Variable<int8_t>::Info> i8Info =
+                engine.BlocksInfo(var_i8, engine.CurrentStep());
+            const std::vector<adios2::Variable<int16_t>::Info> i16Info =
+                engine.BlocksInfo(var_i16, engine.CurrentStep());
+            const std::vector<adios2::Variable<int32_t>::Info> i32Info =
+                engine.BlocksInfo(var_i32, engine.CurrentStep());
+            const std::vector<adios2::Variable<int64_t>::Info> i64Info =
+                engine.BlocksInfo(var_i64, engine.CurrentStep());
+            const std::vector<adios2::Variable<float>::Info> r32Info =
+                engine.BlocksInfo(var_r32, engine.CurrentStep());
+            const std::vector<adios2::Variable<double>::Info> r64Info =
+                engine.BlocksInfo(var_r64, engine.CurrentStep());
+            EXPECT_EQ(i8Info.size(), writerSize);
+            EXPECT_EQ(i16Info.size(), writerSize);
+            EXPECT_EQ(i32Info.size(), writerSize);
+            EXPECT_EQ(i64Info.size(), writerSize);
+            EXPECT_EQ(r32Info.size(), writerSize);
+            EXPECT_EQ(r64Info.size(), writerSize);
+            for (size_t i = 0; i < writerSize; ++i)
+            {
+                EXPECT_FALSE(i8Info[0].IsValue);
+                EXPECT_FALSE(i16Info[0].IsValue);
+                EXPECT_FALSE(i32Info[0].IsValue);
+                EXPECT_FALSE(i64Info[0].IsValue);
+                EXPECT_FALSE(r32Info[0].IsValue);
+                EXPECT_FALSE(r64Info[0].IsValue);
+            }
         }
 
         if (var_c32)
@@ -211,83 +265,110 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         const adios2::Box<adios2::Dims> sel2(start2, count2);
         const adios2::Box<adios2::Dims> sel3(start3, count3);
         const adios2::Box<adios2::Dims> sel_time(start_time, count_time);
-
-        var_i8.SetSelection(sel);
-        var_i16.SetSelection(sel);
-        var_i32.SetSelection(sel);
-        var_i64.SetSelection(sel);
-
-        var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
-        if (var_c32)
-            var_c32.SetSelection(sel);
-        if (var_c64)
-            var_c64.SetSelection(sel);
-        if (var_r64_2d)
-            var_r64_2d.SetSelection(sel2);
-        if (var_r64_2d_rev)
-            var_r64_2d_rev.SetSelection(sel3);
-
-        var_time.SetSelection(sel_time);
-
-        in_I8.resize(myLength);
-        in_I16.resize(myLength);
-        in_I32.resize(myLength);
-        in_I64.resize(myLength);
-        in_R32.resize(myLength);
-        in_R64.resize(myLength);
-        in_C32.resize(myLength);
-        in_C64.resize(myLength);
-        in_R64_2d.resize(myLength * 2);
-        in_R64_2d_rev.resize(myLength * 2);
-        engine.Get(var_i8, in_I8.data());
-        engine.Get(var_i16, in_I16.data());
-        engine.Get(var_i32, in_I32.data());
-        engine.Get(var_i64, in_I64.data());
-
-        engine.Get(scalar_r64, in_scalar_R64);
-
-        engine.Get(var_r32, in_R32.data());
-        engine.Get(var_r64, in_R64.data());
-        if (var_c32)
-            engine.Get(var_c32, in_C32.data());
-        if (var_c64)
-            engine.Get(var_c64, in_C64.data());
-        if (var_r64_2d)
-            engine.Get(var_r64_2d, in_R64_2d.data());
-        if (var_r64_2d_rev)
-            engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
         std::time_t write_time;
-        engine.Get(var_time, (int64_t *)&write_time);
-        if (LockGeometry)
+
+        if (!NoData)
         {
-            // we'll never change our data decomposition
-            engine.LockReaderSelections();
+            var_i8.SetSelection(sel);
+            var_i16.SetSelection(sel);
+            var_i32.SetSelection(sel);
+            var_i64.SetSelection(sel);
+
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
+            if (var_c32)
+                var_c32.SetSelection(sel);
+            if (var_c64)
+                var_c64.SetSelection(sel);
+            if (var_r64_2d)
+                var_r64_2d.SetSelection(sel2);
+            if (var_r64_2d_rev)
+                var_r64_2d_rev.SetSelection(sel3);
+
+            var_time.SetSelection(sel_time);
+
+            in_I8.resize(myLength);
+            in_I16.resize(myLength);
+            in_I32.resize(myLength);
+            in_I64.resize(myLength);
+            in_R32.resize(myLength);
+            in_R64.resize(myLength);
+            in_C32.resize(myLength);
+            in_C64.resize(myLength);
+            in_R64_2d.resize(myLength * 2);
+            in_R64_2d_rev.resize(myLength * 2);
+            if (!NoData)
+            {
+                engine.Get(var_i8, in_I8.data());
+                engine.Get(var_i16, in_I16.data());
+                engine.Get(var_i32, in_I32.data());
+                engine.Get(var_i64, in_I64.data());
+
+                engine.Get(scalar_r64, in_scalar_R64);
+
+                engine.Get(var_r32, in_R32.data());
+                engine.Get(var_r64, in_R64.data());
+                engine.Get(var_time, (int64_t *)&write_time);
+            }
+            else
+            {
+                if (NoDataNode != -1)
+                {
+                    // someone wrote everything, get our part
+                    engine.Get(var_r64, in_R64.data());
+                }
+            }
+            if (var_c32)
+                engine.Get(var_c32, in_C32.data());
+            if (var_c64)
+                engine.Get(var_c64, in_C64.data());
+            if (var_r64_2d)
+                engine.Get(var_r64_2d, in_R64_2d.data());
+            if (var_r64_2d_rev)
+                engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
+            if (LockGeometry)
+            {
+                // we'll never change our data decomposition
+                engine.LockReaderSelections();
+            }
         }
         engine.EndStep();
 
-        EXPECT_EQ(validateCommonTestData(myStart, myLength, t, !var_c32), 0);
-        write_times.push_back(write_time);
-        ++t;
-    }
-
-    if ((write_times.back() - write_times.front()) > 1)
-    {
-        TimeGapDetected++;
-    }
-
-    if (!IgnoreTimeGap)
-    {
-        if (TimeGapExpected)
+        if (!NoData)
         {
-            EXPECT_TRUE(TimeGapDetected);
+            EXPECT_EQ(validateCommonTestData(myStart, myLength, t, !var_c32),
+                      0);
+            write_times.push_back(write_time);
         }
         else
         {
-            EXPECT_FALSE(TimeGapDetected);
+            if (NoDataNode != -1)
+                EXPECT_EQ(
+                    validateCommonTestDataR64(myStart, myLength, t, !var_c32),
+                    0);
         }
+        ++t;
     }
 
+    if (!NoData)
+    {
+        if ((write_times.back() - write_times.front()) > 1)
+        {
+            TimeGapDetected++;
+        }
+
+        if (!IgnoreTimeGap)
+        {
+            if (TimeGapExpected)
+            {
+                EXPECT_TRUE(TimeGapDetected);
+            }
+            else
+            {
+                EXPECT_FALSE(TimeGapDetected);
+            }
+        }
+    }
     EXPECT_EQ(t, NSteps);
 
     // Close the file

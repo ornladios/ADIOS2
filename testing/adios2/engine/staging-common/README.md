@@ -17,6 +17,9 @@ This test suite consists of a core set of tests defined in TestSupp.cmake, where
 * 1x1.ForcePreload - 1x1 with Preload explicitly turned on (likely SST specific)
 * 1x1.Bulk - One to one, with larger data
 * 1x1.BulkLockGeometry - One to one, with larger data with geometry explicitly locked on reader and writer.
+* 1x1.NoData - A simple test where no data is written, but there are still timesteps
+* 2x2.NoData - A simple test where no data is written, but there are still timesteps
+* 2x2.HalfNoData - A simple test where one rank writes no data in a timestep, while the other writes all of it, everyone still timesteps
 * 2x1 - simple 2 to 1 MPI test
 * 2x1.ZeroDataVar - simple 2 to 1 MPI test, with one rank contributing zero data to some variable
 * 2x1.NoPreload - 2x1 with Preload explicitly turned off (likely SST specific)
@@ -30,6 +33,8 @@ This test suite consists of a core set of tests defined in TestSupp.cmake, where
 * 1x2.Local - simple test with local, not global arrays
 * 3x5.Local - simple test with local, not global arrays
 * 5x3.Local - simple test with local, not global arrays
+* 1x1.LocalVarying - test with local variables, but the dimensions change from rank to rank and timestep to timestep
+* 5x3.LocalVarying - test with local variables, but the dimensions change from rank to rank and timestep to timestep
 * DelayedReader_3x5 - simple test, but with the reader delayed by 5 seconds to see if the writer waits.  No MPMD.
 * FtoC.3x5 - Simple 3 reader 5 writer, but with Fortran writer and C++ reader
 * FtoF.3x5 - Simple 3 reader 5 writer, but with Fortran writer and Fortran reader
