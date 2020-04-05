@@ -85,7 +85,7 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
         if (key == "compression_level")
         {
             compressionLevel = static_cast<int>(helper::StringTo<int32_t>(
-                value, m_DebugMode, "when setting PNG level parameter\n"));
+                value, "when setting PNG level parameter\n"));
 
             if (compressionLevel < 1 || compressionLevel > 9)
             {
@@ -114,7 +114,7 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
         else if (key == "bit_depth")
         {
             bitDepth = static_cast<int>(helper::StringTo<int32_t>(
-                value, m_DebugMode, "when setting PNG bit_depth parameter\n"));
+                value, "when setting PNG bit_depth parameter\n"));
         }
     }
 

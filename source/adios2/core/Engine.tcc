@@ -136,8 +136,7 @@ void Engine::Get(Variable<T> &variable, std::vector<T> &dataV,
                  const Mode launch)
 {
     const size_t dataSize = variable.SelectionSize();
-    helper::Resize(dataV, dataSize, m_DebugMode,
-                   "in call to Get with std::vector argument");
+    helper::Resize(dataV, dataSize, "in call to Get with std::vector argument");
     Get(variable, dataV.data(), launch);
 }
 

@@ -60,7 +60,7 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
         if (key == "compression_level" || key == "clevel")
         {
             compressionLevel = static_cast<int>(helper::StringTo<int32_t>(
-                value, m_DebugMode, "when setting Blosc clevel parameter\n"));
+                value, "when setting Blosc clevel parameter\n"));
             if (compressionLevel < 0 || compressionLevel > 9)
             {
                 throw std::invalid_argument(
@@ -86,7 +86,7 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
         else if (key == "nthreads")
         {
             threads = static_cast<int>(helper::StringTo<int32_t>(
-                value, m_DebugMode, "when setting Blosc nthreads parameter\n"));
+                value, "when setting Blosc nthreads parameter\n"));
         }
         else if (key == "compressor")
         {
@@ -102,8 +102,7 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
         else if (key == "blocksize")
         {
             blockSize = static_cast<size_t>(helper::StringTo<uint64_t>(
-                value, m_DebugMode,
-                "when setting Blosc blocksize parameter\n"));
+                value, "when setting Blosc blocksize parameter\n"));
         }
     }
 

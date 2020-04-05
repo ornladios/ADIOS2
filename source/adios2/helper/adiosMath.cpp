@@ -308,7 +308,7 @@ size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
     return LinearIndex(start, count, point, isRowMajor);
 }
 
-size_t GetDistance(const size_t end, const size_t start, const bool debugMode,
+size_t GetDistance(const size_t end, const size_t start,
                    const std::string &hint)
 {
     if (end < start)

@@ -43,7 +43,7 @@ std::string FileToString(const std::string &fileName, const std::string hint)
 }
 
 Params BuildParametersMap(const std::vector<std::string> &parameters,
-                          const char delimKeyValue, const bool debugMode)
+                          const char delimKeyValue)
 {
     auto lf_Trim = [](std::string &input) {
         input.erase(0, input.find_first_not_of(" \n\r\t")); // prefixing spaces
@@ -51,8 +51,7 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
     };
 
     auto lf_GetFieldValue = [](const std::string parameter, std::string &field,
-                               std::string &value, const char delimKeyValue,
-                               const bool debugMode) {
+                               std::string &value, const char delimKeyValue) {
         auto equalPosition = parameter.find(delimKeyValue);
 
         if (equalPosition == parameter.npos)
@@ -73,7 +72,7 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
     for (const std::string &parameter : parameters)
     {
         std::string field, value;
-        lf_GetFieldValue(parameter, field, value, delimKeyValue, debugMode);
+        lf_GetFieldValue(parameter, field, value, delimKeyValue);
         lf_Trim(field);
         lf_Trim(value);
 
@@ -96,7 +95,7 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
 }
 
 Params BuildParametersMap(const std::string &input, const char delimKeyValue,
-                          const char delimItem, const bool debugMode)
+                          const char delimItem)
 {
     auto lf_Trim = [](std::string &input) {
         input.erase(0, input.find_first_not_of(" \n\r\t")); // prefixing spaces
@@ -209,8 +208,7 @@ void SetParameterValue(const std::string key, const Params &parameters,
 }
 
 std::string GetParameter(const std::string key, const Params &params,
-                         const bool isMandatory, const bool debugMode,
-                         const std::string hint)
+                         const bool isMandatory, const std::string hint)
 {
     std::string value;
     auto itParameter = params.find(key);
@@ -230,8 +228,7 @@ std::string GetParameter(const std::string key, const Params &params,
 }
 
 void SetParameterValueInt(const std::string key, const Params &parameters,
-                          int &value, const bool debugMode,
-                          const std::string &hint)
+                          int &value, const std::string &hint)
 {
     auto itKey = parameters.find(key);
     if (itKey == parameters.end())
@@ -246,7 +243,7 @@ void SetParameterValueInt(const std::string key, const Params &parameters,
         }
     }
 
-    value = static_cast<int>(StringTo<int32_t>(itKey->second, debugMode, hint));
+    value = static_cast<int>(StringTo<int32_t>(itKey->second, hint));
 }
 
 std::string DimsToString(const Dims &dimensions)
@@ -294,19 +291,17 @@ std::string GlobalName(const std::string &localName, const std::string &prefix,
     return prefix + separator + localName;
 }
 
-size_t StringToSizeT(const std::string &input, const bool debugMode,
-                     const std::string &hint)
+size_t StringToSizeT(const std::string &input, const std::string &hint)
 {
     if (sizeof(size_t) == sizeof(uint32_t))
     {
-        return StringTo<uint32_t>(input, debugMode, hint);
+        return StringTo<uint32_t>(input, hint);
     }
 
-    return StringTo<uint64_t>(input, debugMode, hint);
+    return StringTo<uint64_t>(input, hint);
 }
 
-size_t StringToByteUnits(const std::string &input, const bool debugMode,
-                         const std::string &hint)
+size_t StringToByteUnits(const std::string &input, const std::string &hint)
 {
     std::string units;
     size_t unitsLength = 2;
@@ -335,7 +330,7 @@ size_t StringToByteUnits(const std::string &input, const bool debugMode,
     }
 
     const std::string number(input.substr(0, input.size() - unitsLength));
-    const size_t factor = BytesFactor(units, debugMode);
+    const size_t factor = BytesFactor(units);
 
     return static_cast<size_t>(std::stoul(number) * factor);
 }

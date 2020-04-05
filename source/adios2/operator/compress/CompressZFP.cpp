@@ -233,16 +233,14 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions,
     if (hasAccuracy)
     {
         const double accuracy = helper::StringTo<double>(
-            itAccuracy->second, m_DebugMode,
-            "setting accuracy in call to CompressZfp\n");
+            itAccuracy->second, "setting accuracy in call to CompressZfp\n");
 
         zfp_stream_set_accuracy(stream, accuracy);
     }
     else if (hasRate)
     {
-        const double rate =
-            helper::StringTo<double>(itRate->second, m_DebugMode,
-                                     "setting Rate in call to CompressZfp\n");
+        const double rate = helper::StringTo<double>(
+            itRate->second, "setting Rate in call to CompressZfp\n");
         // TODO support last argument write random access?
         zfp_stream_set_rate(stream, rate, GetZfpType(type),
                             static_cast<unsigned int>(dimensions.size()), 0);
@@ -251,7 +249,7 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions,
     {
         const unsigned int precision =
             static_cast<unsigned int>(helper::StringTo<uint32_t>(
-                itPrecision->second, m_DebugMode,
+                itPrecision->second,
                 "setting Precision in call to CompressZfp\n"));
         zfp_stream_set_precision(stream, precision);
     }

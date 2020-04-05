@@ -180,7 +180,7 @@ void BP3Reader::InitBuffer()
             throw std::logic_error(err);
         }
         const size_t miniFooterStart =
-            helper::GetDistance(fileSize, miniFooterSize, m_DebugMode,
+            helper::GetDistance(fileSize, miniFooterSize,
                                 " fileSize < miniFooterSize, in call to Open");
 
         m_BP3Deserializer.m_Metadata.Resize(
@@ -195,7 +195,7 @@ void BP3Reader::InitBuffer()
         const size_t metadataStart =
             m_BP3Deserializer.MetadataStart(m_BP3Deserializer.m_Metadata);
         const size_t metadataSize =
-            helper::GetDistance(fileSize, metadataStart, m_DebugMode,
+            helper::GetDistance(fileSize, metadataStart,
                                 " fileSize < miniFooterSize, in call to Open");
 
         m_BP3Deserializer.m_Metadata.Resize(

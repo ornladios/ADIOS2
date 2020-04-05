@@ -19,8 +19,7 @@ namespace helper
 {
 
 template <>
-bool StringTo(const std::string &input, const bool debugMode,
-              const std::string &hint)
+bool StringTo(const std::string &input, const std::string &hint)
 {
     const std::string value = LowerCase(input);
     bool result = false;
@@ -43,8 +42,7 @@ bool StringTo(const std::string &input, const bool debugMode,
 }
 
 template <>
-int32_t StringTo(const std::string &input, const bool debugMode,
-                 const std::string &hint)
+int32_t StringTo(const std::string &input, const std::string &hint)
 {
     try
     {
@@ -59,8 +57,7 @@ int32_t StringTo(const std::string &input, const bool debugMode,
 }
 
 template <>
-uint32_t StringTo(const std::string &input, const bool debugMode,
-                  const std::string &hint)
+uint32_t StringTo(const std::string &input, const std::string &hint)
 {
     try
     {
@@ -75,8 +72,7 @@ uint32_t StringTo(const std::string &input, const bool debugMode,
 }
 
 template <>
-int64_t StringTo(const std::string &input, const bool debugMode,
-                 const std::string &hint)
+int64_t StringTo(const std::string &input, const std::string &hint)
 {
     try
     {
@@ -91,8 +87,7 @@ int64_t StringTo(const std::string &input, const bool debugMode,
 }
 
 template <>
-uint64_t StringTo(const std::string &input, const bool debugMode,
-                  const std::string &hint)
+uint64_t StringTo(const std::string &input, const std::string &hint)
 {
     try
     {
@@ -107,8 +102,7 @@ uint64_t StringTo(const std::string &input, const bool debugMode,
 }
 
 template <>
-float StringTo(const std::string &input, const bool debugMode,
-               const std::string &hint)
+float StringTo(const std::string &input, const std::string &hint)
 {
     try
     {
@@ -123,8 +117,7 @@ float StringTo(const std::string &input, const bool debugMode,
 }
 
 template <>
-double StringTo(const std::string &input, const bool debugMode,
-                const std::string &hint)
+double StringTo(const std::string &input, const std::string &hint)
 {
     try
     {

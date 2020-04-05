@@ -103,7 +103,7 @@ Uint64VectorToSizetVector(const std::vector<uint64_t> &in) noexcept
 }
 
 TimeUnit StringToTimeUnit(const std::string timeUnitString,
-                          const bool debugMode, const std::string hint)
+                          const std::string hint)
 {
     TimeUnit timeUnit = TimeUnit::Microseconds; // default
 
@@ -139,7 +139,7 @@ TimeUnit StringToTimeUnit(const std::string timeUnitString,
     return timeUnit;
 }
 
-size_t BytesFactor(const std::string units, const bool debugMode)
+size_t BytesFactor(const std::string units)
 {
     size_t factor = 1; // bytes
     if (units == "Gb" || units == "gb")

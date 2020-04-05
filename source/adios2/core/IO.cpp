@@ -246,7 +246,7 @@ void IO::SetParameters(const std::string &parameters)
 {
     TAU_SCOPED_TIMER("IO::other");
     adios2::Params parameterMap =
-        adios2::helper::BuildParametersMap(parameters, '=', ',', false);
+        adios2::helper::BuildParametersMap(parameters, '=', ',');
     SetParameters(parameterMap);
 }
 

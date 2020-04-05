@@ -52,11 +52,10 @@ size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
         const std::string hint(" in call to CompressBZIP2 Compress " + type +
                                "\n");
         helper::SetParameterValueInt("blockSize100k", parameters, blockSize100k,
-                                     m_DebugMode, hint);
-        helper::SetParameterValueInt("verbosity", parameters, verbosity,
-                                     m_DebugMode, hint);
+                                     hint);
+        helper::SetParameterValueInt("verbosity", parameters, verbosity, hint);
         helper::SetParameterValueInt("workFactor", parameters, workFactor,
-                                     m_DebugMode, hint);
+                                     hint);
 
         if (blockSize100k < 1 || blockSize100k > 9)
         {
@@ -126,7 +125,7 @@ size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
         (itBatches == info.end())
             ? 1
             : static_cast<size_t>(helper::StringTo<uint32_t>(
-                  itBatches->second, m_DebugMode,
+                  itBatches->second,
                   "when extracting batches in ADIOS2 BZIP2 Decompress"));
 
     size_t expectedSizeOut = 0;
@@ -137,7 +136,7 @@ size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
 
         const size_t destOffset =
             static_cast<size_t>(helper::StringTo<uint32_t>(
-                info.at("OriginalOffset_" + bStr), m_DebugMode,
+                info.at("OriginalOffset_" + bStr),
                 "when extracting batches in ADIOS2 BZIP2 Decompress"));
 
         char *dest = reinterpret_cast<char *>(dataOut) + destOffset;
@@ -149,7 +148,7 @@ size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
 
         const size_t sourceOffset =
             static_cast<size_t>(helper::StringTo<uint32_t>(
-                info.at("CompressedOffset_" + bStr), m_DebugMode,
+                info.at("CompressedOffset_" + bStr),
                 "when extracting batches in ADIOS2 BZIP2 Decompress"));
         char *source =
             const_cast<char *>(reinterpret_cast<const char *>(bufferIn)) +
@@ -157,7 +156,7 @@ size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
 
         unsigned int sourceLen =
             static_cast<unsigned int>(helper::StringTo<uint32_t>(
-                info.at("CompressedSize_" + bStr), m_DebugMode,
+                info.at("CompressedSize_" + bStr),
                 "when extracting batches in ADIOS2 BZIP2 Decompress"));
 
         int status = BZ2_bzBuffToBuffDecompress(dest, &destLen, source,

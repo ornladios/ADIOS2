@@ -241,12 +241,11 @@ std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
  * (undefined)
  * @param end input
  * @param start input
- * @param debugMode true: check end > start
  * @param hint added debug information, can be larger than 15 characters
  * @return end - start
  */
 size_t GetDistance(const size_t end, const size_t start,
-                   const bool debugMode = false, const std::string &hint = "");
+                   const std::string &hint = "");
 
 /** A flag to indicate how a block is divided up.
  * At this time, only the contiguous method is supported

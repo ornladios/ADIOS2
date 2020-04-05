@@ -61,18 +61,17 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         {
             profilePresent = true;
             profileValue = helper::StringTo<bool>(
-                value, m_DebugMode, " in Parameter key=Profile " + hint);
+                value, " in Parameter key=Profile " + hint);
         }
         else if (key == "profileunits")
         {
             parsedParameters.ProfileUnit =
-                helper::StringToTimeUnit(value, m_DebugMode, hint);
+                helper::StringToTimeUnit(value, hint);
         }
         else if (key == "opentimeoutsecs")
         {
             parsedParameters.OpenTimeoutSecs = helper::StringTo<float>(
-                value, m_DebugMode,
-                " in Parameter key=OpenTimeOutSecs " + hint);
+                value, " in Parameter key=OpenTimeOutSecs " + hint);
 
             if (parsedParameters.OpenTimeoutSecs < 0.0)
             {
@@ -83,9 +82,8 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         else if (key == "beginsteppollingfrequencysecs")
         {
             parsedParameters.BeginStepPollingFrequencySecs =
-                helper::StringTo<float>(value, m_DebugMode,
-                                        " in Parameter key=OpenTimeOutSecs " +
-                                            hint);
+                helper::StringTo<float>(
+                    value, " in Parameter key=OpenTimeOutSecs " + hint);
 
             if (parsedParameters.BeginStepPollingFrequencySecs < 0.0)
             {
@@ -97,15 +95,13 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         else if (key == "buffergrowthfactor")
         {
             parsedParameters.GrowthFactor = helper::StringTo<float>(
-                value, m_DebugMode,
-                " in Parameter key=BufferGrowthFactor " + hint);
+                value, " in Parameter key=BufferGrowthFactor " + hint);
         }
         else if (key == "initialbuffersize")
         {
             // it will resize m_Data
             parsedParameters.InitialBufferSize = helper::StringToByteUnits(
-                value, m_DebugMode,
-                "for Parameter key=InitialBufferSize, in call to Open");
+                value, "for Parameter key=InitialBufferSize, in call to Open");
 
             if (parsedParameters.InitialBufferSize <
                 DefaultInitialBufferSize) // 16384b
@@ -119,26 +115,24 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         else if (key == "maxbuffersize")
         {
             parsedParameters.MaxBufferSize = helper::StringToByteUnits(
-                value, m_DebugMode,
-                "for Parameter key=MaxBufferSize, in call to Open");
+                value, "for Parameter key=MaxBufferSize, in call to Open");
         }
         else if (key == "threads")
         {
             parsedParameters.Threads =
                 static_cast<unsigned int>(helper::StringTo<uint32_t>(
-                    value, m_DebugMode, " in Parameter key=Threads " + hint));
+                    value, " in Parameter key=Threads " + hint));
         }
         else if (key == "asynctasks")
         {
             parsedParameters.AsyncTasks = helper::StringTo<bool>(
-                value, m_DebugMode, " in Parameter key=AsyncTasks " + hint);
+                value, " in Parameter key=AsyncTasks " + hint);
         }
         else if (key == "statslevel")
         {
             parsedParameters.StatsLevel =
                 static_cast<unsigned int>(helper::StringTo<uint32_t>(
-                    value, m_DebugMode,
-                    " in Parameter key=StatsLevel " + hint));
+                    value, " in Parameter key=StatsLevel " + hint));
             if (parsedParameters.StatsLevel > 5)
             {
                 throw std::invalid_argument(
@@ -150,24 +144,22 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         else if (key == "statsblocksize")
         {
             parsedParameters.StatsBlockSize = helper::StringToSizeT(
-                value, m_DebugMode, " in Parameter key=StatsBlockSize " + hint);
+                value, " in Parameter key=StatsBlockSize " + hint);
         }
         else if (key == "collectivemetadata")
         {
             parsedParameters.CollectiveMetadata = helper::StringTo<bool>(
-                value, m_DebugMode,
-                " in Parameter key=CollectiveMetadata " + hint);
+                value, " in Parameter key=CollectiveMetadata " + hint);
         }
         else if (key == "flushstepscount")
         {
             parsedParameters.FlushStepsCount = helper::StringToSizeT(
-                value, m_DebugMode,
-                " in Parameter key=FlushStepsCount " + hint);
+                value, " in Parameter key=FlushStepsCount " + hint);
         }
         else if (key == "substreams")
         {
             int subStreams = static_cast<int>(helper::StringTo<int32_t>(
-                value, m_DebugMode, " in Parameter key=SubStreams " + hint));
+                value, " in Parameter key=SubStreams " + hint));
 
             if (subStreams < 1)
             {
@@ -187,7 +179,7 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         else if (key == "node-local")
         {
             parsedParameters.NodeLocal = helper::StringTo<bool>(
-                value, m_DebugMode, " in Parameter key=node-local " + hint);
+                value, " in Parameter key=node-local " + hint);
         }
     }
     if (!engineType.empty())

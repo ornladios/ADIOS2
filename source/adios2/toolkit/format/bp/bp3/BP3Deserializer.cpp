@@ -199,7 +199,7 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
 
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = helper::GetDistance(
-        m_Minifooter.VarsIndexStart, m_Minifooter.PGIndexStart, m_DebugMode,
+        m_Minifooter.VarsIndexStart, m_Minifooter.PGIndexStart,
         " BP3 variable index start < pg index start, in call to Open");
 
     const uint32_t count = helper::ReadValue<uint32_t>(
@@ -301,7 +301,6 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
 
     size_t position = helper::GetDistance(
         m_Minifooter.AttributesIndexStart, m_Minifooter.PGIndexStart,
-        m_DebugMode,
         " BP3 attributes index start < pg index start, in call to Open");
 
     const uint32_t count = helper::ReadValue<uint32_t>(

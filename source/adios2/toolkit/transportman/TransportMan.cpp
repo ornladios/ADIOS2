@@ -347,7 +347,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
         std::string profileUnits(defaultTimeUnit);
         helper::SetParameterValue("ProfileUnits", parameters, profileUnits);
         helper::SetParameterValue("profileunits", parameters, profileUnits);
-        return helper::StringToTimeUnit(profileUnits, m_DebugMode);
+        return helper::StringToTimeUnit(profileUnits);
     };
 
     auto lf_GetAsync = [&](const std::string defaultAsync,
@@ -355,7 +355,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
         std::string Async = defaultAsync;
         helper::SetParameterValue("AsyncTasks", parameters, Async);
         helper::SetParameterValue("asynctasks", parameters, Async);
-        return helper::StringTo<bool>(Async, m_DebugMode, "");
+        return helper::StringTo<bool>(Async, "");
     };
 
     // BODY OF FUNCTION starts here
