@@ -10,6 +10,7 @@
 
 #include "TransportMan.h"
 
+#include <ios>
 #include <set>
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
@@ -303,29 +304,67 @@ TransportMan::OpenFileTransport(const std::string &fileName,
                                 const Mode openMode, const Params &parameters,
                                 const bool profile)
 {
+    auto lf_GetBuffered = [&](const std::string bufferedDefault) -> bool {
+        bool bufferedValue;
+        std::string bufferedValueStr(bufferedDefault);
+        helper::SetParameterValue("Buffered", parameters, bufferedValueStr);
+        helper::SetParameterValue("buffered", parameters, bufferedValueStr);
+        {
+            std::stringstream ss(bufferedValueStr);
+            if (!(ss >> std::boolalpha >> bufferedValue))
+            {
+                throw std::invalid_argument(
+                    "ERROR: invalid value for \"buffered\" transport "
+                    "parameter: " +
+                    bufferedValueStr);
+            }
+        }
+        return bufferedValue;
+    };
+
     auto lf_SetFileTransport = [&](const std::string library,
                                    std::shared_ptr<Transport> &transport) {
         if (library == "stdio")
         {
             transport =
                 std::make_shared<transport::FileStdio>(m_Comm, m_DebugMode);
+            if (!lf_GetBuffered("true"))
+            {
+                transport->SetBuffer(nullptr, 0);
+            }
         }
         else if (library == "fstream")
         {
             transport =
                 std::make_shared<transport::FileFStream>(m_Comm, m_DebugMode);
+            if (!lf_GetBuffered("true"))
+            {
+                transport->SetBuffer(nullptr, 0);
+            }
         }
 #ifndef _WIN32
         else if (library == "POSIX" || library == "posix")
         {
             transport =
                 std::make_shared<transport::FilePOSIX>(m_Comm, m_DebugMode);
+            if (lf_GetBuffered("false"))
+            {
+                throw std::invalid_argument(
+                    "ERROR: " + library +
+                    " transport does not support buffered I/O.");
+            }
         }
 #endif
         else if (library == "NULL" || library == "null")
         {
             transport =
                 std::make_shared<transport::NullTransport>(m_Comm, m_DebugMode);
+            if (lf_GetBuffered("false"))
+            {
+                throw std::invalid_argument(
+                    "ERROR: " + library +
+                    " transport does not support buffered I/O.");
+            }
         }
         else
         {

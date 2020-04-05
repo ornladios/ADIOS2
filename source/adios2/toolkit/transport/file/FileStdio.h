@@ -59,6 +59,11 @@ private:
     bool m_IsOpening = false;
     std::future<FILE *> m_OpenFuture;
 
+    /** Buffer settings need to be delayed until after opening */
+    bool m_DelayedBufferSet = false;
+    char *m_DelayedBuffer = nullptr;
+    size_t m_DelayedBufferSize = 0;
+
     /**
      * Check for std::ferror and throw an exception if true
      * @param hint exception message

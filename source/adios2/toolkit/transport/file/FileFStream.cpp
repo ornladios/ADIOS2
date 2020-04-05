@@ -102,6 +102,11 @@ void FileFStream::Open(const std::string &name, const Mode openMode,
 
 void FileFStream::SetBuffer(char *buffer, size_t size)
 {
+    if (!buffer && size != 0)
+    {
+        throw std::invalid_argument(
+            "buffer size must be 0 when using a NULL buffer");
+    }
     m_FileStream.rdbuf()->pubsetbuf(buffer, size);
     CheckFile("couldn't set buffer in file " + m_Name +
               ", in call to fstream rdbuf()->pubsetbuf");

@@ -47,6 +47,7 @@
             
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
             <parameter key="Library" value="stdio"/>
+            <parameter key="Buffered" value="false"/>
             
             <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
                  Minutes, Hours. open/close always in Microseconds -->
