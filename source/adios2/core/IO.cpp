@@ -268,18 +268,16 @@ size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
     TAU_SCOPED_TIMER("IO::other");
     Params parametersMap(parameters);
-    if (m_DebugMode)
-    {
-        if (parameters.count("transport") == 1 ||
-            parameters.count("Transport") == 1)
-        {
-            throw std::invalid_argument("ERROR: key Transport (or transport) "
-                                        "is not valid for transport type " +
-                                        type + ", in call to AddTransport)");
-        }
 
-        CheckTransportType(type);
+    if (parameters.count("transport") == 1 ||
+        parameters.count("Transport") == 1)
+    {
+        throw std::invalid_argument("ERROR: key Transport (or transport) "
+                                    "is not valid for transport type " +
+                                    type + ", in call to AddTransport)");
     }
+
+    CheckTransportType(type);
 
     parametersMap["transport"] = type;
     m_TransportsParameters.push_back(parametersMap);

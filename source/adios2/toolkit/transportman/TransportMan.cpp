@@ -119,21 +119,18 @@ std::vector<std::string> TransportMan::GetFilesBaseNames(
 
         const std::string type(parameters.at("transport"));
 
-        if (m_DebugMode)
+        auto itType = typeTransportNames.find(type);
+        // check if name exists for this transport type
+        if (itType != typeTransportNames.end())
         {
-            auto itType = typeTransportNames.find(type);
-            // check if name exists for this transport type
-            if (itType != typeTransportNames.end())
+            if (itType->second.count(name) == 1)
             {
-                if (itType->second.count(name) == 1)
-                {
-                    throw std::invalid_argument(
-                        "ERROR: two IO AddTransport of the same type can't "
-                        "have the same name : " +
-                        name +
-                        ", use Name=value parameter, in "
-                        "call to Open");
-                }
+                throw std::invalid_argument(
+                    "ERROR: two IO AddTransport of the same type can't "
+                    "have the same name : " +
+                    name +
+                    ", use Name=value parameter, in "
+                    "call to Open");
             }
         }
         typeTransportNames[type].insert(name);
