@@ -167,11 +167,8 @@ void ParseConfigYAML(
             for (auto it = transportsSequence.begin();
                  it != transportsSequence.end(); ++it)
             {
-                if (adios.m_DebugMode)
-                {
-                    YAMLNode("Type", *it, " in transport node " + hint,
-                             isMandatory, YAML::NodeType::Scalar);
-                }
+                YAMLNode("Type", *it, " in transport node " + hint, isMandatory,
+                         YAML::NodeType::Scalar);
 
                 Params parameters = YAMLNodeMapToParams(*it, hint);
                 const std::string type =

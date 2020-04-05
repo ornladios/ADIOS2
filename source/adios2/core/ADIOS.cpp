@@ -322,16 +322,13 @@ void ADIOS::RemoveAllIOs() noexcept { m_IOs.clear(); }
 // PRIVATE FUNCTIONS
 void ADIOS::CheckOperator(const std::string name) const
 {
-    if (m_DebugMode)
+    if (m_Operators.count(name) == 1)
     {
-        if (m_Operators.count(name) == 1)
-        {
-            throw std::invalid_argument(
-                "ERROR: Operator with name " + name +
-                ", is already defined in either config file "
-                "or with call to DefineOperator, name must "
-                "be unique, in call to DefineOperator\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: Operator with name " + name +
+            ", is already defined in either config file "
+            "or with call to DefineOperator, name must "
+            "be unique, in call to DefineOperator\n");
     }
 }
 
