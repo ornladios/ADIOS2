@@ -453,11 +453,6 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
-    SscReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
-    {                                                                          \
-        return AllStepsBlocksInfoCommon(variable);                             \
-    }                                                                          \
     std::vector<typename Variable<T>::Info> SscReader::DoBlocksInfo(           \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \

@@ -198,7 +198,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
             auto scalarInt = dataManIO.InquireVariable<int>("scalarInt");
-            auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
 
             dataManReader.Get(bpChars, myChars.data(), adios2::Mode::Sync);
             dataManReader.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
