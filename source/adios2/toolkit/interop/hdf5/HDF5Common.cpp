@@ -61,6 +61,7 @@ public:
 };
 */
 
+
 HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
 {
     m_DefH5TypeComplexFloat =
@@ -639,6 +640,9 @@ void HDF5Common::SetAdiosStep(int step)
 
 void HDF5Common::Advance()
 {
+    if (m_WriteMode)
+      CheckWriteGroup();
+
     if (m_GroupId >= 0)
     {
         H5Gclose(m_GroupId);
