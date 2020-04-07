@@ -107,9 +107,9 @@ protected:
     int Open(const std::string &path, const Mode mode);
     void Seek(int fd, size_t offset, const std::string &path,
               int whence = SEEK_SET);
-    void Read(int fd, size_t count, char *buffer, const std::string &path);
-    void Write(int fd, size_t count, const char *buffer,
-               const std::string &path);
+    size_t Read(int fd, size_t count, char *buffer, const std::string &path);
+    size_t Write(int fd, size_t count, const char *buffer,
+                 const std::string &path);
     void Close(int fd, const std::string &path);
 };
 

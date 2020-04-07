@@ -93,18 +93,27 @@ void FileDrainerSingleThread::DrainThread()
     std::vector<char> buffer; // fixed, preallocated buffer to read/write data
     buffer.resize(bufferSize);
 
+    size_t nReadBytesTasked = 0;
+    size_t nReadBytesSucc = 0;
+    size_t nWriteBytesTasked = 0;
+    size_t nWriteBytesSucc = 0;
+
     /* Copy a block of data from one file to another at the same offset */
     auto lf_Copy = [&](FileDrainOperation &fdo, int fdr, int fdw,
                        size_t count) {
+        nReadBytesTasked += count;
         ts = std::chrono::steady_clock::now();
-        Read(fdr, count, buffer.data(), fdo.fromFileName);
+        size_t n = Read(fdr, count, buffer.data(), fdo.fromFileName);
         te = std::chrono::steady_clock::now();
         timeRead += te - ts;
+        nReadBytesSucc += n;
 
+        nWriteBytesTasked += count;
         ts = std::chrono::steady_clock::now();
-        Write(fdw, count, buffer.data(), fdo.toFileName);
+        n = Write(fdw, count, buffer.data(), fdo.toFileName);
         te = std::chrono::steady_clock::now();
         timeWrite += te - ts;
+        nWriteBytesSucc += n;
     };
 
     std::chrono::duration<double> d(0.100);
@@ -227,12 +236,15 @@ void FileDrainerSingleThread::DrainThread()
                           << " bytes of data from memory to offset "
                           << fdo.toOffset << std::endl;
             }
+            nWriteBytesTasked += fdo.countBytes;
             ts = std::chrono::steady_clock::now();
             int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
             Seek(fdw, fdo.toOffset, fdo.toFileName);
-            Write(fdw, fdo.countBytes, fdo.dataToWrite.data(), fdo.toFileName);
+            size_t n = Write(fdw, fdo.countBytes, fdo.dataToWrite.data(),
+                             fdo.toFileName);
             te = std::chrono::steady_clock::now();
             timeWrite += te - ts;
+            nWriteBytesSucc += n;
             break;
         }
         case DrainOperation::Write:
@@ -244,11 +256,14 @@ void FileDrainerSingleThread::DrainThread()
                           << " bytes of data from memory (no seek)"
                           << std::endl;
             }
+            nWriteBytesTasked += fdo.countBytes;
             ts = std::chrono::steady_clock::now();
             int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
-            Write(fdw, fdo.countBytes, fdo.dataToWrite.data(), fdo.toFileName);
+            size_t n = Write(fdw, fdo.countBytes, fdo.dataToWrite.data(),
+                             fdo.toFileName);
             te = std::chrono::steady_clock::now();
             timeWrite += te - ts;
+            nWriteBytesSucc += n;
             break;
         }
         case DrainOperation::Create:
@@ -297,11 +312,32 @@ void FileDrainerSingleThread::DrainThread()
     {
         std::cout << "Drain " << m_Rank
                   << ": Runtime  total = " << timeTotal.count()
-                  << " read = " << std::setprecision(10) << timeRead.count()
+                  << " read = " << timeRead.count()
                   << " write = " << timeWrite.count()
                   << " close = " << timeClose.count()
                   << " sleep = " << timeSleep.count() << " seconds"
-                  << ". Max queue size = " << maxQueueSize << std::endl;
+                  << ". Max queue size = " << maxQueueSize << ".";
+        if (nReadBytesTasked == nReadBytesSucc)
+        {
+            std::cout << " Read " << nReadBytesSucc << " bytes";
+        }
+        else
+        {
+            std::cout << " WARNING Read wanted = " << nReadBytesTasked
+                      << " but successfully read = " << nReadBytesSucc
+                      << " bytes.";
+        }
+        if (nWriteBytesTasked == nWriteBytesSucc)
+        {
+            std::cout << " Wrote " << nWriteBytesSucc << " bytes";
+        }
+        else
+        {
+            std::cout << " WARNING Write wanted = " << nWriteBytesTasked
+                      << " but successfully wrote = " << nWriteBytesSucc
+                      << " bytes.";
+        }
+        std::cout << std::endl;
     }
 }
 

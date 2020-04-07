@@ -201,9 +201,10 @@ void FileDrainer::Seek(int fd, size_t offset, const std::string &path,
     }
 }
 
-void FileDrainer::Read(int fd, size_t count, char *buffer,
-                       const std::string &path)
+size_t FileDrainer::Read(int fd, size_t count, char *buffer,
+                         const std::string &path)
 {
+    size_t totalRead = 0;
     while (count > 0)
     {
         const auto readSize = read(fd, buffer, count);
@@ -223,12 +224,15 @@ void FileDrainer::Read(int fd, size_t count, char *buffer,
 
         buffer += readSize;
         count -= readSize;
+        totalRead += readSize;
     }
+    return totalRead;
 }
 
-void FileDrainer::Write(int fd, size_t count, const char *buffer,
-                        const std::string &path)
+size_t FileDrainer::Write(int fd, size_t count, const char *buffer,
+                          const std::string &path)
 {
+    size_t totalWritten = 0;
     while (count > 0)
     {
         const auto writtenSize = write(fd, buffer, count);
@@ -248,7 +252,9 @@ void FileDrainer::Write(int fd, size_t count, const char *buffer,
 
         buffer += writtenSize;
         count -= writtenSize;
+        totalWritten += writtenSize;
     }
+    return totalWritten;
 }
 
 void FileDrainer::SetVerbose(int verboseLevel, int rank)
