@@ -11,7 +11,7 @@ FortranCInterface_VERIFY(CXX QUIET)
 # Check whether the compiler supports Fortran submodule constructs we need.
 adios2_check_fortran_submodules(ADIOS2_HAVE_FORTRAN_SUBMODULES)
 
-add_library(adios2_f
+add_library(adios2_fortran
   f2c/adios2_f2c_adios.cpp
   f2c/adios2_f2c_attribute.cpp
   f2c/adios2_f2c_io.cpp
@@ -42,34 +42,80 @@ add_library(adios2_f
   modules/adios2_variable_max_mod.f90
   modules/adios2_operator_mod.f90
 )
+set_property(TARGET adios2_fortran PROPERTY EXPORT_NAME fortran)
 
-target_include_directories(adios2_f
+target_include_directories(adios2_fortran
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/adios2/fortran>
+  PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-target_link_libraries(adios2_f PRIVATE adios2)
+target_link_libraries(adios2_fortran
+  PRIVATE
+    adios2_c
+    adios2_core
+)
 
 if(ADIOS2_HAVE_FORTRAN_SUBMODULES)
-  target_compile_definitions(adios2_f PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_FORTRAN_SUBMODULES>")
+  target_compile_definitions(adios2_fortran PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_FORTRAN_SUBMODULES>")
 endif()
 
+# Set library version information
+set_target_properties(adios2_fortran PROPERTIES
+  VERSION ${ADIOS2_LIBRARY_VERSION}
+  SOVERSION ${ADIOS2_VERSION_MAJOR}
+)
+
 if(ADIOS2_HAVE_MPI)
-  target_compile_definitions(adios2_f PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_MPI_F>")
-  target_sources(adios2_f PRIVATE
+  target_compile_definitions(adios2_fortran PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_MPI_F>")
+
+  set(adios2_fortran_mpi_srcs
     modules/adios2_adios_init_mod_mpi.F90
     modules/adios2_io_open_mod_mpi.F90
     f2c/adios2_f2c_adios_mpi.cpp
     f2c/adios2_f2c_io_mpi.cpp
-  )
-  target_link_libraries(adios2_f PRIVATE MPI::MPI_Fortran MPI::MPI_C)
+    )
+
+  if(ADIOS2_HAVE_FORTRAN_SUBMODULES)
+    # With submodules we can put MPI implementations in a separate library.
+    add_library(adios2_fortran_mpi ${adios2_fortran_mpi_srcs})
+    target_include_directories(adios2_fortran_mpi PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(adios2_fortran_mpi
+      PUBLIC
+        adios2_fortran
+      PRIVATE
+        adios2_c_mpi
+        adios2_core_mpi
+      PUBLIC
+        MPI::MPI_Fortran
+    )
+    target_compile_definitions(adios2_fortran_mpi PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_FORTRAN_SUBMODULES;ADIOS2_HAVE_MPI_F>")
+    set_target_properties(adios2_fortran_mpi PROPERTIES
+      VERSION ${ADIOS2_LIBRARY_VERSION}
+      SOVERSION ${ADIOS2_VERSION_MAJOR}
+    )
+  else()
+    # Without submodules we need to put everything in one library.
+    add_library(adios2_fortran_mpi INTERFACE)
+    target_link_libraries(adios2_fortran_mpi INTERFACE adios2_fortran MPI::MPI_Fortran)
+    target_sources(adios2_fortran PRIVATE ${adios2_fortran_mpi_srcs})
+    target_link_libraries(adios2_fortran PRIVATE adios2_c_mpi adios2_core_mpi)
+  endif()
+
+  set_property(TARGET adios2_fortran_mpi PROPERTY EXPORT_NAME fortran_mpi)
+  target_compile_definitions(adios2_fortran_mpi INTERFACE ADIOS2_USE_MPI)
+  set(maybe_adios2_fortran_mpi adios2_fortran_mpi)
+else()
+  set(maybe_adios2_fortran_mpi)
 endif()
 
+add_library(adios2_f INTERFACE)
+target_link_libraries(adios2_f INTERFACE ${maybe_adios2_fortran_mpi} adios2_fortran)
 
 install(
-  TARGETS adios2_f EXPORT adios2Exports
+  TARGETS adios2_fortran ${maybe_adios2_fortran_mpi} adios2_f EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

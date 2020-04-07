@@ -31,10 +31,12 @@
 
 /* Everything between here and the note above is programatically generated */
 
-#ifdef ADIOS2_HAVE_MPI
-#  define ADIOS2_USE_MPI 1
-#else
+#ifndef ADIOS2_USE_MPI
 #  define ADIOS2_USE_MPI 0
+#endif
+
+#if ADIOS2_USE_MPI && !defined(ADIOS2_HAVE_MPI)
+#  error "ADIOS2 was not built with MPI enabled."
 #endif
 
 #endif /* ADIOSCONFIG_H_ */

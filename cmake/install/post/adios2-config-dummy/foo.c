@@ -1,6 +1,6 @@
 #ifdef WITH_ADIOS2
 #include <adios2_c.h>
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 #endif
@@ -10,7 +10,7 @@
 void foo(void)
 {
 #ifdef WITH_ADIOS2
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2_adios *ctx = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
 #else
     adios2_adios *ctx = adios2_init(adios2_debug_mode_on);

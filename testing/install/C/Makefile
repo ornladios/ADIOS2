@@ -3,29 +3,55 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-ADIOS_C_FLAGS=$(shell adios2-config --c-flags)
-ADIOS_C_LD_FLAGS=$(shell adios2-config --c-libs)
-ADIOS_C_ALL_FLAGS=$(shell adios2-config -c)
-
 ifeq ($(ADIOS2_HAVE_MPI),1)
 	main_c=main_mpi.c
 	mpiexec=$(MPIEXEC)
+	test_mpi=test_mpi
 else
 	main_c=main_nompi.c
 	mpiexec=
+	test_mpi=
 endif
 
-all: test
+all: test test_serial $(test_mpi)
 
 test: adios_c_test adios_c_test_2
 	$(mpiexec) ./adios_c_test
 	$(mpiexec) ./adios_c_test_2
 
 adios_c_test: main.o
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o adios_c_test main.o $(ADIOS_C_LD_FLAGS)
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o adios_c_test main.o $(shell adios2-config --c-libs)
 
 main.o: $(main_c)
-	$(CC) $(CFLAGS) $(ISYSROOT) -o main.o -c $(main_c) $(ADIOS_C_FLAGS)
+	$(CC) $(CFLAGS) $(ISYSROOT) -o main.o -c $(main_c) $(shell adios2-config --c-flags)
 
 adios_c_test_2: $(main_c)
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_c_test_2 $(main_c) $(ADIOS_C_ALL_FLAGS)
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_c_test_2 $(main_c) $(shell adios2-config -c)
+
+
+test_serial: adios_c_serial_test adios_c_serial_test_2
+	./adios_c_serial_test
+	./adios_c_serial_test_2
+
+adios_c_serial_test: main_nompi.o
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o adios_c_serial_test main_nompi.o $(shell adios2-config --serial --c-libs)
+
+main_nompi.o: main_nompi.c
+	$(CC) $(CFLAGS) $(ISYSROOT) -o main_nompi.o -c main_nompi.c $(shell adios2-config -s --c-flags)
+
+adios_c_serial_test_2: main_nompi.o
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_c_serial_test_2 main_nompi.c $(shell adios2-config -s -c)
+
+
+test_mpi: adios_c_mpi_test adios_c_mpi_test_2
+	$(MPIEXEC) ./adios_c_mpi_test
+	$(MPIEXEC) ./adios_c_mpi_test_2
+
+adios_c_mpi_test: main_mpi.o
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o adios_c_mpi_test main_mpi.o $(shell adios2-config --mpi --c-libs)
+
+main_mpi.o: main_mpi.c
+	$(CC) $(CFLAGS) $(ISYSROOT) -o main_mpi.o -c main_mpi.c $(shell adios2-config -m --c-flags)
+
+adios_c_mpi_test_2: main_mpi.o
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_c_mpi_test_2 main_mpi.c $(shell adios2-config -m -c)
