@@ -37,10 +37,8 @@ public:
     /**
      * Base class constructor
      * @param type from derived class object: e.g. bzip2, zfp, callback
-     * @param debugMode true: extra exceptions checks
      */
-    Operator(const std::string type, const Params &parameters,
-             const bool debugMode);
+    Operator(const std::string type, const Params &parameters);
 
     virtual ~Operator() = default;
 
@@ -113,9 +111,6 @@ public:
 protected:
     /** Parameters associated with a particular Operator */
     Params m_Parameters;
-
-    /** true: extra exception checks, false: skip exception checks */
-    const bool m_DebugMode = false;
 
     /**
      * Used by CompressZfp

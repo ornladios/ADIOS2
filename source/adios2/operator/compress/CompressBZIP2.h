@@ -26,9 +26,8 @@ class CompressBZIP2 : public Operator
 public:
     /**
      * Unique constructor
-     * @param debugMode
      */
-    CompressBZIP2(const Params &parameters, const bool debugMode);
+    CompressBZIP2(const Params &parameters);
 
     ~CompressBZIP2() = default;
 

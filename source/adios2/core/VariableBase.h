@@ -114,8 +114,7 @@ public:
 
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,
-                 const Dims &count, const bool constantShape,
-                 const bool debugMode);
+                 const Dims &count, const bool constantShape);
 
     virtual ~VariableBase() = default;
 
@@ -214,7 +213,6 @@ public:
                       const bool fullNameKeys) const noexcept;
 
 protected:
-    const bool m_DebugMode = false;
     bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count
 
     unsigned int m_DeferredCounter = 0;

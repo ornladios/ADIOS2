@@ -26,9 +26,8 @@ namespace engine
 
 BP3Writer::BP3Writer(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
-: Engine("BP3", io, name, mode, std::move(comm)),
-  m_BP3Serializer(m_Comm, m_DebugMode), m_FileDataManager(m_Comm, m_DebugMode),
-  m_FileMetadataManager(m_Comm, m_DebugMode)
+: Engine("BP3", io, name, mode, std::move(comm)), m_BP3Serializer(m_Comm),
+  m_FileDataManager(m_Comm), m_FileMetadataManager(m_Comm)
 {
     TAU_SCOPED_TIMER("BP3Writer::Open");
     m_IO.m_ReadStreaming = false;
@@ -282,7 +281,7 @@ void BP3Writer::WriteProfilingJSONFile()
 
     if (m_BP3Serializer.m_RankMPI == 0)
     {
-        transport::FileFStream profilingJSONStream(m_Comm, m_DebugMode);
+        transport::FileFStream profilingJSONStream(m_Comm);
         auto bpBaseNames = m_BP3Serializer.GetBPBaseNames({m_Name});
         profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
                                  Mode::Write);

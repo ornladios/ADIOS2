@@ -44,9 +44,8 @@ public:
     /**
      * Unique base constructor
      * @param comm
-     * @param debugMode
      */
-    TransportMan(helper::Comm const &comm, const bool debugMode);
+    TransportMan(helper::Comm const &comm);
 
     virtual ~TransportMan() = default;
 
@@ -162,7 +161,6 @@ public:
 
 protected:
     helper::Comm const &m_Comm;
-    const bool m_DebugMode = false;
 
     std::shared_ptr<Transport> OpenFileTransport(const std::string &fileName,
                                                  const Mode openMode,

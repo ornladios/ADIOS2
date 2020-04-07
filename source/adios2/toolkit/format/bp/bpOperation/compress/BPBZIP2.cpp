@@ -85,7 +85,7 @@ void BPBZIP2::GetData(const char *input,
                       char *dataOutput) const
 {
 #ifdef ADIOS2_HAVE_BZIP2
-    core::compress::CompressBZIP2 op(Params(), true);
+    core::compress::CompressBZIP2 op((Params()));
     const size_t sizeOut = (sizeof(size_t) == 8)
                                ? static_cast<size_t>(helper::StringTo<uint64_t>(
                                      blockOperationInfo.Info.at("InputSize"),

@@ -30,9 +30,8 @@ namespace adios2
 namespace format
 {
 
-BP4Serializer::BP4Serializer(helper::Comm const &comm, const bool debugMode)
-: BPSerializer(comm, debugMode, 4), BP4Base(comm, debugMode),
-  BPBase(comm, debugMode)
+BP4Serializer::BP4Serializer(helper::Comm const &comm)
+: BPSerializer(comm, 4), BP4Base(comm), BPBase(comm)
 {
 }
 

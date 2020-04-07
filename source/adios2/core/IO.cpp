@@ -173,9 +173,9 @@ void IO::RegisterEngine(const std::string &engineType, EngineFactoryEntry entry)
 }
 
 IO::IO(ADIOS &adios, const std::string name, const bool inConfigFile,
-       const std::string hostLanguage, const bool debugMode)
+       const std::string hostLanguage)
 : m_ADIOS(adios), m_Name(name), m_InConfigFile(inConfigFile),
-  m_HostLanguage(hostLanguage), m_DebugMode(debugMode)
+  m_HostLanguage(hostLanguage)
 {
 }
 

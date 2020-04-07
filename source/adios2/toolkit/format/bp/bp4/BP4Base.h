@@ -65,9 +65,8 @@ public:
     /**
      * Unique constructor
      * @param mpiComm for m_BP1Aggregator
-     * @param debugMode true: exceptions checks
      */
-    BP4Base(helper::Comm const &comm, const bool debugMode);
+    BP4Base(helper::Comm const &comm);
 
     virtual ~BP4Base() = default;
 

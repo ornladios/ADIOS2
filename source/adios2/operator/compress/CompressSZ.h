@@ -26,9 +26,8 @@ class CompressSZ : public Operator
 public:
     /**
      * Unique constructor
-     * @param debugMode
      */
-    CompressSZ(const Params &parameters, const bool debugMode);
+    CompressSZ(const Params &parameters);
 
     ~CompressSZ() = default;
 

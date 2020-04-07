@@ -48,9 +48,8 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
     const unsigned int newIndex =
         variableMap.empty() ? 0 : variableMap.rbegin()->first + 1;
 
-    auto itVariablePair =
-        variableMap.emplace(newIndex, Variable<T>(name, shape, start, count,
-                                                  constantDims, m_DebugMode));
+    auto itVariablePair = variableMap.emplace(
+        newIndex, Variable<T>(name, shape, start, count, constantDims));
     m_Variables.emplace(name, std::make_pair(helper::GetType<T>(), newIndex));
 
     Variable<T> &variable = itVariablePair.first->second;
@@ -113,10 +112,8 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
 
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
-    // if (m_DebugMode)
-    // {
+
     //     CheckAttributeCommon(globalName);
-    // }
 
     auto &attributeMap = GetAttributeMap<T>();
     auto itExistingAttribute = m_Attributes.find(globalName);
@@ -174,10 +171,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
-    // if (m_DebugMode)
-    // {
     //     CheckAttributeCommon(globalName);
-    // }
 
     auto &attributeMap = GetAttributeMap<T>();
     auto itExistingAttribute = m_Attributes.find(globalName);

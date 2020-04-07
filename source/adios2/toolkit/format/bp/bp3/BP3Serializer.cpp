@@ -28,9 +28,8 @@ namespace adios2
 namespace format
 {
 
-BP3Serializer::BP3Serializer(helper::Comm const &comm, const bool debugMode)
-: BPSerializer(comm, debugMode, 3), BP3Base(comm, debugMode),
-  BPBase(comm, debugMode)
+BP3Serializer::BP3Serializer(helper::Comm const &comm)
+: BPSerializer(comm, 3), BP3Base(comm), BPBase(comm)
 {
 }
 

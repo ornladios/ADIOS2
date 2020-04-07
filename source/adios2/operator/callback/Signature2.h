@@ -28,7 +28,7 @@ public:
                    void(void *, const std::string &, const std::string &,
                         const std::string &, const size_t, const Dims &,
                         const Dims &, const Dims &)> &function,
-               const Params &parameters, const bool debugMode);
+               const Params &parameters);
 
     ~Signature2() = default;
 

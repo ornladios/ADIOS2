@@ -35,8 +35,7 @@ BPBase::SerialElementIndex::SerialElementIndex(const uint32_t memberID,
 
 BPBase::Minifooter::Minifooter(const int8_t version) : Version(version) {}
 
-BPBase::BPBase(helper::Comm const &comm, const bool debugMode)
-: m_Comm(comm), m_DebugMode(debugMode)
+BPBase::BPBase(helper::Comm const &comm) : m_Comm(comm)
 {
     m_RankMPI = m_Comm.Rank();
     m_SizeMPI = m_Comm.Size();
@@ -220,20 +219,18 @@ void BPBase::Init(const Params &parameters, const std::string hint,
     if (m_Profiler.m_IsActive)
     {
         const TimeUnit timeUnit = m_Parameters.ProfileUnit;
+        m_Profiler.m_Timers.emplace("buffering",
+                                    profiling::Timer("buffering", timeUnit));
+        m_Profiler.m_Timers.emplace("memcpy",
+                                    profiling::Timer("memcpy", timeUnit));
+        m_Profiler.m_Timers.emplace("minmax",
+                                    profiling::Timer("minmax", timeUnit));
         m_Profiler.m_Timers.emplace(
-            "buffering", profiling::Timer("buffering", timeUnit, m_DebugMode));
-        m_Profiler.m_Timers.emplace(
-            "memcpy", profiling::Timer("memcpy", timeUnit, m_DebugMode));
-        m_Profiler.m_Timers.emplace(
-            "minmax", profiling::Timer("minmax", timeUnit, m_DebugMode));
-        m_Profiler.m_Timers.emplace(
-            "meta_sort_merge",
-            profiling::Timer("meta_sort_merge", timeUnit, m_DebugMode));
-        m_Profiler.m_Timers.emplace(
-            "aggregation",
-            profiling::Timer("aggregation", timeUnit, m_DebugMode));
-        m_Profiler.m_Timers.emplace(
-            "mkdir", profiling::Timer("mkdir", timeUnit, m_DebugMode));
+            "meta_sort_merge", profiling::Timer("meta_sort_merge", timeUnit));
+        m_Profiler.m_Timers.emplace("aggregation",
+                                    profiling::Timer("aggregation", timeUnit));
+        m_Profiler.m_Timers.emplace("mkdir",
+                                    profiling::Timer("mkdir", timeUnit));
         m_Profiler.m_Bytes.emplace("buffering", 0);
     }
 

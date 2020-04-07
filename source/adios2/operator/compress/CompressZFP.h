@@ -31,9 +31,8 @@ class CompressZFP : public Operator
 public:
     /**
      * Unique constructor
-     * @param debugMode
      */
-    CompressZFP(const Params &parameters, const bool debugMode);
+    CompressZFP(const Params &parameters);
 
     ~CompressZFP() = default;
 

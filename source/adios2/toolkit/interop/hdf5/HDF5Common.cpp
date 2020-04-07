@@ -61,7 +61,7 @@ public:
 };
 */
 
-HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
+HDF5Common::HDF5Common()
 {
     m_DefH5TypeComplexFloat =
         H5Tcreate(H5T_COMPOUND, sizeof(std::complex<float>));

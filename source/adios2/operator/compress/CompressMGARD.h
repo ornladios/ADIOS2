@@ -26,9 +26,8 @@ class CompressMGARD : public Operator
 public:
     /**
      * Unique constructor
-     * @param debugMode
      */
-    CompressMGARD(const Params &parameters, const bool debugMode);
+    CompressMGARD(const Params &parameters);
 
     ~CompressMGARD() = default;
 

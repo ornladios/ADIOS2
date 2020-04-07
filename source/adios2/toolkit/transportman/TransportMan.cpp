@@ -33,10 +33,7 @@ namespace adios2
 namespace transportman
 {
 
-TransportMan::TransportMan(helper::Comm const &comm, const bool debugMode)
-: m_Comm(comm), m_DebugMode(debugMode)
-{
-}
+TransportMan::TransportMan(helper::Comm const &comm) : m_Comm(comm) {}
 
 void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
                                  const bool nodeLocal)
@@ -323,8 +320,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
                                    std::shared_ptr<Transport> &transport) {
         if (library == "stdio")
         {
-            transport =
-                std::make_shared<transport::FileStdio>(m_Comm, m_DebugMode);
+            transport = std::make_shared<transport::FileStdio>(m_Comm);
             if (!lf_GetBuffered("true"))
             {
                 transport->SetBuffer(nullptr, 0);
@@ -332,8 +328,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
         }
         else if (library == "fstream")
         {
-            transport =
-                std::make_shared<transport::FileFStream>(m_Comm, m_DebugMode);
+            transport = std::make_shared<transport::FileFStream>(m_Comm);
             if (!lf_GetBuffered("true"))
             {
                 transport->SetBuffer(nullptr, 0);
@@ -342,8 +337,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
 #ifndef _WIN32
         else if (library == "POSIX" || library == "posix")
         {
-            transport =
-                std::make_shared<transport::FilePOSIX>(m_Comm, m_DebugMode);
+            transport = std::make_shared<transport::FilePOSIX>(m_Comm);
             if (lf_GetBuffered("false"))
             {
                 throw std::invalid_argument(
@@ -354,8 +348,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
 #endif
         else if (library == "NULL" || library == "null")
         {
-            transport =
-                std::make_shared<transport::NullTransport>(m_Comm, m_DebugMode);
+            transport = std::make_shared<transport::NullTransport>(m_Comm);
             if (lf_GetBuffered("false"))
             {
                 throw std::invalid_argument(

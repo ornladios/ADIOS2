@@ -31,8 +31,8 @@ const std::map<std::string, uint32_t> CompressBlosc::m_Shuffles = {
 const std::set<std::string> CompressBlosc::m_Compressors = {
     "blosclz", "lz4", "lz4hc", "snappy", "zlib", "zstd"};
 
-CompressBlosc::CompressBlosc(const Params &parameters, const bool debugMode)
-: Operator("blosc", parameters, debugMode)
+CompressBlosc::CompressBlosc(const Params &parameters)
+: Operator("blosc", parameters)
 {
 }
 

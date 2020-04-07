@@ -28,9 +28,8 @@ class CompressPNG : public Operator
 public:
     /**
      * Unique constructor
-     * @param debugMode
      */
-    CompressPNG(const Params &parameters, const bool debugMode);
+    CompressPNG(const Params &parameters);
 
     ~CompressPNG() = default;
 

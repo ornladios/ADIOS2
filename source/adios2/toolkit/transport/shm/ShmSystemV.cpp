@@ -22,10 +22,9 @@ namespace transport
 {
 
 ShmSystemV::ShmSystemV(const unsigned int projectID, const size_t size,
-                       helper::Comm const &comm, const bool debugMode,
-                       const bool removeAtClose)
-: Transport("Shm", "SystemV", comm, debugMode), m_ProjectID(projectID),
-  m_Size(size), m_RemoveAtClose(removeAtClose)
+                       helper::Comm const &comm, const bool removeAtClose)
+: Transport("Shm", "SystemV", comm), m_ProjectID(projectID), m_Size(size),
+  m_RemoveAtClose(removeAtClose)
 {
     if (projectID == 0)
     {

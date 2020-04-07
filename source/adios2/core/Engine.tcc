@@ -26,12 +26,8 @@ template <class T>
 typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
                                         const size_t bufferID, const T &value)
 {
-    if (m_DebugMode)
-    {
-        CheckOpenModes({{Mode::Write}},
-                       " for variable " + variable.m_Name +
-                           ", in call to Variable<T>::Span Put");
-    }
+    CheckOpenModes({{Mode::Write}}, " for variable " + variable.m_Name +
+                                        ", in call to Variable<T>::Span Put");
 
     auto itSpan = variable.m_BlocksSpan.emplace(
         variable.m_BlocksInfo.size(),
@@ -43,11 +39,8 @@ typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
 template <class T>
 void Engine::Put(Variable<T> &variable, const T *data, const Mode launch)
 {
-    if (m_DebugMode)
-    {
-        CommonChecks(variable, data, {{Mode::Write, Mode::Append}},
-                     "in call to Put");
-    }
+    CommonChecks(variable, data, {{Mode::Write, Mode::Append}},
+                 "in call to Put");
 
     switch (launch)
     {
@@ -92,10 +85,7 @@ void Engine::Put(const std::string &variableName, const T &datum,
 template <class T>
 void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
 {
-    if (m_DebugMode)
-    {
-        CommonChecks(variable, data, {{Mode::Read}}, "in call to Get");
-    }
+    CommonChecks(variable, data, {{Mode::Read}}, "in call to Get");
 
     switch (launch)
     {
@@ -166,10 +156,8 @@ typename Variable<T>::Info *Engine::Get(Variable<T> &variable,
             ", only Mode::Deferred and Mode::Sync are valid, in call to "
             "GetBlock\n");
     }
-    if (m_DebugMode)
-    {
-        CommonChecks<T>(variable, info->Data, {{Mode::Read}}, "in call to Get");
-    }
+
+    CommonChecks<T>(variable, info->Data, {{Mode::Read}}, "in call to Get");
 
     return info;
 }

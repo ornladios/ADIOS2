@@ -450,9 +450,6 @@ protected:
      *  if no communicator is passed */
     helper::Comm m_Comm;
 
-    /** true: additional exceptions */
-    const bool m_DebugMode = false;
-
     /** added to exceptions to improve debugging */
     std::string m_EndMessage;
 
