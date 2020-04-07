@@ -121,6 +121,16 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
+            auto scalarInt = dataManIO.InquireVariable<int>("scalarInt");
+            auto blocksInfo = dataManReader.BlocksInfo(
+                scalarInt, dataManReader.CurrentStep());
+
+            for (const auto &bi : blocksInfo)
+            {
+                ASSERT_EQ(bi.IsValue, true);
+                ASSERT_EQ(bi.Value, dataManReader.CurrentStep());
+            }
+
             const auto &vars = dataManIO.AvailableVariables();
             ASSERT_EQ(vars.size(), 11);
             size_t currentStep = dataManReader.CurrentStep();
@@ -144,8 +154,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<float>>("bpComplexes");
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
-            auto scalarInt = dataManIO.InquireVariable<int>("scalarInt");
-            auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
 
             bpChars.SetSelection({start, count});
             bpUChars.SetSelection({start, count});
@@ -172,7 +180,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                               adios2::Mode::Sync);
             int i;
             dataManReader.Get(scalarInt, &i);
-
             ASSERT_EQ(i, currentStep);
 
             VerifyData(myChars.data(), currentStep, start, count, shape,

@@ -73,16 +73,10 @@ private:
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;                              \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
-    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
     std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
         const Variable<T> &variable, const size_t step) const final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-
-    template <typename T>
-    std::map<size_t, std::vector<typename Variable<T>::Info>>
-    AllStepsBlocksInfoCommon(const Variable<T> &variable) const;
 
     template <typename T>
     std::vector<typename Variable<T>::Info>
