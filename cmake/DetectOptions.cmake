@@ -274,7 +274,11 @@ endif()
 
 if(Python_Interpreter_FOUND)
   # Setup output directories
-  lists_get_prefix("Python_INCLUDE_DIRS;Python_LIBRARIES;Python_SITEARCH" _Python_DEVPREFIX)
+  if(Python_Development_FOUND)
+    lists_get_prefix("Python_INCLUDE_DIRS;Python_LIBRARIES;Python_SITEARCH" _Python_DEVPREFIX)
+  else()
+    lists_get_prefix("Python_EXECUTABLE;Python_SITEARCH" _Python_DEVPREFIX)
+  endif()
   string_strip_prefix(
     "${_Python_DEVPREFIX}" "${Python_SITEARCH}" CMAKE_INSTALL_PYTHONDIR_DEFAULT
   )
