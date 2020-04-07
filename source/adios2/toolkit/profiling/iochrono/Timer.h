@@ -44,10 +44,8 @@ public:
      * Timer object constructor using std::chrono class
      * @param process name of process to be measured
      * @param timeUnit (mus, ms, s, etc.) from ADIOSTypes.h TimeUnit
-     * @param debugMode true: additional exception checks (recommended)
      */
-    Timer(const std::string process, const TimeUnit timeUnit,
-          const bool debugMode = false);
+    Timer(const std::string process, const TimeUnit timeUnit);
 
     ~Timer() = default;
 
@@ -64,9 +62,6 @@ public:
     std::string GetShortUnits() const noexcept;
 
 private:
-    /** true: extra exceptions */
-    const bool m_DebugMode = false;
-
     /** Set at Resume */
     std::chrono::time_point<std::chrono::high_resolution_clock> m_InitialTime;
 

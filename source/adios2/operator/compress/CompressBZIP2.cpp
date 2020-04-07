@@ -27,8 +27,8 @@ namespace core
 namespace compress
 {
 
-CompressBZIP2::CompressBZIP2(const Params &parameters, const bool debugMode)
-: Operator("bzip2", parameters, debugMode)
+CompressBZIP2::CompressBZIP2(const Params &parameters)
+: Operator("bzip2", parameters)
 {
 }
 

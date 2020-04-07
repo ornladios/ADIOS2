@@ -24,7 +24,7 @@ namespace engine
 class HDFVDSWriter
 {
 public:
-    HDFVDSWriter(helper::Comm const &comm, bool debugMode);
+    HDFVDSWriter(helper::Comm const &comm);
     void Init(const std::string &name);
     void AddVar(const VariableBase &var, hid_t h5Type);
     void
@@ -48,7 +48,7 @@ private:
 class HDFSerialWriter
 {
 public:
-    HDFSerialWriter(helper::Comm const &comm, bool debugMode);
+    HDFSerialWriter(helper::Comm const &comm);
     void
     Advance(const float timeoutSeconds = std::numeric_limits<float>::max());
     void Close(const int transportIndex = -1);
@@ -67,7 +67,6 @@ public:
 private:
     helper::Comm const
         &m_LocalComm; // all ranks in this comm write to the same file
-    const bool m_DebugMode = false;
     int m_Rank;
 };
 

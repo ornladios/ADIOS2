@@ -29,7 +29,7 @@ public:
                    const T *, const std::string &, const std::string &,        \
                    const std::string &, const size_t, const Dims &,            \
                    const Dims &, const Dims &)> &function,                     \
-               const Params &parameters, const bool debugMode);
+               const Params &parameters);
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

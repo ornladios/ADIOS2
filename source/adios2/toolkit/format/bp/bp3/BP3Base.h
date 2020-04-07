@@ -49,9 +49,8 @@ public:
     /**
      * Unique constructor
      * @param comm for m_BP1Aggregator
-     * @param debugMode true: exceptions checks
      */
-    BP3Base(helper::Comm const &comm, const bool debugMode);
+    BP3Base(helper::Comm const &comm);
 
     virtual ~BP3Base() = default;
 

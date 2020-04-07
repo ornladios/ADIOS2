@@ -118,8 +118,7 @@ public:
     std::map<size_t, Span> m_BlocksSpan;
 
     Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
-                const Dims &count, const bool constantShape,
-                const bool debugMode);
+                const Dims &count, const bool constantShape);
 
     ~Variable<T>() = default;
 

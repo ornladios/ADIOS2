@@ -23,8 +23,8 @@ namespace core
 namespace engine
 {
 
-HDFVDSWriter::HDFVDSWriter(helper::Comm const &comm, bool debugMode)
-: m_SubfileComm(comm), m_VDSFile(debugMode), m_Rank(-1)
+HDFVDSWriter::HDFVDSWriter(helper::Comm const &comm)
+: m_SubfileComm(comm), m_VDSFile(), m_Rank(-1)
 {
     m_NumSubFiles = m_SubfileComm.Size();
     m_Rank = m_SubfileComm.Rank();
@@ -218,9 +218,8 @@ void HDFVDSWriter::Close(const int transportIndex)
 //
 // class HDFSerialWriter
 //
-HDFSerialWriter::HDFSerialWriter(helper::Comm const &comm,
-                                 const bool debugMode = false)
-: m_LocalComm(comm), m_DebugMode(debugMode), m_H5File(debugMode)
+HDFSerialWriter::HDFSerialWriter(helper::Comm const &comm)
+: m_LocalComm(comm), m_H5File()
 {
 }
 

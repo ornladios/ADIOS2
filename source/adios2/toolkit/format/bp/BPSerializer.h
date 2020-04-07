@@ -23,8 +23,7 @@ namespace format
 class BPSerializer : virtual public BPBase
 {
 public:
-    BPSerializer(helper::Comm const &comm, const bool debugMode,
-                 const uint8_t version);
+    BPSerializer(helper::Comm const &comm, const uint8_t version);
 
     virtual ~BPSerializer() = default;
 

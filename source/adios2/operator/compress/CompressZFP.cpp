@@ -18,8 +18,7 @@ namespace core
 namespace compress
 {
 
-CompressZFP::CompressZFP(const Params &parameters, const bool debugMode)
-: Operator("zfp", parameters, debugMode)
+CompressZFP::CompressZFP(const Params &parameters) : Operator("zfp", parameters)
 {
 }
 

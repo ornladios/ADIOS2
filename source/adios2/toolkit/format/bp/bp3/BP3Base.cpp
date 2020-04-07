@@ -20,10 +20,7 @@ namespace adios2
 namespace format
 {
 
-BP3Base::BP3Base(helper::Comm const &comm, const bool debugMode)
-: BPBase(comm, debugMode)
-{
-}
+BP3Base::BP3Base(helper::Comm const &comm) : BPBase(comm) {}
 
 std::vector<std::string>
 BP3Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept

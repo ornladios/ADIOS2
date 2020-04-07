@@ -41,7 +41,6 @@ public:
      * @param accessMode
      * @param comm
      * @param method
-     * @param debugMode
      * @param hostLanguage
      */
     InSituMPIReader(IO &adios, const std::string &name, const Mode mode,

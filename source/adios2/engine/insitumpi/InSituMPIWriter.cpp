@@ -32,7 +32,7 @@ namespace engine
 InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
                                  const Mode mode, helper::Comm comm)
 : Engine("InSituMPIWriter", io, name, mode, std::move(comm)),
-  m_BP3Serializer(m_Comm, m_DebugMode)
+  m_BP3Serializer(m_Comm)
 {
     TAU_SCOPED_TIMER("InSituMPIWriter::Open");
     m_EndMessage = " in call to InSituMPIWriter " + m_Name + " Open\n";

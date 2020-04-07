@@ -27,10 +27,7 @@ namespace core
 namespace compress
 {
 
-CompressSZ::CompressSZ(const Params &parameters, const bool debugMode)
-: Operator("sz", parameters, debugMode)
-{
-}
+CompressSZ::CompressSZ(const Params &parameters) : Operator("sz", parameters) {}
 
 size_t CompressSZ::BufferMaxSize(const size_t sizeIn) const
 {

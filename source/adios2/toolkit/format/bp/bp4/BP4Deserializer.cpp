@@ -32,8 +32,8 @@ namespace format
 
 std::mutex BP4Deserializer::m_Mutex;
 
-BP4Deserializer::BP4Deserializer(helper::Comm const &comm, const bool debugMode)
-: BP4Base(comm, debugMode), BPBase(comm, debugMode), m_Minifooter(4)
+BP4Deserializer::BP4Deserializer(helper::Comm const &comm)
+: BP4Base(comm), BPBase(comm), m_Minifooter(4)
 {
 }
 

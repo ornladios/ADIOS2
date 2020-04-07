@@ -22,8 +22,8 @@ namespace callback
                                  const std::string &, const std::string &,     \
                                  const size_t, const Dims &, const Dims &,     \
                                  const Dims &)> &function,                     \
-        const Params &parameters, const bool debugMode)                        \
-    : Operator("Signature1", parameters, debugMode), m_Function##L(function)   \
+        const Params &parameters)                                              \
+    : Operator("Signature1", parameters), m_Function##L(function)              \
     {                                                                          \
     }
 ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)

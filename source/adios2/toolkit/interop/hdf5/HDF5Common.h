@@ -107,9 +107,8 @@ class HDF5Common
 public:
     /**
      * Unique constructor for HDF5 file
-     * @param debugMode true: extra exception checks
      */
-    HDF5Common(const bool debugMode);
+    HDF5Common();
     ~HDF5Common();
 
     static const std::string ATTRNAME_NUM_STEPS;
@@ -212,7 +211,6 @@ private:
     void WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr,
                             hid_t parentID, const char *h5Name);
 
-    const bool m_DebugMode;
     bool m_WriteMode = false;
     unsigned int m_NumAdiosSteps = 0;
 

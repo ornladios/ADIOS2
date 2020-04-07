@@ -43,7 +43,7 @@ public:
      * @param comm multi-process communicator
      * @param debug true: extra checks
      */
-    BP4Deserializer(helper::Comm const &comm, const bool debugMode);
+    BP4Deserializer(helper::Comm const &comm);
 
     ~BP4Deserializer() = default;
 

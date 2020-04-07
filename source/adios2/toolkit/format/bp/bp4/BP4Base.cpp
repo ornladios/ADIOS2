@@ -22,10 +22,7 @@ namespace adios2
 namespace format
 {
 
-BP4Base::BP4Base(helper::Comm const &comm, const bool debugMode)
-: BPBase(comm, debugMode)
-{
-}
+BP4Base::BP4Base(helper::Comm const &comm) : BPBase(comm) {}
 
 std::string BP4Base::RemoveTrailingSlash(const std::string &name) const noexcept
 {

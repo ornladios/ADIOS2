@@ -21,8 +21,7 @@ namespace engine
 
 HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode mode,
                          helper::Comm comm)
-: Engine("HDF5Writer", io, name, mode, std::move(comm)),
-  m_H5File(io.m_DebugMode)
+: Engine("HDF5Writer", io, name, mode, std::move(comm))
 {
     m_IO.m_ReadStreaming = false;
     m_EndMessage = ", in call to IO HDF5Writer Open " + m_Name + "\n";
@@ -112,9 +111,8 @@ void HDF5WriterP::DoPutSyncCommon(Variable<T> &variable, const T *values)
                 c_count[i] = variable.m_Count[ndims - i - 1];
             }
 
-            Variable<T> dup =
-                Variable<T>(variable.m_Name, c_shape, c_offset, c_count,
-                            variable.IsConstantDims(), false);
+            Variable<T> dup = Variable<T>(variable.m_Name, c_shape, c_offset,
+                                          c_count, variable.IsConstantDims());
 
             /*
              * duplicate var attributes and convert to c order before saving.

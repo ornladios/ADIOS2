@@ -25,9 +25,8 @@ namespace engine
 HDFMixer::HDFMixer(IO &io, const std::string &name, const Mode openMode,
                    helper::Comm comm)
 : Engine("HDFMixer", io, name, openMode, std::move(comm)),
-  m_HDFVDSWriter(m_Comm, m_DebugMode),
-  m_HDFSerialWriter(helper::Comm(), m_DebugMode),
-  m_TransportsManager(m_Comm, m_DebugMode)
+  m_HDFVDSWriter(m_Comm), m_HDFSerialWriter(helper::Comm()),
+  m_TransportsManager(m_Comm)
 {
     m_EndMessage = " in call to IO Open HDFMixer " + m_Name + "\n";
     Init();
