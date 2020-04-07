@@ -50,6 +50,10 @@ void FileStdio::WaitForOpen()
             "couldn't open file " + m_Name +
             ", check permissions or path existence, in call to POSIX open");
         m_IsOpen = true;
+        if (m_DelayedBufferSet)
+        {
+            SetBuffer(m_DelayedBuffer, m_DelayedBufferSize);
+        }
     }
 }
 
@@ -101,9 +105,33 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
 
 void FileStdio::SetBuffer(char *buffer, size_t size)
 {
-    const int status = std::setvbuf(m_File, buffer, _IOFBF, size);
+    if (!m_File)
+    {
+        m_DelayedBufferSet = true;
+        m_DelayedBuffer = buffer;
+        m_DelayedBufferSize = size;
+        return;
+    }
+    m_DelayedBufferSet = false;
+    m_DelayedBuffer = nullptr;
+    m_DelayedBufferSize = 0;
 
-    if (!status)
+    int status;
+    if (buffer)
+    {
+        status = std::setvbuf(m_File, buffer, _IOFBF, size);
+    }
+    else
+    {
+        if (size != 0)
+        {
+            throw std::invalid_argument(
+                "buffer size must be 0 when using a NULL buffer");
+        }
+        status = std::setvbuf(m_File, NULL, _IONBF, 0);
+    }
+
+    if (status)
     {
         throw std::ios_base::failure(
             "ERROR: could not set FILE* buffer in file " + m_Name +
