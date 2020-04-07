@@ -195,8 +195,7 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         {
             parsedParameters.BurstBufferVerbose =
                 static_cast<int>(helper::StringTo<int32_t>(
-                    value, m_DebugMode,
-                    " in Parameter key=BurstBufferVerbose " + hint));
+                    value, " in Parameter key=BurstBufferVerbose " + hint));
         }
     }
     if (!engineType.empty())

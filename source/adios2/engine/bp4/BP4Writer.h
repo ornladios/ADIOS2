@@ -63,8 +63,10 @@ private:
     /*
      *  Burst buffer variables
      */
-    /** true if burst buffer is used */
-    bool m_UseBB = false;
+    /** true if burst buffer is used to write */
+    bool m_WriteToBB = false;
+    /** true if burst buffer is drained to disk  */
+    bool m_DrainBB = true;
     /** File drainer thread if burst buffer is used */
     burstbuffer::FileDrainerSingleThread m_FileDrainer;
     /** m_Name modified with burst buffer path if BB is used,
