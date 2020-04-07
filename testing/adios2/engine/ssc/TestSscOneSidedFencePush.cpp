@@ -145,7 +145,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
             auto scalarInt = dataManIO.InquireVariable<int>("scalarInt");
-            auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
 
             bpChars.SetSelection({start, count});
             bpUChars.SetSelection({start, count});
