@@ -163,13 +163,16 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
                 if (v.shapeId == ShapeID::GlobalValue ||
                     v.shapeId == ShapeID::LocalValue)
                 {
-                    T value;
-                    std::memcpy(&value, m_Buffer.data() + v.bufferStart,
-                                v.bufferCount);
                     b.IsValue = true;
-                    b.Max = value;
-                    b.Min = value;
-                    b.Value = value;
+                    if (m_CurrentStep == 0)
+                    {
+                        std::memcpy(&b.Value, v.value.data(), v.value.size());
+                    }
+                    else
+                    {
+                        std::memcpy(&b.Value, m_Buffer.data() + v.bufferStart,
+                                    v.bufferCount);
+                    }
                 }
             }
         }
