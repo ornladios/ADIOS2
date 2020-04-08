@@ -61,6 +61,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
     auto scalarInt = dataManIO.DefineVariable<int>("scalarInt");
+    auto stringVar = dataManIO.DefineVariable<std::string>("stringVar");
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter = dataManIO.Open(name, adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
@@ -88,6 +89,8 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         dataManWriter.Put(bpDComplexes, myDComplexes.data(),
                           adios2::Mode::Sync);
         dataManWriter.Put(scalarInt, i);
+        std::string s = "sample string sample string sample string";
+        dataManWriter.Put(stringVar, s);
         dataManWriter.EndStep();
     }
     dataManWriter.Close();
@@ -134,7 +137,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             }
 
             const auto &vars = dataManIO.AvailableVariables();
-            ASSERT_EQ(vars.size(), 11);
+            ASSERT_EQ(vars.size(), 12);
             size_t currentStep = dataManReader.CurrentStep();
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
@@ -156,6 +159,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<float>>("bpComplexes");
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
+            adios2::Variable<std::string> stringVar =
+                dataManIO.InquireVariable<std::string>("stringVar");
 
             bpChars.SetSelection({start, count});
             bpUChars.SetSelection({start, count});
@@ -180,6 +185,13 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                               adios2::Mode::Sync);
             dataManReader.Get(bpDComplexes, myDComplexes.data(),
                               adios2::Mode::Sync);
+            std::string s;
+            dataManReader.Get(stringVar, s);
+            ASSERT_EQ(s, "sample string sample string sample string");
+            ASSERT_EQ(stringVar.Min(),
+                      "sample string sample string sample string");
+            ASSERT_EQ(stringVar.Max(),
+                      "sample string sample string sample string");
 
             int i;
             dataManReader.Get(scalarInt, &i);

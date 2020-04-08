@@ -85,9 +85,6 @@ private:
     void DoClose(const int transportIndex = -1);
 
     template <class T>
-    void GetSyncCommon(Variable<T> &variable, T *data);
-
-    template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
     void CalculatePosition(ssc::BlockVecVec &mapVec,

@@ -147,10 +147,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
             if (v.shapeId == ShapeID::GlobalValue ||
                 v.shapeId == ShapeID::LocalValue)
             {
-                std::vector<char> value(ssc::GetTypeSize(v.type));
-                std::cout << " ===== " << value.size() << " >>> "
-                          << v.value.size() << " <<< " << v.bufferCount
-                          << std::endl;
+                std::vector<char> value(v.bufferCount);
                 if (m_CurrentStep == 0)
                 {
                     std::memcpy(value.data(), v.value.data(), v.value.size());
@@ -163,6 +160,19 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                 if (v.type.empty())
                 {
                     throw(std::runtime_error("unknown data type"));
+                }
+                else if (v.type == "string")
+                {
+                    auto variable = m_IO.InquireVariable<std::string>(v.name);
+                    if (variable)
+                    {
+                        variable->m_Value =
+                            std::string(value.begin(), value.end());
+                        variable->m_Min =
+                            std::string(value.begin(), value.end());
+                        variable->m_Max =
+                            std::string(value.begin(), value.end());
+                    }
                 }
 #define declare_type(T)                                                        \
     else if (v.type == helper::GetType<T>())                                   \
@@ -489,7 +499,8 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
 #define declare_type(T)                                                        \
     void SscReader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
-        GetSyncCommon(variable, data);                                         \
+        GetDeferredCommon(variable, data);                                     \
+        PerformGets();                                                         \
     }                                                                          \
     void SscReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
