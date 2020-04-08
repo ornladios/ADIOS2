@@ -15,6 +15,7 @@
 #include <iostream>
 #include <locale>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <streambuf>
@@ -57,10 +58,10 @@ struct FileDrainOperation
                        size_t fromOffset, size_t toOffset, const void *data);
 };
 
-typedef std::map<std::string, std::ifstream> InputFileMap;
-typedef std::map<std::string, std::ofstream> OutputFileMap;
-typedef std::map<std::string, std::ifstream>::iterator InputFile;
-typedef std::map<std::string, std::ofstream>::iterator OutputFile;
+typedef std::map<std::string, std::shared_ptr<std::ifstream>> InputFileMap;
+typedef std::map<std::string, std::shared_ptr<std::ofstream>> OutputFileMap;
+typedef std::shared_ptr<std::ifstream> InputFile;
+typedef std::shared_ptr<std::ofstream> OutputFile;
 
 class FileDrainer
 {
@@ -136,10 +137,10 @@ protected:
 private:
     InputFileMap m_InputFileMap;
     OutputFileMap m_OutputFileMap;
-    void Open(std::ifstream &f, const std::string &path);
-    void Close(std::ifstream &f);
-    void Open(std::ofstream &f, const std::string &path, bool append);
-    void Close(std::ofstream &f);
+    void Open(InputFile f, const std::string &path);
+    void Close(InputFile);
+    void Open(OutputFile f, const std::string &path, bool append);
+    void Close(OutputFile f);
 };
 
 } // end namespace burstbuffer

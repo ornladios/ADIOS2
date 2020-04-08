@@ -126,80 +126,77 @@ void FileDrainer::AddOperationOpen(const std::string &toFileName, Mode mode)
 
 InputFile FileDrainer::GetFileForRead(const std::string &path)
 {
-    InputFile it = m_InputFileMap.find(path);
+    auto it = m_InputFileMap.find(path);
     if (it != m_InputFileMap.end())
     {
-        return it;
+        return it->second;
     }
     else
     {
-        auto ip = m_InputFileMap.emplace(path, std::ifstream());
-        InputFile it = ip.first;
-        std::ifstream &f = it->second;
+        InputFile f = std::make_shared<std::ifstream>();
+        m_InputFileMap.emplace(path, f);
         Open(f, path);
-        return it;
+        return f;
     }
 }
 
 OutputFile FileDrainer::GetFileForWrite(const std::string &path, bool append)
 {
-    OutputFile it = m_OutputFileMap.find(path);
+    auto it = m_OutputFileMap.find(path);
     if (it != m_OutputFileMap.end())
     {
-        return it;
+        return it->second;
     }
     else
     {
-        auto op = m_OutputFileMap.emplace(path, std::ofstream());
-        OutputFile it = op.first;
-        std::ofstream &f = it->second;
+        OutputFile f = std::make_shared<std::ofstream>();
+        m_OutputFileMap.emplace(path, f);
         Open(f, path, append);
-        return it;
+        return f;
     }
 }
 
-void FileDrainer::Open(std::ifstream &f, const std::string &path)
+void FileDrainer::Open(InputFile f, const std::string &path)
 {
-    f.rdbuf()->pubsetbuf(0, 0);
-    f.open(path, std::ios::in);
+
+    f->rdbuf()->pubsetbuf(0, 0);
+    f->open(path, std::ios::in);
 }
 
-void FileDrainer::Open(std::ofstream &f, const std::string &path, bool append)
+void FileDrainer::Open(OutputFile f, const std::string &path, bool append)
 {
 
     if (append)
     {
-        f.rdbuf()->pubsetbuf(0, 0);
-        f.open(path, std::ios::out | std::ios::app | std::ios::binary);
+        f->rdbuf()->pubsetbuf(0, 0);
+        f->open(path, std::ios::out | std::ios::app | std::ios::binary);
     }
     else
     {
-        f.rdbuf()->pubsetbuf(0, 0);
-        f.open(path, std::ios::out | std::ios::trunc | std::ios::binary);
+        f->rdbuf()->pubsetbuf(0, 0);
+        f->open(path, std::ios::out | std::ios::trunc | std::ios::binary);
     }
 }
 
-void FileDrainer::Close(std::ifstream &f) { f.close(); }
-void FileDrainer::Close(std::ofstream &f) { f.close(); }
+void FileDrainer::Close(InputFile f) { f->close(); }
+void FileDrainer::Close(OutputFile f) { f->close(); }
 
-bool FileDrainer::Good(InputFile f) { return (f->second.good()); }
-bool FileDrainer::Good(OutputFile f) { return (f->second.good()); }
+bool FileDrainer::Good(InputFile f) { return (f->good()); }
+bool FileDrainer::Good(OutputFile f) { return (f->good()); }
 
 void FileDrainer::CloseAll()
 {
-    for (OutputFile it = m_OutputFileMap.begin(); it != m_OutputFileMap.end();
-         ++it)
+    for (auto it = m_OutputFileMap.begin(); it != m_OutputFileMap.end(); ++it)
     {
-        if (it->second.good())
+        if (it->second->good())
         {
             Close(it->second);
         }
         m_OutputFileMap.erase(it);
     }
-    for (InputFile it = m_InputFileMap.begin(); it != m_InputFileMap.end();
-         ++it)
+    for (auto it = m_InputFileMap.begin(); it != m_InputFileMap.end(); ++it)
     {
-        if (it->second.good())
+        if (it->second->good())
         {
             Close(it->second);
         }
@@ -209,40 +206,35 @@ void FileDrainer::CloseAll()
 
 void FileDrainer::Seek(InputFile f, size_t offset, const std::string &path)
 {
-    auto &s = f->second;
-    s.seekg(offset, std::ios_base::beg);
+    f->seekg(offset, std::ios_base::beg);
 }
 
 void FileDrainer::Seek(OutputFile f, size_t offset, const std::string &path)
 {
-    f->second.seekp(offset, std::ios_base::beg);
+    f->seekp(offset, std::ios_base::beg);
 }
 
-void FileDrainer::SeekEnd(OutputFile f)
-{
-    f->second.seekp(0, std::ios_base::end);
-}
+void FileDrainer::SeekEnd(OutputFile f) { f->seekp(0, std::ios_base::end); }
 
 std::pair<size_t, double> FileDrainer::Read(InputFile f, size_t count,
                                             char *buffer,
                                             const std::string &path)
 {
-    auto &s = f->second;
     size_t totalRead = 0;
     double totalSlept = 0.0;
     const double sleepUnit = 0.01; // seconds
     while (count > 0)
     {
-        s.read(buffer, static_cast<std::streamsize>(count));
-        const auto readSize = s.gcount();
+        f->read(buffer, static_cast<std::streamsize>(count));
+        const auto readSize = f->gcount();
 
         if (readSize < count)
         {
-            if (s.eof())
+            if (f->eof())
             {
                 std::chrono::duration<double> d(sleepUnit);
                 std::this_thread::sleep_for(d);
-                s.clear(s.rdstate() & ~std::fstream::eofbit);
+                f->clear(f->rdstate() & ~std::fstream::eofbit);
                 totalSlept += sleepUnit;
             }
             else
@@ -264,11 +256,10 @@ std::pair<size_t, double> FileDrainer::Read(InputFile f, size_t count,
 size_t FileDrainer::Write(OutputFile f, size_t count, const char *buffer,
                           const std::string &path)
 {
-    auto &s = f->second;
     size_t totalWritten = 0;
-    s.write(buffer, static_cast<std::streamsize>(count));
+    f->write(buffer, static_cast<std::streamsize>(count));
 
-    if (s.bad())
+    if (f->bad())
     {
         throw std::ios_base::failure(
             "FileDrainer couldn't write to file " + path +
