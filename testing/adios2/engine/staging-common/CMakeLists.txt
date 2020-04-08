@@ -317,7 +317,7 @@ if(NOT MSVC AND ADIOS2_HAVE_HDF5 AND (NOT ADIOS2_HAVE_MPI OR HDF5_IS_PARALLEL)) 
     # Oddly, some multi-writer tests fail
     list (FILTER HDF5_TESTS EXCLUDE REGEX "[2345]x")
     # The nobody-writes-data-in-a-timestep tests don't work with HDF5
-    list (FILTER HDF5_TESTS EXCLUDE REGEX ".*NoData$")
+    list (FILTER HDF5_TESTS EXCLUDE REGEX ".*HalfNoData$")
     foreach(test ${HDF5_TESTS})
         add_common_test(${test} HDF5)
     endforeach()
