@@ -3,9 +3,15 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+if(ADIOS2_HAVE_MPI)
+  set(maybe_adios2_core_mpi adios2_core_mpi)
+else()
+  set(maybe_adios2_core_mpi)
+endif()
+
 # stt_conn_tool
 add_executable(sst_conn_tool sst_conn_tool.c sst_conn_tool.cxx)
-target_link_libraries(sst_conn_tool adios2)
+target_link_libraries(sst_conn_tool ${maybe_adios2_core_mpi} adios2_core)
 
 if(WIN32)
   target_link_libraries(sst_conn_tool getopt)
