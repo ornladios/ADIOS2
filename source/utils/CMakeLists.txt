@@ -44,11 +44,6 @@ install(TARGETS adios_reorganize EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# Add MPI dependency to parallel tools
-if(ADIOS2_HAVE_MPI)
-  target_link_libraries(adios_reorganize MPI::MPI_C)
-endif()
-
 if(ADIOS2_HAVE_MGARD)
   target_link_libraries(adios_reorganize MGARD::MGARD)
 endif()
