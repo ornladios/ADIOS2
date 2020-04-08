@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 
     try
     {
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        adios2::ADIOS adios(MPI_COMM_WORLD);
         adios2::IO sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
 

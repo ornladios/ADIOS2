@@ -32,9 +32,8 @@ int main(int argc, char *argv[])
 
     try
     {
-        /** ADIOS class factory of IO class objects, DebugON (default) is
-         * recommended */
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        /** ADIOS class factory of IO class objects */
+        adios2::ADIOS adios(MPI_COMM_WORLD);
 
         /// WRITE
         {

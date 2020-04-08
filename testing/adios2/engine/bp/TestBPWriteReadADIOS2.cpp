@@ -1003,9 +1003,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead10D2x2)
     // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");

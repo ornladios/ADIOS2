@@ -61,8 +61,8 @@ int main(int argc, char *argv[])
 
     try
     {
-        /** ADIOS class factory of IO class objects, DebugON is recommended */
-        adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON);
+        /** ADIOS class factory of IO class objects */
+        adios2::ADIOS adios(configFile, MPI_COMM_WORLD);
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */

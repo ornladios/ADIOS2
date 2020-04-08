@@ -20,8 +20,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include <ios>      //std::ios_base::failure
-#include <iostream> //std::cout
+#include <ios>       //std::ios_base::failure
+#include <iostream>  //std::cout
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
@@ -50,11 +50,11 @@ int main(int argc, char *argv[])
 
     try
     {
-        /** ADIOS class factory of IO class objects, DebugON is recommended */
+        /** ADIOS class factory of IO class objects */
 #ifdef ADIOS2_HAVE_MPI
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-        adios2::ADIOS adios(adios2::DebugON);
+        adios2::ADIOS adios;
 #endif
 
         /*** IO class object: settings and factory of Settings: Variables,

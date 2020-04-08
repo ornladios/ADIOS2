@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     shape = {mpiSize * Nx, Ny};
 
     // initialize adios2
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
     adios2::IO dataManIO = adios.DeclareIO("whatever");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(

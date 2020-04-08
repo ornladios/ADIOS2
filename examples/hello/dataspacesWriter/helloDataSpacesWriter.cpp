@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 
     try
     {
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        adios2::ADIOS adios(MPI_COMM_WORLD);
         adios2::IO dataSpacesIO = adios.DeclareIO("myIO");
         dataSpacesIO.SetEngine("DATASPACES");
 

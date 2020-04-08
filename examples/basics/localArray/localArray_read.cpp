@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 {
     try
     {
-        adios2::ADIOS adios(adios2::DebugON);
+        adios2::ADIOS adios;
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines

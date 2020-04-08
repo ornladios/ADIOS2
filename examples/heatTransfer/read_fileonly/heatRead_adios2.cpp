@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(mpiReaderComm, &rank);
     MPI_Comm_size(mpiReaderComm, &nproc);
 
-    adios2::ADIOS ad(mpiReaderComm, adios2::DebugON);
+    adios2::ADIOS ad(mpiReaderComm);
 
     // Define method for engine creation
     // 1. Get method def from config file or define new one
