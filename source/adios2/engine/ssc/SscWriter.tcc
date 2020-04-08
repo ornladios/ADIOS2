@@ -52,7 +52,7 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         }
     }
 
-    if (not found)
+    if (!found)
     {
         if (m_CurrentStep == 0)
         {
@@ -68,6 +68,12 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
             b.bufferCount = ssc::TotalDataSize(b.count, b.type, b.shapeId);
             m_Buffer.resize(b.bufferStart + b.bufferCount);
             std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
+            if (b.shapeId == ShapeID::GlobalValue ||
+                b.shapeId == ShapeID::LocalValue)
+            {
+                b.value.resize(sizeof(T));
+                std::memcpy(b.value.data(), data, b.bufferCount);
+            }
         }
         else
         {

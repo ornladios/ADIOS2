@@ -35,6 +35,7 @@ struct BlockInfo
     Dims count;
     size_t bufferStart;
     size_t bufferCount;
+    std::vector<char> value;
 };
 using BlockVec = std::vector<BlockInfo>;
 using BlockVecVec = std::vector<BlockVec>;

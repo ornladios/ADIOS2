@@ -140,6 +140,48 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
         }
     }
 
+    for (const auto &r : m_GlobalWritePattern)
+    {
+        for (auto &v : r)
+        {
+            if (v.shapeId == ShapeID::GlobalValue ||
+                v.shapeId == ShapeID::LocalValue)
+            {
+                std::vector<char> value(ssc::GetTypeSize(v.type));
+                std::cout << " ===== " << value.size() << " >>> "
+                          << v.value.size() << " <<< " << v.bufferCount
+                          << std::endl;
+                if (m_CurrentStep == 0)
+                {
+                    std::memcpy(value.data(), v.value.data(), v.value.size());
+                }
+                else
+                {
+                    std::memcpy(value.data(), m_Buffer.data() + v.bufferStart,
+                                v.bufferCount);
+                }
+                if (v.type.empty())
+                {
+                    throw(std::runtime_error("unknown data type"));
+                }
+#define declare_type(T)                                                        \
+    else if (v.type == helper::GetType<T>())                                   \
+    {                                                                          \
+        auto variable = m_IO.InquireVariable<T>(v.name);                       \
+        if (variable)                                                          \
+        {                                                                      \
+            std::memcpy(&variable->m_Min, value.data(), value.size());         \
+            std::memcpy(&variable->m_Max, value.data(), value.size());         \
+            std::memcpy(&variable->m_Value, value.data(), value.size());       \
+        }                                                                      \
+    }
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+                else { throw(std::runtime_error("unknown data type")); }
+            }
+        }
+    }
+
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::BeginStep, World Rank " << m_StreamRank

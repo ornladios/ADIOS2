@@ -129,6 +129,10 @@ void BlockVecToJson(const BlockVec &input, nlohmann::json &output)
         jref["Count"] = b.count;
         jref["BufferStart"] = b.bufferStart;
         jref["BufferCount"] = b.bufferCount;
+        if (!b.value.empty())
+        {
+            jref["Value"] = b.value;
+        }
     }
 }
 
@@ -214,6 +218,13 @@ void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
                 b.shape = j["Shape"].get<Dims>();
                 b.bufferStart = j["BufferStart"].get<size_t>();
                 b.bufferCount = j["BufferCount"].get<size_t>();
+                auto it = j.find("Value");
+                if (it != j.end())
+                {
+                    auto value = it->get<std::vector<char>>();
+                    b.value.resize(value.size());
+                    std::memcpy(b.value.data(), value.data(), value.size());
+                }
             }
         }
     }
