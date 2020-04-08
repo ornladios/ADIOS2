@@ -61,7 +61,14 @@ size_t TotalDataSize(const BlockVec &bv)
     size_t s = 0;
     for (const auto &b : bv)
     {
-        s += TotalDataSize(b.count, b.type, b.shapeId);
+        if (b.type == "string")
+        {
+            s += b.bufferCount;
+        }
+        else
+        {
+            s += TotalDataSize(b.count, b.type, b.shapeId);
+        }
     }
     return s;
 }
