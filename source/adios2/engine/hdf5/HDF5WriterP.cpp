@@ -34,6 +34,11 @@ HDF5WriterP::~HDF5WriterP() { DoClose(); }
 StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_IO.m_ReadStreaming = false;
+#ifndef RELAY_DEFINE_TO_HDF5 // RELAY_DEFINE_TO_HDF5 = variables in io are
+                             // created at begin_step
+#else
+    m_H5File.CreateVarsFromIO(m_IO);
+#endif
     return StepStatus::OK;
 }
 
