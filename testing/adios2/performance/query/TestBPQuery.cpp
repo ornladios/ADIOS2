@@ -248,9 +248,9 @@ TEST_F(BPQueryTest, BP3)
     const std::string fname(engineName + "Query1D.bp");
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
 
     WriteFile(fname, adios, engineName);
@@ -274,9 +274,9 @@ TEST_F(BPQueryTest, BP4)
     const std::string fname(engineName + "4Query1D.bp");
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
 
     WriteFile(fname, adios, engineName);

@@ -53,9 +53,6 @@ public:
     /** unique identifier */
     const std::string m_Name;
 
-    /** true: extra exceptions checks */
-    const bool m_DebugMode = false;
-
     /** from ADIOS class passed to Engine created with Open */
     const std::string m_HostLanguage = "C++";
 
@@ -122,10 +119,9 @@ public:
      * @param name unique identifier for this IO object
      * @param inConfigFile IO defined in config file (XML)
      * @param hostLanguage current language using the adios2 library
-     * @param debugMode true: extra exception checks (recommended)
      */
     IO(ADIOS &adios, const std::string name, const bool inConfigFile,
-       const std::string hostLanguage, const bool debugMode);
+       const std::string hostLanguage);
 
     ~IO() = default;
 

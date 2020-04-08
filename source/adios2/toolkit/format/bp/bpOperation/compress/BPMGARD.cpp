@@ -67,7 +67,7 @@ void BPMGARD::GetData(const char *input,
                       char *dataOutput) const
 {
 #ifdef ADIOS2_HAVE_MGARD
-    core::compress::CompressMGARD op(Params(), true);
+    core::compress::CompressMGARD op((Params()));
     op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
                   blockOperationInfo.PreCount,
                   blockOperationInfo.Info.at("PreDataType"),

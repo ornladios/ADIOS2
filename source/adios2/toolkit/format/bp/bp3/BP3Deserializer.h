@@ -38,7 +38,7 @@ public:
      * @param mpiComm
      * @param debug true: extra checks
      */
-    BP3Deserializer(helper::Comm const &comm, const bool debugMode);
+    BP3Deserializer(helper::Comm const &comm);
 
     ~BP3Deserializer() = default;
 

@@ -67,7 +67,7 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
     // must be unique per io
     const pugi::xml_node &engineNode =
         adios2::query::XmlUtil::XMLNode("engine", ioNode, false, true);
-    // adios2::ADIOS adios(m_Comm, adios2::DebugON);
+    // adios2::ADIOS adios(m_Comm);
     // adios2::IO currIO = m_Adios2.DeclareIO(ioName.value());
     m_IO = &(m_Adios2.DeclareIO(ioName.value()));
 

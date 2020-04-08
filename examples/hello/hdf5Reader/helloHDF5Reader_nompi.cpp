@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
     std::cout << " Using file: " << filename << std::endl;
     try
     {
-        /** ADIOS class factory of IO class objects, DebugON is recommended */
-        adios2::ADIOS adios(adios2::DebugON);
+        /** ADIOS class factory of IO class objects */
+        adios2::ADIOS adios;
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */

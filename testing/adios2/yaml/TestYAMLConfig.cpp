@@ -24,9 +24,9 @@ TEST_F(YAMLConfigTest, TwoIOs)
         configDir + std::string(&adios2::PathSeparator, 1) + "config1.yaml");
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(configFile, MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(configFile, adios2::DebugON);
+    adios2::ADIOS adios(configFile);
 #endif
 
     // must be declared at least once
@@ -75,13 +75,11 @@ TEST_F(YAMLConfigTest, OpTypeException)
 
     if (rank == 0)
     {
-        EXPECT_THROW(
-            adios2::ADIOS adios(configFile, MPI_COMM_SELF, adios2::DebugON),
-            std::invalid_argument);
+        EXPECT_THROW(adios2::ADIOS adios(configFile, MPI_COMM_SELF),
+                     std::invalid_argument);
     }
 #else
-    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 #endif
 }
 
@@ -92,12 +90,10 @@ TEST_F(YAMLConfigTest, OpNullException)
                                  "configOpNullException.yaml");
 
 #ifdef ADIOS2_HAVE_MPI
-    EXPECT_THROW(
-        adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON),
-        std::invalid_argument);
-#else
-    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
+    EXPECT_THROW(adios2::ADIOS adios(configFile, MPI_COMM_WORLD),
                  std::invalid_argument);
+#else
+    EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 #endif
 }
 

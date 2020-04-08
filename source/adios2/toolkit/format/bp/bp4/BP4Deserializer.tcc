@@ -59,38 +59,34 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
     const size_t stepsStart = variable.m_StepsStart;
     const size_t stepsCount = variable.m_StepsCount;
 
-    if (m_DebugMode)
+    const auto &indices = variable.m_AvailableStepBlockIndexOffsets;
+    const size_t maxStep = indices.rbegin()->first;
+    if (stepsStart + 1 > maxStep)
     {
-        const auto &indices = variable.m_AvailableStepBlockIndexOffsets;
-        const size_t maxStep = indices.rbegin()->first;
-        if (stepsStart + 1 > maxStep)
+        throw std::invalid_argument(
+            "ERROR: steps start " + std::to_string(stepsStart) +
+            " from SetStepsSelection or BeginStep is larger than "
+            "the maximum available step " +
+            std::to_string(maxStep - 1) + " for variable " + variable.m_Name +
+            ", in call to Get\n");
+    }
+
+    auto itStep = std::next(indices.begin(), stepsStart);
+
+    for (size_t i = 0; i < stepsCount; ++i)
+    {
+        if (itStep == indices.end())
         {
             throw std::invalid_argument(
-                "ERROR: steps start " + std::to_string(stepsStart) +
-                " from SetStepsSelection or BeginStep is larger than "
-                "the maximum available step " +
-                std::to_string(maxStep - 1) + " for variable " +
-                variable.m_Name + ", in call to Get\n");
+                "ERROR: offset " + std::to_string(i) + " from steps start " +
+                std::to_string(stepsStart) + " in variable " + variable.m_Name +
+                " is beyond the largest available step = " +
+                std::to_string(maxStep - 1) +
+                ", check Variable SetStepSelection argument stepsCount "
+                "(random access), or "
+                "number of BeginStep calls (streaming), in call to Get");
         }
-
-        auto itStep = std::next(indices.begin(), stepsStart);
-
-        for (size_t i = 0; i < stepsCount; ++i)
-        {
-            if (itStep == indices.end())
-            {
-                throw std::invalid_argument(
-                    "ERROR: offset " + std::to_string(i) +
-                    " from steps start " + std::to_string(stepsStart) +
-                    " in variable " + variable.m_Name +
-                    " is beyond the largest available step = " +
-                    std::to_string(maxStep - 1) +
-                    ", check Variable SetStepSelection argument stepsCount "
-                    "(random access), or "
-                    "number of BeginStep calls (streaming), in call to Get");
-            }
-            ++itStep;
-        }
+        ++itStep;
     }
 
     if (variable.m_SelectionType == SelectionType::WriteBlock)
@@ -201,42 +197,39 @@ void BP4Deserializer::SetVariableBlockInfo(
             return;
         }
 
-        if (m_DebugMode)
+        const size_t dimensions = blockCharacteristics.Count.size();
+        if (dimensions != blockInfo.Count.size())
         {
-            const size_t dimensions = blockCharacteristics.Count.size();
-            if (dimensions != blockInfo.Count.size())
+            throw std::invalid_argument(
+                "ERROR: block Count (available) and "
+                "selection Count (requested) number of dimensions, do not "
+                "match "
+                "when reading local array variable " +
+                variableName + ", in call to Get");
+        }
+
+        const Dims readInCount = m_ReverseDimensions
+                                     ? Dims(blockCharacteristics.Count.rbegin(),
+                                            blockCharacteristics.Count.rend())
+                                     : blockCharacteristics.Count;
+
+        const Dims blockInfoStart = blockInfo.Start.empty()
+                                        ? Dims(blockInfo.Count.size(), 0)
+                                        : blockInfo.Start;
+
+        for (size_t i = 0; i < dimensions; ++i)
+        {
+            if (blockInfoStart[i] + blockInfo.Count[i] > readInCount[i])
             {
                 throw std::invalid_argument(
-                    "ERROR: block Count (available) and "
-                    "selection Count (requested) number of dimensions, do not "
-                    "match "
-                    "when reading local array variable " +
-                    variableName + ", in call to Get");
-            }
-
-            const Dims readInCount =
-                m_ReverseDimensions ? Dims(blockCharacteristics.Count.rbegin(),
-                                           blockCharacteristics.Count.rend())
-                                    : blockCharacteristics.Count;
-
-            const Dims blockInfoStart = blockInfo.Start.empty()
-                                            ? Dims(blockInfo.Count.size(), 0)
-                                            : blockInfo.Start;
-
-            for (size_t i = 0; i < dimensions; ++i)
-            {
-                if (blockInfoStart[i] + blockInfo.Count[i] > readInCount[i])
-                {
-                    throw std::invalid_argument(
-                        "ERROR: selection Start " +
-                        helper::DimsToString(blockInfoStart) + " and Count " +
-                        helper::DimsToString(blockInfo.Count) +
-                        " (requested) is out of bounds of (available) local"
-                        " Count " +
-                        helper::DimsToString(readInCount) +
-                        " , when reading local array variable " + variableName +
-                        ", in call to Get");
-                }
+                    "ERROR: selection Start " +
+                    helper::DimsToString(blockInfoStart) + " and Count " +
+                    helper::DimsToString(blockInfo.Count) +
+                    " (requested) is out of bounds of (available) local"
+                    " Count " +
+                    helper::DimsToString(readInCount) +
+                    " , when reading local array variable " + variableName +
+                    ", in call to Get");
             }
         }
 
@@ -310,39 +303,36 @@ void BP4Deserializer::SetVariableBlockInfo(
             return;
         }
 
-        if (m_DebugMode)
+        const size_t dimensions = blockCharacteristics.Shape.size();
+        if (dimensions != blockInfo.Shape.size())
         {
-            const size_t dimensions = blockCharacteristics.Shape.size();
-            if (dimensions != blockInfo.Shape.size())
+            throw std::invalid_argument(
+                "ERROR: block Shape (available) and "
+                "selection Shape (requested) number of dimensions, do not "
+                "match "
+                "when reading global array variable " +
+                variableName + ", in call to Get");
+        }
+
+        Dims readInShape = blockCharacteristics.Shape;
+        if (m_ReverseDimensions)
+        {
+            std::reverse(readInShape.begin(), readInShape.end());
+        }
+
+        for (size_t i = 0; i < dimensions; ++i)
+        {
+            if (blockInfo.Start[i] + blockInfo.Count[i] > readInShape[i])
             {
                 throw std::invalid_argument(
-                    "ERROR: block Shape (available) and "
-                    "selection Shape (requested) number of dimensions, do not "
-                    "match "
-                    "when reading global array variable " +
-                    variableName + ", in call to Get");
-            }
-
-            Dims readInShape = blockCharacteristics.Shape;
-            if (m_ReverseDimensions)
-            {
-                std::reverse(readInShape.begin(), readInShape.end());
-            }
-
-            for (size_t i = 0; i < dimensions; ++i)
-            {
-                if (blockInfo.Start[i] + blockInfo.Count[i] > readInShape[i])
-                {
-                    throw std::invalid_argument(
-                        "ERROR: selection Start " +
-                        helper::DimsToString(blockInfo.Start) + " and Count " +
-                        helper::DimsToString(blockInfo.Count) +
-                        " (requested) is out of bounds of (available) "
-                        "Shape " +
-                        helper::DimsToString(readInShape) +
-                        " , when reading global array variable " +
-                        variableName + ", in call to Get");
-                }
+                    "ERROR: selection Start " +
+                    helper::DimsToString(blockInfo.Start) + " and Count " +
+                    helper::DimsToString(blockInfo.Count) +
+                    " (requested) is out of bounds of (available) "
+                    "Shape " +
+                    helper::DimsToString(readInShape) +
+                    " , when reading global array variable " + variableName +
+                    ", in call to Get");
             }
         }
 

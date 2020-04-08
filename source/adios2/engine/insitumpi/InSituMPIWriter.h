@@ -37,7 +37,6 @@ public:
      * @param accessMode
      * @param comm
      * @param method
-     * @param debugMode
      */
     InSituMPIWriter(IO &adios, const std::string &name, const Mode openMode,
                     helper::Comm comm);

@@ -283,9 +283,8 @@ public:
     /**
      * Default constructor
      * @param comm communicator from Engine
-     * @param debugMode true: exceptions check
      */
-    BPBase(helper::Comm const &comm, const bool debugMode);
+    BPBase(helper::Comm const &comm);
 
     virtual ~BPBase() = default;
 
@@ -320,8 +319,6 @@ public:
     void DeleteBuffers();
 
 protected:
-    const bool m_DebugMode = false;
-
     /** file I/O method type, adios1 legacy, only POSIX and MPI_AGG are used */
     enum IO_METHOD
     {

@@ -22,10 +22,7 @@ namespace adios2
 namespace format
 {
 
-BP4Base::BP4Base(helper::Comm const &comm, const bool debugMode)
-: BPBase(comm, debugMode)
-{
-}
+BP4Base::BP4Base(helper::Comm const &comm) : BPBase(comm) {}
 
 std::vector<std::string>
 BP4Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept

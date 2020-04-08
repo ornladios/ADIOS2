@@ -21,10 +21,8 @@ namespace core
 VariableCompound::VariableCompound(const std::string &name,
                                    const size_t structSize, const Dims &shape,
                                    const Dims &start, const Dims &count,
-                                   const bool constantDims,
-                                   const bool debugMode)
-: VariableBase(name, "compound", structSize, shape, start, count, constantDims,
-               debugMode)
+                                   const bool constantDims)
+: VariableBase(name, "compound", structSize, shape, start, count, constantDims)
 {
 }
 

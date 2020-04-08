@@ -21,8 +21,8 @@ Signature2::Signature2(
     const std::function<void(void *, const std::string &, const std::string &,
                              const std::string &, const size_t, const Dims &,
                              const Dims &, const Dims &)> &function,
-    const Params &parameters, const bool debugMode)
-: Operator("Signature2", parameters, debugMode), m_Function(function)
+    const Params &parameters)
+: Operator("Signature2", parameters), m_Function(function)
 {
 }
 

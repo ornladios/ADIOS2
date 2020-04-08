@@ -8,33 +8,53 @@ endif()
 
 find_package(adios2 REQUIRED)
 
-add_executable(without_C foo.c main.c)
-add_executable(with_C foo.c main.c)
-add_executable(without_CXX foo.cxx main.cxx)
-add_executable(with_CXX foo.cxx main.cxx)
-
-target_compile_definitions(with_C PRIVATE WITH_ADIOS2)
-target_compile_definitions(with_CXX PRIVATE WITH_ADIOS2)
-target_link_libraries(with_C adios2::adios2)
-target_link_libraries(with_CXX adios2::adios2)
-
 if(ADIOS2_HAVE_Fortran)
   enable_language(Fortran)
-  add_executable(without_Fortran foo.F90 main.f90)
-  add_executable(with_Fortran foo.F90 main.f90)
-  target_compile_definitions(with_Fortran PRIVATE WITH_ADIOS2)
-  target_link_libraries(with_Fortran adios2::adios2_f)
+endif()
 
-  set_target_properties(without_Fortran with_Fortran PROPERTIES
+add_executable(serial_without_C foo.c main.c)
+add_executable(serial_with_C foo.c main.c)
+target_compile_definitions(serial_with_C PRIVATE WITH_ADIOS2)
+target_link_libraries(serial_with_C adios2::c)
+
+add_executable(serial_without_CXX foo.cxx main.cxx)
+add_executable(serial_with_CXX foo.cxx main.cxx)
+target_compile_definitions(serial_with_CXX PRIVATE WITH_ADIOS2)
+target_link_libraries(serial_with_CXX adios2::cxx11)
+
+if(ADIOS2_HAVE_Fortran)
+  add_executable(serial_without_Fortran foo.F90 main.f90)
+  add_executable(serial_with_Fortran foo.F90 main.f90)
+  target_compile_definitions(serial_with_Fortran PRIVATE WITH_ADIOS2)
+  target_link_libraries(serial_with_Fortran adios2::fortran)
+  set_target_properties(serial_without_Fortran serial_with_Fortran PROPERTIES
     LINKER_LANGUAGE Fortran
-  )
+    )
 endif()
 
 if(ADIOS2_HAVE_MPI)
   find_package(MPI REQUIRED)
-  target_link_libraries(without_C MPI::MPI_C)
-  target_link_libraries(without_CXX MPI::MPI_C)
+
+  add_executable(mpi_without_C foo.c main.c)
+  target_link_libraries(mpi_without_C MPI::MPI_C)
+  add_executable(mpi_with_C foo.c main.c)
+  target_compile_definitions(mpi_with_C PRIVATE WITH_ADIOS2)
+  target_link_libraries(mpi_with_C adios2::c_mpi adios2::c MPI::MPI_C)
+
+  add_executable(mpi_without_CXX foo.cxx main.cxx)
+  target_link_libraries(mpi_without_CXX MPI::MPI_C)
+  add_executable(mpi_with_CXX foo.cxx main.cxx)
+  target_compile_definitions(mpi_with_CXX PRIVATE WITH_ADIOS2)
+  target_link_libraries(mpi_with_CXX adios2::cxx11_mpi adios2::cxx11 MPI::MPI_CXX)
+
   if(ADIOS2_HAVE_Fortran)
-    target_link_libraries(without_Fortran MPI::MPI_Fortran)
+    add_executable(mpi_without_Fortran foo.F90 main.f90)
+    target_link_libraries(mpi_without_Fortran MPI::MPI_Fortran)
+    add_executable(mpi_with_Fortran foo.F90 main.f90)
+    target_compile_definitions(mpi_with_Fortran PRIVATE WITH_ADIOS2)
+    target_link_libraries(mpi_with_Fortran adios2::fortran_mpi adios2::fortran MPI::MPI_Fortran)
+    set_target_properties(mpi_without_Fortran mpi_with_Fortran PROPERTIES
+      LINKER_LANGUAGE Fortran
+      )
   endif()
 endif()

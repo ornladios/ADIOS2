@@ -24,5 +24,5 @@ Docker
 ******
 
 Docker images including building and installation of ADIOS 2 in a container: 
-* Ubuntu 18.04: under `scripts/docker/images/ubuntu18.04/Dockerfile <https://github.com/ornladios/ADIOS2/tree/master/scripts/docker/images/ubuntu18.04/Dockerfile>`_
+* Ubuntu 18.04: under `scripts/docker/images/ubuntu/Dockerfile <https://github.com/ornladios/ADIOS2/tree/master/scripts/docker/images/ubuntu/Dockerfile>`_
 

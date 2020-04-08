@@ -77,9 +77,9 @@ TEST_F(SstParamFailTest, MarshalMethodUnknown)
     adios2::Params engineParams = ParseEngineParams("MarshalMethod:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
 
     adios2::IO io = adios.DeclareIO("TestIO");
@@ -102,9 +102,9 @@ TEST_F(SstParamFailTest, CompressionMethodUnknown)
         ParseEngineParams("CompressionMethod:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
 
     adios2::IO io = adios.DeclareIO("TestIO");
@@ -126,9 +126,9 @@ TEST_F(SstParamFailTest, QueueFullPolicyUnknown)
     adios2::Params engineParams = ParseEngineParams("QueueFullPolicy:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
 
     adios2::IO io = adios.DeclareIO("TestIO");
@@ -151,9 +151,9 @@ TEST_F(SstParamFailTest, RendezvousReaderCountBad)
         ParseEngineParams("RendezvousReaderCount:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
 
     adios2::IO io = adios.DeclareIO("TestIO");
@@ -175,9 +175,9 @@ TEST_F(SstParamFailTest, QueueLimitBad)
     adios2::Params engineParams = ParseEngineParams("QueueLimit:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
 
     adios2::IO io = adios.DeclareIO("TestIO");
@@ -200,9 +200,9 @@ TEST_F(SstParamFailTest, PreciousFirstTimestepParamTest)
         ParseEngineParams("FirstTimestepPrecious:unknown");
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
 
     adios2::IO io = adios.DeclareIO("TestIO");

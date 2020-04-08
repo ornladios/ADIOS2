@@ -44,8 +44,7 @@ int main(int argc, char *argv[])
             std::cout << "        data file  = " << dataFileName << std::endl;
         }
 
-        adios2::ADIOS ad =
-            adios2::ADIOS(configFileName, MPI_COMM_WORLD, adios2::DebugON);
+        adios2::ADIOS ad = adios2::ADIOS(configFileName, MPI_COMM_WORLD);
 
         adios2::IO queryIO = ad.DeclareIO("query");
         adios2::Engine reader =
@@ -102,7 +101,7 @@ int main(int argc, char *argv[])
 bool testMe(std::string &queryConfigFile, std::string const &doubleVarName,
             MPI_Comm comm)
 {
-    adios2::ADIOS ad(queryConfigFile, comm, adios2::DebugON);
+    adios2::ADIOS ad(queryConfigFile, comm);
     std::string dataFileName = "test.file";
 
     // adios2::query::Worker w(queryConfigFile, comm);

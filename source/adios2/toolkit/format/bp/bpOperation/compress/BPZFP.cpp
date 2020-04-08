@@ -87,7 +87,7 @@ void BPZFP::GetData(const char *input,
                     char *dataOutput) const
 {
 #ifdef ADIOS2_HAVE_ZFP
-    core::compress::CompressZFP op(Params(), true);
+    core::compress::CompressZFP op((Params()));
     op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
                   blockOperationInfo.PreCount,
                   blockOperationInfo.Info.at("PreDataType"),

@@ -29,10 +29,9 @@ namespace engine
 
 BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
-: Engine("BP4Writer", io, name, mode, std::move(comm)),
-  m_BP4Serializer(m_Comm, m_DebugMode), m_FileDataManager(m_Comm, m_DebugMode),
-  m_FileMetadataManager(m_Comm, m_DebugMode),
-  m_FileMetadataIndexManager(m_Comm, m_DebugMode), m_FileDrainer()
+: Engine("BP4Writer", io, name, mode, std::move(comm)), m_BP4Serializer(m_Comm),
+  m_FileDataManager(m_Comm), m_FileMetadataManager(m_Comm),
+  m_FileMetadataIndexManager(m_Comm), m_FileDrainer()
 {
     TAU_SCOPED_TIMER("BP4Writer::Open");
     m_IO.m_ReadStreaming = false;
@@ -480,7 +479,7 @@ void BP4Writer::WriteProfilingJSONFile()
     if (m_BP4Serializer.m_RankMPI == 0)
     {
         // std::cout << "write profiling file!" << std::endl;
-        transport::FileFStream profilingJSONStream(m_Comm, m_DebugMode);
+        transport::FileFStream profilingJSONStream(m_Comm);
         auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
         profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
                                  Mode::Write);

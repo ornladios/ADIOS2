@@ -64,9 +64,9 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const std::string &name)
 {
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
 #endif
     adios2::IO dataManIO = adios.DeclareIO("Test");
     dataManIO.SetEngine("BP4");
@@ -157,9 +157,9 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
 #endif
     adios2::IO dataManIO = adios.DeclareIO("ms");
     dataManIO.SetEngine("table");

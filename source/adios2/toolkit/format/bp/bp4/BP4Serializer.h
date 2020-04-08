@@ -38,7 +38,7 @@ public:
      * @param comm multi-process communicator for BP1 Aggregator
      * @param debug true: extra checks
      */
-    BP4Serializer(helper::Comm const &comm, const bool debugMode = false);
+    BP4Serializer(helper::Comm const &comm);
 
     ~BP4Serializer() = default;
 

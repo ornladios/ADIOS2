@@ -41,9 +41,9 @@ void SZAccuracy1D(const std::string accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -181,9 +181,9 @@ void SZAccuracy2D(const std::string accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -324,9 +324,9 @@ void SZAccuracy3D(const std::string accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -467,9 +467,9 @@ void SZAccuracy1DSel(const std::string accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -607,9 +607,9 @@ void SZAccuracy2DSel(const std::string accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -750,9 +750,9 @@ void SZAccuracy3DSel(const std::string accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -897,9 +897,9 @@ void SZAccuracy2DSmallSel(const std::string accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");

@@ -256,7 +256,7 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
             p[key] = i.second;
         }
     }
-    core::compress::CompressZFP compressor(p, false);
+    core::compress::CompressZFP compressor(p);
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
@@ -301,7 +301,7 @@ bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-    core::compress::CompressSZ compressor(p, false);
+    core::compress::CompressSZ compressor(p);
     try
     {
         Params info;
@@ -344,7 +344,7 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-    core::compress::CompressBZIP2 compressor(p, false);
+    core::compress::CompressBZIP2 compressor(p);
     try
     {
         Params info;
@@ -434,7 +434,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             if (j.compression == "zfp")
             {
 #ifdef ADIOS2_HAVE_ZFP
-                core::compress::CompressZFP decompressor(j.params, true);
+                core::compress::CompressZFP decompressor(j.params);
                 size_t datasize =
                     std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
                                     std::multiplies<size_t>());
@@ -467,7 +467,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             else if (j.compression == "sz")
             {
 #ifdef ADIOS2_HAVE_SZ
-                core::compress::CompressSZ decompressor(j.params, true);
+                core::compress::CompressSZ decompressor(j.params);
                 size_t datasize =
                     std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
                                     std::multiplies<size_t>());
@@ -499,7 +499,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             else if (j.compression == "bzip2")
             {
 #ifdef ADIOS2_HAVE_BZIP2
-                core::compress::CompressBZIP2 decompressor(j.params, true);
+                core::compress::CompressBZIP2 decompressor(j.params);
                 size_t datasize =
                     std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
                                     std::multiplies<size_t>());

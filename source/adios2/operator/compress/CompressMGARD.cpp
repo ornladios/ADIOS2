@@ -23,8 +23,8 @@ namespace core
 namespace compress
 {
 
-CompressMGARD::CompressMGARD(const Params &parameters, const bool debugMode)
-: Operator("mgard", parameters, debugMode)
+CompressMGARD::CompressMGARD(const Params &parameters)
+: Operator("mgard", parameters)
 {
 }
 

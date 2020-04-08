@@ -24,8 +24,8 @@ namespace adios2
 namespace transport
 {
 
-FileStdio::FileStdio(helper::Comm const &comm, const bool debugMode)
-: Transport("File", "stdio", comm, debugMode)
+FileStdio::FileStdio(helper::Comm const &comm)
+: Transport("File", "stdio", comm)
 {
 }
 

@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     try
     {
         ReadSettings settings(argc, argv, rank, nproc);
-        adios2::ADIOS ad(settings.configfile, mpiReaderComm, adios2::DebugON);
+        adios2::ADIOS ad(settings.configfile, mpiReaderComm);
 
         // Define method for engine creation
         // 1. Get method def from config file or define new one

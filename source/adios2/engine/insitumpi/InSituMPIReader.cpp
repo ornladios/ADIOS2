@@ -32,7 +32,7 @@ namespace engine
 InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
                                  const Mode mode, helper::Comm comm)
 : Engine("InSituMPIReader", io, name, mode, std::move(comm)),
-  m_BP3Deserializer(m_Comm, m_DebugMode)
+  m_BP3Deserializer(m_Comm)
 {
     TAU_SCOPED_TIMER("InSituMPIReader::Open");
     m_EndMessage = " in call to IO Open InSituMPIReader " + m_Name + "\n";

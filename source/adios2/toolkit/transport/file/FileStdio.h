@@ -30,7 +30,7 @@ class FileStdio : public Transport
 {
 
 public:
-    FileStdio(helper::Comm const &comm, const bool debugMode);
+    FileStdio(helper::Comm const &comm);
 
     ~FileStdio();
 

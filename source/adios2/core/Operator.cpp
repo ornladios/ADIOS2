@@ -18,9 +18,8 @@ namespace adios2
 namespace core
 {
 
-Operator::Operator(const std::string type, const Params &parameters,
-                   const bool debugMode)
-: m_Type(type), m_Parameters(parameters), m_DebugMode(debugMode)
+Operator::Operator(const std::string type, const Params &parameters)
+: m_Type(type), m_Parameters(parameters)
 {
 }
 

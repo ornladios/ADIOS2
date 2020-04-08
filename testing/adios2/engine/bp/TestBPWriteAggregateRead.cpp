@@ -34,7 +34,7 @@ void WriteAggRead1D8(const std::string substreams)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     // Write test data using BP
 
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -338,7 +338,7 @@ void WriteAggRead2D4x2(const std::string substreams)
 
     // Write test data using ADIOS2
 
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -647,7 +647,7 @@ void WriteAggRead2D2x4(const std::string substreams)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 
     // Write test data using ADIOS2
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 

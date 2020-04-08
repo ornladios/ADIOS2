@@ -125,8 +125,7 @@ IO &ADIOS::DeclareIO(const std::string name)
         }
     }
 
-    auto ioPair = m_IOs.emplace(
-        name, IO(*this, name, false, m_HostLanguage, m_DebugMode));
+    auto ioPair = m_IOs.emplace(name, IO(*this, name, false, m_HostLanguage));
     IO &io = ioPair.first->second;
     io.SetDeclared();
     return io;
@@ -181,8 +180,7 @@ Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
     {
 #ifdef ADIOS2_HAVE_BZIP2
         auto itPair = m_Operators.emplace(
-            name,
-            std::make_shared<compress::CompressBZIP2>(parameters, m_DebugMode));
+            name, std::make_shared<compress::CompressBZIP2>(parameters));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(lf_ErrorMessage("BZip2"));
@@ -192,8 +190,7 @@ Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
     {
 #ifdef ADIOS2_HAVE_ZFP
         auto itPair = m_Operators.emplace(
-            name,
-            std::make_shared<compress::CompressZFP>(parameters, m_DebugMode));
+            name, std::make_shared<compress::CompressZFP>(parameters));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(lf_ErrorMessage("ZFP"));
@@ -203,8 +200,7 @@ Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
     {
 #ifdef ADIOS2_HAVE_SZ
         auto itPair = m_Operators.emplace(
-            name,
-            std::make_shared<compress::CompressSZ>(parameters, m_DebugMode));
+            name, std::make_shared<compress::CompressSZ>(parameters));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(lf_ErrorMessage("SZ"));
@@ -214,8 +210,7 @@ Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
     {
 #ifdef ADIOS2_HAVE_MGARD
         auto itPair = m_Operators.emplace(
-            name,
-            std::make_shared<compress::CompressMGARD>(parameters, m_DebugMode));
+            name, std::make_shared<compress::CompressMGARD>(parameters));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(lf_ErrorMessage("MGARD"));
@@ -225,8 +220,7 @@ Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
     {
 #ifdef ADIOS2_HAVE_PNG
         auto itPair = m_Operators.emplace(
-            name,
-            std::make_shared<compress::CompressPNG>(parameters, m_DebugMode));
+            name, std::make_shared<compress::CompressPNG>(parameters));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(lf_ErrorMessage("PNG"));
@@ -236,8 +230,7 @@ Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
     {
 #ifdef ADIOS2_HAVE_BLOSC
         auto itPair = m_Operators.emplace(
-            name,
-            std::make_shared<compress::CompressBlosc>(parameters, m_DebugMode));
+            name, std::make_shared<compress::CompressBlosc>(parameters));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(lf_ErrorMessage("Blosc"));
@@ -281,8 +274,7 @@ Operator *ADIOS::InquireOperator(const std::string &name) noexcept
     {                                                                          \
         CheckOperator(name);                                                   \
         std::shared_ptr<Operator> callbackOperator =                           \
-            std::make_shared<callback::Signature1>(function, parameters,       \
-                                                   m_DebugMode);               \
+            std::make_shared<callback::Signature1>(function, parameters);      \
                                                                                \
         auto itPair = m_Operators.emplace(name, std::move(callbackOperator));  \
         return *itPair.first->second;                                          \
@@ -300,8 +292,7 @@ Operator &ADIOS::DefineCallBack(
 {
     CheckOperator(name);
     std::shared_ptr<Operator> callbackOperator =
-        std::make_shared<callback::Signature2>(function, parameters,
-                                               m_DebugMode);
+        std::make_shared<callback::Signature2>(function, parameters);
 
     auto itPair = m_Operators.emplace(name, std::move(callbackOperator));
     return *itPair.first->second;

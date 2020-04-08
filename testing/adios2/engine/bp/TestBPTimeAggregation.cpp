@@ -38,9 +38,9 @@ void TimeAggregation1D8(const std::string flushstepscount)
     // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -351,9 +351,9 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
     // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");

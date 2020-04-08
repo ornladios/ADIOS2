@@ -132,49 +132,49 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <typename T>
-std::map<size_t, std::vector<typename Variable<T>::Info>>
-SscReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
-{
-    TAU_SCOPED_TIMER_FUNC();
-    std::map<size_t, std::vector<typename Variable<T>::Info>> m;
-    return m;
-}
-
-template <typename T>
 std::vector<typename Variable<T>::Info>
 SscReader::BlocksInfoCommon(const Variable<T> &variable,
                             const size_t step) const
 {
     TAU_SCOPED_TIMER_FUNC();
+
     std::vector<typename Variable<T>::Info> ret;
 
     for (const auto &r : m_GlobalWritePattern)
     {
         for (auto &v : r)
         {
-            if (v.name != variable.m_Name)
+            if (v.name == variable.m_Name)
             {
-                continue;
-            }
-            typename Variable<T>::Info b;
-            b.Start = v.start;
-            b.Count = v.count;
-            b.Shape = v.shape;
-            if (!helper::IsRowMajor(m_IO.m_HostLanguage))
-            {
-                std::reverse(b.Start.begin(), b.Start.end());
-                std::reverse(b.Count.begin(), b.Count.end());
-                std::reverse(b.Shape.begin(), b.Shape.end());
-            }
-            b.IsValue = false;
-            if (b.Shape.size() == 1)
-            {
-                if (b.Shape[0] == 1)
+                ret.emplace_back();
+                auto &b = ret.back();
+                b.Start = v.start;
+                b.Count = v.count;
+                b.Shape = v.shape;
+                b.Step = m_CurrentStep;
+                b.StepsStart = m_CurrentStep;
+                b.StepsCount = 1;
+                if (!helper::IsRowMajor(m_IO.m_HostLanguage))
+                {
+                    std::reverse(b.Start.begin(), b.Start.end());
+                    std::reverse(b.Count.begin(), b.Count.end());
+                    std::reverse(b.Shape.begin(), b.Shape.end());
+                }
+                if (v.shapeId == ShapeID::GlobalValue ||
+                    v.shapeId == ShapeID::LocalValue)
                 {
                     b.IsValue = true;
+                    if (m_CurrentStep == 0)
+                    {
+                        std::memcpy(&b.Value, v.value.data(), v.value.size());
+                    }
+                    else
+                    {
+                        std::memcpy(&b.Value, m_Buffer.data() + v.bufferStart,
+                                    v.bufferCount);
+                    }
                 }
             }
-            ret.push_back(b);
         }
     }
     return ret;

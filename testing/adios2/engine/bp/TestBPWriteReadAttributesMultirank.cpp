@@ -48,9 +48,9 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
 
 // Write test data using BP
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");

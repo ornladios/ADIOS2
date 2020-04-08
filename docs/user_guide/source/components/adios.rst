@@ -6,8 +6,8 @@ The `adios2::ADIOS` component is the initial contact point between an applicatio
 
 .. code-block:: c++
 
-   /** ADIOS class factory of IO class objects, DebugON is default */
-   adios2::ADIOS adios("config.xml", MPI_COMM_WORLD, adios2::DebugON);
+   /** ADIOS class factory of IO class objects */
+   adios2::ADIOS adios("config.xml", MPI_COMM_WORLD);
 
 This component is created by passing:
 
@@ -59,7 +59,7 @@ Thus resulting in:
     adios2::ADIOS (const bool debugMode = adios2::DebugON );
 
     /** Examples */
-    adios2::ADIOS adios("config.xml", adios2::DebugON);
+    adios2::ADIOS adios("config.xml");
     adios2::ADIOS adios; // Do not use () for empty constructor.
 
 .. tip::
@@ -82,7 +82,7 @@ Thus resulting in:
 
 This function returns a reference to an existing IO class object that lives inside the ADIOS object that created it.
 The ``ioName`` identifier input must be unique for each IO.
-Trying to declare an IO object with the same name twice will throw an exception if the ``debugMode`` is on in the ADIOS object constructor.
+Trying to declare an IO object with the same name twice will throw an exception.
 IO names are used to identify IO components in the runtime configuration file, :ref:`Runtime Configuration Files`
 
 As shown in the diagram below, each resulting IO object is self-managed and independent, thus providing an adaptable way to perform different kinds of I/O operations. Users must be careful not to create conflicts between system level unique I/O identifiers: file names, IP address and port, MPI Send/Receive message rank and tag, etc.

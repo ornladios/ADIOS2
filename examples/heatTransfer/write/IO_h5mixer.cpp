@@ -35,10 +35,9 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     m_outputfilename = MakeFilename(s.outputfile, ".h5");
 
-    /*ad = new adios2::ADIOS(std::string(DEFAULT_CONFIG_STR), comm,
-                           adios2::DebugON);
-    */
-    ad = new adios2::ADIOS(comm, adios2::DebugOFF);
+    /*ad = new adios2::ADIOS(std::string(DEFAULT_CONFIG_STR), comm);
+     */
+    ad = new adios2::ADIOS(comm);
 
     // Define method for engine creation
 

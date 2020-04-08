@@ -43,7 +43,7 @@ public:
 
     VariableCompound(const std::string &name, const size_t structSize,
                      const Dims &shape, const Dims &start, const Dims &count,
-                     const bool constantDims, const bool debugMode);
+                     const bool constantDims);
 
     ~VariableCompound() = default;
 

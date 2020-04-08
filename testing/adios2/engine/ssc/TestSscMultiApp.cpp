@@ -28,7 +28,7 @@ void Writer1(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-    adios2::ADIOS adios(mpiComm, adios2::DebugON);
+    adios2::ADIOS adios(mpiComm);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
@@ -98,7 +98,7 @@ void Writer2(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-    adios2::ADIOS adios(mpiComm, adios2::DebugON);
+    adios2::ADIOS adios(mpiComm);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
@@ -166,7 +166,7 @@ void Reader1(const Dims &shape, const Dims &start, const Dims &count,
              const size_t steps, const adios2::Params &engineParams,
              const std::string &name)
 {
-    adios2::ADIOS adios(mpiComm, adios2::DebugON);
+    adios2::ADIOS adios(mpiComm);
     adios2::IO dataManIO = adios.DeclareIO("Test");
     dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
@@ -214,7 +214,6 @@ void Reader1(const Dims &shape, const Dims &start, const Dims &count,
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>(
                     "bpDComplexes2");
-            auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
 
             dataManReader.Get(bpChars, myChars.data(), adios2::Mode::Sync);
             dataManReader.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
@@ -265,7 +264,7 @@ void Reader2(const Dims &shape, const Dims &start, const Dims &count,
              const size_t steps, const adios2::Params &engineParams,
              const std::string &name)
 {
-    adios2::ADIOS adios(mpiComm, adios2::DebugON);
+    adios2::ADIOS adios(mpiComm);
     adios2::IO dataManIO = adios.DeclareIO("Test");
     dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
@@ -312,7 +311,6 @@ void Reader2(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<float>>("bpComplexes");
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
-            auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
 
             dataManReader.Get(bpChars, myChars.data(), adios2::Mode::Sync);
             dataManReader.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);

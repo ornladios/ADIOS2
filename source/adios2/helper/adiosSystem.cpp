@@ -128,7 +128,7 @@ bool IsHDF5File(const std::string &name, helper::Comm &comm,
     {
         try
         {
-            transportman::TransportMan tm(Comm(), false);
+            transportman::TransportMan tm(comm);
             if (transportsParameters.empty())
             {
                 std::vector<Params> defaultTransportParameters(1);

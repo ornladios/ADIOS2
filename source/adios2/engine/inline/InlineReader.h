@@ -36,7 +36,6 @@ public:
      * @param accessMode
      * @param comm
      * @param method
-     * @param debugMode
      * @param hostLanguage
      */
     InlineReader(IO &adios, const std::string &name, const Mode mode,

@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
         {
             std::cout << "Use ADIOS without XML configuration " << std::endl;
         }
-        adios = adios2::ADIOS(settings.appComm, adios2::DebugON);
+        adios = adios2::ADIOS(settings.appComm);
     }
     else
     {
@@ -46,8 +46,7 @@ int main(int argc, char *argv[])
             std::cout << "Use ADIOS xml file " << settings.adiosConfigFileName
                       << std::endl;
         }
-        adios = adios2::ADIOS(settings.adiosConfigFileName, settings.appComm,
-                              adios2::DebugON);
+        adios = adios2::ADIOS(settings.adiosConfigFileName, settings.appComm);
     }
     Config cfg;
     size_t currentConfigLineNumber = 0;

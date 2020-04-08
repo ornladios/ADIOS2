@@ -27,7 +27,7 @@ TEST_F(XMLConfigSerialTest, TwoIOs)
     const std::string configFile(
         configDir + std::string(&adios2::PathSeparator, 1) + "config1.xml");
 
-    adios2::ADIOS adios(configFile, adios2::DebugON);
+    adios2::ADIOS adios(configFile);
 
     // must be declared at least once
     EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1"),
@@ -68,8 +68,7 @@ TEST_F(XMLConfigSerialTest, TwoEnginesException)
     const std::string configFile(
         configDir + std::string(&adios2::PathSeparator, 1) + "config2.xml");
 
-    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 }
 
 TEST_F(XMLConfigSerialTest, OpTypeException)
@@ -78,8 +77,7 @@ TEST_F(XMLConfigSerialTest, OpTypeException)
                                  std::string(&adios2::PathSeparator, 1) +
                                  "configOpTypeException.xml");
 
-    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 }
 
 TEST_F(XMLConfigSerialTest, OpNullException)
@@ -88,8 +86,7 @@ TEST_F(XMLConfigSerialTest, OpNullException)
                                  std::string(&adios2::PathSeparator, 1) +
                                  "configOpNullException.xml");
 
-    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 }
 
 TEST_F(XMLConfigSerialTest, OpNoneException)
@@ -98,8 +95,7 @@ TEST_F(XMLConfigSerialTest, OpNoneException)
                                  std::string(&adios2::PathSeparator, 1) +
                                  "configOpNoneException.xml");
 
-    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 }
 
 int main(int argc, char **argv)

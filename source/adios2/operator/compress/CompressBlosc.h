@@ -29,9 +29,8 @@ class CompressBlosc : public Operator
 public:
     /**
      * Unique constructor
-     * @param debugMode
      */
-    CompressBlosc(const Params &parameters, const bool debugMode);
+    CompressBlosc(const Params &parameters);
 
     ~CompressBlosc() = default;
 

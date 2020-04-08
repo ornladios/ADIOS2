@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
     if (rank == 0)
     {
-        /** ADIOS class factory of IO class objects, DebugON is recommended */
+        /** ADIOS class factory of IO class objects */
         adios2::ADIOS adios(MPI_COMM_SELF);
 
         /*** IO class object: settings and factory of Settings: Variables,

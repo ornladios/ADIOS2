@@ -23,9 +23,8 @@ namespace engine
 
 BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
-: Engine("BP3", io, name, mode, std::move(comm)),
-  m_BP3Deserializer(m_Comm, m_DebugMode), m_FileManager(m_Comm, m_DebugMode),
-  m_SubFileManager(m_Comm, m_DebugMode)
+: Engine("BP3", io, name, mode, std::move(comm)), m_BP3Deserializer(m_Comm),
+  m_FileManager(m_Comm), m_SubFileManager(m_Comm)
 {
     TAU_SCOPED_TIMER("BP3Reader::Open");
     Init();
