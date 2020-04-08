@@ -10,13 +10,9 @@
 
 #include "FileDrainer.h"
 
-#include <cerrno>
-#include <cstring>
-#include <fcntl.h>     // open
-#include <stddef.h>    // write output
-#include <sys/stat.h>  // open, fstat
-#include <sys/types.h> // open
-#include <unistd.h>    // write, close
+#include <chrono>
+#include <cstring> // std::memcpy
+#include <thread>  // std::this_thread::sleep_for
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> //std::ios_base::failure
@@ -128,133 +124,158 @@ void FileDrainer::AddOperationOpen(const std::string &toFileName, Mode mode)
     }
 }
 
-int FileDrainer::GetFileDescriptor(const std::string &path, const Mode mode)
+InputFile FileDrainer::GetFileForRead(const std::string &path)
 {
-    int fd;
-    auto it = fileDescriptorMap.find(path);
-    if (it != fileDescriptorMap.end())
+    InputFile it = m_InputFileMap.find(path);
+    if (it != m_InputFileMap.end())
     {
-        return it->second;
+        return it;
     }
     else
     {
-        fd = Open(path, mode);
-        fileDescriptorMap.emplace(path, fd);
+        auto ip = m_InputFileMap.emplace(path, std::ifstream());
+        InputFile it = ip.first;
+        std::ifstream &f = it->second;
+        Open(f, path);
+        return it;
     }
-    return fd;
 }
 
-int FileDrainer::Open(const std::string &path, const Mode mode)
+OutputFile FileDrainer::GetFileForWrite(const std::string &path, bool append)
 {
-    int fd;
-    switch (mode)
+    OutputFile it = m_OutputFileMap.find(path);
+    if (it != m_OutputFileMap.end())
     {
-    case (Mode::Write):
-        fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
-        break;
-    case (Mode::Append):
-        fd = open(path.c_str(), O_RDWR | O_CREAT, 0777);
-        lseek(fd, 0, SEEK_END);
-        break;
-    case (Mode::Read):
-    default:
-        fd = open(path.c_str(), O_RDONLY);
-        break;
+        return it;
     }
-    return fd;
+    else
+    {
+        auto op = m_OutputFileMap.emplace(path, std::ofstream());
+        OutputFile it = op.first;
+        std::ofstream &f = it->second;
+        Open(f, path, append);
+        return it;
+    }
 }
 
-void FileDrainer::Close(int fd, const std::string &path)
+void FileDrainer::Open(std::ifstream &f, const std::string &path)
 {
-    const int status = close(fd);
+    f.rdbuf()->pubsetbuf(0, 0);
+    f.open(path, std::ios::in);
+}
 
-    if (status == -1)
+void FileDrainer::Open(std::ofstream &f, const std::string &path, bool append)
+{
+
+    if (append)
     {
-        throw std::ios_base::failure("FileDrainer couldn't close file " + path +
-                                     "\n");
+        f.rdbuf()->pubsetbuf(0, 0);
+        f.open(path, std::ios::out | std::ios::app | std::ios::binary);
+    }
+    else
+    {
+        f.rdbuf()->pubsetbuf(0, 0);
+        f.open(path, std::ios::out | std::ios::trunc | std::ios::binary);
     }
 }
+
+void FileDrainer::Close(std::ifstream &f) { f.close(); }
+void FileDrainer::Close(std::ofstream &f) { f.close(); }
+
+bool FileDrainer::Good(InputFile f) { return (f->second.good()); }
+bool FileDrainer::Good(OutputFile f) { return (f->second.good()); }
 
 void FileDrainer::CloseAll()
 {
-    std::map<std::string, int>::iterator it;
-    for (it = fileDescriptorMap.begin(); it != fileDescriptorMap.end(); ++it)
+    for (OutputFile it = m_OutputFileMap.begin(); it != m_OutputFileMap.end();
+         ++it)
     {
-        if (it->second != errorState)
+        if (it->second.good())
         {
-            Close(it->second, it->first);
+            Close(it->second);
         }
-        fileDescriptorMap.erase(it);
+        m_OutputFileMap.erase(it);
     }
-}
-
-void FileDrainer::Seek(int fd, size_t offset, const std::string &path,
-                       int whence)
-{
-    const auto newPosition = lseek(fd, offset, whence);
-    if (newPosition == -1)
+    for (InputFile it = m_InputFileMap.begin(); it != m_InputFileMap.end();
+         ++it)
     {
-        throw std::ios_base::failure(
-            "FileDrainer couldn't seek in file " + path +
-            " to offset = " + std::to_string(offset) +
-            " errno: " + std::to_string(errno) + std::strerror(errno) + "\n");
+        if (it->second.good())
+        {
+            Close(it->second);
+        }
+        m_InputFileMap.erase(it);
     }
 }
 
-size_t FileDrainer::Read(int fd, size_t count, char *buffer,
-                         const std::string &path)
+void FileDrainer::Seek(InputFile f, size_t offset, const std::string &path)
 {
+    auto &s = f->second;
+    s.seekg(offset, std::ios_base::beg);
+}
+
+void FileDrainer::Seek(OutputFile f, size_t offset, const std::string &path)
+{
+    f->second.seekp(offset, std::ios_base::beg);
+}
+
+void FileDrainer::SeekEnd(OutputFile f)
+{
+    f->second.seekp(0, std::ios_base::end);
+}
+
+std::pair<size_t, double> FileDrainer::Read(InputFile f, size_t count,
+                                            char *buffer,
+                                            const std::string &path)
+{
+    auto &s = f->second;
     size_t totalRead = 0;
+    double totalSlept = 0.0;
+    const double sleepUnit = 0.01; // seconds
     while (count > 0)
     {
-        const auto readSize = read(fd, buffer, count);
+        s.read(buffer, static_cast<std::streamsize>(count));
+        const auto readSize = s.gcount();
 
-        if (readSize == -1)
+        if (readSize < count)
         {
-            if (errno == EINTR)
+            if (s.eof())
             {
-                continue;
+                std::chrono::duration<double> d(sleepUnit);
+                std::this_thread::sleep_for(d);
+                s.clear(s.rdstate() & ~std::fstream::eofbit);
+                totalSlept += sleepUnit;
             }
-
-            throw std::ios_base::failure(
-                "FileDrainer couldn't read from file " + path +
-                " count = " + std::to_string(count) + " bytes\n");
-            break;
+            else
+            {
+                throw std::ios_base::failure(
+                    "FileDrainer couldn't read from file " + path +
+                    " count = " + std::to_string(count) + " bytes but only " +
+                    std::to_string(readSize) + "\n");
+                break;
+            }
         }
-
         buffer += readSize;
         count -= readSize;
         totalRead += readSize;
     }
-    return totalRead;
+    return std::pair<size_t, double>(totalRead, totalSlept);
 }
 
-size_t FileDrainer::Write(int fd, size_t count, const char *buffer,
+size_t FileDrainer::Write(OutputFile f, size_t count, const char *buffer,
                           const std::string &path)
 {
+    auto &s = f->second;
     size_t totalWritten = 0;
-    while (count > 0)
+    s.write(buffer, static_cast<std::streamsize>(count));
+
+    if (s.bad())
     {
-        const auto writtenSize = write(fd, buffer, count);
-
-        if (writtenSize == -1)
-        {
-            if (errno == EINTR)
-            {
-                continue;
-            }
-
-            throw std::ios_base::failure(
-                "FileDrainer couldn't write to file " + path +
-                " count = " + std::to_string(count) + " bytes\n");
-            break;
-        }
-
-        buffer += writtenSize;
-        count -= writtenSize;
-        totalWritten += writtenSize;
+        throw std::ios_base::failure(
+            "FileDrainer couldn't write to file " + path +
+            " count = " + std::to_string(count) + " bytes\n");
     }
-    return totalWritten;
+
+    return count;
 }
 
 void FileDrainer::SetVerbose(int verboseLevel, int rank)

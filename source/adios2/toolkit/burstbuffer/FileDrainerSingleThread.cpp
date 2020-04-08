@@ -97,20 +97,23 @@ void FileDrainerSingleThread::DrainThread()
     size_t nReadBytesSucc = 0;
     size_t nWriteBytesTasked = 0;
     size_t nWriteBytesSucc = 0;
+    double sleeptForWaitingOnRead = 0.0;
 
     /* Copy a block of data from one file to another at the same offset */
-    auto lf_Copy = [&](FileDrainOperation &fdo, int fdr, int fdw,
+    auto lf_Copy = [&](FileDrainOperation &fdo, InputFile fdr, OutputFile fdw,
                        size_t count) {
         nReadBytesTasked += count;
         ts = std::chrono::steady_clock::now();
-        size_t n = Read(fdr, count, buffer.data(), fdo.fromFileName);
+        std::pair<size_t, double> ret =
+            Read(fdr, count, buffer.data(), fdo.fromFileName);
         te = std::chrono::steady_clock::now();
         timeRead += te - ts;
-        nReadBytesSucc += n;
+        nReadBytesSucc += ret.first;
+        sleeptForWaitingOnRead += ret.second;
 
         nWriteBytesTasked += count;
         ts = std::chrono::steady_clock::now();
-        n = Write(fdw, count, buffer.data(), fdo.toFileName);
+        size_t n = Write(fdw, count, buffer.data(), fdo.toFileName);
         te = std::chrono::steady_clock::now();
         timeWrite += te - ts;
         nWriteBytesSucc += n;
@@ -153,22 +156,20 @@ void FileDrainerSingleThread::DrainThread()
         case DrainOperation::Copy:
         {
             ts = std::chrono::steady_clock::now();
-            int fdr = GetFileDescriptor(fdo.fromFileName, Mode::Read);
+            auto fdr = GetFileForRead(fdo.fromFileName);
             te = std::chrono::steady_clock::now();
             timeRead += te - ts;
 
             ts = std::chrono::steady_clock::now();
-            Mode wMode =
-                (fdo.op == DrainOperation::CopyAt ? Mode::Write : Mode::Append);
-            int fdw = GetFileDescriptor(fdo.toFileName, wMode);
+            bool append = (fdo.op == DrainOperation::Copy);
+            auto fdw = GetFileForWrite(fdo.toFileName, append);
             te = std::chrono::steady_clock::now();
             timeWrite += te - ts;
 
             if (m_Verbose >= 2)
             {
                 std::cout << "Drain " << m_Rank << ": Copy from "
-                          << fdo.fromFileName << " (fd=" << fdr << ") -> "
-                          << fdo.toFileName << " (fd=" << fdw << ") "
+                          << fdo.fromFileName << " -> " << fdo.toFileName << " "
                           << fdo.countBytes << " bytes ";
                 if (fdo.op == DrainOperation::CopyAt)
                 {
@@ -178,7 +179,7 @@ void FileDrainerSingleThread::DrainThread()
                 std::cout << std::endl;
             }
 
-            if (fdr != errorState && fdw != errorState)
+            if (Good(fdr) && Good(fdw))
             {
                 try
                 {
@@ -221,8 +222,8 @@ void FileDrainerSingleThread::DrainThread()
                           << fdo.toFileName << std::endl;
             }
             ts = std::chrono::steady_clock::now();
-            int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
-            Seek(fdw, 0, fdo.toFileName, SEEK_END);
+            auto fdw = GetFileForWrite(fdo.toFileName);
+            SeekEnd(fdw);
             te = std::chrono::steady_clock::now();
             timeWrite += te - ts;
             break;
@@ -238,7 +239,7 @@ void FileDrainerSingleThread::DrainThread()
             }
             nWriteBytesTasked += fdo.countBytes;
             ts = std::chrono::steady_clock::now();
-            int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
+            auto fdw = GetFileForWrite(fdo.toFileName);
             Seek(fdw, fdo.toOffset, fdo.toFileName);
             size_t n = Write(fdw, fdo.countBytes, fdo.dataToWrite.data(),
                              fdo.toFileName);
@@ -258,7 +259,7 @@ void FileDrainerSingleThread::DrainThread()
             }
             nWriteBytesTasked += fdo.countBytes;
             ts = std::chrono::steady_clock::now();
-            int fdw = GetFileDescriptor(fdo.toFileName, Mode::Write);
+            auto fdw = GetFileForWrite(fdo.toFileName);
             size_t n = Write(fdw, fdo.countBytes, fdo.dataToWrite.data(),
                              fdo.toFileName);
             te = std::chrono::steady_clock::now();
@@ -274,7 +275,7 @@ void FileDrainerSingleThread::DrainThread()
                           << fdo.toFileName << std::endl;
             }
             ts = std::chrono::steady_clock::now();
-            GetFileDescriptor(fdo.toFileName, Mode::Write);
+            GetFileForWrite(fdo.toFileName, false);
             te = std::chrono::steady_clock::now();
             timeWrite += te - ts;
             break;
@@ -287,7 +288,7 @@ void FileDrainerSingleThread::DrainThread()
                           << fdo.toFileName << " for append " << std::endl;
             }
             ts = std::chrono::steady_clock::now();
-            GetFileDescriptor(fdo.toFileName, Mode::Append);
+            GetFileForWrite(fdo.toFileName, true);
             te = std::chrono::steady_clock::now();
             timeWrite += te - ts;
             break;
@@ -336,6 +337,11 @@ void FileDrainerSingleThread::DrainThread()
             std::cout << " WARNING Write wanted = " << nWriteBytesTasked
                       << " but successfully wrote = " << nWriteBytesSucc
                       << " bytes.";
+        }
+        if (sleeptForWaitingOnRead > 0.0)
+        {
+            std::cout << " WARNING Read had to wait " << sleeptForWaitingOnRead
+                      << " seconds for the data to arrive on disk.";
         }
         std::cout << std::endl;
     }

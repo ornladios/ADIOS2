@@ -11,9 +11,13 @@
 #ifndef ADIOS2_TOOLKIT_BURSTBUFFER_FILEDRAINER_H_
 #define ADIOS2_TOOLKIT_BURSTBUFFER_FILEDRAINER_H_
 
+#include <fstream>
+#include <iostream>
+#include <locale>
 #include <map>
 #include <mutex>
 #include <queue>
+#include <streambuf>
 #include <string>
 
 #include "adios2/common/ADIOSTypes.h"
@@ -52,6 +56,11 @@ struct FileDrainOperation
                        const std::string &toFileName, size_t countBytes,
                        size_t fromOffset, size_t toOffset, const void *data);
 };
+
+typedef std::map<std::string, std::ifstream> InputFileMap;
+typedef std::map<std::string, std::ofstream> OutputFileMap;
+typedef std::map<std::string, std::ifstream>::iterator InputFile;
+typedef std::map<std::string, std::ofstream>::iterator OutputFile;
 
 class FileDrainer
 {
@@ -94,23 +103,43 @@ public:
 protected:
     std::queue<FileDrainOperation> operations;
     std::mutex operationsMutex;
-    std::map<std::string, int> fileDescriptorMap;
 
     /** rank of process just for stdout/stderr messages */
     int m_Rank = 0;
     int m_Verbose = 0;
     static const int errorState = -1;
 
-    int GetFileDescriptor(const std::string &path, const Mode mode);
+    /** instead for Open, use this function */
+    InputFile GetFileForRead(const std::string &path);
+    OutputFile GetFileForWrite(const std::string &path, bool append = false);
+
+    /** return true if the File is usable (no previous errors) */
+    bool Good(InputFile f);
+    bool Good(OutputFile f);
+
     void CloseAll();
 
-    int Open(const std::string &path, const Mode mode);
-    void Seek(int fd, size_t offset, const std::string &path,
-              int whence = SEEK_SET);
-    size_t Read(int fd, size_t count, char *buffer, const std::string &path);
-    size_t Write(int fd, size_t count, const char *buffer,
+    void Seek(InputFile f, size_t offset, const std::string &path);
+    void Seek(OutputFile f, size_t offset, const std::string &path);
+    void SeekEnd(OutputFile f);
+
+    /** Read from file. Return a pair of
+     *  - number of bytes written
+     *  - time spent in waiting for file to be actually written to disk for this
+     * read to succeed.
+     */
+    std::pair<size_t, double> Read(InputFile f, size_t count, char *buffer,
+                                   const std::string &path);
+    size_t Write(OutputFile f, size_t count, const char *buffer,
                  const std::string &path);
-    void Close(int fd, const std::string &path);
+
+private:
+    InputFileMap m_InputFileMap;
+    OutputFileMap m_OutputFileMap;
+    void Open(std::ifstream &f, const std::string &path);
+    void Close(std::ifstream &f);
+    void Open(std::ofstream &f, const std::string &path, bool append);
+    void Close(std::ofstream &f);
 };
 
 } // end namespace burstbuffer
