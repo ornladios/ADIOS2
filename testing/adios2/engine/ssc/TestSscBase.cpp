@@ -129,6 +129,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             {
                 ASSERT_EQ(bi.IsValue, true);
                 ASSERT_EQ(bi.Value, dataManReader.CurrentStep());
+                ASSERT_EQ(scalarInt.Min(), dataManReader.CurrentStep());
+                ASSERT_EQ(scalarInt.Max(), dataManReader.CurrentStep());
             }
 
             const auto &vars = dataManIO.AvailableVariables();
