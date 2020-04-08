@@ -42,9 +42,9 @@ int main(int argc, char *argv[])
     try
     {
         //#ifdef ADIOS2_HAVE_MPI
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        adios2::ADIOS adios(MPI_COMM_WORLD);
         //#else
-        //        adios2::ADIOS adios(adios2::DebugON);
+        //        adios2::ADIOS adios;
         //#endif
 
         adios2::IO dataSpacesIO = adios.DeclareIO("myIO");

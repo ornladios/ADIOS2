@@ -23,7 +23,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 {
     m_outputfilename = s.outputfile;
 
-    ad = adios2::ADIOS(s.configfile, comm, adios2::DebugON);
+    ad = adios2::ADIOS(s.configfile, comm);
 
     adios2::IO bpio = ad.DeclareIO("writer");
     if (!bpio.InConfigFile())
