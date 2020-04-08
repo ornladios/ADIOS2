@@ -6,7 +6,7 @@ end subroutine usage
 
 program TestSstRead
   use sst_test_data
-#ifdef ADIOS2_HAVE_MPI_F
+#if ADIOS2_USE_MPI
   use mpi
 #endif
   use adios2
@@ -59,7 +59,7 @@ program TestSstRead
 
   insteps = 1;
 
-#ifdef ADIOS2_HAVE_MPI_F
+#if ADIOS2_USE_MPI
   !Launch MPI
   call MPI_Init(ierr) 
 
@@ -245,7 +245,7 @@ program TestSstRead
   if( adios%valid .eqv. .true. ) stop 'Invalid adios2_finalize'
 
 
-#ifdef ADIOS2_HAVE_MPI_F
+#if ADIOS2_USE_MPI
   call MPI_Finalize(ierr)
 #endif
 

@@ -82,18 +82,17 @@ if(ADIOS2_HAVE_Fortran)
   set_target_properties(TestCommonWrite_f TestCommonRead_f PROPERTIES
     LINKER_LANGUAGE Fortran
   )
-  target_link_libraries(TestCommonWrite_f adios2_f)
-  target_link_libraries(TestCommonRead_f adios2_f)
+  if(ADIOS2_HAVE_MPI)
+    target_link_libraries(TestCommonWrite_f adios2_fortran_mpi MPI::MPI_Fortran)
+    target_link_libraries(TestCommonRead_f adios2_fortran_mpi MPI::MPI_Fortran)
+  else()
+    target_link_libraries(TestCommonWrite_f adios2_fortran)
+    target_link_libraries(TestCommonRead_f adios2_fortran)
+  endif()
 endif()
 
 if(ADIOS2_HAVE_MPI)
   set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
-  if(ADIOS2_HAVE_Fortran)
-    target_compile_definitions(TestCommonWrite_f PRIVATE ADIOS2_HAVE_MPI_F=1)
-    target_compile_definitions(TestCommonRead_f PRIVATE ADIOS2_HAVE_MPI_F=1)
-    target_link_libraries(TestCommonWrite_f MPI::MPI_Fortran)
-    target_link_libraries(TestCommonRead_f MPI::MPI_Fortran)
-  endif()
 endif()
 
 configure_file(

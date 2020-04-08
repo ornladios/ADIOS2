@@ -1,6 +1,6 @@
 program TestBPWriteTypes
      use small_test_data
-#ifdef USE_MPI
+#if ADIOS2_USE_MPI
      use mpi
 #endif
      use adios2
@@ -27,7 +27,7 @@ program TestBPWriteTypes
      integer(kind=8), dimension(:), allocatable :: shape_in
 
 
-#ifdef USE_MPI
+#if ADIOS2_USE_MPI
      ! Launch MPI
      call MPI_Init(ierr)
      call MPI_Comm_rank(MPI_COMM_WORLD, irank, ierr)
@@ -56,7 +56,7 @@ program TestBPWriteTypes
 
 
      ! Create adios handler passing the communicator, debug mode and error flag
-#ifdef USE_MPI
+#if ADIOS2_USE_MPI
      call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
 #else
      call adios2_init(adios, adios2_debug_mode_on, ierr)
@@ -293,7 +293,7 @@ program TestBPWriteTypes
      call adios2_finalize(adios, ierr)
      if( adios%valid .eqv. .true. ) stop 'Invalid adios2_finalize'
 
-#ifdef USE_MPI
+#if ADIOS2_USE_MPI
      call MPI_Finalize(ierr)
 #endif
 
