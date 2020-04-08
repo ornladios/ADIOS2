@@ -228,7 +228,7 @@ std::pair<size_t, double> FileDrainer::Read(InputFile f, size_t count,
         f->read(buffer, static_cast<std::streamsize>(count));
         const auto readSize = f->gcount();
 
-        if (readSize < count)
+        if (readSize < static_cast<std::streamsize>(count))
         {
             if (f->eof())
             {
