@@ -47,11 +47,10 @@ void ZfpRate1D(const std::string configFile)
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
                             adios2::PathSeparator + configFile,
-                        MPI_COMM_WORLD, adios2::DebugON);
+                        MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
-                        true);
+                        adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -164,11 +163,10 @@ void ZfpRate2D(const std::string configFile)
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
                             adios2::PathSeparator + configFile,
-                        MPI_COMM_WORLD, adios2::DebugON);
+                        MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
-                        true);
+                        adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -281,11 +279,10 @@ void ZfpRate3D(const std::string configFile)
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
                             adios2::PathSeparator + configFile,
-                        MPI_COMM_WORLD, adios2::DebugON);
+                        MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
-                        true);
+                        adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -398,11 +395,10 @@ void ZfpRate1DSel(const std::string configFile)
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
                             adios2::PathSeparator + configFile,
-                        MPI_COMM_WORLD, adios2::DebugON);
+                        MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
-                        true);
+                        adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -520,11 +516,10 @@ void ZfpRate2DSel(const std::string configFile)
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
                             adios2::PathSeparator + configFile,
-                        MPI_COMM_WORLD, adios2::DebugON);
+                        MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
-                        true);
+                        adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -641,11 +636,10 @@ void ZfpRate3DSel(const std::string configFile)
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
                             adios2::PathSeparator + configFile,
-                        MPI_COMM_WORLD, adios2::DebugON);
+                        MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
-                        true);
+                        adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -767,11 +761,10 @@ void ZfpRate2DSmallSel(const std::string configFile)
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
                             adios2::PathSeparator + configFile,
-                        MPI_COMM_WORLD, adios2::DebugON);
+                        MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
-                        true);
+                        adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");

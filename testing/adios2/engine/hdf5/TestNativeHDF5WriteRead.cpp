@@ -501,9 +501,9 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
     // Write test data using ADIOS2
 
 #ifdef TEST_HDF5_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -742,9 +742,9 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read1D8)
     // Write test data using ADIOS2
 
 #ifdef TEST_HDF5_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -1078,9 +1078,9 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
         // Write test data using ADIOS2
 
 #ifdef TEST_HDF5_MPI
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-        adios2::ADIOS adios(true);
+        adios2::ADIOS adios;
 #endif
         adios2::IO io = adios.DeclareIO("HDF5ReadIO");
         io.SetEngine("HDF5");
@@ -1275,9 +1275,9 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
     // Write test data using ADIOS2
     {
 #ifdef TEST_HDF5_MPI
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-        adios2::ADIOS adios(true);
+        adios2::ADIOS adios;
 #endif
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -1536,9 +1536,9 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D2x4)
 #endif
 
 #ifdef TEST_HDF5_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     // Write test data using ADIOS2
     {
@@ -1892,9 +1892,9 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D2x4)
 #endif
 
 #ifdef TEST_HDF5_MPI
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-        adios2::ADIOS adios(true);
+        adios2::ADIOS adios;
 #endif
         adios2::IO io = adios.DeclareIO("HDF5ReadIO");
         io.SetEngine("HDF5");
@@ -2095,9 +2095,9 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
     // Write test data using ADIOS2
     {
 #ifdef TEST_HDF5_MPI
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-        adios2::ADIOS adios(true);
+        adios2::ADIOS adios;
 #endif
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -2353,9 +2353,9 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
 #endif
 
 #ifdef TEST_HDF5_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
 
     // Write test data using ADIOS2
@@ -2705,9 +2705,9 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D4x2)
 #endif
 
 #ifdef TEST_HDF5_MPI
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-        adios2::ADIOS adios(true);
+        adios2::ADIOS adios;
 #endif
 
         adios2::IO io = adios.DeclareIO("HDF5ReadIO");
@@ -2901,9 +2901,9 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
     // Write test data using ADIOS2
 
 #ifdef TEST_HDF5_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     adios2::IO io = adios.DeclareIO("TestIO");
 

@@ -122,9 +122,9 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_SELF);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
 #endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
@@ -196,9 +196,9 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                                const adios2::Params &engineParams)
 {
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_SELF);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
 #endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");

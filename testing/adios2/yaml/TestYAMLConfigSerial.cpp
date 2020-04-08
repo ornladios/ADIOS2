@@ -23,7 +23,7 @@ TEST_F(YAMLConfigTestSerial, TwoIOs)
     const std::string configFile(
         configDir + std::string(&adios2::PathSeparator, 1) + "config1.yaml");
 
-    adios2::ADIOS adios(configFile, adios2::DebugON);
+    adios2::ADIOS adios(configFile);
 
     // must be declared at least once
     EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1"),
@@ -65,8 +65,7 @@ TEST_F(YAMLConfigTestSerial, OpTypeException)
                                  std::string(&adios2::PathSeparator, 1) +
                                  "configOpTypeException.yaml");
 
-    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 }
 
 TEST_F(YAMLConfigTestSerial, OpNullException)
@@ -75,8 +74,7 @@ TEST_F(YAMLConfigTestSerial, OpNullException)
                                  std::string(&adios2::PathSeparator, 1) +
                                  "configOpNullException.yaml");
 
-    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 }
 
 int main(int argc, char **argv)
