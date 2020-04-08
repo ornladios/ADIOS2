@@ -9,7 +9,7 @@
  */
 TEST(ADIOSInterface, ADIOSNoMpi)
 {
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
     {
         adios2::IO io = adios.DeclareIO("TestIOWrite");
         adios2::Engine engine = io.Open("test.bp", adios2::Mode::Write);

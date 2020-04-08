@@ -41,9 +41,9 @@ void MGARDAccuracy1D(const std::string tolerance)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -181,9 +181,9 @@ void MGARDAccuracy2D(const std::string tolerance)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -323,9 +323,9 @@ void MGARDAccuracy3D(const std::string tolerance)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -465,9 +465,9 @@ void MGARDAccuracy1DSel(const std::string tolerance)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -596,9 +596,9 @@ void MGARDAccuracy2DSel(const std::string tolerance)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -730,9 +730,9 @@ void MGARDAccuracy3DSel(const std::string tolerance)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -877,9 +877,9 @@ void MGARDAccuracy2DSmallSel(const std::string tolerance)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");

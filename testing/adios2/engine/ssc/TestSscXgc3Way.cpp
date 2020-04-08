@@ -28,7 +28,7 @@ void coupler(const Dims &shape, const Dims &start, const Dims &count,
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
 
-    adios2::ADIOS adios(mpiComm, adios2::DebugON);
+    adios2::ADIOS adios(mpiComm);
 
     adios2::IO x_to_c_io = adios.DeclareIO("x_to_c");
     x_to_c_io.SetEngine("ssc");
@@ -116,7 +116,7 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<float> x_to_c_data(datasize);
     std::vector<float> c_to_x_data;
 
-    adios2::ADIOS adios(mpiComm, adios2::DebugON);
+    adios2::ADIOS adios(mpiComm);
 
     adios2::IO x_to_c_io = adios.DeclareIO("x_to_c");
     x_to_c_io.SetEngine("ssc");
@@ -159,7 +159,7 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
 void gene(const Dims &shape, const Dims &start, const Dims &count,
           const size_t steps, const adios2::Params &engineParams)
 {
-    adios2::ADIOS adios(mpiComm, adios2::DebugON);
+    adios2::ADIOS adios(mpiComm);
 
     adios2::IO c_to_g_io = adios.DeclareIO("c_to_g");
     c_to_g_io.SetEngine("ssc");

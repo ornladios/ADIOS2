@@ -142,9 +142,9 @@ void HDF5Steps1D(const size_t ghostCells)
 #endif
 
 #ifdef TEST_HDF5_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
@@ -378,9 +378,9 @@ void HDF5Steps2D4x2(const size_t ghostCells)
 #endif
 
 #ifdef TEST_HDF5_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
@@ -626,9 +626,9 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
 #endif
 
 #ifdef TEST_HDF5_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("WriteIO");

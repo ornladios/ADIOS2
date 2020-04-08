@@ -103,7 +103,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_SELF);
 #else
     adios2::ADIOS adios;
 #endif
@@ -179,9 +179,9 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_SELF);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
 #endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
@@ -308,9 +308,9 @@ void DataManReaderSubscribe(const Dims &shape, const Dims &start,
                                       std::multiplies<size_t>());
     std::vector<float> myFloats(datasize);
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_SELF);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
 #endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");

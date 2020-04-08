@@ -25,7 +25,7 @@ public:
 
 TEST_F(InSituMPIMPMDExceptions, Writer)
 {
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
     adios2::IO dataManIO = adios.DeclareIO("Test");
     dataManIO.SetEngine("insitumpi");
     EXPECT_THROW(dataManIO.Open("filename", adios2::Mode::Write),
@@ -34,7 +34,7 @@ TEST_F(InSituMPIMPMDExceptions, Writer)
 
 TEST_F(InSituMPIMPMDExceptions, Reader)
 {
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
     adios2::IO dataManIO = adios.DeclareIO("Test");
     dataManIO.SetEngine("insitumpi");
     EXPECT_THROW(dataManIO.Open("filename", adios2::Mode::Read),

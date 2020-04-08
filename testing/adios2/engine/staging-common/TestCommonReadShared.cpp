@@ -41,9 +41,9 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(testComm, adios2::DebugON);
+    adios2::ADIOS adios(testComm);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     /* we won't share IOs on the reader side */
     adios2::IO io1 = adios.DeclareIO("TestIO");

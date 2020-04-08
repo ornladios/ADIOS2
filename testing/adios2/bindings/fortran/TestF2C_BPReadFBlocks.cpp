@@ -30,9 +30,9 @@ TEST_F(BPReadFBlocks, FHeatMap2D)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(;
 #endif
     // read
     {
@@ -79,9 +79,9 @@ TEST_F(BPReadFBlocks, FHeatMap3D)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
     // read
     {
