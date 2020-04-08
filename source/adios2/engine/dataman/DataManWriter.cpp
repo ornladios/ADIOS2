@@ -24,7 +24,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     if (m_IPAddress.empty())
     {
         throw(std::invalid_argument(
-            "IP address not specified in wide area staging"));
+            "IP address not specified"));
     }
     m_Port += m_MpiRank;
     m_ControlAddress = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
@@ -34,7 +34,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     std::vector<std::string> daVec;
     std::vector<std::string> caVec;
 
-    if (m_MpiSize == 1 or m_OneToOneMode)
+    if (m_MpiSize == 1)
     {
         daVec.push_back(m_DataAddress);
         caVec.push_back(m_ControlAddress);

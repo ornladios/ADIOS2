@@ -42,7 +42,6 @@ protected:
     size_t m_SerializerBufferSize = 128 * 1024 * 1024;
     size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
     int m_Timeout = 5;
-    bool m_OneToOneMode = false;
 
     // internal variables
     int m_MpiRank;
