@@ -39,10 +39,11 @@ private:
     std::string m_DataAddress;
     std::string m_ControlAddress;
     std::string m_AllAddresses;
+    int m_CurrentReaderCount = 0;
 
     adios2::zmq::ZmqPubSub m_DataPublisher;
 
-    void ReplyThread(const std::string &address);
+    void ReplyThread(const std::string &address, const int times);
     std::thread m_ReplyThread;
 
 #define declare_type(T)                                                        \
