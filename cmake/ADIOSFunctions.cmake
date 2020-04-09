@@ -71,7 +71,7 @@ function(python_add_test)
   set(multiValueArgs EXEC_WRAPPER SCRIPT)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" "${ARGN}")
   add_test(NAME ${ARGS_NAME}
-    COMMAND ${ARGS_EXEC_WRAPPER} ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SCRIPT}
+    COMMAND ${ARGS_EXEC_WRAPPER} $<TARGET_FILE:Python::Interpreter> ${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SCRIPT}
   )
 
   if(UNIX)

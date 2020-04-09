@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TestDataManP2P3SDMemSelect.cpp
+ * TestDataMan3DMemSelect.cpp
  *
  *  Created on: Nov 24, 2018
  *      Author: Jason Wang
@@ -87,7 +87,7 @@ void VerifyData(const int *data, size_t step, const Dims &start,
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
     bool compressed = false;
-    if (print_lines < 100)
+    if (print_lines < 32)
     {
         PrintData(data, step, start, count);
         ++print_lines;
@@ -182,7 +182,7 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
 }
 
 #ifdef ADIOS2_HAVE_ZEROMQ
-TEST_F(DataManEngineTest, WriteRead_3D_MemSelect)
+TEST_F(DataManEngineTest, 3D_MemSelect)
 {
 
     size_t steps = 10000;

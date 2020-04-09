@@ -9,3 +9,10 @@ if(CMAKE_VERSION VERSION_LESS 3.18.0)
 else()
   include(${CMAKE_ROOT}/Modules/FindPython.cmake)
 endif()
+
+# Backwards compatibility with deprecated FindPythonInterp.cmake
+if(Python_Interpreter_FOUND)
+  set(PYTHON_EXECUTABLE "${Python_EXECUTABLE}" CACHE INTERNAL
+    "Helper for deprecated FindPythonInterp" FORCE
+  )
+endif()

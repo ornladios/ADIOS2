@@ -22,6 +22,56 @@ namespace core
 namespace engine
 {
 
+template <>
+void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
+                                  const std::string *data)
+{
+    TAU_SCOPED_TIMER_FUNC();
+    variable.SetData(data);
+
+    bool found = false;
+    for (const auto &b : m_GlobalWritePattern[m_StreamRank])
+    {
+        if (b.name == variable.m_Name)
+        {
+            if (b.bufferCount < data->size())
+            {
+                throw(std::runtime_error(
+                    "SSC only accepts fixed length string variables"));
+            }
+            std::memcpy(m_Buffer.data() + b.bufferStart, data->data(),
+                        data->size());
+            found = true;
+        }
+    }
+
+    if (!found)
+    {
+        if (m_CurrentStep == 0)
+        {
+            m_GlobalWritePattern[m_StreamRank].emplace_back();
+            auto &b = m_GlobalWritePattern[m_StreamRank].back();
+            b.name = variable.m_Name;
+            b.type = "string";
+            b.shapeId = variable.m_ShapeID;
+            b.shape = variable.m_Shape;
+            b.start = variable.m_Start;
+            b.count = variable.m_Count;
+            b.bufferStart = m_Buffer.size();
+            b.bufferCount = data->size();
+            m_Buffer.resize(b.bufferStart + b.bufferCount);
+            std::memcpy(m_Buffer.data() + b.bufferStart, data->data(),
+                        data->size());
+            b.value.resize(data->size());
+            std::memcpy(b.value.data(), data->data(), data->size());
+        }
+        else
+        {
+            throw std::runtime_error("ssc only accepts fixed IO pattern");
+        }
+    }
+}
+
 template <class T>
 void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
