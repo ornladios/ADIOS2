@@ -97,8 +97,8 @@ private:
      * Closes a single transport or all transports
      * @param transportIndex, if -1 (default) closes all transports,
      * otherwise it
-     * closes a transport in m_Transport[transportIndex]. In debug mode the
-     * latter is bounds-checked.
+     * closes a transport in m_Transport[transportIndex]. transportIndex is
+     * bounds-checked.
      */
     void DoClose(const int transportIndex = -1) final;
 

@@ -174,7 +174,7 @@ public:
      * used if variableName is empty.
      * @return object reference to internal Attribute in IO
      * @exception std::invalid_argument if Attribute with unique name (in IO or
-     * Variable) is already defined, in debug mode only
+     * Variable) is already defined
      */
     template <class T>
     Attribute<T> DefineAttribute(const std::string &name, const T *data,
@@ -194,7 +194,7 @@ public:
      * used if variableName is empty.
      * @return object reference to internal Attribute in IO
      * @exception std::invalid_argument if Attribute with unique name (in IO or
-     * Variable) is already defined, in debug mode only
+     * Variable) is already defined
      */
     template <class T>
     Attribute<T> DefineAttribute(const std::string &name, const T &value,

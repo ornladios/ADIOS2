@@ -45,10 +45,8 @@ public:
      * Starting point for MPI apps. Creates an ADIOS object.
      * MPI Collective Operation as it call MPI_Comm_dup
      * @param comm defines domain scope from application
-     * @param debugMode true: extra user-input debugging information, false: run
-     * without checking user-input (stable workflows)
-     * @exception std::invalid_argument in debugMode = true if user input is
-     * incorrect
+     * @param debugMode is deprecated and has no effect on library behavior
+     * @exception std::invalid_argument if user input is incorrect
      */
     ADIOS(MPI_Comm comm, const bool debugMode = true);
 
@@ -59,10 +57,8 @@ public:
      * configFile contents
      * @param configFile runtime config file
      * @param comm defines domain scope from application
-     * @param debugMode true: extra user-input debugging information, false:
-     * run without checking user-input (stable workflows)
-     * @exception std::invalid_argument in debugMode = true if user input is
-     * incorrect
+     * @param debugMode is deprecated and has no effect on library behavior
+     * @exception std::invalid_argument if user input is incorrect
      */
     ADIOS(const std::string &configFile, MPI_Comm comm,
           const bool debugMode = true);
@@ -72,19 +68,15 @@ public:
      * Starting point for non-MPI serial apps. Creates an ADIOS object allowing
      * a runtime config file.
      * @param configFile runtime config file
-     * @param debugMode true: extra user-input debugging information, false: run
-     * without checking user-input (stable workflows)
-     * @exception std::invalid_argument in debugMode = true if user input is
-     * incorrect
+     * @param debugMode is deprecated and has no effect on library behavior
+     * @exception std::invalid_argument if user input is incorrect
      */
     ADIOS(const std::string &configFile, const bool debugMode = true);
 
     /**
      * Starting point for non-MPI apps. Creates an ADIOS object
-     * @param debugMode true: extra user-input debugging information, false: run
-     * without checking user-input (stable workflows)
-     * @exception std::invalid_argument in debugMode = true if user input is
-     * incorrect
+     * @param debugMode is deprecated and has no effect on library behavior
+     * @exception std::invalid_argument if user input is incorrect
      */
     ADIOS(const bool debugMode = true);
 
@@ -124,7 +116,7 @@ public:
      * @return reference to newly created IO object inside current ADIOS
      * object
      * @exception std::invalid_argument if IO with unique name is already
-     * declared, in ADIOS debug mode only
+     * declared
      */
     IO DeclareIO(const std::string name);
 
@@ -134,7 +126,7 @@ public:
      * @return if IO exists returns a reference to existing IO object inside
      * ADIOS, else throws an exception. IO objects can't be invalid.
      * @exception std::invalid_argument if IO was not created with
-     * DeclareIO, in debug mode only
+     * DeclareIO
      */
     IO AtIO(const std::string name);
 
@@ -170,7 +162,7 @@ public:
      * Retrieve an existing Operator object in current ADIOS object
      * @param name Operator unique identifier key in current ADIOS object
      * @return object to an existing operator in current ADIOS object, Operator
-     * object is false if name is not found, in debugMode only
+     * object is false if name is not found
      */
     Operator InquireOperator(const std::string name);
 

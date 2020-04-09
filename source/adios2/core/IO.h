@@ -196,7 +196,7 @@ public:
      * change over time
      * @return reference to Variable object
      * @exception std::invalid_argument if Variable with unique name is already
-     * defined, in debug mode only
+     * defined
      */
     template <class T>
     Variable<T> &
@@ -212,7 +212,7 @@ public:
      * @param variableName optionally associates the attribute to a Variable
      * @return reference to internal Attribute
      * @exception std::invalid_argument if Attribute with unique name is already
-     * defined, in debug mode only
+     * defined
      */
     template <class T>
     Attribute<T> &DefineAttribute(const std::string &name, const T *array,
@@ -226,7 +226,7 @@ public:
      * @param value single data value
      * @return reference to internal Attribute
      * @exception std::invalid_argument if Attribute with unique name is already
-     * defined, in debug mode only
+     * defined
      */
     template <class T>
     Attribute<T> &DefineAttribute(const std::string &name, const T &value,
@@ -389,7 +389,7 @@ public:
      * @param mpiComm assigns a new communicator to the Engine
      * @return a reference to a derived object of the Engine class
      * @exception std::invalid_argument if Engine with unique name is already
-     * created with another Open, in debug mode only
+     * created with another Open
      */
     Engine &Open(const std::string &name, const Mode mode, helper::Comm comm);
 
@@ -401,7 +401,7 @@ public:
      * @param mode write, read, append from ADIOSTypes.h OpenMode
      * @return a reference to a derived object of the Engine class
      * @exception std::invalid_argument if Engine with unique name is already
-     * created with another Open, in debug mode only
+     * created with another Open
      */
     Engine &Open(const std::string &name, const Mode mode);
 

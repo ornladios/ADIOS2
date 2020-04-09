@@ -199,7 +199,7 @@ TEST(MultiArray, Make)
 class ADIOS2_CXX11_API : public ::testing::Test
 {
 public:
-    ADIOS2_CXX11_API() : m_Ad(adios2::DebugON) {}
+    ADIOS2_CXX11_API() : m_Ad() {}
 
     adios2::ADIOS m_Ad;
 };

@@ -237,8 +237,7 @@ std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
 
 /**
  * Get the size for a piece between end and start positions
- * Safe call with debug mode to check end > start so size_t won't be negative
- * (undefined)
+ * Safe call check end > start so size_t won't be negative (undefined)
  * @param end input
  * @param start input
  * @param hint added debug information, can be larger than 15 characters

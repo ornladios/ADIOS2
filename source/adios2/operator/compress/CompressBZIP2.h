@@ -62,8 +62,7 @@ public:
 
 private:
     /**
-     * In debug mode, check status from BZip compression and decompression
-     * functions
+     * check status from BZip compression and decompression functions
      * @param status returned by BZip2 library
      * @param hint extra exception information
      */
