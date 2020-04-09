@@ -27,12 +27,10 @@ The DataMan engine takes the following parameters:
 3. ``Timeout``: Default **5**. Timeout in seconds to wait for every send / receive operation.
    Packages not sent or received within this time are considered lost.
 
-4. ``RendezvousReaderCount``: Default **1**.  This integer value specifies
-the number of readers for which the writer should wait before the
-writer-side Open() returns. By default, an early-starting writer will wait for the
-reader to start, or vice versa.  A number >1 will cause the writer to wait
-for more readers, and a value of 0 will allow the writer to proceed without
-any readers present. This value is interpreted by DataMan Writer engines only.
+4. ``RendezvousReaderCount``: Default **1**. This integer value specifies the number of readers for which the writer should wait before the writer-side Open() returns.
+   By default, an early-starting writer will wait for the reader to start, or vice versa.
+   A number >1 will cause the writer to wait for more readers, and a value of 0 will allow the writer to proceed without any readers present.
+   This value is interpreted by DataMan Writer engines only.
 
 =============================== ================== ================================================
  **Key**                         **Value Format**   **Default** and Examples
