@@ -74,6 +74,9 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 
     m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout);
 
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds(m_RendezvousMilliseconds));
+
     if (m_Verbosity >= 5)
     {
         std::cout << "DataManWriter::DataManWriter() Rank " << m_MpiRank
@@ -187,7 +190,7 @@ void DataManWriter::ReplyThread(const std::string &address, const int times)
         }
         if (times == count)
         {
-            break;
+            m_ThreadActive = false;
         }
     }
 }

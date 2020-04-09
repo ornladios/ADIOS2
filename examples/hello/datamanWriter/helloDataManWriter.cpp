@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     adios2::IO dataManIO = adios.DeclareIO("whatever");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(
-        {{"IPAddress", "127.0.0.1"}, {"Port", "12306"}, {"Timeout", "5"}});
+        {{"IPAddress", "127.0.0.1"}, {"Port", "12306"}, {"Timeout", "5"},{"RendezvousReaderCount", "1"}});
 
     // open stream
     adios2::Engine dataManWriter =

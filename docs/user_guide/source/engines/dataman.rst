@@ -34,7 +34,6 @@ reader to start, or vice versa.  A number >1 will cause the writer to wait
 for more readers, and a value of 0 will allow the writer to proceed without
 any readers present. This value is interpreted by DataMan Writer engines only.
 
-
 =============================== ================== ================================================
  **Key**                         **Value Format**   **Default** and Examples
 =============================== ================== ================================================

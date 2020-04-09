@@ -32,6 +32,8 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     GetParameter(m_IO.m_Parameters, "RendezvousReaderCount",
                  m_RendezvousReaderCount);
+    GetParameter(m_IO.m_Parameters, "RendezvousMilliseconds",
+                 m_RendezvousMilliseconds);
 }
 
 DataManCommon::~DataManCommon() {}
