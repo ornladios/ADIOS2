@@ -30,6 +30,8 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     GetParameter(m_IO.m_Parameters, "Port", m_Port);
     GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
     GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    GetParameter(m_IO.m_Parameters, "RendezvousReaderCount",
+                 m_RendezvousReaderCount);
 }
 
 DataManCommon::~DataManCommon() {}

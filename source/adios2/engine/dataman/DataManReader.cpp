@@ -26,46 +26,33 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
 
-    if (m_OneToOneMode)
+    if (m_IPAddress.empty())
     {
-        m_ControlAddresses.push_back("tcp://" + m_IPAddress + ":" +
-                                     std::to_string(m_Port));
-        m_DataAddresses.push_back("tcp://" + m_IPAddress + ":" +
-                                  std::to_string(m_Port + m_MpiSize));
+        throw(std::invalid_argument(
+            "IP address not specified in wide area staging"));
     }
-    else
+    std::string address = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
+    std::string request = "Address";
+    auto reply =
+        m_ZmqRequester.Request(request.data(), request.size(), address);
+    auto start_time = std::chrono::system_clock::now();
+    while (reply == nullptr or reply->empty())
     {
-        if (m_IPAddress.empty())
+        reply = m_ZmqRequester.Request(request.data(), request.size(), address);
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > m_Timeout)
         {
-            throw(std::invalid_argument(
-                "IP address not specified in wide area staging"));
+            m_InitFailed = true;
+            return;
         }
-        std::string address =
-            "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
-        std::string request = "Address";
-        auto reply =
-            m_ZmqRequester.Request(request.data(), request.size(), address);
-        auto start_time = std::chrono::system_clock::now();
-        while (reply == nullptr or reply->empty())
-        {
-            reply =
-                m_ZmqRequester.Request(request.data(), request.size(), address);
-            auto now_time = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-                now_time - start_time);
-            if (duration.count() > m_Timeout)
-            {
-                m_InitFailed = true;
-                return;
-            }
-        }
-        auto addJson = nlohmann::json::parse(*reply);
-        m_DataAddresses =
-            addJson["DataAddresses"].get<std::vector<std::string>>();
-        m_ControlAddresses =
-            addJson["ControlAddresses"].get<std::vector<std::string>>();
-        m_TotalWriters = m_DataAddresses.size();
     }
+    auto addJson = nlohmann::json::parse(*reply);
+    m_DataAddresses = addJson["DataAddresses"].get<std::vector<std::string>>();
+    m_ControlAddresses =
+        addJson["ControlAddresses"].get<std::vector<std::string>>();
+    m_TotalWriters = m_DataAddresses.size();
 
     for (const auto &address : m_DataAddresses)
     {

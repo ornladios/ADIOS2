@@ -38,10 +38,11 @@ public:
 
 protected:
     // external parameters
-    int m_Verbosity = 0;
-    size_t m_SerializerBufferSize = 128 * 1024 * 1024;
-    size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
+    std::string m_IPAddress;
+    int m_Port = 50001;
     int m_Timeout = 5;
+    int m_RendezvousReaderCount = 1;
+    int m_Verbosity = 5;
 
     // internal variables
     int m_MpiRank;
@@ -49,8 +50,8 @@ protected:
     int64_t m_CurrentStep = -1;
     bool m_ThreadActive = true;
     bool m_IsRowMajor;
-    std::string m_IPAddress;
-    int m_Port = 50001;
+    size_t m_SerializerBufferSize = 128 * 1024 * 1024;
+    size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
 
     format::DataManSerializer m_FastSerializer;
 

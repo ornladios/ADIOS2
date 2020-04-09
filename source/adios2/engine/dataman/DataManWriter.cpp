@@ -23,8 +23,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 {
     if (m_IPAddress.empty())
     {
-        throw(std::invalid_argument(
-            "IP address not specified"));
+        throw(std::invalid_argument("IP address not specified"));
     }
     m_Port += m_MpiRank;
     m_ControlAddress = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
@@ -63,8 +62,15 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     addJson["ControlAddresses"] = caVec;
     m_AllAddresses = addJson.dump() + '\0';
 
-    m_ReplyThread =
-        std::thread(&DataManWriter::ReplyThread, this, m_ControlAddress);
+    if (m_RendezvousReaderCount == 0)
+    {
+        m_ReplyThread = std::thread(&DataManWriter::ReplyThread, this,
+                                    m_ControlAddress, -1);
+    }
+    else
+    {
+        ReplyThread(m_ControlAddress, m_RendezvousReaderCount);
+    }
 
     m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout);
 
@@ -162,8 +168,9 @@ void DataManWriter::DoClose(const int transportIndex)
     }
 }
 
-void DataManWriter::ReplyThread(const std::string &address)
+void DataManWriter::ReplyThread(const std::string &address, const int times)
 {
+    int count = 0;
     adios2::zmq::ZmqReqRep replier;
     replier.OpenReplier(address, m_Timeout, 8192);
     while (m_ThreadActive)
@@ -175,7 +182,12 @@ void DataManWriter::ReplyThread(const std::string &address)
             if (r == "Address")
             {
                 replier.SendReply(m_AllAddresses.data(), m_AllAddresses.size());
+                ++count;
             }
+        }
+        if (times == count)
+        {
+            break;
         }
     }
 }
