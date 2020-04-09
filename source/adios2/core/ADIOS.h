@@ -35,7 +35,7 @@ class IO;
 class ADIOS
 {
 public:
-    /** if true will do more checks, exceptions, warnings, expect slower code */
+    /** m_DebugMode is deprecated and has no effect on library behaviour */
     const bool m_DebugMode = true;
 
     /** Get the communicator passed to constructor for parallel case.  */
@@ -50,7 +50,7 @@ public:
      * future (json)?)
      * @param mpiComm MPI communicator from application, make sure is valid
      * through the scope of adios2 calls
-     * @param debugMode true (default): extra exception checks (recommended),
+     * @param debugMode is deprecated and has no effect on library behavior
      * false: optional feature to turn off checks on user input data,
      * recommended in stable flows
      */
@@ -62,7 +62,7 @@ public:
      * must end with extension .xml)
      * @param configFile XML format (maybe support different formats in the
      * future (json)?)
-     * @param debugMode true (default): extra exception checks (recommended),
+     * @param debugMode is deprecated and has no effect on library behavior
      * false: optional feature to turn off checks on user input data,
      * recommended in stable flows
      */
@@ -72,7 +72,7 @@ public:
     /**
      * @brief Constructor for MPI apps WITHOUT a XML config file
      * @param mpiComm MPI communicator from application
-     * @param debugMode true (default): extra exception checks (recommended),
+     * @param debugMode is deprecated and has no effect on library behavior
      * false: optional feature to turn off checks on user input data,
      * recommended in stable flows
      */
@@ -81,7 +81,7 @@ public:
 
     /**
      *  @brief ADIOS no-MPI default empty constructor
-     * @param debugMode true (default): extra exception checks (recommended),
+     * @param debugMode is deprecated and has no effect on library behavior
      * false: optional feature to turn off checks on user input data,
      * recommended in stable flows
      */
@@ -101,7 +101,7 @@ public:
      * @param ioName must be unique
      * @return reference to newly created IO object inside current ADIOS object
      * @exception std::invalid_argument if IO with unique name is already
-     * declared, in debug mode only
+     * declared
      */
     IO &DeclareIO(const std::string name);
 
@@ -111,8 +111,7 @@ public:
      * @param name of IO to look for
      * @return if IO exists returns a reference to existing IO object inside
      * ADIOS
-     * @exception std::invalid_argument if IO was not created with DeclareIO, in
-     * debug mode only
+     * @exception std::invalid_argument if IO was not created with DeclareIO
      */
     IO &AtIO(const std::string name);
 
@@ -134,7 +133,7 @@ public:
      * @param parameters optional parameters
      * @return reference to Operator object
      * @exception std::invalid_argument if Operator with unique name is already
-     * defined, in debug mode only
+     * defined
      */
     Operator &DefineOperator(const std::string &name, const std::string type,
                              const Params &parameters = Params());

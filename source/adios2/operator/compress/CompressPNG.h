@@ -61,8 +61,7 @@ public:
 
 private:
     /**
-     * In debug mode, check status from PNG compression and decompression
-     * functions
+     * check status from PNG compression and decompression functions
      * @param status returned by PNG library
      * @param hint extra exception information
      */

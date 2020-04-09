@@ -50,8 +50,7 @@ The following figure depicts the components hierarchy from the application's poi
 
 * **ADIOS**: the ADIOS component is the starting point between an application and the ADIOS2 library. Applications provide:
     1. the scope of the ADIOS object through the MPI communicator,
-    2. a debug mode option for extra exception checking
-    3. an optional runtime configuration file (in XML format) to allow changing settings without recompiling.
+    2. an optional runtime configuration file (in XML format) to allow changing settings without recompiling.
 
     The ADIOS component serves as a factory of adaptable IO components. Each IO must have a unique name within the scope of the ADIOS class object that created them with the DeclareIO function.
 
@@ -67,4 +66,3 @@ The following figure depicts the components hierarchy from the application's poi
 * **Engine**: Engines define the actual system executing the heavy IO tasks at Open, BeginStep, Put, Get, EndStep and Close. Due to polymorphism, new IO system solutions can be developed quickly reusing internal components and reusing the same API. If IO.SetEngine is not called, the default engine is the binary-pack bp file reader and writer: **BPFile**.
 
 * **Operator**: (under development) this component defines possible operations to be applied on adios2 self-describing data. This higher level abstraction is needed to provide support for: Callback functions, Transforms, Analytics functions, Data Models functionality, etc. Any required task will be executed within the Engine. One or many operators can be associated with any of the adios2 objects or a group of them.
-
