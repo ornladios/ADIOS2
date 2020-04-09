@@ -1,19 +1,17 @@
 FROM centos:centos7
 
 # Install core dev packages
-RUN yum -y install make curl file git valgrind vim bison flex sudo gdb \
+RUN yum upgrade -y && \
+    yum -y install make curl file valgrind vim bison flex sudo gdb \
         pkgconfig bison flex pkgconfig gcc gcc-c++ gcc-gfortran \
         zlib zlib-devel bzip2 bzip2-libs bzip2-devel libpng-devel \
         libfabric-devel libffi-devel
 RUN yum -y install epel-release && \
     yum -y install zeromq-devel blosc-devel libzstd-devel
 
-# Install and setup newer version of git from the
-# Red Hat Software Collections Library
-RUN yum -y install centos-release-scl-rh && \
-    yum -y install rh-git218
-ENV LD_LIBRARY_PATH=/opt/rh/httpd24/root/usr/lib64:${LD_LIBRARY_PATH} \
-    PATH=/opt/rh/rh-git218/root/usr/bin:${PATH}
+# Install and setup newer version of git
+RUN yum install -y https://centos7.iuscommunity.org/ius-release.rpm && \
+    yum -y install git222
 
 # Install the most recent CMake nightly binary
 WORKDIR /opt/cmake
