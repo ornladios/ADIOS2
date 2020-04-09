@@ -177,18 +177,18 @@ void FileDrainer::CloseAll()
 {
     for (auto it = m_OutputFileMap.begin(); it != m_OutputFileMap.end(); ++it)
     {
-        if (it->second->good())
-        {
-            Close(it->second);
-        }
+        // if (it->second->good())
+        //{
+        Close(it->second);
+        //}
         m_OutputFileMap.erase(it);
     }
     for (auto it = m_InputFileMap.begin(); it != m_InputFileMap.end(); ++it)
     {
-        if (it->second->good())
-        {
-            Close(it->second);
-        }
+        // if (it->second->good())
+        //{
+        Close(it->second);
+        //}
         m_InputFileMap.erase(it);
     }
 }

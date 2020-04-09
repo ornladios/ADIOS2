@@ -176,6 +176,10 @@ void FileDrainerSingleThread::DrainThread()
                     std::cout << ", offsets: from " << fdo.fromOffset << " to "
                               << fdo.toOffset;
                 }
+                if (!Good(fdr) || !Good(fdw))
+                {
+                    std::cout << " -- Skip because of previous error";
+                }
                 std::cout << std::endl;
             }
 
@@ -300,6 +304,12 @@ void FileDrainerSingleThread::DrainThread()
         operationsMutex.lock();
         operations.pop();
         operationsMutex.unlock();
+    }
+
+    if (m_Verbose > 1)
+    {
+        std::cout << "Drain " << m_Rank
+                  << " finished operations. Closing all files" << std::endl;
     }
 
     ts = std::chrono::steady_clock::now();
