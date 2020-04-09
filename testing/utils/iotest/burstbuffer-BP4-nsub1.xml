@@ -9,7 +9,7 @@
         <engine type="BP4">
         
             <parameter key="BurstBufferPath" value="bb"/>
-            <parameter key="BurstBufferDrain" value="true"/>
+            <parameter key="BurstBufferDrain" value="Off"/>
             <parameter key="BurstBufferVerbose" value="2"/>
             <parameter key="SubStreams" value="1"/>
         
