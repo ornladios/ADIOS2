@@ -5,6 +5,6 @@ group  io_T1
 # Task 1 actions
 app 1
   steps   4
-  sleep   1.0  
+  sleep   0.2  
   write   burstbuffer-32KB.bp    io_T1
 

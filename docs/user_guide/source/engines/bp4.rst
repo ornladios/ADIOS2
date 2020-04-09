@@ -68,7 +68,7 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 12. **StatsBlockSize**: Calculate Min/Max for a given size of each process output. Default is one Min/Max per writer. More fine-grained min/max can be useful for querying the data. 
 
-13. **NodeLocal**: For distributed file system. Every writer process must make sure the .bp/ directory is created on the local file system. Required for using local disk/SSD/NVMe in a cluster.  
+13. **NodeLocal** or **Node-Local**: For distributed file system. Every writer process must make sure the .bp/ directory is created on the local file system. Required for using local disk/SSD/NVMe in a cluster.  
 
 14. **BurstBufferPath**: Redirect output file to another location and drain it to the original target location in an asynchronous thread. It requires to be able to launch one thread per aggregator (see SubStreams) on the system. This feature can be used on machines that have local NVMe/SSDs on each node to accelerate the output writing speed. On Summit at OLCF, use "/tmp/bb" for the path. Note: ADIOS does not remove the data on the accelerated storage after draining to the file system. 
 
@@ -94,6 +94,7 @@ This engine allows the user to fine tune the buffering operations through the fo
  StatsLevel                     integer, 0 or 1       **1**, ``0``
  StatsBlockSize                 integer > 0           **a very big number**, ``1073741824`` for blocks with 1M elements
  NodeLocal                      string On/Off         **Off**, On
+ Node-Local                     string On/Off         **Off**, On
  BurstBufferPath                string                **""**, /tmp/bb, /ssd
  BurstBufferDrain               string On/Off         **On**, Off
  BurstBufferVerbose             integer, 0-2          **0**, ``1``, ``2`` 

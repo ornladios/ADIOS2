@@ -38,17 +38,6 @@ FileDrainOperation::FileDrainOperation(DrainOperation op,
     };
 }
 
-/*FileDrainOperation::FileDrainOperation(std::string &toFileName,
-                                       size_t countBytes, size_t toOffset, )
-: op(DrainOperation::Write), fromFileName(""), toFileName(toFileName),
-  countBytes(countBytes), append(false), fromOffset(0), toOffset(toOffset){
-
-};*/
-
-FileDrainer::FileDrainer() {}
-
-FileDrainer::~FileDrainer() {}
-
 void FileDrainer::AddOperation(FileDrainOperation &operation)
 {
     std::lock_guard<std::mutex> lockGuard(operationsMutex);
@@ -156,14 +145,14 @@ OutputFile FileDrainer::GetFileForWrite(const std::string &path, bool append)
     }
 }
 
-void FileDrainer::Open(InputFile f, const std::string &path)
+void FileDrainer::Open(InputFile &f, const std::string &path)
 {
 
     f->rdbuf()->pubsetbuf(0, 0);
     f->open(path, std::ios::in);
 }
 
-void FileDrainer::Open(OutputFile f, const std::string &path, bool append)
+void FileDrainer::Open(OutputFile &f, const std::string &path, bool append)
 {
 
     if (append)
@@ -178,11 +167,11 @@ void FileDrainer::Open(OutputFile f, const std::string &path, bool append)
     }
 }
 
-void FileDrainer::Close(InputFile f) { f->close(); }
-void FileDrainer::Close(OutputFile f) { f->close(); }
+void FileDrainer::Close(InputFile &f) { f->close(); }
+void FileDrainer::Close(OutputFile &f) { f->close(); }
 
-bool FileDrainer::Good(InputFile f) { return (f->good()); }
-bool FileDrainer::Good(OutputFile f) { return (f->good()); }
+bool FileDrainer::Good(InputFile &f) { return (f->good()); }
+bool FileDrainer::Good(OutputFile &f) { return (f->good()); }
 
 void FileDrainer::CloseAll()
 {
@@ -204,19 +193,19 @@ void FileDrainer::CloseAll()
     }
 }
 
-void FileDrainer::Seek(InputFile f, size_t offset, const std::string &path)
+void FileDrainer::Seek(InputFile &f, size_t offset, const std::string &path)
 {
     f->seekg(offset, std::ios_base::beg);
 }
 
-void FileDrainer::Seek(OutputFile f, size_t offset, const std::string &path)
+void FileDrainer::Seek(OutputFile &f, size_t offset, const std::string &path)
 {
     f->seekp(offset, std::ios_base::beg);
 }
 
-void FileDrainer::SeekEnd(OutputFile f) { f->seekp(0, std::ios_base::end); }
+void FileDrainer::SeekEnd(OutputFile &f) { f->seekp(0, std::ios_base::end); }
 
-std::pair<size_t, double> FileDrainer::Read(InputFile f, size_t count,
+std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
                                             char *buffer,
                                             const std::string &path)
 {
@@ -225,6 +214,12 @@ std::pair<size_t, double> FileDrainer::Read(InputFile f, size_t count,
     const double sleepUnit = 0.01; // seconds
     while (count > 0)
     {
+        /* Debugging for Windows */
+        const auto currentOffset = f->tellg();
+        f->seekg(0, std::ios_base::end);
+        auto fileSize = f->tellg();
+        f->seekg(currentOffset, std::ios_base::beg);
+
         f->read(buffer, static_cast<std::streamsize>(count));
         const auto readSize = f->gcount();
 
@@ -241,8 +236,11 @@ std::pair<size_t, double> FileDrainer::Read(InputFile f, size_t count,
             {
                 throw std::ios_base::failure(
                     "FileDrainer couldn't read from file " + path +
+                    " offset = " + std::to_string(currentOffset) +
                     " count = " + std::to_string(count) + " bytes but only " +
-                    std::to_string(readSize) + "\n");
+                    std::to_string(readSize) +
+                    ". File size at time of reading = " +
+                    std::to_string(fileSize) + "\n");
                 break;
             }
         }
@@ -253,7 +251,7 @@ std::pair<size_t, double> FileDrainer::Read(InputFile f, size_t count,
     return std::pair<size_t, double>(totalRead, totalSlept);
 }
 
-size_t FileDrainer::Write(OutputFile f, size_t count, const char *buffer,
+size_t FileDrainer::Write(OutputFile &f, size_t count, const char *buffer,
                           const std::string &path)
 {
     size_t totalWritten = 0;

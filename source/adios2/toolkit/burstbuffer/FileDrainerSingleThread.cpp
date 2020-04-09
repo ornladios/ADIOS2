@@ -97,7 +97,7 @@ void FileDrainerSingleThread::DrainThread()
     size_t nReadBytesSucc = 0;
     size_t nWriteBytesTasked = 0;
     size_t nWriteBytesSucc = 0;
-    double sleeptForWaitingOnRead = 0.0;
+    double sleptForWaitingOnRead = 0.0;
 
     /* Copy a block of data from one file to another at the same offset */
     auto lf_Copy = [&](FileDrainOperation &fdo, InputFile fdr, OutputFile fdw,
@@ -109,7 +109,7 @@ void FileDrainerSingleThread::DrainThread()
         te = std::chrono::steady_clock::now();
         timeRead += te - ts;
         nReadBytesSucc += ret.first;
-        sleeptForWaitingOnRead += ret.second;
+        sleptForWaitingOnRead += ret.second;
 
         nWriteBytesTasked += count;
         ts = std::chrono::steady_clock::now();
@@ -309,7 +309,11 @@ void FileDrainerSingleThread::DrainThread()
 
     const auto tTotalEnd = std::chrono::steady_clock::now();
     timeTotal = tTotalEnd - tTotalStart;
-    if (m_Verbose)
+    const bool shouldReport =
+        (m_Verbose || (nReadBytesTasked != nReadBytesSucc) ||
+         (nWriteBytesTasked != nWriteBytesSucc) ||
+         (sleptForWaitingOnRead > 0.0));
+    if (shouldReport)
     {
         std::cout << "Drain " << m_Rank
                   << ": Runtime  total = " << timeTotal.count()
@@ -338,9 +342,9 @@ void FileDrainerSingleThread::DrainThread()
                       << " but successfully wrote = " << nWriteBytesSucc
                       << " bytes.";
         }
-        if (sleeptForWaitingOnRead > 0.0)
+        if (sleptForWaitingOnRead > 0.0)
         {
-            std::cout << " WARNING Read had to wait " << sleeptForWaitingOnRead
+            std::cout << " WARNING Read had to wait " << sleptForWaitingOnRead
                       << " seconds for the data to arrive on disk.";
         }
         std::cout << std::endl;

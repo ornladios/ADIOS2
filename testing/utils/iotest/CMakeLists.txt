@@ -314,7 +314,7 @@ add_test(NAME Utils.IOTest.BurstBuffer.2to2.BP4.Write
   COMMAND ${MPIEXEC_COMMAND} ${MPIEXEC_NUMPROC_FLAG} 2
       $<TARGET_FILE:adios_iotest>
         -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/burstbuffer-32KB.txt
-        -x ${CMAKE_CURRENT_SOURCE_DIR}/burstbuffer-BP4-nsub1.xml -d 2 1 --weak-scaling
+        -x ${CMAKE_CURRENT_SOURCE_DIR}/burstbuffer-BP4-nsub2.yaml -d 2 1 --weak-scaling
 )
 set_tests_properties(Utils.IOTest.BurstBuffer.2to2.BP4.Write PROPERTIES PROCESSORS 2)
 

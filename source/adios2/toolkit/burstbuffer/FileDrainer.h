@@ -66,9 +66,9 @@ typedef std::shared_ptr<std::ofstream> OutputFile;
 class FileDrainer
 {
 public:
-    FileDrainer();
+    FileDrainer() = default;
 
-    virtual ~FileDrainer();
+    virtual ~FileDrainer() = default;
 
     void AddOperation(FileDrainOperation &operation);
     void AddOperation(DrainOperation op, const std::string &fromFileName,
@@ -115,32 +115,32 @@ protected:
     OutputFile GetFileForWrite(const std::string &path, bool append = false);
 
     /** return true if the File is usable (no previous errors) */
-    bool Good(InputFile f);
-    bool Good(OutputFile f);
+    bool Good(InputFile &f);
+    bool Good(OutputFile &f);
 
     void CloseAll();
 
-    void Seek(InputFile f, size_t offset, const std::string &path);
-    void Seek(OutputFile f, size_t offset, const std::string &path);
-    void SeekEnd(OutputFile f);
+    void Seek(InputFile &f, size_t offset, const std::string &path);
+    void Seek(OutputFile &f, size_t offset, const std::string &path);
+    void SeekEnd(OutputFile &f);
 
     /** Read from file. Return a pair of
      *  - number of bytes written
      *  - time spent in waiting for file to be actually written to disk for this
      * read to succeed.
      */
-    std::pair<size_t, double> Read(InputFile f, size_t count, char *buffer,
+    std::pair<size_t, double> Read(InputFile &f, size_t count, char *buffer,
                                    const std::string &path);
-    size_t Write(OutputFile f, size_t count, const char *buffer,
+    size_t Write(OutputFile &f, size_t count, const char *buffer,
                  const std::string &path);
 
 private:
     InputFileMap m_InputFileMap;
     OutputFileMap m_OutputFileMap;
-    void Open(InputFile f, const std::string &path);
-    void Close(InputFile);
-    void Open(OutputFile f, const std::string &path, bool append);
-    void Close(OutputFile f);
+    void Open(InputFile &f, const std::string &path);
+    void Close(InputFile &f);
+    void Open(OutputFile &f, const std::string &path, bool append);
+    void Close(OutputFile &f);
 };
 
 } // end namespace burstbuffer
