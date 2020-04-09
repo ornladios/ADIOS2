@@ -42,7 +42,7 @@ protected:
     int m_Port = 50001;
     int m_Timeout = 5;
     int m_RendezvousReaderCount = 1;
-    int m_Verbosity = 5;
+    int m_Verbosity = 0;
 
     // internal variables
     int m_MpiRank;
