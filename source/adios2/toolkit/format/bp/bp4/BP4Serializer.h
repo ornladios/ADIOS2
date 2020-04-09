@@ -36,7 +36,6 @@ public:
     /**
      * Unique constructor
      * @param comm multi-process communicator for BP1 Aggregator
-     * @param debug true: extra checks
      */
     BP4Serializer(helper::Comm const &comm);
 

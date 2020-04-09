@@ -30,7 +30,7 @@ adios2_adios *adios2_init_config_glue_serial(const char *config_file,
         const bool debugBool =
             (debug_mode == adios2_debug_mode_on) ? true : false;
         adios = reinterpret_cast<adios2_adios *>(
-            new adios2::core::ADIOS(config_file, debugBool, host_language));
+            new adios2::core::ADIOS(config_file, host_language));
     }
     catch (...)
     {

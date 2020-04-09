@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     try
     {
 
-/** ADIOS class factory of IO class objects, Debug is ON by default */
+/** ADIOS class factory of IO class objects */
 #ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(mpiReaderComm);
 #else

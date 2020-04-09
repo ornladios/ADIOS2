@@ -107,7 +107,6 @@ class HDF5Common
 public:
     /**
      * Unique constructor for HDF5 file
-     * @param debugMode true: extra exception checks
      */
     HDF5Common();
     ~HDF5Common();

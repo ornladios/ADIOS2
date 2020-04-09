@@ -30,9 +30,9 @@ class ADIOS2_CXX11_API : public ::testing::Test
 public:
     ADIOS2_CXX11_API()
 #ifdef ADIOS2_HAVE_MPI
-    : m_Ad(MPI_COMM_WORLD, adios2::DebugON)
+    : m_Ad(MPI_COMM_WORLD)
 #else
-    : m_Ad(adios2::DebugON)
+    : m_Ad()
 #endif
     {
 #ifdef ADIOS2_HAVE_MPI

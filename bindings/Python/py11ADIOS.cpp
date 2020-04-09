@@ -23,22 +23,18 @@ namespace py11
 ADIOS::ADIOS(const std::string &configFile, MPI4PY_Comm mpiComm,
              const bool debugMode)
 : m_ADIOS(std::make_shared<adios2::core::ADIOS>(
-      configFile, helper::CommDupMPI(mpiComm), debugMode, "Python"))
+      configFile, helper::CommDupMPI(mpiComm), "Python"))
 {
 }
 
-ADIOS::ADIOS(MPI4PY_Comm mpiComm, const bool debugMode)
-: ADIOS("", mpiComm, debugMode)
-{
-}
+ADIOS::ADIOS(MPI4PY_Comm mpiComm, const bool debugMode) : ADIOS("", mpiComm) {}
 #endif
 ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
-: m_ADIOS(
-      std::make_shared<adios2::core::ADIOS>(configFile, debugMode, "Python"))
+: m_ADIOS(std::make_shared<adios2::core::ADIOS>(configFile, "Python"))
 {
 }
 
-ADIOS::ADIOS(const bool debugMode) : ADIOS("", debugMode) {}
+ADIOS::ADIOS(const bool debugMode) : ADIOS("", "Python") {}
 
 ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 

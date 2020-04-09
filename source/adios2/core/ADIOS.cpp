@@ -60,9 +60,9 @@ namespace core
 {
 
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
-             const bool debugMode, const std::string hostLanguage)
-: m_ConfigFile(configFile), m_DebugMode(debugMode),
-  m_HostLanguage(hostLanguage), m_Comm(std::move(comm))
+             const std::string hostLanguage)
+: m_ConfigFile(configFile), m_HostLanguage(hostLanguage),
+  m_Comm(std::move(comm))
 {
     if (!configFile.empty())
     {
@@ -83,20 +83,18 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
     }
 }
 
-ADIOS::ADIOS(const std::string configFile, const bool debugMode,
-             const std::string hostLanguage)
-: ADIOS(configFile, helper::CommDummy(), debugMode, hostLanguage)
+ADIOS::ADIOS(const std::string configFile, const std::string hostLanguage)
+: ADIOS(configFile, helper::CommDummy(), hostLanguage)
 {
 }
 
-ADIOS::ADIOS(helper::Comm comm, const bool debugMode,
-             const std::string hostLanguage)
-: ADIOS("", std::move(comm), debugMode, hostLanguage)
+ADIOS::ADIOS(helper::Comm comm, const std::string hostLanguage)
+: ADIOS("", std::move(comm), hostLanguage)
 {
 }
 
-ADIOS::ADIOS(const bool debugMode, const std::string hostLanguage)
-: ADIOS("", helper::CommDummy(), debugMode, hostLanguage)
+ADIOS::ADIOS(const std::string hostLanguage)
+: ADIOS("", helper::CommDummy(), hostLanguage)
 {
 }
 
