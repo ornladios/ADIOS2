@@ -207,7 +207,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
                 for (int i = 0; i < Nx * mpiSize; i++)
                     data_R64[i] = (double)10 * i + step;
                 sel_r64.first[0] = 0;
-                sel_r64.first[1] = mpiSize * Nx;
+                sel_r64.second[0] = mpiSize * Nx;
                 var_r64.SetSelection(sel_r64);
 
                 engine.Put(var_r64, data_R64.data(), sync);

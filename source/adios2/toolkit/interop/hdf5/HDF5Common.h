@@ -107,6 +107,7 @@ class HDF5Common
 public:
     /**
      * Unique constructor for HDF5 file
+     * @param debugMode true: extra exception checks
      */
     HDF5Common();
     ~HDF5Common();
@@ -126,6 +127,15 @@ public:
     template <class T>
     void Write(core::Variable<T> &variable, const T *values);
 
+    /*
+     * This function will define a non string variable to HDF5
+     * note that define a dataset in HDF5 means allocate space and place an
+     * entry to the HDF5 file. (By default we define variable when a PUT is
+     * called from adios client)
+     */
+    template <class T>
+    void DefineDataset(core::Variable<T> &variable);
+
     void CreateDataset(const std::string &varName, hid_t h5Type,
                        hid_t filespaceID, std::vector<hid_t> &chain);
     bool OpenDataset(const std::string &varName, std::vector<hid_t> &chain);
@@ -139,6 +149,15 @@ public:
 
     void Close();
     void Advance();
+
+    /*
+     * This function will browse all (non-string) variables in io and define
+     * them in HDF5 This is a back up mode compare to the default behaviour that
+     * defines a variable in HDF5 when the PUT is called on that variable. This
+     * function is expected to be called by BeginStep(), for collectiveness,
+     * required by HDF5
+     */
+    void CreateVarsFromIO(core::IO &io);
 
     void WriteAttrFromIO(core::IO &io);
     void ReadAttrToIO(core::IO &io);
@@ -210,6 +229,11 @@ private:
     template <class T>
     void WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr,
                             hid_t parentID, const char *h5Name);
+
+    template <class T>
+    void GetHDF5SpaceSpec(const core::Variable<T> &variable,
+                          std::vector<hsize_t> &, std::vector<hsize_t> &,
+                          std::vector<hsize_t> &);
 
     bool m_WriteMode = false;
     unsigned int m_NumAdiosSteps = 0;

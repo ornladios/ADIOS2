@@ -639,6 +639,9 @@ void HDF5Common::SetAdiosStep(int step)
 
 void HDF5Common::Advance()
 {
+    if (m_WriteMode)
+        CheckWriteGroup();
+
     if (m_GroupId >= 0)
     {
         H5Gclose(m_GroupId);
@@ -1175,6 +1178,29 @@ void HDF5Common::LocateAttrParent(const std::string &attrName,
     // return dsetID;
 }
 
+//
+// Create Variables from IO
+//
+void HDF5Common::CreateVarsFromIO(core::IO &io)
+{
+    CheckWriteGroup();
+    const core::DataMap &variables = io.GetVariablesDataMap();
+    for (const auto &vpair : variables)
+    {
+        const std::string &varName = vpair.first;
+        const std::string &varType = vpair.second.first;
+#define declare_template_instantiation(T)                                      \
+    if (varType == helper::GetType<T>())                                       \
+    {                                                                          \
+        core::Variable<T> *v = io.InquireVariable<T>(varName);                 \
+        if (!v)                                                                \
+            return;                                                            \
+        DefineDataset(*v);                                                     \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+}
 //
 // write attr from io to hdf5
 // right now adios only support global attr
