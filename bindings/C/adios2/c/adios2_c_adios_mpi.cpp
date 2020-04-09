@@ -27,11 +27,8 @@ adios2_adios *adios2_init_config_glue_mpi(const char *config_file,
         adios2::helper::CheckForNullptr(
             config_file,
             "for config_file, in call to adios2_init or adios2_init_config");
-        const bool debugBool =
-            (debug_mode == adios2_debug_mode_on) ? true : false;
         adios = reinterpret_cast<adios2_adios *>(new adios2::core::ADIOS(
-            config_file, adios2::helper::CommDupMPI(comm), debugBool,
-            host_language));
+            config_file, adios2::helper::CommDupMPI(comm), host_language));
     }
     catch (...)
     {

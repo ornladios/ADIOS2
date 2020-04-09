@@ -14,12 +14,10 @@ namespace adios2
 {
 ADIOS::ADIOS(const std::string &configFile, MPI_Comm comm, const bool debugMode)
 : m_ADIOS(std::make_shared<core::ADIOS>(configFile, helper::CommDupMPI(comm),
-                                        debugMode, "C++"))
+                                        "C++"))
 {
 }
 
-ADIOS::ADIOS(MPI_Comm comm, const bool debugMode) : ADIOS("", comm, debugMode)
-{
-}
+ADIOS::ADIOS(MPI_Comm comm, const bool debugMode) : ADIOS("", comm) {}
 
 } // end namespace adios2

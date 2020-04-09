@@ -131,7 +131,7 @@ void Reorganize::Run()
     print0("Write method            = ", wmethodname);
     print0("Write method parameters = ", wmethodparam_str);
 
-    core::ADIOS adios(m_Comm.Duplicate(), true, "C++");
+    core::ADIOS adios(m_Comm.Duplicate(), "C++");
     core::IO &io = adios.DeclareIO("group");
 
     print0("Waiting to open stream ", infilename, "...");

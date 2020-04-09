@@ -35,9 +35,6 @@ class IO;
 class ADIOS
 {
 public:
-    /** m_DebugMode is deprecated and has no effect on library behaviour */
-    const bool m_DebugMode = true;
-
     /** Get the communicator passed to constructor for parallel case.  */
     helper::Comm const &GetComm() const { return m_Comm; }
 
@@ -50,11 +47,8 @@ public:
      * future (json)?)
      * @param mpiComm MPI communicator from application, make sure is valid
      * through the scope of adios2 calls
-     * @param debugMode is deprecated and has no effect on library behavior
-     * false: optional feature to turn off checks on user input data,
-     * recommended in stable flows
      */
-    ADIOS(const std::string configFile, helper::Comm comm, const bool debugMode,
+    ADIOS(const std::string configFile, helper::Comm comm,
           const std::string hostLanguage);
 
     /**
@@ -62,30 +56,19 @@ public:
      * must end with extension .xml)
      * @param configFile XML format (maybe support different formats in the
      * future (json)?)
-     * @param debugMode is deprecated and has no effect on library behavior
-     * false: optional feature to turn off checks on user input data,
-     * recommended in stable flows
      */
-    ADIOS(const std::string configFile, const bool debugMode,
-          const std::string hostLanguage);
+    ADIOS(const std::string configFile, const std::string hostLanguage);
 
     /**
      * @brief Constructor for MPI apps WITHOUT a XML config file
      * @param mpiComm MPI communicator from application
-     * @param debugMode is deprecated and has no effect on library behavior
-     * false: optional feature to turn off checks on user input data,
-     * recommended in stable flows
      */
-    ADIOS(helper::Comm comm, const bool debugMode,
-          const std::string hostLanguage);
+    ADIOS(helper::Comm comm, const std::string hostLanguage);
 
     /**
      *  @brief ADIOS no-MPI default empty constructor
-     * @param debugMode is deprecated and has no effect on library behavior
-     * false: optional feature to turn off checks on user input data,
-     * recommended in stable flows
      */
-    ADIOS(const bool debugMode, const std::string hostLanguage);
+    ADIOS(const std::string hostLanguage);
 
     /**
      * Delete copy constructor explicitly. Objects shouldn't be allowed to be

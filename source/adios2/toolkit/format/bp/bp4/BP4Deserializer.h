@@ -41,7 +41,6 @@ public:
     /**
      * Unique constructor
      * @param comm multi-process communicator
-     * @param debug true: extra checks
      */
     BP4Deserializer(helper::Comm const &comm);
 

@@ -15,11 +15,11 @@
 namespace adios2
 {
 ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
-: m_ADIOS(std::make_shared<core::ADIOS>(configFile, debugMode, "C++"))
+: m_ADIOS(std::make_shared<core::ADIOS>(configFile, "C++"))
 {
 }
 
-ADIOS::ADIOS(const bool debugMode) : ADIOS("", debugMode) {}
+ADIOS::ADIOS(const bool debugMode) : ADIOS("", "C++") {}
 
 ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 
