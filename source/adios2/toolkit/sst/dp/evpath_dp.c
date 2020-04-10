@@ -383,13 +383,10 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
                 free_attr_list(List);
                 if (!Conn)
                 {
-                    Svcs->verbose(
-                        WS_Stream->CP_Stream,
-                        "Failed to connect to reader rank %d for response to "
-                        "remote read, assume failure, no response sent\n",
-                        RequestingRank);
-                    TAU_STOP_FUNC();
-                    return;
+                    /* we failed to connect, maybe he's behind a NAT, reuse
+                     * incoming */
+                    CMConnection_add_reference(conn);
+                    Conn = conn;
                 }
                 WSR_Stream->ReaderContactInfo[RequestingRank].Conn = Conn;
             }
