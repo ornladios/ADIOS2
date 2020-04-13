@@ -334,7 +334,7 @@ static void MarkReadRequest(TimestepList TS, DP_WSR_Stream Reader,
 }
 
 // writer side routine, called by the network handler thread
-static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
+static void EvpathReadRequestHandler(CManager cm, CMConnection incoming_conn,
                                      void *msg_v, void *client_Data,
                                      attr_list attrs)
 {
@@ -360,6 +360,7 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
         if (tmp->Timestep == ReadRequestMsg->Timestep)
         {
             struct _EvpathReadReplyMsg ReadReplyMsg;
+            CMConnection ReplyConn;
             /* memset avoids uninit byte warnings from valgrind */
             MarkReadRequest(tmp, WSR_Stream, RequestingRank);
             memset(&ReadReplyMsg, 0, sizeof(ReadReplyMsg));
@@ -372,27 +373,28 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
                 WS_Stream->CP_Stream,
                 "Sending a reply to reader rank %d for remote memory read\n",
                 RequestingRank);
-            if (!WSR_Stream->ReaderContactInfo[RequestingRank].Conn)
+            ReplyConn = WSR_Stream->ReaderContactInfo[RequestingRank].Conn;
+            if (!ReplyConn)
             {
                 attr_list List = attr_list_from_string(
                     WSR_Stream->ReaderContactInfo[RequestingRank]
                         .ContactString);
                 pthread_mutex_unlock(&WS_Stream->DataLock);
-                CMConnection Conn = CMget_conn(cm, List);
-                pthread_mutex_lock(&WS_Stream->DataLock);
+                ReplyConn = CMget_conn(cm, List);
                 free_attr_list(List);
-                if (!Conn)
+                if (!ReplyConn)
                 {
                     /* we failed to connect, maybe he's behind a NAT, reuse
                      * incoming */
-                    CMConnection_add_reference(conn);
-                    Conn = conn;
+                    CMConnection_add_reference(incoming_conn);
+                    ReplyConn = incoming_conn;
                 }
-                WSR_Stream->ReaderContactInfo[RequestingRank].Conn = Conn;
+                pthread_mutex_lock(&WS_Stream->DataLock);
+                WSR_Stream->ReaderContactInfo[RequestingRank].Conn = ReplyConn;
             }
+            CMFormat Format = WS_Stream->ReadReplyFormat;
             pthread_mutex_unlock(&WS_Stream->DataLock);
-            CMwrite(WSR_Stream->ReaderContactInfo[RequestingRank].Conn,
-                    WS_Stream->ReadReplyFormat, &ReadReplyMsg);
+            CMwrite(ReplyConn, Format, &ReadReplyMsg);
 
             TAU_STOP_FUNC();
             return;
