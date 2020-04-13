@@ -1012,6 +1012,7 @@ extern void SstStreamDestroy(SstStream Stream)
     }
     if (Stream->DP_Stream)
     {
+        pthread_mutex_unlock(&Stream->DataLock);
         if (Stream->Role == ReaderRole)
         {
             Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
@@ -1020,6 +1021,7 @@ extern void SstStreamDestroy(SstStream Stream)
         {
             Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
         }
+        pthread_mutex_lock(&Stream->DataLock);
     }
     if (Stream->Readers)
     {
