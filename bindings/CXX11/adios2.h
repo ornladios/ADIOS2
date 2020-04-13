@@ -15,6 +15,15 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 
+namespace adios2
+{
+
+// adios alias values and types.  These not used internally and deprecated.
+constexpr bool DebugON = true;
+constexpr bool DebugOFF = false;
+
+} // end namespace adios2
+
 #include "adios2/cxx11/ADIOS.h"
 #include "adios2/cxx11/Attribute.h"
 #include "adios2/cxx11/Engine.h"
