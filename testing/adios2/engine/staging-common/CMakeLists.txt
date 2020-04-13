@@ -204,9 +204,6 @@ LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${BP_SST_TESTS})
 # Zero Data tests are unreliable with SST and BP marshaling
 list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
 
-# NoData tests don't work with FFS
-list (FILTER SST_TESTS EXCLUDE REGEX ".*NoData.*FFS")
-
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
