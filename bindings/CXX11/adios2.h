@@ -22,7 +22,6 @@ namespace adios2
 constexpr bool DebugON = true;
 constexpr bool DebugOFF = false;
 
-
 } // end namespace adios2
 
 #include "adios2/cxx11/ADIOS.h"
