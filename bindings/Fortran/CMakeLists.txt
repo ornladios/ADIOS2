@@ -68,6 +68,8 @@ set_target_properties(adios2_fortran PROPERTIES
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
+add_library(adios2::fortran ALIAS adios2_fortran)
+
 if(ADIOS2_HAVE_MPI)
   target_compile_definitions(adios2_fortran PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_MPI_F>")
 
@@ -106,6 +108,7 @@ if(ADIOS2_HAVE_MPI)
 
   set_property(TARGET adios2_fortran_mpi PROPERTY EXPORT_NAME fortran_mpi)
   target_compile_definitions(adios2_fortran_mpi INTERFACE ADIOS2_USE_MPI)
+  add_library(adios2::fortran_mpi ALIAS adios2_fortran_mpi)
   set(maybe_adios2_fortran_mpi adios2_fortran_mpi)
 else()
   set(maybe_adios2_fortran_mpi)

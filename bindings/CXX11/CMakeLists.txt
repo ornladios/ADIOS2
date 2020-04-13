@@ -29,6 +29,8 @@ target_include_directories(adios2_cxx11
     $<BUILD_INTERFACE:$<TARGET_PROPERTY:adios2_core,INTERFACE_INCLUDE_DIRECTORIES>>
 )
 
+add_library(adios2::cxx11 ALIAS adios2_cxx11)
+
 if(ADIOS2_HAVE_MPI)
   add_library(adios2_cxx11_mpi
     adios2/cxx11/ADIOSMPI.cpp
@@ -39,6 +41,7 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(adios2_cxx11_mpi PUBLIC adios2_cxx11 PRIVATE adios2_core_mpi PUBLIC MPI::MPI_CXX)
   set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
   target_compile_definitions(adios2_cxx11_mpi INTERFACE ADIOS2_USE_MPI)
+  add_library(adios2::cxx11_mpi ALIAS adios2_cxx11_mpi)
 else()
   set(maybe_adios2_cxx11_mpi)
 endif()
