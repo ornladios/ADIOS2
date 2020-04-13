@@ -345,7 +345,11 @@ static void AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name,
              ElementSize) *
             ElementSize;
     }
-    *FieldP = realloc(*FieldP, (*CountP + 2) * sizeof((*FieldP)[0]));
+    if (*FieldP)
+        *FieldP = realloc(*FieldP, (*CountP + 2) * sizeof((*FieldP)[0]));
+    else
+        *FieldP = malloc((*CountP + 2) * sizeof((*FieldP)[0]));
+
     Field = &((*FieldP)[*CountP]);
     (*CountP)++;
     Field->field_name = strdup(Name);
@@ -411,9 +415,9 @@ static void InitMarshalData(SstStream Stream)
     Info->RecCount = 0;
     Info->RecList = malloc(sizeof(Info->RecList[0]));
     Info->MetaFieldCount = 0;
-    Info->MetaFields = malloc(sizeof(Info->MetaFields[0]));
+    Info->MetaFields = NULL;
     Info->DataFieldCount = 0;
-    Info->DataFields = malloc(sizeof(Info->DataFields[0]));
+    Info->DataFields = NULL;
     Info->LocalFMContext = create_local_FMcontext();
     AddSimpleField(&Info->MetaFields, &Info->MetaFieldCount, "BitFieldCount",
                    "integer", sizeof(size_t));
@@ -444,9 +448,9 @@ extern void FFSFreeMarshalData(SstStream Stream)
         }
         if (Info->RecList)
             free(Info->RecList);
-        if (Info->MetaFields)
+        if (Info->MetaFieldCount)
             free_FMfield_list(Info->MetaFields);
-        if (Info->DataFields)
+        if (Info->DataFieldCount)
             free_FMfield_list(Info->DataFields);
         if (Info->LocalFMContext)
             free_FMcontext(Info->LocalFMContext);
@@ -606,8 +610,10 @@ typedef struct _FFSTimestepInfo
 static void FreeTSInfo(void *ClientData)
 {
     FFSTimestepInfo TSInfo = (FFSTimestepInfo)ClientData;
-    free_FFSBuffer(TSInfo->MetaEncodeBuffer);
-    free_FFSBuffer(TSInfo->DataEncodeBuffer);
+    if (TSInfo->MetaEncodeBuffer)
+        free_FFSBuffer(TSInfo->MetaEncodeBuffer);
+    if (TSInfo->DataEncodeBuffer)
+        free_FFSBuffer(TSInfo->DataEncodeBuffer);
     free(TSInfo);
 }
 
@@ -1441,8 +1447,7 @@ extern SstStatusValue SstFFSPerformGets(SstStream Stream)
 
 extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
 {
-    struct FFSWriterMarshalBase *Info =
-        (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
+    struct FFSWriterMarshalBase *Info;
     struct FFSFormatBlock *Formats = NULL;
     FMFormat AttributeFormat = NULL;
 
@@ -1451,7 +1456,12 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     CP_verbose(Stream, "Calling SstWriterEndStep\n");
     // if field lists have changed, register formats with FFS local context, add
     // to format chain
-    if (!Info->MetaFormat)
+    if (!Stream->WriterMarshalData)
+    {
+        InitMarshalData(Stream);
+    }
+    Info = (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
+    if (!Info->MetaFormat && Info->MetaFieldCount)
     {
         struct FFSFormatBlock *Block = malloc(sizeof(*Block));
         FMStructDescRec struct_list[4] = {
@@ -1473,7 +1483,7 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
         Block->Next = NULL;
         Formats = Block;
     }
-    if (!Info->DataFormat)
+    if (!Info->DataFormat && Info->DataFieldCount)
     {
         struct FFSFormatBlock *Block = malloc(sizeof(*Block));
         FMStructDescRec struct_list[4] = {
@@ -1537,9 +1547,18 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     int DataSize;
     int AttributeSize = 0;
     struct FFSMetadataInfoStruct *MBase;
-    DataRec.block =
-        FFSencode(DataEncodeBuffer, Info->DataFormat, Stream->D, &DataSize);
-    DataRec.DataSize = DataSize;
+    if (Info->DataFormat)
+    {
+        DataRec.block =
+            FFSencode(DataEncodeBuffer, Info->DataFormat, Stream->D, &DataSize);
+        DataRec.DataSize = DataSize;
+    }
+    else
+    {
+        DataRec.block = NULL;
+        DataRec.DataSize = 0;
+        DataSize = 0;
+    }
     TSInfo->DataEncodeBuffer = DataEncodeBuffer;
 
     MBase = Stream->M;
@@ -1570,10 +1589,14 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
      * isn't unnecessarily free'd.
      */
     MBase->BitField = NULL;
-    FMfree_var_rec_elements(Info->MetaFormat, Stream->M);
-    FMfree_var_rec_elements(Info->DataFormat, Stream->D);
-    memset(Stream->M, 0, Stream->MetadataSize);
-    memset(Stream->D, 0, Stream->DataSize);
+    if (Info->MetaFormat)
+        FMfree_var_rec_elements(Info->MetaFormat, Stream->M);
+    if (Info->DataFormat)
+        FMfree_var_rec_elements(Info->DataFormat, Stream->D);
+    if (Stream->M && Stream->MetadataSize)
+        memset(Stream->M, 0, Stream->MetadataSize);
+    if (Stream->D && Stream->DataSize)
+        memset(Stream->D, 0, Stream->DataSize);
     MBase->BitField = tmp;
 
     // Call SstInternalProvideStep with Metadata block, Data block and (any new)
@@ -1849,7 +1872,8 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     FieldList = FormatList[0].field_list;
     while (strncmp(FieldList->field_name, "BitField", 8) == 0)
         FieldList++;
-    while (strncmp(FieldList->field_name, "DataBlockSize", 8) == 0)
+    while (FieldList->field_name &&
+           (strncmp(FieldList->field_name, "DataBlockSize", 8) == 0))
         FieldList++;
     int i = 0;
     int j = 0;
