@@ -22,30 +22,46 @@ namespace engine
 {
 
 template <class T>
-void InlineWriter::PutSyncCommon(Variable<T> &variable,
-                                 typename Variable<T>::Info &blockInfo)
+void InlineWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
-    if (variable.m_ShapeID == ShapeID::GlobalValue ||
-        variable.m_ShapeID == ShapeID::LocalValue)
-    {
-        blockInfo.IsValue = true;
-        blockInfo.Value = blockInfo.Data[0];
-    }
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << "     PutSync("
                   << variable.m_Name << ")\n";
+    }
+
+    // PutSync really shouldn't be supported for any variable, but single value
+    // variables are treated as sync, even if deferred is used.
+    if (variable.m_SingleValue)
+    {
+        PutDeferredCommon(variable, data);
+    }
+    else
+    {
+        throw std::invalid_argument("ERROR: ADIOS Inline Engine: Put Sync is "
+                                    "not supported.");
     }
 }
 
 template <class T>
 void InlineWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    variable.SetBlockInfo(data, CurrentStep());
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << "     PutDeferred("
                   << variable.m_Name << ")\n";
+    }
+
+    if (m_ResetVariables)
+    {
+        ResetVariables();
+    }
+    auto &blockInfo = variable.SetBlockInfo(data, CurrentStep());
+    if (variable.m_ShapeID == ShapeID::GlobalValue ||
+        variable.m_ShapeID == ShapeID::LocalValue)
+    {
+        blockInfo.IsValue = true;
+        blockInfo.Value = blockInfo.Data[0];
     }
 }
 

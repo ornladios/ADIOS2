@@ -481,7 +481,8 @@ protected:
 #define declare_type(T)                                                        \
     virtual void DoGetSync(Variable<T> &, T *);                                \
     virtual void DoGetDeferred(Variable<T> &, T *);                            \
-    virtual typename Variable<T>::Info *DoGetBlockSync(Variable<T> &);
+    virtual typename Variable<T>::Info *DoGetBlockSync(Variable<T> &);         \
+    virtual typename Variable<T>::Info *DoGetBlockDeferred(Variable<T> &);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 

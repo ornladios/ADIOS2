@@ -31,12 +31,10 @@ InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
     m_EndMessage = " in call to IO Open InlineReader " + m_Name + "\n";
     m_ReaderRank = m_Comm.Rank();
     Init();
-    Engine &writer = io.GetEngine(m_WriterID);
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << " Open(" << m_Name
-                  << ") in constructor, with writer: " << writer.m_Name
-                  << std::endl;
+                  << ") in constructor" << std::endl;
     }
 }
 
@@ -44,14 +42,26 @@ StepStatus InlineReader::BeginStep(const StepMode mode,
                                    const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER("InlineReader::BeginStep");
-    // Reader should be on same step as writer
+    if (m_InsideStep)
+    {
+        throw std::runtime_error("InlineReader::BeginStep was called but the "
+                                 "reader is already inside a step");
+    }
+    // Reader should be on step that writer just completed
     const auto &writer =
         dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
+    if (writer.IsInsideStep())
+    {
+        m_InsideStep = false;
+        return StepStatus::NotReady;
+    }
     m_CurrentStep = writer.CurrentStep();
     if (m_CurrentStep == static_cast<size_t>(-1))
     {
+        m_InsideStep = false;
         return StepStatus::EndOfStream;
     }
+    m_InsideStep = true;
 
     if (m_Verbosity == 5)
     {
@@ -69,6 +79,7 @@ void InlineReader::PerformGets()
     {
         std::cout << "Inline Reader " << m_ReaderRank << "     PerformGets()\n";
     }
+    SetDeferredVariablePointers();
 }
 
 size_t InlineReader::CurrentStep() const
@@ -84,12 +95,24 @@ size_t InlineReader::CurrentStep() const
 void InlineReader::EndStep()
 {
     TAU_SCOPED_TIMER("InlineReader::EndStep");
+    if (!m_InsideStep)
+    {
+        throw std::runtime_error("InlineReader::EndStep() cannot be called "
+                                 "without a call to BeginStep() first");
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << " EndStep() Step "
                   << m_CurrentStep << std::endl;
     }
+    if (!m_DeferredVariables.empty())
+    {
+        SetDeferredVariablePointers();
+    }
+    m_InsideStep = false;
 }
+
+bool InlineReader::IsInsideStep() const { return m_InsideStep; }
 
 // PRIVATE
 
@@ -109,6 +132,12 @@ void InlineReader::EndStep()
     {                                                                          \
         TAU_SCOPED_TIMER("InlineReader::DoGetBlockSync");                      \
         return GetBlockSyncCommon(variable);                                   \
+    }                                                                          \
+    typename Variable<T>::Info *InlineReader::DoGetBlockDeferred(              \
+        Variable<T> &variable)                                                 \
+    {                                                                          \
+        TAU_SCOPED_TIMER("InlineReader::DoGetBlockDeferred");                  \
+        return GetBlockDeferredCommon(variable);                               \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -185,6 +214,33 @@ void InlineReader::DoClose(const int transportIndex)
         std::cout << "Inline Reader " << m_ReaderRank << " Close(" << m_Name
                   << ")\n";
     }
+}
+
+void InlineReader::SetDeferredVariablePointers()
+{
+    // need to set core::Variable::Info::BufferP for each deferred variable
+    // to the ptr stored in core::Variable::Info::Data
+    // this will make Variable::Info::Data() work correctly for the user
+    for (const auto &varName : m_DeferredVariables)
+    {
+        const std::string type = m_IO.InquireVariableType(varName);
+        if (type == "compound")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> &variable =                                                \
+            FindVariable<T>(varName, "in call to EndStep");                    \
+        for (auto &info : variable.m_BlocksInfo)                               \
+        {                                                                      \
+            info.BufferP = info.Data;                                          \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    }
+    m_DeferredVariables.clear();
 }
 
 } // end namespace engine

@@ -112,11 +112,14 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
         // Create the Engine
         io.SetEngine("Inline");
 
+        // writerID parameter makes sure the reader can find the writer.
+        io.SetParameters({{"verbose", "4"},
+                          {"writerID", fname + "_write"},
+                          {"readerID", fname + "_read"}});
+
         adios2::Engine inlineWriter =
             io.Open(fname + "_write", adios2::Mode::Write);
 
-        // writerID parameter makes sure the reader can find the writer.
-        io.SetParameters({{"verbose", "4"}, {"writerID", fname + "_write"}});
         adios2::Engine inlineReader =
             io.Open(fname + "_read", adios2::Mode::Read);
 
@@ -177,7 +180,6 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
             inlineWriter.Put(wvar_r64, testData.R64.data());
             inlineWriter.Put(wvar_cr32, testData.CR32.data());
             inlineWriter.Put(wvar_cr64, testData.CR64.data());
-            inlineWriter.PerformPuts();
 
             inlineWriter.EndStep();
 
@@ -258,6 +260,7 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
                 continue;
             }
 
+            inlineReader.BeginStep();
             inlineReader.Get(var_iString, IString);
             auto info_i8 = setSelection<int8_t>(var_i8, step, inlineReader);
             auto info_i16 = setSelection<int16_t>(var_i16, step, inlineReader);
@@ -275,23 +278,23 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
                                                                 inlineReader);
 
             testBlocksInfo<int8_t>(var_i8, step, inlineReader);
-            setSelection<int16_t>(var_i16, step, inlineReader);
-            setSelection<int32_t>(var_i32, step, inlineReader);
-            setSelection<int64_t>(var_i64, step, inlineReader);
-            setSelection<uint8_t>(var_u8, step, inlineReader);
-            setSelection<uint16_t>(var_u16, step, inlineReader);
-            setSelection<uint32_t>(var_u32, step, inlineReader);
-            setSelection<uint64_t>(var_u64, step, inlineReader);
-            setSelection<float>(var_r32, step, inlineReader);
-            setSelection<double>(var_r64, step, inlineReader);
-            setSelection<std::complex<float>>(var_cr32, step, inlineReader);
-            setSelection<std::complex<double>>(var_cr64, step, inlineReader);
+            testBlocksInfo<int16_t>(var_i16, step, inlineReader);
+            testBlocksInfo<int32_t>(var_i32, step, inlineReader);
+            testBlocksInfo<int64_t>(var_i64, step, inlineReader);
+            testBlocksInfo<uint8_t>(var_u8, step, inlineReader);
+            testBlocksInfo<uint16_t>(var_u16, step, inlineReader);
+            testBlocksInfo<uint32_t>(var_u32, step, inlineReader);
+            testBlocksInfo<uint64_t>(var_u64, step, inlineReader);
+            testBlocksInfo<float>(var_r32, step, inlineReader);
+            testBlocksInfo<double>(var_r64, step, inlineReader);
+            testBlocksInfo<std::complex<float>>(var_cr32, step, inlineReader);
+            testBlocksInfo<std::complex<double>>(var_cr64, step, inlineReader);
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
-            inlineReader.PerformGets();
+            inlineReader.EndStep();
             const int8_t *I8 = info_i8.Data();
             const int16_t *I16 = info_i16.Data();
             const int32_t *I32 = info_i32.Data();
@@ -399,11 +402,14 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
         // Create the Engine
         io.SetEngine("Inline");
 
+        // writerID parameter makes sure the reader can find the writer.
+        io.SetParameters({{"verbose", "4"},
+                          {"writerID", fname + "_write"},
+                          {"readerID", fname + "_read"}});
+
         adios2::Engine inlineWriter =
             io.Open(fname + "_write", adios2::Mode::Write);
 
-        // writerID parameter makes sure the reader can find the writer.
-        io.SetParameters({{"verbose", "4"}, {"writerID", fname + "_write"}});
         adios2::Engine inlineReader =
             io.Open(fname + "_read", adios2::Mode::Read);
 
@@ -465,7 +471,6 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
             inlineWriter.Put(wvar_r64, testData.R64.data());
             inlineWriter.Put(wvar_cr32, testData.CR32.data());
             inlineWriter.Put(wvar_cr64, testData.CR64.data());
-            inlineWriter.PerformPuts();
 
             inlineWriter.EndStep();
 
@@ -548,6 +553,7 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
 
             std::string IString;
 
+            inlineReader.BeginStep();
             inlineReader.Get(var_iString, IString);
             auto info_i8 = setSelection<int8_t>(var_i8, step, inlineReader);
             auto info_i16 = setSelection<int16_t>(var_i16, step, inlineReader);
@@ -568,7 +574,7 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
-            inlineReader.PerformGets();
+            inlineReader.EndStep();
             const int8_t *I8 = info_i8.Data();
             const int16_t *I16 = info_i16.Data();
             const int32_t *I32 = info_i32.Data();
@@ -603,6 +609,248 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
 
                 EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
                 EXPECT_EQ(CR64[i], currentTestData.CR64[i]) << msg;
+            }
+        }
+        inlineWriter.Close();
+        inlineReader.Close();
+    }
+}
+
+TEST_F(InlineWriteRead, InlineWriteReadContracts)
+{
+    const std::string fname("InlineWriteReadContracts");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    const size_t Nx = 8;
+
+    // Number of steps
+    const size_t NSteps = 3;
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(adios2::DebugON);
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+
+        // Declare 1D variables (NumOfProcesses * Nx)
+        // The local process' part (start, count) can be defined now or later
+        // before Write().
+        {
+            const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
+            const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
+            const adios2::Dims count{Nx};
+
+            auto var_iString = io.DefineVariable<std::string>("iString");
+            auto var_i32 =
+                io.DefineVariable<int32_t>("i32", shape, start, count);
+        }
+
+        // Create the Engine
+        io.SetEngine("Inline");
+
+        // writerID parameter makes sure the reader can find the writer.
+        io.SetParameters({{"verbose", "4"},
+                          {"writerID", fname + "_write"},
+                          {"readerID", fname + "_read"}});
+
+        adios2::Engine inlineWriter =
+            io.Open(fname + "_write", adios2::Mode::Write);
+
+        adios2::Engine inlineReader =
+            io.Open(fname + "_read", adios2::Mode::Read);
+
+        // Want to test that the engine correctly fails when using the engine
+        // incorrectly
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData testData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
+            // Retrieve the variables that previously went out of scope
+            auto wvar_iString = io.InquireVariable<std::string>("iString");
+            auto wvar_i32 = io.InquireVariable<int32_t>("i32");
+
+            // Make a 1D selection to describe the local dimensions of the
+            // variable we write and its offsets in the global spaces
+            adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
+
+            EXPECT_THROW(wvar_iString.SetSelection(sel), std::invalid_argument);
+            wvar_i32.SetSelection(sel);
+
+            EXPECT_THROW(inlineWriter.EndStep(), std::runtime_error);
+            ASSERT_EQ(inlineWriter.BeginStep(), adios2::StepStatus::OK);
+            EXPECT_THROW(inlineWriter.BeginStep(), std::runtime_error);
+            ASSERT_EQ(inlineReader.BeginStep(), adios2::StepStatus::NotReady);
+            EXPECT_THROW(inlineReader.EndStep(), std::runtime_error);
+
+            inlineWriter.Put(wvar_iString, testData.S1, adios2::Mode::Sync);
+            EXPECT_THROW(inlineWriter.Put(wvar_i32, testData.I32.data(),
+                                          adios2::Mode::Sync),
+                         std::invalid_argument);
+            inlineWriter.Put(wvar_i32, testData.I32.data());
+            inlineWriter.EndStep();
+
+            auto var_iString = io.InquireVariable<std::string>("iString");
+            EXPECT_TRUE(var_iString);
+            ASSERT_EQ(var_iString.Shape().size(), 0);
+
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Shape()[0], mpiSize * Nx);
+
+            EXPECT_THROW(inlineReader.EndStep(), std::runtime_error);
+            ASSERT_EQ(inlineReader.BeginStep(), adios2::StepStatus::OK);
+            EXPECT_THROW(inlineReader.BeginStep(), std::runtime_error);
+            ASSERT_EQ(inlineWriter.BeginStep(), adios2::StepStatus::NotReady);
+            EXPECT_THROW(inlineWriter.EndStep(), std::runtime_error);
+
+            std::string IString;
+            inlineReader.Get(var_iString, IString);
+            auto info_i32 = setSelection<int32_t>(var_i32, step, inlineReader);
+            testBlocksInfo<int32_t>(var_i32, step, inlineReader);
+
+            // Generate test data for each rank uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
+            const int32_t *testI32 = info_i32.Data();
+            EXPECT_EQ(testI32, nullptr);
+            inlineReader.EndStep();
+
+            EXPECT_EQ(IString, currentTestData.S1);
+            const int32_t *I32 = info_i32.Data();
+            for (size_t i = 0; i < Nx; ++i)
+            {
+                std::stringstream ss;
+                ss << "step=" << step << " i=" << i << " rank=" << mpiRank;
+                std::string msg = ss.str();
+
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+            }
+        }
+        inlineWriter.Close();
+        inlineReader.Close();
+    }
+}
+
+TEST_F(InlineWriteRead, InlineWriteReadContracts2)
+{
+    const std::string fname("InlineWriteReadContracts2");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    const size_t Nx = 8;
+
+    // Number of steps
+    const size_t NSteps = 3;
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(adios2::DebugON);
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+
+        // Declare 1D variables (NumOfProcesses * Nx)
+        // The local process' part (start, count) can be defined now or later
+        // before Write().
+        {
+            const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
+            const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
+            const adios2::Dims count{Nx};
+
+            auto var_iString = io.DefineVariable<std::string>("iString");
+            auto var_i32 =
+                io.DefineVariable<int32_t>("i32", shape, start, count);
+        }
+
+        // Create the Engine
+        io.SetEngine("Inline");
+
+        // writerID parameter makes sure the reader can find the writer.
+        io.SetParameters({{"verbose", "4"},
+                          {"writerID", fname + "_write"},
+                          {"readerID", fname + "_read"}});
+
+        adios2::Engine inlineWriter =
+            io.Open(fname + "_write", adios2::Mode::Write);
+
+        adios2::Engine inlineReader =
+            io.Open(fname + "_read", adios2::Mode::Read);
+
+        // Want to test that the engine correctly fails when using the engine
+        // incorrectly
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData testData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
+            // Retrieve the variables that previously went out of scope
+            auto wvar_iString = io.InquireVariable<std::string>("iString");
+            auto wvar_i32 = io.InquireVariable<int32_t>("i32");
+
+            // Make a 1D selection to describe the local dimensions of the
+            // variable we write and its offsets in the global spaces
+            adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
+
+            EXPECT_THROW(wvar_iString.SetSelection(sel), std::invalid_argument);
+            wvar_i32.SetSelection(sel);
+
+            inlineWriter.Put(wvar_iString, testData.S1);
+            EXPECT_THROW(inlineWriter.Put(wvar_i32, testData.I32.data(),
+                                          adios2::Mode::Sync),
+                         std::invalid_argument);
+            inlineWriter.Put(wvar_i32, testData.I32.data());
+            inlineWriter.PerformPuts();
+
+            auto var_iString = io.InquireVariable<std::string>("iString");
+            EXPECT_TRUE(var_iString);
+            ASSERT_EQ(var_iString.Shape().size(), 0);
+
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Shape()[0], mpiSize * Nx);
+
+            std::string IString;
+            inlineReader.Get(var_iString, IString, adios2::Mode::Sync);
+            auto info_i32 = setSelection<int32_t>(var_i32, step, inlineReader);
+            testBlocksInfo<int32_t>(var_i32, step, inlineReader);
+
+            // Generate test data for each rank uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
+            const int32_t *testI32 = info_i32.Data();
+            EXPECT_EQ(testI32, nullptr);
+            inlineReader.PerformGets();
+
+            EXPECT_EQ(IString, currentTestData.S1);
+            const int32_t *I32 = info_i32.Data();
+            for (size_t i = 0; i < Nx; ++i)
+            {
+                std::stringstream ss;
+                ss << "step=" << step << " i=" << i << " rank=" << mpiRank;
+                std::string msg = ss.str();
+
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
             }
         }
         inlineWriter.Close();

@@ -48,12 +48,16 @@ public:
     size_t CurrentStep() const final;
     void EndStep() final;
 
+    bool IsInsideStep() const;
+
 private:
     int m_Verbosity = 0;
     int m_ReaderRank; // my rank in the readers' comm
 
     // step info should be received from the writer side in BeginStep()
     size_t m_CurrentStep = static_cast<size_t>(-1);
+    bool m_InsideStep = false;
+    std::vector<std::string> m_DeferredVariables;
 
     std::string m_WriterID;
 
@@ -65,7 +69,8 @@ private:
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;                              \
-    typename Variable<T>::Info *DoGetBlockSync(Variable<T> &) final;
+    typename Variable<T>::Info *DoGetBlockSync(Variable<T> &) final;           \
+    typename Variable<T>::Info *DoGetBlockDeferred(Variable<T> &) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -80,6 +85,9 @@ private:
     template <class T>
     typename Variable<T>::Info *GetBlockSyncCommon(Variable<T> &variable);
 
+    template <class T>
+    typename Variable<T>::Info *GetBlockDeferredCommon(Variable<T> &variable);
+
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
@@ -89,6 +97,8 @@ private:
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+    void SetDeferredVariablePointers();
 };
 
 } // end namespace engine

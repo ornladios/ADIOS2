@@ -346,7 +346,9 @@ public:
         size_t BlockID = 0;
         /** block corresponding step */
         size_t Step = 0;
-        /** reference to internal block data (used by inline Engine) */
+        /** reference to internal block data (used by inline Engine).
+         *  For deferred variables, valid pointer is not returned until
+         *  EndStep/PerformGets has been called. */
         const T *Data() const;
         /** true: Dims were swapped from column-major, false: not swapped */
         bool IsReverseDims = false;
