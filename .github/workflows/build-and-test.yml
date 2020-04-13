@@ -43,6 +43,59 @@ jobs:
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.event.pull_request.head.sha }}
+        entrypoint: /usr/bin/sh -c
+    - name: Setup
+      run: scripts/ci/gh-actions/linux-setup.sh
+    - name: Update
+      run: scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: scripts/ci/gh-actions/run.sh build
+    - name: Test
+      run: scripts/ci/gh-actions/run.sh test
+
+  linux_emu:
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.container }}
+      options: --privileged
+    env:
+      GH_YML_JOBNAME: ${{ matrix.jobname }}
+      GH_YML_OS: Linux
+
+    strategy:
+      fail-fast: false
+      matrix:
+        jobname: [
+          power8-el7-xl,
+          power8-el7-xl-smpi,
+          power8-el7-pgi,
+          power8-el7-pgi-smpi ]
+        include:
+        - jobname: power8-el7-xl
+          container: ornladios/adios2:x86_64-power8-el7-xl
+          arch: ppc64le
+        - jobname: power8-el7-xl-smpi
+          container: ornladios/adios2:x86_64-power8-el7-xl-smpi
+          arch: ppc64le
+        - jobname: power8-el7-pgi
+          container: ornladios/adios2:x86_64-power8-el7-pgi
+          arch: ppc64le
+        - jobname: power8-el7-pgi-smpi
+          container: ornladios/adios2:x86_64-power8-el7-pgi-smpi
+          arch: ppc64le
+
+    steps:
+    - name: Emulation Setup
+      run: /x86_64/bin/register --reset --targets ${{ matrix.arch }}
+      env:
+        PATH: /x86_64/bin
+    - name: Node.js Setup
+      run: mount --bind /x86_64/bin/node /__e/node12/bin/node
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
     - name: Setup
       run: scripts/ci/gh-actions/linux-setup.sh
     - name: Update
