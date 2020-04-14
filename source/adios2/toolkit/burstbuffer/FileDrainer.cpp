@@ -181,7 +181,6 @@ void FileDrainer::CloseAll()
         //{
         Close(it->second);
         //}
-        m_OutputFileMap.erase(it);
     }
     for (auto it = m_InputFileMap.begin(); it != m_InputFileMap.end(); ++it)
     {
@@ -189,8 +188,8 @@ void FileDrainer::CloseAll()
         //{
         Close(it->second);
         //}
-        m_InputFileMap.erase(it);
     }
+    m_InputFileMap.clear();
 }
 
 void FileDrainer::Seek(InputFile &f, size_t offset, const std::string &path)
