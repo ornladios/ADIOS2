@@ -141,6 +141,7 @@ private:
     void Close(InputFile &f);
     void Open(OutputFile &f, const std::string &path, bool append);
     void Close(OutputFile &f);
+    size_t GetFileSize(InputFile &f);
 };
 
 } // end namespace burstbuffer

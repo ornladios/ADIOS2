@@ -204,6 +204,15 @@ void FileDrainer::Seek(OutputFile &f, size_t offset, const std::string &path)
 
 void FileDrainer::SeekEnd(OutputFile &f) { f->seekp(0, std::ios_base::end); }
 
+size_t FileDrainer::GetFileSize(InputFile &f)
+{
+    const auto currentOffset = f->tellg();
+    f->seekg(0, std::ios_base::end);
+    auto fileSize = f->tellg();
+    f->seekg(currentOffset, std::ios_base::beg);
+    return static_cast<size_t>(fileSize);
+}
+
 std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
                                             char *buffer,
                                             const std::string &path)
@@ -213,12 +222,7 @@ std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
     const double sleepUnit = 0.01; // seconds
     while (count > 0)
     {
-        /* Debugging for Windows */
         const auto currentOffset = f->tellg();
-        f->seekg(0, std::ios_base::end);
-        auto fileSize = f->tellg();
-        f->seekg(currentOffset, std::ios_base::beg);
-
         f->read(buffer, static_cast<std::streamsize>(count));
         const auto readSize = f->gcount();
 
@@ -237,9 +241,7 @@ std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
                     "FileDrainer couldn't read from file " + path +
                     " offset = " + std::to_string(currentOffset) +
                     " count = " + std::to_string(count) + " bytes but only " +
-                    std::to_string(readSize) +
-                    ". File size at time of reading = " +
-                    std::to_string(fileSize) + "\n");
+                    std::to_string(totalRead+readSize) + ".\n");
                 break;
             }
         }
