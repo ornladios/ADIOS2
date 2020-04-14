@@ -607,13 +607,37 @@ typedef struct _FFSTimestepInfo
     FFSBuffer DataEncodeBuffer;
 } * FFSTimestepInfo;
 
+#if defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#endif
+#endif
+
+#ifndef NO_SANITIZE_THREAD
+#define NO_SANITIZE_THREAD
+#endif
+
+/*
+ * The FFS-encoded data buffer is created and destroyed at the control
+ * plane level, moderated by CP stream locking.  But between times it
+ * is passed to the data plane for servicing incoming read requests,
+ * where it is managed by DP-level locking.  TSAN sees fault with this
+ * because the buffer is accessed and written (freed) under different
+ * locking stragegies.  To suppress TSAN errors, we're telling TSAN to
+ * ignore the free.
+ */
+static inline void NO_SANITIZE_THREAD no_tsan_free_FFSBuffer(FFSBuffer buf)
+{
+    free_FFSBuffer(buf);
+}
+
 static void FreeTSInfo(void *ClientData)
 {
     FFSTimestepInfo TSInfo = (FFSTimestepInfo)ClientData;
     if (TSInfo->MetaEncodeBuffer)
         free_FFSBuffer(TSInfo->MetaEncodeBuffer);
     if (TSInfo->DataEncodeBuffer)
-        free_FFSBuffer(TSInfo->DataEncodeBuffer);
+        no_tsan_free_FFSBuffer(TSInfo->DataEncodeBuffer);
     free(TSInfo);
 }
 
