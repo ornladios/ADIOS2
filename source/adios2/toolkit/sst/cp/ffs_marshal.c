@@ -742,11 +742,16 @@ extern int SstFFSWriterBeginStep(SstStream Stream, int mode,
     return 0;
 }
 
-void SstReaderInitFFSCallback(SstStream Stream, void *Reader,
-                              VarSetupUpcallFunc VarCallback,
-                              ArraySetupUpcallFunc ArrayCallback,
-                              AttrSetupUpcallFunc AttrCallback,
-                              ArrayBlocksInfoUpcallFunc BlocksInfoCallback)
+/*
+ *  This code initializes upcall pointers during stream creation,
+ *  which are then read during stream usage (when locks are held).
+ *  The serialized init-then-use pattern is not a real TSAN problem,
+ *  so ignore this.
+ */
+void NO_SANITIZE_THREAD SstReaderInitFFSCallback(
+    SstStream Stream, void *Reader, VarSetupUpcallFunc VarCallback,
+    ArraySetupUpcallFunc ArrayCallback, AttrSetupUpcallFunc AttrCallback,
+    ArrayBlocksInfoUpcallFunc BlocksInfoCallback)
 {
     Stream->VarSetupUpcall = VarCallback;
     Stream->ArraySetupUpcall = ArrayCallback;

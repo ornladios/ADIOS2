@@ -255,7 +255,6 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         break;
     }
     m_IO.RemoveAllVariables();
-    m_IO.RemoveAllAttributes();
     result = SstAdvanceStep(m_Input, timeout_sec);
     if (result == SstEndOfStream)
     {
