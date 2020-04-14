@@ -764,17 +764,8 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         Msg.Timestep = tsm->Timestep;
 
         /*
-         * before discarding, install any precious metadata from this message
-         */
-        if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
-        {
-            FFSMarshalInstallPreciousMetadata(Stream, tsm);
-        }
-
-        /*
          * send each writer rank a release for this timestep (actually goes to
-         * WSR
-         * Streams)
+         * WSR Streams)
          */
         CP_verbose(Stream,
                    "Sending ReleaseTimestep message for PRIOR DISCARD "
@@ -797,10 +788,6 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
                        "ignoring in PRIOR DISCARD\n",
                        tsm->Timestep);
         }
-        if (tsm == NULL)
-            printf("READER RETURN_BUFFER, tsm == %p, line %d\n", tsm, __LINE__);
-        CMreturn_buffer(Stream->CPInfo->cm, tsm);
-        return;
     }
 
     struct _TimestepMetadataList *New = malloc(sizeof(struct _RequestQueue));
@@ -1248,12 +1235,17 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         {
             CP_verbose(Stream, "Examining metadata for Timestep %d\n",
                        Next->MetadataMsg->Timestep);
-            if ((Next->MetadataMsg->Metadata == NULL) && (FoundTS == NULL))
+            if (((Next->MetadataMsg->Metadata == NULL) ||
+                 (Next->MetadataMsg->Timestep <
+                  Stream->DiscardPriorTimestep)) &&
+                (FoundTS == NULL))
             {
                 /*
-                 * This is a dummy timestep for something that was
-                 * discarded on the writer side.  Now is the time to
-                 * install the 'precious' info that it carried
+                 * Either this is a dummy timestep for something that
+                 * was discarded on the writer side, or it is a
+                 * timestep that satisfies DiscardPriorTimestep and
+                 * we've already sent a release for it.  Now is the
+                 * time to install the 'precious' info that it carried
                  * (Attributes and formats) and then discard it.
                  */
                 CP_verbose(Stream,
