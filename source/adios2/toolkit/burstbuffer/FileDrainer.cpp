@@ -149,7 +149,7 @@ void FileDrainer::Open(InputFile &f, const std::string &path)
 {
 
     f->rdbuf()->pubsetbuf(0, 0);
-    f->open(path, std::ios::in);
+    f->open(path, std::ios::in | std::ios::binary);
 }
 
 void FileDrainer::Open(OutputFile &f, const std::string &path, bool append)
