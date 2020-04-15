@@ -241,7 +241,7 @@ std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
                     "FileDrainer couldn't read from file " + path +
                     " offset = " + std::to_string(currentOffset) +
                     " count = " + std::to_string(count) + " bytes but only " +
-                    std::to_string(totalRead+readSize) + ".\n");
+                    std::to_string(totalRead + readSize) + ".\n");
                 break;
             }
         }
