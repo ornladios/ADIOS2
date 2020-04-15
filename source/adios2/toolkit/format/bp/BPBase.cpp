@@ -175,10 +175,26 @@ void BPBase::Init(const Params &parameters, const std::string hint,
                 subStreamsValue = subStreams;
             }
         }
-        else if (key == "node-local")
+        else if (key == "node-local" || key == "nodelocal")
         {
             parsedParameters.NodeLocal = helper::StringTo<bool>(
-                value, " in Parameter key=node-local " + hint);
+                value, " in Parameter key=NodeLocal " + hint);
+        }
+        else if (key == "burstbufferpath")
+        {
+            parsedParameters.BurstBufferPath =
+                helper::RemoveTrailingSlash(value);
+        }
+        else if (key == "burstbufferdrain")
+        {
+            parsedParameters.BurstBufferDrain = helper::StringTo<bool>(
+                value, " in Parameter key=BurstBufferDrain " + hint);
+        }
+        else if (key == "burstbufferverbose")
+        {
+            parsedParameters.BurstBufferVerbose =
+                static_cast<int>(helper::StringTo<int32_t>(
+                    value, " in Parameter key=BurstBufferVerbose " + hint));
         }
     }
     if (!engineType.empty())
@@ -201,6 +217,7 @@ void BPBase::Init(const Params &parameters, const std::string hint,
             // CollectiveMetadata might break SST
             // NodeLocal has an unknown effect on SST
             // SubStreams break SST
+            // BurstBufferBasePath has no impact on SST
         }
     }
     else

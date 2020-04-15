@@ -104,6 +104,9 @@ add_library(adios2_core
 
   toolkit/aggregator/mpi/MPIAggregator.cpp
   toolkit/aggregator/mpi/MPIChain.cpp
+
+  toolkit/burstbuffer/FileDrainer.cpp
+  toolkit/burstbuffer/FileDrainerSingleThread.cpp
 )
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 

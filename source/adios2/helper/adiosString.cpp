@@ -382,5 +382,15 @@ PrefixMatches(const std::string &prefix,
     return outputs;
 }
 
+std::string RemoveTrailingSlash(const std::string &name) noexcept
+{
+    size_t len = name.size();
+    while (name[len - 1] == PathSeparator)
+    {
+        --len;
+    }
+    return name.substr(0, len);
+}
+
 } // end namespace helper
 } // end namespace adios2

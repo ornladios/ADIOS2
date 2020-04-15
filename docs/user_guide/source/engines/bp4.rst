@@ -4,14 +4,16 @@ BP4
 
 The BP4 Engine writes and reads files in ADIOS2 native binary-pack (bp version 4) format. 
 This is a new format for ADIOS 2.x which improves on the metadata operations of the older BP3 format. 
-Compared to the older format, BP4 provides two main advantages:
+Compared to the older format, BP4 provides three main advantages:
 
   * Fast and safe **appending** of multiple output steps into the same file. Better performance than writing new files each step. 
     Existing steps cannot be corrupted by appending new steps. 
   * **Streaming** through files (i.e. online processing). Consumer apps can read existing steps while the Producer is still writing new steps.
     Reader's loop can block (with timeout) and wait for new steps to arrive. Same reader code can read the entire data in post or in situ.
     No restrictions on the Producer.  
-    
+  * **Burst buffer support** for writing data. It can write the output to a local file system on each compute node and drain the data to the parallel file system in a separate asynchronous thread. 
+    Appending and streaming to the target file system are still supported when data goes through the burst buffer.
+
 BP4 files have the following structure given a "name" string passed as the first argument of ``IO::Open``:
 
 .. code-block:: c++
@@ -66,7 +68,15 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 12. **StatsBlockSize**: Calculate Min/Max for a given size of each process output. Default is one Min/Max per writer. More fine-grained min/max can be useful for querying the data. 
 
-13. **Node-Local**: For distributed file system. Every writer process must make sure the .bp/ directory is created on the local file system. Required for using local disk/SSD/NVMe in a cluster.  
+13. **NodeLocal** or **Node-Local**: For distributed file system. Every writer process must make sure the .bp/ directory is created on the local file system. Required for using local disk/SSD/NVMe in a cluster.  
+
+14. **BurstBufferPath**: Redirect output file to another location and drain it to the original target location in an asynchronous thread. It requires to be able to launch one thread per aggregator (see SubStreams) on the system. This feature can be used on machines that have local NVMe/SSDs on each node to accelerate the output writing speed. On Summit at OLCF, use "/tmp/bb" for the path. Note: ADIOS does not remove the data on the accelerated storage after draining to the file system. 
+
+15. **BurstBufferDrain**: To write only to the accelerated storage but do not drain it to the target file system, set this flag to false. By default, setting the BurstBufferPath will turn on draining. 
+
+16. **BurstBufferVerbose**: Verbose level 1 will cause each draining thread to print a one line report at the end (to standard output) about where it has spent its time and the number of bytes moved. Verbose level 2 will cause each thread to print a line for each draining operation (file creation, copy block, write block from memory, etc). 
+
+
 
 ============================== ===================== ===========================================================
  **Key**                       **Value Format**      **Default** and Examples
@@ -83,7 +93,11 @@ This engine allows the user to fine tune the buffering operations through the fo
  BeginStepPollingFrequencySecs  float                 **1**, ``10.0`` 
  StatsLevel                     integer, 0 or 1       **1**, ``0``
  StatsBlockSize                 integer > 0           **a very big number**, ``1073741824`` for blocks with 1M elements
+ NodeLocal                      string On/Off         **Off**, On
  Node-Local                     string On/Off         **Off**, On
+ BurstBufferPath                string                **""**, /tmp/bb, /ssd
+ BurstBufferDrain               string On/Off         **On**, Off
+ BurstBufferVerbose             integer, 0-2          **0**, ``1``, ``2`` 
 ============================== ===================== ===========================================================
 
 
