@@ -125,8 +125,8 @@ void Stream::Write(const std::string &name, const T &datum, const bool isLocal,
     const T datumLocal = datum;
     if (isLocal)
     {
-        Write(name, &datumLocal, {adios2::LocalValueDim}, {}, {}, vParams(),
-              endStep);
+        Write(name, &datumLocal, {static_cast<size_t>(adios2::LocalValueDim)},
+              {}, {}, vParams(), endStep);
     }
     else
     {
