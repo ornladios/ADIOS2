@@ -368,7 +368,7 @@ void VariableBase::InitShapeType()
         }
         else
         {
-            if (m_Shape != Dims{LocalValueDim})
+            if (m_Shape != Dims{static_cast<size_t>(LocalValueDim)})
             {
                 throw std::invalid_argument(
                     "ERROR: LocalValue string variable " + m_Name +
