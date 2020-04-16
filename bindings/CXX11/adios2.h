@@ -21,6 +21,7 @@ namespace adios2
 // adios alias values and types.  These not used internally and deprecated.
 constexpr bool DebugON = true;
 constexpr bool DebugOFF = false;
+constexpr bool NewParam = true;
 
 } // end namespace adios2
 
