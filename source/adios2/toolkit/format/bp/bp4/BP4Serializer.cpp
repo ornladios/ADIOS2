@@ -1418,7 +1418,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     lf_SerializeAllIndices(comm, rank); // Set m_SerializedIndices
 
     comm.GathervVectors(m_SerializedIndices, inBufferSTL.m_Buffer,
-                        inBufferSTL.m_Position, 0, 0);
+                        inBufferSTL.m_Position, 0);
 
     // deserialize, it's all local inside rank 0
     if (rank == 0)
