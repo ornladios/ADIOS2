@@ -589,11 +589,26 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     lf_SerializeAllIndices(comm, rank); // Set m_SerializedIndices
 
     size_t countPosition = bufferSTL.m_Position;
+
+    comm.GathervVectors(m_SerializedIndices, bufferSTL.m_Buffer,
+                        bufferSTL.m_Position, 0);
+
     // use bufferSTL (will resize) to GatherV
     const size_t extraSize = 16 + 12 + 12 + m_MetadataSet.MiniFooterSize;
 
-    comm.GathervVectors(m_SerializedIndices, bufferSTL.m_Buffer,
-                        bufferSTL.m_Position, 0, extraSize);
+    try
+    {
+        bufferSTL.m_Buffer.reserve(bufferSTL.m_Position +
+                                   extraSize); // to avoid power of 2 growth
+        bufferSTL.m_Buffer.resize(bufferSTL.m_Position + extraSize);
+    }
+    catch (...)
+    {
+        std::throw_with_nested(std::runtime_error(
+            "ERROR: buffer overflow when resizing to " +
+            std::to_string(bufferSTL.m_Position + extraSize) +
+            " bytes, in call to GathervVectors\n"));
+    }
 
     // deserialize, it's all local inside rank 0
     if (rank == 0)

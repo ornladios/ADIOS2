@@ -165,8 +165,7 @@ public:
 
     template <class T>
     void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
-                        size_t &position, int rankDestination = 0,
-                        size_t extraSize = 0) const;
+                        size_t &position, int rankDestination = 0) const;
     /**
      * Perform AllGather for source value
      * @param source input

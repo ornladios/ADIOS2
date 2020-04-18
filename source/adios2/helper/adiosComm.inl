@@ -63,8 +63,7 @@ void Comm::GathervArrays(const T *source, size_t sourceCount,
 
 template <class T>
 void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
-                          size_t &position, int rankDestination,
-                          size_t extraSize) const
+                          size_t &position, int rankDestination) const
 {
     const size_t inSize = in.size();
     const std::vector<size_t> counts =
@@ -81,8 +80,8 @@ void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
         const size_t newSize = position + gatheredSize;
         try
         {
-            out.reserve(newSize + extraSize); // to avoid power of 2 growth
-            out.resize(newSize + extraSize);
+            out.reserve(newSize); // to avoid power of 2 growth
+            out.resize(newSize);
         }
         catch (...)
         {
