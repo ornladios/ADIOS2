@@ -13,7 +13,7 @@
 class ADIOSDefineAttributeTest : public ::testing::Test
 {
 public:
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     ADIOSDefineAttributeTest()
     : adios(MPI_COMM_WORLD, true), io(adios.DeclareIO("TestIO"))
 #else
@@ -33,7 +33,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -60,7 +60,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
 {
     int mpiRank = 0;
     int mpiSize = 1;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -219,7 +219,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
 {
     int mpiRank = 0, mpiSize = 1;
     size_t numberOfElements = 10;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -378,7 +378,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
 {
     int mpiRank = 0, mpiSize = 1;
     size_t numberOfElements = 10;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -732,7 +732,7 @@ TEST_F(ADIOSDefineAttributeTest, VariableException)
     std::vector<std::string> numbers = {"one", "two", "three"};
 
 // Write test data using BP
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -762,7 +762,7 @@ TEST_F(ADIOSDefineAttributeTest, VariableException)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -770,7 +770,7 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

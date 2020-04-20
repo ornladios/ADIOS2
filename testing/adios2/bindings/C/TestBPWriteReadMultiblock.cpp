@@ -10,7 +10,7 @@
 
 #include <adios2_c.h>
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -30,7 +30,7 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
     int size = 1;
     size_t steps = 5;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -182,7 +182,7 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
         }
         adios2_close(engineH);
     }
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     {
@@ -297,7 +297,7 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -305,7 +305,7 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

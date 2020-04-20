@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     std::ofstream out("TestSkeletonWriterOutput.txt");
     auto coutbuf = std::cout.rdbuf(out.rdbuf()); // save and redirect
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int wrank = 0, wnproc = 1;
     MPI_Comm mpiWriterComm;
     MPI_Init(&argc, &argv);
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 
     try
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::ADIOS adios(mpiWriterComm);
 #else
         adios2::ADIOS adios;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
         retval = 3;
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

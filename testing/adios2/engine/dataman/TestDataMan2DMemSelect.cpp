@@ -10,7 +10,7 @@
 
 #include <adios2.h>
 #include <gtest/gtest.h>
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 #include <numeric>
@@ -121,7 +121,7 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_SELF);
 #else
     adios2::ADIOS adios;
@@ -195,7 +195,7 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                                const Dims &memCount, const size_t steps,
                                const adios2::Params &engineParams)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_SELF);
 #else
     adios2::ADIOS adios;
@@ -376,7 +376,7 @@ TEST_F(DataManEngineTest, 2D_MemSelect)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpi_provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
     std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
@@ -392,7 +392,7 @@ int main(int argc, char **argv)
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

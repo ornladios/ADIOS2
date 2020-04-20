@@ -6,18 +6,18 @@
 include(ADIOSFunctions)
 
 add_executable(Test.Engine.Skeleton.Writer TestSkeletonWriter.cpp)
-target_link_libraries(Test.Engine.Skeleton.Writer adios2)
 
 add_executable(Test.Engine.Skeleton.Reader TestSkeletonReader.cpp)
-target_link_libraries(Test.Engine.Skeleton.Reader adios2)
 
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(Test.Engine.Skeleton.Writer MPI::MPI_C)
-  target_link_libraries(Test.Engine.Skeleton.Reader MPI::MPI_C)
+  target_link_libraries(Test.Engine.Skeleton.Writer adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(Test.Engine.Skeleton.Reader adios2::cxx11_mpi MPI::MPI_C)
   set(cmd_executor
     ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS} ${MPIEXEC_NUMPROC_FLAG} 1
   )
 else()
+  target_link_libraries(Test.Engine.Skeleton.Writer adios2::cxx11)
+  target_link_libraries(Test.Engine.Skeleton.Reader adios2::cxx11)
   set(cmd_executor)
 endif()
 

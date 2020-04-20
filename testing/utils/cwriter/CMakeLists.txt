@@ -6,12 +6,12 @@
 include(ADIOSFunctions)
 
 add_executable(Test.Utils.CWriter TestUtilsCWriter.c)
-target_link_libraries(Test.Utils.CWriter adios2)
 
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(Test.Utils.CWriter MPI::MPI_C)
+  target_link_libraries(Test.Utils.CWriter adios2::c_mpi MPI::MPI_C)
   set(cmd_executor ${MPIEXEC_COMMAND} ${MPIEXEC_NUMPROC_FLAG} 1)
 else()
+  target_link_libraries(Test.Utils.CWriter adios2::c)
   set(cmd_executor)
 endif()
 

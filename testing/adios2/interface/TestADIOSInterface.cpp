@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 
 TEST(ADIOSInterface, MPICommRemoved)
 {
@@ -29,13 +29,13 @@ class ADIOS2_CXX11_API : public ::testing::Test
 {
 public:
     ADIOS2_CXX11_API()
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     : m_Ad(MPI_COMM_WORLD)
 #else
     : m_Ad()
 #endif
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &m_MpiRank);
         MPI_Comm_size(MPI_COMM_WORLD, &m_MpiSize);
 #endif
@@ -281,7 +281,7 @@ public:
             return;
         }
         auto io = m_Ad.DeclareIO("CXX11_API_CheckOutput");
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         auto engine = io.Open(filename, adios2::Mode::Read, MPI_COMM_SELF);
 #else
         auto engine = io.Open(filename, adios2::Mode::Read);
@@ -491,7 +491,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2Writers)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -499,7 +499,7 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 
