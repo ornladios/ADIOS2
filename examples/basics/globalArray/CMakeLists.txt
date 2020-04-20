@@ -4,8 +4,9 @@
 #------------------------------------------------------------------------------#
 
 add_executable(globalArray_write globalArray_write.cpp)
-target_link_libraries(globalArray_write adios2)
+target_link_libraries(globalArray_write adios2::cxx11)
 
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(globalArray_write MPI::MPI_C)
+  add_executable(globalArray_write_mpi globalArray_write.cpp)
+  target_link_libraries(globalArray_write_mpi adios2::cxx11_mpi MPI::MPI_C)
 endif()

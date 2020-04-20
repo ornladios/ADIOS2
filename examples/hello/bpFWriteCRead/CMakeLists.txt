@@ -4,10 +4,10 @@
 #------------------------------------------------------------------------------#
 
 add_executable(CppWriter CppWriter.cpp)
-target_link_libraries(CppWriter adios2 MPI::MPI_C)
+target_link_libraries(CppWriter adios2::cxx11_mpi MPI::MPI_C)
 
 add_executable(CppReader CppReader.cpp)
-target_link_libraries(CppReader adios2 MPI::MPI_C)
+target_link_libraries(CppReader adios2::cxx11_mpi MPI::MPI_C)
 
 if(ADIOS2_HAVE_Fortran)
   add_executable(FWriter FWriter.f90)

@@ -4,8 +4,9 @@
 #------------------------------------------------------------------------------#
 
 add_executable(hello_dataSpacesWriter helloDataSpacesWriter.cpp)
-target_link_libraries(hello_dataSpacesWriter adios2)
+target_link_libraries(hello_dataSpacesWriter adios2::cxx11)
 
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(hello_dataSpacesWriter MPI::MPI_C)
+  add_executable(hello_dataSpacesWriter_mpi helloDataSpacesWriter.cpp)
+  target_link_libraries(hello_dataSpacesWriter_mpi adios2::cxx11_mpi MPI::MPI_C)
 endif()

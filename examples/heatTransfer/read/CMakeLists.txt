@@ -8,4 +8,4 @@ add_executable(heatTransfer_read
   PrintDataStep.h 
   ReadSettings.cpp
 )
-target_link_libraries(heatTransfer_read adios2 MPI::MPI_C)
+target_link_libraries(heatTransfer_read adios2::cxx11_mpi MPI::MPI_C)

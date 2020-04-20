@@ -21,7 +21,7 @@
 
 #include <adios2.h>
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 MPI_Comm readerComm;
 #endif
@@ -109,7 +109,7 @@ ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     // sync printouts
     MPI_Barrier(readerComm);
 #endif
@@ -145,7 +145,7 @@ void ReadVariables(int rank, adios2::Engine &reader, adios2::IO &io,
 void SerialPrintout(std::vector<VarInfo> &varinfos, int rank, int nproc)
 {
 // Serialize printout
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Barrier(readerComm);
     int token = 0;
     MPI_Status st;
@@ -169,7 +169,7 @@ void SerialPrintout(std::vector<VarInfo> &varinfos, int rank, int nproc)
         std::cout << "  ]" << std::endl;
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     if (rank < nproc - 1)
     {
         std::chrono::milliseconds timespan(100);
@@ -213,7 +213,7 @@ void ProcessArgs(int rank, int argc, char *argv[])
 int main(int argc, char *argv[])
 {
     int rank = 0, nproc = 1;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(&argc, &argv);
     int wrank, wnproc;
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
     MPI_Comm_size(readerComm, &nproc);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(readerComm);
 #else
     adios2::ADIOS adios;
@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
         }
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

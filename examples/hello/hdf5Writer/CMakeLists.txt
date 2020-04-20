@@ -3,10 +3,10 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+add_executable(hello_hdf5Writer helloHDF5Writer_nompi.cpp)
+target_link_libraries(hello_hdf5Writer adios2::cxx11)
+
 if(ADIOS2_HAVE_MPI)
-  add_executable(hello_hdf5Writer helloHDF5Writer.cpp)
-  target_link_libraries(hello_hdf5Writer MPI::MPI_C)
-else()
-  add_executable(hello_hdf5Writer helloHDF5Writer_nompi.cpp)
+  add_executable(hello_hdf5Writer_mpi helloHDF5Writer.cpp)
+  target_link_libraries(hello_hdf5Writer_mpi adios2::cxx11_mpi MPI::MPI_C)
 endif()
-target_link_libraries(hello_hdf5Writer adios2)

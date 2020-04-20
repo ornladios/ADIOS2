@@ -31,7 +31,7 @@
 #include <vector>
 
 #include <adios2.h>
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 MPI_Comm writerComm;
 #endif
@@ -88,7 +88,7 @@ void ProcessArgs(int rank, int argc, char *argv[])
 int main(int argc, char *argv[])
 {
     int rank = 0, nproc = 1;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(&argc, &argv);
     int wrank, wnproc;
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
         std::cout << std::endl;
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(writerComm);
 #else
     adios2::ADIOS adios;
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
         }
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

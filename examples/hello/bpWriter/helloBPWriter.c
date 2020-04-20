@@ -12,7 +12,7 @@
 
 #include <adios2_c.h>
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 {
     int rank, size;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
         myFloats[i] = (float)i;
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2_adios *adios = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
 #else
     adios2_adios *adios = adios2_init(adios2_debug_mode_on);
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 
     free(myFloats);
 
-#ifdef ADISO2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

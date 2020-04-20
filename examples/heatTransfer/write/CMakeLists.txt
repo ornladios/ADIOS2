@@ -10,7 +10,7 @@ add_executable(heatTransfer_write_adios2
   IO_adios2.cpp
 )
 target_link_libraries(heatTransfer_write_adios2
-  adios2 MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
+  adios2::cxx11_mpi MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
 )
 
 add_executable(heatTransfer_write_ascii
@@ -60,7 +60,7 @@ if(ADIOS2_HAVE_HDF5)
       IO_h5mixer.cpp
     ) 
     target_link_libraries(heatTransfer_write_h5mixer
-      adios2 MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
+      adios2::cxx11_mpi MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
     )
   endif()
 endif()

@@ -4,8 +4,9 @@
 #------------------------------------------------------------------------------#
 
 add_executable(hello_sstReader helloSstReader.cpp)
-target_link_libraries(hello_sstReader adios2)
+target_link_libraries(hello_sstReader adios2::cxx11)
 
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(hello_sstReader MPI::MPI_C)
+  add_executable(hello_sstReader_mpi helloSstReader.cpp)
+  target_link_libraries(hello_sstReader_mpi adios2::cxx11_mpi MPI::MPI_C)
 endif()
