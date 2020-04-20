@@ -42,18 +42,33 @@ if(ADIOS2_HAVE_MPI)
   )
 endif()
 
-add_executable(TestCommonWrite TestCommonWrite.cpp)
-add_executable(TestCommonWriteAttrs TestCommonWriteAttrs.cpp)
-add_executable(TestCommonWriteModes TestCommonWriteModes.cpp)
-add_executable(TestCommonWriteLocal TestCommonWriteLocal.cpp)
-add_executable(TestCommonWriteShared TestCommonWriteShared.cpp)
-add_executable(TestCommonRead TestCommonRead.cpp)
-add_executable(TestCommonReadR64 TestCommonReadR64.cpp)
-add_executable(TestCommonReadAttrs TestCommonReadAttrs.cpp)
-add_executable(TestCommonReadLocal TestCommonReadLocal.cpp)
-add_executable(TestCommonReadShared TestCommonReadShared.cpp)
-add_executable(TestCommonServer TestCommonServer.cpp)
-add_executable(TestCommonClient TestCommonClient.cpp)
+foreach(helper
+    TestCommonWrite
+    TestCommonWriteModes
+    TestCommonWriteAttrs
+    TestCommonWriteLocal
+    TestCommonWriteShared
+    TestCommonRead
+    TestCommonReadR64
+    TestCommonReadLocal
+    TestCommonReadShared
+    TestCommonReadAttrs
+    TestCommonServer
+    TestCommonClient
+    )
+  add_executable(${helper} ${helper}.cpp)
+
+  # Workaround for multiple versions of FindSst
+  if(SST_INCLUDE_DIRS)
+    target_include_directories(${helper} PRIVATE ${SST_INCLUDE_DIRS})
+  endif()
+
+  target_link_libraries(${helper} adios2 gtest_interface ${Sst_LIBRARY})
+  if(ADIOS2_HAVE_MPI)
+    target_link_libraries(${helper} MPI::MPI_C)
+  endif()
+endforeach()
+
 if(ADIOS2_HAVE_Fortran)
   add_library(TestCommonData_f OBJECT TestData_mod.F90)
   add_executable(TestCommonWrite_f
@@ -71,46 +86,7 @@ if(ADIOS2_HAVE_Fortran)
   target_link_libraries(TestCommonRead_f adios2_f)
 endif()
 
-# Workaround for multiple versions of FindSst
-if(SST_INCLUDE_DIRS)
-  target_include_directories(TestCommonWrite PRIVATE ${SST_INCLUDE_DIRS})
-  target_include_directories(TestCommonWriteModes PRIVATE ${SST_INCLUDE_DIRS})
-  target_include_directories(TestCommonWriteAttrs PRIVATE ${SST_INCLUDE_DIRS})
-  target_include_directories(TestCommonWriteLocal PRIVATE ${SST_INCLUDE_DIRS})
-  target_include_directories(TestCommonWriteShared PRIVATE ${SST_INCLUDE_DIRS})
-  target_include_directories(TestCommonRead PRIVATE ${SST_INCLUDE_DIRS})
-  target_include_directories(TestCommonReadR64 PRIVATE ${SST_INCLUDE_DIRS})
-  target_include_directories(TestCommonReadLocal PRIVATE ${SST_INCLUDE_DIRS})
-  target_include_directories(TestCommonReadShared PRIVATE ${SST_INCLUDE_DIRS})
-  target_include_directories(TestCommonServer PRIVATE ${SST_INCLUDE_DIRS})
-  target_include_directories(TestCommonClient PRIVATE ${SST_INCLUDE_DIRS})
-endif()
-target_link_libraries(TestCommonWrite adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonWriteModes adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonWriteAttrs adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonWriteLocal adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonWriteShared adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonRead adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonReadR64 adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonReadLocal adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonReadShared adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonReadAttrs adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonServer adios2 gtest_interface ${Sst_LIBRARY})
-target_link_libraries(TestCommonClient adios2 gtest_interface ${Sst_LIBRARY})
-
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(TestCommonWrite MPI::MPI_C)
-  target_link_libraries(TestCommonWriteModes MPI::MPI_C)
-  target_link_libraries(TestCommonWriteAttrs MPI::MPI_C)
-  target_link_libraries(TestCommonWriteLocal MPI::MPI_C)
-  target_link_libraries(TestCommonWriteShared MPI::MPI_C)
-  target_link_libraries(TestCommonRead MPI::MPI_C)
-  target_link_libraries(TestCommonReadR64 MPI::MPI_C)
-  target_link_libraries(TestCommonReadLocal MPI::MPI_C)
-  target_link_libraries(TestCommonReadShared MPI::MPI_C)
-  target_link_libraries(TestCommonReadAttrs MPI::MPI_C)
-  target_link_libraries(TestCommonServer MPI::MPI_C)
-  target_link_libraries(TestCommonClient MPI::MPI_C)
   set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
   if(ADIOS2_HAVE_Fortran)
     target_compile_definitions(TestCommonWrite_f PRIVATE ADIOS2_HAVE_MPI_F=1)
