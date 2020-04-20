@@ -35,7 +35,7 @@ file(GENERATE
 
 # BPSPLIT
 #add_executable(bpsplit ./bpsplit/bpsplit.cpp)
-#target_link_libraries(bpsplit adios2 adios2sys_interface pugixml)
+#target_link_libraries(bpsplit adios2::cxx11 adios2sys_interface pugixml)
 #install(TARGETS bpsplit EXPORT adios2
 #  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 #)
