@@ -1,5 +1,7 @@
 program helloBPReaderHeatMap3D
+#if ADIOS2_USE_MPI
     use mpi
+#endif
     use adios2
 
     implicit none
@@ -15,9 +17,14 @@ program helloBPReaderHeatMap3D
     integer :: ierr, irank, isize, inx, iny, inz
     integer :: i, j, k, iglobal, value, ilinear, icounter
 
+#if ADIOS2_USE_MPI
     call MPI_INIT(ierr)
     call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
     call MPI_COMM_SIZE(MPI_COMM_WORLD, isize, ierr)
+#else
+    irank = 0
+    isize = 1
+#endif
 
     inx = 10
     iny = 10
@@ -41,7 +48,11 @@ program helloBPReaderHeatMap3D
     end do
 
     ! Start adios2 Writer
+#if ADIOS2_USE_MPI
     call adios2_init( adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr )
+#else
+    call adios2_init( adios, adios2_debug_mode_on, ierr)
+#endif
     call adios2_declare_io( ioPut, adios, 'HeatMapWrite', ierr )
 
     call adios2_define_variable( var_temperatures, ioPut, 'temperatures', &
@@ -64,8 +75,13 @@ program helloBPReaderHeatMap3D
 
         call adios2_declare_io( ioGet, adios, 'HeatMapRead', ierr )
 
+#if ADIOS2_USE_MPI
         call adios2_open( bpReader, ioGet, 'HeatMap3D_f.bp', &
                           adios2_mode_read, MPI_COMM_SELF, ierr)
+#else
+        call adios2_open( bpReader, ioGet, 'HeatMap3D_f.bp', &
+                          adios2_mode_read, ierr)
+#endif
 
         call adios2_inquire_variable( var_temperaturesIn, ioGet, &
                                       'temperatures', ierr )
@@ -109,6 +125,8 @@ program helloBPReaderHeatMap3D
 
 
     call adios2_finalize(adios, ierr)
+#if ADIOS2_USE_MPI
     call MPI_Finalize(ierr)
+#endif
 
 end program helloBPReaderHeatMap3D

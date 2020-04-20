@@ -19,13 +19,11 @@ if(ADIOS2_HAVE_SZ)
   add_executable(hello_bpSZ helloBPSZ.cpp)
   target_link_libraries(hello_bpSZ adios2)
 endif()
-  
+
 if(ADIOS2_HAVE_Fortran)
   add_executable(hello_bpWriter_f helloBPWriter.F90)
-  target_link_libraries(hello_bpWriter_f adios2_f)
-  set_target_properties(hello_bpWriter_f PROPERTIES
-    LINKER_LANGUAGE Fortran
-  )
+  set_property(TARGET hello_bpWriter_f PROPERTY LINKER_LANGUAGE Fortran)
+  target_link_libraries(hello_bpWriter_f adios2::fortran)
 endif()
 
 if(ADIOS2_HAVE_MPI)
@@ -39,7 +37,8 @@ if(ADIOS2_HAVE_MPI)
   endif()
 
   if(ADIOS2_HAVE_Fortran)
-    target_compile_definitions(hello_bpWriter_f PUBLIC USE_MPI=1)
-    target_link_libraries(hello_bpWriter_f MPI::MPI_Fortran)
+    add_executable(hello_bpWriter_f_mpi helloBPWriter.F90)
+    set_property(TARGET hello_bpWriter_f_mpi PROPERTY LINKER_LANGUAGE Fortran)
+    target_link_libraries(hello_bpWriter_f_mpi adios2::fortran_mpi MPI::MPI_Fortran)
   endif()
 endif()
