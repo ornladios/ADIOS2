@@ -242,7 +242,6 @@ std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
                     " offset = " + std::to_string(currentOffset) +
                     " count = " + std::to_string(count) + " bytes but only " +
                     std::to_string(totalRead + readSize) + ".\n");
-                break;
             }
         }
         buffer += readSize;
@@ -255,7 +254,6 @@ std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
 size_t FileDrainer::Write(OutputFile &f, size_t count, const char *buffer,
                           const std::string &path)
 {
-    size_t totalWritten = 0;
     f->write(buffer, static_cast<std::streamsize>(count));
 
     if (f->bad())
