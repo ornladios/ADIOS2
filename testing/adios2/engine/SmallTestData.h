@@ -20,7 +20,7 @@
 struct SmallTestData
 {
     std::string S1 = "Testing ADIOS2 String type";
-    std::array<std::string, 1> S1array = {{"one"}};
+    std::array<std::string, 1> S1array;
     std::array<std::string, 3> S3 = {{"one", "two", "three"}};
 
     std::array<int8_t, 10> I8 = {{0, 1, -2, 3, -4, 5, -6, 7, -8, 9}};
@@ -63,6 +63,10 @@ struct SmallTestData
          std::complex<double>(14.2, 15.2), std::complex<double>(15.2, 16.2),
          std::complex<double>(16.2, 17.2), std::complex<double>(17.2, 18.2),
          std::complex<double>(18.2, 19.2), std::complex<double>(19.2, 20.2)}};
+
+    // FIXME: Really ugly workaround for a double-free/corruption error in XL
+    // compiler
+    SmallTestData() : S1array{{"one"}} {}
 };
 
 SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
