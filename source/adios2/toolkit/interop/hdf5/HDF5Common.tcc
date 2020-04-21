@@ -28,14 +28,6 @@ void HDF5Common::DefineDataset(core::Variable<T> &variable)
     int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
     hid_t h5Type = GetHDF5Type<T>();
 
-    if (std::is_same<T, std::string>::value)
-    {
-        // h5Type = GetTypeStringScalar(*(std::string *)values);
-        std::cout << "...Needs actual string size, so defer to later? var name="
-                  << variable.m_Name << std::endl;
-        return;
-    }
-
     if (dimSize == 0)
     {
         // write scalar
@@ -57,6 +49,14 @@ void HDF5Common::DefineDataset(core::Variable<T> &variable)
     std::vector<hid_t> chain;
     CreateDataset(variable.m_Name, h5Type, fileSpace, chain);
     HDF5DatasetGuard g(chain);
+}
+
+template <>
+void HDF5Common::DefineDataset<std::string>(
+    core::Variable<std::string> &variable)
+{
+    std::cout << "...Needs actual string size, so defer to later? var name="
+              << variable.m_Name << std::endl;
 }
 
 template <class T>
