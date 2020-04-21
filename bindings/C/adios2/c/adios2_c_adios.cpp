@@ -21,14 +21,16 @@ adios2_adios *adios2_init_config_glue_serial(const char *config_file,
                                              const adios2_debug_mode debug_mode,
                                              const char *host_language)
 {
+    // The debug_mode argument is no longer used, but kept in the public
+    // API for compatibility.
+    static_cast<void>(debug_mode);
+
     adios2_adios *adios = nullptr;
     try
     {
         adios2::helper::CheckForNullptr(
             config_file,
             "for config_file, in call to adios2_init or adios2_init_config");
-        const bool debugBool =
-            (debug_mode == adios2_debug_mode_on) ? true : false;
         adios = reinterpret_cast<adios2_adios *>(
             new adios2::core::ADIOS(config_file, host_language));
     }
