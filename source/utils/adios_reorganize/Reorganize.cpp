@@ -61,7 +61,7 @@ Reorganize::Reorganize(int argc, char *argv[])
     m_Rank = m_Comm.Rank();
     m_Size = m_Comm.Size();
 
-    if (argc < 5)
+    if (argc < 7)
     {
         PrintUsage();
         throw std::invalid_argument(
