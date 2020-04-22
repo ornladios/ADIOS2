@@ -7,13 +7,10 @@
 
     <io name="io_T1">
         <engine type="BP4">
-        
-        lakSJ
             <parameter key="BurstBufferPath" value="bb"/>
-            <parameter key="BuasdrstBufferDrain" value="On"/>
+            <parameter key="BurstBufferDrain" value="On"/>
             <parameter key="BurstBufferVerbose" value="2"/>
             <parameter key="SubStreams" value="1"/>
-        
         </engine>
     </io>
 
