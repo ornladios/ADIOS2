@@ -13,6 +13,8 @@ target_include_directories(taustubs PRIVATE
       $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
 )
 
+target_link_libraries(taustubs PRIVATE ${CMAKE_DL_LIBS})
+
 add_library(adios2_core
   common/ADIOSTypes.cpp
   
