@@ -11,7 +11,7 @@
 class ADIOSDefineVariableTest : public ::testing::Test
 {
 public:
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     ADIOSDefineVariableTest()
     : adios(MPI_COMM_WORLD, true), io(adios.DeclareIO("TestIO"))
 #else
@@ -66,7 +66,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalValue)
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArray)
 {
     int mpiRank = 0, mpiSize = 1;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -110,7 +110,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
     // Define ADIOS global array with postponed size definition in SetSelection
 
     int mpiRank = 0, mpiSize = 1;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -157,7 +157,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
 {
     // Define ADIOS global array with locked-down dimensions
     int mpiRank = 0, mpiSize = 1;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -237,7 +237,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArray)
 TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
 {
     int mpiRank = 0, mpiSize = 1;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -292,7 +292,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
 
 TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -657,7 +657,7 @@ TEST_F(ADIOSDefineVariableTest, DefineCheckType)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -665,7 +665,7 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

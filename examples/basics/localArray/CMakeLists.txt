@@ -4,11 +4,12 @@
 #------------------------------------------------------------------------------#
 
 add_executable(localArray_write localArray_write.cpp)
-target_link_libraries(localArray_write adios2)
+target_link_libraries(localArray_write adios2::cxx11)
 
 add_executable(localArray_read localArray_read.cpp)
-target_link_libraries(localArray_read adios2)
+target_link_libraries(localArray_read adios2::cxx11)
 
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(localArray_read MPI::MPI_C)
+  add_executable(localArray_write_mpi localArray_write.cpp)
+  target_link_libraries(localArray_write_mpi adios2::cxx11_mpi MPI::MPI_C)
 endif()

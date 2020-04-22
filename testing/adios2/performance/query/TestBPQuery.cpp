@@ -159,7 +159,7 @@ void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios,
                             const std::string &engineName)
 {
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -247,7 +247,7 @@ TEST_F(BPQueryTest, BP3)
     // form a mpiSize * Nx 1D array
     const std::string fname(engineName + "Query1D.bp");
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -273,7 +273,7 @@ TEST_F(BPQueryTest, BP4)
     // form a mpiSize * Nx 1D array
     const std::string fname(engineName + "4Query1D.bp");
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -294,7 +294,7 @@ TEST_F(BPQueryTest, BP4)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     // MPI_Init(nullptr, nullptr);
     MPI_Init(&argc, &argv);
 #endif
@@ -308,7 +308,7 @@ int main(int argc, char **argv)
     }
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

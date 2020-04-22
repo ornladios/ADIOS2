@@ -37,7 +37,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DSel)
     // Number of steps
     const size_t NSteps = 5;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -49,7 +49,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DSel)
         const adios2::Dims start{};
         const adios2::Dims count{Nx};
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
                                 engineName);
 #else
@@ -100,7 +100,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DSel)
         }
         oStream.close();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
                                 engineName);
 #else
@@ -203,7 +203,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal2D2x4Sel)
     // Number of steps
     const size_t NSteps = 5;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -215,7 +215,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal2D2x4Sel)
         const adios2::Dims start{};
         const adios2::Dims count{Ny, Nx};
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
                                 engineName);
 #else
@@ -266,7 +266,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal2D2x4Sel)
         }
         oStream.close();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
                                 engineName);
 #else
@@ -421,7 +421,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
     // Number of steps
     const size_t NSteps = 5;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -433,7 +433,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
         const adios2::Dims start{};
         const adios2::Dims count{Nx};
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
                                 engineName);
 #else
@@ -484,7 +484,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
         }
         oStream.close();
     }
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
                             engineName);
 #else
@@ -592,7 +592,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -604,7 +604,7 @@ int main(int argc, char **argv)
     }
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

@@ -30,14 +30,14 @@ void TimeAggregation1D8(const std::string flushstepscount)
     // Number of steps
     const size_t NSteps = 10;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // Write test data using ADIOS2
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -343,14 +343,14 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
     // Number of steps
     const std::size_t NSteps = 10;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // Write test data using ADIOS2
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -670,7 +670,7 @@ INSTANTIATE_TEST_CASE_P(FlushStepsCount, BPTestTimeAggregation,
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -683,7 +683,7 @@ int main(int argc, char **argv)
     }
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

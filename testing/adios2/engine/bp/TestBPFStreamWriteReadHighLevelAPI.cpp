@@ -41,14 +41,14 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
     // Number of steps
     const size_t NSteps = 3;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // write test data using BP
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 
         adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
                                 engineName);
@@ -186,7 +186,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
         adios2::fstream iStream;
         EXPECT_FALSE(iStream);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         iStream.open(fname, adios2::fstream::in, MPI_COMM_WORLD, engineName);
 #else
         iStream.open(fname, adios2::fstream::in, engineName);
@@ -468,14 +468,14 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
     // Number of steps
     const std::size_t NSteps = 3;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // write test data using ADIOS2
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 
         adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
                                 engineName);
@@ -514,7 +514,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
 
     // READ
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
                                 engineName);
 #else
@@ -590,14 +590,14 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
     // Number of steps
     const std::size_t NSteps = 3;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // write test data using ADIOS2
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 
         adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
                                 engineName);
@@ -639,7 +639,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
     }
 
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
                                 engineName);
 #else
@@ -703,7 +703,7 @@ TEST_F(StreamWriteReadHighLevelAPI, DoubleOpenException)
     const std::string fname("ADIOS2BP_hl_exception.bp");
 
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 
         adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
                                 engineName);
@@ -721,7 +721,7 @@ TEST_F(StreamWriteReadHighLevelAPI, DoubleOpenException)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -733,7 +733,7 @@ int main(int argc, char **argv)
     }
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

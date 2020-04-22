@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 {
     int rank = 0, nproc = 1;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int wrank = 0, wnproc = 1;
     MPI_Comm mpiReaderComm;
     MPI_Init(&argc, &argv);
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
         HelloSkeletonArgs settings(false, argc, argv, rank, nproc);
 
 /** ADIOS class factory of IO class objects, Debug is ON by default */
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::ADIOS adios(settings.configfile, mpiReaderComm);
 #else
         adios2::ADIOS adios(settings.configfile);
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

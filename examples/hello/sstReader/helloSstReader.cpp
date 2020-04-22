@@ -16,7 +16,7 @@ v *      Author: Greg Eisenhauer
 
 #include <adios2.h>
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     int rank;
     int size;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
     try
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
         adios2::ADIOS adios;
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

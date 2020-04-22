@@ -64,12 +64,12 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
     // Number of steps
     const size_t NSteps = 3;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -354,12 +354,12 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
     // Number of steps
     const size_t NSteps = 3;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -864,7 +864,7 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -872,7 +872,7 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

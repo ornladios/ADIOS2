@@ -6,10 +6,12 @@
 find_package(Threads REQUIRED)
 
 add_executable(Test.Engine.Common TestEngineCommon.cpp)
-target_link_libraries(Test.Engine.Common adios2 gtest ${CMAKE_THREAD_LIBS_INIT})
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(Test.Engine.Common gtest_interface MPI::MPI_C)
+  target_link_libraries(Test.Engine.Common gtest_interface adios2::cxx11_mpi MPI::MPI_C)
+else()
+  target_link_libraries(Test.Engine.Common adios2::cxx11)
 endif()
+target_link_libraries(Test.Engine.Common gtest ${CMAKE_THREAD_LIBS_INIT})
 
 # Note: extra arguments
 #   1st arg: Engine

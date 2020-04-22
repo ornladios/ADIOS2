@@ -10,7 +10,7 @@
 class ADIOSInterfaceWriteTest : public ::testing::Test
 {
 public:
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     ADIOSInterfaceWriteTest()
     : adios(MPI_COMM_SELF, true), io(adios.DeclareIO("TestIO"))
     {
@@ -32,7 +32,7 @@ protected:
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_1x10)
 {
     int mpiRank = 0;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -64,7 +64,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_1x10)
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_1x10)
 {
     int mpiRank = 0;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -97,7 +97,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_1x10)
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_1x10)
 {
     int mpiRank = 0;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -131,7 +131,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_1x10)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -166,7 +166,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_1x10)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -200,7 +200,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_1x10)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -234,7 +234,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_1x10)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -268,7 +268,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_1x10)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -306,7 +306,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_2x5)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -341,7 +341,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_2x5)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -376,7 +376,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_2x5)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -411,7 +411,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_2x5)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -447,7 +447,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_2x5)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -482,7 +482,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_2x5)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -517,7 +517,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_2x5)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -552,7 +552,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_2x5)
 {
     int mpiRank = 0;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -620,7 +620,7 @@ TEST_F(ADIOSInterfaceWriteTest, Exceptions)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -628,7 +628,7 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

@@ -5,7 +5,7 @@
 
 #include <adios2.h>
 #include <gtest/gtest.h>
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 #include <numeric>
@@ -65,7 +65,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const size_t rows, const adios2::Params &engineParams,
             const std::string &name)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -158,7 +158,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -251,14 +251,14 @@ TEST_F(TableEngineTest, TestTableMultiRank)
 
     Reader(shape, start, count, rows, engineParams, filename);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
     return result;

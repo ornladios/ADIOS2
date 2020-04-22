@@ -32,7 +32,7 @@
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosString.h"
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include "adios2/helper/adiosCommMPI.h"
 #else
 #include "adios2/helper/adiosCommDummy.h"
@@ -50,7 +50,7 @@ namespace utils
 Reorganize::Reorganize(int argc, char *argv[])
 : Utils("adios_reorganize", argc, argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     {
         auto commWorld = helper::CommWithMPI(MPI_COMM_WORLD);
         m_Comm = commWorld.Split(m_CommSplitColor, 0);

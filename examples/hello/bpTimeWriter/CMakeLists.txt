@@ -3,12 +3,10 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-if(ADIOS2_HAVE_MPI)
-  add_executable(hello_bpTimeWriter helloBPTimeWriter.cpp)
-  target_link_libraries(hello_bpTimeWriter MPI::MPI_C)
-  
-else()
-  add_executable(hello_bpTimeWriter helloBPTimeWriter_nompi.cpp)
-endif()
+add_executable(hello_bpTimeWriter helloBPTimeWriter_nompi.cpp)
+target_link_libraries(hello_bpTimeWriter adios2::cxx11)
 
-target_link_libraries(hello_bpTimeWriter adios2)
+if(ADIOS2_HAVE_MPI)
+  add_executable(hello_bpTimeWriter_mpi helloBPTimeWriter.cpp)
+  target_link_libraries(hello_bpTimeWriter_mpi adios2::cxx11_mpi MPI::MPI_C)
+endif()

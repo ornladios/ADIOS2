@@ -4,8 +4,9 @@
 #------------------------------------------------------------------------------#
 
 add_executable(hello_inlineReaderWriter helloInlineReaderWriter.cpp)
-target_link_libraries(hello_inlineReaderWriter adios2)
+target_link_libraries(hello_inlineReaderWriter adios2::cxx11)
 
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(hello_inlineReaderWriter MPI::MPI_C)
+  add_executable(hello_inlineReaderWriter_mpi helloInlineReaderWriter.cpp)
+  target_link_libraries(hello_inlineReaderWriter_mpi adios2::cxx11_mpi MPI::MPI_C)
 endif()

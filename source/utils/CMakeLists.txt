@@ -9,9 +9,15 @@ configure_file(
   @ONLY
 )
 
+if(ADIOS2_HAVE_MPI)
+  set(maybe_adios2_core_mpi adios2_core_mpi)
+else()
+  set(maybe_adios2_core_mpi)
+endif()
+
 # BPLS
 add_executable(bpls ./bpls/bpls.cpp)
-target_link_libraries(bpls adios2 adios2sys pugixml)
+target_link_libraries(bpls adios2_core adios2sys pugixml)
 target_include_directories(bpls PRIVATE ${PROJECT_BINARY_DIR})
 install(TARGETS bpls EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -29,7 +35,7 @@ file(GENERATE
 
 # BPSPLIT
 #add_executable(bpsplit ./bpsplit/bpsplit.cpp)
-#target_link_libraries(bpsplit adios2 adios2sys_interface pugixml)
+#target_link_libraries(bpsplit adios2::cxx11 adios2sys_interface pugixml)
 #install(TARGETS bpsplit EXPORT adios2
 #  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 #)
@@ -39,15 +45,10 @@ add_executable(adios_reorganize
                ./adios_reorganize/main.cpp 
                ./adios_reorganize/Reorganize.cpp 
                Utils.cpp)
-target_link_libraries(adios_reorganize adios2)
+target_link_libraries(adios_reorganize PRIVATE adios2_cxx11 ${maybe_adios2_core_mpi} adios2_core)
 install(TARGETS adios_reorganize EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-
-# Add MPI dependency to parallel tools
-if(ADIOS2_HAVE_MPI)
-  target_link_libraries(adios_reorganize MPI::MPI_C)
-endif()
 
 if(ADIOS2_HAVE_MGARD)
   target_link_libraries(adios_reorganize MGARD::MGARD)

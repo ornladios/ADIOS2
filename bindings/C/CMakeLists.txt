@@ -19,7 +19,11 @@ target_include_directories(adios2_c
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  INTERFACE
+    $<BUILD_INTERFACE:$<TARGET_PROPERTY:adios2_core,INTERFACE_INCLUDE_DIRECTORIES>>
 )
+
+add_library(adios2::c ALIAS adios2_c)
 
 if(ADIOS2_HAVE_MPI)
   add_library(adios2_c_mpi
@@ -29,6 +33,7 @@ if(ADIOS2_HAVE_MPI)
   set_property(TARGET adios2_c_mpi PROPERTY EXPORT_NAME c_mpi)
   target_link_libraries(adios2_c_mpi PUBLIC adios2_c PRIVATE adios2_core_mpi PUBLIC MPI::MPI_C)
   target_compile_definitions(adios2_c_mpi INTERFACE ADIOS2_USE_MPI)
+  add_library(adios2::c_mpi ALIAS adios2_c_mpi)
   set(maybe_adios2_c_mpi adios2_c_mpi)
 else()
   set(maybe_adios2_c_mpi)

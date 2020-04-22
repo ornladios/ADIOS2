@@ -35,12 +35,12 @@ void SZAccuracy1D(const std::string accuracy)
     std::iota(r32s.begin(), r32s.end(), 0.f);
     std::iota(r64s.begin(), r64s.end(), 0.);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -175,12 +175,12 @@ void SZAccuracy2D(const std::string accuracy)
     std::iota(r32s.begin(), r32s.end(), 0.f);
     std::iota(r64s.begin(), r64s.end(), 0.);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -318,12 +318,12 @@ void SZAccuracy3D(const std::string accuracy)
     std::iota(r32s.begin(), r32s.end(), 0.f);
     std::iota(r64s.begin(), r64s.end(), 0.);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -461,12 +461,12 @@ void SZAccuracy1DSel(const std::string accuracy)
     std::iota(r32s.begin(), r32s.end(), 0.f);
     std::iota(r64s.begin(), r64s.end(), 0.);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -601,12 +601,12 @@ void SZAccuracy2DSel(const std::string accuracy)
     std::iota(r32s.begin(), r32s.end(), 0.f);
     std::iota(r64s.begin(), r64s.end(), 0.);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -744,12 +744,12 @@ void SZAccuracy3DSel(const std::string accuracy)
     std::iota(r32s.begin(), r32s.end(), 0.f);
     std::iota(r64s.begin(), r64s.end(), 0.);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -891,12 +891,12 @@ void SZAccuracy2DSmallSel(const std::string accuracy)
                                 0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13,
                                 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20,
                                 0.21, 0.22, 0.23, 0.24};
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -1041,7 +1041,7 @@ INSTANTIATE_TEST_CASE_P(SZAccuracy, BPWriteReadSZ,
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -1054,7 +1054,7 @@ int main(int argc, char **argv)
     }
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

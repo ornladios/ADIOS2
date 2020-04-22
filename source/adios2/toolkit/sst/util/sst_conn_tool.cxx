@@ -4,7 +4,7 @@
  */
 #include "sst_comm_fwd.h"
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include "adios2/helper/adiosCommMPI.h"
 static adios2::helper::Comm CommWorld =
     adios2::helper::CommWithMPI(MPI_COMM_WORLD);
@@ -18,7 +18,7 @@ SMPI_Comm SMPI_COMM_WORLD = &CommWorld;
 extern "C" {
 int SMPI_Init(int *argc, char ***argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     return MPI_Init(argc, argv);
 #else
     static_cast<void>(argc);

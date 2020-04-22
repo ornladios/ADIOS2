@@ -10,7 +10,7 @@
 
 #include <adios2_c.h>
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -367,7 +367,7 @@ INSTANTIATE_TEST_CASE_P(Substreams, BPWriteAggregateReadLocalTest,
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -375,7 +375,7 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

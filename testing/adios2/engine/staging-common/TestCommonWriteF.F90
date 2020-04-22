@@ -5,7 +5,7 @@ end subroutine usage
 
 program TestSstWrite
   use sst_test_data
-#ifdef ADIOS2_HAVE_MPI_F
+#if ADIOS2_USE_MPI
   use mpi
 #endif
   use adios2
@@ -55,7 +55,7 @@ program TestSstWrite
      call getarg(3, params)
   endif
 
-#ifdef ADIOS2_HAVE_MPI_F
+#if ADIOS2_USE_MPI
   !Launch MPI
   call MPI_Init(ierr) 
 
@@ -92,7 +92,7 @@ program TestSstWrite
   start_time = (/ irank /)
   count_time = (/ 1 /)
 
-#ifdef ADIOS2_HAVE_MPI_F
+#if ADIOS2_USE_MPI
   !Create adios handler passing the communicator, debug mode and error flag
   call adios2_init(adios, testComm, adios2_debug_mode_on, ierr)
 #else
@@ -197,7 +197,7 @@ program TestSstWrite
    !Deallocates adios and calls its destructor 
    call adios2_finalize(adios, ierr)
 
-#ifdef ADIOS2_HAVE_MPI_F
+#if ADIOS2_USE_MPI
   call MPI_Finalize(ierr)
 #endif
 

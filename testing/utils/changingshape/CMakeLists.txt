@@ -6,12 +6,12 @@
 include(ADIOSFunctions)
 
 add_executable(Test.Utils.ChangingShape TestUtilsChangingShape.cpp)
-target_link_libraries(Test.Utils.ChangingShape adios2)
 
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(Test.Utils.ChangingShape MPI::MPI_C)
+  target_link_libraries(Test.Utils.ChangingShape adios2::cxx11_mpi MPI::MPI_C)
   set(cmd_executor ${MPIEXEC_COMMAND} ${MPIEXEC_NUMPROC_FLAG} 1)
 else()
+  target_link_libraries(Test.Utils.ChangingShape adios2::cxx11)
   set(cmd_executor)
 endif()
 

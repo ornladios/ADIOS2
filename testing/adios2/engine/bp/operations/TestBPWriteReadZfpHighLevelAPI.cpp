@@ -36,7 +36,7 @@ void ZfpRate1D(const double rate)
     std::iota(r32s.begin(), r32s.end(), 0.f);
     std::iota(r64s.begin(), r64s.end(), 0.);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -47,7 +47,7 @@ void ZfpRate1D(const double rate)
 
     // Writer
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fw(fname, adios2::fstream::out, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -65,13 +65,13 @@ void ZfpRate1D(const double rate)
         fw.close();
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
     // reader
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fr(fname, adios2::fstream::in, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -132,14 +132,14 @@ void ZfpRate2D(const double rate)
     const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
     const adios2::Dims count{Nx, Ny};
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // writer
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fw(fname, adios2::fstream::out, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -159,7 +159,7 @@ void ZfpRate2D(const double rate)
 
     // reader
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fr(fname, adios2::fstream::in, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -221,14 +221,14 @@ void ZfpRate3D(const double rate)
     const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
     const adios2::Dims count{Nx, Ny, Nz};
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // writer
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fw(fname, adios2::fstream::out, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -248,7 +248,7 @@ void ZfpRate3D(const double rate)
 
     // reader
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fr(fname, adios2::fstream::in, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -312,14 +312,14 @@ void ZfpRate1DSel(const double rate)
                                 Nx / 2};
     const adios2::Dims countSel{Nx / 2};
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // Writer
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fw(fname, adios2::fstream::out, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -337,13 +337,13 @@ void ZfpRate1DSel(const double rate)
         fw.close();
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
     // reader
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fr(fname, adios2::fstream::in, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -411,14 +411,14 @@ void ZfpRate2DSel(const double rate)
     const adios2::Dims startSel{mpiRank * Nx + Nx / 2, 0};
     const adios2::Dims countSel{Nx / 2, Ny};
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // Writer
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fw(fname, adios2::fstream::out, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -436,13 +436,13 @@ void ZfpRate2DSel(const double rate)
         fw.close();
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
     // reader
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fr(fname, adios2::fstream::in, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -512,14 +512,14 @@ void ZfpRate3DSel(const double rate)
                                 0, 0};
     const adios2::Dims countSel{Nx / 2, Ny, Nz};
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // Writer
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fw(fname, adios2::fstream::out, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -537,13 +537,13 @@ void ZfpRate3DSel(const double rate)
         fw.close();
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
     // reader
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fr(fname, adios2::fstream::in, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -615,14 +615,14 @@ void ZfpRate2DSmallSel(const double rate)
     const adios2::Dims startSel{static_cast<std::size_t>(mpiRank) * Nx + 1, 1};
     const adios2::Dims countSel{2, 2};
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // Writer
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fw(fname, adios2::fstream::out, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -640,13 +640,13 @@ void ZfpRate2DSmallSel(const double rate)
         fw.close();
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
     // reader
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2::fstream fr(fname, adios2::fstream::in, MPI_COMM_WORLD,
                            engineName);
 #else
@@ -727,7 +727,7 @@ INSTANTIATE_TEST_CASE_P(ZfpRate, BPWriteReadZfpHighLevelAPI,
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -739,7 +739,7 @@ int main(int argc, char **argv)
     }
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

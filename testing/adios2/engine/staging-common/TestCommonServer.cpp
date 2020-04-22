@@ -41,14 +41,14 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
     int GlobalCloseNow = 0;
 
     std::remove(shutdown_name.c_str());
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // Server test data using ADIOS2
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -168,7 +168,7 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
             {
                 MyCloseNow = 1;
             }
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
             MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
                           MPI_COMM_WORLD);
 #else
@@ -188,7 +188,7 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
 #endif
 
@@ -199,7 +199,7 @@ int main(int argc, char **argv)
 
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

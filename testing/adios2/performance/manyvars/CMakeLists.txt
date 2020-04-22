@@ -9,5 +9,5 @@ if(ADIOS2_HAVE_MPI AND NOT WIN32) # Doesn't reliably work on windows
   # Pure C code, not added to test, 
   # just for executing manually for performance studies
   add_executable(PerfManyVars PerfManyVars.c)
-  target_link_libraries(PerfManyVars adios2 MPI::MPI_C)
+  target_link_libraries(PerfManyVars adios2::c_mpi MPI::MPI_C)
 endif()

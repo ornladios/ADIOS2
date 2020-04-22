@@ -105,7 +105,7 @@ void DoAnalysis(adios2::IO &inlineIO, adios2::Engine &inlineReader, int rank,
 int main(int argc, char *argv[])
 {
     int rank = 0, size = 1;
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 
     try
     {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         /** ADIOS class factory of IO class objects */
         adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
 

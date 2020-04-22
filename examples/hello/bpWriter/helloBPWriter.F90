@@ -1,5 +1,5 @@
 program helloBPWriter
-#ifdef USE_MPI
+#if ADIOS2_USE_MPI
     use mpi
 #endif
     use adios2
@@ -15,7 +15,7 @@ program helloBPWriter
     type(adios2_engine) :: engine1
     character(len=:), allocatable :: var1_name
 
-#ifdef USE_MPI
+#if ADIOS2_USE_MPI
     ! Launch MPI
     call MPI_Init(ierr)
     call MPI_Comm_rank(MPI_COMM_WORLD, irank, ierr)
@@ -39,7 +39,7 @@ program helloBPWriter
     count_dims(1) = inx
 
     ! Create adios handler passing the communicator, debug mode and error flag
-#ifdef USE_MPI
+#if ADIOS2_USE_MPI
     call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
 #else
     call adios2_init(adios, adios2_debug_mode_on, ierr)
@@ -68,7 +68,7 @@ program helloBPWriter
     if( allocated(myArray) ) deallocate(myArray)
     if( allocated(var1_name) ) deallocate(var1_name)
 
-#ifdef USE_MPI
+#if ADIOS2_USE_MPI
     call MPI_Finalize(ierr)
 #endif
 

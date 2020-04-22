@@ -21,7 +21,7 @@
 
 #include <adios2/common/ADIOSConfig.h>
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -130,7 +130,7 @@ std::vector<RunParams> CreateRunParams()
             break;                                                             \
         }
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
 MPI_Comm comm = MPI_COMM_WORLD;
 #endif
 int rank = 0;
@@ -255,7 +255,7 @@ public:
                  NBLOCKS, NSTEPS, REDEFINE ? "_redefine" : "");
 
         alloc_vars();
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         adios2_adios *adiosH =
             adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
 #else
@@ -353,7 +353,7 @@ public:
                 double(std::chrono::duration_cast<std::chrono::seconds>(te - tb)
                            .count()));
         }
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         MPI_Barrier(comm);
 #endif
         return 0;
@@ -399,7 +399,7 @@ public:
         {
             CHECK_VARINFO(varnames[i], 2, NSTEPS)
         }
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         MPI_Barrier(comm);
 #endif
         te = std::chrono::high_resolution_clock::now();
@@ -450,7 +450,7 @@ public:
                 }
             }
             adios2_end_step(engineR);
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
             MPI_Barrier(comm);
 #endif
             te = std::chrono::high_resolution_clock::now();
@@ -465,7 +465,7 @@ public:
     endread:
 
         adios2_close(engineR);
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
         MPI_Barrier(comm);
 #endif
         return err;
@@ -488,12 +488,12 @@ INSTANTIATE_TEST_CASE_P(NxM, TestManyVars,
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Init(&argc, &argv);
 #endif
     ::testing::InitGoogleTest(&argc, argv);
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 #endif
@@ -501,7 +501,7 @@ int main(int argc, char **argv)
     int result;
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
     return result;
