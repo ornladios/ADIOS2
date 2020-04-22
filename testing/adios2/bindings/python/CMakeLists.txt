@@ -26,6 +26,7 @@ if(ADIOS2_HAVE_MPI)
   add_python_mpi_test(BPWriteTypesHighLevelAPILocal)
   add_python_mpi_test(BPReadMultisteps)
   add_python_mpi_test(BPWriteRead2D)
+  add_python_mpi_test(BPBlocksInfo)
   add_python_mpi_test(BPChangingShapeHighLevelAPI)
   add_python_mpi_test(NullEngine)
 

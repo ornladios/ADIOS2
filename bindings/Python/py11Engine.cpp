@@ -14,6 +14,8 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
 
+#include <sstream>
+
 #include "py11types.h"
 
 namespace adios2
@@ -277,6 +279,64 @@ void Engine::LockReaderSelections() const
     helper::CheckForNullptr(m_Engine,
                             "in call to Engine::LockReaderSelections");
     m_Engine->LockReaderSelections();
+}
+
+std::vector<std::map<std::string, std::string>>
+Engine::BlocksInfo(std::string &var_name, const size_t step) const
+{
+    std::vector<std::map<std::string, std::string>> rv;
+
+    // Grab the specified variable object and get its type string
+    std::string var_type = m_Engine->GetIO().InquireVariableType(var_name);
+
+    // Use the macro incantation to call the right instantiation of
+    // core::BlocksInfo<>() Note that we are flatting the Dims type items, and
+    // returning everything as a dictionary of strings.
+    if (false)
+    {
+    }
+#define GET_BLOCKS_INFO(T)                                                     \
+    else if (var_type == helper::GetType<T>())                                 \
+    {                                                                          \
+        auto variable = m_Engine->GetIO().InquireVariable<T>(var_name);        \
+        auto infoVec = m_Engine->BlocksInfo<T>(*variable, step);               \
+        for (auto &info : infoVec)                                             \
+        {                                                                      \
+            std::map<std::string, std::string> info_map;                       \
+            std::stringstream start_ss;                                        \
+            for (size_t i = 0; i < info.Start.size(); ++i)                     \
+            {                                                                  \
+                if (i != 0)                                                    \
+                    start_ss << ",";                                           \
+                start_ss << info.Start[i];                                     \
+            }                                                                  \
+            info_map["Start"] = start_ss.str();                                \
+            std::stringstream count_ss;                                        \
+            for (size_t i = 0; i < info.Count.size(); ++i)                     \
+            {                                                                  \
+                if (i != 0)                                                    \
+                    count_ss << ",";                                           \
+                count_ss << info.Count[i];                                     \
+            }                                                                  \
+            info_map["Count"] = count_ss.str();                                \
+            info_map["WriterID"] = std::to_string(info.WriterID);              \
+            info_map["BlockID"] = std::to_string(info.BlockID);                \
+            info_map["IsValue"] = info.IsValue ? "True" : "False";             \
+            info_map["IsReverseDims"] = info.IsReverseDims ? "True" : "False"; \
+            rv.push_back(info_map);                                            \
+        }                                                                      \
+    }
+    ADIOS2_FOREACH_PYTHON_TYPE_1ARG(GET_BLOCKS_INFO)
+#undef GET_BLOCKS_INFO
+    else
+    {
+        throw std::invalid_argument("ERROR: variable " + var_name +
+                                    " can't be defined, either type is not "
+                                    "supported or is not memory "
+                                    "contiguous, in call to DefineVariable\n");
+    }
+
+    return rv;
 }
 
 } // end namespace py11
