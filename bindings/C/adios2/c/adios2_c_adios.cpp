@@ -41,15 +41,14 @@ adios2_adios *adios2_init_config_glue_serial(const char *config_file,
     return adios;
 }
 
-adios2_adios *adios2_init_serial(const adios2_debug_mode debug_mode)
+adios2_adios *adios2_init_serial()
 {
-    return adios2_init_config_serial("", debug_mode);
+    return adios2_init_config_glue_serial("", adios2_debug_mode_off, "C");
 }
 
-adios2_adios *adios2_init_config_serial(const char *config_file,
-                                        const adios2_debug_mode debug_mode)
+adios2_adios *adios2_init_config_serial(const char *config_file)
 {
-    return adios2_init_config_glue_serial("", debug_mode, "C");
+    return adios2_init_config_glue_serial("", adios2_debug_mode_off, "C");
 }
 
 adios2_io *adios2_declare_io(adios2_adios *adios, const char *name)
