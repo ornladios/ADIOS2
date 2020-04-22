@@ -147,7 +147,15 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
     std::unordered_set<uint32_t> stepsFound;
     m_MetadataSet.StepsCount = 0;
 
-    while (localPosition < length)
+    /* Note: In ADIOS 1.x BP3 files, length is unreliable and is
+     * probably smaller than the actual length of the PG index. Let's use
+     * here the more reliable limit: the start of variable index - start of
+     * PG index (- the already parsed 16 bytes)
+     */
+    const size_t pgIndexLength =
+        m_Minifooter.VarsIndexStart - m_Minifooter.PGIndexStart - 16;
+
+    while (localPosition < pgIndexLength)
     {
         ProcessGroupIndex index = ReadProcessGroupIndexHeader(
             buffer, position, m_Minifooter.IsLittleEndian);
@@ -210,9 +218,17 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
     const size_t startPosition = position;
     size_t localPosition = 0;
 
+    /* Note: In ADIOS 1.x BP3 files, length is unreliable and is
+     * probably smaller than the actual length of the variable index. Let's use
+     * here the more reliable limit: the start of attribute index - start of
+     * variable index (- the already parsed 12 bytes)
+     */
+    const size_t varIndexLength =
+        m_Minifooter.AttributesIndexStart - m_Minifooter.VarsIndexStart - 12;
+
     if (m_Parameters.Threads == 1)
     {
-        while (localPosition < length)
+        while (localPosition < varIndexLength)
         {
             lf_ReadElementIndex(engine, buffer, position);
 
@@ -231,7 +247,7 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
 
     bool launched = false;
 
-    while (localPosition < length)
+    while (localPosition < varIndexLength)
     {
         // extract async positions
         for (unsigned int t = 0; t < m_Parameters.Threads; ++t)
@@ -248,7 +264,7 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
                 asyncs[t].get();
             }
 
-            if (localPosition <= length)
+            if (localPosition <= varIndexLength)
             {
                 asyncs[t] = std::async(std::launch::async, lf_ReadElementIndex,
                                        std::ref(engine), std::ref(buffer),
@@ -311,8 +327,16 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
     const size_t startPosition = position;
     size_t localPosition = 0;
 
+    /* Note: In ADIOS 1.x BP3 files, length is unreliable and is
+     * probably smaller than the actual length of the attribute index. Let's use
+     * here the more reliable limit: the end of index buffer - the size of the
+     * minifooter
+     */
+    const size_t attrIndexLength =
+        buffer.size() - m_MetadataSet.MiniFooterSize - startPosition;
+
     // Read sequentially
-    while (localPosition < length)
+    while (localPosition < attrIndexLength)
     {
         lf_ReadElementIndex(engine, buffer, position);
         const size_t elementIndexSize =
