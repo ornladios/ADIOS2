@@ -1,4 +1,4 @@
-Python_add_library(adios2py MODULE
+Python_add_library(adios2_py MODULE
   py11ADIOS.cpp
   py11IO.cpp
   py11Variable.cpp
@@ -17,7 +17,7 @@ else()
   set(maybe_adios2_core_mpi)
   set(maybe_mpi4py)
 endif()
-target_link_libraries(adios2py PRIVATE
+target_link_libraries(adios2_py PRIVATE
   ${maybe_adios2_cxx11_mpi} adios2_cxx11
   ${maybe_adios2_core_mpi} adios2_core
   pybind11
@@ -29,7 +29,7 @@ configure_file(
   COPYONLY
 )
 
-set_target_properties(adios2py PROPERTIES
+set_target_properties(adios2_py PROPERTIES
   CXX_VISIBILITY_PRESET hidden
   OUTPUT_NAME adios2
   ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2
@@ -38,7 +38,7 @@ set_target_properties(adios2py PROPERTIES
   PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2
   COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2
 )
-install(TARGETS adios2py
+install(TARGETS adios2_py
   DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2
 )
 install(FILES __init__.py
