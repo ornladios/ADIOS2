@@ -528,6 +528,10 @@ void SstReader::PerformGets()
     }
     else if (m_WriterMarshalMethod == SstMarshalBP)
     {
+        std::vector<void *> sstReadHandlers;
+        std::vector<std::vector<char>> buffers;
+        size_t iter = 0;
+
         if (m_BP3Deserializer->m_DeferredVariables.empty())
         {
             return;
@@ -549,7 +553,34 @@ void SstReader::PerformGets()
         {                                                                      \
             m_BP3Deserializer->SetVariableBlockInfo(variable, blockInfo);      \
         }                                                                      \
-        ReadVariableBlocks(variable);                                          \
+        ReadVariableBlocksRequests(variable, sstReadHandlers, buffers);        \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        }
+        // wait for all SstRead requests to finish
+        for (const auto &i : sstReadHandlers)
+        {
+            if (SstWaitForCompletion(m_Input, i) != SstSuccess)
+            {
+                throw std::runtime_error(
+                    "ERROR:  Writer failed before returning data");
+            }
+        }
+
+        for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
+        {
+            const std::string type = m_IO.InquireVariableType(name);
+
+            if (type == "compound")
+            {
+            }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> &variable =                                                \
+            FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \
+        ReadVariableBlocksFill(variable, buffers, iter);                       \
         variable.m_BlocksInfo.clear();                                         \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
