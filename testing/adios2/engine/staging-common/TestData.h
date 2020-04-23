@@ -10,6 +10,7 @@
 #include <array>
 #include <limits>
 #include <string>
+#include <vector>
 
 #ifdef WIN32
 #define NOMINMAX
@@ -20,8 +21,8 @@
 std::size_t Nx = 10;
 
 std::string data_S1 = "Testing ADIOS2 String type";
-std::array<std::string, 1> data_S1array = {{"one"}};
-std::array<std::string, 3> data_S3 = {{"one", "two", "three"}};
+std::vector<std::string> data_S1array = {"one"};
+std::vector<std::string> data_S3 = {"one", "two", "three"};
 
 std::vector<int8_t> data_I8;
 std::vector<int16_t> data_I16;
