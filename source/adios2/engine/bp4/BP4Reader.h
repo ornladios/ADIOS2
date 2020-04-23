@@ -70,6 +70,9 @@ private:
     transportman::TransportMan m_MDIndexFileManager;
     size_t m_MDIndexFileProcessedSize = 0;
 
+    /* transport manager for managing the active flag file */
+    transportman::TransportMan m_ActiveFlagFileManager;
+
     /** used for per-step reads, TODO: to be moved to BP4Deserializer */
     size_t m_CurrentStep = 0;
     bool m_FirstStep = true;

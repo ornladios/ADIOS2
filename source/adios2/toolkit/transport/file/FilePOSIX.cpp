@@ -9,6 +9,7 @@
  */
 #include "FilePOSIX.h"
 
+#include <cstdio>      // remove
 #include <fcntl.h>     // open
 #include <stddef.h>    // write output
 #include <sys/stat.h>  // open, fstat
@@ -261,6 +262,16 @@ void FilePOSIX::Close()
     }
 
     m_IsOpen = false;
+}
+
+void FilePOSIX::Delete()
+{
+    WaitForOpen();
+    if (m_IsOpen)
+    {
+        Close();
+    }
+    std::remove(m_Name.c_str());
 }
 
 void FilePOSIX::CheckFile(const std::string hint) const

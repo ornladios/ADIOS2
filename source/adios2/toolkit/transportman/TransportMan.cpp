@@ -33,7 +33,7 @@ namespace adios2
 namespace transportman
 {
 
-TransportMan::TransportMan(helper::Comm const &comm) : m_Comm(comm) {}
+TransportMan::TransportMan(helper::Comm &comm) : m_Comm(comm) {}
 
 void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
                                  const bool nodeLocal)
@@ -273,6 +273,29 @@ void TransportMan::CloseFiles(const int transportIndex)
         CheckFile(itTransport, ", in call to CloseFiles with index " +
                                    std::to_string(transportIndex));
         itTransport->second->Close();
+    }
+}
+
+void TransportMan::DeleteFiles(const int transportIndex)
+{
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+
+            if (transport->m_Type == "File")
+            {
+                transport->Delete();
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to CloseFiles with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->Delete();
     }
 }
 

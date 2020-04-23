@@ -296,6 +296,16 @@ void FileStdio::Close()
     m_IsOpen = false;
 }
 
+void FileStdio::Delete()
+{
+    WaitForOpen();
+    if (m_IsOpen)
+    {
+        Close();
+    };
+    std::remove(m_Name.c_str());
+}
+
 void FileStdio::CheckFile(const std::string hint) const
 {
     if (std::ferror(m_File))

@@ -84,6 +84,29 @@ std::string BP4Base::GetBPMetadataIndexFileName(const std::string &name) const
 }
 
 std::vector<std::string>
+BP4Base::GetBPActiveFlagFileNames(const std::vector<std::string> &names) const
+    noexcept
+{
+    std::vector<std::string> metadataIndexFileNames;
+    metadataIndexFileNames.reserve(names.size());
+    for (const auto &name : names)
+    {
+        metadataIndexFileNames.push_back(GetBPActiveFlagFileName(name));
+    }
+    return metadataIndexFileNames;
+}
+
+std::string BP4Base::GetBPActiveFlagFileName(const std::string &name) const
+    noexcept
+{
+    const std::string bpName = helper::RemoveTrailingSlash(name);
+    /* the name of the metadata index file is "md.idx" */
+    const std::string bpMetaDataIndexRankName(bpName + PathSeparator +
+                                              "active");
+    return bpMetaDataIndexRankName;
+}
+
+std::vector<std::string>
 BP4Base::GetBPSubStreamNames(const std::vector<std::string> &names) const
     noexcept
 {

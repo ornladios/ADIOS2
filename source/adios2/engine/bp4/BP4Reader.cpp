@@ -27,7 +27,7 @@ BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("BP4Reader", io, name, mode, std::move(comm)),
   m_BP4Deserializer(m_Comm), m_MDFileManager(m_Comm), m_DataFileManager(m_Comm),
-  m_MDIndexFileManager(m_Comm)
+  m_MDIndexFileManager(m_Comm), m_ActiveFlagFileManager(m_Comm)
 {
     TAU_SCOPED_TIMER("BP4Reader::Open");
     Init();
@@ -514,10 +514,25 @@ bool BP4Reader::CheckWriterActive()
     size_t flag = 0;
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
-        std::vector<char> header(64, '\0');
-        m_MDIndexFileManager.ReadFile(header.data(), 64, 0, 0);
-        bool active = m_BP4Deserializer.ReadActiveFlag(header);
-        flag = (active ? 1 : 0);
+        try
+        {
+            /* Look for the active flag file */
+            const std::string activeFlagFile(
+                m_BP4Deserializer.GetBPActiveFlagFileName(m_Name));
+
+            m_ActiveFlagFileManager.OpenFileID(
+                activeFlagFile, 0, adios2::Mode::Read,
+                m_IO.m_TransportsParameters[0],
+                m_BP4Deserializer.m_Profiler.m_IsActive);
+
+            flag = 1;
+
+            m_ActiveFlagFileManager.CloseFiles(0);
+        }
+        catch (std::ios_base::failure &e)
+        {
+            flag = 0;
+        }
     }
     flag = m_BP4Deserializer.m_Comm.BroadcastValue(flag, 0);
     m_BP4Deserializer.m_WriterIsActive = (flag > 0);

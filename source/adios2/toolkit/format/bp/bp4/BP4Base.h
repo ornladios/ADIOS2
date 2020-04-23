@@ -102,6 +102,12 @@ public:
     std::string GetBPMetadataIndexFileName(const std::string &name) const
         noexcept;
 
+    std::vector<std::string>
+    GetBPActiveFlagFileNames(const std::vector<std::string> &names) const
+        noexcept;
+
+    std::string GetBPActiveFlagFileName(const std::string &name) const noexcept;
+
     std::string GetBPSubFileName(const std::string &name,
                                  const size_t subFileIndex,
                                  const bool hasSubFiles = true,

@@ -50,6 +50,8 @@ public:
 
     void Close() override;
 
+    void Delete() final;
+
     void SeekToEnd() override;
 
     void SeekToBegin() override;

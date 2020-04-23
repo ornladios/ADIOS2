@@ -109,6 +109,8 @@ void NullTransport::Close()
     Impl->IsOpen = false;
 }
 
+void NullTransport::Delete() { Close(); }
+
 void NullTransport::SeekToEnd()
 {
     if (!Impl->IsOpen)

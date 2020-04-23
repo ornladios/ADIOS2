@@ -45,7 +45,7 @@ public:
      * Unique base constructor
      * @param comm
      */
-    TransportMan(helper::Comm const &comm);
+    TransportMan(helper::Comm &comm);
 
     virtual ~TransportMan() = default;
 
@@ -151,6 +151,12 @@ public:
      * @param transportIndex -1: all transports, otherwise index in m_Transports
      */
     void CloseFiles(const int transportIndex = -1);
+
+    /**
+     * Delete file or files depending on transport index. The files
+     * must be open for this function to have an effect.
+     */
+    void DeleteFiles(const int transportIndex = -1);
 
     /** Checks if all transports are closed */
     bool AllTransportsClosed() const noexcept;

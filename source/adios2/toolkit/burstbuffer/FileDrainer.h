@@ -39,8 +39,8 @@ enum class DrainOperation
     WriteAt, // Write data from memory to toFileName directly at offset
     Write,   // Write data from memory to toFileName directly (without seek)
     Create,  // Open file for writing (creat) - only toFile
-    Open     // Open file for append - only toFile
-
+    Open,    // Open file for append - only toFile
+    Delete // Remove a file on disk (file will be opened if not already opened)
 };
 
 struct FileDrainOperation
@@ -88,6 +88,8 @@ public:
                            const void *data);
     void AddOperationOpen(const std::string &toFileName, Mode mode);
 
+    void AddOperationDelete(const std::string &toFileName);
+
     /** Create thread */
     virtual void Start() = 0;
 
@@ -133,6 +135,8 @@ protected:
                                    const std::string &path);
     size_t Write(OutputFile &f, size_t count, const char *buffer,
                  const std::string &path);
+
+    void Delete(OutputFile &f, const std::string &path);
 
 private:
     InputFileMap m_InputFileMap;

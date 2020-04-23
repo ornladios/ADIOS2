@@ -48,6 +48,8 @@ public:
 
     void Close() final;
 
+    void Delete() final;
+
     void SeekToEnd() final;
 
     void SeekToBegin() final;
