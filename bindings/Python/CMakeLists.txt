@@ -38,6 +38,14 @@ set_target_properties(adios2_py PROPERTIES
   PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2
   COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2
 )
+
+string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_PYTHONDIR}/adios2")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  set_target_properties(adios2_py PROPERTIES
+    INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}"
+  )
+endif()
+
 install(TARGETS adios2_py
   DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2
 )
