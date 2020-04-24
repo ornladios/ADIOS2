@@ -11,6 +11,8 @@
 #include "FileStdio.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <cerrno>
+#include <cstring>
 #include <ios> //std::ios_base::failure
 /// \endcond
 
@@ -61,6 +63,7 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
                      const bool async)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> FILE * {
+        errno = 0;
         return std::fopen(name.c_str(), "wb");
     };
     m_Name = name;
@@ -78,20 +81,23 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
         }
         else
         {
+            errno = 0;
             m_File = std::fopen(name.c_str(), "wb");
         }
         break;
     case (Mode::Append):
+        errno = 0;
         m_File = std::fopen(name.c_str(), "rwb");
         // m_File = std::fopen(name.c_str(), "a+b");
         std::fseek(m_File, 0, SEEK_END);
         break;
     case (Mode::Read):
+        errno = 0;
         m_File = std::fopen(name.c_str(), "rb");
         break;
     default:
-        CheckFile("unknown open mode for file " + m_Name +
-                  ", in call to stdio fopen");
+        throw std::ios_base::failure("ERROR: unknown open mode for file " +
+                                     m_Name + ", in call to stdio fopen");
     }
 
     if (!m_IsOpening)
@@ -308,7 +314,16 @@ void FileStdio::Delete()
 
 void FileStdio::CheckFile(const std::string hint) const
 {
-    if (std::ferror(m_File))
+    if (!m_File)
+    {
+        std::string errmsg;
+        if (errno)
+        {
+            errmsg = std::strerror(errno);
+        }
+        throw std::ios_base::failure("ERROR: " + hint + ":" + errmsg + "\n");
+    }
+    else if (std::ferror(m_File))
     {
         throw std::ios_base::failure("ERROR: " + hint + "\n");
     }

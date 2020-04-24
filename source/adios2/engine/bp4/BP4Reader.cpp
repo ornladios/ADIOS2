@@ -521,7 +521,6 @@ bool BP4Reader::CheckWriterActive()
         flag = m_ActiveFlagFileManager.FileExists(
             activeFlagFile, m_IO.m_TransportsParameters[0],
             m_BP4Deserializer.m_Profiler.m_IsActive);
-        std::cout << " -- Active flag status: " << flag << std::endl;
     }
     flag = m_BP4Deserializer.m_Comm.BroadcastValue(flag, 0);
     m_WriterIsActive = (flag > 0);
