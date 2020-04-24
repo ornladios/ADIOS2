@@ -93,6 +93,17 @@ void SetParameterValue(const std::string key, const Params &parameters,
 
 std::string GetParameter(const std::string key, const adios2::Params &params,
                          const bool isMandatory, const std::string hint);
+
+/**
+ * Get parameter 'key' from 'params' and put into 'value'
+ * @param params parameter vector input
+ * @param key parameter name to find in params
+ * @param value to be modified if key is found in parameters
+ * @return true if key is found, false if key is not found
+ */
+template <typename T>
+bool GetParameter(const Params &params, const std::string &key, T &value);
+
 /**
  * Sets int value if found in parameters for input key
  * @param key input

@@ -34,7 +34,6 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    bool m_ProvideLatest = true;
     bool m_InitFailed = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
     int m_TotalWriters;

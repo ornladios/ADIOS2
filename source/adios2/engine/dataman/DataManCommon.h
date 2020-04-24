@@ -56,12 +56,6 @@ protected:
 
     format::DataManSerializer m_FastSerializer;
 
-    bool GetParameter(const Params &params, const std::string &key,
-                      bool &value);
-    bool GetParameter(const Params &params, const std::string &key, int &value);
-    bool GetParameter(const Params &params, const std::string &key,
-                      std::string &value);
-
 }; // end class DataManCommon
 
 } // end namespace engine

@@ -378,45 +378,6 @@ void PrintMpiInfo(const MpiInfo &writersInfo, const MpiInfo &readersInfo)
     std::cout << std::endl;
 }
 
-bool GetParameter(const Params &params, const std::string &key, int &value)
-{
-    auto it = params.find(key);
-    if (it == params.end())
-    {
-        return false;
-    }
-    else
-    {
-        try
-        {
-            value = std::stoi(it->second);
-        }
-        catch (...)
-        {
-            std::string error =
-                "Engine parameter " + key + " can only be integer numbers";
-            std::cerr << error << std::endl;
-            return false;
-        }
-    }
-    return true;
-}
-
-bool GetParameter(const Params &params, const std::string &key,
-                  std::string &value)
-{
-    auto it = params.find(key);
-    if (it == params.end())
-    {
-        return false;
-    }
-    else
-    {
-        value = it->second;
-    }
-    return true;
-}
-
 } // end namespace ssc
 } // end namespace engine
 } // end namespace core

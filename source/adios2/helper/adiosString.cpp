@@ -227,6 +227,67 @@ std::string GetParameter(const std::string key, const Params &params,
     return value;
 }
 
+template <>
+bool GetParameter(const Params &params, const std::string &key,
+                  std::string &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = it->second;
+        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+        return true;
+    }
+    return false;
+}
+
+template <>
+bool GetParameter(const Params &params, const std::string &key, int &value)
+{
+    auto it = params.find(key);
+    if (it == params.end())
+    {
+        return false;
+    }
+    else
+    {
+        try
+        {
+            value = std::stoi(it->second);
+        }
+        catch (...)
+        {
+            std::string error =
+                "Engine parameter " + key + " can only be integer numbers";
+            throw(std::invalid_argument(error));
+            return false;
+        }
+    }
+    return true;
+}
+
+template <>
+bool GetParameter(const Params &params, const std::string &key, bool &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        std::string valueStr = it->second;
+        std::transform(valueStr.begin(), valueStr.end(), valueStr.begin(),
+                       ::tolower);
+        if (valueStr == "yes" || valueStr == "true")
+        {
+            value = true;
+        }
+        else if (valueStr == "no" || valueStr == "false")
+        {
+            value = false;
+        }
+        return true;
+    }
+    return false;
+}
+
 void SetParameterValueInt(const std::string key, const Params &parameters,
                           int &value, const std::string &hint)
 {

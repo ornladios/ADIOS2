@@ -73,10 +73,6 @@ void JsonToBlockVecVec(const std::string &input, BlockVecVec &output);
 
 bool AreSameDims(const Dims &a, const Dims &b);
 
-bool GetParameter(const Params &params, const std::string &key, int &value);
-bool GetParameter(const Params &params, const std::string &key,
-                  std::string &value);
-
 } // end namespace ssc
 } // end namespace engine
 } // end namespace core
