@@ -212,20 +212,20 @@ set_bigendian () {
 static attr_list
 internal_create_attr_list(int iattr_count, int oattr_count)
 {
-    attr_list list = malloc(sizeof(attr_list_struct));
+    attr_list list = calloc(1, sizeof(attr_list_struct));
 
     list->list_of_lists = 0;
     list->ref_count = 1;
     if (oattr_count == 0) {
 	list->l.list.attributes = NULL;
     } else {
-	list->l.list.attributes = malloc(oattr_count * sizeof(attr));
+        list->l.list.attributes = calloc(1,  oattr_count * sizeof(attr));
     }
     if (iattr_count == 0) {
 	/* adding 4 here so that we can pad the send structure up to 8 */
-	list->l.list.iattrs = malloc(sizeof(struct int_attr_struct) + 4);
+        list->l.list.iattrs = calloc(1, sizeof(struct int_attr_struct) + 4);
     } else {
-	list->l.list.iattrs = malloc(sizeof(struct int_attr_struct) +
+        list->l.list.iattrs = calloc(1, sizeof(struct int_attr_struct) +
 				     (iattr_count -1) * sizeof(int_attr));
     }
     list->l.list.iattrs->other_attr_count = oattr_count;
