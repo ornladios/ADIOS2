@@ -77,7 +77,6 @@ foreach my $file (@files) {
     print CTEST "# \n";
     print CTEST "# tests from $file\n";
     print CTEST "# \n";
-    my $remote_spec = "jedi080.cc.gatech.edu:/users/c/chaos/evpath_tests/rhe6-64";
     foreach my $line (<TSTS>)  {
 	chomp $line;
 	print CTEST "ADD_TEST($line \"$line\" \"-ssh\" \"\$ENV{SSH_PARAMS}\")\n";
@@ -162,14 +161,18 @@ sub build_env_scripts($) {
 sub load_db() {
     %build_for_host = (
         'jedi080', 'jedi',
+        'chaos', 'chaos',
 	'raspberrypi', 'raspberry',
 	);
     $source_dir{"jedi"} = "/users/c/chaos/evpath_tests/rhe6-64";
+    $source_dir{"chaos"} = "/home/greg/evpath_tests/";
     $source_dir{"raspberry"} = "/home/eisen/evpath_tests/scripts";
     $build_name{"jedi"} = "Jedi";
+    $build_name{"chaos"} = "UB18";
     $build_name{"raspberry"} = "Pi";
     $external_hostname{"raspberry"} = "eisenhauer.dyndns.org";
     $local_port_range{"raspberry"} = "62000:62100";
     $external_ssh_arg{"jedi"} = "chaos\@jedi080.cc.gatech.edu";
+    $external_ssh_arg{"chaos"} = "greg\@chaos.cc.gatech.edu";
     $external_ssh_arg{"raspberry"} = "eisen\@eisenhauer.dyndns.org:4022";
 }
