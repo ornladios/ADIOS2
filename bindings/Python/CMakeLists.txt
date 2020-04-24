@@ -9,6 +9,11 @@ Python_add_library(adios2_py MODULE
   py11glue.cpp
 )
 if(ADIOS2_HAVE_MPI)
+  target_sources(adios2_py PRIVATE
+    py11ADIOSMPI.cpp
+    py11FileMPI.cpp
+    py11IOMPI.cpp
+  )
   set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
   set(maybe_adios2_core_mpi adios2_core_mpi)
   set(maybe_mpi4py Python::mpi4py)
