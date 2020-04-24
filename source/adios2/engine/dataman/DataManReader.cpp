@@ -21,8 +21,6 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              helper::Comm comm)
 : DataManCommon("DataManReader", io, name, mode, std::move(comm))
 {
-    GetParameter(m_IO.m_Parameters, "AlwaysProvideLatestTimestep",
-                 m_ProvideLatest);
 
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
 
@@ -124,7 +122,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
 
     m_CurrentStepMetadata = m_FastSerializer.GetEarliestLatestStep(
-        m_CurrentStep, m_TotalWriters, timeout, m_ProvideLatest);
+        m_CurrentStep, m_TotalWriters, timeout, true);
 
     if (m_CurrentStepMetadata == nullptr)
     {

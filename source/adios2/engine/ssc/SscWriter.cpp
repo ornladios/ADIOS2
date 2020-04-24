@@ -11,6 +11,7 @@
 #include "SscWriter.tcc"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosCommMPI.h"
+#include "adios2/helper/adiosString.h"
 
 namespace adios2
 {
@@ -25,15 +26,16 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    ssc::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
-    ssc::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
-    ssc::GetParameter(m_IO.m_Parameters, "MaxFilenameLength",
-                      m_MaxFilenameLength);
-    ssc::GetParameter(m_IO.m_Parameters, "RendezvousAppCount",
-                      m_RendezvousAppCount);
-    ssc::GetParameter(m_IO.m_Parameters, "MaxStreamsPerApp",
-                      m_MaxStreamsPerApp);
-    ssc::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs", m_OpenTimeoutSecs);
+    helper::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
+    helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    helper::GetParameter(m_IO.m_Parameters, "MaxFilenameLength",
+                         m_MaxFilenameLength);
+    helper::GetParameter(m_IO.m_Parameters, "RendezvousAppCount",
+                         m_RendezvousAppCount);
+    helper::GetParameter(m_IO.m_Parameters, "MaxStreamsPerApp",
+                         m_MaxStreamsPerApp);
+    helper::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs",
+                         m_OpenTimeoutSecs);
 
     m_Buffer.resize(1);
 
@@ -153,23 +155,23 @@ void SscWriter::EndStep()
     }
     else
     {
-        if (m_MpiMode == "TwoSided")
+        if (m_MpiMode == "twosided")
         {
             PutTwoSided();
         }
-        else if (m_MpiMode == "OneSidedFencePush")
+        else if (m_MpiMode == "onesidedfencepush")
         {
             PutOneSidedFencePush();
         }
-        else if (m_MpiMode == "OneSidedPostPush")
+        else if (m_MpiMode == "onesidedpostpush")
         {
             PutOneSidedPostPush();
         }
-        else if (m_MpiMode == "OneSidedFencePull")
+        else if (m_MpiMode == "onesidedfencepull")
         {
             PutOneSidedFencePull();
         }
-        else if (m_MpiMode == "OneSidedPostPull")
+        else if (m_MpiMode == "onesidedpostpull")
         {
             PutOneSidedPostPull();
         }
@@ -386,7 +388,7 @@ void SscWriter::DoClose(const int transportIndex)
 
     m_Buffer[0] = 1;
 
-    if (m_MpiMode == "TwoSided")
+    if (m_MpiMode == "twosided")
     {
         std::vector<MPI_Request> requests;
         for (const auto &i : m_AllSendingReaderRanks)
@@ -398,7 +400,7 @@ void SscWriter::DoClose(const int transportIndex)
         MPI_Status statuses[requests.size()];
         MPI_Waitall(requests.size(), requests.data(), statuses);
     }
-    else if (m_MpiMode == "OneSidedFencePush")
+    else if (m_MpiMode == "onesidedfencepush")
     {
         MPI_Win_fence(0, m_MpiWin);
         for (const auto &i : m_AllSendingReaderRanks)
@@ -408,7 +410,7 @@ void SscWriter::DoClose(const int transportIndex)
         }
         MPI_Win_fence(0, m_MpiWin);
     }
-    else if (m_MpiMode == "OneSidedPostPush")
+    else if (m_MpiMode == "onesidedpostpush")
     {
         MPI_Win_start(m_MpiAllReadersGroup, 0, m_MpiWin);
         for (const auto &i : m_AllSendingReaderRanks)
@@ -418,12 +420,12 @@ void SscWriter::DoClose(const int transportIndex)
         }
         MPI_Win_complete(m_MpiWin);
     }
-    else if (m_MpiMode == "OneSidedFencePull")
+    else if (m_MpiMode == "onesidedfencepull")
     {
         MPI_Win_fence(0, m_MpiWin);
         MPI_Win_fence(0, m_MpiWin);
     }
-    else if (m_MpiMode == "OneSidedPostPull")
+    else if (m_MpiMode == "onesidedpostpull")
     {
         MPI_Win_post(m_MpiAllReadersGroup, 0, m_MpiWin);
         MPI_Win_wait(m_MpiWin);

@@ -28,15 +28,16 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    ssc::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
-    ssc::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
-    ssc::GetParameter(m_IO.m_Parameters, "MaxFilenameLength",
-                      m_MaxFilenameLength);
-    ssc::GetParameter(m_IO.m_Parameters, "RendezvousAppCount",
-                      m_RendezvousAppCount);
-    ssc::GetParameter(m_IO.m_Parameters, "MaxStreamsPerApp",
-                      m_MaxStreamsPerApp);
-    ssc::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs", m_OpenTimeoutSecs);
+    helper::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
+    helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    helper::GetParameter(m_IO.m_Parameters, "MaxFilenameLength",
+                         m_MaxFilenameLength);
+    helper::GetParameter(m_IO.m_Parameters, "RendezvousAppCount",
+                         m_RendezvousAppCount);
+    helper::GetParameter(m_IO.m_Parameters, "MaxStreamsPerApp",
+                         m_MaxStreamsPerApp);
+    helper::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs",
+                         m_OpenTimeoutSecs);
 
     m_Buffer.resize(1);
 
@@ -118,23 +119,23 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     else
     {
         ++m_CurrentStep;
-        if (m_MpiMode == "TwoSided")
+        if (m_MpiMode == "twosided")
         {
             GetTwoSided();
         }
-        else if (m_MpiMode == "OneSidedFencePush")
+        else if (m_MpiMode == "onesidedfencepush")
         {
             GetOneSidedFencePush();
         }
-        else if (m_MpiMode == "OneSidedPostPush")
+        else if (m_MpiMode == "onesidedpostpush")
         {
             GetOneSidedPostPush();
         }
-        else if (m_MpiMode == "OneSidedFencePull")
+        else if (m_MpiMode == "onesidedfencepull")
         {
             GetOneSidedFencePull();
         }
-        else if (m_MpiMode == "OneSidedPostPull")
+        else if (m_MpiMode == "onesidedpostpull")
         {
             GetOneSidedPostPull();
         }
