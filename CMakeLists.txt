@@ -23,6 +23,19 @@ if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 endif()
 
+if(NOT DEFINED DILL_RUNTIME_COMPONENT)
+  set(DILL_RUNTIME_COMPONENT bin)
+endif()
+if(NOT DEFINED DILL_LIBRARY_COMPONENT)
+  set(DILL_LIBRARY_COMPONENT shlib)
+endif()
+if(NOT DEFINED DILL_ARCHIVE_COMPONENT)
+  set(DILL_ARCHIVE_COMPONENT lib)
+endif()
+if(NOT DEFINED DILL_HEADER_COMPONENT)
+  set(DILL_HEADER_COMPONENT dev)
+endif()
+
 # Setup shared library defaults.  If explicitly specified somehow, then default 
 # to that.  Otherwise base the default on whether or not shared libs are even
 # supported.
@@ -36,7 +49,7 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 
 # Default to a RelWithDebInfo build if not specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebugInfo)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebInfo)
 endif()
 
 set(SRC_list
@@ -143,10 +156,18 @@ find_package(LibFFI)
 if(LIBFFI_FOUND)
   message(STATUS "Enabling emulation")
   set(EMULATION_POSSIBLE TRUE)
-elseif(DILL_IGNORE_NATIVE)
+elseif(DILL_IGNORE_NATIVE OR (NATIVE_ARCH STREQUAL "UNSUPPORTED"))
   find_program (AUTOCONF autoconf)
-  if (AUTOCONF STREQUAL "AUTOCONF-NOTFOUND")
-      message(FATAL_ERROR "DILL_IGNORE_NATIVE set, but autoconf not found, so unable to build libffi")
+  find_program (AUTOMAKE automake)
+  if ((AUTOCONF STREQUAL "AUTOCONF-NOTFOUND") OR (AUTOMAKE STREQUAL "AUTOMAKE-NOTFOUND"))
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+      # I am top-level project.
+      message(FATAL_ERROR "DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
+    else()
+      # I am called from other project with add_subdirectory().
+      message(STATUS "DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
+      return()
+    endif()
   endif()
   set(LIBFFI_INTERNAL ON)
   message(STATUS "Using private copy of libffi")
@@ -190,7 +211,7 @@ elseif(DILL_IGNORE_NATIVE)
 
   if(NOT BUILD_SHARED_LIBS)
     install(FILES ${PROJECT_SOURCE_DIR}/cmake/FindLibFFI.cmake
-      DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+      DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT ${DILL_HEADER_COMPONENT})
   endif()
 
   message(STATUS "Enabling emulation")
@@ -251,13 +272,20 @@ if(DILL_MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
     set(BUILD_EMULATOR TRUE)
   endif()
 else()
-  message(FATAL_ERROR
-    "Configure has detected no native dynamic code generation support 
-   for this architecture (\"${NATIVE_ARCH}\"), -DDILL_MULTI_TARGET=ON 
-   was not specified, and no emulation is possible (libffi library 
-   not found)
-   NO LIBRARY WILL BE BUILT"
-  )
+  if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    # I am top-level project.
+    message(FATAL_ERROR
+	"Configure has detected no native dynamic code generation support 
+	 for this architecture (\"${NATIVE_ARCH}\"), -DDILL_MULTI_TARGET=ON 
+	 was not specified, and no emulation is possible (libffi library 
+	 not found)  NO LIBRARY WILL BE BUILT" )
+  else()
+    message(STATUS
+	"No native dynamic code generation support for this architecture 
+	(\"${CMAKE_SYSTEM_PROCESSOR}\"), -DDILL_MULTI_TARGET=ON was not specified, and no emulation 
+	is possible (libffi library not found) NO DILL LIBRARY WILL BE BUILT, but this is not a failure")
+    return()
+  endif()
 endif()
 
 include(CheckIncludeFiles)
@@ -357,30 +385,34 @@ if(DILL_INSTALL_PKGCONFIG)
     @ONLY
   )
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dill.pc
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig" COMPONENT ${DILL_HEADER_COMPONENT})
   configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/dill-config.in
     ${CMAKE_CURRENT_BINARY_DIR}/dill-config
     @ONLY
   )
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/dill-config
-    DESTINATION "${CMAKE_INSTALL_BINDIR}")
+    DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT ${DILL_HEADER_COMPONENT})
 endif()
 
 option(DILL_INSTALL_HEADERS "Install Dill header files" ON)
 mark_as_advanced(DILL_INSTALL_HEADERS)
 if(DILL_INSTALL_HEADERS)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dill.h"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" COMPONENT ${DILL_HEADER_COMPONENT})
 endif()
 
+set(namelink_component_args)
+if(NOT CMAKE_VERSION VERSION_LESS 3.12)
+  set(namelink_component_args NAMELINK_COMPONENT ${DILL_HEADER_COMPONENT})
+endif()
 install(TARGETS dill
   # IMPORTANT: Add the dill library to the "export-set"
   EXPORT dill-targets
-  RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"          COMPONENT bin
-  LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"          COMPONENT shlib
-  ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"          COMPONENT lib
-  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/dill" COMPONENT dev)
+  RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"          COMPONENT ${DILL_RUNTIME_COMPONENT}
+  LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"          COMPONENT ${DILL_LIBRARY_COMPONENT} ${namelink_component_args}
+  ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"          COMPONENT ${DILL_ARCHIVE_COMPONENT}
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/dill" COMPONENT ${DILL_HEADER_COMPONENT})
 
 if(${CMAKE_C_COMPILER_ID} MATCHES "Intel") 
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
@@ -410,20 +442,20 @@ configure_file(dill-config-install.cmake.in
 install(FILES
   "${PROJECT_BINARY_DIR}/dill-config-common.cmake"
   "${PROJECT_BINARY_DIR}/dill-config-version.cmake"
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT ${DILL_HEADER_COMPONENT})
 
 install(
   FILES "${PROJECT_BINARY_DIR}/dill-config-install.cmake"
   RENAME dill-config.cmake
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT ${DILL_HEADER_COMPONENT})
  
 # Install the export set for use with the install-tree
 install(EXPORT dill-targets NAMESPACE dill::
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT ${DILL_HEADER_COMPONENT})
 
 # Install extra find module dependencies
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
-  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR} COMPONENT ${DILL_HEADER_COMPONENT}
   FILES_MATCHING PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
 )
 
