@@ -315,6 +315,23 @@ bool TransportMan::AllTransportsClosed() const noexcept
     return allClose;
 }
 
+bool TransportMan::FileExists(const std::string &name, const Params &parameters,
+                              const bool profile)
+{
+    bool exists = false;
+    try
+    {
+        std::shared_ptr<Transport> file =
+            OpenFileTransport(name, Mode::Read, parameters, profile);
+        exists = true;
+        file->Close();
+    }
+    catch (std::ios_base::failure &e)
+    {
+    }
+    return exists;
+}
+
 // PRIVATE
 std::shared_ptr<Transport>
 TransportMan::OpenFileTransport(const std::string &fileName,

@@ -165,6 +165,15 @@ public:
 
     void SeekToFileBegin(const int transportIndex = 0);
 
+    /**
+     * Check if a file exists.
+     * @param name
+     * @param parameters
+     * @param profile
+     */
+    bool FileExists(const std::string &name, const Params &parameters,
+                    const bool profile);
+
 protected:
     helper::Comm const &m_Comm;
 

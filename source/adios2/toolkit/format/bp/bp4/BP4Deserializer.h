@@ -36,8 +36,6 @@ public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
 
-    bool m_WriterIsActive = false;
-
     /**
      * Unique constructor
      * @param comm multi-process communicator
@@ -153,12 +151,6 @@ public:
     template <class T>
     std::vector<typename core::Variable<T>::Info>
     BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
-
-    /** Parse active flag in index table header (64 bytes).
-     *  Header must be read by caller into a vector of 64 characters.
-     *  It sets m_WriterIsActive and returns the same value
-     */
-    bool ReadActiveFlag(std::vector<char> &buffer);
 
     // TODO : Will deprecate all function below
     std::map<std::string, helper::SubFileInfoMap>

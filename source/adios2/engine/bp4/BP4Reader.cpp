@@ -514,29 +514,18 @@ bool BP4Reader::CheckWriterActive()
     size_t flag = 0;
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
-        try
-        {
-            /* Look for the active flag file */
-            const std::string activeFlagFile(
-                m_BP4Deserializer.GetBPActiveFlagFileName(m_Name));
+        /* Look for the active flag file */
+        const std::string activeFlagFile(
+            m_BP4Deserializer.GetBPActiveFlagFileName(m_Name));
 
-            m_ActiveFlagFileManager.OpenFileID(
-                activeFlagFile, 0, adios2::Mode::Read,
-                m_IO.m_TransportsParameters[0],
-                m_BP4Deserializer.m_Profiler.m_IsActive);
-
-            flag = 1;
-
-            m_ActiveFlagFileManager.CloseFiles(0);
-        }
-        catch (std::ios_base::failure &e)
-        {
-            flag = 0;
-        }
+        flag = m_ActiveFlagFileManager.FileExists(
+            activeFlagFile, m_IO.m_TransportsParameters[0],
+            m_BP4Deserializer.m_Profiler.m_IsActive);
+        std::cout << " -- Active flag status: " << flag << std::endl;
     }
     flag = m_BP4Deserializer.m_Comm.BroadcastValue(flag, 0);
-    m_BP4Deserializer.m_WriterIsActive = (flag > 0);
-    return m_BP4Deserializer.m_WriterIsActive;
+    m_WriterIsActive = (flag > 0);
+    return m_WriterIsActive;
 }
 
 StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
@@ -567,7 +556,7 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
     const bool saveReadStreaming = m_IO.m_ReadStreaming;
 
     m_IO.m_ReadStreaming = false;
-    while (m_BP4Deserializer.m_WriterIsActive)
+    while (m_WriterIsActive)
     {
         size_t newIdxSize = UpdateBuffer(timeoutInstant, pollSeconds / 10);
         if (newIdxSize > 0)
@@ -591,7 +580,7 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
     if (!haveNewStep)
     {
         m_IO.m_ReadStreaming = false;
-        if (m_BP4Deserializer.m_WriterIsActive)
+        if (m_WriterIsActive)
         {
             retval = StepStatus::NotReady;
         }
