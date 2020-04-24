@@ -326,7 +326,7 @@ bool TransportMan::FileExists(const std::string &name, const Params &parameters,
         exists = true;
         file->Close();
     }
-    catch (std::ios_base::failure &e)
+    catch (std::ios_base::failure &)
     {
     }
     return exists;

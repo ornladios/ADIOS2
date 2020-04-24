@@ -11,7 +11,7 @@
 #include "FileDrainer.h"
 
 #include <chrono>
-#include <cstdio>  // std::remove
+#include <cstdio>
 #include <cstring> // std::memcpy
 #include <thread>  // std::this_thread::sleep_for
 
