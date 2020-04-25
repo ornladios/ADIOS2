@@ -47,7 +47,7 @@ private:
     std::vector<std::string> m_ControlAddresses;
     format::DmvVecPtr m_CurrentStepMetadata;
     std::thread m_SubscriberThread;
-    format::DataManSerializer m_FastSerializer;
+    format::DataManSerializer m_Serializer;
     int m_MpiRank;
     int m_MpiSize;
     std::string m_IPAddress;

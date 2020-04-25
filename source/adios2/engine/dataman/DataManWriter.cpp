@@ -20,7 +20,7 @@ namespace engine
 DataManWriter::DataManWriter(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
 : Engine("DataManWriter", io, name, openMode, std::move(comm)),
-  m_FastSerializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
+  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
 {
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
@@ -112,7 +112,7 @@ DataManWriter::~DataManWriter()
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     ++m_CurrentStep;
-    m_FastSerializer.NewWriterBuffer(m_SerializerBufferSize);
+    m_Serializer.NewWriterBuffer(m_SerializerBufferSize);
 
     if (m_Verbosity >= 5)
     {
@@ -131,11 +131,11 @@ void DataManWriter::EndStep()
 {
     if (m_CurrentStep == 0)
     {
-        m_FastSerializer.PutAttributes(m_IO);
+        m_Serializer.PutAttributes(m_IO);
     }
 
-    m_FastSerializer.AttachAttributesToLocalPack();
-    const auto buf = m_FastSerializer.GetLocalPack();
+    m_Serializer.AttachAttributesToLocalPack();
+    const auto buf = m_Serializer.GetLocalPack();
     m_SerializerBufferSize = buf->size();
     m_DataPublisher.PushBufferQueue(buf);
 
