@@ -22,8 +22,10 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 : Engine("DataManWriter", io, name, openMode, std::move(comm)),
   m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
 {
+
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
+
     helper::GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);
     helper::GetParameter(m_IO.m_Parameters, "Port", m_Port);
     helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
@@ -32,6 +34,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
                          m_RendezvousReaderCount);
     helper::GetParameter(m_IO.m_Parameters, "RendezvousMilliseconds",
                          m_RendezvousMilliseconds);
+    helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
 
     if (m_IPAddress.empty())
     {
@@ -84,7 +87,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         ReplyThread(m_ControlAddress, m_RendezvousReaderCount);
     }
 
-    m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout);
+    m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout, m_DoubleBuffer);
 
     std::this_thread::sleep_for(
         std::chrono::milliseconds(m_RendezvousMilliseconds));
@@ -137,7 +140,8 @@ void DataManWriter::EndStep()
     m_Serializer.AttachAttributesToLocalPack();
     const auto buf = m_Serializer.GetLocalPack();
     m_SerializerBufferSize = buf->size();
-    m_DataPublisher.PushBufferQueue(buf);
+
+    m_DataPublisher.Send(buf);
 
     if (m_Verbosity >= 5)
     {
@@ -169,7 +173,7 @@ void DataManWriter::DoClose(const int transportIndex)
     std::string s = endSignal.dump() + '\0';
     auto cvp = std::make_shared<std::vector<char>>(s.size());
     std::memcpy(cvp->data(), s.c_str(), s.size());
-    m_DataPublisher.PushBufferQueue(cvp);
+    m_DataPublisher.Send(cvp);
 
     m_ThreadActive = false;
     if (m_ReplyThread.joinable())
@@ -181,6 +185,7 @@ void DataManWriter::DoClose(const int transportIndex)
         std::cout << "DataManWriter::DoClose() Rank " << m_MpiRank << ", Step "
                   << m_CurrentStep << std::endl;
     }
+    m_IsClosed = true;
 }
 
 void DataManWriter::ReplyThread(const std::string &address, const int times)

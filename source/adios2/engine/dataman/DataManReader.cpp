@@ -33,6 +33,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
                          m_RendezvousReaderCount);
     helper::GetParameter(m_IO.m_Parameters, "RendezvousMilliseconds",
                          m_RendezvousMilliseconds);
+    helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
 
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
 
@@ -67,7 +68,8 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     for (const auto &address : m_DataAddresses)
     {
         auto dataZmq = std::make_shared<adios2::zmq::ZmqPubSub>();
-        dataZmq->OpenSubscriber(address, m_Timeout, m_ReceiverBufferSize);
+        dataZmq->OpenSubscriber(address, m_Timeout, m_DoubleBuffer,
+                                m_ReceiverBufferSize);
         m_ZmqSubscriberVec.push_back(dataZmq);
     }
     m_SubscriberThread = std::thread(&DataManReader::SubscriberThread, this);
@@ -203,7 +205,7 @@ void DataManReader::SubscriberThread()
     {
         for (auto &z : m_ZmqSubscriberVec)
         {
-            auto buffer = z->PopBufferQueue();
+            auto buffer = z->Receive();
             if (buffer != nullptr && buffer->size() > 0)
             {
                 if (buffer->size() < 64)
