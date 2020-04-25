@@ -21,7 +21,7 @@ namespace engine
 DataManReader::DataManReader(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
 : Engine("DataManReader", io, name, openMode, std::move(comm)),
-  m_FastSerializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
+  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
 {
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
@@ -133,7 +133,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         return StepStatus::EndOfStream;
     }
 
-    m_CurrentStepMetadata = m_FastSerializer.GetEarliestLatestStep(
+    m_CurrentStepMetadata = m_Serializer.GetEarliestLatestStep(
         m_CurrentStep, m_TotalWriters, timeout, true);
 
     if (m_CurrentStepMetadata == nullptr)
@@ -148,7 +148,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         return StepStatus::EndOfStream;
     }
 
-    m_FastSerializer.GetAttributes(m_IO);
+    m_Serializer.GetAttributes(m_IO);
 
     for (const auto &i : *m_CurrentStepMetadata)
     {
@@ -184,7 +184,7 @@ void DataManReader::PerformGets() {}
 
 void DataManReader::EndStep()
 {
-    m_FastSerializer.Erase(m_CurrentStep, true);
+    m_Serializer.Erase(m_CurrentStep, true);
     m_CurrentStepMetadata = nullptr;
     if (m_Verbosity >= 5)
     {
@@ -218,7 +218,7 @@ void DataManReader::SubscriberThread()
                     {
                     }
                 }
-                m_FastSerializer.PutPack(buffer);
+                m_Serializer.PutPack(buffer);
             }
         }
     }

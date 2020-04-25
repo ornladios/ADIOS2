@@ -55,7 +55,7 @@ private:
     size_t m_SerializerBufferSize = 128 * 1024 * 1024;
     bool m_ThreadActive = true;
 
-    format::DataManSerializer m_FastSerializer;
+    format::DataManSerializer m_Serializer;
     adios2::zmq::ZmqPubSub m_DataPublisher;
 
     void ReplyThread(const std::string &address, const int times);

@@ -920,23 +920,6 @@ bool DataManSerializer::CalculateOverlap(const Dims &inStart,
     return true;
 }
 
-/*
-size_t DataManSerializer::MinStep()
-{
-    TAU_SCOPED_TIMER_FUNC();
-    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-    size_t minStep = std::numeric_limits<size_t>::max();
-    for (const auto &i : m_DataManVarMap)
-    {
-        if (minStep > i.first)
-        {
-            minStep = i.first;
-        }
-    }
-    return minStep;
-}
-*/
-
 size_t DataManSerializer::LocalBufferSize() { return m_LocalBuffer->size(); }
 
 VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
