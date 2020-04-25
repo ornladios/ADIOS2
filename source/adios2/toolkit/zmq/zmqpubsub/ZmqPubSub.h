@@ -41,7 +41,7 @@ private:
 
     // For threads
     void WriterThread();
-    void ReaderThread(const int timeout, const size_t receiveBufferSize);
+    void ReaderThread();
     std::thread m_Thread;
     bool m_ThreadActive = true;
 

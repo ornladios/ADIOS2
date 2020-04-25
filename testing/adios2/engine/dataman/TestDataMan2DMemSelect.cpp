@@ -337,6 +337,10 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
         ASSERT_NE(111, attInt.Data()[0]);
         ASSERT_EQ(currentStep + 1, steps);
     }
+    else
+    {
+        std::cout << "no steps received " << std::endl;
+    }
     dataManReader.Close();
     print_lines = 0;
 }

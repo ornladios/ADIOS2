@@ -296,6 +296,10 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
         ASSERT_NE(111, attInt.Data()[0]);
         ASSERT_EQ(currentStep + 1, steps);
     }
+    else
+    {
+        std::cout << "no steps received " << std::endl;
+    }
     dataManReader.Close();
 }
 

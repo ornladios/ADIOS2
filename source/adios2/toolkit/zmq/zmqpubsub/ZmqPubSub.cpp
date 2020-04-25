@@ -64,13 +64,13 @@ void ZmqPubSub::OpenPublisher(const std::string &address, const int timeout)
 {
     m_Timeout = timeout;
 
-    void *m_ZmqContext = zmq_ctx_new();
+    m_ZmqContext = zmq_ctx_new();
     if (not m_ZmqContext)
     {
         throw std::runtime_error("creating zmq context failed");
     }
 
-    void *m_ZmqSocket = zmq_socket(m_ZmqContext, ZMQ_PUB);
+    m_ZmqSocket = zmq_socket(m_ZmqContext, ZMQ_PUB);
     if (not m_ZmqSocket)
     {
         throw std::runtime_error("creating zmq socket failed");
@@ -112,7 +112,7 @@ void ZmqPubSub::OpenSubscriber(const std::string &address, const int timeout,
 
     m_ReceiverBuffer.resize(bufferSize);
 
-    m_Thread = std::thread(&ZmqPubSub::ReaderThread, this, timeout, bufferSize);
+    m_Thread = std::thread(&ZmqPubSub::ReaderThread, this);
 }
 
 void ZmqPubSub::PushBufferQueue(std::shared_ptr<std::vector<char>> buffer)
@@ -148,12 +148,12 @@ void ZmqPubSub::WriterThread()
     }
 }
 
-void ZmqPubSub::ReaderThread(const int timeout, const size_t bufferSize)
+void ZmqPubSub::ReaderThread()
 {
     while (m_ThreadActive)
     {
-        int ret = zmq_recv(m_ZmqSocket, m_ReceiverBuffer.data(), bufferSize,
-                           ZMQ_DONTWAIT);
+        int ret = zmq_recv(m_ZmqSocket, m_ReceiverBuffer.data(),
+                           m_ReceiverBuffer.size(), ZMQ_DONTWAIT);
         if (ret > 0)
         {
             auto buff = std::make_shared<std::vector<char>>(ret);
