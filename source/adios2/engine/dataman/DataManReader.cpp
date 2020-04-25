@@ -33,6 +33,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
                          m_RendezvousReaderCount);
     helper::GetParameter(m_IO.m_Parameters, "RendezvousMilliseconds",
                          m_RendezvousMilliseconds);
+    helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
 
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
 
