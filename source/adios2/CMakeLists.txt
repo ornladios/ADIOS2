@@ -172,7 +172,6 @@ endif()
 
 if(ADIOS2_HAVE_DataMan)
     target_sources(adios2_core PRIVATE
-        engine/dataman/DataManCommon.cpp
         engine/dataman/DataManReader.cpp
         engine/dataman/DataManReader.tcc
         engine/dataman/DataManWriter.cpp

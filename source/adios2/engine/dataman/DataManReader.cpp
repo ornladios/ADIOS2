@@ -9,6 +9,7 @@
  */
 
 #include "DataManReader.tcc"
+#include "adios2/helper/adiosString.h"
 
 namespace adios2
 {
@@ -17,10 +18,21 @@ namespace core
 namespace engine
 {
 
-DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
-                             helper::Comm comm)
-: DataManCommon("DataManReader", io, name, mode, std::move(comm))
+DataManReader::DataManReader(IO &io, const std::string &name,
+                             const Mode openMode, helper::Comm comm)
+: Engine("DataManReader", io, name, openMode, std::move(comm)),
+  m_FastSerializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
 {
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
+    helper::GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);
+    helper::GetParameter(m_IO.m_Parameters, "Port", m_Port);
+    helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
+    helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    helper::GetParameter(m_IO.m_Parameters, "RendezvousReaderCount",
+                         m_RendezvousReaderCount);
+    helper::GetParameter(m_IO.m_Parameters, "RendezvousMilliseconds",
+                         m_RendezvousMilliseconds);
 
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
 

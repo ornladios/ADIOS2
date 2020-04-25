@@ -19,8 +19,20 @@ namespace engine
 
 DataManWriter::DataManWriter(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
-: DataManCommon("DataManWriter", io, name, openMode, std::move(comm))
+: Engine("DataManWriter", io, name, openMode, std::move(comm)),
+  m_FastSerializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
 {
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
+    helper::GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);
+    helper::GetParameter(m_IO.m_Parameters, "Port", m_Port);
+    helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
+    helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    helper::GetParameter(m_IO.m_Parameters, "RendezvousReaderCount",
+                         m_RendezvousReaderCount);
+    helper::GetParameter(m_IO.m_Parameters, "RendezvousMilliseconds",
+                         m_RendezvousMilliseconds);
+
     if (m_IPAddress.empty())
     {
         throw(std::invalid_argument("IP address not specified"));

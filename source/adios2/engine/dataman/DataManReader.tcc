@@ -12,6 +12,7 @@
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_TCC_
 
 #include "DataManReader.h"
+#include "adios2/helper/adiosSystem.h"
 
 namespace adios2
 {
@@ -30,7 +31,7 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    if (m_IsRowMajor)
+    if (helper::IsRowMajor(m_IO.m_HostLanguage))
     {
         while (true)
         {
