@@ -40,7 +40,7 @@ private:
     std::mutex m_BufferQueueMutex;
 
     // For threads
-    void WriterThread(const std::string &address);
+    void WriterThread();
     void ReaderThread(const int timeout, const size_t receiveBufferSize);
     std::thread m_Thread;
     bool m_ThreadActive = true;

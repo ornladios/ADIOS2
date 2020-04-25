@@ -63,7 +63,26 @@ ZmqPubSub::~ZmqPubSub()
 void ZmqPubSub::OpenPublisher(const std::string &address, const int timeout)
 {
     m_Timeout = timeout;
-    m_Thread = std::thread(&ZmqPubSub::WriterThread, this, address);
+
+    void *m_ZmqContext = zmq_ctx_new();
+    if (not m_ZmqContext)
+    {
+        throw std::runtime_error("creating zmq context failed");
+    }
+
+    void *m_ZmqSocket = zmq_socket(m_ZmqContext, ZMQ_PUB);
+    if (not m_ZmqSocket)
+    {
+        throw std::runtime_error("creating zmq socket failed");
+    }
+
+    int error = zmq_bind(m_ZmqSocket, address.c_str());
+    if (error)
+    {
+        throw std::runtime_error("binding zmq socket failed");
+    }
+
+    m_Thread = std::thread(&ZmqPubSub::WriterThread, this);
 }
 
 void ZmqPubSub::OpenSubscriber(const std::string &address, const int timeout,
@@ -117,47 +136,15 @@ std::shared_ptr<std::vector<char>> ZmqPubSub::PopBufferQueue()
     }
 }
 
-void ZmqPubSub::WriterThread(const std::string &address)
+void ZmqPubSub::WriterThread()
 {
-    void *context = zmq_ctx_new();
-    if (not context)
-    {
-        throw std::runtime_error("creating zmq context failed");
-    }
-
-    void *socket = zmq_socket(context, ZMQ_PUB);
-    if (not socket)
-    {
-        throw std::runtime_error("creating zmq socket failed");
-    }
-
-    int error = zmq_bind(socket, address.c_str());
-    if (error)
-    {
-        throw std::runtime_error("binding zmq socket failed");
-    }
-
     while (m_ThreadActive)
     {
         auto buffer = PopBufferQueue();
         if (buffer != nullptr and buffer->size() > 0)
         {
-            zmq_send(socket, buffer->data(), buffer->size(), ZMQ_DONTWAIT);
-            if (m_Verbosity >= 5)
-            {
-                std::cout << "ZmqPubSub::WriterThread sent package size "
-                          << buffer->size() << std::endl;
-            }
+            zmq_send(m_ZmqSocket, buffer->data(), buffer->size(), ZMQ_DONTWAIT);
         }
-    }
-
-    if (socket)
-    {
-        zmq_close(socket);
-    }
-    if (context)
-    {
-        zmq_ctx_destroy(context);
     }
 }
 
