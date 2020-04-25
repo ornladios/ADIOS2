@@ -11,7 +11,10 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 
-#include "DataManCommon.h"
+#include "adios2/core/Engine.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.h"
+#include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
+#include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 
 namespace adios2
 {
@@ -20,7 +23,7 @@ namespace core
 namespace engine
 {
 
-class DataManReader : public DataManCommon
+class DataManReader : public Engine
 {
 
 public:
@@ -35,14 +38,27 @@ public:
 
 private:
     bool m_InitFailed = false;
+    int64_t m_CurrentStep = -1;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
     int m_TotalWriters;
+    std::vector<std::shared_ptr<adios2::zmq::ZmqPubSub>> m_ZmqSubscriberVec;
     adios2::zmq::ZmqReqRep m_ZmqRequester;
     std::vector<std::string> m_DataAddresses;
     std::vector<std::string> m_ControlAddresses;
-    std::vector<std::shared_ptr<adios2::zmq::ZmqPubSub>> m_ZmqSubscriberVec;
     format::DmvVecPtr m_CurrentStepMetadata;
     std::thread m_SubscriberThread;
+    format::DataManSerializer m_FastSerializer;
+    int m_MpiRank;
+    int m_MpiSize;
+    std::string m_IPAddress;
+    int m_Port = 50001;
+    int m_Timeout = 5;
+    int m_RendezvousReaderCount = 1;
+    int m_RendezvousMilliseconds = 1000;
+    int m_Verbosity = 0;
+    size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
+    bool m_ThreadActive = true;
+
     void SubscriberThread();
     void DoClose(const int transportIndex = -1) final;
 

@@ -11,7 +11,10 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_H_
 
-#include "DataManCommon.h"
+#include "adios2/core/Engine.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
+#include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
+#include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 
 namespace adios2
 {
@@ -20,7 +23,7 @@ namespace core
 namespace engine
 {
 
-class DataManWriter : public DataManCommon
+class DataManWriter : public Engine
 {
 
 public:
@@ -40,7 +43,19 @@ private:
     std::string m_ControlAddress;
     std::string m_AllAddresses;
     int m_CurrentReaderCount = 0;
+    int m_MpiRank;
+    int m_MpiSize;
+    std::string m_IPAddress;
+    int m_Port = 50001;
+    int m_RendezvousReaderCount = 1;
+    int m_RendezvousMilliseconds = 1000;
+    int m_Timeout = 5;
+    int m_Verbosity = 0;
+    int64_t m_CurrentStep = -1;
+    size_t m_SerializerBufferSize = 128 * 1024 * 1024;
+    bool m_ThreadActive = true;
 
+    format::DataManSerializer m_FastSerializer;
     adios2::zmq::ZmqPubSub m_DataPublisher;
 
     void ReplyThread(const std::string &address, const int times);
