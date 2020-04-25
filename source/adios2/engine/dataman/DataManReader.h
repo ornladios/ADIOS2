@@ -37,6 +37,14 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
+    std::string m_IPAddress;
+    int m_Port = 50001;
+    int m_Timeout = 5;
+    int m_RendezvousReaderCount = 1;
+    int m_RendezvousMilliseconds = 1000;
+    int m_Verbosity = 0;
+    bool m_DoubleBuffer = true;
+
     bool m_InitFailed = false;
     int64_t m_CurrentStep = -1;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
@@ -50,12 +58,6 @@ private:
     format::DataManSerializer m_Serializer;
     int m_MpiRank;
     int m_MpiSize;
-    std::string m_IPAddress;
-    int m_Port = 50001;
-    int m_Timeout = 5;
-    int m_RendezvousReaderCount = 1;
-    int m_RendezvousMilliseconds = 1000;
-    int m_Verbosity = 0;
     size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
     bool m_ThreadActive = true;
 
