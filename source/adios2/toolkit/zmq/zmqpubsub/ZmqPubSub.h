@@ -41,10 +41,14 @@ private:
 
     // For threads
     void WriterThread(const std::string &address);
-    void ReaderThread(const std::string &address, const int timeout,
-                      const size_t receiveBufferSize);
+    void ReaderThread(const int timeout, const size_t receiveBufferSize);
     std::thread m_Thread;
     bool m_ThreadActive = true;
+
+    // for zmq
+    void *m_ZmqContext = nullptr;
+    void *m_ZmqSocket = nullptr;
+    std::vector<char> m_ReceiverBuffer;
 
     // parameters
     int m_Timeout = 10;
