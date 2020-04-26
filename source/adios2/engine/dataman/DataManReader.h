@@ -40,8 +40,6 @@ private:
     std::string m_IPAddress;
     int m_Port = 50001;
     int m_Timeout = 5;
-    int m_RendezvousReaderCount = 1;
-    int m_RendezvousMilliseconds = 1000;
     int m_Verbosity = 0;
     bool m_DoubleBuffer = true;
 
