@@ -29,10 +29,6 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Port", m_Port);
     helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
-    helper::GetParameter(m_IO.m_Parameters, "RendezvousReaderCount",
-                         m_RendezvousReaderCount);
-    helper::GetParameter(m_IO.m_Parameters, "RendezvousMilliseconds",
-                         m_RendezvousMilliseconds);
     helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
 
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
@@ -73,6 +69,8 @@ DataManReader::DataManReader(IO &io, const std::string &name,
         m_ZmqSubscriberVec.push_back(dataZmq);
     }
     m_SubscriberThread = std::thread(&DataManReader::SubscriberThread, this);
+
+    m_ZmqRequester.Request("Ready", 5, address);
 
     if (m_Verbosity >= 5)
     {

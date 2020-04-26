@@ -32,8 +32,6 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "RendezvousReaderCount",
                          m_RendezvousReaderCount);
-    helper::GetParameter(m_IO.m_Parameters, "RendezvousMilliseconds",
-                         m_RendezvousMilliseconds);
     helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
 
     if (m_IPAddress.empty())
@@ -77,6 +75,8 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     addJson["ControlAddresses"] = caVec;
     m_AllAddresses = addJson.dump() + '\0';
 
+    m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout, m_DoubleBuffer);
+
     if (m_RendezvousReaderCount == 0)
     {
         m_ReplyThread = std::thread(&DataManWriter::ReplyThread, this,
@@ -86,11 +86,6 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     {
         ReplyThread(m_ControlAddress, m_RendezvousReaderCount);
     }
-
-    m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout, m_DoubleBuffer);
-
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(m_RendezvousMilliseconds));
 
     if (m_Verbosity >= 5)
     {
@@ -202,6 +197,10 @@ void DataManWriter::ReplyThread(const std::string &address, const int times)
             if (r == "Address")
             {
                 replier.SendReply(m_AllAddresses.data(), m_AllAddresses.size());
+            }
+            else if (r == "Ready")
+            {
+                replier.SendReply("OK", 2);
                 ++count;
             }
         }
