@@ -87,6 +87,11 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         ReplyThread();
         m_Comm.Barrier();
     }
+
+    if (m_DoubleBuffer)
+    {
+        m_PublishThread = std::thread(&DataManWriter::PublishThread, this);
+    }
 }
 
 DataManWriter::~DataManWriter()
@@ -117,13 +122,20 @@ void DataManWriter::EndStep()
     }
 
     m_Serializer.AttachAttributesToLocalPack();
-    const auto buf = m_Serializer.GetLocalPack();
-    if (buf->size() > m_SerializerBufferSize)
+    const auto buffer = m_Serializer.GetLocalPack();
+    if (buffer->size() > m_SerializerBufferSize)
     {
-        m_SerializerBufferSize = buf->size();
+        m_SerializerBufferSize = buffer->size();
     }
 
-    m_Publisher.Send(buf);
+    if (m_DoubleBuffer)
+    {
+        PushBufferQueue(buffer);
+    }
+    else
+    {
+        m_Publisher.Send(buffer);
+    }
 }
 
 void DataManWriter::Flush(const int transportIndex) {}
@@ -185,6 +197,15 @@ std::shared_ptr<std::vector<char>> DataManWriter::PopBufferQueue()
         auto ret = m_BufferQueue.front();
         m_BufferQueue.pop();
         return ret;
+    }
+}
+
+void DataManWriter::PublishThread()
+{
+    auto buffer = PopBufferQueue();
+    if (buffer != nullptr && buffer->size() > 0)
+    {
+        m_Publisher.Send(buffer);
     }
 }
 

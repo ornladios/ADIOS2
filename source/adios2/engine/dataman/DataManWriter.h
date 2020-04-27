@@ -71,6 +71,7 @@ private:
     std::shared_ptr<std::vector<char>> PopBufferQueue();
 
     void ReplyThread();
+    void PublishThread();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
