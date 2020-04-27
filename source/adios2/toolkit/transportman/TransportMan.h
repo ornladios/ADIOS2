@@ -45,7 +45,7 @@ public:
      * Unique base constructor
      * @param comm
      */
-    TransportMan(helper::Comm const &comm);
+    TransportMan(helper::Comm &comm);
 
     virtual ~TransportMan() = default;
 
@@ -152,12 +152,27 @@ public:
      */
     void CloseFiles(const int transportIndex = -1);
 
+    /**
+     * Delete file or files depending on transport index. The files
+     * must be open for this function to have an effect.
+     */
+    void DeleteFiles(const int transportIndex = -1);
+
     /** Checks if all transports are closed */
     bool AllTransportsClosed() const noexcept;
 
     void SeekToFileEnd(const int transportIndex = 0);
 
     void SeekToFileBegin(const int transportIndex = 0);
+
+    /**
+     * Check if a file exists.
+     * @param name
+     * @param parameters
+     * @param profile
+     */
+    bool FileExists(const std::string &name, const Params &parameters,
+                    const bool profile);
 
 protected:
     helper::Comm const &m_Comm;

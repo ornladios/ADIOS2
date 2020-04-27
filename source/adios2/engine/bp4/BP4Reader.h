@@ -70,9 +70,14 @@ private:
     transportman::TransportMan m_MDIndexFileManager;
     size_t m_MDIndexFileProcessedSize = 0;
 
+    /* transport manager for managing the active flag file */
+    transportman::TransportMan m_ActiveFlagFileManager;
+    bool m_WriterIsActive = true;
+
     /** used for per-step reads, TODO: to be moved to BP4Deserializer */
     size_t m_CurrentStep = 0;
     bool m_FirstStep = true;
+    bool m_IdxHeaderParsed = false; // true after first index parsing
 
     void Init();
     void InitTransports();
@@ -97,9 +102,9 @@ private:
      */
     void ProcessMetadataForNewSteps(const size_t newIdxSize);
 
-    /** Check the active status flag in index file.
-     *  @return true if writer is still active
-     *  it sets BP4Deserialized.m_WriterIsActive
+    /** Check the active status of the writer.
+     *  @return true if writer is still active.
+     *  It sets m_WriterIsActive.
      */
     bool CheckWriterActive();
 

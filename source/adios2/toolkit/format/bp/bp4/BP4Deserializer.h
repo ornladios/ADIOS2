@@ -36,8 +36,6 @@ public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
 
-    bool m_WriterIsActive = false;
-
     /**
      * Unique constructor
      * @param comm multi-process communicator
@@ -47,8 +45,8 @@ public:
     ~BP4Deserializer() = default;
 
     void ParseMetadataIndex(const BufferSTL &bufferSTL,
-                            const size_t absoluteStartPos = 0,
-                            const bool hasHeader = true);
+                            const size_t absoluteStartPos,
+                            const bool hasHeader);
 
     /* Return the position in the buffer where processing ends. The processing
      * is controlled by the number of records in the Index, which may be less
@@ -153,12 +151,6 @@ public:
     template <class T>
     std::vector<typename core::Variable<T>::Info>
     BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
-
-    /** Parse active flag in index table header (64 bytes).
-     *  Header must be read by caller into a vector of 64 characters.
-     *  It sets m_WriterIsActive and returns the same value
-     */
-    bool ReadActiveFlag(std::vector<char> &buffer);
 
     // TODO : Will deprecate all function below
     std::map<std::string, helper::SubFileInfoMap>

@@ -33,7 +33,7 @@ namespace adios2
 namespace transportman
 {
 
-TransportMan::TransportMan(helper::Comm const &comm) : m_Comm(comm) {}
+TransportMan::TransportMan(helper::Comm &comm) : m_Comm(comm) {}
 
 void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
                                  const bool nodeLocal)
@@ -276,6 +276,29 @@ void TransportMan::CloseFiles(const int transportIndex)
     }
 }
 
+void TransportMan::DeleteFiles(const int transportIndex)
+{
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+
+            if (transport->m_Type == "File")
+            {
+                transport->Delete();
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to CloseFiles with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->Delete();
+    }
+}
+
 bool TransportMan::AllTransportsClosed() const noexcept
 {
     bool allClose = true;
@@ -290,6 +313,23 @@ bool TransportMan::AllTransportsClosed() const noexcept
         }
     }
     return allClose;
+}
+
+bool TransportMan::FileExists(const std::string &name, const Params &parameters,
+                              const bool profile)
+{
+    bool exists = false;
+    try
+    {
+        std::shared_ptr<Transport> file =
+            OpenFileTransport(name, Mode::Read, parameters, profile);
+        exists = true;
+        file->Close();
+    }
+    catch (std::ios_base::failure &)
+    {
+    }
+    return exists;
 }
 
 // PRIVATE

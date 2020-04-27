@@ -8,6 +8,7 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "FileFStream.h"
+#include <cstdio> // remove
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> // std::ios_base::failure
@@ -220,6 +221,16 @@ void FileFStream::Close()
 
     CheckFile("couldn't close file " + m_Name + ", in call to fstream close");
     m_IsOpen = false;
+}
+
+void FileFStream::Delete()
+{
+    WaitForOpen();
+    if (m_IsOpen)
+    {
+        Close();
+    }
+    std::remove(m_Name.c_str());
 }
 
 void FileFStream::CheckFile(const std::string hint) const

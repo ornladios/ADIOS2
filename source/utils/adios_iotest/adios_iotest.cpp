@@ -85,6 +85,11 @@ int main(int argc, char *argv[])
         /* writing to one stream using two groups is not supported.
          * FIXME: we need to check for this condition and raise error
          */
+        if (!settings.myRank && settings.verbose)
+        {
+            std::cout << "Start App " + std::to_string(settings.appId) + ": "
+                      << std::endl;
+        }
         /* 1. Assign stream names with group names that appear in
            commands */
         // map of <streamName, groupName>
@@ -137,6 +142,11 @@ int main(int argc, char *argv[])
                 auto it = writeStreamMap.find(streamName);
                 if (it == writeStreamMap.end())
                 {
+                    if (!settings.myRank && settings.verbose)
+                    {
+                        std::cout << "    Create Output Stream " << streamName
+                                  << "... " << std::endl;
+                    }
                     std::shared_ptr<Stream> writer =
                         openStream(streamName, io, adios2::Mode::Write,
                                    settings.iolib, settings.appComm);
@@ -148,6 +158,8 @@ int main(int argc, char *argv[])
                 auto it = readStreamMap.find(streamName);
                 if (it == readStreamMap.end())
                 {
+                    std::cout << "    Open Input Stream " << streamName
+                              << "... " << std::endl;
                     std::shared_ptr<Stream> reader =
                         openStream(streamName, io, adios2::Mode::Read,
                                    settings.iolib, settings.appComm);

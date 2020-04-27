@@ -102,11 +102,13 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL,
                 std::to_string(m_Minifooter.Version) + " version \n");
         }
 
-        // Writer active flag
-        position = m_ActiveFlagPosition;
-        const char activeChar = helper::ReadValue<uint8_t>(
-            buffer, position, m_Minifooter.IsLittleEndian);
-        m_WriterIsActive = (activeChar == '\1' ? true : false);
+        /* Writer active flag (not used anymore)
+            //
+            //position = m_ActiveFlagPosition;
+            //const char activeChar = helper::ReadValue<uint8_t>(
+            //    buffer, position, m_Minifooter.IsLittleEndian);
+            //m_WriterIsActive = (activeChar == '\1' ? true : false);
+        */
 
         // move position to first row
         position = 64;
@@ -630,21 +632,6 @@ void BP4Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-}
-
-bool BP4Deserializer::ReadActiveFlag(std::vector<char> &buffer)
-{
-    if (buffer.size() < m_ActiveFlagPosition)
-    {
-        throw std::runtime_error("BP4Deserializer::CheckActiveFlag() is called "
-                                 "with a buffer smaller than required");
-    }
-    // Writer active flag
-    size_t position = m_ActiveFlagPosition;
-    const char activeChar = helper::ReadValue<uint8_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
-    m_WriterIsActive = (activeChar == '\1' ? true : false);
-    return m_WriterIsActive;
 }
 
 #define declare_template_instantiation(T)                                      \

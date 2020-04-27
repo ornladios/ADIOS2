@@ -31,11 +31,13 @@ BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("BP4Writer", io, name, mode, std::move(comm)), m_BP4Serializer(m_Comm),
   m_FileDataManager(m_Comm), m_FileMetadataManager(m_Comm),
-  m_FileMetadataIndexManager(m_Comm), m_FileDrainer()
+  m_FileMetadataIndexManager(m_Comm), m_FileActiveFlagManager(m_Comm),
+  m_FileDrainer()
 {
     TAU_SCOPED_TIMER("BP4Writer::Open");
     m_IO.m_ReadStreaming = false;
     m_EndMessage = " in call to IO Open BP4Writer " + m_Name + "\n";
+
     Init();
 }
 
@@ -242,6 +244,16 @@ void BP4Writer::InitTransports()
             m_FileMetadataManager.GetFilesBaseNames(
                 m_BBName, m_IO.m_TransportsParameters);
 
+        /* Create active flag file now to indicate a producer is active.
+         * When the index file is created, a reader might start polling on it,
+         * so the active flag should already exist. */
+        m_ActiveFlagFileNames =
+            m_BP4Serializer.GetBPActiveFlagFileNames(transportsNames);
+
+        m_FileActiveFlagManager.OpenFiles(
+            m_ActiveFlagFileNames, Mode::Write, m_IO.m_TransportsParameters,
+            m_BP4Serializer.m_Profiler.m_IsActive);
+
         m_MetadataFileNames =
             m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
 
@@ -266,41 +278,21 @@ void BP4Writer::InitTransports()
             m_DrainMetadataIndexFileNames =
                 m_BP4Serializer.GetBPMetadataIndexFileNames(
                     drainTransportNames);
+            m_DrainActiveFlagFileNames =
+                m_BP4Serializer.GetBPActiveFlagFileNames(drainTransportNames);
+
+            for (const auto &name : m_DrainActiveFlagFileNames)
+            {
+                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
+            }
             for (const auto &name : m_DrainMetadataFileNames)
             {
                 m_FileDrainer.AddOperationOpen(name, m_OpenMode);
             }
-        }
-
-        if (m_OpenMode != Mode::Append ||
-            m_FileMetadataIndexManager.GetFileSize(0) == 0)
-        {
-            /* Prepare header and write now to Index Table indicating
-             * the start of streaming */
-            m_BP4Serializer.MakeHeader(m_BP4Serializer.m_MetadataIndex,
-                                       "Index Table", true);
-
-            m_FileMetadataIndexManager.WriteFiles(
-                m_BP4Serializer.m_MetadataIndex.m_Buffer.data(),
-                m_BP4Serializer.m_MetadataIndex.m_Position);
-            m_FileMetadataIndexManager.FlushFiles();
-            if (m_DrainBB)
+            for (const auto &name : m_DrainMetadataIndexFileNames)
             {
-                for (const auto &name : m_DrainMetadataIndexFileNames)
-                {
-                    m_FileDrainer.AddOperationWrite(
-                        name, m_BP4Serializer.m_MetadataIndex.m_Position,
-                        m_BP4Serializer.m_MetadataIndex.m_Buffer.data());
-                    // Note:: the content is buffered safely inside drain thread
-                }
+                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
             }
-            /* clear the metadata index buffer*/
-            m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_MetadataIndex, true);
-        }
-        else
-        {
-            /* Update header to indicate re-start of streaming */
-            UpdateActiveFlag(true);
         }
     }
 }
@@ -360,10 +352,6 @@ void BP4Writer::InitBPBuffer()
 
             if (m_BP4Serializer.m_RankMPI == 0)
             {
-                // Set the flag in the header of metadata index table to 0 again
-                // to indicate a new run begins
-                UpdateActiveFlag(true);
-
                 // Get the size of existing metadata file
                 m_BP4Serializer.m_PreMetadataFileLength =
                     m_FileMetadataManager.GetFileSize(0);
@@ -380,6 +368,8 @@ void BP4Writer::InitBPBuffer()
         {
             m_BP4Serializer.MakeHeader(m_BP4Serializer.m_Metadata, "Metadata",
                                        false);
+            m_BP4Serializer.MakeHeader(m_BP4Serializer.m_MetadataIndex,
+                                       "Index Table", false);
         }
         if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
         {
@@ -443,6 +433,16 @@ void BP4Writer::DoClose(const int transportIndex)
 
         // close metadata index file
         m_FileMetadataIndexManager.CloseFiles();
+
+        // Delete the active flag file to indicate current run is over.
+        m_FileActiveFlagManager.DeleteFiles();
+        if (m_DrainBB)
+        {
+            for (const auto &name : m_DrainActiveFlagFileNames)
+            {
+                m_FileDrainer.AddOperationDelete(name);
+            }
+        }
     }
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer && m_DrainBB)
@@ -515,25 +515,6 @@ void BP4Writer::PopulateMetadataIndexFileContent(
     position += 8;
 }
 
-void BP4Writer::UpdateActiveFlag(const bool active)
-{
-    const char activeChar = (active ? '\1' : '\0');
-    m_FileMetadataIndexManager.WriteFileAt(
-        &activeChar, 1, m_BP4Serializer.m_ActiveFlagPosition, 0);
-    m_FileMetadataIndexManager.FlushFiles();
-    m_FileMetadataIndexManager.SeekToFileEnd();
-    if (m_DrainBB)
-    {
-        for (int i = 0; i < m_MetadataIndexFileNames.size(); ++i)
-        {
-            m_FileDrainer.AddOperationWriteAt(
-                m_DrainMetadataIndexFileNames[i],
-                m_BP4Serializer.m_ActiveFlagPosition, 1, &activeChar);
-            m_FileDrainer.AddOperationSeekEnd(m_DrainMetadataIndexFileNames[i]);
-        }
-    }
-}
-
 void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 {
 
@@ -543,13 +524,6 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
     {
         // If data pg count is zero, it means all metadata
         // has already been written, don't need to write it again.
-
-        if (m_BP4Serializer.m_RankMPI == 0)
-        {
-            // But the flag in the header of metadata index table needs to
-            // be modified to indicate current run is over.
-            UpdateActiveFlag(false);
-        }
         return;
     }
     m_BP4Serializer.AggregateCollectiveMetadata(
@@ -591,11 +565,6 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
                                                "BP4 Index Table");
         for (auto const &t : timeSteps)
         {
-            /*if (t == 1)
-            {
-                m_BP4Serializer.MakeHeader(m_BP4Serializer.m_MetadataIndex,
-                                           "Index Table", true);
-            }*/
             const uint64_t pgIndexStartMetadataFile =
                 m_BP4Serializer
                     .m_MetadataIndexTable[m_BP4Serializer.m_RankMPI][t][0] +
@@ -640,14 +609,6 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
                     m_BP4Serializer.m_MetadataIndex.m_Position,
                     m_BP4Serializer.m_MetadataIndex.m_Buffer.data());
             }
-        }
-
-        if (isFinal)
-        {
-            // Only one step of metadata is generated at close.
-            // The flag in the header of metadata index table
-            // needs to be modified to indicate current run is over.
-            UpdateActiveFlag(false);
         }
     }
     /*Clear the local indices buffer at the end of each step*/

@@ -288,11 +288,25 @@ void FileDrainerSingleThread::DrainThread()
         {
             if (m_Verbose >= 2)
             {
-                std::cout << "Drain " << m_Rank << "Open file "
+                std::cout << "Drain " << m_Rank << ": Open file "
                           << fdo.toFileName << " for append " << std::endl;
             }
             ts = std::chrono::steady_clock::now();
             GetFileForWrite(fdo.toFileName, true);
+            te = std::chrono::steady_clock::now();
+            timeWrite += te - ts;
+            break;
+        }
+        case DrainOperation::Delete:
+        {
+            if (m_Verbose >= 2)
+            {
+                std::cout << "Drain " << m_Rank << ": Delete file "
+                          << fdo.toFileName << std::endl;
+            }
+            ts = std::chrono::steady_clock::now();
+            auto fdw = GetFileForWrite(fdo.toFileName, true);
+            Delete(fdw, fdo.toFileName);
             te = std::chrono::steady_clock::now();
             timeWrite += te - ts;
             break;

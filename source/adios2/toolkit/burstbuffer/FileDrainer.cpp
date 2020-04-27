@@ -11,6 +11,7 @@
 #include "FileDrainer.h"
 
 #include <chrono>
+#include <cstdio>
 #include <cstring> // std::memcpy
 #include <thread>  // std::this_thread::sleep_for
 
@@ -113,6 +114,12 @@ void FileDrainer::AddOperationOpen(const std::string &toFileName, Mode mode)
     }
 }
 
+void FileDrainer::AddOperationDelete(const std::string &toFileName)
+{
+    std::string emptyStr;
+    AddOperation(DrainOperation::Delete, emptyStr, toFileName, 0, 0, 0);
+}
+
 InputFile FileDrainer::GetFileForRead(const std::string &path)
 {
     auto it = m_InputFileMap.find(path);
@@ -182,6 +189,7 @@ void FileDrainer::CloseAll()
         Close(it->second);
         //}
     }
+    m_OutputFileMap.clear();
     for (auto it = m_InputFileMap.begin(); it != m_InputFileMap.end(); ++it)
     {
         // if (it->second->good())
@@ -264,6 +272,12 @@ size_t FileDrainer::Write(OutputFile &f, size_t count, const char *buffer,
     }
 
     return count;
+}
+
+void FileDrainer::Delete(OutputFile &f, const std::string &path)
+{
+    Close(f);
+    std::remove(path.c_str());
 }
 
 void FileDrainer::SetVerbose(int verboseLevel, int rank)

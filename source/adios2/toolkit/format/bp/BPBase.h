@@ -118,7 +118,7 @@ public:
         size_t StepsStart = 0;
 
         /** Used at Read, number of total steps */
-        size_t StepsCount = 1;
+        size_t StepsCount = 0;
 
         /** Similar to TimeStep, but uses uint64_t and start from zero. Used for
          * streaming a large number of steps */
