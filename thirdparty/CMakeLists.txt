@@ -33,7 +33,10 @@ endif()
 add_subdirectory(pugixml)
 add_subdirectory(nlohmann_json)
 add_subdirectory(RapidJSON)
-add_subdirectory(yaml-cpp)
+
+if(NOT ADIOS2_USE_EXTERNAL_yaml-cpp)
+  add_subdirectory(yaml-cpp)
+endif()
 
 if(WIN32)
   add_subdirectory(mingw-w64)

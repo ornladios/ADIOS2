@@ -337,5 +337,14 @@ if(ADIOS2_USE_Endian_Reverse STREQUAL ON)
   set(ADIOS2_HAVE_Endian_Reverse TRUE)
 endif()
 
+# EXTERNAL_yaml-cpp
+if(ADIOS2_USE_EXTERNAL_yaml-cpp STREQUAL ON)
+  find_package(yaml-cpp REQUIRED)
+  message("-- Using EXTERNAL yaml-cpp package") 
+  set(ADIOS2_HAVE_EXTERNAL_yaml-cpp TRUE)
+else()
+  set(ADIOS2_USE_EXTERNAL_yaml-cpp OFF)
+endif()
+
 # Multithreading
 find_package(Threads REQUIRED)
