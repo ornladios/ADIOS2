@@ -147,7 +147,6 @@ endfunction()
 
 
 function(adios2_add_thirdparty_target PackageName TargetName)
-  find_package(${PackageName} REQUIRED)
   add_library(adios2::thirdparty::${PackageName} INTERFACE IMPORTED GLOBAL)
   target_link_libraries(adios2::thirdparty::${PackageName}
     INTERFACE ${TargetName}

@@ -17,7 +17,7 @@ endif()
 
 # BPLS
 add_executable(bpls ./bpls/bpls.cpp)
-target_link_libraries(bpls adios2_core adios2sys pugixml)
+target_link_libraries(bpls adios2_core adios2sys adios2::thirdparty::pugixml)
 target_include_directories(bpls PRIVATE ${PROJECT_BINARY_DIR})
 install(TARGETS bpls EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -35,7 +35,7 @@ file(GENERATE
 
 # BPSPLIT
 #add_executable(bpsplit ./bpsplit/bpsplit.cpp)
-#target_link_libraries(bpsplit adios2::cxx11 adios2sys_interface pugixml)
+#target_link_libraries(bpsplit adios2::cxx11 adios2sys_interface adios2::thirdparty::pugixml)
 #install(TARGETS bpsplit EXPORT adios2
 #  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 #)
