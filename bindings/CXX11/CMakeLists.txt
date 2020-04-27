@@ -18,7 +18,7 @@ add_library(adios2_cxx11
   adios2/cxx11/fstream/ADIOS2fstream.cpp
 )
 set_property(TARGET adios2_cxx11 PROPERTY EXPORT_NAME cxx11)
-target_link_libraries(adios2_cxx11 PRIVATE adios2_core pugixml)
+target_link_libraries(adios2_cxx11 PRIVATE adios2_core adios2::thirdparty::pugixml)
 target_compile_features(adios2_cxx11 INTERFACE ${ADIOS2_CXX11_FEATURES})
 
 target_include_directories(adios2_cxx11

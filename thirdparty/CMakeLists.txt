@@ -22,6 +22,8 @@ include(CMakeDependentOption)
 
 option(ADIOS2_USE_EXTERNAL_DEPENDENCIES
   "Use externally supplied dependencies" OFF)
+option(ADIOS2_USE_EXTERNAL_PUGIXML
+  "Use an externally supplied pugixml library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 
 add_subdirectory(KWSys)
 
@@ -33,7 +35,15 @@ if(ADIOS2_HAVE_Python)
   add_subdirectory(pybind11)
 endif()
 
-add_subdirectory(pugixml)
+if(ADIOS2_USE_EXTERNAL_PUGIXML)
+  find_package(pugixml 1.10 REQUIRED)
+  add_library(pugixml_impl INTERFACE)
+  target_link_libraries(pugixml_impl INTERFACE pugixml)
+else()
+  add_subdirectory(pugixml)
+endif()
+adios2_add_thirdparty_target(pugixml pugixml)
+adios2_add_thirdparty_target(pugixml_impl pugixml_impl)
 add_subdirectory(nlohmann_json)
 add_subdirectory(yaml-cpp)
 
