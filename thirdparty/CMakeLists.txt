@@ -24,6 +24,8 @@ option(ADIOS2_USE_EXTERNAL_DEPENDENCIES
   "Use externally supplied dependencies" OFF)
 option(ADIOS2_USE_EXTERNAL_PUGIXML
   "Use an externally supplied pugixml library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_YAMLCPP
+  "Use an externally supplied yaml-cpp library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 
 add_subdirectory(KWSys)
 
@@ -45,7 +47,12 @@ endif()
 adios2_add_thirdparty_target(pugixml pugixml)
 adios2_add_thirdparty_target(pugixml_impl pugixml_impl)
 add_subdirectory(nlohmann_json)
-add_subdirectory(yaml-cpp)
+if(ADIOS2_USE_EXTERNAL_YAMLCPP)
+  find_package(yaml-cpp REQUIRED)
+else()
+  add_subdirectory(yaml-cpp)
+endif()
+adios2_add_thirdparty_target(yaml-cpp yaml-cpp)
 
 if(WIN32)
   add_subdirectory(mingw-w64)
