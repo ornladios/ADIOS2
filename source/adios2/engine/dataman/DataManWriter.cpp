@@ -39,58 +39,53 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         throw(std::invalid_argument("IP address not specified"));
     }
     m_Port += m_MpiRank;
-    m_ControlAddress = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
-    m_DataAddress =
+    m_ReplierAddress = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
+    m_PublisherAddress =
         "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + m_MpiSize);
 
-    std::vector<std::string> daVec;
-    std::vector<std::string> caVec;
+    std::vector<std::string> pubVec;
+    std::vector<std::string> repVec;
 
     if (m_MpiSize == 1)
     {
-        daVec.push_back(m_DataAddress);
-        caVec.push_back(m_ControlAddress);
+        pubVec.push_back(m_PublisherAddress);
+        repVec.push_back(m_ReplierAddress);
     }
     else
     {
-        std::vector<char> allDaVec(32 * m_MpiSize, '\0');
-        std::vector<char> allCaVec(32 * m_MpiSize, '\0');
+        std::vector<char> allPubVec(32 * m_MpiSize, '\0');
+        std::vector<char> allRepVec(32 * m_MpiSize, '\0');
 
-        m_Comm.Allgather(m_DataAddress.data(), m_DataAddress.size(),
-                         allDaVec.data(), 32);
-        m_Comm.Allgather(m_ControlAddress.data(), m_ControlAddress.size(),
-                         allCaVec.data(), 32);
+        m_Comm.Allgather(m_PublisherAddress.data(), m_PublisherAddress.size(),
+                         allPubVec.data(), 32);
+        m_Comm.Allgather(m_ReplierAddress.data(), m_ReplierAddress.size(),
+                         allRepVec.data(), 32);
 
         for (int i = 0; i < m_MpiSize; ++i)
         {
-            daVec.push_back(std::string(allDaVec.begin() + i * 32,
-                                        allDaVec.begin() + (i + 1) * 32));
-            caVec.push_back(std::string(allCaVec.begin() + i * 32,
-                                        allCaVec.begin() + (i + 1) * 32));
+            pubVec.push_back(std::string(allPubVec.begin() + i * 32,
+                                         allPubVec.begin() + (i + 1) * 32));
+            repVec.push_back(std::string(allRepVec.begin() + i * 32,
+                                         allRepVec.begin() + (i + 1) * 32));
         }
     }
 
     nlohmann::json addJson;
-    addJson["DataAddresses"] = daVec;
-    addJson["ControlAddresses"] = caVec;
+    addJson["DataAddresses"] = pubVec;
+    addJson["ControlAddresses"] = repVec;
     m_AllAddresses = addJson.dump() + '\0';
 
-    m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout, m_DoubleBuffer);
+    m_Publisher.OpenPublisher(m_PublisherAddress);
+    m_Replier.OpenReplier(m_ReplierAddress, m_Timeout, 8192);
 
     if (m_RendezvousReaderCount == 0)
     {
-        m_ReplyThread = std::thread(&DataManWriter::ReplyThread, this,
-                                    m_ControlAddress, -1);
+        m_ReplyThread = std::thread(&DataManWriter::ReplyThread, this);
     }
     else
     {
-        ReplyThread(m_ControlAddress, m_RendezvousReaderCount);
-    }
-
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "DataManWriter::DataManWriter() Rank " << m_MpiRank
-                  << std::endl;
+        ReplyThread();
+        m_Comm.Barrier();
     }
 }
 
@@ -100,23 +95,12 @@ DataManWriter::~DataManWriter()
     {
         DoClose();
     }
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "DataManWriter::~DataManWriter() Rank " << m_MpiRank
-                  << ", Fianl Step " << m_CurrentStep << std::endl;
-    }
 }
 
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     ++m_CurrentStep;
     m_Serializer.NewWriterBuffer(m_SerializerBufferSize);
-
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "DataManWriter::BeginStep() Rank " << m_MpiRank
-                  << ", Step " << m_CurrentStep << std::endl;
-    }
 
     return StepStatus::OK;
 }
@@ -134,15 +118,12 @@ void DataManWriter::EndStep()
 
     m_Serializer.AttachAttributesToLocalPack();
     const auto buf = m_Serializer.GetLocalPack();
-    m_SerializerBufferSize = buf->size();
-
-    m_DataPublisher.Send(buf);
-
-    if (m_Verbosity >= 5)
+    if (buf->size() > m_SerializerBufferSize)
     {
-        std::cout << "DataManWriter::EndStep() Rank " << m_MpiRank << ", Step "
-                  << m_CurrentStep << std::endl;
+        m_SerializerBufferSize = buf->size();
     }
+
+    m_Publisher.Send(buf);
 }
 
 void DataManWriter::Flush(const int transportIndex) {}
@@ -168,45 +149,68 @@ void DataManWriter::DoClose(const int transportIndex)
     std::string s = endSignal.dump() + '\0';
     auto cvp = std::make_shared<std::vector<char>>(s.size());
     std::memcpy(cvp->data(), s.c_str(), s.size());
-    m_DataPublisher.Send(cvp);
+    m_Publisher.Send(cvp);
 
-    m_ThreadActive = false;
+    m_ReplyThreadActive = false;
+    m_PublishThreadActive = false;
+
     if (m_ReplyThread.joinable())
     {
         m_ReplyThread.join();
     }
-    if (m_Verbosity >= 5)
+
+    if (m_PublishThread.joinable())
     {
-        std::cout << "DataManWriter::DoClose() Rank " << m_MpiRank << ", Step "
-                  << m_CurrentStep << std::endl;
+        m_PublishThread.join();
     }
+
     m_IsClosed = true;
 }
 
-void DataManWriter::ReplyThread(const std::string &address, const int times)
+void DataManWriter::PushBufferQueue(std::shared_ptr<std::vector<char>> buffer)
 {
-    int count = 0;
-    adios2::zmq::ZmqReqRep replier;
-    replier.OpenReplier(address, m_Timeout, 8192);
-    while (m_ThreadActive)
+    std::lock_guard<std::mutex> l(m_BufferQueueMutex);
+    m_BufferQueue.push(buffer);
+}
+
+std::shared_ptr<std::vector<char>> DataManWriter::PopBufferQueue()
+{
+    std::lock_guard<std::mutex> l(m_BufferQueueMutex);
+    if (m_BufferQueue.empty())
     {
-        auto request = replier.ReceiveRequest();
+        return nullptr;
+    }
+    else
+    {
+        auto ret = m_BufferQueue.front();
+        m_BufferQueue.pop();
+        return ret;
+    }
+}
+
+void DataManWriter::ReplyThread()
+{
+    int readerCount = 0;
+    while (m_ReplyThreadActive)
+    {
+        auto request = m_Replier.ReceiveRequest();
         if (request && request->size() > 0)
         {
             std::string r(request->begin(), request->end());
             if (r == "Address")
             {
-                replier.SendReply(m_AllAddresses.data(), m_AllAddresses.size());
+                m_Replier.SendReply(m_AllAddresses.data(),
+                                    m_AllAddresses.size());
             }
             else if (r == "Ready")
             {
-                replier.SendReply("OK", 2);
-                ++count;
+                m_Replier.SendReply("OK", 2);
+                ++readerCount;
             }
         }
-        if (times == count)
+        if (m_RendezvousReaderCount == readerCount)
         {
-            m_ThreadActive = false;
+            m_ReplyThreadActive = false;
         }
     }
 }

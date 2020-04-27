@@ -17,7 +17,7 @@
 
 size_t Nx = 10;
 size_t Ny = 10;
-size_t steps = 100000;
+size_t steps = 10000;
 adios2::Dims shape;
 adios2::Dims start;
 adios2::Dims count;

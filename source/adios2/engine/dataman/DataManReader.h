@@ -42,24 +42,31 @@ private:
     int m_Timeout = 5;
     int m_Verbosity = 0;
     bool m_DoubleBuffer = true;
+    size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
 
-    bool m_InitFailed = false;
-    int64_t m_CurrentStep = -1;
-    size_t m_FinalStep = std::numeric_limits<size_t>::max();
-    int m_TotalWriters;
-    std::vector<std::shared_ptr<adios2::zmq::ZmqPubSub>> m_ZmqSubscriberVec;
-    adios2::zmq::ZmqReqRep m_ZmqRequester;
-    std::vector<std::string> m_DataAddresses;
-    std::vector<std::string> m_ControlAddresses;
-    format::DmvVecPtr m_CurrentStepMetadata;
-    std::thread m_SubscriberThread;
-    format::DataManSerializer m_Serializer;
+    std::vector<std::string> m_PublisherAddresses;
+    std::vector<std::string> m_ReplierAddresses;
     int m_MpiRank;
     int m_MpiSize;
-    size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
-    bool m_ThreadActive = true;
+    int64_t m_CurrentStep = -1;
+    bool m_InitFailed = false;
+    size_t m_FinalStep = std::numeric_limits<size_t>::max();
+    format::DmvVecPtr m_CurrentStepMetadata;
 
-    void SubscriberThread();
+    format::DataManSerializer m_Serializer;
+
+    std::vector<zmq::ZmqPubSub> m_Subscribers;
+    std::vector<zmq::ZmqReqRep> m_Requesters;
+
+    std::vector<std::thread> m_SubscriberThreads;
+    std::vector<std::thread> m_RequesterThreads;
+
+    bool m_RequesterThreadActive = true;
+    bool m_SubscriberThreadActive = true;
+
+    void SubscribeThread(zmq::ZmqPubSub &subscriber);
+    void RequestThread();
+
     void DoClose(const int transportIndex = -1) final;
 
 #define declare_type(T)                                                        \
