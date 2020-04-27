@@ -47,19 +47,31 @@ private:
     bool m_DoubleBuffer = false;
 
     std::string m_AllAddresses;
-    std::string m_DataAddress;
-    std::string m_ControlAddress;
+    std::string m_PublisherAddress;
+    std::string m_ReplierAddress;
     int m_MpiRank;
     int m_MpiSize;
     int64_t m_CurrentStep = -1;
     size_t m_SerializerBufferSize = 128 * 1024 * 1024;
-    bool m_ThreadActive = true;
 
     format::DataManSerializer m_Serializer;
-    zmq::ZmqPubSub m_DataPublisher;
+
+    zmq::ZmqPubSub m_Publisher;
+    zmq::ZmqReqRep m_Replier;
 
     std::thread m_ReplyThread;
-    void ReplyThread(const std::string &address, const int times);
+    std::thread m_PublishThread;
+    bool m_ReplyThreadActive = true;
+    bool m_PublishThreadActive = true;
+
+    std::queue<std::shared_ptr<std::vector<char>>> m_BufferQueue;
+    std::mutex m_BufferQueueMutex;
+
+    void PushBufferQueue(std::shared_ptr<std::vector<char>> buffer);
+    std::shared_ptr<std::vector<char>> PopBufferQueue();
+
+    void ReplyThread();
+    void PublishThread();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
