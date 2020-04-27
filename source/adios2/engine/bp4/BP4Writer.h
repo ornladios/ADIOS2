@@ -131,8 +131,6 @@ private:
      * profilers*/
     void WriteProfilingJSONFile();
 
-    void UpdateActiveFlag(const bool active);
-
     void PopulateMetadataIndexFileContent(
         format::BufferSTL &buffer, const uint64_t currentStep,
         const uint64_t mpirank, const uint64_t pgIndexStart,

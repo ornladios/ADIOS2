@@ -77,6 +77,7 @@ private:
     /** used for per-step reads, TODO: to be moved to BP4Deserializer */
     size_t m_CurrentStep = 0;
     bool m_FirstStep = true;
+    bool m_IdxHeaderParsed = false; // true after first index parsing
 
     void Init();
     void InitTransports();

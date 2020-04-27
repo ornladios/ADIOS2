@@ -244,6 +244,16 @@ void BP4Writer::InitTransports()
             m_FileMetadataManager.GetFilesBaseNames(
                 m_BBName, m_IO.m_TransportsParameters);
 
+        /* Create active flag file now to indicate a producer is active.
+         * When the index file is created, a reader might start polling on it,
+         * so the active flag should already exist. */
+        m_ActiveFlagFileNames =
+            m_BP4Serializer.GetBPActiveFlagFileNames(transportsNames);
+
+        m_FileActiveFlagManager.OpenFiles(
+            m_ActiveFlagFileNames, Mode::Write, m_IO.m_TransportsParameters,
+            m_BP4Serializer.m_Profiler.m_IsActive);
+
         m_MetadataFileNames =
             m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
 
@@ -258,9 +268,6 @@ void BP4Writer::InitTransports()
             m_MetadataIndexFileNames, m_OpenMode, m_IO.m_TransportsParameters,
             m_BP4Serializer.m_Profiler.m_IsActive);
 
-        m_ActiveFlagFileNames =
-            m_BP4Serializer.GetBPActiveFlagFileNames(transportsNames);
-
         if (m_DrainBB)
         {
             const std::vector<std::string> drainTransportNames =
@@ -273,16 +280,20 @@ void BP4Writer::InitTransports()
                     drainTransportNames);
             m_DrainActiveFlagFileNames =
                 m_BP4Serializer.GetBPActiveFlagFileNames(drainTransportNames);
+
+            for (const auto &name : m_DrainActiveFlagFileNames)
+            {
+                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
+            }
             for (const auto &name : m_DrainMetadataFileNames)
             {
                 m_FileDrainer.AddOperationOpen(name, m_OpenMode);
             }
-            /* We don't need to create the index file, will just add a write
-             * operation to drain which will take care of creating it */
+            for (const auto &name : m_DrainMetadataIndexFileNames)
+            {
+                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
+            }
         }
-
-        /* Create active flag file to indicate a producer is active */
-        UpdateActiveFlag(true);
     }
 }
 
@@ -424,7 +435,14 @@ void BP4Writer::DoClose(const int transportIndex)
         m_FileMetadataIndexManager.CloseFiles();
 
         // Delete the active flag file to indicate current run is over.
-        UpdateActiveFlag(false);
+        m_FileActiveFlagManager.DeleteFiles();
+        if (m_DrainBB)
+        {
+            for (const auto &name : m_DrainActiveFlagFileNames)
+            {
+                m_FileDrainer.AddOperationDelete(name);
+            }
+        }
     }
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer && m_DrainBB)
@@ -495,34 +513,6 @@ void BP4Writer::PopulateMetadataIndexFileContent(
     helper::CopyToBuffer(buffer, position, &currentStepEndPos);
     helper::CopyToBuffer(buffer, position, &currentTimeStamp);
     position += 8;
-}
-
-void BP4Writer::UpdateActiveFlag(const bool active)
-{
-    if (active)
-    {
-        m_FileActiveFlagManager.OpenFiles(
-            m_ActiveFlagFileNames, Mode::Write, m_IO.m_TransportsParameters,
-            m_BP4Serializer.m_Profiler.m_IsActive);
-        if (m_DrainBB)
-        {
-            for (const auto &name : m_DrainActiveFlagFileNames)
-            {
-                m_FileDrainer.AddOperationOpen(name, Mode::Write);
-            }
-        }
-    }
-    else
-    {
-        m_FileActiveFlagManager.DeleteFiles();
-        if (m_DrainBB)
-        {
-            for (const auto &name : m_DrainActiveFlagFileNames)
-            {
-                m_FileDrainer.AddOperationDelete(name);
-            }
-        }
-    }
 }
 
 void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)

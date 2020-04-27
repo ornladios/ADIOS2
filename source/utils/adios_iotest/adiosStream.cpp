@@ -147,13 +147,7 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
 {
     if (!settings.myRank && settings.verbose)
     {
-        std::cout << "    Read ";
-        if (cmdR->stepMode == adios2::StepMode::Read)
-        {
-            std::cout << "got a step from ";
-        }
-
-        std::cout << cmdR->streamName << " with timeout value "
+        std::cout << "    Read " << cmdR->streamName << " with timeout value "
                   << cmdR->timeout_sec << " using the group "
                   << cmdR->groupName;
         if (!cmdR->variables.empty())
@@ -164,7 +158,7 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
                 std::cout << v->name << " ";
             }
         }
-        std::cout << std::endl;
+        std::cout << "... " << std::endl;
     }
     double timeStart, timeEnd;
     double readTime;

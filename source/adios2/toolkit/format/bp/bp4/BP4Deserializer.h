@@ -45,8 +45,8 @@ public:
     ~BP4Deserializer() = default;
 
     void ParseMetadataIndex(const BufferSTL &bufferSTL,
-                            const size_t absoluteStartPos = 0,
-                            const bool hasHeader = true);
+                            const size_t absoluteStartPos,
+                            const bool hasHeader);
 
     /* Return the position in the buffer where processing ends. The processing
      * is controlled by the number of records in the Index, which may be less
