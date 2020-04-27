@@ -117,7 +117,7 @@ target_include_directories(adios2_core
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
 )
-target_link_libraries(adios2_core PRIVATE adios2sys_interface pugixml_private taustubs yaml-cpp)
+target_link_libraries(adios2_core PRIVATE adios2sys_interface pugixml_impl taustubs yaml-cpp)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 
