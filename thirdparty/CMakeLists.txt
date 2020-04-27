@@ -22,6 +22,8 @@ include(CMakeDependentOption)
 
 set(ADIOS2_USE_EXTERNAL_PUGIXML OFF CACHE BOOL
   "Use an externally supplied pugixml library")
+set(ADIOS2_USE_EXTERNAL_YAMLCPP OFF CACHE BOOL
+  "Use an externally supplied yaml-cpp library")
 
 add_subdirectory(KWSys)
 
@@ -44,7 +46,12 @@ adios2_add_thirdparty_target(pugixml pugixml)
 adios2_add_thirdparty_target(pugixml_impl pugixml_impl)
 add_subdirectory(nlohmann_json)
 add_subdirectory(RapidJSON)
-add_subdirectory(yaml-cpp)
+if(ADIOS2_USE_EXTERNAL_YAMLCPP)
+  find_package(yaml-cpp REQUIRED)
+else()
+  add_subdirectory(yaml-cpp)
+endif()
+adios2_add_thirdparty_target(yaml-cpp yaml-cpp)
 
 if(WIN32)
   add_subdirectory(mingw-w64)
