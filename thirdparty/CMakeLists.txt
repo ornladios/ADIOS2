@@ -22,6 +22,8 @@ include(CMakeDependentOption)
 
 option(ADIOS2_USE_EXTERNAL_DEPENDENCIES
   "Use externally supplied dependencies" OFF)
+option(ADIOS2_USE_EXTERNAL_GTEST
+  "Use an externally supplied GTest library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_PUGIXML
   "Use an externally supplied pugixml library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_PYBIND11
@@ -32,7 +34,13 @@ option(ADIOS2_USE_EXTERNAL_YAMLCPP
 add_subdirectory(KWSys)
 
 if(BUILD_TESTING)
-  add_subdirectory(GTest)
+  if(ADIOS2_USE_EXTERNAL_GTEST)
+    find_package(GTest REQUIRED)
+    adios2_add_thirdparty_target(gtest GTest::GTest)
+  else()
+    add_subdirectory(GTest)
+    adios2_add_thirdparty_target(gtest gtest_interface)
+  endif()
 endif()
 
 if(ADIOS2_HAVE_Python)
