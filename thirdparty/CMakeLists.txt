@@ -24,6 +24,8 @@ set(ADIOS2_USE_EXTERNAL_GTEST OFF CACHE BOOL
   "Use an externally supplied GTest library")
 set(ADIOS2_USE_EXTERNAL_PUGIXML OFF CACHE BOOL
   "Use an externally supplied pugixml library")
+set(ADIOS2_USE_EXTERNAL_RAPIDJSON OFF CACHE BOOL
+  "Use an externally supplied RapidJSON library")
 set(ADIOS2_USE_EXTERNAL_PYBIND11 OFF CACHE BOOL
   "Use an externally supplied pybind11 library")
 set(ADIOS2_USE_EXTERNAL_YAMLCPP OFF CACHE BOOL
@@ -61,7 +63,17 @@ endif()
 adios2_add_thirdparty_target(pugixml pugixml)
 adios2_add_thirdparty_target(pugixml_impl pugixml_impl)
 add_subdirectory(nlohmann_json)
-add_subdirectory(RapidJSON)
+if(ADIOS2_USE_EXTERNAL_RAPIDJSON)
+  find_package(RapidJSON REQUIRED)
+  if(NOT TARGET rapidjson) # This target is created by RapidJSON itself in newer versions
+    add_library(rapidjson INTERFACE)
+    target_include_directories(rapidjson INTERFACE ${RAPIDJSON_INCLUDE_DIRS})
+  endif()
+  add_library(RapidJSON INTERFACE)
+  target_link_libraries(RapidJSON INTERFACE rapidjson)
+else()
+  add_subdirectory(RapidJSON)
+endif()
 if(ADIOS2_USE_EXTERNAL_YAMLCPP)
   find_package(yaml-cpp REQUIRED)
 else()
