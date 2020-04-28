@@ -158,7 +158,7 @@ if (ADIOS2_HAVE_DataMan)
     target_sources(adios2_core PRIVATE
 	toolkit/query/JsonWorker.cpp			
    	)
-    target_link_libraries(adios2_core PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_Table)
@@ -166,7 +166,7 @@ if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_Table)
         toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
     )
-    target_link_libraries(adios2_core PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
 
@@ -188,9 +188,9 @@ if(ADIOS2_HAVE_SSC)
         engine/ssc/SscWriter.tcc
         engine/ssc/SscHelper.cpp
         )
-    target_link_libraries(adios2_core_mpi PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core_mpi PRIVATE adios2::thirdparty::nlohmann_json)
     # SSC also activates code in main core library that uses nlohmann_json.
-    target_link_libraries(adios2_core PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_Table)

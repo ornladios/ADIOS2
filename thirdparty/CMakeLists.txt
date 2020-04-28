@@ -24,6 +24,8 @@ set(ADIOS2_USE_EXTERNAL_GTEST OFF CACHE BOOL
   "Use an externally supplied GTest library")
 set(ADIOS2_USE_EXTERNAL_PUGIXML OFF CACHE BOOL
   "Use an externally supplied pugixml library")
+set(ADIOS2_USE_EXTERNAL_NLOHMANN_JSON OFF CACHE BOOL
+  "Use an externally supplied nlohmann_json library")
 set(ADIOS2_USE_EXTERNAL_RAPIDJSON OFF CACHE BOOL
   "Use an externally supplied RapidJSON library")
 set(ADIOS2_USE_EXTERNAL_PYBIND11 OFF CACHE BOOL
@@ -62,7 +64,13 @@ else()
 endif()
 adios2_add_thirdparty_target(pugixml pugixml)
 adios2_add_thirdparty_target(pugixml_impl pugixml_impl)
-add_subdirectory(nlohmann_json)
+if(ADIOS2_USE_EXTERNAL_NLOHMANN_JSON)
+  find_package(nlohmann_json REQUIRED)
+  adios2_add_thirdparty_target(nlohmann_json nlohmann_json::nlohmann_json)
+else()
+  add_subdirectory(nlohmann_json)
+  adios2_add_thirdparty_target(nlohmann_json nlohmann_json)
+endif()
 if(ADIOS2_USE_EXTERNAL_RAPIDJSON)
   find_package(RapidJSON REQUIRED)
   if(NOT TARGET rapidjson) # This target is created by RapidJSON itself in newer versions
