@@ -46,13 +46,18 @@ else()
   set(maybe_mgard)
 endif()
 add_executable(adios_reorganize ${adios_reorganize_srcs})
+target_link_libraries(adios_reorganize PRIVATE adios2_core ${maybe_mgard})
+
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(adios_reorganize PRIVATE adios2_core_mpi ${maybe_mgard})
+  add_executable(adios_reorganize_mpi ${adios_reorganize_srcs})
+  target_link_libraries(adios_reorganize_mpi PRIVATE adios2_core_mpi ${maybe_mgard})
+  set(maybe_adios_reorganize_mpi adios_reorganize_mpi)
 else()
-  target_link_libraries(adios_reorganize PRIVATE adios2_core ${maybe_mgard})
+  set(maybe_adios_reorganize_mpi)
 endif()
 
 install(TARGETS adios_reorganize
+  ${maybe_adios_reorganize_mpi}
   EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
