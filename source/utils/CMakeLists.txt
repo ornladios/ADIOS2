@@ -45,7 +45,7 @@ add_executable(adios_reorganize
                ./adios_reorganize/main.cpp 
                ./adios_reorganize/Reorganize.cpp 
                Utils.cpp)
-target_link_libraries(adios_reorganize PRIVATE adios2_cxx11 ${maybe_adios2_core_mpi} adios2_core)
+target_link_libraries(adios_reorganize PRIVATE ${maybe_adios2_core_mpi} adios2_core)
 install(TARGETS adios_reorganize EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
