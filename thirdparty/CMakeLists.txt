@@ -22,6 +22,8 @@ include(CMakeDependentOption)
 
 set(ADIOS2_USE_EXTERNAL_PUGIXML OFF CACHE BOOL
   "Use an externally supplied pugixml library")
+set(ADIOS2_USE_EXTERNAL_PYBIND11 OFF CACHE BOOL
+  "Use an externally supplied pybind11 library")
 set(ADIOS2_USE_EXTERNAL_YAMLCPP OFF CACHE BOOL
   "Use an externally supplied yaml-cpp library")
 
@@ -32,7 +34,13 @@ if(BUILD_TESTING)
 endif()
 
 if(ADIOS2_HAVE_Python)
-  add_subdirectory(pybind11)
+  if(ADIOS2_USE_EXTERNAL_PYBIND11)
+    find_package(pybind11 REQUIRED)
+    adios2_add_thirdparty_target(pybind11 pybind11::pybind11)
+  else()
+    add_subdirectory(pybind11)
+    adios2_add_thirdparty_target(pybind11 pybind11)
+  endif()
 endif()
 
 if(ADIOS2_USE_EXTERNAL_PUGIXML)

@@ -20,7 +20,7 @@ endif()
 target_link_libraries(adios2py PRIVATE
   ${maybe_adios2_cxx11_mpi} adios2_cxx11
   ${maybe_adios2_core_mpi} adios2_core
-  pybind11
+  adios2::thirdparty::pybind11
   ${maybe_mpi4py} Python::NumPy
   )
 configure_file(
