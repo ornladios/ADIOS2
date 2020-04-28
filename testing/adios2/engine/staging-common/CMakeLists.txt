@@ -11,7 +11,7 @@ if(ADIOS2_HAVE_MPI)
   add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
   target_link_libraries(TestStagingMPMD
     ${CMAKE_THREAD_LIBS_INIT}
-    gtest gtest_interface adios2::cxx11_mpi MPI::MPI_C
+    adios2::thirdparty::gtest adios2::cxx11_mpi MPI::MPI_C
   )
   if(ADIOS2_HAVE_SST)
     gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
@@ -63,7 +63,7 @@ foreach(helper
     target_include_directories(${helper} PRIVATE ${SST_INCLUDE_DIRS})
   endif()
 
-  target_link_libraries(${helper} gtest_interface ${Sst_LIBRARY})
+  target_link_libraries(${helper} adios2::thirdparty::gtest ${Sst_LIBRARY})
   if(ADIOS2_HAVE_MPI)
     target_link_libraries(${helper} adios2::cxx11_mpi adios2_core_mpi MPI::MPI_C)
   else()

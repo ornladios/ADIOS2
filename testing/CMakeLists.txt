@@ -58,7 +58,7 @@ function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
     else()
       target_link_libraries(${tgt} adios2::cxx11 adios2::c adios2_core)
     endif()
-    target_link_libraries(${tgt} gtest)
+    target_link_libraries(${tgt} adios2::thirdparty::gtest)
   endif()
   if(mpi AND NOT mpi STREQUAL "NOEXEC")
     gtest_add_tests(TARGET ${tgt}

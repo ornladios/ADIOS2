@@ -20,6 +20,8 @@ endfunction()
 
 include(CMakeDependentOption)
 
+set(ADIOS2_USE_EXTERNAL_GTEST OFF CACHE BOOL
+  "Use an externally supplied GTest library")
 set(ADIOS2_USE_EXTERNAL_PUGIXML OFF CACHE BOOL
   "Use an externally supplied pugixml library")
 set(ADIOS2_USE_EXTERNAL_PYBIND11 OFF CACHE BOOL
@@ -30,7 +32,13 @@ set(ADIOS2_USE_EXTERNAL_YAMLCPP OFF CACHE BOOL
 add_subdirectory(KWSys)
 
 if(BUILD_TESTING)
-  add_subdirectory(GTest)
+  if(ADIOS2_USE_EXTERNAL_GTEST)
+    find_package(GTest REQUIRED)
+    adios2_add_thirdparty_target(gtest GTest::GTest)
+  else()
+    add_subdirectory(GTest)
+    adios2_add_thirdparty_target(gtest gtest_interface)
+  endif()
 endif()
 
 if(ADIOS2_HAVE_Python)

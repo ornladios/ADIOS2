@@ -8,11 +8,11 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 add_executable(TestSstParamFails TestSstParamFails.cpp)
-target_link_libraries(TestSstParamFails gtest_interface)
+target_link_libraries(TestSstParamFails adios2::thirdparty::gtest)
 gtest_add_tests(TARGET TestSstParamFails ${extra_test_args})
 
 add_executable(TestSstWriterFails TestSstWriterFails.cpp)
-target_link_libraries(TestSstWriterFails gtest_interface)
+target_link_libraries(TestSstWriterFails adios2::thirdparty::gtest)
 gtest_add_tests(TARGET TestSstWriterFails ${extra_test_args})
 
 if(ADIOS2_HAVE_MPI)
