@@ -24,6 +24,8 @@ option(ADIOS2_USE_EXTERNAL_DEPENDENCIES
   "Use externally supplied dependencies" OFF)
 option(ADIOS2_USE_EXTERNAL_PUGIXML
   "Use an externally supplied pugixml library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_PYBIND11
+  "Use an externally supplied pybind11 library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_YAMLCPP
   "Use an externally supplied yaml-cpp library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 
@@ -34,7 +36,13 @@ if(BUILD_TESTING)
 endif()
 
 if(ADIOS2_HAVE_Python)
-  add_subdirectory(pybind11)
+  if(ADIOS2_USE_EXTERNAL_PYBIND11)
+    find_package(pybind11 REQUIRED)
+    adios2_add_thirdparty_target(pybind11 pybind11::pybind11)
+  else()
+    add_subdirectory(pybind11)
+    adios2_add_thirdparty_target(pybind11 pybind11)
+  endif()
 endif()
 
 if(ADIOS2_USE_EXTERNAL_PUGIXML)
