@@ -28,6 +28,8 @@ option(ADIOS2_USE_EXTERNAL_PUGIXML
   "Use an externally supplied pugixml library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_PYBIND11
   "Use an externally supplied pybind11 library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_NLOHMANN_JSON
+  "Use an externally supplied nlohmann_json library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 option(ADIOS2_USE_EXTERNAL_YAMLCPP
   "Use an externally supplied yaml-cpp library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
 
@@ -62,7 +64,13 @@ else()
 endif()
 adios2_add_thirdparty_target(pugixml pugixml)
 adios2_add_thirdparty_target(pugixml_impl pugixml_impl)
-add_subdirectory(nlohmann_json)
+if(ADIOS2_USE_EXTERNAL_NLOHMANN_JSON)
+  find_package(nlohmann_json REQUIRED)
+  adios2_add_thirdparty_target(nlohmann_json nlohmann_json::nlohmann_json)
+else()
+  add_subdirectory(nlohmann_json)
+  adios2_add_thirdparty_target(nlohmann_json nlohmann_json)
+endif()
 if(ADIOS2_USE_EXTERNAL_YAMLCPP)
   find_package(yaml-cpp REQUIRED)
 else()
