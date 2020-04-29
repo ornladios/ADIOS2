@@ -33,17 +33,6 @@ class Comm;
  */
 std::vector<std::string> AvailableIpAddresses() noexcept;
 
-void HandshakeWriter(Comm const &comm, size_t &appID,
-                     std::vector<std::string> &fullAddresses,
-                     const std::string &name, const std::string &engineName,
-                     const int basePort, const int channelsPerRank,
-                     const int maxRanksPerNode = 100,
-                     const int maxAppsPerNode = 10);
-
-void HandshakeReader(Comm const &comm, size_t &appID,
-                     std::vector<std::string> &fullAddresses,
-                     const std::string &name, const std::string &engineName);
-
 } // end namespace helper
 } // end namespace adios2
 
