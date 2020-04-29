@@ -191,6 +191,10 @@ void HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
         status = H5Pclose(dcpl);
     }
 
+    // status is never checked so this silences the working about it not being
+    // used.  TODO: check the status and handle the error conditions.
+    (void)status;
+
     // m_VDSFile.Close();
     m_SubfileComm.Barrier();
 }

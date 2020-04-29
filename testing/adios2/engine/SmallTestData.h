@@ -10,6 +10,7 @@
 #include <array>
 #include <limits>
 #include <string>
+#include <vector>
 
 #ifdef WIN32
 #define NOMINMAX
@@ -20,8 +21,13 @@
 struct SmallTestData
 {
     std::string S1 = "Testing ADIOS2 String type";
-    std::array<std::string, 1> S1array = {{"one"}};
-    std::array<std::string, 3> S3 = {{"one", "two", "three"}};
+
+    // These shoudl be able to use std::array like the rest of the pieces
+    // but the XL compiler seems to have some bad code generation surounding
+    // it that results in a double-free corruption.  Switching to std::vector
+    // bypasses the problem
+    std::vector<std::string> S1array = {"one"};
+    std::vector<std::string> S3 = {"one", "two", "three"};
 
     std::array<int8_t, 10> I8 = {{0, 1, -2, 3, -4, 5, -6, 7, -8, 9}};
     std::array<int16_t, 10> I16 = {

@@ -1,6 +1,12 @@
 #!/bin/bash --login
 
-export CI_SITE_NAME="GitHub Actions"
+if [[ "${GITHUB_JOB}" =~ emu ]]
+then
+  export CI_SITE_NAME="GitHub Actions (QEMU)"
+else
+  export CI_SITE_NAME="GitHub Actions"
+fi
+
 if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]
 then
   GH_PR_NUMBER=$(expr "${GITHUB_REF}" : 'refs/pull/\([^/]*\)')
@@ -38,31 +44,37 @@ else
   CTEST=ctest
 fi
 
-# macOS tmpdir issues
-# See https://github.com/open-mpi/ompi/issues/6518
-if [[ "${GH_YML_OS}" =~ "macOS" ]]
-then
-  export TMPDIR=/tmp
-elif [[ "${GH_YML_OS}" = "linux" ]]
-then
-  export TMPDIR="${CI_ROOT_DIR}/tmp"
-  mkdir -p "${TMPDIR}"
-fi
+# Don't rely on the container's storage for tmp
+export TMPDIR="${RUNNER_TEMP}/tmp"
+mkdir -p "${TMPDIR}"
 
-# OpenMPI specific setup
-if [[ "${GH_YML_JOBNAME}" =~ openmpi ]]
+# OpenMPI specific setup and workarounds
+if [[ "${GH_YML_JOBNAME}" =~ (openmpi|smpi) ]]
 then
-  # Workaround to quiet some warnings from OpenMPI
+  # Quiet some warnings from OpenMPI
   export OMPI_MCA_btl_base_warn_component_unused=0
   export OMPI_MCA_btl_vader_single_copy_mechanism=none
 
-  # https://github.com/open-mpi/ompi/issues/6518
-  export OMPI_MCA_btl=self,tcp
+  # Force only shared mem backends
+  export OMPI_MCA_btl="self,vader"
+
+  # Workaround for open-mpi/ompi#7516
+  export OMPI_MCA_gds=hash
+
+  # Workaround for open-mpi/ompi#5798
+  export OMPI_MCA_btl_vader_backing_directory="/tmp"
 
   # Enable overscription in OpenMPI
   export OMPI_MCA_rmaps_base_oversubscribe=1
   export OMPI_MCA_hwloc_base_binding_policy=none
+
+  # Disable OpenMPI rsh launching
+  export OMPI_MCA_plm_rsh_agent=false
+
+  # Disable cuda warnings
+  export OMPI_MCA_opal_warn_on_missing_libcuda=0
 fi
+
 
 echo "**********Env Begin**********"
 env | sort
