@@ -80,32 +80,32 @@ public:
 
 #if ADIOS2_USE_MPI
 
-adios2::py11::File Open(const std::string &name, const std::string mode,
-                        adios2::py11::MPI4PY_Comm comm,
-                        const std::string enginetype)
+adios2::py11::File OpenMPI(const std::string &name, const std::string mode,
+                           adios2::py11::MPI4PY_Comm comm,
+                           const std::string enginetype)
 {
     return adios2::py11::File(name, mode, comm, enginetype);
 }
 
-adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
-                              adios2::py11::MPI4PY_Comm comm,
-                              const std::string &configfile,
-                              const std::string ioinconfigfile)
+adios2::py11::File OpenConfigMPI(const std::string &name,
+                                 const std::string mode,
+                                 adios2::py11::MPI4PY_Comm comm,
+                                 const std::string &configfile,
+                                 const std::string ioinconfigfile)
 {
     return adios2::py11::File(name, mode, comm, configfile, ioinconfigfile);
 }
 
 #endif
-adios2::py11::File OpenNoComm(const std::string &name, const std::string mode,
-                              const std::string enginetype)
+adios2::py11::File Open(const std::string &name, const std::string mode,
+                        const std::string enginetype)
 {
     return adios2::py11::File(name, mode, enginetype);
 }
 
-adios2::py11::File OpenConfigNoComm(const std::string &name,
-                                    const std::string mode,
-                                    const std::string configfile,
-                                    const std::string ioinconfigfile)
+adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
+                              const std::string configfile,
+                              const std::string ioinconfigfile)
 {
     return adios2::py11::File(name, mode, configfile, ioinconfigfile);
 }
@@ -153,7 +153,7 @@ PYBIND11_MODULE(adios2, m)
         .export_values();
 
 #if ADIOS2_USE_MPI
-    m.def("open", &Open, pybind11::arg("name"), pybind11::arg("mode"),
+    m.def("open", &OpenMPI, pybind11::arg("name"), pybind11::arg("mode"),
           pybind11::arg("comm"), pybind11::arg("engine_type") = "BPFile", R"md(
           Simple API MPI open, based on python IO. 
           Allows for passing parameters in source code.
@@ -177,7 +177,7 @@ PYBIND11_MODULE(adios2, m)
                   handler to adios File for the simple Python API
     )md");
 
-    m.def("open", &OpenConfig, pybind11::arg("name"), pybind11::arg("mode"),
+    m.def("open", &OpenConfigMPI, pybind11::arg("name"), pybind11::arg("mode"),
           pybind11::arg("comm"), pybind11::arg("config_file"),
           pybind11::arg("io_in_config_file"), R"md(
           Simple API MPI open, based on python IO. 
@@ -207,11 +207,11 @@ PYBIND11_MODULE(adios2, m)
     )md");
 
 #endif
-    m.def("open", &OpenNoComm, "High-level API, file object open",
+    m.def("open", &Open, "High-level API, file object open",
           pybind11::arg("name"), pybind11::arg("mode"),
           pybind11::arg("engine_type") = "BPFile");
 
-    m.def("open", &OpenConfigNoComm,
+    m.def("open", &OpenConfig,
           "High-level API, file object open with a runtime config file",
           pybind11::arg("name"), pybind11::arg("mode"),
           pybind11::arg("config_file"), pybind11::arg("io_in_config_file"));

@@ -15,12 +15,7 @@
 #include <iostream>
 
 #include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h"
-
-#if ADIOS2_USE_MPI
-#include "adios2/helper/adiosCommMPI.h"
-#endif
 
 #include "py11types.h"
 
@@ -28,25 +23,6 @@ namespace adios2
 {
 namespace py11
 {
-
-#if ADIOS2_USE_MPI
-File::File(const std::string &name, const std::string mode, MPI_Comm comm,
-           const std::string engineType)
-: m_Name(name), m_Mode(mode),
-  m_Stream(std::make_shared<core::Stream>(
-      name, ToMode(mode), helper::CommDupMPI(comm), engineType, "Python"))
-{
-}
-
-File::File(const std::string &name, const std::string mode, MPI_Comm comm,
-           const std::string &configFile, const std::string ioInConfigFile)
-: m_Name(name), m_Mode(mode),
-  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode),
-                                          helper::CommDupMPI(comm), configFile,
-                                          ioInConfigFile, "Python"))
-{
-}
-#endif
 
 File::File(const std::string &name, const std::string mode,
            const std::string engineType)
