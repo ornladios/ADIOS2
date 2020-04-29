@@ -50,24 +50,6 @@ void ParseConfigXML(
         return fileContents;
     };
 
-    auto lf_GetParametersXML = [&](const pugi::xml_node &node) -> Params {
-        const std::string errorMessage("in node " + std::string(node.value()) +
-                                       ", " + hint);
-        Params parameters;
-
-        for (const pugi::xml_node paramNode : node.children("parameter"))
-        {
-            const std::unique_ptr<pugi::xml_attribute> key =
-                XMLAttribute("key", paramNode, errorMessage);
-
-            const std::unique_ptr<pugi::xml_attribute> value =
-                XMLAttribute("value", paramNode, errorMessage);
-
-            parameters.emplace(key->value(), value->value());
-        }
-        return parameters;
-    };
-
     auto lf_OperatorXML = [&](const pugi::xml_node &operatorNode) {
         const std::unique_ptr<pugi::xml_attribute> name =
             helper::XMLAttribute("name", operatorNode, hint);
@@ -79,7 +61,7 @@ void ParseConfigXML(
         std::transform(typeLowerCase.begin(), typeLowerCase.end(),
                        typeLowerCase.begin(), ::tolower);
 
-        const Params parameters = lf_GetParametersXML(operatorNode);
+        const Params parameters = helper::XMLGetParameters(operatorNode, hint);
 
         adios.DefineOperator(name->value(), typeLowerCase, parameters);
     };
@@ -154,7 +136,7 @@ void ParseConfigXML(
                     op = itOperator->second.get();
                 }
             }
-            const Params parameters = lf_GetParametersXML(operation);
+            const Params parameters = helper::XMLGetParameters(operation, hint);
             currentIO.m_VarOpsPlaceholder[variableName].push_back(
                 core::IO::Operation{op, parameters, Params()});
         }
@@ -180,7 +162,7 @@ void ParseConfigXML(
                 helper::XMLAttribute("type", *engine, hint);
             currentIO.SetEngine(type->value());
 
-            const Params parameters = lf_GetParametersXML(*engine);
+            const Params parameters = helper::XMLGetParameters(*engine, hint);
             currentIO.SetParameters(parameters);
         }
 
@@ -189,7 +171,7 @@ void ParseConfigXML(
             const std::unique_ptr<pugi::xml_attribute> type =
                 helper::XMLAttribute("type", transport, hint);
 
-            const Params parameters = lf_GetParametersXML(transport);
+            const Params parameters = helper::XMLGetParameters(transport, hint);
             currentIO.AddTransport(type->value(), parameters);
         }
 

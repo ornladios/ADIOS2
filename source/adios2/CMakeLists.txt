@@ -94,7 +94,6 @@ add_library(adios2_core
 
   toolkit/query/Query.cpp
   toolkit/query/Worker.cpp
-  toolkit/query/XmlUtil.cpp
   toolkit/query/XmlWorker.cpp
   toolkit/query/BlockIndex.cpp
 

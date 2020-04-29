@@ -116,5 +116,27 @@ XMLAttribute(const std::string attributeName, const pugi::xml_node &node,
     return attribute;
 }
 
+adios2::Params XMLGetParameters(const pugi::xml_node &node,
+                                const std::string hint,
+                                const std::string xmlKey,
+                                const std::string xmlValue)
+{
+    const std::string errorMessage("in node " + std::string(node.value()) +
+                                   ", " + hint);
+    Params parameters;
+
+    for (const pugi::xml_node paramNode : node.children("parameter"))
+    {
+        const std::unique_ptr<pugi::xml_attribute> key =
+            XMLAttribute("key", paramNode, errorMessage);
+
+        const std::unique_ptr<pugi::xml_attribute> value =
+            XMLAttribute("value", paramNode, errorMessage);
+
+        parameters.emplace(key->value(), value->value());
+    }
+    return parameters;
+}
+
 } // end namespace helper
 } // end namespace adios2

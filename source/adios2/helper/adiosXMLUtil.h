@@ -15,6 +15,8 @@
 #include <memory> //std::unique_ptr
 #include <string>
 
+#include "adios2/common/ADIOSTypes.h"
+
 // forward declaring pugi objects for private implementation
 namespace pugi
 {
@@ -85,6 +87,19 @@ std::unique_ptr<pugi::xml_node> XMLNode(const std::string nodeName,
 std::unique_ptr<pugi::xml_attribute>
 XMLAttribute(const std::string attributeName, const pugi::xml_node &node,
              const std::string hint, const bool isMandatory = true);
+
+/**
+ * Get Parameters map of key/value strings from a XML node
+ * @param node input XML node
+ * @param hint used for exception information
+ * @param key identifier in the XML schema for parameter key
+ * @param value identifier in the XML schema for parameter value
+ * @return parameters map
+ */
+adios2::Params XMLGetParameters(const pugi::xml_node &node,
+                                const std::string hint,
+                                const std::string xmlKey = "key",
+                                const std::string xmlValue = "value");
 
 } // end namespace helper
 } // end namespace adios2
