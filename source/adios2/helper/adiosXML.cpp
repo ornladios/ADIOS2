@@ -22,7 +22,7 @@
 #include "adios2/helper/adiosString.h"
 #include "adios2/helper/adiosXMLUtil.h"
 
-#include "pugixml.hpp"
+#include <pugixml.hpp>
 
 namespace adios2
 {
@@ -80,7 +80,7 @@ void ParseConfigXML(
             const std::unique_ptr<pugi::xml_attribute> opType =
                 helper::XMLAttribute("type", operation, hint, false);
 
-            if (opName && opType)
+            if (*opName && *opType)
             {
                 throw std::invalid_argument(
                     "ERROR: operator (" + std::string(opName->value()) +
@@ -90,7 +90,7 @@ void ParseConfigXML(
                     variableName + "\"> element, " + hint + "\n");
             }
 
-            if (!opName && !opType)
+            if (!*opName && !*opType)
             {
                 throw std::invalid_argument(
                     "ERROR: <operation> element "
@@ -103,7 +103,7 @@ void ParseConfigXML(
 
             core::Operator *op = nullptr;
 
-            if (opName)
+            if (*opName)
             {
                 auto itOperator = operators.find(std::string(opName->value()));
                 if (itOperator == operators.end())
@@ -117,7 +117,7 @@ void ParseConfigXML(
                 op = itOperator->second.get();
             }
 
-            if (opType)
+            if (*opType)
             {
                 std::string operatorType = std::string(opType->value());
                 std::transform(operatorType.begin(), operatorType.end(),
@@ -156,7 +156,7 @@ void ParseConfigXML(
         const std::unique_ptr<pugi::xml_node> engine =
             helper::XMLNode("engine", io, hint, false, true);
 
-        if (engine)
+        if (*engine)
         {
             const std::unique_ptr<pugi::xml_attribute> type =
                 helper::XMLAttribute("type", *engine, hint);
