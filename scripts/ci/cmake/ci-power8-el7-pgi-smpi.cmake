@@ -4,6 +4,8 @@ set(ENV{CC}  pgcc)
 set(ENV{CXX} pgc++)
 set(ENV{FC}  pgfortran)
 
+set(ENV{CXXFLAGS} --brief_diagnostics)
+
 find_program(MPICC mpipgicc)
 find_program(MPICXX mpipgic++)
 find_program(MPIFC mpipgifort)

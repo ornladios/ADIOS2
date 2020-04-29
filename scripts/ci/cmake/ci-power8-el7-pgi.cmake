@@ -4,6 +4,8 @@ set(ENV{CC}  pgcc)
 set(ENV{CXX} pgc++)
 set(ENV{FC}  pgfortran)
 
+set(ENV{CXXFLAGS} --brief_diagnostics)
+
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=OFF
 ADIOS2_USE_Blosc:BOOL=OFF
