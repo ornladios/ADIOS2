@@ -20,6 +20,9 @@ endfunction()
 
 include(CMakeDependentOption)
 
+option(ADIOS2_USE_EXTERNAL_DEPENDENCIES
+  "Use externally supplied dependencies" OFF)
+
 add_subdirectory(KWSys)
 
 if(BUILD_TESTING)
