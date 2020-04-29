@@ -11,7 +11,6 @@
 #ifndef UTILS_REORGANIZE_REORGANIZE_H_
 #define UTILS_REORGANIZE_REORGANIZE_H_
 
-#include "adios2.h"
 #include "adios2/core/IO.h" // DataMap
 #include "adios2/helper/adiosComm.h"
 #include "utils/Utils.h"

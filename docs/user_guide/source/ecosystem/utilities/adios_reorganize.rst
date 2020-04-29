@@ -2,7 +2,10 @@
 adios_reorganize
 *****************
 
-adios_reorganize is a generic ADIOS tool to read in ADIOS streams and output the same data into another ADIOS stream. It can be used for
+``adios_reorganize`` and ``adios_reorganize_mpi`` are generic ADIOS tools
+to read in ADIOS streams and output the same data into another ADIOS stream.
+The two tools are for serial and MPI environments, respectively.
+They can be used for
 
 * converting files between ADIOS BP and HDF5 format
 * using separate compute nodes to stage I/O from/to disk to/from a large scale application
@@ -29,7 +32,7 @@ In our example, we have an array, ``T``. It is a 2-dimensional ``double`` array,
 
    .. code-block:: bash
    
-       $ mpirun -n 2 adios_reorganize sim.bp sim.h5 BPFile "" HDF5 "" 2 1 
+       $ mpirun -n 2 adios_reorganize_mpi sim.bp sim.h5 BPFile "" HDF5 "" 2 1
       
        $ bpls sim.h5
          double   T     3*{15, 16}
@@ -61,7 +64,7 @@ In our example, we have an array, ``T``. It is a 2-dimensional ``double`` array,
 
 
         $ mpirun -n 12 ./heatSimulation  sim.bp  3 4   5 4   3 1 : \
-                 -n 2 adios_reorganize sim.bp staged.bp SST "" BPFile "" 2 1 
+                 -n 2 adios_reorganize_mpi sim.bp staged.bp SST "" BPFile "" 2 1
         
         $ bpls staged.bp
           double   T     3*{15, 16}
@@ -72,7 +75,7 @@ In our example, we have an array, ``T``. It is a 2-dimensional ``double`` array,
     
 * Reorganizing the data blocks in file for a different number of blocks
 
-    In the above example, the application writes the array from 12 processes, but then ``adios_reorganize`` reads the global arrays on 2 processes. The output file on disk will therefore contain the array in 2 blocks. This reorganization of the array may be useful if reading is too slow for a dataset created by many-many processes. One may want to reorganize a file written by tens or hundreds of thousands of processes if one wants to read the content more than one time and the read time proves to be a bottleneck in one's work flow. 
+    In the above example, the application writes the array from 12 processes, but then ``adios_reorganize_mpi`` reads the global arrays on 2 processes. The output file on disk will therefore contain the array in 2 blocks. This reorganization of the array may be useful if reading is too slow for a dataset created by many-many processes. One may want to reorganize a file written by tens or hundreds of thousands of processes if one wants to read the content more than one time and the read time proves to be a bottleneck in one's work flow.
     
     .. code-block:: bash
     
@@ -120,7 +123,7 @@ In our example, we have an array, ``T``. It is a 2-dimensional ``double`` array,
                 block 11: [10:14, 12:15]
 
           
-        $ mpirun -n 2 adios_reorganize sim.bp reorg.bp BPFile "" BPFile "" 2 1 
+        $ mpirun -n 2 adios_reorganize_mpi sim.bp reorg.bp BPFile "" BPFile "" 2 1
         $ bpls reorg.bp -D
           double   T     3*{15, 16}
               step 0: 

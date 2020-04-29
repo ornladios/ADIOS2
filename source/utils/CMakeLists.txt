@@ -9,12 +9,6 @@ configure_file(
   @ONLY
 )
 
-if(ADIOS2_HAVE_MPI)
-  set(maybe_adios2_core_mpi adios2_core_mpi)
-else()
-  set(maybe_adios2_core_mpi)
-endif()
-
 # BPLS
 add_executable(bpls ./bpls/bpls.cpp)
 target_link_libraries(bpls adios2_core adios2sys pugixml)
@@ -41,18 +35,32 @@ file(GENERATE
 #)
 
 # ADIOS_REORGANIZE
-add_executable(adios_reorganize 
-               ./adios_reorganize/main.cpp 
-               ./adios_reorganize/Reorganize.cpp 
-               Utils.cpp)
-target_link_libraries(adios_reorganize PRIVATE adios2_cxx11 ${maybe_adios2_core_mpi} adios2_core)
-install(TARGETS adios_reorganize EXPORT adios2
+set(adios_reorganize_srcs
+  adios_reorganize/main.cpp
+  adios_reorganize/Reorganize.cpp
+  Utils.cpp
+  )
+if(ADIOS2_HAVE_MGARD)
+  set(maybe_mgard MGARD::MGARD)
+else()
+  set(maybe_mgard)
+endif()
+add_executable(adios_reorganize ${adios_reorganize_srcs})
+target_link_libraries(adios_reorganize PRIVATE adios2_core ${maybe_mgard})
+
+if(ADIOS2_HAVE_MPI)
+  add_executable(adios_reorganize_mpi ${adios_reorganize_srcs})
+  target_link_libraries(adios_reorganize_mpi PRIVATE adios2_core_mpi ${maybe_mgard})
+  set(maybe_adios_reorganize_mpi adios_reorganize_mpi)
+else()
+  set(maybe_adios_reorganize_mpi)
+endif()
+
+install(TARGETS adios_reorganize
+  ${maybe_adios_reorganize_mpi}
+  EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-
-if(ADIOS2_HAVE_MGARD)
-  target_link_libraries(adios_reorganize MGARD::MGARD)
-endif()
 
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(adios_iotest)
