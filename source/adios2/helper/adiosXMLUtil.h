@@ -13,13 +13,14 @@
 #define ADIOS2_HELPER_ADIOSXMLUTIL_H_
 
 #include <memory> //std::unique_ptr
+#include <string>
 
 // forward declaring pugi objects for private implementation
-class pugi
+namespace pugi
 {
-    class xml_attribute;
-    class xml_node;
-    class xml_document;
+class xml_attribute;
+class xml_node;
+class xml_document;
 };
 
 namespace adios2
