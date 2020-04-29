@@ -13,7 +13,6 @@
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 #ifndef _WIN32
-#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_SSC)
 
 #include <iostream>
 #include <thread>
@@ -251,5 +250,4 @@ void HandshakeReader(Comm const &comm, size_t &appID,
 } // end namespace helper
 } // end namespace adios2
 
-#endif
 #endif
