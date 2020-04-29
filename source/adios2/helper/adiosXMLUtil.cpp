@@ -24,7 +24,7 @@ namespace helper
 std::unique_ptr<pugi::xml_document> XMLDocument(const std::string &xmlContents,
                                                 const std::string hint)
 {
-    std::unique_ptr<pugi::xml_document> document;
+    std::unique_ptr<pugi::xml_document> document(new pugi::xml_document);
     auto parse_result = document->load_buffer_inplace(
         const_cast<char *>(xmlContents.data()), xmlContents.size());
 
