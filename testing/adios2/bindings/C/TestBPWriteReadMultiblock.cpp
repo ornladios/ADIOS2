@@ -106,7 +106,7 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
 
         for (auto i = 0; i < steps; ++i)
         {
-            adios2_begin_step(engineH, adios2_step_mode_append, 0., &status);
+            adios2_begin_step(engineH, adios2_step_mode_append, -1., &status);
 
             adios2_set_selection(varI8, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varI8, nullptr, adios2_mode_sync);
@@ -207,8 +207,8 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
         adios2_steps(&nsteps, engineH);
         EXPECT_EQ(nsteps, steps);
 
-        while (adios2_begin_step(engineH, adios2_step_mode_read, 0., &status) ==
-               adios2_error_none)
+        while (adios2_begin_step(engineH, adios2_step_mode_read, -1.,
+                                 &status) == adios2_error_none)
         {
             if (status == adios2_step_status_end_of_stream)
             {

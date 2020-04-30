@@ -173,7 +173,7 @@ program TestSstWrite
   !Put array contents to bp buffer, based on var1 metadata
   do i = 1, insteps
      call GenerateTestData(i - 1, irank, isize)
-     call adios2_begin_step(sstWriter, adios2_step_mode_append, 0.0, &
+     call adios2_begin_step(sstWriter, adios2_step_mode_append, -1.0, &
                             status, ierr)
      call adios2_put(sstWriter, variables(12), data_scalar_r64, ierr)
      call adios2_put(sstWriter, variables(1), data_I8, ierr)
