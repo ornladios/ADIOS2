@@ -44,6 +44,7 @@ add_library(adios2_core
   helper/adiosSystem.cpp
   helper/adiosType.cpp
   helper/adiosXML.cpp
+  helper/adiosXMLUtil.cpp
   helper/adiosYAML.cpp
 
 #engine derived classes  
@@ -93,7 +94,6 @@ add_library(adios2_core
 
   toolkit/query/Query.cpp
   toolkit/query/Worker.cpp
-  toolkit/query/XmlUtil.cpp
   toolkit/query/XmlWorker.cpp
   toolkit/query/BlockIndex.cpp
 
