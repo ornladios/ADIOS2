@@ -17,9 +17,14 @@ if(ADIOS2_HAVE_ZFP)
   bp3_bp4_gtest_add_tests_helper(WriteReadZfp)
   bp3_bp4_gtest_add_tests_helper(WriteReadZfpHighLevelAPI)
   bp3_bp4_gtest_add_tests_helper(WriteReadZfpConfig)
-  target_compile_definitions(Test.Engine.BP.WriteReadZfpConfig PRIVATE
-    "XML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
-  )
+
+  foreach(tgt
+      ${Test.Engine.BP.WriteReadZfpConfig-TARGETS}
+      )
+    target_compile_definitions(${tgt} PRIVATE
+      "XML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+      )
+  endforeach()
 endif()
 
 if(ADIOS2_HAVE_MGARD)

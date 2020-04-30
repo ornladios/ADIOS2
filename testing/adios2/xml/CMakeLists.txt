@@ -10,10 +10,11 @@ else()
   gtest_add_tests_helper(XMLConfigSerial FALSE "" "" "")
 endif()
 
-target_compile_definitions(Test.XMLConfig PRIVATE
-  "XML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
-)
-
-target_compile_definitions(Test.XMLConfigSerial PRIVATE
-  "XML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
-)
+foreach(tgt
+    ${Test.XMLConfig-TARGETS}
+    ${Test.XMLConfigSerial-TARGETS}
+    )
+  target_compile_definitions(${tgt} PRIVATE
+    "XML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+endforeach()

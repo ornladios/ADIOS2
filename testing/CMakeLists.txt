@@ -48,7 +48,9 @@ include(GoogleTest)
 #    Foo.Things.Test2.Baz
 #
 function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
+  set(test_targets "")
   set(tgt Test.${tst_pfx}${testname})
+  list(APPEND test_targets "${tgt}")
   if(NOT TARGET ${tgt})
     add_executable(${tgt} Test${src_pfx}${testname}.cpp)
     if(mpi)
@@ -71,6 +73,7 @@ function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
       ${ARGN}
     )
   endif()
+  set("Test.${tst_pfx}${testname}-TARGETS" "${test_targets}" PARENT_SCOPE)
 endfunction()
 
 add_subdirectory(adios2)

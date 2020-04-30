@@ -10,10 +10,11 @@ else()
   gtest_add_tests_helper(YAMLConfigSerial FALSE "" "" "")
 endif()
 
-target_compile_definitions(Test.YAMLConfig PRIVATE
-  "YAML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
-)
-
-target_compile_definitions(Test.YAMLConfigSerial PRIVATE
-  "YAML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
-)
+foreach(tgt
+    ${Test.YAMLConfig-TARGETS}
+    ${Test.YAMLConfigSerial-TARGETS}
+    )
+  target_compile_definitions(${tgt} PRIVATE
+    "YAML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+endforeach()
