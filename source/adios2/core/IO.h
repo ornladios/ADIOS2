@@ -158,6 +158,13 @@ public:
      */
     void SetParameter(const std::string key, const std::string value) noexcept;
 
+    /**
+     * @brief Checks input parameters
+     * @param key parameter key
+     * @param value parameter value
+     */
+     void CheckParameters(const std::string key, const std::string value);
+
     /** @brief Retrieve current parameters map */
     Params &GetParameters() noexcept;
 

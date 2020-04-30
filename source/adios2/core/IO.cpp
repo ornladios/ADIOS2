@@ -253,9 +253,26 @@ void IO::SetParameters(const std::string &parameters)
 void IO::SetParameter(const std::string key, const std::string value) noexcept
 {
     TAU_SCOPED_TIMER("IO::other");
+    try{
+        CheckParameters(key, value);
+    }
+    catch (const std::exception& e){
+        /* throw */
+    }
     m_Parameters[key] = value;
 }
-
+void IO::CheckParameters(const std::string key, const std::string value)
+{
+    if (key == "profile")
+    {
+        // handle bool
+    }
+    else if (key == "profileunits")
+    {
+            // handle double
+    }
+    return;
+}
 Params &IO::GetParameters() noexcept { return m_Parameters; }
 
 void IO::ClearParameters() noexcept
