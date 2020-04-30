@@ -279,7 +279,7 @@ int write_file(int step)
     tb = MPI_Wtime();
 
     adios2_step_status status;
-    adios2_begin_step(engineW, adios2_step_mode_append, 0.0, &status);
+    adios2_begin_step(engineW, adios2_step_mode_append, -1., &status);
     for (block = 0; block < NBLOCKS; block++)
     {
         v = VALUE(rank, step, block);
@@ -382,7 +382,7 @@ int read_file()
     }
 
     adios2_step_status status;
-    adios2_begin_step(engineR, adios2_step_mode_read, 0.0, &status);
+    adios2_begin_step(engineR, adios2_step_mode_read, -1., &status);
 
     log("  Check variable definitions... %s\n", FILENAME);
     tb = MPI_Wtime();
@@ -404,7 +404,7 @@ int read_file()
         ts = 0;
         if (step > 0)
         {
-            adios2_begin_step(engineR, adios2_step_mode_read, 0.0, &status);
+            adios2_begin_step(engineR, adios2_step_mode_read, -1., &status);
         }
         for (block = 0; block < NBLOCKS; block++)
         {
