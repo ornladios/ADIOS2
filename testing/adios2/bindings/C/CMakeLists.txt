@@ -3,15 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-if(ADIOS2_HAVE_MPI)
-  set(mpi TRUE)
-else()
-  set(mpi FALSE)
-endif()
-
-gtest_add_tests_helper(WriteTypes ${mpi} BP Bindings.C. "")
-gtest_add_tests_helper(WriteReadMultiblock ${mpi} BP Bindings.C. "")
-gtest_add_tests_helper(NullWriteRead ${mpi} "" Bindings.C. "")
-if(mpi)
-  gtest_add_tests_helper(WriteAggregateReadLocal TRUE BP Bindings.C. "")
-endif()
+gtest_add_tests_helper(WriteTypes MPI_ALLOW BP Bindings.C. "")
+gtest_add_tests_helper(WriteReadMultiblock MPI_ALLOW BP Bindings.C. "")
+gtest_add_tests_helper(NullWriteRead MPI_ALLOW "" Bindings.C. "")
+gtest_add_tests_helper(WriteAggregateReadLocal MPI_ONLY BP Bindings.C. "")

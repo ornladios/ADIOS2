@@ -6,52 +6,52 @@
 include(ADIOSFunctions)
 
 if(ADIOS2_HAVE_MPI)
-  gtest_add_tests_helper(Base TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBase "" TRUE)
+  gtest_add_tests_helper(Base MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBase.MPI "" TRUE)
 
-  gtest_add_tests_helper(OneSidedFencePush TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedFencePush "" TRUE)
+  gtest_add_tests_helper(OneSidedFencePush MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedFencePush.MPI "" TRUE)
 
-  gtest_add_tests_helper(OneSidedPostPush TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedPostPush "" TRUE)
+  gtest_add_tests_helper(OneSidedPostPush MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedPostPush.MPI "" TRUE)
 
-  gtest_add_tests_helper(OneSidedFencePull TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedFencePull "" TRUE)
+  gtest_add_tests_helper(OneSidedFencePull MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedFencePull.MPI "" TRUE)
 
-  gtest_add_tests_helper(OneSidedPostPull TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedPostPull "" TRUE)
+  gtest_add_tests_helper(OneSidedPostPull MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedPostPull.MPI "" TRUE)
 
-  gtest_add_tests_helper(Unbalanced TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscUnbalanced "" TRUE)
+  gtest_add_tests_helper(Unbalanced MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscUnbalanced.MPI "" TRUE)
 
-  gtest_add_tests_helper(WriterMultiblock TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscWriterMultiblock "" TRUE)
+  gtest_add_tests_helper(WriterMultiblock MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscWriterMultiblock.MPI "" TRUE)
 
-  gtest_add_tests_helper(ReaderMultiblock TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscReaderMultiblock "" TRUE)
+  gtest_add_tests_helper(ReaderMultiblock MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscReaderMultiblock.MPI "" TRUE)
 
-  gtest_add_tests_helper(NoAttributes TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscNoAttributes "" TRUE)
+  gtest_add_tests_helper(NoAttributes MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscNoAttributes.MPI "" TRUE)
 
-  gtest_add_tests_helper(NoSelection TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscNoSelection "" TRUE)
+  gtest_add_tests_helper(NoSelection MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscNoSelection.MPI "" TRUE)
 
-  gtest_add_tests_helper(7d TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSsc7d "" TRUE)
+  gtest_add_tests_helper(7d MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSsc7d.MPI "" TRUE)
 
-  gtest_add_tests_helper(MoreReadersThanWriters TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMoreReadersThanWriters "" TRUE)
+  gtest_add_tests_helper(MoreReadersThanWriters MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMoreReadersThanWriters.MPI "" TRUE)
 
-  gtest_add_tests_helper(MoreWritersThanReaders TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMoreWritersThanReaders "" TRUE)
+  gtest_add_tests_helper(MoreWritersThanReaders MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMoreWritersThanReaders.MPI "" TRUE)
 
-  gtest_add_tests_helper(MultiApp TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMultiApp "" TRUE)
+  gtest_add_tests_helper(MultiApp MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMultiApp.MPI "" TRUE)
 
-  gtest_add_tests_helper(Xgc2Way TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc2Way "" TRUE)
+  gtest_add_tests_helper(Xgc2Way MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc2Way.MPI "" TRUE)
 
-  gtest_add_tests_helper(Xgc3Way TRUE Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc3Way "" TRUE)
+  gtest_add_tests_helper(Xgc3Way MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc3Way.MPI "" TRUE)
 
 endif()

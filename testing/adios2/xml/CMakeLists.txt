@@ -3,12 +3,8 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-gtest_add_tests_helper(XMLConfig ${test_mpi} "" "" "")
-if(ADIOS2_HAVE_MPI)
-  gtest_add_tests_helper(XMLConfigSerial NOEXEC "" "" "")
-else()
-  gtest_add_tests_helper(XMLConfigSerial FALSE "" "" "")
-endif()
+gtest_add_tests_helper(XMLConfig MPI_ALLOW "" "" "")
+gtest_add_tests_helper(XMLConfigSerial MPI_NOEXEC "" "" "")
 
 foreach(tgt
     ${Test.XMLConfig-TARGETS}

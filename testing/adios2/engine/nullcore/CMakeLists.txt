@@ -3,4 +3,4 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-gtest_add_tests_helper(Write ${test_mpi} NullCore Engine.NullCore. "")
+gtest_add_tests_helper(Write MPI_ALLOW NullCore Engine.NullCore. "")

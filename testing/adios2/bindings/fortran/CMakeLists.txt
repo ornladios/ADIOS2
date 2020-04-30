@@ -5,52 +5,57 @@
 
 macro(fortran_add_test_helper testname mpi)
   set(test_targets "")
+  if(NOT "${mpi}" MATCHES "^MPI_(ALLOW|ONLY|NONE)$")
+    message(FATAL_ERROR "Invalid mpi argument value '${mpi}'.")
+  endif()
   set(pfx Bindings.Fortran.)
-  set(tgt Test.${pfx}${testname})
-  list(APPEND test_targets "${tgt}")
-  add_executable(${tgt} Test${testname}.F90)
-  set_target_properties(${tgt} PROPERTIES LINKER_LANGUAGE Fortran)
-  if(mpi)
+  if(NOT "${mpi}" STREQUAL "MPI_ONLY")
+    set(tgt Test.${pfx}${testname}.Serial)
+    list(APPEND test_targets "${tgt}")
+    add_executable(${tgt} Test${testname}.F90)
+    set_target_properties(${tgt} PROPERTIES LINKER_LANGUAGE Fortran)
+    target_link_libraries(${tgt} adios2::fortran)
+    add_test(
+      NAME ${pfx}${testname}.Serial
+      COMMAND ${tgt}
+    )
+  endif()
+  if(ADIOS2_HAVE_MPI AND NOT "${mpi}" STREQUAL "MPI_NONE")
+    set(tgt Test.${pfx}${testname}.MPI)
+    list(APPEND test_targets "${tgt}")
+    add_executable(${tgt} Test${testname}.F90)
+    set_target_properties(${tgt} PROPERTIES LINKER_LANGUAGE Fortran)
     target_link_libraries(${tgt} adios2::fortran_mpi MPI::MPI_Fortran)
-    add_test(NAME ${pfx}${testname}
+    add_test(
+      NAME ${pfx}${testname}.MPI
       COMMAND ${MPIEXEC_COMMAND} $<TARGET_FILE:${tgt}>
     )
-    set_tests_properties(${pfx}${testname} PROPERTIES
+    set_tests_properties(${pfx}${testname}.MPI PROPERTIES
       PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
     )
-  else()
-    target_link_libraries(${tgt} adios2::fortran)
-    add_test(NAME ${pfx}${testname} COMMAND ${tgt})
   endif()
   set("Test.${pfx}${testname}-TARGETS" "${test_targets}")
 endmacro()
 
+fortran_add_test_helper(BPWriteTypes MPI_ALLOW)
+fortran_add_test_helper(Remove MPI_ALLOW)
+
+fortran_add_test_helper(Adios2BindingsFortranIO MPI_ONLY)
+fortran_add_test_helper(BPWriteReadAttributes MPI_ONLY)
+fortran_add_test_helper(BPWriteVariableAttributes MPI_ONLY)
+fortran_add_test_helper(BPWriteTypesByName MPI_ONLY)
+fortran_add_test_helper(BPWriteTypesLocal MPI_ONLY)
+fortran_add_test_helper(BPWriteReadHeatMap2D MPI_ONLY)
+fortran_add_test_helper(BPWriteReadHeatMap3D MPI_ONLY)
+fortran_add_test_helper(BPWriteReadHeatMap4D MPI_ONLY)
+fortran_add_test_helper(BPWriteReadHeatMap5D MPI_ONLY)
+fortran_add_test_helper(BPWriteReadHeatMap6D MPI_ONLY)
+fortran_add_test_helper(BPReadGlobalsByName MPI_ONLY)
+fortran_add_test_helper(BPWriteMemorySelectionRead2D MPI_ONLY)
+fortran_add_test_helper(BPWriteMemorySelectionRead3D MPI_ONLY)
+fortran_add_test_helper(NullEngine MPI_ONLY)
+
 if(ADIOS2_HAVE_MPI)
-  set(mpi TRUE)
-else()
-  set(mpi FALSE)
-endif()
-
-fortran_add_test_helper(BPWriteTypes ${mpi})
-
-fortran_add_test_helper(Remove ${mpi})
-
-if(mpi)
-  fortran_add_test_helper(Adios2BindingsFortranIO TRUE)
-  fortran_add_test_helper(BPWriteReadAttributes TRUE)
-  fortran_add_test_helper(BPWriteVariableAttributes TRUE) 
-  fortran_add_test_helper(BPWriteTypesByName TRUE)
-  fortran_add_test_helper(BPWriteTypesLocal TRUE)
-  fortran_add_test_helper(BPWriteReadHeatMap2D TRUE)
-  fortran_add_test_helper(BPWriteReadHeatMap3D TRUE)
-  fortran_add_test_helper(BPWriteReadHeatMap4D TRUE)
-  fortran_add_test_helper(BPWriteReadHeatMap5D TRUE)
-  fortran_add_test_helper(BPWriteReadHeatMap6D TRUE)
-  fortran_add_test_helper(BPReadGlobalsByName TRUE)
-  fortran_add_test_helper(BPWriteMemorySelectionRead2D TRUE)
-  fortran_add_test_helper(BPWriteMemorySelectionRead3D TRUE)
-  fortran_add_test_helper(NullEngine TRUE)
-
   add_subdirectory(operation) 
   
   # F2C 

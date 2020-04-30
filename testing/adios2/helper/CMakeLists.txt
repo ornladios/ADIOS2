@@ -3,7 +3,7 @@
 #accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-gtest_add_tests_helper(Strings FALSE Helper Helper. "")
-gtest_add_tests_helper(DivideBlock FALSE "" Helper. "")
-gtest_add_tests_helper(MinMaxs FALSE "" Helper. "")
-gtest_add_tests_helper(ReadNonBPFile FALSE "" Helper. "")
+gtest_add_tests_helper(Strings MPI_NONE Helper Helper. "")
+gtest_add_tests_helper(DivideBlock MPI_NONE "" Helper. "")
+gtest_add_tests_helper(MinMaxs MPI_NONE "" Helper. "")
+gtest_add_tests_helper(ReadNonBPFile MPI_NONE "" Helper. "")

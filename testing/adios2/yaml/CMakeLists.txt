@@ -3,12 +3,8 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-gtest_add_tests_helper(YAMLConfig ${test_mpi} "" "" "")
-if(ADIOS2_HAVE_MPI)
-  gtest_add_tests_helper(YAMLConfigSerial NOEXEC "" "" "")
-else()
-  gtest_add_tests_helper(YAMLConfigSerial FALSE "" "" "")
-endif()
+gtest_add_tests_helper(YAMLConfig MPI_ALLOW "" "" "")
+gtest_add_tests_helper(YAMLConfigSerial MPI_NOEXEC "" "" "")
 
 foreach(tgt
     ${Test.YAMLConfig-TARGETS}

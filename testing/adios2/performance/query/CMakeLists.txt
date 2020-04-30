@@ -3,4 +3,4 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-gtest_add_tests_helper(Query ${test_mpi} BP Performance. "")
+gtest_add_tests_helper(Query MPI_ALLOW BP Performance. "")

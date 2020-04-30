@@ -3,8 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-gtest_add_tests_helper(SingleRank FALSE Table Engine.Table. "")
+gtest_add_tests_helper(SingleRank MPI_NONE Table Engine.Table. "")
 
-if(ADIOS2_HAVE_MPI)
-  gtest_add_tests_helper(MultiRank "${ADIOS2_HAVE_MPI}" Table Engine.Table. "")
-endif()
+gtest_add_tests_helper(MultiRank MPI_ONLY Table Engine.Table. "")
