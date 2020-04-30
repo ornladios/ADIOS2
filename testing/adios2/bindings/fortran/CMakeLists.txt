@@ -4,8 +4,10 @@
 #------------------------------------------------------------------------------#
 
 macro(fortran_add_test_helper testname mpi)
+  set(test_targets "")
   set(pfx Bindings.Fortran.)
   set(tgt Test.${pfx}${testname})
+  list(APPEND test_targets "${tgt}")
   add_executable(${tgt} Test${testname}.F90)
   set_target_properties(${tgt} PROPERTIES LINKER_LANGUAGE Fortran)
   if(mpi)
@@ -20,6 +22,7 @@ macro(fortran_add_test_helper testname mpi)
     target_link_libraries(${tgt} adios2::fortran)
     add_test(NAME ${pfx}${testname} COMMAND ${tgt})
   endif()
+  set("Test.${pfx}${testname}-TARGETS" "${test_targets}")
 endmacro()
 
 if(ADIOS2_HAVE_MPI)
@@ -28,39 +31,16 @@ else()
   set(mpi FALSE)
 endif()
 
-add_library(SmallTestData_f OBJECT SmallTestData_mod.F90)
-add_library(ISmallTestData_f INTERFACE)
-target_sources(ISmallTestData_f INTERFACE $<TARGET_OBJECTS:SmallTestData_f>)
-
 fortran_add_test_helper(BPWriteTypes ${mpi})
-target_link_libraries(Test.Bindings.Fortran.BPWriteTypes ISmallTestData_f)
 
 fortran_add_test_helper(Remove ${mpi})
-target_link_libraries(Test.Bindings.Fortran.Remove ISmallTestData_f)
 
 if(mpi)
   fortran_add_test_helper(Adios2BindingsFortranIO TRUE)
-  
   fortran_add_test_helper(BPWriteReadAttributes TRUE)
-  target_link_libraries(Test.Bindings.Fortran.BPWriteReadAttributes
-    ISmallTestData_f
-  )
-
   fortran_add_test_helper(BPWriteVariableAttributes TRUE) 
-  target_link_libraries(Test.Bindings.Fortran.BPWriteVariableAttributes
-    ISmallTestData_f
-  )
-
   fortran_add_test_helper(BPWriteTypesByName TRUE)
-  target_link_libraries(Test.Bindings.Fortran.BPWriteTypesByName
-    ISmallTestData_f
-  )
- 
   fortran_add_test_helper(BPWriteTypesLocal TRUE)
-  target_link_libraries(Test.Bindings.Fortran.BPWriteTypesLocal
-    ISmallTestData_f
-  )
-  
   fortran_add_test_helper(BPWriteReadHeatMap2D TRUE)
   fortran_add_test_helper(BPWriteReadHeatMap3D TRUE)
   fortran_add_test_helper(BPWriteReadHeatMap4D TRUE)
@@ -89,3 +69,18 @@ if(mpi)
     PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
   )
 endif()
+
+add_library(SmallTestData_f OBJECT SmallTestData_mod.F90)
+add_library(ISmallTestData_f INTERFACE)
+target_sources(ISmallTestData_f INTERFACE $<TARGET_OBJECTS:SmallTestData_f>)
+
+foreach(tgt
+    ${Test.Bindings.Fortran.BPWriteTypes-TARGETS}
+    ${Test.Bindings.Fortran.Remove-TARGETS}
+    ${Test.Bindings.Fortran.BPWriteReadAttributes-TARGETS}
+    ${Test.Bindings.Fortran.BPWriteVariableAttributes-TARGETS}
+    ${Test.Bindings.Fortran.BPWriteTypesByName-TARGETS}
+    ${Test.Bindings.Fortran.BPWriteTypesLocal-TARGETS}
+    )
+  target_link_libraries(${tgt} ISmallTestData_f)
+endforeach()
