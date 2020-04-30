@@ -10,14 +10,12 @@ if(ADIOS2_HAVE_MPI)
   mark_as_advanced(MPIEXEC_EXTRA_FLAGS)
   separate_arguments(MPIEXEC_EXTRA_FLAGS)
 
-  set(NUM_TEST_PROCS ${MPIEXEC_MAX_NUMPROCS})
   set(MPIEXEC_COMMAND
     ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
-    ${MPIEXEC_NUMPROC_FLAG} ${NUM_TEST_PROCS}
+    ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
   )
   set(test_mpi TRUE)
 else()
-  set(NUM_TEST_PROCS 1)
   set(test_mpi FALSE)
 endif()
 
@@ -66,7 +64,7 @@ function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
       EXEC_WRAPPER ${MPIEXEC_COMMAND} TEST_LIST added_tests
       ${ARGN}
     )
-    set_tests_properties(${added_tests} PROPERTIES PROCESSORS ${NUM_TEST_PROCS})
+    set_tests_properties(${added_tests} PROPERTIES PROCESSORS "${MPIEXEC_MAX_NUMPROCS}")
   else()
     gtest_add_tests(TARGET ${tgt}
       TEST_PREFIX "${tst_pfx}" TEST_SUFFIX "${tst_sfx}"

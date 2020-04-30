@@ -14,7 +14,7 @@ macro(fortran_add_test_helper testname mpi)
       COMMAND ${MPIEXEC_COMMAND} $<TARGET_FILE:${tgt}>
     )
     set_tests_properties(${pfx}${testname} PROPERTIES
-      PROCESSORS ${NUM_TEST_PROCS}
+      PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
     )
   else()
     target_link_libraries(${tgt} adios2::fortran)
@@ -86,6 +86,6 @@ if(mpi)
   )
   set_tests_properties(Bindings.Fortran.F2C.BPReadFBlocks PROPERTIES
     DEPENDS "Bindings.Fortran.BPWriteReadHeatMap2D;Bindings.Fortran.BPWriteReadHeatMap3D"
-    PROCESSORS ${NUM_TEST_PROCS}
+    PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
   )
 endif()

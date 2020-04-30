@@ -8,7 +8,7 @@ function(add_python_mpi_test testname)
     EXEC_WRAPPER ${MPIEXEC_COMMAND}
   )
   set_tests_properties(Bindings.Python.${testname} PROPERTIES
-    PROCESSORS ${NUM_TEST_PROCS}
+    PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
   )
 endfunction()
 
