@@ -481,7 +481,15 @@ inline size_t BP4Serializer::PutVariableMetadataInData(
     helper::CopyToBuffer(buffer, position, &stats.MemberID);
 
     PutNameRecord(variable.m_Name, buffer, position);
-    position += 2; // skip layout and unused byte
+
+    // Layout can be 'K' = same as the language default, 'C' for row major and
+    // 'F' for column major -- these are Numpy-like flags
+    const char layout = 'K';
+    helper::CopyToBuffer(buffer, position, &layout);
+
+    // unused byte, write a 0 length to skip it
+    const uint8_t zero8 = 0;
+    helper::CopyToBuffer(buffer, position, &zero8);
 
     const uint8_t dataType = TypeTraits<std::string>::type_enum;
     helper::CopyToBuffer(buffer, position, &dataType);

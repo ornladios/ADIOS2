@@ -254,11 +254,13 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
 
     # 1 byte ORDER (K, C, F)
     order = f.read(1)
-    if (order != b'K' and order != b'C' and order != b'F'):
+    if (order != b'K' and order != b'C' and order != b'F' and order != b'\x00'):
         print(
             "ERROR: Next byte for Order must be 'K', 'C', or 'F' "
             "but it isn't = {0}".format(order))
         return False
+    if (order == b'\x00'):
+        order = b'0'
     print("        Order           : " + order.decode('ascii'))
 
     # 1 byte UNUSED
