@@ -545,7 +545,10 @@ static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream,
                 RS_Stream->QueuedTimesteps = Entry->Next;
             }
             /* free item */
-            CMreturn_buffer(cm, ItemToFree->Data);
+            if (ItemToFree->Data)
+            {
+                CMreturn_buffer(cm, ItemToFree->Data);
+            }
 
             free(ItemToFree);
         }
