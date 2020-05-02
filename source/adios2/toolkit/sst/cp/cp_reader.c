@@ -24,29 +24,31 @@
 #ifdef MUTEX_DEBUG
 #define STREAM_MUTEX_LOCK(Stream)                                              \
     {                                                                          \
-        printf("(PID %lx, TID %lx) CP_READER Trying lock line %d\n",           \
-               (long)getpid(), (long)gettid(), __LINE__);                      \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_READER Trying lock line %d\n",  \
+                (long)getpid(), (long)gettid(), __LINE__);                     \
         pthread_mutex_lock(&Stream->DataLock);                                 \
         Stream->Locked++;                                                      \
-        printf("(PID %lx, TID %lx) CP_READER Got lock\n", (long)getpid(),      \
-               (long)gettid());                                                \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_READER Got lock\n",             \
+                (long)getpid(), (long)gettid());                               \
     }
 
 #define STREAM_MUTEX_UNLOCK(Stream)                                            \
     {                                                                          \
-        printf("(PID %lx, TID %lx) CP_READER UNlocking line %d\n",             \
-               (long)getpid(), (long)gettid(), __LINE__);                      \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_READER UNlocking line %d\n",    \
+                (long)getpid(), (long)gettid(), __LINE__);                     \
         Stream->Locked--;                                                      \
         pthread_mutex_unlock(&Stream->DataLock);                               \
     }
 #define STREAM_CONDITION_WAIT(Stream)                                          \
     {                                                                          \
-        printf(                                                                \
+        fprintf(                                                               \
+            stderr,                                                            \
             "(PID %lx, TID %lx) CP_READER Dropping Condition Lock line %d\n",  \
             (long)getpid(), (long)gettid(), __LINE__);                         \
         Stream->Locked = 0;                                                    \
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);          \
-        printf(                                                                \
+        fprintf(                                                               \
+            stderr,                                                            \
             "(PID %lx, TID %lx) CP_READER Acquired Condition Lock line %d\n",  \
             (long)getpid(), (long)gettid(), __LINE__);                         \
         Stream->Locked = 1;                                                    \
@@ -54,8 +56,9 @@
 #define STREAM_CONDITION_SIGNAL(Stream)                                        \
     {                                                                          \
         assert(Stream->Locked == 1);                                           \
-        printf("(PID %lx, TID %lx) CP_READER Signalling Condition line %d\n",  \
-               (long)getpid(), (long)gettid(), __LINE__);                      \
+        fprintf(stderr,                                                        \
+                "(PID %lx, TID %lx) CP_READER Signalling Condition line %d\n", \
+                (long)getpid(), (long)gettid(), __LINE__);                     \
         pthread_cond_signal(&Stream->DataCondition);                           \
     }
 
@@ -1439,7 +1442,7 @@ extern void SstReleaseStep(SstStream Stream)
     TAU_STOP_FUNC();
 }
 
-static void NotifyDPArrivedMetadataPeer(SstStream Stream)
+static void NotifyDPArrivedMetadata(SstStream Stream)
 {
     struct _TimestepMetadataList *TS;
     TS = Stream->Timesteps;
@@ -1637,7 +1640,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
 
     TAU_STOP("Waiting on metadata per rank per timestep");
 
-    NotifyDPArrivedMetadataPeer(Stream);
+    NotifyDPArrivedMetadata(Stream);
     if (Entry)
     {
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
@@ -1866,7 +1869,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     }
     ret = ReturnData->ReturnValue;
 
-    //    NotifyDPArrivedMetadataMin(Stream, ReturnData);
+    NotifyDPArrivedMetadata(Stream);
 
     if (ReturnData->ReturnValue != SstSuccess)
     {

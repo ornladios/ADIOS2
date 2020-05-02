@@ -74,10 +74,12 @@ typedef struct _WS_ReaderInfo
     void *RankZeroID;
     long StartingTimestep;
     long LastSentTimestep;
+    int LocalReaderDefinitionsLocked;
     int LastReleasedTimestep;
-    int ReaderDefinitionsLocked;
-    int ReaderSelectionLockTimestep;
+    int FullCommPatternLocked;
+    int CommPatternLockTimestep;
     SstPreloadModeType PreloadMode;
+    long PreloadModeActiveTimestep;
     long OldestUnreleasedTimestep;
     struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
