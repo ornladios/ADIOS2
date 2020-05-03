@@ -154,6 +154,13 @@ std::string IO::EngineType() const
     return m_IO->m_EngineType;
 }
 
+std::vector<std::pair<std::string, std::string>> IO::GetVariableNames() const
+    noexcept
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::GetVariablesDataMap");
+    return m_IO->GetVariableNames();
+}
+
 // PRIVATE
 IO::IO(core::IO *io) : m_IO(io) {}
 

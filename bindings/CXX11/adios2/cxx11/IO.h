@@ -16,6 +16,8 @@
 #include "Operator.h"
 #include "Variable.h"
 
+#include <unordered_map>
+
 #if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
@@ -35,6 +37,10 @@ namespace core
 class IO; // private implementation
 }
 /// \endcond
+
+/** used for Variables and Attributes, name, type, type-index */
+using DataMap =
+    std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
 
 class IO
 {
@@ -355,6 +361,14 @@ public:
      * @return current engine type
      */
     std::string EngineType() const;
+
+    /**
+     * Return the list of variable names + types that are valid in the current
+     * step/file
+     * @return vector of string pairs (name + type of variables)
+     */
+    std::vector<std::pair<std::string, std::string>> GetVariableNames() const
+        noexcept;
 
 private:
     IO(core::IO *io);

@@ -142,6 +142,8 @@ var_names = ["varStr", "varI8", "varI16", "varI32", "varI64",
              "varU8", "varU16", "varU32", "varU64",
                       "varR32", "varR64"]
 
+if rank == 0:
+    print("Testing AvailableAttributes()")
 attributesInfo = ioReader.AvailableAttributes()
 for name, info in attributesInfo.items():
     check_name(name, attr_names)
@@ -151,6 +153,8 @@ for name, info in attributesInfo.items():
             print("\t" + key + ": " + value)
         print("\n")
 
+if rank == 0:
+    print("Testing AvailableVariables()")
 variablesInfo = ioReader.AvailableVariables()
 for name, info in variablesInfo.items():
     check_name(name, var_names)
@@ -159,6 +163,14 @@ for name, info in variablesInfo.items():
         for key, value in info.items():
             print("\t" + key + ": " + value)
         print("\n")
+
+if rank == 0:
+    print("Testing GetVariableNames()")
+varlist = ioReader.GetVariableNames()
+for name, typestr in varlist:
+    check_name(name, var_names)
+    if rank == 0:
+        print(typestr + "  " + name)
 
 
 if varI8 is not None:

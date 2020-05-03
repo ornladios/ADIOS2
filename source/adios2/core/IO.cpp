@@ -443,6 +443,22 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
     return variablesInfo;
 }
 
+std::vector<std::pair<std::string, std::string>> IO::GetVariableNames() const
+    noexcept
+{
+    std::vector<std::pair<std::string, std::string>> names;
+    for (const auto &variablePair : m_Variables)
+    {
+        const std::string name(variablePair.first);
+        const std::string type = InquireVariableType(name);
+        if (!type.empty())
+        {
+            names.push_back(std::make_pair(name, type));
+        }
+    }
+    return names;
+}
+
 std::map<std::string, Params>
 IO::GetAvailableAttributes(const std::string &variableName,
                            const std::string separator,

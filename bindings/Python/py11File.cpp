@@ -64,6 +64,12 @@ std::map<std::string, adios2::Params> File::AvailableAttributes() noexcept
     return m_Stream->m_IO->GetAvailableAttributes();
 }
 
+std::vector<std::pair<std::string, std::string>>
+File::GetVariableNames() noexcept
+{
+    return m_Stream->m_IO->GetVariableNames();
+}
+
 void File::WriteAttribute(const std::string &name, const pybind11::array &array,
                           const std::string &variableName,
                           const std::string separator, const bool endStep)

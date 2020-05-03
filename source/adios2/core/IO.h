@@ -276,6 +276,14 @@ public:
     std::map<std::string, Params> GetAvailableVariables() noexcept;
 
     /**
+     * Return the list of variable names + types that are valid in the current
+     * step/file. This is much faster than GetAvailableVariables()
+     * @return vector of string pairs (name + type of variables)
+     */
+    std::vector<std::pair<std::string, std::string>> GetVariableNames() const
+        noexcept;
+
+    /**
      * @brief Gets an existing variable of primitive type by name
      * @param name of variable to be retrieved
      * @return pointer to an existing variable in current IO, nullptr if not

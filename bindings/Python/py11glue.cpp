@@ -357,6 +357,7 @@ PYBIND11_MODULE(adios2, m)
 #endif
         .def("AvailableVariables", &adios2::py11::IO::AvailableVariables)
         .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
+        .def("GetVariableNames", &adios2::py11::IO::GetVariableNames)
         .def("FlushAll", &adios2::py11::IO::FlushAll)
         .def("EngineType", &adios2::py11::IO::EngineType)
         .def("RemoveVariable", &adios2::py11::IO::RemoveVariable)
@@ -603,6 +604,16 @@ PYBIND11_MODULE(adios2, m)
                          attribute name
                      value 
                          attribute information dictionary
+        )md")
+
+        .def("get_variable_names", &adios2::py11::File::GetVariableNames,
+             pybind11::return_value_policy::move, R"md(
+             Returns a list with basic variable information. 
+             Read mode only.
+             
+             Returns
+                 variables list of string pairs
+                     variable name, type
         )md")
 
         .def("write",

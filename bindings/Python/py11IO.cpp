@@ -260,6 +260,11 @@ std::map<std::string, Params> IO::AvailableAttributes()
     return m_IO->GetAvailableAttributes();
 }
 
+std::vector<std::pair<std::string, std::string>> IO::GetVariableNames() noexcept
+{
+    return m_IO->GetVariableNames();
+}
+
 std::string IO::VariableType(const std::string &name) const
 {
     helper::CheckForNullptr(m_IO, "for variable " + name +

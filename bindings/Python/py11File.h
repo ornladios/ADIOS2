@@ -58,6 +58,9 @@ public:
 
     std::map<std::string, adios2::Params> AvailableAttributes() noexcept;
 
+    std::vector<std::pair<std::string, std::string>>
+    GetVariableNames() noexcept;
+
     void WriteAttribute(const std::string &name, const pybind11::array &array,
                         const std::string &variableName = "",
                         const std::string separator = "/",

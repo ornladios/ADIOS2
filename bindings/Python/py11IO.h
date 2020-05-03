@@ -97,6 +97,9 @@ public:
 
     std::map<std::string, Params> AvailableAttributes();
 
+    std::vector<std::pair<std::string, std::string>>
+    GetVariableNames() noexcept;
+
     std::string VariableType(const std::string &name) const;
 
     std::string AttributeType(const std::string &name) const;
