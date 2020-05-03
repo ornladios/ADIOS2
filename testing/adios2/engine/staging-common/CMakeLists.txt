@@ -210,6 +210,8 @@ if(ADIOS2_HAVE_MPI)
     list (FILTER INSITU_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
     # No locking geometry
     list (FILTER INSITU_TESTS EXCLUDE REGEX "LockGeometry")
+    # The nobody-writes-data-in-a-timestep tests don't work for InSitu
+    list (FILTER INSITU_TESTS EXCLUDE REGEX ".*NoData$")
     foreach(test ${INSITU_TESTS})
         add_common_test(${test} InSituMPI)
     endforeach()
