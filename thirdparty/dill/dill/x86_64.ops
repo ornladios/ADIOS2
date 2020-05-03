@@ -48,6 +48,9 @@ sub upperc {
 
 print COUT "DECLARE_JUMP_TABLE(${mach});\n";
 print COUT "extern void dill_x86_64_init(dill_stream s)\n{\n";
+print COUT "\t  static int first = 1;";
+print COUT "\t  if (!first) return;";
+print COUT "\t  first = 0;";
 print COUT "\t  FILL_JUMP_STRUCTURE(x86_64);\n";
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
