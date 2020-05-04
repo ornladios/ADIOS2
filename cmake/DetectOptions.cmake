@@ -339,3 +339,17 @@ endif()
 
 # Multithreading
 find_package(Threads REQUIRED)
+
+# Floating point detection
+include(CheckTypeRepresentation)
+
+check_float_type_representation(float FLOAT_TYPE_C)
+check_float_type_representation(double DOUBLE_TYPE_C)
+check_float_type_representation("long double" LONG_DOUBLE_TYPE_C)
+
+if(ADIOS2_USE_Fortran)
+  check_float_type_representation(real REAL_TYPE_Fortran LANGUAGE Fortran)
+  check_float_type_representation("real(kind=4)" REAL4_TYPE_Fortran LANGUAGE Fortran)
+  check_float_type_representation("real(kind=8)" REAL8_TYPE_Fortran LANGUAGE Fortran)
+  check_float_type_representation("real(kind=16)" REAL16_TYPE_Fortran LANGUAGE Fortran)
+endif()
