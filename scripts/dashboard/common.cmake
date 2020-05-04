@@ -444,7 +444,9 @@ if(dashboard_do_build)
       dashboard_hook_build()
     endif()
     message("Calling ctest_build")
-    ctest_build()
+    ctest_build(
+      NUMBER_WARNINGS ctest_build_num_warnings
+      )
   endif()
   if(dashboard_do_submit)
     ctest_submit(PARTS Build)
