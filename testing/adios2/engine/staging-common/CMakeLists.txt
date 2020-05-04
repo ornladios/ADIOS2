@@ -20,7 +20,7 @@ if(ADIOS2_HAVE_MPI)
       TEST_LIST _gtest_added_tests
     )
     set_tests_properties(${_gtest_added_tests} PROPERTIES
-      PROCESSORS ${NUM_TEST_PROCS}
+      PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
     )
     gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
       EXTRA_ARGS "SST" "MarshalMethod=BP"
@@ -28,7 +28,7 @@ if(ADIOS2_HAVE_MPI)
       TEST_LIST _gtest_added_tests
     )
     set_tests_properties(${_gtest_added_tests} PROPERTIES
-      PROCESSORS ${NUM_TEST_PROCS}
+      PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
     )
   endif()
 
@@ -38,7 +38,7 @@ if(ADIOS2_HAVE_MPI)
     TEST_LIST _gtest_added_tests
   )
   set_tests_properties(${_gtest_added_tests} PROPERTIES
-    PROCESSORS ${NUM_TEST_PROCS}
+    PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
   )
 endif()
 

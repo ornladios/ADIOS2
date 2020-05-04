@@ -3,4 +3,4 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-gtest_add_tests_helper(File FALSE "" Transports. "")
+gtest_add_tests_helper(File MPI_NONE "" Transports. "")

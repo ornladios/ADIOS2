@@ -3,4 +3,4 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-gtest_add_tests_helper(WriteRead ${test_mpi} Null Engine.Null. "")
+gtest_add_tests_helper(WriteRead MPI_ALLOW Null Engine.Null. "")
