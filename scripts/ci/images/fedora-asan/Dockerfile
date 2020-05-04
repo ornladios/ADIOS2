@@ -1,4 +1,4 @@
-FROM ornladios/adios2:fedora-sanitizers-base
+FROM ornladios/adios2:ci-fedora-sanitizers-base
 
 # Install core dev packages
 RUN dnf -y install libasan python3-devel python3-numpy hdf5-devel

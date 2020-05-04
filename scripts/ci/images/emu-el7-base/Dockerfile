@@ -1,5 +1,5 @@
 ARG TARGET_CPU=power8
-FROM ornladios/adios2:x86_64-${TARGET_CPU}-el7
+FROM ornladios/adios2:ci-x86_64-${TARGET_CPU}-el7
 
 # Install core dev packages
 RUN yum upgrade -y && \

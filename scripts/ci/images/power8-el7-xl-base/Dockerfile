@@ -1,4 +1,4 @@
-FROM ornladios/adios2:x86_64-power8-el7-base
+FROM ornladios/adios2:ci-x86_64-power8-el7-base
 
 # Install XL compilers
 COPY IBM_XL_C_CPP_*_LINUX_COMMUNITY.tar.gz /tmp

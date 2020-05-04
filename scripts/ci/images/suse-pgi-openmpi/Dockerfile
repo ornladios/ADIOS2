@@ -1,4 +1,4 @@
-FROM ornladios/adios2:suse-pgi-base
+FROM ornladios/adios2:ci-suse-pgi-base
 
 # Install OpenMPI
 WORKDIR /opt/openmpi

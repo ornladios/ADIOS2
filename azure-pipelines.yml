@@ -12,9 +12,9 @@ pr:
 resources:
   containers:
   - container: el7-intel-ohpc
-    image: ornladios/adios2:el7-intel-ohpc
+    image: ornladios/adios2:ci-el7-intel-ohpc
   - container: el7-intel-openmpi-ohpc
-    image: ornladios/adios2:el7-intel-openmpi-ohpc
+    image: ornladios/adios2:ci-el7-intel-openmpi-ohpc
 
 jobs:
 - job: windows

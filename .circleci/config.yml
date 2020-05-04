@@ -24,19 +24,19 @@ jobs:
   "fedora-ubsan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:fedora-ubsan
+      - image: ornladios/adios2:ci-fedora-ubsan
   "fedora-asan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:fedora-asan
+      - image: ornladios/adios2:ci-fedora-asan
   "fedora-msan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:fedora-msan
+      - image: ornladios/adios2:ci-fedora-msan
   "fedora-tsan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:fedora-tsan
+      - image: ornladios/adios2:ci-fedora-tsan
 
 workflows:
   version: 2

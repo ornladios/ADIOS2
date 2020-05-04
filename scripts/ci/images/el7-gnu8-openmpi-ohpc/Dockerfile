@@ -1,4 +1,4 @@
-FROM ornladios/adios2:el7-gnu8-ohpc-base
+FROM ornladios/adios2:ci-el7-gnu8-ohpc-base
 
 # Install OpenHPC packages
 RUN yum -y install python-devel python-numpy-gnu8-ohpc openmpi3-gnu8-ohpc \

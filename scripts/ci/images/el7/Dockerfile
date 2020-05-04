@@ -1,4 +1,4 @@
-FROM ornladios/adios2:el7-base
+FROM ornladios/adios2:ci-el7-base
 
 # Install extra system dev packages
 RUN yum -y install hdf5-devel python-devel numpy
