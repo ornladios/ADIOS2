@@ -14,12 +14,12 @@ function build_partially_squashed_image()
   local IMAGE_FROM=$1
   local IMAGE_TO=$2
 
-  docker build -t ornladios/adios2:${IMAGE_TO} ${IMAGE_TO}
+  docker build --rm -t ornladios/adios2:ci-${IMAGE_TO} ${IMAGE_TO}
 
   docker-squash \
-    -f ornladios/adios2:${IMAGE_FROM} \
-    -t ornladios/adios2:${IMAGE_TO} \
-    ornladios/adios2:${IMAGE_TO}
+    -f ornladios/adios2:ci-${IMAGE_FROM} \
+    -t ornladios/adios2:ci-${IMAGE_TO} \
+    ornladios/adios2:ci-${IMAGE_TO}
 }
 
 echo "************************************************************"
@@ -29,7 +29,7 @@ ROOT_BASE_IMAGES="el7-base suse-pgi-base fedora-sanitizers-base"
 for IMAGE in ${ROOT_BASE_IMAGES}
 do
   echo "${IMAGE}"
-  docker build --squash -t ornladios/adios2:${IMAGE} ${IMAGE}
+  docker build --squash --rm -t ornladios/adios2:ci-${IMAGE} ${IMAGE}
   echo
 done
 
@@ -62,6 +62,6 @@ ALL_IMAGES="el7-base el7 el7-gnu8-ohpc-base el7-gnu8-ohpc el7-gnu8-openmpi-ohpc 
 for IMAGE in ${ALL_IMAGES}
 do
   echo "${IMAGE}"
-  docker push ornladios/adios2:${IMAGE}
+  docker push ornladios/adios2:ci-${IMAGE}
   echo
 done

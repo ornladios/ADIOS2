@@ -1,4 +1,4 @@
-FROM ornladios/adios2:el7-base
+FROM ornladios/adios2:ci-el7-base
 
 # Install OpenHPC packages
 RUN yum -y install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm && \

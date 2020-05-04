@@ -29,15 +29,15 @@ jobs:
           suse-pgi-openmpi ]
         include:
         - jobname: el7
-          container: ornladios/adios2:el7
+          container: ornladios/adios2:ci-el7
         - jobname: el7-gnu8-ohpc
-          container: ornladios/adios2:el7-gnu8-ohpc
+          container: ornladios/adios2:ci-el7-gnu8-ohpc
         - jobname: el7-gnu8-openmpi-ohpc
-          container: ornladios/adios2:el7-gnu8-openmpi-ohpc
+          container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
         - jobname: suse-pgi
-          container: ornladios/adios2:suse-pgi
+          container: ornladios/adios2:ci-suse-pgi
         - jobname: suse-pgi-openmpi
-          container: ornladios/adios2:suse-pgi-openmpi
+          container: ornladios/adios2:ci-suse-pgi-openmpi
 
     steps:
     - uses: actions/checkout@v2
@@ -74,16 +74,16 @@ jobs:
           power8-el7-pgi-smpi ]
         include:
         - jobname: power8-el7-xl
-          container: ornladios/adios2:x86_64-power8-el7-xl
+          container: ornladios/adios2:ci-x86_64-power8-el7-xl
           arch: ppc64le
         - jobname: power8-el7-xl-smpi
-          container: ornladios/adios2:x86_64-power8-el7-xl-smpi
+          container: ornladios/adios2:ci-x86_64-power8-el7-xl-smpi
           arch: ppc64le
         - jobname: power8-el7-pgi
-          container: ornladios/adios2:x86_64-power8-el7-pgi
+          container: ornladios/adios2:ci-x86_64-power8-el7-pgi
           arch: ppc64le
         - jobname: power8-el7-pgi-smpi
-          container: ornladios/adios2:x86_64-power8-el7-pgi-smpi
+          container: ornladios/adios2:ci-x86_64-power8-el7-pgi-smpi
           arch: ppc64le
 
     steps:

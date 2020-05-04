@@ -29,7 +29,7 @@
 #
 ################################################################################
 
-FROM ornladios/adios2:el7-base
+FROM ornladios/adios2:ci-el7-base
 
 # Install Intel C++ and Fortran compilers
 ARG LICENSE_FILE=CI.lic

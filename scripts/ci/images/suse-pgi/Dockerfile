@@ -1,4 +1,4 @@
-FROM ornladios/adios2:suse-pgi-base
+FROM ornladios/adios2:ci-suse-pgi-base
 
 # Install HDF5 1.10.4 (the current 1.10.5 has a parallel close bug affecting
 # the tests

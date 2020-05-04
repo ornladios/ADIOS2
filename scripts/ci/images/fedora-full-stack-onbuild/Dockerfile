@@ -1,4 +1,4 @@
-FROM ornladios/adios2:fedora-sanitizers-base
+FROM ornladios/adios2:ci-fedora-sanitizers-base
 
 # Set up some arguments
 ONBUILD ARG INSTALL_PREFIX

@@ -1,5 +1,5 @@
 ARG COMPILER
-FROM ornladios/adios2:x86_64-power8-el7-${COMPILER}-base
+FROM ornladios/adios2:ci-x86_64-power8-el7-${COMPILER}-base
 
 # Install SpectrumMPI
 WORKDIR /tmp
