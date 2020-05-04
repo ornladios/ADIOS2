@@ -26,7 +26,9 @@ jobs:
           el7-gnu8-ohpc,
           el7-gnu8-openmpi-ohpc,
           suse-pgi,
-          suse-pgi-openmpi ]
+          suse-pgi-openmpi,
+          debian-sid,
+          debian-sid-openmpi ]
         include:
         - jobname: el7
           container: ornladios/adios2:ci-el7
@@ -38,8 +40,15 @@ jobs:
           container: ornladios/adios2:ci-suse-pgi
         - jobname: suse-pgi-openmpi
           container: ornladios/adios2:ci-suse-pgi-openmpi
+        - jobname: debian-sid
+          container: debian:sid
+        - jobname: debian-sid-openmpi
+          container: debian:sid
 
     steps:
+    - name: Bootstrap
+      run: /bin/sh -c "apt-get update && apt-get dist-upgrade -y && apt-get install -y git"
+      if: contains(matrix.jobname, 'debian')
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.event.pull_request.head.sha }}
