@@ -260,7 +260,6 @@ bool GetParameter(const Params &params, const std::string &key, int &value)
             std::string error =
                 "Engine parameter " + key + " can only be integer numbers";
             throw(std::invalid_argument(error));
-            return false;
         }
     }
     return true;

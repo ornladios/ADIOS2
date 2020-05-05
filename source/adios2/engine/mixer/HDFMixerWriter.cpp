@@ -191,12 +191,20 @@ void HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
         status = H5Pclose(dcpl);
     }
 
-    // status is never checked so this silences the working about it not being
-    // used.  TODO: check the status and handle the error conditions.
-    (void)status;
+    // status is never checked so this silences the warning about it not
+    // being used.  TODO: check the status and handle the error conditions.
+    static_cast<void>(status);
 
     // m_VDSFile.Close();
     m_SubfileComm.Barrier();
+
+#if defined(__PGI)
+    // The above cast to void is not enough to quiet PGI.  "Check" status.
+    if (status < 0)
+    {
+        return;
+    }
+#endif
 }
 
 void HDFVDSWriter::Advance(const float timeoutSeconds)
