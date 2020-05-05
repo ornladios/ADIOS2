@@ -313,7 +313,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
     }
 
-    if ((write_times.back() - write_times.front()) > 1)
+    if ((write_times.size() > 1) &&
+        ((write_times.back() - write_times.front()) > 1))
     {
         TimeGapDetected++;
     }
