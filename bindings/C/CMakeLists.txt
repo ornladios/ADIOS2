@@ -13,6 +13,7 @@ add_library(adios2_c
   adios2/c/adios2_c_operator.cpp
 )
 set_property(TARGET adios2_c PROPERTY EXPORT_NAME c)
+set_property(TARGET adios2_c PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_c)
 target_link_libraries(adios2_c PRIVATE adios2_core)
 
 target_include_directories(adios2_c
@@ -31,6 +32,7 @@ if(ADIOS2_HAVE_MPI)
     adios2/c/adios2_c_io_mpi.cpp
     )
   set_property(TARGET adios2_c_mpi PROPERTY EXPORT_NAME c_mpi)
+  set_property(TARGET adios2_c_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_c_mpi)
   target_link_libraries(adios2_c_mpi PUBLIC adios2_c PRIVATE adios2_core_mpi PUBLIC MPI::MPI_C)
   target_compile_definitions(adios2_c_mpi INTERFACE ADIOS2_USE_MPI)
   add_library(adios2::c_mpi ALIAS adios2_c_mpi)

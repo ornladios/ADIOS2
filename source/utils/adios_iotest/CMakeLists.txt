@@ -12,6 +12,7 @@ target_link_libraries(adios_iotest adios2::cxx11_mpi MPI::MPI_C)
 if(WIN32)
   target_link_libraries(adios_iotest getopt)
 endif()
+set_property(TARGET adios_iotest PROPERTY OUTPUT_NAME adios2_iotest${ADIOS2_EXECUTABLE_SUFFIX})
 
 if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
   target_compile_definitions(adios_iotest PRIVATE ADIOS2_HAVE_HDF5_PARALLEL)

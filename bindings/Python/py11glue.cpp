@@ -110,7 +110,7 @@ adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
     return adios2::py11::File(name, mode, configfile, ioinconfigfile);
 }
 
-PYBIND11_MODULE(adios2, m)
+PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
 {
     m.attr("DebugON") = true;
     m.attr("DebugOFF") = false;

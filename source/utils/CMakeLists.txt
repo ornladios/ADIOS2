@@ -13,6 +13,7 @@ configure_file(
 add_executable(bpls ./bpls/bpls.cpp)
 target_link_libraries(bpls adios2_core adios2sys adios2::thirdparty::pugixml)
 target_include_directories(bpls PRIVATE ${PROJECT_BINARY_DIR})
+set_property(TARGET bpls PROPERTY OUTPUT_NAME bpls${ADIOS2_EXECUTABLE_SUFFIX})
 install(TARGETS bpls EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
 )
@@ -47,10 +48,12 @@ else()
 endif()
 add_executable(adios_reorganize ${adios_reorganize_srcs})
 target_link_libraries(adios_reorganize PRIVATE adios2_core ${maybe_mgard})
+set_property(TARGET adios_reorganize PROPERTY OUTPUT_NAME adios2_reorganize${ADIOS2_EXECUTABLE_SUFFIX})
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios_reorganize_mpi ${adios_reorganize_srcs})
   target_link_libraries(adios_reorganize_mpi PRIVATE adios2_core_mpi ${maybe_mgard})
+  set_property(TARGET adios_reorganize_mpi PROPERTY OUTPUT_NAME adios2_reorganize_mpi${ADIOS2_EXECUTABLE_SUFFIX})
   set(maybe_adios_reorganize_mpi adios_reorganize_mpi)
 else()
   set(maybe_adios_reorganize_mpi)
@@ -70,4 +73,7 @@ if(Python_Interpreter_FOUND)
   add_subdirectory(bp4dbg)
 endif()
 
-install(PROGRAMS adios_deactivate_bp.sh DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_scripts-runtime)
+install(PROGRAMS adios_deactivate_bp.sh
+  RENAME adios2_deactivate_bp
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT adios2_scripts-runtime)
