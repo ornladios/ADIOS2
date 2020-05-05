@@ -12,7 +12,7 @@ Compared to the older format, BP4 provides three main advantages:
     Reader's loop can block (with timeout) and wait for new steps to arrive. Same reader code can read the entire data in post or in situ.
     No restrictions on the Producer.  
   * **Burst buffer support** for writing data. It can write the output to a local file system on each compute node and drain the data to the parallel file system in a separate asynchronous thread. 
-    Appending and streaming to the target file system are still supported when data goes through the burst buffer.
+    Streaming read from the target file system are still supported when data goes through the burst buffer. Appending to an existing file on the target file system is NOT supported currently.
 
 BP4 files have the following structure given a "name" string passed as the first argument of ``IO::Open``:
 
