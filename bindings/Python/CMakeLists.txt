@@ -1,4 +1,5 @@
 Python_add_library(adios2_py MODULE
+  WITH_SOABI
   py11ADIOS.cpp
   py11IO.cpp
   py11Variable.cpp
