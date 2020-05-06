@@ -1511,7 +1511,7 @@ dill_dump(dill_stream s)
 	void *p;
 	int l;
 	int insn_count = 0;
-	printf("\nDILL virtual instruction stream\n\n");
+	fprintf(stderr, "\nDILL virtual instruction stream\n\n");
 	for (p =base; p < code_limit;) {
 	    printf("%lx  - %x - ", (unsigned long)p, (unsigned)*(int*)p);
 	    l = s->p->virtual.mach_jump->print_insn(s, &info, (void *)p);

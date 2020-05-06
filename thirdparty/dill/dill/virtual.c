@@ -4338,6 +4338,7 @@ virtual_do_end(dill_stream s, int package)
     label_translation_table ltable;
     int virtual_local_pointer = s->dill_local_pointer;
 
+    fprintf(stderr, "DILL at the start s->p->native.mach_jump = %p\n", s->p->native.mach_jump);
     if (dill_verbose == -1) {
 	dill_verbose = (getenv ("DILL_VERBOSE") != NULL);
 	no_optimize = (getenv ("DILL_NOOPTIMIZE") != NULL);
@@ -4398,6 +4399,7 @@ virtual_do_end(dill_stream s, int package)
 	(dill_foreign_cg)(s, (virtual_insn *)s->p->code_base, (virtual_insn *)s->p->cur_ip);
     } else {
 	s->j = s->p->native.mach_jump;
+	fprintf(stderr, "DILL early s->j = %p\n", s->j);
 	s->p->mach_reset = s->p->native.mach_reset;
 	s->p->mach_info = s->p->native.mach_info;
 	s->p->code_base = s->p->native.code_base;
@@ -4413,8 +4415,8 @@ virtual_do_end(dill_stream s, int package)
 
 	s->p->native_mach_reset(s);
 	ltable = build_label_translation(s);
-	printf("DILL s = %p\n", s);
-	printf("DILL s->j = %p\n", s->j);
+	fprintf(stderr, "DILL s = %p\n", s);
+	fprintf(stderr, "DILL s->j = %p\n", s->j);
 	(s->j->proc_start)(s, "no name", s->p->c_param_count, 
 			   vmi->arg_info, (void*)0);
 	fill_label_translation(s, ltable);
