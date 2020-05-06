@@ -70,27 +70,21 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     }
     Seconds timeOpen = std::chrono::steady_clock::now() - ts;
     EXPECT_TRUE(engine);
-    if (!mpiRank)
-    {
-        std::cout << "Reader Open took " << std::fixed << std::setprecision(9)
-                  << timeOpen.count() << " seconds" << std::endl;
-    }
 
     unsigned int t = 0;
 
     std::vector<std::time_t> write_times;
+    std::vector<Seconds> begin_times;
+    std::vector<adios2::StepStatus> begin_statuses;
 
     while (true)
     {
         ts = std::chrono::steady_clock::now();
         adios2::StepStatus status = engine.BeginStep();
         Seconds timeBeginStep = std::chrono::steady_clock::now() - ts;
-        if (!mpiRank)
-        {
-            std::cout << "Reader BeginStep t = " << t << " status = " << status
-                      << " after " << std::fixed << std::setprecision(9)
-                      << timeBeginStep.count() << " seconds" << std::endl;
-        }
+        begin_statuses.push_back(status);
+        begin_times.push_back(timeBeginStep);
+
         if (status != adios2::StepStatus::OK)
         {
             break;
@@ -374,6 +368,19 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                     0);
         }
         ++t;
+    }
+
+    if (!mpiRank)
+    {
+        std::cout << "Reader Open took " << std::fixed << std::setprecision(9)
+                  << timeOpen.count() << " seconds" << std::endl;
+        for (int i = 0; i < begin_times.size(); ++i)
+        {
+            std::cout << "Reader BeginStep t = " << i
+                      << " had status = " << begin_statuses[i] << " after "
+                      << std::fixed << std::setprecision(9)
+                      << begin_times[i].count() << " seconds" << std::endl;
+        }
     }
 
     EXPECT_EQ(t, NSteps);
