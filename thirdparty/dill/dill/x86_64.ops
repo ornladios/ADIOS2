@@ -48,9 +48,9 @@ sub upperc {
 
 print COUT "DECLARE_JUMP_TABLE(${mach});\n";
 print COUT "extern void dill_x86_64_init(dill_stream s)\n{\n";
-print COUT "\t  static int first = 1;";
-print COUT "\t  if (!first) return;";
-print COUT "\t  first = 0;";
+print COUT "\t  static int first = 1;\n";
+print COUT "\t  if (first) {\n";
+print COUT "\t  first = 0;\n";
 print COUT "\t  FILL_JUMP_STRUCTURE(x86_64);\n";
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
@@ -99,6 +99,7 @@ print COUT "\t  ${mach}_jump_table->count_insn = x86_64_count_insn;\n";
 print COUT "\t  ${mach}_jump_table->do_reverse_push = 0;\n";
 print COUT "\t  ${mach}_jump_table->target_byte_order = 2;  /* Format_Integer_littleendian */\n";
 print COUT "\t  ${mach}_jump_table->target_float_format = 2;  /* Format_IEEE_754_littleendian */ \n";
+print COUT "\t}\n";
 print COUT "\ts->j = x86_64_jump_table;\n";
 print COUT "\ts->dill_local_pointer = EBP;\n";
 print COUT "\ts->dill_param_reg_pointer = EBP;\n";
