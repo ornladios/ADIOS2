@@ -5,8 +5,10 @@
 #include <cstdint>
 #include <cstring>
 
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 
 #include <adios2.h>
 
@@ -21,6 +23,8 @@ class CommonReadTest : public ::testing::Test
 public:
     CommonReadTest() = default;
 };
+
+typedef std::chrono::duration<double> Seconds;
 
 #if ADIOS2_USE_MPI
 MPI_Comm testComm;
@@ -54,6 +58,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     adios2::Engine engine;
 
+    auto ts = std::chrono::steady_clock::now();
     if (ExpectOpenTimeout)
     {
         ASSERT_ANY_THROW(engine = io.Open(fname, adios2::Mode::Read));
@@ -63,12 +68,27 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     {
         engine = io.Open(fname, adios2::Mode::Read);
     }
+    Seconds timeOpen = std::chrono::steady_clock::now() - ts;
+    EXPECT_TRUE(engine);
+
     unsigned int t = 0;
 
     std::vector<std::time_t> write_times;
+    std::vector<Seconds> begin_times;
+    std::vector<adios2::StepStatus> begin_statuses;
 
-    while (engine.BeginStep() == adios2::StepStatus::OK)
+    while (true)
     {
+        ts = std::chrono::steady_clock::now();
+        adios2::StepStatus status = engine.BeginStep();
+        Seconds timeBeginStep = std::chrono::steady_clock::now() - ts;
+        begin_statuses.push_back(status);
+        begin_times.push_back(timeBeginStep);
+
+        if (status != adios2::StepStatus::OK)
+        {
+            break;
+        }
         const size_t currentStep = engine.CurrentStep();
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
@@ -350,6 +370,20 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         ++t;
     }
 
+    if (!mpiRank)
+    {
+        std::cout << "Reader Open took " << std::fixed << std::setprecision(9)
+                  << timeOpen.count() << " seconds" << std::endl;
+        for (int i = 0; i < begin_times.size(); ++i)
+        {
+            std::cout << "Reader BeginStep t = " << i
+                      << " had status = " << begin_statuses[i] << " after "
+                      << std::fixed << std::setprecision(9)
+                      << begin_times[i].count() << " seconds" << std::endl;
+        }
+    }
+
+    EXPECT_EQ(t, NSteps);
     if (!NoData)
     {
         if ((write_times.back() - write_times.front()) > 1)
@@ -369,7 +403,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             }
         }
     }
-    EXPECT_EQ(t, NSteps);
 
     // Close the file
     engine.Close();
