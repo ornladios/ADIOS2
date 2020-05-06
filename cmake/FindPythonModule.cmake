@@ -121,12 +121,19 @@ set( PythonModule_${module_NAME}_PATH
   endif()
 
   include(FindPackageHandleStandardArgs)
-  set(FPHSA_NAME_MISMATCHED TRUE)
+  set(CMAKE_FIND_PACKAGE_NAME PythonModule_${module_NAME})
+  foreach(VAR IN ITEMS REQUIRED QUIETLY VERSION COMPONENTS)
+    if(DEFINED PythonModule_FIND_${VAR})
+      set(PythonModule_${module_NAME}_FIND_${VAR} "${PythonModule_FIND_${VAR}}")
+    else()
+      unset(PythonModule_${module_NAME}_FIND_${VAR})
+    endif()
+  endforeach()
+
   find_package_handle_standard_args(PythonModule_${module_NAME}
     FOUND_VAR PythonModule_${module_NAME}_FOUND
     REQUIRED_VARS ${required_vars}
   )
-  unset(FPHSA_NAME_MISMATCHED)
 endif()
 
 if(PythonModule_${module_NAME}_FOUND AND
