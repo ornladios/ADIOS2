@@ -403,9 +403,14 @@ void IO::RemoveAllAttributes() noexcept
 #undef declare_type
 }
 
-std::map<std::string, Params> IO::GetAvailableVariables() noexcept
+std::map<std::string, Params>
+IO::GetAvailableVariables(const std::set<std::string> &keys) noexcept
 {
     TAU_SCOPED_TIMER("IO::GetAvailableVariables");
+
+    std::set<std::string> keysLC = helper::LowerCase(keys);
+    // TODO
+
     std::map<std::string, Params> variablesInfo;
     for (const auto &variablePair : m_Variables)
     {

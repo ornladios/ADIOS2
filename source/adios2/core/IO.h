@@ -269,11 +269,16 @@ public:
 
     /**
      * @brief Retrieve map with variables info. Use when reading.
+     * @param keys list of variable information keys to be extracted (case
+     * insensitive). Leave empty to return all possible keys.
+     * Possible values:
+     * keys=['AvailableStepsCount','Type','Max','Min','SingleValue','Shape']
      * @return map with current variables and info
      * keys: Type, Min, Max, Value, AvailableStepsStart,
      * AvailableStepsCount, Shape, Start, Count, SingleValue
      */
-    std::map<std::string, Params> GetAvailableVariables() noexcept;
+    std::map<std::string, Params> GetAvailableVariables(
+        const std::set<std::string> &keys = std::set<std::string>()) noexcept;
 
     /**
      * @brief Gets an existing variable of primitive type by name

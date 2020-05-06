@@ -26,6 +26,14 @@ namespace helper
 {
 
 /**
+ * Transforms string to LowerCase: either single string or set of strings
+ * @param input string or set of strings
+ * @return input contents in lower case
+ */
+template <class T>
+T LowerCase(const T &input);
+
+/**
  * Opens and checks for file and dumps content to a single string.
  * @param fileName of text file
  * @param hint exception message
@@ -168,18 +176,10 @@ size_t StringToSizeT(const std::string &input, const std::string &hint);
 size_t StringToByteUnits(const std::string &input, const std::string &hint);
 
 /**
- * Transforms string to LowerCase
- * @param input string
- * @return input contents in lower case
- */
-std::string LowerCase(const std::string &input);
-
-/**
  * Transforms parameter map to LowerCase.
  * @param params parameter map
  * @return parameter map with keys and values lower case.
  */
-
 Params LowerCaseParams(const Params &params);
 
 /**

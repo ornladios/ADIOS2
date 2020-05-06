@@ -155,5 +155,23 @@ class TestReadStepSelection(unittest.TestCase):
                     val, local_arrays[1:3, b, 1:5, 1:3]))
 
 
+class TestReadAvailableVariables(unittest.TestCase):
+    
+    def test_AvailableVariables(self):
+        with adios2.open(filename, 'r') as fh:
+            for fh_step in fh:
+                vars_info = fh_step.available_variables()
+                
+                for name, info in vars_info.items():
+                    print("variable_name: " + name)
+                    for key, value in info.items():
+                        print("\t" + key + ": " + value)
+                    print("\n")
+                
+                keys=['Type']
+                print(keys)
+                
+                vars_info = fh_step.available_variables(keys)
+
 if __name__ == '__main__':
     unittest.main()
