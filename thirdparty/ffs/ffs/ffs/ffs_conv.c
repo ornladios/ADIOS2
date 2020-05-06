@@ -2112,6 +2112,7 @@ int dest_alignment;
     read_generation_environment_variables();
     if (!ffs_conversion_generation())
 	return NULL;
+    fprintf(stderr, "generating a conversion for format %s\n", format_name);
     if (generation_verbose()) {
 	printf("For format %s ===================\n", format_name);
 	dump_IOConversion(conv);
@@ -2158,6 +2159,7 @@ int dest_alignment;
 	}
 #else
 	c = dill_create_stream();
+	fprintf(stderr, "created stream %p\n", c);
 	register_args = 1;
 #endif
     }
@@ -2274,7 +2276,9 @@ int dest_alignment;
 	dill_free_stream(c);
 	return NULL;
     } else {
+	fprintf(stderr, "calling dill_finalize, stream %p\n", c);
 	conversion_handle = dill_finalize(c);
+	fprintf(stderr, "called dill_finalize, stream %p\n", c);
 	conv->free_data = conversion_handle;
 	conv->free_func = (void(*)(void*))&dill_free_handle;
 	conversion_routine = (void(*)()) dill_get_fp(conversion_handle);
@@ -2283,6 +2287,7 @@ int dest_alignment;
 	dill_dump(c);
     }
     dill_free_stream(c);
+    fprintf(stderr, "FREEE'd stream %p\n", c);
     return (conv_routine) conversion_routine;
 }
 /*#define REG_DEBUG(x) printf x ;*/
