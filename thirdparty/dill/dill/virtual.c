@@ -4330,6 +4330,7 @@ virtual_do_end(dill_stream s, int package)
     static int old_reg_alloc = -1;
     static int do_emulation = -1;
 
+    fprintf(stderr, "CALLED VIRTUAL_DO_END\n");
     virtual_mach_info vmi = (virtual_mach_info)s->p->mach_info;
     void *insns = s->p->code_base;
     void *code_end = s->p->cur_ip;
@@ -4450,6 +4451,7 @@ virtual_do_end(dill_stream s, int package)
 EXTERN void
 virtual_end(dill_stream c)
 {
+    fprintf(stderr, "CALLED VIRTUAL_END\n");
     virtual_do_end(c, 0 /* package */);
 }
 

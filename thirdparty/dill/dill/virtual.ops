@@ -53,8 +53,9 @@ print VMOUT "{\n    switch(code) {\n$vm_loadi_code    default: printf(\"loadi mi
 print VMOUT "int emulate_storei(int code, struct reg_type *dest, struct reg_type *src, long imm)\n";
 print VMOUT "{\n    switch(code) {\n$vm_storei_code    }return 0;\n}\n";
 
-print COUT "DECLARE_JUMP_TABLE(${mach});\n";
+print COUT "DECLARE_JUMP_TABLE(virtual);\n";
 print COUT "extern void dill_virtual_init(dill_stream s)\n{\n";
+print COUT "\t  fprintf(stderr, \"CALLED DILL_VIRTUAL_INIT\\n\");\n";
 print COUT "\t  FILL_JUMP_STRUCTURE(virtual);\n";
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
@@ -62,60 +63,60 @@ print COUT $jmp_a2_assigns;
 print COUT $jmp_b_assigns;
 print COUT $jmp_c_assigns;
 print COUT "# line ". (__LINE__ + 2) . " \"virtual.ops\"\n";
-print COUT "\t  ${mach}_jump_table->proc_start = (dill_mach_proc_start) virtual_proc_start;\n";
-print COUT "\t  ${mach}_jump_table->end = (dill_mach_end)virtual_end;\n";
-print COUT "\t  ${mach}_jump_table->package_end = (dill_mach_end)virtual_package_end;\n";
+print COUT "\t  virtual_jump_table->proc_start = (dill_mach_proc_start) virtual_proc_start;\n";
+print COUT "\t  virtual_jump_table->end = (dill_mach_end)virtual_end;\n";
+print COUT "\t  virtual_jump_table->package_end = (dill_mach_end)virtual_package_end;\n";
 print COUT "\t  if (s->p->native.mach_jump != NULL) {\n";
-print COUT "\t    ${mach}_jump_table->type_align = s->p->native.mach_jump->type_align;\n";
-print COUT "\t    ${mach}_jump_table->type_size = s->p->native.mach_jump->type_size;\n";
+print COUT "\t    virtual_jump_table->type_align = s->p->native.mach_jump->type_align;\n";
+print COUT "\t    virtual_jump_table->type_size = s->p->native.mach_jump->type_size;\n";
 print COUT "\t  } else {\n";
-print COUT "\t    ${mach}_jump_table->type_align = virtual_type_align;\n";
-print COUT "\t    ${mach}_jump_table->type_size = virtual_type_size;\n";
+print COUT "\t    virtual_jump_table->type_align = virtual_type_align;\n";
+print COUT "\t    virtual_jump_table->type_size = virtual_type_size;\n";
 print COUT "\t  }\n";
-print COUT "\t  ${mach}_jump_table->ret = virtual_ret;\n";
-print COUT "\t  ${mach}_jump_table->reti = virtual_reti;\n";
-print COUT "\t  ${mach}_jump_table->retf = (ret_opf)virtual_reti;\n";
-print COUT "\t  ${mach}_jump_table->load = virtual_load;\n";
-print COUT "\t  ${mach}_jump_table->bsload = virtual_pbsload;\n";
-print COUT "\t  ${mach}_jump_table->loadi = virtual_loadi;\n";
-print COUT "\t  ${mach}_jump_table->bsloadi = virtual_pbsloadi;\n";
-print COUT "\t  ${mach}_jump_table->store = virtual_store;\n";
-print COUT "\t  ${mach}_jump_table->storei = virtual_storei;\n";
-print COUT "\t  ${mach}_jump_table->convert = virtual_convert;\n";
-print COUT "\t  ${mach}_jump_table->mov = virtual_mov;\n";
-print COUT "\t  ${mach}_jump_table->set = virtual_pset;\n";
-print COUT "\t  ${mach}_jump_table->setf = virtual_setf;\n";
-print COUT "\t  ${mach}_jump_table->setp = virtual_setp;\n";
-print COUT "\t  ${mach}_jump_table->jv = virtual_jump_to_label;\n";
-print COUT "\t  ${mach}_jump_table->jp = virtual_jump_to_reg;\n";
-print COUT "\t  ${mach}_jump_table->jpi = virtual_jump_to_imm;\n";
-print COUT "\t  ${mach}_jump_table->special = virtual_special;\n";
-print COUT "\t  ${mach}_jump_table->push = virtual_push;\n";
-print COUT "\t  ${mach}_jump_table->pushi = virtual_pushi;\n";
-print COUT "\t  ${mach}_jump_table->pushfi = virtual_pushfi;\n";
-print COUT "\t  ${mach}_jump_table->pushpi = virtual_pushpi;\n";
-print COUT "\t  ${mach}_jump_table->calli = virtual_calli;\n";
-print COUT "\t  ${mach}_jump_table->callr = virtual_callr;\n";
-print COUT "	${mach}_jump_table->lea = virtual_lea;\n";
-#  print COUT "\t  ${mach}_jump_table->local = sparc_local_op;\n";
-#  print COUT "\t  ${mach}_jump_table->save_restore = sparc_save_restore_op;\n";
-print COUT "\t  ${mach}_jump_table->mark_label = virtual_mark_label;\n";
-print COUT "\t  ${mach}_jump_table->init_disassembly = virtual_init_disassembly_info;\n";
-print COUT "\t  ${mach}_jump_table->print_insn = virtual_print_insn;\n";
-print COUT "\t  ${mach}_jump_table->print_reg = NULL;\n";
-print COUT "\t  ${mach}_jump_table->count_insn = NULL;\n";
+print COUT "\t  virtual_jump_table->ret = virtual_ret;\n";
+print COUT "\t  virtual_jump_table->reti = virtual_reti;\n";
+print COUT "\t  virtual_jump_table->retf = (ret_opf)virtual_reti;\n";
+print COUT "\t  virtual_jump_table->load = virtual_load;\n";
+print COUT "\t  virtual_jump_table->bsload = virtual_pbsload;\n";
+print COUT "\t  virtual_jump_table->loadi = virtual_loadi;\n";
+print COUT "\t  virtual_jump_table->bsloadi = virtual_pbsloadi;\n";
+print COUT "\t  virtual_jump_table->store = virtual_store;\n";
+print COUT "\t  virtual_jump_table->storei = virtual_storei;\n";
+print COUT "\t  virtual_jump_table->convert = virtual_convert;\n";
+print COUT "\t  virtual_jump_table->mov = virtual_mov;\n";
+print COUT "\t  virtual_jump_table->set = virtual_pset;\n";
+print COUT "\t  virtual_jump_table->setf = virtual_setf;\n";
+print COUT "\t  virtual_jump_table->setp = virtual_setp;\n";
+print COUT "\t  virtual_jump_table->jv = virtual_jump_to_label;\n";
+print COUT "\t  virtual_jump_table->jp = virtual_jump_to_reg;\n";
+print COUT "\t  virtual_jump_table->jpi = virtual_jump_to_imm;\n";
+print COUT "\t  virtual_jump_table->special = virtual_special;\n";
+print COUT "\t  virtual_jump_table->push = virtual_push;\n";
+print COUT "\t  virtual_jump_table->pushi = virtual_pushi;\n";
+print COUT "\t  virtual_jump_table->pushfi = virtual_pushfi;\n";
+print COUT "\t  virtual_jump_table->pushpi = virtual_pushpi;\n";
+print COUT "\t  virtual_jump_table->calli = virtual_calli;\n";
+print COUT "\t  virtual_jump_table->callr = virtual_callr;\n";
+print COUT "	virtual_jump_table->lea = virtual_lea;\n";
+#  print COUT "\t  virtual_jump_table->local = sparc_local_op;\n";
+#  print COUT "\t  virtual_jump_table->save_restore = sparc_save_restore_op;\n";
+print COUT "\t  virtual_jump_table->mark_label = virtual_mark_label;\n";
+print COUT "\t  virtual_jump_table->init_disassembly = virtual_init_disassembly_info;\n";
+print COUT "\t  virtual_jump_table->print_insn = virtual_print_insn;\n";
+print COUT "\t  virtual_jump_table->print_reg = NULL;\n";
+print COUT "\t  virtual_jump_table->count_insn = NULL;\n";
 print COUT "\t  if (s->p->native.mach_jump != NULL) {\n";
-print COUT "\t    ${mach}_jump_table->do_reverse_push = s->p->native.mach_jump->do_reverse_push;\n";
-print COUT "\t    ${mach}_jump_table->target_byte_order = s->p->native.mach_jump->target_byte_order;\n";
-print COUT "\t    ${mach}_jump_table->target_float_format = s->p->native.mach_jump->target_float_format;\n";
+print COUT "\t    virtual_jump_table->do_reverse_push = s->p->native.mach_jump->do_reverse_push;\n";
+print COUT "\t    virtual_jump_table->target_byte_order = s->p->native.mach_jump->target_byte_order;\n";
+print COUT "\t    virtual_jump_table->target_float_format = s->p->native.mach_jump->target_float_format;\n";
 print COUT "\t  } else {\n";
-print COUT "\t    ${mach}_jump_table->do_reverse_push = 0;\n";
+print COUT "\t    virtual_jump_table->do_reverse_push = 0;\n";
 print COUT "#ifdef WORDS_BIGENDIAN\n";
-print COUT "\t    ${mach}_jump_table->target_byte_order = 1;  /* Format_Integer_bigendian */\n";
-print COUT "\t    ${mach}_jump_table->target_float_format = 1;  /* Format_IEEE_754_bigendian */ \n";
+print COUT "\t    virtual_jump_table->target_byte_order = 1;  /* Format_Integer_bigendian */\n";
+print COUT "\t    virtual_jump_table->target_float_format = 1;  /* Format_IEEE_754_bigendian */ \n";
 print COUT "#else\n";
-print COUT "\t    ${mach}_jump_table->target_byte_order = 2;  /* Format_Integer_littleendian */\n";
-print COUT "\t    ${mach}_jump_table->target_float_format = 2;  /* Format_IEEE_754_littleendian */ \n";
+print COUT "\t    virtual_jump_table->target_byte_order = 2;  /* Format_Integer_littleendian */\n";
+print COUT "\t    virtual_jump_table->target_float_format = 2;  /* Format_IEEE_754_littleendian */ \n";
 print COUT "#endif\n";
 print COUT "\t  }\n";
 
@@ -146,9 +147,9 @@ sub arith_insn {
 	$c_op = $c_operations{$op};
 	foreach(split(' ', $type_list)) {
 	    $jmp_a3_assigns = $jmp_a3_assigns . "# line ".__LINE__." \"virtual.ops\"\n";
-	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->jmp_a3[dill_jmp_${op}${_}] = $subr;\n";
-	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data1 = dill_jmp_${op}${_};\n";
-	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data2 = 0;\n";
+	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  virtual_jump_table->jmp_a3[dill_jmp_${op}${_}] = $subr;\n";
+	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  virtual_jump_table->a3_data[dill_jmp_${op}${_}].data1 = dill_jmp_${op}${_};\n";
+	    $jmp_a3_assigns = $jmp_a3_assigns . "\t  virtual_jump_table->a3_data[dill_jmp_${op}${_}].data2 = 0;\n";
 	    $vm_a3_code .= "\t  case dill_jmp_${op}${_}:  dest->u.${_}.${_} = $src1_cast{$_} src1->u.${_}.${_} $c_op $src2_cast{$_} src2->u.${_}.${_}; break;\n";
 	}
     }
@@ -160,9 +161,9 @@ sub arith2_insn {
 	$op = $_;
 	$c_op = $c_operations{$op};
 	foreach(split(' ', $type_list)) {
-	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->jmp_a2[dill_jmp_${op}${_}] = $subr;\n";
-	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->a2_data[dill_jmp_${op}${_}].data1 = dill_jmp_${op}${_};\n";
-	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->a2_data[dill_jmp_${op}${_}].data2 = 0;\n";
+	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  virtual_jump_table->jmp_a2[dill_jmp_${op}${_}] = $subr;\n";
+	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  virtual_jump_table->a2_data[dill_jmp_${op}${_}].data1 = dill_jmp_${op}${_};\n";
+	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  virtual_jump_table->a2_data[dill_jmp_${op}${_}].data2 = 0;\n";
 	    $vm_a2_code .= "\t  case dill_jmp_${op}${_}:  dest->u.${_}.${_} = $c_op $src_cast{$_} src->u.${_}.${_}; break;\n";
 	}
     }
@@ -175,9 +176,9 @@ sub arithi_insn {
 	$op = $_;
 	$c_op = $c_operations{$op};
 	foreach(split(' ', $type_list)) {
-	    $jmp_a3i_assigns = $jmp_a3i_assigns . "\t  ${mach}_jump_table->jmp_a3i[dill_jmp_${op}${_}] = $subr;\n";
-	    $jmp_a3i_assigns = $jmp_a3i_assigns . "\t  ${mach}_jump_table->a3i_data[dill_jmp_${op}${_}].data1 = dill_jmp_${op}${_};\n";
-	    $jmp_a3i_assigns = $jmp_a3i_assigns . "\t  ${mach}_jump_table->a3i_data[dill_jmp_${op}${_}].data2 = 0;\n";
+	    $jmp_a3i_assigns = $jmp_a3i_assigns . "\t  virtual_jump_table->jmp_a3i[dill_jmp_${op}${_}] = $subr;\n";
+	    $jmp_a3i_assigns = $jmp_a3i_assigns . "\t  virtual_jump_table->a3i_data[dill_jmp_${op}${_}].data1 = dill_jmp_${op}${_};\n";
+	    $jmp_a3i_assigns = $jmp_a3i_assigns . "\t  virtual_jump_table->a3i_data[dill_jmp_${op}${_}].data2 = 0;\n";
 	    $vm_a3i_code .= "\t  case dill_jmp_${op}${_}:  dest->u.${_}.${_} = $src1_cast{$_} src1->u.${_}.${_} $c_op $src2_cast{$_} imm; break;\n";
 	}
     }
@@ -191,9 +192,9 @@ sub branch_insn {
 	$op = $_;
 	$c_op = $c_operations{$op};
 	foreach (split(' ', $types)) {
-	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_b[dill_jmp_b${op}${_}] = $subr;\n";
-	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_jmp_b${op}${_};\n";
-	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
+	    $jmp_b_assigns = $jmp_b_assigns . "\t  virtual_jump_table->jmp_b[dill_jmp_b${op}${_}] = $subr;\n";
+	    $jmp_b_assigns = $jmp_b_assigns . "\t  virtual_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_jmp_b${op}${_};\n";
+	    $jmp_b_assigns = $jmp_b_assigns . "\t  virtual_jump_table->b_data[dill_jmp_b${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
 	    $vm_br_code .=  "\t  case dill_jmp_b${op}${_}:  return ($src1_cast{$_} src1->u.${_}.${_}) $c_op ($src2_cast{$_} src2->u.${_}.${_});\n";
 	}
     }
@@ -205,7 +206,7 @@ sub branchi_insn {
 	$op = $_;
 	$c_op = $c_operations{$op};
 	foreach (split(' ', $types)) {
-	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_bi[dill_jmp_b${op}${_}] = $subr;\n";
+	    $jmp_b_assigns = $jmp_b_assigns . "\t  virtual_jump_table->jmp_bi[dill_jmp_b${op}${_}] = $subr;\n";
 	    $vm_bri_code .=  "\t  case dill_jmp_b${op}${_}:  return ($src1_cast{$_} src1->u.${_}.${_}) $c_op $src1_cast{$_} imm; break;\n";
 	}
     }
@@ -217,9 +218,9 @@ sub compare_insn {
 	$op = $_;
 	$c_op = $c_operations{$op};
 	foreach (split(' ', $types)) {
-	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->jmp_c[dill_jmp_c${op}${_}] = $subr;\n";
-	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data1 = dill_jmp_c${op}${_};\n";
-	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  virtual_jump_table->jmp_c[dill_jmp_c${op}${_}] = $subr;\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  virtual_jump_table->c_data[dill_jmp_c${op}${_}].data1 = dill_jmp_c${op}${_};\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  virtual_jump_table->c_data[dill_jmp_c${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
 	    $vm_c_code .=  "\t  case dill_jmp_c${op}${_}:  return ($src2_cast{$_} src1->u.${_}.${_}) $c_op ($src2_cast{$_} src2->u.${_}.${_});\n";
 	}
     }
@@ -258,7 +259,7 @@ sub load_store {
 
 sub output_header {
     $mach = virtual;
-    open(COUT, ">dill_${mach}.c") || die "Can't open header output";
+    open(COUT, ">dill_virtual.c") || die "Can't open header output";
     open(VMOUT, ">vm_include.c") || die "Can't open vm_include output";
 print VMOUT<<EOF;
 /* This file is generated from virtual.ops.  Do not edit directly. */
