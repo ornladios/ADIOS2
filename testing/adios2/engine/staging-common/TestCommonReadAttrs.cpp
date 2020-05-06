@@ -5,8 +5,10 @@
 #include <cstdint>
 #include <cstring>
 
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 
 #include <adios2.h>
 
@@ -21,6 +23,8 @@ class CommonReadTest : public ::testing::Test
 public:
     CommonReadTest() = default;
 };
+
+typedef std::chrono::duration<double> Seconds;
 
 #if ADIOS2_USE_MPI
 MPI_Comm testComm;
@@ -52,7 +56,15 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     io.SetEngine(engine);
     io.SetParameters(engineParams);
 
+    auto ts = std::chrono::steady_clock::now();
     adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+    Seconds timeOpen = std::chrono::steady_clock::now() - ts;
+    EXPECT_TRUE(engine);
+    if (!mpiRank)
+    {
+        std::cout << "Reader Open took " << std::fixed << std::setprecision(9)
+                  << timeOpen.count() << " seconds" << std::endl;
+    }
 
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
@@ -74,11 +86,14 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     while (true)
     {
+        ts = std::chrono::steady_clock::now();
         adios2::StepStatus status = engine.BeginStep();
+        Seconds timeBeginStep = std::chrono::steady_clock::now() - ts;
         if (!mpiRank)
         {
             std::cout << "Reader BeginStep t = " << t << " status = " << status
-                      << std::endl;
+                      << " after " << std::fixed << std::setprecision(9)
+                      << timeBeginStep.count() << " seconds" << std::endl;
         }
         if (status != adios2::StepStatus::OK)
         {
