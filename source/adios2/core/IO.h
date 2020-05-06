@@ -549,6 +549,10 @@ private:
     template <class T>
     bool IsAvailableStep(const size_t step,
                          const unsigned int variableIndex) noexcept;
+
+    template <class T>
+    Params GetVariableInfo(const std::string &variableName,
+                           const std::set<std::string> &keys);
 };
 
 // Explicit declaration of the public template methods

@@ -113,21 +113,10 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
-    //     CheckAttributeCommon(globalName);
-
     auto &attributeMap = GetAttributeMap<T>();
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (!IsEnd(itExistingAttribute, m_Attributes))
     {
-        // std::cout << "attribute " << globalName << " has already been
-        // defined!"
-        //           << std::endl;
-        // std::cout << "index of defined attribute in attributeMap is "
-        //           << itExistingAttribute->second.second << std::endl;
-        // std::cout << "value of existing attribute is "
-        //           << attributeMap.at(itExistingAttribute->second.second)
-        //                  .GetInfo()["Value"]
-        //           << std::endl;
         if (helper::ValueToString(value) ==
             attributeMap.at(itExistingAttribute->second.second)
                 .GetInfo()["Value"])
@@ -171,26 +160,15 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
-    //     CheckAttributeCommon(globalName);
-
     auto &attributeMap = GetAttributeMap<T>();
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (!IsEnd(itExistingAttribute, m_Attributes))
     {
-        // std::cout << "attribute " << globalName << " has already been
-        // defined!"
-        //           << std::endl;
-        // std::cout << "index of defined attribute in attributeMap is "
-        //           << itExistingAttribute->second.second << std::endl;
-        // std::cout << "value of existing attribute is "
-        //           << attributeMap.at(itExistingAttribute->second.second)
-        //                  .GetInfo()["Value"]
-        //           << std::endl;
-        std::string arrayValues(
+        const std::string arrayValues(
             "{ " +
             helper::VectorToCSV(std::vector<T>(array, array + elements)) +
             " }");
-        // std::cout << "new value is " << arrayValues << std::endl;
+
         if (attributeMap.at(itExistingAttribute->second.second)
                 .GetInfo()["Value"] == arrayValues)
         {
@@ -259,6 +237,41 @@ ADIOS2_FOREACH_STDTYPE_2ARGS(make_GetVariableMap)
     }
 ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(make_GetAttributeMap)
 #undef make_GetAttributeMap
+
+template <class T>
+Params IO::GetVariableInfo(const std::string &variableName,
+                           const std::set<std::string> &keys)
+{
+    Params info;
+    const std::set<std::string> keysLC = helper::LowerCase(keys);
+    // small strings so passing by value
+    auto lf_Insert = [&](const std::string key, const std::string value) {
+        const std::string keyLC = helper::LowerCase(key);
+        if (keys.empty() || keysLC.count(keyLC) == 1)
+        {
+            info[key] = value;
+        }
+    };
+
+    Variable<T> &variable = *InquireVariable<T>(variableName);
+
+    lf_Insert("Type", variable.m_Type);
+    lf_Insert("AvailableStepsCount",
+              helper::ValueToString(variable.m_AvailableStepsCount));
+    lf_Insert("Shape", helper::VectorToCSV(variable.Shape()));
+
+    if (variable.m_SingleValue)
+    {
+        lf_Insert("SingleValue", "true");
+    }
+    else
+    {
+        lf_Insert("SingleValue", "true");
+        lf_Insert("Min", helper::ValueToString(variable.Min()));
+        lf_Insert("Max", helper::ValueToString(variable.Max()));
+    }
+    return info;
+}
 
 } // end namespace core
 } // end namespace adios2
