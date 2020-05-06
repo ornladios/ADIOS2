@@ -4412,6 +4412,8 @@ virtual_do_end(dill_stream s, int package)
 
 	s->p->native_mach_reset(s);
 	ltable = build_label_translation(s);
+	printf("DILL s = %p\n", s);
+	printf("DILL s->j = %p\n", s->j);
 	(s->j->proc_start)(s, "no name", s->p->c_param_count, 
 			   vmi->arg_info, (void*)0);
 	fill_label_translation(s, ltable);
