@@ -305,6 +305,7 @@ dill_cross_init(char *arch)
     s->p->vreg_count = 0;
     s->p->vregs = malloc(1);
     reset_context(s);
+    fprintf(stderr, "In dill_cross_init, setting mach_jump to %p\n", s->j);
     s->p->native.mach_jump = s->j;
     s->p->native.mach_reset = s->p->mach_reset;
     s->p->native.mach_info = NULL;
@@ -318,6 +319,7 @@ dill_cross_init(char *arch)
     s->p->virtual.cur_ip = NULL;
     s->p->virtual.code_limit = NULL;
     s->p->unavail_called = 0;
+    fprintf(stderr, "In dill_cross_init, returning native.mach_jump to %p\n", s->p->native.mach_jump);
     return s;
 }
 
