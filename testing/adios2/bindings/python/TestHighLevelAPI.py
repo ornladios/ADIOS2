@@ -161,21 +161,24 @@ class TestReadAvailableVariables(unittest.TestCase):
         with adios2.open(filename, 'r') as fh:
             for fh_step in fh:
                 vars_info = fh_step.available_variables()
+                self.assertTrue(len(vars_info['global_array']) == 6)
                 
-#                 for name, info in vars_info.items():
-#                     print("variable_name: " + name)
-#                     for key, value in info.items():
-#                         print("\t" + key + ": " + value)
-#                     print("\n")
+                vars_info = fh_step.available_variables(['type'])
+                self.assertTrue(len(vars_info['global_array']) == 1)
+                self.assertTrue(vars_info['global_array']['Type'] == 'int64_t')
                 
-                keys=['Type']
+                vars_info = fh_step.available_variables(['type', 'min', 'max'])
+                self.assertTrue(len(vars_info['global_array']) == 3)
+                self.assertTrue(vars_info['global_array']['Type'] == 'int64_t')
                 
-                vars_info = fh_step.available_variables(keys)
-                for name, info in vars_info.items():
-                    print("variable_name: " + name)
-                    for key, value in info.items():
-                        print("\t" + key + ": " + value)
-                    print("\n")
+                vars_info = fh_step.available_variables(['Type','Min','Max', 'SingleValue'])
+                self.assertTrue(len(vars_info['global_array']) == 4)
+                self.assertTrue(vars_info['global_array']['Type'] == 'int64_t')
+                self.assertTrue(vars_info['global_array']['SingleValue'] == 'false')
+                
+                vars_info = fh_step.available_variables(['shape'])
+                self.assertTrue(len(vars_info['global_array']) == 1)
+                self.assertTrue(vars_info['global_array']['Shape']=='2, 16')
 
 if __name__ == '__main__':
     unittest.main()

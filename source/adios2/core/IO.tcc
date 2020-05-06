@@ -266,7 +266,7 @@ Params IO::GetVariableInfo(const std::string &variableName,
     }
     else
     {
-        lf_Insert("SingleValue", "true");
+        lf_Insert("SingleValue", "false");
         lf_Insert("Min", helper::ValueToString(variable.Min()));
         lf_Insert("Max", helper::ValueToString(variable.Max()));
     }
