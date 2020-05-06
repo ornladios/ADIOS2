@@ -72,8 +72,18 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     std::vector<std::time_t> write_times;
 
-    while (engine.BeginStep() == adios2::StepStatus::OK)
+    while (true)
     {
+        adios2::StepStatus status = engine.BeginStep();
+        if (!mpiRank)
+        {
+            std::cout << "Reader BeginStep t = " << t << " status = " << status
+                      << std::endl;
+        }
+        if (status != adios2::StepStatus::OK)
+        {
+            break;
+        }
         const size_t currentStep = engine.CurrentStep();
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
