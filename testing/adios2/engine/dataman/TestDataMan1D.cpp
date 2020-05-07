@@ -317,7 +317,7 @@ TEST_F(DataManEngineTest, 1D)
     Dims count = {10};
     size_t steps = 10000;
     adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
-                                   {"Port", "12306"}};
+                                   {"Port", "12300"}};
 
     // run workflow
     auto r =

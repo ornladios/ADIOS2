@@ -187,7 +187,7 @@ TEST_F(DataManEngineTest, 3D_MemSelect)
 
     size_t steps = 10000;
     adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
-                                   {"Port", "12310"}};
+                                   {"Port", "12340"}};
     // run workflow
 
     auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
