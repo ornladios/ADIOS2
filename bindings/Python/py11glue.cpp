@@ -589,6 +589,7 @@ PYBIND11_MODULE(adios2, m)
                  keys
                     list of variable information keys to be extracted (case insensitive)
                     keys=['AvailableStepsCount','Type','Max','Min','SingleValue','Shape']
+                    keys=['Name'] returns only the variable names as 1st-level keys
                     leave empty to return all possible keys
 
              Returns
