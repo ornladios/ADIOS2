@@ -14,6 +14,7 @@
 #include "adiosString.h"
 
 #include <algorithm> //std::transform
+#include <iterator>  //std::inserter
 
 namespace adios2
 {
