@@ -177,10 +177,15 @@ class TestReadAvailableVariables(unittest.TestCase):
                 self.assertTrue(vars_info['global_array']['Type'] == 'int64_t')
                 self.assertTrue(vars_info['global_array']
                                 ['SingleValue'] == 'false')
+                self.assertTrue(vars_info['global_value']
+                                ['SingleValue'] == 'true')
 
                 vars_info = fh_step.available_variables(['shape'])
                 self.assertTrue(len(vars_info['global_array']) == 1)
                 self.assertTrue(vars_info['global_array']['Shape'] == '2, 16')
+
+                vars_info = fh_step.available_variables(['Name'])
+                self.assertTrue(len(vars_info['global_array']) == 0)
 
 
 if __name__ == '__main__':

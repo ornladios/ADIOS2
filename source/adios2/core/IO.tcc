@@ -243,32 +243,57 @@ Params IO::GetVariableInfo(const std::string &variableName,
                            const std::set<std::string> &keys)
 {
     Params info;
+    // keys input are case insensitive
     const std::set<std::string> keysLC = helper::LowerCase(keys);
-    // small strings so passing by value
-    auto lf_Insert = [&](const std::string key, const std::string value) {
-        const std::string keyLC = helper::LowerCase(key);
-        if (keys.empty() || keysLC.count(keyLC) == 1)
-        {
-            info[key] = value;
-        }
-    };
+
+    // return empty map if only "name" key is requested
+    if (keys.size() == 1 && keysLC.count("name") == 1)
+    {
+        return info;
+    }
 
     Variable<T> &variable = *InquireVariable<T>(variableName);
 
-    lf_Insert("Type", variable.m_Type);
-    lf_Insert("AvailableStepsCount",
-              helper::ValueToString(variable.m_AvailableStepsCount));
-    lf_Insert("Shape", helper::VectorToCSV(variable.Shape()));
+    if (keys.empty() || keysLC.count("type") == 1)
+    {
+        info["Type"] = variable.m_Type;
+    }
+
+    if (keys.empty() || keysLC.count("availablestepscount") == 1)
+    {
+        info["AvailableStepsCount"] =
+            helper::ValueToString(variable.m_AvailableStepsCount);
+    }
+
+    if (keys.empty() || keysLC.count("shape") == 1)
+    {
+        // expensive function
+        info["Shape"] = helper::VectorToCSV(variable.Shape());
+    }
 
     if (variable.m_SingleValue)
     {
-        lf_Insert("SingleValue", "true");
+        if (keys.empty() || keysLC.count("singlevalue") == 1)
+        {
+            info["SingleValue"] = "true";
+        }
     }
     else
     {
-        lf_Insert("SingleValue", "false");
-        lf_Insert("Min", helper::ValueToString(variable.Min()));
-        lf_Insert("Max", helper::ValueToString(variable.Max()));
+        if (keys.empty() || keysLC.count("singlevalue") == 1)
+        {
+            info["SingleValue"] = "false";
+        }
+        if (keys.empty() || keysLC.count("min") == 1)
+        {
+            // expensive function
+            info["Min"] = helper::ValueToString(variable.Min());
+        }
+        if (keys.empty() || keysLC.count("max") == 1)
+        {
+            // expensive function
+            info["Max"] = helper::ValueToString(variable.Max());
+        }
     }
     return info;
 }
