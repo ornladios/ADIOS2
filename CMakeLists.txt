@@ -151,6 +151,7 @@ configure_file(
 
 install(FILES ${PROJECT_BINARY_DIR}/source/adios2/common/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common
+  COMPONENT adios2_core-development
 )
 
 #------------------------------------------------------------------------------#

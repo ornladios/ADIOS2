@@ -28,9 +28,9 @@ endif()
 
 
 install(TARGETS adios_iotest EXPORT adios2
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
 )
 
 install(DIRECTORY iotest-config/ 
-   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/iotest-config
+   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/iotest-config COMPONENT adios2_tools-data
 )

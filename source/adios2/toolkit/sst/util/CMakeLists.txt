@@ -22,5 +22,5 @@ target_link_libraries(sst_conn_tool sst adios2::thirdparty::EVPath)
 target_include_directories(sst_conn_tool PRIVATE .. ../cp )
 
 install(TARGETS sst_conn_tool EXPORT adios2
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
 )

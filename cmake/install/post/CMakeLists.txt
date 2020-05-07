@@ -50,5 +50,6 @@ if(NOT WIN32)
       message(FATAL_ERROR \"generate-adios2-config.sh returned \${result}, should be 0\")
     endif()
   "
+    COMPONENT adios2_core-config
   )
 endif()

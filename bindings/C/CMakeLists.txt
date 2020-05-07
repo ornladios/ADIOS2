@@ -47,15 +47,16 @@ set_target_properties(
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
-install(TARGETS adios2_c ${maybe_adios2_c_mpi} EXPORT adios2Exports
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+install(TARGETS adios2_c ${maybe_adios2_c_mpi} EXPORT adios2CExports
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_c-runtime
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_c-libraries NAMELINK_COMPONENT adios2_c-development
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_c-development
 )
 
 install(
   FILES adios2_c.h 
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  COMPONENT adios2_c-development
 )
 
 install(
@@ -67,4 +68,16 @@ install(
         adios2/c/adios2_c_engine.h
         adios2/c/adios2_c_operator.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/c
+  COMPONENT adios2_c-development
+)
+
+export(EXPORT adios2CExports
+  FILE ${ADIOS2_BINARY_DIR}/adios2-c-targets.cmake
+  NAMESPACE adios2::
+)
+install(EXPORT adios2CExports
+  FILE adios2-c-targets.cmake
+  NAMESPACE adios2::
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  COMPONENT adios2_c-development
 )

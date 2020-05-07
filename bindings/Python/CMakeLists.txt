@@ -54,7 +54,9 @@ endif()
 
 install(TARGETS adios2_py
   DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2
+  COMPONENT adios2_python-python
 )
 install(FILES __init__.py
   DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2
+  COMPONENT adios2_python-python
 )

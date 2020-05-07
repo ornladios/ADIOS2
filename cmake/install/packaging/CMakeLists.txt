@@ -37,11 +37,13 @@ install(
     ${ADIOS2_BINARY_DIR}/adios2-config-version.cmake
     ${ADIOS2_BINARY_DIR}/adios2-config-common.cmake
   DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  COMPONENT adios2_core-development
 )
 install(EXPORT adios2Exports
   FILE adios2-targets.cmake
   NAMESPACE adios2::
   DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  COMPONENT adios2_core-development
 )
 configure_file(
   ${ADIOS2_SOURCE_DIR}/cmake/adios2-config-install.cmake.in
@@ -51,4 +53,5 @@ configure_file(
 install(FILES ${ADIOS2_BINARY_DIR}/adios2-config-install.cmake
   RENAME adios2-config.cmake
   DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  COMPONENT adios2_core-development
 )

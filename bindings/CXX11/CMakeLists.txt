@@ -54,20 +54,22 @@ set_target_properties(
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
-install(TARGETS adios2_cxx11 ${maybe_adios2_cxx11_mpi} EXPORT adios2Exports
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+install(TARGETS adios2_cxx11 ${maybe_adios2_cxx11_mpi} EXPORT adios2CXX11Exports
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_cxx11-runtime
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_cxx11-libraries NAMELINK_COMPONENT adios2_cxx11-development
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_cxx11-development
 )
 
 install(
   FILES adios2.h 
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  COMPONENT adios2_cxx11-development
 )
 
 install(
   FILES adios2/cxx11/fstream/ADIOS2fstream.h 
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx11/fstream
+  COMPONENT adios2_cxx11-development
 )
 
 install(
@@ -81,4 +83,16 @@ install(
         adios2/cxx11/Query.h
         adios2/cxx11/Types.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx11
+  COMPONENT adios2_cxx11-development
+)
+
+export(EXPORT adios2CXX11Exports
+  FILE ${ADIOS2_BINARY_DIR}/adios2-cxx11-targets.cmake
+  NAMESPACE adios2::
+)
+install(EXPORT adios2CXX11Exports
+  FILE adios2-cxx11-targets.cmake
+  NAMESPACE adios2::
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  COMPONENT adios2_cxx11-development
 )
