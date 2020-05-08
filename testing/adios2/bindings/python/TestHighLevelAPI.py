@@ -160,8 +160,15 @@ class TestReadAvailableVariables(unittest.TestCase):
     def test_AvailableVariables(self):
         with adios2.open(filename, 'r') as fh:
             for fh_step in fh:
+
+                step = fh_step.current_step()
+
                 vars_info = fh_step.available_variables()
                 self.assertTrue(len(vars_info['global_array']) == 6)
+
+                self.assertTrue(len(vars_info['global_value']) == 6)
+                self.assertTrue(vars_info['global_value']['Min'] == str(step))
+                self.assertTrue(vars_info['global_value']['Max'] == str(step))
 
                 vars_info = fh_step.available_variables(['type'])
                 self.assertTrue(len(vars_info['global_array']) == 1)
@@ -177,8 +184,14 @@ class TestReadAvailableVariables(unittest.TestCase):
                 self.assertTrue(vars_info['global_array']['Type'] == 'int64_t')
                 self.assertTrue(vars_info['global_array']
                                 ['SingleValue'] == 'false')
+
+                self.assertTrue(len(vars_info['global_value']) == 4)
+                self.assertTrue(vars_info['global_value']['Type'] == 'int64_t')
                 self.assertTrue(vars_info['global_value']
                                 ['SingleValue'] == 'true')
+
+                self.assertTrue(vars_info['global_value']['Min'] == str(step))
+                self.assertTrue(vars_info['global_value']['Max'] == str(step))
 
                 vars_info = fh_step.available_variables(['shape'])
                 self.assertTrue(len(vars_info['global_array']) == 1)

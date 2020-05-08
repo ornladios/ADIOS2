@@ -271,29 +271,26 @@ Params IO::GetVariableInfo(const std::string &variableName,
         info["Shape"] = helper::VectorToCSV(variable.Shape());
     }
 
-    if (variable.m_SingleValue)
+    if (keys.empty() || keysLC.count("singlevalue") == 1)
     {
-        if (keys.empty() || keysLC.count("singlevalue") == 1)
-        {
-            info["SingleValue"] = "true";
-        }
+        const std::string isSingleValue =
+            variable.m_SingleValue ? "true" : "false";
+        info["SingleValue"] = isSingleValue;
     }
-    else
+
+    if (keys.empty() || (keysLC.count("min") == 1 && keysLC.count("max") == 1))
     {
-        if (keys.empty() || keysLC.count("singlevalue") == 1)
-        {
-            info["SingleValue"] = "false";
-        }
-        if (keys.empty() || keysLC.count("min") == 1)
-        {
-            // expensive function
-            info["Min"] = helper::ValueToString(variable.Min());
-        }
-        if (keys.empty() || keysLC.count("max") == 1)
-        {
-            // expensive function
-            info["Max"] = helper::ValueToString(variable.Max());
-        }
+        const auto pairMinMax = variable.MinMax();
+        info["Min"] = helper::ValueToString(pairMinMax.first);
+        info["Max"] = helper::ValueToString(pairMinMax.second);
+    }
+    else if (keysLC.count("min") == 1)
+    {
+        info["Min"] = helper::ValueToString(variable.Min());
+    }
+    else if (keysLC.count("max") == 1)
+    {
+        info["Max"] = helper::ValueToString(variable.Min());
     }
     return info;
 }
