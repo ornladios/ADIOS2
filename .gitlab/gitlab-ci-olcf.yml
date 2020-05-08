@@ -1,0 +1,30 @@
+stages:
+  - full
+
+.all-steps:
+  stage: full
+  variables:
+    GITLAB_SITE: "OLCF GitLab"
+    CMAKE_ENV_MODULE: "cmake"
+  script:
+    - bash scripts/ci/gitlab-ci/run.sh update
+    - bash scripts/ci/gitlab-ci/run.sh configure
+    - bash scripts/ci/gitlab-ci/run.sh build
+    - bash scripts/ci/gitlab-ci/run.sh test
+
+ascent-xl:
+  extends:
+  - .all-steps
+  tags: [nobatch]
+
+ascent-gcc:
+  extends:
+  - .all-steps
+  tags: [nobatch]
+
+#ascent-xl-smpi:
+#  extends:
+#  - .all-steps
+#  tags: [batch]
+#  variables:
+#    SCHEDULER_PARAMETERS: "-P CSC303 -W 1:00 -nnodes 1"
