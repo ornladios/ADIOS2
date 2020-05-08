@@ -1451,9 +1451,12 @@ static void NotifyDPArrivedMetadata(SstStream Stream)
         if ((TS->MetadataMsg->Metadata != NULL) &&
             (TS->MetadataMsg->Timestep > Stream->LastDPNotifiedTimestep))
         {
-            Stream->DP_Interface->timestepArrived(&Svcs, Stream->DP_Stream,
-                                                  TS->MetadataMsg->Timestep,
-                                                  TS->MetadataMsg->PreloadMode);
+            if (Stream->DP_Interface->timestepArrived)
+            {
+                Stream->DP_Interface->timestepArrived(
+                    &Svcs, Stream->DP_Stream, TS->MetadataMsg->Timestep,
+                    TS->MetadataMsg->PreloadMode);
+            }
             Stream->LastDPNotifiedTimestep = TS->MetadataMsg->Timestep;
         }
         TS = TS->Next;
