@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
@@ -542,7 +543,21 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
                       rc);
     }
 
-    rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
+    // at large scale the servers backing drc can become overwhelmed and
+    // timeout. The return value is -22 (EINVAL). a work around is to wait
+    // and try again.
+    int try
+        = 0;
+    int max_try = 60;
+    int try_wait_sec = 1;
+    do
+    {
+        sleep(try_wait_sec);
+        rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
+        try
+            += 1;
+    } while ((rc != DRC_SUCCESS) && (try < max_try));
+
     if (rc != DRC_SUCCESS)
     {
         Svcs->verbose(CP_Stream,
