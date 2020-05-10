@@ -59,7 +59,7 @@ function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
     list(APPEND test_targets "${tgt}")
     if(NOT TARGET ${tgt})
       add_executable(${tgt} Test${src_pfx}${testname}.cpp)
-      target_link_libraries(${tgt} adios2::cxx11 adios2::c adios2_core gtest)
+      target_link_libraries(${tgt} adios2::cxx11 adios2::c adios2_core adios2::thirdparty::gtest)
     endif()
     gtest_add_tests(TARGET ${tgt}
       TEST_PREFIX "${tst_pfx}"
@@ -72,7 +72,7 @@ function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
     list(APPEND test_targets "${tgt}")
     if(NOT TARGET ${tgt})
       add_executable(${tgt} Test${src_pfx}${testname}.cpp)
-      target_link_libraries(${tgt} adios2::cxx11_mpi adios2::c_mpi adios2_core_mpi MPI::MPI_C gtest)
+      target_link_libraries(${tgt} adios2::cxx11_mpi adios2::c_mpi adios2_core_mpi MPI::MPI_C adios2::thirdparty::gtest)
     endif()
     if(NOT mpi STREQUAL "MPI_NOEXEC")
       gtest_add_tests(TARGET ${tgt}
