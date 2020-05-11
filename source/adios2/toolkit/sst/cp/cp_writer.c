@@ -1491,13 +1491,13 @@ void SstWriterClose(SstStream Stream)
     if ((Stream->ConfigParams->CPCommPattern == SstCPCommPeer) ||
         (Stream->Rank == 0))
     {
-        PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+        STREAM_MUTEX_LOCK(Stream)
         if (Stream->ReleaseCount > 0)
         {
-            SMPI_Bcast(&Stream->ReleaseCount, 1, MPI_INT, 0, Stream->mpiComm);
+            SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
             SMPI_Bcast(Stream->ReleaseList,
                        Stream->ReleaseCount * sizeof(*(Stream->ReleaseList)),
-                       MPI_BYTE, 0, Stream->mpiComm);
+                       SMPI_BYTE, 0, Stream->mpiComm);
             Stream->ReleaseCount = 0;
             free(Stream->ReleaseList);
             Stream->ReleaseList = NULL;
@@ -1540,23 +1540,22 @@ void SstWriterClose(SstStream Stream)
             }
             /* NEED TO HANDLE FAILURE HERE */
             STREAM_CONDITION_WAIT(Stream);
-            SST_REAFFIRM_LOCKED_AFTER_CONDITION();
-            SMPI_Bcast(&Stream->ReleaseCount, 1, MPI_INT, 0, Stream->mpiComm);
+            SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
             if (Stream->ReleaseCount > 0)
             {
                 SMPI_Bcast(Stream->ReleaseList,
                            Stream->ReleaseCount *
                                sizeof(*(Stream->ReleaseList)),
-                           MPI_BYTE, 0, Stream->mpiComm);
+                           SMPI_BYTE, 0, Stream->mpiComm);
                 Stream->ReleaseCount = 0;
                 free(Stream->ReleaseList);
                 Stream->ReleaseList = NULL;
             }
         }
         Stream->ReleaseCount = -1;
-        SMPI_Bcast(&Stream->ReleaseCount, 1, MPI_INT, 0, Stream->mpiComm);
+        SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
         Stream->ReleaseCount = 0;
-        PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+        STREAM_MUTEX_UNLOCK(Stream);
     }
 
     if (Stream->ConfigParams->CPCommPattern == SstCPCommMin)
@@ -1566,7 +1565,7 @@ void SstWriterClose(SstStream Stream)
             ReleaseData = malloc(sizeof(*ReleaseData));
             while (1)
             {
-                SMPI_Bcast(&ReleaseData->ReleaseCount, 1, MPI_INT, 0,
+                SMPI_Bcast(&ReleaseData->ReleaseCount, 1, SMPI_INT, 0,
                            Stream->mpiComm);
                 if (ReleaseData->ReleaseCount == -1)
                 {
@@ -1580,7 +1579,7 @@ void SstWriterClose(SstStream Stream)
                     SMPI_Bcast(ReleaseData->ReleaseList,
                                ReleaseData->ReleaseCount *
                                    sizeof(*(ReleaseData->ReleaseList)),
-                               MPI_BYTE, 0, Stream->mpiComm);
+                               SMPI_BYTE, 0, Stream->mpiComm);
                     ProcessReleaseList(Stream, ReleaseData);
                     free(ReleaseData->ReleaseList);
                     ReleaseData->ReleaseList = NULL;
