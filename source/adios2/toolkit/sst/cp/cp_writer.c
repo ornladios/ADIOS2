@@ -1554,7 +1554,6 @@ void SstWriterClose(SstStream Stream)
         Stream->ReleaseCount = -1;
         SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
         Stream->ReleaseCount = 0;
-        STREAM_MUTEX_UNLOCK(Stream);
     }
 
     if (Stream->ConfigParams->CPCommPattern == SstCPCommMin)
