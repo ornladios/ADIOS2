@@ -339,12 +339,12 @@ set_target_properties(
 )
 
 install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common COMPONENT adios2_core-development
 )
 
 # Library installation
-install(TARGETS adios2 adios2_core ${maybe_adios2_core_mpi} taustubs EXPORT adios2Exports
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+install(TARGETS adios2_core ${maybe_adios2_core_mpi} taustubs EXPORT adios2Exports
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development
 )

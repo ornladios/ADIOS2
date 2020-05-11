@@ -118,15 +118,27 @@ add_library(adios2_f INTERFACE)
 target_link_libraries(adios2_f INTERFACE ${maybe_adios2_fortran_mpi} adios2_fortran)
 
 install(
-  TARGETS adios2_fortran ${maybe_adios2_fortran_mpi} adios2_f EXPORT adios2Exports
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  TARGETS adios2_fortran ${maybe_adios2_fortran_mpi} adios2_f EXPORT adios2FortranExports
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_fortran-runtime
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_fortran-libraries NAMELINK_COMPONENT adios2_fortran-development
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_fortran-development
 )
 install(
   DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/fortran
+  COMPONENT adios2_fortran-development
   FILES_MATCHING
     PATTERN "adios2*.mod"
     PATTERN "CMakeFiles" EXCLUDE
+)
+
+export(EXPORT adios2FortranExports
+  FILE ${ADIOS2_BINARY_DIR}/adios2-fortran-targets.cmake
+  NAMESPACE adios2::
+)
+install(EXPORT adios2FortranExports
+  FILE adios2-fortran-targets.cmake
+  NAMESPACE adios2::
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  COMPONENT adios2_fortran-development
 )

@@ -58,6 +58,7 @@ include(SSTFunctions)
 GenerateSSTHeaderConfig(${SST_CONFIG_OPTS})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/SSTConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/toolkit/sst
+  COMPONENT adios2_core-development
 )
 
 if (NOT MSVC)
