@@ -388,7 +388,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     FabricState Fabric;
     int rc;
-    int try_left; 
+    int try_left;
 
     memset(Stream, 0, sizeof(struct _Rdma_WS_Stream));
 
@@ -424,9 +424,11 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
         usleep(DP_DRC_WAIT_USEC);
         rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
     }
-    if(rc != DRC_SUCCESS) {
+    if (rc != DRC_SUCCESS)
+    {
         Svcs->verbose(CP_Stream,
-                      "Could not access DRC credential. Last failed with %d.\n", rc);
+                      "Could not access DRC credential. Last failed with %d.\n",
+                      rc);
         goto err_out;
     }
 
@@ -566,9 +568,11 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
         usleep(DP_DRC_WAIT_USEC);
         rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
     }
-    if(rc != DRC_SUCCESS) {
+    if (rc != DRC_SUCCESS)
+    {
         Svcs->verbose(CP_Stream,
-                      "Could not access DRC credential. Last failed with %d.\n", rc);
+                      "Could not access DRC credential. Last failed with %d.\n",
+                      rc);
     }
 
     Fabric->auth_key = malloc(sizeof(*Fabric->auth_key));
