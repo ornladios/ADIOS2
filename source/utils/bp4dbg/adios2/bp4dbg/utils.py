@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 LocalValueDim = 18446744073709551613
 
 dataTypes = {
@@ -103,7 +100,7 @@ def GetCharacteristicDataLength(cID, typeID):
 # fileType: Data, Metadata, Index Table
 def ReadHeader(f, fileSize, fileType):
     status = True
-    if (fileSize < 64):
+    if fileSize < 64:
         print("ERROR: Invalid " + fileType + ". File is smaller "
               "than the header (64 bytes)")
         return False
