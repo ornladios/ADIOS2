@@ -63,7 +63,7 @@ if(ADIOS2_HAVE_MPI)
     TestF2C_BPReadFBlocks.cpp
   )
   target_link_libraries(Test.Bindings.Fortran.F2C.BPReadFBlocks
-    adios2 gtest MPI::MPI_C
+    adios2 adios2::thirdparty::gtest MPI::MPI_C
   )
   add_test(NAME Bindings.Fortran.F2C.BPReadFBlocks
     COMMAND

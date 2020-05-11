@@ -117,7 +117,7 @@ target_include_directories(adios2_core
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
 )
-target_link_libraries(adios2_core PRIVATE adios2sys_interface pugixml_private taustubs yaml-cpp)
+target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml_impl taustubs adios2::thirdparty::yaml-cpp)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 
@@ -158,7 +158,7 @@ if (ADIOS2_HAVE_DataMan)
     target_sources(adios2_core PRIVATE
 	toolkit/query/JsonWorker.cpp			
    	)
-    target_link_libraries(adios2_core PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_Table)
@@ -166,7 +166,7 @@ if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_Table)
         toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
     )
-    target_link_libraries(adios2_core PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
 
@@ -187,9 +187,9 @@ if(ADIOS2_HAVE_SSC)
         engine/ssc/SscWriter.tcc
         engine/ssc/SscHelper.cpp
         )
-    target_link_libraries(adios2_core_mpi PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core_mpi PRIVATE adios2::thirdparty::nlohmann_json)
     # SSC also activates code in main core library that uses nlohmann_json.
-    target_link_libraries(adios2_core PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_Table)

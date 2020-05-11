@@ -7,10 +7,9 @@ find_package(Threads REQUIRED)
 
 add_executable(Test.Engine.Common.MPI TestEngineCommon.cpp)
 target_link_libraries(Test.Engine.Common.MPI PRIVATE
-  gtest_interface
   adios2::cxx11_mpi
   MPI::MPI_C
-  gtest
+  adios2::thirdparty::gtest
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
