@@ -1493,10 +1493,12 @@ void SstWriterClose(SstStream Stream)
     {
         if (Stream->ReleaseCount > 0)
         {
-            SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
-            SMPI_Bcast(Stream->ReleaseList,
+            if(Stream->ConfigParams->CPCommPattern == SstCPCommMin) {
+                SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
+                SMPI_Bcast(Stream->ReleaseList,
                        Stream->ReleaseCount * sizeof(*(Stream->ReleaseList)),
                        SMPI_BYTE, 0, Stream->mpiComm);
+            }
             Stream->ReleaseCount = 0;
             free(Stream->ReleaseList);
             Stream->ReleaseList = NULL;
@@ -1539,21 +1541,26 @@ void SstWriterClose(SstStream Stream)
             }
             /* NEED TO HANDLE FAILURE HERE */
             STREAM_CONDITION_WAIT(Stream);
-            SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
-            if (Stream->ReleaseCount > 0)
-            {
-                SMPI_Bcast(Stream->ReleaseList,
+            if(Stream->ConfigParams->CPCommPattern == SstCPCommMin) {
+                SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
+                if (Stream->ReleaseCount > 0)
+                {
+                    SMPI_Bcast(Stream->ReleaseList,
                            Stream->ReleaseCount *
                                sizeof(*(Stream->ReleaseList)),
                            SMPI_BYTE, 0, Stream->mpiComm);
-                Stream->ReleaseCount = 0;
-                free(Stream->ReleaseList);
-                Stream->ReleaseList = NULL;
+                    Stream->ReleaseCount = 0;
+                    free(Stream->ReleaseList);
+                    Stream->ReleaseList = NULL;
+                }
             }
         }
-        Stream->ReleaseCount = -1;
-        SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
-        Stream->ReleaseCount = 0;
+        if(Stream->ConfigParams->CPCommPattern == SstCPCommMin) 
+        {
+            Stream->ReleaseCount = -1;
+            SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
+            Stream->ReleaseCount = 0;
+        }
     }
 
     if (Stream->ConfigParams->CPCommPattern == SstCPCommMin)
