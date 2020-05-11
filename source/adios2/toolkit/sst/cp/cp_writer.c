@@ -1491,7 +1491,6 @@ void SstWriterClose(SstStream Stream)
     if ((Stream->ConfigParams->CPCommPattern == SstCPCommPeer) ||
         (Stream->Rank == 0))
     {
-        STREAM_MUTEX_LOCK(Stream)
         if (Stream->ReleaseCount > 0)
         {
             SMPI_Bcast(&Stream->ReleaseCount, 1, SMPI_INT, 0, Stream->mpiComm);
@@ -1580,7 +1579,9 @@ void SstWriterClose(SstStream Stream)
                                ReleaseData->ReleaseCount *
                                    sizeof(*(ReleaseData->ReleaseList)),
                                SMPI_BYTE, 0, Stream->mpiComm);
+                    STREAM_MUTEX_UNLOCK(Stream);
                     ProcessReleaseList(Stream, ReleaseData);
+                    STREAM_MUTEX_LOCK(Stream);
                     free(ReleaseData->ReleaseList);
                     ReleaseData->ReleaseList = NULL;
                 }
