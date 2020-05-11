@@ -1,5 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 import numpy as np
 from os import fstat
 from .utils import *
@@ -12,7 +10,7 @@ def ReadEncodedStringFromBuffer(buf, pos, ID, limit, lenbytes=2):
         dt = np.dtype(np.uint16)
     namelen = np.frombuffer(buf, dtype=dt, count=1, offset=pos)[0]
     pos = pos + lenbytes
-    if (namelen > limit - lenbytes):
+    if namelen > limit - lenbytes:
         print("ERROR: " + ID + " string length ({0}) is longer than the "
               "limit to stay inside the block ({1})".format(
                   namelen, limit - lenbytes))
@@ -28,7 +26,7 @@ def ReadEncodedStringArrayFromBuffer(buf, pos, ID, limit, nStrings):
         # 2 bytes length + string without \0
         namelen = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
         pos = pos + 2
-        if (namelen > limit - 2):
+        if namelen > limit - 2:
             print("ERROR: " + ID + " string length ({0}) is longer than the "
                   "limit to stay inside the block ({1})".format(
                       namelen, limit - 2))
@@ -174,7 +172,7 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
                 print("]")
 
             else:
-                if (isVarCharacteristics):
+                if isVarCharacteristics:
                     cData = buf[pos:pos + cLen]
                     pos = pos + cLen
                     data = bDataToNumpyArray(cData, dataTypeName, 1)
@@ -295,7 +293,7 @@ def ReadPGMD(buf, idx, pos, limit, pgStartOffset):
     print(
         "        PG length       : {0} bytes (+2 for length)".format(
             pgLength))
-    if (pgStartPosition + pgLength + 2 > limit):
+    if pgStartPosition + pgLength + 2 > limit:
         print("ERROR: There is not enough bytes {0} left in PG index block "
               "to read this single PG index ({1} bytes)").format(
                   limit - pgStartPosition, pgLength)
@@ -303,7 +301,7 @@ def ReadPGMD(buf, idx, pos, limit, pgStartOffset):
 
     pgNameLen = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
     pos = pos + 2
-    if (pgStartPosition + pgNameLen > limit):
+    if pgStartPosition + pgNameLen > limit:
         print("ERROR: There is not enough bytes {0} left in PG index block "
               "to read the name of this single PG index ({1} bytes)").format(
                   limit - pos + 2, pgNameLen)
@@ -317,7 +315,7 @@ def ReadPGMD(buf, idx, pos, limit, pgStartOffset):
     # ColumnMajor (host language Fortran) 1 byte, 'y' or 'n'
     isColumnMajor = buf[pos]  # this is an integer value
     pos = pos + 1
-    if (isColumnMajor != ord('y') and isColumnMajor != ord('n')):
+    if isColumnMajor != ord('y') and isColumnMajor != ord('n'):
         print(
             "ERROR: Next byte for isColumnMajor must be 'y' or 'n' "
             "but it isn't = {0} (={1})".format(
@@ -331,7 +329,7 @@ def ReadPGMD(buf, idx, pos, limit, pgStartOffset):
 
     pgTimeNameLen = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
     pos = pos + 2
-    if (pgStartPosition + pgTimeNameLen > limit):
+    if pgStartPosition + pgTimeNameLen > limit:
         print("ERROR: There is not enough bytes {0} left in PG index block "
               "to read the name of this single PG index ({1} bytes)").format(
                   limit - pos + 2, pgTimeNameLen)
@@ -364,7 +362,7 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
     pos = pos + 4
     print("        Var idx length  : {0} bytes (+4 for idx length)".format(
         varLength))
-    if (varStartPosition + varLength + 4 > limit):
+    if varStartPosition + varLength + 4 > limit:
         print("ERROR: There is not enough bytes in Var index block "
               "to read this single Var index")
         return False, pos
@@ -401,7 +399,7 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
     # 1 byte ORDER (K, C, F)
     order = buf[pos]  # this is an integer value
     pos = pos + 1
-    if (order != ord('K') and order != ord('C') and order != ord('F')):
+    if order != ord('K') and order != ord('C') and order != ord('F'):
         print(
             "ERROR: Next byte for Order must be 'K', 'C', or 'F' "
             "but it isn't = {0} (={1})".format(
@@ -448,7 +446,7 @@ def ReadAttrMD(buf, idx, pos, limit, attrStartOffset):
     pos = pos + 4
     print("        Attr idx length : {0} bytes (+4 for idx length)".format(
         attrLength))
-    if (attrStartPosition + attrLength + 4 > limit):
+    if attrStartPosition + attrLength + 4 > limit:
         print("ERROR: There is not enough bytes in Attr index block "
               "to read this single Attr index")
         return False, pos
@@ -524,7 +522,7 @@ def ReadMetadataStep(f, fileSize, step):
         pgLength))
 
     pgStartPosition = f.tell()
-    if (pgStartPosition + pgLength > fileSize):
+    if pgStartPosition + pgLength > fileSize:
         print("ERROR: There is not enough bytes in file to read the PG index")
         return False
 
@@ -550,7 +548,7 @@ def ReadMetadataStep(f, fileSize, step):
         varLength))
 
     varsStartPosition = f.tell()
-    if (varsStartPosition + varLength > fileSize):
+    if varsStartPosition + varLength > fileSize:
         print("ERROR: There is not enough bytes in file to read the VAR index")
         return False
 
@@ -576,7 +574,7 @@ def ReadMetadataStep(f, fileSize, step):
         attrLength))
 
     attrsStartPosition = f.tell()
-    if (attrsStartPosition + attrLength > fileSize):
+    if attrsStartPosition + attrLength > fileSize:
         print("ERROR: There is not enough bytes in file "
               "to read the Attribute index")
         return False
