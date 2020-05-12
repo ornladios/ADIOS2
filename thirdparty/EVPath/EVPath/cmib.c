@@ -1941,7 +1941,7 @@ CMtrans_services svc;
 
 	ib_client_data_ptr socket_data;
 	svc->trace_out(cm, "Initialize CM IB transport built in %s\n",
-	               EVPATH_LIBRARY_BUILD_DIR);
+	               EVPATH_MODULE_BUILD_DIR);
 	page_size = sysconf(_SC_PAGE_SIZE);
 	if (socket_global_init == 0) {
 #ifdef SIGPIPE

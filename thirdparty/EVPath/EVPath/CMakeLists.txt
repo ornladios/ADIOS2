@@ -20,6 +20,10 @@ set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/EVPath
   CACHE STRING "Installation CMake subdirectory")
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
+set(EVPATH_INSTALL_MODULE_DIR "${CMAKE_INSTALL_LIBDIR}"
+  CACHE STRING "Directory in which to install EVPath transport modules")
+mark_as_advanced(EVPATH_INSTALL_MODULE_DIR)
+
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
     ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
@@ -45,6 +49,9 @@ if(NOT DEFINED EVPATH_ARCHIVE_COMPONENT)
 endif()
 if(NOT DEFINED EVPATH_HEADER_COMPONENT)
   set(EVPATH_HEADER_COMPONENT dev)
+endif()
+if(NOT DEFINED EVPATH_MODULE_COMPONENT_PREFIX)
+  set(EVPATH_MODULE_COMPONENT_PREFIX "")
 endif()
 
 # Default to a RelWithDebInfo build if not specified
@@ -249,7 +256,9 @@ if(EVPATH_TRANSPORT_MODULES)
 
   foreach(M cmselect cmsockets cmudp cmmulticast)
     set_target_properties(${M} PROPERTIES
-      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}${M})
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}${M}
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
+    install(TARGETS ${M} DESTINATION ${EVPATH_INSTALL_MODULE_DIR} COMPONENT ${EVPATH_MODULE_COMPONENT_PREFIX}${M})
   endforeach()
 
   target_link_libraries(cmselect PRIVATE evpath_headers atl::atl)
@@ -262,9 +271,11 @@ if(EVPATH_TRANSPORT_MODULES)
   if (HAVE_SYS_EPOLL_H)
      add_library(cmepoll MODULE cmepoll.c)
      set_target_properties(cmepoll PROPERTIES
-     	  OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmepoll)
+          OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmepoll
+          LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
      target_link_libraries(cmepoll PRIVATE evpath_headers atl::atl)
      list(APPEND EVPATH_TRANSPORT_TARGETS cmepoll)
+     install(TARGETS cmepoll DESTINATION ${EVPATH_INSTALL_MODULE_DIR} COMPONENT ${EVPATH_MODULE_COMPONENT_PREFIX}cmepoll)
   endif()
 else()
   # dummy dyn linking in cm.c and cm_transport.c
@@ -297,10 +308,12 @@ if(ENET_FOUND)
   if(EVPATH_TRANSPORT_MODULES)
     add_library(cmenet MODULE cmenet.c ip_config.c)
     set_target_properties(cmenet PROPERTIES
-      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmenet)
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmenet
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
 
     target_link_libraries(cmenet PRIVATE evpath_headers atl::atl enet::enet)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmenet)
+    install(TARGETS cmenet DESTINATION ${EVPATH_INSTALL_MODULE_DIR} COMPONENT ${EVPATH_MODULE_COMPONENT_PREFIX}cmenet)
   else()
     target_sources(EVPath PRIVATE cmenet.c)
     target_link_libraries(EVPath PRIVATE enet::enet)
@@ -323,10 +336,12 @@ if(EVPATH_USE_ZPL_ENET)
   if(EVPATH_TRANSPORT_MODULES)
     add_library(cmzplenet MODULE cmzplenet.c ip_config.c)
     set_target_properties(cmzplenet PROPERTIES
-      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmzplenet)
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmzplenet
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
 
     target_link_libraries(cmzplenet PRIVATE evpath_headers atl::atl)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmzplenet)
+    install(TARGETS cmzplenet DESTINATION ${EVPATH_INSTALL_MODULE_DIR} COMPONENT ${EVPATH_MODULE_COMPONENT_PREFIX}cmzplenet)
   else()
     target_sources(EVPath PRIVATE cmzplenet.c)
   endif()
@@ -355,10 +370,12 @@ if(UDT4_FOUND)
   if(EVPATH_TRANSPORT_MODULES)
     add_library(cmudt4 MODULE cmudt4.cpp ip_config.c)
     set_target_properties(cmudt4 PROPERTIES
-      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmudt4)
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmudt4
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
 
     target_link_libraries(cmudt4 PRIVATE evpath_headers atl::atl udt4::udt4)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmudt4)
+    install(TARGETS cmudt4 DESTINATION ${EVPATH_INSTALL_MODULE_DIR} COMPONENT ${EVPATH_MODULE_COMPONENT_PREFIX}cmudt4)
   else()
     target_sources(EVPath PRIVATE cmudt4.cpp)
     target_link_libraries(EVPath PRIVATE udt4::udt4)
@@ -384,10 +401,12 @@ if(LIBFABRIC_FOUND)
   if(EVPATH_TRANSPORT_MODULES)
     add_library(cmfabric MODULE cmfabric.c ip_config.c)
     set_target_properties(cmfabric PROPERTIES
-      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmfabric)
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmfabric
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
     target_link_libraries(cmfabric PRIVATE
       evpath_headers atl::atl libfabric::libfabric)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmfabric)
+    install(TARGETS cmfabric DESTINATION ${EVPATH_INSTALL_MODULE_DIR} COMPONENT ${EVPATH_MODULE_COMPONENT_PREFIX}cmfabric)
   else()
     if(NOT BUILD_SHARED_LIBS)
       list(APPEND EXTRA_INSTALL_PACKAGES LIBFABRIC)
@@ -441,10 +460,12 @@ if(IBVERBS_FOUND)
   if(EVPATH_TRANSPORT_MODULES)
     add_library(cmib MODULE cmib.c)
     set_target_properties(cmib PROPERTIES
-      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmib)
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmib
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
     target_link_libraries(cmib PRIVATE
       evpath_headers atl::atl ${IBVERBS_LIBRARIES})
     list(APPEND EVPATH_TRANSPORT_TARGETS cmib)
+    install(TARGETS cmib DESTINATION ${EVPATH_INSTALL_MODULE_DIR} COMPONENT ${EVPATH_MODULE_COMPONENT_PREFIX}cmib)
   else()
     target_sources(EVPath PRIVATE cmib.c)
     target_link_libraries(EVPath PRIVATE ${IBVERBS_LIBRARIES})
@@ -480,10 +501,12 @@ if(IBVERBS_FOUND)
     if(EVPATH_TRANSPORT_MODULES)
       add_library(cmnnti MODULE cmnnti.c)
       set_target_properties(cmnnti PROPERTIES
-        OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmnnti)
+        OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmnnti
+        LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
       target_link_libraries(cmnnti PRIVATE
         evpath_headers atl::atl nnti::nnti enet::enet)
       list(APPEND EVPATH_TRANSPORT_TARGETS cmnnti)
+    install(TARGETS cmnnti DESTINATION ${EVPATH_INSTALL_MODULE_DIR} COMPONENT ${EVPATH_MODULE_COMPONENT_PREFIX}cmnnti)
     else()
       if(NOT BUILD_SHARED_LIBS)
         list(APPEND EXTRA_INSTALL_PACKAGES NNTI)
@@ -635,18 +658,23 @@ set(namelink_component_args)
 if(NOT CMAKE_VERSION VERSION_LESS 3.12)
   set(namelink_component_args NAMELINK_COMPONENT ${EVPATH_HEADER_COMPONENT})
 endif()
-install(TARGETS EVPath ${EVPATH_TRANSPORT_TARGETS} EXPORT EVPathTargets
+install(TARGETS EVPath EXPORT EVPathTargets
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${EVPATH_RUNTIME_COMPONENT}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT ${EVPATH_LIBRARY_COMPONENT} ${namelink_component_args}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT ${EVPATH_ARCHIVE_COMPONENT}
 )
 
 FOREACH(tgt ${EVPATH_TRANSPORT_TARGETS})
-   TARGET_COMPILE_DEFINITIONS(${tgt} PRIVATE EVPATH_LIBRARY_BUILD_DIR="$<TARGET_FILE_DIR:${tgt}>")
+   TARGET_COMPILE_DEFINITIONS(${tgt} PRIVATE EVPATH_MODULE_BUILD_DIR="$<TARGET_FILE_DIR:${tgt}>")
 ENDFOREACH()
 
-TARGET_COMPILE_DEFINITIONS(EVPath PRIVATE EVPATH_LIBRARY_BUILD_DIR="$<TARGET_FILE_DIR:EVPath>")
-set(EVPATH_LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+set(config_suffix)
+get_property(multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(multi_config)
+  set(config_suffix "/$<CONFIG>")
+endif()
+TARGET_COMPILE_DEFINITIONS(EVPath PRIVATE EVPATH_MODULE_BUILD_DIR="${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR}${config_suffix}")
+set(EVPATH_MODULE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${EVPATH_INSTALL_MODULE_DIR})
 
 if(CMAKE_C_COMPILER_ID MATCHES "Intel") 
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
