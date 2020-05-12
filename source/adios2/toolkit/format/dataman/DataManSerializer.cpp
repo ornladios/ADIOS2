@@ -29,6 +29,14 @@ DataManSerializer::DataManSerializer(helper::Comm const &comm,
     m_MpiSize = m_Comm.Size();
 }
 
+DataManSerializer::~DataManSerializer()
+{
+    if (m_PutPackThread.joinable())
+    {
+        m_PutPackThread.join();
+    }
+}
+
 void DataManSerializer::NewWriterBuffer(size_t bufferSize)
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -553,7 +561,24 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
     }
 }
 
-int DataManSerializer::PutPack(const VecPtr data)
+void DataManSerializer::PutPack(const VecPtr data, const bool useThread)
+{
+    if (useThread)
+    {
+        if (m_PutPackThread.joinable())
+        {
+            m_PutPackThread.join();
+        }
+        m_PutPackThread =
+            std::thread(&DataManSerializer::PutPackThread, this, data);
+    }
+    else
+    {
+        PutPackThread(data);
+    }
+}
+
+int DataManSerializer::PutPackThread(const VecPtr data)
 {
     TAU_SCOPED_TIMER_FUNC();
     if (data->size() == 0)

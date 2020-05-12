@@ -207,7 +207,7 @@ void DataManReader::SubscribeThread(zmq::ZmqPubSub &subscriber)
                 {
                 }
             }
-            m_Serializer.PutPack(buffer);
+            m_Serializer.PutPack(buffer, m_DoubleBuffer);
         }
     }
 }
