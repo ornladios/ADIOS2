@@ -1472,7 +1472,6 @@ void SstWriterClose(SstStream Stream)
     memset(&Msg, 0, sizeof(Msg));
     STREAM_MUTEX_LOCK(Stream);
     Msg.FinalTimestep = Stream->LastProvidedTimestep;
-    ReturnMetadataInfo ReleaseData;
     CP_verbose(
         Stream,
         "SstWriterClose, Sending Close at Timestep %d, one to each reader\n",
@@ -1572,32 +1571,31 @@ void SstWriterClose(SstStream Stream)
     {
         if (Stream->Rank != 0)
         {
-            ReleaseData = malloc(sizeof(*ReleaseData));
+            struct _ReturnMetadataInfo ReleaseData;
             while (1)
             {
-                SMPI_Bcast(&ReleaseData->ReleaseCount, 1, SMPI_INT, 0,
+                SMPI_Bcast(&ReleaseData.ReleaseCount, 1, SMPI_INT, 0,
                            Stream->mpiComm);
-                if (ReleaseData->ReleaseCount == -1)
+                if (ReleaseData.ReleaseCount == -1)
                 {
                     break;
                 }
-                else if (ReleaseData->ReleaseCount > 0)
+                else if (ReleaseData.ReleaseCount > 0)
                 {
-                    ReleaseData->ReleaseList =
-                        malloc(ReleaseData->ReleaseCount *
-                               sizeof(*ReleaseData->ReleaseList));
-                    SMPI_Bcast(ReleaseData->ReleaseList,
-                               ReleaseData->ReleaseCount *
-                                   sizeof(*(ReleaseData->ReleaseList)),
+                    ReleaseData.ReleaseList =
+                        malloc(ReleaseData.ReleaseCount *
+                               sizeof(*ReleaseData.ReleaseList));
+                    SMPI_Bcast(ReleaseData.ReleaseList,
+                               ReleaseData.ReleaseCount *
+                                   sizeof(*ReleaseData.ReleaseList),
                                SMPI_BYTE, 0, Stream->mpiComm);
                     STREAM_MUTEX_UNLOCK(Stream);
-                    ProcessReleaseList(Stream, ReleaseData);
+                    ProcessReleaseList(Stream, &ReleaseData);
                     STREAM_MUTEX_LOCK(Stream);
-                    free(ReleaseData->ReleaseList);
-                    ReleaseData->ReleaseList = NULL;
+                    free(ReleaseData.ReleaseList);
+                    ReleaseData.ReleaseList = NULL;
                 }
             }
-            free(ReleaseData);
         }
         /*
          * if we're CommMin, getting here implies that Rank 0 has released all
