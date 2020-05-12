@@ -1112,6 +1112,8 @@ void *client_data;
     svc->verbose(sd->cm, CMFreeVerbose, "CMSelect free task called");
 
     if (*((select_data_ptr *)client_data) != NULL) {
+	close(sd->wake_read_fd);
+	close(sd->wake_write_fd);
 	free_select_data(svc, sdp);
     }
 }
