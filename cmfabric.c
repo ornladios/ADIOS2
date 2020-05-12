@@ -2552,7 +2552,7 @@ libcmfabric_LTX_initialize(CManager cm, CMtrans_services svc)
 
     fabric_client_data_ptr fabd;
     svc->trace_out(cm, "Initialize CM fabric transport built in %s\n",
-		   EVPATH_LIBRARY_BUILD_DIR);
+		   EVPATH_MODULE_BUILD_DIR);
     if (atom_init == 0) {
 	CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
 	CM_IP_PORT = attr_atom_from_string("IP_PORT");

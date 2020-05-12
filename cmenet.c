@@ -1260,7 +1260,7 @@ INTERFACE_NAME(initialize)(CManager cm, CMtrans_services svc,
     enet_client_data_ptr enet_data;
     (void)attrs;
     svc->trace_out(cm, "Initialize ENET reliable UDP transport built in %s",
-		   EVPATH_LIBRARY_BUILD_DIR);
+		   EVPATH_MODULE_BUILD_DIR);
     if (enet_global_init == 0) {
 	if (enet_initialize () != 0) {
 	    fprintf (stderr, "An error occurred while initializing ENet.\n");

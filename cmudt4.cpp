@@ -996,7 +996,7 @@ libcmudt4_LTX_initialize(CManager cm, CMtrans_services svc,
     (void) trans;
     udt4_transport_data_ptr udt4_data;
     svc->trace_out(cm, "Initialize UDP4 transport built in %s",
-		   EVPATH_LIBRARY_BUILD_DIR);
+		   EVPATH_MODULE_BUILD_DIR);
 
     if (atom_init == 0) {
 	CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
