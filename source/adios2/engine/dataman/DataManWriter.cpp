@@ -33,6 +33,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "RendezvousReaderCount",
                          m_RendezvousReaderCount);
     helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
+    helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
 
     if (m_IPAddress.empty())
     {
@@ -78,7 +79,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     m_Publisher.OpenPublisher(m_PublisherAddress);
     m_Replier.OpenReplier(m_ReplierAddress, m_Timeout, 8192);
 
-    if (m_RendezvousReaderCount == 0)
+    if (m_RendezvousReaderCount == 0 || m_TransportMode == "secure")
     {
         m_ReplyThread = std::thread(&DataManWriter::ReplyThread, this);
     }
@@ -88,7 +89,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         m_Comm.Barrier();
     }
 
-    if (m_DoubleBuffer)
+    if (m_DoubleBuffer && m_TransportMode == "fast")
     {
         m_PublishThread = std::thread(&DataManWriter::PublishThread, this);
     }
@@ -128,7 +129,7 @@ void DataManWriter::EndStep()
         m_SerializerBufferSize = buffer->size();
     }
 
-    if (m_DoubleBuffer)
+    if (m_DoubleBuffer || m_TransportMode == "secure")
     {
         PushBufferQueue(buffer);
     }

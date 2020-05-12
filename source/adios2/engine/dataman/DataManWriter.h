@@ -45,6 +45,7 @@ private:
     int m_Timeout = 5;
     int m_Verbosity = 0;
     bool m_DoubleBuffer = false;
+    std::string m_TransportMode = "fast";
 
     std::string m_AllAddresses;
     std::string m_PublisherAddress;
