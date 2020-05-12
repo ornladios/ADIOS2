@@ -113,21 +113,10 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
-    //     CheckAttributeCommon(globalName);
-
     auto &attributeMap = GetAttributeMap<T>();
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (!IsEnd(itExistingAttribute, m_Attributes))
     {
-        // std::cout << "attribute " << globalName << " has already been
-        // defined!"
-        //           << std::endl;
-        // std::cout << "index of defined attribute in attributeMap is "
-        //           << itExistingAttribute->second.second << std::endl;
-        // std::cout << "value of existing attribute is "
-        //           << attributeMap.at(itExistingAttribute->second.second)
-        //                  .GetInfo()["Value"]
-        //           << std::endl;
         if (helper::ValueToString(value) ==
             attributeMap.at(itExistingAttribute->second.second)
                 .GetInfo()["Value"])
@@ -171,26 +160,15 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
-    //     CheckAttributeCommon(globalName);
-
     auto &attributeMap = GetAttributeMap<T>();
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (!IsEnd(itExistingAttribute, m_Attributes))
     {
-        // std::cout << "attribute " << globalName << " has already been
-        // defined!"
-        //           << std::endl;
-        // std::cout << "index of defined attribute in attributeMap is "
-        //           << itExistingAttribute->second.second << std::endl;
-        // std::cout << "value of existing attribute is "
-        //           << attributeMap.at(itExistingAttribute->second.second)
-        //                  .GetInfo()["Value"]
-        //           << std::endl;
-        std::string arrayValues(
+        const std::string arrayValues(
             "{ " +
             helper::VectorToCSV(std::vector<T>(array, array + elements)) +
             " }");
-        // std::cout << "new value is " << arrayValues << std::endl;
+
         if (attributeMap.at(itExistingAttribute->second.second)
                 .GetInfo()["Value"] == arrayValues)
         {
@@ -259,6 +237,63 @@ ADIOS2_FOREACH_STDTYPE_2ARGS(make_GetVariableMap)
     }
 ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(make_GetAttributeMap)
 #undef make_GetAttributeMap
+
+template <class T>
+Params IO::GetVariableInfo(const std::string &variableName,
+                           const std::set<std::string> &keys)
+{
+    Params info;
+    // keys input are case insensitive
+    const std::set<std::string> keysLC = helper::LowerCase(keys);
+
+    // return empty map if only "name" key is requested
+    if (keys.size() == 1 && keysLC.count("name") == 1)
+    {
+        return info;
+    }
+
+    Variable<T> &variable = *InquireVariable<T>(variableName);
+
+    if (keys.empty() || keysLC.count("type") == 1)
+    {
+        info["Type"] = variable.m_Type;
+    }
+
+    if (keys.empty() || keysLC.count("availablestepscount") == 1)
+    {
+        info["AvailableStepsCount"] =
+            helper::ValueToString(variable.m_AvailableStepsCount);
+    }
+
+    if (keys.empty() || keysLC.count("shape") == 1)
+    {
+        // expensive function
+        info["Shape"] = helper::VectorToCSV(variable.Shape());
+    }
+
+    if (keys.empty() || keysLC.count("singlevalue") == 1)
+    {
+        const std::string isSingleValue =
+            variable.m_SingleValue ? "true" : "false";
+        info["SingleValue"] = isSingleValue;
+    }
+
+    if (keys.empty() || (keysLC.count("min") == 1 && keysLC.count("max") == 1))
+    {
+        const auto pairMinMax = variable.MinMax();
+        info["Min"] = helper::ValueToString(pairMinMax.first);
+        info["Max"] = helper::ValueToString(pairMinMax.second);
+    }
+    else if (keysLC.count("min") == 1)
+    {
+        info["Min"] = helper::ValueToString(variable.Min());
+    }
+    else if (keysLC.count("max") == 1)
+    {
+        info["Max"] = helper::ValueToString(variable.Min());
+    }
+    return info;
+}
 
 } // end namespace core
 } // end namespace adios2

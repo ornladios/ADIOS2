@@ -580,10 +580,18 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("available_variables", &adios2::py11::File::AvailableVariables,
-             pybind11::return_value_policy::move, R"md(
+             pybind11::return_value_policy::move,
+             pybind11::arg("keys") = std::vector<std::string>(), R"md(
              Returns a 2-level dictionary with variable information. 
              Read mode only.
              
+             Parameters
+                 keys
+                    list of variable information keys to be extracted (case insensitive)
+                    keys=['AvailableStepsCount','Type','Max','Min','SingleValue','Shape']
+                    keys=['Name'] returns only the variable names as 1st-level keys
+                    leave empty to return all possible keys
+
              Returns
                  variables dictionary
                      key 

@@ -54,7 +54,9 @@ public:
     size_t AddTransport(const std::string type,
                         const Params &parameters = Params());
 
-    std::map<std::string, adios2::Params> AvailableVariables() noexcept;
+    std::map<std::string, adios2::Params>
+    AvailableVariables(const std::vector<std::string> &keys =
+                           std::vector<std::string>()) noexcept;
 
     std::map<std::string, adios2::Params> AvailableAttributes() noexcept;
 

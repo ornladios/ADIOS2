@@ -227,6 +227,14 @@ template <class T, class U>
 std::set<T> KeysToSet(const std::unordered_map<T, U> &hash) noexcept;
 
 /**
+ * Convert a vector to a set (without duplicate entries)
+ * @param input vector
+ * @return ordered keys content
+ */
+template <class T>
+std::set<T> VectorToSet(const std::vector<T> &input) noexcept;
+
+/**
  * Calls map.erase(key) returning current value. Throws an exception if Key not
  * found.
  * @param key input

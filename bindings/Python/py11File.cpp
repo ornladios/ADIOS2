@@ -54,9 +54,11 @@ size_t File::AddTransport(const std::string type, const Params &parameters)
     return m_Stream->m_IO->AddTransport(type, parameters);
 }
 
-std::map<std::string, adios2::Params> File::AvailableVariables() noexcept
+std::map<std::string, adios2::Params>
+File::AvailableVariables(const std::vector<std::string> &keys) noexcept
 {
-    return m_Stream->m_IO->GetAvailableVariables();
+    const std::set<std::string> keysSet = helper::VectorToSet(keys);
+    return m_Stream->m_IO->GetAvailableVariables(keysSet);
 }
 
 std::map<std::string, adios2::Params> File::AvailableAttributes() noexcept
