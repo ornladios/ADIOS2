@@ -18,6 +18,12 @@
 
 FROM centos:centos8
 
+# Workaround stale RPM lock files leftover in the base image
+RUN rm -fv /var/lib/rpm/.*.lock ; \
+    rpm --rebuilddb ; \
+    cp -rv /var/lib/rpmrebuilddb*/* /var/lib/rpm; \
+    yum clean all
+
 # Install system dependencies
 RUN sed 's|enabled=0|enabled=1|' -i /etc/yum.repos.d/CentOS-PowerTools.repo && \
     yum upgrade -y && \
