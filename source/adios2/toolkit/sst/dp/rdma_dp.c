@@ -975,7 +975,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     }
 
     forkunsafe = getenv("FI_FORK_UNSAFE");
-    if(!forkunsafe)
+    if (!forkunsafe)
     {
         putenv("FI_FORK_UNSAFE=Yes");
     }
