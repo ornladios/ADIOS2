@@ -80,6 +80,7 @@ typedef struct _Evpath_WSR_Stream
     int ReaderCohortSize;
     int ReadPatternLockTimestep;
     char *ReaderRequestArray;
+    SstPreloadModeType CurPreloadMode;
     struct _EvpathReaderContactInfo *ReaderContactInfo;
     struct _EvpathWriterContactInfo
         *WriterContactInfo; /* included so we can free on destroy */
@@ -1069,6 +1070,15 @@ static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
     TimestepList Entry;
 
     pthread_mutex_lock(&WS_Stream->DataLock);
+    if ((WSR_Stream->CurPreloadMode == SstPreloadSpeculative) &&
+        (PreloadMode == SstPreloadLearned))
+    {
+        // Never transition from Speculative to Learned, because the writer
+        // doesn't have the read knowledge
+        PreloadMode = SstPreloadSpeculative;
+    }
+    WSR_Stream->CurPreloadMode = PreloadMode;
+
     Entry = WS_Stream->Timesteps;
 
     while (Entry)
