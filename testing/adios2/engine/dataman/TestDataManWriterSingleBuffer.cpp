@@ -1,11 +1,6 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
- *
- * TestDataMan1D.cpp
- *
- *  Created on: Jul 12, 2018
- *      Author: Jason Wang
  */
 
 #include <numeric>
@@ -309,7 +304,7 @@ public:
 };
 
 #ifdef ADIOS2_HAVE_ZEROMQ
-TEST_F(DataManEngineTest, ReaderDirectReceive)
+TEST_F(DataManEngineTest, WriterSingleBuffer)
 {
     // set parameters
     Dims shape = {10};
@@ -319,13 +314,13 @@ TEST_F(DataManEngineTest, ReaderDirectReceive)
 
     // run workflow
     adios2::Params readerEngineParams = {{"IPAddress", "127.0.0.1"},
-                                         {"Port", "12360"},
-                                         {"DoubleBuffer", "false"}};
+                                         {"Port", "12380"}};
     auto r = std::thread(DataManReader, shape, start, count, steps,
                          readerEngineParams);
     std::cout << "Reader thread started" << std::endl;
     adios2::Params writerEngineParams = {{"IPAddress", "127.0.0.1"},
-                                         {"Port", "12360"}};
+                                         {"Port", "12380"},
+                                         {"DoubleBuffer", "false"}};
     auto w = std::thread(DataManWriter, shape, start, count, steps,
                          writerEngineParams);
     std::cout << "Writer thread started" << std::endl;
