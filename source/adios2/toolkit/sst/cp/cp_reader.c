@@ -1404,8 +1404,8 @@ extern void SstReleaseStep(SstStream Stream)
     STREAM_MUTEX_LOCK(Stream);
     if (Stream->DP_Interface->RSReleaseTimestep)
     {
-        (Stream->DP_Interface->RSReleaseTimestep)(
-            &Svcs, Stream->DP_Stream, Timestep);
+        (Stream->DP_Interface->RSReleaseTimestep)(&Svcs, Stream->DP_Stream,
+                                                  Timestep);
     }
     STREAM_MUTEX_UNLOCK(Stream);
 
