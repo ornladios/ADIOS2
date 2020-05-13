@@ -4,21 +4,17 @@
 #------------------------------------------------------------------------------#
 
 function(add_python_mpi_test testname)
-  python_add_test(NAME Bindings.Python.${testname} SCRIPT Test${testname}.py
+  python_add_test(NAME Bindings.Python.${testname}.MPI SCRIPT Test${testname}.py
     EXEC_WRAPPER ${MPIEXEC_COMMAND}
   )
-  set_tests_properties(Bindings.Python.${testname} PROPERTIES
+  set_tests_properties(Bindings.Python.${testname}.MPI PROPERTIES
     PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
   )
 endfunction()
 
-python_add_test(NAME Bindings.Python.HighLevelAPI SCRIPT TestHighLevelAPI.py) 
+python_add_test(NAME Bindings.Python.HighLevelAPI.Serial SCRIPT TestHighLevelAPI.py)
 
-if(NOT ADIOS2_HAVE_MPI)
-  python_add_test(NAME Bindings.Python.BPWriteReadTypes
-    SCRIPT TestBPWriteReadTypes_nompi.py
-  )
-endif()
+python_add_test(NAME Bindings.Python.BPWriteReadTypes.Serial SCRIPT TestBPWriteReadTypes_nompi.py)
 
 if(ADIOS2_HAVE_MPI)
   add_python_mpi_test(BPWriteReadTypes)
