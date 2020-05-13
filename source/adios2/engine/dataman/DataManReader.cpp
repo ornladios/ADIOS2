@@ -41,8 +41,10 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     }
     std::string address = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
     std::string request = "Address";
+
     auto reply =
         m_Requesters[0].Request(request.data(), request.size(), address);
+
     auto start_time = std::chrono::system_clock::now();
     while (reply == nullptr or reply->empty())
     {
@@ -63,16 +65,35 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     m_ReplierAddresses =
         addJson["ControlAddresses"].get<std::vector<std::string>>();
 
-    for (const auto &address : m_PublisherAddresses)
+    if (m_TransportMode == "fast")
     {
-        m_Subscribers.emplace_back();
-        m_Subscribers.back().OpenSubscriber(address, m_ReceiverBufferSize);
-        m_SubscriberThreads.emplace_back(
-            std::thread(&DataManReader::SubscribeThread, this,
-                        std::ref(m_Subscribers.back())));
+        for (const auto &address : m_PublisherAddresses)
+        {
+            m_Subscribers.emplace_back();
+            m_Subscribers.back().OpenSubscriber(address, m_ReceiverBufferSize);
+            m_SubscriberThreads.emplace_back(
+                std::thread(&DataManReader::SubscribeThread, this,
+                            std::ref(m_Subscribers.back())));
+        }
+    }
+    else if (m_TransportMode == "secure")
+    {
+        m_Requesters.clear();
+        for (const auto &address : m_ReplierAddresses)
+        {
+            m_Requesters.emplace_back();
+            m_Requesters.back().OpenRequester(m_Timeout, m_ReceiverBufferSize);
+        }
+    }
+    else
+    {
+        throw(std::invalid_argument("unknown transport mode"));
     }
 
-    m_Requesters[0].Request("Ready", 5, address);
+    for (auto &requester : m_Requesters)
+    {
+        requester.Request("Ready", 5, address);
+    }
 }
 
 DataManReader::~DataManReader()
@@ -187,6 +208,31 @@ void DataManReader::EndStep()
 void DataManReader::Flush(const int transportIndex) {}
 
 // PRIVATE
+
+void DataManReader::RequestThread(zmq::ZmqReqRep &requester,
+                                  const std::string address)
+{
+    while (m_RequesterThreadActive)
+    {
+        auto buffer = requester.Request("Step", 4, address);
+        if (buffer != nullptr && buffer->size() > 0)
+        {
+            if (buffer->size() < 64)
+            {
+                try
+                {
+                    auto jmsg = nlohmann::json::parse(buffer->data());
+                    m_FinalStep = jmsg["FinalStep"].get<size_t>();
+                    continue;
+                }
+                catch (...)
+                {
+                }
+            }
+            m_Serializer.PutPack(buffer, m_DoubleBuffer);
+        }
+    }
+}
 
 void DataManReader::SubscribeThread(zmq::ZmqPubSub &subscriber)
 {

@@ -76,8 +76,12 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     addJson["ControlAddresses"] = repVec;
     m_AllAddresses = addJson.dump() + '\0';
 
-    m_Publisher.OpenPublisher(m_PublisherAddress);
-    m_Replier.OpenReplier(m_ReplierAddress, m_Timeout, 8192);
+    if (m_TransportMode == "fast")
+    {
+        m_Publisher.OpenPublisher(m_PublisherAddress);
+    }
+
+    m_Replier.OpenReplier(m_ReplierAddress, m_Timeout, 64);
 
     if (m_RendezvousReaderCount == 0 || m_TransportMode == "secure")
     {
@@ -162,7 +166,15 @@ void DataManWriter::DoClose(const int transportIndex)
     std::string s = endSignal.dump() + '\0';
     auto cvp = std::make_shared<std::vector<char>>(s.size());
     std::memcpy(cvp->data(), s.c_str(), s.size());
-    m_Publisher.Send(cvp);
+
+    if (m_DoubleBuffer || m_TransportMode == "secure")
+    {
+        PushBufferQueue(cvp);
+    }
+    else
+    {
+        m_Publisher.Send(cvp);
+    }
 
     m_ReplyThreadActive = false;
     m_PublishThreadActive = false;
@@ -178,6 +190,19 @@ void DataManWriter::DoClose(const int transportIndex)
     }
 
     m_IsClosed = true;
+}
+
+bool DataManWriter::CheckBufferQueue()
+{
+    std::lock_guard<std::mutex> l(m_BufferQueueMutex);
+    if (m_BufferQueue.empty())
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 void DataManWriter::PushBufferQueue(std::shared_ptr<std::vector<char>> buffer)
@@ -203,17 +228,20 @@ std::shared_ptr<std::vector<char>> DataManWriter::PopBufferQueue()
 
 void DataManWriter::PublishThread()
 {
-    auto buffer = PopBufferQueue();
-    if (buffer != nullptr && buffer->size() > 0)
+    while (m_PublishThreadActive || CheckBufferQueue())
     {
-        m_Publisher.Send(buffer);
+        auto buffer = PopBufferQueue();
+        if (buffer != nullptr && buffer->size() > 0)
+        {
+            m_Publisher.Send(buffer);
+        }
     }
 }
 
 void DataManWriter::ReplyThread()
 {
     int readerCount = 0;
-    while (m_ReplyThreadActive)
+    while (m_ReplyThreadActive || CheckBufferQueue())
     {
         auto request = m_Replier.ReceiveRequest();
         if (request && request->size() > 0)
@@ -229,8 +257,35 @@ void DataManWriter::ReplyThread()
                 m_Replier.SendReply("OK", 2);
                 ++readerCount;
             }
+            else if (r == "Step")
+            {
+                auto buffer = PopBufferQueue();
+                while (buffer == nullptr)
+                {
+                    auto buffer = PopBufferQueue();
+                }
+                if (buffer != nullptr && buffer->size() > 0)
+                {
+                    m_Replier.SendReply(buffer);
+                    if (buffer->size() < 64)
+                    {
+                        try
+                        {
+                            auto jmsg = nlohmann::json::parse(buffer->data());
+                            auto finalStep = jmsg["FinalStep"].get<size_t>();
+                            if (finalStep == m_CurrentStep)
+                            {
+                                m_ReplyThreadActive = false;
+                            }
+                        }
+                        catch (...)
+                        {
+                        }
+                    }
+                }
+            }
         }
-        if (m_RendezvousReaderCount == readerCount)
+        if (m_RendezvousReaderCount == readerCount && m_TransportMode == "fast")
         {
             m_ReplyThreadActive = false;
         }
