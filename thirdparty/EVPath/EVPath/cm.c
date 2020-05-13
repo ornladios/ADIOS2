@@ -3683,8 +3683,8 @@ CM_init_select(CMControlList cl, CManager cm)
 #if !NO_DYNAMIC_LINKING
     char *libname;
     lt_dlhandle handle;	
-    lt_dladdsearchdir(EVPATH_LIBRARY_BUILD_DIR);
-    lt_dladdsearchdir(EVPATH_LIBRARY_INSTALL_DIR);
+    lt_dladdsearchdir(EVPATH_MODULE_BUILD_DIR);
+    lt_dladdsearchdir(EVPATH_MODULE_INSTALL_DIR);
     libname = malloc(strlen("lib" CM_LIBRARY_PREFIX "cm") + strlen(select_module) + strlen(MODULE_EXT) + 1);
     strcpy(libname, "lib" CM_LIBRARY_PREFIX "cm");
     strcat(libname, select_module);
@@ -3694,8 +3694,8 @@ CM_init_select(CMControlList cl, CManager cm)
     free(libname);
     if (!handle) {
 	fprintf(stderr, "Failed to load requested libcm%s dll.\n", select_module);
-	fprintf(stderr, "Search path includes '.', '%s', '%s' and any default search paths supported by ld.so\n", EVPATH_LIBRARY_BUILD_DIR, 
-		EVPATH_LIBRARY_INSTALL_DIR);
+	fprintf(stderr, "Search path includes '.', '%s', '%s' and any default search paths supported by ld.so\n", EVPATH_MODULE_BUILD_DIR, 
+		EVPATH_MODULE_INSTALL_DIR);
 	fprintf(stderr, "Consider setting LD_LIBRARY_PATH or otherwise modifying module search paths.\n");
 	exit(1);
     }

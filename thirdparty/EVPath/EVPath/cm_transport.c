@@ -130,8 +130,8 @@ load_transport(CManager cm, const char *trans_name, int quiet)
     strcat(libname, trans_name);
     strcat(libname, MODULE_EXT);
 
-    lt_dladdsearchdir(EVPATH_LIBRARY_BUILD_DIR "/lib");
-    lt_dladdsearchdir(EVPATH_LIBRARY_INSTALL_DIR "/lib");
+    lt_dladdsearchdir(EVPATH_MODULE_BUILD_DIR);
+    lt_dladdsearchdir(EVPATH_MODULE_INSTALL_DIR);
     handle = CMdlopen(cm->CMTrace_file, libname, 0);
     if (!handle) {
 	if (!quiet)
@@ -140,7 +140,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	if (!quiet)
 	    fprintf(stderr,
 		    "Search path includes '.', '%s', '%s' and any default search paths supported by ld.so\n",
-		    EVPATH_LIBRARY_BUILD_DIR, EVPATH_LIBRARY_INSTALL_DIR);
+		    EVPATH_MODULE_BUILD_DIR, EVPATH_MODULE_INSTALL_DIR);
     }
     if (!handle) {
 	return 0;

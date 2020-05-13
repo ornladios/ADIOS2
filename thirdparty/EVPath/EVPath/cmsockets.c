@@ -86,6 +86,7 @@ typedef struct socket_client_data {
     CManager cm;
     char *hostname;
     int listen_port;
+    int conn_sock;
     attr_list characteristics;
     CMtrans_services svc;
 } *socket_client_data_ptr;
@@ -786,6 +787,7 @@ attr_list listen_info;
     svc->fd_add_select(cm, conn_sock, socket_accept_conn,
 		       (void *) trans, (void *) (long)conn_sock);
 
+    sd->conn_sock = conn_sock;
     {
 	int int_port_num = ntohs(sock_addr.sin_port);
 	attr_list ret_list;
@@ -1139,6 +1141,7 @@ free_socket_data(CManager cm, void *sdv)
     if (sd->hostname != NULL)
 	svc->free_func(sd->hostname);
     free_attr_list(sd->characteristics);
+    close(sd->conn_sock);
     svc->free_func(sd);
 }
 
@@ -1150,7 +1153,7 @@ libcmsockets_LTX_initialize(CManager cm, CMtrans_services svc, transport_entry t
     (void)trans;
     socket_client_data_ptr socket_data;
     svc->trace_out(cm, "Initialize TCP/IP Socket transport built in %s",
-		   EVPATH_LIBRARY_BUILD_DIR);
+		   EVPATH_MODULE_BUILD_DIR);
     if (socket_global_init == 0) {
 #ifdef HAVE_WINDOWS_H
 	int nErrorStatus;
