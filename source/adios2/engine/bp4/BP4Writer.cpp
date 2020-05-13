@@ -407,6 +407,14 @@ void BP4Writer::DoClose(const int transportIndex)
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
     {
         m_FileDataManager.CloseFiles(transportIndex);
+        // Delete files from temporary storage if draining was on
+        if (m_DrainBB)
+        {
+            for (const auto &name : m_SubStreamNames)
+            {
+                m_FileDrainer.AddOperationDelete(name);
+            }
+        }
     }
 
     if (m_BP4Serializer.m_Parameters.CollectiveMetadata &&
@@ -439,6 +447,26 @@ void BP4Writer::DoClose(const int transportIndex)
         if (m_DrainBB)
         {
             for (const auto &name : m_DrainActiveFlagFileNames)
+            {
+                m_FileDrainer.AddOperationDelete(name);
+            }
+        }
+
+        // Delete metadata files from temporary storage if draining was on
+        if (m_DrainBB)
+        {
+            for (const auto &name : m_MetadataFileNames)
+            {
+                m_FileDrainer.AddOperationDelete(name);
+            }
+            for (const auto &name : m_MetadataIndexFileNames)
+            {
+                m_FileDrainer.AddOperationDelete(name);
+            }
+            const std::vector<std::string> transportsNames =
+                m_FileDataManager.GetFilesBaseNames(
+                    m_BBName, m_IO.m_TransportsParameters);
+            for (const auto &name : transportsNames)
             {
                 m_FileDrainer.AddOperationDelete(name);
             }
@@ -479,18 +507,22 @@ void BP4Writer::WriteProfilingJSONFile()
     if (m_BP4Serializer.m_RankMPI == 0)
     {
         // std::cout << "write profiling file!" << std::endl;
-        transport::FileFStream profilingJSONStream(m_Comm);
-        auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
-        profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
-                                 Mode::Write);
-        profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
-        profilingJSONStream.Close();
         if (m_DrainBB)
         {
             auto bpTargetNames = m_BP4Serializer.GetBPBaseNames({m_Name});
             std::string targetProfiler(bpTargetNames[0] + "/profiling.json");
             m_FileDrainer.AddOperationWrite(
                 targetProfiler, profilingJSON.size(), profilingJSON.data());
+        }
+        else
+        {
+            transport::FileFStream profilingJSONStream(m_Comm);
+            auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
+            profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
+                                     Mode::Write);
+            profilingJSONStream.Write(profilingJSON.data(),
+                                      profilingJSON.size());
+            profilingJSONStream.Close();
         }
     }
 }
