@@ -706,6 +706,7 @@ static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
     WSR_Stream->PeerCohort = PeerCohort;
     WSR_Stream->ReadPatternLockTimestep = -1;
     WSR_Stream->ReaderRequestArray = NULL;
+    WSR_Stream->CurPreloadMode = SstPreloadNone;
 
     /*
      * make a copy of writer contact information (original will not be
