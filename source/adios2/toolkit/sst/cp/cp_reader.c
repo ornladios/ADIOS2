@@ -1188,11 +1188,6 @@ static void FreeTimestep(SstStream Stream, long Timestep)
             printf("READER RETURN_BUFFER, List->MEtadataMsg == %p, line %d\n",
                    List->MetadataMsg, __LINE__);
         CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
-        if (Stream->DP_Interface->RSReleaseTimestep)
-        {
-            (Stream->DP_Interface->RSReleaseTimestep)(
-                &Svcs, Stream->DP_Stream, List->MetadataMsg->Timestep);
-        }
 
         free(List);
     }
@@ -1210,11 +1205,6 @@ static void FreeTimestep(SstStream Stream, long Timestep)
                            "line %d\n",
                            List->MetadataMsg, __LINE__);
                 CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
-                if (Stream->DP_Interface->RSReleaseTimestep)
-                {
-                    (Stream->DP_Interface->RSReleaseTimestep)(
-                        &Svcs, Stream->DP_Stream, List->MetadataMsg->Timestep);
-                }
 
                 free(List);
                 break;
@@ -1411,6 +1401,14 @@ extern void SstReleaseStep(SstStream Stream)
     struct _ReleaseTimestepMsg Msg;
 
     TAU_START_FUNC();
+    STREAM_MUTEX_LOCK(Stream);
+    if (Stream->DP_Interface->RSReleaseTimestep)
+    {
+        (Stream->DP_Interface->RSReleaseTimestep)(
+            &Svcs, Stream->DP_Stream, Timestep);
+    }
+    STREAM_MUTEX_UNLOCK(Stream);
+
     if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer) ||
         (Stream->Rank == 0))
     {
