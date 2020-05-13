@@ -17,7 +17,8 @@ add_test(NAME HeatTransfer.SST.BP.MxN
         ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_sst_bp.xml
         Write.bp Read.bp 1 3
 )
-set_tests_properties(HeatTransfer.SST.BP.MxN PROPERTIES PROCESSORS 7)
+set_tests_properties(HeatTransfer.SST.BP.MxN PROPERTIES PROCESSORS 7
+					     ENVIRONMENT SstVerbose=1)
 
 add_test(NAME HeatTransfer.SST.BP.MxN.Dump
   COMMAND ${CMAKE_COMMAND}

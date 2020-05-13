@@ -17,7 +17,8 @@ add_test(NAME HeatTransfer.SST.BP.RDMA.MxN
         ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_sst_bp_rdma.xml
         Write.bp Read.bp 1 3
 )
-set_tests_properties(HeatTransfer.SST.BP.RDMA.MxN PROPERTIES PROCESSORS 7)
+set_tests_properties(HeatTransfer.SST.BP.RDMA.MxN PROPERTIES PROCESSORS 7
+					     ENVIRONMENT SstVerbose=1)
 
 add_test(NAME HeatTransfer.SST.BP.RDMA.MxN.Dump
   COMMAND ${CMAKE_COMMAND}

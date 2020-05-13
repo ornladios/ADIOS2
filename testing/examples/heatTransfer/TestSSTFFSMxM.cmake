@@ -17,7 +17,8 @@ add_test(NAME HeatTransfer.SST.FFS.MxM
         ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_sst_ffs.xml
         Write.bp Read.bp 2 2
 )
-set_tests_properties(HeatTransfer.SST.FFS.MxM PROPERTIES PROCESSORS 8)
+set_tests_properties(HeatTransfer.SST.FFS.MxM PROPERTIES PROCESSORS 8
+					     ENVIRONMENT SstVerbose=1)
 
 add_test(NAME HeatTransfer.SST.FFS.MxM.Dump
   COMMAND ${CMAKE_COMMAND}
