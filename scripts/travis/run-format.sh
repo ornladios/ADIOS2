@@ -11,6 +11,17 @@ then
   exit 1
 fi
 
+# Install clang-format
+pushd ${HOME}
+wget http://releases.llvm.org/7.0.1/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz
+tar -xf clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz
+export PATH="${PWD}/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04/bin:${PATH}"
+git config --global clangformat.binary ${HOME}/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang-format
+popd
+
+# Install flake8
+pip install --user flake8
+
 cd ${SOURCE_DIR}
 
 # Check C and C++ code with clang-format

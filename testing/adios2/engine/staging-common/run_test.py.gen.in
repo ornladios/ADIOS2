@@ -257,6 +257,7 @@ parser.add_argument('--max_readers', '-mr', type=int, default=1)
 parser.add_argument('--duration', type=int, default=60)
 parser.add_argument('--interval', type=int, default=5)
 parser.add_argument('--reader_delay', '-rd', type=int, default=0)
+parser.add_argument('--disable_mpmd', action='store_true')
 parser.add_argument('--test_protocol', '-tp', choices=[
                     'simple', 'kill_readers', 'one_client',
                     'kill_writer'], default='simple')
@@ -340,6 +341,9 @@ if is_file_engine[args.engine.lower()]:
 
 if args.reader_delay != 0:
     print("TestDriver: Reader delay setting MPMD false\n")
+    mpmd_possible = False
+
+if args.disable_mpmd:
     mpmd_possible = False
 
 test_setup(args.filename)
