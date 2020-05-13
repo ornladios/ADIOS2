@@ -949,6 +949,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
 {
     struct fi_info *hints, *info, *originfo, *useinfo;
     char *ifname;
+    char *forkunsafe;
     int Ret = -1;
 
     (void)attr_atom_from_string(
@@ -971,6 +972,12 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     else
     {
         ifname = getenv("FABRIC_IFACE");
+    }
+
+    forkunsafe = getenv("FI_FORK_UNSAFE");
+    if (!forkunsafe)
+    {
+        putenv("FI_FORK_UNSAFE=Yes");
     }
 
     fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
