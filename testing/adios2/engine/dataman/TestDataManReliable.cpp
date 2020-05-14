@@ -304,7 +304,7 @@ public:
 };
 
 #ifdef ADIOS2_HAVE_ZEROMQ
-TEST_F(DataManEngineTest, Secure)
+TEST_F(DataManEngineTest, Reliable)
 {
     // set parameters
     Dims shape = {10};
@@ -315,13 +315,13 @@ TEST_F(DataManEngineTest, Secure)
     // run workflow
     adios2::Params readerEngineParams = {{"IPAddress", "127.0.0.1"},
                                          {"Port", "12360"},
-                                         {"TransportMode", "secure"}};
+                                         {"TransportMode", "reliable"}};
     auto r = std::thread(DataManReader, shape, start, count, steps,
                          readerEngineParams);
     std::cout << "Reader thread started" << std::endl;
     adios2::Params writerEngineParams = {{"IPAddress", "127.0.0.1"},
                                          {"Port", "12360"},
-                                         {"TransportMode", "secure"}};
+                                         {"TransportMode", "reliable"}};
     auto w = std::thread(DataManWriter, shape, start, count, steps,
                          writerEngineParams);
     std::cout << "Writer thread started" << std::endl;

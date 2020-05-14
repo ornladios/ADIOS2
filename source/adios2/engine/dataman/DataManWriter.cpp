@@ -83,7 +83,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 
     m_Replier.OpenReplier(m_ReplierAddress, m_Timeout, 64);
 
-    if (m_RendezvousReaderCount == 0 || m_TransportMode == "secure")
+    if (m_RendezvousReaderCount == 0 || m_TransportMode == "reliable")
     {
         m_ReplyThread = std::thread(&DataManWriter::ReplyThread, this);
     }
@@ -133,7 +133,7 @@ void DataManWriter::EndStep()
         m_SerializerBufferSize = buffer->size();
     }
 
-    if (m_DoubleBuffer || m_TransportMode == "secure")
+    if (m_DoubleBuffer || m_TransportMode == "reliable")
     {
         PushBufferQueue(buffer);
     }
@@ -167,7 +167,7 @@ void DataManWriter::DoClose(const int transportIndex)
     auto cvp = std::make_shared<std::vector<char>>(s.size());
     std::memcpy(cvp->data(), s.c_str(), s.size());
 
-    if (m_DoubleBuffer || m_TransportMode == "secure")
+    if (m_DoubleBuffer || m_TransportMode == "reliable")
     {
         PushBufferQueue(cvp);
     }

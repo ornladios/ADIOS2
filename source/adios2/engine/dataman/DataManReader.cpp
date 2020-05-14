@@ -77,7 +77,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
                             std::ref(m_Subscribers.back())));
         }
     }
-    else if (m_TransportMode == "secure")
+    else if (m_TransportMode == "reliable")
     {
         m_Requesters.clear();
         for (const auto &address : m_ReplierAddresses)
@@ -97,7 +97,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
         requester.Request("Ready", 5, address);
     }
 
-    if (m_TransportMode == "secure")
+    if (m_TransportMode == "reliable")
     {
         for (const auto &address : m_ReplierAddresses)
         {

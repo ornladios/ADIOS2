@@ -39,7 +39,7 @@ The DataMan engine takes the following parameters:
 6. ``TransportMode``: Default **fast**. The fast mode is optimized for latency-critical applications.
    It enforces readers to only receive the latest step.
    Therefore, in cases where writers are faster than readers, readers will skip some data steps.
-   The secure mode ensures that all steps are received by readers, by sacrificing performance compared to the fast mode.
+   The reliable mode ensures that all steps are received by readers, by sacrificing performance compared to the fast mode.
 
 =============================== ================== ================================================
  **Key**                         **Value Format**   **Default** and Examples
@@ -49,7 +49,7 @@ The DataMan engine takes the following parameters:
  Timeout                         integer            **5**, 10, 30
  RendezvousReaderCount           integer            **1**, 0, 3
  DoubleBuffer                    bool               **true** for reader, **false** for writer
- TransportMode                   string             **fast**, secure
+ TransportMode                   string             **fast**, reliable
 =============================== ================== ================================================
 
 
