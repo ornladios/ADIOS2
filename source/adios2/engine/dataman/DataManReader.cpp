@@ -225,9 +225,7 @@ void DataManReader::RequestThread(zmq::ZmqReqRep &requester)
 {
     while (m_RequesterThreadActive)
     {
-        std::cout << " ========== before request " << std::endl;
         auto buffer = requester.Request("Step", 4);
-        std::cout << " ========== after request " << std::endl;
         if (buffer != nullptr && buffer->size() > 0)
         {
             if (buffer->size() < 64)
