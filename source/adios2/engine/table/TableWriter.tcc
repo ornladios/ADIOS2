@@ -113,7 +113,7 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
             else
             {
                 auto localPack = serializer->GetLocalPack();
-                m_Deserializer.PutPack(localPack);
+                m_Deserializer.PutPack(localPack, false);
                 serializer->NewWriterBuffer(m_SerializerBufferSize);
                 PutAggregatorBuffer();
                 PutSubEngine();

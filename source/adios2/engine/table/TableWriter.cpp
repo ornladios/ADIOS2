@@ -87,7 +87,7 @@ void TableWriter::EndStep()
         else
         {
             auto localPack = serializer->GetLocalPack();
-            m_Deserializer.PutPack(localPack);
+            m_Deserializer.PutPack(localPack, false);
             PutAggregatorBuffer();
         }
     }
@@ -125,7 +125,7 @@ void TableWriter::ReplyThread()
             }
             continue;
         }
-        m_Deserializer.PutPack(request);
+        m_Deserializer.PutPack(request, false);
         format::VecPtr reply = std::make_shared<std::vector<char>>(1, 'K');
         replier.SendReply(reply);
         if (m_Verbosity >= 1)
