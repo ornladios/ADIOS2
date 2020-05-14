@@ -86,6 +86,7 @@ class DataManSerializer
 {
 public:
     DataManSerializer(helper::Comm const &comm, const bool isRowMajor);
+    ~DataManSerializer();
 
     // ************ serializer functions
 
@@ -135,7 +136,8 @@ public:
     // ************ deserializer functions
 
     // put binary pack for deserialization
-    int PutPack(const VecPtr data);
+    void PutPack(const VecPtr data, const bool useThread = true);
+    int PutPackThread(const VecPtr data);
 
     // get attributes form m_StaticDataJson and put into IO
     void GetAttributes(core::IO &io);
@@ -261,6 +263,7 @@ private:
     int m_MpiRank;
     int m_MpiSize;
     helper::Comm const &m_Comm;
+    std::thread m_PutPackThread;
 
     int m_Verbosity = 0;
 };

@@ -47,6 +47,34 @@ void ZmqReqRep::OpenRequester(const int timeout,
     m_ReceiverBuffer.reserve(receiverBufferSize);
 }
 
+void ZmqReqRep::OpenRequester(const std::string &address, const int timeout,
+                              const size_t receiverBufferSize)
+{
+    m_Timeout = timeout;
+    m_ReceiverBuffer.reserve(receiverBufferSize);
+
+    m_Socket = zmq_socket(m_Context, ZMQ_REQ);
+
+    int ret = 1;
+    auto start_time = std::chrono::system_clock::now();
+    while (ret)
+    {
+        ret = zmq_connect(m_Socket, address.c_str());
+        zmq_setsockopt(m_Socket, ZMQ_SNDTIMEO, &m_Timeout, sizeof(m_Timeout));
+        zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &m_Timeout, sizeof(m_Timeout));
+        zmq_setsockopt(m_Socket, ZMQ_LINGER, &m_Timeout, sizeof(m_Timeout));
+
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > m_Timeout)
+        {
+            zmq_close(m_Socket);
+            return;
+        }
+    }
+}
+
 void ZmqReqRep::OpenReplier(const std::string &address, const int timeout,
                             const size_t receiverBufferSize)
 {
@@ -152,6 +180,47 @@ ZmqReqRep::Request(const void *request, const size_t size,
     reply->resize(ret);
     std::memcpy(reply->data(), m_ReceiverBuffer.data(), ret);
     zmq_close(socket);
+    return reply;
+}
+
+std::shared_ptr<std::vector<char>> ZmqReqRep::Request(const void *request,
+                                                      const size_t size)
+{
+    auto reply = std::make_shared<std::vector<char>>();
+
+    int ret = -1;
+    auto start_time = std::chrono::system_clock::now();
+    while (ret < 1)
+    {
+        ret = zmq_send(m_Socket, request, size, 0);
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > m_Timeout)
+        {
+            zmq_close(m_Socket);
+            return reply;
+        }
+    }
+
+    ret = -1;
+    start_time = std::chrono::system_clock::now();
+    while (ret < 1)
+    {
+        ret = zmq_recv(m_Socket, m_ReceiverBuffer.data(),
+                       m_ReceiverBuffer.capacity(), 0);
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > m_Timeout)
+        {
+            zmq_close(m_Socket);
+            return reply;
+        }
+    }
+
+    reply->resize(ret);
+    std::memcpy(reply->data(), m_ReceiverBuffer.data(), ret);
     return reply;
 }
 

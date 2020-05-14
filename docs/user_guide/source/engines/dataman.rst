@@ -36,6 +36,11 @@ The DataMan engine takes the following parameters:
    Enabling double buffer will cause extra overhead for managing threads and buffer queues, but will improve the continuity of data steps for the reader, for the pub/sub mode.
    Advice for generic uses cases is to keep the default values, true for reader and false for writer.
 
+6. ``TransportMode``: Default **fast**. The fast mode is optimized for latency-critical applications.
+   It enforces readers to only receive the latest step.
+   Therefore, in cases where writers are faster than readers, readers will skip some data steps.
+   The reliable mode ensures that all steps are received by readers, by sacrificing performance compared to the fast mode.
+
 =============================== ================== ================================================
  **Key**                         **Value Format**   **Default** and Examples
 =============================== ================== ================================================
@@ -44,6 +49,7 @@ The DataMan engine takes the following parameters:
  Timeout                         integer            **5**, 10, 30
  RendezvousReaderCount           integer            **1**, 0, 3
  DoubleBuffer                    bool               **true** for reader, **false** for writer
+ TransportMode                   string             **fast**, reliable
 =============================== ================== ================================================
 
 
