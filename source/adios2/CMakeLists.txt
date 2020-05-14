@@ -12,6 +12,7 @@ add_library(taustubs
 target_include_directories(taustubs PRIVATE
       $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
 )
+set_property(TARGET taustubs PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_taustubs)
 
 target_link_libraries(taustubs PRIVATE ${CMAKE_DL_LIBS})
 
@@ -111,6 +112,7 @@ add_library(adios2_core
   toolkit/burstbuffer/FileDrainerSingleThread.cpp
 )
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
+set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)
 
 target_include_directories(adios2_core
   PUBLIC
@@ -135,6 +137,7 @@ if(ADIOS2_HAVE_MPI)
     engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
   )
   set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
+  set_property(TARGET adios2_core_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_mpi)
   target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_C PRIVATE taustubs)
   target_compile_definitions(adios2_core_mpi PUBLIC "$<BUILD_INTERFACE:ADIOS2_USE_MPI>")
 endif()
@@ -264,6 +267,7 @@ if(ADIOS2_HAVE_HDF5)
   endif()
   target_link_libraries(adios2_core PRIVATE adios2_hdf5)
   set_property(TARGET adios2_hdf5 PROPERTY EXPORT_NAME hdf5)
+  set_property(TARGET adios2_hdf5 PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_hdf5)
 
   set(adios2_hdf5_objs adios2_hdf5)
   if(HDF5_IS_PARALLEL)
@@ -275,6 +279,7 @@ if(ADIOS2_HAVE_HDF5)
     target_compile_definitions(adios2_hdf5_mpi PRIVATE ADIOS2_USE_MPI)
     target_link_libraries(adios2_core_mpi PRIVATE adios2_hdf5_mpi)
     set_property(TARGET adios2_hdf5_mpi PROPERTY EXPORT_NAME hdf5_mpi)
+    set_property(TARGET adios2_hdf5_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_hdf5_mpi)
   endif()
 
   foreach(lib IN LISTS adios2_hdf5_objs)

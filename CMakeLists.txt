@@ -78,6 +78,14 @@ if(NOT MSVC)
   set(CMAKE_C_STANDARD_REQUIRED True)
 endif()
 
+# Option for packagers to add a suffix after "adios" in library names (to
+# install multiple builds in parallel)
+set(ADIOS2_LIBRARY_SUFFIX "" CACHE STRING
+  "Suffix to put after \"adios\" in library names")
+set(ADIOS2_EXECUTABLE_SUFFIX "${ADIOS2_LIBRARY_SUFFIX}" CACHE STRING
+  "Suffix to append to executable names")
+mark_as_advanced(ADIOS2_LIBRARY_SUFFIX ADIOS2_EXECUTABLE_SUFFIX)
+
 # Use meta-compile features if available, otherwise use specific language
 # features
 if(CMAKE_VERSION VERSION_LESS 3.9 OR

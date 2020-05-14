@@ -18,6 +18,7 @@ add_library(adios2_cxx11
   adios2/cxx11/fstream/ADIOS2fstream.cpp
 )
 set_property(TARGET adios2_cxx11 PROPERTY EXPORT_NAME cxx11)
+set_property(TARGET adios2_cxx11 PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_cxx11)
 target_link_libraries(adios2_cxx11 PRIVATE adios2_core adios2::thirdparty::pugixml)
 target_compile_features(adios2_cxx11 INTERFACE ${ADIOS2_CXX11_FEATURES})
 
@@ -38,6 +39,7 @@ if(ADIOS2_HAVE_MPI)
     adios2/cxx11/fstream/ADIOS2fstreamMPI.cpp
   )
   set_property(TARGET adios2_cxx11_mpi PROPERTY EXPORT_NAME cxx11_mpi)
+  set_property(TARGET adios2_cxx11_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_cxx11_mpi)
   target_link_libraries(adios2_cxx11_mpi PUBLIC adios2_cxx11 PRIVATE adios2_core_mpi PUBLIC MPI::MPI_CXX)
   set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
   target_compile_definitions(adios2_cxx11_mpi INTERFACE ADIOS2_USE_MPI)

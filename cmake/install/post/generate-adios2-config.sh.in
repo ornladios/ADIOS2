@@ -83,7 +83,7 @@ then
   EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DCMAKE_PREFIX_PATH=@CMAKE_PREFIX_PATH@"
 fi
 
-echo "Configuring adios2-config dummy CMake project"
+echo "Configuring adios2-config@ADIOS2_EXECUTABLE_SUFFIX@ dummy CMake project"
 if ! ${CMAKE} -G "Unix Makefiles" ${SOURCE_DIR} ${EXTRA_CMAKE_ARGS}
 then
   echo "Failed"
@@ -169,11 +169,11 @@ else
   BINDIR="${adios2_DIR}/@CMAKE_INSTALL_BINDIR@"
 fi
 
-echo "Writing ${BINDIR}/adios2-config"
+echo "Writing ${BINDIR}/adios2-config@ADIOS2_EXECUTABLE_SUFFIX@"
 cat \
   "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.pre.sh" \
   adios2.flags \
-  "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.post.sh" > "${BINDIR}/adios2-config"
-chmod +x "${BINDIR}/adios2-config"
+  "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.post.sh" > "${BINDIR}/adios2-config@ADIOS2_EXECUTABLE_SUFFIX@"
+chmod +x "${BINDIR}/adios2-config@ADIOS2_EXECUTABLE_SUFFIX@"
 popd 
 rm -rf ${BUILD_DIR}

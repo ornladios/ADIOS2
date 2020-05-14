@@ -9,6 +9,7 @@ Python_add_library(adios2_py MODULE
   py11File.cpp py11File.tcc
   py11glue.cpp
 )
+target_compile_definitions(adios2_py PRIVATE "ADIOS2_PYTHON_MODULE_NAME=adios2${ADIOS2_LIBRARY_SUFFIX}")
 if(ADIOS2_HAVE_MPI)
   target_sources(adios2_py PRIVATE
     py11ADIOSMPI.cpp
@@ -30,14 +31,14 @@ target_link_libraries(adios2_py PRIVATE
   ${maybe_mpi4py} Python::NumPy
   )
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in
   ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/__init__.py
-  COPYONLY
+  @ONLY
 )
 
 set_target_properties(adios2_py PROPERTIES
   CXX_VISIBILITY_PRESET hidden
-  OUTPUT_NAME adios2
+  OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}
   ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2
@@ -56,7 +57,7 @@ install(TARGETS adios2_py
   DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2
   COMPONENT adios2_python-python
 )
-install(FILES __init__.py
+install(FILES ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/__init__.py
   DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2
   COMPONENT adios2_python-python
 )

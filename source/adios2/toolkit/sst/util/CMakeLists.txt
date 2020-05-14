@@ -12,6 +12,7 @@ endif()
 # stt_conn_tool
 add_executable(sst_conn_tool sst_conn_tool.c sst_conn_tool.cxx)
 target_link_libraries(sst_conn_tool ${maybe_adios2_core_mpi} adios2_core)
+set_property(TARGET sst_conn_tool PROPERTY OUTPUT_NAME sst_conn_tool${ADIOS2_EXECUTABLE_SUFFIX})
 
 if(WIN32)
   target_link_libraries(sst_conn_tool getopt)

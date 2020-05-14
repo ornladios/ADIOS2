@@ -43,6 +43,7 @@ add_library(adios2_fortran
   modules/adios2_operator_mod.f90
 )
 set_property(TARGET adios2_fortran PROPERTY EXPORT_NAME fortran)
+set_property(TARGET adios2_fortran PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_fortran)
 
 target_include_directories(adios2_fortran
   PUBLIC
@@ -98,6 +99,7 @@ if(ADIOS2_HAVE_MPI)
       VERSION ${ADIOS2_LIBRARY_VERSION}
       SOVERSION ${ADIOS2_VERSION_MAJOR}
     )
+    set_property(TARGET adios2_fortran_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_fortran_mpi)
   else()
     # Without submodules we need to put everything in one library.
     add_library(adios2_fortran_mpi INTERFACE)
