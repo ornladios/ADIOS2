@@ -269,6 +269,8 @@ typedef struct _Rdma_RS_Stream
     void *CP_Stream;
     int Rank;
     FabricState Fabric;
+
+    int PreloadAvail;
     struct _SstParams *Params;
 
     /* writer info */
@@ -309,6 +311,7 @@ typedef struct _Rdma_WS_Stream
     int Rank;
     FabricState Fabric;
 
+    int PreloadAvail;
     TimestepList Timesteps;
 
     int ReaderCount;
@@ -339,6 +342,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     CManager cm = Svcs->getCManager(CP_Stream);
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     FabricState Fabric;
+    char *PreloadEnv = NULL;
 
     memset(Stream, 0, sizeof(*Stream));
 
@@ -356,6 +360,14 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
         Stream->Params = malloc(sizeof(*Stream->Params));
         memcpy(Stream->Params, Params, sizeof(*Params));
     }
+
+    PreloadEnv = getenv("SST_DP_PRELOAD");
+    if(PreloadEnv && (strcmp(PreloadEnv, "1") == 0 || strcmp(PreloadEnv, "yes") == 0 || strcmp(PreloadEnv,"Yes") == 0 || strcmp(PreloadEnv,"YES") == 0)) {
+        Svcs->verbose(CP_Stream, "making preload available in RDMA DP based on environment variable value.\n");
+        Stream->PreloadAvail = 1;
+      } else {
+        Stream->PreloadAvail = 0;
+      }
 
 #ifdef SST_HAVE_CRAY_DRC
     int protection_key;
@@ -386,6 +398,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     Rdma_WS_Stream Stream = malloc(sizeof(struct _Rdma_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
+    char *PreloadEnv;
     FabricState Fabric;
     int rc;
     int try_left;
@@ -393,6 +406,14 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     memset(Stream, 0, sizeof(struct _Rdma_WS_Stream));
 
     SMPI_Comm_rank(comm, &Stream->Rank);
+
+    PreloadEnv = getenv("SST_DP_PRELOAD");
+    if(PreloadEnv && (strcmp(PreloadEnv, "1") == 0 || strcmp(PreloadEnv, "yes") == 0 || strcmp(PreloadEnv,"Yes") == 0 || strcmp(PreloadEnv,"YES") == 0)) {
+        Svcs->verbose(CP_Stream, "making preload available in RDMA DP based on environment variable value.\n");
+        Stream->PreloadAvail = 1;
+      } else {
+        Stream->PreloadAvail = 0;
+      }
 
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
     Fabric = Stream->Fabric;
