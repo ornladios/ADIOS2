@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <inttypes.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,8 @@
 #include "dp_interface.h"
 
 #define DP_AV_DEF_SIZE 512
+#define REQ_LIST_GRAN 8
+#define DP_DATA_RECV_SIZE 64
 
 pthread_mutex_t fabric_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t wsr_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -46,9 +49,9 @@ struct fabric_state
     struct fi_info *info;
     // struct fi_info *linfo;
     int local_mr_req;
+    int rx_cq_data;
     size_t addr_len;
     size_t msg_prefix_size;
-    // size_t lmsg_prefix_size;
     struct fid_fabric *fabric;
     struct fid_domain *domain;
     struct fid_ep *signal;
@@ -200,6 +203,16 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
         fabric->msg_prefix_size = 0;
     }
 
+    if (info->mode & FI_RX_CQ_DATA)
+    {
+        fabric->rx_cq_data = 1;
+    }
+    else
+    {
+        fabric->rx_cq_data = 0;
+    }
+
+
     fabric->addr_len = info->src_addrlen;
 
     info->domain_attr->mr_mode = FI_MR_BASIC;
@@ -259,9 +272,80 @@ static void fini_fabric(struct fabric_state *fabric)
     {
         free(fabric->ctx);
     }
+
+#ifdef SST_HAVE_CRAY_DRC
+    if (Fabric->auth_key)
+    {
+        free(Fabric->auth_key);
+    }
+#endif /* SST_HAVE_CRAY_DRC */
 }
 
 typedef struct fabric_state *FabricState;
+
+typedef struct _RdmaCompletionHandle
+{
+    struct fid_mr *LocalMR;
+    void *CPStream;
+    void *Buffer;
+    size_t Length;
+    int Rank;
+    int Pending;
+    double StartWTime;
+    void *PreloadBuffer;
+} * RdmaCompletionHandle;
+
+typedef struct _RdmaBufferHandle
+{
+    uint8_t *Block;
+    uint64_t Key;
+} * RdmaBufferHandle;
+
+typedef struct _RdmaBuffer
+{
+    struct _RdmaBufferHandle Handle;
+    uint64_t BufferLen;
+    uint64_t Offset;
+} * RdmaBuffer;
+
+typedef struct _RdmaReqLogEntry
+{
+    size_t Offset;
+    size_t Length;
+} * RdmaReqLogEntry;
+
+typedef struct _RdmaRankReqLog
+{
+    RdmaBuffer ReqLog;
+    int Entries;
+    union
+    {
+        int MaxEntries; // Reader Side
+        int Rank;       // Writer Side
+    };
+    union
+    {
+        void *Buffer;               // Reader side
+        uint64_t PreloadBufferSize; // Writer side
+    };
+    long BufferSize;
+    union
+    {
+        struct fid_mr *preqbmr;       // Reader side
+        struct _RdmaRankReqLog *next; // Writer side
+    };
+    RdmaCompletionHandle *PreloadHandles;
+} * RdmaRankReqLog;
+
+typedef struct _RdmaStepLogEntry
+{
+    long Timestep;
+    RdmaRankReqLog RankLog;
+    struct _RdmaStepLogEntry *Next;
+    int Entries;
+    long BufferSize;
+    int WRanks;
+} * RdmaStepLogEntry;
 
 typedef struct _Rdma_RS_Stream
 {
@@ -270,23 +354,34 @@ typedef struct _Rdma_RS_Stream
     int Rank;
     FabricState Fabric;
 
+    long PreloadStep;
+    int PreloadPosted;
+    RdmaStepLogEntry StepLog;
+    RdmaStepLogEntry PreloadStepLog;
+    struct _RdmaBuffer PreloadBuffer;
+    struct fid_mr *pbmr;
+    uint64_t *RecvCounter;
     int PreloadAvail;
+
     struct _SstParams *Params;
+    struct _RdmaReaderContactInfo *ContactInfo;
 
     /* writer info */
     int WriterCohortSize;
     CP_PeerCohort PeerCohort;
     struct _RdmaWriterContactInfo *WriterContactInfo;
-    fi_addr_t *WriterAddr;
-} * Rdma_RS_Stream;
 
-typedef struct _Rdma_WSR_Stream
-{
-    struct _Rdma_WS_Stream *WS_Stream;
-    CP_PeerCohort PeerCohort;
-    int ReaderCohortSize;
-    struct _RdmaWriterContactInfo *WriterContactInfo;
-} * Rdma_WSR_Stream;
+    fi_addr_t *WriterAddr;
+    struct _RdmaBufferHandle *WriterRoll;
+
+    int PendingReads;
+    long EarlyReads;
+    long TotalReads;
+
+    void *RecvDataBuffer;
+    struct fid_mr *rbmr;
+    void *rbdesc;
+} * Rdma_RS_Stream;
 
 typedef struct _RdmaPerTimestepInfo
 {
@@ -298,11 +393,31 @@ typedef struct _TimestepEntry
 {
     long Timestep;
     struct _SstData *Data;
-    struct _RdmaPerTimestepInfo *DP_TimestepInfo;
-    struct _TimestepEntry *Next;
+    struct _RdmaBufferHandle *DP_TimestepInfo;
+    struct _TimestepEntry *Prev, *Next;
     struct fid_mr *mr;
+    void *Desc;
     uint64_t Key;
+    uint64_t OutstandingWrites;
+    int BufferSlot;
 } * TimestepList;
+
+typedef struct _Rdma_WSR_Stream
+{
+    struct _Rdma_WS_Stream *WS_Stream;
+    CP_PeerCohort PeerCohort;
+    int ReaderCohortSize;
+    struct _RdmaWriterContactInfo *WriterContactInfo;
+    struct _RdmaBuffer *ReaderRoll;
+    struct fid_mr *rrmr;
+    fi_addr_t *ReaderAddr;
+    int SelectLocked;
+    int Preload;
+    int SelectionPulled;
+    RdmaRankReqLog PreloadReq;
+    TimestepList LastReleased;
+    int PreloadUsed[2];
+} * Rdma_WSR_Stream;
 
 typedef struct _Rdma_WS_Stream
 {
@@ -310,10 +425,9 @@ typedef struct _Rdma_WS_Stream
     void *CP_Stream;
     int Rank;
     FabricState Fabric;
-
+    int DefLocked;
     int PreloadAvail;
     TimestepList Timesteps;
-
     int ReaderCount;
     Rdma_WSR_Stream *Readers;
 } * Rdma_WS_Stream;
@@ -321,6 +435,8 @@ typedef struct _Rdma_WS_Stream
 typedef struct _RdmaReaderContactInfo
 {
     void *RS_Stream;
+    size_t Length;
+    void *Address;
 } * RdmaReaderContactInfo;
 
 typedef struct _RdmaWriterContactInfo
@@ -328,10 +444,23 @@ typedef struct _RdmaWriterContactInfo
     void *WS_Stream;
     size_t Length;
     void *Address;
-#ifdef SST_HAVE_CRAY_DRC
-    int Credential;
-#endif /* SST_HAVE_CRAY_DRC */
+    struct _RdmaBufferHandle ReaderRollHandle;
 } * RdmaWriterContactInfo;
+
+static TimestepList GetStep(Rdma_WS_Stream Stream, long Timestep)
+{
+    TimestepList Step;
+
+    pthread_mutex_lock(&ts_mutex);
+    Step = Stream->Timesteps;
+    while (Step && Step->Timestep != Timestep)
+    {
+        Step = Step->Prev;
+    }
+    pthread_mutex_unlock(&ts_mutex);
+
+    return (Step);
+}
 
 static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
                                    void **ReaderContactInfoPtr,
@@ -341,10 +470,16 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     Rdma_RS_Stream Stream = malloc(sizeof(struct _Rdma_RS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
+    RdmaReaderContactInfo ContactInfo =
+        malloc(sizeof(struct _RdmaReaderContactInfo));
     FabricState Fabric;
     char *PreloadEnv = NULL;
+    int rc;
 
     memset(Stream, 0, sizeof(*Stream));
+    Stream->Fabric = calloc(1, sizeof(*Fabric));
+
+    Fabric = Stream->Fabric;
 
     /*
      * save the CP_stream value of later use
@@ -354,6 +489,8 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     SMPI_Comm_rank(comm, &Stream->Rank);
 
     *ReaderContactInfoPtr = NULL;
+
+    ContactInfo->RS_Stream = Stream;
 
     if (Params)
     {
@@ -370,27 +507,93 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
       }
 
 #ifdef SST_HAVE_CRAY_DRC
-    int protection_key;
+    int attr_cred, try_left;
     if (!get_int_attr(WriterContact, attr_atom_from_string("RDMA_DRC_KEY"),
-                      &protection_key))
+                      &attr_cred))
     {
         Svcs->verbose(CP_Stream, "Didn't find DRC credential\n");
         return NULL;
     }
-    // do something with protection key?
-#endif
+    Fabric->credential = attr_cred;
+
+    try_left = DP_DRC_MAX_TRY;
+    rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
+    while (rc != DRC_SUCCESS && try_left--)
+    {
+        usleep(DP_DRC_WAIT_USEC);
+        rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
+    }
+    if (rc != DRC_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream,
+                      "Could not access DRC credential. Last failed with %d.\n",
+                      rc);
+    }
+
+    Fabric->auth_key = malloc(sizeof(*Fabric->auth_key));
+    Fabric->auth_key->type = GNIX_AKT_RAW;
+    Fabric->auth_key->raw.protection_key =
+        drc_get_first_cookie(Fabric->drc_info);
+    Svcs->verbose(CP_Stream, "Using protection key %08x.\n",
+                  Fabric->auth_key->raw.protection_key);
+
+#endif /* SST_HAVE_CRAY_DRC */
+
+    init_fabric(Stream->Fabric, Stream->Params);
+    if (!Fabric->info)
+    {
+        Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
+        return NULL;
+    }
+
+    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n",
+                  fi_tostr(Fabric->info, FI_TYPE_INFO));
+
+    ContactInfo->Length = Fabric->info->src_addrlen;
+    ContactInfo->Address = malloc(ContactInfo->Length);
+    fi_getname((fid_t)Fabric->signal, ContactInfo->Address,
+               &ContactInfo->Length);
+
+    Stream->PreloadStep = -1;
+    Stream->ContactInfo = ContactInfo;
+    Stream->PreloadPosted = 0;
+    Stream->PendingReads = 0;
+    Stream->RecvCounter = NULL;
+    Stream->EarlyReads = 0;
+    Stream->TotalReads = 0;
+
+    *ReaderContactInfoPtr = ContactInfo;
+
     return Stream;
 }
 
-typedef struct _RdmaCompletionHandle
+static void RdmaReadPatternLocked(CP_Services Svcs, DP_WSR_Stream WSRStream_v,
+                                  long EffectiveTimestep)
 {
-    struct fid_mr *LocalMR;
-    void *CPStream;
-    void *Buffer;
-    size_t Length;
-    int Rank;
-    int Pending;
-} * RdmaCompletionHandle;
+    Rdma_WSR_Stream WSR_Stream = (Rdma_WSR_Stream)WSRStream_v;
+    Rdma_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
+
+    if(WS_Stream->PreloadAvail) {
+        Svcs->verbose(WS_Stream->CP_Stream, "read pattern is locked\n");
+        WSR_Stream->SelectLocked = EffectiveTimestep;
+        WSR_Stream->Preload = 1;
+    } else {
+        Svcs->verbose(WS_Stream->CP_Stream, "RDMA dataplane is ignoring a read pattern lock notification because preloading is disabled. Enable by setting the environment variable SST_DP_PRELOAD to 'yes'\n");
+    }
+}
+
+static void RdmaWritePatternLocked(CP_Services Svcs, DP_RS_Stream Stream_v,
+                                   long EffectiveTimestep)
+{
+    Rdma_RS_Stream Stream = (Rdma_RS_Stream)Stream_v;
+
+    if(Stream->PreloadAvail) {
+        Stream->PreloadStep = EffectiveTimestep;
+        Svcs->verbose(Stream->CP_Stream, "write pattern is locked.\n");
+    } else {
+        Svcs->verbose(Stream->CP_Stream, "RDMA dataplane is ignoring a write pattern lock notification because preloading is disabled. Enable by setting the environment variable SST_DP_PRELOAD to 'yes'\n");
+    }
+}
 
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
                                    struct _SstParams *Params, attr_list DPAttrs)
@@ -459,10 +662,8 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
         drc_get_first_cookie(Fabric->drc_info);
     Svcs->verbose(CP_Stream, "Using protection key %08x.\n",
                   Fabric->auth_key->raw.protection_key);
-
-    set_int_attr(DPAttrs, attr_atom_from_string("RDMA_DRC_KEY"),
-                 Fabric->auth_key->raw.protection_key);
-
+    long attr_cred = Fabric->credential;
+    set_long_attr(DPAttrs, attr_atom_from_string("RDMA_DRC_CRED"), attr_cred);
 #endif /* SST_HAVE_CRAY_DRC */
 
     init_fabric(Stream->Fabric, Params);
@@ -480,6 +681,8 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
      * save the CP_stream value of later use
      */
     Stream->CP_Stream = CP_Stream;
+
+    Stream->DefLocked = -1;
 
     return (void *)Stream;
 
@@ -506,15 +709,28 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
     Rdma_WSR_Stream WSR_Stream = malloc(sizeof(*WSR_Stream));
     FabricState Fabric = WS_Stream->Fabric;
     RdmaWriterContactInfo ContactInfo;
+    RdmaReaderContactInfo *providedReaderInfo =
+        (RdmaReaderContactInfo *)providedReaderInfo_v;
     SMPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
-    int Rank;
-
-    SMPI_Comm_rank(comm, &Rank);
+    RdmaBufferHandle ReaderRollHandle;
+    int i;
 
     WSR_Stream->WS_Stream = WS_Stream; /* pointer to writer struct */
     WSR_Stream->PeerCohort = PeerCohort;
 
     WSR_Stream->ReaderCohortSize = readerCohortSize;
+
+    WSR_Stream->ReaderAddr =
+        calloc(readerCohortSize, sizeof(*WSR_Stream->ReaderAddr));
+
+    for (i = 0; i < readerCohortSize; i++)
+    {
+        fi_av_insert(Fabric->av, providedReaderInfo[i]->Address, 1,
+                     &WSR_Stream->ReaderAddr[i], 0, NULL);
+        Svcs->verbose(WS_Stream->CP_Stream,
+                      "Received contact info for RS_Stream %p, WSR Rank %d\n",
+                      providedReaderInfo[i]->RS_Stream, i);
+    }
 
     /*
      * add this writer-side reader-specific stream to the parent writer stream
@@ -527,18 +743,35 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
     WS_Stream->ReaderCount++;
     pthread_mutex_unlock(&wsr_mutex);
 
-    ContactInfo = malloc(sizeof(struct _RdmaWriterContactInfo));
-    memset(ContactInfo, 0, sizeof(struct _RdmaWriterContactInfo));
+    ContactInfo = calloc(1, sizeof(struct _RdmaWriterContactInfo));
     ContactInfo->WS_Stream = WSR_Stream;
 
     ContactInfo->Length = Fabric->info->src_addrlen;
     ContactInfo->Address = malloc(ContactInfo->Length);
     fi_getname((fid_t)Fabric->signal, ContactInfo->Address,
                &ContactInfo->Length);
-#ifdef SST_HAVE_CRAY_DRC
-    ContactInfo->Credential = Fabric->credential;
-#endif /* SST_HAVE_CRAY_DRC */
+
+    ReaderRollHandle = &ContactInfo->ReaderRollHandle;
+    ReaderRollHandle->Block =
+        calloc(readerCohortSize, sizeof(struct _RdmaBuffer));
+    fi_mr_reg(Fabric->domain, ReaderRollHandle->Block,
+              readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_WRITE, 0,
+              0, 0, &WSR_Stream->rrmr, Fabric->ctx);
+    ReaderRollHandle->Key = fi_mr_key(WSR_Stream->rrmr);
+
     WSR_Stream->WriterContactInfo = ContactInfo;
+
+    WSR_Stream->ReaderRoll = malloc(sizeof(struct _RdmaBuffer));
+    WSR_Stream->ReaderRoll->Handle = *ReaderRollHandle;
+    WSR_Stream->ReaderRoll->BufferLen =
+        readerCohortSize * sizeof(struct _RdmaBuffer);
+
+    WSR_Stream->Preload = 0;
+    WSR_Stream->SelectionPulled = 0;
+    WSR_Stream->SelectLocked = -1;
+
+    WSR_Stream->LastReleased = NULL;
+
     *WriterContactInfoPtr = ContactInfo;
 
     return WSR_Stream;
@@ -562,56 +795,8 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
     RS_Stream->WriterCohortSize = writerCohortSize;
     RS_Stream->WriterAddr =
         calloc(writerCohortSize, sizeof(*RS_Stream->WriterAddr));
-
-    RS_Stream->Fabric = calloc(1, sizeof(struct fabric_state));
-
-    Fabric = RS_Stream->Fabric;
-#ifdef SST_HAVE_CRAY_DRC
-    if (providedWriterInfo)
-    {
-        Fabric->credential = (*providedWriterInfo)->Credential;
-    }
-    else
-    {
-        Svcs->verbose(CP_Stream,
-                      "Writer contact info needed to access DRC credentials.\n",
-                      rc);
-    }
-
-    // at large scale the servers backing drc can become overwhelmed and
-    // timeout. The return value is -22 (EINVAL). a work around is to wait
-    // and try again.
-
-    try_left = DP_DRC_MAX_TRY;
-    rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
-    while (rc != DRC_SUCCESS && try_left--)
-    {
-        usleep(DP_DRC_WAIT_USEC);
-        rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
-    }
-    if (rc != DRC_SUCCESS)
-    {
-        Svcs->verbose(CP_Stream,
-                      "Could not access DRC credential. Last failed with %d.\n",
-                      rc);
-    }
-
-    Fabric->auth_key = malloc(sizeof(*Fabric->auth_key));
-    Fabric->auth_key->type = GNIX_AKT_RAW;
-    Fabric->auth_key->raw.protection_key =
-        drc_get_first_cookie(Fabric->drc_info);
-    Svcs->verbose(CP_Stream, "Using protection key %08x.\n",
-                  Fabric->auth_key->raw.protection_key);
-#endif /* SST_HAVE_CRAY_DRC */
-
-    init_fabric(RS_Stream->Fabric, RS_Stream->Params);
-    if (!Fabric->info)
-    {
-        Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
-    }
-
-    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n",
-                  fi_tostr(Fabric->info, FI_TYPE_INFO));
+    RS_Stream->WriterRoll =
+        calloc(writerCohortSize, sizeof(*RS_Stream->WriterRoll));
 
     /*
      * make a copy of writer contact information (original will not be
@@ -619,53 +804,95 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
      */
     RS_Stream->WriterContactInfo =
         malloc(sizeof(struct _RdmaWriterContactInfo) * writerCohortSize);
+
     for (int i = 0; i < writerCohortSize; i++)
     {
         RS_Stream->WriterContactInfo[i].WS_Stream =
             providedWriterInfo[i]->WS_Stream;
         fi_av_insert(Fabric->av, providedWriterInfo[i]->Address, 1,
                      &RS_Stream->WriterAddr[i], 0, NULL);
+        RS_Stream->WriterRoll[i] = providedWriterInfo[i]->ReaderRollHandle;
         Svcs->verbose(RS_Stream->CP_Stream,
                       "Received contact info for WS_stream %p, WSR Rank %d\n",
                       RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
 }
 
-static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
-                                  int Rank, long Timestep, size_t Offset,
-                                  size_t Length, void *Buffer,
-                                  void *DP_TimestepInfo)
+static void LogRequest(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank,
+                       long Timestep, size_t Offset, size_t Length)
 {
-    Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)Stream_v;
-    FabricState Fabric = RS_Stream->Fabric;
-    RdmaPerTimestepInfo Info = (RdmaPerTimestepInfo)DP_TimestepInfo;
-    RdmaCompletionHandle ret = malloc(sizeof(struct _RdmaCompletionHandle));
-    fi_addr_t SrcAddress;
-    void *LocalDesc = NULL;
-    uint8_t *Addr;
-    ssize_t rc;
+    RdmaStepLogEntry *StepLog_p;
+    RdmaStepLogEntry StepLog;
+    RdmaBuffer LogEntry;
+    size_t ReqLogSize;
+    int LogIdx;
 
-    Svcs->verbose(RS_Stream->CP_Stream,
-                  "Performing remote read of Writer Rank %d\n", Rank);
-
-    if (Info)
+    StepLog_p = &(RS_Stream->StepLog);
+    while (*StepLog_p && Timestep < (*StepLog_p)->Timestep)
     {
-        Svcs->verbose(RS_Stream->CP_Stream,
-                      "Block address is %p, with a key of %d\n", Info->Block,
-                      Info->Key);
+        StepLog_p = &((*StepLog_p)->Next);
+    }
+
+    if (!(*StepLog_p) || (*StepLog_p)->Timestep != Timestep)
+    {
+        StepLog = malloc(sizeof(*StepLog));
+        StepLog->RankLog =
+            calloc(RS_Stream->WriterCohortSize, sizeof(*StepLog->RankLog));
+        StepLog->Timestep = Timestep;
+        StepLog->Next = *StepLog_p;
+        StepLog->BufferSize = 0;
+        StepLog->WRanks = 0;
+        *StepLog_p = StepLog;
     }
     else
     {
-        Svcs->verbose(RS_Stream->CP_Stream, "Timestep info is null\n");
+        StepLog = *StepLog_p;
     }
 
-    ret->CPStream = RS_Stream;
-    ret->Buffer = Buffer;
-    ret->Rank = Rank;
-    ret->Length = Length;
-    ret->Pending = 1;
+    StepLog->BufferSize += Length;
+    StepLog->Entries++;
+    if (!StepLog->RankLog[Rank].ReqLog)
+    {
+        ReqLogSize =
+            (REQ_LIST_GRAN * sizeof(struct _RdmaRankReqLog)) +
+            sizeof(uint64_t); // extra uint64_t for the preload buffer key
+        StepLog->RankLog[Rank].ReqLog = calloc(1, ReqLogSize);
+        StepLog->RankLog[Rank].MaxEntries = REQ_LIST_GRAN;
+        StepLog->WRanks++;
+    }
+    if (StepLog->RankLog[Rank].MaxEntries == StepLog->RankLog[Rank].Entries)
+    {
+        StepLog->RankLog[Rank].MaxEntries *= 2;
+        ReqLogSize = (StepLog->RankLog[Rank].MaxEntries *
+                      sizeof(struct _RdmaRankReqLog)) +
+                     sizeof(uint64_t);
+        StepLog->RankLog[Rank].ReqLog =
+            realloc(StepLog->RankLog[Rank].ReqLog, ReqLogSize);
+    }
+    StepLog->RankLog[Rank].BufferSize += Length;
+    LogIdx = StepLog->RankLog[Rank].Entries++;
+    LogEntry = &StepLog->RankLog[Rank].ReqLog[LogIdx];
+    LogEntry->BufferLen = Length;
+    LogEntry->Offset = Offset;
+    LogEntry->Handle.Block = NULL;
+}
 
-    SrcAddress = RS_Stream->WriterAddr[Rank];
+static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank,
+                        long Timestep, size_t Offset, size_t Length,
+                        void *Buffer, RdmaBufferHandle Info,
+                        RdmaCompletionHandle *ret_v)
+{
+    FabricState Fabric = RS_Stream->Fabric;
+    fi_addr_t SrcAddress = RS_Stream->WriterAddr[Rank];
+    void *LocalDesc = NULL;
+    uint8_t *Addr;
+    RdmaCompletionHandle ret;
+    ssize_t rc;
+
+    *ret_v = malloc(sizeof(struct _RdmaCompletionHandle));
+    ret = *ret_v;
+    ret->Pending = 1;
+    ret->StartWTime = MPI_Wtime();
 
     if (Fabric->local_mr_req)
     {
@@ -677,9 +904,10 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
 
     Addr = Info->Block + Offset;
 
-    Svcs->verbose(RS_Stream->CP_Stream,
-                  "Target of remote read on Writer Rank %d is %p\n", Rank,
-                  Addr);
+    Svcs->verbose(
+        RS_Stream->CP_Stream,
+        "Remote read target is Rank %d (Offset = %zi, Length = %zi)\n", Rank,
+        Offset, Length);
 
     do
     {
@@ -691,13 +919,134 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     {
         Svcs->verbose(RS_Stream->CP_Stream, "fi_read failed with code %d.\n",
                       rc);
-        free(ret);
-        return NULL;
+        return (rc);
+    }
+    else
+    {
+
+        Svcs->verbose(RS_Stream->CP_Stream,
+                      "Posted RDMA get for Writer Rank %d for handle %p\n",
+                      Rank, (void *)ret);
+        RS_Stream->PendingReads++;
     }
 
+    return (rc);
+}
+
+static RdmaBuffer GetRequest(Rdma_RS_Stream Stream, RdmaStepLogEntry StepLog,
+                             int Rank, size_t Offset, size_t Length)
+{
+
+    RdmaRankReqLog RankLog = &StepLog->RankLog[Rank];
+    RdmaBuffer Req;
+    int i;
+
+    for (i = 0; i < RankLog->Entries; i++)
+    {
+        Req = &RankLog->ReqLog[i];
+        if (Req->BufferLen == Length && Req->Offset == Offset)
+        {
+            return (Req);
+        }
+    }
+
+    return (NULL);
+}
+
+static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
+                                  int Rank, long Timestep, size_t Offset,
+                                  size_t Length, void *Buffer,
+                                  void *DP_TimestepInfo)
+{
+    RdmaCompletionHandle ret;
+    Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)Stream_v;
+    RdmaBufferHandle Info = (RdmaBufferHandle)DP_TimestepInfo;
+    RdmaStepLogEntry StepLog;
+    RdmaRankReqLog RankLog;
+    RdmaBuffer Req;
+    int BufferSlot;
+    int WRidx;
+
     Svcs->verbose(RS_Stream->CP_Stream,
-                  "Posted RDMA get for Writer Rank %d for handle %p\n", Rank,
-                  (void *)ret);
+                  "Performing remote read of Writer Rank %d at step %d\n", Rank,
+                  Timestep);
+
+    if (Info)
+    {
+        Svcs->verbose(RS_Stream->CP_Stream,
+                      "Block address is %p, with a key of %d\n", Info->Block,
+                      Info->Key);
+    }
+    else
+    {
+        Svcs->verbose(RS_Stream->CP_Stream, "Timestep info is null\n");
+        free(ret);
+        return (NULL);
+    }
+
+    pthread_mutex_lock(&ts_mutex);
+    if (RS_Stream->PreloadPosted)
+    {
+        RS_Stream->TotalReads++;
+        Req = GetRequest(RS_Stream, RS_Stream->PreloadStepLog, Rank, Offset,
+                         Length);
+        if (Req)
+        {
+            BufferSlot = Timestep & 1;
+            StepLog = RS_Stream->PreloadStepLog;
+            RankLog = &StepLog->RankLog[Rank];
+            WRidx = Req - RankLog->ReqLog;
+            ret = &((RankLog->PreloadHandles[BufferSlot])[WRidx]);
+            ret->PreloadBuffer =
+                Req->Handle.Block + (BufferSlot * StepLog->BufferSize);
+            ret->Pending++;
+            if (ret->Pending == 0)
+            {
+                // the data has already been preloaded, safe to copy
+                memcpy(Buffer, ret->PreloadBuffer, Length);
+                RS_Stream->EarlyReads++;
+            }
+            else if (ret->Pending != 1)
+            {
+                Svcs->verbose(RS_Stream->CP_Stream,
+                         "rank %d, wrank %d, entry %d, buffer slot %d, bad "
+                         "handle pending value.\n",
+                         RS_Stream->Rank, Rank, WRidx, BufferSlot);
+            }
+            ret->StartWTime = MPI_Wtime();
+        }
+        else
+        {
+            Svcs->verbose(RS_Stream->CP_Stream,
+                          "read patterns are fixed, but new request to rank %d "
+                          "(Offset = %zi, Length = %zi \n",
+                          Rank, Offset, Length);
+            ret->PreloadBuffer = NULL;
+            if (PostRead(Svcs, RS_Stream, Rank, Timestep, Offset, Length,
+                         Buffer, Info, &ret) != 0)
+            {
+                free(ret);
+                return (NULL);
+            }
+        }
+    }
+    else
+    {
+        LogRequest(Svcs, RS_Stream, Rank, Timestep, Offset, Length);
+        if (PostRead(Svcs, RS_Stream, Rank, Timestep, Offset, Length, Buffer,
+                     Info, &ret) != 0)
+        {
+            free(ret);
+            return (NULL);
+        }
+        ret->PreloadBuffer = NULL;
+    }
+    pthread_mutex_unlock(&ts_mutex);
+
+    ret->CPStream = RS_Stream;
+    ret->Buffer = Buffer;
+    ret->Rank = Rank;
+    ret->Length = Length;
 
     return (ret);
 }
@@ -717,17 +1066,19 @@ static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     //   FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
 }
 
-/*
- * RdmaWaitForCompletion should return 1 if successful, but 0 if the reads
- * failed for some reason or were aborted by RdmaNotifyConnFailure()
+/* We still have to handle Pull completions while waiting for push to complete
  */
-static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
+static int DoPushWait(CP_Services Svcs, Rdma_RS_Stream Stream,
+                      RdmaCompletionHandle Handle)
 {
-    RdmaCompletionHandle Handle = (RdmaCompletionHandle)Handle_v;
-    Rdma_RS_Stream Stream = Handle->CPStream;
     FabricState Fabric = Stream->Fabric;
+    RdmaStepLogEntry StepLog = Stream->PreloadStepLog;
+    RdmaRankReqLog RankLog;
+    RdmaBuffer Req;
     RdmaCompletionHandle Handle_t;
     struct fi_cq_data_entry CQEntry = {0};
+    int WRank, WRidx;
+    int BufferSlot;
 
     while (Handle->Pending > 0)
     {
@@ -735,7 +1086,53 @@ static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
         rc = fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
         if (rc < 1)
         {
-            // Handle errrors
+            Svcs->verbose(Stream->CP_Stream,
+                          "failure while waiting for completions (%d).\n", rc);
+            return 0;
+        }
+        else if (CQEntry.flags & FI_REMOTE_CQ_DATA)
+        {
+            BufferSlot = CQEntry.data >> 31;
+            WRidx = (CQEntry.data >> 20) & 0x3FF;
+            WRank = CQEntry.data & 0x0FFFFF;
+
+            Svcs->verbose(Stream->CP_Stream,
+                          "got completion for Rank %d, push request %d.\n",
+                          WRank, WRidx);
+            RankLog = &StepLog->RankLog[WRank];
+            Svcs->verbose(Stream->CP_Stream,
+                          "CQEntry.data = %" PRIu64
+                          ", BufferSlot = %d, WRank = %d, WRidx = %d\n",
+                          CQEntry.data, BufferSlot, WRank, WRidx);
+            Handle_t = (RdmaCompletionHandle) &
+                       ((RankLog->PreloadHandles[BufferSlot])[WRidx]);
+            if (Handle_t)
+            {
+                pthread_mutex_lock(&ts_mutex);
+                Handle_t->Pending--;
+                if (Handle_t->Pending == 0)
+                {
+                    // already saw a ReadRemote for this data, safe to copy
+                    memcpy(Handle_t->Buffer, CQEntry.buf, CQEntry.len);
+                }
+                else if (Handle_t->Pending != -1)
+                {
+                    Svcs->verbose(Stream->CP_Stream,
+                            "rank %d, wrank %d, entry %d, buffer slot %d, bad "
+                            "handle pending value.\n",
+                            Stream->Rank, WRank, WRidx, BufferSlot);
+                }
+                else
+                {
+                }
+                pthread_mutex_unlock(&ts_mutex);
+            }
+            else
+            {
+                Svcs->verbose(
+                    Stream->CP_Stream,
+                    "Got push completion without a known handle...\n");
+            }
         }
         else
         {
@@ -747,12 +1144,70 @@ static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
         }
     }
 
+    if (Handle->LocalMR && Fabric->local_mr_req)
+    {
+        fi_close((struct fid *)Handle->LocalMR);
+    }
+
+    return (1);
+}
+
+static int DoPullWait(CP_Services Svcs, Rdma_RS_Stream Stream,
+                      RdmaCompletionHandle Handle)
+{
+    FabricState Fabric = Stream->Fabric;
+    RdmaCompletionHandle Handle_t;
+    struct fi_cq_data_entry CQEntry = {0};
+
+    while (Handle->Pending > 0)
+    {
+        ssize_t rc;
+        rc = fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
+        if (rc < 1)
+        {
+            Svcs->verbose(Stream->CP_Stream,
+                          "failure while waiting for completions (%d).\n", rc);
+            return 0;
+        }
+        else
+        {
+            Svcs->verbose(
+                Stream->CP_Stream,
+                "got completion for request with handle %p (flags %li).\n",
+                CQEntry.op_context, CQEntry.flags);
+            Handle_t = (RdmaCompletionHandle)CQEntry.op_context;
+            Handle_t->Pending--;
+        }
+    }
+
+    // TODO: maybe reuse this memory registration
     if (Fabric->local_mr_req)
     {
         fi_close((struct fid *)Handle->LocalMR);
     }
 
     return (1);
+}
+
+/*
+ * RdmaWaitForCompletion should return 1 if successful, but 0 if the reads
+ * failed for some reason or were aborted by RdmaNotifyConnFailure()
+ */
+static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
+{
+    RdmaCompletionHandle Handle = (RdmaCompletionHandle)Handle_v;
+    Rdma_RS_Stream Stream = Handle->CPStream;
+
+    Svcs->verbose(Stream->CP_Stream, "Rank %d, %s\n", Stream->Rank, __func__);
+
+    if (Stream->PreloadPosted && Handle->PreloadBuffer)
+    {
+        return (DoPushWait(Svcs, Stream, Handle));
+    }
+    else
+    {
+        return (DoPullWait(Svcs, Stream, Handle));
+    }
 }
 
 static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
@@ -762,19 +1217,30 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
 {
     Rdma_WS_Stream Stream = (Rdma_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));
-    RdmaPerTimestepInfo Info = malloc(sizeof(struct _RdmaPerTimestepInfo));
+    RdmaBufferHandle Info = malloc(sizeof(struct _RdmaBufferHandle));
     FabricState Fabric = Stream->Fabric;
 
     Entry->Data = malloc(sizeof(*Data));
     memcpy(Entry->Data, Data, sizeof(*Data));
     Entry->Timestep = Timestep;
     Entry->DP_TimestepInfo = Info;
+    Entry->BufferSlot = -1;
+    Entry->Desc = NULL;
 
-    fi_mr_reg(Fabric->domain, Data->block, Data->DataSize, FI_REMOTE_READ, 0, 0,
-              0, &Entry->mr, Fabric->ctx);
+    fi_mr_reg(Fabric->domain, Data->block, Data->DataSize,
+              FI_WRITE | FI_REMOTE_READ, 0, 0, 0, &Entry->mr, Fabric->ctx);
     Entry->Key = fi_mr_key(Entry->mr);
+    if (Fabric->local_mr_req)
+    {
+        Entry->Desc = fi_mr_desc(Entry->mr);
+    }
     pthread_mutex_lock(&ts_mutex);
-    Entry->Next = Stream->Timesteps;
+    if (Stream->Timesteps)
+    {
+        Stream->Timesteps->Next = Entry;
+    }
+    Entry->Prev = Stream->Timesteps;
+    Entry->Next = NULL;
     Stream->Timesteps = Entry;
     // Probably doesn't need to be in the lock
     // |
@@ -794,16 +1260,18 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                                 long Timestep)
 {
     Rdma_WS_Stream Stream = (Rdma_WS_Stream)Stream_v;
+    Rdma_WSR_Stream WSR_Stream;
     TimestepList *List = &Stream->Timesteps;
     TimestepList ReleaseTSL;
-    RdmaPerTimestepInfo Info;
+    RdmaBufferHandle Info;
+    int i;
 
     Svcs->verbose(Stream->CP_Stream, "Releasing timestep %ld\n", Timestep);
 
     pthread_mutex_lock(&ts_mutex);
     while ((*List) && (*List)->Timestep != Timestep)
     {
-        List = &((*List)->Next);
+        List = &((*List)->Prev);
     }
 
     if ((*List) == NULL)
@@ -812,13 +1280,13 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
          * Shouldn't ever get here because we should never release a
          * timestep that we don't have.
          */
-        fprintf(stderr, "Failed to release Timestep %ld, not found\n",
+        Svcs->verbose(Stream->CP_Stream, "Failed to release Timestep %ld, not found\n",
                 Timestep);
         assert(0);
     }
 
     ReleaseTSL = *List;
-    *List = ReleaseTSL->Next;
+    *List = ReleaseTSL->Prev;
     pthread_mutex_unlock(&ts_mutex);
     fi_close((struct fid *)ReleaseTSL->mr);
     if (ReleaseTSL->Data)
@@ -833,18 +1301,58 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     free(ReleaseTSL);
 }
 
+static void RdmaDestroyRankReqLog(Rdma_RS_Stream RS_Stream,
+                                  RdmaRankReqLog RankReqLog)
+{
+    RdmaReqLogEntry tmp;
+    int i;
+
+    for (i = 0; i < RS_Stream->WriterCohortSize; i++)
+    {
+        if (RankReqLog[i].ReqLog)
+        {
+            free(RankReqLog[i].ReqLog);
+        }
+    }
+    free(RankReqLog);
+}
+
 static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 {
     Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)RS_Stream_v;
+    RdmaStepLogEntry StepLog = RS_Stream->StepLog;
+    RdmaStepLogEntry tStepLog;
+
+    fprintf(stdout,
+            "Reader Rank %d: %li early reads of %li total reads (where preload "
+            "was possible.)\n",
+            RS_Stream->Rank, RS_Stream->EarlyReads, RS_Stream->TotalReads);
 
     Svcs->verbose(RS_Stream->CP_Stream, "Tearing down RDMA state on reader.\n");
-    fini_fabric(RS_Stream->Fabric);
+    if (RS_Stream->Fabric)
+    {
+        fini_fabric(RS_Stream->Fabric);
+    }
+
+    while (StepLog)
+    {
+        RdmaDestroyRankReqLog(RS_Stream, StepLog->RankLog);
+        tStepLog = StepLog;
+        StepLog = StepLog->Next;
+        free(tStepLog);
+    }
 
     free(RS_Stream->WriterContactInfo);
     free(RS_Stream->WriterAddr);
-    free(RS_Stream->Fabric);
+    free(RS_Stream->WriterRoll);
+    if (RS_Stream->ContactInfo)
+    {
+        free(RS_Stream->ContactInfo->Address);
+        free(RS_Stream->ContactInfo);
+    }
     free(RS_Stream);
 }
+
 
 static void RdmaDestroyWriterPerReader(CP_Services Svcs,
                                        DP_WSR_Stream WSR_Stream_v)
@@ -863,6 +1371,11 @@ static void RdmaDestroyWriterPerReader(CP_Services Svcs,
             break;
         }
     }
+    fi_close((struct fid *)WSR_Stream->rrmr);
+    if (WSR_Stream->ReaderAddr)
+    {
+        free(WSR_Stream->ReaderAddr);
+    }
     WS_Stream->Readers = realloc(
         WS_Stream->Readers, sizeof(*WSR_Stream) * (WS_Stream->ReaderCount - 1));
     WS_Stream->ReaderCount--;
@@ -873,18 +1386,40 @@ static void RdmaDestroyWriterPerReader(CP_Services Svcs,
         WriterContactInfo = WSR_Stream->WriterContactInfo;
         free(WriterContactInfo->Address);
     }
+    if (WriterContactInfo->ReaderRollHandle.Block)
+    {
+        free(WriterContactInfo->ReaderRollHandle.Block);
+    }
     free(WSR_Stream->WriterContactInfo);
+
+    if (WSR_Stream->ReaderRoll)
+    {
+        free(WSR_Stream->ReaderRoll);
+    }
     free(WSR_Stream);
 }
 
 static FMField RdmaReaderContactList[] = {
     {"reader_ID", "integer", sizeof(void *),
      FMOffset(RdmaReaderContactInfo, RS_Stream)},
+    {"Length", "integer", sizeof(int), FMOffset(RdmaReaderContactInfo, Length)},
+    {"Address", "integer[Length]", sizeof(char),
+     FMOffset(RdmaReaderContactInfo, Address)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec RdmaReaderContactStructs[] = {
     {"RdmaReaderContactInfo", RdmaReaderContactList,
      sizeof(struct _RdmaReaderContactInfo), NULL},
+    {NULL, NULL, 0, NULL}};
+
+static FMField RdmaBufferHandleList[] = {
+    {"Block", "integer", sizeof(void *), FMOffset(RdmaBufferHandle, Block)},
+    {"Key", "integer", sizeof(uint64_t), FMOffset(RdmaBufferHandle, Key)},
+    {NULL, NULL, 0, 0}};
+
+static FMStructDescRec RdmaBufferHandleStructs[] = {
+    {"RdmaBufferHandle", RdmaBufferHandleList, sizeof(struct _RdmaBufferHandle),
+     NULL},
     {NULL, NULL, 0, NULL}};
 
 static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
@@ -898,7 +1433,9 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 #endif /* SST_HAVE_CRAY_DRC */
 
     Svcs->verbose(WS_Stream->CP_Stream, "Tearing down RDMA state on writer.\n");
-    fini_fabric(WS_Stream->Fabric);
+    if(WS_Stream->Fabric) {
+        fini_fabric(WS_Stream->Fabric);
+    }
 
 #ifdef SST_HAVE_CRAY_DRC
     if (WS_Stream->Rank == 0)
@@ -930,25 +1467,15 @@ static FMField RdmaWriterContactList[] = {
     {"Length", "integer", sizeof(int), FMOffset(RdmaWriterContactInfo, Length)},
     {"Address", "integer[Length]", sizeof(char),
      FMOffset(RdmaWriterContactInfo, Address)},
-#ifdef SST_HAVE_CRAY_DRC
-    {"Credential", "integer", sizeof(int),
-     FMOffset(RdmaWriterContactInfo, Credential)},
-#endif /* SST_HAVE_CRAY_DRC */
+    {"ReaderRollHandle", "RdmaBufferHandle", sizeof(struct _RdmaBufferHandle),
+     FMOffset(RdmaWriterContactInfo, ReaderRollHandle)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec RdmaWriterContactStructs[] = {
     {"RdmaWriterContactInfo", RdmaWriterContactList,
      sizeof(struct _RdmaWriterContactInfo), NULL},
-    {NULL, NULL, 0, NULL}};
-
-static FMField RdmaTimestepInfoList[] = {
-    {"Block", "integer", sizeof(void *), FMOffset(RdmaPerTimestepInfo, Block)},
-    {"Key", "integer", sizeof(uint64_t), FMOffset(RdmaPerTimestepInfo, Key)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec RdmaTimestepInfoStructs[] = {
-    {"RdmaTimestepInfo", RdmaTimestepInfoList,
-     sizeof(struct _RdmaPerTimestepInfo), NULL},
+    {"RdmaBufferHandle", RdmaBufferHandleList, sizeof(struct _RdmaBufferHandle),
+     NULL},
     {NULL, NULL, 0, NULL}};
 
 static struct _CP_DP_Interface RdmaDPInterface;
@@ -1067,12 +1594,446 @@ static void RdmaUnGetPriority(CP_Services Svcs, void *CP_Stream)
     Svcs->verbose(CP_Stream, "RDMA Dataplane unloading\n");
 }
 
+static void PushData(CP_Services Svcs, Rdma_WSR_Stream Stream,
+                     TimestepList Step, int BufferSlot)
+{
+    Rdma_WS_Stream WS_Stream = Stream->WS_Stream;
+    FabricState Fabric = WS_Stream->Fabric;
+    RdmaRankReqLog RankReq = Stream->PreloadReq;
+    RdmaBuffer Req, ReaderRoll, RollBuffer;
+    uint64_t RecvCounter;
+    uint8_t *StepBuffer;
+    int i, rc;
+
+    StepBuffer = (uint8_t *)Step->Data->block;
+    ReaderRoll = (RdmaBuffer)Stream->ReaderRoll->Handle.Block;
+
+    Step->OutstandingWrites = 0;
+    while (RankReq)
+    {
+        RollBuffer = &ReaderRoll[RankReq->Rank];
+        for (i = 0; i < RankReq->Entries; i++)
+        {
+            // TODO: this can only handle 4096 requests per reader rank. Fix.
+            uint64_t Data = ((uint64_t)i << 20) | WS_Stream->Rank;
+            Data |= BufferSlot << 31;
+            Data &= 0xFFFFFFFF;
+            Svcs->verbose(WS_Stream->CP_Stream,
+                          "Sending Data = %" PRIu64
+                          " ; BufferSlot = %d, Rank = %d, Entry = %d\n",
+                          Data, BufferSlot, WS_Stream->Rank, i);
+            Req = &RankReq->ReqLog[i];
+            do
+            {
+                rc = fi_writedata(Fabric->signal, StepBuffer + Req->Offset,
+                                  Req->BufferLen, Step->Desc, Data,
+                                  Stream->ReaderAddr[RankReq->Rank],
+                                  (uint64_t)Req->Handle.Block +
+                                      (BufferSlot * RankReq->PreloadBufferSize),
+                                  RollBuffer->Offset, (void *)(Step->Timestep));
+            } while (rc == -EAGAIN);
+            if (rc != 0)
+            {
+                Svcs->verbose(WS_Stream->CP_Stream,
+                              "fi_read failed with code %d.\n", rc);
+            }
+        }
+        Step->OutstandingWrites += RankReq->Entries;
+        RankReq = RankReq->next;
+    }
+}
+
+static void RdmaReaderRegisterTimestep(CP_Services Svcs,
+                                       DP_WSR_Stream WSRStream_v, long Timestep,
+                                       SstPreloadModeType PreloadMode)
+{
+    Rdma_WSR_Stream WSR_Stream = (Rdma_WSR_Stream)WSRStream_v;
+    Rdma_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
+    TimestepList Step;
+
+    if (PreloadMode != SstPreloadNone && WS_Stream->DefLocked < 0)
+    {
+        WS_Stream->DefLocked = Timestep;
+        if (WSR_Stream->SelectLocked >= 0)
+        {
+            Svcs->verbose(WS_Stream->CP_Stream, "enabling preload.\n");
+            WSR_Stream->Preload = 1;
+        }
+    }
+
+    Step = GetStep(WS_Stream, Timestep);
+    pthread_mutex_lock(&ts_mutex);
+    if (WSR_Stream->SelectionPulled &&
+        WSR_Stream->PreloadUsed[Step->Timestep & 1] == 0)
+    {
+        PushData(Svcs, WSR_Stream, Step, Step->Timestep & 1);
+        WSR_Stream->PreloadUsed[Step->Timestep & 1] = 1;
+        Step->BufferSlot = Step->Timestep & 1;
+    }
+    pthread_mutex_unlock(&ts_mutex);
+}
+
+static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
+{
+    RdmaStepLogEntry StepLog;
+    FabricState Fabric = Stream->Fabric;
+    RdmaBuffer PreloadBuffer = &Stream->PreloadBuffer;
+    RdmaRankReqLog RankLog;
+    RdmaBuffer SendBuffer;
+    struct fid_mr *sbmr = NULL;
+    void *sbdesc = NULL;
+    size_t SBSize;
+    RdmaBuffer ReqLog;
+    uint64_t PreloadKey;
+    uint8_t *RawPLBuffer;
+    int WRidx = 0;
+    uint64_t RollDest;
+    struct fi_cq_data_entry CQEntry = {0};
+    uint8_t *RecvBuffer;
+    RdmaBuffer CQBuffer;
+    size_t RBLen;
+    uint64_t *BLenHolder;
+    int rc;
+    int i, j;
+
+    Svcs->verbose(Stream->CP_Stream, "rank %d: %s\n", Stream->Rank, __func__);
+
+    StepLog = Stream->StepLog;
+    while (StepLog)
+    {
+        if (StepLog->Timestep == Timestep)
+        {
+            break;
+        }
+        StepLog = StepLog->Next;
+    }
+    if (!StepLog)
+    {
+        Svcs->verbose(Stream->CP_Stream, "trying to post preload data for a "
+                                         "timestep with no access history.");
+        return;
+    }
+
+    Stream->PreloadStepLog = StepLog;
+
+    PreloadBuffer->BufferLen = 2 * StepLog->BufferSize;
+    PreloadBuffer->Handle.Block = malloc(PreloadBuffer->BufferLen);
+    fi_mr_reg(Fabric->domain, PreloadBuffer->Handle.Block,
+              PreloadBuffer->BufferLen, FI_REMOTE_WRITE, 0, 0, 0, &Stream->pbmr,
+              Fabric->ctx);
+    PreloadKey = fi_mr_key(Stream->pbmr);
+
+    SBSize = sizeof(*SendBuffer) * StepLog->WRanks;
+    SendBuffer = malloc(SBSize);
+    if (Fabric->local_mr_req)
+    {
+        fi_mr_reg(Fabric->domain, SendBuffer, SBSize, FI_WRITE, 0, 0, 0, &sbmr,
+                  Fabric->ctx);
+        sbdesc = fi_mr_desc(sbmr);
+    }
+
+    if (Fabric->rx_cq_data)
+    {
+        RBLen = 2 * StepLog->Entries * DP_DATA_RECV_SIZE;
+        Stream->RecvDataBuffer = malloc(RBLen);
+        fi_mr_reg(Fabric->domain, Stream->RecvDataBuffer, RBLen, FI_RECV, 0, 0,
+                  0, &Stream->rbmr, Fabric->ctx);
+        Stream->rbdesc = fi_mr_desc(Stream->rbmr);
+        RecvBuffer = (uint8_t *)Stream->RecvDataBuffer;
+        for (i = 0; i < 2 * StepLog->Entries; i++)
+        {
+            rc = fi_recv(Fabric->signal, RecvBuffer, DP_DATA_RECV_SIZE,
+                         Stream->rbdesc, FI_ADDR_UNSPEC, Fabric->ctx);
+            if (rc)
+            {
+                Svcs->verbose(Stream->CP_Stream, "Rank %d, fi_recv failed.\n", Stream->Rank);
+            }
+            RecvBuffer += DP_DATA_RECV_SIZE;
+        }
+    }
+
+    RawPLBuffer = PreloadBuffer->Handle.Block;
+    for (i = 0; i < Stream->WriterCohortSize; i++)
+    {
+        RankLog = &StepLog->RankLog[i];
+        if (RankLog->Entries > 0)
+        {
+            RankLog->Buffer = (void *)RawPLBuffer;
+            fi_mr_reg(Fabric->domain, RankLog->ReqLog,
+                      (sizeof(struct _RdmaBuffer) * RankLog->Entries) +
+                          sizeof(uint64_t),
+                      FI_REMOTE_READ, 0, 0, 0, &RankLog->preqbmr, Fabric->ctx);
+            for (j = 0; j < RankLog->Entries; j++)
+            {
+                ReqLog = &RankLog->ReqLog[j];
+                ReqLog->Handle.Block = RawPLBuffer;
+                ReqLog->Handle.Key = PreloadKey;
+                RawPLBuffer += ReqLog->BufferLen;
+            }
+            /* We always allocate and extra sizeof(uint64_t) in the ReqLog. We
+             * use this to make the size of the Preload Buffer available to each
+             * writer. */
+            BLenHolder = (uint64_t *)(&RankLog->ReqLog[RankLog->Entries]);
+            *BLenHolder = StepLog->BufferSize;
+
+            SendBuffer[WRidx].BufferLen =
+                (RankLog->Entries * sizeof(struct _RdmaBuffer)) +
+                sizeof(uint64_t);
+            SendBuffer[WRidx].Offset = (uint64_t)PreloadKey;
+            SendBuffer[WRidx].Handle.Block = (void *)RankLog->ReqLog;
+            SendBuffer[WRidx].Handle.Key = fi_mr_key(RankLog->preqbmr);
+            RollDest = (uint64_t)Stream->WriterRoll[i].Block +
+                       (sizeof(struct _RdmaBuffer) * Stream->Rank);
+            fi_write(Fabric->signal, &SendBuffer[WRidx],
+                     sizeof(struct _RdmaBuffer), sbdesc, Stream->WriterAddr[i],
+                     RollDest, Stream->WriterRoll[i].Key, &SendBuffer[WRidx]);
+            RankLog->PreloadHandles = malloc(sizeof(void *) * 2);
+            RankLog->PreloadHandles[0] =
+                calloc(sizeof(struct _RdmaCompletionHandle), RankLog->Entries);
+            RankLog->PreloadHandles[1] =
+                calloc(sizeof(struct _RdmaCompletionHandle), RankLog->Entries);
+            WRidx++;
+        }
+    }
+
+    while (WRidx > 0)
+    {
+        fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
+        CQBuffer = CQEntry.op_context;
+        if (CQBuffer >= SendBuffer && CQBuffer < (SendBuffer + StepLog->WRanks))
+        {
+            WRidx--;
+        }
+        else
+        {
+            Svcs->verbose(Stream->CP_Stream,
+                          "got unexpected completion while posting preload "
+                          "pattern. This is probably an error.\n");
+        }
+    }
+
+    if (Fabric->local_mr_req)
+    {
+        fi_close((struct fid *)sbmr);
+    }
+    free(SendBuffer);
+}
+
+static void RdmaReaderReleaseTimestep(CP_Services Svcs, DP_RS_Stream Stream_v,
+                                      long Timestep)
+{
+    Rdma_RS_Stream Stream = (Rdma_RS_Stream)Stream_v;
+
+    pthread_mutex_lock(&ts_mutex);
+    if (Timestep >= Stream->PreloadStep && !Stream->PreloadPosted)
+    {
+        // TODO: Destroy all StepLog entries other than the one used for Preload
+        PostPreload(Svcs, Stream, Timestep);
+        Stream->PreloadPosted = 1;
+    }
+    pthread_mutex_unlock(&ts_mutex);
+
+    // This might be be a good spot to flush the Step list if we aren't doing
+    // preload (yet.)
+    // fprintf(stderr, "rank %d, leaving %s\n", Stream->Rank, __func__);
+}
+
+static void PullSelection(CP_Services Svcs, Rdma_WSR_Stream Stream)
+{
+    Rdma_WS_Stream WS_Stream = Stream->WS_Stream;
+    FabricState Fabric = WS_Stream->Fabric;
+    RdmaBuffer ReaderRoll = (RdmaBuffer)Stream->ReaderRoll->Handle.Block;
+    struct _RdmaBuffer ReqBuffer = {0};
+    struct fi_cq_data_entry CQEntry = {0};
+    struct fid_mr *rrmr = NULL;
+    void *rrdesc = NULL;
+    RdmaRankReqLog *RankReq_p = &Stream->PreloadReq;
+    RdmaRankReqLog RankReq, CQRankReq;
+    RdmaBuffer CQReqLog;
+    uint8_t *ReadBuffer;
+    int i;
+
+    for (i = 0; i < Stream->ReaderCohortSize; i++)
+    {
+        if (ReaderRoll[i].BufferLen > 0)
+        {
+            RankReq = malloc(sizeof(struct _RdmaRankReqLog));
+            RankReq->Entries =
+                (ReaderRoll[i].BufferLen - sizeof(uint64_t)) /
+                sizeof(struct _RdmaBuffer); // piggyback the RecvCounter address
+            RankReq->ReqLog = malloc(ReaderRoll[i].BufferLen);
+            RankReq->BufferSize = ReaderRoll[i].BufferLen;
+            RankReq->next = NULL;
+            RankReq->Rank = i;
+            *RankReq_p = RankReq;
+            RankReq_p = &RankReq->next;
+            ReqBuffer.BufferLen += ReaderRoll[i].BufferLen;
+        }
+    }
+
+    ReqBuffer.Handle.Block = ReadBuffer = malloc(ReqBuffer.BufferLen);
+    if (Fabric->local_mr_req)
+    {
+        fi_mr_reg(Fabric->domain, ReqBuffer.Handle.Block, ReqBuffer.BufferLen,
+                  FI_READ, 0, 0, 0, &rrmr, Fabric->ctx);
+        rrdesc = fi_mr_desc(rrmr);
+    }
+
+    for (RankReq = Stream->PreloadReq; RankReq; RankReq = RankReq->next)
+    {
+        RankReq->ReqLog = (RdmaBuffer)ReadBuffer;
+        fi_read(Fabric->signal, RankReq->ReqLog, RankReq->BufferSize, rrdesc,
+                Stream->ReaderAddr[RankReq->Rank],
+                (uint64_t)ReaderRoll[RankReq->Rank].Handle.Block,
+                ReaderRoll[RankReq->Rank].Handle.Key, RankReq);
+        ReadBuffer += RankReq->BufferSize;
+    }
+
+    RankReq = Stream->PreloadReq;
+    while (RankReq)
+    {
+        fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
+        CQRankReq = CQEntry.op_context;
+        if (CQEntry.flags & FI_READ)
+        {
+            CQReqLog = CQRankReq->ReqLog;
+            CQRankReq->PreloadBufferSize =
+                *((uint64_t *)&CQReqLog[CQRankReq->Entries]);
+            RankReq = RankReq->next;
+        }
+        else
+        {
+            Svcs->verbose(
+                WS_Stream->CP_Stream,
+                "got unexpected completion while fetching preload patterns."
+                " This is probably an error.\n");
+        }
+    }
+
+    // fprintf(stderr, "Leaving %s\n", __func__);
+
+    if (Fabric->local_mr_req)
+    {
+        fi_close((struct fid *)rrmr);
+    }
+}
+
+static void CompletePush(CP_Services Svcs, Rdma_WSR_Stream Stream,
+                         TimestepList Step)
+{
+    Rdma_WS_Stream WS_Stream = Stream->WS_Stream;
+    FabricState Fabric = WS_Stream->Fabric;
+    TimestepList CQStep;
+    struct fi_cq_data_entry CQEntry = {0};
+    long CQTimestep;
+
+    while (Step->OutstandingWrites > 0)
+    {
+        fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
+        if (CQEntry.flags & FI_WRITE)
+        {
+            CQTimestep = (long)CQEntry.op_context;
+            if (CQTimestep == Step->Timestep)
+            {
+                CQStep = Step;
+            }
+            else
+            {
+                Svcs->verbose(WS_Stream->CP_Stream,
+                              "while completing step %d, saw completion notice "
+                              "for step %d.\n",
+                              Step->Timestep, CQTimestep);
+
+                CQStep = GetStep(WS_Stream, CQTimestep);
+
+                if (!CQStep)
+                {
+                    Svcs->verbose(WS_Stream->CP_Stream,
+                                  "received completion for step %d, which we "
+                                  "don't know about.\n",
+                                  CQTimestep);
+                }
+            }
+            CQStep->OutstandingWrites--;
+        }
+        else
+        {
+            Svcs->verbose(WS_Stream->CP_Stream,
+                          "while waiting for push to complete, saw an unknown "
+                          "completion. This is probably an error.\n");
+        }
+    }
+}
+
+static void RdmaReleaseTimestepPerReader(CP_Services Svcs,
+                                         DP_WSR_Stream Stream_v, long Timestep)
+{
+    Rdma_WSR_Stream Stream = (Rdma_WSR_Stream)Stream_v;
+    Rdma_WS_Stream WS_Stream = Stream->WS_Stream;
+    TimestepList Step = GetStep(WS_Stream, Timestep);
+
+    if (!Step)
+    {
+        return;
+    }
+
+    if (Stream->Preload)
+    {
+        if (Stream->SelectionPulled)
+        {
+            // Make sure all writes for this timestep have completed
+            CompletePush(Svcs, Stream, Step);
+            // If data have been provided for the next timestep, push it
+            pthread_mutex_lock(&ts_mutex);
+            Stream->PreloadUsed[Step->Timestep & 1] = 0;
+            for (Step = Step->Next; Step; Step = Step->Next)
+            {
+                if (Step->BufferSlot == -1)
+                {
+                    if (Stream->PreloadUsed[Step->Timestep & 1] == 1)
+                    {
+                        Svcs->verbose(WS_Stream->CP_Stream,
+                                 "rank %d, RX preload buffers full, deferring"
+                                 " preload of step %li.\n", WS_Stream->Rank,
+                                 Step->Timestep);
+                    }
+                    else
+                    {
+                        PushData(Svcs, Stream, Step, Step->Timestep & 1);
+                        Stream->PreloadUsed[Step->Timestep & 1] = 1;
+                        Step->BufferSlot = Step->Timestep & 1;
+                    }
+                    break;
+                }
+            }
+            pthread_mutex_unlock(&ts_mutex);
+        }
+        else
+        {
+            PullSelection(Svcs, Stream);
+            Stream->PreloadUsed[0] = Stream->PreloadUsed[1] = 0;
+            Stream->SelectionPulled = 1;
+
+            pthread_mutex_lock(&ts_mutex);
+            Step = Step->Next;
+            while (Step && Stream->PreloadUsed[Step->Timestep & 1] == 0)
+            {
+                PushData(Svcs, Stream, Step, Step->Timestep & 1);
+                Stream->PreloadUsed[Step->Timestep & 1] = 1;
+                Step->BufferSlot = Step->Timestep & 1;
+                Step = Step->Next;
+            }
+            pthread_mutex_unlock(&ts_mutex);
+        }
+    }
+}
+
 extern CP_DP_Interface LoadRdmaDP()
 {
     memset(&RdmaDPInterface, 0, sizeof(RdmaDPInterface));
     RdmaDPInterface.ReaderContactFormats = RdmaReaderContactStructs;
     RdmaDPInterface.WriterContactFormats = RdmaWriterContactStructs;
-    RdmaDPInterface.TimestepInfoFormats = RdmaTimestepInfoStructs;
+    RdmaDPInterface.TimestepInfoFormats = RdmaBufferHandleStructs;
     RdmaDPInterface.initReader = RdmaInitReader;
     RdmaDPInterface.initWriter = RdmaInitWriter;
     RdmaDPInterface.initWriterPerReader = RdmaInitWriterPerReader;
@@ -1081,9 +2042,12 @@ extern CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.waitForCompletion = RdmaWaitForCompletion;
     RdmaDPInterface.notifyConnFailure = RdmaNotifyConnFailure;
     RdmaDPInterface.provideTimestep = RdmaProvideTimestep;
-    RdmaDPInterface.readerRegisterTimestep = NULL;
+    RdmaDPInterface.readerRegisterTimestep = RdmaReaderRegisterTimestep;
     RdmaDPInterface.releaseTimestep = RdmaReleaseTimestep;
-    RdmaDPInterface.readerReleaseTimestep = NULL;
+    RdmaDPInterface.readerReleaseTimestep = RdmaReleaseTimestepPerReader;
+    RdmaDPInterface.WSRreadPatternLocked = RdmaReadPatternLocked;
+    RdmaDPInterface.RSreadPatternLocked = RdmaWritePatternLocked;
+    RdmaDPInterface.RSReleaseTimestep = RdmaReaderReleaseTimestep;
     RdmaDPInterface.destroyReader = RdmaDestroyReader;
     RdmaDPInterface.destroyWriter = RdmaDestroyWriter;
     RdmaDPInterface.destroyWriterPerReader = RdmaDestroyWriterPerReader;
