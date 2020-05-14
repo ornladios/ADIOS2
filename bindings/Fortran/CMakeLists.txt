@@ -11,6 +11,10 @@ FortranCInterface_VERIFY(CXX QUIET)
 # Check whether the compiler supports Fortran submodule constructs we need.
 adios2_check_fortran_submodules(ADIOS2_HAVE_FORTRAN_SUBMODULES)
 
+if(ADIOS2_USE_Fortran_flag_argument_mismatch)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+endif()
+
 add_library(adios2_fortran
   f2c/adios2_f2c_adios.cpp
   f2c/adios2_f2c_attribute.cpp
