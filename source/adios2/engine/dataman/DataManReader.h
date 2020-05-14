@@ -66,7 +66,7 @@ private:
     bool m_SubscriberThreadActive = true;
 
     void SubscribeThread(zmq::ZmqPubSub &subscriber);
-    void RequestThread(zmq::ZmqReqRep &requester, const std::string address);
+    void RequestThread(zmq::ZmqReqRep &requester);
 
     void DoClose(const int transportIndex = -1) final;
 

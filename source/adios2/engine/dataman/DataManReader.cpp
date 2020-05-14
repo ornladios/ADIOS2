@@ -94,6 +94,16 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     {
         requester.Request("Ready", 5, address);
     }
+
+    if (m_TransportMode == "secure")
+    {
+        for (const auto &address : m_ReplierAddresses)
+        {
+            m_RequesterThreads.emplace_back(
+                std::thread(&DataManReader::RequestThread, this,
+                            std::ref(m_Requesters.back())));
+        }
+    }
 }
 
 DataManReader::~DataManReader()
@@ -209,12 +219,11 @@ void DataManReader::Flush(const int transportIndex) {}
 
 // PRIVATE
 
-void DataManReader::RequestThread(zmq::ZmqReqRep &requester,
-                                  const std::string address)
+void DataManReader::RequestThread(zmq::ZmqReqRep &requester)
 {
     while (m_RequesterThreadActive)
     {
-        auto buffer = requester.Request("Step", 4, address);
+        auto buffer = requester.Request("Step", 4);
         if (buffer != nullptr && buffer->size() > 0)
         {
             if (buffer->size() < 64)
