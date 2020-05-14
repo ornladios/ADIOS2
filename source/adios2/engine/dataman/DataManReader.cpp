@@ -30,6 +30,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
+    helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
 
     m_Requesters.emplace_back();
     m_Requesters[0].OpenRequester(m_Timeout, m_ReceiverBufferSize);
@@ -61,9 +62,9 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     }
     auto addJson = nlohmann::json::parse(*reply);
     m_PublisherAddresses =
-        addJson["DataAddresses"].get<std::vector<std::string>>();
+        addJson["PublisherAddresses"].get<std::vector<std::string>>();
     m_ReplierAddresses =
-        addJson["ControlAddresses"].get<std::vector<std::string>>();
+        addJson["ReplierAddresses"].get<std::vector<std::string>>();
 
     if (m_TransportMode == "fast")
     {
@@ -82,7 +83,8 @@ DataManReader::DataManReader(IO &io, const std::string &name,
         for (const auto &address : m_ReplierAddresses)
         {
             m_Requesters.emplace_back();
-            m_Requesters.back().OpenRequester(m_Timeout, m_ReceiverBufferSize);
+            m_Requesters.back().OpenRequester(address, m_Timeout,
+                                              m_ReceiverBufferSize);
         }
     }
     else
@@ -223,7 +225,9 @@ void DataManReader::RequestThread(zmq::ZmqReqRep &requester)
 {
     while (m_RequesterThreadActive)
     {
+        std::cout << " ========== before request " << std::endl;
         auto buffer = requester.Request("Step", 4);
+        std::cout << " ========== after request " << std::endl;
         if (buffer != nullptr && buffer->size() > 0)
         {
             if (buffer->size() < 64)

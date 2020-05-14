@@ -72,8 +72,8 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     }
 
     nlohmann::json addJson;
-    addJson["DataAddresses"] = pubVec;
-    addJson["ControlAddresses"] = repVec;
+    addJson["PublisherAddresses"] = pubVec;
+    addJson["ReplierAddresses"] = repVec;
     m_AllAddresses = addJson.dump() + '\0';
 
     if (m_TransportMode == "fast")
