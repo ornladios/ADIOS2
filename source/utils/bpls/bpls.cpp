@@ -2189,6 +2189,7 @@ const std::map<std::string, enum ADIOS_DATATYPES> adios_types_map = {
     {"int32_t", adios_integer},
     {"float", adios_real},
     {"double", adios_double},
+    {"long double", adios_long_double},
     {"float complex", adios_complex},
     {"double complex", adios_double_complex},
     {"int8_t", adios_byte},
