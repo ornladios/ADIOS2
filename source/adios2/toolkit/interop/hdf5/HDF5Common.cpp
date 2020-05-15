@@ -596,9 +596,11 @@ void HDF5Common::Close()
     H5Tclose(m_DefH5TypeComplexFloat);
 
     H5Pclose(m_PropertyTxfID);
-    H5Fclose(m_FileId);
+
     if (-1 != m_ChunkPID)
         H5Pclose(m_ChunkPID);
+
+    H5Fclose(m_FileId);
 
     m_FileId = -1;
     m_GroupId = -1;
@@ -624,6 +626,9 @@ void HDF5Common::SetAdiosStep(int step)
     {
         return;
     }
+
+    if (m_GroupId >= 0)
+        H5Gclose(m_GroupId);
 
     std::string stepName;
     StaticGetAdiosStepString(stepName, step);
@@ -1316,7 +1321,10 @@ void HDF5Common::ReadAttrToIO(core::IO &io)
                 {
                     continue;
                 }
+                HDF5TypeGuard ag(attrId, E_H5_ATTRIBUTE);
+
                 hid_t sid = H5Aget_space(attrId);
+                HDF5TypeGuard sg(sid, E_H5_SPACE);
                 H5S_class_t stype = H5Sget_simple_extent_type(sid);
 
                 hid_t attrType = H5Aget_type(attrId);
@@ -1329,8 +1337,6 @@ void HDF5Common::ReadAttrToIO(core::IO &io)
                 {
                     ReadInNonStringAttr(io, attrName, attrId, attrType, sid);
                 }
-                H5Sclose(sid);
-                H5Aclose(attrId);
             }
         }
     }
@@ -1371,12 +1377,15 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
                 {
                     continue;
                 }
+                HDF5TypeGuard ag(attrId, E_H5_ATTRIBUTE);
                 if (ATTRNAME_GIVEN_ADIOSNAME.compare(attrName) == 0)
                 {
                     continue;
                 }
 
                 hid_t sid = H5Aget_space(attrId);
+                HDF5TypeGuard sg(sid, E_H5_SPACE);
+
                 H5S_class_t stype = H5Sget_simple_extent_type(sid);
 
                 hid_t attrType = H5Aget_type(attrId);
@@ -1393,8 +1402,6 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
                     ReadInNonStringAttr(io, attrNameInAdios, attrId, attrType,
                                         sid);
                 }
-                H5Sclose(sid);
-                H5Aclose(attrId);
             }
         }
     }
