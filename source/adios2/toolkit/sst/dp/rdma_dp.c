@@ -212,7 +212,6 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
         fabric->rx_cq_data = 0;
     }
 
-
     fabric->addr_len = info->src_addrlen;
 
     info->domain_attr->mr_mode = FI_MR_BASIC;
@@ -291,7 +290,6 @@ typedef struct _RdmaCompletionHandle
     size_t Length;
     int Rank;
     int Pending;
-    double StartWTime;
     void *PreloadBuffer;
 } * RdmaCompletionHandle;
 
@@ -499,12 +497,18 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     }
 
     PreloadEnv = getenv("SST_DP_PRELOAD");
-    if(PreloadEnv && (strcmp(PreloadEnv, "1") == 0 || strcmp(PreloadEnv, "yes") == 0 || strcmp(PreloadEnv,"Yes") == 0 || strcmp(PreloadEnv,"YES") == 0)) {
-        Svcs->verbose(CP_Stream, "making preload available in RDMA DP based on environment variable value.\n");
+    if (PreloadEnv &&
+        (strcmp(PreloadEnv, "1") == 0 || strcmp(PreloadEnv, "yes") == 0 ||
+         strcmp(PreloadEnv, "Yes") == 0 || strcmp(PreloadEnv, "YES") == 0))
+    {
+        Svcs->verbose(CP_Stream, "making preload available in RDMA DP based on "
+                                 "environment variable value.\n");
         Stream->PreloadAvail = 1;
-      } else {
+    }
+    else
+    {
         Stream->PreloadAvail = 0;
-      }
+    }
 
 #ifdef SST_HAVE_CRAY_DRC
     int attr_cred, try_left;
@@ -573,12 +577,19 @@ static void RdmaReadPatternLocked(CP_Services Svcs, DP_WSR_Stream WSRStream_v,
     Rdma_WSR_Stream WSR_Stream = (Rdma_WSR_Stream)WSRStream_v;
     Rdma_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
 
-    if(WS_Stream->PreloadAvail) {
+    if (WS_Stream->PreloadAvail)
+    {
         Svcs->verbose(WS_Stream->CP_Stream, "read pattern is locked\n");
         WSR_Stream->SelectLocked = EffectiveTimestep;
         WSR_Stream->Preload = 1;
-    } else {
-        Svcs->verbose(WS_Stream->CP_Stream, "RDMA dataplane is ignoring a read pattern lock notification because preloading is disabled. Enable by setting the environment variable SST_DP_PRELOAD to 'yes'\n");
+    }
+    else
+    {
+        Svcs->verbose(
+            WS_Stream->CP_Stream,
+            "RDMA dataplane is ignoring a read pattern lock notification "
+            "because preloading is disabled. Enable by setting the environment "
+            "variable SST_DP_PRELOAD to 'yes'\n");
     }
 }
 
@@ -587,11 +598,18 @@ static void RdmaWritePatternLocked(CP_Services Svcs, DP_RS_Stream Stream_v,
 {
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)Stream_v;
 
-    if(Stream->PreloadAvail) {
+    if (Stream->PreloadAvail)
+    {
         Stream->PreloadStep = EffectiveTimestep;
         Svcs->verbose(Stream->CP_Stream, "write pattern is locked.\n");
-    } else {
-        Svcs->verbose(Stream->CP_Stream, "RDMA dataplane is ignoring a write pattern lock notification because preloading is disabled. Enable by setting the environment variable SST_DP_PRELOAD to 'yes'\n");
+    }
+    else
+    {
+        Svcs->verbose(
+            Stream->CP_Stream,
+            "RDMA dataplane is ignoring a write pattern lock notification "
+            "because preloading is disabled. Enable by setting the environment "
+            "variable SST_DP_PRELOAD to 'yes'\n");
     }
 }
 
@@ -611,12 +629,18 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     SMPI_Comm_rank(comm, &Stream->Rank);
 
     PreloadEnv = getenv("SST_DP_PRELOAD");
-    if(PreloadEnv && (strcmp(PreloadEnv, "1") == 0 || strcmp(PreloadEnv, "yes") == 0 || strcmp(PreloadEnv,"Yes") == 0 || strcmp(PreloadEnv,"YES") == 0)) {
-        Svcs->verbose(CP_Stream, "making preload available in RDMA DP based on environment variable value.\n");
+    if (PreloadEnv &&
+        (strcmp(PreloadEnv, "1") == 0 || strcmp(PreloadEnv, "yes") == 0 ||
+         strcmp(PreloadEnv, "Yes") == 0 || strcmp(PreloadEnv, "YES") == 0))
+    {
+        Svcs->verbose(CP_Stream, "making preload available in RDMA DP based on "
+                                 "environment variable value.\n");
         Stream->PreloadAvail = 1;
-      } else {
+    }
+    else
+    {
         Stream->PreloadAvail = 0;
-      }
+    }
 
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
     Fabric = Stream->Fabric;
@@ -892,7 +916,6 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank,
     *ret_v = malloc(sizeof(struct _RdmaCompletionHandle));
     ret = *ret_v;
     ret->Pending = 1;
-    ret->StartWTime = MPI_Wtime();
 
     if (Fabric->local_mr_req)
     {
@@ -1008,12 +1031,12 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
             }
             else if (ret->Pending != 1)
             {
-                Svcs->verbose(RS_Stream->CP_Stream,
-                         "rank %d, wrank %d, entry %d, buffer slot %d, bad "
-                         "handle pending value.\n",
-                         RS_Stream->Rank, Rank, WRidx, BufferSlot);
+                Svcs->verbose(
+                    RS_Stream->CP_Stream,
+                    "rank %d, wrank %d, entry %d, buffer slot %d, bad "
+                    "handle pending value.\n",
+                    RS_Stream->Rank, Rank, WRidx, BufferSlot);
             }
-            ret->StartWTime = MPI_Wtime();
         }
         else
         {
@@ -1117,10 +1140,11 @@ static int DoPushWait(CP_Services Svcs, Rdma_RS_Stream Stream,
                 }
                 else if (Handle_t->Pending != -1)
                 {
-                    Svcs->verbose(Stream->CP_Stream,
-                            "rank %d, wrank %d, entry %d, buffer slot %d, bad "
-                            "handle pending value.\n",
-                            Stream->Rank, WRank, WRidx, BufferSlot);
+                    Svcs->verbose(
+                        Stream->CP_Stream,
+                        "rank %d, wrank %d, entry %d, buffer slot %d, bad "
+                        "handle pending value.\n",
+                        Stream->Rank, WRank, WRidx, BufferSlot);
                 }
                 else
                 {
@@ -1280,8 +1304,8 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
          * Shouldn't ever get here because we should never release a
          * timestep that we don't have.
          */
-        Svcs->verbose(Stream->CP_Stream, "Failed to release Timestep %ld, not found\n",
-                Timestep);
+        Svcs->verbose(Stream->CP_Stream,
+                      "Failed to release Timestep %ld, not found\n", Timestep);
         assert(0);
     }
 
@@ -1352,7 +1376,6 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     }
     free(RS_Stream);
 }
-
 
 static void RdmaDestroyWriterPerReader(CP_Services Svcs,
                                        DP_WSR_Stream WSR_Stream_v)
@@ -1433,7 +1456,8 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 #endif /* SST_HAVE_CRAY_DRC */
 
     Svcs->verbose(WS_Stream->CP_Stream, "Tearing down RDMA state on writer.\n");
-    if(WS_Stream->Fabric) {
+    if (WS_Stream->Fabric)
+    {
         fini_fabric(WS_Stream->Fabric);
     }
 
@@ -1746,7 +1770,8 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
                          Stream->rbdesc, FI_ADDR_UNSPEC, Fabric->ctx);
             if (rc)
             {
-                Svcs->verbose(Stream->CP_Stream, "Rank %d, fi_recv failed.\n", Stream->Rank);
+                Svcs->verbose(Stream->CP_Stream, "Rank %d, fi_recv failed.\n",
+                              Stream->Rank);
             }
             RecvBuffer += DP_DATA_RECV_SIZE;
         }
@@ -1992,10 +2017,11 @@ static void RdmaReleaseTimestepPerReader(CP_Services Svcs,
                 {
                     if (Stream->PreloadUsed[Step->Timestep & 1] == 1)
                     {
-                        Svcs->verbose(WS_Stream->CP_Stream,
-                                 "rank %d, RX preload buffers full, deferring"
-                                 " preload of step %li.\n", WS_Stream->Rank,
-                                 Step->Timestep);
+                        Svcs->verbose(
+                            WS_Stream->CP_Stream,
+                            "rank %d, RX preload buffers full, deferring"
+                            " preload of step %li.\n",
+                            WS_Stream->Rank, Step->Timestep);
                     }
                     else
                     {
