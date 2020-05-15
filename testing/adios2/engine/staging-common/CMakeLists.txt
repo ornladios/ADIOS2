@@ -5,41 +5,10 @@
 
 find_package(Threads REQUIRED)
 
-if(ADIOS2_HAVE_MPI)
-  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
-
-  add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
-  target_link_libraries(TestStagingMPMD
-    ${CMAKE_THREAD_LIBS_INIT}
-    adios2::thirdparty::gtest adios2::cxx11_mpi MPI::MPI_C
-  )
-  if(ADIOS2_HAVE_SST)
-    gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-      EXTRA_ARGS "SST" "MarshalMethod=FFS"
-      TEST_SUFFIX _SST_FFS
-      TEST_LIST _gtest_added_tests
-    )
-    set_tests_properties(${_gtest_added_tests} PROPERTIES
-      PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
-    )
-    gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-      EXTRA_ARGS "SST" "MarshalMethod=BP"
-      TEST_SUFFIX _SST_BP
-      TEST_LIST _gtest_added_tests
-    )
-    set_tests_properties(${_gtest_added_tests} PROPERTIES
-      PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
-    )
-  endif()
-
-  gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-    EXTRA_ARGS "InSituMPI"
-    TEST_SUFFIX _InSituMPI
-    TEST_LIST _gtest_added_tests
-  )
-  set_tests_properties(${_gtest_added_tests} PROPERTIES
-    PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
-  )
+gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".InSituMPI" EXTRA_ARGS "InSituMPI")
+if(ADIOS2_HAVE_SST)
+  gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST" "MarshalMethod=FFS")
+  gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST" "MarshalMethod=BP")
 endif()
 
 foreach(helper
@@ -91,10 +60,6 @@ if(ADIOS2_HAVE_Fortran)
     target_link_libraries(TestCommonWrite_f adios2_fortran)
     target_link_libraries(TestCommonRead_f adios2_fortran)
   endif()
-endif()
-
-if(ADIOS2_HAVE_MPI)
-  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 endif()
 
 configure_file(
