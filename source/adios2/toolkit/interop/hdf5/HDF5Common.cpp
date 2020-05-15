@@ -628,7 +628,7 @@ void HDF5Common::SetAdiosStep(int step)
     }
 
     if (m_GroupId >= 0)
-      H5Gclose(m_GroupId);
+        H5Gclose(m_GroupId);
 
     std::string stepName;
     StaticGetAdiosStepString(stepName, step);

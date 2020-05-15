@@ -91,10 +91,10 @@ public:
         {
             H5Tclose(m_Key);
         }
-	else if (m_Type == E_H5_ATTRIBUTE)
-	  {
-	    H5Aclose(m_Key);
-	  }
+        else if (m_Type == E_H5_ATTRIBUTE)
+        {
+            H5Aclose(m_Key);
+        }
         else
         {
             printf(" UNABLE to close \n");
