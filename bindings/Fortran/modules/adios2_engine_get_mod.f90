@@ -13,6 +13,22 @@ module adios2_engine_get_mod
     use adios2_variable_mod
     use adios2_parameters_mod
     implicit none
+    interface
+        subroutine adios2_get_by_name_f2c(engine, name, data, launch, ierr)
+            type(*) :: engine
+            type(*) :: name
+            type(*), dimension(..) :: data
+            type(*) :: launch
+            type(*) :: ierr
+        end subroutine
+        subroutine adios2_get_f2c(engine, variable, data, launch, ierr)
+            type(*) :: engine
+            type(*) :: variable
+            type(*), dimension(..) :: data
+            type(*) :: launch
+            type(*) :: ierr
+        end subroutine
+    end interface
 
     interface adios2_get
 

@@ -11,6 +11,19 @@
 module adios2_attribute_data_mod
     use adios2_attribute_mod
     implicit none
+    interface
+        subroutine adios2_attribute_data_f2c(data, size, attribute, ierr)
+            type(*), dimension(..) :: data
+            type(*) :: size
+            type(*) :: attribute
+            type(*) :: ierr
+        end subroutine
+        subroutine adios2_attribute_value_f2c(data, attribute, ierr)
+            type(*), dimension(..) :: data
+            type(*) :: attribute
+            type(*) :: ierr
+        end subroutine
+    end interface
 
     interface adios2_attribute_data
 
