@@ -14,14 +14,14 @@ module adios2_attribute_data_mod
     interface
         subroutine adios2_attribute_data_f2c(data, size, attribute, ierr)
             type(*), dimension(..) :: data
-            type(*) :: size
-            type(*) :: attribute
-            type(*) :: ierr
+            type(*), dimension(..) :: size
+            type(*), dimension(..) :: attribute
+            type(*), dimension(..) :: ierr
         end subroutine
         subroutine adios2_attribute_value_f2c(data, attribute, ierr)
             type(*), dimension(..) :: data
-            type(*) :: attribute
-            type(*) :: ierr
+            type(*), dimension(..) :: attribute
+            type(*), dimension(..) :: ierr
         end subroutine
     end interface
 

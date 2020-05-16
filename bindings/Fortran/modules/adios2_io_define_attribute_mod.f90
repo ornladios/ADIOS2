@@ -17,28 +17,28 @@ module adios2_io_define_attribute_mod
                                                  type, data, size, &
                                                  variable_name, &
                                                  separator, ierr)
-            type(*) :: attribute
-            type(*) :: io
-            type(*) :: name
-            type(*) :: type
+            type(*), dimension(..) :: attribute
+            type(*), dimension(..) :: io
+            type(*), dimension(..) :: name
+            type(*), dimension(..) :: type
             type(*), dimension(..) :: data
-            type(*) :: size
-            type(*) :: variable_name
-            type(*) :: separator
-            type(*) :: ierr
+            type(*), dimension(..) :: size
+            type(*), dimension(..) :: variable_name
+            type(*), dimension(..) :: separator
+            type(*), dimension(..) :: ierr
         end subroutine
         subroutine adios2_define_vattr_f2c(attribute, io, name, &
                                                  type, value, &
                                                  variable_name, &
                                                  separator, ierr)
-            type(*) :: attribute
-            type(*) :: io
-            type(*) :: name
-            type(*) :: type
-            type(*) :: value
-            type(*) :: variable_name
-            type(*) :: separator
-            type(*) :: ierr
+            type(*), dimension(..) :: attribute
+            type(*), dimension(..) :: io
+            type(*), dimension(..) :: name
+            type(*), dimension(..) :: type
+            type(*), dimension(..) :: value
+            type(*), dimension(..) :: variable_name
+            type(*), dimension(..) :: separator
+            type(*), dimension(..) :: ierr
         end subroutine
     end interface
 
