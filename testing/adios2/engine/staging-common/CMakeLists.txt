@@ -147,6 +147,9 @@ LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${BP_SST_TESTS})
 # Zero Data tests are unreliable with SST and BP marshaling
 list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
 
+# Temporarily exclude SST LockGeometry tests
+list (FILTER SST_TESTS EXCLUDE REGEX "LockGeometry")
+
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
