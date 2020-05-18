@@ -27,6 +27,8 @@ jobs:
           el7-gnu8-openmpi-ohpc,
           suse-pgi,
           suse-pgi-openmpi ]
+          #debian-sid,
+          #debian-sid-openmpi ]
         include:
         - jobname: el7
           container: ornladios/adios2:ci-el7
@@ -38,8 +40,15 @@ jobs:
           container: ornladios/adios2:ci-suse-pgi
         - jobname: suse-pgi-openmpi
           container: ornladios/adios2:ci-suse-pgi-openmpi
+        #- jobname: debian-sid
+        #  container: debian:sid
+        #- jobname: debian-sid-openmpi
+        #  container: debian:sid
 
     steps:
+    - name: Bootstrap
+      run: /bin/sh -c "apt-get update && apt-get dist-upgrade -y && apt-get install -y git"
+      if: contains(matrix.jobname, 'debian')
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.event.pull_request.head.sha }}
@@ -98,36 +107,6 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha }}
     - name: Setup
       run: scripts/ci/gh-actions/linux-setup.sh
-    - name: Update
-      run: scripts/ci/gh-actions/run.sh update
-    - name: Configure
-      run: scripts/ci/gh-actions/run.sh configure
-    - name: Build
-      run: scripts/ci/gh-actions/run.sh build
-    - name: Test
-      run: scripts/ci/gh-actions/run.sh test
-
-  macos:
-    runs-on: ${{ matrix.os }}
-    env:
-      GH_YML_JOBNAME: ${{ matrix.jobname }}
-      GH_YML_OS: macOS
-
-    strategy:
-      fail-fast: false
-      matrix:
-        jobname: [
-          macos1015-xcode111-make ]
-        include:
-        - jobname: macos1015-xcode111-make
-          os: macos-10.15
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-    - name: Setup
-      run: scripts/ci/gh-actions/macos-setup.sh
     - name: Update
       run: scripts/ci/gh-actions/run.sh update
     - name: Configure

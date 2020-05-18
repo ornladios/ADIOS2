@@ -20,19 +20,63 @@ endfunction()
 
 include(CMakeDependentOption)
 
+option(ADIOS2_USE_EXTERNAL_DEPENDENCIES
+  "Use externally supplied dependencies" OFF)
+option(ADIOS2_USE_EXTERNAL_GTEST
+  "Use an externally supplied GTest library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_PUGIXML
+  "Use an externally supplied pugixml library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_PYBIND11
+  "Use an externally supplied pybind11 library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_NLOHMANN_JSON
+  "Use an externally supplied nlohmann_json library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+option(ADIOS2_USE_EXTERNAL_YAMLCPP
+  "Use an externally supplied yaml-cpp library" "${ADIOS2_USE_EXTERNAL_DEPENDENCIES}")
+
 add_subdirectory(KWSys)
 
 if(BUILD_TESTING)
-  add_subdirectory(GTest)
+  if(ADIOS2_USE_EXTERNAL_GTEST)
+    find_package(GTest REQUIRED)
+    adios2_add_thirdparty_target(gtest GTest::GTest)
+  else()
+    add_subdirectory(GTest)
+    adios2_add_thirdparty_target(gtest gtest_interface)
+  endif()
 endif()
 
 if(ADIOS2_HAVE_Python)
-  add_subdirectory(pybind11)
+  if(ADIOS2_USE_EXTERNAL_PYBIND11)
+    find_package(pybind11 REQUIRED)
+    adios2_add_thirdparty_target(pybind11 pybind11::pybind11)
+  else()
+    add_subdirectory(pybind11)
+    adios2_add_thirdparty_target(pybind11 pybind11)
+  endif()
 endif()
 
-add_subdirectory(pugixml)
-add_subdirectory(nlohmann_json)
-add_subdirectory(yaml-cpp)
+if(ADIOS2_USE_EXTERNAL_PUGIXML)
+  find_package(pugixml 1.10 REQUIRED)
+  add_library(pugixml_impl INTERFACE)
+  target_link_libraries(pugixml_impl INTERFACE pugixml)
+else()
+  add_subdirectory(pugixml)
+endif()
+adios2_add_thirdparty_target(pugixml pugixml)
+adios2_add_thirdparty_target(pugixml_impl pugixml_impl)
+if(ADIOS2_USE_EXTERNAL_NLOHMANN_JSON)
+  find_package(nlohmann_json REQUIRED)
+  adios2_add_thirdparty_target(nlohmann_json nlohmann_json::nlohmann_json)
+else()
+  add_subdirectory(nlohmann_json)
+  adios2_add_thirdparty_target(nlohmann_json nlohmann_json)
+endif()
+if(ADIOS2_USE_EXTERNAL_YAMLCPP)
+  find_package(yaml-cpp REQUIRED)
+else()
+  add_subdirectory(yaml-cpp)
+endif()
+adios2_add_thirdparty_target(yaml-cpp yaml-cpp)
 
 if(WIN32)
   add_subdirectory(mingw-w64)

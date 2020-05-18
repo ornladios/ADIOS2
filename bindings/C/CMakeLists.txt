@@ -13,6 +13,7 @@ add_library(adios2_c
   adios2/c/adios2_c_operator.cpp
 )
 set_property(TARGET adios2_c PROPERTY EXPORT_NAME c)
+set_property(TARGET adios2_c PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_c)
 target_link_libraries(adios2_c PRIVATE adios2_core)
 
 target_include_directories(adios2_c
@@ -31,6 +32,7 @@ if(ADIOS2_HAVE_MPI)
     adios2/c/adios2_c_io_mpi.cpp
     )
   set_property(TARGET adios2_c_mpi PROPERTY EXPORT_NAME c_mpi)
+  set_property(TARGET adios2_c_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_c_mpi)
   target_link_libraries(adios2_c_mpi PUBLIC adios2_c PRIVATE adios2_core_mpi PUBLIC MPI::MPI_C)
   target_compile_definitions(adios2_c_mpi INTERFACE ADIOS2_USE_MPI)
   add_library(adios2::c_mpi ALIAS adios2_c_mpi)
@@ -47,15 +49,16 @@ set_target_properties(
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
-install(TARGETS adios2_c ${maybe_adios2_c_mpi} EXPORT adios2Exports
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+install(TARGETS adios2_c ${maybe_adios2_c_mpi} EXPORT adios2CExports
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_c-runtime
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_c-libraries NAMELINK_COMPONENT adios2_c-development
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_c-development
 )
 
 install(
   FILES adios2_c.h 
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  COMPONENT adios2_c-development
 )
 
 install(
@@ -67,4 +70,16 @@ install(
         adios2/c/adios2_c_engine.h
         adios2/c/adios2_c_operator.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/c
+  COMPONENT adios2_c-development
+)
+
+export(EXPORT adios2CExports
+  FILE ${ADIOS2_BINARY_DIR}/adios2-c-targets.cmake
+  NAMESPACE adios2::
+)
+install(EXPORT adios2CExports
+  FILE adios2-c-targets.cmake
+  NAMESPACE adios2::
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  COMPONENT adios2_c-development
 )

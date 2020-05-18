@@ -12,6 +12,7 @@ add_library(taustubs
 target_include_directories(taustubs PRIVATE
       $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
 )
+set_property(TARGET taustubs PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_taustubs)
 
 target_link_libraries(taustubs PRIVATE ${CMAKE_DL_LIBS})
 
@@ -111,13 +112,14 @@ add_library(adios2_core
   toolkit/burstbuffer/FileDrainerSingleThread.cpp
 )
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
+set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)
 
 target_include_directories(adios2_core
   PUBLIC
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
 )
-target_link_libraries(adios2_core PRIVATE adios2sys_interface pugixml_private taustubs yaml-cpp)
+target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml_impl taustubs adios2::thirdparty::yaml-cpp)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 
@@ -135,6 +137,7 @@ if(ADIOS2_HAVE_MPI)
     engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
   )
   set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
+  set_property(TARGET adios2_core_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_mpi)
   target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_C PRIVATE taustubs)
   target_compile_definitions(adios2_core_mpi PUBLIC "$<BUILD_INTERFACE:ADIOS2_USE_MPI>")
 endif()
@@ -158,7 +161,7 @@ if (ADIOS2_HAVE_DataMan)
     target_sources(adios2_core PRIVATE
 	toolkit/query/JsonWorker.cpp			
    	)
-    target_link_libraries(adios2_core PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_Table)
@@ -166,7 +169,7 @@ if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_Table)
         toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
     )
-    target_link_libraries(adios2_core PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
 
@@ -187,9 +190,9 @@ if(ADIOS2_HAVE_SSC)
         engine/ssc/SscWriter.tcc
         engine/ssc/SscHelper.cpp
         )
-    target_link_libraries(adios2_core_mpi PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core_mpi PRIVATE adios2::thirdparty::nlohmann_json)
     # SSC also activates code in main core library that uses nlohmann_json.
-    target_link_libraries(adios2_core PRIVATE nlohmann_json)
+    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_Table)
@@ -264,6 +267,7 @@ if(ADIOS2_HAVE_HDF5)
   endif()
   target_link_libraries(adios2_core PRIVATE adios2_hdf5)
   set_property(TARGET adios2_hdf5 PROPERTY EXPORT_NAME hdf5)
+  set_property(TARGET adios2_hdf5 PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_hdf5)
 
   set(adios2_hdf5_objs adios2_hdf5)
   if(HDF5_IS_PARALLEL)
@@ -275,6 +279,7 @@ if(ADIOS2_HAVE_HDF5)
     target_compile_definitions(adios2_hdf5_mpi PRIVATE ADIOS2_USE_MPI)
     target_link_libraries(adios2_core_mpi PRIVATE adios2_hdf5_mpi)
     set_property(TARGET adios2_hdf5_mpi PROPERTY EXPORT_NAME hdf5_mpi)
+    set_property(TARGET adios2_hdf5_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_hdf5_mpi)
   endif()
 
   foreach(lib IN LISTS adios2_hdf5_objs)
@@ -339,12 +344,12 @@ set_target_properties(
 )
 
 install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common COMPONENT adios2_core-development
 )
 
 # Library installation
-install(TARGETS adios2 adios2_core ${maybe_adios2_core_mpi} taustubs EXPORT adios2Exports
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+install(TARGETS adios2_core ${maybe_adios2_core_mpi} taustubs EXPORT adios2Exports
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development
 )

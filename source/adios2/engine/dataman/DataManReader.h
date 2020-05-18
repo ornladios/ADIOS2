@@ -43,6 +43,7 @@ private:
     int m_Verbosity = 0;
     bool m_DoubleBuffer = true;
     size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
+    std::string m_TransportMode = "fast";
 
     std::vector<std::string> m_PublisherAddresses;
     std::vector<std::string> m_ReplierAddresses;
@@ -65,7 +66,7 @@ private:
     bool m_SubscriberThreadActive = true;
 
     void SubscribeThread(zmq::ZmqPubSub &subscriber);
-    void RequestThread();
+    void RequestThread(zmq::ZmqReqRep &requester);
 
     void DoClose(const int transportIndex = -1) final;
 

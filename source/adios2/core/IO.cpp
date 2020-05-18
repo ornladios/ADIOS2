@@ -403,14 +403,16 @@ void IO::RemoveAllAttributes() noexcept
 #undef declare_type
 }
 
-std::map<std::string, Params> IO::GetAvailableVariables() noexcept
+std::map<std::string, Params>
+IO::GetAvailableVariables(const std::set<std::string> &keys) noexcept
 {
     TAU_SCOPED_TIMER("IO::GetAvailableVariables");
+
     std::map<std::string, Params> variablesInfo;
     for (const auto &variablePair : m_Variables)
     {
-        const std::string name(variablePair.first);
-        const std::string type = InquireVariableType(name);
+        const std::string variableName = variablePair.first;
+        const std::string type = InquireVariableType(variableName);
 
         if (type == "compound")
         {
@@ -418,23 +420,7 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        variablesInfo[name]["Type"] = type;                                    \
-        Variable<T> &variable = *InquireVariable<T>(name);                     \
-        variablesInfo[name]["AvailableStepsCount"] =                           \
-            helper::ValueToString(variable.m_AvailableStepsCount);             \
-        variablesInfo[name]["Shape"] = helper::VectorToCSV(variable.Shape());  \
-        if (variable.m_SingleValue)                                            \
-        {                                                                      \
-            variablesInfo[name]["SingleValue"] = "true";                       \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            variablesInfo[name]["SingleValue"] = "false";                      \
-            variablesInfo[name]["Min"] =                                       \
-                helper::ValueToString(variable.Min());                         \
-            variablesInfo[name]["Max"] =                                       \
-                helper::ValueToString(variable.Max());                         \
-        }                                                                      \
+        variablesInfo[variableName] = GetVariableInfo<T>(variableName, keys);  \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

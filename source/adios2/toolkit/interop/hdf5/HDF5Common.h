@@ -34,6 +34,7 @@ typedef enum
     E_H5_DATATYPE = 1,
     E_H5_GROUP = 2,
     E_H5_SPACE = 3,
+    E_H5_ATTRIBUTE = 4
 } ADIOS_ENUM_H5;
 
 class HDF5DatasetGuard
@@ -89,6 +90,10 @@ public:
         else if (m_Type == E_H5_DATATYPE)
         {
             H5Tclose(m_Key);
+        }
+        else if (m_Type == E_H5_ATTRIBUTE)
+        {
+            H5Aclose(m_Key);
         }
         else
         {

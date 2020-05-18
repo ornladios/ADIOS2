@@ -18,7 +18,8 @@ add_library(adios2_cxx11
   adios2/cxx11/fstream/ADIOS2fstream.cpp
 )
 set_property(TARGET adios2_cxx11 PROPERTY EXPORT_NAME cxx11)
-target_link_libraries(adios2_cxx11 PRIVATE adios2_core pugixml)
+set_property(TARGET adios2_cxx11 PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_cxx11)
+target_link_libraries(adios2_cxx11 PRIVATE adios2_core adios2::thirdparty::pugixml)
 target_compile_features(adios2_cxx11 INTERFACE ${ADIOS2_CXX11_FEATURES})
 
 target_include_directories(adios2_cxx11
@@ -38,6 +39,7 @@ if(ADIOS2_HAVE_MPI)
     adios2/cxx11/fstream/ADIOS2fstreamMPI.cpp
   )
   set_property(TARGET adios2_cxx11_mpi PROPERTY EXPORT_NAME cxx11_mpi)
+  set_property(TARGET adios2_cxx11_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_cxx11_mpi)
   target_link_libraries(adios2_cxx11_mpi PUBLIC adios2_cxx11 PRIVATE adios2_core_mpi PUBLIC MPI::MPI_CXX)
   set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
   target_compile_definitions(adios2_cxx11_mpi INTERFACE ADIOS2_USE_MPI)
@@ -54,20 +56,22 @@ set_target_properties(
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
-install(TARGETS adios2_cxx11 ${maybe_adios2_cxx11_mpi} EXPORT adios2Exports
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+install(TARGETS adios2_cxx11 ${maybe_adios2_cxx11_mpi} EXPORT adios2CXX11Exports
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_cxx11-runtime
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_cxx11-libraries NAMELINK_COMPONENT adios2_cxx11-development
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_cxx11-development
 )
 
 install(
   FILES adios2.h 
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  COMPONENT adios2_cxx11-development
 )
 
 install(
   FILES adios2/cxx11/fstream/ADIOS2fstream.h 
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx11/fstream
+  COMPONENT adios2_cxx11-development
 )
 
 install(
@@ -81,4 +85,16 @@ install(
         adios2/cxx11/Query.h
         adios2/cxx11/Types.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx11
+  COMPONENT adios2_cxx11-development
+)
+
+export(EXPORT adios2CXX11Exports
+  FILE ${ADIOS2_BINARY_DIR}/adios2-cxx11-targets.cmake
+  NAMESPACE adios2::
+)
+install(EXPORT adios2CXX11Exports
+  FILE adios2-cxx11-targets.cmake
+  NAMESPACE adios2::
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  COMPONENT adios2_cxx11-development
 )

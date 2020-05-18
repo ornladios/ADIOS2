@@ -12,7 +12,6 @@
 #include "adiosString.tcc"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <algorithm> //std::transform
 #include <fstream>
 #include <ios> //std::ios_base::failure
 #include <sstream>
@@ -393,13 +392,6 @@ size_t StringToByteUnits(const std::string &input, const std::string &hint)
     const size_t factor = BytesFactor(units);
 
     return static_cast<size_t>(std::stoul(number) * factor);
-}
-
-std::string LowerCase(const std::string &input)
-{
-    std::string output = input;
-    std::transform(output.begin(), output.end(), output.begin(), ::tolower);
-    return output;
 }
 
 // The design decision is that user-supplied parameters are case-insensitive.

@@ -21,6 +21,10 @@
 #include <rdma/fi_ext_gni.h>
 #ifdef SST_HAVE_CRAY_DRC
 #include <rdmacred.h>
+
+#define DP_DRC_MAX_TRY 60
+#define DP_DRC_WAIT_USEC 1000000
+
 #endif /* SST_HAVE_CRAY_DRC */
 #endif /* SST_HAVE_FI_GNI */
 
@@ -384,6 +388,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     FabricState Fabric;
     int rc;
+    int try_left;
 
     memset(Stream, 0, sizeof(struct _Rdma_WS_Stream));
 
@@ -411,11 +416,19 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
 
     SMPI_Bcast(&Fabric->credential, sizeof(Fabric->credential), SMPI_BYTE, 0,
                comm);
+
+    try_left = DP_DRC_MAX_TRY;
     rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
+    while (rc != DRC_SUCCESS && try_left--)
+    {
+        usleep(DP_DRC_WAIT_USEC);
+        rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
+    }
     if (rc != DRC_SUCCESS)
     {
         Svcs->verbose(CP_Stream,
-                      "Could not access DRC credential. Failed with %d.\n", rc);
+                      "Could not access DRC credential. Last failed with %d.\n",
+                      rc);
         goto err_out;
     }
 
@@ -521,6 +534,7 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
     RdmaWriterContactInfo *providedWriterInfo =
         (RdmaWriterContactInfo *)providedWriterInfo_v;
     void *CP_Stream = RS_Stream->CP_Stream;
+    int try_left;
     int rc;
 
     RS_Stream->PeerCohort = PeerCohort;
@@ -546,22 +560,19 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
     // at large scale the servers backing drc can become overwhelmed and
     // timeout. The return value is -22 (EINVAL). a work around is to wait
     // and try again.
-    int try
-        = 0;
-    int max_try = 60;
-    int try_wait_sec = 1;
-    do
-    {
-        sleep(try_wait_sec);
-        rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
-        try
-            += 1;
-    } while ((rc != DRC_SUCCESS) && (try < max_try));
 
+    try_left = DP_DRC_MAX_TRY;
+    rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
+    while (rc != DRC_SUCCESS && try_left--)
+    {
+        usleep(DP_DRC_WAIT_USEC);
+        rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
+    }
     if (rc != DRC_SUCCESS)
     {
         Svcs->verbose(CP_Stream,
-                      "Could not access DRC credential. Failed with %d.\n", rc);
+                      "Could not access DRC credential. Last failed with %d.\n",
+                      rc);
     }
 
     Fabric->auth_key = malloc(sizeof(*Fabric->auth_key));
@@ -938,6 +949,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
 {
     struct fi_info *hints, *info, *originfo, *useinfo;
     char *ifname;
+    char *forkunsafe;
     int Ret = -1;
 
     (void)attr_atom_from_string(
@@ -960,6 +972,12 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     else
     {
         ifname = getenv("FABRIC_IFACE");
+    }
+
+    forkunsafe = getenv("FI_FORK_UNSAFE");
+    if (!forkunsafe)
+    {
+        putenv("FI_FORK_UNSAFE=Yes");
     }
 
     fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);

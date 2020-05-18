@@ -55,10 +55,10 @@ function flag_diff() {
 }
 
 function prefixify() {
-  echo "$@" | sed "s|${adios2_DIR}|\${ADIOS2_PREFIX}|g"
+  echo "$@" | sed "s|${PREFIX}|\${ADIOS2_PREFIX}|g"
 }
 
-export adios2_DIR="${DESTDIR}$1"
+PREFIX="${DESTDIR}$1"
 shift
 CMAKE="@CMAKE_COMMAND@"
 SOURCE_DIR="@ADIOS2_SOURCE_DIR@/cmake/install/post/adios2-config-dummy"
@@ -78,12 +78,13 @@ then
   export FC="@MPI_Fortran_COMPILER@"
 fi
 
+EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -Dadios2_DIR=${PREFIX}/@CMAKE_INSTALL_CMAKEDIR@"
 if [ -n "@CMAKE_PREFIX_PATH@" ]
 then
   EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DCMAKE_PREFIX_PATH=@CMAKE_PREFIX_PATH@"
 fi
 
-echo "Configuring adios2-config dummy CMake project"
+echo "Configuring adios2-config@ADIOS2_EXECUTABLE_SUFFIX@ dummy CMake project"
 if ! ${CMAKE} -G "Unix Makefiles" ${SOURCE_DIR} ${EXTRA_CMAKE_ARGS}
 then
   echo "Failed"
@@ -166,14 +167,14 @@ then
   BINDIR="@CMAKE_INSTALL_BINDIR@"
 else
   # relative path
-  BINDIR="${adios2_DIR}/@CMAKE_INSTALL_BINDIR@"
+  BINDIR="${PREFIX}/@CMAKE_INSTALL_BINDIR@"
 fi
 
-echo "Writing ${BINDIR}/adios2-config"
+echo "Writing ${BINDIR}/adios2-config@ADIOS2_EXECUTABLE_SUFFIX@"
 cat \
   "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.pre.sh" \
   adios2.flags \
-  "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.post.sh" > "${BINDIR}/adios2-config"
-chmod +x "${BINDIR}/adios2-config"
+  "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.post.sh" > "${BINDIR}/adios2-config@ADIOS2_EXECUTABLE_SUFFIX@"
+chmod +x "${BINDIR}/adios2-config@ADIOS2_EXECUTABLE_SUFFIX@"
 popd 
 rm -rf ${BUILD_DIR}

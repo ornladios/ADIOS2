@@ -11,6 +11,10 @@ FortranCInterface_VERIFY(CXX QUIET)
 # Check whether the compiler supports Fortran submodule constructs we need.
 adios2_check_fortran_submodules(ADIOS2_HAVE_FORTRAN_SUBMODULES)
 
+if(ADIOS2_USE_Fortran_flag_argument_mismatch)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+endif()
+
 add_library(adios2_fortran
   f2c/adios2_f2c_adios.cpp
   f2c/adios2_f2c_attribute.cpp
@@ -43,6 +47,7 @@ add_library(adios2_fortran
   modules/adios2_operator_mod.f90
 )
 set_property(TARGET adios2_fortran PROPERTY EXPORT_NAME fortran)
+set_property(TARGET adios2_fortran PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_fortran)
 
 target_include_directories(adios2_fortran
   PUBLIC
@@ -98,6 +103,7 @@ if(ADIOS2_HAVE_MPI)
       VERSION ${ADIOS2_LIBRARY_VERSION}
       SOVERSION ${ADIOS2_VERSION_MAJOR}
     )
+    set_property(TARGET adios2_fortran_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_fortran_mpi)
   else()
     # Without submodules we need to put everything in one library.
     add_library(adios2_fortran_mpi INTERFACE)
@@ -118,15 +124,27 @@ add_library(adios2_f INTERFACE)
 target_link_libraries(adios2_f INTERFACE ${maybe_adios2_fortran_mpi} adios2_fortran)
 
 install(
-  TARGETS adios2_fortran ${maybe_adios2_fortran_mpi} adios2_f EXPORT adios2Exports
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  TARGETS adios2_fortran ${maybe_adios2_fortran_mpi} adios2_f EXPORT adios2FortranExports
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_fortran-runtime
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_fortran-libraries NAMELINK_COMPONENT adios2_fortran-development
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_fortran-development
 )
 install(
   DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/fortran
+  COMPONENT adios2_fortran-development
   FILES_MATCHING
     PATTERN "adios2*.mod"
     PATTERN "CMakeFiles" EXCLUDE
+)
+
+export(EXPORT adios2FortranExports
+  FILE ${ADIOS2_BINARY_DIR}/adios2-fortran-targets.cmake
+  NAMESPACE adios2::
+)
+install(EXPORT adios2FortranExports
+  FILE adios2-fortran-targets.cmake
+  NAMESPACE adios2::
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  COMPONENT adios2_fortran-development
 )

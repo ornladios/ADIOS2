@@ -13,10 +13,31 @@
 
 #include "adiosString.h"
 
+#include <algorithm> //std::transform
+#include <iterator>  //std::inserter
+
 namespace adios2
 {
 namespace helper
 {
+
+template <>
+std::string LowerCase(const std::string &input)
+{
+    std::string output = input;
+    std::transform(output.begin(), output.end(), output.begin(), ::tolower);
+    return output;
+}
+
+template <>
+std::set<std::string> LowerCase(const std::set<std::string> &input)
+{
+    std::set<std::string> output;
+    std::transform(input.begin(), input.end(),
+                   std::inserter(output, output.begin()),
+                   [](const std::string &in) { return LowerCase(in); });
+    return output;
+}
 
 template <>
 bool StringTo(const std::string &input, const std::string &hint)

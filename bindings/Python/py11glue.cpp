@@ -110,7 +110,7 @@ adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
     return adios2::py11::File(name, mode, configfile, ioinconfigfile);
 }
 
-PYBIND11_MODULE(adios2, m)
+PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
 {
     m.attr("DebugON") = true;
     m.attr("DebugOFF") = false;
@@ -229,6 +229,15 @@ PYBIND11_MODULE(adios2, m)
                  const bool opBool = adios ? true : false;
                  return opBool;
              })
+        .def(pybind11::init<const bool>(),
+             "adios2 module starting point "
+             "non-MPI, constructs an ADIOS class "
+             "object",
+             pybind11::arg("debugMode") = true)
+        .def(pybind11::init<const std::string &, const bool>(),
+             "adios2 module starting point non-MPI, constructs an ADIOS class "
+             "object",
+             pybind11::arg("configFile"), pybind11::arg("debugMode") = true)
 #if ADIOS2_USE_MPI
         .def(pybind11::init<const adios2::py11::MPI4PY_Comm, const bool>(),
              "adios2 module starting point, constructs an ADIOS class object",
@@ -239,15 +248,6 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("configFile"), pybind11::arg("comm"),
              pybind11::arg("debugMode") = true)
 #endif
-        .def(pybind11::init<const bool>(),
-             "adios2 module starting point "
-             "non-MPI, constructs an ADIOS class "
-             "object",
-             pybind11::arg("debugMode") = true)
-        .def(pybind11::init<const std::string &, const bool>(),
-             "adios2 module starting point non-MPI, constructs an ADIOS class "
-             "object",
-             pybind11::arg("configFile"), pybind11::arg("debugMode") = true)
         .def("DeclareIO", &adios2::py11::ADIOS::DeclareIO,
              "spawn IO object component returning a IO object with a unique "
              "name, throws an exception if IO with the same name is declared "
@@ -580,10 +580,18 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("available_variables", &adios2::py11::File::AvailableVariables,
-             pybind11::return_value_policy::move, R"md(
+             pybind11::return_value_policy::move,
+             pybind11::arg("keys") = std::vector<std::string>(), R"md(
              Returns a 2-level dictionary with variable information. 
              Read mode only.
              
+             Parameters
+                 keys
+                    list of variable information keys to be extracted (case insensitive)
+                    keys=['AvailableStepsCount','Type','Max','Min','SingleValue','Shape']
+                    keys=['Name'] returns only the variable names as 1st-level keys
+                    leave empty to return all possible keys
+
              Returns
                  variables dictionary
                      key 

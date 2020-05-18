@@ -352,4 +352,7 @@ if(ADIOS2_USE_Fortran)
   check_float_type_representation("real(kind=4)" REAL4_TYPE_Fortran LANGUAGE Fortran)
   check_float_type_representation("real(kind=8)" REAL8_TYPE_Fortran LANGUAGE Fortran)
   check_float_type_representation("real(kind=16)" REAL16_TYPE_Fortran LANGUAGE Fortran)
+
+  include(CheckFortranCompilerFlag)
+  check_fortran_compiler_flag("-fallow-argument-mismatch" ADIOS2_USE_Fortran_flag_argument_mismatch)
 endif()

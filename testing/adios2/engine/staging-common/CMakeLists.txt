@@ -5,41 +5,10 @@
 
 find_package(Threads REQUIRED)
 
-if(ADIOS2_HAVE_MPI)
-  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
-
-  add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
-  target_link_libraries(TestStagingMPMD
-    ${CMAKE_THREAD_LIBS_INIT}
-    gtest gtest_interface adios2::cxx11_mpi MPI::MPI_C
-  )
-  if(ADIOS2_HAVE_SST)
-    gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-      EXTRA_ARGS "SST" "MarshalMethod=FFS"
-      TEST_SUFFIX _SST_FFS
-      TEST_LIST _gtest_added_tests
-    )
-    set_tests_properties(${_gtest_added_tests} PROPERTIES
-      PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
-    )
-    gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-      EXTRA_ARGS "SST" "MarshalMethod=BP"
-      TEST_SUFFIX _SST_BP
-      TEST_LIST _gtest_added_tests
-    )
-    set_tests_properties(${_gtest_added_tests} PROPERTIES
-      PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
-    )
-  endif()
-
-  gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-    EXTRA_ARGS "InSituMPI"
-    TEST_SUFFIX _InSituMPI
-    TEST_LIST _gtest_added_tests
-  )
-  set_tests_properties(${_gtest_added_tests} PROPERTIES
-    PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
-  )
+gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".InSituMPI" EXTRA_ARGS "InSituMPI")
+if(ADIOS2_HAVE_SST)
+  gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST" "MarshalMethod=FFS")
+  gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST" "MarshalMethod=BP")
 endif()
 
 foreach(helper
@@ -63,7 +32,7 @@ foreach(helper
     target_include_directories(${helper} PRIVATE ${SST_INCLUDE_DIRS})
   endif()
 
-  target_link_libraries(${helper} gtest_interface ${Sst_LIBRARY})
+  target_link_libraries(${helper} adios2::thirdparty::gtest ${Sst_LIBRARY})
   if(ADIOS2_HAVE_MPI)
     target_link_libraries(${helper} adios2::cxx11_mpi adios2_core_mpi MPI::MPI_C)
   else()
@@ -91,10 +60,6 @@ if(ADIOS2_HAVE_Fortran)
     target_link_libraries(TestCommonWrite_f adios2_fortran)
     target_link_libraries(TestCommonRead_f adios2_fortran)
   endif()
-endif()
-
-if(ADIOS2_HAVE_MPI)
-  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 endif()
 
 configure_file(
@@ -182,6 +147,9 @@ LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${BP_SST_TESTS})
 # Zero Data tests are unreliable with SST and BP marshaling
 list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
 
+# Temporarily exclude SST LockGeometry tests
+list (FILTER SST_TESTS EXCLUDE REGEX "LockGeometry")
+
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
@@ -189,7 +157,7 @@ endforeach()
 #
 #   Setup tests for InSituMPI engine
 #
-if(ADIOS2_HAVE_MPI)
+if(ADIOS2_HAVE_MPI AND ADIOS2_RUN_MPMD_TESTS)
     set (SIMPLE_IMPI_TESTS "1x1;TimeoutOnOpen;1x1.Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
     set (INSITU_TESTS ${SIMPLE_IMPI_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_TESTS} ${SIMPLE_ZFP_TESTS})
     # Tests that don't work for InSitu
@@ -217,7 +185,7 @@ if(ADIOS2_HAVE_MPI)
     endforeach()
 endif()
 
-if(ADIOS2_HAVE_SSC)
+if(ADIOS2_HAVE_SSC AND ADIOS2_RUN_MPMD_TESTS)
     set (SSC_BASE_TESTS "1x1;1x1.Attrs;2x1;1x2;2x1ZeroDataVar;2x1ZeroDataR64;3x5;5x3;3x5LockGeometry;TimeoutOnOpen")
     set (SSC_TESTS  ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_FORTRAN_TESTS} ${SSC_BASE_TESTS})
     foreach(test ${SSC_TESTS})

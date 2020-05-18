@@ -45,6 +45,7 @@ private:
     int m_Timeout = 5;
     int m_Verbosity = 0;
     bool m_DoubleBuffer = false;
+    std::string m_TransportMode = "fast";
 
     std::string m_AllAddresses;
     std::string m_PublisherAddress;
@@ -69,6 +70,7 @@ private:
 
     void PushBufferQueue(std::shared_ptr<std::vector<char>> buffer);
     std::shared_ptr<std::vector<char>> PopBufferQueue();
+    bool CheckBufferQueue();
 
     void ReplyThread();
     void PublishThread();

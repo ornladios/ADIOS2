@@ -27,8 +27,8 @@
 /* Define to 1 if you have the df_shm header and libraries */
 #cmakedefine DF_SHM_FOUND
 
-/* Place where evpath transport libraries are installed */
-#cmakedefine EVPATH_LIBRARY_INSTALL_DIR "@EVPATH_LIBRARY_INSTALL_DIR@"
+/* Place where evpath transport modules are installed */
+#cmakedefine EVPATH_MODULE_INSTALL_DIR "@EVPATH_MODULE_INSTALL_DIR@"
 
 /* Place where evpath tests are to be installed */
 #cmakedefine EVPATH_TEST_INSTALL_DIR "@EVPATH_TEST_INSTALL_DIR@"

@@ -1,29 +1,13 @@
 sudo: false
 language: cpp
 dist: xenial
-addons:
-  apt:
-    packages:
-      - libmpich-dev
-before_install:
-  - pushd ${HOME}
-  - wget http://releases.llvm.org/7.0.1/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz
-  - popd
-install:
-  - pushd ${HOME}
-  - tar -xf clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz
-  - export PATH="${PWD}/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04/bin:${PATH}"
-  - export PATH="${PWD}/cmake-3.7.2-Linux-x86_64/bin:${PATH}"
-  - popd
-  - pip install --user flake8
-  - git config --global clangformat.binary ${HOME}/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang-format
 env:
   matrix:
     - BUILD_MATRIX_ENTRY=format
     - BUILD_MATRIX_ENTRY=docker-ubuntu1804
     - BUILD_MATRIX_ENTRY=docker-ubuntu1910
     - BUILD_MATRIX_ENTRY=docker-centos7
-    - BUILD_MATRIX_ENTRY=docker-centos8
+#    - BUILD_MATRIX_ENTRY=docker-centos8
 script:
   - git reset --hard ${TRAVIS_PULL_REQUEST_SHA}
   - ${TRAVIS_BUILD_DIR}/scripts/travis/run.sh

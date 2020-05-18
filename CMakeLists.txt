@@ -78,6 +78,14 @@ if(NOT MSVC)
   set(CMAKE_C_STANDARD_REQUIRED True)
 endif()
 
+# Option for packagers to add a suffix after "adios" in library names (to
+# install multiple builds in parallel)
+set(ADIOS2_LIBRARY_SUFFIX "" CACHE STRING
+  "Suffix to put after \"adios\" in library names")
+set(ADIOS2_EXECUTABLE_SUFFIX "${ADIOS2_LIBRARY_SUFFIX}" CACHE STRING
+  "Suffix to append to executable names")
+mark_as_advanced(ADIOS2_LIBRARY_SUFFIX ADIOS2_EXECUTABLE_SUFFIX)
+
 # Use meta-compile features if available, otherwise use specific language
 # features
 if(CMAKE_VERSION VERSION_LESS 3.9 OR
@@ -151,6 +159,7 @@ configure_file(
 
 install(FILES ${PROJECT_BINARY_DIR}/source/adios2/common/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common
+  COMPONENT adios2_core-development
 )
 
 #------------------------------------------------------------------------------#
@@ -221,8 +230,13 @@ else()
 endif()
 unset(BUILD_TESTING)
 option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree" 
-       ${ADIOS2_BUILD_TESTING_DEFAULT})
-       
+  ${ADIOS2_BUILD_TESTING_DEFAULT})
+
+cmake_dependent_option(ADIOS2_RUN_MPI_MPMD_TESTS
+  "Enable the parallel MPMD tests" ON
+  "ADIOS2_BUILD_TESTING;ADIOS2_HAVE_MPI" OFF)
+mark_as_advanced(ADIOS2_RUN_MPMD_TESTS)
+
 include(CTest)
 set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})
 if(BUILD_TESTING)

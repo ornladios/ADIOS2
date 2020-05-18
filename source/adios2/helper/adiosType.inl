@@ -267,6 +267,17 @@ std::set<T> KeysToSet(const std::unordered_map<T, U> &hash) noexcept
     return output;
 }
 
+template <class T>
+std::set<T> VectorToSet(const std::vector<T> &input) noexcept
+{
+    std::set<T> output;
+    for (const T &in : input)
+    {
+        output.insert(in);
+    }
+    return output;
+}
+
 template <class T, class U>
 U EraseKey(const T &key, std::map<T, U> &map)
 {
