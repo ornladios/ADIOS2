@@ -25,7 +25,7 @@ function build_partially_squashed_image()
 echo "************************************************************"
 echo "* Building fully squashed root base images                 *"
 echo "************************************************************"
-ROOT_BASE_IMAGES="el7-base suse-pgi-base fedora-sanitizers-base"
+ROOT_BASE_IMAGES="el7-base suse-pgi-base fedora-sanitizers-base debian-sid"
 for IMAGE in ${ROOT_BASE_IMAGES}
 do
   echo "${IMAGE}"
@@ -58,7 +58,7 @@ done
 echo "************************************************************"
 echo "* Push all images                                          *"
 echo "************************************************************"
-ALL_IMAGES="el7-base el7 el7-gnu8-ohpc-base el7-gnu8-ohpc el7-gnu8-openmpi-ohpc el7-intel-ohpc-base el7-intel-ohpc el7-intel-openmpi-ohpc suse-pgi-base suse-pgi suse-pgi-openmpi fedora-sanitizers-base fedora-ubsan"
+ALL_IMAGES="el7-base el7 el7-gnu8-ohpc-base el7-gnu8-ohpc el7-gnu8-openmpi-ohpc el7-intel-ohpc-base el7-intel-ohpc el7-intel-openmpi-ohpc suse-pgi-base suse-pgi suse-pgi-openmpi fedora-sanitizers-base fedora-ubsan debian-sid"
 for IMAGE in ${ALL_IMAGES}
 do
   echo "${IMAGE}"
