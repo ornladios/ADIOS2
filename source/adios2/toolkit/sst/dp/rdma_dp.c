@@ -869,7 +869,7 @@ static FMStructDescRec RdmaReaderContactStructs[] = {
 static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 {
     Rdma_WS_Stream WS_Stream = (Rdma_WS_Stream)WS_Stream_v;
-    TimestepList List;
+    long Timestep;
 #ifdef SST_HAVE_CRAY_DRC
     uint32_t Credential;
 
@@ -894,8 +894,10 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
     pthread_mutex_lock(&ts_mutex);
     while (WS_Stream->Timesteps)
     {
-        List = WS_Stream->Timesteps;
-        RdmaReleaseTimestep(Svcs, WS_Stream, List->Timestep);
+        Timestep = WS_Stream->Timesteps->Timestep;
+        pthread_mutex_unlock(&ts_mutex);
+        RdmaReleaseTimestep(Svcs, WS_Stream, Timestep);
+        pthread_mutex_lock(&ts_mutex);
     }
     pthread_mutex_unlock(&ts_mutex);
 
