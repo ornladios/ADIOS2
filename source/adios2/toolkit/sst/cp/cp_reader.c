@@ -21,7 +21,6 @@
 #include "cp_internal.h"
 
 #define gettid() pthread_self()
-#define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define STREAM_MUTEX_LOCK(Stream)                                              \
     {                                                                          \
