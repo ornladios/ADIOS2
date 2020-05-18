@@ -17,13 +17,16 @@ ADIOS2_LIBRARY_SUFFIX:STRING=_openmpi
 ADIOS2_EXECUTABLE_SUFFIX:STRING=.openmpi
 
 MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
+MPI_C_COMPILER:FILEPATH=/usr/bin/mpicc.openmpi
+MPI_CXX_COMPILER:FILEPATH=/usr/bin/mpic++.openmpi
+MPI_Fortran_COMPILER:FILEPATH=/usr/bin/mpif77.openmpi
+MPIEXEC_EXECUTABLE:FILEPATH=/usr/bin/mpiexec.openmpi
+HDF5_C_COMPILER_EXECUTABLE:FILEPATH=/usr/bin/h5pcc.openmpi
 ")
 
 set(CTEST_TEST_ARGS
   PARALLEL_LEVEL 1
 )
 set(CTEST_CMAKE_GENERATOR "Ninja")
-
-set(ADIOS_TEST_REPEAT 0)
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)
