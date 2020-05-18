@@ -12,13 +12,6 @@ module adios2_variable_min_mod
     use adios2_parameters_mod
     use adios2_variable_mod
     implicit none
-    interface
-        subroutine adios2_variable_min_f2c(min, variable, ierr)
-            type(*), dimension(..) :: min
-            type(*), dimension(..) :: variable
-            type(*), dimension(..) :: ierr
-        end subroutine
-    end interface
 
     interface adios2_variable_min
 

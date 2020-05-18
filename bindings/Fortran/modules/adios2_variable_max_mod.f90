@@ -12,13 +12,6 @@ module adios2_variable_max_mod
     use adios2_parameters_mod
     use adios2_variable_mod
     implicit none
-    interface
-        subroutine adios2_variable_max_f2c(max, variable, ierr)
-            type(*), dimension(..) :: max
-            type(*), dimension(..) :: variable
-            type(*), dimension(..) :: ierr
-        end subroutine
-    end interface
 
     interface adios2_variable_max
 

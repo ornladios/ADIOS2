@@ -12,35 +12,6 @@
 module adios2_io_define_attribute_mod
     use adios2_parameters_mod
     implicit none
-    interface
-        subroutine adios2_define_vattr_array_f2c(attribute, io, name, &
-                                                 type, data, size, &
-                                                 variable_name, &
-                                                 separator, ierr)
-            type(*), dimension(..) :: attribute
-            type(*), dimension(..) :: io
-            type(*), dimension(..) :: name
-            type(*), dimension(..) :: type
-            type(*), dimension(..) :: data
-            type(*), dimension(..) :: size
-            type(*), dimension(..) :: variable_name
-            type(*), dimension(..) :: separator
-            type(*), dimension(..) :: ierr
-        end subroutine
-        subroutine adios2_define_vattr_f2c(attribute, io, name, &
-                                                 type, value, &
-                                                 variable_name, &
-                                                 separator, ierr)
-            type(*), dimension(..) :: attribute
-            type(*), dimension(..) :: io
-            type(*), dimension(..) :: name
-            type(*), dimension(..) :: type
-            type(*), dimension(..) :: value
-            type(*), dimension(..) :: variable_name
-            type(*), dimension(..) :: separator
-            type(*), dimension(..) :: ierr
-        end subroutine
-    end interface
 
     interface adios2_define_attribute
 
