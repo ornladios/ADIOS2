@@ -605,6 +605,11 @@ static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
         }
         Requests = Next;
     }
+    Svcs->verbose(RS_Stream->CP_Stream,
+                  "Done processing preload message from writer rank %d for "
+                  "timestep %ld\n",
+                  PreloadMsg->WriterRank, PreloadMsg->Timestep);
+
     pthread_mutex_unlock(&RS_Stream->DataLock);
     return;
 }
@@ -912,6 +917,11 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     int HadPreload;
     static long LastRequestedTimestep = -1;
 
+    Svcs->verbose(Stream->CP_Stream,
+                  "EVPATH read request Timestep %d from Rank %d, WSR_Stream = "
+                  "%p, DP_TimestepInfo %p\n",
+                  Timestep, Rank, Stream->WriterContactInfo[Rank].WS_Stream,
+                  DP_TimestepInfo);
     pthread_mutex_lock(&Stream->DataLock);
     if ((LastRequestedTimestep != -1) && (LastRequestedTimestep != Timestep))
     {
@@ -936,6 +946,8 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
         ret->CMcondition = -1;
         Stream->ReadRequestsFromPreload++;
         pthread_mutex_unlock(&Stream->DataLock);
+        Svcs->verbose(Stream->CP_Stream, "EVPATH satisfied with preload\n");
+
         return ret;
     }
 
@@ -1173,6 +1185,10 @@ static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
         if (WSR_Stream->ReaderRequestArray[i])
         {
             PreloadMsg.RS_Stream = WSR_Stream->ReaderContactInfo[i].RS_Stream;
+            Svcs->verbose(
+                WS_Stream->CP_Stream,
+                "EVPATH Preload message for timestep %ld, going to rank %d\n",
+                TS->Timestep);
             CMwrite(WSR_Stream->ReaderContactInfo[i].Conn,
                     WS_Stream->PreloadFormat, &PreloadMsg);
         }

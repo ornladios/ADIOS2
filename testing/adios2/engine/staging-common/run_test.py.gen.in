@@ -64,8 +64,7 @@ def do_simple_test(writer_cmd, reader_cmd, reader_delay, file_test):
 
     return_code = 0
 
-#    if "--lock_geometry" in writer_cmd:
-#        my_env["SstVerbose"] = "1"
+    my_env["SstVerbose"] = "1"
 
     print("TestDriver:  Doing simple with file_test = " + str(file_test))
     sys.stdout.flush()
