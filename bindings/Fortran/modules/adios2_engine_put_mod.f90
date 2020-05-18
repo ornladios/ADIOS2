@@ -13,22 +13,6 @@ module adios2_engine_put_mod
     use adios2_variable_mod
     use adios2_parameters_mod
     implicit none
-    interface
-        subroutine adios2_put_by_name_f2c(engine, name, data, launch, ierr)
-            type(*), dimension(..) :: engine
-            type(*), dimension(..) :: name
-            type(*), dimension(..) :: data
-            type(*), dimension(..) :: launch
-            type(*), dimension(..) :: ierr
-        end subroutine
-        subroutine adios2_put_f2c(engine, variable, data, launch, ierr)
-            type(*), dimension(..) :: engine
-            type(*), dimension(..) :: variable
-            type(*), dimension(..) :: data
-            type(*), dimension(..) :: launch
-            type(*), dimension(..) :: ierr
-        end subroutine
-    end interface
 
     interface adios2_put
 
