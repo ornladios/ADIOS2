@@ -261,10 +261,10 @@ bool introspectAsHDF5File(std::ifstream &f, const std::string &name) noexcept
 
 bool introspectAsBPFile(std::ifstream &f, const std::string &name) noexcept
 {
-    const size_t MFOOTERSIZE = 56;
+    const int MFOOTERSIZE = 56;
     std::vector<char> buffer(MFOOTERSIZE, 0);
     f.seekg(0, f.end);
-    size_t flength = f.tellg();
+    auto flength = f.tellg();
     if (flength < MFOOTERSIZE)
     {
         return false;
@@ -363,10 +363,10 @@ bool introspectAsBPDir(const std::string &name) noexcept
         return false;
     }
 
-    const size_t HEADERSIZE = 64;
+    const int HEADERSIZE = 64;
     std::vector<char> buffer(HEADERSIZE, 0);
     f.seekg(0, f.end);
-    size_t flength = f.tellg();
+    auto flength = f.tellg();
     if (flength >= HEADERSIZE)
     {
         f.seekg(0, f.beg);
