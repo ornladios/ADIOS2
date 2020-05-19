@@ -310,7 +310,7 @@ TEST_F(DataManEngineTest, ReaderSingleBuffer)
     Dims shape = {10};
     Dims start = {0};
     Dims count = {10};
-    size_t steps = 10000;
+    size_t steps = 5000;
 
     // run workflow
     adios2::Params readerEngineParams = {{"IPAddress", "127.0.0.1"},
