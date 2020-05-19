@@ -7,6 +7,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/TestBPFileMx1.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/TestBPFileMxM.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/TestBPFileMxN.cmake)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/TestInlineMxM.cmake)
+
 if(ADIOS2_HAVE_ZFP)
   #include(${CMAKE_CURRENT_SOURCE_DIR}/TestBPFileMxM_zfp.cmake)
   #include(${CMAKE_CURRENT_SOURCE_DIR}/TestBPFileMxN_zfp.cmake)
