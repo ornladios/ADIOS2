@@ -418,7 +418,6 @@ void introspect_file(const char *filename) noexcept
     }
     else
     {
-        int BPVersion = 0;
         std::ifstream f(filename, std::ifstream::in | std::ifstream::binary);
         if (f)
         {
@@ -506,7 +505,6 @@ int process_unused_args(adios2sys::CommandLineArguments &arg)
     }
     else
     {
-        return 0;
         delete[] retry_args[0];
     }
 
