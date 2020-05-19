@@ -356,7 +356,7 @@ TEST_F(DataManEngineTest, 2D_MemSelect)
     memstart = {1, 1};
     memcount = {7, 9};
 
-    size_t steps = 10000;
+    size_t steps = 5000;
     adios2::Params engineParams = {
         {"IPAddress", "127.0.0.1"}, {"Port", "12320"}, {"Verbose", "0"}};
 
