@@ -305,7 +305,7 @@ bool introspectAsBPFile(std::ifstream &f, const std::string &name) noexcept
                 helper::ReadValue<uint64_t>(buffer, position, !IsBigEndian);
             if (PGIndexStart >= VarsIndexStart ||
                 VarsIndexStart >= AttributesIndexStart ||
-                AttributesIndexStart >= flength)
+                AttributesIndexStart >= static_cast<uint64_t>(flength))
             {
                 return false;
             }
