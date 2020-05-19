@@ -13,15 +13,17 @@ module adios2_attribute_data_mod
     implicit none
     interface
         subroutine adios2_attribute_data_f2c(data, size, attribute, ierr)
-            type(*), dimension(..) :: data
-            type(*), dimension(..) :: size
-            type(*), dimension(..) :: attribute
-            type(*), dimension(..) :: ierr
+            !GCC$ attributes no_arg_check :: data
+            type(*) :: data
+            type(*) :: size
+            type(*) :: attribute
+            type(*) :: ierr
         end subroutine
         subroutine adios2_attribute_value_f2c(data, attribute, ierr)
-            type(*), dimension(..) :: data
-            type(*), dimension(..) :: attribute
-            type(*), dimension(..) :: ierr
+            !GCC$ attributes no_arg_check :: data
+            type(*) :: data
+            type(*) :: attribute
+            type(*) :: ierr
         end subroutine
     end interface
 
