@@ -3,7 +3,12 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(write)
-add_subdirectory(read)
-add_subdirectory(read_fileonly)
-add_subdirectory(inline)
+add_executable(heatTransfer_inline_adios2
+  main.cpp
+  InlineIO.cpp
+  ../write/HeatTransfer.cpp
+  ../write/Settings.cpp
+)
+target_link_libraries(heatTransfer_inline_adios2
+  adios2::cxx11_mpi MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
+)

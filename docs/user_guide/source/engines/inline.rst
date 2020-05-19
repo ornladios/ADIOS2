@@ -18,7 +18,17 @@ To use this engine, you can either specify it in your XML config file, with tag 
 
 Notice that unlike other engines, the reader and writer share an IO instance. Also, the ``writerID`` parameter allows the reader to connect to the writer, and ``readerID`` allows writer to connect to the reader. Both the writer and reader must be opened before either tries to call BeginStep/PerformPuts/PeformGets.
 
-For successful operation, the writer will perform a step, then the reader will perform a step in the same process. Data is decomposed between processes, and the writer can write its portion of the data like other ADIOS engines. When the reader starts its step, the only data it has available is that written by the writer in its process. To select this data in ADIOS, use a block selection. The reader then can retrieve whatever data was written by the writer.
+For successful operation, the writer will perform a step, then the reader will perform a step in the same process. Data is decomposed between processes, and the writer can write its portion of the data like other ADIOS engines. When the reader starts its step, the only data it has available is that written by the writer in its process. To select this data in ADIOS, use a block selection. The reader then can retrieve whatever data was written by the writer. The reader does require the use of a new ``Get()`` call that was added to the API:
+
+.. code-block:: c++
+
+    void Engine::Get<T>(                                       \
+        Variable<T>, typename Variable<T>::Info & info, const Mode);
+
+This version of ``Get`` is only used for the inline engine and requires passing a ``Variable<T>::Info`` object, which can be obtained from calling the reader's ``BlocksInfo()``. See the example below for details.
+
+.. note::
+ This ``Get()`` method is preliminary and may be removed in the future when the span interface on the read side becomes available.
 
 .. note::
  The inline engine does not support Sync mode for writing. In addition, since the inline engine does not do any data copy, the writer should avoid changing the data contents before the reader has read the data.
@@ -32,8 +42,8 @@ Typical access pattern:
     inlineWriter.BeginStep();
     inlineWriter.Put(var, data); // always use deferred mode
     inlineWriter.EndStep();
-    // Unlike other engines, data should not be reused at this point,
-    // though ADIOS cannot enforce this.
+    // Unlike other engines, data should not be reused at this point (since ADIOS
+    // does not copy the data), though ADIOS cannot enforce this.
     // Must wait until reader is finished using the data.
 
     inlineReader.BeginStep();
@@ -50,14 +60,6 @@ Typical access pattern:
 
     // After any desired analysis is finished, writer can now reuse data pointer
 
-Note, however, that the ``Get()`` method:
-
-.. code-block:: c++
-
-    void Engine::Get<T>(                                       \
-        Variable<T>, typename Variable<T>::Info & info, const Mode);
-
-is preliminary, and may change in the future.
 
 Parameters:
 
