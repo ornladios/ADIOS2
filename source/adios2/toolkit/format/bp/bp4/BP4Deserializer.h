@@ -36,6 +36,8 @@ public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
 
+    bool m_WriterIsActive = false;
+
     /**
      * Unique constructor
      * @param comm multi-process communicator
@@ -175,6 +177,8 @@ public:
                     const std::vector<char> &contiguousMemory,
                     const Box<Dims> &blockBox,
                     const Box<Dims> &intersectionBox) const;
+
+    bool ReadActiveFlag(std::vector<char> &buffer);
 
     // TODO: will deprecate
     bool m_PerformedGets = false;

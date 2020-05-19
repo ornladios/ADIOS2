@@ -245,13 +245,15 @@ void BP4Reader::OpenFiles(const TimePoint &timeoutInstant,
         if (m_BP4Deserializer.m_RankMPI == 0)
         {
             throw std::ios_base::failure(
-                "ERROR: File " + m_Name +
-                " could not be found within timeout: " + lasterrmsg);
+                "ERROR: File " + m_Name + " could not be found within the " +
+                std::to_string(timeoutSeconds.count()) +
+                "s timeout: " + lasterrmsg);
         }
         else
         {
-            throw std::ios_base::failure("ERROR: File " + m_Name +
-                                         " could not be found within timeout");
+            throw std::ios_base::failure(
+                "ERROR: File " + m_Name + " could not be found within the " +
+                std::to_string(timeoutSeconds.count()) + "s timeout");
         }
     }
 
@@ -508,13 +510,10 @@ bool BP4Reader::CheckWriterActive()
     size_t flag = 0;
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
-        /* Look for the active flag file */
-        const std::string activeFlagFile(
-            m_BP4Deserializer.GetBPActiveFlagFileName(m_Name));
-
-        flag = m_ActiveFlagFileManager.FileExists(
-            activeFlagFile, m_IO.m_TransportsParameters[0],
-            m_BP4Deserializer.m_Profiler.m_IsActive);
+        std::vector<char> header(64, '\0');
+        m_MDIndexFileManager.ReadFile(header.data(), 64, 0, 0);
+        bool active = m_BP4Deserializer.ReadActiveFlag(header);
+        flag = (active ? 1 : 0);
     }
     flag = m_BP4Deserializer.m_Comm.BroadcastValue(flag, 0);
     m_WriterIsActive = (flag > 0);
@@ -526,7 +525,6 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
     /* Do a collective wait for a step within timeout.
        Make sure every reader comes to the same conclusion */
     StepStatus retval = StepStatus::OK;
-    bool haveNewStep = false;
 
     if (timeoutSeconds < Seconds::zero())
     {
@@ -547,16 +545,14 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
     // Hack: processing metadata for multiple new steps only works
     // when pretending not to be in streaming mode
     const bool saveReadStreaming = m_IO.m_ReadStreaming;
+    size_t newIdxSize = 0;
 
     m_IO.m_ReadStreaming = false;
     while (m_WriterIsActive)
     {
-        size_t newIdxSize = UpdateBuffer(timeoutInstant, pollSeconds / 10);
+        newIdxSize = UpdateBuffer(timeoutInstant, pollSeconds / 10);
         if (newIdxSize > 0)
         {
-            haveNewStep = true;
-            /* we have new metadata in memory. Need to parse it now */
-            ProcessMetadataForNewSteps(newIdxSize);
             break;
         }
         if (!CheckWriterActive())
@@ -570,7 +566,13 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
         }
     }
 
-    if (!haveNewStep)
+    if (newIdxSize > 0)
+    {
+        /* we have new metadata in memory. Need to parse it now */
+        ProcessMetadataForNewSteps(newIdxSize);
+        retval = StepStatus::OK;
+    }
+    else
     {
         m_IO.m_ReadStreaming = false;
         if (m_WriterIsActive)
@@ -582,10 +584,7 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
             retval = StepStatus::EndOfStream;
         }
     }
-    else
-    {
-        retval = StepStatus::OK;
-    }
+
     m_IO.m_ReadStreaming = saveReadStreaming;
 
     return retval;

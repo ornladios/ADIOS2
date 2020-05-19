@@ -60,8 +60,6 @@ private:
     /* transport manager for managing the metadata index file */
     transportman::TransportMan m_FileMetadataIndexManager;
 
-    transportman::TransportMan m_FileActiveFlagManager;
-
     /*
      *  Burst buffer variables
      */
@@ -87,7 +85,6 @@ private:
     std::vector<std::string> m_MetadataIndexFileNames;
     std::vector<std::string> m_DrainMetadataIndexFileNames;
     std::vector<std::string> m_ActiveFlagFileNames;
-    std::vector<std::string> m_DrainActiveFlagFileNames;
 
     void Init() final;
 
@@ -136,6 +133,8 @@ private:
         const uint64_t mpirank, const uint64_t pgIndexStart,
         const uint64_t variablesIndexStart, const uint64_t attributesIndexStart,
         const uint64_t currentStepEndPos, const uint64_t currentTimeStamp);
+
+    void UpdateActiveFlag(const bool active);
 
     void WriteCollectiveMetadataFile(const bool isFinal = false);
 
