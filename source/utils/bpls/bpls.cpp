@@ -22,6 +22,7 @@
 
 #include <cinttypes>
 #include <cstdio>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -50,6 +51,8 @@
 #include <fnmatch.h>
 #endif
 
+#include "adios2/helper/adiosString.h" // EndsWith
+#include "adios2/helper/adiosSystem.h" //isHDF5File
 #include <adios2sys/CommandLineArguments.hxx>
 #include <adios2sys/SystemTools.hxx>
 #include <pugixml.hpp>
@@ -76,7 +79,7 @@ std::string count;        // dimension spec counts
 std::string format;       // format string for one data element (e.g. %6.2f)
 
 // Flags from arguments or defaults
-bool dump; // dump data not just list info
+bool dump; // dump data not just list info(flag == 1)
 bool output_xml;
 bool use_regexp; // use varmasks as regular expressions
 bool sortnames;  // sort names before listing
@@ -91,6 +94,7 @@ bool plot;             // dump histogram related information
 bool hidden_attrs;     // show hidden attrs in BP file
 int hidden_attrs_flag; // to be passed on in option struct
 bool show_decomp;      // show decomposition of arrays
+bool show_version;     // print binary version info of file before work
 
 // other global variables
 char *prgname; /* argv[0] */
@@ -181,7 +185,7 @@ void display_help()
         "doing.\n"
         "                               Use multiple -v to increase logging "
         "level.\n"
-        "  --version                  Print version information; compatible "
+        "  --version   | -V           Print version information; compatible "
         " with\n"
         "                               --verbose for additional information, "
         "i.e.\n"
@@ -206,40 +210,232 @@ int optioncb_verbose(const char *argument, const char *value, void *call_data)
     return 1;
 }
 
-int optioncb_version(const char *argument, const char *value, void *call_data)
+void print_bpls_version()
 {
     if (verbose == 0)
     {
         printf(ADIOS2_VERSION_STR "\n");
         option_help_was_called = true;
-        return 1;
+    }
+    else
+    {
+        printf("blps: ADIOS file introspection utility\n");
+        printf("\nBuild configuration:\n");
+        if (strlen(ADIOS_INFO_VER_GIT) > 0)
+        {
+            printf("ADIOS version: %s (%s)\n", ADIOS2_VERSION_STR,
+                   ADIOS_INFO_VER_GIT);
+        }
+        else
+        {
+            printf("ADIOS version: %s\n", ADIOS2_VERSION_STR);
+        }
+        if (strlen(ADIOS_INFO_COMPILER_WRAP) > 0)
+        {
+            printf("C++ Compiler:  %s %s (%s)\n", ADIOS_INFO_COMPILER_ID,
+                   ADIOS_INFO_COMPILER_VER, ADIOS_INFO_COMPILER_WRAP);
+        }
+        else
+        {
+            printf("C++ Compiler:  %s %s\n", ADIOS_INFO_COMPILER_ID,
+                   ADIOS_INFO_COMPILER_VER);
+        }
+        printf("Target OS:     %s\n", ADIOS_INFO_SYSTEM);
+        printf("Target Arch:   %s\n", ADIOS_INFO_ARCH);
+    }
+}
+
+bool introspectAsHDF5File(std::ifstream &f, const std::string &name) noexcept
+{
+    const unsigned char HDF5Header[8] = {137, 72, 68, 70, 13, 10, 26, 10};
+    bool isHDF5 = false;
+    char header[8] = "       ";
+    f.read(header, 8);
+    if (f && !std::memcmp(header, HDF5Header, 8))
+    {
+        printf("Hierarchical Data Format (version 5) data\n");
+        isHDF5 = true;
+    }
+    return isHDF5;
+}
+
+bool introspectAsBPFile(std::ifstream &f, const std::string &name) noexcept
+{
+    const size_t MFOOTERSIZE = 56;
+    std::vector<char> buffer(MFOOTERSIZE, 0);
+    f.seekg(0, f.end);
+    size_t flength = f.tellg();
+    if (flength < MFOOTERSIZE)
+    {
+        return false;
+    }
+    f.seekg(-MFOOTERSIZE, f.end);
+    f.read(buffer.data(), MFOOTERSIZE);
+    if (f)
+    {
+        const uint8_t endianness = static_cast<uint8_t>(buffer[52]);
+        if (endianness > 1)
+        {
+            return false;
+        }
+        bool IsBigEndian = (endianness == 1) ? true : false;
+
+        const int8_t fileType = static_cast<int8_t>(buffer[54]);
+        if (fileType != 0 && fileType != 2 && fileType != 3)
+        {
+            return false;
+        }
+        const int8_t BPVersion = static_cast<uint8_t>(buffer[55]);
+        if (BPVersion < 1 || BPVersion > 3)
+        {
+            return false;
+        }
+
+        size_t position = 0;
+        std::string VersionTag(buffer.data(), 28);
+        position = 28;
+
+        if (!IsBigEndian)
+        {
+            uint64_t PGIndexStart =
+                helper::ReadValue<uint64_t>(buffer, position, !IsBigEndian);
+            uint64_t VarsIndexStart =
+                helper::ReadValue<uint64_t>(buffer, position, !IsBigEndian);
+            uint64_t AttributesIndexStart =
+                helper::ReadValue<uint64_t>(buffer, position, !IsBigEndian);
+            if (PGIndexStart >= VarsIndexStart ||
+                VarsIndexStart >= AttributesIndexStart ||
+                AttributesIndexStart >= flength)
+            {
+                return false;
+            }
+        }
+
+        if (BPVersion < 3)
+        {
+            printf("ADIOS-BP Version %d\n", BPVersion);
+        }
+        else
+        {
+            uint8_t major = static_cast<uint8_t>(buffer[24]);
+            uint8_t minor = static_cast<uint8_t>(buffer[25]);
+            uint8_t patch = static_cast<uint8_t>(buffer[26]);
+            if (major > '0')
+            {
+                // ADIOS2 writes these as ASCII characters
+                major -= '0';
+                minor -= '0';
+                patch -= '0';
+            }
+
+            /* Cleanup ADIOS2 bug here: VersionTag is not filled with 0s */
+            int pos = 10;
+            while (VersionTag[pos] == '.' ||
+                   (VersionTag[pos] >= '0' && VersionTag[pos] <= '9'))
+            {
+                ++pos;
+            }
+            VersionTag[pos] = '\0';
+            printf("ADIOS-BP Version %d %s - ADIOS v%d.%d.%d\n", BPVersion,
+                   (IsBigEndian ? "Big Endian" : "Little Endian"), major, minor,
+                   patch);
+        }
+    }
+    return true;
+}
+
+bool introspectAsBPDir(const std::string &name) noexcept
+{
+    /* Must have name/md.0 */
+    const std::string MDName = name + PathSeparator + "md.0";
+    std::ifstream md(MDName, std::ifstream::in | std::ifstream::binary);
+    if (!md)
+    {
+        return false;
+    }
+    md.close();
+
+    /* Must have name/md.idx */
+    const std::string IdxName = name + PathSeparator + "md.idx";
+    std::ifstream f(IdxName, std::ifstream::in | std::ifstream::binary);
+    if (!f)
+    {
+        return false;
     }
 
-    printf("blps: ADIOS file introspection utility\n");
-    printf("\nBuild configuration:\n");
-    if (strlen(ADIOS_INFO_VER_GIT) > 0)
+    const size_t HEADERSIZE = 64;
+    std::vector<char> buffer(HEADERSIZE, 0);
+    f.seekg(0, f.end);
+    size_t flength = f.tellg();
+    if (flength >= HEADERSIZE)
     {
-        printf("ADIOS version: %s (%s)\n", ADIOS2_VERSION_STR,
-               ADIOS_INFO_VER_GIT);
+        f.seekg(0, f.beg);
+        f.read(buffer.data(), HEADERSIZE);
+    }
+    f.close();
+
+    if (flength == 0)
+    {
+        printf("This could be an active ADIOS BP output just opened but not "
+               "written "
+               "to yet\n");
+        return true;
+    }
+    else if (flength < HEADERSIZE)
+    {
+        return false;
+    }
+
+    std::string tag(buffer.data(), 9);
+    if (tag != "ADIOS-BP ")
+    {
+        return false;
+    }
+
+    char major = buffer[32];
+    char minor = buffer[33];
+    char patch = buffer[34];
+    bool isBigEndian = static_cast<bool>(buffer[36]);
+    uint8_t BPVersion = static_cast<uint8_t>(buffer[37]);
+    bool isActive = static_cast<bool>(buffer[38]);
+
+    printf("ADIOS-BP Version %d %s - ADIOS v%c.%c.%c %s\n", BPVersion,
+           (isBigEndian ? "Big Endian" : "Little Endian"), major, minor, patch,
+           (isActive ? "- active" : ""));
+
+    return true;
+}
+
+void introspect_file(const char *filename) noexcept
+{
+    if (adios2sys::SystemTools::FileIsDirectory(filename))
+    {
+        if (!introspectAsBPDir(filename))
+        {
+            printf("bpls does not recognize this directory as an ADIOS "
+                   "dataset\n");
+        }
     }
     else
     {
-        printf("ADIOS version: %s\n", ADIOS2_VERSION_STR);
+        int BPVersion = 0;
+        std::ifstream f(filename, std::ifstream::in | std::ifstream::binary);
+        if (f)
+        {
+            if (!introspectAsHDF5File(f, filename))
+            {
+                if (!introspectAsBPFile(f, filename))
+                {
+                    printf("bpls does not recognize this file\n");
+                }
+            }
+            f.close();
+        }
+        else
+        {
+            printf("File cannot be opened: %s\n", filename);
+        }
     }
-    if (strlen(ADIOS_INFO_COMPILER_WRAP) > 0)
-    {
-        printf("C++ Compiler:  %s %s (%s)\n", ADIOS_INFO_COMPILER_ID,
-               ADIOS_INFO_COMPILER_VER, ADIOS_INFO_COMPILER_WRAP);
-    }
-    else
-    {
-        printf("C++ Compiler:  %s %s\n", ADIOS_INFO_COMPILER_ID,
-               ADIOS_INFO_COMPILER_VER);
-    }
-    printf("Target OS:     %s\n", ADIOS_INFO_SYSTEM);
-    printf("Target Arch:   %s\n", ADIOS_INFO_ARCH);
-    option_help_was_called = true;
-    return 1;
 }
 
 int process_unused_args(adios2sys::CommandLineArguments &arg)
@@ -294,7 +490,8 @@ int process_unused_args(adios2sys::CommandLineArguments &arg)
     if (retry_args.size() > 1)
     {
         // Run a new parse on the -a single letter arguments
-        // fprintf(stderr, "Rerun parse on %zu options\n", retry_args.size());
+        // fprintf(stderr, "Rerun parse on %zu options\n",
+        // retry_args.size());
         arg.Initialize(static_cast<int>(retry_args.size()), retry_args.data());
         arg.StoreUnusedArguments(false);
         if (!arg.Parse())
@@ -309,6 +506,7 @@ int process_unused_args(adios2sys::CommandLineArguments &arg)
     }
     else
     {
+        return 0;
         delete[] retry_args[0];
     }
 
@@ -331,9 +529,6 @@ int bplsMain(int argc, char *argv[])
                     "Print information about what bpls is doing");
     arg.AddCallback("--help", argT::NO_ARGUMENT, optioncb_help, &arg, "Help");
     arg.AddCallback("-h", argT::NO_ARGUMENT, optioncb_help, &arg, "");
-    arg.AddCallback("--version", argT::NO_ARGUMENT, optioncb_version, &arg,
-                    "Print version information (add -verbose for additional"
-                    " information)");
     arg.AddBooleanArgument("--dump", &dump,
                            "Dump matched variables/attributes");
     arg.AddBooleanArgument("-d", &dump, "");
@@ -387,6 +582,11 @@ int bplsMain(int argc, char *argv[])
         "--decompose", &show_decomp,
         "| -D Show decomposition of variables as layed out in file");
     arg.AddBooleanArgument("-D", &show_decomp, "");
+    arg.AddBooleanArgument(
+        "--version", &show_version,
+        "Print version information (add -verbose for additional"
+        " information)");
+    arg.AddBooleanArgument("-V", &show_version, "");
 
     if (!arg.Parse())
     {
@@ -403,6 +603,19 @@ int bplsMain(int argc, char *argv[])
     }
     if (option_help_was_called)
         return 0;
+
+    if (show_version)
+    {
+        if (vfile == NULL)
+        {
+            print_bpls_version();
+        }
+        else
+        {
+            introspect_file(vfile);
+        }
+        return 0;
+    }
 
     /* Check if we have a file defined */
     if (vfile == NULL)
@@ -493,6 +706,7 @@ void init_globals()
     hidden_attrs_flag = 0;
     printByteAsChar = false;
     show_decomp = false;
+    show_version = false;
     for (i = 0; i < MAX_DIMS; i++)
     {
         istart[i] = 0LL;
@@ -555,7 +769,7 @@ void printSettings(void)
         printf("      -A : list attributes only\n");
     else if (listattrs)
         printf("      -a : list attributes too\n");
-    else if (listmeshes)
+    if (listmeshes)
         printf("      -m : list meshes too\n");
     if (dump)
         printf("      -d : dump matching variables and attributes\n");
@@ -567,6 +781,8 @@ void printSettings(void)
         printf("      -x : output data in XML format\n");
     if (show_decomp)
         printf("      -D : show decomposition of variables in the file\n");
+    if (show_version)
+        printf("      -V : show binary version info of file\n");
     if (hidden_attrs)
     {
         printf("         : show hidden attributes in the file\n");
@@ -1504,11 +1720,12 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     int i, j;
     uint64_t start_t[MAX_DIMS],
-        count_t[MAX_DIMS];             // processed <0 values in start/count
-    uint64_t s[MAX_DIMS], c[MAX_DIMS]; // for block reading of smaller chunks
-    int tdims;                         // number of dimensions including time
-    int tidx;                          // 0 or 1 to account for time dimension
-    uint64_t nelems;                   // number of elements to read
+        count_t[MAX_DIMS]; // processed <0 values in start/count
+    uint64_t s[MAX_DIMS],
+        c[MAX_DIMS]; // for block reading of smaller chunks
+    int tdims;       // number of dimensions including time
+    int tidx;        // 0 or 1 to account for time dimension
+    uint64_t nelems; // number of elements to read
     // size_t elemsize;                   // size in bytes of one element
     uint64_t stepStart, stepCount;
     std::vector<T> dataV;
@@ -1821,9 +2038,10 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
 {
     int i, j;
     uint64_t start_t[MAX_DIMS],
-        count_t[MAX_DIMS];             // processed <0 values in start/count
-    uint64_t s[MAX_DIMS], c[MAX_DIMS]; // for block reading of smaller chunks
-    uint64_t nelems;                   // number of elements to read
+        count_t[MAX_DIMS]; // processed <0 values in start/count
+    uint64_t s[MAX_DIMS],
+        c[MAX_DIMS]; // for block reading of smaller chunks
+    uint64_t nelems; // number of elements to read
     int tidx;
     uint64_t st, ct;
     std::vector<T> dataV;
@@ -2087,8 +2305,8 @@ bool matchesAMask(const char *name)
         {
 #ifdef USE_C_REGEX
             int excode = regexec(&(varregex[i]), name, 1, pmatch, 0);
-            if (name[0] == '/') // have to check if it matches from the second
-                                // character too
+            if (name[0] == '/') // have to check if it matches from the
+                                // second character too
                 startpos = 1;
             if (excode == 0 && // matches
                 (pmatch[0].rm_so == 0 ||
