@@ -253,7 +253,7 @@ if(NOT MSVC)    # not on windows
     endforeach()
 
     # add burst buffer tests
-    MutateTestSet( BP4_BBSTREAM_TESTS "BB" writer "BurstBufferPath=bb;BurstBufferVerbose=2" "${BP4_STREAM_TESTS}")
+    MutateTestSet( BP4_BBSTREAM_TESTS "BB" writer "BurstBufferPath=bb,BurstBufferVerbose=2" "${BP4_STREAM_TESTS}")
     foreach(test ${BP4_BBSTREAM_TESTS})
         add_common_test(${test} BP4_stream)
     endforeach()
