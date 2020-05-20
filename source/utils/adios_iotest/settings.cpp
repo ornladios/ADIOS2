@@ -24,12 +24,13 @@ struct option options[] = {{"help", no_argument, NULL, 'h'},
                            {"strong-scaling", no_argument, NULL, 's'},
                            {"weak-scaling", no_argument, NULL, 'w'},
                            {"timer", no_argument, NULL, 't'},
+                           {"fixed", no_argument, NULL, 'F'},
 #ifdef ADIOS2_HAVE_HDF5_PARALLEL
                            {"hdf5", no_argument, NULL, 'H'},
 #endif
                            {NULL, 0, NULL, 0}};
 
-static const char *optstring = "-hvswtHa:c:d:x:";
+static const char *optstring = "-hvswtFHa:c:d:x:";
 
 size_t Settings::ndigits(size_t n) const
 {
@@ -58,6 +59,7 @@ void Settings::displayHelp()
 #endif
         << "  -v         increase verbosity\n"
         << "  -h         display this help\n"
+        << "  -F         turn on fixed I/O pattern explicitly\n"
         << "  -t         print and dump the timing measured by the I/O "
            "timer\n\n";
 }
@@ -98,6 +100,9 @@ int Settings::processArgs(int argc, char *argv[])
             processDecomp[nDecomp] =
                 stringToNumber("decomposition in dimension 1", optarg);
             ++nDecomp;
+            break;
+        case 'F':
+            fixedPattern = true;
             break;
         case 'h':
             if (!myRank)
