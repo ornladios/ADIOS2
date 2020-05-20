@@ -123,8 +123,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        jobname: [ ]
+        jobname: [
+          package-debian-sid ]
         include:
+        - jobname: package-debian-sid
+          container: ornladios/adios2:ci-debian-sid
 
     steps:
     - uses: actions/checkout@v2
