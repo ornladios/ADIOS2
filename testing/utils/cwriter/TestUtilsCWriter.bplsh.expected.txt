@@ -39,7 +39,7 @@ Help options
   --help      | -h           Print this help.
   --verbose   | -v           Print log about what this program is doing.
                                Use multiple -v to increase logging level.
-  --version                  Print version information; compatible  with
+  --version   | -V           Print version information; compatible  with
                                --verbose for additional information, i.e.
                                -v --version.
 
