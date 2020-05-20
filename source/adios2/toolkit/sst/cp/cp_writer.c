@@ -28,28 +28,31 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
 static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata);
 
 #define gettid() pthread_self()
+#define MUTEX_DEBUG
 #ifdef MUTEX_DEBUG
 #define STREAM_MUTEX_LOCK(Stream)                                              \
-    printf("(PID %lx, TID %lx) CP_WRITER Trying lock line %d\n",               \
-           (long)getpid(), (long)gettid(), __LINE__);                          \
+    fprintf(stderr, "(PID %lx, TID %lx) CP_WRITER Trying lock line %d\n",      \
+            (long)getpid(), (long)gettid(), __LINE__);                         \
     pthread_mutex_lock(&Stream->DataLock);                                     \
     Stream->Locked++;                                                          \
-    printf("(PID %lx, TID %lx) CP_WRITER Got lock\n", (long)getpid(),          \
-           (long)gettid());
+    fprintf(stderr, "(PID %lx, TID %lx) CP_WRITER Got lock\n", (long)getpid(), \
+            (long)gettid());
 
 #define STREAM_MUTEX_UNLOCK(Stream)                                            \
-    printf("(PID %lx, TID %lx) CP_WRITER UNlocking line %d\n", (long)getpid(), \
-           (long)gettid(), __LINE__);                                          \
+    fprintf(stderr, "(PID %lx, TID %lx) CP_WRITER UNlocking line %d\n",        \
+            (long)getpid(), (long)gettid(), __LINE__);                         \
     Stream->Locked--;                                                          \
     pthread_mutex_unlock(&Stream->DataLock);
 #define STREAM_CONDITION_WAIT(Stream)                                          \
     {                                                                          \
-        printf(                                                                \
+        fprintf(                                                               \
+            stderr,                                                            \
             "(PID %lx, TID %lx) CP_WRITER Dropping Condition Lock line %d\n",  \
             (long)getpid(), (long)gettid(), __LINE__);                         \
         Stream->Locked = 0;                                                    \
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);          \
-        printf(                                                                \
+        fprintf(                                                               \
+            stderr,                                                            \
             "(PID %lx, TID %lx) CP_WRITER Acquired Condition Lock line %d\n",  \
             (long)getpid(), (long)gettid(), __LINE__);                         \
         Stream->Locked = 1;                                                    \
@@ -57,8 +60,9 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata);
 #define STREAM_CONDITION_SIGNAL(Stream)                                        \
     {                                                                          \
         assert(Stream->Locked == 1);                                           \
-        printf("(PID %lx, TID %lx) CP_WRITER Signalling Condition line %d\n",  \
-               (long)getpid(), (long)gettid(), __LINE__);                      \
+        fprintf(stderr,                                                        \
+                "(PID %lx, TID %lx) CP_WRITER Signalling Condition line %d\n", \
+                (long)getpid(), (long)gettid(), __LINE__);                     \
         pthread_cond_signal(&Stream->DataCondition);                           \
     }
 
@@ -1086,6 +1090,7 @@ static void DerefAllSentTimesteps(SstStream Stream, WS_ReaderInfo Reader)
 {
     CPTimestepList List = Stream->QueuedTimesteps;
 
+    STREAM_ASSERT_LOCKED(Stream);
     CP_verbose(Stream, "Dereferencing all timesteps sent to reader %p\n",
                Reader);
     while (List)
@@ -1420,6 +1425,9 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         return;
     }
 
+    CP_WSR_Stream->ReaderStatus = NewState;
+    STREAM_CONDITION_SIGNAL(ParentStream);
+
     if ((NewState == PeerClosed) || (NewState == Closed) ||
         (NewState == PeerFailed))
     {
@@ -1446,8 +1454,6 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     }
     CP_verbose(ParentStream, "Moving Reader stream %p to status %s\n",
                CP_WSR_Stream, SSTStreamStatusStr[NewState]);
-    CP_WSR_Stream->ReaderStatus = NewState;
-    STREAM_CONDITION_SIGNAL(ParentStream);
 
     QueueMaintenance(ParentStream);
 }
