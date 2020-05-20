@@ -112,3 +112,28 @@ jobs:
       run: scripts/ci/gh-actions/run.sh build
     - name: Test
       run: scripts/ci/gh-actions/run.sh test
+
+  debian_package:
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    env:
+      GH_YML_JOBNAME: ${{ matrix.jobname }}
+      GH_YML_OS: Linux
+
+    strategy:
+      fail-fast: false
+      matrix:
+        jobname: [ ]
+        include:
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        entrypoint: /usr/bin/sh -c
+    - name: Setup
+      run: scripts/ci/gh-actions/linux-setup.sh
+    - name: Prepare
+      run: scripts/ci/gh-actions/debian-package.sh prepare
+    - name: Build
+      run: scripts/ci/gh-actions/debian-package.sh build
