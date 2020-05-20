@@ -6,6 +6,7 @@ RUN apt-get update && \
         curl \
         python3-all \
         ca-certificates \
+        devscripts \
         git \
         cmake \
         ninja-build \
