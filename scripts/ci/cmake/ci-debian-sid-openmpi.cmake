@@ -1,5 +1,11 @@
 # Client maintainer: chuck.atkins@kitware.com
 
+execute_process(
+  COMMAND /usr/bin/dpkg-architecture -q DEB_HOST_GNU_TYPE
+  OUTPUT_VARIABLE arch
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 set(dashboard_cache "
 ADIOS2_USE_EXTERNAL_DEPENDENCIES:BOOL=ON
 ADIOS2_USE_EXTERNAL_EVPATH:BOOL=OFF
@@ -15,6 +21,9 @@ ADIOS2_USE_SST:BOOL=ON
 ADIOS2_USE_ZeroMQ:BOOL=ON
 ADIOS2_LIBRARY_SUFFIX:STRING=_openmpi
 ADIOS2_EXECUTABLE_SUFFIX:STRING=.openmpi
+CMAKE_INSTALL_PREFIX:STRING=/usr
+CMAKE_INSTALL_LIBDIR:STRING=lib/${arch}
+CMAKE_INSTALL_CMAKEDIR:STRING=lib/${arch}/cmake/adios/openmpi
 
 MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
 MPI_C_COMPILER:FILEPATH=/usr/bin/mpicc.openmpi
