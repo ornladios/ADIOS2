@@ -79,6 +79,10 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     while (true)
     {
+        if (EarlyExit && (t == NSteps))
+        {
+            break;
+        }
         ts = std::chrono::steady_clock::now();
         adios2::StepStatus status = engine.BeginStep();
         Seconds timeBeginStep = std::chrono::steady_clock::now() - ts;
