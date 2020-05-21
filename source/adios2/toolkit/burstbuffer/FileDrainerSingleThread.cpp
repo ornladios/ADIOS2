@@ -22,6 +22,11 @@
 #include "../../common/ADIOSTypes.h"
 
 /// \endcond
+#if defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#endif
+#endif
 
 namespace adios2
 {
@@ -69,9 +74,11 @@ void FileDrainerSingleThread::Join()
         timeTotal = tTotalEnd - tTotalStart;
         if (m_Verbose)
         {
+#ifndef NO_SANITIZE_THREAD
             std::cout << "Drain " << m_Rank
                       << ": Waited for thread to join = " << timeTotal.count()
                       << " seconds" << std::endl;
+#endif
         }
     }
 }
@@ -168,6 +175,7 @@ void FileDrainerSingleThread::DrainThread()
 
             if (m_Verbose >= 2)
             {
+#ifndef NO_SANITIZE_THREAD
                 std::cout << "Drain " << m_Rank << ": Copy from "
                           << fdo.fromFileName << " -> " << fdo.toFileName << " "
                           << fdo.countBytes << " bytes ";
@@ -181,6 +189,7 @@ void FileDrainerSingleThread::DrainThread()
                     std::cout << " -- Skip because of previous error";
                 }
                 std::cout << std::endl;
+#endif
             }
 
             if (Good(fdr) && Good(fdw))
@@ -222,8 +231,10 @@ void FileDrainerSingleThread::DrainThread()
         {
             if (m_Verbose >= 2)
             {
+#ifndef NO_SANITIZE_THREAD
                 std::cout << "Drain " << m_Rank << ": Seek to End of file "
                           << fdo.toFileName << std::endl;
+#endif
             }
             ts = std::chrono::steady_clock::now();
             auto fdw = GetFileForWrite(fdo.toFileName);
@@ -236,10 +247,12 @@ void FileDrainerSingleThread::DrainThread()
         {
             if (m_Verbose >= 2)
             {
+#ifndef NO_SANITIZE_THREAD
                 std::cout << "Drain " << m_Rank << ": Write to file "
                           << fdo.toFileName << " " << fdo.countBytes
                           << " bytes of data from memory to offset "
                           << fdo.toOffset << std::endl;
+#endif
             }
             nWriteBytesTasked += fdo.countBytes;
             ts = std::chrono::steady_clock::now();
@@ -256,10 +269,12 @@ void FileDrainerSingleThread::DrainThread()
         {
             if (m_Verbose >= 2)
             {
+#ifndef NO_SANITIZE_THREAD
                 std::cout << "Drain " << m_Rank << ": Write to file "
                           << fdo.toFileName << " " << fdo.countBytes
                           << " bytes of data from memory (no seek)"
                           << std::endl;
+#endif
             }
             nWriteBytesTasked += fdo.countBytes;
             ts = std::chrono::steady_clock::now();
@@ -275,8 +290,10 @@ void FileDrainerSingleThread::DrainThread()
         {
             if (m_Verbose >= 2)
             {
+#ifndef NO_SANITIZE_THREAD
                 std::cout << "Drain " << m_Rank << ": Create new file "
                           << fdo.toFileName << std::endl;
+#endif
             }
             ts = std::chrono::steady_clock::now();
             GetFileForWrite(fdo.toFileName, false);
@@ -288,8 +305,10 @@ void FileDrainerSingleThread::DrainThread()
         {
             if (m_Verbose >= 2)
             {
+#ifndef NO_SANITIZE_THREAD
                 std::cout << "Drain " << m_Rank << ": Open file "
                           << fdo.toFileName << " for append " << std::endl;
+#endif
             }
             ts = std::chrono::steady_clock::now();
             GetFileForWrite(fdo.toFileName, true);
@@ -301,8 +320,10 @@ void FileDrainerSingleThread::DrainThread()
         {
             if (m_Verbose >= 2)
             {
+#ifndef NO_SANITIZE_THREAD
                 std::cout << "Drain " << m_Rank << ": Delete file "
                           << fdo.toFileName << std::endl;
+#endif
             }
             ts = std::chrono::steady_clock::now();
             auto fdw = GetFileForWrite(fdo.toFileName, true);
@@ -322,8 +343,10 @@ void FileDrainerSingleThread::DrainThread()
 
     if (m_Verbose > 1)
     {
+#ifndef NO_SANITIZE_THREAD
         std::cout << "Drain " << m_Rank
                   << " finished operations. Closing all files" << std::endl;
+#endif
     }
 
     ts = std::chrono::steady_clock::now();
@@ -339,6 +362,7 @@ void FileDrainerSingleThread::DrainThread()
          (sleptForWaitingOnRead > 0.0));
     if (shouldReport)
     {
+#ifndef NO_SANITIZE_THREAD
         std::cout << "Drain " << m_Rank
                   << ": Runtime  total = " << timeTotal.count()
                   << " read = " << timeRead.count()
@@ -372,6 +396,7 @@ void FileDrainerSingleThread::DrainThread()
                       << " seconds for the data to arrive on disk.";
         }
         std::cout << std::endl;
+#endif
     }
 }
 
