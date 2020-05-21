@@ -108,7 +108,13 @@ Only file transport types are supported. Optional parameters for ``IO::AddTransp
 ============= ================= ================================================
  **Key**       **Value Format**  **Default** and Examples
 ============= ================= ================================================
- Library           string        **POSIX** (UNIX), **FStream** (Windows), stdio
+ Library           string        **POSIX** (UNIX), **FStream** (Windows), stdio, IME
 ============= ================= ================================================
 
-
+The IME transport directly reads and writes files stored on DDN's IME burst
+buffer using the IME native API. To use the IME transport, IME must be
+avaiable on the target system and ADIOS2 needs to be configured with
+``ADIOS2_USE_IME``. By default, data written to the IME is automatically
+flushed to the parallel filesystem at every ``EndStep()`` call. You can
+disable this automaic flush by setting the transport parameter ``SyncToPFS``
+to ``OFF``.
