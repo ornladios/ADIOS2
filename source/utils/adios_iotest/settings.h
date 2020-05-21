@@ -39,6 +39,7 @@ public:
     size_t appId = 0;
     bool isStrongScaling = true; // strong or weak scaling
     bool ioTimer = false;        // used to measure io time
+    bool fixedPattern = false;   // should Lock definitions?
     IOLib iolib = IOLib::ADIOS;
     //   process decomposition
     std::vector<size_t> processDecomp = {1, 1, 1, 1, 1, 1, 1, 1,
