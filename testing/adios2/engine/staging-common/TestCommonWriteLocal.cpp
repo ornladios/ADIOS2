@@ -6,8 +6,10 @@
 #include <cstring>
 #include <ctime>
 
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 
 #include <adios2.h>
 
@@ -167,6 +169,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
         engine.EndStep();
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+            DelayMS)); /* sleep for DelayMS milliseconds */
     }
 
     // Close the file
@@ -187,6 +191,8 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    DelayMS = 0; // zero for common writer
 
     ParseArgs(argc, argv);
 
