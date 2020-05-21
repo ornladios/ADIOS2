@@ -82,6 +82,7 @@ struct FFSReaderMarshalBase
     FFSVarRec VarList;
     FMContext LocalFMContext;
     FFSArrayRequest PendingVarRequests;
+    pthread_mutex_t FFSLock;
 
     void **MetadataBaseAddrs;
     FMFieldList *MetadataFieldLists;

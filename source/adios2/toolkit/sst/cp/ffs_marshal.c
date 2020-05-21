@@ -936,6 +936,7 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
     FFSformat = FFSTypeHandle_from_encode(Stream->ReaderFFSContext,
                                           WriterInfo->RawBuffer);
 
+    pthread_mutex_lock(&Info->FFSLock);
     if (!FFShas_conversion(FFSformat))
     {
         FMContext FMC = FMContext_from_FFS(Stream->ReaderFFSContext);
@@ -946,6 +947,7 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
         establish_conversion(Stream->ReaderFFSContext, FFSformat, List);
         FMfree_struct_list(List);
     }
+    pthread_mutex_unlock(&Info->FFSLock);
     if (FFSdecode_in_place_possible(FFSformat))
     {
         FFSdecode_in_place(Stream->ReaderFFSContext, WriterInfo->RawBuffer,
@@ -1666,6 +1668,7 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
 
 static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
 {
+    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
     static int DumpMetadata = -1;
     Stream->AttrSetupUpcall(Stream->SetupUpcallReader, NULL, NULL, NULL);
     for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize;
@@ -1682,6 +1685,7 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
         FFSformat = FFSTypeHandle_from_encode(
             Stream->ReaderFFSContext,
             MetaData->AttributeData[WriterRank].block);
+        pthread_mutex_lock(&Info->FFSLock);
         if (!FFShas_conversion(FFSformat))
         {
             FMContext FMC = FMContext_from_FFS(Stream->ReaderFFSContext);
@@ -1693,6 +1697,7 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
             establish_conversion(Stream->ReaderFFSContext, FFSformat, List);
             FMfree_struct_list(List);
         }
+        pthread_mutex_unlock(&Info->FFSLock);
 
         if (FFSdecode_in_place_possible(FFSformat))
         {
@@ -1846,6 +1851,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             calloc(sizeof(Info->DataBaseAddrs[0]), Stream->WriterCohortSize);
         Info->DataFieldLists =
             calloc(sizeof(Info->DataFieldLists[0]), Stream->WriterCohortSize);
+        pthread_mutex_init(&Info->FFSLock, NULL);
     }
 
     if (!MetaData->Metadata[WriterRank].block)
@@ -1858,6 +1864,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     FFSformat = FFSTypeHandle_from_encode(Stream->ReaderFFSContext,
                                           MetaData->Metadata[WriterRank].block);
 
+    pthread_mutex_lock(&Info->FFSLock);
     if (!FFShas_conversion(FFSformat))
     {
         FMContext FMC = FMContext_from_FFS(Stream->ReaderFFSContext);
@@ -1869,6 +1876,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
         establish_conversion(Stream->ReaderFFSContext, FFSformat, List);
         FMfree_struct_list(List);
     }
+    pthread_mutex_unlock(&Info->FFSLock);
 
     if (FFSdecode_in_place_possible(FFSformat))
     {
