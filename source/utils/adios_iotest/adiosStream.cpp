@@ -191,6 +191,19 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
     {
         getADIOSArray(ov);
     }
+
+    if (step == 1 && settings.fixedPattern)
+    {
+        if (!settings.myRank && settings.verbose)
+        {
+            std::cout
+                << "        Lock Reader Selections for Fixed Pattern before "
+                   "first EndStep"
+                << std::endl;
+        }
+        engine.LockWriterDefinitions();
+    }
+
     engine.EndStep();
     timeEnd = MPI_Wtime();
     if (settings.ioTimer)
@@ -303,6 +316,19 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
     {
         putADIOSArray(ov);
     }
+
+    if (step == 1 && settings.fixedPattern)
+    {
+        if (!settings.myRank && settings.verbose)
+        {
+            std::cout
+                << "        Lock Writer Definitions for Fixed Pattern before "
+                   "first EndStep"
+                << std::endl;
+        }
+        engine.LockWriterDefinitions();
+    }
+
     engine.EndStep();
     timeEnd = MPI_Wtime();
     if (settings.ioTimer)
