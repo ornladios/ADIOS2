@@ -1668,9 +1668,11 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
 
 static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
 {
-    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
     static int DumpMetadata = -1;
     Stream->AttrSetupUpcall(Stream->SetupUpcallReader, NULL, NULL, NULL);
+
+    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+
     for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize;
          WriterRank++)
     {
@@ -1836,23 +1838,6 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
      */
 
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
-    if (!Info)
-    {
-        Info = malloc(sizeof(*Info));
-        memset(Info, 0, sizeof(*Info));
-        Stream->ReaderMarshalData = Info;
-        Info->WriterInfo =
-            calloc(sizeof(Info->WriterInfo[0]), Stream->WriterCohortSize);
-        Info->MetadataBaseAddrs = calloc(sizeof(Info->MetadataBaseAddrs[0]),
-                                         Stream->WriterCohortSize);
-        Info->MetadataFieldLists = calloc(sizeof(Info->MetadataFieldLists[0]),
-                                          Stream->WriterCohortSize);
-        Info->DataBaseAddrs =
-            calloc(sizeof(Info->DataBaseAddrs[0]), Stream->WriterCohortSize);
-        Info->DataFieldLists =
-            calloc(sizeof(Info->DataFieldLists[0]), Stream->WriterCohortSize);
-        pthread_mutex_init(&Info->FFSLock, NULL);
-    }
 
     if (!MetaData->Metadata[WriterRank].block)
     {
@@ -2016,6 +2001,27 @@ extern void FFSMarshalInstallPreciousMetadata(SstStream Stream,
         FMContext Tmp = create_local_FMcontext();
         Stream->ReaderFFSContext = create_FFSContext_FM(Tmp);
         free_FMcontext(Tmp);
+    }
+
+
+    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    if (!Info)
+    {
+        Info = malloc(sizeof(*Info));
+        memset(Info, 0, sizeof(*Info));
+        Stream->ReaderMarshalData = Info;
+        Info->WriterInfo =
+            calloc(sizeof(Info->WriterInfo[0]), Stream->WriterCohortSize);
+        Info->MetadataBaseAddrs = calloc(sizeof(Info->MetadataBaseAddrs[0]),
+                                         Stream->WriterCohortSize);
+        Info->MetadataFieldLists = calloc(sizeof(Info->MetadataFieldLists[0]),
+                                          Stream->WriterCohortSize);
+        Info->DataBaseAddrs =
+            calloc(sizeof(Info->DataBaseAddrs[0]), Stream->WriterCohortSize);
+        Info->DataFieldLists =
+            calloc(sizeof(Info->DataFieldLists[0]), Stream->WriterCohortSize);
+        pthread_mutex_init(&Info->FFSLock, NULL);
+
     }
 
     LoadFormats(Stream, MetaData->Formats);
