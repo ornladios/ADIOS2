@@ -247,9 +247,17 @@ if(NOT MSVC)    # not on windows
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
     # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*NoData.BPS$")
+    
     foreach(test ${BP4_STREAM_TESTS})
         add_common_test(${test} BP4_stream)
     endforeach()
+
+    # add burst buffer tests
+    MutateTestSet( BP4_BBSTREAM_TESTS "BB" writer "BurstBufferPath=bb,BurstBufferVerbose=2" "${BP4_STREAM_TESTS}")
+    foreach(test ${BP4_BBSTREAM_TESTS})
+        add_common_test(${test} BP4_stream)
+    endforeach()
+    
 endif()
 
 #
