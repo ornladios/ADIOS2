@@ -35,6 +35,7 @@ int LockGeometry = 0;
 bool VaryingDataSize = false;
 int NoData = 0;
 int NoDataNode = -1;
+int EarlyExit = 0;
 
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
@@ -249,6 +250,10 @@ static void ParseArgs(int argc, char **argv)
                           << argv[1] << '\n';
             argv++;
             argc--;
+        }
+        else if (std::string(argv[1]) == "--early_exit")
+        {
+            EarlyExit++;
         }
         else
         {
