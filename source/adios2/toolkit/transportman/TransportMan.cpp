@@ -392,8 +392,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
 #ifdef ADIOS2_HAVE_IME
         else if (library == "IME" || library == "ime")
         {
-            transport =
-                std::make_shared<transport::FileIME>(m_Comm, m_DebugMode);
+            transport = std::make_shared<transport::FileIME>(m_Comm);
         }
 #endif
         else if (library == "NULL" || library == "null")

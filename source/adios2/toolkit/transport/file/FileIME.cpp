@@ -32,9 +32,12 @@ namespace transport
 
 std::atomic_uint FileIME::client_refcount = 0;
 
-FileIME::FileIME(helper::Comm const &comm, const bool debugMode)
-: Transport("File", "IME", comm, debugMode)
+FileIME::FileIME(helper::Comm const &comm) : Transport("File", "IME", comm)
 {
+    /** Initialize the IME client if there are no existing FileIME instances.
+     * We need to check if the IME client has been already initialized because
+     * initializing the IME multiple times leaves the client in a weired
+     * state. */
     if (!client_refcount)
     {
         ime_client_native2_init();
@@ -47,6 +50,8 @@ FileIME::~FileIME()
 {
     if (m_IsOpen)
     {
+        /** Trigger a flush from IME to PFS. Note that fsync needs to be
+         * called before bfs_sync. */
         if (m_SyncToPFS)
         {
             ime_client_native2_fsync(m_FileDescriptor);
@@ -57,15 +62,22 @@ FileIME::~FileIME()
 
     client_refcount--;
 
+    /** Finalize the IME client if there are no existing FileIME instances. */
     if (client_refcount)
     {
         ime_client_native2_finalize();
     }
 }
 
-void FileIME::Open(const std::string &name, const Mode openMode)
+/** Note that async mode is unsupported in FileIME. */
+void FileIME::Open(const std::string &name, const Mode openMode,
+                   const bool async)
 {
-    m_Name = "ime://";
+    /** DEFAULT_IME_FILE_PREFIX is "ime://" */
+    m_Name = DEFAULT_IME_FILE_PREFIX;
+
+    /** Convert relative path to absolute path. The IME API only supports
+     * absolute path. */
     if (name[0] != '/')
     {
         char tmp[PATH_MAX];
@@ -77,7 +89,6 @@ void FileIME::Open(const std::string &name, const Mode openMode)
     m_OpenMode = openMode;
     switch (m_OpenMode)
     {
-
     case (Mode::Write):
         ProfilerStart("open");
         m_FileDescriptor = ime_client_native2_open(
@@ -87,7 +98,6 @@ void FileIME::Open(const std::string &name, const Mode openMode)
 
     case (Mode::Append):
         ProfilerStart("open");
-        // m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
         m_FileDescriptor =
             ime_client_native2_open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
         lseek(m_FileDescriptor, 0, SEEK_END);
@@ -121,8 +131,8 @@ void FileIME::SetParameters(const Params &parameters)
 
         if (key == "synctopfs")
         {
-            m_SyncToPFS = helper::StringTo<bool>(value, m_DebugMode,
-                                                 " in Parameter key=SyncToPFS");
+            m_SyncToPFS =
+                helper::StringTo<bool>(value, " in Parameter key=SyncToPFS");
         }
     }
 }
@@ -285,6 +295,15 @@ void FileIME::Close()
     }
 
     m_IsOpen = false;
+}
+
+void FileIME::Delete()
+{
+    if (m_IsOpen)
+    {
+        Close();
+    }
+    ime_client_native2_unlink(m_Name.c_str());
 }
 
 void FileIME::CheckFile(const std::string hint) const

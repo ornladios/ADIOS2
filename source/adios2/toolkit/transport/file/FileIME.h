@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * FileDescriptor.h wrapper of POSIX library functions for file I/O
+ * FileIME.h file I/O using IME Native library
  *
- *  Created on: Oct 6, 2016
- *      Author: William F Godoy godoywf@ornl.gov
+ *  Created on: Dec 1, 2019
+ *      Author: Keichi Takahashi keichi@is.naist.jp
  */
 
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_IME_H_
@@ -30,11 +30,13 @@ class FileIME : public Transport
 {
 
 public:
-    FileIME(helper::Comm const &comm, const bool debugMode);
+    FileIME(helper::Comm const &comm);
 
     ~FileIME();
 
-    void Open(const std::string &name, const Mode openMode) final;
+    /** Async option is ignored in FileIME transport */
+    void Open(const std::string &name, const Mode openMode,
+              const bool async = false) final;
 
     void SetParameters(const Params &parameters) final;
 
@@ -44,10 +46,12 @@ public:
 
     size_t GetSize() final;
 
-    /** Does nothing, each write is supposed to flush */
+    /** Triggers a flush from IME to PFS if SyncToPFS=ON */
     void Flush() final;
 
     void Close() final;
+
+    void Delete() final;
 
     void SeekToEnd() final;
 
@@ -63,7 +67,8 @@ private:
      */
     void CheckFile(const std::string hint) const;
 
-    /** Number of existing FileIME instances */
+    /** Number of existing FileIME instances. We use atomic type for thread
+     * safety but it is unclear if the IME client itself is thread safe. */
     static std::atomic_uint client_refcount;
 
     bool m_SyncToPFS = true;
