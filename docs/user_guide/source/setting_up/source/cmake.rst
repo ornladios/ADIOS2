@@ -99,6 +99,7 @@ VAR                            VALUE                     Description
 ``ADIOS2_USE_PNG``             **ON**/OFF      `PNG <https://libpng.org>`_ compression (experimental).
 ``ADIOS2_USE_Blosc``           **ON**/OFF      `Blosc <http://blosc.org/>`_ compression (experimental).
 ``ADIOS2_USE_Endian_Reverse``  ON/**OFF**      Enable endian conversion if a different endianness is detected between write and read.
+``ADIOS2_USE_IME``             ON/**OFF**      DDN IME transport.
 ============================= ================ ==========================================================================================================================================================================================================================
 
 In addition to the ``ADIOS2_USE_Feature`` options, the following options are also available to control how the library gets built:

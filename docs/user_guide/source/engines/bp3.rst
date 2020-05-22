@@ -75,7 +75,7 @@ Only file transport types are supported. Optional parameters for ``IO::AddTransp
 ============= ================= ================================================
  **Key**       **Value Format**  **Default** and Examples
 ============= ================= ================================================
- Library           string        **POSIX** (UNIX), **FStream** (Windows), stdio
+ Library           string        **POSIX** (UNIX), **FStream** (Windows), stdio, IME
 ============= ================= ================================================
 
 
