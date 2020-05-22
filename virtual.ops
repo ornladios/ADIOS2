@@ -54,7 +54,15 @@ print VMOUT "int emulate_storei(int code, struct reg_type *dest, struct reg_type
 print VMOUT "{\n    switch(code) {\n$vm_storei_code    }return 0;\n}\n";
 
 print COUT "DECLARE_JUMP_TABLE(${mach});\n";
-print COUT "extern void dill_virtual_init(dill_stream s)\n{\n";
+print COUT "#ifdef __has_feature\n";
+print COUT "#if __has_feature(thread_sanitizer)\n";
+print COUT "#define NO_SANITIZE_THREAD __attribute__((no_sanitize(\"thread\")))\n";
+print COUT "#endif\n";
+print COUT "#endif\n";
+print COUT "#ifndef NO_SANITIZE_THREAD\n";
+print COUT "#define NO_SANITIZE_THREAD\n";
+print COUT "#endif\n";
+print COUT "extern void NO_SANITIZE_THREAD dill_virtual_init(dill_stream s)\n{\n";
 print COUT "\t  FILL_JUMP_STRUCTURE(virtual);\n";
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
