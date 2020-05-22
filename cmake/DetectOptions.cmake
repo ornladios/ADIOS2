@@ -224,6 +224,17 @@ elseif(ADIOS2_USE_HDF5)
   set(ADIOS2_HAVE_HDF5 TRUE)
 endif()
 
+# IME
+if(ADIOS2_USE_IME STREQUAL AUTO)
+  find_package(IME)
+elseif(ADIOS2_USE_IME)
+  find_package(IME REQUIRED)
+endif()
+if(IME_FOUND)
+  set(ADIOS2_HAVE_IME TRUE)
+endif()
+
+
 # Python
 
 # Not supported on PGI

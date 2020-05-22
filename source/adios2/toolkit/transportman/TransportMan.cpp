@@ -19,6 +19,9 @@
 #ifndef _WIN32
 #include "adios2/toolkit/transport/file/FilePOSIX.h"
 #endif
+#ifdef ADIOS2_HAVE_IME
+#include "adios2/toolkit/transport/file/FileIME.h"
+#endif
 
 #ifdef _WIN32
 #pragma warning(disable : 4503) // length of std::function inside std::async
@@ -386,6 +389,12 @@ TransportMan::OpenFileTransport(const std::string &fileName,
             }
         }
 #endif
+#ifdef ADIOS2_HAVE_IME
+        else if (library == "IME" || library == "ime")
+        {
+            transport = std::make_shared<transport::FileIME>(m_Comm);
+        }
+#endif
         else if (library == "NULL" || library == "null")
         {
             transport = std::make_shared<transport::NullTransport>(m_Comm);
@@ -438,6 +447,8 @@ TransportMan::OpenFileTransport(const std::string &fileName,
         transport->InitProfiler(openMode,
                                 lf_GetTimeUnits(DefaultTimeUnit, parameters));
     }
+
+    transport->SetParameters(parameters);
 
     // open
     transport->Open(fileName, openMode, lf_GetAsync("false", parameters));
