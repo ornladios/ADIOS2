@@ -40,6 +40,9 @@
 #if __has_feature(thread_sanitizer)
 #define NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
 #endif
+#if __has_feature(address_sanitizer)
+#define ADDRESS_SANITIZER_ACTIVE
+#endif
 #endif
 
 #ifndef NO_SANITIZE_THREAD
@@ -2084,6 +2087,9 @@ static void NO_SANITIZE_THREAD read_generation_environment_variables(void)
 	    }
 	}
 	_ffs_conversion_generation = tmp;
+#ifdef ADDRESS_SANITIZER_ACTIVE
+	_ffs_conversion_generation = 0;
+#endif
     }
     if (_debug_code_generation == -1)
 	_debug_code_generation =

@@ -2003,7 +2003,6 @@ extern void FFSMarshalInstallPreciousMetadata(SstStream Stream,
         free_FMcontext(Tmp);
     }
 
-
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
     if (!Info)
     {
@@ -2021,7 +2020,6 @@ extern void FFSMarshalInstallPreciousMetadata(SstStream Stream,
         Info->DataFieldLists =
             calloc(sizeof(Info->DataFieldLists[0]), Stream->WriterCohortSize);
         pthread_mutex_init(&Info->FFSLock, NULL);
-
     }
 
     LoadFormats(Stream, MetaData->Formats);
