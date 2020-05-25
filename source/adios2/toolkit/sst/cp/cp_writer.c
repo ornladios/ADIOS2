@@ -506,6 +506,7 @@ static void SendPeerSetupMsg(WS_ReaderInfo reader, int reversePeer, int myRank)
     CMConnection conn = reader->Connections[reversePeer].CMconn;
     SstStream Stream = reader->ParentStream;
     struct _PeerSetupMsg setup;
+    memset(&setup, 0, sizeof(setup));
     setup.RS_Stream = reader->Connections[reversePeer].RemoteStreamID;
     setup.WriterRank = myRank;
     setup.WriterCohortSize = Stream->CohortSize;
@@ -1824,6 +1825,7 @@ static void ActOnTSLockStatus(SstStream Stream, long Timestep)
             (Stream->Readers[i]->CommPatternLockTimestep == -1))
         {
             struct _CommPatternLockedMsg Msg;
+            memset(&Msg, 0, sizeof(Msg));
             Stream->Readers[i]->CommPatternLockTimestep = Timestep;
             if (Stream->DP_Interface->WSRreadPatternLocked)
             {
