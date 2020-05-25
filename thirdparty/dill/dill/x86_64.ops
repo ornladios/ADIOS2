@@ -47,7 +47,15 @@ sub upperc {
 &comparei_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "x86_64_comparei");
 
 print COUT "DECLARE_JUMP_TABLE(${mach});\n";
-print COUT "extern void dill_x86_64_init(dill_stream s)\n{\n";
+print COUT "#ifdef __has_feature\n";
+print COUT "#if __has_feature(thread_sanitizer)\n";
+print COUT "#define NO_SANITIZE_THREAD __attribute__((no_sanitize(\"thread\")))\n";
+print COUT "#endif\n";
+print COUT "#endif\n";
+print COUT "#ifndef NO_SANITIZE_THREAD\n";
+print COUT "#define NO_SANITIZE_THREAD\n";
+print COUT "#endif\n";
+print COUT "extern void NO_SANITIZE_THREAD dill_x86_64_init(dill_stream s)\n{\n";
 print COUT "\t  FILL_JUMP_STRUCTURE(x86_64);\n";
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
