@@ -1,0 +1,31 @@
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  ci:
+    runs-on: ${{ matrix.os-image }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os-image: [ubuntu-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Setup
+      run: ci/gh-actions/setup.sh
+    - name: Configure
+      run: ci/gh-actions/run.sh configure
+    - name: Build
+      run: ci/gh-actions/run.sh build
+    - name: Test
+      run: ci/gh-actions/run.sh test
+    - name: Install
+      run: ci/gh-actions/run.sh install
