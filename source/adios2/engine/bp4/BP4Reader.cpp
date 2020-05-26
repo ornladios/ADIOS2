@@ -557,7 +557,25 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
         }
         if (!CheckWriterActive())
         {
+            /* Race condition: When checking data in UpdateBuffer, new step(s)
+             * may have not arrived yet. When checking active flag, the writer
+             * may have completed write and terminated. So we may have missed a
+             * step or two. */
+            newIdxSize = UpdateBuffer(timeoutInstant, pollSeconds / 10);
+#ifndef NDEBUG
+            /* TODO: remove this after seeing in CI that this is the cause of
+             * failures */
+            if (newIdxSize > 0)
+            {
+                std::cout << "**** ADIOS2:BP4Reader::CheckForNewSteps race "
+                             "condition handled, found "
+                          << newIdxSize
+                          << " bytes of index after writer has finished ****"
+                          << std::endl;
+                newIdxSize = 0; // Make the CI tests fail for now
+            }
             break;
+#endif
         }
         std::this_thread::sleep_for(pollSeconds);
         if (std::chrono::steady_clock::now() >= timeoutInstant)
