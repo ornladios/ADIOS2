@@ -557,6 +557,11 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
         }
         if (!CheckWriterActive())
         {
+            /* Race condition: When checking data in UpdateBuffer, new step(s)
+             * may have not arrived yet. When checking active flag, the writer
+             * may have completed write and terminated. So we may have missed a
+             * step or two. */
+            newIdxSize = UpdateBuffer(timeoutInstant, pollSeconds / 10);
             break;
         }
         std::this_thread::sleep_for(pollSeconds);
