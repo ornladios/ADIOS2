@@ -760,10 +760,9 @@ void NO_SANITIZE_THREAD SstReaderInitFFSCallback(
     Stream->SetupUpcallReader = Reader;
 }
 
-extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
-                              const char *Name, size_t DimCount,
-                              const size_t *Start, const size_t *Count,
-                              void *Data)
+extern int SstFFSGetDeferred(SstStream Stream, void *Variable, const char *Name,
+                             size_t DimCount, const size_t *Start,
+                             const size_t *Count, void *Data)
 {
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
     int GetFromWriter = 0;
@@ -778,6 +777,7 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
             Var->PerWriterMetaFieldDesc[GetFromWriter]->field_offset;
         memcpy(Data, IncomingDataBase,
                Var->PerWriterMetaFieldDesc[GetFromWriter]->field_size);
+        return 0; // No Sync needed
     }
     else
     {
@@ -793,13 +793,14 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
         Req->Data = Data;
         Req->Next = Info->PendingVarRequests;
         Info->PendingVarRequests = Req;
+        return 1; // Later Sync needed
     }
 }
 
-extern void SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
-                                   const char *Name, size_t DimCount,
-                                   const int BlockID, const size_t *Count,
-                                   void *Data)
+extern int SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
+                                  const char *Name, size_t DimCount,
+                                  const int BlockID, const size_t *Count,
+                                  void *Data)
 {
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
     int GetFromWriter = 0;
@@ -814,6 +815,7 @@ extern void SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
             Var->PerWriterMetaFieldDesc[GetFromWriter]->field_offset;
         memcpy(Data, IncomingDataBase,
                Var->PerWriterMetaFieldDesc[GetFromWriter]->field_size);
+        return 0; // No Sync needed
     }
     else
     {
@@ -829,6 +831,7 @@ extern void SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
         Req->Data = Data;
         Req->Next = Info->PendingVarRequests;
         Info->PendingVarRequests = Req;
+        return 1; // Later Sync needed
     }
 }
 
