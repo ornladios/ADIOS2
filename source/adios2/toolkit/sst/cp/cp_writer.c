@@ -69,6 +69,11 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata);
     {                                                                          \
         assert(Stream->Locked == 1);                                           \
     }
+#define STREAM_ASSERT_UNLOCKED(Stream)                                         \
+    {                                                                          \
+        STREAM_MUTEX_LOCK(Stream);                                             \
+        STREAM_MUTEX_UNLOCK(Stream);                                           \
+    }
 #else
 #define STREAM_MUTEX_LOCK(Stream)                                              \
     {                                                                          \
@@ -87,6 +92,7 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata);
         pthread_cond_signal(&Stream->DataCondition);                           \
     }
 #define STREAM_ASSERT_LOCKED(Stream)
+#define STREAM_ASSERT_UNLOCKED(Stream)
 #endif
 
 static char *buildContactInfo(SstStream Stream, attr_list DPAttrs)
@@ -510,8 +516,7 @@ static void SendPeerSetupMsg(WS_ReaderInfo reader, int reversePeer, int myRank)
     setup.RS_Stream = reader->Connections[reversePeer].RemoteStreamID;
     setup.WriterRank = myRank;
     setup.WriterCohortSize = Stream->CohortSize;
-    STREAM_MUTEX_LOCK(Stream);
-    STREAM_MUTEX_UNLOCK(Stream);
+    STREAM_ASSERT_UNLOCKED(Stream);
     if (CMwrite(conn, Stream->CPInfo->PeerSetupFormat, &setup) != 1)
     {
         CP_verbose(Stream,
@@ -942,8 +947,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
                 (struct _CP_WriterInitInfo *)pointers[i]->CP_Info;
             response.DP_WriterInfo[i] = pointers[i]->DP_Info;
         }
-        STREAM_MUTEX_LOCK(Stream);
-        STREAM_MUTEX_UNLOCK(Stream);
+        STREAM_ASSERT_UNLOCKED(Stream);
         if (CMwrite(conn, Stream->CPInfo->WriterResponseFormat, &response) != 1)
         {
             CP_verbose(
@@ -986,11 +990,19 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
             CP_verbose(Stream, "Sending a message to reader %d (%p)\n", peer,
                        *RS_StreamPtr);
 
-            if ((!conn) || (CMwrite(conn, f, Msg) != 1))
+            if (conn)
             {
-                CP_verbose(Stream, "Message failed to send to reader %d (%p)\n",
-                           peer, *RS_StreamPtr);
-                CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
+                int res;
+                STREAM_MUTEX_UNLOCK(Stream);
+                res = CMwrite(conn, f, Msg);
+                STREAM_MUTEX_LOCK(Stream);
+                if (res != 1)
+                {
+                    CP_verbose(Stream,
+                               "Message failed to send to reader %d (%p)\n",
+                               peer, *RS_StreamPtr);
+                    CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
+                }
             }
             j++;
         }
@@ -1007,11 +1019,20 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
             *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
             CP_verbose(Stream, "Sending a message to reader %d (%p)\n", peer,
                        *RS_StreamPtr);
-            if ((!conn) || (CMwrite(conn, f, Msg) != 1))
+
+            if (conn)
             {
-                CP_verbose(Stream, "Message failed to send to reader %d (%p)\n",
-                           peer, *RS_StreamPtr);
-                CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
+                int res;
+                STREAM_MUTEX_UNLOCK(Stream);
+                res = CMwrite(conn, f, Msg);
+                STREAM_MUTEX_LOCK(Stream);
+                if (res != 1)
+                {
+                    CP_verbose(Stream,
+                               "Message failed to send to reader %d (%p)\n",
+                               peer, *RS_StreamPtr);
+                    CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
+                }
             }
         }
     }
@@ -1145,9 +1166,10 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
 
         Entry->Msg->PreloadMode = PMode;
         STREAM_MUTEX_LOCK(Stream);
-        sendOneToWSRCohort(CP_WSR_Stream,
-                           Stream->CPInfo->DeliverTimestepMetadataFormat,
-                           Entry->Msg, &Entry->Msg->RS_Stream);
+        if (CP_WSR_Stream->ReaderStatus == Established)
+            sendOneToWSRCohort(CP_WSR_Stream,
+                               Stream->CPInfo->DeliverTimestepMetadataFormat,
+                               Entry->Msg, &Entry->Msg->RS_Stream);
     }
 }
 
