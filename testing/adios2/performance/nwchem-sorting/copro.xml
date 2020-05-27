@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<adios-config>
+
+
+    <!--===========================================
+           Configuration for trj_dump_out output group
+        ==========================================-->
+
+    <io name="trj_dump_out">
+        <engine type="BP4">
+            <!--<parameter key="DataTransport" value="WAN"/>-->
+	    <parameter key="OpenTimeOutSecs" value="30.0"/>
+        </engine>
+    </io>
+
+
+    <!--=================================================
+           Configuration for trj_dump_in group
+           It should match the trj_dump_out output group
+        =================================================-->
+    
+    <io name="trj_dump_in">
+        <engine type="BP4">
+            <!--<parameter key="DataTransport" value="WAN"/>-->
+            <parameter key="OpenTimeOutSecs" value="30.0"/>
+        </engine>
+    </io>
+
+    <!--=========================================
+           Configuration for trj_out group
+        =========================================-->
+    
+    <io name="trj_out">
+        <engine type="File">
+        </engine>
+    </io>
+
+    <!-- example engines 
+
+        <engine type="File"/>
+        <engine type="FileStream"/>
+        <engine type="SSC"/>
+        <engine type="SST"/>
+        <engine type="HDF5"/>
+
+     -->
+
+</adios-config>
+

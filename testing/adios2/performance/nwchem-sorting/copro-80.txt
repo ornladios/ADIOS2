@@ -1,0 +1,55 @@
+# ADIOS2 IOTEST for NWChem + sorting trajectory for the copro dataset 
+# NWCHEM - MEDIUM
+# # of solute atoms: 4684
+# # of solvent molecules: 31850
+#
+# NWCHEM sizes for running: 9, 14, 20, 26, 44, 80, 116, 224
+# Sorter sizes for running: any number
+
+# Set up for weak scaling, M proc will write Mx3x6511 array of solute/coords
+group  trj_dump_out
+  # item  type    varname           N   [dim1 dim2 ... dimN     decomp1 decomp2 ... decompN]
+  array   double  solute/coords     3    1    3      6511       XYZ     1      1
+  array   double  solute/indices    2    1    6511              XYZ     1
+  array   double  solute/nsan       1    1                      XYZ 
+  array   double  solvent/coords    4    1    3      3   2171   XYZ     1      1      1
+  array   double  solvent/indices   2    1    2171              XYZ     1      
+  array   double  solvent/nwmn      1    1                      XYZ 
+
+# Set up read for strong scaling: 
+#  set 1st dim to M if task 1 is/was running on M processors to ensure reading all data
+group  trj_dump_in
+  # item  type    varname           N   [dim1 dim2 ... dimN     decomp1 decomp2 ... decompN]
+  array   double  solute/coords     3    80    3      6511       XYZ     1      1
+  array   double  solute/indices    2    80    6511              XYZ     1
+  array   double  solute/nsan       1    80                      XYZ 
+  array   double  solvent/coords    4    80    3      3   2171   XYZ     1      1      1
+  array   double  solvent/indices   2    80    2171              XYZ     1      
+  array   double  solvent/nwmn      1    80                      XYZ 
+
+# Set up for strong scaling. This is the copro trajectory size.
+group  trj_out
+  # item  type    varname           N   [dim1 dim2 ... dimN     decomp1 decomp2 ... decompN]
+  array   double  solute/coords     2    4686    3              XYZ     1      1
+  array   double  solvent/coords    3    31850   3    3         XYZ     1      1
+
+
+
+# Task 1 actions (nwchem)
+app 1
+  steps   75
+  sleep   0.25
+  # write all of trj_dump_out into copro_md_trj_dump.bp
+  write   copro_md_trj_dump.bp    trj_dump_out
+
+# Task 2 actions (nwchem-sort-trajectory-global)
+app 2
+  steps   over copro_md_trj_dump.bp   
+  # read all from copro_md_trj_dump.bp using trj_dump_in definition with blocking wait
+  read  next  copro_md_trj_dump.bp    trj_dump_in  -1  
+
+  # Sleep and write only if read was successful:
+  cond copro_md_trj_dump.bp   sleep   0.1
+  # write trj_out into copro_md_trj.bp
+  cond copro_md_trj_dump.bp   write   copro_md_trj.bp    trj_out  
+
