@@ -1,0 +1,12 @@
+Index: src/bindings/Python/CMakeLists.txt
+===================================================================
+--- src.orig/bindings/Python/CMakeLists.txt
++++ src/bindings/Python/CMakeLists.txt
+@@ -57,7 +57,3 @@ install(TARGETS adios2_py
+   DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2
+   COMPONENT adios2_python-python
+ )
+-install(FILES ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/__init__.py
+-  DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2
+-  COMPONENT adios2_python-python
+-)

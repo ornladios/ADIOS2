@@ -1,0 +1,140 @@
+#!/usr/bin/make -f
+
+get-orig-source:
+	wget -O ../adios2_$(DEBIAN_VERSION).orig.tar.gz --no-clobber https://github.com/ornladios/ADIOS2/archive/$(GIT_VERSION).tar.gz
+	mkdir tmp
+	tar -C tmp --strip-components=1 -xf ../adios2_$(DEBIAN_VERSION).orig.tar.gz
+	cd tmp && rm -r \
+	  thirdparty/atl \
+	  thirdparty/dill \
+	  thirdparty/enet \
+	  thirdparty/EVPath \
+	  thirdparty/ffs \
+	  thirdparty/GTest \
+	  thirdparty/mingw-w64 \
+	  thirdparty/nlohmann_json \
+	  thirdparty/pugixml \
+	  thirdparty/pybind11 \
+	  thirdparty/yaml-cpp
+	tar --owner=root --group=root --transform="s/^tmp/adios2_$(DEBIAN_VERSION)+dfsg1/" -cJf ../adios2_$(DEBIAN_VERSION)+dfsg1.orig.tar.xz tmp
+	rm -r tmp
+
+flavors := serial openmpi
+
+%:
+	dh $@ --buildsystem=cmake+ninja
+
+configure_flags_common := \
+  -DADIOS2_USE_EXTERNAL_DEPENDENCIES:BOOL=ON \
+  -DADIOS2_USE_EXTERNAL_EVPATH:BOOL=ON \
+  -DADIOS2_USE_BZip2:BOOL=ON \
+  -DADIOS2_USE_Blosc:BOOL=ON \
+  -DADIOS2_USE_Fortran:BOOL=ON \
+  -DADIOS2_USE_HDF5:BOOL=ON \
+  -DADIOS2_USE_PNG:BOOL=ON \
+  -DADIOS2_USE_SST:BOOL=ON \
+  -DADIOS2_USE_ZeroMQ:BOOL=ON
+
+configure_flags_serial := $(configure_flags_common) \
+  -DCMAKE_INSTALL_CMAKEDIR:STRING=lib/$(DEB_HOST_GNU_TYPE)/cmake/adios2/serial \
+  -DADIOS2_LIBRARY_SUFFIX:STRING=_serial \
+  -DADIOS2_EXECUTABLE_SUFFIX:STRING=.serial \
+  -DADIOS2_USE_Python:BOOL=ON \
+  -DADIOS2_USE_MPI:BOOL=OFF \
+  -DHDF5_C_COMPILER_EXECUTABLE:FILEPATH=/usr/bin/h5cc
+
+configure_flags_openmpi := $(configure_flags_common) \
+  -DCMAKE_INSTALL_CMAKEDIR:STRING=lib/$(DEB_HOST_GNU_TYPE)/cmake/adios2/openmpi \
+  -DADIOS2_LIBRARY_SUFFIX:STRING=_openmpi \
+  -DADIOS2_EXECUTABLE_SUFFIX:STRING=.openmpi \
+  -DADIOS2_USE_Python:BOOL=ON \
+  -DADIOS2_USE_MPI:BOOL=ON \
+  -DADIOS2_USE_SSC:BOOL=ON \
+  -DMPI_C_COMPILER:FILEPATH=/usr/bin/mpicc.openmpi \
+  -DMPI_CXX_COMPILER:FILEPATH=/usr/bin/mpic++.openmpi \
+  -DMPI_Fortran_COMPILER:FILEPATH=/usr/bin/mpif77.openmpi \
+  -DHDF5_C_COMPILER_EXECUTABLE:FILEPATH=/usr/bin/h5pcc.openmpi
+
+override_dh_auto_clean:
+	dh_clean $(foreach flavor,$(flavors),build-$(flavor)/ install-$(flavor)/)
+
+start_%: flavor = $(patsubst start_%,%,$@)
+start_%:
+	dh_ctest_start --ctest-testing-dir=build-$(flavor) --builddirectory=build-$(flavor) --ctest-build-suffix=-$(flavor)
+
+override_dh_ctest_start: $(foreach flavor,$(flavors),start_$(flavor))
+
+update_%: flavor = $(patsubst update_%,%,$@)
+update_%:
+	dh_ctest_update --ctest-testing-dir=build-$(flavor) --builddirectory=build-$(flavor) --ctest-build-suffix=-$(flavor)
+
+override_dh_ctest_update: $(foreach flavor,$(flavors),update_$(flavor))
+
+configure_%: flavor = $(patsubst configure_%,%,$@)
+configure_%:
+	dh_ctest_configure -O--ctest-testing-dir=build-$(flavor) --builddirectory=build-$(flavor) -O--ctest-build-suffix=-$(flavor) -O--buildsystem=cmake+ninja -- $(configure_flags_$(flavor))
+
+override_dh_ctest_configure: $(foreach flavor,$(flavors),configure_$(flavor))
+
+build_%: flavor = $(patsubst build_%,%,$@)
+build_%:
+	dh_ctest_build -O--ctest-testing-dir=build-$(flavor) --builddirectory=build-$(flavor) -O--ctest-build-suffix=-$(flavor) -O--buildsystem=cmake+ninja
+
+override_dh_ctest_build: $(foreach flavor,$(flavors),build_$(flavor))
+
+test_%: flavor = $(patsubst test_%,%,$@)
+test_%:
+	dh_ctest_test --ctest-testing-dir=build-$(flavor) --builddirectory=build-$(flavor) --ctest-build-suffix=-$(flavor) -- -R '^Install\.'
+
+override_dh_ctest_test: $(foreach flavor,$(flavors),test_$(flavor))
+
+submit_%: flavor = $(patsubst submit_%,%,$@)
+submit_%:
+	dh_ctest_submit --ctest-testing-dir=build-$(flavor) --builddirectory=build-$(flavor) --ctest-build-suffix=-$(flavor)
+
+override_dh_ctest_submit: $(foreach flavor,$(flavors),submit_$(flavor))
+
+install_%: flavor = $(patsubst install_%,%,$@)
+install_%:
+	dh_auto_install --buildsystem=cmake+ninja --builddirectory=build-$(flavor) --destdir=install-$(flavor)
+	dh_install --sourcedir=install-$(flavor) --package libadios2-$(flavor)-core-dev usr/bin/adios2-config.$(flavor)
+
+override_dh_auto_install: $(foreach flavor,$(flavors),install_$(flavor))
+
+cmake_install_%: flavor = $(patsubst cmake_install_%,%,$@)
+cmake_install_%: cmdbase = dh_cmake_install --builddirectory=build-$(flavor) --sourcedir=install-$(flavor)
+cmake_install_%:
+	$(cmdbase) --package adios2-$(flavor)-bin            --component adios2_tools-runtime
+	$(cmdbase) --package libadios2-$(flavor)-core        --component adios2_core-libraries
+	$(cmdbase) --package libadios2-$(flavor)-core-dev    --component adios2_core-development
+	$(cmdbase) --package libadios2-$(flavor)-c           --component adios2_c-libraries
+	$(cmdbase) --package libadios2-$(flavor)-c-dev       --component adios2_c-development
+	$(cmdbase) --package libadios2-$(flavor)-c++11       --component adios2_cxx11-libraries
+	$(cmdbase) --package libadios2-$(flavor)-c++11-dev   --component adios2_cxx11-development
+	$(cmdbase) --package libadios2-$(flavor)-fortran     --component adios2_fortran-libraries
+	$(cmdbase) --package libadios2-$(flavor)-fortran-dev --component adios2_fortran-development
+
+cmake_install_serial_extra: cmdbase = dh_cmake_install --builddirectory=build-serial --sourcedir=install-serial
+cmake_install_serial_extra:
+	$(cmdbase) --package python3-adios2-serial           --component adios2_python-python
+
+cmake_install_openmpi_extra: cmdbase = dh_cmake_install --builddirectory=build-openmpi --sourcedir=install-openmpi
+cmake_install_openmpi_extra:
+	$(cmdbase) --package python3-adios2-openmpi          --component adios2_python-python
+	$(cmdbase) --package adios2-data                     --component adios2_tools-data
+
+override_dh_cmake_install: cmdbase = dh_cmake_install --builddirectory=build-serial --sourcedir=install-serial
+override_dh_cmake_install: $(foreach flavor,$(flavors),cmake_install_$(flavor) cmake_install_$(flavor)_extra)
+	$(cmdbase) --package adios2-scripts                  --component adios2_scripts-runtime
+	dh_install --sourcedir=debian/adios2 --package python3-adios2-serial \
+	  __init__.py usr/lib/python3/dist-packages/adios2
+	dh_install --sourcedir=debian/adios2 --package libadios2-serial-core-dev \
+	  adios2-config.cmake usr/lib/$(DEB_HOST_GNU_TYPE)/cmake/adios2
+	dh_install --sourcedir=install-serial --package libadios2-serial-core-dev \
+	  usr/lib/$(DEB_HOST_GNU_TYPE)/cmake/adios2/serial/adios2-config-version.cmake usr/lib/$(DEB_HOST_GNU_TYPE)/cmake/adios2
+
+missing_%: flavor = $(patsubst missing_%,%,$@)
+missing_%:
+	dh_missing --sourcedir=install-$(flavor)
+
+override_dh_missing: $(foreach flavor,$(flavors),missing_$(flavor))

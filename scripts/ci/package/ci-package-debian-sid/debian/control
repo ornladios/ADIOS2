@@ -1,0 +1,412 @@
+Source: adios2
+Priority: optional
+Maintainer: Kitware Debian Maintainers <debian@kitware.com>
+Uploaders:
+    Kyle Edwards <kyle.edwards@kitware.com>,
+    Kitware Robot <kwrobot@kitware.com>
+Build-Depends:
+    debhelper-compat (= 12),
+    dh-cmake-compat (= 1),
+    dh-sequence-cmake,
+    dh-sequence-ctest,
+    dh-sequence-python3,
+    cmake,
+    ninja-build,
+    g++,
+    gfortran,
+    pkg-config,
+    libevpath-dev,
+    libpugixml-dev,
+    libyaml-cpp-dev,
+    pybind11-dev,
+    libgtest-dev,
+    nlohmann-json3-dev,
+    python3-all,
+    libpython3-dev,
+    python3-numpy,
+    libblosc-dev,
+    libbz2-dev,
+    libpng-dev,
+    libczmq-dev,
+    libhdf5-serial-dev,
+    libhdf5-openmpi-dev,
+    libfabric-dev,
+    libffi-dev,
+    libopenmpi-dev,
+    python3-mpi4py
+Standards-Version: 4.5.0
+Section: libs
+Homepage: https://github.com/ornladios/ADIOS2
+Vcs-Browser: https://gitlab.kitware.com/debian/adios2
+Vcs-Git: https://gitlab.kitware.com/debian/adios2.git
+
+Package: adios2-data
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - tool data
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains tool data for ADIOS2.
+
+Package: adios2-scripts
+Architecture: all
+Multi-Arch: foreign
+Depends: ${python3:Depends}, ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - scripts
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains scripts for ADIOS2.
+
+Package: adios2-serial-bin
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - binary tools (serial)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains binary tools for ADIOS2.
+
+Package: libadios2-serial-core
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - core libraries (serial)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the core libraries for the serial build of
+ ADIOS2.
+
+Package: libadios2-serial-core-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libadios2-serial-core (= ${binary:Version}), ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - core development files (serial)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the core development files for the serial build
+ of ADIOS2.
+
+Package: libadios2-serial-c
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - C binding libraries (serial)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the C binding libraries for the serial build of
+ ADIOS2.
+
+Package: libadios2-serial-c-dev
+Architecture: any
+Multi-Arch: same
+Depends:
+    libadios2-serial-c (= ${binary:Version}),
+    libadios2-serial-core-dev (= ${binary:Version}),
+    ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - C binding development files (serial)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the C binding development files for the serial
+ build of ADIOS2.
+
+Package: libadios2-serial-c++11
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - C++11 binding libraries (serial)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the C++11 binding libraries for the serial build of
+ ADIOS2.
+
+Package: libadios2-serial-c++11-dev
+Architecture: any
+Multi-Arch: same
+Depends:
+    libadios2-serial-c++11 (= ${binary:Version}),
+    libadios2-serial-core-dev (= ${binary:Version}),
+    ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - C++11 binding development files (serial)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the C++11 binding development files for the serial
+ build of ADIOS2.
+
+Package: libadios2-serial-fortran
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - Fortran binding libraries (serial)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the Fortran binding libraries for the serial build of
+ ADIOS2.
+
+Package: libadios2-serial-fortran-dev
+Architecture: any
+Multi-Arch: same
+Depends:
+    libadios2-serial-fortran (= ${binary:Version}),
+    libadios2-serial-core-dev (= ${binary:Version}),
+    ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - Fortran binding development files (serial)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the Fortran binding development files for the serial
+ build of ADIOS2.
+
+Package: python3-adios2-serial
+Architecture: any
+Multi-Arch: same
+Depends: ${python3:Depends}, ${shlibs:Depends}, ${misc:Depends}
+Provides: ${python3:Provides}
+Description: ADIOS2 Adaptable IO system for simulations - Python bindings (serial)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the Python bindings for the serial build of
+ ADIOS2.
+
+Package: adios2-openmpi-bin
+Architecture: any
+Depends:
+    adios2-data (= ${binary:Version}),
+    ${shlibs:Depends},
+    ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - binary tools (OpenMPI)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains binary tools for the OpenMPI build of ADIOS2.
+
+Package: libadios2-openmpi-core
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - core libraries (OpenMPI)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the core libraries for the OpenMPI build of
+ ADIOS2.
+
+Package: libadios2-openmpi-core-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libadios2-openmpi-core (= ${binary:Version}), ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - core development files (OpenMPI)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the core development files for the OpenMPI build
+ of ADIOS2.
+
+Package: libadios2-openmpi-c
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - C binding libraries (OpenMPI)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the C binding libraries for the OpenMPI build of
+ ADIOS2.
+
+Package: libadios2-openmpi-c-dev
+Architecture: any
+Multi-Arch: same
+Depends:
+    libadios2-openmpi-c (= ${binary:Version}),
+    libadios2-openmpi-core-dev (= ${binary:Version}),
+    ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - C binding development files (OpenMPI)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the C binding development files for the OpenMPI
+ build of ADIOS2.
+
+Package: libadios2-openmpi-c++11
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - C++11 binding libraries (OpenMPI)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the C++11 binding libraries for the OpenMPI build of
+ ADIOS2.
+
+Package: libadios2-openmpi-c++11-dev
+Architecture: any
+Multi-Arch: same
+Depends:
+    libadios2-openmpi-c++11 (= ${binary:Version}),
+    libadios2-openmpi-core-dev (= ${binary:Version}),
+    ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - C++11 binding development files (OpenMPI)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the C++11 binding development files for the OpenMPI
+ build of ADIOS2.
+
+Package: libadios2-openmpi-fortran
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - Fortran binding libraries (OpenMPI)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the Fortran binding libraries for the OpenMPI build of
+ ADIOS2.
+
+Package: libadios2-openmpi-fortran-dev
+Architecture: any
+Multi-Arch: same
+Depends:
+    libadios2-openmpi-fortran (= ${binary:Version}),
+    libadios2-openmpi-core-dev (= ${binary:Version}),
+    ${misc:Depends}
+Description: ADIOS2 Adaptable IO system for simulations - Fortran binding development files (OpenMPI)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the Fortran binding development files for the OpenMPI
+ build of ADIOS2.
+
+Package: python3-adios2-openmpi
+Architecture: any
+Multi-Arch: same
+Depends: ${python3:Depends}, ${shlibs:Depends}, ${misc:Depends}
+Provides: ${python3:Provides}
+Description: ADIOS2 Adaptable IO system for simulations - Python bindings (OpenMPI)
+ The Adaptable IO System (ADIOS) provides a simple, flexible way for
+ scientists to describe the data in their code that may need to be
+ written, read, or processed outside of the running simulation. By
+ providing an external to the code XML file describing the various
+ elements, their types, and how you wish to process them this run, the
+ routines in the host code (either Fortran or C) can transparently
+ change how they process the data.
+ .
+ This package contains the Python bindings for the OpenMPI build of
+ ADIOS2.
