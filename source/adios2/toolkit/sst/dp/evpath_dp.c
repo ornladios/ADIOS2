@@ -331,18 +331,28 @@ static void EvpathDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 }
 
 // writer side routine, called by the
-static void MarkReadRequest(TimestepList TS, DP_WSR_Stream Reader,
+static void MarkReadRequest(TimestepList TS, DP_WSR_Stream WSR_Stream_v,
                             int RequestingRank)
 {
+    Evpath_WSR_Stream Reader = (Evpath_WSR_Stream)WSR_Stream_v;
     ReaderRequestTrackPtr ReqList = TS->ReaderRequests;
     while (ReqList != NULL)
     {
         if (ReqList->Reader == Reader)
         {
             ReqList->RequestList[RequestingRank] = 1;
+            return;
         }
         ReqList = ReqList->Next;
     }
+    /* Didn't find this reader. go ahead and record read patterns, just in case
+     * we need them */
+    ReaderRequestTrackPtr ReqTrk = calloc(1, sizeof(*ReqTrk));
+    ReqTrk->Reader = Reader;
+    ReqTrk->RequestList = calloc(1, Reader->ReaderCohortSize);
+    ReqTrk->RequestList[RequestingRank] = 1;
+    ReqTrk->Next = TS->ReaderRequests;
+    TS->ReaderRequests = ReqTrk;
 }
 
 // writer side routine, called by the network handler thread
@@ -1098,12 +1108,6 @@ static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
         pthread_mutex_unlock(&WS_Stream->DataLock);
         return;
     }
-    /* go ahead and record read patterns, just in case we need them */
-    ReaderRequestTrackPtr ReqTrk = calloc(1, sizeof(*ReqTrk));
-    ReqTrk->Reader = WSR_Stream;
-    ReqTrk->RequestList = calloc(1, WSR_Stream->ReaderCohortSize);
-    ReqTrk->Next = Entry->ReaderRequests;
-    Entry->ReaderRequests = ReqTrk;
 
     Svcs->verbose(WS_Stream->CP_Stream,
                   "Per reader registration for timestep %ld, preload mode %d\n",
@@ -1173,6 +1177,10 @@ static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
         if (WSR_Stream->ReaderRequestArray[i])
         {
             PreloadMsg.RS_Stream = WSR_Stream->ReaderContactInfo[i].RS_Stream;
+            Svcs->verbose(
+                WS_Stream->CP_Stream,
+                "EVPATH Preload message for timestep %ld, going to rank %d\n",
+                TS->Timestep, i);
             CMwrite(WSR_Stream->ReaderContactInfo[i].Conn,
                     WS_Stream->PreloadFormat, &PreloadMsg);
         }
