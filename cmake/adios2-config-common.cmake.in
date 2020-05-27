@@ -13,6 +13,10 @@ endif()
 set(ADIOS2_HAVE_Fortran @ADIOS2_HAVE_Fortran@)
 set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
 
+function(adios2_add_thirdparty_target PackageName)
+  add_library(adios2::thirdparty::${PackageName} INTERFACE IMPORTED)
+endfunction()
+
 # Add default find components.
 set(_ADIOS2_FIND_COMPONENTS_DEFAULT "")
 if(NOT ";${${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS};" MATCHES ";(C|CXX|Fortran);")
@@ -116,6 +120,23 @@ if(NOT @BUILD_SHARED_LIBS@)
   if(ADIOS2_HAVE_HDF5)
     find_dependency(HDF5 COMPONENTS C)
   endif()
+
+  adios2_add_thirdparty_target(pugixml)
+  set(ADIOS2_USE_EXTERNAL_PUGIXML @ADIOS2_USE_EXTERNAL_PUGIXML@)
+  if(ADIOS2_USE_EXTERNAL_PUGIXML)
+    find_dependency(pugixml 1.10)
+    target_link_libraries(adios2::thirdparty::pugixml INTERFACE pugixml)
+  endif()
+
+  adios2_add_thirdparty_target(yaml-cpp)
+  set(ADIOS2_USE_EXTERNAL_YAMLCPP @ADIOS2_USE_EXTERNAL_YAMLCPP@)
+  if(ADIOS2_USE_EXTERNAL_YAMLCPP)
+    find_dependency(yaml-cpp)
+    target_link_libraries(adios2::thirdparty::yaml-cpp INTERFACE yaml-cpp)
+  endif()
+
+  # No concrete implementation, just put this here to satisfy quasi-dependency
+  adios2_add_thirdparty_target(nlohmann_json)
 
   set(ADIOS2_HAVE_SST @ADIOS2_HAVE_SST@)
   if(ADIOS2_HAVE_SST)
