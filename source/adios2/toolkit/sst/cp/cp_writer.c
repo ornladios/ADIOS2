@@ -69,10 +69,10 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata);
     {                                                                          \
         assert(Stream->Locked == 1);                                           \
     }
-#define STREAM_ASSERT_UNLOCKED(Stream)                                           \
+#define STREAM_ASSERT_UNLOCKED(Stream)                                         \
     {                                                                          \
-	STREAM_MUTEX_LOCK(Stream);						\
-        STREAM_MUTEX_UNLOCK(Stream);						\
+        STREAM_MUTEX_LOCK(Stream);                                             \
+        STREAM_MUTEX_UNLOCK(Stream);                                           \
     }
 #else
 #define STREAM_MUTEX_LOCK(Stream)                                              \
