@@ -428,6 +428,7 @@ void SstReader::Init()
             size_t *Start = NULL;                                              \
             size_t *Count = NULL;                                              \
             size_t DimCount = 0;                                               \
+            int NeedSync;                                                      \
                                                                                \
             if (variable.m_SelectionType ==                                    \
                 adios2::SelectionType::BoundingBox)                            \
@@ -435,20 +436,23 @@ void SstReader::Init()
                 DimCount = variable.m_Shape.size();                            \
                 Start = variable.m_Start.data();                               \
                 Count = variable.m_Count.data();                               \
-                SstFFSGetDeferred(m_Input, (void *)&variable,                  \
-                                  variable.m_Name.c_str(), DimCount, Start,    \
-                                  Count, data);                                \
+                NeedSync = SstFFSGetDeferred(m_Input, (void *)&variable,       \
+                                             variable.m_Name.c_str(),          \
+                                             DimCount, Start, Count, data);    \
             }                                                                  \
             else if (variable.m_SelectionType ==                               \
                      adios2::SelectionType::WriteBlock)                        \
             {                                                                  \
                 DimCount = variable.m_Count.size();                            \
                 Count = variable.m_Count.data();                               \
-                SstFFSGetLocalDeferred(m_Input, (void *)&variable,             \
-                                       variable.m_Name.c_str(), DimCount,      \
-                                       variable.m_BlockID, Count, data);       \
+                NeedSync = SstFFSGetLocalDeferred(                             \
+                    m_Input, (void *)&variable, variable.m_Name.c_str(),       \
+                    DimCount, variable.m_BlockID, Count, data);                \
             }                                                                  \
-            SstFFSPerformGets(m_Input);                                        \
+            if (NeedSync)                                                      \
+            {                                                                  \
+                SstFFSPerformGets(m_Input);                                    \
+            }                                                                  \
         }                                                                      \
         if (m_WriterMarshalMethod == SstMarshalBP)                             \
         {                                                                      \
@@ -456,7 +460,12 @@ void SstReader::Init()
             /*  it's a bad idea in an SST-like environment.  But do */         \
             /*  whatever you do forDoGetDeferred() and then PerformGets() */   \
             DoGetDeferred(variable, data);                                     \
-            PerformGets();                                                     \
+            if (!variable.m_SingleValue)                                       \
+            {                                                                  \
+                /* Don't need to do gets if this was a SingleValue (in         \
+                 * metadata) */                                                \
+                PerformGets();                                                 \
+            }                                                                  \
         }                                                                      \
     }                                                                          \
                                                                                \
