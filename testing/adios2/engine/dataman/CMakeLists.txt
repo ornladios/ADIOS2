@@ -11,5 +11,6 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(WriterSingleBuffer MPI_NOEXEC DataMan Engine.DataMan. "")
   gtest_add_tests_helper(ReaderDoubleBuffer MPI_NOEXEC DataMan Engine.DataMan. "")
   gtest_add_tests_helper(ReaderSingleBuffer MPI_NOEXEC DataMan Engine.DataMan. "")
-  gtest_add_tests_helper(Reliable MPI_NOEXEC DataMan Engine.DataMan. "")
+# Turning off DataMan.Reliable test as unstable - May 27, 2020
+#  gtest_add_tests_helper(Reliable MPI_NOEXEC DataMan Engine.DataMan. "")
 endif()
