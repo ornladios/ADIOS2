@@ -165,14 +165,15 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
 extern void SstFFSMarshalAttribute(SstStream Stream, const char *Name,
                                    const char *Type, size_t ElemSize,
                                    size_t ElemCount, const void *data);
-extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
-                              const char *Name, size_t DimCount,
-                              const size_t *Start, const size_t *Count,
-                              void *Data);
-extern void SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
-                                   const char *Name, size_t DimCount,
-                                   const int BlockID, const size_t *Count,
-                                   void *Data);
+/* GetDeferred calls return true if need later sync */
+extern int SstFFSGetDeferred(SstStream Stream, void *Variable, const char *Name,
+                             size_t DimCount, const size_t *Start,
+                             const size_t *Count, void *Data);
+/* GetDeferred calls return true if need later sync */
+extern int SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
+                                  const char *Name, size_t DimCount,
+                                  const int BlockID, const size_t *Count,
+                                  void *Data);
 
 extern SstStatusValue SstFFSPerformGets(SstStream Stream);
 
