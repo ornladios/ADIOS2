@@ -243,7 +243,7 @@ if(NOT MSVC)    # not on windows
     # Fortran scalar reads don't work for BP4 streaming
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
     # Local Vars have a heisen failure for BP4 streaming
-    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*LocalVarying$")
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*LocalVarying.BPS$")
     # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*NoData.BPS$")
     
