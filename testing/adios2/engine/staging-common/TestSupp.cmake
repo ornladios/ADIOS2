@@ -69,7 +69,7 @@ set (2x2.NoData_CMD "run_test.py.$<CONFIG> -nw 2 -nr 2 --warg=--no_data --rarg=-
 set (2x2.HalfNoData_CMD "run_test.py.$<CONFIG> -nw 2 -nr 2 --warg=--no_data --warg=--no_data_node --warg=1 --rarg=--no_data --rarg=--no_data_node --rarg=1" )
 set (1x1.ForcePreload_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=PreloadMode=SstPreloadOn,RENGINE_PARAMS")
 set (1x1Bulk_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--nx --warg=10000 --warg=--num_steps --warg=101 --rarg=--num_steps --rarg=101")
-set (1x1BulkLockGeometry_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  --warg=--num_steps --warg=101  --warg=--nx --warg=10000 --rarg=--num_steps --rarg=101 --warg=--lock_geometry --rarg=--lock_geometry")
+set (1x1LockGeometry_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  --warg=--num_steps --warg=101  --warg=--nx --warg=50 --rarg=--num_steps --rarg=101 --warg=--lock_geometry --rarg=--lock_geometry --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
 set (2x1_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1")
 set (2x1ZeroDataVar_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1 --warg=--zero_data_var")
 set (2x1ZeroDataR64_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -r $<TARGET_FILE:TestCommonReadR64> --warg=--zero_data_var")
