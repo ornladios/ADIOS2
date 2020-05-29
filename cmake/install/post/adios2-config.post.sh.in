@@ -6,7 +6,7 @@ function usage() {
   echo "  -c               Both compile and link flags for the C bindings"
   echo "  --c-flags        Preprocessor and compile flags for the C bindings"
   echo "  --c-libs         Linker flags for the C bindings"
-  echo "  -x, -cxx         Both compile and link flags for the C++ bindings"
+  echo "  -x, --cxx        Both compile and link flags for the C++ bindings"
   echo "  --cxx-flags      Preprocessor and compile flags for the C++ bindings"
   echo "  --cxx-libs       Linker flags for the C++ bindings"
   echo "  -f, --fortran    Both compile and link flags for the F90 bindings"
