@@ -2,10 +2,10 @@
 
 set(ENV{CC}  clang)
 set(ENV{CXX} clang++)
-set(ASAN_FLAGS "-fsanitize=address -fno-omit-frame-pointer -pthread")
+set(ASAN_FLAGS "-fsanitize=address -fno-omit-frame-pointer -pthread -mllvm -asan-use-private-alias=1 -Wno-unused-command-line-argument")
+set(ENV{ASAN_OPTIONS} "use_odr_indicator=1")
 set(ENV{CFLAGS}   "${ASAN_FLAGS}")
 set(ENV{CXXFLAGS} "${ASAN_FLAGS}")
-set(ENV{FFLAGS}   "${ASAN_FLAGS}")
 
 set(dashboard_cache "
 ADIOS2_USE_Fortran:STRING=OFF
