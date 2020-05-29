@@ -25,10 +25,10 @@ jobs:
     <<: *defaults
     docker:
       - image: ornladios/adios2:ci-fedora-ubsan
-  "fedora-asan":
-    <<: *defaults
-    docker:
-      - image: ornladios/adios2:ci-fedora-asan
+  #"fedora-asan":
+  #  <<: *defaults
+  #  docker:
+  #    - image: ornladios/adios2:ci-fedora-asan
   "fedora-msan":
     <<: *defaults
     docker:
@@ -43,6 +43,6 @@ workflows:
   sanitizers:
     jobs:
       - "fedora-ubsan"
-      - "fedora-asan"
+      #- "fedora-asan"
       - "fedora-msan"
       - "fedora-tsan"
