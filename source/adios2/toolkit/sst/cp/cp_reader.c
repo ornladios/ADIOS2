@@ -1440,24 +1440,19 @@ extern void SstReleaseStep(SstStream Stream)
     TAU_STOP_FUNC();
 }
 
-static void NotifyDPArrivedMetadata(SstStream Stream)
+static void NotifyDPArrivedMetadata(SstStream Stream,
+                                    struct _TimestepMetadataMsg *MetadataMsg)
 {
-    struct _TimestepMetadataList *TS;
-    TS = Stream->Timesteps;
-    while (TS)
+    if ((MetadataMsg->Metadata != NULL) &&
+        (MetadataMsg->Timestep > Stream->LastDPNotifiedTimestep))
     {
-        if ((TS->MetadataMsg->Metadata != NULL) &&
-            (TS->MetadataMsg->Timestep > Stream->LastDPNotifiedTimestep))
+        if (Stream->DP_Interface->timestepArrived)
         {
-            if (Stream->DP_Interface->timestepArrived)
-            {
-                Stream->DP_Interface->timestepArrived(
-                    &Svcs, Stream->DP_Stream, TS->MetadataMsg->Timestep,
-                    TS->MetadataMsg->PreloadMode);
-            }
-            Stream->LastDPNotifiedTimestep = TS->MetadataMsg->Timestep;
+            Stream->DP_Interface->timestepArrived(&Svcs, Stream->DP_Stream,
+                                                  MetadataMsg->Timestep,
+                                                  MetadataMsg->PreloadMode);
         }
-        TS = TS->Next;
+        Stream->LastDPNotifiedTimestep = MetadataMsg->Timestep;
     }
 }
 
@@ -1641,9 +1636,10 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
 
     TAU_STOP("Waiting on metadata per rank per timestep");
 
-    NotifyDPArrivedMetadata(Stream);
     if (Entry)
     {
+        NotifyDPArrivedMetadata(Stream, Entry->MetadataMsg);
+
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
             TAU_START("FFS marshaling case");
@@ -1870,8 +1866,6 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     }
     ret = ReturnData->ReturnValue;
 
-    NotifyDPArrivedMetadata(Stream);
-
     if (ReturnData->ReturnValue != SstSuccess)
     {
         if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) &&
@@ -1888,6 +1882,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         return ret;
     }
     MetadataMsg = ReturnData->TSmsg;
+
     if (ReturnData->CommPatternLockedTimestep != -1)
     {
         Stream->CommPatternLockedTimestep =
@@ -1903,6 +1898,8 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     }
     if (MetadataMsg)
     {
+        NotifyDPArrivedMetadata(Stream, MetadataMsg);
+
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
             CP_verbose(
