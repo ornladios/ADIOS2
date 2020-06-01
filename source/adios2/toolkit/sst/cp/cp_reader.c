@@ -1440,16 +1440,17 @@ extern void SstReleaseStep(SstStream Stream)
     TAU_STOP_FUNC();
 }
 
-static void NotifyDPArrivedMetadata(SstStream Stream,   struct _TimestepMetadataMsg *MetadataMsg)
+static void NotifyDPArrivedMetadata(SstStream Stream,
+                                    struct _TimestepMetadataMsg *MetadataMsg)
 {
     if ((MetadataMsg->Metadata != NULL) &&
         (MetadataMsg->Timestep > Stream->LastDPNotifiedTimestep))
     {
         if (Stream->DP_Interface->timestepArrived)
         {
-            Stream->DP_Interface->timestepArrived(
-                &Svcs, Stream->DP_Stream, MetadataMsg->Timestep,
-                MetadataMsg->PreloadMode);
+            Stream->DP_Interface->timestepArrived(&Svcs, Stream->DP_Stream,
+                                                  MetadataMsg->Timestep,
+                                                  MetadataMsg->PreloadMode);
         }
         Stream->LastDPNotifiedTimestep = MetadataMsg->Timestep;
     }
