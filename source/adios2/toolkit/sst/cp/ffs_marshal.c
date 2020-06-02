@@ -900,6 +900,8 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
             char tmpstr[256] = {0};
             sprintf(tmpstr, "Request to rank %d, bytes", i);
             TAU_SAMPLE_COUNTER(tmpstr, (double)DataSize);
+            CP_verbose(Stream, "remote read request to node %d, buffer %p\n", i,
+                       Info->WriterInfo[i].RawBuffer);
             Info->WriterInfo[i].ReadHandle = SstReadRemoteMemory(
                 Stream, i, Stream->ReaderTimestep, 0, DataSize,
                 Info->WriterInfo[i].RawBuffer, DP_TimestepInfo);
@@ -1465,6 +1467,11 @@ extern SstStatusValue SstFFSPerformGets(SstStream Stream)
 
     if (Ret == SstSuccess)
     {
+        for (int i = 0; i < Stream->WriterCohortSize; i++)
+        {
+            CP_verbose(Stream, "Filling read requests node %d, buffer %p\n", i,
+                       Info->WriterInfo[i].RawBuffer);
+        }
         FillReadRequests(Stream, Info->PendingVarRequests);
     }
     else
@@ -1778,8 +1785,11 @@ extern void FFSClearTimestepData(SstStream Stream)
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
     for (int i = 0; i < Stream->WriterCohortSize; i++)
     {
-        if (Info->WriterInfo[i].RawBuffer)
+        if (Info->WriterInfo[i].RawBuffer) {
+            CP_verbose(Stream, "freeing  rawbuffer node %d, buffer %p\n", i,
+                       Info->WriterInfo[i].RawBuffer);
             free(Info->WriterInfo[i].RawBuffer);
+        }
     }
     memset(Info->WriterInfo, 0,
            sizeof(Info->WriterInfo[0]) * Stream->WriterCohortSize);
