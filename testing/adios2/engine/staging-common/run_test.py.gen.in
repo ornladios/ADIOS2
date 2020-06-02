@@ -64,8 +64,9 @@ def do_simple_test(writer_cmd, reader_cmd, reader_delay, file_test):
 
     return_code = 0
 
-#    if "--lock_geometry" in writer_cmd:
-#        my_env["SstVerbose"] = "1"
+    if writer_cmd is not None:
+       if "--lock_geometry" in writer_cmd:
+           my_env["SstVerbose"] = "1"
 
     print("TestDriver:  Doing simple with file_test = " + str(file_test))
     sys.stdout.flush()
@@ -106,6 +107,10 @@ def do_simple_mpmd_test(writer_cmd, reader_cmd):
     return_code = 0
 
     mpiexec_cmd = ['@MPIEXEC_EXECUTABLE@']
+
+    if writer_cmd is not None:
+       if "--lock_geometry" in writer_cmd:
+           my_env["SstVerbose"] = "1"
 
     if '@MPIEXEC_EXTRA_FLAGS@':
         mpiexec_cmd.extend('@MPIEXEC_EXTRA_FLAGS@'.split(';'))
@@ -175,7 +180,7 @@ def do_kill_writer_test(writer_cmd, reader_cmd, interval):
 def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval):
     return_code = 0
     my_env = os.environ
-#    my_env["SstCPVerbose"] = "1"
+#    my_env["SstVerbose"] = "1"
     writer = subprocess.Popen(writer_cmd, env=my_env)
     start = time.time()
     timeout = time.time() + duration
