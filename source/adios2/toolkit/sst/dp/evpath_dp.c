@@ -508,6 +508,35 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
     TAU_STOP_FUNC();
 }
 
+/*
+ * To "fingerprint" a data block, take 8 sample bytes in it and put
+ * them in a long.  If a sample point is zero, use the next non-zero
+ * byte.  This is only used in verbose mode as an indication that
+ * we're dealing with a copy of the memory region between reader and
+ * writer, so we're not being pedantic about anything here.
+ */
+static unsigned long writeBlockFingerprint(char *Page, size_t Size)
+{
+    size_t Start = Size / 16;
+    size_t Stride = Size / 8;
+    unsigned long Print = 0;
+    if (!Page)
+        return 0;
+    for (int i = 0; i < 8; i++)
+    {
+        size_t Index = Start + Stride * i;
+        unsigned char Component = 0;
+        while ((Page[Index] == 0) && (Index < Size))
+        {
+            Component++;
+            Index++;
+        }
+        Component += (unsigned char)Page[Index];
+        Print |= (((unsigned long)Component) << (8 * i));
+    }
+    return Print;
+}
+
 // reader-side routine, called from the main program
 static int HandleRequestWithPreloaded(CP_Services Svcs,
                                       Evpath_RS_Stream RS_Stream, int Rank,
@@ -527,8 +556,9 @@ static int HandleRequestWithPreloaded(CP_Services Svcs,
     }
     Svcs->verbose(RS_Stream->CP_Stream,
                   "Satisfying remote memory read with preload from writer rank "
-                  "%d for timestep %ld\n",
-                  Rank, Timestep);
+                  "%d for timestep %ld, fprint %lx\n",
+                  Rank, Timestep,
+                  writeBlockFingerprint(Entry->Data, Entry->DataSize));
     memcpy(Buffer, Entry->Data + Offset, Length);
     return 1;
 }
@@ -558,6 +588,11 @@ static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream,
             /* free item */
             if (ItemToFree->Data)
             {
+                Svcs->verbose(RS_Stream->CP_Stream,
+                              "Discarding prior, TS %ld, data %p, fprint %lx\n",
+                              ItemToFree->Timestep, ItemToFree->Data,
+                              writeBlockFingerprint(ItemToFree->Data,
+                                                    ItemToFree->DataSize));
                 CMreturn_buffer(cm, ItemToFree->Data);
             }
 
@@ -585,9 +620,10 @@ static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
 
     Svcs->verbose(
         RS_Stream->CP_Stream,
-        "Got a preload message from writer rank %d for timestep %ld\n",
-        PreloadMsg->WriterRank, PreloadMsg->Timestep);
-
+        "Got a preload message from writer rank %d for timestep %ld, fprint "
+        "%lx\n",
+        PreloadMsg->WriterRank, PreloadMsg->Timestep,
+        writeBlockFingerprint(PreloadMsg->Data, PreloadMsg->DataLength));
     /* arrange for this message data to stay around */
     CMtake_buffer(cm, msg_v);
 
@@ -1122,8 +1158,10 @@ static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
         {
             Svcs->verbose(
                 WS_Stream->CP_Stream,
-                "Sending Learned Preload messages, reader %p, timestep %ld\n",
-                WSR_Stream, Timestep);
+                "Sending Learned Preload messages, reader %p, timestep %ld, "
+                "fprint %lx\n",
+                WSR_Stream, Timestep,
+                writeBlockFingerprint(Entry->Data.block, Entry->Data.DataSize));
             SendPreloadMsgs(Svcs, WSR_Stream, Entry);
         }
     }
@@ -1303,6 +1341,11 @@ static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     Entry->Timestep = Timestep;
     Entry->Next = NULL;
 
+    Svcs->verbose(
+        WS_Stream->CP_Stream,
+        "ProvideTimestep, registering timestep %ld, data %p, fprint %lx\n",
+        Timestep, Data->block,
+        writeBlockFingerprint(Data->block, Data->DataSize));
     pthread_mutex_lock(&WS_Stream->DataLock);
     if (WS_Stream->Timesteps)
     {
