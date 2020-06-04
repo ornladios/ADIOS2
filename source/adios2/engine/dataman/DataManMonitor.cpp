@@ -39,6 +39,8 @@ void DataManMonitor::BeginStep(size_t step)
     {
         m_TotalBytes.push(m_TotalBytes.back());
     }
+
+    ++m_CurrentStep;
 }
 
 void DataManMonitor::EndStep(size_t step)
@@ -58,27 +60,30 @@ void DataManMonitor::EndStep(size_t step)
         m_StepBytes.pop();
     }
 
+    m_TotalTime = std::chrono::duration_cast<std::chrono::microseconds>(
+                      (m_Timers.back() - m_InitialTimer))
+                      .count();
+    m_AverageTime = std::chrono::duration_cast<std::chrono::microseconds>(
+                        (m_Timers.back() - m_Timers.front()))
+                        .count();
+    m_TotalRate = m_TotalBytes.back() / m_TotalTime;
+    m_AverageRate =
+        (m_TotalBytes.back() - m_TotalBytes.front()) / m_AverageTime;
+    if (step > 0)
+    {
+        m_DropRate = static_cast<double>((step - m_CurrentStep)) / step;
+    }
+
     if (m_Verbose)
     {
-        double totalTime =
-            std::chrono::duration_cast<std::chrono::microseconds>(
-                (m_Timers.back() - m_InitialTimer))
-                .count();
-        double averageTime =
-            std::chrono::duration_cast<std::chrono::microseconds>(
-                (m_Timers.back() - m_Timers.front()))
-                .count();
-        double totalRate = m_TotalBytes.back() / totalTime;
-        double averageRate =
-            (m_TotalBytes.back() - m_TotalBytes.front()) / averageTime;
-
         std::cout << "Step " << step << ", Total MBs "
                   << m_TotalBytes.back() / 1000000 << ", Step MBs "
                   << m_StepBytes.back() / 1000000 << ", Total seconds "
-                  << totalTime / 1000000 << ", " << m_Timers.size()
-                  << " step seconds " << averageTime / 1000000
-                  << ", Total MB/s " << totalRate << ", " << m_Timers.size()
-                  << " step average MB/s " << averageRate << std::endl;
+                  << m_TotalTime / 1000000 << ", " << m_Timers.size()
+                  << " step seconds " << m_AverageTime / 1000000
+                  << ", Total MB/s " << m_TotalRate << ", " << m_Timers.size()
+                  << " step average MB/s " << m_AverageRate << ", Drop rate "
+                  << m_DropRate * 100 << "%" << std::endl;
     }
 }
 

@@ -34,6 +34,13 @@ private:
     std::queue<size_t> m_StepBytes;
     std::queue<size_t> m_TotalBytes;
     size_t m_AverageSteps = 10;
+    int64_t m_CurrentStep = -1;
+
+    double m_TotalTime;
+    double m_AverageTime;
+    double m_TotalRate;
+    double m_AverageRate;
+    double m_DropRate;
 
     bool m_Verbose = true;
 };

@@ -31,6 +31,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
     helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
+    helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
 
     m_Requesters.emplace_back();
     m_Requesters[0].OpenRequester(m_Timeout, m_ReceiverBufferSize);
@@ -204,6 +205,11 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                   << ", Step " << m_CurrentStep << std::endl;
     }
 
+    if (m_MonitorActive)
+    {
+        m_Monitor.BeginStep(m_CurrentStep);
+    }
+
     return StepStatus::OK;
 }
 
@@ -215,6 +221,11 @@ void DataManReader::EndStep()
 {
     m_Serializer.Erase(m_CurrentStep, true);
     m_CurrentStepMetadata = nullptr;
+
+    if (m_MonitorActive)
+    {
+        m_Monitor.EndStep(m_CurrentStep);
+    }
 }
 
 void DataManReader::Flush(const int transportIndex) {}

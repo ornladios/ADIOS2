@@ -64,6 +64,13 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
             }
         }
     }
+
+    if (m_MonitorActive)
+    {
+        m_Monitor.AddBytes(std::accumulate(variable.m_Count.begin(),
+                                           variable.m_Count.end(), sizeof(T),
+                                           std::multiplies<size_t>()));
+    }
 }
 
 template <typename T>
