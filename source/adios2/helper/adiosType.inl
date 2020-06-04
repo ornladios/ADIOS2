@@ -96,25 +96,6 @@ inline std::string GetType<std::complex<double>>() noexcept
     return "double complex";
 }
 
-template <class T>
-bool IsTypeAlias(
-    const std::string type,
-    const std::map<std::string, std::set<std::string>> &aliases) noexcept
-{
-    if (type == GetType<T>()) // is key itself
-    {
-        return true;
-    }
-
-    bool isAlias = false;
-    if (aliases.at(GetType<T>()).count(type) == 1)
-    {
-        isAlias = true;
-    }
-
-    return isAlias;
-}
-
 template <class T, class U>
 std::vector<U> NewVectorType(const std::vector<T> &in)
 {
