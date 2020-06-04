@@ -1698,10 +1698,6 @@ int getTypeInfo(enum ADIOS_DATATYPES adiosvartype, int *elemsize)
         *elemsize = 16;
         break;
 
-    case adios_long_double_complex:
-        *elemsize = 32;
-        break;
-
     case adios_long_double: // do not know how to print
     //*elemsize = 16;
     default:
@@ -2737,10 +2733,6 @@ int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartype,
         fprintf(outf, (f ? fmt : "\"%s\""), dataStr[item].c_str());
         break;
     }
-    case adios_string_array:
-        // we expect one elemet of the array here
-        fprintf(outf, (f ? fmt : "\"%s\""), *((char **)data + item));
-        break;
 
     case adios_unsigned_short:
         fprintf(outf, (f ? fmt : "%hu"), ((unsigned short *)data)[item]);
@@ -2784,11 +2776,6 @@ int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartype,
     case adios_double_complex:
         fprintf(outf, (f ? fmt : "(%g,i%g)"), ((double *)data)[2 * item],
                 ((double *)data)[2 * item + 1]);
-        break;
-
-    case adios_long_double_complex:
-        fprintf(outf, (f ? fmt : "(%Lg,i%Lg)"), ((long double *)data)[2 * item],
-                ((long double *)data)[2 * item + 1]);
         break;
 
     default:
