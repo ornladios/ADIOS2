@@ -183,7 +183,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (i.step == m_CurrentStep)
         {
-            if (i.type.empty())
+            if (i.type == Type::None)
             {
                 throw("unknown data type");
             }

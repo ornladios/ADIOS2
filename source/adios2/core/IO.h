@@ -35,8 +35,7 @@ namespace core
 {
 
 /** used for Variables and Attributes, name, type, type-index */
-using DataMap =
-    std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
+using DataMap = std::unordered_map<std::string, std::pair<Type, unsigned int>>;
 
 // forward declaration needed as IO is passed to Engine derived
 // classes
@@ -294,15 +293,14 @@ public:
      * @param name input variable name
      * @return type primitive type
      */
-    std::string InquireVariableType(const std::string &name) const noexcept;
+    Type InquireVariableType(const std::string &name) const noexcept;
 
     /**
      * Overload that accepts a const iterator into the m_Variables map if found
      * @param itVariable
      * @return type primitive type
      */
-    std::string
-    InquireVariableType(const DataMap::const_iterator itVariable) const
+    Type InquireVariableType(const DataMap::const_iterator itVariable) const
         noexcept;
 
     /**
@@ -343,10 +341,9 @@ public:
      * @param name input attribute name
      * @return type if found returns type as string, otherwise an empty string
      */
-    std::string InquireAttributeType(const std::string &name,
-                                     const std::string &variableName = "",
-                                     const std::string separator = "/") const
-        noexcept;
+    Type InquireAttributeType(const std::string &name,
+                              const std::string &variableName = "",
+                              const std::string separator = "/") const noexcept;
 
     /**
      * @brief Retrieve map with attributes info. Use when reading.

@@ -84,7 +84,7 @@ adios2_error adios2_attribute_type_string(char *type, size_t *size,
 
         const adios2::core::AttributeBase *attributeBase =
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
-        return String2CAPI(attributeBase->m_Type, type, size);
+        return String2CAPI(ToString(attributeBase->m_Type), type, size);
     }
     catch (...)
     {
@@ -146,9 +146,9 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
         const adios2::core::AttributeBase *attributeBase =
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
 
-        const std::string type(attributeBase->m_Type);
+        const adios2::Type type(attributeBase->m_Type);
 
-        if (type == "")
+        if (type == adios2::Type::None)
         {
             // not supported
         }

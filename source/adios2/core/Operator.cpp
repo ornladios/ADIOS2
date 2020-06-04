@@ -70,9 +70,9 @@ ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
 #undef declare_type
 
 size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
-                          const size_t /*elementSize*/,
-                          const std::string /*type*/, void * /*bufferOut*/,
-                          const Params & /*params*/, Params & /*info*/) const
+                          const size_t /*elementSize*/, Type /*type*/,
+                          void * /*bufferOut*/, const Params & /*params*/,
+                          Params & /*info*/) const
 {
     throw std::invalid_argument("ERROR: signature (const void*, const "
                                 "Dims, const size_t, const std::string, "
@@ -93,8 +93,7 @@ size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
 
 size_t Operator::Decompress(const void * /*bufferIn*/, const size_t /*sizeIn*/,
                             void * /*dataOut*/, const Dims & /*dimensions*/,
-                            const std::string /*type*/,
-                            const Params & /*parameters*/) const
+                            Type /*type*/, const Params & /*parameters*/) const
 {
     throw std::invalid_argument("ERROR: signature (const void*, const "
                                 "size_t, void*, const Dims&, const "
@@ -105,8 +104,7 @@ size_t Operator::Decompress(const void * /*bufferIn*/, const size_t /*sizeIn*/,
 
 // PROTECTED
 size_t Operator::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                                 const std::string type,
-                                 const Params &parameters) const
+                                 Type type, const Params &parameters) const
 {
     throw std::invalid_argument("ERROR: signature (const void*, const Dims& "
                                 "std::string ) not supported "

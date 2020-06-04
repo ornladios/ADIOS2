@@ -115,9 +115,9 @@ void BP4Reader::PerformGets()
 
     for (const std::string &name : m_BP4Deserializer.m_DeferredVariables)
     {
-        const std::string type = m_IO.InquireVariableType(name);
+        const Type type = m_IO.InquireVariableType(name);
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
         }
 #define declare_type(T)                                                        \

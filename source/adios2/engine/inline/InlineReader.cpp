@@ -223,8 +223,8 @@ void InlineReader::SetDeferredVariablePointers()
     // this will make Variable::Info::Data() work correctly for the user
     for (const auto &varName : m_DeferredVariables)
     {
-        const std::string type = m_IO.InquireVariableType(varName);
-        if (type == "compound")
+        const Type type = m_IO.InquireVariableType(varName);
+        if (type == Type::Compound)
         {
         }
 #define declare_type(T)                                                        \

@@ -111,10 +111,10 @@ Variable IO::InquireVariable(const std::string &name)
     helper::CheckForNullptr(m_IO, "for variable " + name +
                                       ", in call to IO::InquireVariable");
 
-    const std::string type(m_IO->InquireVariableType(name));
+    const Type type(m_IO->InquireVariableType(name));
     core::VariableBase *variable = nullptr;
 
-    if (type == "unknown")
+    if (type == Type::None)
     {
     }
 #define declare_template_instantiation(T)                                      \
@@ -193,9 +193,9 @@ Attribute IO::InquireAttribute(const std::string &name)
                                       ", in call to IO::InquireAttribute");
 
     core::AttributeBase *attribute = nullptr;
-    const std::string type(m_IO->InquireAttributeType(name));
+    const Type type(m_IO->InquireAttributeType(name));
 
-    if (type == "unknown")
+    if (type == Type::None)
     {
     }
 #define declare_template_instantiation(T)                                      \
@@ -264,14 +264,14 @@ std::string IO::VariableType(const std::string &name) const
 {
     helper::CheckForNullptr(m_IO, "for variable " + name +
                                       " in call to IO::VariableType");
-    return m_IO->InquireVariableType(name);
+    return ToString(m_IO->InquireVariableType(name));
 }
 
 std::string IO::AttributeType(const std::string &name) const
 {
     helper::CheckForNullptr(m_IO, "for attribute " + name +
                                       " in call to IO::AttributeType");
-    return m_IO->InquireAttributeType(name);
+    return ToString(m_IO->InquireAttributeType(name));
 }
 
 std::string IO::EngineType() const

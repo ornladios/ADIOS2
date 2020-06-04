@@ -56,10 +56,10 @@ size_t Variable::SelectionSize() const
     helper::CheckForNullptr(m_VariableBase,
                             "in call to Variable::SelectionSize");
 
-    const std::string typeCpp = m_VariableBase->m_Type;
+    const adios2::Type typeCpp = m_VariableBase->m_Type;
     size_t size = 0;
 
-    if (typeCpp == "compound")
+    if (typeCpp == adios2::Type::Compound)
     {
         // not supported
     }
@@ -106,7 +106,7 @@ std::string Variable::Name() const
 std::string Variable::Type() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Type");
-    return m_VariableBase->m_Type;
+    return ToString(m_VariableBase->m_Type);
 }
 
 size_t Variable::Sizeof() const
@@ -125,10 +125,10 @@ Dims Variable::Shape(const size_t step) const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Shape");
 
-    const std::string typeCpp = m_VariableBase->m_Type;
+    const adios2::Type typeCpp = m_VariableBase->m_Type;
     Dims shape;
 
-    if (typeCpp == "compound")
+    if (typeCpp == adios2::Type::Compound)
     {
         // not supported
     }
@@ -155,10 +155,10 @@ Dims Variable::Count() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Count");
 
-    const std::string typeCpp = m_VariableBase->m_Type;
+    const adios2::Type typeCpp = m_VariableBase->m_Type;
     Dims count;
 
-    if (typeCpp == "compound")
+    if (typeCpp == adios2::Type::Compound)
     {
         // not supported
     }

@@ -44,7 +44,7 @@ namespace adios2
     {                                                                          \
         helper::CheckForNullptr(m_Attribute,                                   \
                                 "in call to Attribute<T>::Type()");            \
-        return m_Attribute->m_Type;                                            \
+        return ToString(m_Attribute->m_Type);                                  \
     }                                                                          \
                                                                                \
     template <>                                                                \

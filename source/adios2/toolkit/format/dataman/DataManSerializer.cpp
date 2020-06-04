@@ -289,8 +289,7 @@ void DataManSerializer::PutAggregatedMetadata(VecPtr input,
 }
 
 bool DataManSerializer::IsCompressionAvailable(const std::string &method,
-                                               const std::string &type,
-                                               const Dims &count)
+                                               Type type, const Dims &count)
 {
     TAU_SCOPED_TIMER_FUNC();
     if (method == "zfp")
@@ -338,8 +337,8 @@ void DataManSerializer::PutAttributes(core::IO &io)
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
-        const std::string type(attributePair.second.first);
-        if (type == "unknown")
+        const Type type(attributePair.second.first);
+        if (type == Type::None)
         {
         }
 #define declare_type(T)                                                        \
@@ -376,8 +375,9 @@ void DataManSerializer::GetAttributes(core::IO &io)
     std::lock_guard<std::mutex> lStaticDataJson(m_StaticDataJsonMutex);
     for (const auto &staticVar : m_StaticDataJson["S"])
     {
-        const std::string type(staticVar["Y"].get<std::string>());
-        if (type == "")
+        const Type type(
+            helper::GetTypeFromString(staticVar["Y"].get<std::string>()));
+        if (type == Type::None)
         {
         }
 #define declare_type(T)                                                        \
@@ -460,7 +460,8 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
                     var.start = varBlock["O"].get<Dims>();
                     var.count = varBlock["C"].get<Dims>();
                     var.size = varBlock["I"].get<size_t>();
-                    var.type = varBlock["Y"].get<std::string>();
+                    var.type = helper::GetTypeFromString(
+                        varBlock["Y"].get<std::string>());
                     var.rank = stoi(rankMapIt.key());
                 }
                 catch (std::exception &e)
@@ -842,7 +843,7 @@ VecPtr DataManSerializer::GenerateReply(
                 if (ovlp)
                 {
                     std::vector<char> tmpBuffer;
-                    if (var.type == "compound")
+                    if (var.type == Type::Compound)
                     {
                         throw("Compound type is not supported yet.");
                     }

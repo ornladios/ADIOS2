@@ -135,7 +135,7 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                  const Dims &srcMemStart = Dims(),
                  const Dims &srcMemCount = Dims(),
                  const bool endianReverse = false,
-                 const std::string destType = "") noexcept;
+                 const Type destType = Type::None) noexcept;
 
 /**
  * Clips the contiguous memory corresponding to an intersection and puts it in

@@ -494,12 +494,12 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
     for (const auto &variablePair : variables)
     {
         const std::string &name(variablePair.first);
-        const std::string &type(variablePair.second.first);
+        const Type type(variablePair.second.first);
         core::VariableBase *variable = nullptr;
         print0("Get info on variable ", varidx, ": ", name);
         size_t nBlocks = 1;
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
             // not supported
         }
@@ -526,7 +526,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
             // print variable type and dimensions
             if (!m_Rank)
             {
-                std::cout << "    " << type << " " << name;
+                std::cout << "    " << ToString(type) << " " << name;
             }
             // if (variable->GetShape().size() > 0)
             if (variable->m_ShapeID == adios2::ShapeID::GlobalArray)
@@ -639,8 +639,8 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 // read variable subset
                 std::cout << "rank " << m_Rank << ": Read variable " << name
                           << std::endl;
-                const std::string &type = variables.at(name).first;
-                if (type == "compound")
+                const Type type = variables.at(name).first;
+                if (type == Type::Compound)
                 {
                     // not supported
                 }
@@ -683,8 +683,8 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 // Write variable subset
                 std::cout << "rank " << m_Rank << ": Write variable " << name
                           << std::endl;
-                const std::string &type = variables.at(name).first;
-                if (type == "compound")
+                const Type type = variables.at(name).first;
+                if (type == Type::Compound)
                 {
                     // not supported
                 }

@@ -219,7 +219,7 @@ adios2_error adios2_variable_type(adios2_type *type,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        const std::string typeCpp = variableBase->m_Type;
+        const adios2::Type typeCpp = variableBase->m_Type;
         if (typeCpp == adios2::helper::GetType<std::string>())
         {
             *type = adios2_type_string;
@@ -254,7 +254,7 @@ adios2_error adios2_variable_type_string(char *type, size_t *size,
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        return String2CAPI(variableBase->m_Type, type, size);
+        return String2CAPI(ToString(variableBase->m_Type), type, size);
     }
     catch (...)
     {
@@ -319,8 +319,8 @@ adios2_error adios2_variable_shape(size_t *shape,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        const std::string typeCpp = variableBase->m_Type;
-        if (typeCpp == "compound")
+        const adios2::Type typeCpp = variableBase->m_Type;
+        if (typeCpp == adios2::Type::Compound)
         {
             // not supported
         }
@@ -382,8 +382,8 @@ adios2_error adios2_variable_count(size_t *count,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        const std::string typeCpp = variableBase->m_Type;
-        if (typeCpp == "compound")
+        const adios2::Type typeCpp = variableBase->m_Type;
+        if (typeCpp == adios2::Type::Compound)
         {
             // not supported
         }
@@ -458,9 +458,9 @@ adios2_error adios2_selection_size(size_t *size,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        const std::string typeCpp = variableBase->m_Type;
+        const adios2::Type typeCpp = variableBase->m_Type;
 
-        if (typeCpp == "compound")
+        if (typeCpp == adios2::Type::Compound)
         {
             // not supported
         }
@@ -552,9 +552,9 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        const std::string type(variableBase->m_Type);
+        const adios2::Type type(variableBase->m_Type);
 
-        if (type == "compound")
+        if (type == adios2::Type::Compound)
         {
             // not supported
         }
@@ -589,9 +589,9 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        const std::string type(variableBase->m_Type);
+        const adios2::Type type(variableBase->m_Type);
 
-        if (type == "compound")
+        if (type == adios2::Type::Compound)
         {
             // not supported
         }

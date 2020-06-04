@@ -186,7 +186,7 @@ void QueryVar::BlockIndexEvaluate(adios2::core::IO &io,
                                   adios2::core::Engine &reader,
                                   std::vector<Box<Dims>> &touchedBlocks)
 {
-    const std::string varType = io.InquireVariableType(m_VarName);
+    const Type varType = io.InquireVariableType(m_VarName);
 
     // Variable<int> var = io.InquireVariable<int>(m_VarName);
     // BlockIndex<int> idx(io, reader);

@@ -136,8 +136,8 @@ QueryVar *XmlWorker::ParseVarNode(const pugi::xml_node &node,
         adios2::helper::XMLAttribute("name", node, "in query")->value());
 
     // const std::string varType = currentIO.VariableType(variableName);
-    const std::string varType = currentIO.InquireVariableType(variableName);
-    if (varType.size() == 0)
+    const Type varType = currentIO.InquireVariableType(variableName);
+    if (varType == Type::None)
     {
         std::cerr << "No such variable: " << variableName << std::endl;
         return nullptr;

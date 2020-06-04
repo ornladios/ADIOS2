@@ -321,10 +321,10 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     if (itVariable != m_Variables.end())
     {
         // first remove the Variable object
-        const std::string type(itVariable->second.first);
+        const Type type(itVariable->second.first);
         const unsigned int index(itVariable->second.second);
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
             auto variableMap = m_Compound;
             variableMap.erase(index);
@@ -367,10 +367,10 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
     if (itAttribute != m_Attributes.end())
     {
         // first remove the Attribute object
-        const std::string type(itAttribute->second.first);
+        const Type type(itAttribute->second.first);
         const unsigned int index(itAttribute->second.second);
 
-        if (type.empty())
+        if (type == Type::None)
         {
             // nothing to do
         }
@@ -412,9 +412,9 @@ IO::GetAvailableVariables(const std::set<std::string> &keys) noexcept
     for (const auto &variablePair : m_Variables)
     {
         const std::string variableName = variablePair.first;
-        const std::string type = InquireVariableType(variableName);
+        const Type type = InquireVariableType(variableName);
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
         }
 #define declare_template_instantiation(T)                                      \
@@ -440,9 +440,9 @@ IO::GetAvailableAttributes(const std::string &variableName,
     if (!variableName.empty())
     {
         auto itVariable = m_Variables.find(variableName);
-        const std::string type = InquireVariableType(itVariable);
+        const Type type = InquireVariableType(itVariable);
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
         }
 #define declare_template_instantiation(T)                                      \
@@ -463,9 +463,9 @@ IO::GetAvailableAttributes(const std::string &variableName,
     for (const auto &attributePair : m_Attributes)
     {
         const std::string &name = attributePair.first;
-        const std::string type = attributePair.second.first;
+        const Type type = attributePair.second.first;
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
         }
 #define declare_template_instantiation(T)                                      \
@@ -481,26 +481,26 @@ IO::GetAvailableAttributes(const std::string &variableName,
     return attributesInfo;
 }
 
-std::string IO::InquireVariableType(const std::string &name) const noexcept
+Type IO::InquireVariableType(const std::string &name) const noexcept
 {
     TAU_SCOPED_TIMER("IO::other");
     auto itVariable = m_Variables.find(name);
     return InquireVariableType(itVariable);
 }
 
-std::string
-IO::InquireVariableType(const DataMap::const_iterator itVariable) const noexcept
+Type IO::InquireVariableType(const DataMap::const_iterator itVariable) const
+    noexcept
 {
     if (itVariable == m_Variables.end())
     {
-        return "";
+        return Type::None;
     }
 
-    const std::string type = itVariable->second.first;
+    const Type type = itVariable->second.first;
 
     if (m_ReadStreaming)
     {
-        if (type == "compound")
+        if (type == Type::Compound)
         {
         }
 #define declare_template_instantiation(T)                                      \
@@ -511,7 +511,7 @@ IO::InquireVariableType(const DataMap::const_iterator itVariable) const noexcept
                 itVariable->second.second);                                    \
         if (!variable.IsValidStep(m_EngineStep + 1))                           \
         {                                                                      \
-            return "";                                                         \
+            return Type::None;                                                 \
         }                                                                      \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
@@ -521,9 +521,9 @@ IO::InquireVariableType(const DataMap::const_iterator itVariable) const noexcept
     return type;
 }
 
-std::string IO::InquireAttributeType(const std::string &name,
-                                     const std::string &variableName,
-                                     const std::string separator) const noexcept
+Type IO::InquireAttributeType(const std::string &name,
+                              const std::string &variableName,
+                              const std::string separator) const noexcept
 {
     TAU_SCOPED_TIMER("IO::other");
     const std::string globalName =
@@ -532,7 +532,7 @@ std::string IO::InquireAttributeType(const std::string &name,
     auto itAttribute = m_Attributes.find(globalName);
     if (itAttribute == m_Attributes.end())
     {
-        return "";
+        return Type::None;
     }
 
     return itAttribute->second.first;
@@ -712,14 +712,14 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
          ++itVariable)
     {
         const std::string &name = itVariable->first;
-        const std::string type = InquireVariableType(itVariable);
+        const Type type = InquireVariableType(itVariable);
 
-        if (type.empty())
+        if (type == Type::None)
         {
             continue;
         }
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
         }
 // using relative start
@@ -748,15 +748,15 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
         const std::string &name = itVariable->first;
         // if for each step (BP4), check if variable type is not empty (means
         // variable exist in that step)
-        const std::string type =
+        const Type type =
             isStep ? InquireVariableType(itVariable) : itVariable->second.first;
 
-        if (type.empty())
+        if (type == Type::None)
         {
             continue;
         }
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
         }
 #define declare_type(T)                                                        \

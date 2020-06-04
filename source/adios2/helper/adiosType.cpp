@@ -20,6 +20,72 @@ namespace adios2
 namespace helper
 {
 
+Type GetTypeFromString(std::string const &type) noexcept
+{
+    // Keep in sync with adios2::ToString(Type).
+    if (type == "int8_t")
+    {
+        return Type::Int8;
+    }
+    if (type == "int16_t")
+    {
+        return Type::Int16;
+    }
+    if (type == "int32_t")
+    {
+        return Type::Int32;
+    }
+    if (type == "int64_t")
+    {
+        return Type::Int64;
+    }
+    if (type == "uint8_t")
+    {
+        return Type::UInt8;
+    }
+    if (type == "uint16_t")
+    {
+        return Type::UInt16;
+    }
+    if (type == "uint32_t")
+    {
+        return Type::UInt32;
+    }
+    if (type == "uint64_t")
+    {
+        return Type::UInt64;
+    }
+    if (type == "float")
+    {
+        return Type::Float;
+    }
+    if (type == "double")
+    {
+        return Type::Double;
+    }
+    if (type == "long double")
+    {
+        return Type::LongDouble;
+    }
+    if (type == "float complex")
+    {
+        return Type::FloatComplex;
+    }
+    if (type == "double complex")
+    {
+        return Type::DoubleComplex;
+    }
+    if (type == "string")
+    {
+        return Type::String;
+    }
+    if (type == "compound")
+    {
+        return Type::Compound;
+    }
+    return Type::None;
+}
+
 std::string DimsToCSV(const Dims &dimensions) noexcept
 {
     std::string dimsCSV;

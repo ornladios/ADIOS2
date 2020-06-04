@@ -48,9 +48,9 @@ CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
 }
 
 size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
-                             const size_t elementSize,
-                             const std::string /*type*/, void *bufferOut,
-                             const Params &parameters, Params &info) const
+                             const size_t elementSize, Type /*type*/,
+                             void *bufferOut, const Params &parameters,
+                             Params &info) const
 {
     auto lf_Write = [](png_structp png_ptr, png_bytep data, png_size_t length) {
         DestInfo *pDestInfo =

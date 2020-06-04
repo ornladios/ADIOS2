@@ -19,7 +19,8 @@
 /// \endcond
 
 #include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>
+#include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosType.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
@@ -102,7 +103,8 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                                   const std::string separator)
 {
     TAU_SCOPED_TIMER("IO::DefineAttribute");
-    if (!variableName.empty() && InquireVariableType(variableName).empty())
+    if (!variableName.empty() &&
+        InquireVariableType(variableName) == Type::None)
     {
         throw std::invalid_argument(
             "ERROR: variable " + variableName +
@@ -149,7 +151,8 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
                                   const std::string separator)
 {
     TAU_SCOPED_TIMER("IO::DefineAttribute");
-    if (!variableName.empty() && InquireVariableType(variableName).empty())
+    if (!variableName.empty() &&
+        InquireVariableType(variableName) == Type::None)
     {
         throw std::invalid_argument(
             "ERROR: variable " + variableName +
@@ -256,7 +259,7 @@ Params IO::GetVariableInfo(const std::string &variableName,
 
     if (keys.empty() || keysLC.count("type") == 1)
     {
-        info["Type"] = variable.m_Type;
+        info["Type"] = ToString(variable.m_Type);
     }
 
     if (keys.empty() || keysLC.count("availablestepscount") == 1)
