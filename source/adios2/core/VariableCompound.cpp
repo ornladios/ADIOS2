@@ -22,7 +22,7 @@ VariableCompound::VariableCompound(const std::string &name,
                                    const size_t structSize, const Dims &shape,
                                    const Dims &start, const Dims &count,
                                    const bool constantDims)
-: VariableBase(name, Type::Compound, structSize, shape, start, count,
+: VariableBase(name, DataType::Compound, structSize, shape, start, count,
                constantDims)
 {
 }

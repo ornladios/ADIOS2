@@ -820,7 +820,7 @@ template <class T>
 int printAttributeValue(core::Engine *fp, core::IO *io,
                         core::Attribute<T> *attribute)
 {
-    Type adiosvartype = attribute->m_Type;
+    DataType adiosvartype = attribute->m_Type;
     if (attribute->m_IsSingleValue)
     {
         print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
@@ -848,7 +848,7 @@ template <>
 int printAttributeValue(core::Engine *fp, core::IO *io,
                         core::Attribute<std::string> *attribute)
 {
-    Type adiosvartype = attribute->m_Type;
+    DataType adiosvartype = attribute->m_Type;
     bool xmlprint = helper::EndsWith(attribute->m_Name, "xml", false);
     bool printDataAnyway = true;
 
@@ -956,12 +956,12 @@ int doList_vars(core::Engine *fp, core::IO *io)
                 if (longopt || dump)
                 {
                     fprintf(outf, "  attr   = ");
-                    if (entry.typeName == Type::Compound)
+                    if (entry.typeName == DataType::Compound)
                     {
                         // not supported
                     }
 #define declare_template_instantiation(T)                                      \
-    else if (entry.typeName == helper::GetType<T>())                           \
+    else if (entry.typeName == helper::GetDataType<T>())                       \
     {                                                                          \
         core::Attribute<T> *a = io->InquireAttribute<T>(name);                 \
         retval = printAttributeValue(fp, io, a);                               \
@@ -979,12 +979,12 @@ int doList_vars(core::Engine *fp, core::IO *io)
             }
             else
             {
-                if (entry.typeName == Type::Compound)
+                if (entry.typeName == DataType::Compound)
                 {
                     // not supported
                 }
 #define declare_template_instantiation(T)                                      \
-    else if (entry.typeName == helper::GetType<T>())                           \
+    else if (entry.typeName == helper::GetDataType<T>())                       \
     {                                                                          \
         core::Variable<T> *v = io->InquireVariable<T>(name);                   \
         retval = printVariableInfo(fp, io, v);                                 \
@@ -1007,7 +1007,7 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
                       core::Variable<T> *variable)
 {
     size_t nsteps = variable->GetAvailableStepsCount();
-    Type adiosvartype = variable->m_Type;
+    DataType adiosvartype = variable->m_Type;
     int retval = 0;
 
     bool isGlobalValue = (nsteps == 1);
@@ -1128,11 +1128,11 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
                 /* End - Print the headers of statistics first */
 
                 void *min, *max, *avg, *std_dev;
-                Type vt = vartype;
+                DataType vt = vartype;
                 struct ADIOS_STAT_STEP *s = vi->statistics->steps;
-                if (vi->type == Type::FloatComplex ||
-                    vi->type == Type::DoubleComplex)
-                    vt = Type::Double;
+                if (vi->type == DataType::FloatComplex ||
+                    vi->type == DataType::DoubleComplex)
+                    vt = DataType::Double;
                 fprintf(outf, "\n%-*sglobal:", indent_len, indent_char);
                 print_data_characteristics(
                     vi->statistics->min, vi->statistics->max,
@@ -1647,58 +1647,58 @@ void mergeLists(int nV, char **listV, int nA, char **listA, char **mlist,
     }
 }
 
-int getTypeInfo(Type adiosvartype, int *elemsize)
+int getTypeInfo(DataType adiosvartype, int *elemsize)
 {
     switch (adiosvartype)
     {
-    case Type::UInt8:
+    case DataType::UInt8:
         *elemsize = 1;
         break;
-    case Type::Int8:
+    case DataType::Int8:
         *elemsize = 1;
         break;
-    case Type::String:
+    case DataType::String:
         *elemsize = 1;
         break;
 
-    case Type::UInt16:
+    case DataType::UInt16:
         *elemsize = 2;
         break;
-    case Type::Int16:
+    case DataType::Int16:
         *elemsize = 2;
         break;
 
-    case Type::UInt32:
+    case DataType::UInt32:
         *elemsize = 4;
         break;
-    case Type::Int32:
-        *elemsize = 4;
-        break;
-
-    case Type::UInt64:
-        *elemsize = 8;
-        break;
-    case Type::Int64:
-        *elemsize = 8;
-        break;
-
-    case Type::Float:
+    case DataType::Int32:
         *elemsize = 4;
         break;
 
-    case Type::Double:
+    case DataType::UInt64:
+        *elemsize = 8;
+        break;
+    case DataType::Int64:
         *elemsize = 8;
         break;
 
-    case Type::FloatComplex:
+    case DataType::Float:
+        *elemsize = 4;
+        break;
+
+    case DataType::Double:
         *elemsize = 8;
         break;
 
-    case Type::DoubleComplex:
+    case DataType::FloatComplex:
+        *elemsize = 8;
+        break;
+
+    case DataType::DoubleComplex:
         *elemsize = 16;
         break;
 
-    case Type::LongDouble: // do not know how to print
+    case DataType::LongDouble: // do not know how to print
     //*elemsize = 16;
     default:
         return 1;
@@ -1875,7 +1875,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         maxreadn = nelems;
 
     // special case: string. Need to use different elemsize
-    /*if (vi->type == Type::String)
+    /*if (vi->type == DataType::String)
     {
         if (vi->value)
             elemsize = strlen(vi->value) + 1;
@@ -2396,15 +2396,15 @@ void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s,
     }
 }
 
-int print_data_as_string(const void *data, int maxlen, Type adiosvartype)
+int print_data_as_string(const void *data, int maxlen, DataType adiosvartype)
 {
     const char *str = (const char *)data;
     int len = maxlen;
     switch (adiosvartype)
     {
-    case Type::UInt8:
-    case Type::Int8:
-    case Type::String:
+    case DataType::UInt8:
+    case DataType::Int8:
+    case DataType::String:
         while (str[len - 1] == 0)
         {
             len--;
@@ -2437,7 +2437,7 @@ int print_data_as_string(const void *data, int maxlen, Type adiosvartype)
 }
 
 int print_data_characteristics(void *min, void *max, double *avg,
-                               double *std_dev, Type adiosvartype,
+                               double *std_dev, DataType adiosvartype,
                                bool allowformat)
 {
     bool f = format.size() && allowformat;
@@ -2445,7 +2445,7 @@ int print_data_characteristics(void *min, void *max, double *avg,
 
     switch (adiosvartype)
     {
-    case Type::UInt8:
+    case DataType::UInt8:
         if (min)
             fprintf(outf, (f ? fmt : "%10hhu  "), *((unsigned char *)min));
         else
@@ -2463,7 +2463,7 @@ int print_data_characteristics(void *min, void *max, double *avg,
         else
             fprintf(outf, "      null  ");
         break;
-    case Type::Int8:
+    case DataType::Int8:
         if (min)
             fprintf(outf, (f ? fmt : "%10hhd  "), *((char *)min));
         else
@@ -2481,10 +2481,10 @@ int print_data_characteristics(void *min, void *max, double *avg,
         else
             fprintf(outf, "      null  ");
         break;
-    case Type::String:
+    case DataType::String:
         break;
 
-    case Type::UInt16:
+    case DataType::UInt16:
         if (min)
             fprintf(outf, (f ? fmt : "%10hu  "), (*(unsigned short *)min));
         else
@@ -2502,7 +2502,7 @@ int print_data_characteristics(void *min, void *max, double *avg,
         else
             fprintf(outf, "      null  ");
         break;
-    case Type::Int16:
+    case DataType::Int16:
         if (min)
             fprintf(outf, (f ? fmt : "%10hd  "), (*(short *)min));
         else
@@ -2521,7 +2521,7 @@ int print_data_characteristics(void *min, void *max, double *avg,
             fprintf(outf, "      null  ");
         break;
 
-    case Type::UInt32:
+    case DataType::UInt32:
         if (min)
             fprintf(outf, (f ? fmt : "%10u  "), (*(unsigned int *)min));
         else
@@ -2539,7 +2539,7 @@ int print_data_characteristics(void *min, void *max, double *avg,
         else
             fprintf(outf, "      null  ");
         break;
-    case Type::Int32:
+    case DataType::Int32:
         if (min)
             fprintf(outf, (f ? fmt : "%10d  "), (*(int *)min));
         else
@@ -2558,7 +2558,7 @@ int print_data_characteristics(void *min, void *max, double *avg,
             fprintf(outf, "      null  ");
         break;
 
-    case Type::UInt64:
+    case DataType::UInt64:
         if (min)
             fprintf(outf, (f ? fmt : "%10llu  "), (*(unsigned long long *)min));
         else
@@ -2576,7 +2576,7 @@ int print_data_characteristics(void *min, void *max, double *avg,
         else
             fprintf(outf, "      null  ");
         break;
-    case Type::Int64:
+    case DataType::Int64:
         if (min)
             fprintf(outf, (f ? fmt : "%10lld  "), (*(long long *)min));
         else
@@ -2595,7 +2595,7 @@ int print_data_characteristics(void *min, void *max, double *avg,
             fprintf(outf, "      null  ");
         break;
 
-    case Type::Float:
+    case DataType::Float:
         if (min)
             fprintf(outf, (f ? fmt : "%10.2g  "), (*(float *)min));
         else
@@ -2613,7 +2613,7 @@ int print_data_characteristics(void *min, void *max, double *avg,
         else
             fprintf(outf, "      null  ");
         break;
-    case Type::Double:
+    case DataType::Double:
         if (min)
             fprintf(outf, (f ? fmt : "%10.2g  "), (*(double *)min));
         else
@@ -2632,18 +2632,18 @@ int print_data_characteristics(void *min, void *max, double *avg,
             fprintf(outf, "      null  ");
         break;
 
-    case Type::LongDouble:
+    case DataType::LongDouble:
         fprintf(outf, "????????");
         break;
 
     // TO DO
     /*
-       case Type::FloatComplex:
+       case DataType::FloatComplex:
        fprintf(outf,(f ? format : "(%g,i%g) "), ((float *) data)[2*item],
        ((float *) data)[2*item+1]);
        break;
 
-       case Type::DoubleComplex:
+       case DataType::DoubleComplex:
        fprintf(outf,(f ? format : "(%g,i%g)" ), ((double *) data)[2*item],
        ((double *) data)[2*item+1]);
        break;
@@ -2675,7 +2675,8 @@ bool print_data_xml(const char *s, const size_t length)
     return false;
 }
 
-int print_data(const void *data, int item, Type adiosvartype, bool allowformat)
+int print_data(const void *data, int item, DataType adiosvartype,
+               bool allowformat)
 {
     bool f = format.size() && allowformat;
     const char *fmt = format.c_str();
@@ -2687,14 +2688,14 @@ int print_data(const void *data, int item, Type adiosvartype, bool allowformat)
     // print next data item
     switch (adiosvartype)
     {
-    case Type::UInt8:
+    case DataType::UInt8:
         fprintf(outf, (f ? fmt : "%hhu"), ((unsigned char *)data)[item]);
         break;
-    case Type::Int8:
+    case DataType::Int8:
         fprintf(outf, (f ? fmt : "%hhd"), ((signed char *)data)[item]);
         break;
 
-    case Type::String:
+    case DataType::String:
     {
         // fprintf(outf, (f ? fmt : "\"%s\""), ((char *)data) + item);
         const std::string *dataStr =
@@ -2703,46 +2704,46 @@ int print_data(const void *data, int item, Type adiosvartype, bool allowformat)
         break;
     }
 
-    case Type::UInt16:
+    case DataType::UInt16:
         fprintf(outf, (f ? fmt : "%hu"), ((unsigned short *)data)[item]);
         break;
-    case Type::Int16:
+    case DataType::Int16:
         fprintf(outf, (f ? fmt : "%hd"), ((signed short *)data)[item]);
         break;
 
-    case Type::UInt32:
+    case DataType::UInt32:
         fprintf(outf, (f ? fmt : "%u"), ((unsigned int *)data)[item]);
         break;
-    case Type::Int32:
+    case DataType::Int32:
         fprintf(outf, (f ? fmt : "%d"), ((signed int *)data)[item]);
         break;
 
-    case Type::UInt64:
+    case DataType::UInt64:
         fprintf(outf, (f ? fmt : "%llu"), ((unsigned long long *)data)[item]);
         break;
-    case Type::Int64:
+    case DataType::Int64:
         fprintf(outf, (f ? fmt : "%lld"), ((signed long long *)data)[item]);
         break;
 
-    case Type::Float:
+    case DataType::Float:
         fprintf(outf, (f ? fmt : "%g"), ((float *)data)[item]);
         break;
 
-    case Type::Double:
+    case DataType::Double:
         fprintf(outf, (f ? fmt : "%g"), ((double *)data)[item]);
         break;
 
-    case Type::LongDouble:
+    case DataType::LongDouble:
         fprintf(outf, (f ? fmt : "%Lg"), ((long double *)data)[item]);
         // fprintf(outf,(f ? fmt : "????????"));
         break;
 
-    case Type::FloatComplex:
+    case DataType::FloatComplex:
         fprintf(outf, (f ? fmt : "(%g,i%g)"), ((float *)data)[2 * item],
                 ((float *)data)[2 * item + 1]);
         break;
 
-    case Type::DoubleComplex:
+    case DataType::DoubleComplex:
         fprintf(outf, (f ? fmt : "(%g,i%g)"), ((double *)data)[2 * item],
                 ((double *)data)[2 * item + 1]);
         break;
@@ -2753,14 +2754,14 @@ int print_data(const void *data, int item, Type adiosvartype, bool allowformat)
     return 0;
 }
 
-int print_dataset(const void *data, const Type vartype, uint64_t *s,
+int print_dataset(const void *data, const DataType vartype, uint64_t *s,
                   uint64_t *c, int tdims, int *ndigits)
 {
     int i, item, steps;
     char idxstr[128], buf[16];
     uint64_t ids[MAX_DIMS]; // current indices
     bool roll;
-    Type adiosvartype = vartype;
+    DataType adiosvartype = vartype;
 
     // init current indices
     steps = 1;
@@ -2794,7 +2795,7 @@ int print_dataset(const void *data, const Type vartype, uint64_t *s,
         // print item
         fprintf(outf, "%s", idxstr);
         if (printByteAsChar &&
-            (adiosvartype == Type::Int8 || adiosvartype == Type::UInt8))
+            (adiosvartype == DataType::Int8 || adiosvartype == DataType::UInt8))
         {
             /* special case: k-D byte array printed as (k-1)D array of
              * strings
@@ -2971,7 +2972,7 @@ template <class T>
 void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
-    Type adiosvartype = variable->m_Type;
+    DataType adiosvartype = variable->m_Type;
     std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
         fp->AllStepsBlocksInfo(*variable);
     if (allblocks.empty())

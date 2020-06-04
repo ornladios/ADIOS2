@@ -494,17 +494,17 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
     for (const auto &variablePair : variables)
     {
         const std::string &name(variablePair.first);
-        const Type type(variablePair.second.first);
+        const DataType type(variablePair.second.first);
         core::VariableBase *variable = nullptr;
         print0("Get info on variable ", varidx, ": ", name);
         size_t nBlocks = 1;
 
-        if (type == Type::Compound)
+        if (type == DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         core::Variable<T> *v = io.InquireVariable<T>(variablePair.first);      \
         if (v->m_ShapeID == adios2::ShapeID::LocalArray)                       \
@@ -639,13 +639,13 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 // read variable subset
                 std::cout << "rank " << m_Rank << ": Read variable " << name
                           << std::endl;
-                const Type type = variables.at(name).first;
-                if (type == Type::Compound)
+                const DataType type = variables.at(name).first;
+                if (type == DataType::Compound)
                 {
                     // not supported
                 }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         varinfo[varidx].readbuf = calloc(1, varinfo[varidx].writesize);        \
         if (varinfo[varidx].count.size() == 0)                                 \
@@ -683,13 +683,13 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 // Write variable subset
                 std::cout << "rank " << m_Rank << ": Write variable " << name
                           << std::endl;
-                const Type type = variables.at(name).first;
-                if (type == Type::Compound)
+                const DataType type = variables.at(name).first;
+                if (type == DataType::Compound)
                 {
                     // not supported
                 }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         if (varinfo[varidx].count.size() == 0)                                 \
         {                                                                      \

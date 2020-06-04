@@ -12,7 +12,7 @@
 #include "Attribute.tcc"
 
 #include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/helper/adiosFunctions.h" //GetDataType<T>
 
 #include <type_traits>
 
@@ -50,7 +50,7 @@ struct RequiresZeroPadding<long double> : std::true_type
     template <>                                                                \
     Attribute<T>::Attribute(const std::string &name, const T *array,           \
                             const size_t elements)                             \
-    : AttributeBase(name, helper::GetType<T>(), elements)                      \
+    : AttributeBase(name, helper::GetDataType<T>(), elements)                  \
     {                                                                          \
         if (RequiresZeroPadding<T>::value)                                     \
             std::memset(&m_DataSingleValue, 0, sizeof(m_DataSingleValue));     \
@@ -59,7 +59,7 @@ struct RequiresZeroPadding<long double> : std::true_type
                                                                                \
     template <>                                                                \
     Attribute<T>::Attribute(const std::string &name, const T &value)           \
-    : AttributeBase(name, helper::GetType<T>())                                \
+    : AttributeBase(name, helper::GetDataType<T>())                            \
     {                                                                          \
         if (RequiresZeroPadding<T>::value)                                     \
             std::memset(&m_DataSingleValue, 0, sizeof(m_DataSingleValue));     \

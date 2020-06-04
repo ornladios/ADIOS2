@@ -743,7 +743,7 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
 
     for (const auto &attribute : attributes)
     {
-        const Type type = attribute.second.first;
+        const DataType type = attribute.second.first;
 
         // each attribute is only written to output once
         // so filter out the ones already written
@@ -753,11 +753,11 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
             continue;
         }
 
-        if (type == Type::Compound)
+        if (type == DataType::Compound)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         const std::string name = attribute.first;                              \
         const core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);   \
@@ -796,7 +796,7 @@ void BPSerializer::PutAttributes(core::IO &io)
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
-        const Type type(attributePair.second.first);
+        const DataType type(attributePair.second.first);
 
         // each attribute is only written to output once
         // so filter out the ones already written
@@ -806,11 +806,11 @@ void BPSerializer::PutAttributes(core::IO &io)
             continue;
         }
 
-        if (type == Type::None)
+        if (type == DataType::None)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Stats<T> stats;                                                        \
         stats.Offset = absolutePosition + m_PreDataFileLength;                 \

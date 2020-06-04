@@ -20,14 +20,14 @@ Worker::~Worker()
 QueryVar *Worker::GetBasicVarQuery(adios2::core::IO &currentIO,
                                    const std::string &variableName)
 {
-    const Type varType = currentIO.InquireVariableType(variableName);
-    if (varType == Type::None)
+    const DataType varType = currentIO.InquireVariableType(variableName);
+    if (varType == DataType::None)
     {
         std::cerr << "No such variable: " << variableName << std::endl;
         return nullptr;
     }
 #define declare_type(T)                                                        \
-    if (varType == helper::GetType<T>())                                       \
+    if (varType == helper::GetDataType<T>())                                   \
     {                                                                          \
         core::Variable<T> *var = currentIO.InquireVariable<T>(variableName);   \
         if (var)                                                               \

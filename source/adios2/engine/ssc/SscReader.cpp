@@ -158,11 +158,11 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                     std::memcpy(value.data(), m_Buffer.data() + v.bufferStart,
                                 v.bufferCount);
                 }
-                if (v.type == Type::None)
+                if (v.type == DataType::None)
                 {
                     throw(std::runtime_error("unknown data type"));
                 }
-                else if (v.type == Type::String)
+                else if (v.type == DataType::String)
                 {
                     auto variable = m_IO.InquireVariable<std::string>(v.name);
                     if (variable)
@@ -176,7 +176,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                     }
                 }
 #define declare_type(T)                                                        \
-    else if (v.type == helper::GetType<T>())                                   \
+    else if (v.type == helper::GetDataType<T>())                               \
     {                                                                          \
         auto variable = m_IO.InquireVariable<T>(v.name);                       \
         if (variable)                                                          \
@@ -313,12 +313,12 @@ void SscReader::SyncWritePattern()
     {
         for (const auto &b : blockVec)
         {
-            if (b.type == Type::None)
+            if (b.type == DataType::None)
             {
                 throw(std::runtime_error("unknown data type"));
             }
 #define declare_type(T)                                                        \
-    else if (b.type == helper::GetType<T>())                                   \
+    else if (b.type == helper::GetDataType<T>())                               \
     {                                                                          \
         auto v = m_IO.InquireVariable<T>(b.name);                              \
         if (not v)                                                             \
@@ -367,13 +367,13 @@ void SscReader::SyncWritePattern()
         }
         for (const auto &attributeJson : attributesJson)
         {
-            const Type type(helper::GetTypeFromString(
+            const DataType type(helper::GetDataTypeFromString(
                 attributeJson["Type"].get<std::string>()));
-            if (type == Type::None)
+            if (type == DataType::None)
             {
             }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         const auto &attributesDataMap = m_IO.GetAttributesDataMap();           \
         auto it =                                                              \

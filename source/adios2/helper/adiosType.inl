@@ -25,75 +25,75 @@ namespace helper
 {
 
 template <>
-inline Type GetType<std::string>() noexcept
+inline DataType GetDataType<std::string>() noexcept
 {
-    return Type::String;
+    return DataType::String;
 }
 
 template <>
-inline Type GetType<int8_t>() noexcept
+inline DataType GetDataType<int8_t>() noexcept
 {
-    return Type::Int8;
+    return DataType::Int8;
 }
 template <>
-inline Type GetType<uint8_t>() noexcept
+inline DataType GetDataType<uint8_t>() noexcept
 {
-    return Type::UInt8;
+    return DataType::UInt8;
 }
 template <>
-inline Type GetType<int16_t>() noexcept
+inline DataType GetDataType<int16_t>() noexcept
 {
-    return Type::Int16;
+    return DataType::Int16;
 }
 template <>
-inline Type GetType<uint16_t>() noexcept
+inline DataType GetDataType<uint16_t>() noexcept
 {
-    return Type::UInt16;
+    return DataType::UInt16;
 }
 template <>
-inline Type GetType<int32_t>() noexcept
+inline DataType GetDataType<int32_t>() noexcept
 {
-    return Type::Int32;
+    return DataType::Int32;
 }
 template <>
-inline Type GetType<uint32_t>() noexcept
+inline DataType GetDataType<uint32_t>() noexcept
 {
-    return Type::UInt32;
+    return DataType::UInt32;
 }
 template <>
-inline Type GetType<int64_t>() noexcept
+inline DataType GetDataType<int64_t>() noexcept
 {
-    return Type::Int64;
+    return DataType::Int64;
 }
 template <>
-inline Type GetType<uint64_t>() noexcept
+inline DataType GetDataType<uint64_t>() noexcept
 {
-    return Type::UInt64;
+    return DataType::UInt64;
 }
 template <>
-inline Type GetType<float>() noexcept
+inline DataType GetDataType<float>() noexcept
 {
-    return Type::Float;
+    return DataType::Float;
 }
 template <>
-inline Type GetType<double>() noexcept
+inline DataType GetDataType<double>() noexcept
 {
-    return Type::Double;
+    return DataType::Double;
 }
 template <>
-inline Type GetType<long double>() noexcept
+inline DataType GetDataType<long double>() noexcept
 {
-    return Type::LongDouble;
+    return DataType::LongDouble;
 }
 template <>
-inline Type GetType<std::complex<float>>() noexcept
+inline DataType GetDataType<std::complex<float>>() noexcept
 {
-    return Type::FloatComplex;
+    return DataType::FloatComplex;
 }
 template <>
-inline Type GetType<std::complex<double>>() noexcept
+inline DataType GetDataType<std::complex<double>>() noexcept
 {
-    return Type::DoubleComplex;
+    return DataType::DoubleComplex;
 }
 
 template <class T, class U>

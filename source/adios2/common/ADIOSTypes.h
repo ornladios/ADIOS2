@@ -120,7 +120,7 @@ enum class SelectionType
 };
 
 // Data types.
-enum class Type
+enum class DataType
 {
     None,
     Int8,
@@ -236,7 +236,7 @@ std::string ToString(StepMode value);
 std::string ToString(StepStatus value);
 std::string ToString(TimeUnit value);
 std::string ToString(SelectionType value);
-std::string ToString(Type type);
+std::string ToString(DataType type);
 
 /**
  * os << [adios2_type] enables output of adios2 enums/classes directly

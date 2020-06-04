@@ -82,13 +82,13 @@ void InlineWriter::ResetVariables()
     for (auto &varPair : availVars)
     {
         const auto &name = varPair.first;
-        const Type type = m_IO.InquireVariableType(name);
+        const DataType type = m_IO.InquireVariableType(name);
 
-        if (type == Type::Compound)
+        if (type == DataType::Compound)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(name, "in call to BeginStep"); \
         variable.m_BlocksInfo.clear();                                         \

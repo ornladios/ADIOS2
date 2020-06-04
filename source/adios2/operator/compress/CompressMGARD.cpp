@@ -29,7 +29,7 @@ CompressMGARD::CompressMGARD(const Params &parameters)
 }
 
 size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
-                               const size_t elementSize, Type type,
+                               const size_t elementSize, DataType type,
                                void *bufferOut, const Params &parameters,
                                Params &info) const
 {
@@ -43,7 +43,7 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
 
     // set type
     int mgardType = -1;
-    if (type == helper::GetType<double>())
+    if (type == helper::GetDataType<double>())
     {
         mgardType = 1;
     }
@@ -104,13 +104,14 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
                                  void *dataOut, const Dims &dimensions,
-                                 Type type, const Params & /*parameters*/) const
+                                 DataType type,
+                                 const Params & /*parameters*/) const
 {
     int mgardType = -1;
     size_t elementSize = 0;
     double quantizer = 0.0;
 
-    if (type == helper::GetType<double>())
+    if (type == helper::GetDataType<double>())
     {
         mgardType = 1;
         elementSize = 8;

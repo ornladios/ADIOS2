@@ -488,14 +488,14 @@ void InSituMPIReader::AsyncRecvAllVariables()
     for (const auto &variablePair : m_ReadScheduleMap)
     {
         // AsyncRecvVariable(variablePair.first, variablePair.second);
-        const Type type(m_IO.InquireVariableType(variablePair.first));
+        const DataType type(m_IO.InquireVariableType(variablePair.first));
 
-        if (type == Type::Compound)
+        if (type == DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         core::Variable<T> *variable =                                          \
             m_IO.InquireVariable<T>(variablePair.first);                       \

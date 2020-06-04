@@ -48,7 +48,7 @@ CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
 }
 
 size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
-                             const size_t elementSize, Type /*type*/,
+                             const size_t elementSize, DataType /*type*/,
                              void *bufferOut, const Params &parameters,
                              Params &info) const
 {

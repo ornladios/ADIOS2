@@ -13,7 +13,7 @@
 
 #include "SstWriter.h"
 
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/helper/adiosFunctions.h" //GetDataType<T>
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2

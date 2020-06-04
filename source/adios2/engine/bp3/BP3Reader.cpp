@@ -92,13 +92,13 @@ void BP3Reader::PerformGets()
 
     for (const std::string &name : m_BP3Deserializer.m_DeferredVariables)
     {
-        const Type type = m_IO.InquireVariableType(name);
+        const DataType type = m_IO.InquireVariableType(name);
 
-        if (type == Type::Compound)
+        if (type == DataType::Compound)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable =                                                \
             FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \

@@ -52,7 +52,7 @@ void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
             m_GlobalWritePattern[m_StreamRank].emplace_back();
             auto &b = m_GlobalWritePattern[m_StreamRank].back();
             b.name = variable.m_Name;
-            b.type = Type::String;
+            b.type = DataType::String;
             b.shapeId = variable.m_ShapeID;
             b.shape = variable.m_Shape;
             b.start = variable.m_Start;
@@ -109,7 +109,7 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
             m_GlobalWritePattern[m_StreamRank].emplace_back();
             auto &b = m_GlobalWritePattern[m_StreamRank].back();
             b.name = variable.m_Name;
-            b.type = helper::GetType<T>();
+            b.type = helper::GetDataType<T>();
             b.shapeId = variable.m_ShapeID;
             b.shape = vShape;
             b.start = vStart;

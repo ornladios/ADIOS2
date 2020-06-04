@@ -183,12 +183,12 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (i.step == m_CurrentStep)
         {
-            if (i.type == Type::None)
+            if (i.type == DataType::None)
             {
                 throw("unknown data type");
             }
 #define declare_type(T)                                                        \
-    else if (i.type == helper::GetType<T>())                                   \
+    else if (i.type == helper::GetDataType<T>())                               \
     {                                                                          \
         CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
     }

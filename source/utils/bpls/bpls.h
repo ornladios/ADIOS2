@@ -38,9 +38,9 @@ namespace utils
 struct Entry
 {
     bool isVar;
-    Type typeName;
+    DataType typeName;
     unsigned int typeIndex;
-    Entry(bool b, Type name, unsigned idx)
+    Entry(bool b, DataType name, unsigned idx)
     : isVar(b), typeName(name), typeIndex(idx)
     {
     }
@@ -87,20 +87,20 @@ bool matchesAMask(const char *name);
 int print_start(const std::string &fnamestr);
 void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s,
                       uint64_t *c, Dims count);
-int print_data(const void *data, int item, Type adiosvartypes,
+int print_data(const void *data, int item, DataType adiosvartypes,
                bool allowformat);
 
 /* s is a character array not necessarily null terminated.
  * return false on OK print, true if it not XML (not printed)*/
 bool print_data_xml(const char *s, const size_t length);
 
-int print_dataset(const void *data, const Type vartype, uint64_t *s,
+int print_dataset(const void *data, const DataType vartype, uint64_t *s,
                   uint64_t *c, int tdims, int *ndigits);
 void print_endline(void);
 void print_stop(void);
 int print_data_hist(core::VariableBase *vi, char *varname);
 int print_data_characteristics(void *min, void *max, double *avg,
-                               double *std_dev, Type adiosvartypes,
+                               double *std_dev, DataType adiosvartypes,
                                bool allowformat);
 
 template <class T>

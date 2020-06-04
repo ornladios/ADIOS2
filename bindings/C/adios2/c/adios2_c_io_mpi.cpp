@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "adios2/core/IO.h"
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/helper/adiosFunctions.h" //GetDataType<T>
 #include "adios2_c_internal.h"
 
 #include "adios2/helper/adiosCommMPI.h"
