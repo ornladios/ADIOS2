@@ -44,6 +44,7 @@ private:
     bool m_DoubleBuffer = true;
     size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
     std::string m_TransportMode = "fast";
+    bool m_Monitor = false;
 
     std::vector<std::string> m_PublisherAddresses;
     std::vector<std::string> m_ReplierAddresses;

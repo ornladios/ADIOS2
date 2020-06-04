@@ -53,6 +53,13 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
                              count, memstart, memcount, m_Name, CurrentStep(),
                              m_MpiRank, "", Params());
     }
+
+    if (m_MonitorActive)
+    {
+        m_Monitor.AddBytes(std::accumulate(variable.m_Count.begin(),
+                                           variable.m_Count.end(), sizeof(T),
+                                           std::multiplies<size_t>()));
+    }
 }
 
 } // end namespace engine
