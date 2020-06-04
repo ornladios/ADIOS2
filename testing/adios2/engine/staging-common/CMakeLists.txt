@@ -154,7 +154,7 @@ endforeach()
 #
 #   Setup tests for InSituMPI engine
 #
-if(ADIOS2_HAVE_MPI AND ADIOS2_RUN_MPMD_TESTS)
+if(ADIOS2_HAVE_MPI AND ADIOS2_RUN_MPI_MPMD_STATIC_NPROC_TESTS)
     set (SIMPLE_IMPI_TESTS "1x1;TimeoutOnOpen;1x1.Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
     set (INSITU_TESTS ${SIMPLE_IMPI_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_TESTS} ${SIMPLE_ZFP_TESTS})
     # Tests that don't work for InSitu
@@ -184,7 +184,7 @@ if(ADIOS2_HAVE_MPI AND ADIOS2_RUN_MPMD_TESTS)
     endforeach()
 endif()
 
-if(ADIOS2_HAVE_SSC AND ADIOS2_RUN_MPMD_TESTS)
+if(ADIOS2_HAVE_SSC AND ADIOS2_RUN_MPI_MPMD_STATIC_NPROC_TESTS)
     set (SSC_BASE_TESTS "1x1;1x1.Attrs;2x1;1x2;2x1ZeroDataVar;2x1ZeroDataR64;3x5;5x3;3x5LockGeometry;TimeoutOnOpen")
     set (SSC_TESTS  ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_FORTRAN_TESTS} ${SSC_BASE_TESTS})
     foreach(test ${SSC_TESTS})
