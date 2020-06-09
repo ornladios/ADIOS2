@@ -559,7 +559,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             }
             if (j.shape.empty() or (j.shape.size() == 1 and j.shape[0] == 1))
             {
-                *outputData = *reinterpret_cast<T *>(input_data);
+                std::memcpy(outputData, input_data, sizeof(T));
             }
         }
     }
