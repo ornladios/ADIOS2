@@ -153,6 +153,11 @@ elseif(ADIOS2_USE_MPI)
 endif()
 if(MPI_FOUND)
   set(ADIOS2_HAVE_MPI TRUE)
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/scripts/ci/scripts/mpmd-wrapper.sh.cmake
+    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/mpmd-wrapper.sh
+    @ONLY
+  )
 endif()
 
 # ZeroMQ

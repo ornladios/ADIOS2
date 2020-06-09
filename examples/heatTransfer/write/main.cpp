@@ -10,12 +10,15 @@
  *     Author: Norbert Podhorszki
  *
  */
-#include <mpi.h>
+#include <cstdlib>
+#include <cstring>
 
 #include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
+
+#include <mpi.h>
 
 #include "HeatTransfer.h"
 #include "IO.h"
@@ -106,6 +109,14 @@ int main(int argc, char *argv[])
     {
         std::cout << "Exception caught\n";
         std::cout << e.what() << std::endl;
+    }
+
+    // Handle the special case where this is used as a unit test in the ADIOS
+    // build and is running under the MPMD wrapper script.
+    const char *ADIOS2_MPMD_WRAPPER = std::getenv("ADIOS2_MPMD_WRAPPER");
+    if (ADIOS2_MPMD_WRAPPER && std::strcmp(ADIOS2_MPMD_WRAPPER, "1") == 0)
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     MPI_Finalize();

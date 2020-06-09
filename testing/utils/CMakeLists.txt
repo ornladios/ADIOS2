@@ -5,6 +5,7 @@
 
 if(ADIOS2_HAVE_MPI)
   set(MPIEXEC_COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS})
+  add_subdirectory(mpidummy)
   add_subdirectory(iotest)
 else()
   set(MPIEXEC_COMMAND)

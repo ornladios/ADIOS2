@@ -20,7 +20,7 @@ namespace adios2
 namespace utils
 {
 
-typedef struct
+struct VarInfo
 {
     core::VariableBase *v = nullptr;
     std::string type;
@@ -28,7 +28,7 @@ typedef struct
     Dims count;
     size_t writesize = 0; // size of subset this process writes, 0: do not write
     void *readbuf = nullptr; // read in buffer
-} VarInfo;
+};
 
 class Reorganize : public Utils
 {

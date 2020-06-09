@@ -29,6 +29,7 @@ program TestSstRead
   integer:: irank, isize, ierr, i, insteps, status
 
   character(len=256) :: filename, engine, params
+  character(len=1) :: ADIOS2_MPMD_WRAPPER
 
   integer :: writerSize, myStart, myLength
 
@@ -246,6 +247,13 @@ program TestSstRead
 
 
 #if ADIOS2_USE_MPI
+  call MPI_Comm_free(testComm, ierr)
+
+  ! Handle the special case where this is used as a unit test in the ADIOS
+  ! build and is running under the MPMD wrapper script.
+  call getenv('ADIOS2_MPMD_WRAPPER', ADIOS2_MPMD_WRAPPER)
+  if(ADIOS2_MPMD_WRAPPER .eq. '1') call MPI_Barrier(MPI_COMM_WORLD, ierr)
+
   call MPI_Finalize(ierr)
 #endif
 

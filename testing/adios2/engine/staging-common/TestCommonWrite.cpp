@@ -13,6 +13,10 @@
 
 #include <adios2.h>
 
+#if ADIOS2_USE_MPI
+#include <mpi.h>
+#endif
+
 #include <gtest/gtest.h>
 
 #include "TestData.h"
@@ -255,6 +259,16 @@ int main(int argc, char **argv)
     result = RUN_ALL_TESTS();
 
 #if ADIOS2_USE_MPI
+    MPI_Comm_free(&testComm);
+
+    // Handle the special case where this is used as a unit test in the ADIOS
+    // build and is running under the MPMD wrapper script.
+    const char *ADIOS2_MPMD_WRAPPER = std::getenv("ADIOS2_MPMD_WRAPPER");
+    if (ADIOS2_MPMD_WRAPPER && std::strcmp(ADIOS2_MPMD_WRAPPER, "1") == 0)
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
     MPI_Finalize();
 #endif
 

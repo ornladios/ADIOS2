@@ -6,6 +6,9 @@
  *      Author: Norbert Podhorszki
  */
 
+#include <cstdlib>
+#include <cstring>
+
 #include <chrono>
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
@@ -21,10 +24,14 @@
 
 #include <adios2.h>
 
+#include <mpi.h>
+
 #include "ParseArgs.h"
 
-static int numprocs, wrank;
+static int numTProcs, tRank;
 std::string engineName; // comes from command line
+
+static MPI_Comm testComm;
 
 struct RunParams
 {
@@ -121,7 +128,7 @@ public:
             }
             writer.BeginStep(adios2::StepMode::Append);
             writer.Put<float>(varArray, myArray.data());
-            if (wrank == 0)
+            if (tRank == 0)
                 writer.Put<double>(varScalar, 1.5 * (step + 1));
             writer.EndStep();
             std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
@@ -263,9 +270,9 @@ public:
 
         size_t nwriters = p.npx_w * p.npy_w;
         size_t nreaders = p.npx_r * p.npy_r;
-        if (nwriters + nreaders > numprocs)
+        if (nwriters + nreaders > numTProcs)
         {
-            if (!wrank)
+            if (!tRank)
             {
                 std::cout
                     << "skip test: writers+readers > available processors "
@@ -278,11 +285,11 @@ public:
         MPI_Comm comm;
 
         unsigned int color;
-        if (wrank < nwriters)
+        if (tRank < nwriters)
         {
             color = 0; // writers
         }
-        else if (wrank < nwriters + nreaders)
+        else if (tRank < nwriters + nreaders)
         {
             color = 1; // readers
         }
@@ -290,25 +297,25 @@ public:
         {
             color = 2; // not participating in test
         }
-        MPI_Comm_split(MPI_COMM_WORLD, color, wrank, &comm);
+        MPI_Comm_split(testComm, color, tRank, &comm);
         MPI_Comm_rank(comm, &rank);
 
         if (color == 0)
         {
-            std::cout << "Process wrank " << wrank << " rank " << rank
+            std::cout << "Process tRank " << tRank << " rank " << rank
                       << " calls MainWriters " << std::endl;
             MainWriters(comm, p.npx_w, p.npy_w, steps, writer_sleeptime);
         }
         else if (color == 1)
         {
-            std::cout << "Process wrank " << wrank << " rank " << rank
+            std::cout << "Process tRank " << tRank << " rank " << rank
                       << " calls MainReaders " << std::endl;
             MainReaders(comm, p.npx_r, p.npy_r, reader_sleeptime,
                         reader_timeout);
         }
-        std::cout << "Process wrank " << wrank << " rank " << rank
+        std::cout << "Process tRank " << tRank << " rank " << rank
                   << " enters MPI barrier..." << std::endl;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(testComm);
 
         // Separate each individual test with a big gap in time
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -367,8 +374,12 @@ int main(int argc, char **argv)
     MPI_Init(&argc, &argv);
     ::testing::InitGoogleTest(&argc, argv);
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
-    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+    int wRank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &wRank);
+    MPI_Comm_split(MPI_COMM_WORLD, 1, wRank, &testComm);
+
+    MPI_Comm_rank(testComm, &tRank);
+    MPI_Comm_size(testComm, &numTProcs);
 
     engineName = std::string(argv[1]);
     if (argc > 2)
@@ -376,14 +387,24 @@ int main(int argc, char **argv)
         engineParams = ParseEngineParams(argv[2]);
     }
 
-    if (!wrank)
+    if (tRank != 0)
     {
-        std::cout << "Test " << engineName << " engine with " << numprocs
+        std::cout << "Test " << engineName << " engine with " << numTProcs
                   << " processes " << std::endl;
     }
 
     int result;
     result = RUN_ALL_TESTS();
+
+    MPI_Comm_free(&testComm);
+
+    // Handle the special case where this is used as a unit test in the ADIOS
+    // build and is running under the MPMD wrapper script.
+    const char *ADIOS2_MPMD_WRAPPER = std::getenv("ADIOS2_MPMD_WRAPPER");
+    if (ADIOS2_MPMD_WRAPPER && std::strcmp(ADIOS2_MPMD_WRAPPER, "1") == 0)
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 
     MPI_Finalize();
     return result;

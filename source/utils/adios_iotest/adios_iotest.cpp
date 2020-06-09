@@ -1,5 +1,7 @@
-#include <chrono>
 #include <cstdlib>
+#include <cstring>
+
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <math.h>
@@ -8,8 +10,9 @@
 #include <thread>
 #include <vector>
 
-#include "adios2.h"
 #include "mpi.h"
+
+#include "adios2.h"
 
 #include "decomp.h"
 #include "processConfig.h"
@@ -329,6 +332,14 @@ int main(int argc, char *argv[])
     {
         std::cout << "ADIOS IOTEST test time " << timeEnd - timeStart
                   << "  seconds " << std::endl;
+    }
+
+    // Handle the special case where this is used as a unit test in the ADIOS
+    // build and is running under the MPMD wrapper script.
+    const char *ADIOS2_MPMD_WRAPPER = std::getenv("ADIOS2_MPMD_WRAPPER");
+    if (ADIOS2_MPMD_WRAPPER && std::strcmp(ADIOS2_MPMD_WRAPPER, "1") == 0)
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     MPI_Finalize();

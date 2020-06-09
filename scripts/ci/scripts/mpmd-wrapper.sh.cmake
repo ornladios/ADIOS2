@@ -2,7 +2,7 @@
 
 function usage()
 {
-  echo "Usage: mpi-mpmd-wrapper <MPI_RANK_ENV_VAR> -n P ex1 ex1a1 .. ex1aN : -n Q ex2 ex2a1 ... ex2aN : ..."
+  echo "Usage: mpmd-wrapper <MPI_RANK_ENV_VAR> -n P ex1 ex1a1 .. ex1aN : -n Q ex2 ex2a1 ... ex2aN : ..."
 
 }
 
@@ -17,6 +17,7 @@ shift
 BUCKETS_N=()
 BUCKETS_CMD=()
 
+NTOTAL=0
 while [ $# -gt 0 ]
 do
   N=
@@ -44,19 +45,21 @@ do
     shift
   done
   shift
-  
-  BUCKETS_N+=( $N )
+
+  NTOTAL=$((NTOTAL + N)) 
+  BUCKETS_N+=( ${NTOTAL} )
   BUCKETS_CMD+=( "$(echo ${CMD})" )
 done
 
-NNEXT=0
+export ADIOS2_MPMD_WRAPPER=1
+
 for i in ${!BUCKETS_N[@]}
 do
-  NNEXT=$((${NNEXT} + ${BUCKETS_N[$i]}))
-  if [ ${RANK} -lt ${NNEXT} ]
+  if [ ${RANK} -lt ${BUCKETS_N[$i]} ]
   then
     exec ${BUCKETS_CMD[$i]}
     exit $?
   fi
 done
-exit 0
+exec @CMAKE_RUNTIME_OUTPUT_DIRECTORY@/MPIDummyBarrier
+exit $?

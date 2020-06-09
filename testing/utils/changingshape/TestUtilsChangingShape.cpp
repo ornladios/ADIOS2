@@ -9,6 +9,7 @@
  */
 
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 
 #include <iostream>
@@ -32,9 +33,17 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+
+    int wrank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
+
+    MPI_Comm localComm;
+    MPI_Comm_split(MPI_COMM_WORLD, 1, wrank, &localComm);
+
+    MPI_Comm_rank(localComm, &rank);
+    MPI_Comm_size(localComm, &nproc);
+
+    adios2::ADIOS adios(localComm);
 #else
     adios2::ADIOS adios;
 #endif
@@ -117,6 +126,16 @@ int main(int argc, char **argv)
     writer.Close();
 
 #if ADIOS2_USE_MPI
+    MPI_Comm_free(&localComm);
+
+    // Handle the special case where this is used as a unit test in the ADIOS
+    // build and is running under the MPMD wrapper script.
+    const char *ADIOS2_MPMD_WRAPPER = std::getenv("ADIOS2_MPMD_WRAPPER");
+    if (ADIOS2_MPMD_WRAPPER && std::strcmp(ADIOS2_MPMD_WRAPPER, "1") == 0)
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
     MPI_Finalize();
 #endif
 

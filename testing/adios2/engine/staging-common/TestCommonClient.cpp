@@ -12,6 +12,10 @@
 
 #include <adios2.h>
 
+#if ADIOS2_USE_MPI
+#include <mpi.h>
+#endif
+
 #include <gtest/gtest.h>
 
 #include "TestData.h"
@@ -28,6 +32,10 @@ public:
     SstReadTest() = default;
 };
 
+#if ADIOS2_USE_MPI
+MPI_Comm testComm;
+#endif
+
 // ADIOS2 Sst read
 TEST_F(SstReadTest, ADIOS2SstRead)
 {
@@ -37,14 +45,14 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
     int TimeGapDetected = 0;
 #if ADIOS2_USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(testComm, &mpiRank);
+    MPI_Comm_size(testComm, &mpiSize);
 #endif
 
     // Write test data using ADIOS2
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(testComm);
 #else
     adios2::ADIOS adios;
 #endif
@@ -363,6 +371,10 @@ int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI
     MPI_Init(nullptr, nullptr);
+
+    int wRank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &wRank);
+    MPI_Comm_split(MPI_COMM_WORLD, 1, wRank, &testComm);
 #endif
 
     int result;
@@ -372,6 +384,16 @@ int main(int argc, char **argv)
     result = RUN_ALL_TESTS();
 
 #if ADIOS2_USE_MPI
+    MPI_Comm_free(&testComm);
+
+    // Handle the special case where this is used as a unit test in the ADIOS
+    // build and is running under the MPMD wrapper script.
+    const char *ADIOS2_MPMD_WRAPPER = std::getenv("ADIOS2_MPMD_WRAPPER");
+    if (ADIOS2_MPMD_WRAPPER && std::strcmp(ADIOS2_MPMD_WRAPPER, "1") == 0)
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
     MPI_Finalize();
 #endif
 

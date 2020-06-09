@@ -14,6 +14,7 @@
 #include <adios2_c.h>
 
 #if ADIOS2_USE_MPI
+#include <stdlib.h>
 #include <mpi.h>
 #endif
 
@@ -25,11 +26,19 @@ int main(int argc, char *argv[])
     int nproc = 1;
 #if ADIOS2_USE_MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+
+    int wrank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
+
+    MPI_Comm localComm;
+    MPI_Comm_split(MPI_COMM_WORLD, 1, wrank, &localComm);
+
+    MPI_Comm_rank(localComm, &rank);
+    MPI_Comm_size(localComm, &nproc);
+
+    adios2_adios *adiosH = adios2_init(localComm, adios2_debug_off);
 #else
-    adios2_adios *adiosH = adios2_init(adios2_debug_mode_on);
+    adios2_adios *adiosH = adios2_init(adios2_debug_off);
 #endif
 
     char engineName[32] = "BPFile";
@@ -150,6 +159,16 @@ int main(int argc, char *argv[])
     adios2_finalize(adiosH);
 
 #if ADIOS2_USE_MPI
+    MPI_Comm_free(&localComm);
+
+    // Handle the special case where this is used as a unit test in the ADIOS
+    // build and is running under the MPMD wrapper script.
+    const char *ADIOS2_MPMD_WRAPPER = getenv("ADIOS2_MPMD_WRAPPER");
+    if(ADIOS2_MPMD_WRAPPER && strcmp(ADIOS2_MPMD_WRAPPER, "1") == 0)
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
     MPI_Finalize();
 #endif
 
