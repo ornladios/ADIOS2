@@ -51,6 +51,7 @@ include(GoogleTest)
 #
 function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
   set(test_targets "")
+  set(test_tests "")
   if(NOT mpi MATCHES "^MPI_(ALLOW|NONE|ONLY)$")
     message(FATAL_ERROR "Invalid mpi argument value '${mpi}'.")
   endif()
@@ -59,38 +60,51 @@ function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
     list(APPEND test_targets "${tgt}")
     if(NOT TARGET ${tgt})
       add_executable(${tgt} Test${src_pfx}${testname}.cpp)
-      target_link_libraries(${tgt} adios2::cxx11 adios2::c adios2_core adios2::thirdparty::gtest)
+      target_link_libraries(${tgt}
+        adios2::cxx11 adios2::c adios2_core
+        adios2::thirdparty::gtest
+      )
     endif()
     gtest_add_tests(TARGET ${tgt}
       TEST_PREFIX "${tst_pfx}"
       TEST_SUFFIX "${tst_sfx}.Serial"
+      TEST_LIST added_tests_serial
       ${ARGN}
     )
+    list(APPEND test_tests ${added_tests_serial})
   endif()
   if(ADIOS2_HAVE_MPI AND NOT mpi STREQUAL "MPI_NONE")
     set(tgt Test.${tst_pfx}${testname}.MPI)
     list(APPEND test_targets "${tgt}")
     if(NOT TARGET ${tgt})
       add_executable(${tgt} Test${src_pfx}${testname}.cpp)
-      target_link_libraries(${tgt} adios2::cxx11_mpi adios2::c_mpi adios2_core_mpi MPI::MPI_C adios2::thirdparty::gtest)
+      target_link_libraries(${tgt}
+        adios2::cxx11_mpi adios2::c_mpi adios2_core_mpi
+        MPI::MPI_C adios2::thirdparty::gtest
+      )
     endif()
     if(NOT mpi STREQUAL "MPI_NOEXEC")
       gtest_add_tests(TARGET ${tgt}
         TEST_PREFIX "${tst_pfx}"
         TEST_SUFFIX "${tst_sfx}.MPI"
         EXEC_WRAPPER ${MPIEXEC_COMMAND}
-        TEST_LIST added_tests
+        TEST_LIST added_tests_mpi
         ${ARGN}
-        )
-      set_tests_properties(${added_tests} PROPERTIES PROCESSORS "${MPIEXEC_MAX_NUMPROCS}")
+      )
+      set_tests_properties(${added_tests_mpi} PROPERTIES
+        PROCESSORS "${MPIEXEC_MAX_NUMPROCS}"
+      )
     else()
       gtest_add_tests(TARGET ${tgt}
         TEST_PREFIX "${tst_pfx}"
         TEST_SUFFIX "${tst_sfx}.MPI"
+        TEST_LIST added_tests_mpi
         ${ARGN}
-        )
+      )
     endif()
+    list(APPEND test_tests ${added_tests_mpi})
   endif()
+  set("Test.${tst_pfx}${testname}-TESTS" "${test_tests}" PARENT_SCOPE)
   set("Test.${tst_pfx}${testname}-TARGETS" "${test_targets}" PARENT_SCOPE)
 endfunction()
 
