@@ -34,4 +34,7 @@ if(ADIOS2_HAVE_MPI)
   add_subdirectory(insitumpi)
 endif()
 
-add_subdirectory(staging-common)
+if((NOT ADIOS2_USE_MPI) OR
+   (ADIOS2_USE_MPI AND ADIOS2_RUN_MPI_MPMD_STATIC_NPROC_TESTS))
+  add_subdirectory(staging-common)
+endif()
