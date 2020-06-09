@@ -258,7 +258,7 @@ private:
     std::string m_Destination;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
-    bool m_ContiguousMajor;
+    bool m_ContiguousMajor = false;
     bool m_EnableStat = true;
     int m_MpiRank;
     int m_MpiSize;
