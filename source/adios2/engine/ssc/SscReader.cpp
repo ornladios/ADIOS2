@@ -158,11 +158,11 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                     std::memcpy(value.data(), m_Buffer.data() + v.bufferStart,
                                 v.bufferCount);
                 }
-                if (v.type.empty())
+                if (v.type == Type::None)
                 {
                     throw(std::runtime_error("unknown data type"));
                 }
-                else if (v.type == "string")
+                else if (v.type == Type::String)
                 {
                     auto variable = m_IO.InquireVariable<std::string>(v.name);
                     if (variable)
@@ -313,7 +313,7 @@ void SscReader::SyncWritePattern()
     {
         for (const auto &b : blockVec)
         {
-            if (b.type.empty())
+            if (b.type == Type::None)
             {
                 throw(std::runtime_error("unknown data type"));
             }
@@ -367,8 +367,9 @@ void SscReader::SyncWritePattern()
         }
         for (const auto &attributeJson : attributesJson)
         {
-            const std::string type(attributeJson["Type"].get<std::string>());
-            if (type.empty())
+            const Type type(helper::GetTypeFromString(
+                attributeJson["Type"].get<std::string>()));
+            if (type == Type::None)
             {
             }
 #define declare_type(T)                                                        \

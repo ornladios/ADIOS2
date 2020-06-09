@@ -25,94 +25,75 @@ namespace helper
 {
 
 template <>
-inline std::string GetType<std::string>() noexcept
+inline Type GetType<std::string>() noexcept
 {
-    return "string";
+    return Type::String;
 }
 
 template <>
-inline std::string GetType<int8_t>() noexcept
+inline Type GetType<int8_t>() noexcept
 {
-    return "int8_t";
+    return Type::Int8;
 }
 template <>
-inline std::string GetType<uint8_t>() noexcept
+inline Type GetType<uint8_t>() noexcept
 {
-    return "uint8_t";
+    return Type::UInt8;
 }
 template <>
-inline std::string GetType<int16_t>() noexcept
+inline Type GetType<int16_t>() noexcept
 {
-    return "int16_t";
+    return Type::Int16;
 }
 template <>
-inline std::string GetType<uint16_t>() noexcept
+inline Type GetType<uint16_t>() noexcept
 {
-    return "uint16_t";
+    return Type::UInt16;
 }
 template <>
-inline std::string GetType<int32_t>() noexcept
+inline Type GetType<int32_t>() noexcept
 {
-    return "int32_t";
+    return Type::Int32;
 }
 template <>
-inline std::string GetType<uint32_t>() noexcept
+inline Type GetType<uint32_t>() noexcept
 {
-    return "uint32_t";
+    return Type::UInt32;
 }
 template <>
-inline std::string GetType<int64_t>() noexcept
+inline Type GetType<int64_t>() noexcept
 {
-    return "int64_t";
+    return Type::Int64;
 }
 template <>
-inline std::string GetType<uint64_t>() noexcept
+inline Type GetType<uint64_t>() noexcept
 {
-    return "uint64_t";
+    return Type::UInt64;
 }
 template <>
-inline std::string GetType<float>() noexcept
+inline Type GetType<float>() noexcept
 {
-    return "float";
+    return Type::Float;
 }
 template <>
-inline std::string GetType<double>() noexcept
+inline Type GetType<double>() noexcept
 {
-    return "double";
+    return Type::Double;
 }
 template <>
-inline std::string GetType<long double>() noexcept
+inline Type GetType<long double>() noexcept
 {
-    return "long double";
+    return Type::LongDouble;
 }
 template <>
-inline std::string GetType<std::complex<float>>() noexcept
+inline Type GetType<std::complex<float>>() noexcept
 {
-    return "float complex";
+    return Type::FloatComplex;
 }
 template <>
-inline std::string GetType<std::complex<double>>() noexcept
+inline Type GetType<std::complex<double>>() noexcept
 {
-    return "double complex";
-}
-
-template <class T>
-bool IsTypeAlias(
-    const std::string type,
-    const std::map<std::string, std::set<std::string>> &aliases) noexcept
-{
-    if (type == GetType<T>()) // is key itself
-    {
-        return true;
-    }
-
-    bool isAlias = false;
-    if (aliases.at(GetType<T>()).count(type) == 1)
-    {
-        isAlias = true;
-    }
-
-    return isAlias;
+    return Type::DoubleComplex;
 }
 
 template <class T, class U>

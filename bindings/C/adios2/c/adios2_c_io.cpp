@@ -258,10 +258,10 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
             return variable;
         }
 
-        const std::string type(ioCpp.InquireVariableType(name));
+        const adios2::Type type(ioCpp.InquireVariableType(name));
         adios2::core::VariableBase *variableCpp = nullptr;
 
-        if (type == "compound")
+        if (type == adios2::Type::Compound)
         {
             // not supported
         }
@@ -308,10 +308,10 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
         for (auto &name : names)
         {
             auto it = dataMap.find(name);
-            const std::string type(it->second.first);
+            const adios2::Type type(it->second.first);
             adios2::core::VariableBase *variable = nullptr;
 
-            if (type == "compound")
+            if (type == adios2::Type::Compound)
             {
                 // not supported
             }
@@ -506,10 +506,10 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
             return attribute;
         }
 
-        const std::string type(itAttribute->second.first);
+        const adios2::Type type(itAttribute->second.first);
         adios2::core::AttributeBase *attributeCpp = nullptr;
 
-        if (type == "compound")
+        if (type == adios2::Type::Compound)
         {
             // not supported
         }
@@ -567,10 +567,10 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
         for (auto &name : names)
         {
             auto it = dataMap.find(name);
-            const std::string type(it->second.first);
+            const adios2::Type type(it->second.first);
             adios2::core::AttributeBase *attribute = nullptr;
 
-            if (type == "compound")
+            if (type == adios2::Type::Compound)
             {
                 // not supported
             }

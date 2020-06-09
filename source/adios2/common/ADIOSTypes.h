@@ -119,6 +119,27 @@ enum class SelectionType
     Auto         ///< Let the engine decide what to return
 };
 
+// Data types.
+enum class Type
+{
+    None,
+    Int8,
+    Int16,
+    Int32,
+    Int64,
+    UInt8,
+    UInt16,
+    UInt32,
+    UInt64,
+    Float,
+    Double,
+    LongDouble,
+    FloatComplex,
+    DoubleComplex,
+    String,
+    Compound
+};
+
 // Types
 using std::size_t;
 
@@ -215,6 +236,7 @@ std::string ToString(StepMode value);
 std::string ToString(StepStatus value);
 std::string ToString(TimeUnit value);
 std::string ToString(SelectionType value);
+std::string ToString(Type type);
 
 /**
  * os << [adios2_type] enables output of adios2 enums/classes directly

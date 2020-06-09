@@ -98,23 +98,16 @@ struct SubStreamBoxInfo
 
 /**
  * Gets type from template parameter T
- * @return string with type
+ * @return Type enumeration value
  */
 template <class T>
-std::string GetType() noexcept;
+Type GetType() noexcept;
 
 /**
- * Check in types set if "type" is one of the aliases for a certain type,
- * (e.g. if type = integer is an accepted alias for "int", returning true)
- * @param type input to be compared with an alias
- * @param aliases set containing aliases to a certain type, typically
- * Support::DatatypesAliases from Support.h
- * @return true: is an alias, false: is not
+ * Gets type from string, inversing ToString(Type)
+ * @return Type enumeration value, or Type::None on failure
  */
-template <class T>
-bool IsTypeAlias(
-    const std::string type,
-    const std::map<std::string, std::set<std::string>> &aliases) noexcept;
+Type GetTypeFromString(std::string const &) noexcept;
 
 /**
  * Converts a vector of dimensions to a CSV string

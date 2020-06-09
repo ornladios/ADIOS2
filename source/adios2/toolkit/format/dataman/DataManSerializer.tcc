@@ -117,7 +117,7 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
     metaj["O"] = varStart;
     metaj["C"] = varCount;
     metaj["S"] = varShape;
-    metaj["Y"] = helper::GetType<T>();
+    metaj["Y"] = ToString(helper::GetType<T>());
     metaj["P"] = localBuffer->size();
 
     if (not address.empty())
@@ -371,7 +371,7 @@ void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute)
     TAU_SCOPED_TIMER_FUNC();
     nlohmann::json staticVar;
     staticVar["N"] = attribute.m_Name;
-    staticVar["Y"] = attribute.m_Type;
+    staticVar["Y"] = ToString(attribute.m_Type);
     staticVar["V"] = attribute.m_IsSingleValue;
     if (attribute.m_IsSingleValue)
     {

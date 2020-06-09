@@ -52,10 +52,10 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 
     auto varFFSCallback = [](void *reader, const char *variableName,
                              const char *type, void *data) {
-        std::string Type(type);
+        adios2::Type Type(helper::GetTypeFromString(type));
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
-        if (Type == "compound")
+        if (Type == adios2::Type::Compound)
         {
             return (void *)NULL;
         }
@@ -85,10 +85,10 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             Reader->m_IO.RemoveAllAttributes();
             return;
         }
-        std::string Type(type);
+        adios2::Type Type(helper::GetTypeFromString(type));
         try
         {
-            if (Type == "compound")
+            if (Type == adios2::Type::Compound)
             {
                 return;
             }
@@ -107,8 +107,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 #undef declare_type
             else
             {
-                std::cout << "Loading attribute matched no type " << Type
-                          << std::endl;
+                std::cout << "Loading attribute matched no type "
+                          << ToString(Type) << std::endl;
             }
         }
         catch (...)
@@ -125,7 +125,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         std::vector<size_t> VecShape;
         std::vector<size_t> VecStart;
         std::vector<size_t> VecCount;
-        std::string Type(type);
+        adios2::Type Type(helper::GetTypeFromString(type));
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
         /*
@@ -151,7 +151,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             }
         }
 
-        if (Type == "compound")
+        if (Type == adios2::Type::Compound)
         {
             return (void *)NULL;
         }
@@ -174,7 +174,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             std::vector<size_t> VecShape;
             std::vector<size_t> VecStart;
             std::vector<size_t> VecCount;
-            std::string Type(type);
+            adios2::Type Type(helper::GetTypeFromString(type));
             class SstReader::SstReader *Reader =
                 reinterpret_cast<class SstReader::SstReader *>(reader);
             size_t currentStep = SstCurrentStep(Reader->m_Input);
@@ -201,7 +201,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
                 }
             }
 
-            if (Type == "compound")
+            if (Type == adios2::Type::Compound)
             {
                 return;
             }
@@ -548,9 +548,9 @@ void SstReader::PerformGets()
 
         for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
         {
-            const std::string type = m_IO.InquireVariableType(name);
+            const Type type = m_IO.InquireVariableType(name);
 
-            if (type == "compound")
+            if (type == Type::Compound)
             {
             }
 #define declare_type(T)                                                        \
@@ -579,9 +579,9 @@ void SstReader::PerformGets()
 
         for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
         {
-            const std::string type = m_IO.InquireVariableType(name);
+            const Type type = m_IO.InquireVariableType(name);
 
-            if (type == "compound")
+            if (type == Type::Compound)
             {
             }
 #define declare_type(T)                                                        \

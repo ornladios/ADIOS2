@@ -82,9 +82,9 @@ void InlineWriter::ResetVariables()
     for (auto &varPair : availVars)
     {
         const auto &name = varPair.first;
-        const std::string type = m_IO.InquireVariableType(name);
+        const Type type = m_IO.InquireVariableType(name);
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
         }
 #define declare_type(T)                                                        \

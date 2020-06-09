@@ -14,6 +14,7 @@
 #include "Attribute.h"
 
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosType.h"
 
 namespace adios2
 {
@@ -24,7 +25,7 @@ template <class T>
 Params Attribute<T>::DoGetInfo() const noexcept
 {
     Params info;
-    info["Type"] = m_Type;
+    info["Type"] = ToString(m_Type);
     info["Elements"] = std::to_string(m_Elements);
 
     if (m_IsSingleValue)

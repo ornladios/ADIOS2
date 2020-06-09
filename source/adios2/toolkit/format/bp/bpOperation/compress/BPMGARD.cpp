@@ -11,6 +11,7 @@
 #include "BPMGARD.h"
 
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosType.h"
 
 #ifdef ADIOS2_HAVE_MGARD
 #include "adios2/operator/compress/CompressMGARD.h"
@@ -68,10 +69,11 @@ void BPMGARD::GetData(const char *input,
 {
 #ifdef ADIOS2_HAVE_MGARD
     core::compress::CompressMGARD op((Params()));
-    op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
-                  blockOperationInfo.PreCount,
-                  blockOperationInfo.Info.at("PreDataType"),
-                  blockOperationInfo.Info);
+    op.Decompress(
+        input, blockOperationInfo.PayloadSize, dataOutput,
+        blockOperationInfo.PreCount,
+        helper::GetTypeFromString(blockOperationInfo.Info.at("PreDataType")),
+        blockOperationInfo.Info);
 
 #else
     throw std::runtime_error(

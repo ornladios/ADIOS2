@@ -24,9 +24,9 @@ namespace engine
 namespace ssc
 {
 
-size_t GetTypeSize(const std::string &type)
+size_t GetTypeSize(Type type)
 {
-    if (type.empty())
+    if (type == Type::None)
     {
         throw(std::runtime_error("unknown data type"));
     }
@@ -37,8 +37,7 @@ size_t GetTypeSize(const std::string &type)
     else { throw(std::runtime_error("unknown data type")); }
 }
 
-size_t TotalDataSize(const Dims &dims, const std::string &type,
-                     const ShapeID &shapeId)
+size_t TotalDataSize(const Dims &dims, Type type, const ShapeID &shapeId)
 {
     if (shapeId == ShapeID::GlobalArray || shapeId == ShapeID::LocalArray)
     {
@@ -61,7 +60,7 @@ size_t TotalDataSize(const BlockVec &bv)
     size_t s = 0;
     for (const auto &b : bv)
     {
-        if (b.type == "string")
+        if (b.type == Type::String)
         {
             s += b.bufferCount;
         }
@@ -129,7 +128,7 @@ void BlockVecToJson(const BlockVec &input, nlohmann::json &output)
         output["Variables"].emplace_back();
         auto &jref = output["Variables"].back();
         jref["Name"] = b.name;
-        jref["Type"] = b.type;
+        jref["Type"] = ToString(b.type);
         jref["ShapeID"] = b.shapeId;
         jref["Shape"] = b.shape;
         jref["Start"] = b.start;
@@ -150,8 +149,8 @@ void AttributeMapToJson(IO &input, nlohmann::json &output)
     for (const auto &attributePair : attributeMap)
     {
         const std::string name(attributePair.first);
-        const std::string type(attributePair.second.first);
-        if (type.empty())
+        const Type type(attributePair.second.first);
+        if (type == Type::None)
         {
         }
 #define declare_type(T)                                                        \
@@ -160,7 +159,7 @@ void AttributeMapToJson(IO &input, nlohmann::json &output)
         const auto &attribute = input.InquireAttribute<T>(name);               \
         nlohmann::json attributeJson;                                          \
         attributeJson["Name"] = attribute->m_Name;                             \
-        attributeJson["Type"] = attribute->m_Type;                             \
+        attributeJson["Type"] = ToString(attribute->m_Type);                   \
         attributeJson["IsSingleValue"] = attribute->m_IsSingleValue;           \
         if (attribute->m_IsSingleValue)                                        \
         {                                                                      \
@@ -218,7 +217,8 @@ void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
                 output[i].emplace_back();
                 auto &b = output[i].back();
                 b.name = j["Name"].get<std::string>();
-                b.type = j["Type"].get<std::string>();
+                b.type =
+                    helper::GetTypeFromString(j["Type"].get<std::string>());
                 b.shapeId = j["ShapeID"].get<ShapeID>();
                 b.start = j["Start"].get<Dims>();
                 b.count = j["Count"].get<Dims>();
@@ -295,7 +295,7 @@ void PrintBlock(const BlockInfo &b, const std::string &label)
 {
     std::cout << label << std::endl;
     std::cout << b.name << std::endl;
-    std::cout << "    Type : " << b.type << std::endl;
+    std::cout << "    Type : " << ToString(b.type) << std::endl;
     PrintDims(b.shape, "    Shape : ");
     PrintDims(b.start, "    Start : ");
     PrintDims(b.count, "    Count : ");
@@ -309,7 +309,7 @@ void PrintBlockVec(const BlockVec &bv, const std::string &label)
     for (const auto &i : bv)
     {
         std::cout << i.name << std::endl;
-        std::cout << "    Type : " << i.type << std::endl;
+        std::cout << "    Type : " << ToString(i.type) << std::endl;
         PrintDims(i.shape, "    Shape : ");
         PrintDims(i.start, "    Start : ");
         PrintDims(i.count, "    Count : ");
@@ -328,7 +328,7 @@ void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label)
         for (const auto &i : bv)
         {
             std::cout << "    " << i.name << std::endl;
-            std::cout << "        Type : " << i.type << std::endl;
+            std::cout << "        Type : " << ToString(i.type) << std::endl;
             PrintDims(i.shape, "        Shape : ");
             PrintDims(i.start, "        Start : ");
             PrintDims(i.count, "        Count : ");

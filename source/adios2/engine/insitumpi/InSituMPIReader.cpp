@@ -488,9 +488,9 @@ void InSituMPIReader::AsyncRecvAllVariables()
     for (const auto &variablePair : m_ReadScheduleMap)
     {
         // AsyncRecvVariable(variablePair.first, variablePair.second);
-        const std::string type(m_IO.InquireVariableType(variablePair.first));
+        const Type type(m_IO.InquireVariableType(variablePair.first));
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
             // not supported
         }

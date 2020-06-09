@@ -14,6 +14,7 @@
 #include "VariableBase.h"
 
 #include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/ADIOSTypes.h"
 
 namespace adios2
 {
@@ -34,8 +35,8 @@ public:
     struct Element
     {
         const std::string Name;
-        const std::string Type; ///< from GetType<T>
-        const size_t Offset;    ///< element offset in struct
+        const adios2::Type Type; ///< from GetType<T>
+        const size_t Offset;     ///< element offset in struct
     };
 
     /** vector of primitve element types defining compound struct */

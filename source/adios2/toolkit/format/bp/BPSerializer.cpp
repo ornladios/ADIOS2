@@ -743,7 +743,7 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
 
     for (const auto &attribute : attributes)
     {
-        const std::string type = attribute.second.first;
+        const Type type = attribute.second.first;
 
         // each attribute is only written to output once
         // so filter out the ones already written
@@ -753,7 +753,7 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
             continue;
         }
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
         }
 #define declare_type(T)                                                        \
@@ -796,7 +796,7 @@ void BPSerializer::PutAttributes(core::IO &io)
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
-        const std::string type(attributePair.second.first);
+        const Type type(attributePair.second.first);
 
         // each attribute is only written to output once
         // so filter out the ones already written
@@ -806,7 +806,7 @@ void BPSerializer::PutAttributes(core::IO &io)
             continue;
         }
 
-        if (type == "unknown")
+        if (type == Type::None)
         {
         }
 #define declare_type(T)                                                        \

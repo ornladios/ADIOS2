@@ -61,7 +61,7 @@ struct DataManVar
     Dims start;
     std::string name;
     std::string doid;
-    std::string type;
+    Type type;
     std::vector<char> min;
     std::vector<char> max;
     std::vector<char> value;
@@ -193,8 +193,8 @@ private:
     template <class T>
     void PutAttribute(const core::Attribute<T> &attribute);
 
-    bool IsCompressionAvailable(const std::string &method,
-                                const std::string &type, const Dims &count);
+    bool IsCompressionAvailable(const std::string &method, Type type,
+                                const Dims &count);
 
     void JsonToVarMap(nlohmann::json &metaJ, VecPtr pack);
 

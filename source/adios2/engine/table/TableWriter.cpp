@@ -287,7 +287,7 @@ void TableWriter::PutAggregatorBuffer()
         m_VarInfoMap[v.name].type = v.type;
         m_VarInfoMap[v.name].shape = v.shape;
         size_t elementSize;
-        if (v.type == "")
+        if (v.type == Type::None)
         {
         }
 #define declare_type(T)                                                        \
@@ -320,7 +320,7 @@ void TableWriter::PutAggregatorBuffer()
                 }
             }
 
-            if (v.type == "")
+            if (v.type == Type::None)
             {
             }
 #define declare_type(T)                                                        \
@@ -376,8 +376,8 @@ void TableWriter::PutSubEngine(bool finalPut)
                 {
                     count[0] = shape[0] - start[0];
                 }
-                const std::string &type = m_VarInfoMap[varPair.first].type;
-                if (type == "")
+                const Type type = m_VarInfoMap[varPair.first].type;
+                if (type == Type::None)
                 {
                 }
 #define declare_type(T)                                                        \

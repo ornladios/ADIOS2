@@ -28,7 +28,7 @@ namespace adios2
 namespace core
 {
 
-VariableBase::VariableBase(const std::string &name, const std::string type,
+VariableBase::VariableBase(const std::string &name, const Type type,
                            const size_t elementSize, const Dims &shape,
                            const Dims &start, const Dims &count,
                            const bool constantDims)
@@ -305,12 +305,12 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
         }
 
         auto itAttribute = io.m_Attributes.find(attributeName);
-        const std::string type = itAttribute->second.first;
+        const Type type = itAttribute->second.first;
 
         const std::string key =
             fullNameKeys ? attributeName : attributeName.substr(prefix.size());
 
-        if (type == "compound")
+        if (type == Type::Compound)
         {
         }
 #define declare_template_instantiation(T)                                      \
@@ -521,7 +521,7 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
 
 Dims VariableBase::GetShape(const size_t step)
 {
-    if (m_Type == "compound")
+    if (m_Type == Type::Compound)
     {
         // not supported
     }

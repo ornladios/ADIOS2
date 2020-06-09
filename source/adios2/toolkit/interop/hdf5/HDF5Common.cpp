@@ -1193,7 +1193,7 @@ void HDF5Common::CreateVarsFromIO(core::IO &io)
     for (const auto &vpair : variables)
     {
         const std::string &varName = vpair.first;
-        const std::string &varType = vpair.second.first;
+        const Type varType = vpair.second.first;
 #define declare_template_instantiation(T)                                      \
     if (varType == helper::GetType<T>())                                       \
     {                                                                          \
@@ -1229,7 +1229,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
     {
         std::string attrName = apair.first;
         Params temp = apair.second;
-        std::string attrType = temp["Type"];
+        Type attrType = helper::GetTypeFromString(temp["Type"]);
 
         hid_t parentID = m_FileId;
 #ifdef NO_ATTR_VAR_ASSOC
@@ -1254,7 +1254,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
             continue;
         }
 
-        if (attrType == "compound")
+        if (attrType == Type::Compound)
         {
             // not supported
         }

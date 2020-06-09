@@ -29,7 +29,7 @@ CompressMGARD::CompressMGARD(const Params &parameters)
 }
 
 size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
-                               const size_t elementSize, const std::string type,
+                               const size_t elementSize, Type type,
                                void *bufferOut, const Params &parameters,
                                Params &info) const
 {
@@ -104,8 +104,7 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
                                  void *dataOut, const Dims &dimensions,
-                                 const std::string type,
-                                 const Params & /*parameters*/) const
+                                 Type type, const Params & /*parameters*/) const
 {
     int mgardType = -1;
     size_t elementSize = 0;

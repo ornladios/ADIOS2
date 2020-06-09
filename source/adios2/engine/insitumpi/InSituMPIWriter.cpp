@@ -281,9 +281,9 @@ void InSituMPIWriter::PerformPuts()
 void InSituMPIWriter::AsyncSendVariable(std::string variableName)
 {
     TAU_SCOPED_TIMER("InSituMPIWriter::AsyncSendVariable");
-    const std::string type(m_IO.InquireVariableType(variableName));
+    const Type type(m_IO.InquireVariableType(variableName));
 
-    if (type == "compound")
+    if (type == Type::Compound)
     {
         // not supported
     }
