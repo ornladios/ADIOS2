@@ -14,6 +14,7 @@ HDF5_DIFF_EXECUTABLE:FILEPATH=/opt/msan/bin/h5diff
 set(dashboard_track "Analysis")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j4")
+set(CTEST_MEMORYCHECK_TYPE "MemorySanitizer")
 
 set(ADIOS_TEST_REPEAT 0)
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
