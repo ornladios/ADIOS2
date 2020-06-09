@@ -10,15 +10,10 @@
 
 #include <adios2.h>
 #include <gtest/gtest.h>
-#if ADIOS2_USE_MPI
-#include <mpi.h>
-#endif
 #include <numeric>
 #include <thread>
 
 using namespace adios2;
-int mpiRank = 0;
-int mpiSize = 1;
 size_t print_lines = 0;
 
 Dims shape = {4, 4, 4};
@@ -58,8 +53,7 @@ void PrintData(const T *data, const size_t step, const Dims &start,
 {
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
-    std::cout << "Rank: " << mpiRank << " Step: " << step << " Size:" << size
-              << "\n";
+    std::cout << "Step: " << step << " Size:" << size << "\n";
     size_t printsize = 128;
 
     if (size < printsize)
@@ -105,11 +99,7 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
                                const Dims &count, const size_t steps,
                                const adios2::Params &engineParams)
 {
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF);
-#else
     adios2::ADIOS adios;
-#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -130,11 +120,7 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                                const Dims &memCount, const size_t steps,
                                const adios2::Params &engineParams)
 {
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF);
-#else
     adios2::ADIOS adios;
-#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -181,7 +167,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     print_lines = 0;
 }
 
-#ifdef ADIOS2_HAVE_ZEROMQ
 TEST_F(DataManEngineTest, 3D_MemSelect)
 {
 
@@ -205,29 +190,11 @@ TEST_F(DataManEngineTest, 3D_MemSelect)
     std::cout << "Reader thread ended" << std::endl;
 }
 
-#endif // ZEROMQ
-
 int main(int argc, char **argv)
 {
-#if ADIOS2_USE_MPI
-    int mpi_provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
-    std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
-              << " and provided Mode " << mpi_provided << std::endl;
-    if (mpi_provided != MPI_THREAD_MULTIPLE)
-    {
-        MPI_Finalize();
-        return 0;
-    }
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
-#if ADIOS2_USE_MPI
-    MPI_Finalize();
-#endif
 
     return result;
 }

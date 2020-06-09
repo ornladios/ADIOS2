@@ -51,7 +51,7 @@ include(GoogleTest)
 #
 function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
   set(test_targets "")
-  if(NOT mpi MATCHES "^MPI_(ALLOW|NONE|ONLY|NOEXEC)$")
+  if(NOT mpi MATCHES "^MPI_(ALLOW|NONE|ONLY)$")
     message(FATAL_ERROR "Invalid mpi argument value '${mpi}'.")
   endif()
   if(NOT mpi STREQUAL "MPI_ONLY")
