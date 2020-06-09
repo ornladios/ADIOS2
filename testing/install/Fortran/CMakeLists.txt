@@ -18,7 +18,7 @@ if(ADIOS2_HAVE_MPI)
   find_package(MPI REQUIRED)
   set(src main_mpi_check.F90)
   set(mpilib MPI::MPI_Fortran)
-  set(mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS})
+  set(mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS})
 
   # Test using mpi Fortran bindings through adios2::fortran_mpi target.
   add_executable(adios_fortran_mpi_test main_mpi_check.F90)

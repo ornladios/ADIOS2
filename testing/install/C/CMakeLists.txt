@@ -18,7 +18,7 @@ if(ADIOS2_HAVE_MPI)
   find_package(MPI REQUIRED)
   set(src main_mpi.c)
   set(mpilib MPI::MPI_C)
-  set(mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS})
+  set(mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS})
 
   # Test using mpi C bindings through adios2::c_mpi target.
   add_executable(adios_c_mpi_test main_mpi.c)

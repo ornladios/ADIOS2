@@ -24,6 +24,8 @@ function(add_install_cmake_test name)
     "-DBUILD_TYPE=$<CONFIG>"
     "-DMPIEXEC_EXECUTABLE=${MPIEXEC_EXECUTABLE}"
     "-DMPIEXEC_EXTRA_FLAGS=${MPIEXEC_EXTRA_FLAGS}"
+    "-DMPIEXEC_MAX_NUMPROCS=${MPIEXEC_MAX_NUMPROCS}"
+    "-DMPIEXEC_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/run_cmake.cmake"
     )
   set_tests_properties(Install.CMake.${name} PROPERTIES
@@ -63,6 +65,8 @@ function(add_install_make_test name)
     "-DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}"
     "-DMPIEXEC_EXECUTABLE=${mpiexec}"
     "-DMPIEXEC_EXTRA_FLAGS=${mpiexec_extra_flags}"
+    "-DMPIEXEC_MAX_NUMPROCS=${MPIEXEC_MAX_NUMPROCS}"
+    "-DMPIEXEC_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG}"
     "-DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/run_make.cmake"
     )
