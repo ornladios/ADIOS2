@@ -6,27 +6,17 @@
 include(ADIOSFunctions)
 
 add_executable(Test.Engine.Skeleton.Writer TestSkeletonWriter.cpp)
-
 add_executable(Test.Engine.Skeleton.Reader TestSkeletonReader.cpp)
 
-if(ADIOS2_HAVE_MPI)
-  target_link_libraries(Test.Engine.Skeleton.Writer adios2::cxx11_mpi MPI::MPI_C)
-  target_link_libraries(Test.Engine.Skeleton.Reader adios2::cxx11_mpi MPI::MPI_C)
-  set(cmd_executor
-    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS} ${MPIEXEC_NUMPROC_FLAG} 1
-  )
-else()
-  target_link_libraries(Test.Engine.Skeleton.Writer adios2::cxx11)
-  target_link_libraries(Test.Engine.Skeleton.Reader adios2::cxx11)
-  set(cmd_executor)
-endif()
+target_link_libraries(Test.Engine.Skeleton.Writer adios2::cxx11)
+target_link_libraries(Test.Engine.Skeleton.Reader adios2::cxx11)
 
 add_test(NAME Engine.Skeleton.Writer
-  COMMAND ${cmd_executor} $<TARGET_FILE:Test.Engine.Skeleton.Writer> 
+  COMMAND $<TARGET_FILE:Test.Engine.Skeleton.Writer> 
 )
 
 add_test(NAME Engine.Skeleton.Reader
-  COMMAND ${cmd_executor} $<TARGET_FILE:Test.Engine.Skeleton.Reader>
+  COMMAND $<TARGET_FILE:Test.Engine.Skeleton.Reader>
 )
 SetupTestPipeline(Engine.Skeleton "Writer;Reader" TRUE)
 
