@@ -132,84 +132,78 @@ if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
   )
 endif()
 
-if(ADIOS2_RUN_MPI_MPMD_STATIC_NPROC_TESTS)
-  if(MPIEXEC_MAX_NUMPROCS GREATER 1) 
-    #------------------------------------------
-    #  Pipe2 InsituMPI version 
-    #------------------------------------------
-    add_test(NAME Utils.IOTest.Pipe2.InSituMPI
-      COMMAND ${MPIEXEC_COMMAND}
-        ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
-          -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
-          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-InSituMPI.xml -d 1 1
-          --strong-scaling
-        :
-        ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
-          -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
-          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-InSituMPI.xml -d 1 1
-          --strong-scaling 
-    )
-    set_tests_properties(Utils.IOTest.Pipe2.InSituMPI PROPERTIES PROCESSORS 2)
-  
-    add_test(NAME Utils.IOTest.Pipe2.InSituMPI.Dump
-      COMMAND ${CMAKE_COMMAND}
-        -DARG1=-laD
-        -DINPUT_FILE=pipe2_read.bp
-        -DOUTPUT_FILE=IOTest.Pipe2.InSituMPI.bpls.txt
-        -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-    )
-  
-    add_test(NAME Utils.IOTest.Pipe2.InSituMPI.Validate
-      COMMAND ${DIFF_COMMAND} -u -w
-        ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.InSituMPI.bpls.txt
-        IOTest.Pipe2.InSituMPI.bpls.txt
-    )
-  
-    SetupTestPipeline(
-      Utils.IOTest.Pipe2.InSituMPI
-      ";Dump;Validate"
-      TRUE
-    )
-  
-    #------------------------------------------
-    #  Pipe2 SST version 
-    #------------------------------------------
-    if(ADIOS2_HAVE_SST)
-      add_test(NAME Utils.IOTest.Pipe2.SST
-        COMMAND ${MPIEXEC_COMMAND}
-          ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
-            -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
-            -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SST.xml -d 1 1 --strong-scaling
-          :
-          ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
-            -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
-            -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SST.xml -d 1 1 --strong-scaling 
-      )
-  	
-      add_test(NAME Utils.IOTest.Pipe2.SST.Dump
-        COMMAND ${CMAKE_COMMAND}
-          -DARG1=-laD
-          -DINPUT_FILE=pipe2_read.bp
-          -DOUTPUT_FILE=IOTest.Pipe2.SST.bpls.txt
-          -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-      )
-  
-      add_test(NAME Utils.IOTest.Pipe2.SST.Validate
-        COMMAND ${DIFF_COMMAND} -u -w
-          ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.SST.bpls.txt
-          IOTest.Pipe2.SST.bpls.txt
-      )
-  
-      SetupTestPipeline(
-        Utils.IOTest.Pipe2.SST
-        ";Dump;Validate"
-        TRUE
-      )
-    endif()
-  else()
-    message(WARNING "Not enough (2) MPI procs for insitu tests with adios_iotest")
-  endif() 
-endif()
+#------------------------------------------
+#  Pipe2 InsituMPI version 
+#------------------------------------------
+add_test(NAME Utils.IOTest.Pipe2.InSituMPI
+  COMMAND ${MPIEXEC_COMMAND}
+    ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+      -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+      -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-InSituMPI.xml -d 1 1
+      --strong-scaling
+    :
+    ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+      -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+      -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-InSituMPI.xml -d 1 1
+      --strong-scaling 
+)
+set_tests_properties(Utils.IOTest.Pipe2.InSituMPI PROPERTIES PROCESSORS 2)
+
+add_test(NAME Utils.IOTest.Pipe2.InSituMPI.Dump
+  COMMAND ${CMAKE_COMMAND}
+    -DARG1=-laD
+    -DINPUT_FILE=pipe2_read.bp
+    -DOUTPUT_FILE=IOTest.Pipe2.InSituMPI.bpls.txt
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+)
+
+add_test(NAME Utils.IOTest.Pipe2.InSituMPI.Validate
+  COMMAND ${DIFF_COMMAND} -u -w
+    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.InSituMPI.bpls.txt
+    IOTest.Pipe2.InSituMPI.bpls.txt
+)
+
+SetupTestPipeline(
+  Utils.IOTest.Pipe2.InSituMPI
+  ";Dump;Validate"
+  TRUE
+)
+
+#------------------------------------------
+#  Pipe2 SST version 
+#------------------------------------------
+if(ADIOS2_HAVE_SST)
+  add_test(NAME Utils.IOTest.Pipe2.SST
+    COMMAND ${MPIEXEC_COMMAND}
+      ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+	-a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+	-x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SST.xml -d 1 1 --strong-scaling
+      :
+      ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+	-a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+	-x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SST.xml -d 1 1 --strong-scaling 
+  )
+      
+  add_test(NAME Utils.IOTest.Pipe2.SST.Dump
+    COMMAND ${CMAKE_COMMAND}
+      -DARG1=-laD
+      -DINPUT_FILE=pipe2_read.bp
+      -DOUTPUT_FILE=IOTest.Pipe2.SST.bpls.txt
+      -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+  )
+
+  add_test(NAME Utils.IOTest.Pipe2.SST.Validate
+    COMMAND ${DIFF_COMMAND} -u -w
+      ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.SST.bpls.txt
+      IOTest.Pipe2.SST.bpls.txt
+  )
+
+  SetupTestPipeline(
+    Utils.IOTest.Pipe2.SST
+    ";Dump;Validate"
+    TRUE
+  )
+  endif()
 
 #------------------------------------------
 #  BurstBuffer BP4 tests
@@ -349,102 +343,99 @@ SetupTestPipeline(
 #-------------------------------------------------
 #  BurstBuffer BP4 streaming test nproc = 2 
 #-------------------------------------------------
-if(ADIOS2_RUN_MPI_MPMD_STATIC_NPROC_TESTS)
-  add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.Run
-    COMMAND ${MPIEXEC_COMMAND} 
-        ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
-          -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
-          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP4-burstbuffer.xml -d 1 1 --strong-scaling
-        :
-        ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
-          -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
-          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP4-burstbuffer.xml -d 1 1 --strong-scaling
-  
+add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.Run
+  COMMAND ${MPIEXEC_COMMAND} 
+      ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+	-a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+	-x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP4-burstbuffer.xml -d 1 1 --strong-scaling
+      :
+      ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+	-a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+	-x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP4-burstbuffer.xml -d 1 1 --strong-scaling
+)
+set_tests_properties(Utils.IOTest.BurstBuffer.1to1.BP4.Stream.Run PROPERTIES PROCESSORS 2)
+
+add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.WriteDump
+  COMMAND ${CMAKE_COMMAND}
+    -DARG1=-laD
+    -DINPUT_FILE=pipe2_write.bp
+    -DOUTPUT_FILE=IOTest.BurstBuffer.1to1.BP4.Stream.Write.bpls.txt
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+)
+
+add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.ReadDump
+  COMMAND ${CMAKE_COMMAND}
+    -DARG1=-laD
+    -DINPUT_FILE=pipe2_read.bp
+    -DOUTPUT_FILE=IOTest.BurstBuffer.1to1.BP4.Stream.Read.bpls.txt
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+)
+
+add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.WriteValidate
+  COMMAND ${DIFF_COMMAND} -u -w
+    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.1to1.BP4.Stream.Write.bpls.txt
+    IOTest.BurstBuffer.1to1.BP4.Stream.Write.bpls.txt
+)
+
+add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.ReadValidate
+  COMMAND ${DIFF_COMMAND} -u -w
+    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.1to1.BP4.Stream.Read.bpls.txt
+    IOTest.BurstBuffer.1to1.BP4.Stream.Read.bpls.txt
+)
+
+SetupTestPipeline(
+  Utils.IOTest.BurstBuffer.1to1.BP4.Stream
+  "Run;WriteDump;WriteValidate;ReadDump;ReadValidate"
+  TRUE
+)
+
+
+#-------------------------------------------------
+#  BurstBuffer BP4 streaming test nproc = 4 
+#-------------------------------------------------
+add_test(NAME Utils.IOTest.BurstBuffer.3to1.BP4.Stream.Run
+  COMMAND ${MPIEXEC_COMMAND} 
+      ${MPIEXEC_NUMPROC_FLAG} 3 $<TARGET_FILE:adios_iotest>
+	-a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+	-x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP4-burstbuffer-nsub2.xml -d 3 1 --strong-scaling
+      :
+      ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+	-a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+	-x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP4-burstbuffer-nsub2.xml -d 1 1 --strong-scaling
+
+)
+set_tests_properties(Utils.IOTest.BurstBuffer.3to1.BP4.Stream.Run PROPERTIES PROCESSORS 4)
+
+add_test(NAME Utils.IOTest.BurstBuffer.3to1.BP4.Stream.WriteDump
+  COMMAND ${CMAKE_COMMAND}
+    -DARG1=-laD
+    -DINPUT_FILE=pipe2_write.bp
+    -DOUTPUT_FILE=IOTest.BurstBuffer.3to1.BP4.Stream.Write.bpls.txt
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+)
+
+add_test(NAME Utils.IOTest.BurstBuffer.3to1.BP4.Stream.ReadDump
+  COMMAND ${CMAKE_COMMAND}
+    -DARG1=-laD
+    -DINPUT_FILE=pipe2_read.bp
+    -DOUTPUT_FILE=IOTest.BurstBuffer.3to1.BP4.Stream.Read.bpls.txt
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+)
+
+add_test(NAME Utils.IOTest.BurstBuffer.3to1.BP4.Stream.WriteValidate
+  COMMAND ${DIFF_COMMAND} -u -w
+    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.3to1.BP4.Stream.Write.bpls.txt
+    IOTest.BurstBuffer.3to1.BP4.Stream.Write.bpls.txt
+)
+
+add_test(NAME Utils.IOTest.BurstBuffer.3to1.BP4.Stream.ReadValidate
+  COMMAND ${DIFF_COMMAND} -u -w
+    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.3to1.BP4.Stream.Read.bpls.txt
+    IOTest.BurstBuffer.3to1.BP4.Stream.Read.bpls.txt
+)
+
+SetupTestPipeline(
+  Utils.IOTest.BurstBuffer.3to1.BP4.Stream
+  "Run;WriteDump;WriteValidate;ReadDump;ReadValidate"
+  TRUE
   )
-  set_tests_properties(Utils.IOTest.BurstBuffer.1to1.BP4.Stream.Run PROPERTIES PROCESSORS 2)
-  
-  add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.WriteDump
-    COMMAND ${CMAKE_COMMAND}
-      -DARG1=-laD
-      -DINPUT_FILE=pipe2_write.bp
-      -DOUTPUT_FILE=IOTest.BurstBuffer.1to1.BP4.Stream.Write.bpls.txt
-      -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-  )
-  
-  add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.ReadDump
-    COMMAND ${CMAKE_COMMAND}
-      -DARG1=-laD
-      -DINPUT_FILE=pipe2_read.bp
-      -DOUTPUT_FILE=IOTest.BurstBuffer.1to1.BP4.Stream.Read.bpls.txt
-      -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-  )
-  
-  add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.WriteValidate
-    COMMAND ${DIFF_COMMAND} -u -w
-      ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.1to1.BP4.Stream.Write.bpls.txt
-      IOTest.BurstBuffer.1to1.BP4.Stream.Write.bpls.txt
-  )
-  
-  add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.ReadValidate
-    COMMAND ${DIFF_COMMAND} -u -w
-      ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.1to1.BP4.Stream.Read.bpls.txt
-      IOTest.BurstBuffer.1to1.BP4.Stream.Read.bpls.txt
-  )
-  
-  SetupTestPipeline(
-    Utils.IOTest.BurstBuffer.1to1.BP4.Stream
-    "Run;WriteDump;WriteValidate;ReadDump;ReadValidate"
-    TRUE
-  )
-  
-  
-  #-------------------------------------------------
-  #  BurstBuffer BP4 streaming test nproc = 4 
-  #-------------------------------------------------
-  add_test(NAME Utils.IOTest.BurstBuffer.3to1.BP4.Stream.Run
-    COMMAND ${MPIEXEC_COMMAND} 
-        ${MPIEXEC_NUMPROC_FLAG} 3 $<TARGET_FILE:adios_iotest>
-          -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
-          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP4-burstbuffer-nsub2.xml -d 3 1 --strong-scaling
-        :
-        ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
-          -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
-          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-BP4-burstbuffer-nsub2.xml -d 1 1 --strong-scaling
-  
-  )
-  set_tests_properties(Utils.IOTest.BurstBuffer.3to1.BP4.Stream.Run PROPERTIES PROCESSORS 4)
-  
-  add_test(NAME Utils.IOTest.BurstBuffer.3to1.BP4.Stream.WriteDump
-    COMMAND ${CMAKE_COMMAND}
-      -DARG1=-laD
-      -DINPUT_FILE=pipe2_write.bp
-      -DOUTPUT_FILE=IOTest.BurstBuffer.3to1.BP4.Stream.Write.bpls.txt
-      -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-  )
-  
-  add_test(NAME Utils.IOTest.BurstBuffer.3to1.BP4.Stream.ReadDump
-    COMMAND ${CMAKE_COMMAND}
-      -DARG1=-laD
-      -DINPUT_FILE=pipe2_read.bp
-      -DOUTPUT_FILE=IOTest.BurstBuffer.3to1.BP4.Stream.Read.bpls.txt
-      -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-  )
-  
-  add_test(NAME Utils.IOTest.BurstBuffer.3to1.BP4.Stream.WriteValidate
-    COMMAND ${DIFF_COMMAND} -u -w
-      ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.3to1.BP4.Stream.Write.bpls.txt
-      IOTest.BurstBuffer.3to1.BP4.Stream.Write.bpls.txt
-  )
-  
-  add_test(NAME Utils.IOTest.BurstBuffer.3to1.BP4.Stream.ReadValidate
-    COMMAND ${DIFF_COMMAND} -u -w
-      ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.3to1.BP4.Stream.Read.bpls.txt
-      IOTest.BurstBuffer.3to1.BP4.Stream.Read.bpls.txt
-  )
-  
-  SetupTestPipeline(
-    Utils.IOTest.BurstBuffer.3to1.BP4.Stream
-    "Run;WriteDump;WriteValidate;ReadDump;ReadValidate"
-    TRUE
-  )
-endif()

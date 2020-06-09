@@ -3,6 +3,11 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+option(ADIOS2_RUN_STAGING_NONMPMD_TESTS
+  "Enable the multiprocess staging tests without MPMD" TRUE
+)
+mark_as_advanced(ADIOS2_RUN_STAGING_NONMPMD_TESTS)
+
 find_package(Threads REQUIRED)
 
 gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".InSituMPI" EXTRA_ARGS "InSituMPI")
