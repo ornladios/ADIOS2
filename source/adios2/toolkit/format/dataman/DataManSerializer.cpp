@@ -611,11 +611,11 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
         }
         for (auto it : its)
         {
-            m_DataManVarMap.erase(it);
             Log(5,
-                "DataManSerializer::Erase() erased step " +
+                "DataManSerializer::Erase() erasing step " +
                     std::to_string(it->first),
                 true, true);
+            m_DataManVarMap.erase(it);
         }
         if (m_AggregatedMetadataJson != nullptr)
         {
@@ -636,13 +636,14 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     }
     else
     {
+        Log(5,
+            "DataManSerializer::Erase() erasing step " + std::to_string(step),
+            true, true);
         m_DataManVarMap.erase(step);
         if (m_AggregatedMetadataJson != nullptr)
         {
             m_AggregatedMetadataJson.erase(std::to_string(step));
         }
-        Log(5, "DataManSerializer::Erase() erased step " + std::to_string(step),
-            true, true);
     }
 }
 
