@@ -17,8 +17,8 @@ int main(int argc, char **argv)
     // split is being used.
     const char *ADIOS2_MPMD_WRAPPER_NOSPLIT =
         getenv("ADIOS2_MPMD_WRAPPER_NOSPLIT");
-    if(!ADIOS2_MPMD_WRAPPER_NOSPLIT ||
-       strcmp(ADIOS2_MPMD_WRAPPER_NOSPLIT, "0") == 0)
+    if (!ADIOS2_MPMD_WRAPPER_NOSPLIT ||
+        strcmp(ADIOS2_MPMD_WRAPPER_NOSPLIT, "0") == 0)
     {
         MPI_Comm mpiDummyComm;
         printf("MPIDummy R%02d: Splitting\n", rank);

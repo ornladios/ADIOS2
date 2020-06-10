@@ -15,6 +15,7 @@
 
 #if ADIOS2_USE_MPI
 #include <stdlib.h>
+
 #include <mpi.h>
 #endif
 
@@ -164,7 +165,7 @@ int main(int argc, char *argv[])
     // Handle the special case where this is used as a unit test in the ADIOS
     // build and is running under the MPMD wrapper script.
     const char *ADIOS2_MPMD_WRAPPER = getenv("ADIOS2_MPMD_WRAPPER");
-    if(ADIOS2_MPMD_WRAPPER && strcmp(ADIOS2_MPMD_WRAPPER, "1") == 0)
+    if (ADIOS2_MPMD_WRAPPER && strcmp(ADIOS2_MPMD_WRAPPER, "1") == 0)
     {
         MPI_Barrier(MPI_COMM_WORLD);
     }
