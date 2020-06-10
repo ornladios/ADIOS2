@@ -10,13 +10,15 @@ then
   echo "Error: COMMIT_RANGE is empty or undefined"
   exit 1
 fi
+echo "COMMIT_RANGE: ${COMMIT_RANGE}"
 
 # Install clang-format
 pushd ${HOME}
 wget http://releases.llvm.org/7.0.1/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz
 tar -xf clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz
+${PWD}/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang-format --version
 export PATH="${PWD}/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04/bin:${PATH}"
-git config --global clangformat.binary ${HOME}/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang-format
+git config --global clangformat.binary ${PWD}/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang-format
 popd
 
 # Install flake8
