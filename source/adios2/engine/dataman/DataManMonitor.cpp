@@ -66,24 +66,31 @@ void DataManMonitor::EndStep(size_t step)
     m_AverageTime = std::chrono::duration_cast<std::chrono::microseconds>(
                         (m_Timers.back() - m_Timers.front()))
                         .count();
-    m_TotalRate = m_TotalBytes.back() / m_TotalTime;
+    m_TotalRate = static_cast<double>(m_TotalBytes.back()) /
+                  static_cast<double>(m_TotalTime);
     m_AverageRate =
-        (m_TotalBytes.back() - m_TotalBytes.front()) / m_AverageTime;
+        static_cast<double>(m_TotalBytes.back() - m_TotalBytes.front()) /
+        static_cast<double>(m_AverageTime);
     if (step > 0)
     {
         m_DropRate = static_cast<double>((step - m_CurrentStep)) / step;
     }
+    m_StepsPerSecond = step / m_TotalTime * 1000000;
 
     if (m_Verbose)
     {
         std::cout << "Step " << step << ", Total MBs "
-                  << m_TotalBytes.back() / 1000000 << ", Step MBs "
-                  << m_StepBytes.back() / 1000000 << ", Total seconds "
-                  << m_TotalTime / 1000000 << ", " << m_Timers.size()
-                  << " step seconds " << m_AverageTime / 1000000
+                  << static_cast<double>(m_TotalBytes.back()) / 1000000.0
+                  << ", Step MBs "
+                  << static_cast<double>(m_StepBytes.back()) / 1000000.0
+                  << ", Total seconds "
+                  << static_cast<double>(m_TotalTime) / 1000000.0 << ", "
+                  << m_Timers.size() << " step seconds "
+                  << static_cast<double>(m_AverageTime) / 1000000.0
                   << ", Total MB/s " << m_TotalRate << ", " << m_Timers.size()
                   << " step average MB/s " << m_AverageRate << ", Drop rate "
-                  << m_DropRate * 100 << "%" << std::endl;
+                  << m_DropRate * 100 << "%"
+                  << ", Steps per second " << m_StepsPerSecond << std::endl;
     }
 }
 

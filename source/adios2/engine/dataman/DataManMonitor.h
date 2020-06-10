@@ -41,6 +41,7 @@ private:
     double m_TotalRate;
     double m_AverageRate;
     double m_DropRate;
+    double m_StepsPerSecond;
 
     bool m_Verbose = true;
 };
