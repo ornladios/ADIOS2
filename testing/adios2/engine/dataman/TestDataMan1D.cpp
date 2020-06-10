@@ -8,6 +8,8 @@
  *      Author: Jason Wang
  */
 
+#include <iostream>
+#include <mutex>
 #include <numeric>
 #include <thread>
 
@@ -20,6 +22,8 @@ using namespace adios2;
 
 size_t print_lines = 0;
 size_t to_print_lines = 10;
+
+std::mutex coutMtx;
 
 template <class T>
 void GenData(std::vector<std::complex<T>> &data, const size_t step)
@@ -42,6 +46,8 @@ void GenData(std::vector<T> &data, const size_t step)
 template <class T>
 void PrintData(const T *data, const size_t size, const size_t step)
 {
+    std::lock_guard<std::mutex> coutLock(coutMtx);
+
     std::cout << "Step: " << step << " [";
     size_t printsize = 32;
     if (size < printsize)
@@ -198,6 +204,7 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
             ASSERT_EQ(vars.size(), 11);
             if (print_lines < 10)
             {
+                std::lock_guard<std::mutex> countLock(coutMtx);
                 std::cout << "All available variables : ";
                 for (const auto &var : vars)
                 {
@@ -268,6 +275,7 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
+            std::lock_guard<std::mutex> countLock(coutMtx);
             std::cout << "DataManReader end of stream at Step " << currentStep
                       << std::endl;
             break;
@@ -309,12 +317,21 @@ TEST_F(DataManEngineTest, 1D)
     // run workflow
     auto r =
         std::thread(DataManReader, shape, start, count, steps, engineParams);
-    std::cout << "Reader thread started" << std::endl;
+    {
+        std::lock_guard<std::mutex> coutLock(coutMtx);
+        std::cout << "Reader thread started" << std::endl;
+    }
     auto w =
         std::thread(DataManWriter, shape, start, count, steps, engineParams);
-    std::cout << "Writer thread started" << std::endl;
+    {
+        std::lock_guard<std::mutex> coutLock(coutMtx);
+        std::cout << "Writer thread started" << std::endl;
+    }
     w.join();
-    std::cout << "Writer thread ended" << std::endl;
+    {
+        std::lock_guard<std::mutex> coutLock(coutMtx);
+        std::cout << "Writer thread ended" << std::endl;
+    }
     r.join();
     std::cout << "Reader thread ended" << std::endl;
 }
