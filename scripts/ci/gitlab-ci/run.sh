@@ -7,7 +7,7 @@ else
   export CI_SITE_NAME="GitLab CI"
 fi
 
-export CI_BUILD_NAME="${CI_COMMIT_BRANCH#github/}_${CI_JOB_NAME}"
+export CI_BUILD_NAME="${CI_COMMIT_BRANCH#github/}_${CI_BUILD_LABEL}"
 
 CTEST_ARGS=""
 if [ -n "${EXTERNAL_WORKDIR}" ]
