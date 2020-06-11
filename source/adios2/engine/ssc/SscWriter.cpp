@@ -91,7 +91,7 @@ void SscWriter::PutOneSidedPostPush()
         MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, i.first,
                 i.second.first, m_Buffer.size(), MPI_CHAR, m_MpiWin);
     }
-    MPI_Win_complete(m_MpiWin);
+    m_NeedWait = true;
 }
 
 void SscWriter::PutOneSidedFencePush()
@@ -198,6 +198,7 @@ void SscWriter::MpiWait()
         }
         else if (m_MpiMode == "onesidedpostpush")
         {
+            MPI_Win_complete(m_MpiWin);
         }
         else if (m_MpiMode == "onesidedfencepull")
         {
