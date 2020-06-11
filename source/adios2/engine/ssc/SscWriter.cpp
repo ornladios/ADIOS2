@@ -110,7 +110,7 @@ void SscWriter::PutOneSidedPostPull()
 {
     TAU_SCOPED_TIMER_FUNC();
     MPI_Win_post(m_MpiAllReadersGroup, 0, m_MpiWin);
-    MPI_Win_wait(m_MpiWin);
+    m_NeedWait = true;
 }
 
 void SscWriter::PutOneSidedFencePull()
@@ -147,7 +147,8 @@ void SscWriter::EndStep()
         SyncWritePattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
                        m_StreamComm, &m_MpiWin);
-        PutOneSidedPostPull();
+        MPI_Win_post(m_MpiAllReadersGroup, 0, m_MpiWin);
+        MPI_Win_wait(m_MpiWin);
         MPI_Win_free(&m_MpiWin);
         SyncReadPattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
@@ -206,6 +207,7 @@ void SscWriter::MpiWait()
         }
         else if (m_MpiMode == "onesidedpostpull")
         {
+            MPI_Win_wait(m_MpiWin);
         }
         m_NeedWait = false;
     }
