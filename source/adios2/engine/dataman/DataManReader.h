@@ -11,11 +11,14 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 
-#include "DataManMonitor.h"
+#include <atomic>
+
 #include "adios2/core/Engine.h"
+#include "adios2/engine/dataman/DataManMonitor.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
 #include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
+
 
 namespace adios2
 {
@@ -66,8 +69,8 @@ private:
     std::vector<std::thread> m_SubscriberThreads;
     std::vector<std::thread> m_RequesterThreads;
 
-    bool m_RequesterThreadActive = true;
-    bool m_SubscriberThreadActive = true;
+    std::atomic<bool> m_RequesterThreadActive;
+    std::atomic<bool> m_SubscriberThreadActive;
 
     void SubscribeThread(zmq::ZmqPubSub &subscriber);
     void RequestThread(zmq::ZmqReqRep &requester);
