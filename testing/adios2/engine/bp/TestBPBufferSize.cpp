@@ -81,6 +81,7 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
 {
     std::string fnameSync = "ADIOS2BPBufferSizeSync.bp";
     std::string fnameDeferred = "ADIOS2BPBufferSizeDeferred.bp";
+    std::string fnameDeferredPP = "ADIOS2BPBufferSizeDeferredPP.bp";
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
     const std::size_t Nx = 10485760; // 10M elements, 80MB variable
@@ -196,7 +197,8 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
         size_t bufsize_deferred_pp_v3[NSteps];
         size_t bufsize_deferred_pp_endstep[NSteps];
         {
-            adios2::Engine engine = io.Open(fnameDeferred, adios2::Mode::Write);
+            adios2::Engine engine =
+                io.Open(fnameDeferredPP, adios2::Mode::Write);
 
             bufsize_deferred_pp_init =
                 GetAndPrintBufferSize(engine, "After Open():");
