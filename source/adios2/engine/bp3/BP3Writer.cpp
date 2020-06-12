@@ -79,6 +79,7 @@ void BP3Writer::PerformPuts()
 #undef declare_template_instantiation
     }
     m_BP3Serializer.m_DeferredVariables.clear();
+    m_BP3Serializer.m_DeferredVariablesDataSize = 0;
 }
 
 void BP3Writer::EndStep()
@@ -413,6 +414,10 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
+size_t BP3Writer::DebugGetDataBufferSize() const
+{
+    return m_BP3Serializer.DebugGetDataBufferSize();
+}
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

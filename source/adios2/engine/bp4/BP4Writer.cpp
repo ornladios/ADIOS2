@@ -84,6 +84,7 @@ void BP4Writer::PerformPuts()
 #undef declare_template_instantiation
     }
     m_BP4Serializer.m_DeferredVariables.clear();
+    m_BP4Serializer.m_DeferredVariablesDataSize = 0;
 }
 
 void BP4Writer::EndStep()
@@ -540,7 +541,7 @@ void BP4Writer::UpdateActiveFlag(const bool active)
     m_FileMetadataIndexManager.SeekToFileEnd();
     if (m_DrainBB)
     {
-        for (int i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+        for (size_t i = 0; i < m_MetadataIndexFileNames.size(); ++i)
         {
             m_FileDrainer.AddOperationWriteAt(
                 m_DrainMetadataIndexFileNames[i],
@@ -574,7 +575,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
         if (m_DrainBB)
         {
-            for (int i = 0; i < m_MetadataFileNames.size(); ++i)
+            for (size_t i = 0; i < m_MetadataFileNames.size(); ++i)
             {
                 m_FileDrainer.AddOperationCopy(
                     m_MetadataFileNames[i], m_DrainMetadataFileNames[i],
@@ -637,7 +638,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
         if (m_DrainBB)
         {
-            for (int i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+            for (size_t i = 0; i < m_MetadataIndexFileNames.size(); ++i)
             {
                 m_FileDrainer.AddOperationWrite(
                     m_DrainMetadataIndexFileNames[i],
@@ -678,7 +679,7 @@ void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
     m_FileDataManager.FlushFiles(transportIndex);
     if (m_DrainBB)
     {
-        for (int i = 0; i < m_SubStreamNames.size(); ++i)
+        for (size_t i = 0; i < m_SubStreamNames.size(); ++i)
         {
             m_FileDrainer.AddOperationCopy(m_SubStreamNames[i],
                                            m_DrainSubStreamNames[i], dataSize);
@@ -728,7 +729,7 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
     if (m_DrainBB)
     {
-        for (int i = 0; i < m_SubStreamNames.size(); ++i)
+        for (size_t i = 0; i < m_SubStreamNames.size(); ++i)
         {
             m_FileDrainer.AddOperationCopy(m_SubStreamNames[i],
                                            m_DrainSubStreamNames[i],
@@ -755,6 +756,11 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
+
+size_t BP4Writer::DebugGetDataBufferSize() const
+{
+    return m_BP4Serializer.DebugGetDataBufferSize();
+}
 
 } // end namespace engine
 } // end namespace core

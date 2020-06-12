@@ -199,6 +199,17 @@ ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+size_t Engine::DebugGetDataBufferSize() const
+{
+    helper::CheckForNullptr(m_Engine,
+                            "in call to Engine::DebugGetDataBufferSize");
+    if (m_Engine->m_EngineType == "NULL")
+    {
+        return 0;
+    }
+    return m_Engine->DebugGetDataBufferSize();
+}
+
 std::string ToString(const Engine &engine)
 {
     return std::string("Engine(Name: \"" + engine.Name() + "\", Type: \"" +

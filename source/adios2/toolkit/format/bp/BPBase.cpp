@@ -505,5 +505,7 @@ std::map<size_t, std::shared_ptr<BPOperation>> BPBase::SetBPOperations(
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+size_t BPBase::DebugGetDataBufferSize() const { return m_Data.DebugGetSize(); }
+
 } // end namespace format
 } // end namespace adios2

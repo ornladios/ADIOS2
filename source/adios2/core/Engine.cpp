@@ -89,6 +89,12 @@ void Engine::LockReaderSelections() noexcept
     m_ReaderSelectionsLocked = true;
 }
 
+size_t Engine::DebugGetDataBufferSize() const
+{
+    ThrowUp("DebugGetDataBufferSize");
+    return 0;
+}
+
 // PROTECTED
 void Engine::Init() {}
 void Engine::InitParameters() {}
@@ -171,7 +177,7 @@ ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 
 size_t Engine::DoSteps() const
 {
-    ThrowUp("DoPut");
+    ThrowUp("DoSteps");
     return MaxSizeT;
 }
 

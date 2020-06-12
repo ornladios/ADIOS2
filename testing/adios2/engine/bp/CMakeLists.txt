@@ -42,6 +42,10 @@ bp3_bp4_gtest_add_tests_helper(WriteReadVariableSpan MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(TimeAggregation MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(NoXMLRecovery MPI_ALLOW)
 
+if(NOT MSVC)
+  bp3_bp4_gtest_add_tests_helper(BufferSize MPI_NONE)
+endif()
+
 if(ADIOS2_HAVE_MPI)
   bp3_bp4_gtest_add_tests_helper(WriteAggregateRead MPI_ONLY)
 endif()
