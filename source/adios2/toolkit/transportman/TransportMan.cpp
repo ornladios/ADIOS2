@@ -39,19 +39,26 @@ namespace transportman
 TransportMan::TransportMan(helper::Comm &comm) : m_Comm(comm) {}
 
 void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
+                                 const std::vector<Params> &parametersVector,
                                  const bool nodeLocal)
 {
     auto lf_CreateDirectories = [&](const std::vector<std::string> &fileNames) {
-        for (const std::string fileName : fileNames)
+        for (size_t i = 0; i < fileNames.size(); ++i)
         {
-            const auto lastPathSeparator(fileName.find_last_of(PathSeparator));
+            const auto lastPathSeparator(
+                fileNames[i].find_last_of(PathSeparator));
             if (lastPathSeparator == std::string::npos)
             {
                 continue;
             }
-
-            const std::string path(fileName.substr(0, lastPathSeparator));
-            helper::CreateDirectory(path);
+            const Params &parameters = parametersVector[i];
+            const std::string type = parameters.at("transport");
+            if (type == "File" || type == "file")
+            {
+                const std::string path(
+                    fileNames[i].substr(0, lastPathSeparator));
+                helper::CreateDirectory(path);
+            }
         }
     };
 
@@ -194,26 +201,68 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
 void TransportMan::WriteFileAt(const char *buffer, const size_t size,
                                const size_t start, const int transportIndex)
 {
-    auto itTransport = m_Transports.find(transportIndex);
-    CheckFile(itTransport, ", in call to WriteFileAt with index " +
-                               std::to_string(transportIndex));
-    itTransport->second->Write(buffer, size, start);
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+            if (transport->m_Type == "File")
+            {
+                transport->Write(buffer, size, start);
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to WriteFileAt with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->Write(buffer, size, start);
+    }
 }
 
 void TransportMan::SeekToFileEnd(const int transportIndex)
 {
-    auto itTransport = m_Transports.find(transportIndex);
-    CheckFile(itTransport, ", in call to SeekToFileEnd with index " +
-                               std::to_string(transportIndex));
-    itTransport->second->SeekToEnd();
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+            if (transport->m_Type == "File")
+            {
+                transport->SeekToEnd();
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to SeekToFileEnd with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->SeekToEnd();
+    }
 }
 
 void TransportMan::SeekToFileBegin(const int transportIndex)
 {
-    auto itTransport = m_Transports.find(transportIndex);
-    CheckFile(itTransport, ", in call to SeekToFileBegin with index " +
-                               std::to_string(transportIndex));
-    itTransport->second->SeekToBegin();
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+            if (transport->m_Type == "File")
+            {
+                transport->SeekToBegin();
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to SeekToFileBegin with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->SeekToBegin();
+    }
 }
 
 size_t TransportMan::GetFileSize(const size_t transportIndex) const
