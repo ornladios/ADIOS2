@@ -125,7 +125,6 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
         io.SetParameter("Profile", "OFF");
 
         // Write with Sync
-        size_t bufsize_sync_init = 0;
         size_t bufsize_sync_beginstep[NSteps];
         size_t bufsize_sync_v1[NSteps];
         size_t bufsize_sync_v2[NSteps];
@@ -134,7 +133,7 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
         {
             adios2::Engine engine = io.Open(fnameSync, adios2::Mode::Write);
 
-            bufsize_sync_init = GetAndPrintBufferSize(engine, "After Open():");
+            GetAndPrintBufferSize(engine, "After Open():");
             for (size_t step = 0; step < NSteps; ++step)
             {
                 engine.BeginStep();
@@ -158,7 +157,6 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
         }
 
         // Write with Deferred
-        size_t bufsize_deferred_init = 0;
         size_t bufsize_deferred_beginstep[NSteps];
         size_t bufsize_deferred_v1[NSteps];
         size_t bufsize_deferred_v2[NSteps];
@@ -167,8 +165,7 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
         {
             adios2::Engine engine = io.Open(fnameDeferred, adios2::Mode::Write);
 
-            bufsize_deferred_init =
-                GetAndPrintBufferSize(engine, "After Open():");
+            GetAndPrintBufferSize(engine, "After Open():");
             for (size_t step = 0; step < NSteps; ++step)
             {
                 engine.BeginStep();
@@ -192,7 +189,6 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
         }
 
         // Write with Deferred+PerformPuts
-        size_t bufsize_deferred_pp_init = 0;
         size_t bufsize_deferred_pp_beginstep[NSteps];
         size_t bufsize_deferred_pp_v1[NSteps];
         size_t bufsize_deferred_pp_v2[NSteps];
@@ -202,8 +198,7 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
             adios2::Engine engine =
                 io.Open(fnameDeferredPP, adios2::Mode::Write);
 
-            bufsize_deferred_pp_init =
-                GetAndPrintBufferSize(engine, "After Open():");
+            GetAndPrintBufferSize(engine, "After Open():");
             for (size_t step = 0; step < NSteps; ++step)
             {
                 engine.BeginStep();
