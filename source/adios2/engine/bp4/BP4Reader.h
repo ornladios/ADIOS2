@@ -82,6 +82,16 @@ private:
     void Init();
     void InitTransports();
 
+    /** Open one category of files within timeout.
+     * @return: 0 = OK, 1 = timeout, 2 = error
+     * lasterrmsg contains the error message in case of error
+     */
+    size_t OpenWithTimeout(transportman::TransportMan &tm,
+                           const std::vector<std::string> &fileNames,
+                           const TimePoint &timeoutInstant,
+                           const Seconds &pollSeconds,
+                           std::string &lasterrmsg /*INOUT*/);
+
     /** Open files within timeout.
      * @return True if files are opened, False in case of timeout
      */
