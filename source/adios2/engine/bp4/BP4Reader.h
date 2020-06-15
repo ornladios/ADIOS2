@@ -82,6 +82,12 @@ private:
     void Init();
     void InitTransports();
 
+    /* Sleep up to pollSeconds time if we have not reached timeoutInstant.
+     * Return true if slept
+     * return false if sleep was not needed because it was overtime
+     */
+    bool SleepOrQuit(const TimePoint &timeoutInstant,
+                     const Seconds &pollSeconds);
     /** Open one category of files within timeout.
      * @return: 0 = OK, 1 = timeout, 2 = error
      * lasterrmsg contains the error message in case of error
@@ -95,7 +101,7 @@ private:
     /** Open files within timeout.
      * @return True if files are opened, False in case of timeout
      */
-    void OpenFiles(const TimePoint &timeoutInstant, const Seconds &pollSeconds,
+    void OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                    const Seconds &timeoutSeconds);
     void InitBuffer(const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                     const Seconds &timeoutSeconds);

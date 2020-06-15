@@ -170,11 +170,29 @@ void BP4Reader::Init()
         pollSeconds = pollSecondsMax;
     }
 
-    const TimePoint timeoutInstant =
+    TimePoint timeoutInstant =
         std::chrono::steady_clock::now() + timeoutSeconds;
 
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
     InitBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+}
+
+bool BP4Reader::SleepOrQuit(const TimePoint &timeoutInstant,
+                            const Seconds &pollSeconds)
+{
+    auto now = std::chrono::steady_clock::now();
+    if (now + pollSeconds >= timeoutInstant)
+    {
+        return false;
+    }
+    auto remainderTime = timeoutInstant - now;
+    auto sleepTime = pollSeconds;
+    if (remainderTime < sleepTime)
+    {
+        sleepTime = remainderTime;
+    }
+    std::this_thread::sleep_for(sleepTime);
+    return true;
 }
 
 size_t BP4Reader::OpenWithTimeout(transportman::TransportMan &tm,
@@ -209,24 +227,11 @@ size_t BP4Reader::OpenWithTimeout(transportman::TransportMan &tm,
                 break;
             }
         }
-        auto now = std::chrono::steady_clock::now();
-        if (now + pollSeconds >= timeoutInstant)
-        {
-            break;
-        }
-        auto remainderTime = timeoutInstant - now;
-        auto sleepTime = pollSeconds;
-        if (remainderTime < sleepTime)
-        {
-            sleepTime = remainderTime;
-        }
-        std::this_thread::sleep_for(sleepTime);
-    } while (1);
+    } while (SleepOrQuit(timeoutInstant, pollSeconds));
     return flag;
 }
 
-void BP4Reader::OpenFiles(const TimePoint &timeoutInstant,
-                          const Seconds &pollSeconds,
+void BP4Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                           const Seconds &timeoutSeconds)
 {
     /* Poll */
@@ -251,14 +256,13 @@ void BP4Reader::OpenFiles(const TimePoint &timeoutInstant,
              * This slows down finding the error in file reading mode but
              * it will be more robust in streaming mode
              */
-            TimePoint endTime = timeoutInstant;
             if (timeoutSeconds == Seconds(0.0))
             {
-                endTime += Seconds(5.0);
+                timeoutInstant += Seconds(5.0);
             }
 
-            flag = OpenWithTimeout(m_MDFileManager, {metadataFile}, endTime,
-                                   pollSeconds, lasterrmsg);
+            flag = OpenWithTimeout(m_MDFileManager, {metadataFile},
+                                   timeoutInstant, pollSeconds, lasterrmsg);
             if (flag != 0)
             {
                 /* Close the metadata index table */
@@ -368,8 +372,7 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
                 {
                     break;
                 }
-                std::this_thread::sleep_for(pollSeconds);
-            } while (std::chrono::steady_clock::now() < timeoutInstant);
+            } while (SleepOrQuit(timeoutInstant, pollSeconds));
 
             if (fileSize >= expectedMinFileSize)
             {
@@ -466,8 +469,7 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
                 {
                     break;
                 }
-                std::this_thread::sleep_for(pollSeconds);
-            } while (std::chrono::steady_clock::now() < timeoutInstant);
+            } while (SleepOrQuit(timeoutInstant, pollSeconds));
 
             if (fileSize >= expectedMinFileSize)
             {
@@ -586,10 +588,10 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
     // Hack: processing metadata for multiple new steps only works
     // when pretending not to be in streaming mode
     const bool saveReadStreaming = m_IO.m_ReadStreaming;
+    m_IO.m_ReadStreaming = false;
     size_t newIdxSize = 0;
 
-    m_IO.m_ReadStreaming = false;
-    while (m_WriterIsActive)
+    do
     {
         newIdxSize = UpdateBuffer(timeoutInstant, pollSeconds / 10);
         if (newIdxSize > 0)
@@ -605,12 +607,7 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
             newIdxSize = UpdateBuffer(timeoutInstant, pollSeconds / 10);
             break;
         }
-        std::this_thread::sleep_for(pollSeconds);
-        if (std::chrono::steady_clock::now() >= timeoutInstant)
-        {
-            break;
-        }
-    }
+    } while (SleepOrQuit(timeoutInstant, pollSeconds));
 
     if (newIdxSize > 0)
     {
