@@ -24,9 +24,9 @@ void DataManMonitor::BeginStep(size_t step)
     {
         m_InitialTimer = std::chrono::system_clock::now();
     }
-    if (m_Timers.empty())
+    if (m_StepTimers.empty())
     {
-        m_Timers.push(std::chrono::system_clock::now());
+        m_StepTimers.push(std::chrono::system_clock::now());
     }
 
     m_StepBytes.push(0);
@@ -45,11 +45,11 @@ void DataManMonitor::BeginStep(size_t step)
 
 void DataManMonitor::EndStep(size_t step)
 {
-    m_Timers.push(std::chrono::system_clock::now());
+    m_StepTimers.push(std::chrono::system_clock::now());
 
-    if (m_Timers.size() > m_AverageSteps)
+    if (m_StepTimers.size() > m_AverageSteps)
     {
-        m_Timers.pop();
+        m_StepTimers.pop();
     }
     if (m_TotalBytes.size() > m_AverageSteps)
     {
@@ -61,10 +61,10 @@ void DataManMonitor::EndStep(size_t step)
     }
 
     m_TotalTime = std::chrono::duration_cast<std::chrono::microseconds>(
-                      (m_Timers.back() - m_InitialTimer))
+                      (m_StepTimers.back() - m_InitialTimer))
                       .count();
     m_AverageTime = std::chrono::duration_cast<std::chrono::microseconds>(
-                        (m_Timers.back() - m_Timers.front()))
+                        (m_StepTimers.back() - m_StepTimers.front()))
                         .count();
     m_TotalRate = static_cast<double>(m_TotalBytes.back()) /
                   static_cast<double>(m_TotalTime);
@@ -79,18 +79,45 @@ void DataManMonitor::EndStep(size_t step)
 
     if (m_Verbose)
     {
+        std::lock_guard<std::mutex> l(m_PrintMutex);
         std::cout << "Step " << step << ", Total MBs "
                   << static_cast<double>(m_TotalBytes.back()) / 1000000.0
                   << ", Step MBs "
                   << static_cast<double>(m_StepBytes.back()) / 1000000.0
                   << ", Total seconds "
                   << static_cast<double>(m_TotalTime) / 1000000.0 << ", "
-                  << m_Timers.size() << " step seconds "
+                  << m_StepTimers.size() << " step seconds "
                   << static_cast<double>(m_AverageTime) / 1000000.0
-                  << ", Total MB/s " << m_TotalRate << ", " << m_Timers.size()
-                  << " step average MB/s " << m_AverageRate << ", Drop rate "
-                  << m_DropRate * 100 << "%"
+                  << ", Total MB/s " << m_TotalRate << ", "
+                  << m_StepTimers.size() << " step average MB/s "
+                  << m_AverageRate << ", Drop rate " << m_DropRate * 100 << "%"
                   << ", Steps per second " << m_StepsPerSecond << std::endl;
+    }
+}
+
+void DataManMonitor::BeginTransport(size_t step)
+{
+    std::lock_guard<std::mutex> l(m_TransportTimersMutex);
+    m_TransportTimers.push({step, std::chrono::system_clock::now()});
+}
+
+void DataManMonitor::EndTransport()
+{
+    std::lock_guard<std::mutex> l(m_TransportTimersMutex);
+    if (!m_TransportTimers.empty())
+    {
+        auto latency = std::chrono::duration_cast<std::chrono::microseconds>(
+                           (std::chrono::system_clock::now() -
+                            m_TransportTimers.back().second))
+                           .count();
+        if (m_Verbose)
+        {
+            std::lock_guard<std::mutex> l(m_PrintMutex);
+            std::cout << "Step " << m_TransportTimers.back().first
+                      << ", Latency milliseconds "
+                      << static_cast<double>(latency) / 1000.0 << std::endl;
+        }
+        m_TransportTimers.pop();
     }
 }
 

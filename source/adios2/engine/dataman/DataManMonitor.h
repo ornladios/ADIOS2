@@ -12,6 +12,7 @@
 #define ADIOS2_ENGINE_DATAMAN_DATAMANMONITOR_H_
 
 #include <chrono>
+#include <mutex>
 #include <queue>
 
 namespace adios2
@@ -26,13 +27,22 @@ class DataManMonitor
 public:
     void BeginStep(size_t step);
     void EndStep(size_t step);
+    void BeginTransport(size_t step);
+    void EndTransport();
     void AddBytes(size_t bytes);
 
 private:
-    std::queue<std::chrono::time_point<std::chrono::system_clock>> m_Timers;
-    std::chrono::time_point<std::chrono::system_clock> m_InitialTimer;
+    using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
+    std::queue<TimePoint> m_StepTimers;
+    TimePoint m_InitialTimer;
     std::queue<size_t> m_StepBytes;
     std::queue<size_t> m_TotalBytes;
+
+    std::queue<std::pair<size_t, TimePoint>> m_TransportTimers;
+    std::mutex m_TransportTimersMutex;
+
+    std::mutex m_PrintMutex;
+
     size_t m_AverageSteps = 10;
     int64_t m_CurrentStep = -1;
 

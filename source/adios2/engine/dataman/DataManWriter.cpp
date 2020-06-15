@@ -139,6 +139,11 @@ void DataManWriter::EndStep()
         m_SerializerBufferSize = buffer->size();
     }
 
+    if (m_MonitorActive)
+    {
+        m_Monitor.BeginTransport(m_CurrentStep);
+    }
+
     if (m_DoubleBuffer || m_TransportMode == "reliable")
     {
         PushBufferQueue(buffer);
@@ -146,6 +151,10 @@ void DataManWriter::EndStep()
     else
     {
         m_Publisher.Send(buffer);
+        if (m_MonitorActive)
+        {
+            m_Monitor.EndTransport();
+        }
     }
 
     if (m_MonitorActive)
@@ -245,6 +254,10 @@ void DataManWriter::PublishThread()
         if (buffer != nullptr && buffer->size() > 0)
         {
             m_Publisher.Send(buffer);
+            if (m_MonitorActive)
+            {
+                m_Monitor.EndTransport();
+            }
         }
     }
 }
@@ -278,6 +291,10 @@ void DataManWriter::ReplyThread()
                 if (buffer != nullptr && buffer->size() > 0)
                 {
                     m_Replier.SendReply(buffer);
+                    if (m_MonitorActive)
+                    {
+                        m_Monitor.EndTransport();
+                    }
                     if (buffer->size() < 64)
                     {
                         try
