@@ -53,6 +53,7 @@ private:
     MPI_Group m_MpiAllWritersGroup;
     MPI_Comm m_StreamComm;
     std::string m_MpiMode = "twosided";
+    std::vector<MPI_Request> m_MpiRequests;
 
     int m_StreamRank;
     int m_StreamSize;
