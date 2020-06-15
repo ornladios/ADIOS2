@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Setting up default XCode version"
-case "$GH_YML_JOBNAME" in
+case "${GH_YML_JOBNAME}" in
   *xcode941*)
     sudo xcode-select --switch /Applications/Xcode_9.4.1.app
     ;;
@@ -16,11 +16,14 @@ case "$GH_YML_JOBNAME" in
     ;;
 esac
 
-echo "Installing CMake Nightly"
-curl -L https://cmake.org/files/dev/cmake-3.16.20191218-g8262562-Darwin-x86_64.tar.gz | sudo tar -C /Applications --strip-components=1 -xzv
+echo "Installing CMake"
+curl -L https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3-Darwin-x86_64.tar.gz | sudo tar -C /Applications --strip-components=1 -xz
 
-echo "Installing Kitware Ninja"
-brew install ninja
+echo "Removing all existing brew packages"
+brew remove --force $(brew list)
+
+echo "Installing cmake and ninja"
+brew install cmake ninja
 
 echo "Installing GCC"
 brew install gcc
@@ -28,11 +31,15 @@ brew install gcc
 echo "Installing blosc compression"
 brew install c-blosc
 
-echo "Installing python3"
-brew install python numpy
+echo "Installing python and numpy"
+brew install python
+pip3 install numpy
 
-if [[ "$GH_YML_JOBNAME" =~ .*openmpi.* ]]
+if [[ "${GH_YML_JOBNAME}" =~ .*openmpi.* ]]
 then
   echo "Installing OpenMPI"
-  brew install openmpi mpi4py
+  brew install openmpi
+
+  echo "Installing mpi4py"
+  pip3 install mpi4py
 fi
