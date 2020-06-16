@@ -3,21 +3,18 @@
 
 #define SSTMAGICV0 "#ADIOS2-SST v0\n"
 
-typedef struct _CP_GlobalInfo
+typedef struct StructList
+{
+    int CustomStructCount;
+    FMStructDescList *CustomStructList;
+} CP_StructList;
+
+typedef struct _CP_GlobalCMInfo
 {
     /* exchange info */
     CManager cm;
-    FFSContext ffs_c;
-    FMContext fm_c;
-    FFSTypeHandle PerRankReaderInfoFormat;
-    FFSTypeHandle CombinedReaderInfoFormat;
     CMFormat ReaderRegisterFormat;
-    FFSTypeHandle PerRankWriterInfoFormat;
-    FFSTypeHandle CombinedWriterInfoFormat;
     CMFormat WriterResponseFormat;
-    FFSTypeHandle PerRankMetadataFormat;
-    FFSTypeHandle TimestepDistributionFormat;
-    FFSTypeHandle ReturnMetadataInfoFormat;
     CMFormat DeliverTimestepMetadataFormat;
     CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
@@ -26,11 +23,25 @@ typedef struct _CP_GlobalInfo
     CMFormat CommPatternLockedFormat;
     CMFormat WriterCloseFormat;
     CMFormat ReaderCloseFormat;
-    int CustomStructCount;
-    FMStructDescList *CustomStructList;
     int LastCallFreeCount;
     void **LastCallFreeList;
-} * CP_GlobalInfo;
+    struct StructList CustomStructs;
+} * CP_GlobalCMInfo;
+
+typedef struct _CP_Info
+{
+    CP_GlobalCMInfo SharedCM;
+    FFSContext ffs_c;
+    FMContext fm_c;
+    FFSTypeHandle PerRankReaderInfoFormat;
+    FFSTypeHandle CombinedReaderInfoFormat;
+    FFSTypeHandle PerRankWriterInfoFormat;
+    FFSTypeHandle CombinedWriterInfoFormat;
+    FFSTypeHandle PerRankMetadataFormat;
+    FFSTypeHandle TimestepDistributionFormat;
+    FFSTypeHandle ReturnMetadataInfoFormat;
+    struct StructList CustomStructs;
+} * CP_Info;
 
 struct _ReaderRegisterMsg;
 
@@ -121,7 +132,7 @@ typedef struct FFSFormatBlock *FFSFormatList;
 
 struct _SstStream
 {
-    CP_GlobalInfo CPInfo;
+    CP_Info CPInfo;
 
     SMPI_Comm mpiComm;
     enum StreamRole Role;
@@ -462,7 +473,7 @@ typedef struct _MetadataPlusDPInfo *MetadataPlusDPInfo;
 extern atom_t CM_TRANSPORT_ATOM;
 
 void CP_validateParams(SstStream stream, SstParams Params, int Writer);
-extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule);
+extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule);
 extern char *CP_GetContactString(SstStream s, attr_list DPAttrs);
 extern SstStream CP_newStream();
 extern void SstInternalProvideTimestep(

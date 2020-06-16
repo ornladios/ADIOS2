@@ -932,7 +932,9 @@ static FMStructDescRec RdmaTimestepInfoStructs[] = {
      sizeof(struct _RdmaPerTimestepInfo), NULL},
     {NULL, NULL, 0, NULL}};
 
-static struct _CP_DP_Interface RdmaDPInterface;
+static struct _CP_DP_Interface RdmaDPInterface = {
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* In RdmaGetPriority, the Rdma DP should do whatever is necessary to test to
  * see if it
@@ -1050,7 +1052,6 @@ static void RdmaUnGetPriority(CP_Services Svcs, void *CP_Stream)
 
 extern CP_DP_Interface LoadRdmaDP()
 {
-    memset(&RdmaDPInterface, 0, sizeof(RdmaDPInterface));
     RdmaDPInterface.ReaderContactFormats = RdmaReaderContactStructs;
     RdmaDPInterface.WriterContactFormats = RdmaWriterContactStructs;
     RdmaDPInterface.TimestepInfoFormats = RdmaTimestepInfoStructs;
@@ -1063,8 +1064,12 @@ extern CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.notifyConnFailure = RdmaNotifyConnFailure;
     RdmaDPInterface.provideTimestep = RdmaProvideTimestep;
     RdmaDPInterface.readerRegisterTimestep = NULL;
+    RdmaDPInterface.timestepArrived = NULL;
     RdmaDPInterface.releaseTimestep = RdmaReleaseTimestep;
     RdmaDPInterface.readerReleaseTimestep = NULL;
+    RdmaDPInterface.RSReleaseTimestep = NULL;
+    RdmaDPInterface.WSRreadPatternLocked = NULL;
+    RdmaDPInterface.RSreadPatternLocked = NULL;
     RdmaDPInterface.destroyReader = RdmaDestroyReader;
     RdmaDPInterface.destroyWriter = RdmaDestroyWriter;
     RdmaDPInterface.destroyWriterPerReader = RdmaDestroyWriterPerReader;
