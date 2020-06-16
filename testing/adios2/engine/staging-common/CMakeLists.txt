@@ -9,6 +9,9 @@ gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".InSituMPI" EXTR
 if(ADIOS2_HAVE_SST)
   gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST" "MarshalMethod=FFS")
   gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST" "MarshalMethod=BP")
+  gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. "SST.FFS" EXTRA_ARGS "SST"  "MarshalMethod=FFS")
+  gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. "SST.BP" EXTRA_ARGS "SST"  "MarshalMethod=BP")
+#  gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. "BP4_stream" EXTRA_ARGS "BP4"  "")
 endif()
 
 foreach(helper

@@ -318,20 +318,6 @@ static void RemoveQueueEntries(SstStream Stream)
     }
 }
 
-static void ReleaseAndDiscardRemainingTimesteps(SstStream Stream)
-{
-    CPTimestepList List = Stream->QueuedTimesteps;
-
-    while (List)
-    {
-        List->Expired = 1;
-        List->PreciousTimestep = 0;
-        List->ReferenceCount = 0;
-        List = List->Next;
-    }
-    RemoveQueueEntries(Stream);
-}
-
 /*
 Queue maintenance:    (ASSUME LOCKED)
         calculate smallest entry for CurrentTimestep in a reader.  Update that
@@ -517,7 +503,7 @@ static void SendPeerSetupMsg(WS_ReaderInfo reader, int reversePeer, int myRank)
     setup.WriterRank = myRank;
     setup.WriterCohortSize = Stream->CohortSize;
     STREAM_ASSERT_UNLOCKED(Stream);
-    if (CMwrite(conn, Stream->CPInfo->PeerSetupFormat, &setup) != 1)
+    if (CMwrite(conn, Stream->CPInfo->SharedCM->PeerSetupFormat, &setup) != 1)
     {
         CP_verbose(Stream,
                    "Message failed to send to reader in sendPeerSetup in "
@@ -606,7 +592,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
             if (!reader->Connections[peer].CMconn)
             {
                 reader->Connections[peer].CMconn =
-                    CMget_conn(reader->ParentStream->CPInfo->cm,
+                    CMget_conn(reader->ParentStream->CPInfo->SharedCM->cm,
                                reader->Connections[peer].ContactList);
             }
 
@@ -660,7 +646,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
                 usleep(WriterRank *
                        reader->ParentStream->ConnectionUsleepMultiplier);
             reader->Connections[peer].CMconn =
-                CMget_conn(reader->ParentStream->CPInfo->cm,
+                CMget_conn(reader->ParentStream->CPInfo->SharedCM->cm,
                            reader->Connections[peer].ContactList);
 
             if (!reader->Connections[peer].CMconn)
@@ -694,7 +680,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
             if (!reader->Connections[0].CMconn)
             {
                 reader->Connections[0].CMconn =
-                    CMget_conn(reader->ParentStream->CPInfo->cm,
+                    CMget_conn(reader->ParentStream->CPInfo->SharedCM->cm,
                                reader->Connections[0].ContactList);
             }
             if (!reader->Connections[0].CMconn)
@@ -811,7 +797,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
             &free_block);
         WriterResponseCondition = Req->Msg->WriterResponseCondition;
         conn = Req->Conn;
-        CMreturn_buffer(Stream->CPInfo->cm, Req->Msg);
+        CMreturn_buffer(Stream->CPInfo->SharedCM->cm, Req->Msg);
         free(Req);
     }
     else
@@ -948,7 +934,8 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
             response.DP_WriterInfo[i] = pointers[i]->DP_Info;
         }
         STREAM_ASSERT_UNLOCKED(Stream);
-        if (CMwrite(conn, Stream->CPInfo->WriterResponseFormat, &response) != 1)
+        if (CMwrite(conn, Stream->CPInfo->SharedCM->WriterResponseFormat,
+                    &response) != 1)
         {
             CP_verbose(
                 Stream,
@@ -1167,9 +1154,10 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
         Entry->Msg->PreloadMode = PMode;
         STREAM_MUTEX_LOCK(Stream);
         if (CP_WSR_Stream->ReaderStatus == Established)
-            sendOneToWSRCohort(CP_WSR_Stream,
-                               Stream->CPInfo->DeliverTimestepMetadataFormat,
-                               Entry->Msg, &Entry->Msg->RS_Stream);
+            sendOneToWSRCohort(
+                CP_WSR_Stream,
+                Stream->CPInfo->SharedCM->DeliverTimestepMetadataFormat,
+                Entry->Msg, &Entry->Msg->RS_Stream);
     }
 }
 
@@ -1306,7 +1294,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     if (Stream->RendezvousReaderCount > 0)
     {
         Stream->FirstReaderCondition =
-            CMCondition_get(Stream->CPInfo->cm, NULL);
+            CMCondition_get(Stream->CPInfo->SharedCM->cm, NULL);
     }
     else
     {
@@ -1470,7 +1458,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         if (NewState == PeerFailed)
         {
             // move to fully closed state later
-            CMfree(CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0,
+            CMfree(CMadd_delayed_task(ParentStream->CPInfo->SharedCM->cm, 2, 0,
                                       CloseWSRStream, CP_WSR_Stream));
         }
     }
@@ -1505,8 +1493,8 @@ void SstWriterClose(SstStream Stream)
         "SstWriterClose, Sending Close at Timestep %d, one to each reader\n",
         Msg.FinalTimestep);
 
-    sendOneToEachReaderRank(Stream, Stream->CPInfo->WriterCloseFormat, &Msg,
-                            &Msg.RS_Stream);
+    sendOneToEachReaderRank(Stream, Stream->CPInfo->SharedCM->WriterCloseFormat,
+                            &Msg, &Msg.RS_Stream);
 
     UntagPreciousTimesteps(Stream);
     Stream->ConfigParams->ReserveQueueLimit = 0;
@@ -1857,9 +1845,10 @@ static void ActOnTSLockStatus(SstStream Stream, long Timestep)
             }
             Msg.Timestep = Timestep;
             SomethingSent++;
-            sendOneToWSRCohort(Stream->Readers[i],
-                               Stream->CPInfo->CommPatternLockedFormat, &Msg,
-                               &Msg.RS_Stream);
+            sendOneToWSRCohort(
+                Stream->Readers[i],
+                Stream->CPInfo->SharedCM->CommPatternLockedFormat, &Msg,
+                &Msg.RS_Stream);
             Stream->Readers[i]->PreloadMode = SstPreloadLearned;
             Stream->Readers[i]->PreloadModeActiveTimestep = Timestep;
             CP_verbose(Stream,
@@ -2273,9 +2262,9 @@ extern void SstInternalProvideTimestep(
                    Timestep);
 
         STREAM_MUTEX_LOCK(Stream);
-        sendOneToEachReaderRank(Stream,
-                                Stream->CPInfo->DeliverTimestepMetadataFormat,
-                                Msg, &Msg->RS_Stream);
+        sendOneToEachReaderRank(
+            Stream, Stream->CPInfo->SharedCM->DeliverTimestepMetadataFormat,
+            Msg, &Msg->RS_Stream);
 
         Entry->Expired = 1;
         Entry->ReferenceCount = 0;
