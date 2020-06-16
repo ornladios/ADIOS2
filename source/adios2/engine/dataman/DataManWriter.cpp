@@ -34,6 +34,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
                          m_RendezvousReaderCount);
     helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
     helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
+    helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
 
     if (m_IPAddress.empty())
     {
@@ -112,6 +113,11 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
     ++m_CurrentStep;
     m_Serializer.NewWriterBuffer(m_SerializerBufferSize);
 
+    if (m_MonitorActive)
+    {
+        m_Monitor.BeginStep(m_CurrentStep);
+    }
+
     return StepStatus::OK;
 }
 
@@ -133,6 +139,11 @@ void DataManWriter::EndStep()
         m_SerializerBufferSize = buffer->size();
     }
 
+    if (m_MonitorActive)
+    {
+        m_Monitor.BeginTransport(m_CurrentStep);
+    }
+
     if (m_DoubleBuffer || m_TransportMode == "reliable")
     {
         PushBufferQueue(buffer);
@@ -140,6 +151,15 @@ void DataManWriter::EndStep()
     else
     {
         m_Publisher.Send(buffer);
+        if (m_MonitorActive)
+        {
+            m_Monitor.EndTransport();
+        }
+    }
+
+    if (m_MonitorActive)
+    {
+        m_Monitor.EndStep(m_CurrentStep);
     }
 }
 
@@ -234,6 +254,10 @@ void DataManWriter::PublishThread()
         if (buffer != nullptr && buffer->size() > 0)
         {
             m_Publisher.Send(buffer);
+            if (m_MonitorActive)
+            {
+                m_Monitor.EndTransport();
+            }
         }
     }
 }
@@ -267,6 +291,10 @@ void DataManWriter::ReplyThread()
                 if (buffer != nullptr && buffer->size() > 0)
                 {
                     m_Replier.SendReply(buffer);
+                    if (m_MonitorActive)
+                    {
+                        m_Monitor.EndTransport();
+                    }
                     if (buffer->size() < 64)
                     {
                         try

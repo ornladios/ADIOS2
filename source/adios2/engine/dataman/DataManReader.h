@@ -11,6 +11,7 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 
+#include "DataManMonitor.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
@@ -44,6 +45,7 @@ private:
     bool m_DoubleBuffer = true;
     size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
     std::string m_TransportMode = "fast";
+    bool m_MonitorActive = false;
 
     std::vector<std::string> m_PublisherAddresses;
     std::vector<std::string> m_ReplierAddresses;
@@ -58,6 +60,8 @@ private:
 
     std::vector<zmq::ZmqPubSub> m_Subscribers;
     std::vector<zmq::ZmqReqRep> m_Requesters;
+
+    DataManMonitor m_Monitor;
 
     std::vector<std::thread> m_SubscriberThreads;
     std::vector<std::thread> m_RequesterThreads;
