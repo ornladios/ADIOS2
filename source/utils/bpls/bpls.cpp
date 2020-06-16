@@ -2430,7 +2430,8 @@ int print_data_as_string(const void *data, int maxlen, DataType adiosvartype)
         fprintf(stderr,
                 "Error in bpls code: cannot use print_data_as_string() "
                 "for type \"%d\"\n",
-                adiosvartype);
+                static_cast<typename std::underlying_type<DataType>::type>(
+                    adiosvartype));
         return -1;
     }
     return 0;
