@@ -84,6 +84,7 @@ void BP4Writer::PerformPuts()
 #undef declare_template_instantiation
     }
     m_BP4Serializer.m_DeferredVariables.clear();
+    m_BP4Serializer.m_DeferredVariablesDataSize = 0;
 }
 
 void BP4Writer::EndStep()
@@ -203,13 +204,14 @@ void BP4Writer::InitTransports()
 
     /* Create the directories either on target or burst buffer if used */
     m_BP4Serializer.m_Profiler.Start("mkdir");
-    m_FileDataManager.MkDirsBarrier(m_SubStreamNames,
-                                    m_BP4Serializer.m_Parameters.NodeLocal ||
-                                        m_WriteToBB);
+    m_FileDataManager.MkDirsBarrier(
+        m_SubStreamNames, m_IO.m_TransportsParameters,
+        m_BP4Serializer.m_Parameters.NodeLocal || m_WriteToBB);
     if (m_DrainBB)
     {
         /* Create the directories on target anyway by main thread */
         m_FileDataManager.MkDirsBarrier(m_DrainSubStreamNames,
+                                        m_IO.m_TransportsParameters,
                                         m_BP4Serializer.m_Parameters.NodeLocal);
     }
     m_BP4Serializer.m_Profiler.Stop("mkdir");
@@ -469,6 +471,17 @@ void BP4Writer::WriteProfilingJSONFile()
 {
     TAU_SCOPED_TIMER("BP4Writer::WriteProfilingJSONFile");
     auto transportTypes = m_FileDataManager.GetTransportsTypes();
+
+    // find first File type output, where we can write the profile
+    int fileTransportIdx = -1;
+    for (size_t i = 0; i < transportTypes.size(); ++i)
+    {
+        if (transportTypes[i].compare(0, 4, "File") == 0)
+        {
+            fileTransportIdx = static_cast<int>(i);
+        }
+    }
+
     auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
 
     auto transportTypesMD = m_FileMetadataManager.GetTransportsTypes();
@@ -491,19 +504,36 @@ void BP4Writer::WriteProfilingJSONFile()
     if (m_BP4Serializer.m_RankMPI == 0)
     {
         // std::cout << "write profiling file!" << std::endl;
+        std::string profileFileName;
         if (m_DrainBB)
         {
             auto bpTargetNames = m_BP4Serializer.GetBPBaseNames({m_Name});
-            std::string targetProfiler(bpTargetNames[0] + "/profiling.json");
+            if (fileTransportIdx > -1)
+            {
+                profileFileName =
+                    bpTargetNames[fileTransportIdx] + "/profiling.json";
+            }
+            else
+            {
+                profileFileName = bpTargetNames[0] + "_profiling.json";
+            }
             m_FileDrainer.AddOperationWrite(
-                targetProfiler, profilingJSON.size(), profilingJSON.data());
+                profileFileName, profilingJSON.size(), profilingJSON.data());
         }
         else
         {
             transport::FileFStream profilingJSONStream(m_Comm);
             auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
-            profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
-                                     Mode::Write);
+            if (fileTransportIdx > -1)
+            {
+                profileFileName =
+                    bpBaseNames[fileTransportIdx] + "/profiling.json";
+            }
+            else
+            {
+                profileFileName = bpBaseNames[0] + "_profiling.json";
+            }
+            profilingJSONStream.Open(profileFileName, Mode::Write);
             profilingJSONStream.Write(profilingJSON.data(),
                                       profilingJSON.size());
             profilingJSONStream.Close();
@@ -535,12 +565,12 @@ void BP4Writer::UpdateActiveFlag(const bool active)
 {
     const char activeChar = (active ? '\1' : '\0');
     m_FileMetadataIndexManager.WriteFileAt(
-        &activeChar, 1, m_BP4Serializer.m_ActiveFlagPosition, 0);
+        &activeChar, 1, m_BP4Serializer.m_ActiveFlagPosition);
     m_FileMetadataIndexManager.FlushFiles();
     m_FileMetadataIndexManager.SeekToFileEnd();
     if (m_DrainBB)
     {
-        for (int i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+        for (size_t i = 0; i < m_MetadataIndexFileNames.size(); ++i)
         {
             m_FileDrainer.AddOperationWriteAt(
                 m_DrainMetadataIndexFileNames[i],
@@ -574,7 +604,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
         if (m_DrainBB)
         {
-            for (int i = 0; i < m_MetadataFileNames.size(); ++i)
+            for (size_t i = 0; i < m_MetadataFileNames.size(); ++i)
             {
                 m_FileDrainer.AddOperationCopy(
                     m_MetadataFileNames[i], m_DrainMetadataFileNames[i],
@@ -637,7 +667,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
         if (m_DrainBB)
         {
-            for (int i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+            for (size_t i = 0; i < m_MetadataIndexFileNames.size(); ++i)
             {
                 m_FileDrainer.AddOperationWrite(
                     m_DrainMetadataIndexFileNames[i],
@@ -678,7 +708,7 @@ void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
     m_FileDataManager.FlushFiles(transportIndex);
     if (m_DrainBB)
     {
-        for (int i = 0; i < m_SubStreamNames.size(); ++i)
+        for (size_t i = 0; i < m_SubStreamNames.size(); ++i)
         {
             m_FileDrainer.AddOperationCopy(m_SubStreamNames[i],
                                            m_DrainSubStreamNames[i], dataSize);
@@ -728,7 +758,7 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
     if (m_DrainBB)
     {
-        for (int i = 0; i < m_SubStreamNames.size(); ++i)
+        for (size_t i = 0; i < m_SubStreamNames.size(); ++i)
         {
             m_FileDrainer.AddOperationCopy(m_SubStreamNames[i],
                                            m_DrainSubStreamNames[i],
@@ -755,6 +785,11 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
+
+size_t BP4Writer::DebugGetDataBufferSize() const
+{
+    return m_BP4Serializer.DebugGetDataBufferSize();
+}
 
 } // end namespace engine
 } // end namespace core

@@ -42,6 +42,8 @@ public:
     size_t Align() const noexcept;
 
     void Delete();
+
+    size_t DebugGetSize() const;
 };
 
 #define declare_template_instantiation(T)                                      \

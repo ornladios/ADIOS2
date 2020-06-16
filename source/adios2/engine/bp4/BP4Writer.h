@@ -47,6 +47,8 @@ public:
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
+    size_t DebugGetDataBufferSize() const final;
+
 private:
     /** Single object controlling BP buffering */
     format::BP4Serializer m_BP4Serializer;
@@ -115,7 +117,8 @@ private:
 
     template <class T>
     void PutSyncCommon(Variable<T> &variable,
-                       const typename Variable<T>::Info &blockInfo);
+                       const typename Variable<T>::Info &blockInfo,
+                       const bool resize = true);
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *data);

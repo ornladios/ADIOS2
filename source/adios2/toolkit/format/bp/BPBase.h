@@ -318,6 +318,8 @@ public:
     /** Delete buffer memory manually */
     void DeleteBuffers();
 
+    size_t DebugGetDataBufferSize() const;
+
 protected:
     /** file I/O method type, adios1 legacy, only POSIX and MPI_AGG are used */
     enum IO_METHOD

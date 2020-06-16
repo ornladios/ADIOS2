@@ -436,6 +436,9 @@ public:
      */
     void LockReaderSelections() noexcept;
 
+    /* for adios2 internal testing */
+    virtual size_t DebugGetDataBufferSize() const;
+
 protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no communicator is passed */

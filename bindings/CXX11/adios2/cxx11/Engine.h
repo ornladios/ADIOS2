@@ -419,6 +419,9 @@ public:
      */
     void LockReaderSelections();
 
+    /* Debug function for adios2 testing framework */
+    size_t DebugGetDataBufferSize() const;
+
 private:
     Engine(core::Engine *engine);
     core::Engine *m_Engine = nullptr;
