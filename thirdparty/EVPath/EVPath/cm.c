@@ -335,6 +335,15 @@ INT_CMget_contact_list(CManager cm)
 }
 
 extern attr_list
+INT_CMderef_and_copy_list(CManager cm, attr_list attrs)
+{
+  // done inside the CM lock, so a safe way to convert a shared list to an owned list
+  attr_list ret = attr_copy_list(attrs);
+  free_attr_list(attrs);
+  return ret;
+}
+
+extern attr_list
 INT_CMget_specific_contact_list(CManager cm, attr_list attrs)
 {
     char *chosen_transport = NULL, *chosen_net = NULL, *chosen_interface = NULL;
