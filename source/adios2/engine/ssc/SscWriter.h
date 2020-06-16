@@ -54,6 +54,8 @@ private:
     MPI_Group m_MpiAllReadersGroup;
     MPI_Comm m_StreamComm;
     std::string m_MpiMode = "twosided";
+    bool m_NeedWait = false;
+    std::vector<MPI_Request> m_MpiRequests;
 
     int m_StreamRank;
     int m_StreamSize;
@@ -70,6 +72,7 @@ private:
     void PutOneSidedFencePull();
     void PutOneSidedPostPull();
     void PutTwoSided();
+    void MpiWait();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
