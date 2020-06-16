@@ -20,12 +20,12 @@ namespace adios2
 {
 
 template <class T>
-std::string GetType() noexcept;
+std::string GetDataType() noexcept;
 
-// LIMIT TEMPLATE TYPES FOR adios2::GetType
+// LIMIT TEMPLATE TYPES FOR adios2::GetDataType
 #define declare_template_instantiation(T)                                      \
                                                                                \
-    extern template std::string GetType<T>() noexcept;
+    extern template std::string GetDataType<T>() noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

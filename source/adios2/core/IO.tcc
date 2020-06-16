@@ -51,7 +51,8 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
 
     auto itVariablePair = variableMap.emplace(
         newIndex, Variable<T>(name, shape, start, count, constantDims));
-    m_Variables.emplace(name, std::make_pair(helper::GetType<T>(), newIndex));
+    m_Variables.emplace(name,
+                        std::make_pair(helper::GetDataType<T>(), newIndex));
 
     Variable<T> &variable = itVariablePair.first->second;
 
@@ -81,7 +82,7 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
         return nullptr;
     }
 
-    if (itVariable->second.first != helper::GetType<T>())
+    if (itVariable->second.first != helper::GetDataType<T>())
     {
         return nullptr;
     }
@@ -104,7 +105,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
 {
     TAU_SCOPED_TIMER("IO::DefineAttribute");
     if (!variableName.empty() &&
-        InquireVariableType(variableName) == Type::None)
+        InquireVariableType(variableName) == DataType::None)
     {
         throw std::invalid_argument(
             "ERROR: variable " + variableName +
@@ -139,7 +140,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     auto itAttributePair =
         attributeMap.emplace(newIndex, Attribute<T>(globalName, value));
     m_Attributes.emplace(globalName,
-                         std::make_pair(helper::GetType<T>(), newIndex));
+                         std::make_pair(helper::GetDataType<T>(), newIndex));
 
     return itAttributePair.first->second;
 }
@@ -152,7 +153,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
 {
     TAU_SCOPED_TIMER("IO::DefineAttribute");
     if (!variableName.empty() &&
-        InquireVariableType(variableName) == Type::None)
+        InquireVariableType(variableName) == DataType::None)
     {
         throw std::invalid_argument(
             "ERROR: variable " + variableName +
@@ -191,7 +192,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
     auto itAttributePair = attributeMap.emplace(
         newIndex, Attribute<T>(globalName, array, elements));
     m_Attributes.emplace(globalName,
-                         std::make_pair(helper::GetType<T>(), newIndex));
+                         std::make_pair(helper::GetDataType<T>(), newIndex));
 
     return itAttributePair.first->second;
 }
@@ -211,7 +212,7 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
         return nullptr;
     }
 
-    if (itAttribute->second.first != helper::GetType<T>())
+    if (itAttribute->second.first != helper::GetDataType<T>())
     {
         return nullptr;
     }

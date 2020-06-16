@@ -13,7 +13,7 @@
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
-#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>
+#include "adios2/helper/adiosFunctions.h" //helper::GetDataType<T>
 
 namespace adios2
 {
@@ -26,8 +26,8 @@ namespace core
     Variable<T>::Variable(const std::string &name, const Dims &shape,          \
                           const Dims &start, const Dims &count,                \
                           const bool constantDims)                             \
-    : VariableBase(name, helper::GetType<T>(), sizeof(T), shape, start, count, \
-                   constantDims)                                               \
+    : VariableBase(name, helper::GetDataType<T>(), sizeof(T), shape, start,    \
+                   count, constantDims)                                        \
     {                                                                          \
         m_BlocksInfo.reserve(1);                                               \
     }                                                                          \

@@ -35,7 +35,7 @@ size_t CompressSZ::BufferMaxSize(const size_t sizeIn) const
 }
 
 size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
-                            const size_t elementSize, Type varType,
+                            const size_t elementSize, DataType varType,
                             void *bufferOut, const Params &parameters,
                             Params &info) const
 {
@@ -244,11 +244,11 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 
     // Get type info
     int dtype = -1;
-    if (varType == helper::GetType<double>())
+    if (varType == helper::GetDataType<double>())
     {
         dtype = SZ_DOUBLE;
     }
-    else if (varType == helper::GetType<float>())
+    else if (varType == helper::GetDataType<float>())
     {
         dtype = SZ_FLOAT;
     }
@@ -282,7 +282,8 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
                               void *dataOut, const Dims &dimensions,
-                              Type varType, const Params & /*parameters*/) const
+                              DataType varType,
+                              const Params & /*parameters*/) const
 {
     if (dimensions.size() > 5)
     {
@@ -293,12 +294,12 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
     // Get type info
     int dtype = 0;
     size_t typeSizeBytes = 0;
-    if (varType == helper::GetType<double>())
+    if (varType == helper::GetDataType<double>())
     {
         dtype = SZ_DOUBLE;
         typeSizeBytes = 8;
     }
-    else if (varType == helper::GetType<float>())
+    else if (varType == helper::GetDataType<float>())
     {
         dtype = SZ_FLOAT;
         typeSizeBytes = 4;

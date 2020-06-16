@@ -1193,9 +1193,9 @@ void HDF5Common::CreateVarsFromIO(core::IO &io)
     for (const auto &vpair : variables)
     {
         const std::string &varName = vpair.first;
-        const Type varType = vpair.second.first;
+        const DataType varType = vpair.second.first;
 #define declare_template_instantiation(T)                                      \
-    if (varType == helper::GetType<T>())                                       \
+    if (varType == helper::GetDataType<T>())                                   \
     {                                                                          \
         core::Variable<T> *v = io.InquireVariable<T>(varName);                 \
         if (!v)                                                                \
@@ -1229,7 +1229,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
     {
         std::string attrName = apair.first;
         Params temp = apair.second;
-        Type attrType = helper::GetTypeFromString(temp["Type"]);
+        DataType attrType = helper::GetDataTypeFromString(temp["Type"]);
 
         hid_t parentID = m_FileId;
 #ifdef NO_ATTR_VAR_ASSOC
@@ -1254,11 +1254,11 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
             continue;
         }
 
-        if (attrType == Type::Compound)
+        if (attrType == DataType::Compound)
         {
             // not supported
         }
-        else if (attrType == helper::GetType<std::string>())
+        else if (attrType == helper::GetDataType<std::string>())
         {
             // WriteStringAttr(io, attrName, parentID);
             core::Attribute<std::string> *adiosAttr =
@@ -1269,7 +1269,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
 // note no std::complext attr types
 //
 #define declare_template_instantiation(T)                                      \
-    else if (attrType == helper::GetType<T>())                                 \
+    else if (attrType == helper::GetDataType<T>())                             \
     {                                                                          \
         core::Attribute<T> *adiosAttr = io.InquireAttribute<T>(attrName);      \
         WriteNonStringAttr(io, adiosAttr, parentID, list.back().c_str());      \

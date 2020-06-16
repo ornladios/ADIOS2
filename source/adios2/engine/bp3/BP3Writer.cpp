@@ -62,13 +62,13 @@ void BP3Writer::PerformPuts()
 
     for (const std::string &variableName : m_BP3Serializer.m_DeferredVariables)
     {
-        const Type type = m_IO.InquireVariableType(variableName);
-        if (type == Type::Compound)
+        const DataType type = m_IO.InquireVariableType(variableName);
+        if (type == DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(                               \
             variableName, "in call to PerformPuts, EndStep or Close");         \

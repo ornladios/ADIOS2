@@ -223,12 +223,12 @@ void InlineReader::SetDeferredVariablePointers()
     // this will make Variable::Info::Data() work correctly for the user
     for (const auto &varName : m_DeferredVariables)
     {
-        const Type type = m_IO.InquireVariableType(varName);
-        if (type == Type::Compound)
+        const DataType type = m_IO.InquireVariableType(varName);
+        if (type == DataType::Compound)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable =                                                \
             FindVariable<T>(varName, "in call to EndStep");                    \

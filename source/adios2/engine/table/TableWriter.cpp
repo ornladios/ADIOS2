@@ -287,11 +287,11 @@ void TableWriter::PutAggregatorBuffer()
         m_VarInfoMap[v.name].type = v.type;
         m_VarInfoMap[v.name].shape = v.shape;
         size_t elementSize;
-        if (v.type == Type::None)
+        if (v.type == DataType::None)
         {
         }
 #define declare_type(T)                                                        \
-    else if (v.type == helper::GetType<T>()) { elementSize = sizeof(T); }
+    else if (v.type == helper::GetDataType<T>()) { elementSize = sizeof(T); }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -320,11 +320,11 @@ void TableWriter::PutAggregatorBuffer()
                 }
             }
 
-            if (v.type == Type::None)
+            if (v.type == DataType::None)
             {
             }
 #define declare_type(T)                                                        \
-    else if (v.type == helper::GetType<T>())                                   \
+    else if (v.type == helper::GetDataType<T>())                               \
     {                                                                          \
         helper::NdCopy<T>(                                                     \
             v.buffer->data() + v.position, v.start, v.count, true, true,       \
@@ -376,12 +376,12 @@ void TableWriter::PutSubEngine(bool finalPut)
                 {
                     count[0] = shape[0] - start[0];
                 }
-                const Type type = m_VarInfoMap[varPair.first].type;
-                if (type == Type::None)
+                const DataType type = m_VarInfoMap[varPair.first].type;
+                if (type == DataType::None)
                 {
                 }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         auto variable = m_SubIO.InquireVariable<T>(varPair.first);             \
         if (not variable)                                                      \

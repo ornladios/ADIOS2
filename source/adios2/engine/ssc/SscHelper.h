@@ -28,7 +28,7 @@ namespace ssc
 struct BlockInfo
 {
     std::string name;
-    Type type;
+    DataType type;
     ShapeID shapeId;
     Dims shape;
     Dims start;
@@ -54,7 +54,7 @@ void PrintMpiInfo(const MpiInfo &writersInfo, const MpiInfo &readersInfo);
 
 size_t GetTypeSize(const std::string &type);
 
-size_t TotalDataSize(const Dims &dims, Type type, const ShapeID &shapeId);
+size_t TotalDataSize(const Dims &dims, DataType type, const ShapeID &shapeId);
 size_t TotalDataSize(const BlockVec &bv);
 
 RankPosMap CalculateOverlap(BlockVecVec &globalPattern,

@@ -23,7 +23,8 @@ CompressZFP::CompressZFP(const Params &parameters) : Operator("zfp", parameters)
 }
 
 size_t CompressZFP::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                                    Type type, const Params &parameters) const
+                                    DataType type,
+                                    const Params &parameters) const
 {
     zfp_field *field = GetZFPField(dataIn, dimensions, type);
     zfp_stream *stream = GetZFPStream(dimensions, type, parameters);
@@ -34,7 +35,7 @@ size_t CompressZFP::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
-                             const size_t elementSize, Type type,
+                             const size_t elementSize, DataType type,
                              void *bufferOut, const Params &parameters,
                              Params &info) const
 {
@@ -62,8 +63,8 @@ size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
-                               void *dataOut, const Dims &dimensions, Type type,
-                               const Params &parameters) const
+                               void *dataOut, const Dims &dimensions,
+                               DataType type, const Params &parameters) const
 {
     auto lf_GetTypeSize = [](const zfp_type zfpType) -> size_t {
         size_t size = 0;
@@ -107,23 +108,23 @@ size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
 }
 
 // PRIVATE
-zfp_type CompressZFP::GetZfpType(Type type) const
+zfp_type CompressZFP::GetZfpType(DataType type) const
 {
     zfp_type zfpType = zfp_type_none;
 
-    if (type == helper::GetType<double>())
+    if (type == helper::GetDataType<double>())
     {
         zfpType = zfp_type_double;
     }
-    else if (type == helper::GetType<float>())
+    else if (type == helper::GetDataType<float>())
     {
         zfpType = zfp_type_float;
     }
-    else if (type == helper::GetType<int64_t>())
+    else if (type == helper::GetDataType<int64_t>())
     {
         zfpType = zfp_type_int64;
     }
-    else if (type == helper::GetType<int32_t>())
+    else if (type == helper::GetDataType<int32_t>())
     {
         zfpType = zfp_type_int32;
     }
@@ -141,10 +142,10 @@ zfp_type CompressZFP::GetZfpType(Type type) const
 }
 
 zfp_field *CompressZFP::GetZFPField(const void *data, const Dims &dimensions,
-                                    Type type) const
+                                    DataType type) const
 {
     auto lf_CheckField = [](const zfp_field *field,
-                            const std::string zfpFieldFunction, Type type) {
+                            const std::string zfpFieldFunction, DataType type) {
         if (field == nullptr || field == NULL)
         {
             throw std::invalid_argument(
@@ -186,7 +187,7 @@ zfp_field *CompressZFP::GetZFPField(const void *data, const Dims &dimensions,
     return field;
 }
 
-zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, Type type,
+zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
                                       const Params &parameters) const
 {
     auto lf_HasKey = [](Params::const_iterator itKey,

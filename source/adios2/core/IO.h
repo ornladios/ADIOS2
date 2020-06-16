@@ -35,7 +35,8 @@ namespace core
 {
 
 /** used for Variables and Attributes, name, type, type-index */
-using DataMap = std::unordered_map<std::string, std::pair<Type, unsigned int>>;
+using DataMap =
+    std::unordered_map<std::string, std::pair<DataType, unsigned int>>;
 
 // forward declaration needed as IO is passed to Engine derived
 // classes
@@ -59,7 +60,7 @@ public:
      * Map holding variable identifiers
      * <pre>
      * key: unique variable name,
-     * value: pair.first = type as string GetType<T> from adiosTemplates.h
+     * value: pair.first = type as string GetDataType<T> from adiosTemplates.h
      *        pair.second = index in fixed size map (e.g. m_Int8, m_Double)
      * </pre>
      */
@@ -69,7 +70,7 @@ public:
      * Map holding attribute identifiers
      * <pre>
      * key: unique attribute name,
-     * value: pair.first = type as string GetType<T> from
+     * value: pair.first = type as string GetDataType<T> from
      *                     helper/adiosTemplates.h
      *        pair.second = index in fixed size map (e.g. m_Int8, m_Double)
      * </pre>
@@ -293,14 +294,14 @@ public:
      * @param name input variable name
      * @return type primitive type
      */
-    Type InquireVariableType(const std::string &name) const noexcept;
+    DataType InquireVariableType(const std::string &name) const noexcept;
 
     /**
      * Overload that accepts a const iterator into the m_Variables map if found
      * @param itVariable
      * @return type primitive type
      */
-    Type InquireVariableType(const DataMap::const_iterator itVariable) const
+    DataType InquireVariableType(const DataMap::const_iterator itVariable) const
         noexcept;
 
     /**
@@ -341,9 +342,10 @@ public:
      * @param name input attribute name
      * @return type if found returns type as string, otherwise an empty string
      */
-    Type InquireAttributeType(const std::string &name,
-                              const std::string &variableName = "",
-                              const std::string separator = "/") const noexcept;
+    DataType InquireAttributeType(const std::string &name,
+                                  const std::string &variableName = "",
+                                  const std::string separator = "/") const
+        noexcept;
 
     /**
      * @brief Retrieve map with attributes info. Use when reading.

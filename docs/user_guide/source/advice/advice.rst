@@ -53,7 +53,7 @@ The goal is to provide specific advice and good practices about the use of ADIOS
 
 11. Prefer the high-level Python and C++ APIs for simple tasks that do not require performance. The more familiar Write/Read overloads for File I/O return native data constructs (``std::vector`` and ``numpy arrays``) immediately for a requested selection. ``open`` only explores the metadata index.
 
-12. C++: prefer templates to ``void*`` to increase compile-time safety. Use ``IO::InquireVariableType("variableName")`` and ``adios2::GetType<T>()`` to cast upfront to a ``Variable<T>``. C++17 has ``std::any`` as an alternative to ``void*``. ADIOS 2 follows closely the STL model.
+12. C++: prefer templates to ``void*`` to increase compile-time safety. Use ``IO::InquireVariableType("variableName")`` and ``adios2::GetDataType<T>()`` to cast upfront to a ``Variable<T>``. C++17 has ``std::any`` as an alternative to ``void*``. ADIOS 2 follows closely the STL model.
 
 13. Understand ``Put`` and ``Get`` memory contracts from :ref:`Engine`
 

@@ -43,7 +43,7 @@ public:
      * @return size of compressed buffer in bytes
      */
     size_t Compress(const void *dataIn, const Dims &dimensions,
-                    const size_t elementSize, Type type, void *bufferOut,
+                    const size_t elementSize, DataType type, void *bufferOut,
                     const Params &parameters, Params &info) const final;
 
     using Operator::Decompress;
@@ -58,7 +58,7 @@ public:
      * @return size of decompressed data in dataOut
      */
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const Dims &dimensions, Type type,
+                      const Dims &dimensions, DataType type,
                       const Params &parameters) const final;
 };
 

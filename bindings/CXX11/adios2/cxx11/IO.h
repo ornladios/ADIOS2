@@ -311,19 +311,19 @@ public:
 
     /**
      * Inspects variable type. This function can be used in conjunction with
-     * MACROS in an else if (type == adios2::GetType<T>() ) {} loop
+     * MACROS in an else if (type == adios2::GetDataType<T>() ) {} loop
      * @param name unique variable name identifier in current IO
-     * @return type as in adios2::GetType<T>() (e.g. "double", "float"),
+     * @return type as in adios2::GetDataType<T>() (e.g. "double", "float"),
      * empty std::string if variable not found
      */
     std::string VariableType(const std::string &name) const;
 
     /**
      * Inspects attribute type. This function can be used in conjunction with
-     * MACROS in an else if (type == adios2::GetType<T>() ) {} loop
+     * MACROS in an else if (type == adios2::GetDataType<T>() ) {} loop
      * @param name unique attribute name identifier in current IO
-     * @return type as in adios2::GetType<T>() (e.g. "double", "float"), empty
-     * std::string if attribute not found
+     * @return type as in adios2::GetDataType<T>() (e.g. "double", "float"),
+     * empty std::string if attribute not found
      */
     std::string AttributeType(const std::string &name) const;
 

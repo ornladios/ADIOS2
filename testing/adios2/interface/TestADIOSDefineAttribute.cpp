@@ -712,17 +712,17 @@ TEST_F(ADIOSDefineAttributeTest, DefineCheckType)
     io.DefineAttribute<float>("r32", 32);
     io.DefineAttribute<double>("r64", 64);
 
-    EXPECT_EQ(io.AttributeType("iString"), adios2::GetType<std::string>());
-    EXPECT_EQ(io.AttributeType("i8"), adios2::GetType<int8_t>());
-    EXPECT_EQ(io.AttributeType("i16"), adios2::GetType<int16_t>());
-    EXPECT_EQ(io.AttributeType("i32"), adios2::GetType<int32_t>());
-    EXPECT_EQ(io.AttributeType("i64"), adios2::GetType<int64_t>());
-    EXPECT_EQ(io.AttributeType("u8"), adios2::GetType<uint8_t>());
-    EXPECT_EQ(io.AttributeType("u16"), adios2::GetType<uint16_t>());
-    EXPECT_EQ(io.AttributeType("u32"), adios2::GetType<uint32_t>());
-    EXPECT_EQ(io.AttributeType("u64"), adios2::GetType<uint64_t>());
-    EXPECT_EQ(io.AttributeType("r32"), adios2::GetType<float>());
-    EXPECT_EQ(io.AttributeType("r64"), adios2::GetType<double>());
+    EXPECT_EQ(io.AttributeType("iString"), adios2::GetDataType<std::string>());
+    EXPECT_EQ(io.AttributeType("i8"), adios2::GetDataType<int8_t>());
+    EXPECT_EQ(io.AttributeType("i16"), adios2::GetDataType<int16_t>());
+    EXPECT_EQ(io.AttributeType("i32"), adios2::GetDataType<int32_t>());
+    EXPECT_EQ(io.AttributeType("i64"), adios2::GetDataType<int64_t>());
+    EXPECT_EQ(io.AttributeType("u8"), adios2::GetDataType<uint8_t>());
+    EXPECT_EQ(io.AttributeType("u16"), adios2::GetDataType<uint16_t>());
+    EXPECT_EQ(io.AttributeType("u32"), adios2::GetDataType<uint32_t>());
+    EXPECT_EQ(io.AttributeType("u64"), adios2::GetDataType<uint64_t>());
+    EXPECT_EQ(io.AttributeType("r32"), adios2::GetDataType<float>());
+    EXPECT_EQ(io.AttributeType("r64"), adios2::GetDataType<double>());
 }
 
 TEST_F(ADIOSDefineAttributeTest, VariableException)

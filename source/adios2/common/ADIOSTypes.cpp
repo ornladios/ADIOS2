@@ -180,42 +180,42 @@ std::string ToString(SelectionType value)
     }
 }
 
-std::string ToString(Type type)
+std::string ToString(DataType type)
 {
-    // Keep in sync with helper::GetTypeFromString
+    // Keep in sync with helper::GetDataTypeFromString
     switch (type)
     {
-    case Type::None:
+    case DataType::None:
         break;
-    case Type::Int8:
+    case DataType::Int8:
         return "int8_t";
-    case Type::Int16:
+    case DataType::Int16:
         return "int16_t";
-    case Type::Int32:
+    case DataType::Int32:
         return "int32_t";
-    case Type::Int64:
+    case DataType::Int64:
         return "int64_t";
-    case Type::UInt8:
+    case DataType::UInt8:
         return "uint8_t";
-    case Type::UInt16:
+    case DataType::UInt16:
         return "uint16_t";
-    case Type::UInt32:
+    case DataType::UInt32:
         return "uint32_t";
-    case Type::UInt64:
+    case DataType::UInt64:
         return "uint64_t";
-    case Type::Float:
+    case DataType::Float:
         return "float";
-    case Type::Double:
+    case DataType::Double:
         return "double";
-    case Type::LongDouble:
+    case DataType::LongDouble:
         return "long double";
-    case Type::FloatComplex:
+    case DataType::FloatComplex:
         return "float complex";
-    case Type::DoubleComplex:
+    case DataType::DoubleComplex:
         return "double complex";
-    case Type::String:
+    case DataType::String:
         return "string";
-    case Type::Compound:
+    case DataType::Compound:
         return "compound";
     }
     return std::string();

@@ -112,49 +112,49 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         EXPECT_TRUE(attr_s1);
         ASSERT_EQ(attr_s1.Name(), s1_Single);
         ASSERT_EQ(attr_s1.Data().size() == 1, true);
-        ASSERT_EQ(attr_s1.Type(), adios2::GetType<std::string>());
+        ASSERT_EQ(attr_s1.Type(), adios2::GetDataType<std::string>());
         ASSERT_EQ(attr_s1.Data().front(), data_S1);
 
         // EXPECT_TRUE(attr_s1a);
         // ASSERT_EQ(attr_s1a.Name(), s1_Array);
         // ASSERT_EQ(attr_s1a.Data().size() == 1, true);
-        // ASSERT_EQ(attr_s1a.Type(), adios2::GetType<std::string>());
+        // ASSERT_EQ(attr_s1a.Type(), adios2::GetDataType<std::string>());
         // ASSERT_EQ(attr_s1a.Data()[0], currentTestData.S1array[0]);
 
         EXPECT_TRUE(attr_i8);
         ASSERT_EQ(attr_i8.Name(), i8_Single);
         ASSERT_EQ(attr_i8.Data().size() == 1, true);
-        ASSERT_EQ(attr_i8.Type(), adios2::GetType<int8_t>());
+        ASSERT_EQ(attr_i8.Type(), adios2::GetDataType<int8_t>());
         ASSERT_EQ(attr_i8.Data().front(), data_I8.front());
 
         EXPECT_TRUE(attr_i16);
         ASSERT_EQ(attr_i16.Name(), i16_Single);
         ASSERT_EQ(attr_i16.Data().size() == 1, true);
-        ASSERT_EQ(attr_i16.Type(), adios2::GetType<int16_t>());
+        ASSERT_EQ(attr_i16.Type(), adios2::GetDataType<int16_t>());
         ASSERT_EQ(attr_i16.Data().front(), data_I16.front());
 
         EXPECT_TRUE(attr_i32);
         ASSERT_EQ(attr_i32.Name(), i32_Single);
         ASSERT_EQ(attr_i32.Data().size() == 1, true);
-        ASSERT_EQ(attr_i32.Type(), adios2::GetType<int32_t>());
+        ASSERT_EQ(attr_i32.Type(), adios2::GetDataType<int32_t>());
         ASSERT_EQ(attr_i32.Data().front(), data_I32.front());
 
         EXPECT_TRUE(attr_i64);
         ASSERT_EQ(attr_i64.Name(), i64_Single);
         ASSERT_EQ(attr_i64.Data().size() == 1, true);
-        ASSERT_EQ(attr_i64.Type(), adios2::GetType<int64_t>());
+        ASSERT_EQ(attr_i64.Type(), adios2::GetDataType<int64_t>());
         ASSERT_EQ(attr_i64.Data().front(), data_I64.front());
 
         EXPECT_TRUE(attr_r32);
         ASSERT_EQ(attr_r32.Name(), r32_Single);
         ASSERT_EQ(attr_r32.Data().size() == 1, true);
-        ASSERT_EQ(attr_r32.Type(), adios2::GetType<float>());
+        ASSERT_EQ(attr_r32.Type(), adios2::GetDataType<float>());
         ASSERT_EQ(attr_r32.Data().front(), data_R32.front());
 
         EXPECT_TRUE(attr_r64);
         ASSERT_EQ(attr_r64.Name(), r64_Single);
         ASSERT_EQ(attr_r64.Data().size() == 1, true);
-        ASSERT_EQ(attr_r64.Type(), adios2::GetType<double>());
+        ASSERT_EQ(attr_r64.Type(), adios2::GetDataType<double>());
         ASSERT_EQ(attr_r64.Data().front(), data_R64.front());
 
         auto scalar_r64 = io.InquireVariable<double>("scalar_r64");

@@ -289,15 +289,15 @@ void DataManSerializer::PutAggregatedMetadata(VecPtr input,
 }
 
 bool DataManSerializer::IsCompressionAvailable(const std::string &method,
-                                               Type type, const Dims &count)
+                                               DataType type, const Dims &count)
 {
     TAU_SCOPED_TIMER_FUNC();
     if (method == "zfp")
     {
-        if (type == helper::GetType<int32_t>() ||
-            type == helper::GetType<int64_t>() ||
-            type == helper::GetType<float>() ||
-            type == helper::GetType<double>())
+        if (type == helper::GetDataType<int32_t>() ||
+            type == helper::GetDataType<int64_t>() ||
+            type == helper::GetDataType<float>() ||
+            type == helper::GetDataType<double>())
         {
             if (count.size() <= 3)
             {
@@ -307,8 +307,8 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
     }
     else if (method == "sz")
     {
-        if (type == helper::GetType<float>() ||
-            type == helper::GetType<double>())
+        if (type == helper::GetDataType<float>() ||
+            type == helper::GetDataType<double>())
         {
             if (count.size() <= 5)
             {
@@ -318,10 +318,10 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
     }
     else if (method == "bzip2")
     {
-        if (type == helper::GetType<int32_t>() ||
-            type == helper::GetType<int64_t>() ||
-            type == helper::GetType<float>() ||
-            type == helper::GetType<double>())
+        if (type == helper::GetDataType<int32_t>() ||
+            type == helper::GetDataType<int64_t>() ||
+            type == helper::GetDataType<float>() ||
+            type == helper::GetDataType<double>())
         {
             return true;
         }
@@ -337,12 +337,12 @@ void DataManSerializer::PutAttributes(core::IO &io)
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
-        const Type type(attributePair.second.first);
-        if (type == Type::None)
+        const DataType type(attributePair.second.first);
+        if (type == DataType::None)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
         PutAttribute(attribute);                                               \
@@ -375,13 +375,13 @@ void DataManSerializer::GetAttributes(core::IO &io)
     std::lock_guard<std::mutex> lStaticDataJson(m_StaticDataJsonMutex);
     for (const auto &staticVar : m_StaticDataJson["S"])
     {
-        const Type type(
-            helper::GetTypeFromString(staticVar["Y"].get<std::string>()));
-        if (type == Type::None)
+        const DataType type(
+            helper::GetDataTypeFromString(staticVar["Y"].get<std::string>()));
+        if (type == DataType::None)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         const auto &attributesDataMap = io.GetAttributesDataMap();             \
         auto it = attributesDataMap.find(staticVar["N"].get<std::string>());   \
@@ -460,7 +460,7 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
                     var.start = varBlock["O"].get<Dims>();
                     var.count = varBlock["C"].get<Dims>();
                     var.size = varBlock["I"].get<size_t>();
-                    var.type = helper::GetTypeFromString(
+                    var.type = helper::GetDataTypeFromString(
                         varBlock["Y"].get<std::string>());
                     var.rank = stoi(rankMapIt.key());
                 }
@@ -843,12 +843,12 @@ VecPtr DataManSerializer::GenerateReply(
                 if (ovlp)
                 {
                     std::vector<char> tmpBuffer;
-                    if (var.type == Type::Compound)
+                    if (var.type == DataType::Compound)
                     {
                         throw("Compound type is not supported yet.");
                     }
 #define declare_type(T)                                                        \
-    else if (var.type == helper::GetType<T>())                                 \
+    else if (var.type == helper::GetDataType<T>())                             \
     {                                                                          \
         tmpBuffer.reserve(std::accumulate(ovlpCount.begin(), ovlpCount.end(),  \
                                           sizeof(T),                           \

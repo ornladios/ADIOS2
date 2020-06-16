@@ -169,12 +169,12 @@ void SstWriter::FFSMarshalAttributes()
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
-        const Type type(attributePair.second.first);
+        const DataType type(attributePair.second.first);
 
-        if (type == Type::None)
+        if (type == DataType::None)
         {
         }
-        else if (type == helper::GetType<std::string>())
+        else if (type == helper::GetDataType<std::string>())
         {
             core::Attribute<std::string> &attribute =
                 *m_IO.InquireAttribute<std::string>(name);
@@ -190,7 +190,7 @@ void SstWriter::FFSMarshalAttributes()
                                    element_count, data_addr);
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name);       \
         int element_count = -1;                                                \

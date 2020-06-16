@@ -52,15 +52,15 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 
     auto varFFSCallback = [](void *reader, const char *variableName,
                              const char *type, void *data) {
-        adios2::Type Type(helper::GetTypeFromString(type));
+        adios2::DataType Type(helper::GetDataTypeFromString(type));
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
-        if (Type == adios2::Type::Compound)
+        if (Type == adios2::DataType::Compound)
         {
             return (void *)NULL;
         }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *variable =                                                \
             &(Reader->m_IO.DefineVariable<T>(variableName));                   \
@@ -85,20 +85,20 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             Reader->m_IO.RemoveAllAttributes();
             return;
         }
-        adios2::Type Type(helper::GetTypeFromString(type));
+        adios2::DataType Type(helper::GetDataTypeFromString(type));
         try
         {
-            if (Type == adios2::Type::Compound)
+            if (Type == adios2::DataType::Compound)
             {
                 return;
             }
-            else if (Type == helper::GetType<std::string>())
+            else if (Type == helper::GetDataType<std::string>())
             {
                 Reader->m_IO.DefineAttribute<std::string>(attrName,
                                                           *(char **)data);
             }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Reader->m_IO.DefineAttribute<T>(attrName, *(T *)data);                 \
     }
@@ -125,7 +125,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         std::vector<size_t> VecShape;
         std::vector<size_t> VecStart;
         std::vector<size_t> VecCount;
-        adios2::Type Type(helper::GetTypeFromString(type));
+        adios2::DataType Type(helper::GetDataTypeFromString(type));
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
         /*
@@ -151,12 +151,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             }
         }
 
-        if (Type == adios2::Type::Compound)
+        if (Type == adios2::DataType::Compound)
         {
             return (void *)NULL;
         }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *variable = &(Reader->m_IO.DefineVariable<T>(              \
             variableName, VecShape, VecStart, VecCount));                      \
@@ -174,7 +174,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             std::vector<size_t> VecShape;
             std::vector<size_t> VecStart;
             std::vector<size_t> VecCount;
-            adios2::Type Type(helper::GetTypeFromString(type));
+            adios2::DataType Type(helper::GetDataTypeFromString(type));
             class SstReader::SstReader *Reader =
                 reinterpret_cast<class SstReader::SstReader *>(reader);
             size_t currentStep = SstCurrentStep(Reader->m_Input);
@@ -201,12 +201,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
                 }
             }
 
-            if (Type == adios2::Type::Compound)
+            if (Type == adios2::DataType::Compound)
             {
                 return;
             }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *Var = reinterpret_cast<class Variable<T> *>(variable);    \
         auto savedShape = Var->m_Shape;                                        \
@@ -548,13 +548,13 @@ void SstReader::PerformGets()
 
         for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
         {
-            const Type type = m_IO.InquireVariableType(name);
+            const DataType type = m_IO.InquireVariableType(name);
 
-            if (type == Type::Compound)
+            if (type == DataType::Compound)
             {
             }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable =                                                \
             FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \
@@ -579,13 +579,13 @@ void SstReader::PerformGets()
 
         for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
         {
-            const Type type = m_IO.InquireVariableType(name);
+            const DataType type = m_IO.InquireVariableType(name);
 
-            if (type == Type::Compound)
+            if (type == DataType::Compound)
             {
             }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable =                                                \
             FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \

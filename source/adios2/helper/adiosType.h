@@ -98,16 +98,16 @@ struct SubStreamBoxInfo
 
 /**
  * Gets type from template parameter T
- * @return Type enumeration value
+ * @return DataType enumeration value
  */
 template <class T>
-Type GetType() noexcept;
+DataType GetDataType() noexcept;
 
 /**
- * Gets type from string, inversing ToString(Type)
- * @return Type enumeration value, or Type::None on failure
+ * Gets type from string, inversing ToString(DataType)
+ * @return DataType enumeration value, or DataType::None on failure
  */
-Type GetTypeFromString(std::string const &) noexcept;
+DataType GetDataTypeFromString(std::string const &) noexcept;
 
 /**
  * Converts a vector of dimensions to a CSV string

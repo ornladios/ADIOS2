@@ -20,70 +20,70 @@ namespace adios2
 namespace helper
 {
 
-Type GetTypeFromString(std::string const &type) noexcept
+DataType GetDataTypeFromString(std::string const &type) noexcept
 {
-    // Keep in sync with adios2::ToString(Type).
+    // Keep in sync with adios2::ToString(DataType).
     if (type == "int8_t")
     {
-        return Type::Int8;
+        return DataType::Int8;
     }
     if (type == "int16_t")
     {
-        return Type::Int16;
+        return DataType::Int16;
     }
     if (type == "int32_t")
     {
-        return Type::Int32;
+        return DataType::Int32;
     }
     if (type == "int64_t")
     {
-        return Type::Int64;
+        return DataType::Int64;
     }
     if (type == "uint8_t")
     {
-        return Type::UInt8;
+        return DataType::UInt8;
     }
     if (type == "uint16_t")
     {
-        return Type::UInt16;
+        return DataType::UInt16;
     }
     if (type == "uint32_t")
     {
-        return Type::UInt32;
+        return DataType::UInt32;
     }
     if (type == "uint64_t")
     {
-        return Type::UInt64;
+        return DataType::UInt64;
     }
     if (type == "float")
     {
-        return Type::Float;
+        return DataType::Float;
     }
     if (type == "double")
     {
-        return Type::Double;
+        return DataType::Double;
     }
     if (type == "long double")
     {
-        return Type::LongDouble;
+        return DataType::LongDouble;
     }
     if (type == "float complex")
     {
-        return Type::FloatComplex;
+        return DataType::FloatComplex;
     }
     if (type == "double complex")
     {
-        return Type::DoubleComplex;
+        return DataType::DoubleComplex;
     }
     if (type == "string")
     {
-        return Type::String;
+        return DataType::String;
     }
     if (type == "compound")
     {
-        return Type::Compound;
+        return DataType::Compound;
     }
-    return Type::None;
+    return DataType::None;
 }
 
 std::string DimsToCSV(const Dims &dimensions) noexcept

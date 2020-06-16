@@ -236,7 +236,7 @@ TEST_F(Common, NewAttributeEveryStep)
             uint64_t expectedAttributeValue = step + 1;
             EXPECT_TRUE(aStep);
             ASSERT_EQ(aStep.Data().size() == 1, true);
-            ASSERT_EQ(aStep.Type(), adios2::GetType<uint64_t>());
+            ASSERT_EQ(aStep.Type(), adios2::GetDataType<uint64_t>());
             ASSERT_EQ(aStep.Data().front(), expectedAttributeValue);
 
             if (!rank)

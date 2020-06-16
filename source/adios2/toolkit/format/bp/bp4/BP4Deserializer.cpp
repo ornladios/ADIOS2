@@ -589,13 +589,13 @@ BP4Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
     for (auto &subFileInfoPair : m_DeferredVariablesMap)
     {
         const std::string variableName(subFileInfoPair.first);
-        const Type type(io.InquireVariableType(variableName));
+        const DataType type(io.InquireVariableType(variableName));
 
-        if (type == Type::Compound)
+        if (type == DataType::Compound)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         subFileInfoPair.second =                                               \
             GetSubFileInfo(*io.InquireVariable<T>(variableName));              \
@@ -611,13 +611,13 @@ void BP4Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
                                  const Box<Dims> &blockBox,
                                  const Box<Dims> &intersectionBox) const
 {
-    const Type type(io.InquireVariableType(variableName));
+    const DataType type(io.InquireVariableType(variableName));
 
-    if (type == Type::Compound)
+    if (type == DataType::Compound)
     {
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         core::Variable<T> *variable = io.InquireVariable<T>(variableName);     \
         if (variable != nullptr)                                               \

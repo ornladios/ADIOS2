@@ -43,7 +43,7 @@ public:
      * @return size of compressed buffer in bytes
      */
     size_t Compress(const void *dataIn, const Dims &dimensions,
-                    const size_t elementSize, Type type, void *bufferOut,
+                    const size_t elementSize, DataType type, void *bufferOut,
                     const Params &parameters, Params &info) const final;
 
     /**
