@@ -74,7 +74,6 @@ private:
 
     void PushBufferQueue(std::shared_ptr<std::vector<char>> buffer);
     std::shared_ptr<std::vector<char>> PopBufferQueue();
-    bool CheckBufferQueue();
 
     void ReplyThread();
     void PublishThread();

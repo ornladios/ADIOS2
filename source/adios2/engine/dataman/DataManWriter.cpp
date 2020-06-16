@@ -212,19 +212,6 @@ void DataManWriter::DoClose(const int transportIndex)
     m_IsClosed = true;
 }
 
-bool DataManWriter::CheckBufferQueue()
-{
-    std::lock_guard<std::mutex> l(m_BufferQueueMutex);
-    if (m_BufferQueue.empty())
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
 void DataManWriter::PushBufferQueue(std::shared_ptr<std::vector<char>> buffer)
 {
     std::lock_guard<std::mutex> l(m_BufferQueueMutex);
@@ -248,7 +235,7 @@ std::shared_ptr<std::vector<char>> DataManWriter::PopBufferQueue()
 
 void DataManWriter::PublishThread()
 {
-    while (m_PublishThreadActive || CheckBufferQueue())
+    while (m_PublishThreadActive)
     {
         auto buffer = PopBufferQueue();
         if (buffer != nullptr && buffer->size() > 0)
@@ -265,7 +252,7 @@ void DataManWriter::PublishThread()
 void DataManWriter::ReplyThread()
 {
     int readerCount = 0;
-    while (m_ReplyThreadActive || CheckBufferQueue())
+    while (m_ReplyThreadActive)
     {
         auto request = m_Replier.ReceiveRequest();
         if (request && request->size() > 0)
