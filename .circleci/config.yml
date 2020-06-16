@@ -15,8 +15,8 @@ defaults: &defaults
         name: Build
         command: bash source/scripts/ci/circle/run.sh build
     - run:
-        name: Test
-        command: bash source/scripts/ci/circle/run.sh test
+        name: Sanitize
+        command: bash source/scripts/ci/circle/run.sh memcheck
 
 version: 2
 
