@@ -415,6 +415,7 @@ void *INT_CMCondition_get_client_data(CManager cm, int condition);
 int INT_CMCondition_wait(CManager cm, int condition);
 extern void INT_CMCondition_fail(CManager cm, int condition);
 extern attr_list INT_CMget_contact_list(CManager cm);
+extern attr_list INT_CMderef_and_copy_list(CManager cm, attr_list attrs);
 extern void INT_CMregister_non_CM_message_handler(int header, CMNonCMHandler handler);
 extern void *INT_CMtake_buffer(CManager cm, void *data);
 extern void INT_CMreturn_buffer(CManager cm, void *data);

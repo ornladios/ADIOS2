@@ -102,6 +102,35 @@ atl_lock_func global_as_lock = NULL;
 atl_lock_func global_as_unlock = NULL;
 void* global_as_lock_data = NULL;
 
+
+#if defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#endif
+#endif
+
+#ifndef NO_SANITIZE_THREAD
+#define NO_SANITIZE_THREAD
+#endif
+
+extern void NO_SANITIZE_THREAD
+atl_install_mutex_funcs(atl_lock_func lock, atl_lock_func unlock, void *client_data)
+{
+    global_as_lock = lock;
+    global_as_unlock = unlock;
+    global_as_lock_data = client_data;
+}
+
+static void NO_SANITIZE_THREAD atl_lock()
+{
+    if (global_as_lock) (global_as_lock)(global_as_lock_data);
+}
+
+static void NO_SANITIZE_THREAD atl_unlock()
+{
+    if (global_as_unlock) (global_as_unlock)(global_as_lock_data);
+}
+
 int
 get_pattr(attr_list list,int index, atom_t *name,
 	  attr_value_type *val_type, attr_union *value);
@@ -1023,7 +1052,9 @@ extern void
 fdump_attr_list(void *file, attr_list list)
 {
     FILE *out = (FILE*)file;
+    atl_lock();
     init_global_atom_server(&global_as);
+    atl_unlock();
     fprintf(out, "Attribute list %p, ref_count = %d\n", list, list->ref_count);
     internal_dump_attr_list(out, list, 0);
 }
@@ -1036,7 +1067,9 @@ extern int
 get_attr_id(attr_list list, int item_no, atom_t *item)
 {
 
+    atl_lock();
     init_global_atom_server(&global_as);
+    atl_unlock();
 
     if (item_no < 0) return 0;
 
@@ -1142,23 +1175,15 @@ attr_list_from_string(const char * str)
     return ret_val;
 }
 
-extern void
-atl_install_mutex_funcs(atl_lock_func lock, atl_lock_func unlock, void *client_data)
-{
-    global_as_lock = lock;
-    global_as_unlock = unlock;
-    global_as_lock_data = client_data;
-}
-
 extern
  atom_t
 attr_atom_from_string(const char *str)
 {
     atom_t tmp;
+    atl_lock();
     init_global_atom_server(&global_as);
-    if (global_as_lock) (global_as_lock)(global_as_lock_data);
     tmp = atom_from_string(global_as, (char*)str);
-    if (global_as_unlock) (global_as_unlock)(global_as_lock_data);
+    atl_unlock();
     return tmp;
 }
 
@@ -1167,10 +1192,10 @@ char *
 attr_string_from_atom(atom_t atom)
 {
     char *tmp;
+    atl_lock();
     init_global_atom_server(&global_as);
-    if (global_as_lock) (global_as_lock)(global_as_lock_data);
     tmp = string_from_atom(global_as, atom);
-    if (global_as_unlock) (global_as_unlock)(global_as_lock_data);
+    atl_unlock();
     return tmp;
 }
 

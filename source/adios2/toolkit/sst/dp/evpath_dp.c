@@ -13,6 +13,16 @@
 #include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "dp_interface.h"
 
+#if defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#endif
+#endif
+
+#ifndef NO_SANITIZE_THREAD
+#define NO_SANITIZE_THREAD
+#endif
+
 /*
  *  Some conventions:
  *    `RS` indicates a reader-side item.
@@ -1475,21 +1485,22 @@ static FMStructDescRec EvpathWriterContactStructs[] = {
 //     sizeof(struct _EvpathPerTimestepInfo), NULL},
 //    {NULL, NULL, 0, NULL}};
 
-static struct _CP_DP_Interface evpathDPInterface;
+static struct _CP_DP_Interface evpathDPInterface = {
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 static int EvpathGetPriority(CP_Services Svcs, void *CP_Stream,
                              struct _SstParams *Params)
 {
     // Define any unique attributes here
-    (void)attr_atom_from_string("EVPATH_DP_Attr");
+    //    (void)attr_atom_from_string("EVPATH_DP_Attr");
 
     /* The evpath DP should be a lower priority than any RDMA dp, so return 1 */
     return 1;
 }
 
-extern CP_DP_Interface LoadEVpathDP()
+extern NO_SANITIZE_THREAD CP_DP_Interface LoadEVpathDP()
 {
-    memset(&evpathDPInterface, 0, sizeof(evpathDPInterface));
     evpathDPInterface.ReaderContactFormats = EvpathReaderContactStructs;
     evpathDPInterface.WriterContactFormats = EvpathWriterContactStructs;
     evpathDPInterface.TimestepInfoFormats = NULL; // EvpathTimestepInfoStructs;
