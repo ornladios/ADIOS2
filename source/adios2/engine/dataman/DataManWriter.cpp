@@ -255,7 +255,7 @@ void DataManWriter::ReplyThread()
     while (m_ReplyThreadActive)
     {
         auto request = m_Replier.ReceiveRequest();
-        if (request && request->size() > 0)
+        if (request != nullptr && request->size() > 0)
         {
             std::string r(request->begin(), request->end());
             if (r == "Address")
