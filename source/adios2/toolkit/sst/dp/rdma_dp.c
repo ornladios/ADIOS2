@@ -18,6 +18,16 @@
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>
 
+#if defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#endif
+#endif
+
+#ifndef NO_SANITIZE_THREAD
+#define NO_SANITIZE_THREAD
+#endif
+
 #ifdef SST_HAVE_FI_GNI
 #include <rdma/fi_ext_gni.h>
 #ifdef SST_HAVE_CRAY_DRC
@@ -1526,9 +1536,6 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     char *forkunsafe;
     int Ret = -1;
 
-    (void)attr_atom_from_string(
-        "RDMA_DRC_KEY"); // make sure this attribute is translatable
-
     hints = fi_allocinfo();
     hints->caps = FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ |
                   FI_REMOTE_WRITE | FI_RMA | FI_READ | FI_WRITE;
@@ -2056,7 +2063,7 @@ static void RdmaReleaseTimestepPerReader(CP_Services Svcs,
     }
 }
 
-extern CP_DP_Interface LoadRdmaDP()
+extern NO_SANITIZE_THREAD CP_DP_Interface LoadRdmaDP()
 {
     memset(&RdmaDPInterface, 0, sizeof(RdmaDPInterface));
     RdmaDPInterface.ReaderContactFormats = RdmaReaderContactStructs;
