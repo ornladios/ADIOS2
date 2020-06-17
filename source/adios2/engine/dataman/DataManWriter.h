@@ -55,7 +55,7 @@ private:
     int m_MpiRank;
     int m_MpiSize;
     int64_t m_CurrentStep = -1;
-    size_t m_SerializerBufferSize = 128 * 1024 * 1024;
+    size_t m_SerializerBufferSize = 1024 * 1024;
 
     format::DataManSerializer m_Serializer;
 
@@ -74,7 +74,6 @@ private:
 
     void PushBufferQueue(std::shared_ptr<std::vector<char>> buffer);
     std::shared_ptr<std::vector<char>> PopBufferQueue();
-    bool CheckBufferQueue();
 
     void ReplyThread();
     void PublishThread();
