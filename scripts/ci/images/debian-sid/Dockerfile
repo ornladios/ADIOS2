@@ -31,3 +31,8 @@ RUN apt-get update && \
         libhdf5-openmpi-dev \
         libfabric-dev \
         libffi-dev
+
+# Just for the purposes of CI, grab a newer CMake to allow test re-runs
+RUN mkdir -p /opt/cmake && \
+    curl -L https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3-Linux-x86_64.tar.gz | \
+    tar -C /opt/cmake --strip-components=1 -xzv
