@@ -19,7 +19,6 @@
 #include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
 #include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 
-
 namespace adios2
 {
 namespace core
