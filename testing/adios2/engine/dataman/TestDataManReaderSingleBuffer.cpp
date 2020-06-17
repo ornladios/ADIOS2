@@ -13,9 +13,6 @@
 
 using namespace adios2;
 
-int mpiRank = 0;
-int mpiSize = 1;
-
 size_t print_lines = 0;
 size_t to_print_lines = 10;
 
@@ -24,8 +21,8 @@ void GenData(std::vector<std::complex<T>> &data, const size_t step)
 {
     for (size_t i = 0; i < data.size(); ++i)
     {
-        data[i] = {static_cast<T>(i + mpiRank * 10000 + step * 100),
-                   static_cast<T>(i + mpiRank * 10000)};
+        data[i] = {static_cast<T>(i + 10000 + step * 100),
+                   static_cast<T>(i + 10000)};
     }
 }
 
@@ -34,14 +31,14 @@ void GenData(std::vector<T> &data, const size_t step)
 {
     for (size_t i = 0; i < data.size(); ++i)
     {
-        data[i] = i + mpiRank * 10000 + step * 100;
+        data[i] = i + 10000 + step * 100;
     }
 }
 
 template <class T>
 void PrintData(const T *data, const size_t size, const size_t step)
 {
-    std::cout << "Rank: " << mpiRank << " Step: " << step << " [";
+    std::cout << "Step: " << step << " [";
     size_t printsize = 32;
     if (size < printsize)
     {

@@ -97,11 +97,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF);
-#else
     adios2::ADIOS adios;
-#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -173,11 +169,7 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF);
-#else
     adios2::ADIOS adios;
-#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -333,27 +325,9 @@ TEST_F(DataManEngineTest, WriterSingleBuffer)
 
 int main(int argc, char **argv)
 {
-#if ADIOS2_USE_MPI
-    int mpi_provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
-    std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
-              << " and provided Mode " << mpi_provided << std::endl;
-    if (mpi_provided != MPI_THREAD_MULTIPLE)
-    {
-        MPI_Finalize();
-        return 0;
-    }
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
-
-#if ADIOS2_USE_MPI
-    MPI_Finalize();
-#endif
 
     return result;
 }
