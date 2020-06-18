@@ -45,7 +45,7 @@
 
 #define DP_AV_DEF_SIZE 512
 
-pthread_mutex_t fabric_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t fabric_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t wsr_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ts_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -136,7 +136,9 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
 
     fabric->info = NULL;
 
+    pthread_mutex_lock(&fabric_mutex);
     fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
+    pthread_mutex_unlock(&fabric_mutex);
     if (!info)
     {
         return;
@@ -991,7 +993,9 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
         putenv("FI_FORK_UNSAFE=Yes");
     }
 
+    pthread_mutex_lock(&fabric_mutex);
     fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
+    pthread_mutex_unlock(&fabric_mutex);
     fi_freeinfo(hints);
 
     if (!info)
