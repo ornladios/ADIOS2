@@ -81,11 +81,6 @@ void VerifyData(const int *data, size_t step, const Dims &start,
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
     bool compressed = false;
-    if (print_lines < 32)
-    {
-        PrintData(data, step, start, count);
-        ++print_lines;
-    }
     for (size_t i = 0; i < size; ++i)
     {
         if (!compressed)
@@ -134,15 +129,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
         {
             const auto &vars = dataManIO.AvailableVariables();
             ASSERT_EQ(vars.size(), 1);
-            if (print_lines == 0)
-            {
-                std::cout << "All available variables : ";
-                for (const auto &var : vars)
-                {
-                    std::cout << var.first << ", ";
-                }
-                std::cout << std::endl;
-            }
             size_t currentStep = dataManReader.CurrentStep();
             adios2::Variable<int> bpInts =
                 dataManIO.InquireVariable<int>("bpInts");
@@ -154,8 +140,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << "DataManReader end of stream at Step " << i
-                      << std::endl;
             break;
         }
         else if (status == adios2::StepStatus::NotReady)
@@ -178,17 +162,13 @@ TEST_F(DataManEngineTest, 3D_MemSelect)
 
     auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
                          memstart, memcount, steps, engineParams);
-    std::cout << "Reader thread started" << std::endl;
 
     auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
                          engineParams);
-    std::cout << "Writer thread started" << std::endl;
 
     w.join();
-    std::cout << "Writer thread ended" << std::endl;
 
     r.join();
-    std::cout << "Reader thread ended" << std::endl;
 }
 
 #endif // ZEROMQ

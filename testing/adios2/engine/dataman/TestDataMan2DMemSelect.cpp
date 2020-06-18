@@ -79,11 +79,6 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
-    if (print_lines < 32)
-    {
-        PrintData(data, step, start, count);
-        ++print_lines;
-    }
 }
 
 template <class T>
@@ -94,11 +89,6 @@ void VerifyData(const T *data, size_t step, const Dims &start,
                                   std::multiplies<size_t>());
     bool compressed = false;
     std::vector<T> tmpdata(size);
-    if (print_lines < 32)
-    {
-        PrintData(data, step, start, count);
-        ++print_lines;
-    }
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
@@ -213,15 +203,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
             received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
             ASSERT_EQ(vars.size(), 10);
-            if (print_lines == 0)
-            {
-                std::cout << "All available variables : ";
-                for (const auto &var : vars)
-                {
-                    std::cout << var.first << ", ";
-                }
-                std::cout << std::endl;
-            }
             currentStep = dataManReader.CurrentStep();
             GenData(myChars, currentStep, memStart, memCount, shape);
             GenData(myUChars, currentStep, memStart, memCount, shape);
@@ -317,14 +298,8 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     if (received_steps)
     {
         auto attInt = dataManIO.InquireAttribute<int>("AttInt");
-        std::cout << "Attribute received " << attInt.Data()[0]
-                  << ", expected 110" << std::endl;
         ASSERT_EQ(110, attInt.Data()[0]);
         ASSERT_NE(111, attInt.Data()[0]);
-    }
-    else
-    {
-        std::cout << "no steps received " << std::endl;
     }
     dataManReader.Close();
     print_lines = 0;
@@ -348,17 +323,13 @@ TEST_F(DataManEngineTest, 2D_MemSelect)
 
     auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
                          memstart, memcount, steps, engineParams);
-    std::cout << "Reader thread started" << std::endl;
 
     auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
                          engineParams);
-    std::cout << "Writer thread started" << std::endl;
 
     w.join();
-    std::cout << "Writer thread ended" << std::endl;
 
     r.join();
-    std::cout << "Reader thread ended" << std::endl;
 }
 
 #endif // ZEROMQ
