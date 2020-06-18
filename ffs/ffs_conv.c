@@ -94,23 +94,6 @@ static char *float_format_str[] = {
 
 static int IO_shut_up = 0;
 
-static int words_bigendian = -1;
-
-static int
-set_bigendian () {
-  /* Are we little or big endian?  From Harbison&Steele.  */
-  union
-  {
-    long l;
-    char c[sizeof (long)];
-  } u;
-  u.l = 1;
-  words_bigendian = (u.c[sizeof (long) - 1] == 1);
-  return words_bigendian;
-}
-
-#define WORDS_BIGENDIAN ((words_bigendian == -1) ? set_bigendian() : words_bigendian)
-
 static int
 min_align_size(size)
 int size;
