@@ -19,7 +19,7 @@ namespace adios2
 {
 
 template <class T>
-std::string GetDataType() noexcept
+std::string GetType() noexcept
 {
     return ToString(helper::GetDataType<typename TypeInfo<T>::IOType>());
 }

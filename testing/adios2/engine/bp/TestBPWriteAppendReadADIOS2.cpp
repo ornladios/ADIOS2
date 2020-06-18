@@ -425,121 +425,119 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
         EXPECT_TRUE(attr_s1);
         ASSERT_EQ(attr_s1.Name(), s1_Single);
         ASSERT_EQ(attr_s1.Data().size() == 1, true);
-        ASSERT_EQ(attr_s1.Type(), adios2::GetDataType<std::string>());
+        ASSERT_EQ(attr_s1.Type(), adios2::GetType<std::string>());
         ASSERT_EQ(attr_s1.Data().front(), attributeTestData.S1);
 
         EXPECT_TRUE(attr_s1a);
         ASSERT_EQ(attr_s1a.Name(), s1_Array);
         ASSERT_EQ(attr_s1a.Data().size() == 1, true);
-        ASSERT_EQ(attr_s1a.Type(), adios2::GetDataType<std::string>());
+        ASSERT_EQ(attr_s1a.Type(), adios2::GetType<std::string>());
         ASSERT_EQ(attr_s1a.Data()[0], attributeTestData.S1array[0]);
 
         EXPECT_TRUE(attr_i8);
         ASSERT_EQ(attr_i8.Name(), i8_Single);
         ASSERT_EQ(attr_i8.Data().size() == 1, true);
-        ASSERT_EQ(attr_i8.Type(), adios2::GetDataType<int8_t>());
+        ASSERT_EQ(attr_i8.Type(), adios2::GetType<int8_t>());
         ASSERT_EQ(attr_i8.Data().front(), attributeTestData.I8.front());
 
         EXPECT_TRUE(attr_i16);
         ASSERT_EQ(attr_i16.Name(), i16_Single);
         ASSERT_EQ(attr_i16.Data().size() == 1, true);
-        ASSERT_EQ(attr_i16.Type(), adios2::GetDataType<int16_t>());
+        ASSERT_EQ(attr_i16.Type(), adios2::GetType<int16_t>());
         ASSERT_EQ(attr_i16.Data().front(), attributeTestData.I16.front());
 
         EXPECT_TRUE(attr_i32);
         ASSERT_EQ(attr_i32.Name(), i32_Single);
         ASSERT_EQ(attr_i32.Data().size() == 1, true);
-        ASSERT_EQ(attr_i32.Type(), adios2::GetDataType<int32_t>());
+        ASSERT_EQ(attr_i32.Type(), adios2::GetType<int32_t>());
         ASSERT_EQ(attr_i32.Data().front(), attributeTestData.I32.front());
 
         EXPECT_TRUE(attr_i32a);
         ASSERT_EQ(attr_i32a.Name(), i32_Array);
         ASSERT_EQ(attr_i32a.Data().size() == attributeTestData.I32.size(),
                   true);
-        ASSERT_EQ(attr_i32a.Type(), adios2::GetDataType<int32_t>());
+        ASSERT_EQ(attr_i32a.Type(), adios2::GetType<int32_t>());
         ASSERT_EQ(attr_i32a.Data()[0], attributeTestData.I32[0]);
 
         EXPECT_TRUE(attr_i64);
         ASSERT_EQ(attr_i64.Name(), i64_Single);
         ASSERT_EQ(attr_i64.Data().size() == 1, true);
-        ASSERT_EQ(attr_i64.Type(), adios2::GetDataType<int64_t>());
+        ASSERT_EQ(attr_i64.Type(), adios2::GetType<int64_t>());
         ASSERT_EQ(attr_i64.Data().front(), attributeTestData.I64.front());
 
         EXPECT_TRUE(attr_u8);
         ASSERT_EQ(attr_u8.Name(), u8_Single);
         ASSERT_EQ(attr_u8.Data().size() == 1, true);
-        ASSERT_EQ(attr_u8.Type(), adios2::GetDataType<uint8_t>());
+        ASSERT_EQ(attr_u8.Type(), adios2::GetType<uint8_t>());
         ASSERT_EQ(attr_u8.Data().front(), attributeTestData.U8.front());
 
         EXPECT_TRUE(attr_u16);
         ASSERT_EQ(attr_u16.Name(), u16_Single);
         ASSERT_EQ(attr_u16.Data().size() == 1, true);
-        ASSERT_EQ(attr_u16.Type(), adios2::GetDataType<uint16_t>());
+        ASSERT_EQ(attr_u16.Type(), adios2::GetType<uint16_t>());
         ASSERT_EQ(attr_u16.Data().front(), attributeTestData.U16.front());
 
         EXPECT_TRUE(attr_u32);
         ASSERT_EQ(attr_u32.Name(), u32_Single);
         ASSERT_EQ(attr_u32.Data().size() == 1, true);
-        ASSERT_EQ(attr_u32.Type(), adios2::GetDataType<uint32_t>());
+        ASSERT_EQ(attr_u32.Type(), adios2::GetType<uint32_t>());
         ASSERT_EQ(attr_u32.Data().front(), attributeTestData.U32.front());
 
         EXPECT_TRUE(attr_u32a);
         ASSERT_EQ(attr_u32a.Name(), u32_Array);
         ASSERT_EQ(attr_u32a.Data().size() == attributeTestData.U32.size(),
                   true);
-        ASSERT_EQ(attr_u32a.Type(), adios2::GetDataType<uint32_t>());
+        ASSERT_EQ(attr_u32a.Type(), adios2::GetType<uint32_t>());
         ASSERT_EQ(attr_u32a.Data()[0], attributeTestData.U32[0]);
 
         EXPECT_TRUE(attr_u64);
         ASSERT_EQ(attr_u64.Name(), u64_Single);
         ASSERT_EQ(attr_u64.Data().size() == 1, true);
-        ASSERT_EQ(attr_u64.Type(), adios2::GetDataType<uint64_t>());
+        ASSERT_EQ(attr_u64.Type(), adios2::GetType<uint64_t>());
         ASSERT_EQ(attr_u64.Data().front(), attributeTestData.U64.front());
 
         EXPECT_TRUE(attr_r32);
         ASSERT_EQ(attr_r32.Name(), r32_Single);
         ASSERT_EQ(attr_r32.Data().size() == 1, true);
-        ASSERT_EQ(attr_r32.Type(), adios2::GetDataType<float>());
+        ASSERT_EQ(attr_r32.Type(), adios2::GetType<float>());
         ASSERT_EQ(attr_r32.Data().front(), attributeTestData.R32.front());
 
         EXPECT_TRUE(attr_r32a);
         ASSERT_EQ(attr_r32a.Name(), r32_Array);
         ASSERT_EQ(attr_r32a.Data().size() == attributeTestData.R32.size(),
                   true);
-        ASSERT_EQ(attr_r32a.Type(), adios2::GetDataType<float>());
+        ASSERT_EQ(attr_r32a.Type(), adios2::GetType<float>());
         ASSERT_EQ(attr_r32a.Data()[0], attributeTestData.R32[0]);
 
         EXPECT_TRUE(attr_r64);
         ASSERT_EQ(attr_r64.Name(), r64_Single);
         ASSERT_EQ(attr_r64.Data().size() == 1, true);
-        ASSERT_EQ(attr_r64.Type(), adios2::GetDataType<double>());
+        ASSERT_EQ(attr_r64.Type(), adios2::GetType<double>());
         ASSERT_EQ(attr_r64.Data().front(), attributeTestData.R64.front());
 
         EXPECT_TRUE(attr_r128);
         ASSERT_EQ(attr_r128.Name(), r128_Single);
         ASSERT_EQ(attr_r128.Data().size() == 1, true);
-        ASSERT_EQ(attr_r128.Type(), adios2::GetDataType<long double>());
+        ASSERT_EQ(attr_r128.Type(), adios2::GetType<long double>());
         ASSERT_EQ(attr_r128.Data().front(), attributeTestData.R128.front());
 
         EXPECT_TRUE(attr_cr32);
         ASSERT_EQ(attr_cr32.Name(), cr32_Single);
         ASSERT_EQ(attr_cr32.Data().size() == 1, true);
-        ASSERT_EQ(attr_cr32.Type(), adios2::GetDataType<std::complex<float>>());
+        ASSERT_EQ(attr_cr32.Type(), adios2::GetType<std::complex<float>>());
         ASSERT_EQ(attr_cr32.Data().front(), attributeTestData.CR32.front());
 
         EXPECT_TRUE(attr_cr32a);
         ASSERT_EQ(attr_cr32a.Name(), cr32_Array);
         ASSERT_EQ(attr_cr32a.Data().size() == attributeTestData.CR32.size(),
                   true);
-        ASSERT_EQ(attr_cr32a.Type(),
-                  adios2::GetDataType<std::complex<float>>());
+        ASSERT_EQ(attr_cr32a.Type(), adios2::GetType<std::complex<float>>());
         ASSERT_EQ(attr_cr32a.Data()[0], attributeTestData.CR32[0]);
 
         EXPECT_TRUE(attr_cr64);
         ASSERT_EQ(attr_cr64.Name(), cr64_Single);
         ASSERT_EQ(attr_cr64.Data().size() == 1, true);
-        ASSERT_EQ(attr_cr64.Type(),
-                  adios2::GetDataType<std::complex<double>>());
+        ASSERT_EQ(attr_cr64.Type(), adios2::GetType<std::complex<double>>());
         ASSERT_EQ(attr_cr64.Data().front(), attributeTestData.CR64.front());
 
         EXPECT_EQ(bpReader.Steps(), 2 * NSteps);
