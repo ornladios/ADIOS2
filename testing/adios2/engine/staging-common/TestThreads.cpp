@@ -132,14 +132,4 @@ int main(int argc, char **argv)
     int result;
     result = RUN_ALL_TESTS();
     return result;
-    if (reader_failure)
-        std::cout << "Reader FAIL" << std::endl;
-    if (writer_failure)
-        std::cout << "Writer FAIL" << std::endl;
-    if (value_errors > 0)
-        std::cout << "Number of values not matching after reading = "
-                  << value_errors << std::endl;
-    int ret = (reader_failure ? 1 : 0) + (writer_failure ? 2 : 0) +
-              (value_errors > 0 ? 4 : 0);
-    return ret;
 }
