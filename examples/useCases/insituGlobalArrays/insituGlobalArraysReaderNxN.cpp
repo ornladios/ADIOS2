@@ -102,7 +102,7 @@ ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetDataType<T>())                                 \
+    else if (type == adios2::GetType<T>())                                     \
     {                                                                          \
         ProcessVariableMetadata<T>(rank, name, type, reader, io, varinfos);    \
     }

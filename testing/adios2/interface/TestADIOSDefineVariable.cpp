@@ -637,24 +637,22 @@ TEST_F(ADIOSDefineVariableTest, DefineCheckType)
     io.DefineVariable<long>("l", shape, start, count);
     io.DefineVariable<unsigned long>("ul", shape, start, count);
 
-    EXPECT_EQ(io.VariableType("iString"), adios2::GetDataType<std::string>());
-    EXPECT_EQ(io.VariableType("i8"), adios2::GetDataType<int8_t>());
-    EXPECT_EQ(io.VariableType("i16"), adios2::GetDataType<int16_t>());
-    EXPECT_EQ(io.VariableType("i32"), adios2::GetDataType<int32_t>());
-    EXPECT_EQ(io.VariableType("i64"), adios2::GetDataType<int64_t>());
-    EXPECT_EQ(io.VariableType("u8"), adios2::GetDataType<uint8_t>());
-    EXPECT_EQ(io.VariableType("u16"), adios2::GetDataType<uint16_t>());
-    EXPECT_EQ(io.VariableType("u32"), adios2::GetDataType<uint32_t>());
-    EXPECT_EQ(io.VariableType("u64"), adios2::GetDataType<uint64_t>());
-    EXPECT_EQ(io.VariableType("r32"), adios2::GetDataType<float>());
-    EXPECT_EQ(io.VariableType("r64"), adios2::GetDataType<double>());
-    EXPECT_EQ(io.VariableType("c32"),
-              adios2::GetDataType<std::complex<float>>());
-    EXPECT_EQ(io.VariableType("c64"),
-              adios2::GetDataType<std::complex<double>>());
-    EXPECT_EQ(io.VariableType("char"), adios2::GetDataType<char>());
-    EXPECT_EQ(io.VariableType("l"), adios2::GetDataType<long>());
-    EXPECT_EQ(io.VariableType("ul"), adios2::GetDataType<unsigned long>());
+    EXPECT_EQ(io.VariableType("iString"), adios2::GetType<std::string>());
+    EXPECT_EQ(io.VariableType("i8"), adios2::GetType<int8_t>());
+    EXPECT_EQ(io.VariableType("i16"), adios2::GetType<int16_t>());
+    EXPECT_EQ(io.VariableType("i32"), adios2::GetType<int32_t>());
+    EXPECT_EQ(io.VariableType("i64"), adios2::GetType<int64_t>());
+    EXPECT_EQ(io.VariableType("u8"), adios2::GetType<uint8_t>());
+    EXPECT_EQ(io.VariableType("u16"), adios2::GetType<uint16_t>());
+    EXPECT_EQ(io.VariableType("u32"), adios2::GetType<uint32_t>());
+    EXPECT_EQ(io.VariableType("u64"), adios2::GetType<uint64_t>());
+    EXPECT_EQ(io.VariableType("r32"), adios2::GetType<float>());
+    EXPECT_EQ(io.VariableType("r64"), adios2::GetType<double>());
+    EXPECT_EQ(io.VariableType("c32"), adios2::GetType<std::complex<float>>());
+    EXPECT_EQ(io.VariableType("c64"), adios2::GetType<std::complex<double>>());
+    EXPECT_EQ(io.VariableType("char"), adios2::GetType<char>());
+    EXPECT_EQ(io.VariableType("l"), adios2::GetType<long>());
+    EXPECT_EQ(io.VariableType("ul"), adios2::GetType<unsigned long>());
 }
 
 int main(int argc, char **argv)
