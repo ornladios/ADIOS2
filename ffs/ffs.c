@@ -937,12 +937,6 @@ extern void
 free_FFSContext(FFSContext c)
 {
     int i;
-    static int verbose = -1;
-    if (verbose == -1) {
-	verbose = 0;
-	if (getenv("FMFreeVerbose")) verbose = 1;
-    }
-    if (verbose) printf("Free FFSContext %p\n", c);
     free(c->tmp.tmp_buffer);
     for (i = 0; i < c->handle_list_size; i++) {
 	if (c->handle_list[i]) free_FFSTypeHandle(c->handle_list[i]);
