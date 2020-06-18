@@ -55,7 +55,7 @@ private:
     int m_MpiSize;
     int64_t m_CurrentStep = -1;
     bool m_InitFailed = false;
-    size_t m_FinalStep = std::numeric_limits<size_t>::max();
+    std::atomic<size_t> m_FinalStep;
     format::DmvVecPtr m_CurrentStepMetadata;
 
     format::DataManSerializer m_Serializer;
