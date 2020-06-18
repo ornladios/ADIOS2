@@ -144,3 +144,6 @@
 
 /* Set to 1 to build without dynamic linking  */
 #cmakedefine01 NO_DYNAMIC_LINKING 
+
+/* set to 1 if bigendian, 0 otherwise */
+#define WORDS_BIGENDIAN @WORDS_BIGENDIAN@

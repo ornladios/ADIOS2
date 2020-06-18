@@ -11,8 +11,10 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 
-#include "DataManMonitor.h"
+#include <atomic>
+
 #include "adios2/core/Engine.h"
+#include "adios2/engine/dataman/DataManMonitor.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
 #include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
@@ -53,7 +55,7 @@ private:
     int m_MpiSize;
     int64_t m_CurrentStep = -1;
     bool m_InitFailed = false;
-    size_t m_FinalStep = std::numeric_limits<size_t>::max();
+    std::atomic<size_t> m_FinalStep;
     format::DmvVecPtr m_CurrentStepMetadata;
 
     format::DataManSerializer m_Serializer;
@@ -66,8 +68,8 @@ private:
     std::vector<std::thread> m_SubscriberThreads;
     std::vector<std::thread> m_RequesterThreads;
 
-    bool m_RequesterThreadActive = true;
-    bool m_SubscriberThreadActive = true;
+    std::atomic<bool> m_RequesterThreadActive;
+    std::atomic<bool> m_SubscriberThreadActive;
 
     void SubscribeThread(zmq::ZmqPubSub &subscriber);
     void RequestThread(zmq::ZmqReqRep &requester);

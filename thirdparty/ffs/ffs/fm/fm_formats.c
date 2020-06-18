@@ -261,7 +261,30 @@ FMFormat body;
     free(body);
 }
 
+#if defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#endif
+#endif
+
+#ifndef NO_SANITIZE_THREAD
+#define NO_SANITIZE_THREAD
+#endif
+
 static int format_server_verbose = -1;
+static int NO_SANITIZE_THREAD
+get_format_server_verbose()
+{
+    if (format_server_verbose == -1) {
+	if (getenv("FORMAT_SERVER_VERBOSE") == NULL) {
+	    format_server_verbose = 0;
+	} else {
+	    format_server_verbose = 1;
+	}
+    }
+    return format_server_verbose;
+}
+
 extern void dump_FMFormat(FMFormat fmformat);
 unsigned char ID_length[] = {8, 10, 12};
 
@@ -303,7 +326,7 @@ FMContext fmc;
 
     for (i = 0; i < fmc->reg_format_count; i++) {
 	if (fmc->format_list[i] == format) {
-	    if (format_server_verbose == 1) {
+	    if (get_format_server_verbose()) {
 		printf("Copy, format %lx exists in context %lx as format %lx\n",
 		       (long)format, (long)fmc, (long)fmc->format_list[i]);
 	    }
@@ -311,7 +334,7 @@ FMContext fmc;
 	}
     }
     new_format = malloc(sizeof(struct _FMFormatBody));
-    if (format_server_verbose == 1) {
+    if (get_format_server_verbose()) {
 	printf("Copy, entering format %lx into context %lx as new format %lx\n",
 	       (long) format, (long) fmc, (long) new_format);
     }
@@ -368,14 +391,7 @@ void *buffer;
 {
     FMContext fmc = (FMContext) iocontext;
     int i;
-    if (format_server_verbose == -1) {
-	if (getenv("FORMAT_SERVER_VERBOSE") == NULL) {
-	    format_server_verbose = 0;
-	} else {
-	    format_server_verbose = 1;
-	}
-    }
-    if (format_server_verbose == 1) {
+    if (get_format_server_verbose()) {
 	printf("Get Format searching in context %lx for format ", 
 	       (long)iocontext);
 	print_server_ID(buffer);
@@ -435,15 +451,7 @@ char *buffer;
     FMFormat new_format;
     int i;
 
-    
-    if (format_server_verbose == -1) {
-	if (getenv("FORMAT_SERVER_VERBOSE") == NULL) {
-	    format_server_verbose = 0;
-	} else {
-	    format_server_verbose = 1;
-	}
-    }
-    if (format_server_verbose && (memcmp(buffer, "\0\0\0\0\0\0\0\0", 6) == 0)) {
+    if (get_format_server_verbose() && (memcmp(buffer, "\0\0\0\0\0\0\0\0", 6) == 0)) {
 	printf("   ->>>>   Null id in FMformat_from_ID\n");
     }
     
@@ -491,7 +499,7 @@ char *buffer;
     } else {
 	new_format = server_get_format(iocontext, buffer);
     }
-    if (format_server_verbose == 1) {
+    if (get_format_server_verbose()) {
 	printf("Read format from format server  %lx\n",
 	       (long)new_format);
 	if (new_format != NULL) {
@@ -1176,10 +1184,6 @@ FMFormat *formats;
     FMFieldList field_list = fmformat->field_list;
     int field_count = fmformat->field_count;
     int field;
-    static int first = 1;
-    if (first) {
-	first = 0;
-    }
     if (fmformat->var_list)
 	free(fmformat->var_list);
     if (fmformat->field_subformats)
@@ -1240,23 +1244,6 @@ FMFormat *formats;
     }
     return 1;
 }
-
-static int words_bigendian = -1;
-
-static int
-set_bigendian () {
-  /* Are we little or big endian?  From Harbison&Steele.  */
-  union
-  {
-    long l;
-    char c[sizeof (long)];
-  } u;
-  u.l = 1;
-  words_bigendian = (u.c[sizeof (long) - 1] == 1);
-  return words_bigendian;
-}
-
-#define WORDS_BIGENDIAN ((words_bigendian == -1) ? set_bigendian() : words_bigendian)
 
 static format_rep
 add_server_subformat_rep(fmformat, super_rep, super_rep_size)
@@ -1454,7 +1441,7 @@ FMFormat fmformat;
 	    continue;
 	rep_length = ntohs(tmp->server_format_rep->format_rep_length);
 	if (search_rep_length != rep_length) {
-	    if (format_server_verbose == 1) {
+	    if (get_format_server_verbose()) {
 		printf("Format %s found in context %lx, but server reps have different lengths, %d and %d\n",
 		       fmformat->format_name, (long) iocontext,
 		       search_rep_length, rep_length);
@@ -1465,7 +1452,7 @@ FMFormat fmformat;
 		   search_rep_length) == 0) {
 	    return tmp;
 	} else {
-	    if (format_server_verbose == 1) {
+	    if (get_format_server_verbose()) {
 		printf("Format %s found in context %lx, but server reps are different\n",
 		       fmformat->format_name, (long) iocontext);
 	    }
@@ -1889,13 +1876,6 @@ register_data_format(FMContext context, FMStructDescList struct_list)
     formats[0]->master_struct_list = master_struct_list;
     {
 	FMFormat cache_format;
-	if (format_server_verbose == -1) {
-	    if (getenv("FORMAT_SERVER_VERBOSE") == NULL) {
-		format_server_verbose = 0;
-	    } else {
-		format_server_verbose = 1;
-	    }
-	}
 	formats[0]->server_format_rep = build_server_format_rep(formats[0]);
 	cache_format = search_compatible_formats(context, formats[0]);
 	if (cache_format == NULL) {
@@ -1907,7 +1887,7 @@ register_data_format(FMContext context, FMStructDescList struct_list)
 		if (server_register_format(context, formats[0]) == 0)
 		    return NULL;
 	    }
-	    if (format_server_verbose == 1) {
+	    if (get_format_server_verbose()) {
 		printf("Registered format with format server - %lx  in context %lx\n",
 		    (long) formats[0], (long) context);
 		dump_FMFormat(formats[0]);
@@ -1917,7 +1897,7 @@ register_data_format(FMContext context, FMStructDescList struct_list)
 	    free(formats);
 	    cache_format->ref_count++;
 
-	    if (format_server_verbose == 1) {
+	    if (get_format_server_verbose()) {
 		printf("Cache hit on format registration %lx \"%s\" ", 
 		       (long)cache_format, cache_format->format_name);
 		print_format_ID(cache_format);
@@ -1958,7 +1938,7 @@ generate_format2_server_ID(server_ID_type *server_ID,
     hashlittle2((int*)server_format_rep, 
 		ntohs(server_format_rep->format_rep_length),
 		&hash1, &hash2);
-    if (format_server_verbose == 1) {
+    if (get_format_server_verbose()) {
 	unsigned char *tmp = (unsigned char*)server_format_rep;
 	int size = ntohs(server_format_rep->format_rep_length);
 	int i;
@@ -1980,13 +1960,6 @@ FMContext fmc;
 FMFormat fmformat;
 {
     format_rep server_format_rep;
-    if (format_server_verbose == -1) {
-	if (getenv("FORMAT_SERVER_VERBOSE") == NULL) {
-	    format_server_verbose = 0;
-	} else {
-	    format_server_verbose = 1;
-	}
-    }
     /* we're a format server ourselves, assign an ID */
     if (fmc->master_context != NULL) {
 	return self_server_register_format((FMContext) fmc->master_context,
@@ -2002,7 +1975,7 @@ FMFormat fmformat;
     server_format_rep = fmformat->server_format_rep;
 
     generate_format2_server_ID(&fmformat->server_ID, server_format_rep);
-    if (format_server_verbose == 1) {
+    if (get_format_server_verbose()) {
 	printf("Registering %s to locally-issued format ID ",
 	       fmformat->format_name);
 	print_format_ID(fmformat);
@@ -3198,7 +3171,7 @@ int length;
 
     if (getenv("BAD_CLIENT") && (drand48() < 0.0001)) sleep(600);
     if (ret != length) {
-	if (format_server_verbose == 1) {
+	if (get_format_server_verbose()) {
 	    printf("server read error, return is %d, length %d, errno %d\n",
 		   ret, length, junk_errno);
 	    if (junk_result_str != NULL) {
@@ -3635,7 +3608,7 @@ int index;
     int subformat_count = 0;
     int i, field;
 
-    if (format_server_verbose == 1) {
+    if (get_format_server_verbose()) {
 	printf("Entering format %s (%lx) into context %lx ", 
 	       format->format_name, (long)format,
 	       (long)fmc);
@@ -3756,7 +3729,7 @@ void *buffer;
 	    return NULL;
 	}
 	if (serverAtomicRead(fmc->server_fd, &return_char, 1) != 1) {
-	    if (format_server_verbose == 1) {
+	    if (get_format_server_verbose()) {
 		printf("Retrying because of failed read\n");
 	    }
 	    retry_count++;
@@ -3765,7 +3738,7 @@ void *buffer;
 	if (return_char == 'P') {
 	    provisional_use_warning((int) (long) fmc->server_fd);
 	    if (serverAtomicRead(fmc->server_fd, &return_char, 1) != 1) {
-		if (format_server_verbose == 1) {
+		if (get_format_server_verbose()) {
 		    printf("Retrying because of failed read\n");
 		}
 		retry_count++;
@@ -3773,28 +3746,28 @@ void *buffer;
 	    }
 	}
 	if (return_char != 'f') {
-	    if (format_server_verbose == 1) {
+	    if (get_format_server_verbose()) {
 		printf("Retrying because of failed read\n");
 	    }
 	    retry_count++;
 	    goto retry;
 	}
 	if (serverAtomicRead(fmc->server_fd, &block_version, 1) != 1) {
-	    if (format_server_verbose == 1) {
+	    if (get_format_server_verbose()) {
 		printf("Retrying because of failed read\n");
 	    }
 	    retry_count++;
 	    goto retry;
 	}
 	if (block_version != 1) {
-	    if (format_server_verbose == 1) {
+	    if (get_format_server_verbose()) {
 		fprintf(stderr, "Unknown version \"%d\"in block registration\n", block_version);
 	    }
 	    return NULL;
 	}
 	if (serverAtomicRead(fmc->server_fd, &length, sizeof(length)) !=
 	    sizeof(length)) {
-	    if (format_server_verbose == 1) {
+	    if (get_format_server_verbose()) {
 		printf("Retrying because of failed read\n");
 	    }
 	    retry_count++;
@@ -3808,7 +3781,7 @@ void *buffer;
 	    rep->format_rep_length = htons((short)length);
 	    if (serverAtomicRead(fmc->server_fd, ((char *) rep) + sizeof(length),
 		 length - sizeof(length)) != (length - sizeof(length))) {
-		if (format_server_verbose == 1) {
+		if (get_format_server_verbose()) {
 		    printf("Retrying because of failed read\n");
 		}
 		retry_count++;
@@ -4071,7 +4044,7 @@ char *server_rep;
     FMFormat format = get_local_format_IOcontext(iocontext, server_id);
 
     if (format != NULL) {
-	if (format_server_verbose == 1) {
+	if (get_format_server_verbose()) {
 	    printf("Load external format already exists  - ");
 	    print_server_ID((void*)server_id);
 	}
@@ -4082,7 +4055,7 @@ char *server_rep;
     format = expand_format_from_rep((format_rep)server_rep);
 
     if (format == NULL) {
-	if (format_server_verbose == 1) {
+	if (get_format_server_verbose()) {
 	    printf("Couldn't expand external format  - ");
 	    print_server_ID((void*)server_id);
 	}

@@ -26,7 +26,6 @@ include(GoogleTest)
 #   mpi      - MPI_ALLOW - build MPI test, execute with mpiexec; also build Serial test
 #              MPI_NONE - build Serial test only
 #              MPI_ONLY - build MPI test only, execute with mpiexec
-#              MPI_NOEXEC - build MPI test, execute without MPI; also build Serial test
 #   src_pfx  - Source filename prefix, Test${src_pfs}${testname}.cpp
 #   tst_pfx  - Test name prefix to be added to CTest
 #   tst_sfx  - Test name suffix to be added to CTest
@@ -51,9 +50,10 @@ include(GoogleTest)
 #
 function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
   set(test_targets "")
-  if(NOT mpi MATCHES "^MPI_(ALLOW|NONE|ONLY|NOEXEC)$")
+  if(NOT mpi MATCHES "^MPI_(ALLOW|NONE|ONLY)$")
     message(FATAL_ERROR "Invalid mpi argument value '${mpi}'.")
   endif()
+  set(all_tests)
   if(NOT mpi STREQUAL "MPI_ONLY")
     set(tgt Test.${tst_pfx}${testname}.Serial)
     list(APPEND test_targets "${tgt}")
@@ -64,8 +64,10 @@ function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
     gtest_add_tests(TARGET ${tgt}
       TEST_PREFIX "${tst_pfx}"
       TEST_SUFFIX "${tst_sfx}.Serial"
+      TEST_LIST added_tests
       ${ARGN}
     )
+    list(APPEND all_tests ${added_tests})
   endif()
   if(ADIOS2_HAVE_MPI AND NOT mpi STREQUAL "MPI_NONE")
     set(tgt Test.${tst_pfx}${testname}.MPI)
@@ -74,23 +76,17 @@ function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
       add_executable(${tgt} Test${src_pfx}${testname}.cpp)
       target_link_libraries(${tgt} adios2::cxx11_mpi adios2::c_mpi adios2_core_mpi MPI::MPI_C adios2::thirdparty::gtest)
     endif()
-    if(NOT mpi STREQUAL "MPI_NOEXEC")
-      gtest_add_tests(TARGET ${tgt}
-        TEST_PREFIX "${tst_pfx}"
-        TEST_SUFFIX "${tst_sfx}.MPI"
-        EXEC_WRAPPER ${MPIEXEC_COMMAND}
-        TEST_LIST added_tests
-        ${ARGN}
-        )
-      set_tests_properties(${added_tests} PROPERTIES PROCESSORS "${MPIEXEC_MAX_NUMPROCS}")
-    else()
-      gtest_add_tests(TARGET ${tgt}
-        TEST_PREFIX "${tst_pfx}"
-        TEST_SUFFIX "${tst_sfx}.MPI"
-        ${ARGN}
-        )
-    endif()
+    gtest_add_tests(TARGET ${tgt}
+      TEST_PREFIX "${tst_pfx}"
+      TEST_SUFFIX "${tst_sfx}.MPI"
+      EXEC_WRAPPER ${MPIEXEC_COMMAND}
+      TEST_LIST added_tests
+      ${ARGN}
+    )
+    list(APPEND all_tests ${added_tests})
+    set_tests_properties(${added_tests} PROPERTIES PROCESSORS "${MPIEXEC_MAX_NUMPROCS}")
   endif()
+  set("Test.${tst_pfx}${testname}-TESTS" "${all_tests}" PARENT_SCOPE)
   set("Test.${tst_pfx}${testname}-TARGETS" "${test_targets}" PARENT_SCOPE)
 endfunction()
 

@@ -63,11 +63,6 @@ void VerifyData(const std::complex<T> *data, const size_t size, size_t step)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
-    if (print_lines < to_print_lines)
-    {
-        PrintData(data, size, step);
-        ++print_lines;
-    }
 }
 
 template <class T>
@@ -78,11 +73,6 @@ void VerifyData(const T *data, const size_t size, size_t step)
     for (size_t i = 0; i < size; ++i)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
-    }
-    if (print_lines < to_print_lines)
-    {
-        PrintData(data, size, step);
-        ++print_lines;
     }
 }
 
@@ -97,11 +87,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF);
-#else
     adios2::ADIOS adios;
-#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -173,11 +159,7 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF);
-#else
     adios2::ADIOS adios;
-#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -203,15 +185,6 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
             received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
             ASSERT_EQ(vars.size(), 11);
-            if (print_lines < 10)
-            {
-                std::cout << "All available variables : ";
-                for (const auto &var : vars)
-                {
-                    std::cout << var.first << ", ";
-                }
-                std::cout << std::endl;
-            }
             currentStep = dataManReader.CurrentStep();
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
@@ -275,8 +248,6 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << "DataManReader end of stream at Step " << currentStep
-                      << std::endl;
             break;
         }
         else if (status == adios2::StepStatus::NotReady)
@@ -289,10 +260,6 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
         auto attInt = dataManIO.InquireAttribute<int>("AttInt");
         ASSERT_EQ(110, attInt.Data()[0]);
         ASSERT_NE(111, attInt.Data()[0]);
-    }
-    else
-    {
-        std::cout << "no steps received " << std::endl;
     }
     dataManReader.Close();
 }
@@ -317,43 +284,21 @@ TEST_F(DataManEngineTest, WriterSingleBuffer)
                                          {"Port", "12380"}};
     auto r = std::thread(DataManReader, shape, start, count, steps,
                          readerEngineParams);
-    std::cout << "Reader thread started" << std::endl;
     adios2::Params writerEngineParams = {{"IPAddress", "127.0.0.1"},
                                          {"Port", "12380"},
                                          {"DoubleBuffer", "false"}};
     auto w = std::thread(DataManWriter, shape, start, count, steps,
                          writerEngineParams);
-    std::cout << "Writer thread started" << std::endl;
     w.join();
-    std::cout << "Writer thread ended" << std::endl;
     r.join();
-    std::cout << "Reader thread ended" << std::endl;
 }
 #endif // ZEROMQ
 
 int main(int argc, char **argv)
 {
-#if ADIOS2_USE_MPI
-    int mpi_provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
-    std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
-              << " and provided Mode " << mpi_provided << std::endl;
-    if (mpi_provided != MPI_THREAD_MULTIPLE)
-    {
-        MPI_Finalize();
-        return 0;
-    }
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
-
-#if ADIOS2_USE_MPI
-    MPI_Finalize();
-#endif
 
     return result;
 }

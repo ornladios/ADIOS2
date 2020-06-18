@@ -1,6 +1,6 @@
-#line 1 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/lex.yy.c"
+#line 2 "/home/eisen/prog/ffs/build/lex.yy.c"
 
-#line 3 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/lex.yy.c"
+#line 4 "/home/eisen/prog/ffs/build/lex.yy.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -769,9 +769,9 @@ static void check_strbuf();
 static int buffer_len;
 static char *string_buffer;
 static char *string_buf_ptr;
-#line 772 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/lex.yy.c"
+#line 773 "/home/eisen/prog/ffs/build/lex.yy.c"
 
-#line 774 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/lex.yy.c"
+#line 775 "/home/eisen/prog/ffs/build/lex.yy.c"
 
 #define INITIAL 0
 #define string_cond 1
@@ -994,7 +994,7 @@ YY_DECL
 
 
 
-#line 997 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/lex.yy.c"
+#line 998 "/home/eisen/prog/ffs/build/lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1445,7 +1445,7 @@ YY_RULE_SETUP
 #line 196 "cod/cod.l"
 {
 	  buffer_len = 20;
-	  string_buffer = malloc(20);
+	  string_buffer = malloc(20 + 1);
 	  string_buf_ptr = string_buffer; BEGIN(string_cond);
 }
 	YY_BREAK
@@ -1681,7 +1681,7 @@ YY_RULE_SETUP
 #line 322 "cod/cod.l"
 ECHO;
 	YY_BREAK
-#line 1684 "/Users/eisen/prog/korvo_build/build_area/ffs/darwin10.13/lex.yy.c"
+#line 1685 "/home/eisen/prog/ffs/build/lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(string_cond):
 case YY_STATE_EOF(comment):
@@ -2702,7 +2702,7 @@ static void check_strbuf()
     int cur_len = string_buf_ptr - string_buffer;
     if ((cur_len + 1) == buffer_len) {
 	buffer_len += 20;
-	string_buffer = realloc(string_buffer, buffer_len);
+	string_buffer = realloc(string_buffer, buffer_len + 1);
 	string_buf_ptr = string_buffer + cur_len;
     }
 }
