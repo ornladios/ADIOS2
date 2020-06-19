@@ -16,32 +16,52 @@ bool reader_failure = false;
 bool writer_failure = false;
 int value_errors = 0;
 
+std::mutex StdOutMtx;
+
 void Read()
 {
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("IO");
 
-    std::cout << "Reader: engine = " << engine << std::endl;
+    {
+        std::lock_guard<std::mutex> guard(StdOutMtx);
+        std::cout << "Reader: engine = " << engine << std::endl;
+    }
     io.SetEngine(engine);
     io.SetParameters(engineParams);
 
-    std::cout << "Reader: call Open" << std::endl;
+    {
+        std::lock_guard<std::mutex> guard(StdOutMtx);
+        std::cout << "Reader: call Open" << std::endl;
+    }
 
     try
     {
         adios2::Engine Reader = io.Open("communicate", adios2::Mode::Read);
-        std::cout << "Reader: passed Open" << std::endl;
+        {
+            std::lock_guard<std::mutex> guard(StdOutMtx);
+            std::cout << "Reader: passed Open" << std::endl;
+        }
         std::array<dt, 100000> ar;
 
         auto status = Reader.BeginStep();
-        std::cout << "Reader: passed BeginStep";
+        {
+            std::lock_guard<std::mutex> guard(StdOutMtx);
+            std::cout << "Reader: passed BeginStep";
+        }
         if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << " with EndOfStream " << std::endl;
+            {
+                std::lock_guard<std::mutex> guard(StdOutMtx);
+                std::cout << " with EndOfStream " << std::endl;
+            }
             reader_failure = true;
             return;
         }
-        std::cout << " with success " << std::endl;
+        {
+            std::lock_guard<std::mutex> guard(StdOutMtx);
+            std::cout << " with success " << std::endl;
+        }
 
         adios2::Variable<dt> var = io.InquireVariable<dt>("data");
         Reader.Get(var, ar.begin());
@@ -63,7 +83,10 @@ void Read()
     }
     catch (std::exception &e)
     {
-        std::cout << "Reader: Exception: " << e.what() << std::endl;
+        {
+            std::lock_guard<std::mutex> guard(StdOutMtx);
+            std::cout << "Reader: Exception: " << e.what() << std::endl;
+        }
         reader_failure = true;
         return;
     }
@@ -75,7 +98,10 @@ void Write()
     adios2::IO io = adios.DeclareIO("IO");
     io.SetEngine(engine);
     io.SetParameters(engineParams);
-    std::cout << "Writer: engine = " << engine << std::endl;
+    {
+        std::lock_guard<std::mutex> guard(StdOutMtx);
+        std::cout << "Writer: engine = " << engine << std::endl;
+    }
     auto var =
         io.DefineVariable<dt>("data", adios2::Dims{10000, 10},
                               adios2::Dims{0, 0}, adios2::Dims{10000, 10});
@@ -94,7 +120,10 @@ void Write()
     }
     catch (std::exception &e)
     {
-        std::cout << "Writer: Exception: " << e.what() << std::endl;
+        {
+            std::lock_guard<std::mutex> guard(StdOutMtx);
+            std::cout << "Writer: Exception: " << e.what() << std::endl;
+        }
         writer_failure = true;
         return;
     }
