@@ -12,13 +12,11 @@
 
 using dt = long long;
 
-bool reader_failure = false;
-bool writer_failure = false;
 int value_errors = 0;
 
 std::mutex StdOutMtx;
 
-void Read()
+int Read()
 {
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("IO");
@@ -42,7 +40,7 @@ void Read()
             std::lock_guard<std::mutex> guard(StdOutMtx);
             std::cout << "Reader: passed Open" << std::endl;
         }
-        std::array<dt, 100000> ar;
+        std::array<dt, 1000> ar;
 
         auto status = Reader.BeginStep();
         {
@@ -55,8 +53,7 @@ void Read()
                 std::lock_guard<std::mutex> guard(StdOutMtx);
                 std::cout << " with EndOfStream " << std::endl;
             }
-            reader_failure = true;
-            return;
+            return false;
         }
         {
             std::lock_guard<std::mutex> guard(StdOutMtx);
@@ -72,14 +69,16 @@ void Read()
             if (val != expect)
             {
                 value_errors++;
-                reader_failure = true;
             }
             expect++;
         }
 
         Reader.Close();
-        std::cout << " Reader got " << expect << " values, " << reader_failure
-                  << " were incorrect" << std::endl;
+        {
+            std::lock_guard<std::mutex> guard(StdOutMtx);
+            std::cout << "Reader got " << expect << " values, " << value_errors
+                      << " were incorrect" << std::endl;
+        }
     }
     catch (std::exception &e)
     {
@@ -87,12 +86,12 @@ void Read()
             std::lock_guard<std::mutex> guard(StdOutMtx);
             std::cout << "Reader: Exception: " << e.what() << std::endl;
         }
-        reader_failure = true;
-        return;
+        return false;
     }
+    return true;
 }
 
-void Write()
+bool Write()
 {
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("IO");
@@ -102,21 +101,28 @@ void Write()
         std::lock_guard<std::mutex> guard(StdOutMtx);
         std::cout << "Writer: engine = " << engine << std::endl;
     }
-    auto var =
-        io.DefineVariable<dt>("data", adios2::Dims{10000, 10},
-                              adios2::Dims{0, 0}, adios2::Dims{10000, 10});
+    auto var = io.DefineVariable<dt>("data", adios2::Dims{100, 10},
+                                     adios2::Dims{0, 0}, adios2::Dims{100, 10});
 
-    std::array<dt, 100000> ar;
+    std::array<dt, 1000> ar;
     std::iota(ar.begin(), ar.end(), 0);
 
     try
     {
         adios2::Engine Writer = io.Open("communicate", adios2::Mode::Write);
 
+        {
+            std::lock_guard<std::mutex> guard(StdOutMtx);
+            std::cout << "Writer completed Open() " << std::endl;
+        }
         Writer.BeginStep();
         Writer.Put<dt>(var, ar.begin());
         Writer.EndStep();
         Writer.Close();
+        {
+            std::lock_guard<std::mutex> guard(StdOutMtx);
+            std::cout << "Writer completed Close() " << std::endl;
+        }
     }
     catch (std::exception &e)
     {
@@ -124,9 +130,9 @@ void Write()
             std::lock_guard<std::mutex> guard(StdOutMtx);
             std::cout << "Writer: Exception: " << e.what() << std::endl;
         }
-        writer_failure = true;
-        return;
+        return false;
     }
+    return true;
 }
 
 class TestThreads : public ::testing::Test
@@ -139,18 +145,12 @@ TEST_F(TestThreads, Basic)
 {
     auto read_fut = std::async(std::launch::async, Read);
     auto write_fut = std::async(std::launch::async, Write);
-    read_fut.wait();
-    write_fut.wait();
-    if (reader_failure)
-        std::cout << "Reader FAIL" << std::endl;
-    if (writer_failure)
-        std::cout << "Writer FAIL" << std::endl;
-    if (value_errors > 0)
-        std::cout << "Number of values not matching after reading = "
-                  << value_errors << std::endl;
-    EXPECT_FALSE(reader_failure);
-    EXPECT_FALSE(writer_failure);
-    EXPECT_TRUE(value_errors == 0);
+    bool reader_success = read_fut.get();
+    bool writer_success = write_fut.get();
+    EXPECT_TRUE(reader_success);
+    EXPECT_TRUE(writer_success);
+    EXPECT_EQ(value_errors, 0)
+        << "We got " << value_errors << " erroneous values at the reader";
 }
 
 int main(int argc, char **argv)
