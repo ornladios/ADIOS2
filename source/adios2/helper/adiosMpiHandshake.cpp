@@ -92,10 +92,8 @@ void MpiHandshake::Test()
     }
 }
 
-bool MpiHandshake::Check(const std::string &filename)
+bool MpiHandshake::Check(const std::string &filename, const bool verbose)
 {
-    int m_Verbosity = 1;
-
     Test();
 
     // check if RendezvousAppCount reached
@@ -103,7 +101,7 @@ bool MpiHandshake::Check(const std::string &filename)
     if (m_WritersMap[filename].size() + m_ReadersMap[filename].size() !=
         m_RendezvousAppCounts[filename])
     {
-        if (m_Verbosity >= 10)
+        if (verbose)
         {
             std::cout << "MpiHandshake Rank " << m_WorldRank << " Stream "
                       << filename << ": " << m_WritersMap[filename].size()
@@ -212,7 +210,7 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     // wait and check if required RendezvousAppCount reached
 
     auto startTime = std::chrono::system_clock::now();
-    while (!Check(filename))
+    while (!Check(filename, false))
     {
         std::this_thread::sleep_for(std::chrono::microseconds(100));
         auto nowTime = std::chrono::system_clock::now();
@@ -220,6 +218,7 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
             nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
+            Check(filename, true);
             throw(std::runtime_error("Mpi handshake timeout on Rank" +
                                      std::to_string(m_WorldRank) +
                                      " for Stream " + filename));
