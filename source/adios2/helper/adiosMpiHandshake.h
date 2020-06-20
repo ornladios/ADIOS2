@@ -97,7 +97,7 @@ public:
 
 private:
     static void Test();
-    static bool Check(const std::string &filename);
+    static bool Check(const std::string &filename, const bool verbose);
     static size_t PlaceInBuffer(const size_t stream, const int rank);
     static void PrintMaps();
     static void PrintMaps(const int printRank, const std::string &filename);
