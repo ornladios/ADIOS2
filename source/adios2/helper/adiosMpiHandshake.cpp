@@ -104,11 +104,11 @@ bool MpiHandshake::Check(const std::string &filename, const bool verbose)
         if (verbose)
         {
             std::cout << "MpiHandshake Rank " << m_WorldRank << " Stream "
-                      << filename << ": " << m_WritersMap[filename].size()
-                      << " writers and " << m_ReadersMap[filename].size()
-                      << " readers found out of "
-                      << m_RendezvousAppCounts[filename]
-                      << " total rendezvous apps" << std::endl;
+                << filename << ": " << m_WritersMap[filename].size()
+                << " writers and " << m_ReadersMap[filename].size()
+                << " readers found out of "
+                << m_RendezvousAppCounts[filename]
+                << " total rendezvous apps" << std::endl;
         }
         return false;
     }
@@ -119,6 +119,19 @@ bool MpiHandshake::Check(const std::string &filename, const bool verbose)
     {
         if (app.second.size() != m_AppsSize[app.first])
         {
+            if (verbose)
+            {
+                std::cout << "MpiHandshake Rank " << m_WorldRank << " Stream "
+                    << filename << ": "
+                    << " Writer master rank " << app.first
+                    << ", Expected " << m_AppsSize[app.first] << " ranks "
+                    << ", Received " << app.second.size() << " ranks: ";
+                for(const auto r : app.second)
+                {
+                    std::cout << r << ", ";
+                }
+                std::cout << std::endl;
+            }
             return false;
         }
     }
@@ -127,6 +140,19 @@ bool MpiHandshake::Check(const std::string &filename, const bool verbose)
     {
         if (app.second.size() != m_AppsSize[app.first])
         {
+            if (verbose)
+            {
+                std::cout << "MpiHandshake Rank " << m_WorldRank << " Stream "
+                    << filename << ": "
+                    << " Reader master rank " << app.first
+                    << ", Expected " << m_AppsSize[app.first] << " ranks "
+                    << ", Received " << app.second.size() << " ranks: ";
+                for(const auto r : app.second)
+                {
+                    std::cout << r << ", ";
+                }
+                std::cout << std::endl;
+            }
             return false;
         }
     }
@@ -212,14 +238,14 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     auto startTime = std::chrono::system_clock::now();
     while (!Check(filename, false))
     {
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
+//        std::this_thread::sleep_for(std::chrono::microseconds(1));
         auto nowTime = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
             nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
             Check(filename, true);
-            throw(std::runtime_error("Mpi handshake timeout on Rank" +
+            throw(std::runtime_error("Mpi handshake timeout on Rank " +
                                      std::to_string(m_WorldRank) +
                                      " for Stream " + filename));
         }

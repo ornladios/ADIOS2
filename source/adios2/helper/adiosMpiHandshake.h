@@ -115,8 +115,12 @@ private:
     static int m_LocalSize;
     static int m_LocalRank;
     static int m_LocalMasterRank;
+
+    // <StreamName, <AppMasterRank, AppAllRankVector>>
     static std::map<std::string, std::map<int, std::vector<int>>> m_WritersMap;
     static std::map<std::string, std::map<int, std::vector<int>>> m_ReadersMap;
+
+    // <AppMasterRank, AppTotalRanks>
     static std::map<int, int> m_AppsSize;
 };
 
