@@ -49,6 +49,11 @@ public:
                   const size_t elements);
 
     virtual ~AttributeBase() = default;
+
+    Params GetInfo() const noexcept;
+
+private:
+    virtual std::string DoGetInfoValue() const noexcept = 0;
 };
 
 } // end namespace core

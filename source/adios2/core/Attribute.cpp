@@ -64,12 +64,6 @@ struct RequiresZeroPadding<long double> : std::true_type
         if (RequiresZeroPadding<T>::value)                                     \
             std::memset(&m_DataSingleValue, 0, sizeof(m_DataSingleValue));     \
         m_DataSingleValue = value;                                             \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    Params Attribute<T>::GetInfo() const noexcept                              \
-    {                                                                          \
-        return DoGetInfo();                                                    \
     }
 
 ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
