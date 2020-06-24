@@ -33,9 +33,9 @@ int MpiHandshake::m_WorldRank;
 int MpiHandshake::m_LocalSize;
 int MpiHandshake::m_LocalRank;
 int MpiHandshake::m_LocalMasterRank;
-std::map<std::string, std::map<int, std::vector<int>>>
+std::map<std::string, std::map<int, std::set<int>>>
     MpiHandshake::m_WritersMap;
-std::map<std::string, std::map<int, std::vector<int>>>
+std::map<std::string, std::map<int, std::set<int>>>
     MpiHandshake::m_ReadersMap;
 std::map<int, int> MpiHandshake::m_AppsSize;
 
@@ -92,20 +92,12 @@ void MpiHandshake::Test()
                 if (mode == 'w')
                 {
                     auto &ranks = m_WritersMap[filename][appMasterRank];
-                    if (std::find(ranks.begin(), ranks.end(), rank) ==
-                        ranks.end())
-                    {
-                        ranks.push_back(rank);
-                    }
+                    ranks.insert(rank);
                 }
                 else if (mode == 'r')
                 {
                     auto &ranks = m_ReadersMap[filename][appMasterRank];
-                    if (std::find(ranks.begin(), ranks.end(), rank) ==
-                        ranks.end())
-                    {
-                        ranks.push_back(rank);
-                    }
+                    ranks.insert(rank);
                 }
             }
         }
@@ -287,12 +279,12 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     ++m_StreamID;
 }
 
-const std::map<int, std::vector<int>> &
+const std::map<int, std::set<int>> &
 MpiHandshake::GetWriterMap(const std::string &filename)
 {
     return m_WritersMap[filename];
 }
-const std::map<int, std::vector<int>> &
+const std::map<int, std::set<int>> &
 MpiHandshake::GetReaderMap(const std::string &filename)
 {
     return m_ReadersMap[filename];

@@ -20,6 +20,7 @@
 #include <mpi.h>
 #include <string>
 #include <vector>
+#include <set>
 
 namespace adios2
 {
@@ -81,9 +82,9 @@ public:
      *
      * @return map of all writer apps participating the stream. Key is the world
      * rank of the master rank of the local communicator of a participating
-     * writer app. Value is a vector of all world ranks of this writer app
+     * writer app. Value is a set of all world ranks of this writer app
      */
-    static const std::map<int, std::vector<int>> &
+    static const std::map<int, std::set<int>> &
     GetWriterMap(const std::string &filename);
 
     /**
@@ -93,9 +94,9 @@ public:
      *
      * @return map of all reader apps participating the stream. Key is the world
      * rank of the master rank of the local communicator of a participating
-     * reader app. Value is a vector of all world ranks of this reader app
+     * reader app. Value is a set of all world ranks of this reader app
      */
-    static const std::map<int, std::vector<int>> &
+    static const std::map<int, std::set<int>> &
     GetReaderMap(const std::string &filename);
 
 private:
@@ -119,9 +120,9 @@ private:
     static int m_LocalRank;
     static int m_LocalMasterRank;
 
-    // <StreamName, <AppMasterRank, AppAllRankVector>>
-    static std::map<std::string, std::map<int, std::vector<int>>> m_WritersMap;
-    static std::map<std::string, std::map<int, std::vector<int>>> m_ReadersMap;
+    // <StreamName, <AppMasterRank, AppAllRankSet>>
+    static std::map<std::string, std::map<int, std::set<int>>> m_WritersMap;
+    static std::map<std::string, std::map<int, std::set<int>>> m_ReadersMap;
 
     // <AppMasterRank, AppTotalRanks>
     static std::map<int, int> m_AppsSize;
