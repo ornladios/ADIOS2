@@ -15,6 +15,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <iostream>
+#include <memory>
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
@@ -116,15 +117,15 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
-    auto &attributeMap = GetAttributeMap<T>();
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (!IsEnd(itExistingAttribute, m_Attributes))
     {
         if (helper::ValueToString(value) ==
-            attributeMap.at(itExistingAttribute->second.second)
-                .GetInfo()["Value"])
+            m_AttributeMap.at(itExistingAttribute->second.second)
+                ->GetInfo()["Value"])
         {
-            return attributeMap.at(itExistingAttribute->second.second);
+            return static_cast<Attribute<T> &>(
+                *m_AttributeMap.at(itExistingAttribute->second.second));
         }
         else
         {
@@ -135,14 +136,15 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
         }
     }
     const unsigned int newIndex =
-        attributeMap.empty() ? 0 : attributeMap.rbegin()->first + 1;
+        m_AttributeMap.empty() ? 0 : m_AttributeMap.rbegin()->first + 1;
 
-    auto itAttributePair =
-        attributeMap.emplace(newIndex, Attribute<T>(globalName, value));
+    auto itAttributePair = m_AttributeMap.emplace(
+        newIndex,
+        std::unique_ptr<AttributeBase>(new Attribute<T>(globalName, value)));
     m_Attributes.emplace(globalName,
                          std::make_pair(helper::GetDataType<T>(), newIndex));
 
-    return itAttributePair.first->second;
+    return static_cast<Attribute<T> &>(*itAttributePair.first->second);
 }
 
 template <class T>
@@ -164,7 +166,6 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
-    auto &attributeMap = GetAttributeMap<T>();
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (!IsEnd(itExistingAttribute, m_Attributes))
     {
@@ -173,10 +174,11 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
             helper::VectorToCSV(std::vector<T>(array, array + elements)) +
             " }");
 
-        if (attributeMap.at(itExistingAttribute->second.second)
-                .GetInfo()["Value"] == arrayValues)
+        if (m_AttributeMap.at(itExistingAttribute->second.second)
+                ->GetInfo()["Value"] == arrayValues)
         {
-            return attributeMap.at(itExistingAttribute->second.second);
+            return static_cast<Attribute<T> &>(
+                *m_AttributeMap.at(itExistingAttribute->second.second));
         }
         else
         {
@@ -187,14 +189,15 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
         }
     }
     const unsigned int newIndex =
-        attributeMap.empty() ? 0 : attributeMap.rbegin()->first + 1;
+        m_AttributeMap.empty() ? 0 : m_AttributeMap.rbegin()->first + 1;
 
-    auto itAttributePair = attributeMap.emplace(
-        newIndex, Attribute<T>(globalName, array, elements));
+    auto itAttributePair = m_AttributeMap.emplace(
+        newIndex, std::unique_ptr<AttributeBase>(
+                      new Attribute<T>(globalName, array, elements)));
     m_Attributes.emplace(globalName,
                          std::make_pair(helper::GetDataType<T>(), newIndex));
 
-    return itAttributePair.first->second;
+    return static_cast<Attribute<T> &>(*itAttributePair.first->second);
 }
 
 template <class T>
@@ -217,7 +220,8 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
         return nullptr;
     }
 
-    return &GetAttributeMap<T>().at(itAttribute->second.second);
+    return static_cast<Attribute<T> *>(
+        m_AttributeMap.at(itAttribute->second.second).get());
 }
 
 // PRIVATE
@@ -231,16 +235,6 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
     }
 ADIOS2_FOREACH_STDTYPE_2ARGS(make_GetVariableMap)
 #undef make_GetVariableMap
-
-// GetAttributeMap
-#define make_GetAttributeMap(T, NAME)                                          \
-    template <>                                                                \
-    std::map<unsigned int, Attribute<T>> &IO::GetAttributeMap() noexcept       \
-    {                                                                          \
-        return m_##NAME##A;                                                    \
-    }
-ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(make_GetAttributeMap)
-#undef make_GetAttributeMap
 
 template <class T>
 Params IO::GetVariableInfo(const std::string &variableName,

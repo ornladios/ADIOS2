@@ -373,15 +373,11 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
         {
             // nothing to do
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        auto &attributeMap = GetAttributeMap<T>();                             \
-        attributeMap.erase(index);                                             \
-        isRemoved = true;                                                      \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
+        else
+        {
+            m_AttributeMap.erase(index);
+            isRemoved = true;
+        }
     }
 
     if (isRemoved)
@@ -396,10 +392,7 @@ void IO::RemoveAllAttributes() noexcept
 {
     TAU_SCOPED_TIMER("IO::RemoveAllAttributes");
     m_Attributes.clear();
-
-#define declare_type(T) GetAttributeMap<T>().clear();
-    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
+    m_AttributeMap.clear();
 }
 
 std::map<std::string, Params>
@@ -467,15 +460,12 @@ IO::GetAvailableAttributes(const std::string &variableName,
         if (type == DataType::Compound)
         {
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Attribute<T> &attribute =                                              \
-            GetAttributeMap<T>().at(attributePair.second.second);              \
-        attributesInfo[name] = attribute.GetInfo();                            \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+        else
+        {
+            AttributeBase &attribute =
+                *m_AttributeMap.at(attributePair.second.second);
+            attributesInfo[name] = attribute.GetInfo();
+        }
     }
     return attributesInfo;
 }
@@ -773,6 +763,12 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
     }
 
     m_IsPrefixedNames = true;
+}
+
+std::map<unsigned int, std::unique_ptr<AttributeBase>> &
+IO::GetAttributeMap() noexcept
+{
+    return m_AttributeMap;
 }
 
 // PRIVATE

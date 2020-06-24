@@ -458,9 +458,9 @@ public:
     template <class T>
     std::map<unsigned int, Variable<T>> &GetVariableMap() noexcept;
 
-    /** Gets the internal reference to an attribute map for type T */
-    template <class T>
-    std::map<unsigned int, Attribute<T>> &GetAttributeMap() noexcept;
+    /** Gets the internal reference to the attribute map. */
+    std::map<unsigned int, std::unique_ptr<AttributeBase>> &
+    GetAttributeMap() noexcept;
 
     using MakeEngineFunc = std::function<std::shared_ptr<Engine>(
         IO &, const std::string &, const Mode, helper::Comm)>;
@@ -517,9 +517,7 @@ private:
     ADIOS2_FOREACH_STDTYPE_2ARGS(declare_map)
 #undef declare_map
 
-#define declare_map(T, NAME) std::map<unsigned int, Attribute<T>> m_##NAME##A;
-    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(declare_map)
-#undef declare_map
+    std::map<unsigned int, std::unique_ptr<AttributeBase>> m_AttributeMap;
 
     std::map<std::string, std::shared_ptr<Engine>> m_Engines;
 

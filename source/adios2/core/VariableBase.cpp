@@ -313,15 +313,12 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
         if (type == DataType::Compound)
         {
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Attribute<T> &attribute =                                              \
-            io.GetAttributeMap<T>().at(itAttribute->second.second);            \
-        attributesInfo[key] = attribute.GetInfo();                             \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+        else
+        {
+            AttributeBase &attribute =
+                *io.GetAttributeMap().at(itAttribute->second.second);
+            attributesInfo[key] = attribute.GetInfo();
+        }
     };
 
     // BODY OF FUNCTION STARTS HERE
