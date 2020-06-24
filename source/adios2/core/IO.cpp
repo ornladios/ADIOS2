@@ -179,6 +179,8 @@ IO::IO(ADIOS &adios, const std::string name, const bool inConfigFile,
 {
 }
 
+IO::~IO() = default;
+
 void IO::SetEngine(const std::string engineType) noexcept
 {
     auto lf_InsertParam = [&](const std::string &key,

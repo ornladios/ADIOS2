@@ -123,7 +123,7 @@ public:
     IO(ADIOS &adios, const std::string name, const bool inConfigFile,
        const std::string hostLanguage);
 
-    ~IO() = default;
+    ~IO();
 
     /**
      * @brief Sets the engine type for this IO class object
