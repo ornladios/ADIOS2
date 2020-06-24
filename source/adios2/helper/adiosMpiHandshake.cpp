@@ -39,6 +39,28 @@ std::map<std::string, std::map<int, std::vector<int>>>
     MpiHandshake::m_ReadersMap;
 std::map<int, int> MpiHandshake::m_AppsSize;
 
+
+MpiHandshake::~MpiHandshake()
+{
+    // clean up MPI requests
+
+    for (auto &rs : m_RecvRequests)
+    {
+        for (auto &r : rs)
+        {
+            MPI_Status status;
+            int success;
+            MPI_Test(&r, &success, &status);
+            if (!success)
+            {
+                MPI_Cancel(&r);
+            }
+        }
+    }
+    m_RecvRequests.clear();
+
+}
+
 size_t MpiHandshake::PlaceInBuffer(size_t stream, int rank)
 {
     return rank * m_MaxStreamsPerApp * m_ItemSize + stream * m_ItemSize;
@@ -60,12 +82,10 @@ void MpiHandshake::Test()
                 char mode = m_Buffer[offset];
                 offset += sizeof(char);
                 int appMasterRank;
-                std::memcpy(&appMasterRank, m_Buffer.data() + offset,
-                            sizeof(appMasterRank));
+                std::memcpy(&appMasterRank, m_Buffer.data() + offset, sizeof(appMasterRank));
                 offset += sizeof(int);
                 int appSize;
-                std::memcpy(&appSize, m_Buffer.data() + offset,
-                            sizeof(appSize));
+                std::memcpy(&appSize, m_Buffer.data() + offset, sizeof(appSize));
                 offset += sizeof(int);
                 std::string filename = m_Buffer.data() + offset;
                 m_AppsSize[appMasterRank] = appSize;
@@ -115,6 +135,10 @@ bool MpiHandshake::Check(const std::string &filename, const bool verbose)
 
     // check if all ranks' info is received
 
+    if(m_LocalRank == 0)
+    {
+        std::cout << "Checking ...... " << std::endl;
+    }
     for (const auto &app : m_WritersMap[filename])
     {
         if (app.second.size() != m_AppsSize[app.first])
@@ -123,7 +147,7 @@ bool MpiHandshake::Check(const std::string &filename, const bool verbose)
             {
                 std::cout << "MpiHandshake Rank " << m_WorldRank << " Stream "
                     << filename << ": "
-                    << " Writer master rank " << app.first
+                    << " App master rank " << app.first
                     << ", Expected " << m_AppsSize[app.first] << " ranks "
                     << ", Received " << app.second.size() << " ranks: ";
                 for(const auto r : app.second)
@@ -144,7 +168,7 @@ bool MpiHandshake::Check(const std::string &filename, const bool verbose)
             {
                 std::cout << "MpiHandshake Rank " << m_WorldRank << " Stream "
                     << filename << ": "
-                    << " Reader master rank " << app.first
+                    << " App master rank " << app.first
                     << ", Expected " << m_AppsSize[app.first] << " ranks "
                     << ", Received " << app.second.size() << " ranks: ";
                 for(const auto r : app.second)
@@ -192,7 +216,7 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     }
 
     m_ItemSize = maxFilenameLength + sizeof(char) + sizeof(int) * 2;
-    m_Buffer.resize(m_WorldSize * maxStreamsPerApp * m_ItemSize);
+    m_Buffer.resize(m_WorldSize * maxStreamsPerApp * m_ItemSize, '\0');
 
     // broadcast local master rank's world rank to use as app ID
 
@@ -236,37 +260,29 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     // wait and check if required RendezvousAppCount reached
 
     auto startTime = std::chrono::system_clock::now();
-    while (!Check(filename, false))
+    bool verbose;
+    if(m_LocalRank == 0)
     {
-//        std::this_thread::sleep_for(std::chrono::microseconds(1));
+        verbose = true;
+    }
+    else{
+        verbose = false;
+    }
+    while (!Check(filename, verbose))
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
         auto nowTime = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
             nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
-            Check(filename, true);
+            Check(filename, verbose);
             throw(std::runtime_error("Mpi handshake timeout on Rank " +
                                      std::to_string(m_WorldRank) +
                                      " for Stream " + filename));
         }
     }
 
-    // clean up MPI requests
-
-    for (auto &rs : m_RecvRequests)
-    {
-        for (auto &r : rs)
-        {
-            MPI_Status status;
-            int success;
-            MPI_Test(&r, &success, &status);
-            if (!success)
-            {
-                MPI_Cancel(&r);
-            }
-        }
-    }
-    m_RecvRequests.clear();
 
     ++m_StreamID;
 }
