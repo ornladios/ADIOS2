@@ -123,7 +123,9 @@ IO &ADIOS::DeclareIO(const std::string name)
         }
     }
 
-    auto ioPair = m_IOs.emplace(name, IO(*this, name, false, m_HostLanguage));
+    auto ioPair = m_IOs.emplace(
+        std::piecewise_construct, std::forward_as_tuple(name),
+        std::forward_as_tuple(*this, name, false, m_HostLanguage));
     IO &io = ioPair.first->second;
     io.SetDeclared();
     return io;

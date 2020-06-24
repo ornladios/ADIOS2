@@ -123,7 +123,8 @@ void ParseConfigYAML(
     auto lf_IOYAML = [&](const std::string &ioName, const YAML::Node &ioMap) {
         // Build the IO object
         auto itCurrentIO = ios.emplace(
-            ioName, core::IO(adios, ioName, true, adios.m_HostLanguage));
+            std::piecewise_construct, std::forward_as_tuple(ioName),
+            std::forward_as_tuple(adios, ioName, true, adios.m_HostLanguage));
         core::IO &currentIO = itCurrentIO.first->second;
 
         // Engine parameters

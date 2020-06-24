@@ -125,6 +125,9 @@ public:
 
     ~IO();
 
+    IO(IO const &) = delete;
+    IO &operator=(IO const &) = delete;
+
     /**
      * @brief Sets the engine type for this IO class object
      * @param engine predefined engine type, default is bpfile
