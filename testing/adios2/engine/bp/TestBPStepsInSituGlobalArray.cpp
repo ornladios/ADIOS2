@@ -186,8 +186,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
     adios2::Engine reader = ior.Open(fname, adios2::Mode::Read);
     EXPECT_TRUE(reader);
 
-    size_t stepsWritten = 0;
-    size_t stepsRead = 0;
+    int stepsWritten = 0;
+    int stepsRead = 0;
 
     for (const auto act : schedule)
     {
@@ -342,8 +342,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
     adios2::Engine reader = ior.Open(fname, adios2::Mode::Read);
     EXPECT_TRUE(reader);
 
-    size_t stepsWritten = 0;
-    size_t stepsRead = 0;
+    int stepsWritten = 0;
+    int stepsRead = 0;
 
     for (const auto act : schedule)
     {
@@ -518,7 +518,7 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
     EXPECT_TRUE(writer);
     auto var_i32 = iow.DefineVariable<int32_t>("i32", shape, start, count);
     EXPECT_TRUE(var_i32);
-    auto var_step = iow.DefineVariable<size_t>("step");
+    auto var_step = iow.DefineVariable<int>("step");
     EXPECT_TRUE(var_step);
 
 #if ADIOS2_USE_MPI
@@ -535,10 +535,10 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
     adios2::Engine reader = ior.Open(fname, adios2::Mode::Read);
     EXPECT_TRUE(reader);
 
-    size_t stepsWritten = 0;
-    size_t stepsRead = 0;
-    size_t varStepsWritten = 0;
-    size_t varStepsRead = 0;
+    int stepsWritten = 0;
+    int stepsRead = 0;
+    int varStepsWritten = 0;
+    int varStepsRead = 0;
     for (const auto act : schedule)
     {
         if (act == Act::Write)
