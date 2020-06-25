@@ -130,8 +130,6 @@ int Settings::rescaleDecomp()
 
     throw std::invalid_argument(
         "decomposition ratios must scale up to process count");
-
-    return (0);
 }
 
 int Settings::processArgs(int argc, char *argv[])
