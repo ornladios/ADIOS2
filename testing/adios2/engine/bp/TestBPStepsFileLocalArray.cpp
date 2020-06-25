@@ -5,9 +5,13 @@
 #include <cstdint>
 #include <cstring>
 
+#include <array>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #include <adios2.h>
 
@@ -60,16 +64,14 @@ enum class ReadMode
     ReadStreamBlocks
 };
 
-std::string ReadModeToString(ReadMode r)
+std::string ReadModeToString(const ReadMode r)
 {
     switch (r)
     {
     case ReadMode::ReadFileStepByStepBlocks:
         return "ReadFileStepByStepBlocks";
-        break;
     case ReadMode::ReadStreamBlocks:
         return "ReadStreamBlocks";
-        break;
     }
     return "unknown";
 }
@@ -177,10 +179,9 @@ TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
                       << ArrayToString(d.data(), Nx) << std::endl;
             auto start = var_i32.Start();
             auto count = var_i32.Count();
-            /*EXPECT_EQ(start.size(), 1); -- start and count is actually {}
-            EXPECT_EQ(start[0], mpiRank * Nx);
+            EXPECT_EQ(start.size(), 0);
             EXPECT_EQ(count.size(), 1);
-            EXPECT_EQ(count[0], 1 * Nx);*/
+            EXPECT_EQ(count[0], 1 * Nx);
             for (size_t i = 0; i < Nx; ++i)
             {
                 EXPECT_EQ(d[i], m_TestData[step][i]);
@@ -214,10 +215,9 @@ TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
                       << ArrayToString(d.data(), Nx) << std::endl;
             auto start = var_i32.Start();
             auto count = var_i32.Count();
-            /*EXPECT_EQ(start.size(), 1); -- start and count is actually {}
-            EXPECT_EQ(start[0], mpiRank * Nx);
+            EXPECT_EQ(start.size(), 0);
             EXPECT_EQ(count.size(), 1);
-            EXPECT_EQ(count[0], 1 * Nx);*/
+            EXPECT_EQ(count[0], 1 * Nx);
             for (size_t i = 0; i < Nx; ++i)
             {
                 EXPECT_EQ(d[i], m_TestData[step][i]);
@@ -333,10 +333,9 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
                       << ArrayToString(d.data(), Nx) << std::endl;
             auto start = var.Start();
             auto count = var.Count();
-            /*EXPECT_EQ(start.size(), 1); -- start and count is actually {}
-            EXPECT_EQ(start[0], mpiRank * Nx);
+            EXPECT_EQ(start.size(), 0);
             EXPECT_EQ(count.size(), 1);
-            EXPECT_EQ(count[0], 1 * Nx);*/
+            EXPECT_EQ(count[0], 1 * Nx);
             for (size_t i = 0; i < Nx; ++i)
             {
                 EXPECT_EQ(d[i], m_TestData[step][i]);
@@ -370,10 +369,9 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
                       << ArrayToString(d.data(), Nx) << std::endl;
             auto start = var.Start();
             auto count = var.Count();
-            /*EXPECT_EQ(start.size(), 1); -- start and count is actually {}
-            EXPECT_EQ(start[0], mpiRank * Nx);
+            EXPECT_EQ(start.size(), 0);
             EXPECT_EQ(count.size(), 1);
-            EXPECT_EQ(count[0], 1 * Nx);*/
+            EXPECT_EQ(count[0], 1 * Nx);
             for (size_t i = 0; i < Nx; ++i)
             {
                 EXPECT_EQ(d[i], m_TestData[step][i]);
@@ -421,9 +419,9 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
 #endif
 
     std::array<int32_t, Nx> m_TestData[NSteps / 2];
-    adios2::Dims shape{static_cast<unsigned int>(mpiSize * Nx)};
-    adios2::Dims start{static_cast<unsigned int>(mpiRank * Nx)};
-    adios2::Dims count{static_cast<unsigned int>(Nx)};
+    adios2::Dims shape{};
+    adios2::Dims start{};
+    adios2::Dims count{Nx};
 
     std::string fname;
 #if ADIOS2_USE_MPI
@@ -514,8 +512,7 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
                       << std::endl;
             auto start = var_i32.Start();
             auto count = var_i32.Count();
-            EXPECT_EQ(start.size(), 1);
-            EXPECT_EQ(start[0], mpiRank * Nx);
+            EXPECT_EQ(start.size(), 0);
             EXPECT_EQ(count.size(), 1);
             EXPECT_EQ(count[0], 1 * Nx);
             for (size_t i = 0; i < Nx; ++i)
@@ -555,8 +552,7 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
                           << ArrayToString(d.data(), Nx) << std::endl;
                 auto start = var_i32.Start();
                 auto count = var_i32.Count();
-                EXPECT_EQ(start.size(), 1);
-                EXPECT_EQ(start[0], mpiRank * Nx);
+                EXPECT_EQ(start.size(), 0);
                 EXPECT_EQ(count.size(), 1);
                 EXPECT_EQ(count[0], 1 * Nx);
                 for (size_t i = 0; i < Nx; ++i)

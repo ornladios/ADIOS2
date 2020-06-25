@@ -5,9 +5,12 @@
 #include <cstdint>
 #include <cstring>
 
+#include <array>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #include <adios2.h>
 
@@ -69,19 +72,14 @@ std::string ReadModeToString(ReadMode r)
     {
     case ReadMode::ReadFileAll:
         return "ReadFileAll";
-        break;
     case ReadMode::ReadFileStepByStep:
         return "ReadFileStepByStep";
-        break;
     case ReadMode::ReadFileStepByStepBlocks:
         return "ReadFileStepByStepBlocks";
-        break;
     case ReadMode::ReadStream:
         return "ReadStream";
-        break;
     case ReadMode::ReadStreamBlocks:
         return "ReadStreamBlocks";
-        break;
     }
     return "unknown";
 }
