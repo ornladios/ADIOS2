@@ -58,7 +58,7 @@ public:
     int processArguments(int argc, char *argv[], MPI_Comm worldComm);
     int extraArgumentChecks();
     size_t stringToNumber(const std::string &varName, const char *arg) const;
-    int parseRatios(const char *arg);
+    int parseCSDecomp(const char *arg);
     int rescaleDecomp();
     size_t ndigits(size_t n) const;
 

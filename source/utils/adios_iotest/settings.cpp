@@ -22,6 +22,7 @@ struct option options[] = {{"help", no_argument, NULL, 'h'},
                            {"appid", required_argument, NULL, 'a'},
                            {"config", required_argument, NULL, 'c'},
                            {"decomp", required_argument, NULL, 'd'},
+                           {"decomp-ratio", required_argument, NULL, 'D'},
                            {"xml", required_argument, NULL, 'x'},
                            {"strong-scaling", no_argument, NULL, 's'},
                            {"weak-scaling", no_argument, NULL, 'w'},
@@ -32,7 +33,7 @@ struct option options[] = {{"help", no_argument, NULL, 'h'},
 #endif
                            {NULL, 0, NULL, 0}};
 
-static const char *optstring = "-hvswtFHa:c:d:x:";
+static const char *optstring = "-hvswtFHa:c:d:D:x:";
 
 size_t Settings::ndigits(size_t n) const
 {
@@ -44,8 +45,8 @@ size_t Settings::ndigits(size_t n) const
 void Settings::displayHelp()
 {
     std::cout
-        << "Usage: adios_iotest -a appid -c config {-s | -w} -d {d1 [d2 .. dN] "
-           "| r1,[r2,..,rN]}"
+        << "Usage: adios_iotest -a appid -c config {-s | -w} {-d d1[,d2,..,dN] "
+           "| -D r1[,r2,..,rN]}"
            "[-x "
            "file]\n"
         << "  -a appID:  unique number for each application in the workflow\n"
@@ -54,6 +55,7 @@ void Settings::displayHelp()
         << "      d1:        number of processes in 1st (slowest) dimension\n"
         << "      dN:        number of processes in Nth dimension\n"
         << "                 d1*d2*..*dN must equal the number of processes\n"
+        << "   -D ...    define process decomposition ratio:\n"
         << "      r1:        ratio of process decomposition in the 1st "
            "(slowest) dimension\n"
         << "      rN:        ratio of process decomposition in the Nth "
@@ -86,7 +88,7 @@ size_t Settings::stringToNumber(const std::string &varName,
     return retval;
 }
 
-int Settings::parseRatios(const char *arg)
+int Settings::parseCSDecomp(const char *arg)
 {
     char *argCopy = (char *)malloc(strlen(arg) * sizeof(*argCopy));
     char *ratio;
@@ -100,8 +102,6 @@ int Settings::parseRatios(const char *arg)
     }
 
     free(argCopy);
-
-    isRatioDecomp = true;
 
     return (0);
 }
@@ -137,6 +137,7 @@ int Settings::processArgs(int argc, char *argv[])
 {
     bool appIdDefined = false;
     bool scalingDefined = false;
+    bool decompDefined = false;
     int c;
     int last_c = '_';
 
@@ -153,9 +154,14 @@ int Settings::processArgs(int argc, char *argv[])
             configFileName = optarg;
             break;
         case 'd':
+            if (decompDefined && isRatioDecomp)
+            {
+                throw std::invalid_argument(
+                    "Cannot have -D and -d used at the same time ");
+            }
             if (strchr(optarg, ','))
             {
-                parseRatios(optarg);
+                parseCSDecomp(optarg);
             }
             else
             {
@@ -163,6 +169,26 @@ int Settings::processArgs(int argc, char *argv[])
                     stringToNumber("decomposition in dimension 1", optarg);
                 ++nDecomp;
             }
+            decompDefined = true;
+            break;
+        case 'D':
+            if (decompDefined && !isRatioDecomp)
+            {
+                throw std::invalid_argument(
+                    "Cannot have -D and -d used at the same time ");
+            }
+            if (strchr(optarg, ','))
+            {
+                parseCSDecomp(optarg);
+            }
+            else
+            {
+                processDecomp[nDecomp] =
+                    stringToNumber("decomposition in dimension 1", optarg);
+                ++nDecomp;
+            }
+            decompDefined = true;
+            isRatioDecomp = true;
             break;
         case 'F':
             fixedPattern = true;
@@ -209,7 +235,7 @@ int Settings::processArgs(int argc, char *argv[])
             /* This means a field is unknown, or could be multiple arg or bad
              * arg*/
 
-            if (last_c == 'd')
+            if (last_c == 'd' || last_c == 'D')
             { // --decomp extra arg (or not if not a number)
                 processDecomp[nDecomp] = stringToNumber(
                     "decomposition in dimension " + std::to_string(nDecomp + 1),
