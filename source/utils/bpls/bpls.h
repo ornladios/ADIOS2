@@ -37,9 +37,21 @@ namespace utils
 
 struct Entry
 {
-    bool isVar;
     DataType typeName;
-    Entry(bool b, DataType type) : isVar(b), typeName(type) {}
+    bool isVar;
+    union
+    {
+        core::VariableBase *var;
+        core::AttributeBase *attr;
+    };
+    Entry(DataType type, core::VariableBase *v)
+    : typeName(type), isVar(true), var(v)
+    {
+    }
+    Entry(DataType type, core::AttributeBase *a)
+    : typeName(type), isVar(false), attr(a)
+    {
+    }
 };
 
 // how to print one data item of an array

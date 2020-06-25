@@ -907,7 +907,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
     {
         for (const auto &vpair : variables)
         {
-            Entry e(true, vpair.second->m_Type);
+            Entry e(vpair.second->m_Type, vpair.second.get());
             entries.emplace(vpair.first, e);
         }
     }
@@ -915,7 +915,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
     {
         for (const auto &apair : attributes)
         {
-            Entry e(false, apair.second->m_Type);
+            Entry e(apair.second->m_Type, apair.second.get());
             entries.emplace(apair.first, e);
         }
     }
@@ -963,7 +963,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
 #define declare_template_instantiation(T)                                      \
     else if (entry.typeName == helper::GetDataType<T>())                       \
     {                                                                          \
-        core::Attribute<T> *a = io->InquireAttribute<T>(name);                 \
+        core::Attribute<T> *a = static_cast<core::Attribute<T> *>(entry.attr); \
         retval = printAttributeValue(fp, io, a);                               \
     }
                     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(
@@ -986,7 +986,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
 #define declare_template_instantiation(T)                                      \
     else if (entry.typeName == helper::GetDataType<T>())                       \
     {                                                                          \
-        core::Variable<T> *v = io->InquireVariable<T>(name);                   \
+        core::Variable<T> *v = static_cast<core::Variable<T> *>(entry.var);    \
         retval = printVariableInfo(fp, io, v);                                 \
     }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
