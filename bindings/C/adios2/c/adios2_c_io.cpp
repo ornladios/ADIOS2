@@ -250,7 +250,7 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
             io, "for adios2_io, in call to adios2_inquire_variable");
 
         adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
-        const auto &dataMap = ioCpp.GetVariablesDataMap();
+        const auto &dataMap = ioCpp.GetVariables();
 
         auto itVariable = dataMap.find(name);
         if (itVariable == dataMap.end()) // not found
@@ -292,7 +292,7 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
             io, "for adios2_io, in call to adios2_inquire_all_variables");
 
         adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
-        const auto &dataMap = ioCpp.GetVariablesDataMap();
+        const auto &dataMap = ioCpp.GetVariables();
 
         *size = dataMap.size();
         adios2_variable **list =
@@ -308,7 +308,7 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
         for (auto &name : names)
         {
             auto it = dataMap.find(name);
-            const adios2::DataType type(it->second.first);
+            const adios2::DataType type(it->second->m_Type);
             adios2::core::VariableBase *variable = nullptr;
 
             if (type == adios2::DataType::Compound)
@@ -498,7 +498,7 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
             io, "for adios2_io, in call to adios2_inquire_attribute");
 
         adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
-        const auto &dataMap = ioCpp.GetAttributesDataMap();
+        const auto &dataMap = ioCpp.GetAttributes();
 
         auto itAttribute = dataMap.find(name);
         if (itAttribute == dataMap.end()) // not found
@@ -506,7 +506,7 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
             return attribute;
         }
 
-        const adios2::DataType type(itAttribute->second.first);
+        const adios2::DataType type(itAttribute->second->m_Type);
         adios2::core::AttributeBase *attributeCpp = nullptr;
 
         if (type == adios2::DataType::Compound)
@@ -551,7 +551,7 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
             io, "for adios2_io, in call to adios2_inquire_all_attributes");
 
         adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
-        const auto &dataMap = ioCpp.GetAttributesDataMap();
+        const auto &dataMap = ioCpp.GetAttributes();
 
         *size = dataMap.size();
         adios2_attribute **list =
@@ -567,7 +567,7 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
         for (auto &name : names)
         {
             auto it = dataMap.find(name);
-            const adios2::DataType type(it->second.first);
+            const adios2::DataType type(it->second->m_Type);
             adios2::core::AttributeBase *attribute = nullptr;
 
             if (type == adios2::DataType::Compound)

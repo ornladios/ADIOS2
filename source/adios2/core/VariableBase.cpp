@@ -304,20 +304,17 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
             return;
         }
 
-        auto itAttribute = io.m_Attributes.find(attributeName);
-        const DataType type = itAttribute->second.first;
+        auto itAttribute = io.GetAttributes().find(attributeName);
 
         const std::string key =
             fullNameKeys ? attributeName : attributeName.substr(prefix.size());
 
-        if (type == DataType::Compound)
+        if (itAttribute->second->m_Type == DataType::Compound)
         {
         }
         else
         {
-            AttributeBase &attribute =
-                *io.GetAttributeMap().at(itAttribute->second.second);
-            attributesInfo[key] = attribute.GetInfo();
+            attributesInfo[key] = itAttribute->second->GetInfo();
         }
     };
 
@@ -336,7 +333,7 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
     }
     else
     { // get prefixed attributes on-the-fly (expensive)
-        for (const auto &attributePair : io.m_Attributes)
+        for (const auto &attributePair : io.GetAttributes())
         {
             const std::string &attributeName = attributePair.first;
             lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo,

@@ -38,7 +38,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
 
     {
         auto itVariable = m_Variables.find(name);
-        if (!IsEnd(itVariable, m_Variables))
+        if (itVariable != m_Variables.end())
         {
             throw std::invalid_argument("ERROR: variable " + name +
                                         " exists in IO object " + m_Name +
@@ -46,14 +46,9 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
         }
     }
 
-    const unsigned int newIndex =
-        m_AttributeMap.empty() ? 0 : m_AttributeMap.rbegin()->first + 1;
-
-    auto itVariablePair = m_VariableMap.emplace(
-        newIndex, std::unique_ptr<VariableBase>(new Variable<T>(
-                      name, shape, start, count, constantDims)));
-    m_Variables.emplace(name,
-                        std::make_pair(helper::GetDataType<T>(), newIndex));
+    auto itVariablePair = m_Variables.emplace(
+        name, std::unique_ptr<VariableBase>(
+                  new Variable<T>(name, shape, start, count, constantDims)));
 
     Variable<T> &variable =
         static_cast<Variable<T> &>(*itVariablePair.first->second);
@@ -84,13 +79,13 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
         return nullptr;
     }
 
-    if (itVariable->second.first != helper::GetDataType<T>())
+    if (itVariable->second->m_Type != helper::GetDataType<T>())
     {
         return nullptr;
     }
 
-    Variable<T> *variable = static_cast<Variable<T> *>(
-        m_VariableMap.at(itVariable->second.second).get());
+    Variable<T> *variable =
+        static_cast<Variable<T> *>(itVariable->second.get());
     if (m_ReadStreaming)
     {
         if (!variable->IsValidStep(m_EngineStep + 1))
@@ -120,14 +115,12 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
         helper::GlobalName(name, variableName, separator);
 
     auto itExistingAttribute = m_Attributes.find(globalName);
-    if (!IsEnd(itExistingAttribute, m_Attributes))
+    if (itExistingAttribute != m_Attributes.end())
     {
         if (helper::ValueToString(value) ==
-            m_AttributeMap.at(itExistingAttribute->second.second)
-                ->GetInfo()["Value"])
+            itExistingAttribute->second->GetInfo()["Value"])
         {
-            return static_cast<Attribute<T> &>(
-                *m_AttributeMap.at(itExistingAttribute->second.second));
+            return static_cast<Attribute<T> &>(*itExistingAttribute->second);
         }
         else
         {
@@ -137,14 +130,10 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                 "DefineAttribute\n");
         }
     }
-    const unsigned int newIndex =
-        m_AttributeMap.empty() ? 0 : m_AttributeMap.rbegin()->first + 1;
 
-    auto itAttributePair = m_AttributeMap.emplace(
-        newIndex,
+    auto itAttributePair = m_Attributes.emplace(
+        globalName,
         std::unique_ptr<AttributeBase>(new Attribute<T>(globalName, value)));
-    m_Attributes.emplace(globalName,
-                         std::make_pair(helper::GetDataType<T>(), newIndex));
 
     return static_cast<Attribute<T> &>(*itAttributePair.first->second);
 }
@@ -169,18 +158,16 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
         helper::GlobalName(name, variableName, separator);
 
     auto itExistingAttribute = m_Attributes.find(globalName);
-    if (!IsEnd(itExistingAttribute, m_Attributes))
+    if (itExistingAttribute != m_Attributes.end())
     {
         const std::string arrayValues(
             "{ " +
             helper::VectorToCSV(std::vector<T>(array, array + elements)) +
             " }");
 
-        if (m_AttributeMap.at(itExistingAttribute->second.second)
-                ->GetInfo()["Value"] == arrayValues)
+        if (itExistingAttribute->second->GetInfo()["Value"] == arrayValues)
         {
-            return static_cast<Attribute<T> &>(
-                *m_AttributeMap.at(itExistingAttribute->second.second));
+            return static_cast<Attribute<T> &>(*itExistingAttribute->second);
         }
         else
         {
@@ -190,15 +177,10 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
                 "DefineAttribute\n");
         }
     }
-    const unsigned int newIndex =
-        m_AttributeMap.empty() ? 0 : m_AttributeMap.rbegin()->first + 1;
 
-    auto itAttributePair = m_AttributeMap.emplace(
-        newIndex, std::unique_ptr<AttributeBase>(
-                      new Attribute<T>(globalName, array, elements)));
-    m_Attributes.emplace(globalName,
-                         std::make_pair(helper::GetDataType<T>(), newIndex));
-
+    auto itAttributePair = m_Attributes.emplace(
+        globalName, std::unique_ptr<AttributeBase>(
+                        new Attribute<T>(globalName, array, elements)));
     return static_cast<Attribute<T> &>(*itAttributePair.first->second);
 }
 
@@ -217,13 +199,12 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
         return nullptr;
     }
 
-    if (itAttribute->second.first != helper::GetDataType<T>())
+    if (itAttribute->second->m_Type != helper::GetDataType<T>())
     {
         return nullptr;
     }
 
-    return static_cast<Attribute<T> *>(
-        m_AttributeMap.at(itAttribute->second.second).get());
+    return static_cast<Attribute<T> *>(itAttribute->second.get());
 }
 
 // PRIVATE

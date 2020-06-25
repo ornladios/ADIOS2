@@ -194,8 +194,8 @@ void Reorganize::Run()
         }
 
         curr_step = static_cast<int>(rStream.CurrentStep());
-        const core::DataMap &variables = io.GetVariablesDataMap();
-        const core::DataMap &attributes = io.GetAttributesDataMap();
+        const core::VarMap &variables = io.GetVariables();
+        const core::AttrMap &attributes = io.GetAttributes();
 
         print0("____________________\n\nFile info:");
         print0("  current step:   ", curr_step);
@@ -480,8 +480,8 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
 }
 
 int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
-                                const core::DataMap &variables,
-                                const core::DataMap &attributes, int step)
+                                const core::VarMap &variables,
+                                const core::AttrMap &attributes, int step)
 {
     int retval = 0;
 
@@ -494,7 +494,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
     for (const auto &variablePair : variables)
     {
         const std::string &name(variablePair.first);
-        const DataType type(variablePair.second.first);
+        const DataType type(variablePair.second->m_Type);
         core::VariableBase *variable = nullptr;
         print0("Get info on variable ", varidx, ": ", name);
         size_t nBlocks = 1;
@@ -608,8 +608,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
 }
 
 int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
-                          core::IO &io, const core::DataMap &variables,
-                          int step)
+                          core::IO &io, const core::VarMap &variables, int step)
 {
     int retval = 0;
 
@@ -639,7 +638,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 // read variable subset
                 std::cout << "rank " << m_Rank << ": Read variable " << name
                           << std::endl;
-                const DataType type = variables.at(name).first;
+                const DataType type = variables.at(name)->m_Type;
                 if (type == DataType::Compound)
                 {
                     // not supported
@@ -683,7 +682,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 // Write variable subset
                 std::cout << "rank " << m_Rank << ": Write variable " << name
                           << std::endl;
-                const DataType type = variables.at(name).first;
+                const DataType type = variables.at(name)->m_Type;
                 if (type == DataType::Compound)
                 {
                     // not supported

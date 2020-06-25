@@ -1189,11 +1189,11 @@ void HDF5Common::LocateAttrParent(const std::string &attrName,
 void HDF5Common::CreateVarsFromIO(core::IO &io)
 {
     CheckWriteGroup();
-    const core::DataMap &variables = io.GetVariablesDataMap();
+    const core::VarMap &variables = io.GetVariables();
     for (const auto &vpair : variables)
     {
         const std::string &varName = vpair.first;
-        const DataType varType = vpair.second.first;
+        const DataType varType = vpair.second->m_Type;
 #define declare_template_instantiation(T)                                      \
     if (varType == helper::GetDataType<T>())                                   \
     {                                                                          \

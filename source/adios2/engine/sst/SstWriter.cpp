@@ -157,19 +157,18 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 void SstWriter::FFSMarshalAttributes()
 {
     TAU_SCOPED_TIMER_FUNC();
-    const auto &attributesDataMap = m_IO.GetAttributesDataMap();
+    const auto &attributes = m_IO.GetAttributes();
 
-    const uint32_t attributesCount =
-        static_cast<uint32_t>(attributesDataMap.size());
+    const uint32_t attributesCount = static_cast<uint32_t>(attributes.size());
 
     // if there are no new attributes, nothing to do
     if (attributesCount == m_FFSMarshaledAttributesCount)
         return;
 
-    for (const auto &attributePair : attributesDataMap)
+    for (const auto &attributePair : attributes)
     {
         const std::string name(attributePair.first);
-        const DataType type(attributePair.second.first);
+        const DataType type(attributePair.second->m_Type);
 
         if (type == DataType::None)
         {

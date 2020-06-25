@@ -301,12 +301,9 @@ void IO::SetTransportParameter(const size_t transportIndex,
     m_TransportsParameters[transportIndex][key] = value;
 }
 
-const DataMap &IO::GetVariablesDataMap() const noexcept { return m_Variables; }
+const VarMap &IO::GetVariables() const noexcept { return m_Variables; }
 
-const DataMap &IO::GetAttributesDataMap() const noexcept
-{
-    return m_Attributes;
-}
+const AttrMap &IO::GetAttributes() const noexcept { return m_Attributes; }
 
 bool IO::InConfigFile() const noexcept { return m_InConfigFile; }
 
@@ -322,25 +319,9 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     // variable exists
     if (itVariable != m_Variables.end())
     {
-        // first remove the Variable object
-        const DataType type(itVariable->second.first);
-        const unsigned int index(itVariable->second.second);
-
-        if (type == DataType::Compound)
-        {
-        }
-        else
-        {
-            m_VariableMap.erase(index);
-            isRemoved = true;
-        }
+        m_Variables.erase(itVariable);
+        isRemoved = true;
     }
-
-    if (isRemoved)
-    {
-        m_Variables.erase(name);
-    }
-
     return isRemoved;
 }
 
@@ -348,7 +329,6 @@ void IO::RemoveAllVariables() noexcept
 {
     TAU_SCOPED_TIMER("IO::RemoveAllVariables");
     m_Variables.clear();
-    m_VariableMap.clear();
 }
 
 bool IO::RemoveAttribute(const std::string &name) noexcept
@@ -360,8 +340,7 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
     if (itAttribute != m_Attributes.end())
     {
         // first remove the Attribute object
-        const DataType type(itAttribute->second.first);
-        const unsigned int index(itAttribute->second.second);
+        const DataType type(itAttribute->second->m_Type);
 
         if (type == DataType::None)
         {
@@ -369,14 +348,9 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
         }
         else
         {
-            m_AttributeMap.erase(index);
+            m_Attributes.erase(itAttribute);
             isRemoved = true;
         }
-    }
-
-    if (isRemoved)
-    {
-        m_Attributes.erase(name);
     }
 
     return isRemoved;
@@ -386,7 +360,6 @@ void IO::RemoveAllAttributes() noexcept
 {
     TAU_SCOPED_TIMER("IO::RemoveAllAttributes");
     m_Attributes.clear();
-    m_AttributeMap.clear();
 }
 
 std::map<std::string, Params>
@@ -433,12 +406,9 @@ IO::GetAvailableAttributes(const std::string &variableName,
         }
         else
         {
-            VariableBase &variable =
-                *m_VariableMap.at(itVariable->second.second);
-            attributesInfo =
-                variable.GetAttributesInfo(*this, separator, fullNameKeys);
+            attributesInfo = itVariable->second->GetAttributesInfo(
+                *this, separator, fullNameKeys);
         }
-
         return attributesInfo;
     }
 
@@ -446,16 +416,13 @@ IO::GetAvailableAttributes(const std::string &variableName,
     for (const auto &attributePair : m_Attributes)
     {
         const std::string &name = attributePair.first;
-        const DataType type = attributePair.second.first;
 
-        if (type == DataType::Compound)
+        if (attributePair.second->m_Type == DataType::Compound)
         {
         }
         else
         {
-            AttributeBase &attribute =
-                *m_AttributeMap.at(attributePair.second.second);
-            attributesInfo[name] = attribute.GetInfo();
+            attributesInfo[name] = attributePair.second->GetInfo();
         }
     }
     return attributesInfo;
@@ -468,7 +435,7 @@ DataType IO::InquireVariableType(const std::string &name) const noexcept
     return InquireVariableType(itVariable);
 }
 
-DataType IO::InquireVariableType(const DataMap::const_iterator itVariable) const
+DataType IO::InquireVariableType(const VarMap::const_iterator itVariable) const
     noexcept
 {
     if (itVariable == m_Variables.end())
@@ -476,7 +443,7 @@ DataType IO::InquireVariableType(const DataMap::const_iterator itVariable) const
         return DataType::None;
     }
 
-    const DataType type = itVariable->second.first;
+    const DataType type = itVariable->second->m_Type;
 
     if (m_ReadStreaming)
     {
@@ -485,9 +452,7 @@ DataType IO::InquireVariableType(const DataMap::const_iterator itVariable) const
         }
         else
         {
-            VariableBase &variable =
-                *m_VariableMap.at(itVariable->second.second);
-            if (!variable.IsValidStep(m_EngineStep + 1))
+            if (!itVariable->second->IsValidStep(m_EngineStep + 1))
             {
                 return DataType::None;
             }
@@ -511,7 +476,7 @@ DataType IO::InquireAttributeType(const std::string &name,
         return DataType::None;
     }
 
-    return itAttribute->second.first;
+    return itAttribute->second->m_Type;
 }
 
 size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
@@ -700,8 +665,7 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
         }
         else
         {
-            VariableBase &variable =
-                *m_VariableMap.at(itVariable->second.second);
+            VariableBase &variable = *itVariable->second;
             variable.CheckRandomAccessConflict(hint);
             variable.ResetStepsSelection(zeroStart);
             variable.m_RandomAccess = false;
@@ -720,8 +684,8 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
         const std::string &name = itVariable->first;
         // if for each step (BP4), check if variable type is not empty (means
         // variable exist in that step)
-        const DataType type =
-            isStep ? InquireVariableType(itVariable) : itVariable->second.first;
+        const DataType type = isStep ? InquireVariableType(itVariable)
+                                     : itVariable->second->m_Type;
 
         if (type == DataType::None)
         {
@@ -733,8 +697,7 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
         }
         else
         {
-            VariableBase &variable =
-                *m_VariableMap.at(itVariable->second.second);
+            VariableBase &variable = *itVariable->second;
             variable.m_PrefixedVariables =
                 helper::PrefixMatches(variable.m_Name, variables);
             variable.m_PrefixedAttributes =
@@ -745,42 +708,16 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
     m_IsPrefixedNames = true;
 }
 
-std::map<unsigned int, std::unique_ptr<AttributeBase>> &
-IO::GetAttributeMap() noexcept
-{
-    return m_AttributeMap;
-}
-
 // PRIVATE
-int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const
-    noexcept
-{
-    auto itName = dataMap.find(name);
-    if (itName == dataMap.end())
-    {
-        return -1;
-    }
-    return itName->second.second;
-}
-
 void IO::CheckAttributeCommon(const std::string &name) const
 {
     auto itAttribute = m_Attributes.find(name);
-    if (!IsEnd(itAttribute, m_Attributes))
+    if (itAttribute != m_Attributes.end())
     {
         throw std::invalid_argument("ERROR: attribute " + name +
                                     " exists in IO object " + m_Name +
                                     ", in call to DefineAttribute\n");
     }
-}
-
-bool IO::IsEnd(DataMap::const_iterator itDataMap, const DataMap &dataMap) const
-{
-    if (itDataMap == dataMap.end())
-    {
-        return true;
-    }
-    return false;
 }
 
 void IO::CheckTransportType(const std::string type) const

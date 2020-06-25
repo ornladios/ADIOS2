@@ -144,12 +144,12 @@ void BlockVecToJson(const BlockVec &input, nlohmann::json &output)
 
 void AttributeMapToJson(IO &input, nlohmann::json &output)
 {
-    const auto &attributeMap = input.GetAttributesDataMap();
+    const auto &attributeMap = input.GetAttributes();
     auto &attributesJson = output["Attributes"];
     for (const auto &attributePair : attributeMap)
     {
         const std::string name(attributePair.first);
-        const DataType type(attributePair.second.first);
+        const DataType type(attributePair.second->m_Type);
         if (type == DataType::None)
         {
         }

@@ -39,11 +39,7 @@ struct Entry
 {
     bool isVar;
     DataType typeName;
-    unsigned int typeIndex;
-    Entry(bool b, DataType name, unsigned idx)
-    : isVar(b), typeName(name), typeIndex(idx)
-    {
-    }
+    Entry(bool b, DataType type) : isVar(b), typeName(type) {}
 };
 
 // how to print one data item of an array
