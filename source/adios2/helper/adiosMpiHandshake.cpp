@@ -38,6 +38,7 @@ std::map<std::string, std::map<int, std::set<int>>>
 std::map<std::string, std::map<int, std::set<int>>>
     MpiHandshake::m_ReadersMap;
 std::map<int, int> MpiHandshake::m_AppsSize;
+std::set<int> MpiHandshake::m_RanksToReceive;
 
 
 MpiHandshake::~MpiHandshake()
@@ -68,8 +69,10 @@ size_t MpiHandshake::PlaceInBuffer(size_t stream, int rank)
 
 void MpiHandshake::Test()
 {
-    int success;
+    int success = 0;
     MPI_Status status;
+
+    std::vector<int> ranksToErase;
 
     for (int rank = 0; rank < m_WorldSize; ++rank)
     {
@@ -99,7 +102,15 @@ void MpiHandshake::Test()
                     auto &ranks = m_ReadersMap[filename][appMasterRank];
                     ranks.insert(rank);
                 }
+                ranksToErase.push_back(rank);
             }
+            else{
+                std::cout << std::endl << " Src Rank " << m_WorldRank << " Dest Rank " << rank << " Stream " << stream << " fails " << status.MPI_ERROR << " cancelled " << status._cancelled << " count " << status._ucount << " source " << status.MPI_SOURCE << " tag " << status.MPI_TAG << std::endl;
+            }
+        }
+        for(auto rankToErase : ranksToErase)
+        {
+            m_RanksToReceive.erase(rankToErase);
         }
     }
 }
@@ -127,10 +138,6 @@ bool MpiHandshake::Check(const std::string &filename, const bool verbose)
 
     // check if all ranks' info is received
 
-    if(m_LocalRank == 0)
-    {
-        std::cout << "Checking ...... " << std::endl;
-    }
     for (const auto &app : m_WritersMap[filename])
     {
         if (app.second.size() != m_AppsSize[app.first])
@@ -205,6 +212,7 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     {
         m_SendRequests[rank].resize(maxStreamsPerApp);
         m_RecvRequests[rank].resize(maxStreamsPerApp);
+        m_RanksToReceive.insert(rank);
     }
 
     m_ItemSize = maxFilenameLength + sizeof(char) + sizeof(int) * 2;
@@ -252,14 +260,7 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     // wait and check if required RendezvousAppCount reached
 
     auto startTime = std::chrono::system_clock::now();
-    bool verbose;
-    if(m_LocalRank == 0)
-    {
-        verbose = true;
-    }
-    else{
-        verbose = false;
-    }
+    bool verbose = true;
     while (!Check(filename, verbose))
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -275,6 +276,7 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
         }
     }
 
+    std::cout << "Rank " << m_WorldRank << " completed ..." << std::endl;
 
     ++m_StreamID;
 }
