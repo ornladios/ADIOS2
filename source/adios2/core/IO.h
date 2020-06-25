@@ -518,8 +518,6 @@ private:
     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(declare_map)
 #undef declare_map
 
-    std::map<unsigned int, VariableCompound> m_Compound;
-
     std::map<std::string, std::shared_ptr<Engine>> m_Engines;
 
     /**

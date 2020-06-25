@@ -326,8 +326,6 @@ bool IO::RemoveVariable(const std::string &name) noexcept
 
         if (type == DataType::Compound)
         {
-            auto variableMap = m_Compound;
-            variableMap.erase(index);
         }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
@@ -355,7 +353,6 @@ void IO::RemoveAllVariables() noexcept
 #define declare_type(T) GetVariableMap<T>().clear();
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-    m_Compound.clear();
 }
 
 bool IO::RemoveAttribute(const std::string &name) noexcept
