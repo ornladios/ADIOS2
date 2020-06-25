@@ -122,7 +122,7 @@ protected:
         return Schedules[std::get<0>(GetParam())];
     };
     ReadMode GetReadMode() { return std::get<1>(GetParam()); };
-    int GetScheduleID() { return std::get<0>(GetParam()); };
+    size_t GetScheduleID() { return std::get<0>(GetParam()); };
 };
 
 // Basic case: Variable written every step
@@ -171,6 +171,10 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
     EXPECT_TRUE(writer);
     auto var_i32 = iow.DefineVariable<int32_t>("i32", shape, start, count);
     EXPECT_TRUE(var_i32);
+
+#if ADIOS2_USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
     // Start reader
     adios2::IO ior = adios.DeclareIO("Read");
@@ -323,6 +327,10 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
     auto var_i32 = iow.DefineVariable<int32_t>("i32", shape, start, count);
     EXPECT_TRUE(var_i32);
 
+#if ADIOS2_USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
     // Start reader
     adios2::IO ior = adios.DeclareIO("Read");
     if (!engineName.empty())
@@ -455,7 +463,7 @@ protected:
     };
     size_t GetOddity() { return std::get<1>(GetParam()); };
     ReadMode GetReadMode() { return std::get<2>(GetParam()); };
-    int GetScheduleID() { return std::get<0>(GetParam()); };
+    size_t GetScheduleID() { return std::get<0>(GetParam()); };
 };
 
 // A variable written every other step either from step 0 (EVEN) or from
@@ -510,6 +518,10 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
     EXPECT_TRUE(var_i32);
     auto var_step = iow.DefineVariable<size_t>("step");
     EXPECT_TRUE(var_step);
+
+#if ADIOS2_USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
     // Start reader
     adios2::IO ior = adios.DeclareIO("Read");

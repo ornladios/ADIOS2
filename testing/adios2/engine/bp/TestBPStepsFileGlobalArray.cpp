@@ -18,20 +18,21 @@
 
 std::string engineName; // comes from command line
 
+// Number of elements per process
+const std::size_t Nx = 10;
+using DataArray = std::array<int32_t, Nx>;
+
 class BPStepsFileGlobalArray : public ::testing::Test
 {
 protected:
     BPStepsFileGlobalArray() = default;
 
-    // Number of elements per process
-    static const std::size_t Nx = 10;
-
-    const std::array<int32_t, Nx> I32 = {
+    const DataArray I32 = {
         {512, 513, -510, 515, -508, 517, -506, 519, -504, 521}};
 
-    std::array<int32_t, Nx> GenerateData(int step, int rank, int size)
+    DataArray GenerateData(int step, int rank, int size)
     {
-        std::array<int32_t, Nx> d;
+        DataArray d;
         int j = rank + 1 + step * size;
         for (size_t i = 0; i < d.size(); ++i)
         {
@@ -106,7 +107,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    std::array<int32_t, Nx> m_TestData[NSteps];
+    DataArray m_TestData[NSteps];
     adios2::Dims shape{static_cast<unsigned int>(mpiSize * Nx)};
     adios2::Dims start{static_cast<unsigned int>(mpiRank * Nx)};
     adios2::Dims count{static_cast<unsigned int>(Nx)};
@@ -210,7 +211,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
             var_i32.SetStepSelection({step, 1});
             size_t start = static_cast<size_t>(mpiRank) * Nx;
             var_i32.SetSelection({{start}, {Nx}});
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var_i32, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read step " << step << ": "
                       << ArrayToString(d.data(), Nx) << std::endl;
@@ -240,7 +241,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
             var_i32.SetStepSelection({step, 1});
             size_t blockID = static_cast<size_t>(mpiRank);
             var_i32.SetBlockSelection(blockID);
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var_i32, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read step " << step
                       << " block " << blockID << ": "
@@ -274,7 +275,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
             EXPECT_EQ(var_i32.StepsStart(), 0);
             size_t start = static_cast<size_t>(mpiRank) * Nx;
             var_i32.SetSelection({{start}, {Nx}});
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var_i32, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read step " << step << ": "
                       << ArrayToString(d.data(), Nx) << std::endl;
@@ -305,7 +306,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
             EXPECT_EQ(var_i32.StepsStart(), 0);
             size_t blockID = static_cast<size_t>(mpiRank);
             var_i32.SetBlockSelection(blockID);
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var_i32, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read step " << step
                       << " block " << blockID << ": "
@@ -341,7 +342,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    std::array<int32_t, Nx> m_TestData[NSteps];
+    DataArray m_TestData[NSteps];
     adios2::Dims shape{static_cast<unsigned int>(mpiSize * Nx)};
     adios2::Dims start{static_cast<unsigned int>(mpiRank * Nx)};
     adios2::Dims count{static_cast<unsigned int>(Nx)};
@@ -421,7 +422,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             var.SetStepSelection({0, 1});
             size_t start = static_cast<size_t>(mpiRank) * Nx;
             var.SetSelection({{start}, {Nx}});
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read var " << varName << ": "
                       << ArrayToString(d.data(), Nx) << std::endl;
@@ -452,7 +453,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             EXPECT_EQ(var.StepsStart(), 0);
             size_t start = static_cast<size_t>(mpiRank) * Nx;
             var.SetSelection({{start}, {Nx}});
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read var " << varName << ": "
                       << ArrayToString(d.data(), Nx) << std::endl;
@@ -485,7 +486,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             var.SetStepSelection({0, 1});
             size_t blockID = static_cast<size_t>(mpiRank);
             var.SetBlockSelection(blockID);
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read step " << step
                       << " block " << blockID << ": "
@@ -519,7 +520,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             EXPECT_EQ(var.StepsStart(), 0);
             size_t start = static_cast<size_t>(mpiRank) * Nx;
             var.SetSelection({{start}, {Nx}});
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read var " << varName << ": "
                       << ArrayToString(d.data(), Nx) << std::endl;
@@ -554,7 +555,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             EXPECT_EQ(var.StepsStart(), 0);
             size_t blockID = static_cast<size_t>(mpiRank);
             var.SetBlockSelection(blockID);
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read step " << step
                       << " block " << blockID << ": "
@@ -612,7 +613,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    std::array<int32_t, Nx> m_TestData[NSteps / 2];
+    std::vector<DataArray> m_TestData;
     adios2::Dims shape{static_cast<unsigned int>(mpiSize * Nx)};
     adios2::Dims start{static_cast<unsigned int>(mpiRank * Nx)};
     adios2::Dims count{static_cast<unsigned int>(Nx)};
@@ -654,7 +655,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
             engine.Put(var_step, step);
             if (step % 2 == Oddity)
             {
-                m_TestData[stepsWritten] = GenerateData(step, mpiRank, mpiSize);
+                m_TestData.push_back(GenerateData(step, mpiRank, mpiSize));
                 std::cout << "Rank " << mpiRank << " write step " << step
                           << ": "
                           << ArrayToString(m_TestData[stepsWritten].data(), Nx)
@@ -730,7 +731,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
             var_i32.SetStepSelection({s, 1});
             size_t start = static_cast<size_t>(mpiRank) * Nx;
             var_i32.SetSelection({{start}, {Nx}});
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var_i32, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read step " << s << ": "
                       << ArrayToString(d.data(), Nx) << std::endl;
@@ -762,7 +763,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
             var_i32.SetStepSelection({s, 1});
             size_t blockID = static_cast<size_t>(mpiRank);
             var_i32.SetBlockSelection(blockID);
-            std::array<int32_t, Nx> d;
+            DataArray d;
             engine.Get(var_i32, d.data(), adios2::Mode::Sync);
             std::cout << "Rank " << mpiRank << " read step " << s << " block "
                       << blockID << ": " << ArrayToString(d.data(), Nx)
@@ -800,7 +801,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
                 EXPECT_EQ(var_i32.StepsStart(), 0);
                 size_t start = static_cast<size_t>(mpiRank) * Nx;
                 var_i32.SetSelection({{start}, {Nx}});
-                std::array<int32_t, Nx> d;
+                DataArray d;
                 engine.Get(var_i32, d.data(), adios2::Mode::Sync);
                 std::cout << "Rank " << mpiRank << " read at step " << step
                           << ": " << ArrayToString(d.data(), Nx) << std::endl;
@@ -839,7 +840,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
                 EXPECT_EQ(var_i32.StepsStart(), 0);
                 size_t blockID = static_cast<size_t>(mpiRank);
                 var_i32.SetBlockSelection(blockID);
-                std::array<int32_t, Nx> d;
+                DataArray d;
                 engine.Get(var_i32, d.data(), adios2::Mode::Sync);
                 std::cout << "Rank " << mpiRank << " read step " << step
                           << " block " << blockID << ": "
