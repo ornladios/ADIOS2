@@ -329,15 +329,11 @@ bool IO::RemoveVariable(const std::string &name) noexcept
         if (type == DataType::Compound)
         {
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        auto &variableMap = GetVariableMap<T>();                               \
-        variableMap.erase(index);                                              \
-        isRemoved = true;                                                      \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
+        else
+        {
+            m_VariableMap.erase(index);
+            isRemoved = true;
+        }
     }
 
     if (isRemoved)
@@ -352,9 +348,7 @@ void IO::RemoveAllVariables() noexcept
 {
     TAU_SCOPED_TIMER("IO::RemoveAllVariables");
     m_Variables.clear();
-#define declare_type(T) GetVariableMap<T>().clear();
-    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
+    m_VariableMap.clear();
 }
 
 bool IO::RemoveAttribute(const std::string &name) noexcept
@@ -437,16 +431,13 @@ IO::GetAvailableAttributes(const std::string &variableName,
         if (type == DataType::Compound)
         {
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Variable<T> &variable =                                                \
-            GetVariableMap<T>().at(itVariable->second.second);                 \
-        attributesInfo =                                                       \
-            variable.GetAttributesInfo(*this, separator, fullNameKeys);        \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+        else
+        {
+            VariableBase &variable =
+                *m_VariableMap.at(itVariable->second.second);
+            attributesInfo =
+                variable.GetAttributesInfo(*this, separator, fullNameKeys);
+        }
 
         return attributesInfo;
     }
@@ -492,19 +483,15 @@ DataType IO::InquireVariableType(const DataMap::const_iterator itVariable) const
         if (type == DataType::Compound)
         {
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        const Variable<T> &variable =                                          \
-            const_cast<IO *>(this)->GetVariableMap<T>().at(                    \
-                itVariable->second.second);                                    \
-        if (!variable.IsValidStep(m_EngineStep + 1))                           \
-        {                                                                      \
-            return DataType::None;                                             \
-        }                                                                      \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+        else
+        {
+            VariableBase &variable =
+                *m_VariableMap.at(itVariable->second.second);
+            if (!variable.IsValidStep(m_EngineStep + 1))
+            {
+                return DataType::None;
+            }
+        }
     }
 
     return type;
@@ -711,18 +698,14 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
         if (type == DataType::Compound)
         {
         }
-// using relative start
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Variable<T> &variable =                                                \
-            GetVariableMap<T>().at(itVariable->second.second);                 \
-        variable.CheckRandomAccessConflict(hint);                              \
-        variable.ResetStepsSelection(zeroStart);                               \
-        variable.m_RandomAccess = false;                                       \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
+        else
+        {
+            VariableBase &variable =
+                *m_VariableMap.at(itVariable->second.second);
+            variable.CheckRandomAccessConflict(hint);
+            variable.ResetStepsSelection(zeroStart);
+            variable.m_RandomAccess = false;
+        }
     }
 }
 
@@ -748,18 +731,15 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
         if (type == DataType::Compound)
         {
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Variable<T> &variable =                                                \
-            GetVariableMap<T>().at(itVariable->second.second);                 \
-        variable.m_PrefixedVariables =                                         \
-            helper::PrefixMatches(variable.m_Name, variables);                 \
-        variable.m_PrefixedAttributes =                                        \
-            helper::PrefixMatches(variable.m_Name, attributes);                \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
+        else
+        {
+            VariableBase &variable =
+                *m_VariableMap.at(itVariable->second.second);
+            variable.m_PrefixedVariables =
+                helper::PrefixMatches(variable.m_Name, variables);
+            variable.m_PrefixedAttributes =
+                helper::PrefixMatches(variable.m_Name, attributes);
+        }
     }
 
     m_IsPrefixedNames = true;

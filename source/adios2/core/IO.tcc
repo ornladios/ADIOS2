@@ -46,16 +46,17 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
         }
     }
 
-    auto &variableMap = GetVariableMap<T>();
     const unsigned int newIndex =
-        variableMap.empty() ? 0 : variableMap.rbegin()->first + 1;
+        m_AttributeMap.empty() ? 0 : m_AttributeMap.rbegin()->first + 1;
 
-    auto itVariablePair = variableMap.emplace(
-        newIndex, Variable<T>(name, shape, start, count, constantDims));
+    auto itVariablePair = m_VariableMap.emplace(
+        newIndex, std::unique_ptr<VariableBase>(new Variable<T>(
+                      name, shape, start, count, constantDims)));
     m_Variables.emplace(name,
                         std::make_pair(helper::GetDataType<T>(), newIndex));
 
-    Variable<T> &variable = itVariablePair.first->second;
+    Variable<T> &variable =
+        static_cast<Variable<T> &>(*itVariablePair.first->second);
 
     // check IO placeholder for variable operations
     auto itOperations = m_VarOpsPlaceholder.find(name);
@@ -88,7 +89,8 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
         return nullptr;
     }
 
-    Variable<T> *variable = &GetVariableMap<T>().at(itVariable->second.second);
+    Variable<T> *variable = static_cast<Variable<T> *>(
+        m_VariableMap.at(itVariable->second.second).get());
     if (m_ReadStreaming)
     {
         if (!variable->IsValidStep(m_EngineStep + 1))
@@ -225,16 +227,6 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
 }
 
 // PRIVATE
-
-// GetVariableMap
-#define make_GetVariableMap(T, NAME)                                           \
-    template <>                                                                \
-    std::map<unsigned int, Variable<T>> &IO::GetVariableMap() noexcept         \
-    {                                                                          \
-        return m_##NAME;                                                       \
-    }
-ADIOS2_FOREACH_STDTYPE_2ARGS(make_GetVariableMap)
-#undef make_GetVariableMap
 
 template <class T>
 Params IO::GetVariableInfo(const std::string &variableName,

@@ -454,10 +454,6 @@ public:
 
     void SetPrefixedNames(const bool isStep) noexcept;
 
-    /** Gets the internal reference to a variable map for type T */
-    template <class T>
-    std::map<unsigned int, Variable<T>> &GetVariableMap() noexcept;
-
     /** Gets the internal reference to the attribute map. */
     std::map<unsigned int, std::unique_ptr<AttributeBase>> &
     GetAttributeMap() noexcept;
@@ -512,10 +508,7 @@ private:
     /** Independent (default) or Collective */
     adios2::IOMode m_IOMode = adios2::IOMode::Independent;
 
-/** Variable containers based on fixed-size type */
-#define declare_map(T, NAME) std::map<unsigned int, Variable<T>> m_##NAME;
-    ADIOS2_FOREACH_STDTYPE_2ARGS(declare_map)
-#undef declare_map
+    std::map<unsigned int, std::unique_ptr<VariableBase>> m_VariableMap;
 
     std::map<unsigned int, std::unique_ptr<AttributeBase>> m_AttributeMap;
 
