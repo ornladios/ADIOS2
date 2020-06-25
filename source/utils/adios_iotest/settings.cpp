@@ -10,6 +10,8 @@
 
 #include "settings.h"
 
+#include <cmath>
+#include <cstring>
 #include <getopt.h>
 #include <iostream>
 #include <stdexcept>
@@ -42,7 +44,8 @@ size_t Settings::ndigits(size_t n) const
 void Settings::displayHelp()
 {
     std::cout
-        << "Usage: adios_iotest -a appid -c config {-s | -w} -d d1 [d2 .. dN] "
+        << "Usage: adios_iotest -a appid -c config {-s | -w} -d {d1 [d2 .. dN] "
+           "| r1,[r2,..,rN]}"
            "[-x "
            "file]\n"
         << "  -a appID:  unique number for each application in the workflow\n"
@@ -51,6 +54,12 @@ void Settings::displayHelp()
         << "      d1:        number of processes in 1st (slowest) dimension\n"
         << "      dN:        number of processes in Nth dimension\n"
         << "                 d1*d2*..*dN must equal the number of processes\n"
+        << "      r1:        ratio of process decomposition in the 1st "
+           "(slowest) dimension\n"
+        << "      rN:        ratio of process decomposition in the Nth "
+           "dimension\n"
+        << "                 r1xr2x..xrN must scale up to process count"
+           "count without remainder\n"
         << "  -s OR -w:  strong or weak scaling. \n"
         << "             Dimensions in config are treated accordingly\n"
         << "  -x file    ADIOS configuration XML file\n"
@@ -77,6 +86,54 @@ size_t Settings::stringToNumber(const std::string &varName,
     return retval;
 }
 
+int Settings::parseRatios(const char *arg)
+{
+    char *argCopy = strdup(arg);
+    char *ratio;
+
+    ratio = strtok(argCopy, ",");
+    while (ratio)
+    {
+        processDecomp[nDecomp++] = stringToNumber("decomposition ratio", ratio);
+        ratio = strtok(NULL, ",");
+    }
+
+    free(argCopy);
+
+    isRatioDecomp = true;
+
+    return (0);
+}
+
+int Settings::rescaleDecomp()
+{
+    size_t ratioProd = 1;
+    size_t scaleFactor;
+
+    for (size_t i = 0; i < nDecomp; i++)
+    {
+        ratioProd *= processDecomp[i];
+    }
+
+    for (scaleFactor = 1; ratioProd * pow(scaleFactor, nDecomp) <= nProc;
+         scaleFactor++)
+    {
+        if (ratioProd * pow(scaleFactor, nDecomp) == nProc)
+        {
+            for (size_t i = 0; i < nDecomp; i++)
+            {
+                processDecomp[i] *= scaleFactor;
+            }
+            return (0);
+        }
+    }
+
+    throw std::invalid_argument(
+        "decomposition ratios must scale up to process count");
+
+    return (0);
+}
+
 int Settings::processArgs(int argc, char *argv[])
 {
     bool appIdDefined = false;
@@ -97,9 +154,16 @@ int Settings::processArgs(int argc, char *argv[])
             configFileName = optarg;
             break;
         case 'd':
-            processDecomp[nDecomp] =
-                stringToNumber("decomposition in dimension 1", optarg);
-            ++nDecomp;
+            if (strchr(optarg, ','))
+            {
+                parseRatios(optarg);
+            }
+            else
+            {
+                processDecomp[nDecomp] =
+                    stringToNumber("decomposition in dimension 1", optarg);
+                ++nDecomp;
+            }
             break;
         case 'F':
             fixedPattern = true;
@@ -220,6 +284,11 @@ int Settings::processArguments(int argc, char *argv[], MPI_Comm worldComm)
         MPI_Comm_size(appComm, &nproc);
         myRank = static_cast<size_t>(rank);
         nProc = static_cast<size_t>(nproc);
+
+        if (isRatioDecomp)
+        {
+            rescaleDecomp();
+        }
     }
     catch (std::exception &e) // command-line argument errors
     {
