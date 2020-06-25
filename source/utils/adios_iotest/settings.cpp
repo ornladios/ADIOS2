@@ -88,9 +88,10 @@ size_t Settings::stringToNumber(const std::string &varName,
 
 int Settings::parseRatios(const char *arg)
 {
-    char *argCopy = strdup(arg);
+    char *argCopy = malloc(strlen(arg) * sizeof(*argCopy));
     char *ratio;
 
+    strcpy(argCopy, arg);
     ratio = strtok(argCopy, ",");
     while (ratio)
     {
