@@ -804,7 +804,8 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
                 DataArray d;
                 engine.Get(var_i32, d.data(), adios2::Mode::Sync);
                 std::cout << "Rank " << mpiRank << " read at step " << step
-                          << ": " << ArrayToString(d.data(), Nx) << std::endl;
+                          << " var-step " << writtenStep << ": "
+                          << ArrayToString(d.data(), Nx) << std::endl;
 
                 for (size_t i = 0; i < Nx; ++i)
                 {
@@ -829,6 +830,8 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
                          "block by block"
                       << std::endl;
         }
+
+        size_t writtenStep = 0;
         for (size_t step = 0; step < NSteps; ++step)
         {
             engine.BeginStep();
@@ -842,17 +845,18 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
                 var_i32.SetBlockSelection(blockID);
                 DataArray d;
                 engine.Get(var_i32, d.data(), adios2::Mode::Sync);
-                std::cout << "Rank " << mpiRank << " read step " << step
-                          << " block " << blockID << ": "
-                          << ArrayToString(d.data(), Nx) << std::endl;
+                std::cout << "Rank " << mpiRank << " read at step " << step
+                          << " var-step " << writtenStep << " block " << blockID
+                          << ": " << ArrayToString(d.data(), Nx) << std::endl;
                 auto start = var_i32.Start();
                 auto count = var_i32.Count();
                 EXPECT_EQ(start[0], mpiRank * Nx);
                 EXPECT_EQ(count[0], 1 * Nx);
                 for (size_t i = 0; i < Nx; ++i)
                 {
-                    EXPECT_EQ(d[i], m_TestData[step][i]);
+                    EXPECT_EQ(d[i], m_TestData[writtenStep][i]);
                 }
+                ++writtenStep;
             }
             engine.EndStep();
         }

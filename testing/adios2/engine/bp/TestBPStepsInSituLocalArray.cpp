@@ -156,6 +156,7 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
     {
         ior.SetEngine(engineName);
     }
+    ior.SetParameter("OpenTimeoutSecs", "10.0");
     adios2::Engine reader = ior.Open(fname, adios2::Mode::Read);
     EXPECT_TRUE(reader);
 
@@ -283,6 +284,7 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
     {
         ior.SetEngine(engineName);
     }
+    ior.SetParameter("OpenTimeoutSecs", "10.0");
     adios2::Engine reader = ior.Open(fname, adios2::Mode::Read);
     EXPECT_TRUE(reader);
 
@@ -432,6 +434,7 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
     {
         ior.SetEngine(engineName);
     }
+    ior.SetParameter("OpenTimeoutSecs", "10.0");
     adios2::Engine reader = ior.Open(fname, adios2::Mode::Read);
     EXPECT_TRUE(reader);
 
