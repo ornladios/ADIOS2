@@ -192,7 +192,7 @@ int main(int argc, char **argv)
     int result;
     ::testing::InitGoogleTest(&argc, argv);
 
-    DelayMS = 0; // zero for common writer
+    DelayMS = 0; // zero default for common writer
 
     ParseArgs(argc, argv);
 

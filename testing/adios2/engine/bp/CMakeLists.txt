@@ -41,6 +41,8 @@ bp3_bp4_gtest_add_tests_helper(WriteReadBlockInfo MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadVariableSpan MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(TimeAggregation MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(NoXMLRecovery MPI_ALLOW)
+bp3_bp4_gtest_add_tests_helper(StepsFileGlobalArray MPI_ALLOW)
+bp3_bp4_gtest_add_tests_helper(StepsFileLocalArray MPI_ALLOW)
 
 if(NOT MSVC)
   bp3_bp4_gtest_add_tests_helper(BufferSize MPI_NONE)
@@ -57,6 +59,12 @@ gtest_add_tests_helper(WriteNull MPI_ALLOW BP Engine.BP. .BP3
 
 # BP4 only for now
 gtest_add_tests_helper(WriteAppendReadADIOS2 MPI_ALLOW BP Engine.BP. .BP4
+  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
+)
+gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .BP4
+  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
+)
+gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 )
 

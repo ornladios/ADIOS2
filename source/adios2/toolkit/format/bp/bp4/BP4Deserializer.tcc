@@ -72,7 +72,10 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
     }
 
     auto itStep = std::next(indices.begin(), stepsStart);
+    // BlocksInfo() expects absolute step, stepsStart is relative
+    const size_t absStep = itStep->first;
 
+    // Check that we have enough steps from stepsStart
     for (size_t i = 0; i < stepsCount; ++i)
     {
         if (itStep == indices.end())
@@ -91,8 +94,11 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
 
     if (variable.m_SelectionType == SelectionType::WriteBlock)
     {
+        // BlocksInfo() expects absolute step, stepsStart is relative
+        // BlocksInfo() adds +1 to match the step starting from 1
+        // but absStep already is the actual step in the map
         const std::vector<typename core::Variable<T>::Info> blocksInfo =
-            BlocksInfo(variable, stepsStart);
+            BlocksInfo(variable, absStep - 1);
 
         if (variable.m_BlockID >= blocksInfo.size())
         {
@@ -758,10 +764,8 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
         variable->m_ShapeID = ShapeID::GlobalArray;
         variable->m_SingleValue = true;
     }
-    /* Update variable's starting step, which equals to the min value in the
-     * sorted map minus one */
-    variable->m_StepsStart =
-        variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
+    /* Update variable's starting step, which is always 0 */
+    variable->m_StepsStart = 0;
 
     // update variable Engine for read streaming functions
     variable->m_Engine = &engine;
@@ -1010,10 +1014,8 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
         // in metadata
         variable->m_SingleValue = true;
     }
-    /* Update variable's starting step, which equals to the min value in the
-     * sorted map minus one */
-    variable->m_StepsStart =
-        variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
+    /* Update variable's starting step, which is always 0 */
+    variable->m_StepsStart = 0;
 
     // update variable Engine for read streaming functions
     variable->m_Engine = &engine;

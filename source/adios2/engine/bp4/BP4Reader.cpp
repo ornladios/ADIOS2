@@ -395,7 +395,13 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
                     " was found with an index file but md.0 "
                     "has not contained enough data within "
                     "the specified timeout of " +
-                    std::to_string(timeoutSeconds.count()) + " seconds.");
+                    std::to_string(timeoutSeconds.count()) +
+                    " seconds. index size = " +
+                    std::to_string(metadataIndexFileSize) +
+                    " metadata size = " + std::to_string(fileSize) +
+                    " expected size = " + std::to_string(expectedMinFileSize) +
+                    ". One reason could be if the reader finds old data while "
+                    "the writer is creating the new files.");
             }
         }
     }
