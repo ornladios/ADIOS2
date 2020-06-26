@@ -989,13 +989,14 @@ BP3Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
 
     const auto &buffer = m_Metadata.m_Buffer;
 
-    const size_t stepStart = variable.m_StepsStart + 1;
-    const size_t stepEnd = stepStart + variable.m_StepsCount; // exclusive
+    auto itStep = variable.m_AvailableStepBlockIndexOffsets.begin();
+    const size_t absStepStart = itStep->first; // absolute step in map
+    const size_t stepEnd = absStepStart + variable.m_StepsCount; // exclusive
 
     const Box<Dims> selectionBox = helper::StartEndBox(
         variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
-    for (size_t step = stepStart; step < stepEnd; ++step)
+    for (size_t step = absStepStart; step < stepEnd; ++step)
     {
         auto itBlockStarts =
             variable.m_AvailableStepBlockIndexOffsets.find(step);
