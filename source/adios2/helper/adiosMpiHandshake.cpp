@@ -102,16 +102,6 @@ void MpiHandshake::Test()
                 }
                 ranksToErase.push_back(rank);
             }
-            else
-            {
-                std::cout << std::endl
-                          << " Src Rank " << m_WorldRank << " Dest Rank "
-                          << rank << " Stream " << stream << " fails "
-                          << status.MPI_ERROR << " cancelled "
-                          << status._cancelled << " count " << status._ucount
-                          << " source " << status.MPI_SOURCE << " tag "
-                          << status.MPI_TAG << std::endl;
-            }
         }
         for (auto rankToErase : ranksToErase)
         {
@@ -265,8 +255,7 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     // wait and check if required RendezvousAppCount reached
 
     auto startTime = std::chrono::system_clock::now();
-    bool verbose = true;
-    while (!Check(filename, verbose))
+    while (!Check(filename, false))
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         auto nowTime = std::chrono::system_clock::now();
@@ -274,7 +263,7 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
             nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
-            Check(filename, verbose);
+            Check(filename, true);
             throw(std::runtime_error("Mpi handshake timeout on Rank " +
                                      std::to_string(m_WorldRank) +
                                      " for Stream " + filename));
