@@ -51,10 +51,8 @@ public:
 
     ~Attribute<T>() = default;
 
-    Params GetInfo() const noexcept;
-
 private:
-    Params DoGetInfo() const noexcept;
+    std::string DoGetInfoValue() const noexcept override;
 };
 
 } // end namespace core

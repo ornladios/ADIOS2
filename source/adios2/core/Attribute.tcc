@@ -13,7 +13,6 @@
 
 #include "Attribute.h"
 
-#include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosType.h"
 
 namespace adios2
@@ -22,21 +21,18 @@ namespace core
 {
 
 template <class T>
-Params Attribute<T>::DoGetInfo() const noexcept
+std::string Attribute<T>::DoGetInfoValue() const noexcept
 {
-    Params info;
-    info["Type"] = ToString(m_Type);
-    info["Elements"] = std::to_string(m_Elements);
-
+    std::string value;
     if (m_IsSingleValue)
     {
-        info["Value"] = helper::ValueToString(m_DataSingleValue);
+        value = helper::ValueToString(m_DataSingleValue);
     }
     else
     {
-        info["Value"] = "{ " + helper::VectorToCSV(m_DataArray) + " }";
+        value = "{ " + helper::VectorToCSV(m_DataArray) + " }";
     }
-    return info;
+    return value;
 }
 
 } // end namespace core

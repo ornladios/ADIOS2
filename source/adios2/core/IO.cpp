@@ -179,6 +179,8 @@ IO::IO(ADIOS &adios, const std::string name, const bool inConfigFile,
 {
 }
 
+IO::~IO() = default;
+
 void IO::SetEngine(const std::string engineType) noexcept
 {
     auto lf_InsertParam = [&](const std::string &key,
@@ -299,12 +301,9 @@ void IO::SetTransportParameter(const size_t transportIndex,
     m_TransportsParameters[transportIndex][key] = value;
 }
 
-const DataMap &IO::GetVariablesDataMap() const noexcept { return m_Variables; }
+const VarMap &IO::GetVariables() const noexcept { return m_Variables; }
 
-const DataMap &IO::GetAttributesDataMap() const noexcept
-{
-    return m_Attributes;
-}
+const AttrMap &IO::GetAttributes() const noexcept { return m_Attributes; }
 
 bool IO::InConfigFile() const noexcept { return m_InConfigFile; }
 
@@ -320,31 +319,9 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     // variable exists
     if (itVariable != m_Variables.end())
     {
-        // first remove the Variable object
-        const DataType type(itVariable->second.first);
-        const unsigned int index(itVariable->second.second);
-
-        if (type == DataType::Compound)
-        {
-            auto variableMap = m_Compound;
-            variableMap.erase(index);
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        auto &variableMap = GetVariableMap<T>();                               \
-        variableMap.erase(index);                                              \
-        isRemoved = true;                                                      \
+        m_Variables.erase(itVariable);
+        isRemoved = true;
     }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    }
-
-    if (isRemoved)
-    {
-        m_Variables.erase(name);
-    }
-
     return isRemoved;
 }
 
@@ -352,10 +329,6 @@ void IO::RemoveAllVariables() noexcept
 {
     TAU_SCOPED_TIMER("IO::RemoveAllVariables");
     m_Variables.clear();
-#define declare_type(T) GetVariableMap<T>().clear();
-    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    m_Compound.clear();
 }
 
 bool IO::RemoveAttribute(const std::string &name) noexcept
@@ -367,27 +340,17 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
     if (itAttribute != m_Attributes.end())
     {
         // first remove the Attribute object
-        const DataType type(itAttribute->second.first);
-        const unsigned int index(itAttribute->second.second);
+        const DataType type(itAttribute->second->m_Type);
 
         if (type == DataType::None)
         {
             // nothing to do
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        auto &attributeMap = GetAttributeMap<T>();                             \
-        attributeMap.erase(index);                                             \
-        isRemoved = true;                                                      \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    }
-
-    if (isRemoved)
-    {
-        m_Attributes.erase(name);
+        else
+        {
+            m_Attributes.erase(itAttribute);
+            isRemoved = true;
+        }
     }
 
     return isRemoved;
@@ -397,10 +360,6 @@ void IO::RemoveAllAttributes() noexcept
 {
     TAU_SCOPED_TIMER("IO::RemoveAllAttributes");
     m_Attributes.clear();
-
-#define declare_type(T) GetAttributeMap<T>().clear();
-    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
 }
 
 std::map<std::string, Params>
@@ -445,17 +404,11 @@ IO::GetAvailableAttributes(const std::string &variableName,
         if (type == DataType::Compound)
         {
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Variable<T> &variable =                                                \
-            GetVariableMap<T>().at(itVariable->second.second);                 \
-        attributesInfo =                                                       \
-            variable.GetAttributesInfo(*this, separator, fullNameKeys);        \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
+        else
+        {
+            attributesInfo = itVariable->second->GetAttributesInfo(
+                *this, separator, fullNameKeys);
+        }
         return attributesInfo;
     }
 
@@ -463,20 +416,14 @@ IO::GetAvailableAttributes(const std::string &variableName,
     for (const auto &attributePair : m_Attributes)
     {
         const std::string &name = attributePair.first;
-        const DataType type = attributePair.second.first;
 
-        if (type == DataType::Compound)
+        if (attributePair.second->m_Type == DataType::Compound)
         {
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Attribute<T> &attribute =                                              \
-            GetAttributeMap<T>().at(attributePair.second.second);              \
-        attributesInfo[name] = attribute.GetInfo();                            \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+        else
+        {
+            attributesInfo[name] = attributePair.second->GetInfo();
+        }
     }
     return attributesInfo;
 }
@@ -488,7 +435,7 @@ DataType IO::InquireVariableType(const std::string &name) const noexcept
     return InquireVariableType(itVariable);
 }
 
-DataType IO::InquireVariableType(const DataMap::const_iterator itVariable) const
+DataType IO::InquireVariableType(const VarMap::const_iterator itVariable) const
     noexcept
 {
     if (itVariable == m_Variables.end())
@@ -496,26 +443,20 @@ DataType IO::InquireVariableType(const DataMap::const_iterator itVariable) const
         return DataType::None;
     }
 
-    const DataType type = itVariable->second.first;
+    const DataType type = itVariable->second->m_Type;
 
     if (m_ReadStreaming)
     {
         if (type == DataType::Compound)
         {
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        const Variable<T> &variable =                                          \
-            const_cast<IO *>(this)->GetVariableMap<T>().at(                    \
-                itVariable->second.second);                                    \
-        if (!variable.IsValidStep(m_EngineStep + 1))                           \
-        {                                                                      \
-            return DataType::None;                                             \
-        }                                                                      \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+        else
+        {
+            if (!itVariable->second->IsValidStep(m_EngineStep + 1))
+            {
+                return DataType::None;
+            }
+        }
     }
 
     return type;
@@ -535,7 +476,7 @@ DataType IO::InquireAttributeType(const std::string &name,
         return DataType::None;
     }
 
-    return itAttribute->second.first;
+    return itAttribute->second->m_Type;
 }
 
 size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
@@ -722,18 +663,13 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
         if (type == DataType::Compound)
         {
         }
-// using relative start
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Variable<T> &variable =                                                \
-            GetVariableMap<T>().at(itVariable->second.second);                 \
-        variable.CheckRandomAccessConflict(hint);                              \
-        variable.ResetStepsSelection(zeroStart);                               \
-        variable.m_RandomAccess = false;                                       \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
+        else
+        {
+            VariableBase &variable = *itVariable->second;
+            variable.CheckRandomAccessConflict(hint);
+            variable.ResetStepsSelection(zeroStart);
+            variable.m_RandomAccess = false;
+        }
     }
 }
 
@@ -748,8 +684,8 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
         const std::string &name = itVariable->first;
         // if for each step (BP4), check if variable type is not empty (means
         // variable exist in that step)
-        const DataType type =
-            isStep ? InquireVariableType(itVariable) : itVariable->second.first;
+        const DataType type = isStep ? InquireVariableType(itVariable)
+                                     : itVariable->second->m_Type;
 
         if (type == DataType::None)
         {
@@ -759,53 +695,29 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
         if (type == DataType::Compound)
         {
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Variable<T> &variable =                                                \
-            GetVariableMap<T>().at(itVariable->second.second);                 \
-        variable.m_PrefixedVariables =                                         \
-            helper::PrefixMatches(variable.m_Name, variables);                 \
-        variable.m_PrefixedAttributes =                                        \
-            helper::PrefixMatches(variable.m_Name, attributes);                \
-    }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
+        else
+        {
+            VariableBase &variable = *itVariable->second;
+            variable.m_PrefixedVariables =
+                helper::PrefixMatches(variable.m_Name, variables);
+            variable.m_PrefixedAttributes =
+                helper::PrefixMatches(variable.m_Name, attributes);
+        }
     }
 
     m_IsPrefixedNames = true;
 }
 
 // PRIVATE
-int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const
-    noexcept
-{
-    auto itName = dataMap.find(name);
-    if (itName == dataMap.end())
-    {
-        return -1;
-    }
-    return itName->second.second;
-}
-
 void IO::CheckAttributeCommon(const std::string &name) const
 {
     auto itAttribute = m_Attributes.find(name);
-    if (!IsEnd(itAttribute, m_Attributes))
+    if (itAttribute != m_Attributes.end())
     {
         throw std::invalid_argument("ERROR: attribute " + name +
                                     " exists in IO object " + m_Name +
                                     ", in call to DefineAttribute\n");
     }
-}
-
-bool IO::IsEnd(DataMap::const_iterator itDataMap, const DataMap &dataMap) const
-{
-    if (itDataMap == dataMap.end())
-    {
-        return true;
-    }
-    return false;
 }
 
 void IO::CheckTransportType(const std::string type) const

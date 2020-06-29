@@ -332,12 +332,12 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
 void DataManSerializer::PutAttributes(core::IO &io)
 {
     TAU_SCOPED_TIMER_FUNC();
-    const auto &attributesDataMap = io.GetAttributesDataMap();
+    const auto &attributes = io.GetAttributes();
     bool attributePut = false;
-    for (const auto &attributePair : attributesDataMap)
+    for (const auto &attributePair : attributes)
     {
         const std::string name(attributePair.first);
-        const DataType type(attributePair.second.first);
+        const DataType type(attributePair.second->m_Type);
         if (type == DataType::None)
         {
         }
@@ -383,9 +383,9 @@ void DataManSerializer::GetAttributes(core::IO &io)
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
-        const auto &attributesDataMap = io.GetAttributesDataMap();             \
-        auto it = attributesDataMap.find(staticVar["N"].get<std::string>());   \
-        if (it == attributesDataMap.end())                                     \
+        const auto &attributes = io.GetAttributes();                           \
+        auto it = attributes.find(staticVar["N"].get<std::string>());          \
+        if (it == attributes.end())                                            \
         {                                                                      \
             if (staticVar["V"].get<bool>())                                    \
             {                                                                  \

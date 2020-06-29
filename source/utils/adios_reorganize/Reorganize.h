@@ -11,7 +11,7 @@
 #ifndef UTILS_REORGANIZE_REORGANIZE_H_
 #define UTILS_REORGANIZE_REORGANIZE_H_
 
-#include "adios2/core/IO.h" // DataMap
+#include "adios2/core/IO.h"
 #include "adios2/helper/adiosComm.h"
 #include "utils/Utils.h"
 
@@ -61,10 +61,10 @@ private:
                      const int *np // number of processes in each dimension
     );
     int ProcessMetadata(core::Engine &rStream, core::IO &io,
-                        const core::DataMap &variables,
-                        const core::DataMap &attributes, int step);
+                        const core::VarMap &variables,
+                        const core::AttrMap &attributes, int step);
     int ReadWrite(core::Engine &rStream, core::Engine &wStream, core::IO &io,
-                  const core::DataMap &variables, int step);
+                  const core::VarMap &variables, int step);
     Params parseParams(const std::string &param_str);
 
     // Input arguments

@@ -739,11 +739,11 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
 {
     size_t attributesSizeInData = 0;
 
-    auto &attributes = io.GetAttributesDataMap();
+    auto &attributes = io.GetAttributes();
 
     for (const auto &attribute : attributes)
     {
-        const DataType type = attribute.second.first;
+        const DataType type = attribute.second->m_Type;
 
         // each attribute is only written to output once
         // so filter out the ones already written
@@ -772,7 +772,7 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
 
 void BPSerializer::PutAttributes(core::IO &io)
 {
-    const auto &attributesDataMap = io.GetAttributesDataMap();
+    const auto &attributes = io.GetAttributes();
 
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
@@ -781,8 +781,7 @@ void BPSerializer::PutAttributes(core::IO &io)
     const size_t attributesCountPosition = position;
 
     // count is known ahead of time
-    const uint32_t attributesCount =
-        static_cast<uint32_t>(attributesDataMap.size());
+    const uint32_t attributesCount = static_cast<uint32_t>(attributes.size());
     helper::CopyToBuffer(buffer, position, &attributesCount);
 
     // will go back
@@ -793,10 +792,10 @@ void BPSerializer::PutAttributes(core::IO &io)
 
     uint32_t memberID = 0;
 
-    for (const auto &attributePair : attributesDataMap)
+    for (const auto &attributePair : attributes)
     {
         const std::string name(attributePair.first);
-        const DataType type(attributePair.second.first);
+        const DataType type(attributePair.second->m_Type);
 
         // each attribute is only written to output once
         // so filter out the ones already written

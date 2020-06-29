@@ -265,8 +265,8 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         if (m_Verbosity == 5)
         {
             std::cout << "InSituMPI Reader " << m_ReaderRank << " found "
-                      << m_IO.GetVariablesDataMap().size() << " variables and "
-                      << m_IO.GetAttributesDataMap().size()
+                      << m_IO.GetVariables().size() << " variables and "
+                      << m_IO.GetAttributes().size()
                       << " attributes in metadata. Is source row major = "
                       << m_BP3Deserializer.m_IsRowMajor << std::endl;
         }

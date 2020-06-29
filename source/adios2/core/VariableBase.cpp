@@ -304,24 +304,18 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
             return;
         }
 
-        auto itAttribute = io.m_Attributes.find(attributeName);
-        const DataType type = itAttribute->second.first;
+        auto itAttribute = io.GetAttributes().find(attributeName);
 
         const std::string key =
             fullNameKeys ? attributeName : attributeName.substr(prefix.size());
 
-        if (type == DataType::Compound)
+        if (itAttribute->second->m_Type == DataType::Compound)
         {
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Attribute<T> &attribute =                                              \
-            io.GetAttributeMap<T>().at(itAttribute->second.second);            \
-        attributesInfo[key] = attribute.GetInfo();                             \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+        else
+        {
+            attributesInfo[key] = itAttribute->second->GetInfo();
+        }
     };
 
     // BODY OF FUNCTION STARTS HERE
@@ -339,7 +333,7 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
     }
     else
     { // get prefixed attributes on-the-fly (expensive)
-        for (const auto &attributePair : io.m_Attributes)
+        for (const auto &attributePair : io.GetAttributes())
         {
             const std::string &attributeName = attributePair.first;
             lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo,

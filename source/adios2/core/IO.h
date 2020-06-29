@@ -34,9 +34,8 @@ namespace adios2
 namespace core
 {
 
-/** used for Variables and Attributes, name, type, type-index */
-using DataMap =
-    std::unordered_map<std::string, std::pair<DataType, unsigned int>>;
+using VarMap = std::unordered_map<std::string, std::unique_ptr<VariableBase>>;
+using AttrMap = std::unordered_map<std::string, std::unique_ptr<AttributeBase>>;
 
 // forward declaration needed as IO is passed to Engine derived
 // classes
@@ -55,27 +54,6 @@ public:
 
     /** from ADIOS class passed to Engine created with Open */
     const std::string m_HostLanguage = "C++";
-
-    /**
-     * Map holding variable identifiers
-     * <pre>
-     * key: unique variable name,
-     * value: pair.first = type as string GetDataType<T> from adiosTemplates.h
-     *        pair.second = index in fixed size map (e.g. m_Int8, m_Double)
-     * </pre>
-     */
-    DataMap m_Variables;
-
-    /**
-     * Map holding attribute identifiers
-     * <pre>
-     * key: unique attribute name,
-     * value: pair.first = type as string GetDataType<T> from
-     *                     helper/adiosTemplates.h
-     *        pair.second = index in fixed size map (e.g. m_Int8, m_Double)
-     * </pre>
-     */
-    DataMap m_Attributes;
 
     /** From SetParameter, parameters for a particular engine from m_Type */
     Params m_Parameters;
@@ -123,7 +101,10 @@ public:
     IO(ADIOS &adios, const std::string name, const bool inConfigFile,
        const std::string hostLanguage);
 
-    ~IO() = default;
+    ~IO();
+
+    IO(IO const &) = delete;
+    IO &operator=(IO const &) = delete;
 
     /**
      * @brief Sets the engine type for this IO class object
@@ -301,7 +282,7 @@ public:
      * @param itVariable
      * @return type primitive type
      */
-    DataType InquireVariableType(const DataMap::const_iterator itVariable) const
+    DataType InquireVariableType(const VarMap::const_iterator itVariable) const
         noexcept;
 
     /**
@@ -309,22 +290,20 @@ public:
      * @return
      * <pre>
      * key: unique variable name,
-     * value: pair.first = string type
-     *        pair.second = order in the type bucket
+     * value: pointer to VariableBase
      * </pre>
      */
-    const DataMap &GetVariablesDataMap() const noexcept;
+    const VarMap &GetVariables() const noexcept;
 
     /**
      * Retrieves hash holding internal Attributes identifiers
      * @return
      * <pre>
      * key: unique attribute name,
-     * value: pair.first = string type
-     *        pair.second = order in the type bucket
+     * value: pointer to AttributeBase
      * </pre>
      */
-    const DataMap &GetAttributesDataMap() const noexcept;
+    const AttrMap &GetAttributes() const noexcept;
 
     /**
      * Gets an existing attribute of primitive type by name
@@ -451,14 +430,6 @@ public:
 
     void SetPrefixedNames(const bool isStep) noexcept;
 
-    /** Gets the internal reference to a variable map for type T */
-    template <class T>
-    std::map<unsigned int, Variable<T>> &GetVariableMap() noexcept;
-
-    /** Gets the internal reference to an attribute map for type T */
-    template <class T>
-    std::map<unsigned int, Attribute<T>> &GetAttributeMap() noexcept;
-
     using MakeEngineFunc = std::function<std::shared_ptr<Engine>(
         IO &, const std::string &, const Mode, helper::Comm)>;
     struct EngineFactoryEntry
@@ -509,39 +480,15 @@ private:
     /** Independent (default) or Collective */
     adios2::IOMode m_IOMode = adios2::IOMode::Independent;
 
-/** Variable containers based on fixed-size type */
-#define declare_map(T, NAME) std::map<unsigned int, Variable<T>> m_##NAME;
-    ADIOS2_FOREACH_STDTYPE_2ARGS(declare_map)
-#undef declare_map
+    VarMap m_Variables;
 
-#define declare_map(T, NAME) std::map<unsigned int, Attribute<T>> m_##NAME##A;
-    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(declare_map)
-#undef declare_map
-
-    std::map<unsigned int, VariableCompound> m_Compound;
+    AttrMap m_Attributes;
 
     std::map<std::string, std::shared_ptr<Engine>> m_Engines;
-
-    /**
-     * Gets map index for Variables or Attributes
-     * @param name
-     * @param dataMap m_Variables or m_Attributes
-     * @return index in type map, -1 if not found
-     */
-    int GetMapIndex(const std::string &name, const DataMap &dataMap) const
-        noexcept;
 
     /** Checks if attribute exists, called from DefineAttribute different
      *  signatures */
     void CheckAttributeCommon(const std::string &name) const;
-
-    /**
-     * Checks if iterator points to end. Used for Variables and Attributes.
-     * @param itDataMap iterator to be tested
-     * @param dataMap map
-     * @return true: itDataMap == dataMap.end(), false otherwise
-     */
-    bool IsEnd(DataMap::const_iterator itDataMap, const DataMap &dataMap) const;
 
     void CheckTransportType(const std::string type) const;
 

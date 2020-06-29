@@ -386,10 +386,9 @@ void SscReader::SyncWritePattern()
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
-        const auto &attributesDataMap = m_IO.GetAttributesDataMap();           \
-        auto it =                                                              \
-            attributesDataMap.find(attributeJson["Name"].get<std::string>());  \
-        if (it == attributesDataMap.end())                                     \
+        const auto &attributes = m_IO.GetAttributes();                         \
+        auto it = attributes.find(attributeJson["Name"].get<std::string>());   \
+        if (it == attributes.end())                                            \
         {                                                                      \
             if (attributeJson["IsSingleValue"].get<bool>())                    \
             {                                                                  \

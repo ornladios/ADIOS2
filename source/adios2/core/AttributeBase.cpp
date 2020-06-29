@@ -26,5 +26,14 @@ AttributeBase::AttributeBase(const std::string &name, const DataType type,
 {
 }
 
+Params AttributeBase::GetInfo() const noexcept
+{
+    Params info;
+    info["Type"] = ToString(m_Type);
+    info["Elements"] = std::to_string(m_Elements);
+    info["Value"] = this->DoGetInfoValue();
+    return info;
+}
+
 } // end namespace core
 } // end namespace adios2

@@ -898,8 +898,8 @@ int nEntriesMatched = 0;
 int doList_vars(core::Engine *fp, core::IO *io)
 {
 
-    const core::DataMap &variables = io->GetVariablesDataMap();
-    const core::DataMap &attributes = io->GetAttributesDataMap();
+    const core::VarMap &variables = io->GetVariables();
+    const core::AttrMap &attributes = io->GetAttributes();
 
     // make a sorted list of all variables and attributes
     EntryMap entries;
@@ -907,7 +907,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
     {
         for (const auto &vpair : variables)
         {
-            Entry e(true, vpair.second.first, vpair.second.second);
+            Entry e(true, vpair.second->m_Type);
             entries.emplace(vpair.first, e);
         }
     }
@@ -915,7 +915,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
     {
         for (const auto &apair : attributes)
         {
-            Entry e(false, apair.second.first, apair.second.second);
+            Entry e(false, apair.second->m_Type);
             entries.emplace(apair.first, e);
         }
     }
