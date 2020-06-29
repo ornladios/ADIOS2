@@ -18,9 +18,9 @@
 
 #include <map>
 #include <mpi.h>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 namespace adios2
 {
@@ -30,7 +30,6 @@ namespace helper
 class MpiHandshake
 {
 public:
-
     ~MpiHandshake();
 
     /**
