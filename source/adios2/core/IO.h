@@ -306,6 +306,17 @@ public:
     const AttrMap &GetAttributes() const noexcept;
 
     /**
+     * Invoke the given visitor as a function for each attribute.
+     * The visitor must be callable as if it were a struct with:
+     * <pre>
+     * template <typename T>
+     * void operator()(const core::Attribute<T> &attribute) const;
+     * </pre>
+     */
+    template <typename V>
+    void ForEachAttribute(V const &v) const;
+
+    /**
      * Gets an existing attribute of primitive type by name
      * @param name of attribute to be retrieved
      * @return pointer to an existing attribute in current IO, nullptr if not
@@ -500,6 +511,15 @@ private:
     Params GetVariableInfo(const std::string &variableName,
                            const std::set<std::string> &keys);
 };
+
+template <typename V>
+void IO::ForEachAttribute(V const &v) const
+{
+    for (const auto &attributePair : m_Attributes)
+    {
+        AttributeVisit(*attributePair.second, v);
+    }
+}
 
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \
