@@ -142,38 +142,34 @@ void BlockVecToJson(const BlockVec &input, nlohmann::json &output)
     }
 }
 
+namespace
+{
+struct AttributeToJson
+{
+    nlohmann::json &output;
+    template <typename T>
+    void operator()(Attribute<T> const &attribute) const
+    {
+        nlohmann::json attributeJson;
+        attributeJson["Name"] = attribute.m_Name;
+        attributeJson["Type"] = ToString(attribute.m_Type);
+        attributeJson["IsSingleValue"] = attribute.m_IsSingleValue;
+        if (attribute.m_IsSingleValue)
+        {
+            attributeJson["Value"] = attribute.m_DataSingleValue;
+        }
+        else
+        {
+            attributeJson["Array"] = attribute.m_DataArray;
+        }
+        output["Attributes"].emplace_back(std::move(attributeJson));
+    }
+};
+}
+
 void AttributeMapToJson(IO &input, nlohmann::json &output)
 {
-    const auto &attributeMap = input.GetAttributes();
-    auto &attributesJson = output["Attributes"];
-    for (const auto &attributePair : attributeMap)
-    {
-        const std::string name(attributePair.first);
-        const DataType type(attributePair.second->m_Type);
-        if (type == DataType::None)
-        {
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        const auto &attribute = input.InquireAttribute<T>(name);               \
-        nlohmann::json attributeJson;                                          \
-        attributeJson["Name"] = attribute->m_Name;                             \
-        attributeJson["Type"] = ToString(attribute->m_Type);                   \
-        attributeJson["IsSingleValue"] = attribute->m_IsSingleValue;           \
-        if (attribute->m_IsSingleValue)                                        \
-        {                                                                      \
-            attributeJson["Value"] = attribute->m_DataSingleValue;             \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            attributeJson["Array"] = attribute->m_DataArray;                   \
-        }                                                                      \
-        output["Attributes"].emplace_back(std::move(attributeJson));           \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    }
+    input.ForEachAttribute(AttributeToJson{output});
 }
 
 void LocalJsonToGlobalJson(const std::vector<char> &input,

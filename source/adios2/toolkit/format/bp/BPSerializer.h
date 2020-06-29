@@ -119,9 +119,15 @@ protected:
 
     size_t GetAttributesSizeInData(core::IO &io) const noexcept;
 
+    struct AttributeSizeInData;
+    friend struct AttributeSizeInData;
+
     template <class T>
     size_t GetAttributeSizeInData(const core::Attribute<T> &attribute) const
         noexcept;
+
+    struct PutAttribute;
+    friend struct PutAttribute;
 
     void PutAttributes(core::IO &io);
 

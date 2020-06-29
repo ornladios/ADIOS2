@@ -76,6 +76,9 @@ private:
     SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_locals)
 #undef declare_locals
 
+    struct FFSMarshalAttribute;
+    friend struct FFSMarshalAttribute;
+
     void FFSMarshalAttributes();
     void DoClose(const int transportIndex = -1) final;
 };

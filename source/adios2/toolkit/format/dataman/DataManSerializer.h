@@ -190,8 +190,8 @@ private:
     bool PutBZip2(nlohmann::json &metaj, size_t &datasize, const T *inputData,
                   const Dims &varCount, const Params &params);
 
-    template <class T>
-    void PutAttribute(const core::Attribute<T> &attribute);
+    struct PutAttribute;
+    friend struct PutAttribute;
 
     bool IsCompressionAvailable(const std::string &method, DataType type,
                                 const Dims &count);

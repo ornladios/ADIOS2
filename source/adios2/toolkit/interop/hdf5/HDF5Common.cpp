@@ -1034,7 +1034,7 @@ void HDF5Common::ReadInNonStringAttr(core::IO &io, const std::string &attrName,
 }
 
 void HDF5Common::WriteStringAttr(core::IO &io,
-                                 core::Attribute<std::string> *adiosAttr,
+                                 const core::Attribute<std::string> *adiosAttr,
                                  const std::string &attrName, hid_t parentID)
 {
     // core::Attribute<std::string> *adiosAttr =
@@ -1093,7 +1093,8 @@ void HDF5Common::WriteStringAttr(core::IO &io,
 }
 
 template <class T>
-void HDF5Common::WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr,
+void HDF5Common::WriteNonStringAttr(core::IO &io,
+                                    const core::Attribute<T> *adiosAttr,
                                     hid_t parentID, const char *h5AttrName)
 {
     if (adiosAttr == NULL)
@@ -1206,6 +1207,26 @@ void HDF5Common::CreateVarsFromIO(core::IO &io)
 #undef declare_template_instantiation
     }
 }
+
+struct HDF5Common::WriteAttr
+{
+    HDF5Common &self;
+    core::IO &io;
+    hid_t &parentID;
+
+    template <class T>
+    void operator()(const core::Attribute<T> &attribute) const
+    {
+        self.WriteNonStringAttr(io, &attribute, parentID,
+                                attribute.m_Name.c_str());
+    }
+
+    void operator()(const core::Attribute<std::string> &attribute) const
+    {
+        self.WriteStringAttr(io, &attribute, attribute.m_Name, parentID);
+    }
+};
+
 //
 // write attr from io to hdf5
 // right now adios only support global attr
@@ -1222,13 +1243,10 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
         return;
     }
 
-    const std::map<std::string, Params> &attributesInfo =
-        io.GetAvailableAttributes();
-
-    for (const auto &apair : attributesInfo)
+    for (const auto &apair : io.GetAttributes())
     {
         std::string attrName = apair.first;
-        Params temp = apair.second;
+        Params temp = apair.second->GetInfo();
         DataType attrType = helper::GetDataTypeFromString(temp["Type"]);
 
         hid_t parentID = m_FileId;
@@ -1254,31 +1272,8 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
             continue;
         }
 
-        if (attrType == DataType::Compound)
-        {
-            // not supported
-        }
-        else if (attrType == helper::GetDataType<std::string>())
-        {
-            // WriteStringAttr(io, attrName, parentID);
-            core::Attribute<std::string> *adiosAttr =
-                io.InquireAttribute<std::string>(attrName);
-            WriteStringAttr(io, adiosAttr, list.back(), parentID);
-        }
-//
-// note no std::complext attr types
-//
-#define declare_template_instantiation(T)                                      \
-    else if (attrType == helper::GetDataType<T>())                             \
-    {                                                                          \
-        core::Attribute<T> *adiosAttr = io.InquireAttribute<T>(attrName);      \
-        WriteNonStringAttr(io, adiosAttr, parentID, list.back().c_str());      \
+        core::AttributeVisit(*apair.second, WriteAttr{*this, io, parentID});
     }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-    }
-
-    // std::string attrType = attributesInfo[attrName]["Type"];
 }
 
 //

@@ -154,59 +154,48 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     return StepStatus::OK;
 }
 
+struct SstWriter::FFSMarshalAttribute
+{
+    SstWriter &self;
+
+    template <typename T>
+    void operator()(Attribute<T> const &attribute) const
+    {
+        int element_count = -1;
+        T const *data_addr = &attribute.m_DataSingleValue;
+        if (!attribute.m_IsSingleValue)
+        {
+            element_count = attribute.m_Elements;
+            data_addr = attribute.m_DataArray.data();
+        }
+        SstFFSMarshalAttribute(self.m_Output, attribute.m_Name.c_str(),
+                               ToString(attribute.m_Type).c_str(), sizeof(T),
+                               element_count, data_addr);
+    }
+
+    void operator()(Attribute<std::string> const &attribute) const
+    {
+        int element_count = -1;
+        const char *data_addr = attribute.m_DataSingleValue.c_str();
+        if (!attribute.m_IsSingleValue)
+        {
+            //
+        }
+        SstFFSMarshalAttribute(self.m_Output, attribute.m_Name.c_str(),
+                               ToString(attribute.m_Type).c_str(),
+                               sizeof(char *), element_count, data_addr);
+    }
+};
+
 void SstWriter::FFSMarshalAttributes()
 {
     TAU_SCOPED_TIMER_FUNC();
-    const auto &attributes = m_IO.GetAttributes();
-
-    const uint32_t attributesCount = static_cast<uint32_t>(attributes.size());
 
     // if there are no new attributes, nothing to do
-    if (attributesCount == m_FFSMarshaledAttributesCount)
+    if (m_IO.GetAttributes().size() == m_FFSMarshaledAttributesCount)
         return;
 
-    for (const auto &attributePair : attributes)
-    {
-        const std::string name(attributePair.first);
-        const DataType type(attributePair.second->m_Type);
-
-        if (type == DataType::None)
-        {
-        }
-        else if (type == helper::GetDataType<std::string>())
-        {
-            core::Attribute<std::string> &attribute =
-                *m_IO.InquireAttribute<std::string>(name);
-            int element_count = -1;
-            const char *data_addr = attribute.m_DataSingleValue.c_str();
-            if (!attribute.m_IsSingleValue)
-            {
-                //
-            }
-
-            SstFFSMarshalAttribute(m_Output, name.c_str(),
-                                   ToString(type).c_str(), sizeof(char *),
-                                   element_count, data_addr);
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name);       \
-        int element_count = -1;                                                \
-        void *data_addr = &attribute.m_DataSingleValue;                        \
-        if (!attribute.m_IsSingleValue)                                        \
-        {                                                                      \
-            element_count = attribute.m_Elements;                              \
-            data_addr = attribute.m_DataArray.data();                          \
-        }                                                                      \
-        SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(),             \
-                               ToString(type).c_str(), sizeof(T),              \
-                               element_count, data_addr);                      \
-    }
-
-        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    }
+    m_IO.ForEachAttribute(FFSMarshalAttribute{*this});
 }
 
 void SstWriter::EndStep()

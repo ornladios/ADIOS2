@@ -329,32 +329,41 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
     return false;
 }
 
+struct DataManSerializer::PutAttribute
+{
+    DataManSerializer &self;
+    template <typename T>
+    void operator()(const core::Attribute<T> &attribute) const
+    {
+        TAU_SCOPED_TIMER_FUNC();
+        nlohmann::json staticVar;
+        staticVar["N"] = attribute.m_Name;
+        staticVar["Y"] = ToString(attribute.m_Type);
+        staticVar["V"] = attribute.m_IsSingleValue;
+        if (attribute.m_IsSingleValue)
+        {
+            staticVar["G"] = attribute.m_DataSingleValue;
+        }
+        else
+        {
+            staticVar["G"] = attribute.m_DataArray;
+        }
+
+        self.m_StaticDataJsonMutex.lock();
+        self.m_StaticDataJson["S"].emplace_back(std::move(staticVar));
+        self.m_StaticDataJsonMutex.unlock();
+    }
+};
+
 void DataManSerializer::PutAttributes(core::IO &io)
 {
     TAU_SCOPED_TIMER_FUNC();
-    const auto &attributes = io.GetAttributes();
-    bool attributePut = false;
-    for (const auto &attributePair : attributes)
-    {
-        const std::string name(attributePair.first);
-        const DataType type(attributePair.second->m_Type);
-        if (type == DataType::None)
-        {
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
-        PutAttribute(attribute);                                               \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-        attributePut = true;
-    }
 
-    if (not m_StaticDataFinished)
+    io.ForEachAttribute(PutAttribute{*this});
+
+    if (!m_StaticDataFinished)
     {
-        if (not attributePut)
+        if (io.GetAttributes().empty())
         {
             nlohmann::json staticVar;
             staticVar["N"] = "NoAttributes";

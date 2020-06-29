@@ -366,28 +366,6 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
 }
 
 template <class T>
-void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute)
-{
-    TAU_SCOPED_TIMER_FUNC();
-    nlohmann::json staticVar;
-    staticVar["N"] = attribute.m_Name;
-    staticVar["Y"] = ToString(attribute.m_Type);
-    staticVar["V"] = attribute.m_IsSingleValue;
-    if (attribute.m_IsSingleValue)
-    {
-        staticVar["G"] = attribute.m_DataSingleValue;
-    }
-    else
-    {
-        staticVar["G"] = attribute.m_DataArray;
-    }
-
-    m_StaticDataJsonMutex.lock();
-    m_StaticDataJson["S"].emplace_back(std::move(staticVar));
-    m_StaticDataJsonMutex.unlock();
-}
-
-template <class T>
 int DataManSerializer::GetData(T *outputData, const std::string &varName,
                                const Dims &varStart, const Dims &varCount,
                                const size_t step, const Dims &varMemStart,

@@ -227,17 +227,21 @@ private:
                           hid_t attrId, hid_t h5Type, hid_t sid);
     void ReadInNonStringAttr(core::IO &io, const std::string &attrName,
                              hid_t attrId, hid_t h5Type, hid_t sid);
-    void WriteStringAttr(core::IO &io, core::Attribute<std::string> *adiosAttr,
+    void WriteStringAttr(core::IO &io,
+                         const core::Attribute<std::string> *adiosAttr,
                          const std::string &attrName, hid_t parentID);
 
     template <class T>
-    void WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr,
+    void WriteNonStringAttr(core::IO &io, const core::Attribute<T> *adiosAttr,
                             hid_t parentID, const char *h5Name);
 
     template <class T>
     void GetHDF5SpaceSpec(const core::Variable<T> &variable,
                           std::vector<hsize_t> &, std::vector<hsize_t> &,
                           std::vector<hsize_t> &);
+
+    struct WriteAttr;
+    friend struct WriteAttr;
 
     bool m_WriteMode = false;
     unsigned int m_NumAdiosSteps = 0;

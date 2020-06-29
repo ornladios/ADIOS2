@@ -735,40 +735,59 @@ uint32_t BPSerializer::GetFileIndex() const noexcept
     return static_cast<uint32_t>(m_RankMPI);
 }
 
+struct BPSerializer::AttributeSizeInData
+{
+    BPSerializer const &self;
+    size_t &attributesSizeInData;
+
+    template <typename T>
+    void operator()(const core::Attribute<T> &attribute) const
+    {
+        // each attribute is only written to output once
+        // so filter out the ones already written
+        auto it = self.m_SerializedAttributes.find(attribute.m_Name);
+        if (it != self.m_SerializedAttributes.end())
+        {
+            return;
+        }
+        attributesSizeInData += self.GetAttributeSizeInData(attribute);
+    }
+};
+
 size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
 {
     size_t attributesSizeInData = 0;
-
-    auto &attributes = io.GetAttributes();
-
-    for (const auto &attribute : attributes)
-    {
-        const DataType type = attribute.second->m_Type;
-
-        // each attribute is only written to output once
-        // so filter out the ones already written
-        auto it = m_SerializedAttributes.find(attribute.first);
-        if (it != m_SerializedAttributes.end())
-        {
-            continue;
-        }
-
-        if (type == DataType::Compound)
-        {
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        const std::string name = attribute.first;                              \
-        const core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);   \
-        attributesSizeInData += GetAttributeSizeInData<T>(attribute);          \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    }
-
+    io.ForEachAttribute(AttributeSizeInData{*this, attributesSizeInData});
     return attributesSizeInData;
 }
+
+struct BPSerializer::PutAttribute
+{
+    BPSerializer &self;
+    uint32_t &memberID;
+
+    template <class T>
+    void operator()(const core::Attribute<T> &attribute) const
+    {
+        // each attribute is only written to output once
+        // so filter out the ones already written
+        auto it = self.m_SerializedAttributes.find(attribute.m_Name);
+        if (it != self.m_SerializedAttributes.end())
+        {
+            return;
+        }
+
+        Stats<T> stats;
+        stats.Offset =
+            self.m_Data.m_AbsolutePosition + self.m_PreDataFileLength;
+        stats.MemberID = memberID;
+        stats.Step = self.m_MetadataSet.TimeStep;
+        stats.FileIndex = self.GetFileIndex();
+        self.PutAttributeInData(attribute, stats);
+        self.PutAttributeInIndex(attribute, stats);
+        ++memberID;
+    }
+};
 
 void BPSerializer::PutAttributes(core::IO &io)
 {
@@ -792,39 +811,7 @@ void BPSerializer::PutAttributes(core::IO &io)
 
     uint32_t memberID = 0;
 
-    for (const auto &attributePair : attributes)
-    {
-        const std::string name(attributePair.first);
-        const DataType type(attributePair.second->m_Type);
-
-        // each attribute is only written to output once
-        // so filter out the ones already written
-        auto it = m_SerializedAttributes.find(name);
-        if (it != m_SerializedAttributes.end())
-        {
-            continue;
-        }
-
-        if (type == DataType::None)
-        {
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Stats<T> stats;                                                        \
-        stats.Offset = absolutePosition + m_PreDataFileLength;                 \
-        stats.MemberID = memberID;                                             \
-        stats.Step = m_MetadataSet.TimeStep;                                   \
-        stats.FileIndex = GetFileIndex();                                      \
-        core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
-        PutAttributeInData(attribute, stats);                                  \
-        PutAttributeInIndex(attribute, stats);                                 \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
-        ++memberID;
-    }
+    io.ForEachAttribute(PutAttribute{*this, memberID});
 
     // complete attributes length
     const uint64_t attributesLength =
