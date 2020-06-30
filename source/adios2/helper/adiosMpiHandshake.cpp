@@ -38,26 +38,6 @@ std::map<std::string, std::map<int, std::set<int>>> MpiHandshake::m_ReadersMap;
 std::map<int, int> MpiHandshake::m_AppsSize;
 std::set<int> MpiHandshake::m_RanksToReceive;
 
-MpiHandshake::~MpiHandshake()
-{
-    // clean up MPI requests
-
-    for (auto &rs : m_RecvRequests)
-    {
-        for (auto &r : rs)
-        {
-            MPI_Status status;
-            int success;
-            MPI_Test(&r, &success, &status);
-            if (!success)
-            {
-                MPI_Cancel(&r);
-            }
-        }
-    }
-    m_RecvRequests.clear();
-}
-
 size_t MpiHandshake::PlaceInBuffer(size_t stream, int rank)
 {
     return rank * m_MaxStreamsPerApp * m_ItemSize + stream * m_ItemSize;
@@ -270,7 +250,22 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
         }
     }
 
-    std::cout << "Rank " << m_WorldRank << " completed ..." << std::endl;
+    // clean up MPI requests
+
+    for (auto &rs : m_RecvRequests)
+    {
+        for (auto &r : rs)
+        {
+            MPI_Status status;
+            int success;
+            MPI_Test(&r, &success, &status);
+            if (!success)
+            {
+                MPI_Cancel(&r);
+            }
+        }
+    }
+    m_RecvRequests.clear();
 
     ++m_StreamID;
 }

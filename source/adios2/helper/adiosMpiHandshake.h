@@ -30,8 +30,6 @@ namespace helper
 class MpiHandshake
 {
 public:
-    ~MpiHandshake();
-
     /**
      * Start the handshake operations and wait until the rendezvous conditions
      * are reached, or timeout.
