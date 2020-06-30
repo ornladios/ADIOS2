@@ -47,7 +47,7 @@ done
 echo "************************************************************"
 echo "* Building partially squashed final images                 *"
 echo "************************************************************"
-LEAF_IMAGES="el7-base,el7 el7-gnu8-ohpc-base,el7-gnu8-ohpc el7-gnu8-ohpc-base,el7-gnu8-openmpi-ohpc el7-intel-ohpc-base,el7-intel-ohpc el7-intel-ohpc-base,el7-intel-openmpi-ohpc suse-pgi-base,suse-pgi suse-pgi-base,suse-pgi-openmpi fedora-sanitizers-base,fedora-ubsan"
+LEAF_IMAGES="el7-base,el7 el7-gnu8-ohpc-base,el7-gnu8-ohpc el7-gnu8-ohpc-base,el7-gnu8-openmpi-ohpc el7-intel-ohpc-base,el7-intel-ohpc el7-intel-ohpc-base,el7-intel-openmpi-ohpc suse-pgi-base,suse-pgi suse-pgi-base,suse-pgi-openmpi fedora-sanitizers-base,fedora-asan fedora-sanitizers-base,fedora-ubsan"
 for IMAGE_PAIR in ${LEAF_IMAGES}
 do
   echo "${IMAGE_PAIR%,*} -> ${IMAGE_PAIR#*,}"
@@ -58,7 +58,7 @@ done
 echo "************************************************************"
 echo "* Push all images                                          *"
 echo "************************************************************"
-ALL_IMAGES="el7-base el7 el7-gnu8-ohpc-base el7-gnu8-ohpc el7-gnu8-openmpi-ohpc el7-intel-ohpc-base el7-intel-ohpc el7-intel-openmpi-ohpc suse-pgi-base suse-pgi suse-pgi-openmpi fedora-sanitizers-base fedora-ubsan debian-sid"
+ALL_IMAGES="el7-base el7 el7-gnu8-ohpc-base el7-gnu8-ohpc el7-gnu8-openmpi-ohpc el7-intel-ohpc-base el7-intel-ohpc el7-intel-openmpi-ohpc suse-pgi-base suse-pgi suse-pgi-openmpi fedora-sanitizers-base fedora-asan fedora-ubsan debian-sid"
 for IMAGE in ${ALL_IMAGES}
 do
   echo "${IMAGE}"
