@@ -36,7 +36,6 @@ int MpiHandshake::m_LocalMasterRank;
 std::map<std::string, std::map<int, std::set<int>>> MpiHandshake::m_WritersMap;
 std::map<std::string, std::map<int, std::set<int>>> MpiHandshake::m_ReadersMap;
 std::map<int, int> MpiHandshake::m_AppsSize;
-std::set<int> MpiHandshake::m_RanksToReceive;
 
 size_t MpiHandshake::PlaceInBuffer(size_t stream, int rank)
 {
@@ -47,8 +46,6 @@ void MpiHandshake::Test()
 {
     int success = 0;
     MPI_Status status;
-
-    std::vector<int> ranksToErase;
 
     for (int rank = 0; rank < m_WorldSize; ++rank)
     {
@@ -80,12 +77,7 @@ void MpiHandshake::Test()
                     auto &ranks = m_ReadersMap[filename][appMasterRank];
                     ranks.insert(rank);
                 }
-                ranksToErase.push_back(rank);
             }
-        }
-        for (auto rankToErase : ranksToErase)
-        {
-            m_RanksToReceive.erase(rankToErase);
         }
     }
 }
@@ -187,7 +179,6 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     {
         m_SendRequests[rank].resize(maxStreamsPerApp);
         m_RecvRequests[rank].resize(maxStreamsPerApp);
-        m_RanksToReceive.insert(rank);
     }
 
     m_ItemSize = maxFilenameLength + sizeof(char) + sizeof(int) * 2;

@@ -116,7 +116,6 @@ private:
     static int m_LocalSize;
     static int m_LocalRank;
     static int m_LocalMasterRank;
-    static std::set<int> m_RanksToReceive;
 
     // <StreamName, <AppMasterRank, AppAllRankSet>>
     static std::map<std::string, std::map<int, std::set<int>>> m_WritersMap;
