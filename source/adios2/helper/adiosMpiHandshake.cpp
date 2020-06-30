@@ -33,10 +33,8 @@ int MpiHandshake::m_WorldRank;
 int MpiHandshake::m_LocalSize;
 int MpiHandshake::m_LocalRank;
 int MpiHandshake::m_LocalMasterRank;
-std::map<std::string, std::map<int, std::vector<int>>>
-    MpiHandshake::m_WritersMap;
-std::map<std::string, std::map<int, std::vector<int>>>
-    MpiHandshake::m_ReadersMap;
+std::map<std::string, std::map<int, std::set<int>>> MpiHandshake::m_WritersMap;
+std::map<std::string, std::map<int, std::set<int>>> MpiHandshake::m_ReadersMap;
 std::map<int, int> MpiHandshake::m_AppsSize;
 
 size_t MpiHandshake::PlaceInBuffer(size_t stream, int rank)
@@ -46,7 +44,7 @@ size_t MpiHandshake::PlaceInBuffer(size_t stream, int rank)
 
 void MpiHandshake::Test()
 {
-    int success;
+    int success = 0;
     MPI_Status status;
 
     for (int rank = 0; rank < m_WorldSize; ++rank)
@@ -72,20 +70,12 @@ void MpiHandshake::Test()
                 if (mode == 'w')
                 {
                     auto &ranks = m_WritersMap[filename][appMasterRank];
-                    if (std::find(ranks.begin(), ranks.end(), rank) ==
-                        ranks.end())
-                    {
-                        ranks.push_back(rank);
-                    }
+                    ranks.insert(rank);
                 }
                 else if (mode == 'r')
                 {
                     auto &ranks = m_ReadersMap[filename][appMasterRank];
-                    if (std::find(ranks.begin(), ranks.end(), rank) ==
-                        ranks.end())
-                    {
-                        ranks.push_back(rank);
-                    }
+                    ranks.insert(rank);
                 }
             }
         }
@@ -119,6 +109,19 @@ bool MpiHandshake::Check(const std::string &filename, const bool verbose)
     {
         if (app.second.size() != m_AppsSize[app.first])
         {
+            if (verbose)
+            {
+                std::cout << "MpiHandshake Rank " << m_WorldRank << " Stream "
+                          << filename << ": "
+                          << " App master rank " << app.first << ", Expected "
+                          << m_AppsSize[app.first] << " ranks "
+                          << ", Received " << app.second.size() << " ranks: ";
+                for (const auto r : app.second)
+                {
+                    std::cout << r << ", ";
+                }
+                std::cout << std::endl;
+            }
             return false;
         }
     }
@@ -127,6 +130,19 @@ bool MpiHandshake::Check(const std::string &filename, const bool verbose)
     {
         if (app.second.size() != m_AppsSize[app.first])
         {
+            if (verbose)
+            {
+                std::cout << "MpiHandshake Rank " << m_WorldRank << " Stream "
+                          << filename << ": "
+                          << " App master rank " << app.first << ", Expected "
+                          << m_AppsSize[app.first] << " ranks "
+                          << ", Received " << app.second.size() << " ranks: ";
+                for (const auto r : app.second)
+                {
+                    std::cout << r << ", ";
+                }
+                std::cout << std::endl;
+            }
             return false;
         }
     }
@@ -166,7 +182,7 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     }
 
     m_ItemSize = maxFilenameLength + sizeof(char) + sizeof(int) * 2;
-    m_Buffer.resize(m_WorldSize * maxStreamsPerApp * m_ItemSize);
+    m_Buffer.resize(m_WorldSize * maxStreamsPerApp * m_ItemSize, '\0');
 
     // broadcast local master rank's world rank to use as app ID
 
@@ -212,14 +228,14 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     auto startTime = std::chrono::system_clock::now();
     while (!Check(filename, false))
     {
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
         auto nowTime = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
             nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
             Check(filename, true);
-            throw(std::runtime_error("Mpi handshake timeout on Rank" +
+            throw(std::runtime_error("Mpi handshake timeout on Rank " +
                                      std::to_string(m_WorldRank) +
                                      " for Stream " + filename));
         }
@@ -245,12 +261,12 @@ void MpiHandshake::Handshake(const std::string &filename, const char mode,
     ++m_StreamID;
 }
 
-const std::map<int, std::vector<int>> &
+const std::map<int, std::set<int>> &
 MpiHandshake::GetWriterMap(const std::string &filename)
 {
     return m_WritersMap[filename];
 }
-const std::map<int, std::vector<int>> &
+const std::map<int, std::set<int>> &
 MpiHandshake::GetReaderMap(const std::string &filename)
 {
     return m_ReadersMap[filename];
