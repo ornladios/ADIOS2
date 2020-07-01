@@ -389,9 +389,9 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
 #endif
 }
 
-INSTANTIATE_TEST_CASE_P(BPStepsFileLocalArray, BPStepsFileLocalArrayReaders,
-                        ::testing::Values(ReadMode::ReadFileStepByStepBlocks,
-                                          ReadMode::ReadStreamBlocks));
+INSTANTIATE_TEST_SUITE_P(BPStepsFileLocalArray, BPStepsFileLocalArrayReaders,
+                         ::testing::Values(ReadMode::ReadFileStepByStepBlocks,
+                                           ReadMode::ReadStreamBlocks));
 
 class BPStepsFileLocalArrayParameters
 : public BPStepsFileLocalArray,
@@ -574,7 +574,7 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
 #endif
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BPStepsFileLocalArray, BPStepsFileLocalArrayParameters,
     ::testing::Values(std::make_tuple(4, 0, ReadMode::ReadFileStepByStepBlocks),
                       std::make_tuple(4, 0, ReadMode::ReadStreamBlocks),

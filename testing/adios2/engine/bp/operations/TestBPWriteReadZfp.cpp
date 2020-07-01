@@ -960,7 +960,7 @@ TEST_P(BPWRZFP, ADIOS2BPWRZFP2DSel) { ZFPRate2DSel(GetParam()); }
 TEST_P(BPWRZFP, ADIOS2BPWRZFP3DSel) { ZFPRate3DSel(GetParam()); }
 TEST_P(BPWRZFP, ADIOS2BPWRZFP2DSmallSel) { ZFPRate2DSmallSel(GetParam()); }
 
-INSTANTIATE_TEST_CASE_P(ZFPRate, BPWRZFP, ::testing::Values("8", "9", "10"));
+INSTANTIATE_TEST_SUITE_P(ZFPRate, BPWRZFP, ::testing::Values("8", "9", "10"));
 
 int main(int argc, char **argv)
 {

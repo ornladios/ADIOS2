@@ -441,7 +441,7 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
     reader.Close();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BPStepsInSituGlobalArray, BPStepsInSituGlobalArrayReaders,
     ::testing::Values(std::make_tuple(0, ReadMode::ReadGlobal),
                       std::make_tuple(1, ReadMode::ReadGlobal),
@@ -649,7 +649,7 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
     reader.Close();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BPStepsInSituGlobalArray, BPStepsInSituGlobalArrayParameters,
     ::testing::Values(std::make_tuple(0, 0, ReadMode::ReadGlobal),
                       std::make_tuple(0, 0, ReadMode::ReadBlocks),

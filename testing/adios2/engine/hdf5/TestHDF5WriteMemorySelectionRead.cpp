@@ -924,8 +924,8 @@ TEST_P(HDF5WriteMemSelReadVector, HDF5MemorySelectionSteps3D4x2x8)
     HDF5Steps3D8x2x4(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(ghostCells, HDF5WriteMemSelReadVector,
-                        ::testing::Values(1));
+INSTANTIATE_TEST_SUITE_P(ghostCells, HDF5WriteMemSelReadVector,
+                         ::testing::Values(1));
 
 int main(int argc, char **argv)
 {

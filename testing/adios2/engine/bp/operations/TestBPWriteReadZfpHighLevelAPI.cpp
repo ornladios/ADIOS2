@@ -722,8 +722,8 @@ TEST_P(BPWriteReadZfpHighLevelAPI, ADIOS2BPWriteReadZfp2DSmallSel)
     ZfpRate2DSmallSel(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(ZfpRate, BPWriteReadZfpHighLevelAPI,
-                        ::testing::Values(8., 9., 10));
+INSTANTIATE_TEST_SUITE_P(ZfpRate, BPWriteReadZfpHighLevelAPI,
+                         ::testing::Values(8., 9., 10));
 
 int main(int argc, char **argv)
 {

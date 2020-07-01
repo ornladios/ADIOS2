@@ -76,7 +76,7 @@ TEST_P(BufferTest, WriteRead)
 }
 
 #ifdef __unix__
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TransportTests, BufferTest,
     ::testing::Values(std::make_tuple("fstream", "true", "posix", "false"),
                       std::make_tuple("fstream", "false", "posix", "false"),
@@ -106,7 +106,7 @@ INSTANTIATE_TEST_CASE_P(
                       std::make_tuple("fstream", "false", "fstream", "true"),
                       std::make_tuple("fstream", "false", "fstream", "false")));
 #else
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TransportTests, BufferTest,
     ::testing::Values(std::make_tuple("stdio", "true", "stdio", "true"),
                       std::make_tuple("stdio", "true", "stdio", "false"),

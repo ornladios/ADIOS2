@@ -40,7 +40,7 @@ struct RunParams
     : npx_w{xw}, npy_w{yw}, npx_r{xr}, npy_r{yr} {};
 };
 
-/* This function is executed by INSTANTIATE_TEST_CASE_P
+/* This function is executed by INSTANTIATE_TEST_SUITE_P
    before main() and MPI_Init()!!! */
 std::vector<RunParams> CreateRunParams()
 {
@@ -346,8 +346,8 @@ TEST_P(TestStagingMPMD, SlowReader)
     TestCommon(p, 4, 0, 100, -1.0);
 }
 
-INSTANTIATE_TEST_CASE_P(NxM, TestStagingMPMD,
-                        ::testing::ValuesIn(CreateRunParams()));
+INSTANTIATE_TEST_SUITE_P(NxM, TestStagingMPMD,
+                         ::testing::ValuesIn(CreateRunParams()));
 
 void threadTimeoutRun(size_t t)
 {

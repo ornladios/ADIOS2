@@ -45,7 +45,7 @@ struct RunParams
     : nvars{nv}, nblocks{nb}, nsteps{ns} {};
 };
 
-/* This function is executed by INSTANTIATE_TEST_CASE_P
+/* This function is executed by INSTANTIATE_TEST_SUITE_P
    before main() and MPI_Init()!!! */
 std::vector<RunParams> CreateRunParams()
 {
@@ -479,8 +479,8 @@ TEST_P(TestManyVars, DontRedefineVars)
     ASSERT_EQ(err, 0);
 }
 
-INSTANTIATE_TEST_CASE_P(NxM, TestManyVars,
-                        ::testing::ValuesIn(CreateRunParams()));
+INSTANTIATE_TEST_SUITE_P(NxM, TestManyVars,
+                         ::testing::ValuesIn(CreateRunParams()));
 
 //******************************************************************************
 // main
