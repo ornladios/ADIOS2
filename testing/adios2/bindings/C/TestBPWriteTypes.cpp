@@ -8,13 +8,16 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
+#include <cstring>
+
+#include <algorithm>
+
 #include <adios2_c.h>
 
 #if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
 
-#include <cstring>
 #include <gtest/gtest.h>
 
 #include "SmallTestData_c.h"
