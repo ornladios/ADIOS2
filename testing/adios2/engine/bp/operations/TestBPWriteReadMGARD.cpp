@@ -997,9 +997,9 @@ TEST_P(BPWriteReadMGARD, BPWRMGARD2D) { MGARDAccuracy2D(GetParam()); }
 
 TEST_P(BPWriteReadMGARD, BPWRMGARD3D) { MGARDAccuracy3D(GetParam()); }
 
-INSTANTIATE_TEST_CASE_P(MGARDAccuracy, BPWriteReadMGARD,
-                        ::testing::Values("0.01", "0.001", "0.0001",
-                                          "0.00001"));
+INSTANTIATE_TEST_SUITE_P(MGARDAccuracy, BPWriteReadMGARD,
+                         ::testing::Values("0.01", "0.001", "0.0001",
+                                           "0.00001"));
 
 int main(int argc, char **argv)
 {

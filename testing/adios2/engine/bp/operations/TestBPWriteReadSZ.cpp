@@ -1035,9 +1035,9 @@ TEST_P(BPWriteReadSZ, BPWRSZ2DSel) { SZAccuracy2DSel(GetParam()); }
 TEST_P(BPWriteReadSZ, BPWRSZ3DSel) { SZAccuracy3DSel(GetParam()); }
 TEST_F(BPWriteReadSZ, BPWRSZ2DSmallSel) { SZAccuracy2DSmallSel("0.01"); }
 
-INSTANTIATE_TEST_CASE_P(SZAccuracy, BPWriteReadSZ,
-                        ::testing::Values("0.01", "0.001", "0.0001",
-                                          "0.00001"));
+INSTANTIATE_TEST_SUITE_P(SZAccuracy, BPWriteReadSZ,
+                         ::testing::Values("0.01", "0.001", "0.0001",
+                                           "0.00001"));
 
 int main(int argc, char **argv)
 {

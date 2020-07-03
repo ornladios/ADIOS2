@@ -26,8 +26,7 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Author: wan@google.com (Zhanyong Wan)
+
 
 // Tests Google Test's assert-by-exception mode with exceptions enabled.
 
@@ -81,8 +80,7 @@ TEST(Test, Test) {
   try {
     AssertFalse();
   } catch(const testing::AssertionException& e) {
-    if (strstr(e.what(), "Expected failure") != NULL)
-      throw;
+    if (strstr(e.what(), "Expected failure") != nullptr) throw;
 
     printf("%s",
            "A failed assertion did throw an exception of the right type, "
@@ -98,7 +96,6 @@ TEST(Test, Test) {
 int kTestForContinuingTest = 0;
 
 TEST(Test, Test2) {
-  // FIXME(sokolov): how to force Test2 to be after Test?
   kTestForContinuingTest = 1;
 }
 

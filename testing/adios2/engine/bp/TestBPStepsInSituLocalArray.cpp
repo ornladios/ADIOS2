@@ -357,8 +357,9 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
     reader.Close();
 }
 
-INSTANTIATE_TEST_CASE_P(BPStepsInSituLocalArray, BPStepsInSituLocalArrayReaders,
-                        ::testing::Values(0, 1, 2, 3, 4));
+INSTANTIATE_TEST_SUITE_P(BPStepsInSituLocalArray,
+                         BPStepsInSituLocalArrayReaders,
+                         ::testing::Values(0, 1, 2, 3, 4));
 
 class BPStepsInSituLocalArrayParameters
 : public BPStepsInSituLocalArray,
@@ -516,7 +517,7 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
     reader.Close();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BPStepsInSituLocalArray, BPStepsInSituLocalArrayParameters,
     ::testing::Values(std::make_tuple(0, 0), std::make_tuple(0, 1),
                       std::make_tuple(1, 0), std::make_tuple(1, 1),

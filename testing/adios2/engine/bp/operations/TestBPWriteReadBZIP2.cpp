@@ -878,7 +878,7 @@ TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP23DSel)
     BZIP2Accuracy3DSel(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BZIP2Accuracy, BPWriteReadBZIP2,
     ::testing::Values(adios2::ops::bzip2::value::blockSize100k_1,
                       adios2::ops::bzip2::value::blockSize100k_2,

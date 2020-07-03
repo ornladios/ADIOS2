@@ -438,7 +438,7 @@ public:
 
 TEST_P(BPWRPNG, BPWRPNG2D) { PNGAccuracy2D(GetParam()); }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     PNGAccuracy, BPWRPNG,
     ::testing::Values(adios2::ops::png::value::compression_level_1,
                       adios2::ops::png::value::compression_level_2,

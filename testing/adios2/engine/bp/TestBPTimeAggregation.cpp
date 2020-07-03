@@ -665,8 +665,8 @@ TEST_P(BPTestTimeAggregation, BPTimeAggregation2D4x2)
     TimeAggregation2D4x2(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(FlushStepsCount, BPTestTimeAggregation,
-                        ::testing::Values("1", "2", "3", "6", "8", "10"));
+INSTANTIATE_TEST_SUITE_P(FlushStepsCount, BPTestTimeAggregation,
+                         ::testing::Values("1", "2", "3", "6", "8", "10"));
 
 int main(int argc, char **argv)
 {

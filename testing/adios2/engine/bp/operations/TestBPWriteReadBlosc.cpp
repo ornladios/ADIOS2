@@ -878,16 +878,17 @@ TEST_P(BPWriteReadBlosc, ADIOS2BPWriteReadBlosc3DSel)
     BloscAccuracy3DSel(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(BloscAccuracy, BPWriteReadBlosc,
-                        ::testing::Values(adios2::ops::blosc::value::clevel_1,
-                                          adios2::ops::blosc::value::clevel_2,
-                                          adios2::ops::blosc::value::clevel_3,
-                                          adios2::ops::blosc::value::clevel_4,
-                                          adios2::ops::blosc::value::clevel_5,
-                                          adios2::ops::blosc::value::clevel_6,
-                                          adios2::ops::blosc::value::clevel_7,
-                                          adios2::ops::blosc::value::clevel_8,
-                                          adios2::ops::blosc::value::clevel_9));
+INSTANTIATE_TEST_SUITE_P(
+    BloscAccuracy, BPWriteReadBlosc,
+    ::testing::Values(adios2::ops::blosc::value::clevel_1,
+                      adios2::ops::blosc::value::clevel_2,
+                      adios2::ops::blosc::value::clevel_3,
+                      adios2::ops::blosc::value::clevel_4,
+                      adios2::ops::blosc::value::clevel_5,
+                      adios2::ops::blosc::value::clevel_6,
+                      adios2::ops::blosc::value::clevel_7,
+                      adios2::ops::blosc::value::clevel_8,
+                      adios2::ops::blosc::value::clevel_9));
 
 int main(int argc, char **argv)
 {

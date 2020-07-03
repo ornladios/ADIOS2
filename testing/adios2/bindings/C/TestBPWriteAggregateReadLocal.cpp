@@ -362,8 +362,8 @@ TEST_P(BPWriteAggregateReadLocalTest, Aggregate1DBlock0)
     LocalAggregate1DBlock0(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(Substreams, BPWriteAggregateReadLocalTest,
-                        ::testing::Values("1", "2", "3", "4"));
+INSTANTIATE_TEST_SUITE_P(Substreams, BPWriteAggregateReadLocalTest,
+                         ::testing::Values("1", "2", "3", "4"));
 
 int main(int argc, char **argv)
 {

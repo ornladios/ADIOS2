@@ -303,7 +303,7 @@ public:
     std::vector<Box> m_Selections;
 };
 
-TYPED_TEST_CASE(ADIOS2_CXX11_API_MultiBlock, MultiBlockTypes);
+TYPED_TEST_SUITE(ADIOS2_CXX11_API_MultiBlock, MultiBlockTypes);
 
 TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put)
 {

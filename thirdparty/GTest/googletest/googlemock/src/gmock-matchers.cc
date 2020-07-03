@@ -26,8 +26,7 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Author: wan@google.com (Zhanyong Wan)
+
 
 // Google Mock - a framework for writing C++ mock classes.
 //
@@ -35,7 +34,6 @@
 // utilities for defining matchers.
 
 #include "gmock/gmock-matchers.h"
-#include "gmock/gmock-generated-matchers.h"
 
 #include <string.h>
 #include <iostream>
@@ -43,62 +41,6 @@
 #include <string>
 
 namespace testing {
-
-// Constructs a matcher that matches a const string& whose value is
-// equal to s.
-Matcher<const internal::string&>::Matcher(const internal::string& s) {
-  *this = Eq(s);
-}
-
-// Constructs a matcher that matches a const string& whose value is
-// equal to s.
-Matcher<const internal::string&>::Matcher(const char* s) {
-  *this = Eq(internal::string(s));
-}
-
-// Constructs a matcher that matches a string whose value is equal to s.
-Matcher<internal::string>::Matcher(const internal::string& s) { *this = Eq(s); }
-
-// Constructs a matcher that matches a string whose value is equal to s.
-Matcher<internal::string>::Matcher(const char* s) {
-  *this = Eq(internal::string(s));
-}
-
-#if GTEST_HAS_STRING_PIECE_
-// Constructs a matcher that matches a const StringPiece& whose value is
-// equal to s.
-Matcher<const StringPiece&>::Matcher(const internal::string& s) {
-  *this = Eq(s);
-}
-
-// Constructs a matcher that matches a const StringPiece& whose value is
-// equal to s.
-Matcher<const StringPiece&>::Matcher(const char* s) {
-  *this = Eq(internal::string(s));
-}
-
-// Constructs a matcher that matches a const StringPiece& whose value is
-// equal to s.
-Matcher<const StringPiece&>::Matcher(StringPiece s) {
-  *this = Eq(s.ToString());
-}
-
-// Constructs a matcher that matches a StringPiece whose value is equal to s.
-Matcher<StringPiece>::Matcher(const internal::string& s) {
-  *this = Eq(s);
-}
-
-// Constructs a matcher that matches a StringPiece whose value is equal to s.
-Matcher<StringPiece>::Matcher(const char* s) {
-  *this = Eq(internal::string(s));
-}
-
-// Constructs a matcher that matches a StringPiece whose value is equal to s.
-Matcher<StringPiece>::Matcher(StringPiece s) {
-  *this = Eq(s.ToString());
-}
-#endif  // GTEST_HAS_STRING_PIECE_
-
 namespace internal {
 
 // Returns the description for a matcher defined using the MATCHER*()
@@ -106,12 +48,11 @@ namespace internal {
 // 'negation' is false; otherwise returns the description of the
 // negation of the matcher.  'param_values' contains a list of strings
 // that are the print-out of the matcher's parameters.
-GTEST_API_ string FormatMatcherDescription(bool negation,
-                                           const char* matcher_name,
-                                           const Strings& param_values) {
-  string result = ConvertIdentifierNameToWords(matcher_name);
-  if (param_values.size() >= 1)
-    result += " " + JoinAsTuple(param_values);
+GTEST_API_ std::string FormatMatcherDescription(bool negation,
+                                                const char* matcher_name,
+                                                const Strings& param_values) {
+  std::string result = ConvertIdentifierNameToWords(matcher_name);
+  if (param_values.size() >= 1) result += " " + JoinAsTuple(param_values);
   return negation ? "not (" + result + ")" : result;
 }
 
@@ -277,8 +218,6 @@ class MaxBipartiteMatchState {
   // right_[left_[i]] = i.
   ::std::vector<size_t> left_;
   ::std::vector<size_t> right_;
-
-  GTEST_DISALLOW_ASSIGN_(MaxBipartiteMatchState);
 };
 
 const size_t MaxBipartiteMatchState::kUnused;

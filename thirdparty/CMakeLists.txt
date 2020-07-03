@@ -41,7 +41,7 @@ if(BUILD_TESTING)
     adios2_add_thirdparty_target(gtest GTest::GTest)
   else()
     add_subdirectory(GTest)
-    adios2_add_thirdparty_target(gtest gtest_interface)
+    adios2_add_thirdparty_target(gtest gtest)
   endif()
 endif()
 

@@ -29,21 +29,20 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Tests the text output of Google C++ Mocking Framework.
+r"""Tests the text output of Google C++ Mocking Framework.
 
 To update the golden file:
 gmock_output_test.py --build_dir=BUILD/DIR --gengolden
-# where BUILD/DIR contains the built gmock_output_test_ file.
+where BUILD/DIR contains the built gmock_output_test_ file.
 gmock_output_test.py --gengolden
 gmock_output_test.py
+
 """
 
-__author__ = 'wan@google.com (Zhanyong Wan)'
-
+from io import open    # pylint: disable=redefined-builtin, g-importing-member
 import os
 import re
 import sys
-
 import gmock_test_utils
 
 
@@ -154,10 +153,11 @@ def GetNormalizedCommandOutputAndLeakyTests(cmd):
 
 
 class GMockOutputTest(gmock_test_utils.TestCase):
+
   def testOutput(self):
     (output, leaky_tests) = GetNormalizedCommandOutputAndLeakyTests(COMMAND)
     golden_file = open(GOLDEN_PATH, 'rb')
-    golden = golden_file.read()
+    golden = golden_file.read().decode('utf-8')
     golden_file.close()
 
     # The normalized output should match the golden file.
