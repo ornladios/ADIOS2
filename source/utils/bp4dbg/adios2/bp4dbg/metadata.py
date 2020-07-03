@@ -425,7 +425,7 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
     pos = pos + 8
     print("        # of blocks     : {0}".format(cSets))
 
-##  This loop only reads the number of reported blocks
+#   This loop only reads the number of reported blocks
 #     for i in range(cSets):
 #         # one characteristics block
 #         newlimit = limit - (pos - varStartPosition)
@@ -435,7 +435,7 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
 #         if not status:
 #             return False
 
-##  This loop reads blocks until the reported length of variable index length
+#   This loop reads blocks until the reported length of variable index length
     i = 0
     while pos < varStartPosition + varLength:
         # one characteristics block
@@ -452,7 +452,7 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
             "ERROR: reported # of blocks (={0}) != # of encoded blocks "
             " (={1})".format(
                 cSets, i))
-        
+
     return True, pos
 
 
