@@ -425,7 +425,19 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
     pos = pos + 8
     print("        # of blocks     : {0}".format(cSets))
 
-    for i in range(cSets):
+#   This loop only reads the number of reported blocks
+#     for i in range(cSets):
+#         # one characteristics block
+#         newlimit = limit - (pos - varStartPosition)
+#         fileOffset = varStartOffset + (pos - varStartPosition)
+#         status, pos = ReadCharacteristicsFromMetaData(
+#             buf, i, pos, newlimit, typeID, fileOffset, True)
+#         if not status:
+#             return False
+
+#   This loop reads blocks until the reported length of variable index length
+    i = 0
+    while pos < varStartPosition + varLength:
         # one characteristics block
         newlimit = limit - (pos - varStartPosition)
         fileOffset = varStartOffset + (pos - varStartPosition)
@@ -433,6 +445,13 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
             buf, i, pos, newlimit, typeID, fileOffset, True)
         if not status:
             return False
+        i = i + 1
+
+    if (i != cSets):
+        print(
+            "ERROR: reported # of blocks (={0}) != # of encoded blocks "
+            " (={1})".format(
+                cSets, i))
 
     return True, pos
 

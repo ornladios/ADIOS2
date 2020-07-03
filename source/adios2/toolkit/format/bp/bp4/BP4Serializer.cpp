@@ -1330,7 +1330,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                                       serialized.begin() + start + length,
                                       buffer.begin() + position);
                             position += length - headerSize;
-                            setsCount++;
+                            setsCount += header.CharacteristicsSetsCount;
                         }
                         const uint32_t entryLength = static_cast<uint32_t>(
                             position - entryLengthPosition - 4);
