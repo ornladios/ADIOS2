@@ -60,8 +60,6 @@ private:
     int m_ReaderRank;
     int m_ReaderSize;
 
-    helper::MpiHandshake m_MpiHandshake;
-
     void SyncMpiPattern();
     void SyncWritePattern();
     void SyncReadPattern();

@@ -45,9 +45,6 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(MoreWritersThanReaders MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMoreWritersThanReaders.MPI "" TRUE)
 
-  gtest_add_tests_helper(MultiApp MPI_ONLY Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMultiApp.MPI "" TRUE)
-
   gtest_add_tests_helper(Xgc2Way MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc2Way.MPI "" TRUE)
 
