@@ -251,47 +251,19 @@ void SscReader::SyncMpiPattern()
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscReader::SyncMpiPattern, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_ReaderRank << std::endl;
-    }
-
-    m_MpiHandshake.Handshake(m_Name, 'r', m_OpenTimeoutSecs, m_MaxStreamsPerApp,
-                             m_MaxFilenameLength, m_RendezvousAppCount,
-                             CommAsMPI(m_Comm));
-
-    std::vector<int> allStreamRanks;
-    std::vector<int> allWriterRanks;
-
-    for (const auto &app : m_MpiHandshake.GetWriterMap(m_Name))
-    {
-        for (int rank : app.second)
-        {
-            allWriterRanks.push_back(rank);
-            allStreamRanks.push_back(rank);
-        }
-    }
-
-    for (const auto &app : m_MpiHandshake.GetReaderMap(m_Name))
-    {
-        for (int rank : app.second)
-        {
-            allStreamRanks.push_back(rank);
-        }
-    }
+    auto appRankMaps =
+        helper::Handshake(m_Name, 'r', m_OpenTimeoutSecs, CommAsMPI(m_Comm));
 
     MPI_Group worldGroup;
-    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, allWriterRanks.size(), allWriterRanks.data(),
-                   &m_MpiAllWritersGroup);
+    MPI_Group streamGroup;
 
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    std::sort(allStreamRanks.begin(), allStreamRanks.end());
-    MPI_Group allWorkersGroup;
-    MPI_Group_incl(worldGroup, allStreamRanks.size(), allStreamRanks.data(),
-                   &allWorkersGroup);
-    MPI_Comm_create_group(MPI_COMM_WORLD, allWorkersGroup, 0, &m_StreamComm);
+    MPI_Group_incl(worldGroup, appRankMaps[1].size(), appRankMaps[1].data(),
+                   &m_MpiAllWritersGroup);
+    MPI_Group_incl(worldGroup, appRankMaps[0].size(), appRankMaps[0].data(),
+                   &streamGroup);
+
+    MPI_Comm_create_group(MPI_COMM_WORLD, streamGroup, 0, &m_StreamComm);
 }
 
 void SscReader::SyncWritePattern()

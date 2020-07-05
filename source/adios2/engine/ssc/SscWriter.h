@@ -62,8 +62,6 @@ private:
     int m_WriterRank;
     int m_WriterSize;
 
-    helper::MpiHandshake m_MpiHandshake;
-
     void SyncMpiPattern();
     void SyncWritePattern();
     void SyncReadPattern();
