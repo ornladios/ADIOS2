@@ -9,6 +9,7 @@
  */
 
 #include "adiosMpiHandshake.h"
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <fstream>
