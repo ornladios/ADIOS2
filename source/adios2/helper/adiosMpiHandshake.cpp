@@ -147,18 +147,18 @@ const std::vector<std::vector<int>> Handshake(const std::string &filename,
         }
     }
 
-    size_t dims[3];
+    int dims[3];
 
     if (localRank == 0)
     {
         for (int i = 0; i < 3; ++i)
         {
-            dims[i] = ret[i].size();
+            dims[i] = static_cast<int>(ret[i].size());
             std::sort(ret[i].begin(), ret[i].end());
         }
     }
 
-    MPI_Bcast(dims, 3, MPI_UNSIGNED_LONG_LONG, 0, localComm);
+    MPI_Bcast(dims, 3, MPI_INT, 0, localComm);
 
     if (localRank != 0)
     {
