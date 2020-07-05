@@ -18,6 +18,7 @@
 
 #include <mpi.h>
 #include <string>
+#include <vector>
 
 namespace adios2
 {

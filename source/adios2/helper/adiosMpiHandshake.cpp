@@ -15,7 +15,6 @@
 #include <fstream>
 #include <thread>
 #include <unordered_set>
-#include <vector>
 
 namespace adios2
 {
