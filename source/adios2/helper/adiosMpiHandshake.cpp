@@ -147,7 +147,7 @@ const std::vector<std::vector<int>> Handshake(const std::string &filename,
         }
     }
 
-    int dims[3];
+    size_t dims[3];
 
     if (localRank == 0)
     {
@@ -158,7 +158,7 @@ const std::vector<std::vector<int>> Handshake(const std::string &filename,
         }
     }
 
-    MPI_Bcast(dims, 3, MPI_INT, 0, localComm);
+    MPI_Bcast(dims, 3, MPI_UNSIGNED_LONG_LONG, 0, localComm);
 
     if (localRank != 0)
     {
