@@ -170,7 +170,8 @@ const std::vector<std::vector<int>> Handshake(const std::string &filename,
 
     for (int i = 0; i < 3; ++i)
     {
-        MPI_Bcast(ret[i].data(), ret[i].size(), MPI_INT, 0, localComm);
+        MPI_Bcast(ret[i].data(), static_cast<int>(ret[i].size()), MPI_INT, 0,
+                  localComm);
     }
 
     return ret;
