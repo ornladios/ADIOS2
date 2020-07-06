@@ -60,16 +60,11 @@ void SscReader::GetDeferredCommon(Variable<std::string> &variable,
             totalDataSize += i.second.second;
         }
         m_Buffer.resize(totalDataSize);
-        std::vector<MPI_Request> requests;
         for (const auto &i : m_AllReceivingWriterRanks)
         {
-            requests.emplace_back();
-            MPI_Rget(m_Buffer.data() + i.second.first, i.second.second,
-                     MPI_CHAR, i.first, 0, i.second.second, MPI_CHAR, m_MpiWin,
-                     &requests.back());
+            MPI_Get(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
+                    i.first, 0, i.second.second, MPI_CHAR, m_MpiWin);
         }
-        MPI_Status statuses[requests.size()];
-        MPI_Waitall(requests.size(), requests.data(), statuses);
     }
 
     for (const auto &i : m_AllReceivingWriterRanks)
@@ -146,16 +141,11 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
             totalDataSize += i.second.second;
         }
         m_Buffer.resize(totalDataSize);
-        std::vector<MPI_Request> requests;
         for (const auto &i : m_AllReceivingWriterRanks)
         {
-            requests.emplace_back();
-            MPI_Rget(m_Buffer.data() + i.second.first, i.second.second,
-                     MPI_CHAR, i.first, 0, i.second.second, MPI_CHAR, m_MpiWin,
-                     &requests.back());
+            MPI_Get(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
+                    i.first, 0, i.second.second, MPI_CHAR, m_MpiWin);
         }
-        MPI_Status statuses[requests.size()];
-        MPI_Waitall(requests.size(), requests.data(), statuses);
     }
 
     for (const auto &i : m_AllReceivingWriterRanks)
