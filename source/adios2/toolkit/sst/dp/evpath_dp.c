@@ -536,7 +536,7 @@ static unsigned long writeBlockFingerprint(char *Page, size_t Size)
     {
         size_t Index = Start + Stride * i;
         unsigned char Component = 0;
-        while ((Page[Index] == 0) && (Index < Size))
+        while ((Page[Index] == 0) && (Index < (Size-1)))
         {
             Component++;
             Index++;
