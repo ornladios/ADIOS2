@@ -1474,13 +1474,9 @@ int doList(const char *path)
         // ntsteps = fp->tidx_stop - fp->tidx_start + 1;
         if (verbose)
         {
-            const std::map<std::string, Params> &variablesInfo =
-                io.GetAvailableVariables();
-            const std::map<std::string, Params> &attributesInfo =
-                io.GetAvailableAttributes();
             printf("File info:\n");
-            printf("  of variables:  %zu\n", variablesInfo.size());
-            printf("  of attributes: %zu\n", attributesInfo.size());
+            printf("  of variables:  %zu\n", io.GetVariables().size());
+            printf("  of attributes: %zu\n", io.GetAttributes().size());
             // printf("  of meshes:     %d\n", fp->nmeshes);
             // print_file_size(fp->file_size);
             // printf("  bp version:    %d\n", fp->version);
