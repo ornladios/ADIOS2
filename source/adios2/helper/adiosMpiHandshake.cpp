@@ -68,11 +68,22 @@ const std::vector<std::vector<int>> Handshake(const std::string &filename,
             fsc << "completed";
             fsc.close();
 
+            auto startTime = std::chrono::system_clock::now();
             while (true)
             {
                 std::ifstream fs;
                 try
                 {
+                    auto nowTime = std::chrono::system_clock::now();
+                    auto duration =
+                        std::chrono::duration_cast<std::chrono::seconds>(
+                            nowTime - startTime);
+                    if (duration.count() > timeoutSeconds)
+                    {
+                        throw(std::runtime_error(
+                            "Mpi handshake timeout for Stream " + filename));
+                    }
+
                     fs.open(filename + ".w.c");
                     std::string line;
                     std::getline(fs, line);
