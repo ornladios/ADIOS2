@@ -62,8 +62,10 @@ void SscReader::GetDeferredCommon(Variable<std::string> &variable,
         m_Buffer.resize(totalDataSize);
         for (const auto &i : m_AllReceivingWriterRanks)
         {
+            MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
             MPI_Get(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
                     i.first, 0, i.second.second, MPI_CHAR, m_MpiWin);
+            MPI_Win_unlock(i.first, m_MpiWin);
         }
     }
 
@@ -143,8 +145,10 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         m_Buffer.resize(totalDataSize);
         for (const auto &i : m_AllReceivingWriterRanks)
         {
+            MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
             MPI_Get(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
                     i.first, 0, i.second.second, MPI_CHAR, m_MpiWin);
+            MPI_Win_unlock(i.first, m_MpiWin);
         }
     }
 

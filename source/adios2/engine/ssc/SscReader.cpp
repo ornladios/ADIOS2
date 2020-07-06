@@ -101,7 +101,6 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
         m_InitialStep = false;
         SyncWritePattern();
         MPI_Win_create(NULL, 0, 1, MPI_INFO_NULL, m_StreamComm, &m_MpiWin);
-        MPI_Win_start(m_MpiAllWritersGroup, 0, m_MpiWin);
     }
     else
     {
@@ -210,7 +209,6 @@ void SscReader::EndStep()
     TAU_SCOPED_TIMER_FUNC();
     if (m_CurrentStep == 0)
     {
-        MPI_Win_complete(m_MpiWin);
         MPI_Win_free(&m_MpiWin);
         SyncReadPattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,

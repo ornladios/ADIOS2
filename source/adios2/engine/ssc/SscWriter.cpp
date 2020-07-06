@@ -58,13 +58,6 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         ++m_CurrentStep;
     }
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscWriter::BeginStep, World Rank " << m_StreamRank
-                  << ", Writer Rank " << m_WriterRank << ", Step "
-                  << m_CurrentStep << std::endl;
-    }
-
     return StepStatus::OK;
 }
 
@@ -141,8 +134,6 @@ void SscWriter::EndStep()
         SyncWritePattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
                        m_StreamComm, &m_MpiWin);
-        MPI_Win_post(m_MpiAllReadersGroup, 0, m_MpiWin);
-        MPI_Win_wait(m_MpiWin);
         MPI_Win_free(&m_MpiWin);
         SyncReadPattern();
         MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
