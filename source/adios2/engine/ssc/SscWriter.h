@@ -65,11 +65,6 @@ private:
     void SyncMpiPattern();
     void SyncWritePattern();
     void SyncReadPattern();
-    void PutOneSidedFencePush();
-    void PutOneSidedPostPush();
-    void PutOneSidedFencePull();
-    void PutOneSidedPostPull();
-    void PutTwoSided();
     void MpiWait();
 
 #define declare_type(T)                                                        \
