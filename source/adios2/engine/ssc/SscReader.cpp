@@ -46,7 +46,6 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 
 SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
 
-
 StepStatus SscReader::BeginStep(const StepMode stepMode,
                                 const float timeoutSeconds)
 {
@@ -176,8 +175,9 @@ void SscReader::EndStep()
         for (const auto &i : m_AllReceivingWriterRanks)
         {
             m_MpiRequests.emplace_back();
-            MPI_Irecv(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
-                    i.first, 0, m_StreamComm, &m_MpiRequests.back());
+            MPI_Irecv(m_Buffer.data() + i.second.first, i.second.second,
+                      MPI_CHAR, i.first, 0, m_StreamComm,
+                      &m_MpiRequests.back());
         }
     }
     else if (m_MpiMode == "onesidedfencepush")

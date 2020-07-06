@@ -47,15 +47,18 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-
     if (m_InitialStep)
     {
         m_InitialStep = false;
     }
     else
     {
-        MpiWait();
         ++m_CurrentStep;
+    }
+
+    if (m_CurrentStep > 1)
+    {
+        MpiWait();
     }
 
     return StepStatus::OK;
@@ -96,8 +99,8 @@ void SscWriter::EndStep()
             for (const auto &i : m_AllSendingReaderRanks)
             {
                 m_MpiRequests.emplace_back();
-                MPI_Isend(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, i.first, 0,
-                        m_StreamComm, &m_MpiRequests.back());
+                MPI_Isend(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, i.first,
+                          0, m_StreamComm, &m_MpiRequests.back());
             }
         }
         else if (m_MpiMode == "onesidedfencepush")
@@ -126,7 +129,6 @@ void SscWriter::EndStep()
         {
             MPI_Win_post(m_MpiAllReadersGroup, 0, m_MpiWin);
         }
-        m_NeedWait = true;
     }
 }
 
@@ -136,31 +138,27 @@ void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
 
 void SscWriter::MpiWait()
 {
-    if (m_NeedWait)
+    if (m_MpiMode == "twosided")
     {
-        if (m_MpiMode == "twosided")
-        {
-            MPI_Status statuses[m_MpiRequests.size()];
-            MPI_Waitall(m_MpiRequests.size(), m_MpiRequests.data(), statuses);
-            m_MpiRequests.clear();
-        }
-        else if (m_MpiMode == "onesidedfencepush")
-        {
-            MPI_Win_fence(0, m_MpiWin);
-        }
-        else if (m_MpiMode == "onesidedpostpush")
-        {
-            MPI_Win_complete(m_MpiWin);
-        }
-        else if (m_MpiMode == "onesidedfencepull")
-        {
-            MPI_Win_fence(0, m_MpiWin);
-        }
-        else if (m_MpiMode == "onesidedpostpull")
-        {
-            MPI_Win_wait(m_MpiWin);
-        }
-        m_NeedWait = false;
+        MPI_Status statuses[m_MpiRequests.size()];
+        MPI_Waitall(m_MpiRequests.size(), m_MpiRequests.data(), statuses);
+        m_MpiRequests.clear();
+    }
+    else if (m_MpiMode == "onesidedfencepush")
+    {
+        MPI_Win_fence(0, m_MpiWin);
+    }
+    else if (m_MpiMode == "onesidedpostpush")
+    {
+        MPI_Win_complete(m_MpiWin);
+    }
+    else if (m_MpiMode == "onesidedfencepull")
+    {
+        MPI_Win_fence(0, m_MpiWin);
+    }
+    else if (m_MpiMode == "onesidedpostpull")
+    {
+        MPI_Win_wait(m_MpiWin);
     }
 }
 
@@ -335,7 +333,10 @@ void SscWriter::DoClose(const int transportIndex)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    MpiWait();
+    if (m_CurrentStep > 0)
+    {
+        MpiWait();
+    }
 
     m_Buffer[0] = 1;
 

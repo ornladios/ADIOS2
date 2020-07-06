@@ -54,7 +54,6 @@ private:
     MPI_Group m_MpiAllReadersGroup;
     MPI_Comm m_StreamComm;
     std::string m_MpiMode = "twosided";
-    bool m_NeedWait = false;
     std::vector<MPI_Request> m_MpiRequests;
 
     int m_StreamRank;
