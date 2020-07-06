@@ -28,12 +28,6 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 
     helper::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
-    helper::GetParameter(m_IO.m_Parameters, "MaxFilenameLength",
-                         m_MaxFilenameLength);
-    helper::GetParameter(m_IO.m_Parameters, "RendezvousAppCount",
-                         m_RendezvousAppCount);
-    helper::GetParameter(m_IO.m_Parameters, "MaxStreamsPerApp",
-                         m_MaxStreamsPerApp);
     helper::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs",
                          m_OpenTimeoutSecs);
 
