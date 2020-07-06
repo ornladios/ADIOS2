@@ -1505,6 +1505,7 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
         struct_list[0].field_list = Info->MetaFields;
         struct_list[0].struct_size =
             FMstruct_size_field_list(Info->MetaFields, sizeof(char *));
+
         FMFormat Format =
             register_data_format(Info->LocalFMContext, &struct_list[0]);
         Info->MetaFormat = Format;
@@ -2030,13 +2031,13 @@ extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData)
 
 static void FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
 {
-    int Element = Bit / 64;
-    int ElementBit = Bit % 64;
+    int Element = Bit / (sizeof(size_t) * 8);
+    int ElementBit = Bit % (sizeof(size_t) * 8);
     if (Element >= MBase->BitFieldCount)
     {
         MBase->BitField =
             realloc(MBase->BitField, sizeof(size_t) * (Element + 1));
-        memset(MBase->BitField + MBase->BitFieldCount * sizeof(size_t), 0,
+        memset(MBase->BitField + MBase->BitFieldCount, 0,
                (Element - MBase->BitFieldCount + 1) * sizeof(size_t));
         MBase->BitFieldCount = Element + 1;
     }
@@ -2045,13 +2046,13 @@ static void FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
 
 static int FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit)
 {
-    int Element = Bit / 64;
-    int ElementBit = Bit % 64;
+    int Element = Bit / (sizeof(size_t) * 8);
+    int ElementBit = Bit % (sizeof(size_t) * 8);
     if (Element >= MBase->BitFieldCount)
     {
         MBase->BitField =
             realloc(MBase->BitField, sizeof(size_t) * (Element + 1));
-        memset(MBase->BitField + MBase->BitFieldCount * sizeof(size_t), 0,
+        memset(MBase->BitField + MBase->BitFieldCount, 0,
                (Element - MBase->BitFieldCount + 1) * sizeof(size_t));
         MBase->BitFieldCount = Element + 1;
     }
