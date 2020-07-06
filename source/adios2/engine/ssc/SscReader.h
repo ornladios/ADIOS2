@@ -90,9 +90,6 @@ private:
                            ssc::RankPosMap &allOverlapRanks);
 
     int m_Verbosity = 0;
-    int m_MaxFilenameLength = 128;
-    int m_MaxStreamsPerApp = 1;
-    int m_RendezvousAppCount = 2;
     int m_OpenTimeoutSecs = 10;
 };
 
