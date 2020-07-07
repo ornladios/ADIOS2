@@ -32,7 +32,7 @@ The key aspects ADIOS2 are
 
 #. **Commitment:** ADIOS2 is committed to the HPC community, releasing a new version every 6 months.
 
-*ADIOS2 is funded by the Department of Energy as part of the* `Exascale Computing Program <https://www.exascaleproject.org>`_.
+*ADIOS2 is funded by the Department of Energy as part of the* `Exascale Computing Project <https://www.exascaleproject.org>`_.
 
 ************************
 What ADIOS2 is and isn't

@@ -2,7 +2,7 @@
 Install from Source
 ###################
 
-ADIOS2 uses `CMake <https://cmake.org/>`_ version 3.6 or above, for building,
+ADIOS2 uses `CMake <https://cmake.org/>`_ version 3.12 or above, for building,
 testing and installing the library and utilities.
 
 .. include:: source/cmake.rst

@@ -2,11 +2,6 @@
 Building, Testing, and Installing ADIOS 2
 *****************************************
 
-.. caution::
-
-   Always do a fresh build from scratch if your source is updated with considerable changes *e.g.* `git pull` 
-
-
 To build ADIOS v2.x, clone the repository and invoke the canonical CMake build sequence:
 
 .. code-block:: bash

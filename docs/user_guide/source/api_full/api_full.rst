@@ -4,7 +4,8 @@ Full APIs
 
 .. note::
 
-   Application developers who desire fine-grained control of IO tasks should use the Full APIs. In simple cases (e.g. reading a file for analysis, interactive Python, or saving some data for a small project or tests) please refer to the :ref:High-Level APIs. 
+   Application developers who desire fine-grained control of IO tasks should use the Full APIs.
+   In simple cases (e.g. reading a file for analysis, interactive Python, or saving some data for a small project or tests) please refer to the :ref:`High-Level APIs`.
 
 
 Currently ADIOS2 support bindings for the following languages and their minimum standards:
@@ -27,12 +28,13 @@ Currently ADIOS2 support bindings for the following languages and their minimum 
 
 .. tip::
 
-   Prefer the C++11 bindings if your application C++ compiler supports the 2011 (or later) standard. For code using previous C++ standards (98 or 03) use the C bindings for ABI compatibility.   
+   Prefer the C++11 bindings if your application C++ compiler supports the 2011 (or later) standard.
+   For code using previous C++ standards (98 or 03) use the C bindings for ABI compatibility.
 
 
 .. caution::
 
-   Statically linked libraries (``*.a``) might result in conflicting ABIs between an older C++ project, the C bindings, and the adios native C++11 library. Test to make sure it works for your platform. 
+   Statically linked libraries (``*.a``) might result in conflicting ABIs between an older C++ project, the C bindings, and the adios native C++11 library. Test to make sure it works for your platform.
 
 
 The current interaction flow for each language binding API with the ADIOS2 library is specified as follows
@@ -70,4 +72,3 @@ The following sections provide a summary of the API calls on each language and l
 .. include:: fortran.rst
 .. include:: c.rst
 .. include:: python.rst
-
