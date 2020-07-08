@@ -62,9 +62,8 @@ Optionally, a runtime configuration file can be passed to the constructor indica
     adios2::IO bpReader = adios.DeclareIO("BPReader");
 
 This function returns a reference to an existing IO class object that lives inside the ADIOS object that created it.
-The ``ioName`` identifier input must be unique for each IO.
-Trying to declare an IO object with the same name twice will throw an exception.
-IO names are used to identify IO components in the runtime configuration file, :ref:`Runtime Configuration Files`
+The ``ioName`` string must be unique; declaring two IO objects with the same name will throw an exception.
+IO names are used to identify IO components in the runtime configuration file, :ref:`Runtime Configuration Files`.
 
 As shown in the diagram below, each resulting IO object is self-managed and independent, thus providing an adaptable way to perform different kinds of I/O operations.
 Users must be careful not to create conflicts between system level unique I/O identifiers: file names, IP address and port, MPI Send/Receive message rank and tag, etc.

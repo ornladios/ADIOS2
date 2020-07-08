@@ -2,20 +2,19 @@
 Variable
 ********
 
-Variables are the atomic unit of data representation in the ADIOS2 library when interacting with applications.
-Thus, the Variable component is the link between a piece of data coming from an application and its metadata.
-This component handles all application variables classified by data type and shape type.
+An ``adios2::Variable`` is the link between a piece of data coming from an application and its metadata.
+This component handles all application variables classified by data type and shape.
 
-Each IO holds its own set of Variables, each Variable is identified with a unique name.
+Each ``IO`` holds a set of Variables, and each ``Variable`` is identified with a unique name.
 They are created using the reference from ``IO::DefineVariable<T>`` or retrieved using the pointer from ``IO::InquireVariable<T>`` functions in :ref:`IO`.
 
-Variables Data Types
+Data Types
 --------------------
 
-Currently, only primitive types are supported in ADIOS 2. 
+Only primitive types are supported in ADIOS2.
 Fixed-width types from `<cinttypes> and <cstdint> <https://en.cppreference.com/w/cpp/types/integer>`_  should be preferred when writing portable code.
-ADIOS 2 maps primitive "natural" types to its equivalent fixed-width type (e.g. ``int`` -> ``int32_t``).
-Acceptable values for the type ``T`` in ``Variable<T>`` (this is C++ only, see below for other bindings) along with their preferred fix-width equivalent in 64-bit platforms:
+ADIOS2 maps primitive types to equivalent fixed-width types (e.g. ``int`` -> ``int32_t``).
+In C++, acceptable types ``T`` in ``Variable<T>`` along with their preferred fix-width equivalent in 64-bit platforms are given below:
 
 .. code-block:: c++
 
@@ -41,18 +40,20 @@ Acceptable values for the type ``T`` in ``Variable<T>`` (this is C++ only, see b
 
 .. tip::
 
-   It's recommended to be consistent when using types for portability. If data is defined as a fixed-width integer, define variables in ADIOS2 using a fixed-width type, *e.g.*  for ``int32_t`` data types use ``DefineVariable<int32_t>``.
+   It's recommended to be consistent when using types for portability.
+   If data is defined as a fixed-width integer, define variables in ADIOS2 using a fixed-width type, *e.g.*  for ``int32_t`` data types use ``DefineVariable<int32_t>``.
 
 .. note::
 
-   C, Fortran APIs: the enum and parameter adios2_type_XXX only provides fixed-width types
+   C, Fortran APIs: the enum and parameter adios2_type_XXX only provides fixed-width types.
    
 .. note::
 
-   Python APIs: use the equivalent fixed-width types from numpy. If dtype is not specified, ADIOS 2 would handle numpy defaults just fine as long as primitive types are passed.
+   Python APIs: use the equivalent fixed-width types from numpy.
+   If ``dtype`` is not specified, ADIOS2 handles numpy defaults just fine as long as primitive types are passed.
 
 
-Variables Shape Types
+Shapes
 ---------------------
 
 .. note::
