@@ -169,21 +169,6 @@
     MACRO(std::complex<float>)                                                 \
     MACRO(std::complex<double>)
 
-#define ADIOS2_FOREACH_NUMERIC_ATTRIBUTE_TYPE_1ARG(MACRO)                      \
-    MACRO(short)                                                               \
-    MACRO(unsigned short)                                                      \
-    MACRO(int)                                                                 \
-    MACRO(unsigned int)                                                        \
-    MACRO(long int)                                                            \
-    MACRO(long long int)                                                       \
-    MACRO(unsigned long int)                                                   \
-    MACRO(unsigned long long int)                                              \
-    MACRO(float)                                                               \
-    MACRO(double)                                                              \
-    MACRO(long double)                                                         \
-    MACRO(std::complex<float>)                                                 \
-    MACRO(std::complex<double>)
-
 /**
  <pre>
  The ADIOS2_FOREACH_STDTYPE_2ARGS macro assumes the given argument is a macro
@@ -241,14 +226,6 @@
 
 #define ADIOS2_FOREACH_STDTYPE_2ARGS(MACRO)                                    \
     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)
-
-#define ADIOS2_FOREACH_COMPLEX_TYPE_2ARGS(MACRO)                               \
-    MACRO(std::complex<float>, CFloat)                                         \
-    MACRO(std::complex<double>, CDouble)
-
-#define ADIOS2_FOREACH_LAUNCH_MODE(MACRO)                                      \
-    MACRO(Sync)                                                                \
-    MACRO(Deferred)
 
 #define ADIOS2_CLASS_iterator                                                  \
     class iterator                                                             \
