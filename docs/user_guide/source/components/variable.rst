@@ -71,7 +71,7 @@ The supported Variables by shape types can be classified as:
 
       if( rank == 0 )
       {
-         adios2::Variable<unsigned int> varNodes = adios2::DefineVariable<unsigned int>("Nodes");
+         adios2::Variable<uint32_t> varNodes = adios2::DefineVariable<uint32_t>("Nodes");
          adios2::Variable<std::string> varFlag = adios2::DefineVariable<std::string>("Nodes flag");
          // ...
          engine.Put( varNodes, nodes );
@@ -81,7 +81,8 @@ The supported Variables by shape types can be classified as:
 
    .. note::
 
-      Variables of type string are defined just like global single values. In the current adios2 version multidimensional strings are supported for fixed size strings through variables of type ``char``.
+      Variables of type ``string`` are defined just like global single values.
+      In the current ADIOS2 version multidimensional strings are supported for fixed size strings through variables of type ``char``.
 
 
 2. **Global Array**: the most common shape used for storing self-describing data used for analysis that lives in several MPI processes. The image below illustrates the definitions of the dimension components in a global array: shape, start, and count.
@@ -90,7 +91,8 @@ The supported Variables by shape types can be classified as:
    
    .. warning::
 
-      Be aware of data ordering in your language of choice (Row-Major or Column-Major) as depicted in the above figure. Data decomposition is done by the application based on their requirements, not by adios2.
+      Be aware of data ordering in your language of choice (row-major or column-major) as depicted in the figure above.
+      Data decomposition is done by the application, not by ADIOS2.
 
    Start and Count local dimensions can be later modified with the ``Variable::SetSelection`` function if it is not a constant dimensions variable.
 
@@ -99,18 +101,18 @@ The supported Variables by shape types can be classified as:
 
    .. code-block:: c++
 
-      adios2::Variable<int> varProcessID =
-            io.DefineVariable<int>("ProcessID", {adios2::LocalValueDim})
+      adios2::Variable<int32_t> varProcessID =
+            io.DefineVariable<int32_t>("ProcessID", {adios2::LocalValueDim})
       //...
-      engine.Put<int>(varProcessID, rank);
+      engine.Put<int32_t>(varProcessID, rank);
 
 
-4. **Local Array**: single array variables that are local to the MPI process. These are more commonly used to write Checkpoint data, that is later read for Restart. Reading, however, needs to be handled differently: each process' array has to be read separately, using SetSelection per rank. The size of each process selection should be discovered by the reading application by inquiring per-block size information of the variable, and allocate memory accordingly.
+4. **Local Array**: single array variables that are local to the MPI process. These are more commonly used to write checkpoint data, that is later read for restart. Reading, however, needs to be handled differently: each process' array has to be read separately, using SetSelection per rank. The size of each process selection should be discovered by the reading application by inquiring per-block size information of the variable, and allocate memory accordingly.
 
   .. image:: https://i.imgur.com/XLh2TUG.png
 
 
-5. **Joined Array (NOT YET SUPPORTED)**: in certain circumstances every process has an array that is different only in one dimension. ADIOS2 allows user to present them as a global array by joining the arrays together. For example, if every process has a table with a different number of rows, and one does not want to do a global communication to calculate the offsets in the global table, one can just write the local arrays and let ADIOS2 calculate the offsets at read time (when all sizes are known by any process).
+5. **Joined Array**: in certain circumstances every process has an array that is different only in one dimension. ADIOS2 allows user to present them as a global array by joining the arrays together. For example, if every process has a table with a different number of rows, and one does not want to do a global communication to calculate the offsets in the global table, one can just write the local arrays and let ADIOS2 calculate the offsets at read time (when all sizes are known by any process).
 
    .. code-block:: c++
 
@@ -123,10 +125,13 @@ The supported Variables by shape types can be classified as:
 
    .. note:
 
-      The local dimension size in the joinable dimension is allowed to change over time within each processor. However, if the sum of all local sizes changes over time, the result will look like a local array. Since global arrays with changing global dimension over time can only be handled as local arrays in ADIOS2.
+      The local dimension size in the joinable dimension is allowed to change over time within each processor.
+      However, if the sum of all local sizes changes over time, the result will look like a local array.
+      Since global arrays with changing global dimension over time can only be handled as local arrays in ADIOS2.
 
 
 .. note::
 
-   Constants are not handled separately from step-varying values in ADIOS2. Simply write them only once from one rank.
+   Constants are not handled separately from step-varying values in ADIOS2.
+   Simply write them only once from one rank.
 
