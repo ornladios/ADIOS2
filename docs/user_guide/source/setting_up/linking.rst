@@ -10,7 +10,7 @@ ADIOS exports a CMake package configuration file that allows its targets to be d
 
 .. code-block:: cmake
 
-    cmake_minimum_required(VERSION 3.6)
+    cmake_minimum_required(VERSION 3.12)
     project(MySimulation C CXX)
 
     find_package(MPI REQUIRED)

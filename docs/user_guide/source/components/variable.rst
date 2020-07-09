@@ -2,15 +2,19 @@
 Variable
 ********
 
-Self-describing Variables are the atomic unit of data representation in the ADIOS2 library when interacting with applications. Thus, the Variable component is the link between a piece of data coming from an application and its self-describing information or metadata. This component handles all application variables classified by data type and shape type.
+An ``adios2::Variable`` is the link between a piece of data coming from an application and its metadata.
+This component handles all application variables classified by data type and shape.
 
-Each IO holds its own set of Variables, each Variable is identified with a unique name. They are created using the reference from ``IO::DefineVariable<T>`` or retrieved using the pointer from ``IO::InquireVariable<T>`` functions in :ref:`IO`.
+Each ``IO`` holds a set of Variables, and each ``Variable`` is identified with a unique name.
+They are created using the reference from ``IO::DefineVariable<T>`` or retrieved using the pointer from ``IO::InquireVariable<T>`` functions in :ref:`IO`.
 
-Variables Data Types
+Data Types
 --------------------
 
-Currently, only primitive types are supported in ADIOS 2. 
-Fixed-width types from `<cinttypes> and <cstdint> <https://en.cppreference.com/w/cpp/types/integer>`_  should be preferred when writing portable code. ADIOS 2 maps primitive "natural" types to its equivalent fixed-width type (e.g. ``int`` -> ``int32_t``). Acceptable values for the type ``T`` in ``Variable<T>`` (this is C++ only, see below for other bindings) along with their preferred fix-width equivalent in 64-bit platforms:
+Only primitive types are supported in ADIOS2.
+Fixed-width types from `<cinttypes> and <cstdint> <https://en.cppreference.com/w/cpp/types/integer>`_  should be preferred when writing portable code.
+ADIOS2 maps primitive types to equivalent fixed-width types (e.g. ``int`` -> ``int32_t``).
+In C++, acceptable types ``T`` in ``Variable<T>`` along with their preferred fix-width equivalent in 64-bit platforms are given below:
 
 .. code-block:: c++
 
@@ -36,27 +40,32 @@ Fixed-width types from `<cinttypes> and <cstdint> <https://en.cppreference.com/w
 
 .. tip::
 
-   It's recommended to be consistent when using types for portability. If data is defined as a fixed-width integer, define variables in ADIOS2 using a fixed-width type, *e.g.*  for ``int32_t`` data types use ``DefineVariable<int32_t>``.
+   It's recommended to be consistent when using types for portability.
+   If data is defined as a fixed-width integer, define variables in ADIOS2 using a fixed-width type, *e.g.*  for ``int32_t`` data types use ``DefineVariable<int32_t>``.
 
 .. note::
 
-   C, Fortran APIs: the enum and parameter adios2_type_XXX only provides fixed-width types
+   C, Fortran APIs: the enum and parameter adios2_type_XXX only provides fixed-width types.
    
 .. note::
 
-   Python APIs: use the equivalent fixed-width types from numpy. If dtype is not specified, ADIOS 2 would handle numpy defaults just fine as long as primitive types are passed.
+   Python APIs: use the equivalent fixed-width types from numpy.
+   If ``dtype`` is not specified, ADIOS2 handles numpy defaults just fine as long as primitive types are passed.
 
 
-Variables Shape Types
+Shapes
 ---------------------
 
 .. note::
    As of beta release version 2.2.0 local variable reads are not supported, yet. This is work in progress. Please use global arrays and values as a workaround.
 
-ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different application data shape types must be covered depending on their scope within a particular MPI communicator. The shape type is defined at creation from the IO object by providing the dimensions: shape, start, count in the ``IO::DeclareVariable<T>`` template function. The supported Variables by shape types can be classified as:
+ADIOS2 is designed *out-of-the-box* for MPI applications.
+Thus different application data shape types must be covered depending on their scope within a particular MPI communicator.
+The shape type is defined at creation from the IO object by providing the dimensions: shape, start, count in the ``IO::DeclareVariable<T>`` template function.
+The supported Variables by shape types can be classified as:
 
 
-1. **Global Single Value**: only name is required in their definition. This variables are helpful for storing global information, preferably managed by only one MPI process, that may or may not change over steps: *e.g.* total number of particles, collective norm, number of nodes/cells, etc.
+1. **Global Single Value**: only a name is required for their definition. These variables are helpful for storing global information, preferably managed by only one MPI process, that may or may not change over steps: *e.g.* total number of particles, collective norm, number of nodes/cells, etc.
 
    .. code-block:: c++
 
@@ -77,7 +86,7 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
 
 2. **Global Array**: the most common shape used for storing self-describing data used for analysis that lives in several MPI processes. The image below illustrates the definitions of the dimension components in a global array: shape, start, and count.
 
-   .. image:: https://i.imgur.com/MKwNe5e.png : alt: my-picture2
+   .. image:: https://i.imgur.com/MKwNe5e.png
    
    .. warning::
 
@@ -98,7 +107,7 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
 
 4. **Local Array**: single array variables that are local to the MPI process. These are more commonly used to write Checkpoint data, that is later read for Restart. Reading, however, needs to be handled differently: each process' array has to be read separately, using SetSelection per rank. The size of each process selection should be discovered by the reading application by inquiring per-block size information of the variable, and allocate memory accordingly.
 
-  .. image:: https://i.imgur.com/XLh2TUG.png : alt: my-picture3
+  .. image:: https://i.imgur.com/XLh2TUG.png
 
 
 5. **Joined Array (NOT YET SUPPORTED)**: in certain circumstances every process has an array that is different only in one dimension. ADIOS2 allows user to present them as a global array by joining the arrays together. For example, if every process has a table with a different number of rows, and one does not want to do a global communication to calculate the offsets in the global table, one can just write the local arrays and let ADIOS2 calculate the offsets at read time (when all sizes are known by any process).

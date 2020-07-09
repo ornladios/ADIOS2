@@ -16,7 +16,7 @@ Currently ADIOS 2 can be obtained from anaconda cloud:
 Spack
 *****
 
-ADIOS 2 is fully supported in the latest Spack `adios2 package <https://spack.readthedocs.io/en/latest/package_list.html#adios2>`_
+ADIOS 2 is packaged in Spack `adios2 package <https://spack.readthedocs.io/en/latest/package_list.html#adios2>`_
 
 
 ******

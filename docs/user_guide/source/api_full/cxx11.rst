@@ -88,10 +88,11 @@ The following section provides a summary of the available functionality for each
    :members:
 
 
-Debugging
----------
+**Debugging**
 
-For debugging, ADIOS2 C++11 class instances and enums can be passed directly to ostreams, as well as converted to human-readable strings via the ubiquitous ``ToString(object)`` member variable. You can also directly pass objects to ``ostream``s.
+For debugging, ADIOS2 C++11 class instances and enums can be passed directly to ostreams,
+as well as converted to human-readable strings via the ubiquitous ``ToString(object)`` member variable.
+You can also directly pass objects to an ``ostream``.
 
 Example:
 

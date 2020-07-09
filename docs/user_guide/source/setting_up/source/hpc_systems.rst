@@ -15,8 +15,6 @@ Building on HPC Systems
 
 #. **Big Endian and 32-bit systems:** ADIOS2 hasn't been tested on big endian or 32-bit systems. Please be aware before attempting to run.
 
-#. **CMake minimum version:** The ADIOS2 build system requires a minimum CMake version of 3.6.0. However, IBM XL, Cray, and PGI compilers require version 3.9.0 or newer.
-
 #. **PGI compilers and C++11 support:** Version 15 of the PGI compiler is C++11 compliant.
    However it relies on the C++ standard library headers supplied by the system version of GCC, which may or may support all the C++11 features used in ADIOS2.
    On many systems (Titan at OLCF, for example) even though the PGI compiler supports C++11, the configured GCC and its headers do not (4.3.x on Cray Linux Environment, and v5 systems like Titan).
