@@ -56,16 +56,15 @@ In C++, acceptable types ``T`` in ``Variable<T>`` along with their preferred fix
 Shapes
 ---------------------
 
-.. note::
-   As of beta release version 2.2.0 local variable reads are not supported, yet. This is work in progress. Please use global arrays and values as a workaround.
-
-ADIOS2 is designed *out-of-the-box* for MPI applications.
-Thus different application data shape types must be covered depending on their scope within a particular MPI communicator.
-The shape type is defined at creation from the IO object by providing the dimensions: shape, start, count in the ``IO::DeclareVariable<T>`` template function.
-The supported Variables by shape types can be classified as:
+ADIOS2 is designed for MPI applications.
+Thus different application data shapes must be supported depending on their scope within a particular MPI communicator.
+The shape is defined at creation from the ``IO`` object by providing the dimensions: shape, start, count in the ``IO::DeclareVariable<T>`` template function.
+The supported shapes are described below.
 
 
-1. **Global Single Value**: only a name is required for their definition. These variables are helpful for storing global information, preferably managed by only one MPI process, that may or may not change over steps: *e.g.* total number of particles, collective norm, number of nodes/cells, etc.
+1. **Global Single Value**:
+Only a name is required for their definition.
+These variables are helpful for storing global information, preferably managed by only one MPI process, that may or may not change over steps: *e.g.* total number of particles, collective norm, number of nodes/cells, etc.
 
    .. code-block:: c++
 
@@ -85,7 +84,9 @@ The supported Variables by shape types can be classified as:
       In the current ADIOS2 version multidimensional strings are supported for fixed size strings through variables of type ``char``.
 
 
-2. **Global Array**: the most common shape used for storing self-describing data used for analysis that lives in several MPI processes. The image below illustrates the definitions of the dimension components in a global array: shape, start, and count.
+2. **Global Array**:
+The most common shape used for storing data that lives in several MPI processes.
+The image below illustrates the definitions of the dimension components in a global array: shape, start, and count.
 
    .. image:: https://i.imgur.com/MKwNe5e.png
    
@@ -97,7 +98,9 @@ The supported Variables by shape types can be classified as:
    Start and Count local dimensions can be later modified with the ``Variable::SetSelection`` function if it is not a constant dimensions variable.
 
 
-3. **Local Value**: single value-per-rank variables that are local to the MPI process. They are defined by passing the ``adios2::LocalValueDim`` enum as follows:
+3. **Local Value**:
+Values that are local to the MPI process.
+They are defined by passing the ``adios2::LocalValueDim`` enum as follows:
 
    .. code-block:: c++
 
@@ -107,12 +110,19 @@ The supported Variables by shape types can be classified as:
       engine.Put<int32_t>(varProcessID, rank);
 
 
-4. **Local Array**: single array variables that are local to the MPI process. These are more commonly used to write checkpoint data, that is later read for restart. Reading, however, needs to be handled differently: each process' array has to be read separately, using SetSelection per rank. The size of each process selection should be discovered by the reading application by inquiring per-block size information of the variable, and allocate memory accordingly.
+4. **Local Array**:
+Arrays that are local to the MPI process.
+These are commonly used to write checkpoint-restart data.
+Reading, however, needs to be handled differently: each process' array has to be read separately, using ``SetSelection`` per rank.
+The size of each process selection should be discovered by the reading application by inquiring per-block size information of the variable, and allocate memory accordingly.
 
   .. image:: https://i.imgur.com/XLh2TUG.png
 
 
-5. **Joined Array**: in certain circumstances every process has an array that is different only in one dimension. ADIOS2 allows user to present them as a global array by joining the arrays together. For example, if every process has a table with a different number of rows, and one does not want to do a global communication to calculate the offsets in the global table, one can just write the local arrays and let ADIOS2 calculate the offsets at read time (when all sizes are known by any process).
+5. **Joined Array**:
+In certain circumstances every process has an array that is different only in one dimension.
+ADIOS2 allows user to present them as a global array by joining the arrays together.
+For example, if every process has a table with a different number of rows, and one does not want to do a global communication to calculate the offsets in the global table, one can just write the local arrays and let ADIOS2 calculate the offsets at read time (when all sizes are known by any process).
 
    .. code-block:: c++
 
@@ -134,4 +144,3 @@ The supported Variables by shape types can be classified as:
 
    Constants are not handled separately from step-varying values in ADIOS2.
    Simply write them only once from one rank.
-
