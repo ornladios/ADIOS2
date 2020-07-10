@@ -57,6 +57,7 @@ public:
 private:
     /** POSIX file handle returned by Open */
     int m_FileDescriptor = -1;
+    int m_Errno = 0;
     bool m_IsOpening = false;
     std::future<int> m_OpenFuture;
 
@@ -66,6 +67,7 @@ private:
      */
     void CheckFile(const std::string hint) const;
     void WaitForOpen();
+    std::string SysErrMsg() const;
 };
 
 } // end namespace transport
