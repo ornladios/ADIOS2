@@ -6,7 +6,8 @@ ADIOS2 supports passing an optional runtime configuration file to the :ref:`ADIO
 
 This file contains key-value pairs equivalent to the compile time ``IO::SetParameters`` (``adios2_set_parameter`` in C, Fortran), and ``IO::AddTransport`` (``adios2_set_transport_parameter`` in C, Fortran). 
 
-Each Engine and Operator must provide a set of available parameters as described in the :ref:`Supported Engines` section. Up to version v2.6.0 only XML is supported, v2.6.0 and beyond support XML as well as YAML.
+Each ``Engine`` and ``Operator`` must provide a set of available parameters as described in the :ref:`Supported Engines` section.
+Up to version v2.6.0 only XML is supported, v2.6.0 and beyond support XML as well as YAML.
 
 .. warning::
 
@@ -50,7 +51,10 @@ XML
 YAML
 ----
 
-Starting with v2.6.0, ADIOS supports YAML configuration files. The syntax follows strict use of the YAML node keywords mapping to the ADIOS2 components hierarchy. If a keyword is unknown ADIOS2 simply ignores it. For an example file refer to `adios2 config file example in our repo. <https://github.com/ornladios/ADIOS2/tree/master/testing/adios2/yaml/proto.yaml>`_
+Starting with v2.6.0, ADIOS supports YAML configuration files.
+The syntax follows strict use of the YAML node keywords mapping to the ADIOS2 components hierarchy.
+If a keyword is unknown ADIOS2 simply ignores it.
+For an example file refer to `adios2 config file example in our repo. <https://github.com/ornladios/ADIOS2/tree/master/testing/adios2/yaml/proto.yaml>`_
 
 .. code-block:: yaml
    
@@ -100,4 +104,3 @@ Starting with v2.6.0, ADIOS supports YAML configuration files. The syntax follow
 .. tip::
    
    Run a YAML validator or use a YAML editor to make sure the provided file is YAML compatible.
-   

@@ -34,7 +34,7 @@ C++11 Write example
    {
        if(rank == 0 && step == 0) // global variable
        {
-           oStream.write<int>("size", size); 
+           oStream.write<int32_t>("size", size);
        }
 
        // physicalTime double, <double> is optional

@@ -2,27 +2,35 @@
 Engine
 ******
 
-The Engine abstraction component serves as the base interface to the actual IO Systems executing the heavy-load tasks performed when Producing and Consuming data.
+The Engine abstraction component serves as the base interface to the actual IO systems executing the heavy-load tasks performed when producing and consuming data.
 
-Engine functionality works around two concepts from the application's point-of-view:
+Engine functionality works around two concepts:
 
-1. Self-describing variables are published and consumed in "steps" in either "File" random-access (all steps are available) or "Streaming" (steps are available as they are produced in a step-by-step fashion).
-2. Self-describing variables are published (Put) and consumed (Get) using a "sync" or "deferred" (lazy evaluation) policy.
+1. Variables are published (``Put``) and consumed (``Get``) in "steps" in either "File" random-access (all steps are available) or "Streaming" (steps are available as they are produced in a step-by-step fashion).
+2. Variables are published (``Put``) and consumed (``Get``) using a "sync" or "deferred" (lazy evaluation) policy.
 
 .. caution::
 
-   The ADIOS 2 "step" is a logical abstraction that means different things depending on the application context. Examples: "time step", "iteration step", "inner loop step", or "interpolation step", "variable section", etc. It only indicates how the variables were passed into ADIOS 2 (e.g. I/O steps) without the user having to index this information on their own.
+   The ADIOS2 "step" is a logical abstraction that means different things depending on the application context.
+   Examples: "time step", "iteration step", "inner loop step", or "interpolation step", "variable section", etc.
+   It only indicates how the variables were passed into ADIOS2 (e.g. I/O steps) without the user having to index this information on their own.
 
 .. tip::
    
-   Publishing/Consuming data can be seen as a round-trip in ADIOS 2. Put and Get APIs for write/append and read modes aim to be "symmetric". Hence, reusing similar functions, objects, semantics as much as possible.  
+   Publishing and consuming data can be seen as a round-trip in ADIOS2.
+   ``Put`` and ``Get`` APIs for write/append and read modes aim to be "symmetric".
+   Hence, reusing similar functions, objects, semantics as much as possible.
 
 The rest of the section explains the important concepts 
 
 BeginStep
 ---------
        
-   Begin logical step and return the status (via an enum) of the stream to be read/written. In streaming engines BeginStep in where the receiver tries to acquire a new step in the reading process. The full signature allows for a mode and timeout parameters. See :ref:`Supported Engines` for more information on what engine allows. A simplified signature allows each engine to pick reasonable defaults.
+   Begins a logical step and return the status (via an enum) of the stream to be read/written.
+   In streaming engines ``BeginStep`` is where the receiver tries to acquire a new step in the reading process.
+   The full signature allows for a mode and timeout parameters.
+   See :ref:`Supported Engines` for more information on what engine allows.
+   A simplified signature allows each engine to pick reasonable defaults.
    
 .. code-block:: c++
 
@@ -41,17 +49,19 @@ EndStep
 
 .. tip::
    
-   To write portable code for a step-by-step access across adios2 engines (file and streaming engines) use BeginStep and EndStep. 
+   To write portable code for a step-by-step access across ADIOS2 engines (file and streaming engines) use ``BeginStep`` and ``EndStep``.
 
 .. danger:: 
    
-   Accessing random steps in read mode (e.g. Variable<T>::SetStepSelection in file engines) will create a conflict with BeginStep and EndStep and will throw an exception. In file engines, data is either consumed in a random-access or step-by-step mode, but not both.  
+   Accessing random steps in read mode (e.g. ``Variable<T>::SetStepSelection`` in file engines) will create a conflict with ``BeginStep`` and ``EndStep`` and will throw an exception.
+   In file engines, data is either consumed in a random-access or step-by-step mode, but not both.
 
 
 Close
 -----
 
-   Close current engine and underlying transports. Engine object can't be used after this call.
+   Close current engine and underlying transports.
+   An ``Engine`` object can't be used after this call.
    
 .. tip::
    
@@ -61,9 +71,10 @@ Close
 Put: modes and memory contracts
 -------------------------------
 
-``Put`` is the generalized abstract function for publishing data in adios2 when an Engine is created using Write, or Append, mode at ``IO::Open``. 
+``Put`` is the generalized abstract function for publishing data in adios2 when an Engine is created using ``Write`` or ``Append`` mode at ``IO::Open``.
 
-The most common signature is the one that passes a ``Variable<T>`` object for the metadata, a ``const`` piece of contiguous memory for the data, and a mode for either Deferred (data is collected until EndStep/PerformPuts/Close) or Sync (data is reusable immediately). This is the most common use case in applications.
+The most common signature is the one that passes a ``Variable<T>`` object for the metadata, a ``const`` piece of contiguous memory for the data, and a mode for either ``Deferred`` (data is collected until EndStep/PerformPuts/Close) or ``Sync`` (data is reusable immediately).
+This is the most common use case in applications.
 
 1. Deferred (default) or Sync mode, data is contiguous memory 
 
@@ -71,20 +82,24 @@ The most common signature is the one that passes a ``Variable<T>`` object for th
 
       void Put(Variable<T> variable, const T* data, const adios2::Mode = adios2::Mode::Deferred);
 
-Optionally, adios2 Engines can provide direct access to its buffer memory using an overload that returns a piece of memory to a variable block, basically a zero-copy. Variable<T>::Span is based on a subset of the upcoming `C++20 std::span <https://en.cppreference.com/w/cpp/container/span>`_, which is non-owning and typed contiguous memory piece (it helps to review what std::span is, formerly known as array_view). Spans act as a 1D memory container meant to be filled out by the application. It is safely used as any other STL sequence container, with iterators ``begin()`` and ``end()``, ``operator[]`` and ``at()``, while also providing ``data()`` and ``size()`` functions to manipulate the internal pointer.
+Optionally, ADIOS2 Engines can provide direct access to its buffer memory using an overload that returns a piece of memory to a variable block.
+``Variable<T>::Span`` is based on a subset of the upcoming `C++20 std::span <https://en.cppreference.com/w/cpp/container/span>`_, which is a non-owning reference to a block of contiguous memory.
+Spans act as a 1D container meant to be filled out by the application.
+It is safely used like any other STL container, providing ``begin()`` and ``end()`` iterators, ``operator[]`` and ``at()``, while also providing ``data()`` and ``size()`` functions to manipulate the internal pointer.
 
-Variable<T>::Span is helpful in situations in which temporaries are needed to create contiguous pieces of memory from non-contiguous pieces (``e.g.`` tables, arrays without ghost-cells), or just to save memory as the returned Variable<T>::Span can be used for computation, thus avoiding an extra copy from user memory into the adios buffer. 
-Variable<T>::Span combines a hybrid Sync and Deferred mode, in which the initial value and memory allocations are Sync, while data population and metadata collection are done at EndStep/PerformPuts/Close. Memory contracts are explained later in this chapter followed by examples.
+``Variable<T>::Span`` is helpful in situations in which temporaries are needed to create contiguous pieces of memory from non-contiguous pieces (``e.g.`` tables, arrays without ghost-cells), or just to save memory as the returned ``Variable<T>::Span`` can be used for computation, thus avoiding an extra copy from user memory into the adios buffer.
+``Variable<T>::Span`` combines a hybrid Sync and Deferred mode, in which the initial value and memory allocations are Sync, while data population and metadata collection are done at EndStep/PerformPuts/Close.
+Memory contracts are explained later in this chapter followed by examples.
 
-The following Variable<T>::Span signatures are available:
+The following ``Variable<T>::Span`` signatures are available:
 
-2. Return a span setting a default T() value into a default buffer
+2. Return a span setting a default ``T()`` value into a default buffer
  
    .. code-block:: c++
    
       Variable<T>::Span Put(Variable<T> variable);
       
-3. Return a span setting an initial fill value into a certain buffer. If span is not returned then the fillValue is fixed for that block.
+3. Return a span setting an initial fill value into a certain buffer. If span is not returned then the ``fillValue`` is fixed for that block.
 
    .. code-block:: c++
 
@@ -93,7 +108,8 @@ The following Variable<T>::Span signatures are available:
 
 .. warning:: 
 
-   As of version 2.4.0 only the default BP3 engine using the C++11 bindings supports ``Variable<T>::Span`` Put signatures. We plan to support this feature and add this to streaming Engines. 
+   As of version 2.4.0 only the default BP3 engine using the C++11 bindings supports ``Variable<T>::Span`` Put signatures.
+   We plan to support this feature and add this to streaming Engines.
 
 
 In summary, the following are the current Put signatures for publishing data in ADIOS 2:

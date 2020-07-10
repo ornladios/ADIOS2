@@ -55,7 +55,7 @@ If ``SetEngine`` is not called, then the ``BPFile`` engine is used.
    void adios2::IO::SetEngine( const std::string engineType );
 
    /** Example */
-   bpIO.SetEngine("BPFileWriter");
+   bpIO.SetEngine("BPFile");
 
 Each ``Engine`` allows the user to fine tune execution of buffering and output tasks via parameters passed to the ``IO`` object.
 These parameters are then propagated to the ``Engine``.
@@ -163,7 +163,8 @@ Keep in mind that Attributes apply to all Engines created by the ``IO`` object a
                                   const size_t elements);
 
 In situations in which a variable and attribute has been previously defined:
-1) a variable/attribute reference goes out of scope, or 2) when reading from an incoming stream, IO can inquire the current variables and attributes and return a pointer acting as reference. If the inquired variable/attribute is not found, then ``nullptr`` is returned.
+1) a variable/attribute reference goes out of scope, or 2) when reading from an incoming stream, IO can inquire the current variables and attributes and return a pointer acting as reference.
+If the inquired variable/attribute is not found, then the overloaded ``bool()`` operator of returns ``false``.
 
 .. code-block:: c++
 
@@ -172,7 +173,7 @@ In situations in which a variable and attribute has been previously defined:
     adios2::Attribute<T> InquireAttribute<T>(const std::string &name) noexcept;
 
     /** Example */
-    adios2::Variable<float> varPressure = io.InquireVariable<T>("pressure");
+    adios2::Variable<float> varPressure = io.InquireVariable<float>("pressure");
     if( varPressure ) // it exists
     {
       ...
@@ -180,7 +181,7 @@ In situations in which a variable and attribute has been previously defined:
 
 
 .. note::
-   ``InquireVariable`` returns a pointer so that ``nullptr`` can indicate invalid states (e.g. variables haven't arrived in a stream, weren't previously defined, or weren't written in a file).
+   ``adios2::Variable`` overloads ``operator bool()`` so that we can check for invalid states (e.g. variables haven't arrived in a stream, weren't previously defined, or weren't written in a file).
 
 .. caution::
 

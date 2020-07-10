@@ -4,7 +4,8 @@ Components Overview
 
 .. note::
 
-   If you are doing simple tasks where performance is a non-critical aspect please go to the :ref:`High-Level APIs` section for a quick start. If you are an HPC application developer or you want to use ADIOS2 functionality in full please read this chapter.
+   If you are doing simple tasks where performance is a non-critical aspect please go to the :ref:`High-Level APIs` section for a quick start.
+   If you are an HPC application developer or you want to use ADIOS2 functionality in full please read this chapter.
 
 
 The simple way to understand the big picture for the ADIOS2 unified user interface components is to map each class to the actual definition of the ADIOS acronym.
