@@ -119,27 +119,6 @@ The size of each process selection should be discovered by the reading applicati
   .. image:: https://i.imgur.com/XLh2TUG.png
 
 
-5. **Joined Array**:
-In certain circumstances every process has an array that is different only in one dimension.
-ADIOS2 allows user to present them as a global array by joining the arrays together.
-For example, if every process has a table with a different number of rows, and one does not want to do a global communication to calculate the offsets in the global table, one can just write the local arrays and let ADIOS2 calculate the offsets at read time (when all sizes are known by any process).
-
-   .. code-block:: c++
-
-      adios2::Variable<double> varTable = io.DefineVariable<double>(
-            "table", {adios2::JoinedDim, Ncolumns}, {}, {Nrows, Ncolumns});
-
-   .. note::
-
-      Only one dimension can be joinable, every other dimension must be the same on each process.
-
-   .. note:
-
-      The local dimension size in the joinable dimension is allowed to change over time within each processor.
-      However, if the sum of all local sizes changes over time, the result will look like a local array.
-      Since global arrays with changing global dimension over time can only be handled as local arrays in ADIOS2.
-
-
 .. note::
 
    Constants are not handled separately from step-varying values in ADIOS2.
