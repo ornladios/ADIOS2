@@ -252,7 +252,7 @@ public:
      * Open an Engine to start heavy-weight input/output operations.
      * @param name unique engine identifier
      * @param mode adios2::Mode::Write, adios2::Mode::Read, or
-     *             adios2::Mode::Append (not yet support)
+     *             adios2::Mode::Append (BP4 only)
      * @return engine object
      */
     Engine Open(const std::string &name, const Mode mode);
@@ -265,7 +265,7 @@ public:
      * MPI Collective function as it calls MPI_Comm_dup
      * @param name unique engine identifier within IO
      * @param mode adios2::Mode::Write, adios2::Mode::Read, or
-     *             adios2::Mode::Append (not yet support)
+     *             adios2::Mode::Append (BP4 only)
      * @param comm new communicator other than ADIOS object's communicator
      * @return engine object
      */
