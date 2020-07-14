@@ -20,6 +20,7 @@ git config --global clangformat.binary ${HOME}/clang+llvm-7.0.1-x86_64-linux-gnu
 popd
 
 # Install flake8
+sudo apt update -y
 sudo apt install -y python3-pip
 python3 -m pip install flake8
 
