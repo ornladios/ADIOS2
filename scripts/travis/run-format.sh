@@ -20,7 +20,7 @@ git config --global clangformat.binary ${HOME}/clang+llvm-7.0.1-x86_64-linux-gnu
 popd
 
 # Install flake8
-pip3 install --user flake8
+python3 -m pip install flake8
 
 cd ${SOURCE_DIR}
 
