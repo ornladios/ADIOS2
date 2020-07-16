@@ -2,7 +2,7 @@
 IO
 **
 
-The ``IO`` component is the connection between how applications set up their input/output options by selecting an ``Engine`` and its specific parameters, subscribing variables to self-describe the data, and setting supported transport modes to a particular Engine.
+The ``IO`` component is the connection between how applications set up their input/output options by selecting an ``Engine`` and its specific parameters, subscribing variables to data, and setting supported transport modes to a particular ``Engine``.
 Think of ``IO`` as a control panel for all the user-defined parameters that applications would like to fine tune.
 None of the ``IO`` operations are heavyweight until the ``Open`` function that generates an ``Engine`` is called.
 Its API allows
@@ -163,7 +163,7 @@ Keep in mind that Attributes apply to all Engines created by the ``IO`` object a
                                   const size_t elements);
 
 In situations in which a variable and attribute has been previously defined:
-1) a variable/attribute reference goes out of scope, or 2) when reading from an incoming stream, IO can inquire the current variables and attributes and return a pointer acting as reference.
+1) a variable/attribute reference goes out of scope, or 2) when reading from an incoming stream, the ``IO`` can inquire about the status of variables and attributes.
 If the inquired variable/attribute is not found, then the overloaded ``bool()`` operator of returns ``false``.
 
 .. code-block:: c++
@@ -186,26 +186,6 @@ If the inquired variable/attribute is not found, then the overloaded ``bool()`` 
 .. caution::
 
    Since ``InquireVariable`` and ``InquireAttribute`` are template functions, both the name and type must match the data you are looking for.
-
-
-Removing Variables and Attributes can be done one at a time or by removing all existing variables or attributes in an ``IO``.
-
-.. code-block:: c++
-
-    /** Signature */
-    bool IO::RemoveVariable(const std::string &name) noexcept;
-    void IO::RemoveAllVariables( ) noexcept;
-
-    bool IO::RemoveAttribute(const std::string &name) noexcept;
-    void IO::RemoveAllAttributes( ) noexcept;
-
-.. caution::
-
-   Remove functions must be used with caution as they generate dangling Variable/Attributes references if they didn't go out of scope.
-
-.. tip::
-
-   It is good practice to check the ``bool`` flag returned by ``RemoveVariable`` or ``RemoveAttribute``.
 
 
 Opening an Engine
