@@ -66,7 +66,8 @@ Close
 Put: modes and memory contracts
 -------------------------------
 
-``Put`` publishes data in adios2. It is unavailable unless the ``Engine`` is created in ``Write`` or ``Append`` mode.
+``Put`` publishes data in ADIOS2.
+It is unavailable unless the ``Engine`` is created in ``Write`` or ``Append`` mode.
 
 The most common signature is the one that passes a ``Variable<T>`` object for the metadata, a ``const`` piece of contiguous memory for the data, and a mode for either ``Deferred`` (data is collected until EndStep/PerformPuts/Close) or ``Sync`` (data is reusable immediately).
 This is the most common use case in applications.
@@ -80,9 +81,9 @@ This is the most common use case in applications.
 ADIOS2 Engines also provide direct access to their buffer memory.
 ``Variable<T>::Span`` is based on a subset of the upcoming `C++20 std::span <https://en.cppreference.com/w/cpp/container/span>`_, which is a non-owning reference to a block of contiguous memory.
 Spans act as a 1D container meant to be filled out by the application.
-It is safely used like any other STL container, providing ``begin()`` and ``end()`` iterators, ``operator[]`` and ``at()``, while also providing ``data()`` and ``size()`` functions to manipulate the internal pointer.
+They provide the standard API of an STL container, providing ``begin()`` and ``end()`` iterators, ``operator[]`` and ``at()``, as well as ``data()`` and ``size()``.
 
-``Variable<T>::Span`` is helpful in situations in which temporaries are needed to create contiguous pieces of memory from non-contiguous pieces (``e.g.`` tables, arrays without ghost-cells), or just to save memory as the returned ``Variable<T>::Span`` can be used for computation, thus avoiding an extra copy from user memory into the ADIOS2 buffer.
+``Variable<T>::Span`` is helpful in situations in which temporaries are needed to create contiguous pieces of memory from non-contiguous pieces (*e.g.* tables, arrays without ghost-cells), or just to save memory as the returned ``Variable<T>::Span`` can be used for computation, thus avoiding an extra copy from user memory into the ADIOS2 buffer.
 ``Variable<T>::Span`` combines a hybrid ``Sync`` and ``Deferred`` mode, in which the initial value and memory allocations are ``Sync``, while data population and metadata collection are done at EndStep/PerformPuts/Close.
 Memory contracts are explained later in this chapter followed by examples.
 
@@ -94,7 +95,8 @@ The following ``Variable<T>::Span`` signatures are available:
    
       Variable<T>::Span Put(Variable<T> variable);
       
-3. Return a span setting an initial fill value into a certain buffer. If span is not returned then the ``fillValue`` is fixed for that block.
+3. Return a span setting an initial fill value into a certain buffer.
+If span is not returned then the ``fillValue`` is fixed for that block.
 
    .. code-block:: c++
 
@@ -103,26 +105,28 @@ The following ``Variable<T>::Span`` signatures are available:
 
 In summary, the following are the current Put signatures for publishing data in ADIOS 2:
 
-1. Deferred (default) or Sync mode, data is contiguous memory put in an adios2 buffer
+1. ``Deferred`` (default) or ``Sync`` mode, data is contiguous memory put in an ADIOS2 buffer.
 
    .. code-block:: c++
 
       void Put(Variable<T> variable, const T* data, const adios2::Mode = adios2::Mode::Deferred);
    
-2. Return a span setting a default T() value into a default adios2 buffer. If span is not returned then the default T() is fixed for that block (e.g. zeros).
+2. Return a span setting a default ``T()`` value into a default ADIOS2 buffer.
+If span is not returned then the default ``T()`` is fixed for that block (e.g. zeros).
  
    .. code-block:: c++
    
       Variable<T>::Span Put(Variable<T> variable);
    
-3. Return a span setting an initial fill value into a certain buffer. If span is not returned then the fillValue is fixed for that block.
+3. Return a span setting an initial fill value into a certain buffer.
+If span is not returned then the ``fillValue`` is fixed for that block.
 
    .. code-block:: c++
 
       Variable<T>::Span Put(Variable<T> variable, const size_t bufferID, const T fillValue);
 
 
-The following table summarizes the memory contracts required by adios2 engines between Put signatures and the data memory coming from an application:
+The following table summarizes the memory contracts required by ADIOS2 engines between ``Put`` signatures and the data memory coming from an application:
 
 +----------+-------------+----------------------------------------------------+
 | Put      | Data Memory | Contract                                           |
@@ -146,9 +150,9 @@ The following table summarizes the memory contracts required by adios2 engines b
    In Fortran (array) and Python (numpy array) avoid operations that modify the internal structure of an array (size) to preserve the address. 
    
    
-Each Engine will give a concrete meaning to  each functions signatures, but all of them must follow the same memory contracts to the "data pointer": the memory address itself, and the "data contents": memory bits (values).
+Each ``Engine`` will give a concrete meaning to  each functions signatures, but all of them must follow the same memory contracts to the "data pointer": the memory address itself, and the "data contents": memory bits (values).
    
-1. **Put in Deferred or lazy evaluation mode (default)**: this is the preferred mode as it allows Put calls to be "grouped" before potential data transport at the first encounter of ``PerformPuts``, ``EndStep`` or ``Close``.
+1. **Put in Deferred or lazy evaluation mode (default)**: this is the preferred mode as it allows ``Put`` calls to be "grouped" before potential data transport at the first encounter of ``PerformPuts``, ``EndStep`` or ``Close``.
    
      .. code-block:: c++
          
@@ -190,10 +194,11 @@ Each Engine will give a concrete meaning to  each functions signatures, but all 
         
    .. tip::
 
-      It's recommended practice to set all data contents before Put in deferred mode to minimize the risk of modifying the data pointer (not just the contents) before PerformPuts/EndStep/Close.
+      It's recommended practice to set all data contents before ``Put`` in deferred mode to minimize the risk of modifying the data pointer (not just the contents) before PerformPuts/EndStep/Close.
 
 
-2.  **Put in Sync mode**: this is the special case, data pointer becomes reusable right after Put. Only use it if absolutely necessary (*e.g.* memory bound application or out of scope data, temporary).
+2.  **Put in Sync mode**: this is the special case, data pointer becomes reusable right after ``Put``.
+Only use it if absolutely necessary (*e.g.* memory bound application or out of scope data, temporary).
    
       .. code-block:: c++
          
@@ -238,7 +243,7 @@ Each Engine will give a concrete meaning to  each functions signatures, but all 
 
    Span memory contracts: 
       
-   - "data pointer" provided by the engine and returned by span.data(), might change with the generation of a new span. It follows iterator invalidation rules from std::vector. Use `span.data()` or iterators, `span.begin()`, `span.end()` to keep an updated data pointer.
+   - "data pointer" provided by the engine and returned by ``span.data()``, might change with the generation of a new span. It follows iterator invalidation rules from std::vector. Use `span.data()` or iterators, `span.begin()`, `span.end()` to keep an updated data pointer.
       
    - span "data contents" are published at the first call to ``PerformPuts``, ``EndStep`` or ``Close``
 
@@ -287,35 +292,34 @@ Each Engine will give a concrete meaning to  each functions signatures, but all 
 
 PerformsPuts
 ------------
-   
-   Executes all pending Put calls in deferred mode ad collect spans data
+
+   Executes all pending ``Put`` calls in deferred mode ad collect spans data
 
 
 Get: modes and memory contracts
 -------------------------------
 
-``Get`` is the generalized abstract function for consuming data in adios2 when an Engine is created using Read mode at ``IO::Open``. ADIOS 2 Put and Get APIs semantics are as symmetric as possible considering that they are opposite operations (*e.g.* Put passes ``const T*``, while Get populates a non-const ``T*``). 
+``Get`` is the function for consuming data in ADIOS2.
+It is available when an Engine is created using ``Read`` mode at ``IO::Open``.
+ADIOS2 ``Put`` and ``Get`` semantics are as symmetric as possible considering that they are opposite operations (*e.g.* ``Put`` passes ``const T*``, while ``Get`` populates a non-const ``T*``).
 
-..
-   Optionally, adios2 Engines can provide direct access to its buffer memory using an overload that returns a span to a variable block (base on a subset of the upcoming `C++20 std::span <https://en.cppreference.com/w/cpp/container/span>`_, non-owning contiguous memory piece). Spans act as a 1D memory container meant to be filled out by the application. See :ref:`Supported Engines` for engines that support the span feature (e.g. BP3).
+The ``Get`` signatures are described below.
 
-The following are the current Get signatures:
-
-1. Deferred (default) or Sync mode, data is contiguous pre-allocated memory 
+1. ``Deferred`` (default) or ``Sync`` mode, data is contiguous pre-allocated memory:
 
    .. code-block:: c++
 
       Get(Variable<T> variable, const T* data, const adios2::Mode = adios2::Mode::Deferred);
-      
-      
-2. C++11 only, dataV is automatically resized by adios2 based on Variable selection
+
+
+2. In this signature, ``dataV`` is automatically resized by ADIOS2 based on the ``Variable`` selection:
 
    .. code-block:: c++
-   
+
       Get(Variable<T> variable, std::vector<T>& dataV, const adios2::Mode = adios2::Mode::Deferred);
-   
-   
-The following table summarizes the memory contracts required by adios2 engines between Get signatures and the pre-allocated (except when using C++11 ``std::vector``) data memory coming from an application:
+
+
+The following table summarizes the memory contracts required by ADIOS2 engines between ``Get`` signatures and the pre-allocated (except when using C++11 ``std::vector``) data memory coming from an application:
 
 +----------+-------------+-----------------------------------------------+
 | Get      | Data Memory | Contract                                      |
@@ -330,7 +334,7 @@ The following table summarizes the memory contracts required by adios2 engines b
 +----------+-------------+-----------------------------------------------+
 
 
-1. **Get in Deferred or lazy evaluation mode (default)**: this is the preferred mode as it allows Get calls to be "grouped" before potential data transport at the first encounter of ``PerformPuts``, ``EndStep`` or ``Close``.
+1. **Get in Deferred or lazy evaluation mode (default)**: this is the preferred mode as it allows ``Get`` calls to be "grouped" before potential data transport at the first encounter of ``PerformPuts``, ``EndStep`` or ``Close``.
    
      .. code-block:: c++
          
@@ -347,36 +351,34 @@ The following table summarizes the memory contracts required by adios2 engines b
    Usage:
 
       .. code-block:: c++
-         
+
          std::vector<double> data;
-         
+
          // resize memory to expected size 
          data.resize(varBlockSize);
          // valid if all memory is populated 
          // data.reserve(varBlockSize);
-         
+
          // Gets data pointer to adios2 engine
          // associated with current variable metadata
          engine.Get(variable, data.data() );
-         
+
          // optionally pass data std::vector 
          // leave resize to adios2
          //engine.Get(variable, data);
-         
+
          // "data contents" must be ready
          // "data pointer" must be the same as in Get
          engine.EndStep();   
          //engine.PerformPuts();  
          //engine.Close();
-         
+
          // now data pointer can be reused or modified
-        
-   .. caution::
-
-      Use uninitialized memory at your own risk (e.g. vector reserve, new, malloc). Accessing unitiliazed memory is undefined behavior.
 
 
-2.  **Put in Sync mode**: this is the special case, data pointer becomes reusable right after Put. Only use it if absolutely necessary (*e.g.* memory bound application or out of scope data, temporary).
+
+2.  **Put in Sync mode**: this is the special case, data pointer becomes reusable right after Put.
+Only use it if absolutely necessary (*e.g.* memory bound application or out of scope data, temporary).
    
       .. code-block:: c++
          
@@ -409,15 +411,15 @@ The following table summarizes the memory contracts required by adios2 engines b
          // "data pointer" can be reused by the application
 
 .. note::
-   
-   As of v2.4 Get doesn't support returning spans. This is future work required in streaming engines if the application wants a non-owning view into the data buffer for a particular variable block.
+
+   ``Get`` doesn't support returning spans.
 
 
 PerformsGets
 ------------
-   
-   Executes all pending Get calls in deferred mode
-   
+
+   Executes all pending ``Get`` calls in deferred mode.
+
 
 Engine usage example
 --------------------
@@ -508,22 +510,24 @@ The following example illustrates the basic API usage in write mode for data gen
 
 .. tip::
 
-   Prefer default Deferred (lazy evaluation) functions as they have the potential to group several variables with the trade-off of not being able to reuse the pointers memory space until ``EndStep``, ``PerformPuts``, ``PerformGets``, or ``Close``.
-   Only use Sync if you really have to (*e.g.* reuse memory space from pointer).
+   Prefer default ``Deferred`` (lazy evaluation) functions as they have the potential to group several variables with the trade-off of not being able to reuse the pointers memory space until ``EndStep``, ``PerformPuts``, ``PerformGets``, or ``Close``.
+   Only use ``Sync`` if you really have to (*e.g.* reuse memory space from pointer).
    ADIOS2 prefers a step-based IO in which everything is known ahead of time when writing an entire step.
 
 
 .. danger::
-   The default behavior of adios2 ``Put`` and ``Get`` calls IS NOT synchronized, but rather deferred.
+   The default behavior of ADIOS2 ``Put`` and ``Get`` calls IS NOT synchronized, but rather deferred.
    It's actually the opposite of ``MPI_Put`` and more like ``MPI_rPut``.
    Do not assume the data pointer is usable after a ``Put`` and ``Get``, before ``EndStep``, ``Close`` or the corresponding ``PerformPuts``/``PerformGets``.
-   Avoid using TEMPORARIES, r-values, and out-of-scope variables in ``Deferred`` mode, use adios2::Mode::Sync if required.
+   Avoid using temporaries, r-values, and out-of-scope variables in ``Deferred`` mode.
+   Use ``adios2::Mode::Sync`` in these cases.
 
 
 Available Engines
 -----------------
 
-A particular engine is set within the IO object that creates it with the ``IO::SetEngine`` function in a case insensitive manner. If the SetEngine function is not invoked the default engine is the ``BPFile`` for writing and reading self-describing bp (binary-pack) files.
+A particular engine is set within the ``IO`` object that creates it with the ``IO::SetEngine`` function in a case insensitive manner.
+If the ``SetEngine`` function is not invoked the default engine is the ``BPFile``.
 
 +-------------------------+---------+---------------------------------------------+
 | Application             | Engine  | Description                                 |
@@ -538,12 +542,13 @@ A particular engine is set within the IO object that creates it with the ``IO::S
 +-------------------------+---------+---------------------------------------------+
 
 
-Engine Polymorphism has a two-fold goal:
+``Engine`` polymorphism has two goals:
 
-1. Each Engine implements an orthogonal IO scenario targeting a use case (e.g. Files, WAN, InSitu MPI, etc) using a simple, unified API.
+1. Each ``Engine`` implements an orthogonal IO scenario targeting a use case (e.g. Files, WAN, InSitu MPI, etc) using a simple, unified API.
 
-2. Allow developers to build their own custom system solution based on their particular requirements in the own playground space. Reusable toolkit objects are available inside ADIOS2 for common tasks: bp buffering, transport management, transports, etc.
+2. Allow developers to build their own custom system solution based on their particular requirements in the own playground space.
+Reusable toolkit objects are available inside ADIOS2 for common tasks: bp buffering, transport management, transports, etc.
 
-A class that extends Engine must be thought of as a solution to a range of IO applications. Each engine must provide a list of supported parameters, set in the IO object creating this engine using ``IO::SetParameters, IO::SetParameter``, and supported transports (and their parameters) in ``IO::AddTransport``. Each Engine's particular options are documented in :ref:`Supported Engines`.
-
-
+A class that extends ``Engine`` must be thought of as a solution to a range of IO applications.
+Each engine must provide a list of supported parameters, set in the IO object creating this engine using ``IO::SetParameters``, and supported transports (and their parameters) in ``IO::AddTransport``.
+Each Engine's particular options are documented in :ref:`Supported Engines`.
