@@ -6,11 +6,11 @@ Attributes are extra information associated with a particular IO component.
 They can be thought of as a very simplified ``Variable``, but with the goal of adding extra metadata.
 The most common use is the addition of human-readable metadata (*e.g.* ``"experiment name"``, ``"date and time"``, ``"04,27,2017"``, or a schema).
 
-Currently, ADIOS2 supports single values and arrays of primitive types (excluding ``complex<T>``) for the template type in the ``IO::DefineAttribute<T>`` and ``IO::InquireAttribute<T>`` function (in C++).  
+Currently, ADIOS2 supports single values and arrays of primitive types (excluding ``complex<T>``) for the template type in the ``IO::DefineAttribute<T>`` and ``IO::InquireAttribute<T>`` function (in C++).
+
+The data types supported for ADIOS2 ``Attributes`` are
 
 .. code-block:: c++
-
-   Data types Attributes supported by ADIOS2:
 
    std::string
    char

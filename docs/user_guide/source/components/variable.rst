@@ -58,7 +58,7 @@ Shapes
 
 ADIOS2 is designed for MPI applications.
 Thus different application data shapes must be supported depending on their scope within a particular MPI communicator.
-The shape is defined at creation from the ``IO`` object by providing the dimensions: shape, start, count in the ``IO::DeclareVariable<T>`` template function.
+The shape is defined at creation from the ``IO`` object by providing the dimensions: shape, start, count in the ``IO::DefineVariable<T>``.
 The supported shapes are described below.
 
 
@@ -70,8 +70,8 @@ These variables are helpful for storing global information, preferably managed b
 
       if( rank == 0 )
       {
-         adios2::Variable<uint32_t> varNodes = adios2::DefineVariable<uint32_t>("Nodes");
-         adios2::Variable<std::string> varFlag = adios2::DefineVariable<std::string>("Nodes flag");
+         adios2::Variable<uint32_t> varNodes = io.DefineVariable<uint32_t>("Nodes");
+         adios2::Variable<std::string> varFlag = io.DefineVariable<std::string>("Nodes flag");
          // ...
          engine.Put( varNodes, nodes );
          engine.Put( varFlag, "increased" );
@@ -81,11 +81,11 @@ These variables are helpful for storing global information, preferably managed b
    .. note::
 
       Variables of type ``string`` are defined just like global single values.
-      In the current ADIOS2 version multidimensional strings are supported for fixed size strings through variables of type ``char``.
+      Multidimensional strings are supported for fixed size strings through variables of type ``char``.
 
 
 2. **Global Array**:
-The most common shape used for storing data that lives in several MPI processes.
+This is the most common shape used for storing data that lives in several MPI processes.
 The image below illustrates the definitions of the dimension components in a global array: shape, start, and count.
 
    .. image:: https://i.imgur.com/MKwNe5e.png

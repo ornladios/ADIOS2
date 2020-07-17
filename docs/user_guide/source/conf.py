@@ -66,7 +66,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ADIOS2'
-copyright = u'2018, Oak Ridge National Laboratory'
+copyright = u'2020, Oak Ridge National Laboratory'
 author = u'Oak Ridge National Laboratory'
 
 # The version info for the project you're documenting, acts as replacement for
