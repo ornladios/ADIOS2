@@ -277,9 +277,17 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
 
     SMPI_Comm_rank(comm, &Stream->Rank);
 
-    set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"),
-                    strdup("sockets"));
-
+    if (Params->WANDataTransport)
+    {
+        set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"),
+                        strdup(Params->WANDataTransport));
+    }
+    else
+    {
+        set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"),
+                        strdup("sockets"));
+    }
+    
     if (Params->DataInterface)
     {
         set_string_attr(ListenAttrs, attr_atom_from_string("IP_INTERFACE"),
