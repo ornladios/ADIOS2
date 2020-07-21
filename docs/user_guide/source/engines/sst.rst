@@ -168,7 +168,7 @@ applications running on different interconnects, the Wide Area Network
 (WAN) option should be chosen.  This value is interpreted by both SST
 Writer and Reader engines.
 
-6. ``WANDataTransport``: Default **sockets**.  If the SST
+7. ``WANDataTransport``: Default **sockets**.  If the SST
 **DataTransport** parameter is **"WAN**, this string value specifies
 the EVPath-level data transport to use for exchanging data.  The value
 must be a data transport known to EVPath, such as **"sockets"**,
@@ -176,7 +176,7 @@ must be a data transport known to EVPath, such as **"sockets"**,
 be using the same EVPath-level data transport.  This value is
 interpreted by both SST Writer and Reader engines.
 
-7. ``ControlTransport``: Default **tcp**.  This string value specifies
+8. ``ControlTransport``: Default **tcp**.  This string value specifies
 the underlying network communication mechanism to use for performing
 control operations in SST.  SST can be configured to standard TCP
 sockets, which are very reliable and efficient, but which are limited
@@ -188,7 +188,7 @@ equivalent to **scalable**.  Generally both the reader and writer
 should be using the same control transport.  This value is interpreted
 by both SST Writer and Reader engines.
 
-8. ``NetworkInterface``: Default **NULL**.  In situations in which
+9. ``NetworkInterface``: Default **NULL**.  In situations in which
 there are multiple possible network interfaces available to SST, this
 string value specifies which should be used to generate SST's contact
 information for writers.  Generally this should *NOT* be specified
@@ -201,14 +201,14 @@ will result in SST generating contact information that uses the
 network address associated with the loopback interface (127.0.0.1).
 This value is interpreted by only by the SST Writer engine.
 
-9. ``ControlInterface``: Default **NULL**.  This value is similar to the
+10. ``ControlInterface``: Default **NULL**.  This value is similar to the
 NetworkInterface parameter, but only applies to the SST layer which does
 messaging for control (open, close, flow and timestep management, but not
 actual data transfer).  Generally the NetworkInterface parameter can be used
 to control this, but that also aplies to the Data Plane.  Use
 ControlInterface in the event of conflicting specifications.
 
-10. ``DataInterface``: Default **NULL**.  This value is similar to the
+11. ``DataInterface``: Default **NULL**.  This value is similar to the
 NetworkInterface parameter, but only applies to the SST layer which does
 messaging for data transfer, not control (open, close, flow and timestep
 management).  Generally the NetworkInterface parameter can be used to
@@ -216,7 +216,7 @@ control this, but that also aplies to the Control Plane.  Use DataInterface
 in the event of conflicting specifications.  In the case of the RDMA data
 plane, this parameter controls the libfabric interface choice.
 
-11. ``FirstTimestepPrecious``: Default **FALSE**.
+12. ``FirstTimestepPrecious``: Default **FALSE**.
 FirstTimestepPrecious is a boolean parameter that affects the queueing
 of the first timestep presented to the SST Writer engine. If
 FirstTimestepPrecious is **TRUE***, then the first timestep is
@@ -232,7 +232,7 @@ other reader-side operations (like requesting the LatestAvailable
 timestep in Engine parameters) might still cause the timestep to be skipped.
 This value is interpreted by only by the SST Writer engine.
 
-12. ``AlwaysProvideLatestTimestep``: Default **FALSE**.
+13. ``AlwaysProvideLatestTimestep``: Default **FALSE**.
 AlwaysProvideLatestTimestep is a boolean parameter that affects what
 of the available timesteps will be provided to the reader engine.  If
 AlwaysProvideLatestTimestep is **TRUE***, then if there are multiple
@@ -240,14 +240,14 @@ timesteps available to the reader, older timesteps will be skipped and
 the reader will see only the newest available upon BeginStep.
 This value is interpreted by only by the SST Reader engine.
 
-13. ``OpenTimeoutSecs``: Default **60**.  OpenTimeoutSecs is an integer
+14. ``OpenTimeoutSecs``: Default **60**.  OpenTimeoutSecs is an integer
 parameter that specifies the number of seconds SST is to wait for a peer
 connection on Open().  Currently this is only implemented on the Reader side
 of SST, and is a timeout for locating the contact information file created
 by Writer-side Open, not for completing the entire Open() handshake.
 Currently value is interpreted by only by the SST Reader engine.
 
-14. ``SpeculativePreloadMode``: Default **AUTO**.  In some
+15. ``SpeculativePreloadMode``: Default **AUTO**.  In some
 circumstances, SST eagerly sends all data from writers to every
 readers without first waiting for read requests.  Generally this
 improves performance if every reader needs all the data, but can be
@@ -260,7 +260,7 @@ is less than or equal to the value of the ``SpecAutoNodeThreshold``
 engine parameter (Default value 1), eager sending is initiated.
 Currently value is interpreted by only by the SST Reader engine.
 
-15.  ``SpecAutoNodeThreshold``:  Default **1**.  If the size of the
+16.  ``SpecAutoNodeThreshold``:  Default **1**.  If the size of the
 reader cohort is less than or equal to this value *and* the
 ``SpeculativePreloadMode`` parameter is **AUTO**, SST will initiate
 eager data sending of all data from each writer to all readers.
@@ -276,6 +276,7 @@ Currently value is interpreted by only by the SST Reader engine.
  QueueFullPolicy                 string              **Block**, Discard
  ReserveQueueLimit               integer             **0** (no queue limits)
  DataTransport                   string              **default varies by platform**, RDMA, WAN
+ WANDataTransport                string              **sockets**, enet, ib
  ControlTransport                string              **TCP**, Scalable
  NetworkInterface                string              **NULL**
  ControlInterface                string              **NULL**
