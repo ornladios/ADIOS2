@@ -168,6 +168,14 @@ applications running on different interconnects, the Wide Area Network
 (WAN) option should be chosen.  This value is interpreted by both SST
 Writer and Reader engines.
 
+6. ``WANDataTransport``: Default **sockets**.  If the SST
+**DataTransport** parameter is **"WAN**, this string value specifies
+the EVPath-level data transport to use for exchanging data.  The value
+must be a data transport known to EVPath, such as **"sockets"**,
+**"enet"**, or **"ib"**.  Generally both the reader and writer should
+be using the same EVPath-level data transport.  This value is
+interpreted by both SST Writer and Reader engines.
+
 7. ``ControlTransport``: Default **tcp**.  This string value specifies
 the underlying network communication mechanism to use for performing
 control operations in SST.  SST can be configured to standard TCP
