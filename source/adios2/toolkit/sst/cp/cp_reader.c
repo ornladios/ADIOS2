@@ -412,7 +412,7 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params,
         }
         if (conn)
         {
-            DataSize = strlen(CMContactString);
+            DataSize = strlen(CMContactString) + 1;
             *conn_p = conn;
         }
         else

@@ -50,6 +50,8 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
             SelectedTransport[i] = tolower(Params->DataTransport[i]);
         }
         SelectedTransport[i] = 0;
+        /* free old */
+        free(Params->DataTransport);
 
         /* canonicalize SelectedTransport */
         if ((strcmp(SelectedTransport, "wan") == 0) ||
@@ -1115,7 +1117,9 @@ extern void SstStreamDestroy(SstStream Stream)
     }
     if (Stream->ConfigParams->DataTransport)
         free(Stream->ConfigParams->DataTransport);
-    if (Stream->ConfigParams->DataTransport)
+    if (Stream->ConfigParams->WANDataTransport)
+        free(Stream->ConfigParams->WANDataTransport);
+    if (Stream->ConfigParams->ControlTransport)
         free(Stream->ConfigParams->ControlTransport);
     if (Stream->ConfigParams->NetworkInterface)
         free(Stream->ConfigParams->NetworkInterface);
