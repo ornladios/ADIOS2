@@ -50,6 +50,8 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
             SelectedTransport[i] = tolower(Params->DataTransport[i]);
         }
         SelectedTransport[i] = 0;
+        /* free old */
+        free(Params->DataTransport);
 
         /* canonicalize SelectedTransport */
         if ((strcmp(SelectedTransport, "wan") == 0) ||
