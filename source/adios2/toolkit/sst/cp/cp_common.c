@@ -1115,7 +1115,9 @@ extern void SstStreamDestroy(SstStream Stream)
     }
     if (Stream->ConfigParams->DataTransport)
         free(Stream->ConfigParams->DataTransport);
-    if (Stream->ConfigParams->DataTransport)
+    if (Stream->ConfigParams->WANDataTransport)
+        free(Stream->ConfigParams->WANDataTransport);
+    if (Stream->ConfigParams->ControlTransport)
         free(Stream->ConfigParams->ControlTransport);
     if (Stream->ConfigParams->NetworkInterface)
         free(Stream->ConfigParams->NetworkInterface);
