@@ -224,6 +224,13 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
             // we'll never change our data decomposition
             engine.LockWriterDefinitions();
         }
+        if (AdvancingAttrs)
+        {
+            const std::string r64_Single =
+                std::string("r64_PerStep_") + std::to_string(step);
+            io.DefineAttribute<double>(r64_Single, (double)(step * 10.0));
+            std::cout << "Dumping attribute " << r64_Single << std::endl;
+        }
         engine.EndStep();
         std::this_thread::sleep_for(std::chrono::milliseconds(
             DelayMS)); /* sleep for DelayMS milliseconds */

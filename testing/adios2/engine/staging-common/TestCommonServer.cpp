@@ -158,7 +158,14 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
             // we'll never change our data decomposition
             engine.LockWriterDefinitions();
         }
+        if (AdvancingAttrs)
+        {
+            const std::string r64_Single =
+                std::string("r64_PerStep_") + std::to_string(step);
+            io.DefineAttribute<double>(r64_Single, (double)(step * 10.0));
+        }
         engine.EndStep();
+        std::cout << "Writer finished step " << step << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(
             DelayMS)); /* sleep for DelayMS milliseconds */
         step++;

@@ -163,6 +163,9 @@ set (LatestReaderHold.1x1_CMD "run_test.py.$<CONFIG> --test_protocol one_client 
 # A faster writer and a queue policy that will cause timesteps to be discarded
 set (DiscardWriter.1x1_CMD "run_test.py.$<CONFIG> --test_protocol one_client -nw 1 -nr 1 --warg=--engine_params --warg=QueueLimit=1,QueueFullPolicy=discard,WENGINE_PARAMS --warg=--ms_delay --warg=250 --rarg=--discard")
 
+# Readers using Advancing attributes
+set (CumulativeAttr.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--advancing_attributes --rarg=--advancing_attributes")
+
 function(remove_engine_params_placeholder dst_str src_str )
     string(REGEX REPLACE "([^ 		  ]*),WENGINE_PARAMS" "\\1" src_str "${src_str}")
     string(REGEX REPLACE "([^ 		  ]*),RENGINE_PARAMS" "\\1" src_str "${src_str}")
