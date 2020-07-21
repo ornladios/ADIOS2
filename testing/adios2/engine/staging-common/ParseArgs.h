@@ -33,6 +33,7 @@ int LongFirstDelay = 0;
 int FirstTimestepMustBeZero = 0;
 int LockGeometry = 0;
 bool VaryingDataSize = false;
+bool AdvancingAttrs = false;
 int NoData = 0;
 int NoDataNode = -1;
 int EarlyExit = 0;
@@ -217,6 +218,10 @@ static void ParseArgs(int argc, char **argv)
         else if (std::string(argv[1]) == "--varying_data_size")
         {
             VaryingDataSize = true;
+        }
+        else if (std::string(argv[1]) == "--advancing_attributes")
+        {
+            AdvancingAttrs = true;
         }
         else if (std::string(argv[1]) == "--long_first_delay")
         {
