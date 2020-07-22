@@ -858,6 +858,33 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
     }
 }
 
+TEST_F(InlineWriteRead, IOInvariants)
+{
+    int mpiRank = 0, mpiSize = 1;
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    adios2::IO io = adios.DeclareIO("TestIO");
+    io.SetEngine("Inline");
+
+    adios2::Engine inlineWriter = io.Open("writer", adios2::Mode::Write);
+    // The inline engine does not support multiple writers:
+    EXPECT_THROW(io.Open("another_writer", adios2::Mode::Write),
+                 std::exception);
+    // The inline engine does not support append mode:
+    EXPECT_THROW(io.Open("append_mode", adios2::Mode::Append), std::exception);
+    adios2::Engine inlineReader = io.Open("reader", adios2::Mode::Read);
+    // The inline engine does not support more than 2 writers or readers:
+    EXPECT_THROW(io.Open("reader2", adios2::Mode::Read), std::exception);
+}
+
 //******************************************************************************
 // main
 //******************************************************************************
