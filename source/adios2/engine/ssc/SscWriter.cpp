@@ -56,7 +56,7 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         ++m_CurrentStep;
     }
 
-    if (m_CurrentStep > 1)
+    if (m_CurrentStep > 1 && m_WriterDefinitionsLocked)
     {
         MpiWait();
     }
@@ -333,7 +333,7 @@ void SscWriter::DoClose(const int transportIndex)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    if (m_CurrentStep > 0)
+    if (m_CurrentStep > 0 && m_WriterDefinitionsLocked)
     {
         MpiWait();
     }
