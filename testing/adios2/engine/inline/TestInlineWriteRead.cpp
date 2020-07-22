@@ -860,13 +860,10 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
 
 TEST_F(InlineWriteRead, IOInvariants)
 {
-    int mpiRank = 0, mpiSize = 1;
 #if ADIOS2_USE_MPI
+    int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
