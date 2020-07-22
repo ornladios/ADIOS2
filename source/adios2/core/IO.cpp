@@ -572,7 +572,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
     }
 
-    // For the inline engine, there must be exactly 1 reader, and exactly 2
+    // For the inline engine, there must be exactly 1 reader, and exactly 1
     // writer.
     if (engineTypeLC == "inline")
     {
