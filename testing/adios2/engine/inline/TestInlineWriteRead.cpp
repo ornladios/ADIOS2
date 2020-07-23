@@ -67,9 +67,6 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -113,9 +110,7 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
         io.SetEngine("Inline");
 
         // writerID parameter makes sure the reader can find the writer.
-        io.SetParameters({{"verbose", "4"},
-                          {"writerID", fname + "_write"},
-                          {"readerID", fname + "_read"}});
+        io.SetParameter("verbose", "4");
 
         adios2::Engine inlineWriter =
             io.Open(fname + "_write", adios2::Mode::Write);
@@ -357,9 +352,6 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -403,9 +395,7 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
         io.SetEngine("Inline");
 
         // writerID parameter makes sure the reader can find the writer.
-        io.SetParameters({{"verbose", "4"},
-                          {"writerID", fname + "_write"},
-                          {"readerID", fname + "_read"}});
+        io.SetParameter("verbose", "4");
 
         adios2::Engine inlineWriter =
             io.Open(fname + "_write", adios2::Mode::Write);
@@ -630,12 +620,9 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -657,9 +644,7 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts)
         io.SetEngine("Inline");
 
         // writerID parameter makes sure the reader can find the writer.
-        io.SetParameters({{"verbose", "4"},
-                          {"writerID", fname + "_write"},
-                          {"readerID", fname + "_read"}});
+        io.SetParameter("verbose", "4");
 
         adios2::Engine inlineWriter =
             io.Open(fname + "_write", adios2::Mode::Write);
@@ -757,12 +742,9 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -784,9 +766,7 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
         io.SetEngine("Inline");
 
         // writerID parameter makes sure the reader can find the writer.
-        io.SetParameters({{"verbose", "4"},
-                          {"writerID", fname + "_write"},
-                          {"readerID", fname + "_read"}});
+        io.SetParameter("verbose", "4");
 
         adios2::Engine inlineWriter =
             io.Open(fname + "_write", adios2::Mode::Write);

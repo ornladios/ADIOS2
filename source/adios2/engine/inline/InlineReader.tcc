@@ -55,8 +55,6 @@ template <class T>
 inline typename Variable<T>::Info *
 InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 {
-    InlineWriter &writer =
-        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
     if (variable.m_BlockID >= variable.m_BlocksInfo.size())
     {
         throw std::invalid_argument(
@@ -79,8 +77,6 @@ template <class T>
 inline typename Variable<T>::Info *
 InlineReader::GetBlockDeferredCommon(Variable<T> &variable)
 {
-    InlineWriter &writer =
-        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
     if (variable.m_BlockID >= variable.m_BlocksInfo.size())
     {
         throw std::invalid_argument(

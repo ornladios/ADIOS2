@@ -38,6 +38,30 @@ InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
     }
 }
 
+const InlineWriter *InlineReader::GetWriter() const
+{
+    const auto &engine_map = m_IO.GetEngines();
+    if (engine_map.size() != 2)
+    {
+        throw std::runtime_error("There must be exactly one reader and one "
+                                 "writer for the inline engine.");
+    }
+
+    std::shared_ptr<Engine> e = engine_map.begin()->second;
+    if (e->OpenMode() == adios2::Mode::Read)
+    {
+        e = engine_map.rbegin()->second;
+    }
+
+    const auto writer = dynamic_cast<InlineWriter *>(e.get());
+    if (!writer)
+    {
+        throw std::runtime_error(
+            "dynamic_cast<InlineWriter*> failed; this is very likely a bug.");
+    }
+    return writer;
+}
+
 StepStatus InlineReader::BeginStep(const StepMode mode,
                                    const float timeoutSeconds)
 {
@@ -48,14 +72,13 @@ StepStatus InlineReader::BeginStep(const StepMode mode,
                                  "reader is already inside a step");
     }
     // Reader should be on step that writer just completed
-    const auto &writer =
-        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
-    if (writer.IsInsideStep())
+    auto writer = GetWriter();
+    if (writer->IsInsideStep())
     {
         m_InsideStep = false;
         return StepStatus::NotReady;
     }
-    m_CurrentStep = writer.CurrentStep();
+    m_CurrentStep = writer->CurrentStep();
     if (m_CurrentStep == static_cast<size_t>(-1))
     {
         m_InsideStep = false;
@@ -87,9 +110,8 @@ size_t InlineReader::CurrentStep() const
     // Reader should be on same step as writer
     // added here since it's not really necessary to use beginstep/endstep for
     // this engine's reader so this ensures we do report the correct step
-    const auto &writer =
-        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
-    return writer.CurrentStep();
+    const auto writer = GetWriter();
+    return writer->CurrentStep();
 }
 
 void InlineReader::EndStep()
@@ -188,15 +210,6 @@ void InlineReader::InitParameters()
                     "ERROR: Method verbose argument must be an "
                     "integer in the range [0,5], in call to "
                     "Open or Engine constructor\n");
-        }
-        else if (key == "writerid")
-        {
-            m_WriterID = value;
-            if (m_Verbosity == 5)
-            {
-                std::cout << "Inline Reader " << m_ReaderRank
-                          << " Init() writerID " << m_WriterID << "\n";
-            }
         }
     }
 }

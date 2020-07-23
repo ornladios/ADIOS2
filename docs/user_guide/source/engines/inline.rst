@@ -13,12 +13,10 @@ To use this engine, you can either specify it in your XML config file, with tag 
 
     adios2::IO inlineIO = adios.DeclareIO("ioName");
     inlineIO.SetEngine("Inline");
-    inlineIO.SetParameters({{"writerID", "inline_write"}, {"readerID", "inline_read"}});
     adios2::Engine inlineWriter = inlineIO.Open("inline_write", adios2::Mode::Write);
     adios2::Engine inlineReader = inlineIO.Open("inline_read", adios2::Mode::Read);
 
 Notice that unlike other engines, the reader and writer share an IO instance.
-Also, the ``writerID`` parameter allows the reader to connect to the writer, and ``readerID`` allows writer to connect to the reader.
 Both the writer and reader must be opened before either tries to call ``BeginStep()``/``PerformPuts()``/``PerformGets()``.
 There must be exactly one writer, and exactly one reader.
 
@@ -69,16 +67,3 @@ Typical access pattern:
     // use info.Data() to get the pointer for each element in blocksInfo
 
     // After any desired analysis is finished, writer can now reuse data pointer
-
-
-Parameters:
-
-1. **writerID**: Match the string passed to the ``IO::Open()`` call when creating the writer. The reader uses this parameter to fetch the correct writer.
-2. **readerID**: Match the string passed to the ``IO::Open()`` call when creating the reader. The writer uses this parameter to fetch the correct reader.
-
-===========  ===================== ===============================
- **Key**        **Value Type**       **Default** and Examples
-===========  ===================== ===============================
- writerID         string             none, match the writer name
- readerID         string             none, match the reader name
-===========  ===================== ===============================

@@ -39,6 +39,30 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
     }
 }
 
+const InlineReader *InlineWriter::GetReader() const
+{
+    const auto &engine_map = m_IO.GetEngines();
+    if (engine_map.size() != 2)
+    {
+        throw std::runtime_error("There must be exactly one reader and one "
+                                 "writer for the inline engine.");
+    }
+
+    std::shared_ptr<Engine> e = engine_map.begin()->second;
+    if (e->OpenMode() == adios2::Mode::Write)
+    {
+        e = engine_map.rbegin()->second;
+    }
+
+    const auto reader = dynamic_cast<InlineReader *>(e.get());
+    if (!reader)
+    {
+        throw std::runtime_error(
+            "dynamic_cast<InlineReader*> failed; this is very likely a bug.");
+    }
+    return reader;
+}
+
 StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER("InlineWriter::BeginStep");
@@ -47,9 +71,9 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         throw std::runtime_error("InlineWriter::BeginStep was called but the "
                                  "writer is already inside a step");
     }
-    const auto &reader =
-        dynamic_cast<InlineReader &>(m_IO.GetEngine(m_ReaderID));
-    if (reader.IsInsideStep())
+
+    auto reader = GetReader();
+    if (reader->IsInsideStep())
     {
         m_InsideStep = false;
         return StepStatus::NotReady;
@@ -177,15 +201,6 @@ void InlineWriter::InitParameters()
                     "ERROR: Method verbose argument must be an "
                     "integer in the range [0,5], in call to "
                     "Open or Engine constructor\n");
-        }
-        else if (key == "readerid")
-        {
-            m_ReaderID = value;
-            if (m_Verbosity == 5)
-            {
-                std::cout << "Inline Writer " << m_WriterRank
-                          << " Init() readerID " << m_ReaderID << "\n";
-            }
         }
     }
 }
