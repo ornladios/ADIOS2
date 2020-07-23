@@ -62,10 +62,11 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         "bpDComplexes", shape, start, count);
     auto scalarInt = dataManIO.DefineVariable<int>("scalarInt");
     dataManIO.DefineAttribute<int>("AttInt", 110);
-    adios2::Engine dataManWriter = dataManIO.Open(name, adios2::Mode::Write);
+    adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Write);
+    engine.LockWriterDefinitions();
     for (int i = 0; i < steps; ++i)
     {
-        dataManWriter.BeginStep();
+        engine.BeginStep();
 
         Dims startTmp = {(size_t)mpiRank * 2, 0};
 
@@ -91,18 +92,17 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         bpComplexes.SetSelection({startTmp, count});
         bpDComplexes.SetSelection({startTmp, count});
 
-        dataManWriter.Put(bpChars, myChars.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpInts, myInts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpDComplexes, myDComplexes.data(),
-                          adios2::Mode::Sync);
-        dataManWriter.Put(scalarInt, i);
+        engine.Put(bpChars, myChars.data(), adios2::Mode::Sync);
+        engine.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
+        engine.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
+        engine.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
+        engine.Put(bpInts, myInts.data(), adios2::Mode::Sync);
+        engine.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
+        engine.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
+        engine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
+        engine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
+        engine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+        engine.Put(scalarInt, i);
 
         startTmp = {(size_t)mpiRank * 2 + 1, 0};
 
@@ -128,22 +128,21 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         bpComplexes.SetSelection({startTmp, count});
         bpDComplexes.SetSelection({startTmp, count});
 
-        dataManWriter.Put(bpChars, myChars.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpInts, myInts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpDComplexes, myDComplexes.data(),
-                          adios2::Mode::Sync);
-        dataManWriter.Put(scalarInt, i);
+        engine.Put(bpChars, myChars.data(), adios2::Mode::Sync);
+        engine.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
+        engine.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
+        engine.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
+        engine.Put(bpInts, myInts.data(), adios2::Mode::Sync);
+        engine.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
+        engine.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
+        engine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
+        engine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
+        engine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+        engine.Put(scalarInt, i);
 
-        dataManWriter.EndStep();
+        engine.EndStep();
     }
-    dataManWriter.Close();
+    engine.Close();
 }
 
 void Reader(const Dims &shape, const Dims &start, const Dims &count,

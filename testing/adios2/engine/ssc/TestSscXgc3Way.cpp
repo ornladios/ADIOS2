@@ -60,9 +60,11 @@ void coupler(const Dims &shape, const Dims &start, const Dims &count,
 
     adios2::Engine c_to_x_engine =
         c_to_x_io.Open("c_to_x", adios2::Mode::Write);
+    c_to_x_engine.LockWriterDefinitions();
 
     adios2::Engine c_to_g_engine =
         c_to_g_io.Open("c_to_g", adios2::Mode::Write);
+    c_to_g_engine.LockWriterDefinitions();
 
     adios2::Engine g_to_c_engine = g_to_c_io.Open("g_to_c", adios2::Mode::Read);
 
@@ -131,6 +133,8 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
 
     adios2::Engine x_to_c_engine =
         x_to_c_io.Open("x_to_c", adios2::Mode::Write);
+    x_to_c_engine.LockWriterDefinitions();
+
     adios2::Engine c_to_x_engine = c_to_x_io.Open("c_to_x", adios2::Mode::Read);
 
     for (int i = 0; i < steps; ++i)
@@ -175,6 +179,7 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
     adios2::Engine c_to_g_engine = c_to_g_io.Open("c_to_g", adios2::Mode::Read);
     adios2::Engine g_to_c_engine =
         g_to_c_io.Open("g_to_c", adios2::Mode::Write);
+    g_to_c_engine.LockWriterDefinitions();
 
     size_t datasize = std::accumulate(shape.begin(), shape.end(), 1,
                                       std::multiplies<size_t>());
