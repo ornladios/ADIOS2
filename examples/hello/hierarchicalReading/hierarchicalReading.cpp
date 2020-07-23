@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     rank = 0;
     size = 1;
 #endif
-
+    const int number_of_steps = 3;
     /** Application variable */
     std::string filename = "myVector_cpp.bp";
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -48,23 +48,33 @@ int main(int argc, char *argv[])
          * count
          * (local) }, all are constant dimensions */
         adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
-            "group1/subgroup1/bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
+            "/group1/subgroup1/bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         adios2::Variable<int> bpInts = bpIO.DefineVariable<int>(
-            "group1/subgroup1/bpInts", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
+            "/group1/subgroup1/bpInts", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         adios2::Variable<std::string> bpString =
             bpIO.DefineVariable<std::string>("bpString");
 
+        std::vector<std::string> myStrings = {"one", "two", "three"};
+        bpIO.DefineAttribute<std::string>("Array_of_Strings", myStrings.data(),
+                                          myStrings.size());
+
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpFileWriter = bpIO.Open(filename, adios2::Mode::Write);
+        adios2::Engine bpFileWriter = bpIO.Open(filename, adios2::Mode::Append);
 
-        /** Put variables for buffering, template type is optional */
-        bpFileWriter.Put<float>(bpFloats, myFloats.data());
-        bpFileWriter.Put(bpInts, myInts.data());
-        // bpFileWriter.Put(bpString, myString);
+        for (int i = 0; i < number_of_steps; i++){
 
+             bpFileWriter.BeginStep();
+            /** Put variables for buffering, template type is optional */
+             if (i%2 == 0)
+                bpFileWriter.Put<float>(bpFloats, myFloats.data());
+             else
+                 bpFileWriter.Put(bpInts, myInts.data());
+            // bpFileWriter.Put(bpString, myString);
+             bpFileWriter.EndStep();
+        }
         /** Create bp file, engine becomes unreachable after this*/
         bpFileWriter.Close();
         if (rank == 0)
@@ -113,27 +123,43 @@ int main(int argc, char *argv[])
          * Parameters, Transports, and Execution: Engines */
         adios2::IO bpIO = adios.DeclareIO("ReadBP");
 
+        const auto attributesInfo = bpIO.AvailableAttributes();
+
+        for (const auto &attributeInfoPair : attributesInfo)
+        {
+            std::cout << "Attribute: " << attributeInfoPair.first;
+            for (const auto &attributePair : attributeInfoPair.second)
+            {
+                std::cout << "\tKey: " << attributePair.first
+                          << "\tValue: " << attributePair.second << "\n";
+            }
+            std::cout << "\n";
+        }
+
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpReader = bpIO.Open(filename, adios2::Mode::Read);
 
-        const std::map<std::string, adios2::Params> variables =
-            bpIO.AvailableVariables();
-
-        for (const auto variablePair : variables)
+        for (int step = 0; step < number_of_steps; step++)
         {
-            std::cout << "Name: " << variablePair.first;
+            bpReader.BeginStep();
+            const std::map<std::string, adios2::Params> variables =
+                bpIO.AvailableVariables();
 
-            for (const auto &parameter : variablePair.second)
+            for (const auto variablePair : variables)
             {
-                std::cout << "\t" << parameter.first << ": " << parameter.second
-                          << "\n";
+                std::cout << "Name: " << variablePair.first;
+
+                for (const auto &parameter : variablePair.second)
+                {
+                    std::cout << "\t" << parameter.first << ": "
+                              << parameter.second << "\n";
+                }
             }
-        }
 
         /** Write variable for buffering */
         adios2::Variable<float> bpFloats =
-            bpIO.InquireVariable<float>("group1/subgroup1/bpFloats");
-        adios2::Variable<int> bpInts = bpIO.InquireVariable<int>("group1/subgroup1/bpInts");
+            bpIO.InquireVariable<float>("/group1/subgroup1/bpFloats");
+        adios2::Variable<int> bpInts = bpIO.InquireVariable<int>("/group1/subgroup1/bpInts");
 
         const std::size_t Nx = 10;
         if (bpFloats) // means found
@@ -174,7 +200,8 @@ int main(int argc, char *argv[])
                 std::cout << "\n";
             }
         }
-
+            bpReader.EndStep();
+        }
         /** Close bp file, engine becomes unreachable after this*/
         bpReader.Close();
     }
