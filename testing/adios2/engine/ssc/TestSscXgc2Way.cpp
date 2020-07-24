@@ -47,8 +47,8 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
     adios2::Engine x_to_g_engine =
         x_to_g_io.Open("x_to_g", adios2::Mode::Write);
     adios2::Engine g_to_x_engine = g_to_x_io.Open("g_to_x", adios2::Mode::Read);
-
     x_to_g_engine.LockWriterDefinitions();
+    g_to_x_engine.LockReaderSelections();
 
     for (int i = 0; i < steps; ++i)
     {
@@ -92,8 +92,8 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
     adios2::Engine x_to_g_engine = x_to_g_io.Open("x_to_g", adios2::Mode::Read);
     adios2::Engine g_to_x_engine =
         g_to_x_io.Open("g_to_x", adios2::Mode::Write);
-
     g_to_x_engine.LockWriterDefinitions();
+    x_to_g_engine.LockReaderSelections();
 
     size_t datasize = std::accumulate(shape.begin(), shape.end(), 1,
                                       std::multiplies<size_t>());

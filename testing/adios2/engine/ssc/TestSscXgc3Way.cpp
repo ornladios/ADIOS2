@@ -57,6 +57,7 @@ void coupler(const Dims &shape, const Dims &start, const Dims &count,
         c_to_g_io.DefineVariable<float>("c_to_g", shape, start, count);
 
     adios2::Engine x_to_c_engine = x_to_c_io.Open("x_to_c", adios2::Mode::Read);
+    x_to_c_engine.LockReaderSelections();
 
     adios2::Engine c_to_x_engine =
         c_to_x_io.Open("c_to_x", adios2::Mode::Write);
@@ -67,6 +68,7 @@ void coupler(const Dims &shape, const Dims &start, const Dims &count,
     c_to_g_engine.LockWriterDefinitions();
 
     adios2::Engine g_to_c_engine = g_to_c_io.Open("g_to_c", adios2::Mode::Read);
+    g_to_c_engine.LockReaderSelections();
 
     for (int i = 0; i < steps; ++i)
     {
@@ -136,6 +138,7 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
     x_to_c_engine.LockWriterDefinitions();
 
     adios2::Engine c_to_x_engine = c_to_x_io.Open("c_to_x", adios2::Mode::Read);
+    c_to_x_engine.LockReaderSelections();
 
     for (int i = 0; i < steps; ++i)
     {
@@ -177,6 +180,7 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
         g_to_c_io.DefineVariable<float>("g_to_c", shape, start, count);
 
     adios2::Engine c_to_g_engine = c_to_g_io.Open("c_to_g", adios2::Mode::Read);
+    c_to_g_engine.LockReaderSelections();
     adios2::Engine g_to_c_engine =
         g_to_c_io.Open("g_to_c", adios2::Mode::Write);
     g_to_c_engine.LockWriterDefinitions();

@@ -354,10 +354,10 @@ void SscReader::SyncWritePattern()
 void SscReader::SyncReadPattern()
 {
     TAU_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= 5)
+
+    if (m_ReaderRank == 0)
     {
-        std::cout << "SscReader::SyncReadPattern, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_ReaderRank << std::endl;
+        m_LocalReadPatternJson["Pattern"] = m_ReaderSelectionsLocked;
     }
 
     std::string localStr = m_LocalReadPatternJson.dump();
