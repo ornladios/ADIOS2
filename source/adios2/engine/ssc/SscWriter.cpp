@@ -197,6 +197,7 @@ void SscWriter::SyncWritePattern()
     if (m_WriterRank == 0)
     {
         ssc::AttributeMapToJson(m_IO, localRankMetaJ);
+        localRankMetaJ["Pattern"] = m_WriterDefinitionsLocked;
     }
 
     std::string localStr = localRankMetaJ.dump();
