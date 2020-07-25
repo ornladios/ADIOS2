@@ -39,8 +39,7 @@ public:
     void EndStep() final;
 
 private:
-    size_t m_CurrentStep = 0;
-    bool m_InitialStep = true;
+    int64_t m_CurrentStep = -1;
 
     ssc::BlockVecVec m_GlobalWritePattern;
     ssc::BlockVec m_LocalReadPattern;

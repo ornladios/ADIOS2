@@ -51,15 +51,15 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    if (m_InitialStep)
+    ++m_CurrentStep;
+
+    if (m_CurrentStep == 0)
     {
-        m_InitialStep = false;
         SyncWritePattern();
         MPI_Win_create(NULL, 0, 1, MPI_INFO_NULL, m_StreamComm, &m_MpiWin);
     }
     else
     {
-        ++m_CurrentStep;
         if (m_MpiMode == "twosided")
         {
             MPI_Status statuses[m_MpiRequests.size()];

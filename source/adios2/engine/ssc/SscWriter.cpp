@@ -47,14 +47,7 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    if (m_InitialStep)
-    {
-        m_InitialStep = false;
-    }
-    else
-    {
-        ++m_CurrentStep;
-    }
+    ++m_CurrentStep;
 
     if (m_CurrentStep > 1 && m_WriterDefinitionsLocked &&
         m_ReaderSelectionsLocked)
