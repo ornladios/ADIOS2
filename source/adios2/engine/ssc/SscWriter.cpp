@@ -56,7 +56,8 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         ++m_CurrentStep;
     }
 
-    if (m_CurrentStep > 1 && m_WriterDefinitionsLocked)
+    if (m_CurrentStep > 1 && m_WriterDefinitionsLocked &&
+        m_ReaderSelectionsLocked)
     {
         MpiWait();
     }
@@ -197,6 +198,7 @@ void SscWriter::SyncWritePattern()
     if (m_WriterRank == 0)
     {
         ssc::AttributeMapToJson(m_IO, localRankMetaJ);
+        localRankMetaJ["Pattern"] = m_WriterDefinitionsLocked;
     }
 
     std::string localStr = localRankMetaJ.dump();
@@ -270,6 +272,15 @@ void SscWriter::SyncReadPattern()
     CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,
                       m_AllSendingReaderRanks);
 
+    for (int i = 0; i < m_StreamSize; ++i)
+    {
+        auto &patternJson = globalJson[i]["Pattern"];
+        if (patternJson != nullptr)
+        {
+            m_ReaderSelectionsLocked = patternJson.get<bool>();
+        }
+    }
+
     if (m_Verbosity >= 10)
     {
         ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
@@ -333,7 +344,8 @@ void SscWriter::DoClose(const int transportIndex)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    if (m_CurrentStep > 0 && m_WriterDefinitionsLocked)
+    if (m_CurrentStep > 0 && m_WriterDefinitionsLocked &&
+        m_ReaderSelectionsLocked)
     {
         MpiWait();
     }

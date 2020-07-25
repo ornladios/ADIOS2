@@ -248,11 +248,9 @@ void SscReader::SyncWritePattern()
     MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
                   maxLocalSize, MPI_CHAR, m_StreamComm);
 
-    // deserialize global metadata Json
     ssc::LocalJsonToGlobalJson(globalVec, maxLocalSize, m_StreamSize,
                                m_GlobalWritePatternJson);
 
-    // deserialize variables metadata
     ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
 
     for (const auto &blockVec : m_GlobalWritePattern)
@@ -306,6 +304,13 @@ void SscReader::SyncWritePattern()
         {
             continue;
         }
+
+        auto &patternJson = m_GlobalWritePatternJson[i]["Pattern"];
+        if (patternJson != nullptr)
+        {
+            m_WriterDefinitionsLocked = patternJson.get<bool>();
+        }
+
         auto &attributesJson = m_GlobalWritePatternJson[i]["Attributes"];
         if (attributesJson == nullptr)
         {
@@ -349,10 +354,10 @@ void SscReader::SyncWritePattern()
 void SscReader::SyncReadPattern()
 {
     TAU_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= 5)
+
+    if (m_ReaderRank == 0)
     {
-        std::cout << "SscReader::SyncReadPattern, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_ReaderRank << std::endl;
+        m_LocalReadPatternJson["Pattern"] = m_ReaderSelectionsLocked;
     }
 
     std::string localStr = m_LocalReadPatternJson.dump();

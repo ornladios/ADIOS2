@@ -153,7 +153,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     adios2::IO dataManIO = adios.DeclareIO("Test");
     dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
-    adios2::Engine dataManReader = dataManIO.Open(name, adios2::Mode::Read);
+    adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Read);
+    engine.LockReaderSelections();
 
     size_t datasize = std::accumulate(shape.begin(), shape.end(), 1,
                                       std::multiplies<size_t>());
@@ -170,12 +171,12 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
     while (true)
     {
-        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
+        adios2::StepStatus status = engine.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
             const auto &vars = dataManIO.AvailableVariables();
             ASSERT_EQ(vars.size(), 11);
-            size_t currentStep = dataManReader.CurrentStep();
+            size_t currentStep = engine.CurrentStep();
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
             adios2::Variable<unsigned char> bpUChars =
@@ -198,20 +199,18 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
             auto scalarInt = dataManIO.InquireVariable<int>("scalarInt");
 
-            dataManReader.Get(bpChars, myChars.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpInts, myInts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpComplexes, myComplexes.data(),
-                              adios2::Mode::Sync);
-            dataManReader.Get(bpDComplexes, myDComplexes.data(),
-                              adios2::Mode::Sync);
+            engine.Get(bpChars, myChars.data(), adios2::Mode::Sync);
+            engine.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
+            engine.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
+            engine.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
+            engine.Get(bpInts, myInts.data(), adios2::Mode::Sync);
+            engine.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
+            engine.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
+            engine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
+            engine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
+            engine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
             int i;
-            dataManReader.Get(scalarInt, &i);
+            engine.Get(scalarInt, &i);
 
             ASSERT_EQ(i, currentStep);
 
@@ -235,7 +234,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                        mpiRank);
             VerifyData(myDComplexes.data(), currentStep, start, shape, shape,
                        mpiRank);
-            dataManReader.EndStep();
+            engine.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
@@ -250,7 +249,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
               << attInt.Data()[0] << ", expected 110" << std::endl;
     ASSERT_EQ(110, attInt.Data()[0]);
     ASSERT_NE(111, attInt.Data()[0]);
-    dataManReader.Close();
+    engine.Close();
 }
 
 TEST_F(SscEngineTest, TestSscWriterMultiblock)
