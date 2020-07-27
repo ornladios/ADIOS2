@@ -40,7 +40,7 @@ void PrintData(const T *data, const size_t step, const Dims &start,
 template <class T>
 void GenDataRecursive(std::vector<size_t> start, std::vector<size_t> count,
                       std::vector<size_t> shape, size_t n0, size_t y,
-                      std::vector<T> &vec)
+                      std::vector<T> &vec, const size_t step)
 {
     for (size_t i = 0; i < count[0]; i++)
     {
@@ -59,12 +59,13 @@ void GenDataRecursive(std::vector<size_t> start, std::vector<size_t> count,
             for (size_t j = 0; j < count_next[0]; j++)
             {
                 vec[i0 * count_next[0] + j] =
-                    z * shape_next[0] + (j + start_next[0]);
+                    z * shape_next[0] + (j + start_next[0]) + step;
             }
         }
         else
         {
-            GenDataRecursive(start_next, count_next, shape_next, i0, z, vec);
+            GenDataRecursive(start_next, count_next, shape_next, i0, z, vec,
+                             step);
         }
     }
 }
@@ -77,7 +78,7 @@ void GenData(std::vector<T> &vec, const size_t step,
     size_t total_size = std::accumulate(count.begin(), count.end(), 1,
                                         std::multiplies<size_t>());
     vec.resize(total_size);
-    GenDataRecursive(start, count, shape, 0, 0, vec);
+    GenDataRecursive(start, count, shape, 0, 0, vec, step);
 }
 
 template <class T>

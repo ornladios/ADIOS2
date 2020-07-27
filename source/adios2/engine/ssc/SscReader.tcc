@@ -29,7 +29,8 @@ void SscReader::GetDeferredCommon(Variable<std::string> &variable,
 {
     TAU_SCOPED_TIMER_FUNC();
     variable.SetData(data);
-    if (m_CurrentStep == 0)
+    if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+        m_ReaderSelectionsLocked == false)
     {
         m_LocalReadPattern.emplace_back();
         auto &b = m_LocalReadPattern.back();
@@ -103,7 +104,8 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         std::reverse(vShape.begin(), vShape.end());
     }
 
-    if (m_CurrentStep == 0)
+    if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+        m_ReaderSelectionsLocked == false)
     {
         m_LocalReadPattern.emplace_back();
         auto &b = m_LocalReadPattern.back();
@@ -215,7 +217,9 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
                     v.shapeId == ShapeID::LocalValue)
                 {
                     b.IsValue = true;
-                    if (m_CurrentStep == 0)
+                    if (m_CurrentStep == 0 ||
+                        m_WriterDefinitionsLocked == false ||
+                        m_ReaderSelectionsLocked == false)
                     {
                         std::memcpy(&b.Value, v.value.data(), v.value.size());
                     }

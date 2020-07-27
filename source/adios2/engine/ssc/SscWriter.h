@@ -42,8 +42,7 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    size_t m_CurrentStep = 0;
-    bool m_InitialStep = true;
+    int64_t m_CurrentStep = -1;
 
     ssc::BlockVecVec m_GlobalWritePattern;
     ssc::BlockVecVec m_GlobalReadPattern;
@@ -62,7 +61,7 @@ private:
     int m_WriterSize;
 
     void SyncMpiPattern();
-    void SyncWritePattern();
+    void SyncWritePattern(bool finalStep = false);
     void SyncReadPattern();
     void MpiWait();
 

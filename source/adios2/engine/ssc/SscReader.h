@@ -39,8 +39,7 @@ public:
     void EndStep() final;
 
 private:
-    size_t m_CurrentStep = 0;
-    bool m_InitialStep = true;
+    int64_t m_CurrentStep = -1;
 
     ssc::BlockVecVec m_GlobalWritePattern;
     ssc::BlockVec m_LocalReadPattern;
@@ -61,7 +60,7 @@ private:
     int m_ReaderSize;
 
     void SyncMpiPattern();
-    void SyncWritePattern();
+    bool SyncWritePattern();
     void SyncReadPattern();
 
 #define declare_type(T)                                                        \

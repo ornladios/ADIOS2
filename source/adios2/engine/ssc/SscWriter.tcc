@@ -47,7 +47,8 @@ void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
 
     if (!found)
     {
-        if (m_CurrentStep == 0)
+        if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+            m_ReaderSelectionsLocked == false)
         {
             m_GlobalWritePattern[m_StreamRank].emplace_back();
             auto &b = m_GlobalWritePattern[m_StreamRank].back();
@@ -104,7 +105,8 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 
     if (!found)
     {
-        if (m_CurrentStep == 0)
+        if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+            m_ReaderSelectionsLocked == false)
         {
             m_GlobalWritePattern[m_StreamRank].emplace_back();
             auto &b = m_GlobalWritePattern[m_StreamRank].back();
@@ -127,7 +129,7 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         }
         else
         {
-            throw std::runtime_error("ssc only accepts fixed IO pattern");
+            throw std::runtime_error("IO pattern changed after locking");
         }
     }
 }
