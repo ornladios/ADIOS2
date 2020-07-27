@@ -217,7 +217,9 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
                     v.shapeId == ShapeID::LocalValue)
                 {
                     b.IsValue = true;
-                    if (m_CurrentStep == 0)
+                    if (m_CurrentStep == 0 ||
+                        m_WriterDefinitionsLocked == false ||
+                        m_ReaderSelectionsLocked == false)
                     {
                         std::memcpy(&b.Value, v.value.data(), v.value.size());
                     }

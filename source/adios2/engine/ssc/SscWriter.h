@@ -61,7 +61,7 @@ private:
     int m_WriterSize;
 
     void SyncMpiPattern();
-    void SyncWritePattern();
+    void SyncWritePattern(bool finalStep = false);
     void SyncReadPattern();
     void MpiWait();
 

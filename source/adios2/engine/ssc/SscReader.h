@@ -60,7 +60,7 @@ private:
     int m_ReaderSize;
 
     void SyncMpiPattern();
-    void SyncWritePattern();
+    bool SyncWritePattern();
     void SyncReadPattern();
 
 #define declare_type(T)                                                        \

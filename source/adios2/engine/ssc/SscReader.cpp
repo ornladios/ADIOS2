@@ -38,9 +38,6 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     m_ReaderSize = m_Comm.Size();
     MPI_Comm_rank(m_StreamComm, &m_StreamRank);
     MPI_Comm_size(m_StreamComm, &m_StreamSize);
-
-    m_Buffer.resize(1, 0);
-    m_GlobalWritePattern.resize(m_StreamSize);
 }
 
 SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
@@ -52,10 +49,27 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 
     ++m_CurrentStep;
 
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "SscReader::BeginStep, World Rank " << m_StreamRank
+                  << ", Reader Rank " << m_ReaderRank << ", Step "
+                  << m_CurrentStep << std::endl;
+    }
+
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
     {
-        SyncWritePattern();
+        m_Buffer.resize(1, 0);
+        m_GlobalWritePattern.clear();
+        m_GlobalWritePattern.resize(m_StreamSize);
+        m_LocalReadPattern.clear();
+        m_GlobalWritePatternJson.clear();
+        bool finalStep = SyncWritePattern();
+        if (finalStep)
+        {
+            return StepStatus::EndOfStream;
+        }
+
         MPI_Win_create(NULL, 0, 1, MPI_INFO_NULL, m_StreamComm, &m_MpiWin);
     }
     else
@@ -92,7 +106,8 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                 v.shapeId == ShapeID::LocalValue)
             {
                 std::vector<char> value(v.bufferCount);
-                if (m_CurrentStep == 0)
+                if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+                    m_ReaderSelectionsLocked == false)
                 {
                     std::memcpy(value.data(), v.value.data(), v.value.size());
                 }
@@ -136,13 +151,6 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
         }
     }
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscReader::BeginStep, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_ReaderRank << ", Step "
-                  << m_CurrentStep << std::endl;
-    }
-
     if (m_Buffer[0] == 1)
     {
         return StepStatus::EndOfStream;
@@ -159,7 +167,15 @@ void SscReader::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "SscReader::EndStep, World Rank " << m_StreamRank
+                  << ", Reader Rank " << m_ReaderRank << ", Step "
+                  << m_CurrentStep << std::endl;
+    }
+
+    if (m_WriterDefinitionsLocked &&
+        m_ReaderSelectionsLocked) // fixed IO pattern
     {
         if (m_CurrentStep == 0)
         {
@@ -207,9 +223,13 @@ void SscReader::EndStep()
             }
         }
     }
-    else
+    else // flexible IO pattern
     {
         MPI_Win_free(&m_MpiWin);
+        if (m_CurrentStep == 0)
+        {
+            SyncReadPattern();
+        }
     }
 }
 
@@ -234,13 +254,14 @@ void SscReader::SyncMpiPattern()
     MPI_Comm_create_group(MPI_COMM_WORLD, streamGroup, 0, &m_StreamComm);
 }
 
-void SscReader::SyncWritePattern()
+bool SscReader::SyncWritePattern()
 {
     TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::SyncWritePattern, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_ReaderRank << std::endl;
+                  << ", Reader Rank " << m_ReaderRank << ", Step "
+                  << m_CurrentStep << std::endl;
     }
 
     // aggregate global write pattern
@@ -255,6 +276,22 @@ void SscReader::SyncWritePattern()
 
     ssc::LocalJsonToGlobalJson(globalVec, maxLocalSize, m_StreamSize,
                                m_GlobalWritePatternJson);
+
+    for (int i = 0; i < m_StreamSize; ++i)
+    {
+        if (m_GlobalWritePatternJson[i] == nullptr)
+        {
+            continue;
+        }
+        auto &patternJson = m_GlobalWritePatternJson[i]["FinalStep"];
+        if (patternJson != nullptr)
+        {
+            if (patternJson.get<bool>())
+            {
+                return true;
+            }
+        }
+    }
 
     ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
 
@@ -354,11 +391,19 @@ void SscReader::SyncWritePattern()
 #undef declare_type
         }
     }
+    return false;
 }
 
 void SscReader::SyncReadPattern()
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "SscReader::SyncReadPattern, World Rank " << m_StreamRank
+                  << ", Reader Rank " << m_ReaderRank << ", Step "
+                  << m_CurrentStep << std::endl;
+    }
 
     if (m_ReaderRank == 0)
     {
@@ -479,7 +524,10 @@ void SscReader::DoClose(const int transportIndex)
         std::cout << "SscReader::DoClose, World Rank " << m_StreamRank
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
-    MPI_Win_free(&m_MpiWin);
+    if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
+    {
+        MPI_Win_free(&m_MpiWin);
+    }
 }
 
 } // end namespace engine

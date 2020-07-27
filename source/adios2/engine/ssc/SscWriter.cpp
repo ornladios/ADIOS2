@@ -36,10 +36,6 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     m_WriterSize = m_Comm.Size();
     MPI_Comm_rank(m_StreamComm, &m_StreamRank);
     MPI_Comm_size(m_StreamComm, &m_StreamSize);
-
-    m_Buffer.resize(1, 0);
-    m_GlobalWritePattern.resize(m_StreamSize);
-    m_GlobalReadPattern.resize(m_StreamSize);
 }
 
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -47,6 +43,23 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     TAU_SCOPED_TIMER_FUNC();
 
     ++m_CurrentStep;
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "SscWriter::BeginStep, World Rank " << m_StreamRank
+                  << ", Reader Rank " << m_WriterRank << ", Step "
+                  << m_CurrentStep << std::endl;
+    }
+
+    if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+        m_ReaderSelectionsLocked == false)
+    {
+        m_Buffer.resize(1, 0);
+        m_GlobalWritePattern.clear();
+        m_GlobalWritePattern.resize(m_StreamSize);
+        m_GlobalReadPattern.clear();
+        m_GlobalReadPattern.resize(m_StreamSize);
+    }
 
     if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
     {
@@ -66,6 +79,13 @@ void SscWriter::PerformPuts() { TAU_SCOPED_TIMER_FUNC(); }
 void SscWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "SscWriter::EndStep, World Rank " << m_StreamRank
+                  << ", Reader Rank " << m_WriterRank << ", Step "
+                  << m_CurrentStep << std::endl;
+    }
 
     if (m_CurrentStep == 0)
     {
@@ -124,11 +144,6 @@ void SscWriter::EndStep()
         }
         else
         {
-            m_Buffer.resize(1, 0);
-            m_GlobalWritePattern.clear();
-            m_GlobalWritePattern.resize(m_StreamSize);
-            m_GlobalReadPattern.clear();
-            m_GlobalReadPattern.resize(m_StreamSize);
             SyncWritePattern();
             MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
                            m_StreamComm, &m_MpiWin);
@@ -186,13 +201,14 @@ void SscWriter::SyncMpiPattern()
     MPI_Comm_create_group(MPI_COMM_WORLD, streamGroup, 0, &m_StreamComm);
 }
 
-void SscWriter::SyncWritePattern()
+void SscWriter::SyncWritePattern(bool finalStep)
 {
     TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "SscWriter::SyncWritePattern, World Rank " << m_StreamRank
-                  << ", Writer Rank " << m_WriterRank << std::endl;
+                  << ", Writer Rank " << m_WriterRank << ", Step "
+                  << m_CurrentStep << std::endl;
     }
 
     nlohmann::json localRankMetaJ;
@@ -203,6 +219,10 @@ void SscWriter::SyncWritePattern()
     {
         ssc::AttributeMapToJson(m_IO, localRankMetaJ);
         localRankMetaJ["Pattern"] = m_WriterDefinitionsLocked;
+    }
+    if (finalStep)
+    {
+        localRankMetaJ["FinalStep"] = true;
     }
 
     std::string localStr = localRankMetaJ.dump();
@@ -233,7 +253,8 @@ void SscWriter::SyncReadPattern()
     if (m_Verbosity >= 5)
     {
         std::cout << "SscWriter::SyncReadPattern, World Rank " << m_StreamRank
-                  << ", Writer Rank " << m_WriterRank << std::endl;
+                  << ", Writer Rank " << m_WriterRank << ", Step "
+                  << m_CurrentStep << std::endl;
     }
 
     size_t localSize = 0;
@@ -354,54 +375,58 @@ void SscWriter::DoClose(const int transportIndex)
         {
             MpiWait();
         }
-    }
 
-    m_Buffer[0] = 1;
+        m_Buffer[0] = 1;
 
-    if (m_MpiMode == "twosided")
-    {
-        std::vector<MPI_Request> requests;
-        for (const auto &i : m_AllSendingReaderRanks)
+        if (m_MpiMode == "twosided")
         {
-            requests.emplace_back();
-            MPI_Isend(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, m_StreamComm,
-                      &requests.back());
+            std::vector<MPI_Request> requests;
+            for (const auto &i : m_AllSendingReaderRanks)
+            {
+                requests.emplace_back();
+                MPI_Isend(m_Buffer.data(), 1, MPI_CHAR, i.first, 0,
+                          m_StreamComm, &requests.back());
+            }
+            MPI_Status statuses[requests.size()];
+            MPI_Waitall(requests.size(), requests.data(), statuses);
         }
-        MPI_Status statuses[requests.size()];
-        MPI_Waitall(requests.size(), requests.data(), statuses);
-    }
-    else if (m_MpiMode == "onesidedfencepush")
-    {
-        MPI_Win_fence(0, m_MpiWin);
-        for (const auto &i : m_AllSendingReaderRanks)
+        else if (m_MpiMode == "onesidedfencepush")
         {
-            MPI_Put(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, 1, MPI_CHAR,
-                    m_MpiWin);
+            MPI_Win_fence(0, m_MpiWin);
+            for (const auto &i : m_AllSendingReaderRanks)
+            {
+                MPI_Put(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, 1, MPI_CHAR,
+                        m_MpiWin);
+            }
+            MPI_Win_fence(0, m_MpiWin);
         }
-        MPI_Win_fence(0, m_MpiWin);
-    }
-    else if (m_MpiMode == "onesidedpostpush")
-    {
-        MPI_Win_start(m_MpiAllReadersGroup, 0, m_MpiWin);
-        for (const auto &i : m_AllSendingReaderRanks)
+        else if (m_MpiMode == "onesidedpostpush")
         {
-            MPI_Put(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, 1, MPI_CHAR,
-                    m_MpiWin);
+            MPI_Win_start(m_MpiAllReadersGroup, 0, m_MpiWin);
+            for (const auto &i : m_AllSendingReaderRanks)
+            {
+                MPI_Put(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, 1, MPI_CHAR,
+                        m_MpiWin);
+            }
+            MPI_Win_complete(m_MpiWin);
         }
-        MPI_Win_complete(m_MpiWin);
-    }
-    else if (m_MpiMode == "onesidedfencepull")
-    {
-        MPI_Win_fence(0, m_MpiWin);
-        MPI_Win_fence(0, m_MpiWin);
-    }
-    else if (m_MpiMode == "onesidedpostpull")
-    {
-        MPI_Win_post(m_MpiAllReadersGroup, 0, m_MpiWin);
-        MPI_Win_wait(m_MpiWin);
-    }
+        else if (m_MpiMode == "onesidedfencepull")
+        {
+            MPI_Win_fence(0, m_MpiWin);
+            MPI_Win_fence(0, m_MpiWin);
+        }
+        else if (m_MpiMode == "onesidedpostpull")
+        {
+            MPI_Win_post(m_MpiAllReadersGroup, 0, m_MpiWin);
+            MPI_Win_wait(m_MpiWin);
+        }
 
-    MPI_Win_free(&m_MpiWin);
+        MPI_Win_free(&m_MpiWin);
+    }
+    else
+    {
+        SyncWritePattern(true);
+    }
 }
 
 } // end namespace engine
