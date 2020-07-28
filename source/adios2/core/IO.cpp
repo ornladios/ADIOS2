@@ -224,6 +224,7 @@ void IO::SetEngine(const std::string engineType) noexcept
     {
         finalEngineType = "BP4";
         lf_InsertParam("OpenTimeoutSecs", "3600");
+        lf_InsertParam("StreamReader", "true");
     }
     /* "file" is handled entirely in IO::Open() as it needs the name */
     else

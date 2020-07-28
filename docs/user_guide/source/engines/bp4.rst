@@ -76,7 +76,7 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 16. **BurstBufferVerbose**: Verbose level 1 will cause each draining thread to print a one line report at the end (to standard output) about where it has spent its time and the number of bytes moved. Verbose level 2 will cause each thread to print a line for each draining operation (file creation, copy block, write block from memory, etc). 
 
-
+17. **StreamReader**: By default the BP4 engine parses all available metadata in Open(). An application may turn this flag on to parse a limited number of steps at once, and update metadata when those steps have been processed. If the flag is ON, reading only works in streaming mode (using BeginStep/EndStep); file reading mode will not work as there will be zero steps processed in Open().
 
 ============================== ===================== ===========================================================
  **Key**                       **Value Format**      **Default** and Examples
@@ -98,6 +98,7 @@ This engine allows the user to fine tune the buffering operations through the fo
  BurstBufferPath                string                **""**, /mnt/bb/norbert, /ssd
  BurstBufferDrain               string On/Off         **On**, Off
  BurstBufferVerbose             integer, 0-2          **0**, ``1``, ``2`` 
+ StreamReader                   string On/Off         On, **Off**
 ============================== ===================== ===========================================================
 
 

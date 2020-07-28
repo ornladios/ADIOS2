@@ -196,6 +196,11 @@ void BPBase::Init(const Params &parameters, const std::string hint,
                 static_cast<int>(helper::StringTo<int32_t>(
                     value, " in Parameter key=BurstBufferVerbose " + hint));
         }
+        else if (key == "streamreader")
+        {
+            parsedParameters.StreamReader = helper::StringTo<bool>(
+                value, " in Parameter key=StreamReader " + hint);
+        }
     }
     if (!engineType.empty())
     {

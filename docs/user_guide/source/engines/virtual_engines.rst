@@ -55,6 +55,7 @@ These are the actual settings in ADIOS when a virtual engine is selected. The pa
 ============================== ===================== ===========================================================
  OpenTimeoutSecs                float                 **3600**  (wait for up to an hour)
  BeginStepPollingFrequencySecs  float                 **1**     (poll the file system with 1 second frequency
+ StreamReader                   bool                  **On**    (process metadata in streaming mode)
 ============================== ===================== ===========================================================
 
 3. ``InSituAnalysis``. The engine is ``SST``. The parameters are set to:

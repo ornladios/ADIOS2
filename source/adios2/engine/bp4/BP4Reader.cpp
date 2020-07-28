@@ -174,7 +174,11 @@ void BP4Reader::Init()
         std::chrono::steady_clock::now() + timeoutSeconds;
 
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
-    InitBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+    if (!m_BP4Deserializer.m_Parameters.StreamReader)
+    {
+        /* non-stream reader gets as much steps as available now */
+        InitBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+    }
 }
 
 bool BP4Reader::SleepOrQuit(const TimePoint &timeoutInstant,
@@ -317,6 +321,118 @@ void BP4Reader::InitTransports()
     }
 }
 
+/* Count index records to minimum 1 and maximum of N records so that
+ * expected metadata size is less then a predetermined constant
+ */
+void MetadataCalculateMinFileSize(
+    const format::BP4Deserializer &m_BP4Deserializer,
+    const std::string &IdxFileName, char *buf, size_t idxsize, bool hasHeader,
+    const size_t mdStartPos, size_t &newIdxSize, size_t &expectedMinFileSize)
+{
+    newIdxSize = 0;
+    expectedMinFileSize = 0;
+
+    if (hasHeader && idxsize < m_BP4Deserializer.m_IndexRecordSize)
+    {
+        return;
+    }
+
+    /* eliminate header for now for only calculating with records */
+    if (hasHeader)
+    {
+        buf += m_BP4Deserializer.m_IndexRecordSize;
+        idxsize -= m_BP4Deserializer.m_IndexRecordSize;
+    }
+
+    if (idxsize % m_BP4Deserializer.m_IndexRecordSize != 0)
+    {
+        throw std::runtime_error(
+            "FATAL CODING ERROR: ADIOS Index file " + IdxFileName +
+            " is assumed to always contain n*" +
+            std::to_string(m_BP4Deserializer.m_IndexRecordSize) +
+            " byte-length records. "
+            "Right now the length of index buffer is " +
+            std::to_string(idxsize) + " bytes.");
+    }
+
+    const int nTotalRecords = idxsize / m_BP4Deserializer.m_IndexRecordSize;
+    if (nTotalRecords == 0)
+    {
+        // no (new) step entry in the index, so no metadata is expected
+        newIdxSize = 0;
+        expectedMinFileSize = 0;
+        return;
+    }
+
+    int nRecords = 1;
+    expectedMinFileSize = *(uint64_t *)&(
+        buf[nRecords * m_BP4Deserializer.m_IndexRecordSize - 24]);
+    while (nRecords < nTotalRecords)
+    {
+        const int n = nRecords + 1;
+        const uint64_t mdEndPos =
+            *(uint64_t *)&(buf[n * m_BP4Deserializer.m_IndexRecordSize - 24]);
+        if (mdEndPos - mdStartPos > 16777216)
+        {
+            break;
+        }
+        expectedMinFileSize = mdEndPos;
+        ++nRecords;
+    }
+    newIdxSize = nRecords * m_BP4Deserializer.m_IndexRecordSize;
+    if (hasHeader)
+    {
+        newIdxSize += m_BP4Deserializer.m_IndexRecordSize;
+    }
+}
+
+/* Count index records to minimum 1 and maximum of N records so that
+ * expected metadata size is less then a predetermined constant
+ */
+void MetadataCalculateMinFileSize2(
+    const format::BP4Deserializer &m_BP4Deserializer,
+    const std::string &IdxFileName, char *buf, const size_t idxsize,
+    size_t &newIdxSize, size_t &expectedMinFileSize)
+{
+    if (idxsize % m_BP4Deserializer.m_IndexRecordSize != 0)
+    {
+        throw std::runtime_error(
+            "FATAL CODING ERROR: ADIOS Index file " + IdxFileName +
+            " is assumed to always contain n*" +
+            std::to_string(m_BP4Deserializer.m_IndexRecordSize) +
+            " byte-length records. "
+            "The file size now is " +
+            std::to_string(idxsize + m_BP4Deserializer.m_IndexHeaderSize) +
+            " bytes.");
+    }
+
+    const int nTotalRecords = idxsize / m_BP4Deserializer.m_IndexRecordSize;
+    if (nTotalRecords == 0)
+    {
+        // no (new) step entry in the index, so no metadata is expected
+        newIdxSize = 0;
+        expectedMinFileSize = 0;
+        return;
+    }
+
+    int nRecords = 1;
+    expectedMinFileSize = *(uint64_t *)&(
+        buf[nRecords * m_BP4Deserializer.m_IndexRecordSize - 24]);
+    while (nRecords < nTotalRecords)
+    {
+        const int n = nRecords + 1;
+        const uint64_t mdsize =
+            *(uint64_t *)&(buf[n * m_BP4Deserializer.m_IndexRecordSize - 24]);
+        if (mdsize > 16777216)
+        {
+            break;
+        }
+        expectedMinFileSize = mdsize;
+        ++nRecords;
+    }
+    newIdxSize = nRecords * m_BP4Deserializer.m_IndexRecordSize;
+}
+
 uint64_t
 MetadataExpectedMinFileSize(const format::BP4Deserializer &m_BP4Deserializer,
                             const std::string &IdxFileName, bool hasHeader)
@@ -330,7 +446,9 @@ MetadataExpectedMinFileSize(const format::BP4Deserializer &m_BP4Deserializer,
             "The file size now is " +
             std::to_string(idxsize) + " bytes.");
     }
-    if ((hasHeader && idxsize < 128) || idxsize < 64)
+    if ((hasHeader && idxsize < m_BP4Deserializer.m_IndexHeaderSize +
+                                    m_BP4Deserializer.m_IndexRecordSize) ||
+        idxsize < m_BP4Deserializer.m_IndexRecordSize)
     {
         // no (new) step entry in the index, so no metadata is expected
         return 0;
@@ -450,7 +568,21 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
         const size_t idxFileSize = m_MDIndexFileManager.GetFileSize(0);
         if (idxFileSize > m_MDIndexFileProcessedSize)
         {
-            const size_t newIdxSize = idxFileSize - m_MDIndexFileProcessedSize;
+            const size_t maxIdxSize = idxFileSize - m_MDIndexFileProcessedSize;
+            std::vector<char> idxbuf(maxIdxSize);
+            m_MDIndexFileManager.ReadFile(idxbuf.data(), maxIdxSize,
+                                          m_MDIndexFileProcessedSize);
+            size_t newIdxSize;
+            size_t expectedMinFileSize;
+            char *buf = idxbuf.data();
+
+            MetadataCalculateMinFileSize(
+                m_BP4Deserializer, m_Name, buf, maxIdxSize, !m_IdxHeaderParsed,
+                m_MDFileProcessedSize, newIdxSize, expectedMinFileSize);
+
+            // const uint64_t expectedMinFileSize = MetadataExpectedMinFileSize(
+            //    m_BP4Deserializer, m_Name, !m_IdxHeaderParsed);
+
             if (m_BP4Deserializer.m_MetadataIndex.m_Buffer.size() < newIdxSize)
             {
                 m_BP4Deserializer.m_MetadataIndex.Resize(
@@ -458,15 +590,13 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
                                 "call to BP4Reader::BeginStep/UpdateBuffer");
             }
             m_BP4Deserializer.m_MetadataIndex.m_Position = 0;
-            m_MDIndexFileManager.ReadFile(
-                m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(), newIdxSize,
-                m_MDIndexFileProcessedSize);
+            std::copy(idxbuf.begin(), idxbuf.begin() + newIdxSize,
+                      m_BP4Deserializer.m_MetadataIndex.m_Buffer.begin());
 
             /* Wait until as much metadata arrives in the file as much
              * is indicated by the existing index entries
              */
-            uint64_t expectedMinFileSize = MetadataExpectedMinFileSize(
-                m_BP4Deserializer, m_Name, !m_IdxHeaderParsed);
+
             size_t fileSize = 0;
             do
             {
@@ -486,7 +616,8 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
                  * the buffer now.
                  */
                 const size_t fileSize = m_MDFileManager.GetFileSize(0);
-                const size_t newMDSize = fileSize - m_MDFileProcessedSize;
+                const size_t newMDSize =
+                    expectedMinFileSize - m_MDFileProcessedSize;
                 if (m_BP4Deserializer.m_Metadata.m_Buffer.size() < newMDSize)
                 {
                     m_BP4Deserializer.m_Metadata.Resize(
@@ -549,9 +680,6 @@ void BP4Reader::ProcessMetadataForNewSteps(const size_t newIdxSize)
     {
         m_MDIndexFileProcessedSize += newIdxSize;
     }
-    size_t idxsize = m_BP4Deserializer.m_MetadataIndex.m_Buffer.size();
-    uint64_t lastpos = *(uint64_t *)&(
-        m_BP4Deserializer.m_MetadataIndex.m_Buffer[idxsize - 24]);
 }
 
 bool BP4Reader::CheckWriterActive()
@@ -559,8 +687,9 @@ bool BP4Reader::CheckWriterActive()
     size_t flag = 0;
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
-        std::vector<char> header(64, '\0');
-        m_MDIndexFileManager.ReadFile(header.data(), 64, 0, 0);
+        std::vector<char> header(m_BP4Deserializer.m_IndexHeaderSize, '\0');
+        m_MDIndexFileManager.ReadFile(
+            header.data(), m_BP4Deserializer.m_IndexHeaderSize, 0, 0);
         bool active = m_BP4Deserializer.ReadActiveFlag(header);
         flag = (active ? 1 : 0);
     }
