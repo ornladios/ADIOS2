@@ -29,58 +29,77 @@ void SscReader::GetDeferredCommon(Variable<std::string> &variable,
 {
     TAU_SCOPED_TIMER_FUNC();
     variable.SetData(data);
-    if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
-        m_ReaderSelectionsLocked == false)
+
+    if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
     {
-        m_LocalReadPattern.emplace_back();
-        auto &b = m_LocalReadPattern.back();
-        b.name = variable.m_Name;
-        b.count = variable.m_Count;
-        b.start = variable.m_Start;
-        b.shape = variable.m_Shape;
-        b.type = DataType::String;
-
-        m_LocalReadPatternJson["Variables"].emplace_back();
-        auto &jref = m_LocalReadPatternJson["Variables"].back();
-        jref["Name"] = b.name;
-        jref["Type"] = ToString(b.type);
-        jref["ShapeID"] = variable.m_ShapeID;
-        jref["Start"] = b.start;
-        jref["Count"] = b.count;
-        jref["Shape"] = b.shape;
-        jref["BufferStart"] = 0;
-        jref["BufferCount"] = 0;
-
-        ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
-        m_AllReceivingWriterRanks =
-            ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
-        CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
-        size_t totalDataSize = 0;
-        for (auto i : m_AllReceivingWriterRanks)
+        if (m_CurrentStep == 0)
         {
-            totalDataSize += i.second.second;
+            m_LocalReadPattern.emplace_back();
+            auto &b = m_LocalReadPattern.back();
+            b.name = variable.m_Name;
+            b.count = variable.m_Count;
+            b.start = variable.m_Start;
+            b.shape = variable.m_Shape;
+            b.type = DataType::String;
+
+            m_LocalReadPatternJson["Variables"].emplace_back();
+            auto &jref = m_LocalReadPatternJson["Variables"].back();
+            jref["Name"] = b.name;
+            jref["Type"] = ToString(b.type);
+            jref["ShapeID"] = variable.m_ShapeID;
+            jref["Start"] = b.start;
+            jref["Count"] = b.count;
+            jref["Shape"] = b.shape;
+            jref["BufferStart"] = 0;
+            jref["BufferCount"] = 0;
+
+            ssc::JsonToBlockVecVec(m_GlobalWritePatternJson,
+                                   m_GlobalWritePattern);
+            m_AllReceivingWriterRanks =
+                ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
+            CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
+            size_t totalDataSize = 0;
+            for (auto i : m_AllReceivingWriterRanks)
+            {
+                totalDataSize += i.second.second;
+            }
+            m_Buffer.resize(totalDataSize);
+            for (const auto &i : m_AllReceivingWriterRanks)
+            {
+                MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
+                MPI_Get(m_Buffer.data() + i.second.first, i.second.second,
+                        MPI_CHAR, i.first, 0, i.second.second, MPI_CHAR,
+                        m_MpiWin);
+                MPI_Win_unlock(i.first, m_MpiWin);
+            }
         }
-        m_Buffer.resize(totalDataSize);
+
         for (const auto &i : m_AllReceivingWriterRanks)
         {
-            MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
-            MPI_Get(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
-                    i.first, 0, i.second.second, MPI_CHAR, m_MpiWin);
-            MPI_Win_unlock(i.first, m_MpiWin);
+            const auto &v = m_GlobalWritePattern[i.first];
+            for (const auto &b : v)
+            {
+                if (b.name == variable.m_Name)
+                {
+                    std::vector<char> str(b.bufferCount);
+                    std::memcpy(str.data(), m_Buffer.data() + b.bufferStart,
+                                b.bufferCount);
+                    *data = std::string(str.begin(), str.end());
+                }
+            }
         }
     }
-
-    for (const auto &i : m_AllReceivingWriterRanks)
+    else
     {
-        const auto &v = m_GlobalWritePattern[i.first];
-        for (const auto &b : v)
+        for (const auto &i : m_AllReceivingWriterRanks)
         {
-            if (b.name == variable.m_Name)
+            const auto &v = m_GlobalWritePattern[i.first];
+            for (const auto &b : v)
             {
-                std::vector<char> str(b.bufferCount);
-                std::memcpy(str.data(), m_Buffer.data() + b.bufferStart,
-                            b.bufferCount);
-                *data = std::string(str.begin(), str.end());
+                if (b.name == variable.m_Name)
+                {
+                    *data = std::string(b.value.begin(), b.value.end());
+                }
             }
         }
     }
@@ -147,10 +166,15 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         m_Buffer.resize(totalDataSize);
         for (const auto &i : m_AllReceivingWriterRanks)
         {
-            MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
-            MPI_Get(m_Buffer.data() + i.second.first, i.second.second, MPI_CHAR,
-                    i.first, 0, i.second.second, MPI_CHAR, m_MpiWin);
-            MPI_Win_unlock(i.first, m_MpiWin);
+            if (m_ReceivedRanks.find(i.first) == m_ReceivedRanks.end())
+            {
+                MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
+                MPI_Get(m_Buffer.data() + i.second.first, i.second.second,
+                        MPI_CHAR, i.first, 0, i.second.second, MPI_CHAR,
+                        m_MpiWin);
+                MPI_Win_unlock(i.first, m_MpiWin);
+                m_ReceivedRanks.insert(i.first);
+            }
         }
     }
 

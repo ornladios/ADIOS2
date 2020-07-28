@@ -17,6 +17,7 @@
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include <mpi.h>
 #include <queue>
+#include <unordered_set>
 
 namespace adios2
 {
@@ -53,6 +54,7 @@ private:
     MPI_Comm m_StreamComm;
     std::string m_MpiMode = "twosided";
     std::vector<MPI_Request> m_MpiRequests;
+    std::unordered_set<int> m_ReceivedRanks;
 
     int m_StreamRank;
     int m_StreamSize;

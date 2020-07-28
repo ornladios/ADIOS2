@@ -59,6 +59,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
     {
+        m_ReceivedRanks.clear();
         m_Buffer.resize(1, 0);
         m_GlobalWritePattern.clear();
         m_GlobalWritePattern.resize(m_StreamSize);
