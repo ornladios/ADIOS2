@@ -355,7 +355,7 @@ void MetadataCalculateMinFileSize(
             std::to_string(idxsize) + " bytes.");
     }
 
-    const int nTotalRecords = idxsize / m_BP4Deserializer.m_IndexRecordSize;
+    const size_t nTotalRecords = idxsize / m_BP4Deserializer.m_IndexRecordSize;
     if (nTotalRecords == 0)
     {
         // no (new) step entry in the index, so no metadata is expected
@@ -364,12 +364,12 @@ void MetadataCalculateMinFileSize(
         return;
     }
 
-    int nRecords = 1;
+    size_t nRecords = 1;
     expectedMinFileSize = *(uint64_t *)&(
         buf[nRecords * m_BP4Deserializer.m_IndexRecordSize - 24]);
     while (nRecords < nTotalRecords)
     {
-        const int n = nRecords + 1;
+        const size_t n = nRecords + 1;
         const uint64_t mdEndPos =
             *(uint64_t *)&(buf[n * m_BP4Deserializer.m_IndexRecordSize - 24]);
         if (mdEndPos - mdStartPos > 16777216)
@@ -384,53 +384,6 @@ void MetadataCalculateMinFileSize(
     {
         newIdxSize += m_BP4Deserializer.m_IndexRecordSize;
     }
-}
-
-/* Count index records to minimum 1 and maximum of N records so that
- * expected metadata size is less then a predetermined constant
- */
-void MetadataCalculateMinFileSize2(
-    const format::BP4Deserializer &m_BP4Deserializer,
-    const std::string &IdxFileName, char *buf, const size_t idxsize,
-    size_t &newIdxSize, size_t &expectedMinFileSize)
-{
-    if (idxsize % m_BP4Deserializer.m_IndexRecordSize != 0)
-    {
-        throw std::runtime_error(
-            "FATAL CODING ERROR: ADIOS Index file " + IdxFileName +
-            " is assumed to always contain n*" +
-            std::to_string(m_BP4Deserializer.m_IndexRecordSize) +
-            " byte-length records. "
-            "The file size now is " +
-            std::to_string(idxsize + m_BP4Deserializer.m_IndexHeaderSize) +
-            " bytes.");
-    }
-
-    const int nTotalRecords = idxsize / m_BP4Deserializer.m_IndexRecordSize;
-    if (nTotalRecords == 0)
-    {
-        // no (new) step entry in the index, so no metadata is expected
-        newIdxSize = 0;
-        expectedMinFileSize = 0;
-        return;
-    }
-
-    int nRecords = 1;
-    expectedMinFileSize = *(uint64_t *)&(
-        buf[nRecords * m_BP4Deserializer.m_IndexRecordSize - 24]);
-    while (nRecords < nTotalRecords)
-    {
-        const int n = nRecords + 1;
-        const uint64_t mdsize =
-            *(uint64_t *)&(buf[n * m_BP4Deserializer.m_IndexRecordSize - 24]);
-        if (mdsize > 16777216)
-        {
-            break;
-        }
-        expectedMinFileSize = mdsize;
-        ++nRecords;
-    }
-    newIdxSize = nRecords * m_BP4Deserializer.m_IndexRecordSize;
 }
 
 uint64_t
