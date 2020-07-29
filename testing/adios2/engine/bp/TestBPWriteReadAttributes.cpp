@@ -948,11 +948,6 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
                                         separator);
         io.DefineAttribute<std::string>("smile", "\u263A", var2.Name(),
                                         separator);
-
-        io.DefineAttribute<std::string>("utf8", std::string(u8"महसुस"),
-                                        var1.Name(), separator);
-        io.DefineAttribute<std::string>("utf8", std::string(u8"महसुस"),
-                                        var2.Name(), separator);
 #endif
         adios2::Engine bpWriter = io.Open(fName, adios2::Mode::Write);
 
@@ -1015,8 +1010,6 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
             EXPECT_NE(itUTF8, attributesInfo.end());
             EXPECT_EQ(itUTF8->second.at("Type"), "string");
             EXPECT_EQ(itUTF8->second.at("Elements"), "1");
-            EXPECT_EQ(itUTF8->second.at("Value"),
-                      "\"" + std::string(u8"महसुस") + "\"");
 #endif
         };
 
