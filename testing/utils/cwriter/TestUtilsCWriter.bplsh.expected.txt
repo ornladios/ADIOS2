@@ -10,7 +10,7 @@ The time dimension is the first dimension then.
   --attrs     | -a           List/match attributes too
   --attrsonly | -A           List attributes only
   --meshes    | -m           List meshes
-  --timestep  | -t           Print values of timestep elements
+  --timestep  | -t           Read content step by step (stream reading)
   --dump      | -d           Dump matched variables/attributes
                                To match attributes too, add option -a
   --regexp    | -e           Treat masks as extended regular expressions
