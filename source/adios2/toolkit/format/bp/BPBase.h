@@ -210,6 +210,11 @@ public:
         bool BurstBufferDrain = true;
         /** Verbose level for burst buffer draining thread */
         int BurstBufferVerbose = 0;
+
+        /** Stream reader flag: process metadata step-by-step
+         * instead of parsing everything available
+         */
+        bool StreamReader = false;
     };
 
     /** Return type of the ResizeBuffer function. */

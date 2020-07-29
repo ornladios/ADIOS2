@@ -56,6 +56,8 @@ public:
     BufferSTL m_MetadataIndex;
 
     /** Positions of flags in Index Table Header that Reader uses */
+    static constexpr size_t m_IndexHeaderSize = 64;
+    static constexpr size_t m_IndexRecordSize = 64;
     static constexpr size_t m_EndianFlagPosition = 36;
     static constexpr size_t m_BPVersionPosition = 37;
     static constexpr size_t m_ActiveFlagPosition = 38;

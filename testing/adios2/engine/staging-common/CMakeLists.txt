@@ -12,6 +12,7 @@ if(ADIOS2_HAVE_SST)
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST"  "MarshalMethod=FFS")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST"  "MarshalMethod=BP")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".BP4_stream" EXTRA_ARGS "BP4"  "OpenTimeoutSecs=5")
+  gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".FileStream" EXTRA_ARGS "FileStream")
 endif()
 
 foreach(helper
@@ -230,7 +231,7 @@ endif()
 if(NOT MSVC)    # not on windows
     # BP4 streaming tests start with all the simple tests, but with a timeout added on open
     LIST (APPEND BP4_STREAM_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
-    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10" "${BP4_STREAM_TESTS}")
+    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1" "${BP4_STREAM_TESTS}")
     # SharedVars fail with BP4_streaming*
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*SharedVar.BPS$")
     # Discard not a feature of BP4
@@ -266,6 +267,37 @@ if(NOT MSVC)    # not on windows
         add_common_test(${test} BP4_stream)
     endforeach()
     
+endif()
+
+#
+#   Setup streaming tests for FileStream virtual engine (BP4+StreamReader=true)
+#
+if(NOT MSVC)    # not on windows
+    # FileStream streaming tests start with all the simple tests, but with a timeout added on open
+    LIST (APPEND FILESTREAM_TESTS ${SIMPLE_TESTS} ${SIMPLE_MPI_TESTS})
+    MutateTestSet( FILESTREAM_TESTS "FS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1" "${FILESTREAM_TESTS}")
+    # SharedVars fail with file_streaming*
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*SharedVar.FS$")
+    # SharedVars fail with file_streaming*
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*SharedVar.FS$")
+    # Local fail with file_streaming*
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*Local.FS$")
+    # The nobody-writes-data-in-a-timestep tests don't work for any BP-file based engine
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*NoData.FS$")
+    # Don't need to repeat tests that are identical for BP4 and FileStream
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*NoReaderNoWait.FS$")
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*TimeoutOnOpen.FS$")
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*NoReaderNoWait.FS$")
+
+    foreach(test ${FILESTREAM_TESTS})
+        add_common_test(${test} FileStream)
+    endforeach()
+
+    MutateTestSet( FileStream_BBSTREAM_TESTS "BB" writer "BurstBufferPath=bb,BurstBufferVerbose=2" "${FILESTREAM_TESTS}")
+    foreach(test ${FileStream_BBSTREAM_TESTS})
+        add_common_test(${test} FileStream)
+    endforeach()
+
 endif()
 
 #
