@@ -1003,13 +1003,6 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
             EXPECT_EQ(itSmile->second.at("Type"), "string");
             EXPECT_EQ(itSmile->second.at("Elements"), "1");
             EXPECT_EQ(itSmile->second.at("Value"), std::string("\"\u263A\""));
-
-            const std::string utf8Name =
-                fullNames ? variableName + separator + "utf8" : "utf8";
-            auto itUTF8 = attributesInfo.find(utf8Name);
-            EXPECT_NE(itUTF8, attributesInfo.end());
-            EXPECT_EQ(itUTF8->second.at("Type"), "string");
-            EXPECT_EQ(itUTF8->second.at("Elements"), "1");
 #endif
         };
 
