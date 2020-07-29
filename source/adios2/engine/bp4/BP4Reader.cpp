@@ -157,17 +157,11 @@ void BP4Reader::Init()
     const Seconds timeoutSeconds =
         Seconds(m_BP4Deserializer.m_Parameters.OpenTimeoutSecs);
 
-    // set poll to 1/100 of timeout
-    Seconds pollSeconds = timeoutSeconds / 100.0;
-    static const auto pollSecondsMin = Seconds(1.0);
-    if (pollSeconds < pollSecondsMin)
+    Seconds pollSeconds =
+        Seconds(m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
+    if (pollSeconds > timeoutSeconds)
     {
-        pollSeconds = pollSecondsMin;
-    }
-    static const auto pollSecondsMax = Seconds(10.0);
-    if (pollSeconds > pollSecondsMax)
-    {
-        pollSeconds = pollSecondsMax;
+        pollSeconds = timeoutSeconds;
     }
 
     TimePoint timeoutInstant =
