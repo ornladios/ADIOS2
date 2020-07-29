@@ -5,8 +5,10 @@
 
 set(BP3_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp3)
 set(BP4_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp4)
+set(FS_DIR ${CMAKE_CURRENT_BINARY_DIR}/filestream)
 file(MAKE_DIRECTORY ${BP3_DIR})
 file(MAKE_DIRECTORY ${BP4_DIR})
+file(MAKE_DIRECTORY ${FS_DIR})
 
 macro(bp3_bp4_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP3
@@ -66,5 +68,13 @@ gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .BP4
 )
 gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
+)
+
+# FileStream is BP4 + StreamReader=true
+gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .FileStream
+  WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
+)
+gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .FileStream
+  WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
 )
 
