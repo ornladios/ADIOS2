@@ -23,6 +23,10 @@ namespace core
 namespace engine
 {
 
+// The inline reader needs to know about the writer, and vice versa.
+// Break cyclic dependency via a forward declaration:
+class InlineReader;
+
 class InlineWriter : public Engine
 {
 
@@ -55,11 +59,10 @@ private:
     bool m_InsideStep = false;
     bool m_ResetVariables = false; // used when PerformPuts is being used
 
-    std::string m_ReaderID;
-
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
+    const InlineReader *GetReader() const;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \

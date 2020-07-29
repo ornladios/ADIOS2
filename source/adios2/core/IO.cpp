@@ -572,6 +572,51 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
     }
 
+    // For the inline engine, there must be exactly 1 reader, and exactly 1
+    // writer.
+    if (engineTypeLC == "inline")
+    {
+        if (mode == Mode::Append)
+        {
+            throw std::runtime_error(
+                "Append mode is not supported for the inline engine.");
+        }
+
+        // See inline.rst:44
+        if (mode == Mode::Sync)
+        {
+            throw std::runtime_error(
+                "Sync mode is not supported for the inline engine.");
+        }
+
+        if (m_Engines.size() >= 2)
+        {
+            std::string msg =
+                "Failed to add engine " + name + " to IO \'" + m_Name + "\'. ";
+            msg += "An inline engine must have exactly one writer, and one "
+                   "reader. ";
+            msg += "There are already two engines declared, so no more can be "
+                   "added.";
+            throw std::runtime_error(msg);
+        }
+        // Now protect against declaration of two writers, or declaration of two
+        // readers:
+        if (m_Engines.size() == 1)
+        {
+            auto engine_ptr = m_Engines.begin()->second;
+            if (engine_ptr->OpenMode() == mode)
+            {
+                std::string msg =
+                    "The previously added engine " + engine_ptr->m_Name +
+                    " is already opened in same mode requested for " + name +
+                    ". ";
+                msg += "The inline engine requires exactly one writer and one "
+                       "reader.";
+                throw std::runtime_error(msg);
+            }
+        }
+    }
+
     auto f = FactoryLookup(engineTypeLC);
     if (f != Factory.end())
     {

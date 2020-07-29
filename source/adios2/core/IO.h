@@ -471,6 +471,15 @@ public:
     static void RegisterEngine(const std::string &engineType,
                                EngineFactoryEntry entry);
 
+    /*
+     * Return list of all engines associated with this IO.
+     */
+
+    const std::map<std::string, std::shared_ptr<Engine>> &GetEngines() const
+    {
+        return m_Engines;
+    }
+
 private:
     /** true: exist in config file (XML) */
     const bool m_InConfigFile = false;
