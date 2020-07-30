@@ -214,10 +214,12 @@ int main(int argc, char *argv[])
                                      {rank * Nx}, {Nx}, adios2::ConstantDims);
 
 
-        std::vector<std::string> myStrings = {"one", "two", "three"};
-        g.DefineAttribute("Array_of_Strings");
-        bpIO.DefineAttribute<std::string>("Array_of_Strings", myStrings.data(),
-                                          myStrings.size());
+        std::vector<std::string> myStrings = {"one two three"};
+        g.DefineAttribute("bpString");
+        adios2::Variable<std::string> Array_of_strings =  bpIO.DefineVariable<std::string>("bpString");
+
+        adios2::Variable<std::string> bpString =
+            bpIO.DefineVariable<std::string>("bpString");
 
 
         for (int i = 0; i < number_of_steps; i++)
@@ -230,6 +232,8 @@ int main(int argc, char *argv[])
             bpFileWriter.Put<float>(bpFloats, myFloats.data());
 
             bpFileWriter.Put(bpInts, myInts.data());
+
+            bpFileWriter.Put(bpString, myString);
 
             g.updateMetaInfo();
             bpFileWriter.EndStep();
