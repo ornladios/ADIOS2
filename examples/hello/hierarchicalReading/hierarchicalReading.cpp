@@ -40,26 +40,25 @@ class Group
 {
 private:
     std::string current_path;
-    std::string meta_info;
     std::vector<std::string> variables;
     std::vector<std::string> groups;
     std::vector<std::string> attributes;
     adios2::IO bpIO;
     adios2::Engine engine;
+    adios2::Variable<std::string> meta_info;
 
 public:
-    Group( adios2::IO&& in_bpIO,  adios2::Engine&& in_engine): bpIO(std::move(in_bpIO)), engine(std::move(in_engine)) {
+    Group( adios2::IO in_bpIO, adios2::Engine in_engine): bpIO(in_bpIO), engine(in_engine) {
         //create meta info
         adios2::Variable<std::string> meta_info =
             bpIO.DefineVariable<std::string>("meta_info");
-
     };
-    ~Group();
+    ~Group(){};
     void getMetaInfo();
     void updateMetaInfo();
-    void DefineGroup(std::string&);
-    void DefineVariable(const std::string&);
-    void DefineAttribute(const std::string&);
+    void DefineGroup(std::string);
+    void DefineVariable(const std::string);
+    void DefineAttribute(const std::string);
     std::vector<std::string> AvailableGroups();    // [b,f] groups directly under /a/*, not recursive
     std::vector<std::string> AvailableVariables();    // [x] variables directly under /a/*, not recursive
     std::vector<std::string> AvailableAttributes();
@@ -88,6 +87,7 @@ void Group::getMetaInfo() {
         throw std::exception();
     }
 }
+
 void Group::updateMetaInfo(){
     std::string meta_info_str;
     for (std::string s : groups){
@@ -105,33 +105,34 @@ void Group::updateMetaInfo(){
         meta_info_str += ",";
     }
     //alternatively we can implement "make transaction" at the end with Put
-    engine.Get<std::string>(meta_info, meta_info_str, adios2::Mode::Sync);
+    engine.Put<std::string>(meta_info, meta_info_str.data());
     return;
 }
 
-void Group::DefineGroup(std::string &groupName) {
+void Group::DefineGroup(std::string groupName) {
     groups.push_back(groupName);
-    updateMetaInfo();
     return;
 }
 
-void Group::DefineVariable(const std::string& variable_name) {
+void Group::DefineVariable(const std::string variable_name) {
 
    /* adios2::Variable<T> bpFloats = bpIO.DefineVariable<T>(
         variableName, {size * Nx}, {rank * Nx}, {Nx},
-        adios2::ConstantDims);*/
+        adios2::ConstantDims);
+        Put ...*/
+
     variables.push_back(variable_name);
-    updateMetaInfo();
     return;
 }
 
-void Group::DefineAttribute(const std::string& attribute_name) {
+void Group::DefineAttribute(const std::string attribute_name) {
 
+//wrappers to actual adios functions
     /* adios2::Variable<T> bpFloats = bpIO.DefineVariable<T>(
          variableName, {size * Nx}, {rank * Nx}, {Nx},
-         adios2::ConstantDims);*/
+         adios2::ConstantDims);
+         Put ... */
     attributes.push_back(attribute_name);
-    updateMetaInfo();
     return;
 }
 
@@ -143,6 +144,7 @@ std::vector<std::string> Group::AvailableGroups(){
     return available_groups;
 }
 std::vector<std::string> Group::AvailableVariables(){
+    //simple linear search
     std::vector<std::string> available_variables;
     for (std::string  s :  variables){
         if (s.find(current_path) == 0)  available_variables.push_back(s);
@@ -150,6 +152,7 @@ std::vector<std::string> Group::AvailableVariables(){
     return available_variables;
 }
 std::vector<std::string> Group::AvailableAttributes(){
+    //simple linear search
     std::vector<std::string> available_attributes;
     for (std::string  s :  attributes){
         if (s.find(current_path) == 0)  available_attributes.push_back(s);
@@ -191,48 +194,44 @@ int main(int argc, char *argv[])
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO bpIO = adios.DeclareIO("BPFile_N2N");
+        /** Engine derived class, spawned to start IO operations */
+        adios2::Engine bpFileWriter = bpIO.Open(filename, adios2::Mode::Append);
+
+        Group g = Group(bpIO, bpFileWriter);
 
         /** global array : name, { shape (total) }, { start (local) }, {
          * count
          * (local) }, all are constant dimensions */
+        g.DefineGroup("/group1");
+        g.DefineGroup("/group1/subroup1");
+        g.DefineVariable("/group1/subroup1/bpFloats");
         adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
             "/group1/subgroup1/bpFloats", {size * Nx}, {rank * Nx}, {Nx},
             adios2::ConstantDims);
-
+        g.DefineVariable("/group1/subroup1/bpInts");
         adios2::Variable<int> bpInts =
             bpIO.DefineVariable<int>("/group1/subgroup1/bpInts", {size * Nx},
                                      {rank * Nx}, {Nx}, adios2::ConstantDims);
 
-        adios2::Variable<std::string> meta_info =
-            bpIO.DefineVariable<std::string>("meta_info");
-
-        // adios2::Variable<std::string> bpString =
-        //    bpIO.DefineVariable<std::string>("bpString");
 
         std::vector<std::string> myStrings = {"one", "two", "three"};
+        g.DefineAttribute("Array_of_Strings");
         bpIO.DefineAttribute<std::string>("Array_of_Strings", myStrings.data(),
                                           myStrings.size());
 
-        /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpFileWriter = bpIO.Open(filename, adios2::Mode::Append);
 
         for (int i = 0; i < number_of_steps; i++)
         {
             std::string meta_info_str;
             bpFileWriter.BeginStep();
-            /** Put variables for buffering, template type is optional */
-            if (i % 2 == 0)
-            {
-                bpFileWriter.Put<float>(bpFloats, myFloats.data());
-                meta_info_str = "/group1/subgroup1/bpFloats";
-            }
-            else
-            {
-                bpFileWriter.Put(bpInts, myInts.data());
-                meta_info_str = "/group1/subgroup1/bpInts";
-            }
 
-            bpFileWriter.Put<std::string>(meta_info, meta_info_str.data());
+            /** Put variables for buffering, template type is optional */
+
+            bpFileWriter.Put<float>(bpFloats, myFloats.data());
+
+            bpFileWriter.Put(bpInts, myInts.data());
+
+            g.updateMetaInfo();
             bpFileWriter.EndStep();
         }
         /** Create bp file, engine becomes unreachable after this*/
@@ -298,7 +297,11 @@ int main(int argc, char *argv[])
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpReader = bpIO.Open(filename, adios2::Mode::Read);
-
+        Group g = Group(bpIO, bpReader);
+        g.getMetaInfo();
+        auto all_groups = g.AvailableGroups();
+        auto all_variables = g.AvailableVariables();
+        auto all_attriutes = g.AvailableVariables();
 
         for (int step = 0; step < number_of_steps; step++)
         {
