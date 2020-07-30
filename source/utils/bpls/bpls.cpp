@@ -20,10 +20,12 @@
 #include "bpls.h"
 #include "verinfo.h"
 
+#include <chrono>
 #include <cinttypes>
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <errno.h>
@@ -81,13 +83,13 @@ std::string format;       // format string for one data element (e.g. %6.2f)
 // Flags from arguments or defaults
 bool dump; // dump data not just list info(flag == 1)
 bool output_xml;
-bool use_regexp; // use varmasks as regular expressions
-bool sortnames;  // sort names before listing
-bool listattrs;  // do list attributes too
-bool listmeshes; // do list meshes too
-bool attrsonly;  // do list attributes only
-bool longopt;    // -l is turned on
-bool timestep;
+bool use_regexp;       // use varmasks as regular expressions
+bool sortnames;        // sort names before listing
+bool listattrs;        // do list attributes too
+bool listmeshes;       // do list meshes too
+bool attrsonly;        // do list attributes only
+bool longopt;          // -l is turned on
+bool timestep;         // read step by step
 bool noindex;          // do no print array indices with data
 bool printByteAsChar;  // print 8 bit integer arrays as string
 bool plot;             // dump histogram related information
@@ -133,7 +135,8 @@ void display_help()
         /*
         "  --sort      | -r           Sort names before listing\n"
         */
-        "  --timestep  | -t           Print values of timestep elements\n"
+        "  --timestep  | -t           Read content step by step (stream "
+        "reading)\n"
         "  --dump      | -d           Dump matched variables/attributes\n"
         "                               To match attributes too, add option "
         "-a\n"
@@ -781,6 +784,9 @@ void printSettings(void)
         printf("      -D : show decomposition of variables in the file\n");
     if (show_version)
         printf("      -V : show binary version info of file\n");
+    if (timestep)
+        printf("      -t : read step-by-step\n");
+
     if (hidden_attrs)
     {
         printf("         : show hidden attributes in the file\n");
@@ -908,7 +914,17 @@ int doList_vars(core::Engine *fp, core::IO *io)
         for (const auto &vpair : variables)
         {
             Entry e(vpair.second->m_Type, vpair.second.get());
-            entries.emplace(vpair.first, e);
+            bool valid = true;
+            if (timestep)
+            {
+                valid = e.var->IsValidStep(fp->CurrentStep() + 1);
+                // fprintf(stdout, "Entry: ptr = %p valid = %d\n", e.var,
+                // valid);
+            }
+            if (valid)
+            {
+                entries.emplace(vpair.first, e);
+            }
         }
     }
     if (listattrs)
@@ -1007,6 +1023,10 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
                       core::Variable<T> *variable)
 {
     size_t nsteps = variable->GetAvailableStepsCount();
+    if (timestep)
+    {
+        nsteps = 1;
+    }
     DataType adiosvartype = variable->m_Type;
     int retval = 0;
 
@@ -1165,14 +1185,21 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
 
         if (show_decomp)
         {
-            print_decomp(fp, io, variable);
+            if (timestep)
+            {
+                print_decomp_singlestep(fp, io, variable);
+            }
+            else
+            {
+                print_decomp(fp, io, variable);
+            }
         }
     }
     else
     {
         // single GlobalValue without timesteps
         fprintf(outf, "  scalar");
-        if (longopt)
+        if (longopt && !timestep)
         {
             fprintf(outf, " = ");
             print_data(&variable->m_Value, 0, adiosvartype, false);
@@ -1181,7 +1208,14 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
 
         if (show_decomp)
         {
-            print_decomp(fp, io, variable);
+            if (timestep)
+            {
+                print_decomp_singlestep(fp, io, variable);
+            }
+            else
+            {
+                print_decomp(fp, io, variable);
+            }
         }
     }
 
@@ -1190,7 +1224,14 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         // print variable content
         if (variable->m_ShapeID == ShapeID::LocalArray)
         {
-            print_decomp(fp, io, variable);
+            if (timestep)
+            {
+                print_decomp_singlestep(fp, io, variable);
+            }
+            else
+            {
+                print_decomp(fp, io, variable);
+            }
         }
         else
         {
@@ -1442,6 +1483,11 @@ int doList(const char *path)
 
     core::ADIOS adios("C++");
     core::IO &io = adios.DeclareIO("bpls");
+    if (timestep)
+    {
+        // BP4 can process metadata in chuncks to conserve memory
+        io.SetParameter("StreamReader", "true");
+    }
     core::Engine *fp = nullptr;
     std::vector<std::string> engineList = getEnginesList(path);
     for (auto &engineName : engineList)
@@ -1493,7 +1539,37 @@ int doList(const char *path)
             printMeshes(fp);
         }
 
-        doList_vars(fp, &io);
+        if (timestep)
+        {
+            while (true)
+            {
+                adios2::StepStatus status =
+                    fp->BeginStep(adios2::StepMode::Read);
+                if (status == adios2::StepStatus::EndOfStream)
+                {
+                    break;
+                }
+                else if (status == adios2::StepStatus::NotReady)
+                {
+                    std::this_thread::sleep_for(
+                        std::chrono::milliseconds(1000));
+                    continue;
+                }
+                else if (status == adios2::StepStatus::OtherError)
+                {
+                    fprintf(stderr,
+                            "\nError: Cannot read more steps due to errors\n");
+                    break;
+                }
+                fprintf(stdout, "Step %zu:\n", fp->CurrentStep());
+                doList_vars(fp, &io);
+                fp->EndStep();
+            }
+        }
+        else
+        {
+            doList_vars(fp, &io);
+        }
 
         if (nmasks > 0 && nEntriesMatched == 0)
         {
@@ -1727,7 +1803,8 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     int ndigits_dims[32];     // # of digits (to print) of each dimension
 
     const size_t elemsize = variable->m_ElementSize;
-    const int nsteps = static_cast<int>(variable->GetAvailableStepsCount());
+    const int nsteps =
+        (timestep ? 1 : static_cast<int>(variable->GetAvailableStepsCount()));
     const int ndim = static_cast<int>(variable->m_Shape.size());
     // create the counter arrays with the appropriate lengths
     // transfer start and count arrays to format dependent arrays
@@ -1737,7 +1814,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     stepStart = 0;
     stepCount = 1;
 
-    if (nsteps > 1)
+    if (!timestep && nsteps > 1)
     {
         // user selection must start with step selection
         // calculate the starting step and number of steps requested
@@ -1779,7 +1856,15 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     size_t absstep = relative_to_absolute_step(variable, stepStart);
 
     // Get the shape of the variable for the starting step
-    auto shape = variable->Shape(absstep);
+    Dims shape;
+    if (timestep)
+    {
+        shape = variable->Shape();
+    }
+    else
+    {
+        shape = variable->Shape(absstep);
+    }
     if (verbose > 2)
     {
         printf("    starting step=%" PRIu64 " absolute step=%zu"
@@ -2044,7 +2129,8 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
     int ndigits_dims[32];     // # of digits (to print) of each dimension
 
     const size_t elemsize = variable->m_ElementSize;
-    const int nsteps = static_cast<int>(variable->GetAvailableStepsCount());
+    const int nsteps =
+        (timestep ? 1 : static_cast<int>(variable->GetAvailableStepsCount()));
     const int ndim = static_cast<int>(variable->m_Count.size());
     // create the counter arrays with the appropriate lengths
     // transfer start and count arrays to format dependent arrays
@@ -2881,38 +2967,45 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
                                 core::Variable<T> *variable)
 {
     const size_t ndim = variable->m_Shape.size();
-    const size_t nsteps = variable->GetAvailableStepsCount();
     Dims dims(ndim, 0);
-    bool firstStep = true;
-
-    // looping over the absolute step indexes
-    // is not supported by a simple API function
-    const std::map<size_t, std::vector<size_t>> &indices =
-        variable->m_AvailableStepBlockIndexOffsets;
-    auto itStep = indices.begin();
-
-    for (size_t step = 0; step < nsteps; step++)
+    if (timestep)
     {
-        const size_t absstep = itStep->first;
-        Dims d = variable->Shape(absstep - 1);
-        if (d.empty())
-        {
-            continue;
-        }
+        dims = variable->Shape();
+    }
+    else
+    {
+        const size_t nsteps = variable->GetAvailableStepsCount();
+        bool firstStep = true;
 
-        for (size_t k = 0; k < ndim; k++)
+        // looping over the absolute step indexes
+        // is not supported by a simple API function
+        const std::map<size_t, std::vector<size_t>> &indices =
+            variable->m_AvailableStepBlockIndexOffsets;
+        auto itStep = indices.begin();
+
+        for (size_t step = 0; step < nsteps; step++)
         {
-            if (firstStep)
+            const size_t absstep = itStep->first;
+            Dims d = variable->Shape(absstep - 1);
+            if (d.empty())
             {
-                dims[k] = d[k];
+                continue;
             }
-            else if (dims[k] != d[k])
+
+            for (size_t k = 0; k < ndim; k++)
             {
-                dims[k] = 0;
+                if (firstStep)
+                {
+                    dims[k] = d[k];
+                }
+                else if (dims[k] != d[k])
+                {
+                    dims[k] = 0;
+                }
             }
+            firstStep = false;
+            ++itStep;
         }
-        firstStep = false;
-        ++itStep;
     }
     return dims;
 }
@@ -2925,27 +3018,14 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
     const size_t ndim = variable->m_Count.size();
     size_t nblocks = 0;
     Dims dims(ndim, 0);
-    std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
-        fp->AllStepsBlocksInfo(*variable);
 
-    bool firstStep = true;
-    bool firstBlock = true;
-
-    for (auto &blockpair : allblocks)
+    if (timestep)
     {
-        std::vector<typename adios2::core::Variable<T>::Info> &blocks =
-            blockpair.second;
-        const size_t blocksSize = blocks.size();
-        if (firstStep)
-        {
-            nblocks = blocksSize;
-        }
-        else if (nblocks != blocksSize)
-        {
-            nblocks = 0;
-        }
-
-        for (size_t j = 0; j < blocksSize; j++)
+        std::vector<typename core::Variable<T>::Info> blocks =
+            fp->BlocksInfo(*variable, fp->CurrentStep());
+        nblocks = blocks.size();
+        bool firstBlock = true;
+        for (size_t j = 0; j < nblocks; j++)
         {
             for (size_t k = 0; k < ndim; k++)
             {
@@ -2960,7 +3040,46 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
             }
             firstBlock = false;
         }
-        firstStep = false;
+    }
+    else
+    {
+        std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+            allblocks = fp->AllStepsBlocksInfo(*variable);
+
+        bool firstStep = true;
+        bool firstBlock = true;
+
+        for (auto &blockpair : allblocks)
+        {
+            std::vector<typename adios2::core::Variable<T>::Info> &blocks =
+                blockpair.second;
+            const size_t blocksSize = blocks.size();
+            if (firstStep)
+            {
+                nblocks = blocksSize;
+            }
+            else if (nblocks != blocksSize)
+            {
+                nblocks = 0;
+            }
+
+            for (size_t j = 0; j < blocksSize; j++)
+            {
+                for (size_t k = 0; k < ndim; k++)
+                {
+                    if (firstBlock)
+                    {
+                        dims[k] = blocks[j].Count[k];
+                    }
+                    else if (dims[k] != blocks[j].Count[k])
+                    {
+                        dims[k] = 0;
+                    }
+                }
+                firstBlock = false;
+            }
+            firstStep = false;
+        }
     }
     return std::make_pair(nblocks, dims);
 }
@@ -3118,6 +3237,144 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             }
             ++stepRelative;
         }
+    }
+}
+
+template <class T>
+void print_decomp_singlestep(core::Engine *fp, core::IO *io,
+                             core::Variable<T> *variable)
+{
+    /* Print block info */
+    DataType adiosvartype = variable->m_Type;
+    std::vector<typename core::Variable<T>::Info> blocks =
+        fp->BlocksInfo(*variable, fp->CurrentStep());
+
+    if (blocks.empty())
+    {
+        return;
+    }
+
+    const size_t blocksSize = blocks.size();
+    const int ndigits_nblocks = ndigits(blocksSize - 1);
+
+    if (variable->m_ShapeID == ShapeID::GlobalValue ||
+        variable->m_ShapeID == ShapeID::LocalValue)
+    {
+        // scalars
+        if (dump)
+        {
+            int col = 0;
+            int maxcols = ncols;
+            if (adiosvartype == DataType::String)
+            {
+                maxcols = 1;
+            }
+            for (size_t j = 0; j < blocksSize; j++)
+            {
+                if (col == 0 && !noindex)
+                {
+                    fprintf(outf, "    (%*zu)    ", ndigits_nblocks, j);
+                }
+                print_data(&blocks[j].Value, 0, adiosvartype, true);
+                ++col;
+                if (j < blocks.size() - 1)
+                {
+                    if (col < maxcols)
+                    {
+                        fprintf(outf, " ");
+                    }
+                    else
+                    {
+                        col = 0;
+                        fprintf(outf, "\n");
+                    }
+                }
+            }
+            fprintf(outf, "\n");
+        }
+        return;
+    }
+    else
+    {
+        // arrays
+        size_t ndim = variable->m_Count.size();
+        int ndigits_dims[32] = {
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        };
+        for (size_t k = 0; k < ndim; k++)
+        {
+            // get digit lengths for each dimension
+            if (variable->m_ShapeID == ShapeID::GlobalArray)
+            {
+                ndigits_dims[k] = ndigits(variable->m_Shape[k] - 1);
+            }
+            else
+            {
+                ndigits_dims[k] = ndigits(variable->m_Count[k] - 1);
+            }
+        }
+
+        size_t stepRelative = 0;
+        size_t stepAbsolute = fp->CurrentStep();
+
+        for (size_t j = 0; j < blocksSize; j++)
+        {
+            fprintf(outf, "%c         block %*zu: [", commentchar,
+                    ndigits_nblocks, j);
+
+            // just in case ndim for a block changes in LocalArrays:
+            ndim = variable->m_Count.size();
+
+            for (size_t k = 0; k < ndim; k++)
+            {
+                if (blocks[j].Count[k])
+                {
+                    if (variable->m_ShapeID == ShapeID::GlobalArray)
+                    {
+                        fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
+                                blocks[j].Start[k], ndigits_dims[k],
+                                blocks[j].Start[k] + blocks[j].Count[k] - 1);
+                    }
+                    else
+                    {
+                        // blockStart is empty vector for LocalArrays
+                        fprintf(outf, "0:%*zu", ndigits_dims[k],
+                                blocks[j].Count[k] - 1);
+                    }
+                }
+                else
+                {
+                    fprintf(outf, "%-*s", 2 * ndigits_dims[k] + 1, "null");
+                }
+                if (k < ndim - 1)
+                    fprintf(outf, ", ");
+            }
+            fprintf(outf, "]");
+
+            /* Print per-block statistics if available */
+            if (longopt)
+            {
+                if (true /* TODO: variable->has_minmax */)
+                {
+                    fprintf(outf, " = ");
+                    print_data(&blocks[j].Min, 0, adiosvartype, false);
+
+                    fprintf(outf, " / ");
+                    print_data(&blocks[j].Max, 0, adiosvartype, false);
+                }
+                else
+                {
+                    fprintf(outf, "N/A / N/A");
+                }
+            }
+            fprintf(outf, "\n");
+            if (dump)
+            {
+                readVarBlock(fp, io, variable, stepRelative, j, blocks[j]);
+            }
+        }
+        ++stepRelative;
     }
 }
 

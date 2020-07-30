@@ -114,6 +114,9 @@ int print_data_characteristics(void *min, void *max, double *avg,
 template <class T>
 void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable);
 
+template <class T>
+void print_decomp_singlestep(core::Engine *fp, core::IO *io,
+                             core::Variable<T> *variable);
 // close namespace
 }
 }
