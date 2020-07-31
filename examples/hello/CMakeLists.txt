@@ -11,6 +11,7 @@ add_subdirectory(bpAttributeWriter)
 add_subdirectory(inlineReaderWriter)
 add_subdirectory(skeleton)
 add_subdirectory(hierarchicalReading)
+add_subdirectory(hierarchicalReading2)
 
 if(ADIOS2_HAVE_DataMan)
   add_subdirectory(datamanReader)
