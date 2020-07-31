@@ -269,16 +269,16 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpReader = bpIO.Open(filename, adios2::Mode::Read);
 
-
+        Group g = Group();
         for (int step = 0; step < number_of_steps; step++)
         {
             bpReader.BeginStep();
             const std::map<std::string, adios2::Params> variables =
                 bpIO.AvailableVariables();
-
             for (const auto variablePair : variables)
             {
                 std::cout << "Name: " << variablePair.first;
+                g.ClassifyRecord(variablePair.first);
 
                 for (const auto &parameter : variablePair.second)
                 {
