@@ -386,7 +386,7 @@ void CommImplMPI::Gatherv64(const void *sendbuf, size_t sendcount,
     {
         for (int i = 0; i < mpiSize; ++i)
         {
-            uint64_t recvcount = recvcounts[i];
+            size_t recvcount = recvcounts[i];
             while (recvcount > 0)
             {
                 requests.emplace_back();
@@ -412,7 +412,7 @@ void CommImplMPI::Gatherv64(const void *sendbuf, size_t sendcount,
         }
     }
 
-    uint64_t sendcountvar = sendcount;
+    size_t sendcountvar = sendcount;
 
     while (sendcountvar > 0)
     {
@@ -435,7 +435,8 @@ void CommImplMPI::Gatherv64(const void *sendbuf, size_t sendcount,
         }
     }
 
-    MPI_Waitall(requests.size(), requests.data(), MPI_STATUSES_IGNORE);
+    MPI_Waitall(static_cast<int>(requests.size()), requests.data(),
+                MPI_STATUSES_IGNORE);
 }
 
 void CommImplMPI::Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
@@ -457,13 +458,13 @@ void CommImplMPI::Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
     MPI_Type_size(ToMPI(recvtype), &recvTypeSize);
     MPI_Type_size(ToMPI(sendtype), &sendTypeSize);
 
-    uint64_t recvsize = displs[mpiSize - 1] + recvcounts[mpiSize - 1];
+    size_t recvsize = displs[mpiSize - 1] + recvcounts[mpiSize - 1];
 
     MPI_Win win;
     MPI_Win_create(recvbuf, recvsize * recvTypeSize, recvTypeSize,
                    MPI_INFO_NULL, m_MPIComm, &win);
 
-    uint64_t sendcountvar = sendcount;
+    size_t sendcountvar = sendcount;
 
     while (sendcountvar > 0)
     {
@@ -480,9 +481,10 @@ void CommImplMPI::Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
         {
             MPI_Put(reinterpret_cast<const char *>(sendbuf) +
                         (sendcount - sendcountvar) * sendTypeSize,
-                    sendcountvar, ToMPI(sendtype), root,
-                    displs[mpiRank] + sendcount - sendcountvar, sendcountvar,
-                    ToMPI(sendtype), win);
+                    static_cast<int>(sendcountvar), ToMPI(sendtype), root,
+                    static_cast<int>(displs[mpiRank]) + sendcount -
+                        sendcountvar,
+                    sendcountvar, ToMPI(sendtype), win);
             sendcountvar = 0;
         }
     }
@@ -518,7 +520,7 @@ void CommImplMPI::Gatherv64OneSidedPull(const void *sendbuf, size_t sendcount,
     {
         for (int i = 0; i < mpiSize; ++i)
         {
-            uint64_t recvcount = recvcounts[i];
+            size_t recvcount = recvcounts[i];
             while (recvcount > 0)
             {
                 if (recvcount > chunksize)
