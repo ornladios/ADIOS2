@@ -484,7 +484,7 @@ void CommImplMPI::Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
                     static_cast<int>(sendcountvar), ToMPI(sendtype), root,
                     static_cast<int>(displs[mpiRank]) + sendcount -
                         sendcountvar,
-                    sendcountvar, ToMPI(sendtype), win);
+                    static_cast<int>(sendcountvar), ToMPI(sendtype), win);
             sendcountvar = 0;
         }
     }
