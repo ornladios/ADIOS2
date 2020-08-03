@@ -462,7 +462,6 @@ void CommImplMPI::Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
     MPI_Win win;
     MPI_Win_create(recvbuf, recvsize * recvTypeSize, recvTypeSize,
                    MPI_INFO_NULL, m_MPIComm, &win);
-    MPI_Win_fence(0, win);
 
     uint64_t sendcountvar = sendcount;
 
@@ -488,7 +487,6 @@ void CommImplMPI::Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
         }
     }
 
-    MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 }
 
@@ -515,7 +513,6 @@ void CommImplMPI::Gatherv64OneSidedPull(const void *sendbuf, size_t sendcount,
     MPI_Win win;
     MPI_Win_create(const_cast<void *>(sendbuf), sendcount * sendTypeSize,
                    sendTypeSize, MPI_INFO_NULL, m_MPIComm, &win);
-    MPI_Win_fence(0, win);
 
     if (mpiRank == root)
     {
@@ -548,7 +545,6 @@ void CommImplMPI::Gatherv64OneSidedPull(const void *sendbuf, size_t sendcount,
         }
     }
 
-    MPI_Win_fence(0, win);
     MPI_Win_free(&win);
 }
 

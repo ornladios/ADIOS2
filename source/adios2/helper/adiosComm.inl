@@ -217,6 +217,38 @@ void Comm::Gatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
                            CommImpl::GetDatatype<TRecv>(), root, hint);
 }
 
+template <typename TSend, typename TRecv>
+void Comm::Gatherv64(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                     const size_t *recvcounts, const size_t *displs, int root,
+                     const std::string &hint) const
+{
+    return m_Impl->Gatherv64(sendbuf, sendcount, CommImpl::GetDatatype<TSend>(),
+                             recvbuf, recvcounts, displs,
+                             CommImpl::GetDatatype<TRecv>(), root, hint);
+}
+
+template <typename TSend, typename TRecv>
+void Comm::Gatherv64OneSidedPush(const TSend *sendbuf, size_t sendcount,
+                                 TRecv *recvbuf, const size_t *recvcounts,
+                                 const size_t *displs, int root,
+                                 const std::string &hint) const
+{
+    return m_Impl->Gatherv64OneSidedPush(
+        sendbuf, sendcount, CommImpl::GetDatatype<TSend>(), recvbuf, recvcounts,
+        displs, CommImpl::GetDatatype<TRecv>(), root, hint);
+}
+
+template <typename TSend, typename TRecv>
+void Comm::Gatherv64OneSidedPull(const TSend *sendbuf, size_t sendcount,
+                                 TRecv *recvbuf, const size_t *recvcounts,
+                                 const size_t *displs, int root,
+                                 const std::string &hint) const
+{
+    return m_Impl->Gatherv64OneSidedPush(
+        sendbuf, sendcount, CommImpl::GetDatatype<TSend>(), recvbuf, recvcounts,
+        displs, CommImpl::GetDatatype<TRecv>(), root, hint);
+}
+
 template <typename T>
 void Comm::Reduce(const T *sendbuf, T *recvbuf, size_t count, Op op, int root,
                   const std::string &hint) const

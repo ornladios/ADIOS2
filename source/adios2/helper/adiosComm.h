@@ -218,6 +218,23 @@ public:
                  const size_t *recvcounts, const size_t *displs, int root,
                  const std::string &hint = std::string()) const;
 
+    template <typename TSend, typename TRecv>
+    void Gatherv64(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                   const size_t *recvcounts, const size_t *displs, int root,
+                   const std::string &hint = std::string()) const;
+
+    template <typename TSend, typename TRecv>
+    void Gatherv64OneSidedPush(const TSend *sendbuf, size_t sendcount,
+                               TRecv *recvbuf, const size_t *recvcounts,
+                               const size_t *displs, int root,
+                               const std::string &hint = std::string()) const;
+
+    template <typename TSend, typename TRecv>
+    void Gatherv64OneSidedPull(const TSend *sendbuf, size_t sendcount,
+                               TRecv *recvbuf, const size_t *recvcounts,
+                               const size_t *displs, int root,
+                               const std::string &hint = std::string()) const;
+
     template <typename T>
     void Reduce(const T *sendbuf, T *recvbuf, size_t count, Op op, int root,
                 const std::string &hint = std::string()) const;
