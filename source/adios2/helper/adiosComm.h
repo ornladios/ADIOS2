@@ -400,6 +400,26 @@ public:
                          Datatype recvtype, int root,
                          const std::string &hint) const = 0;
 
+    virtual void Gatherv64(const void *sendbuf, size_t sendcount,
+                           Datatype sendtype, void *recvbuf,
+                           const size_t *recvcounts, const size_t *displs,
+                           Datatype recvtype, int root,
+                           const std::string &hint) const = 0;
+
+    virtual void Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
+                                       Datatype sendtype, void *recvbuf,
+                                       const size_t *recvcounts,
+                                       const size_t *displs, Datatype recvtype,
+                                       int root,
+                                       const std::string &hint) const = 0;
+
+    virtual void Gatherv64OneSidedPull(const void *sendbuf, size_t sendcount,
+                                       Datatype sendtype, void *recvbuf,
+                                       const size_t *recvcounts,
+                                       const size_t *displs, Datatype recvtype,
+                                       int root,
+                                       const std::string &hint) const = 0;
+
     virtual void Reduce(const void *sendbuf, void *recvbuf, size_t count,
                         Datatype datatype, Comm::Op op, int root,
                         const std::string &hint) const = 0;

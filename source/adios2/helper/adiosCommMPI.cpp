@@ -153,6 +153,23 @@ public:
                  Datatype recvtype, int root,
                  const std::string &hint) const override;
 
+    void Gatherv64(const void *sendbuf, size_t sendcount, Datatype sendtype,
+                   void *recvbuf, const size_t *recvcounts,
+                   const size_t *displs, Datatype recvtype, int root,
+                   const std::string &hint) const override;
+
+    void Gatherv64OneSidedPull(const void *sendbuf, size_t sendcount,
+                               Datatype sendtype, void *recvbuf,
+                               const size_t *recvcounts, const size_t *displs,
+                               Datatype recvtype, int root,
+                               const std::string &hint) const override;
+
+    void Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
+                               Datatype sendtype, void *recvbuf,
+                               const size_t *recvcounts, const size_t *displs,
+                               Datatype recvtype, int root,
+                               const std::string &hint) const override;
+
     void Reduce(const void *sendbuf, void *recvbuf, size_t count,
                 Datatype datatype, Comm::Op op, int root,
                 const std::string &hint) const override;
@@ -342,6 +359,197 @@ void CommImplMPI::Gatherv(const void *sendbuf, size_t sendcount,
                                displsInt.data(), ToMPI(recvtype), root,
                                m_MPIComm),
                    hint);
+}
+
+void CommImplMPI::Gatherv64(const void *sendbuf, size_t sendcount,
+                            Datatype sendtype, void *recvbuf,
+                            const size_t *recvcounts, const size_t *displs,
+                            Datatype recvtype, int root,
+                            const std::string &hint) const
+{
+
+    const int chunksize = std::numeric_limits<int>::max();
+
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(m_MPIComm, &mpiSize);
+    MPI_Comm_rank(m_MPIComm, &mpiRank);
+
+    int recvTypeSize;
+    int sendTypeSize;
+
+    MPI_Type_size(ToMPI(recvtype), &recvTypeSize);
+    MPI_Type_size(ToMPI(sendtype), &sendTypeSize);
+
+    std::vector<MPI_Request> requests;
+    if (mpiRank == root)
+    {
+        for (int i = 0; i < mpiSize; ++i)
+        {
+            uint64_t recvcount = recvcounts[i];
+            while (recvcount > 0)
+            {
+                requests.emplace_back();
+                if (recvcount > chunksize)
+                {
+                    MPI_Irecv(reinterpret_cast<char *>(recvbuf) +
+                                  (displs[i] + recvcounts[i] - recvcount) *
+                                      recvTypeSize,
+                              chunksize, ToMPI(recvtype), i, 0, m_MPIComm,
+                              &requests.back());
+                    recvcount -= chunksize;
+                }
+                else
+                {
+                    MPI_Irecv(reinterpret_cast<char *>(recvbuf) +
+                                  (displs[i] + recvcounts[i] - recvcount) *
+                                      recvTypeSize,
+                              static_cast<int>(recvcount), ToMPI(recvtype), i,
+                              0, m_MPIComm, &requests.back());
+                    recvcount = 0;
+                }
+            }
+        }
+    }
+
+    uint64_t sendcountvar = sendcount;
+
+    while (sendcountvar > 0)
+    {
+        requests.emplace_back();
+        if (sendcountvar > chunksize)
+        {
+            MPI_Isend(reinterpret_cast<const char *>(sendbuf) +
+                          (sendcount - sendcountvar) * sendTypeSize,
+                      chunksize, ToMPI(sendtype), root, 0, m_MPIComm,
+                      &requests.back());
+            sendcountvar -= chunksize;
+        }
+        else
+        {
+            MPI_Isend(reinterpret_cast<const char *>(sendbuf) +
+                          (sendcount - sendcountvar) * sendTypeSize,
+                      static_cast<int>(sendcountvar), ToMPI(sendtype), root, 0,
+                      m_MPIComm, &requests.back());
+            sendcountvar = 0;
+        }
+    }
+
+    MPI_Waitall(requests.size(), requests.data(), MPI_STATUSES_IGNORE);
+}
+
+void CommImplMPI::Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
+                                        Datatype sendtype, void *recvbuf,
+                                        const size_t *recvcounts,
+                                        const size_t *displs, Datatype recvtype,
+                                        int root, const std::string &hint) const
+{
+    const int chunksize = std::numeric_limits<int>::max();
+
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(m_MPIComm, &mpiSize);
+    MPI_Comm_rank(m_MPIComm, &mpiRank);
+
+    int recvTypeSize;
+    int sendTypeSize;
+
+    MPI_Type_size(ToMPI(recvtype), &recvTypeSize);
+    MPI_Type_size(ToMPI(sendtype), &sendTypeSize);
+
+    uint64_t recvsize = displs[mpiSize - 1] + recvcounts[mpiSize - 1];
+
+    MPI_Win win;
+    MPI_Win_create(recvbuf, recvsize * recvTypeSize, recvTypeSize,
+                   MPI_INFO_NULL, m_MPIComm, &win);
+    MPI_Win_fence(0, win);
+
+    uint64_t sendcountvar = sendcount;
+
+    while (sendcountvar > 0)
+    {
+        if (sendcountvar > chunksize)
+        {
+            MPI_Put(reinterpret_cast<const char *>(sendbuf) +
+                        (sendcount - sendcountvar) * sendTypeSize,
+                    chunksize, ToMPI(sendtype), root,
+                    displs[mpiRank] + sendcount - sendcountvar, chunksize,
+                    ToMPI(sendtype), win);
+            sendcountvar -= chunksize;
+        }
+        else
+        {
+            MPI_Put(reinterpret_cast<const char *>(sendbuf) +
+                        (sendcount - sendcountvar) * sendTypeSize,
+                    sendcountvar, ToMPI(sendtype), root,
+                    displs[mpiRank] + sendcount - sendcountvar, sendcountvar,
+                    ToMPI(sendtype), win);
+            sendcountvar = 0;
+        }
+    }
+
+    MPI_Win_fence(0, win);
+    MPI_Win_free(&win);
+}
+
+void CommImplMPI::Gatherv64OneSidedPull(const void *sendbuf, size_t sendcount,
+                                        Datatype sendtype, void *recvbuf,
+                                        const size_t *recvcounts,
+                                        const size_t *displs, Datatype recvtype,
+                                        int root, const std::string &hint) const
+{
+
+    const int chunksize = std::numeric_limits<int>::max();
+
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(m_MPIComm, &mpiSize);
+    MPI_Comm_rank(m_MPIComm, &mpiRank);
+
+    int recvTypeSize;
+    int sendTypeSize;
+
+    MPI_Type_size(ToMPI(recvtype), &recvTypeSize);
+    MPI_Type_size(ToMPI(sendtype), &sendTypeSize);
+
+    MPI_Win win;
+    MPI_Win_create(const_cast<void *>(sendbuf), sendcount * sendTypeSize,
+                   sendTypeSize, MPI_INFO_NULL, m_MPIComm, &win);
+    MPI_Win_fence(0, win);
+
+    if (mpiRank == root)
+    {
+        for (int i = 0; i < mpiSize; ++i)
+        {
+            uint64_t recvcount = recvcounts[i];
+            while (recvcount > 0)
+            {
+                if (recvcount > chunksize)
+                {
+                    MPI_Get(reinterpret_cast<char *>(recvbuf) +
+                                (displs[i] + recvcounts[i] - recvcount) *
+                                    recvTypeSize,
+                            chunksize, ToMPI(recvtype), i,
+                            recvcounts[i] - recvcount, chunksize,
+                            ToMPI(recvtype), win);
+                    recvcount -= chunksize;
+                }
+                else
+                {
+                    MPI_Get(reinterpret_cast<char *>(recvbuf) +
+                                (displs[i] + recvcounts[i] - recvcount) *
+                                    recvTypeSize,
+                            static_cast<int>(recvcount), ToMPI(recvtype), i,
+                            recvcounts[i] - recvcount,
+                            static_cast<int>(recvcount), ToMPI(recvtype), win);
+                    recvcount = 0;
+                }
+            }
+        }
+    }
+
+    MPI_Win_fence(0, win);
+    MPI_Win_free(&win);
 }
 
 void CommImplMPI::Reduce(const void *sendbuf, void *recvbuf, size_t count,

@@ -80,6 +80,23 @@ public:
                  Datatype recvtype, int root,
                  const std::string &hint) const override;
 
+    void Gatherv64(const void *sendbuf, size_t sendcount, Datatype sendtype,
+                   void *recvbuf, const size_t *recvcounts,
+                   const size_t *displs, Datatype recvtype, int root,
+                   const std::string &hint) const override;
+
+    void Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
+                               Datatype sendtype, void *recvbuf,
+                               const size_t *recvcounts, const size_t *displs,
+                               Datatype recvtype, int root,
+                               const std::string &hint) const override;
+
+    void Gatherv64OneSidedPull(const void *sendbuf, size_t sendcount,
+                               Datatype sendtype, void *recvbuf,
+                               const size_t *recvcounts, const size_t *displs,
+                               Datatype recvtype, int root,
+                               const std::string &hint) const override;
+
     void Reduce(const void *sendbuf, void *recvbuf, size_t count,
                 Datatype datatype, Comm::Op op, int root,
                 const std::string &hint) const override;
@@ -201,6 +218,53 @@ void CommImplDummy::Gatherv(const void *sendbuf, size_t sendcount,
                             const size_t *recvcounts, const size_t *displs,
                             Datatype recvtype, int root,
                             const std::string &hint) const
+{
+    const size_t recvcount = recvcounts[0];
+    if (recvcount != sendcount)
+    {
+        return CommDummyError("send and recv counts differ");
+    }
+    CommImplDummy::Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                          recvtype, root, hint);
+}
+
+void CommImplDummy::Gatherv64(const void *sendbuf, size_t sendcount,
+                              Datatype sendtype, void *recvbuf,
+                              const size_t *recvcounts, const size_t *displs,
+                              Datatype recvtype, int root,
+                              const std::string &hint) const
+{
+    const size_t recvcount = recvcounts[0];
+    if (recvcount != sendcount)
+    {
+        return CommDummyError("send and recv counts differ");
+    }
+    CommImplDummy::Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                          recvtype, root, hint);
+}
+
+void CommImplDummy::Gatherv64OneSidedPush(const void *sendbuf, size_t sendcount,
+                                          Datatype sendtype, void *recvbuf,
+                                          const size_t *recvcounts,
+                                          const size_t *displs,
+                                          Datatype recvtype, int root,
+                                          const std::string &hint) const
+{
+    const size_t recvcount = recvcounts[0];
+    if (recvcount != sendcount)
+    {
+        return CommDummyError("send and recv counts differ");
+    }
+    CommImplDummy::Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                          recvtype, root, hint);
+}
+
+void CommImplDummy::Gatherv64OneSidedPull(const void *sendbuf, size_t sendcount,
+                                          Datatype sendtype, void *recvbuf,
+                                          const size_t *recvcounts,
+                                          const size_t *displs,
+                                          Datatype recvtype, int root,
+                                          const std::string &hint) const
 {
     const size_t recvcount = recvcounts[0];
     if (recvcount != sendcount)
