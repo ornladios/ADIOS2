@@ -53,11 +53,13 @@ const std::vector<std::vector<int>> HandshakeRank(const std::string &filename,
                                                   const int timeoutSeconds,
                                                   MPI_Comm localComm);
 
+#ifndef _WIN32
 void HandshakeComm(const std::string &filename, const char mode,
                    const int timeoutSeconds, MPI_Comm localComm,
                    MPI_Group &streamGroup, MPI_Group &writerGroup,
                    MPI_Group &readerGroup, MPI_Comm &streamComm,
                    MPI_Comm &writerComm, MPI_Comm &readerComm);
+#endif
 
 } // end namespace helper
 } // end namespace adios2
