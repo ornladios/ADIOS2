@@ -186,19 +186,14 @@ void SscWriter::SyncMpiPattern()
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    auto appRankMaps =
-        helper::Handshake(m_Name, 'w', m_OpenTimeoutSecs, CommAsMPI(m_Comm));
-
-    MPI_Group worldGroup;
     MPI_Group streamGroup;
+    MPI_Group writerGroup;
+    MPI_Comm writerComm;
+    MPI_Comm readerComm;
 
-    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, appRankMaps[2].size(), appRankMaps[2].data(),
-                   &m_MpiAllReadersGroup);
-    MPI_Group_incl(worldGroup, appRankMaps[0].size(), appRankMaps[0].data(),
-                   &streamGroup);
-
-    MPI_Comm_create_group(MPI_COMM_WORLD, streamGroup, 0, &m_StreamComm);
+    helper::HandshakeComm(m_Name, 'w', m_OpenTimeoutSecs, CommAsMPI(m_Comm),
+                          streamGroup, writerGroup, m_MpiAllReadersGroup,
+                          m_StreamComm, writerComm, readerComm);
 }
 
 void SscWriter::SyncWritePattern(bool finalStep)
