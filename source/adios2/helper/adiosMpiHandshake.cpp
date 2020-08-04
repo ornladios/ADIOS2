@@ -21,10 +21,30 @@ namespace adios2
 namespace helper
 {
 
-const std::vector<std::vector<int>> Handshake(const std::string &filename,
-                                              const char mode,
-                                              const int timeoutSeconds,
-                                              MPI_Comm localComm)
+void HandshakeComm(const std::string &filename, const char mode,
+                   const int timeoutSeconds, MPI_Comm localComm,
+                   MPI_Group &streamGroup, MPI_Group &writerGroup,
+                   MPI_Group &readerGroup, MPI_Comm &streamComm,
+                   MPI_Comm &writerComm, MPI_Comm &readerComm)
+{
+    auto appRankMaps = HandshakeRank(filename, mode, timeoutSeconds, localComm);
+    MPI_Group worldGroup;
+    MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
+    MPI_Group_incl(worldGroup, appRankMaps[0].size(), appRankMaps[0].data(),
+                   &streamGroup);
+    MPI_Group_incl(worldGroup, appRankMaps[1].size(), appRankMaps[1].data(),
+                   &writerGroup);
+    MPI_Group_incl(worldGroup, appRankMaps[2].size(), appRankMaps[2].data(),
+                   &readerGroup);
+    MPI_Comm_create_group(MPI_COMM_WORLD, streamGroup, 0, &streamComm);
+    MPI_Comm_create_group(MPI_COMM_WORLD, writerGroup, 0, &writerComm);
+    MPI_Comm_create_group(MPI_COMM_WORLD, readerGroup, 0, &readerComm);
+}
+
+const std::vector<std::vector<int>> HandshakeRank(const std::string &filename,
+                                                  const char mode,
+                                                  const int timeoutSeconds,
+                                                  MPI_Comm localComm)
 {
     std::vector<std::vector<int>> ret(3);
 
