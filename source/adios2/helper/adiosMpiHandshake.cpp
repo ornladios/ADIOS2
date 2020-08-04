@@ -30,12 +30,12 @@ void HandshakeComm(const std::string &filename, const char mode,
     auto appRankMaps = HandshakeRank(filename, mode, timeoutSeconds, localComm);
     MPI_Group worldGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
-    MPI_Group_incl(worldGroup, appRankMaps[0].size(), appRankMaps[0].data(),
-                   &streamGroup);
-    MPI_Group_incl(worldGroup, appRankMaps[1].size(), appRankMaps[1].data(),
-                   &writerGroup);
-    MPI_Group_incl(worldGroup, appRankMaps[2].size(), appRankMaps[2].data(),
-                   &readerGroup);
+    MPI_Group_incl(worldGroup, static_cast<int>(appRankMaps[0].size()),
+                   appRankMaps[0].data(), &streamGroup);
+    MPI_Group_incl(worldGroup, static_cast<int>(appRankMaps[1].size()),
+                   appRankMaps[1].data(), &writerGroup);
+    MPI_Group_incl(worldGroup, static_cast<int>(appRankMaps[2].size()),
+                   appRankMaps[2].data(), &readerGroup);
     MPI_Comm_create_group(MPI_COMM_WORLD, streamGroup, 0, &streamComm);
     MPI_Comm_create_group(MPI_COMM_WORLD, writerGroup, 0, &writerComm);
     MPI_Comm_create_group(MPI_COMM_WORLD, readerGroup, 0, &readerComm);
