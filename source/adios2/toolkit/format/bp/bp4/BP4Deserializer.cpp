@@ -58,13 +58,13 @@ size_t BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
     return lastposition;
 }
 
-void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL,
+void BP4Deserializer::ParseMetadataIndex(BufferSTL &bufferSTL,
                                          const size_t absoluteStartPos,
-                                         const bool hasHeader)
+                                         const bool hasHeader,
+                                         const bool oneStepOnly)
 {
     const auto &buffer = bufferSTL.m_Buffer;
-    const size_t bufferSize = buffer.size();
-    size_t position = 0;
+    size_t &position = bufferSTL.m_Position;
 
     if (hasHeader)
     {
@@ -113,7 +113,7 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL,
     }
 
     // Read each record now
-    while (position < bufferSize)
+    do
     {
         std::vector<uint64_t> ptrs;
         const uint64_t currentStep = helper::ReadValue<uint64_t>(
@@ -137,7 +137,7 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL,
         ptrs.push_back(currentTimeStamp);
         m_MetadataIndexTable[mpiRank][currentStep] = ptrs;
         position += 8;
-    }
+    } while (!oneStepOnly && position < buffer.size());
 }
 
 const helper::BlockOperationInfo &BP4Deserializer::InitPostOperatorBlockData(

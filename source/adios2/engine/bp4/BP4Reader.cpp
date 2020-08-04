@@ -409,7 +409,7 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
                            const Seconds &pollSeconds,
                            const Seconds &timeoutSeconds)
 {
-    std::vector<size_t> sizes(2, 0);
+    size_t newIdxSize = 0;
     // Put all metadata in buffer
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
@@ -448,10 +448,9 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
                 m_MDFileManager.ReadFile(
                     m_BP4Deserializer.m_Metadata.m_Buffer.data(),
                     expectedMinFileSize);
-                m_MDIndexFileProcessedSize = metadataIndexFileSize;
-
-                sizes[0] = metadataIndexFileSize;
-                sizes[1] = m_MDFileProcessedSize;
+                m_MDFileAlreadyReadSize = expectedMinFileSize;
+                m_MDIndexFileAlreadyReadSize = metadataIndexFileSize;
+                newIdxSize = metadataIndexFileSize;
             }
             else
             {
@@ -471,8 +470,7 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
         }
     }
 
-    m_Comm.BroadcastVector(sizes, 0);
-    size_t newIdxSize = sizes[0];
+    newIdxSize = m_Comm.BroadcastValue(newIdxSize, 0);
 
     if (newIdxSize > 0)
     {
@@ -484,7 +482,7 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
 
         /* Parse metadata index table */
         m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex,
-                                             0, true);
+                                             0, true, false);
         // now we are sure the index header has been parsed, first step parsing
         // done
         m_IdxHeaderParsed = true;
@@ -509,23 +507,24 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
 size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
                                const Seconds &pollSeconds)
 {
-    std::vector<size_t> sizes(2, 0);
+    std::vector<size_t> sizes(3, 0);
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
         const size_t idxFileSize = m_MDIndexFileManager.GetFileSize(0);
-        if (idxFileSize > m_MDIndexFileProcessedSize)
+        if (idxFileSize > m_MDIndexFileAlreadyReadSize)
         {
-            const size_t maxIdxSize = idxFileSize - m_MDIndexFileProcessedSize;
+            const size_t maxIdxSize =
+                idxFileSize - m_MDIndexFileAlreadyReadSize;
             std::vector<char> idxbuf(maxIdxSize);
             m_MDIndexFileManager.ReadFile(idxbuf.data(), maxIdxSize,
-                                          m_MDIndexFileProcessedSize);
+                                          m_MDIndexFileAlreadyReadSize);
             size_t newIdxSize;
             size_t expectedMinFileSize;
             char *buf = idxbuf.data();
 
             MetadataCalculateMinFileSize(
                 m_BP4Deserializer, m_Name, buf, maxIdxSize, !m_IdxHeaderParsed,
-                m_MDFileProcessedSize, newIdxSize, expectedMinFileSize);
+                m_MDFileAlreadyReadSize, newIdxSize, expectedMinFileSize);
 
             // const uint64_t expectedMinFileSize = MetadataExpectedMinFileSize(
             //    m_BP4Deserializer, m_Name, !m_IdxHeaderParsed);
@@ -536,7 +535,7 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
                     newIdxSize, "re-allocating metadata index buffer, in "
                                 "call to BP4Reader::BeginStep/UpdateBuffer");
             }
-            m_BP4Deserializer.m_MetadataIndex.m_Position = 0;
+            m_BP4Deserializer.m_MetadataIndex.Reset(true, false);
             std::copy(idxbuf.begin(), idxbuf.begin() + newIdxSize,
                       m_BP4Deserializer.m_MetadataIndex.m_Buffer.begin());
 
@@ -564,20 +563,26 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
                  */
                 const size_t fileSize = m_MDFileManager.GetFileSize(0);
                 const size_t newMDSize =
-                    expectedMinFileSize - m_MDFileProcessedSize;
+                    expectedMinFileSize - m_MDFileAlreadyReadSize;
                 if (m_BP4Deserializer.m_Metadata.m_Buffer.size() < newMDSize)
                 {
                     m_BP4Deserializer.m_Metadata.Resize(
                         newMDSize, "allocating metadata buffer, in call to "
                                    "BP4Reader Open");
                 }
-                m_BP4Deserializer.m_Metadata.m_Position = 0;
+                m_BP4Deserializer.m_Metadata.Reset(true, false);
                 m_MDFileManager.ReadFile(
                     m_BP4Deserializer.m_Metadata.m_Buffer.data(), newMDSize,
-                    m_MDFileProcessedSize);
+                    m_MDFileAlreadyReadSize);
+
+                m_MDFileAbsolutePos = m_MDFileAlreadyReadSize;
+                m_MDFileAlreadyReadSize = expectedMinFileSize;
+
+                m_MDIndexFileAlreadyReadSize = idxFileSize;
 
                 sizes[0] = newIdxSize;
-                sizes[1] = m_MDFileProcessedSize;
+                sizes[1] = m_MDFileAlreadyReadSize;
+                sizes[2] = m_MDFileAbsolutePos;
             }
         }
     }
@@ -587,18 +592,21 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
 
     if (newIdxSize > 0)
     {
+        if (m_BP4Deserializer.m_RankMPI != 0)
+        {
+            m_MDFileAlreadyReadSize = sizes[1];
+            m_MDFileAbsolutePos = sizes[2];
+            m_BP4Deserializer.m_MetadataIndex.Reset(true, false);
+            m_BP4Deserializer.m_Metadata.Reset(true, false);
+            // we need this pointer in Metadata buffer on all processes
+            // for parsing it correctly in ProcessMetadataForNewSteps()
+        }
+
         // broadcast buffer to all ranks from zero
         m_Comm.BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer);
 
         // broadcast metadata index buffer to all ranks from zero
         m_Comm.BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer);
-
-        if (m_BP4Deserializer.m_RankMPI != 0)
-        {
-            m_MDFileProcessedSize = sizes[1];
-            // we need this pointer in Metadata buffer on all processes
-            // for parsing it correctly in ProcessMetadataForNewSteps()
-        }
     }
     return newIdxSize;
 }
@@ -613,8 +621,8 @@ void BP4Reader::ProcessMetadataForNewSteps(const size_t newIdxSize)
        size of the already-processed metadata because the memory buffer of
        new metadata starts from 0 */
     m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex,
-                                         m_MDFileProcessedSize,
-                                         !m_IdxHeaderParsed);
+                                         m_MDFileAbsolutePos,
+                                         !m_IdxHeaderParsed, true);
     m_IdxHeaderParsed = true;
 
     // fills IO with Variables and Attributes
@@ -622,11 +630,11 @@ void BP4Reader::ProcessMetadataForNewSteps(const size_t newIdxSize)
         m_BP4Deserializer.m_Metadata, *this, false);
 
     // remember current end position in metadata and index table for next round
-    m_MDFileProcessedSize += newProcessedMDSize;
-    if (m_BP4Deserializer.m_RankMPI == 0)
-    {
-        m_MDIndexFileProcessedSize += newIdxSize;
-    }
+    m_MDFileProcessedSize = m_MDFileAbsolutePos + newProcessedMDSize;
+    // if (m_BP4Deserializer.m_RankMPI == 0)
+    //{
+    //    m_MDIndexFileAlreadyReadSize += newIdxSize;
+    //}
 }
 
 bool BP4Reader::CheckWriterActive()
@@ -645,11 +653,31 @@ bool BP4Reader::CheckWriterActive()
     return m_WriterIsActive;
 }
 
+bool BP4Reader::ProcessNextStepInMemory()
+{
+    if (m_MDFileAlreadyReadSize > m_MDFileProcessedSize)
+    {
+        // Hack: processing metadata for multiple new steps only works
+        // when pretending not to be in streaming mode
+        const bool saveReadStreaming = m_IO.m_ReadStreaming;
+        m_IO.m_ReadStreaming = false;
+        ProcessMetadataForNewSteps(0);
+        m_IO.m_ReadStreaming = saveReadStreaming;
+        return true;
+    }
+    return false;
+}
+
 StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
 {
     /* Do a collective wait for a step within timeout.
        Make sure every reader comes to the same conclusion */
     StepStatus retval = StepStatus::OK;
+
+    if (ProcessNextStepInMemory())
+    {
+        return retval;
+    }
 
     if (timeoutSeconds < Seconds::zero())
     {
