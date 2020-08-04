@@ -66,8 +66,8 @@ void Comm::GathervArrays(const T *source, size_t sourceCount,
                 std::to_string(totalElements) + " elements\n");
         }
     }
-    this->Gatherv(source, sourceCount, destination, counts, displs.data(),
-                  rankDestination);
+    this->Gatherv31(source, sourceCount, destination, counts, displs.data(),
+                    rankDestination);
 }
 
 template <class T>
@@ -208,13 +208,13 @@ void Comm::Gather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
 }
 
 template <typename TSend, typename TRecv>
-void Comm::Gatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
-                   const size_t *recvcounts, const size_t *displs, int root,
-                   const std::string &hint) const
+void Comm::Gatherv31(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                     const size_t *recvcounts, const size_t *displs, int root,
+                     const std::string &hint) const
 {
-    return m_Impl->Gatherv(sendbuf, sendcount, CommImpl::GetDatatype<TSend>(),
-                           recvbuf, recvcounts, displs,
-                           CommImpl::GetDatatype<TRecv>(), root, hint);
+    return m_Impl->Gatherv31(sendbuf, sendcount, CommImpl::GetDatatype<TSend>(),
+                             recvbuf, recvcounts, displs,
+                             CommImpl::GetDatatype<TRecv>(), root, hint);
 }
 
 template <typename T>

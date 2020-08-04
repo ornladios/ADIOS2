@@ -148,10 +148,10 @@ public:
                 void *recvbuf, size_t recvcount, Datatype recvtype, int root,
                 const std::string &hint) const override;
 
-    void Gatherv(const void *sendbuf, size_t sendcount, Datatype sendtype,
-                 void *recvbuf, const size_t *recvcounts, const size_t *displs,
-                 Datatype recvtype, int root,
-                 const std::string &hint) const override;
+    void Gatherv31(const void *sendbuf, size_t sendcount, Datatype sendtype,
+                   void *recvbuf, const size_t *recvcounts,
+                   const size_t *displs, Datatype recvtype, int root,
+                   const std::string &hint) const override;
 
     void Reduce(const void *sendbuf, void *recvbuf, size_t count,
                 Datatype datatype, Comm::Op op, int root,
@@ -318,11 +318,11 @@ void CommImplMPI::Gather(const void *sendbuf, size_t sendcount,
                    hint);
 }
 
-void CommImplMPI::Gatherv(const void *sendbuf, size_t sendcount,
-                          Datatype sendtype, void *recvbuf,
-                          const size_t *recvcounts, const size_t *displs,
-                          Datatype recvtype, int root,
-                          const std::string &hint) const
+void CommImplMPI::Gatherv31(const void *sendbuf, size_t sendcount,
+                            Datatype sendtype, void *recvbuf,
+                            const size_t *recvcounts, const size_t *displs,
+                            Datatype recvtype, int root,
+                            const std::string &hint) const
 {
     std::vector<int> countsInt;
     std::vector<int> displsInt;

@@ -214,9 +214,9 @@ public:
                 const std::string &hint = std::string()) const;
 
     template <typename TSend, typename TRecv>
-    void Gatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
-                 const size_t *recvcounts, const size_t *displs, int root,
-                 const std::string &hint = std::string()) const;
+    void Gatherv31(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                   const size_t *recvcounts, const size_t *displs, int root,
+                   const std::string &hint = std::string()) const;
 
     template <typename T>
     void Reduce(const T *sendbuf, T *recvbuf, size_t count, Op op, int root,
@@ -394,11 +394,11 @@ public:
                         Datatype recvtype, int root,
                         const std::string &hint) const = 0;
 
-    virtual void Gatherv(const void *sendbuf, size_t sendcount,
-                         Datatype sendtype, void *recvbuf,
-                         const size_t *recvcounts, const size_t *displs,
-                         Datatype recvtype, int root,
-                         const std::string &hint) const = 0;
+    virtual void Gatherv31(const void *sendbuf, size_t sendcount,
+                           Datatype sendtype, void *recvbuf,
+                           const size_t *recvcounts, const size_t *displs,
+                           Datatype recvtype, int root,
+                           const std::string &hint) const = 0;
 
     virtual void Reduce(const void *sendbuf, void *recvbuf, size_t count,
                         Datatype datatype, Comm::Op op, int root,

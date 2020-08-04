@@ -75,10 +75,10 @@ public:
                 void *recvbuf, size_t recvcount, Datatype recvtype, int root,
                 const std::string &hint) const override;
 
-    void Gatherv(const void *sendbuf, size_t sendcount, Datatype sendtype,
-                 void *recvbuf, const size_t *recvcounts, const size_t *displs,
-                 Datatype recvtype, int root,
-                 const std::string &hint) const override;
+    void Gatherv31(const void *sendbuf, size_t sendcount, Datatype sendtype,
+                   void *recvbuf, const size_t *recvcounts,
+                   const size_t *displs, Datatype recvtype, int root,
+                   const std::string &hint) const override;
 
     void Reduce(const void *sendbuf, void *recvbuf, size_t count,
                 Datatype datatype, Comm::Op op, int root,
@@ -196,11 +196,11 @@ void CommImplDummy::Gather(const void *sendbuf, size_t sendcount,
     std::memcpy(recvbuf, sendbuf, nsent);
 }
 
-void CommImplDummy::Gatherv(const void *sendbuf, size_t sendcount,
-                            Datatype sendtype, void *recvbuf,
-                            const size_t *recvcounts, const size_t *displs,
-                            Datatype recvtype, int root,
-                            const std::string &hint) const
+void CommImplDummy::Gatherv31(const void *sendbuf, size_t sendcount,
+                              Datatype sendtype, void *recvbuf,
+                              const size_t *recvcounts, const size_t *displs,
+                              Datatype recvtype, int root,
+                              const std::string &hint) const
 {
     const size_t recvcount = recvcounts[0];
     if (recvcount != sendcount)

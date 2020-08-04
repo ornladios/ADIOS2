@@ -94,8 +94,8 @@ int SMPI_Gatherv_Impl(const TSend *sendbuf, int sendcount, void *recvbuf,
     switch (recvtype)
     {
 #define F(type)                                                                \
-    comm->Gatherv(sendbuf, sendcount, static_cast<type *>(recvbuf),            \
-                  recvcounts, displs, root)
+    comm->Gatherv31(sendbuf, sendcount, static_cast<type *>(recvbuf),          \
+                    recvcounts, displs, root)
         CASE_FOR_EACH_TYPE(F);
 #undef F
     }
