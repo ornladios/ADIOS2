@@ -281,6 +281,186 @@ bool AreSameDims(const Dims &a, const Dims &b)
     return true;
 }
 
+void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount,
+                   MPI_Datatype sendtype, void *recvbuf,
+                   const uint64_t *recvcounts, const uint64_t *displs,
+                   MPI_Datatype recvtype, int root, MPI_Comm comm,
+                   const int chunksize)
+{
+
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(comm, &mpiSize);
+    MPI_Comm_rank(comm, &mpiRank);
+
+    int recvTypeSize;
+    int sendTypeSize;
+
+    MPI_Type_size(recvtype, &recvTypeSize);
+    MPI_Type_size(sendtype, &sendTypeSize);
+
+    std::vector<MPI_Request> requests;
+    if (mpiRank == root)
+    {
+        for (int i = 0; i < mpiSize; ++i)
+        {
+            uint64_t recvcount = recvcounts[i];
+            while (recvcount > 0)
+            {
+                requests.emplace_back();
+                if (recvcount > chunksize)
+                {
+                    MPI_Irecv(reinterpret_cast<char *>(recvbuf) +
+                                  (displs[i] + recvcounts[i] - recvcount) *
+                                      recvTypeSize,
+                              chunksize, recvtype, i, 0, comm,
+                              &requests.back());
+                    recvcount -= chunksize;
+                }
+                else
+                {
+                    MPI_Irecv(reinterpret_cast<char *>(recvbuf) +
+                                  (displs[i] + recvcounts[i] - recvcount) *
+                                      recvTypeSize,
+                              static_cast<int>(recvcount), recvtype, i, 0, comm,
+                              &requests.back());
+                    recvcount = 0;
+                }
+            }
+        }
+    }
+
+    uint64_t sendcountvar = sendcount;
+
+    while (sendcountvar > 0)
+    {
+        requests.emplace_back();
+        if (sendcountvar > chunksize)
+        {
+            MPI_Isend(reinterpret_cast<const char *>(sendbuf) +
+                          (sendcount - sendcountvar) * sendTypeSize,
+                      chunksize, sendtype, root, 0, comm, &requests.back());
+            sendcountvar -= chunksize;
+        }
+        else
+        {
+            MPI_Isend(reinterpret_cast<const char *>(sendbuf) +
+                          (sendcount - sendcountvar) * sendTypeSize,
+                      static_cast<int>(sendcountvar), sendtype, root, 0, comm,
+                      &requests.back());
+            sendcountvar = 0;
+        }
+    }
+
+    MPI_Waitall(requests.size(), requests.data(), MPI_STATUSES_IGNORE);
+}
+
+void MPI_Gatherv64OneSidedPull(const void *sendbuf, uint64_t sendcount,
+                               MPI_Datatype sendtype, void *recvbuf,
+                               const uint64_t *recvcounts,
+                               const uint64_t *displs, MPI_Datatype recvtype,
+                               int root, MPI_Comm comm, const int chunksize)
+{
+
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(comm, &mpiSize);
+    MPI_Comm_rank(comm, &mpiRank);
+
+    int recvTypeSize;
+    int sendTypeSize;
+
+    MPI_Type_size(recvtype, &recvTypeSize);
+    MPI_Type_size(sendtype, &sendTypeSize);
+
+    MPI_Win win;
+    MPI_Win_create(const_cast<void *>(sendbuf), sendcount * sendTypeSize,
+                   sendTypeSize, MPI_INFO_NULL, comm, &win);
+
+    if (mpiRank == root)
+    {
+        for (int i = 0; i < mpiSize; ++i)
+        {
+            uint64_t recvcount = recvcounts[i];
+            while (recvcount > 0)
+            {
+                if (recvcount > chunksize)
+                {
+                    MPI_Get(reinterpret_cast<char *>(recvbuf) +
+                                (displs[i] + recvcounts[i] - recvcount) *
+                                    recvTypeSize,
+                            chunksize, recvtype, i, recvcounts[i] - recvcount,
+                            chunksize, recvtype, win);
+                    recvcount -= chunksize;
+                }
+                else
+                {
+                    MPI_Get(reinterpret_cast<char *>(recvbuf) +
+                                (displs[i] + recvcounts[i] - recvcount) *
+                                    recvTypeSize,
+                            static_cast<int>(recvcount), recvtype, i,
+                            recvcounts[i] - recvcount,
+                            static_cast<int>(recvcount), recvtype, win);
+                    recvcount = 0;
+                }
+            }
+        }
+    }
+
+    MPI_Win_free(&win);
+}
+
+void MPI_Gatherv64OneSidedPush(const void *sendbuf, uint64_t sendcount,
+                               MPI_Datatype sendtype, void *recvbuf,
+                               const uint64_t *recvcounts,
+                               const uint64_t *displs, MPI_Datatype recvtype,
+                               int root, MPI_Comm comm, const int chunksize)
+{
+
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(comm, &mpiSize);
+    MPI_Comm_rank(comm, &mpiRank);
+
+    int recvTypeSize;
+    int sendTypeSize;
+
+    MPI_Type_size(recvtype, &recvTypeSize);
+    MPI_Type_size(sendtype, &sendTypeSize);
+
+    uint64_t recvsize = displs[mpiSize - 1] + recvcounts[mpiSize - 1];
+
+    MPI_Win win;
+    MPI_Win_create(recvbuf, recvsize * recvTypeSize, recvTypeSize,
+                   MPI_INFO_NULL, comm, &win);
+
+    uint64_t sendcountvar = sendcount;
+
+    while (sendcountvar > 0)
+    {
+        if (sendcountvar > chunksize)
+        {
+            MPI_Put(reinterpret_cast<const char *>(sendbuf) +
+                        (sendcount - sendcountvar) * sendTypeSize,
+                    chunksize, sendtype, root,
+                    displs[mpiRank] + sendcount - sendcountvar, chunksize,
+                    sendtype, win);
+            sendcountvar -= chunksize;
+        }
+        else
+        {
+            MPI_Put(reinterpret_cast<const char *>(sendbuf) +
+                        (sendcount - sendcountvar) * sendTypeSize,
+                    sendcountvar, sendtype, root,
+                    displs[mpiRank] + sendcount - sendcountvar, sendcountvar,
+                    sendtype, win);
+            sendcountvar = 0;
+        }
+    }
+
+    MPI_Win_free(&win);
+}
+
 void PrintDims(const Dims &dims, const std::string &label)
 {
     std::cout << label;
