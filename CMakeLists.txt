@@ -70,11 +70,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-# Force C++11 and C99
-set(CMAKE_CXX_STANDARD 11)
+# Force C++14 and C11
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 if(NOT MSVC)
-  set(CMAKE_C_STANDARD 99)
+  set(CMAKE_C_STANDARD 11)
   set(CMAKE_C_STANDARD_REQUIRED True)
 endif()
 
@@ -85,19 +85,6 @@ set(ADIOS2_LIBRARY_SUFFIX "" CACHE STRING
 set(ADIOS2_EXECUTABLE_SUFFIX "${ADIOS2_LIBRARY_SUFFIX}" CACHE STRING
   "Suffix to append to executable names")
 mark_as_advanced(ADIOS2_LIBRARY_SUFFIX ADIOS2_EXECUTABLE_SUFFIX)
-
-# Use meta-compile features if available, otherwise use specific language
-# features
-if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
-  set(ADIOS2_CXX11_FEATURES cxx_auto_type cxx_nullptr)
-else()
-  set(ADIOS2_CXX11_FEATURES cxx_std_11)
-endif()
-if(CMAKE_C_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
-  set(ADIOS2_C99_FEATURES c_restrict)
-else()
-  set(ADIOS2_C99_FEATURES c_std_99)
-endif()
 
 include(CMakeDependentOption)
 

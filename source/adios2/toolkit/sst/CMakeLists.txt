@@ -61,10 +61,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/SSTConfig.h
   COMPONENT adios2_core-development
 )
 
-if (NOT MSVC)
-  target_compile_features(sst PRIVATE ${ADIOS2_C99_FEATURES})
-endif()
-
 target_include_directories(sst PRIVATE
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>

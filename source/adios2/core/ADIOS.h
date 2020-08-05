@@ -90,7 +90,7 @@ public:
 
     /**
      * Retrieve a reference to an existing IO object created with DeclareIO.
-     * Follow the C++11 STL containers at function.
+     * Follow the C++ STL containers at function.
      * @param name of IO to look for
      * @return if IO exists returns a reference to existing IO object inside
      * ADIOS
