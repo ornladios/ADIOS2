@@ -121,7 +121,7 @@ target_include_directories(adios2_core
 )
 target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml taustubs adios2::thirdparty::yaml-cpp)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
-
+target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 if(UNIX)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FilePOSIX.cpp)
 endif()

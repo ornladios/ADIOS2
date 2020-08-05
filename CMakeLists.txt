@@ -85,7 +85,7 @@ set(ADIOS2_LIBRARY_SUFFIX "" CACHE STRING
 set(ADIOS2_EXECUTABLE_SUFFIX "${ADIOS2_LIBRARY_SUFFIX}" CACHE STRING
   "Suffix to append to executable names")
 mark_as_advanced(ADIOS2_LIBRARY_SUFFIX ADIOS2_EXECUTABLE_SUFFIX)
-
+set(ADIOS2_CXX11_FEATURES cxx_std_14)
 include(CMakeDependentOption)
 
 # Setup shared library defaults.  If explicitly specified somehow, then default

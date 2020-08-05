@@ -2,7 +2,6 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
-
 function(add_install_cmake_test name)
   add_test(NAME Install.CMake.${name} COMMAND "${CMAKE_COMMAND}"
     "-DADIOS2_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
@@ -56,7 +55,7 @@ function(add_install_make_test name)
     "-DCMAKE_CXX_COMPILER=${cxx}"
     "-DCMAKE_Fortran_COMPILER=${fc}"
     "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}"
-    "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
+    "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} --std=c++14"
     "-DCMAKE_Fortran_FLAGS=${CMAKE_Fortran_FLAGS}"
     "-DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}"
     "-DTEST_CASE=${name}"
