@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.12)
 
 if(OUTPUT_FILE)
   set(output_arg OUTPUT_FILE "${OUTPUT_FILE}")
