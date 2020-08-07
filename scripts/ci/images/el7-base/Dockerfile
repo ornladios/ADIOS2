@@ -5,13 +5,14 @@ RUN yum upgrade -y && \
     yum -y install make curl file valgrind vim bison flex sudo gdb \
         pkgconfig bison flex pkgconfig gcc gcc-c++ gcc-gfortran \
         zlib zlib-devel bzip2 bzip2-libs bzip2-devel libpng-devel \
-        libfabric-devel libffi-devel
+        libfabric-devel libffi-devel python3 python3-devel
 RUN yum -y install epel-release && \
     yum -y install zeromq-devel blosc-devel libzstd-devel
 
 # Install and setup newer version of git
-RUN yum install -y https://centos7.iuscommunity.org/ius-release.rpm && \
-    yum -y install git222
+RUN yum install -y https://repo.ius.io/ius-release-el7.rpm && \
+    yum -y install git224 && \
+    yum remove -y ius-release
 
 # Install the most recent CMake nightly binary
 WORKDIR /opt/cmake

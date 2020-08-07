@@ -33,7 +33,7 @@ FROM ornladios/adios2:ci-el7-base
 
 # Install Intel C++ and Fortran compilers
 ARG LICENSE_FILE=CI.lic
-ARG INTEL_VERSION=2020_update1
+ARG INTEL_VERSION=2020_update2
 WORKDIR /tmp
 COPY ${LICENSE_FILE} /opt/intel/licenses/license.lic
 COPY silent-cpp.cfg /tmp
@@ -46,8 +46,11 @@ RUN tar -xzf parallel_studio_xe_${INTEL_VERSION}_composer_edition_for_cpp.tgz &&
     ./parallel_studio_xe_${INTEL_VERSION}_composer_edition_for_fortran/install.sh -s ./silent-fortran.cfg
 
 # Install OpenHPC packages
-RUN yum -y install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm && \
-    yum -y install lmod-ohpc intel-compilers-devel-ohpc
+RUN yum install -y /tmp/*_for_cpp/rpm/intel-{comp,ps}xe-doc-*.rpm && \
+    yum -y install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm && \
+    yum -y install lmod-ohpc intel-compilers-devel-ohpc \
+        python3-numpy-intel-ohpc && \
+    sed 's|python3\.4|python3.6|g' -i /opt/ohpc/pub/moduledeps/*/py3-numpy/*
 
 # Install ZFP
 WORKDIR /opt/zfp
@@ -67,19 +70,19 @@ ENV PATH=/opt/zfp/0.5.5/bin:${PATH} \
 
 # Install SZ
 WORKDIR /opt/sz
-RUN curl -L https://github.com/disheng222/SZ/archive/v2.1.8.0.tar.gz | tar -xvz && \
+RUN curl -L https://github.com/disheng222/SZ/archive/v2.1.8.3.tar.gz | tar -xvz && \
     mkdir build && \
     cd build && \
     source /etc/profile && \
     module load intel && \
     export CC=icc CXX=icpc FC=ifort && \
-    cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/sz/2.1.8.0 ../SZ-2.1.8.0 && \
+    cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/sz/2.1.8.3 ../SZ-2.1.8.3 && \
     make -j$(grep -c '^processor' /proc/cpuinfo) install && \
     cd .. && \
-    rm -rf SZ-2.1.8.0 build
-ENV PATH=/opt/sz/2.1.8.0/bin:${PATH} \
-    LD_LIBRARY_PATH=/opt/sz/2.1.8.0/lib64:${LD_LIBRARY_PATH} \
-    CMAKE_PREFIX_PATH=/opt/sz/2.1.8.0:${CMAKE_PREFIX_PATH}
+    rm -rf SZ-2.1.8.3 build
+ENV PATH=/opt/sz/2.1.8.3/bin:${PATH} \
+    LD_LIBRARY_PATH=/opt/sz/2.1.8.3/lib64:${LD_LIBRARY_PATH} \
+    CMAKE_PREFIX_PATH=/opt/sz/2.1.8.3:${CMAKE_PREFIX_PATH}
 
 # Misc cleanup of unneeded files
 RUN rm -rfv \
