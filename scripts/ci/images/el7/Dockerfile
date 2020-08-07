@@ -1,7 +1,7 @@
 FROM ornladios/adios2:ci-el7-base
 
 # Install extra system dev packages
-RUN yum -y install hdf5-devel python-devel numpy
+RUN yum -y install hdf5-devel python36-numpy
 
 # Install ZFP
 WORKDIR /opt/zfp
@@ -18,16 +18,16 @@ ENV PATH=/opt/zfp/0.5.5/bin:${PATH} \
 
 # Install SZ
 WORKDIR /opt/sz
-RUN curl -L https://github.com/disheng222/SZ/archive/v2.1.8.0.tar.gz | tar -xvz && \
+RUN curl -L https://github.com/disheng222/SZ/archive/v2.1.8.3.tar.gz | tar -xvz && \
     mkdir build && \
     cd build && \
-    cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/sz/2.1.8.0 ../SZ-2.1.8.0 && \
+    cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/sz/2.1.8.3 ../SZ-2.1.8.3 && \
     make -j$(grep -c '^processor' /proc/cpuinfo) install && \
     cd .. && \
-    rm -rf SZ-2.1.8.0 build
-ENV PATH /opt/sz/2.1.8.0/bin:${PATH}
-ENV LD_LIBRARY_PATH /opt/sz/2.1.8.0/lib64:${LD_LIBRARY_PATH}
-ENV CMAKE_PREFIX_PATH /opt/sz/2.1.8.0:${CMAKE_PREFIX_PATH}
+    rm -rf SZ-2.1.8.3 build
+ENV PATH /opt/sz/2.1.8.3/bin:${PATH}
+ENV LD_LIBRARY_PATH /opt/sz/2.1.8.3/lib64:${LD_LIBRARY_PATH}
+ENV CMAKE_PREFIX_PATH /opt/sz/2.1.8.3:${CMAKE_PREFIX_PATH}
 
 # Misc cleanup of unneeded files
 RUN yum clean all && \

@@ -3,7 +3,7 @@
 ########################################
 # ppc64le CentOS 7 emulation base image
 ########################################
-docker build --rm --squash \
+docker build --squash \
   --build-arg TARGET_ARCH_SYSTEM=ppc64le \
   --build-arg TARGET_ARCH_DOCKER=ppc64le \
   --build-arg TARGET_CPU=power8 \
@@ -17,7 +17,7 @@ docker push ornladios/adios2:ci-x86_64-power8-el7
 ########################################
 # ppc64le CI base image
 ########################################
-docker build --rm --squash \
+docker build --squash \
   --build-arg TARGET_CPU=power8 \
   -t ornladios/adios2:ci-x86_64-power8-el7-base \
   emu-el7-base
@@ -33,7 +33,7 @@ docker push ornladios/adios2:ci-x86_64-power8-el7-base
 ########################################
 # XL base image
 ########################################
-docker build --rm \
+docker build \
   -t ornladios/adios2:ci-x86_64-power8-el7-xl-base \
   power8-el7-xl-base
 docker-squash \
@@ -48,7 +48,7 @@ docker push ornladios/adios2:ci-x86_64-power8-el7-xl-base
 ########################################
 # XL builder image
 ########################################
-docker build --rm \
+docker build \
   -t ornladios/adios2:ci-x86_64-power8-el7-xl \
   --build-arg COMPILER=xl \
   power8-el7-leaf
@@ -64,7 +64,7 @@ docker push ornladios/adios2:ci-x86_64-power8-el7-xl
 ########################################
 # XL + MPI builder image
 ########################################
-docker build --rm \
+docker build \
   -t ornladios/adios2:ci-x86_64-power8-el7-xl-smpi \
   --build-arg COMPILER=xl \
   power8-el7-leaf-smpi
@@ -80,7 +80,7 @@ docker push ornladios/adios2:ci-x86_64-power8-el7-xl-smpi
 ########################################
 # PGI base image
 ########################################
-docker build --rm \
+docker build \
   -t ornladios/adios2:ci-x86_64-power8-el7-pgi-base \
   power8-el7-pgi-base
 docker-squash \
@@ -95,7 +95,7 @@ docker push ornladios/adios2:ci-x86_64-power8-el7-pgi-base
 ########################################
 # PGI builder image
 ########################################
-docker build --rm \
+docker build \
   -t ornladios/adios2:ci-x86_64-power8-el7-pgi \
   --build-arg COMPILER=pgi \
   power8-el7-leaf
@@ -111,7 +111,7 @@ docker push ornladios/adios2:ci-x86_64-power8-el7-pgi
 ########################################
 # PGI + MPI builder image
 ########################################
-docker build --rm \
+docker build \
   -t ornladios/adios2:ci-x86_64-power8-el7-pgi-smpi \
   --build-arg COMPILER=pgi --build-arg HDF5_ARGS="-DMPI_C_COMPILER=mpipgicc" \
   power8-el7-leaf-smpi

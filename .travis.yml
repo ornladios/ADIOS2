@@ -1,6 +1,11 @@
 sudo: false
 language: cpp
 dist: xenial
+addons:
+  apt:
+    update: true
+    packages:
+      - python3-pip
 env:
   matrix:
     - BUILD_MATRIX_ENTRY=format

@@ -8,10 +8,10 @@ find_package(EnvModules REQUIRED)
 
 env_module(purge)
 env_module(load gnu8)
-env_module(load py2-numpy)
+env_module(load py3-numpy)
 env_module(load openmpi3)
 env_module(load phdf5)
-env_module(load py2-mpi4py)
+env_module(load py3-mpi4py)
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)

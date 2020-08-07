@@ -30,7 +30,7 @@ RUN yum install -y \
         xz-devel rhash-devel zlib-devel libzstd-devel && \
     mkdir tmp && \
     cd tmp && \
-    curl -L https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0.tar.gz | \
+    curl -L https://github.com/Kitware/CMake/releases/download/v3.18.0/cmake-3.18.0.tar.gz | \
         tar -xz && \
     mkdir build && \
     cd build && \
@@ -40,12 +40,12 @@ RUN yum install -y \
       --no-system-libarchive \
       --no-system-libuv \
       --no-system-jsoncpp \
-      --prefix=/opt/cmake/3.17.0 \
+      --prefix=/opt/cmake/3.18.0 \
       --parallel=$(grep -c '^processor' /proc/cpuinfo) && \
     make -j$(grep -c '^processor' /proc/cpuinfo) install && \
     cd ../.. && \
     rm -rf tmp 
-ENV PATH=/opt/cmake/3.17.0/bin:${PATH}
+ENV PATH=/opt/cmake/3.18.0/bin:${PATH}
 
 # Misc cleanup of unneeded files
 RUN yum clean all && \
