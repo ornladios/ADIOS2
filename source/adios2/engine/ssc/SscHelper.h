@@ -15,6 +15,7 @@
 #include "adios2/core/IO.h"
 #include "nlohmann/json.hpp"
 #include <map>
+#include <mpi.h>
 #include <vector>
 
 namespace adios2
@@ -69,6 +70,22 @@ void LocalJsonToGlobalJson(const std::vector<char> &input,
 void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output);
 void JsonToBlockVecVec(const std::vector<char> &input, BlockVecVec &output);
 void JsonToBlockVecVec(const std::string &input, BlockVecVec &output);
+
+void MPI_Gatherv64OneSidedPush(
+    const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype,
+    void *recvbuf, const uint64_t *recvcounts, const uint64_t *displs,
+    MPI_Datatype recvtype, int root, MPI_Comm comm,
+    const int chunksize = std::numeric_limits<int>::max());
+void MPI_Gatherv64OneSidedPull(
+    const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype,
+    void *recvbuf, const uint64_t *recvcounts, const uint64_t *displs,
+    MPI_Datatype recvtype, int root, MPI_Comm comm,
+    const int chunksize = std::numeric_limits<int>::max());
+void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount,
+                   MPI_Datatype sendtype, void *recvbuf,
+                   const uint64_t *recvcounts, const uint64_t *displs,
+                   MPI_Datatype recvtype, int root, MPI_Comm comm,
+                   const int chunksize = std::numeric_limits<int>::max());
 
 bool AreSameDims(const Dims &a, const Dims &b);
 
