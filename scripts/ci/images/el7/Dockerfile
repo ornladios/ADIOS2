@@ -37,6 +37,8 @@ RUN curl -L https://dataspaces.rdi2.rutgers.edu/downloads/dataspaces-1.8.0.tar.g
     ./configure CC=mpicc CXX=mpic++ FC=mpifort --prefix=/opt/dspaces/1.8.0
     make -j
     make install
+ENV PATH /opt/dspaces/1.8.0/bin:${PATH}
+ENV LD_LIBRARY_PATH /opt/dspaces/1.8.0/lib:${LD_LIBRARY_PATH}
 
 # Misc cleanup of unneeded files
 RUN yum clean all && \
