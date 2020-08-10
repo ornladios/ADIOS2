@@ -42,9 +42,6 @@ MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 
 set(CTEST_TEST_ARGS
   PARALLEL_LEVEL 1
-
-  # Unclear why this test currently dies.  Disabling until it can be addressed.
-  EXCLUDE "Install.Make.Fortran"
 )
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
