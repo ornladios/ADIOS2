@@ -29,6 +29,15 @@ ENV PATH /opt/sz/2.1.8.3/bin:${PATH}
 ENV LD_LIBRARY_PATH /opt/sz/2.1.8.3/lib64:${LD_LIBRARY_PATH}
 ENV CMAKE_PREFIX_PATH /opt/sz/2.1.8.3:${CMAKE_PREFIX_PATH}
 
+#Install DataSpaces
+WORKDIR /opt/dspaces
+RUN curl -L https://dataspaces.rdi2.rutgers.edu/downloads/dataspaces-1.8.0.tar.gz | tar -xvz && \
+    mkdir install
+    cd 1.8.0
+    ./configure CC=mpicc CXX=mpic++ FC=mpifort --prefix=/opt/dspaces/1.8.0
+    make -j
+    make install
+
 # Misc cleanup of unneeded files
 RUN yum clean all && \
     rm -rfv /tmp/* /var/cache/yum
