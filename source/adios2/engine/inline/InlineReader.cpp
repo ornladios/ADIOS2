@@ -256,6 +256,12 @@ void InlineReader::SetDeferredVariablePointers()
     m_DeferredVariables.clear();
 }
 
+#define declare_type(T)                                                    \
+    template void InlineReader::Get<T>(Variable<T> &, T**) const;
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

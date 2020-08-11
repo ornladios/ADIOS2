@@ -16,6 +16,7 @@
 #include <stdexcept>
 
 #include "adios2/helper/adiosFunctions.h" // CheckforNullptr
+#include "adios2/engine/inline/InlineReader.h"
 
 namespace adios2
 {
@@ -128,6 +129,19 @@ void Engine::Get(Variable<T> &variable, std::vector<T> &dataV,
     const size_t dataSize = variable.SelectionSize();
     helper::Resize(dataV, dataSize, "in call to Get with std::vector argument");
     Get(variable, dataV.data(), launch);
+}
+
+template <class T>
+void Engine::Get(core::Variable<T> & variable, T** data) const
+{
+    const auto* eng = dynamic_cast<const adios2::core::engine::InlineReader*>(this);
+    if (eng) {
+        eng->Get(variable, data);
+    }
+    else {
+        std::cerr << "Only the inline reader implements Get(core::Variable<T>&, T**)\n";
+        return;
+    }
 }
 
 template <class T>
