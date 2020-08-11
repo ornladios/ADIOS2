@@ -11410,6 +11410,14 @@ class serializer
         }
     }
 
+    template<typename NumberType, detail::enable_if_t<
+        std::is_same<NumberType, number_unsigned_t>::value, int> = 0>
+        bool is_negative_integer(NumberType x) { return false; }
+
+    template<typename NumberType, detail::enable_if_t<
+        std::is_same<NumberType, number_integer_t>::value, int> = 0>
+        bool is_negative_integer(NumberType x) { return x<0; }
+
     /*!
     @brief dump an integer
 
@@ -11432,7 +11440,7 @@ class serializer
             return;
         }
 
-        const bool is_negative = std::is_same<NumberType, number_integer_t>::value and not (x >= 0);  // see issue #755
+        const bool is_negative = is_negative_integer(x); // see issue #755
         std::size_t i = 0;
 
         while (x != 0)
