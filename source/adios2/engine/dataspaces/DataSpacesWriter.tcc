@@ -87,7 +87,7 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
     }
     gdims_vector.push_back(dims_vec);
     int varType;
-    auto itType = varType_to_ds.find(variable.m_Type);
+    auto itType = varType_to_ds.find(ToString(variable.m_Type));
     if (itType == varType_to_ds.end())
     {
         varType = 2;
