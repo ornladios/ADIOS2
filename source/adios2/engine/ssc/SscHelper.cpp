@@ -48,11 +48,7 @@ size_t TotalDataSize(const Dims &dims, DataType type, const ShapeID &shapeId)
     {
         return GetTypeSize(type);
     }
-    else
-    {
-        throw(std::runtime_error("ShapeID not supported"));
-    }
-    return 0;
+    throw(std::runtime_error("ShapeID not supported"));
 }
 
 size_t TotalDataSize(const BlockVec &bv)
