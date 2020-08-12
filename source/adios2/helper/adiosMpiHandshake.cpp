@@ -21,7 +21,6 @@ namespace adios2
 namespace helper
 {
 
-#ifndef _WIN32
 void HandshakeComm(const std::string &filename, const char mode,
                    const int timeoutSeconds, MPI_Comm localComm,
                    MPI_Group &streamGroup, MPI_Group &writerGroup,
@@ -41,7 +40,6 @@ void HandshakeComm(const std::string &filename, const char mode,
     MPI_Comm_create_group(MPI_COMM_WORLD, writerGroup, 0, &writerComm);
     MPI_Comm_create_group(MPI_COMM_WORLD, readerGroup, 0, &readerComm);
 }
-#endif
 
 const std::vector<std::vector<int>> HandshakeRank(const std::string &filename,
                                                   const char mode,
