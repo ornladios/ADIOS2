@@ -109,7 +109,8 @@ void SscWriter::EndStep()
                 for (const auto &i : m_AllSendingReaderRanks)
                 {
                     m_MpiRequests.emplace_back();
-                    MPI_Isend(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
+                    MPI_Isend(m_Buffer.data(),
+                              static_cast<int>(m_Buffer.size()), MPI_CHAR,
                               i.first, 0, m_StreamComm, &m_MpiRequests.back());
                 }
             }
@@ -118,8 +119,9 @@ void SscWriter::EndStep()
                 MPI_Win_fence(0, m_MpiWin);
                 for (const auto &i : m_AllSendingReaderRanks)
                 {
-                    MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, i.first,
-                            i.second.first, m_Buffer.size(), MPI_CHAR,
+                    MPI_Put(m_Buffer.data(), static_cast<int>(m_Buffer.size()),
+                            MPI_CHAR, i.first, i.second.first,
+                            static_cast<int>(m_Buffer.size()), MPI_CHAR,
                             m_MpiWin);
                 }
             }
@@ -128,8 +130,9 @@ void SscWriter::EndStep()
                 MPI_Win_start(m_MpiAllReadersGroup, 0, m_MpiWin);
                 for (const auto &i : m_AllSendingReaderRanks)
                 {
-                    MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, i.first,
-                            i.second.first, m_Buffer.size(), MPI_CHAR,
+                    MPI_Put(m_Buffer.data(), static_cast<int>(m_Buffer.size()),
+                            MPI_CHAR, i.first, i.second.first,
+                            static_cast<int>(m_Buffer.size()), MPI_CHAR,
                             m_MpiWin);
                 }
             }
@@ -160,8 +163,8 @@ void SscWriter::MpiWait()
 {
     if (m_MpiMode == "twosided")
     {
-        MPI_Status statuses[m_MpiRequests.size()];
-        MPI_Waitall(m_MpiRequests.size(), m_MpiRequests.data(), statuses);
+        MPI_Waitall(m_MpiRequests.size(), m_MpiRequests.data(),
+                    MPI_STATUSES_IGNORE);
         m_MpiRequests.clear();
     }
     else if (m_MpiMode == "onesidedfencepush")

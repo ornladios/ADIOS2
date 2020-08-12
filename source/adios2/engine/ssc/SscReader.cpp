@@ -190,9 +190,9 @@ void SscReader::EndStep()
             for (const auto &i : m_AllReceivingWriterRanks)
             {
                 m_MpiRequests.emplace_back();
-                MPI_Irecv(m_Buffer.data() + i.second.first, i.second.second,
-                          MPI_CHAR, i.first, 0, m_StreamComm,
-                          &m_MpiRequests.back());
+                MPI_Irecv(m_Buffer.data() + i.second.first,
+                          static_cast<int>(i.second.second), MPI_CHAR, i.first,
+                          0, m_StreamComm, &m_MpiRequests.back());
             }
         }
         else if (m_MpiMode == "onesidedfencepush")
@@ -208,9 +208,9 @@ void SscReader::EndStep()
             MPI_Win_fence(0, m_MpiWin);
             for (const auto &i : m_AllReceivingWriterRanks)
             {
-                MPI_Get(m_Buffer.data() + i.second.first, i.second.second,
-                        MPI_CHAR, i.first, 0, i.second.second, MPI_CHAR,
-                        m_MpiWin);
+                MPI_Get(m_Buffer.data() + i.second.first,
+                        static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
+                        static_cast<int>(i.second.second), MPI_CHAR, m_MpiWin);
             }
         }
         else if (m_MpiMode == "onesidedpostpull")
@@ -218,9 +218,9 @@ void SscReader::EndStep()
             MPI_Win_start(m_MpiAllWritersGroup, 0, m_MpiWin);
             for (const auto &i : m_AllReceivingWriterRanks)
             {
-                MPI_Get(m_Buffer.data() + i.second.first, i.second.second,
-                        MPI_CHAR, i.first, 0, i.second.second, MPI_CHAR,
-                        m_MpiWin);
+                MPI_Get(m_Buffer.data() + i.second.first,
+                        static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
+                        static_cast<int>(i.second.second), MPI_CHAR, m_MpiWin);
             }
         }
     }
@@ -267,8 +267,9 @@ bool SscReader::SyncWritePattern()
                   m_StreamComm);
     std::vector<char> localVec(maxLocalSize, '\0');
     std::vector<char> globalVec(maxLocalSize * m_StreamSize);
-    MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
-                  maxLocalSize, MPI_CHAR, m_StreamComm);
+    MPI_Allgather(localVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  globalVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  m_StreamComm);
 
     ssc::LocalJsonToGlobalJson(globalVec, maxLocalSize, m_StreamSize,
                                m_GlobalWritePatternJson);
@@ -416,8 +417,9 @@ void SscReader::SyncReadPattern()
     std::vector<char> localVec(maxLocalSize, '\0');
     std::memcpy(localVec.data(), localStr.c_str(), localStr.size());
     std::vector<char> globalVec(maxLocalSize * m_StreamSize);
-    MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
-                  maxLocalSize, MPI_CHAR, m_StreamComm);
+    MPI_Allgather(localVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  globalVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  m_StreamComm);
 
     // deserialize global metadata Json
     nlohmann::json globalJson;
