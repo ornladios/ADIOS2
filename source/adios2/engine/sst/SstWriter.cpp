@@ -111,7 +111,7 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
 
     m_Output = SstWriterOpen(name.c_str(), &Params, &m_Comm);
 
-    if (m_MarshalMethod == SstMarshalBP)
+    if (Params.MarshalMethod == SstMarshalBP)
     {
         SstWriterInitMetadataCallback(m_Output, this, AssembleMetadata,
                                       FreeAssembledMetadata);
@@ -131,12 +131,12 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     }
 
     m_BetweenStepPairs = true;
-    if (m_MarshalMethod == SstMarshalFFS)
+    if (Params.MarshalMethod == SstMarshalFFS)
     {
         return (StepStatus)SstFFSWriterBeginStep(m_Output, (int)mode,
                                                  timeout_sec);
     }
-    else if (m_MarshalMethod == SstMarshalBP)
+    else if (Params.MarshalMethod == SstMarshalBP)
     {
         // initialize BP serializer, deleted in
         // SstWriter::EndStep()::lf_FreeBlocks()
@@ -223,7 +223,7 @@ void SstWriter::EndStep()
         SstWriterDefinitionLock(m_Output, m_WriterStep);
         m_DefinitionsNotified = true;
     }
-    if (m_MarshalMethod == SstMarshalFFS)
+    if (Params.MarshalMethod == SstMarshalFFS)
     {
         TAU_SCOPED_TIMER("Marshaling Overhead");
         TAU_START("SstMarshalFFS");
@@ -231,7 +231,7 @@ void SstWriter::EndStep()
         TAU_STOP("SstMarshalFFS");
         SstFFSWriterEndStep(m_Output, m_WriterStep);
     }
-    else if (m_MarshalMethod == SstMarshalBP)
+    else if (Params.MarshalMethod == SstMarshalBP)
     {
         // This should finalize BP marshaling at the writer side.  All
         // marshaling methods should result in two blocks, one a block of
@@ -285,9 +285,12 @@ void SstWriter::Init()
 
     Parser.ParseParams(m_IO, Params);
 
-#define set_params(Param, Type, Typedecl, Default) m_##Param = Params.Param;
-    SST_FOREACH_PARAMETER_TYPE_4ARGS(set_params);
-#undef set_params
+    if (Params.verbose < 0 || Params.verbose > 5)
+    {
+        throw std::invalid_argument("ERROR: Method verbose argument must be an "
+                                    "integer in the range [0,5], in call to "
+                                    "Open or Engine constructor\n");
+    }
 }
 
 #define declare_type(T)                                                        \

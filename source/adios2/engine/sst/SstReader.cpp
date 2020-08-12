@@ -406,10 +406,6 @@ void SstReader::Init()
     SstParamParser Parser;
 
     Parser.ParseParams(m_IO, Params);
-
-#define set_params(Param, Type, Typedecl, Default) m_##Param = Params.Param;
-    SST_FOREACH_PARAMETER_TYPE_4ARGS(set_params);
-#undef set_params
 }
 
 #define declare_gets(T)                                                        \

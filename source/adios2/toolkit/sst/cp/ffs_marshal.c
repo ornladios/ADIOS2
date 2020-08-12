@@ -734,8 +734,6 @@ static FFSVarRec CreateVarRec(SstStream Stream, const char *ArrayName)
     return &Info->VarList[Info->VarCount++];
 }
 
-extern void CP_verbose(SstStream Stream, char *Format, ...);
-
 extern int SstFFSWriterBeginStep(SstStream Stream, int mode,
                                  const float timeout_sec)
 {
@@ -1015,13 +1013,14 @@ static SstStatusValue WaitForReadRequests(SstStream Stream)
             }
             else
             {
-                CP_verbose(Stream, "Wait for remote read completion failed, "
-                                   "returning failure\n");
+                CP_verbose(Stream, CriticalVerbose,
+                           "Wait for remote read completion failed, "
+                           "returning failure\n");
                 return Result;
             }
         }
     }
-    CP_verbose(Stream, "All remote memory reads completed\n");
+    CP_verbose(Stream, TraceVerbose, "All remote memory reads completed\n");
     return SstSuccess;
 }
 
@@ -1469,8 +1468,9 @@ extern SstStatusValue SstFFSPerformGets(SstStream Stream)
     }
     else
     {
-        CP_verbose(Stream, "Some memory read failed, not filling requests and "
-                           "returning failure\n");
+        CP_verbose(Stream, CriticalVerbose,
+                   "Some memory read failed, not filling requests and "
+                   "returning failure\n");
     }
     ClearReadRequests(Stream);
 
@@ -1485,7 +1485,7 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
 
     TAU_START("Marshaling overhead in SstFFSWriterEndStep");
 
-    CP_verbose(Stream, "Calling SstWriterEndStep\n");
+    CP_verbose(Stream, PerStepVerbose, "Calling SstWriterEndStep\n");
     // if field lists have changed, register formats with FFS local context, add
     // to format chain
     if (!Stream->WriterMarshalData)
