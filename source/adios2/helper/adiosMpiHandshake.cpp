@@ -36,9 +36,15 @@ void HandshakeComm(const std::string &filename, const char mode,
                    appRankMaps[1].data(), &writerGroup);
     MPI_Group_incl(worldGroup, static_cast<int>(appRankMaps[2].size()),
                    appRankMaps[2].data(), &readerGroup);
+#ifndef _WIN32
+    MPI_Comm_create(MPI_COMM_WORLD, streamGroup, &streamComm);
+    MPI_Comm_create(MPI_COMM_WORLD, writerGroup, &writerComm);
+    MPI_Comm_create(MPI_COMM_WORLD, readerGroup, &readerComm);
+#else
     MPI_Comm_create_group(MPI_COMM_WORLD, streamGroup, 0, &streamComm);
     MPI_Comm_create_group(MPI_COMM_WORLD, writerGroup, 0, &writerComm);
     MPI_Comm_create_group(MPI_COMM_WORLD, readerGroup, 0, &readerComm);
+#endif
 }
 
 const std::vector<std::vector<int>> HandshakeRank(const std::string &filename,
