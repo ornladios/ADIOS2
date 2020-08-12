@@ -348,7 +348,8 @@ void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount,
         }
     }
 
-    MPI_Waitall(requests.size(), requests.data(), MPI_STATUSES_IGNORE);
+    MPI_Waitall(static_cast<int>(requests.size()), requests.data(),
+                MPI_STATUSES_IGNORE);
 }
 
 void MPI_Gatherv64OneSidedPull(const void *sendbuf, uint64_t sendcount,
@@ -447,9 +448,9 @@ void MPI_Gatherv64OneSidedPush(const void *sendbuf, uint64_t sendcount,
         {
             MPI_Put(reinterpret_cast<const char *>(sendbuf) +
                         (sendcount - sendcountvar) * sendTypeSize,
-                    sendcountvar, sendtype, root,
-                    displs[mpiRank] + sendcount - sendcountvar, sendcountvar,
-                    sendtype, win);
+                    static_cast<int>(sendcountvar), sendtype, root,
+                    displs[mpiRank] + sendcount - sendcountvar,
+                    static_cast<int>(sendcountvar), sendtype, win);
             sendcountvar = 0;
         }
     }
