@@ -67,17 +67,16 @@ void SscReader::GetDeferredCommon(Variable<std::string> &variable,
             for (const auto &i : m_AllReceivingWriterRanks)
             {
                 MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
-                MPI_Get(m_Buffer.data() + i.second.first, i.second.second,
-                        MPI_CHAR, i.first, 0, i.second.second, MPI_CHAR,
-                        m_MpiWin);
+                MPI_Get(m_Buffer.data() + i.second.first,
+                        static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
+                        static_cast<int>(i.second.second), MPI_CHAR, m_MpiWin);
                 MPI_Win_unlock(i.first, m_MpiWin);
             }
         }
 
         for (const auto &i : m_AllReceivingWriterRanks)
         {
-            const auto &v = m_GlobalWritePattern[i.first];
-            for (const auto &b : v)
+            for (const auto &b : m_GlobalWritePattern[i.first])
             {
                 if (b.name == variable.m_Name)
                 {
