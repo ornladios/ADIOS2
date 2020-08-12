@@ -109,7 +109,8 @@ void SscWriter::EndStep()
                 for (const auto &i : m_AllSendingReaderRanks)
                 {
                     m_MpiRequests.emplace_back();
-                    MPI_Isend(m_Buffer.data(), m_Buffer.size(), MPI_CHAR,
+                    MPI_Isend(m_Buffer.data(),
+                              static_cast<int>(m_Buffer.size()), MPI_CHAR,
                               i.first, 0, m_StreamComm, &m_MpiRequests.back());
                 }
             }
@@ -118,8 +119,9 @@ void SscWriter::EndStep()
                 MPI_Win_fence(0, m_MpiWin);
                 for (const auto &i : m_AllSendingReaderRanks)
                 {
-                    MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, i.first,
-                            i.second.first, m_Buffer.size(), MPI_CHAR,
+                    MPI_Put(m_Buffer.data(), static_cast<int>(m_Buffer.size()),
+                            MPI_CHAR, i.first, i.second.first,
+                            static_cast<int>(m_Buffer.size()), MPI_CHAR,
                             m_MpiWin);
                 }
             }
@@ -128,8 +130,9 @@ void SscWriter::EndStep()
                 MPI_Win_start(m_MpiAllReadersGroup, 0, m_MpiWin);
                 for (const auto &i : m_AllSendingReaderRanks)
                 {
-                    MPI_Put(m_Buffer.data(), m_Buffer.size(), MPI_CHAR, i.first,
-                            i.second.first, m_Buffer.size(), MPI_CHAR,
+                    MPI_Put(m_Buffer.data(), static_cast<int>(m_Buffer.size()),
+                            MPI_CHAR, i.first, i.second.first,
+                            static_cast<int>(m_Buffer.size()), MPI_CHAR,
                             m_MpiWin);
                 }
             }
@@ -160,8 +163,8 @@ void SscWriter::MpiWait()
 {
     if (m_MpiMode == "twosided")
     {
-        MPI_Status statuses[m_MpiRequests.size()];
-        MPI_Waitall(m_MpiRequests.size(), m_MpiRequests.data(), statuses);
+        MPI_Waitall(static_cast<int>(m_MpiRequests.size()),
+                    m_MpiRequests.data(), MPI_STATUSES_IGNORE);
         m_MpiRequests.clear();
     }
     else if (m_MpiMode == "onesidedfencepush")
@@ -230,8 +233,9 @@ void SscWriter::SyncWritePattern(bool finalStep)
     std::vector<char> localVec(maxLocalSize, '\0');
     std::memcpy(localVec.data(), localStr.data(), localStr.size());
     std::vector<char> globalVec(maxLocalSize * m_StreamSize, '\0');
-    MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
-                  maxLocalSize, MPI_CHAR, m_StreamComm);
+    MPI_Allgather(localVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  globalVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  m_StreamComm);
 
     // deserialize global metadata Json
     nlohmann::json globalJson;
@@ -258,8 +262,9 @@ void SscWriter::SyncReadPattern()
                   m_StreamComm);
     std::vector<char> localVec(maxLocalSize, '\0');
     std::vector<char> globalVec(maxLocalSize * m_StreamSize);
-    MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
-                  maxLocalSize, MPI_CHAR, m_StreamComm);
+    MPI_Allgather(localVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  globalVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  m_StreamComm);
 
     // deserialize global metadata Json
     nlohmann::json globalJson;
@@ -321,7 +326,7 @@ void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
         auto currentReaderOverlapWriterRanks =
             CalculateOverlap(writerVecVec, readerRankMap);
         size_t bufferPosition = 0;
-        for (size_t rank = 0; rank < writerVecVec.size(); ++rank)
+        for (int rank = 0; rank < writerVecVec.size(); ++rank)
         {
             bool hasOverlap = false;
             for (const auto r : currentReaderOverlapWriterRanks)
@@ -382,8 +387,7 @@ void SscWriter::DoClose(const int transportIndex)
                 MPI_Isend(m_Buffer.data(), 1, MPI_CHAR, i.first, 0,
                           m_StreamComm, &requests.back());
             }
-            MPI_Status statuses[requests.size()];
-            MPI_Waitall(requests.size(), requests.data(), statuses);
+            MPI_Waitall(requests.size(), requests.data(), MPI_STATUS_IGNORE);
         }
         else if (m_MpiMode == "onesidedfencepush")
         {
