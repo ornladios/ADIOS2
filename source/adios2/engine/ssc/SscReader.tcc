@@ -168,9 +168,9 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
             if (m_ReceivedRanks.find(i.first) == m_ReceivedRanks.end())
             {
                 MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
-                MPI_Get(m_Buffer.data() + i.second.first, i.second.second,
-                        MPI_CHAR, i.first, 0, i.second.second, MPI_CHAR,
-                        m_MpiWin);
+                MPI_Get(m_Buffer.data() + i.second.first,
+                        static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
+                        static_cast<int>(i.second.second), MPI_CHAR, m_MpiWin);
                 MPI_Win_unlock(i.first, m_MpiWin);
                 m_ReceivedRanks.insert(i.first);
             }
