@@ -12,8 +12,9 @@ template <class T>
 void PrintData(const T *data, const size_t step, const Dims &start,
                const Dims &count, const int rank)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     std::cout << "Rank: " << rank << " Step: " << step << " Size:" << size
               << "\n";
     size_t printsize = 128;
@@ -110,8 +111,9 @@ void GenData(std::vector<T> &vec, const size_t step,
              const std::vector<size_t> &start, const std::vector<size_t> &count,
              const std::vector<size_t> &shape)
 {
-    size_t total_size = std::accumulate(count.begin(), count.end(), 1,
-                                        std::multiplies<size_t>());
+    size_t total_size =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     vec.resize(total_size);
     GenDataRecursive(start, count, shape, 0, 0, vec, step);
 }
@@ -120,8 +122,9 @@ template <class T>
 void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
                 const Dims &count, const Dims &shape)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     std::vector<std::complex<T>> tmpdata(size);
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
@@ -139,8 +142,9 @@ template <class T>
 void VerifyData(const T *data, size_t step, const Dims &start,
                 const Dims &count, const Dims &shape, const int rank)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     bool compressed = false;
     std::vector<T> tmpdata(size);
     if (printed_lines < to_print_lines)
