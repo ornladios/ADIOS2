@@ -1121,7 +1121,6 @@ DmvVecPtr DataManSerializer::GetEarliestLatestStep(
             return nullptr;
         }
     }
-    return nullptr;
 }
 
 void DataManSerializer::Log(const int level, const std::string &message,
