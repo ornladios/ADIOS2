@@ -121,7 +121,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     dataManIO.SetParameters(engineParams);
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
     std::vector<int> myInts = reader_data;
-    size_t i;
     while (true)
     {
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);

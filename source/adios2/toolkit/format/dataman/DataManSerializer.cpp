@@ -702,7 +702,6 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
             {
                 throw("DataManSerializer::PutDeferredRequest() requested "
                       "start, count and shape do not match");
-                continue;
             }
             bool toContinue = false;
             for (size_t i = 0; i < start.size(); ++i)
@@ -778,7 +777,7 @@ VecPtr DataManSerializer::GenerateReply(
             "but failed to deserialize due to " +
                 std::string(e.what()),
             true, true);
-        step = -1;
+        step = std::numeric_limits<size_t>::max();
         return replyLocalBuffer;
     }
 
@@ -1122,7 +1121,6 @@ DmvVecPtr DataManSerializer::GetEarliestLatestStep(
             return nullptr;
         }
     }
-    return nullptr;
 }
 
 void DataManSerializer::Log(const int level, const std::string &message,

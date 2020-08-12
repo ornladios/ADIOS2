@@ -6627,8 +6627,6 @@ class binary_reader
             }
             *out++ = static_cast<char>(current);
         }
-
-        return true;
     }
 
     /*!
