@@ -142,8 +142,8 @@ struct _SstStream
     SstRegistrationMethod RegistrationMethod;
 
     /* state */
-    int CPVerbose;
-    int DPVerbose;
+    int CPVerbosityLevel;
+    int DPVerbosityLevel;
     double OpenTimeSecs;
     struct timeval ValidStartTime;
     SstStats Stats;
@@ -524,7 +524,18 @@ extern void FFSFreeMarshalData(SstStream Stream);
 extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
                           int **forwardArray, int **reverseArray);
 extern void AddToLastCallFreeList(void *Block);
-extern void CP_verbose(SstStream Stream, char *Format, ...);
+enum VerbosityLevel
+{
+    TraceVerbose = 5,
+    PerRankVerbose = 4,
+    PerStepVerbose = 3,
+    SummaryVerbose = 2,
+    CriticalVerbose = 1,
+    NoVerbose = 0,
+};
+
+extern void CP_verbose(SstStream Stream, enum VerbosityLevel Level,
+                       char *Format, ...);
 extern void CP_error(SstStream Stream, char *Format, ...);
 extern struct _CP_Services Svcs;
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,

@@ -383,8 +383,13 @@ struct _CP_DP_Interface
         getPriority; // both sides, part of DP selection process.
     CP_DP_UnGetPriorityFunc unGetPriority;
 };
+#define DPTraceVerbose 5
+#define DPPerRankVerbose 4
+#define DPPerStepVerbose 3
+#define DPSummaryVerbose 2
+#define DPCriticalVerbose 1
 
-typedef void (*CP_VerboseFunc)(void *CP_Stream, char *Format, ...);
+typedef void (*CP_VerboseFunc)(void *CP_Stream, int Level, char *Format, ...);
 typedef CManager (*CP_GetCManagerFunc)(void *CP_stream);
 typedef SMPI_Comm (*CP_GetMPICommFunc)(void *CP_Stream);
 typedef int (*CP_SendToPeerFunc)(void *CP_Stream, CP_PeerCohort PeerCohort,

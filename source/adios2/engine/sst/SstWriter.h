@@ -71,10 +71,6 @@ private:
     bool m_DefinitionsNotified = false;
     size_t m_FFSMarshaledAttributesCount = 0;
     struct _SstParams Params;
-#define declare_locals(Param, Type, Typedecl, Default)                         \
-    Typedecl m_##Param = Default;
-    SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_locals)
-#undef declare_locals
 
     void FFSMarshalAttributes();
     void DoClose(const int transportIndex = -1) final;
