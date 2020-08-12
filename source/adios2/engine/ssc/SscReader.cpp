@@ -13,6 +13,7 @@
 #include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosJSONcomplex.h"
+#include "adios2/helper/adiosMpiHandshake.h"
 #include "nlohmann/json.hpp"
 
 namespace adios2
@@ -77,8 +78,8 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     {
         if (m_MpiMode == "twosided")
         {
-            MPI_Status statuses[m_MpiRequests.size()];
-            MPI_Waitall(m_MpiRequests.size(), m_MpiRequests.data(), statuses);
+            MPI_Waitall(m_MpiRequests.size(), m_MpiRequests.data(),
+                        MPI_STATUS_IGNORE);
             m_MpiRequests.clear();
         }
         else if (m_MpiMode == "onesidedfencepush")
