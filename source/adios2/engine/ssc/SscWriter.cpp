@@ -163,8 +163,8 @@ void SscWriter::MpiWait()
 {
     if (m_MpiMode == "twosided")
     {
-        MPI_Waitall(m_MpiRequests.size(), m_MpiRequests.data(),
-                    MPI_STATUSES_IGNORE);
+        MPI_Waitall(static_cast<int>(m_MpiRequests.size()),
+                    m_MpiRequests.data(), MPI_STATUSES_IGNORE);
         m_MpiRequests.clear();
     }
     else if (m_MpiMode == "onesidedfencepush")
@@ -233,8 +233,9 @@ void SscWriter::SyncWritePattern(bool finalStep)
     std::vector<char> localVec(maxLocalSize, '\0');
     std::memcpy(localVec.data(), localStr.data(), localStr.size());
     std::vector<char> globalVec(maxLocalSize * m_StreamSize, '\0');
-    MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
-                  maxLocalSize, MPI_CHAR, m_StreamComm);
+    MPI_Allgather(localVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  globalVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  m_StreamComm);
 
     // deserialize global metadata Json
     nlohmann::json globalJson;
@@ -261,8 +262,9 @@ void SscWriter::SyncReadPattern()
                   m_StreamComm);
     std::vector<char> localVec(maxLocalSize, '\0');
     std::vector<char> globalVec(maxLocalSize * m_StreamSize);
-    MPI_Allgather(localVec.data(), maxLocalSize, MPI_CHAR, globalVec.data(),
-                  maxLocalSize, MPI_CHAR, m_StreamComm);
+    MPI_Allgather(localVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  globalVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
+                  m_StreamComm);
 
     // deserialize global metadata Json
     nlohmann::json globalJson;
@@ -324,7 +326,7 @@ void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
         auto currentReaderOverlapWriterRanks =
             CalculateOverlap(writerVecVec, readerRankMap);
         size_t bufferPosition = 0;
-        for (size_t rank = 0; rank < writerVecVec.size(); ++rank)
+        for (int rank = 0; rank < writerVecVec.size(); ++rank)
         {
             bool hasOverlap = false;
             for (const auto r : currentReaderOverlapWriterRanks)
