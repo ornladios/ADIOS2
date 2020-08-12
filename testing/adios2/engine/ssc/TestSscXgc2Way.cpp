@@ -25,8 +25,9 @@ public:
 void xgc(const Dims &shape, const Dims &start, const Dims &count,
          const size_t steps, const adios2::Params &engineParams)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
 
     std::vector<float> x_to_g_data(datasize);
     std::vector<float> g_to_x_data;
@@ -61,7 +62,8 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
         auto g_to_x_var = g_to_x_io.InquireVariable<float>("g_to_x");
         auto readShape = g_to_x_var.Shape();
         g_to_x_data.resize(std::accumulate(readShape.begin(), readShape.end(),
-                                           1, std::multiplies<size_t>()));
+                                           static_cast<size_t>(1),
+                                           std::multiplies<size_t>()));
         g_to_x_engine.Get(g_to_x_var, g_to_x_data.data(), adios2::Mode::Sync);
         VerifyData(g_to_x_data.data(), i, Dims(readShape.size(), 0), readShape,
                    readShape, mpiRank);
@@ -95,8 +97,9 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
     g_to_x_engine.LockWriterDefinitions();
     x_to_g_engine.LockReaderSelections();
 
-    size_t datasize = std::accumulate(shape.begin(), shape.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize =
+        std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     std::vector<float> x_to_g_data;
     std::vector<float> g_to_x_data(datasize);
 
@@ -106,7 +109,8 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
         auto x_to_g_var = x_to_g_io.InquireVariable<float>("x_to_g");
         auto readShape = x_to_g_var.Shape();
         x_to_g_data.resize(std::accumulate(readShape.begin(), readShape.end(),
-                                           1, std::multiplies<size_t>()));
+                                           static_cast<size_t>(1),
+                                           std::multiplies<size_t>()));
         x_to_g_engine.Get(x_to_g_var, x_to_g_data.data(), adios2::Mode::Sync);
         VerifyData(x_to_g_data.data(), i, Dims(readShape.size(), 0), readShape,
                    readShape, mpiRank);

@@ -25,8 +25,9 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
             const size_t steps, const adios2::Params &engineParams,
             const std::string &name)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("ssc");
@@ -136,8 +137,9 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Read);
     //    engine.LockReaderSelections();
 
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -193,25 +195,35 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::string>("stringVar");
 
             auto vshape = bpChars.Shape();
-            myChars.resize(std::accumulate(vshape.begin(), vshape.end(), 1,
+            myChars.resize(std::accumulate(vshape.begin(), vshape.end(),
+                                           static_cast<size_t>(1),
                                            std::multiplies<size_t>()));
-            myUChars.resize(std::accumulate(vshape.begin(), vshape.end(), 1,
+            myUChars.resize(std::accumulate(vshape.begin(), vshape.end(),
+                                            static_cast<size_t>(1),
                                             std::multiplies<size_t>()));
-            myShorts.resize(std::accumulate(vshape.begin(), vshape.end(), 1,
+            myShorts.resize(std::accumulate(vshape.begin(), vshape.end(),
+                                            static_cast<size_t>(1),
                                             std::multiplies<size_t>()));
-            myUShorts.resize(std::accumulate(vshape.begin(), vshape.end(), 1,
+            myUShorts.resize(std::accumulate(vshape.begin(), vshape.end(),
+                                             static_cast<size_t>(1),
                                              std::multiplies<size_t>()));
-            myInts.resize(std::accumulate(vshape.begin(), vshape.end(), 1,
+            myInts.resize(std::accumulate(vshape.begin(), vshape.end(),
+                                          static_cast<size_t>(1),
                                           std::multiplies<size_t>()));
-            myUInts.resize(std::accumulate(vshape.begin(), vshape.end(), 1,
+            myUInts.resize(std::accumulate(vshape.begin(), vshape.end(),
+                                           static_cast<size_t>(1),
                                            std::multiplies<size_t>()));
-            myFloats.resize(std::accumulate(vshape.begin(), vshape.end(), 1,
+            myFloats.resize(std::accumulate(vshape.begin(), vshape.end(),
+                                            static_cast<size_t>(1),
                                             std::multiplies<size_t>()));
-            myDoubles.resize(std::accumulate(vshape.begin(), vshape.end(), 1,
+            myDoubles.resize(std::accumulate(vshape.begin(), vshape.end(),
+                                             static_cast<size_t>(1),
                                              std::multiplies<size_t>()));
-            myComplexes.resize(std::accumulate(vshape.begin(), vshape.end(), 1,
+            myComplexes.resize(std::accumulate(vshape.begin(), vshape.end(),
+                                               static_cast<size_t>(1),
                                                std::multiplies<size_t>()));
-            myDComplexes.resize(std::accumulate(vshape.begin(), vshape.end(), 1,
+            myDComplexes.resize(std::accumulate(vshape.begin(), vshape.end(),
+                                                static_cast<size_t>(1),
                                                 std::multiplies<size_t>()));
 
             engine.Get(bpChars, myChars.data(), adios2::Mode::Sync);

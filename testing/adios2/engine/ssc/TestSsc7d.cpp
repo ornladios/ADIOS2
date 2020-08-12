@@ -102,8 +102,9 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     dataManIO.SetParameters(engineParams);
     adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Read);
 
-    size_t datasize = std::accumulate(shape.begin(), shape.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize =
+        std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);

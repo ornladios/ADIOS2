@@ -25,8 +25,9 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
             const size_t steps, const adios2::Params &engineParams,
             const std::string &name)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("ssc");
@@ -106,8 +107,9 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     dataManIO.SetParameters(engineParams);
     adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Read);
 
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
