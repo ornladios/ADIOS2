@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import numpy as np
 from os import fstat
 from .utils import *
@@ -52,7 +49,7 @@ def DumpIndexTable(fileName):
     with open(fileName, "rb") as f:
         fileSize = fstat(f.fileno()).st_size
         status = ReadHeader(f, fileSize, "Index Table")
-        if (status):
+        if status:
             status = ReadIndex(f, fileSize)
     return status
 
