@@ -27,6 +27,7 @@ struct _SstBlock
 
 #define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(MarshalMethod, MarshalMethod, size_t, SstMarshalBP)                  \
+    MACRO(verbose, Int, int, 0)                                                \
     MACRO(RegistrationMethod, RegMethod, size_t, 0)                            \
     MACRO(DataTransport, String, char *, NULL)                                 \
     MACRO(WANDataTransport, String, char *, NULL)                              \

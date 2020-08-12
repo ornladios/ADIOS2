@@ -374,7 +374,8 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     if (!get_int_attr(WriterContact, attr_atom_from_string("RDMA_DRC_KEY"),
                       &protection_key))
     {
-        Svcs->verbose(CP_Stream, "Didn't find DRC credential\n");
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "Didn't find DRC credential for Cray RDMA\n");
         return NULL;
     }
     // do something with protection key?
@@ -414,14 +415,15 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
         rc = drc_acquire(&Fabric->credential, DRC_FLAGS_FLEX_CREDENTIAL);
         if (rc != DRC_SUCCESS)
         {
-            Svcs->verbose(CP_Stream,
+            Svcs->verbose(CP_Stream, DPCriticalVerbose,
                           "Could not acquire DRC credential. Failed with %d.\n",
                           rc);
             goto err_out;
         }
         else
         {
-            Svcs->verbose(CP_Stream, "DRC acquired credential id %d.\n",
+            Svcs->verbose(CP_Stream, DPTraceVerbose,
+                          "DRC acquired credential id %d.\n",
                           Fabric->credential);
         }
     }
@@ -438,7 +440,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     }
     if (rc != DRC_SUCCESS)
     {
-        Svcs->verbose(CP_Stream,
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
                       "Could not access DRC credential. Last failed with %d.\n",
                       rc);
         goto err_out;
@@ -448,7 +450,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     Fabric->auth_key->type = GNIX_AKT_RAW;
     Fabric->auth_key->raw.protection_key =
         drc_get_first_cookie(Fabric->drc_info);
-    Svcs->verbose(CP_Stream, "Using protection key %08x.\n",
+    Svcs->verbose(CP_Stream, DPTraceVerbose, "Using protection key %08x.\n",
                   Fabric->auth_key->raw.protection_key);
 
     set_int_attr(DPAttrs, attr_atom_from_string("RDMA_DRC_KEY"),
@@ -460,11 +462,12 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     Fabric = Stream->Fabric;
     if (!Fabric->info)
     {
-        Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Could not find a valid transport fabric.\n");
         goto err_out;
     }
 
-    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n",
+    Svcs->verbose(CP_Stream, DPTraceVerbose, "Fabric Parameters:\n%s\n",
                   fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     /*
@@ -564,7 +567,7 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
     }
     else
     {
-        Svcs->verbose(CP_Stream,
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
                       "Writer contact info needed to access DRC credentials.\n",
                       rc);
     }
@@ -582,7 +585,7 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
     }
     if (rc != DRC_SUCCESS)
     {
-        Svcs->verbose(CP_Stream,
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
                       "Could not access DRC credential. Last failed with %d.\n",
                       rc);
     }
@@ -591,17 +594,18 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
     Fabric->auth_key->type = GNIX_AKT_RAW;
     Fabric->auth_key->raw.protection_key =
         drc_get_first_cookie(Fabric->drc_info);
-    Svcs->verbose(CP_Stream, "Using protection key %08x.\n",
+    Svcs->verbose(CP_Stream, DPTraceVerbose, "Using protection key %08x.\n",
                   Fabric->auth_key->raw.protection_key);
 #endif /* SST_HAVE_CRAY_DRC */
 
     init_fabric(RS_Stream->Fabric, RS_Stream->Params);
     if (!Fabric->info)
     {
-        Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Could not find a valid transport fabric.\n");
     }
 
-    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n",
+    Svcs->verbose(CP_Stream, DPTraceVerbose, "Fabric Parameters:\n%s\n",
                   fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     /*
@@ -616,7 +620,7 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
             providedWriterInfo[i]->WS_Stream;
         fi_av_insert(Fabric->av, providedWriterInfo[i]->Address, 1,
                      &RS_Stream->WriterAddr[i], 0, NULL);
-        Svcs->verbose(RS_Stream->CP_Stream,
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                       "Received contact info for WS_stream %p, WSR Rank %d\n",
                       RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
@@ -636,18 +640,19 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     uint8_t *Addr;
     ssize_t rc;
 
-    Svcs->verbose(RS_Stream->CP_Stream,
+    Svcs->verbose(RS_Stream->CP_Stream, DPPerRankVerbose,
                   "Performing remote read of Writer Rank %d\n", Rank);
 
     if (Info)
     {
-        Svcs->verbose(RS_Stream->CP_Stream,
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                       "Block address is %p, with a key of %d\n", Info->Block,
                       Info->Key);
     }
     else
     {
-        Svcs->verbose(RS_Stream->CP_Stream, "Timestep info is null\n");
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                      "Timestep info is null\n");
     }
 
     ret->CPStream = RS_Stream;
@@ -668,7 +673,7 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
 
     Addr = Info->Block + Offset;
 
-    Svcs->verbose(RS_Stream->CP_Stream,
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                   "Target of remote read on Writer Rank %d is %p\n", Rank,
                   Addr);
 
@@ -680,13 +685,13 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
 
     if (rc != 0)
     {
-        Svcs->verbose(RS_Stream->CP_Stream, "fi_read failed with code %d.\n",
-                      rc);
+        Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
+                      "fi_read failed with code %d.\n", rc);
         free(ret);
         return NULL;
     }
 
-    Svcs->verbose(RS_Stream->CP_Stream,
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                   "Posted RDMA get for Writer Rank %d for handle %p\n", Rank,
                   (void *)ret);
 
@@ -699,7 +704,7 @@ static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)
         Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
-    Svcs->verbose(Stream->CP_Stream,
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                   "received notification that writer peer "
                   "%d has failed, failing any pending "
                   "requests\n",
@@ -730,7 +735,7 @@ static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
         }
         else
         {
-            Svcs->verbose(Stream->CP_Stream,
+            Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                           "got completion for request with handle %p.\n",
                           CQEntry.op_context);
             Handle_t = (RdmaCompletionHandle)CQEntry.op_context;
@@ -774,7 +779,7 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     pthread_mutex_unlock(&ts_mutex);
     Info->Block = (uint8_t *)Data->block;
 
-    Svcs->verbose(Stream->CP_Stream,
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                   "Providing timestep data with block %p and access key %d\n",
                   Info->Block, Info->Key);
 
@@ -789,7 +794,8 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     TimestepList ReleaseTSL;
     RdmaPerTimestepInfo Info;
 
-    Svcs->verbose(Stream->CP_Stream, "Releasing timestep %ld\n", Timestep);
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Releasing timestep %ld\n",
+                  Timestep);
 
     pthread_mutex_lock(&ts_mutex);
     while ((*List) && (*List)->Timestep != Timestep)
@@ -828,7 +834,8 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 {
     Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)RS_Stream_v;
 
-    Svcs->verbose(RS_Stream->CP_Stream, "Tearing down RDMA state on reader.\n");
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                  "Tearing down RDMA state on reader.\n");
     fini_fabric(RS_Stream->Fabric);
 
     free(RS_Stream->WriterContactInfo);
@@ -888,7 +895,8 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
     Credential = WS_Stream->Fabric->credential;
 #endif /* SST_HAVE_CRAY_DRC */
 
-    Svcs->verbose(WS_Stream->CP_Stream, "Tearing down RDMA state on writer.\n");
+    Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                  "Tearing down RDMA state on writer.\n");
     fini_fabric(WS_Stream->Fabric);
 
 #ifdef SST_HAVE_CRAY_DRC
@@ -1000,7 +1008,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
 
     if (!info)
     {
-        Svcs->verbose(CP_Stream,
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
                       "RDMA Dataplane could not find any viable fabrics.\n");
     }
 
@@ -1014,7 +1022,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
         domain_name = info->domain_attr->name;
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
-            Svcs->verbose(CP_Stream,
+            Svcs->verbose(CP_Stream, DPPerStepVerbose,
                           "RDMA Dataplane found the requested "
                           "interface %s, provider type %s.\n",
                           ifname, prov_name);
@@ -1025,7 +1033,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
             strstr(prov_name, "gni") || strstr(prov_name, "psm2"))
         {
 
-            Svcs->verbose(CP_Stream,
+            Svcs->verbose(CP_Stream, DPPerStepVerbose,
                           "RDMA Dataplane sees interface %s, "
                           "provider type %s, which should work.\n",
                           domain_name, prov_name);
@@ -1037,7 +1045,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     if (Ret == -1)
     {
         Svcs->verbose(
-            CP_Stream,
+            CP_Stream, DPPerStepVerbose,
             "RDMA Dataplane could not find an RDMA-compatible fabric.\n");
     }
 
@@ -1047,7 +1055,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     }
 
     Svcs->verbose(
-        CP_Stream,
+        CP_Stream, DPPerStepVerbose,
         "RDMA Dataplane evaluating viability, returning priority %d\n", Ret);
     return Ret;
 }
@@ -1058,7 +1066,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
  */
 static void RdmaUnGetPriority(CP_Services Svcs, void *CP_Stream)
 {
-    Svcs->verbose(CP_Stream, "RDMA Dataplane unloading\n");
+    Svcs->verbose(CP_Stream, DPPerStepVerbose, "RDMA Dataplane unloading\n");
 }
 
 extern NO_SANITIZE_THREAD CP_DP_Interface LoadRdmaDP()

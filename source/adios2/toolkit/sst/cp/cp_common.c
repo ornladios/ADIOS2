@@ -116,10 +116,12 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         {
             Stream->ConnectionUsleepMultiplier = tmp;
         }
-        CP_verbose(Stream, "USING %d as usleep multiplier before connections\n",
+        CP_verbose(Stream, PerStepVerbose,
+                   "USING %d as usleep multiplier before connections\n",
                    Stream->ConnectionUsleepMultiplier);
     }
-    CP_verbose(Stream, "Sst set to use %s as a Control Transport\n",
+    CP_verbose(Stream, PerStepVerbose,
+               "Sst set to use %s as a Control Transport\n",
                Params->ControlTransport);
     if (Params->ControlModule != NULL)
     {
@@ -152,6 +154,14 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     {
         Params->ControlModule = strdup("select");
     }
+    if (Params->verbose > Stream->CPVerbosityLevel)
+    {
+        Stream->CPVerbosityLevel = Params->verbose;
+    }
+    else if (Params->verbose < Stream->CPVerbosityLevel)
+    {
+        Params->verbose = Stream->CPVerbosityLevel;
+    }
 }
 
 static char *SstRegStr[] = {"File", "Screen", "Cloud"};
@@ -164,7 +174,7 @@ static char *SstPreloadModeStr[] = {"Off", "On", "Auto"};
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
                           int ReaderSide)
 {
-    if (!Stream->CPVerbose)
+    if (Stream->CPVerbosityLevel < SummaryVerbose)
         return;
 
     fprintf(stderr, "Param -   RegistrationMethod=%s\n",
@@ -1007,8 +1017,8 @@ extern void SstStreamDestroy(SstStream Stream)
      */
     struct _SstStream StackStream;
     pthread_mutex_lock(&Stream->DataLock);
-    CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
-               Stream->Filename);
+    CP_verbose(Stream, PerStepVerbose, "Destroying stream %p, name %s\n",
+               Stream, Stream->Filename);
     StackStream = *Stream;
     Stream->Status = Destroyed;
     struct _TimestepMetadataList *Next = Stream->Timesteps;
@@ -1161,11 +1171,11 @@ extern void SstStreamDestroy(SstStream Stream)
     if (SharedCMInfoRefCount == 0)
     {
         CP_verbose(
-            Stream,
+            Stream, PerStepVerbose,
             "Reference count now zero, Destroying process SST info cache\n");
         CManager_close(SharedCMInfo->cm);
         FreeCustomStructs(&SharedCMInfo->CustomStructs);
-        CP_verbose(Stream, "Freeing LastCallList\n");
+        CP_verbose(Stream, PerStepVerbose, "Freeing LastCallList\n");
         for (int i = 0; i < SharedCMInfo->LastCallFreeCount; i++)
         {
             free(SharedCMInfo->LastCallFreeList[i]);
@@ -1178,7 +1188,8 @@ extern void SstStreamDestroy(SstStream Stream)
         CP_SstParamsList = NULL;
     }
     pthread_mutex_unlock(&StateMutex);
-    CP_verbose(&StackStream, "SstStreamDestroy successful, returning\n");
+    CP_verbose(&StackStream, PerStepVerbose,
+               "SstStreamDestroy successful, returning\n");
 }
 
 extern char *CP_GetContactString(SstStream Stream, attr_list DPAttrs)
@@ -1309,6 +1320,8 @@ extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
 SstStream CP_newStream()
 {
     SstStream Stream = malloc(sizeof(*Stream));
+    char *CPEnvValue = NULL;
+    char *DPEnvValue = NULL;
     memset(Stream, 0, sizeof(*Stream));
     pthread_mutex_init(&Stream->DataLock, NULL);
     pthread_cond_init(&Stream->DataCondition, NULL);
@@ -1317,21 +1330,28 @@ SstStream CP_newStream()
     Stream->LastReleasedTimestep = -1;
     Stream->DiscardPriorTimestep =
         -1; // Timesteps prior to this discarded/released upon arrival
-    Stream->CPVerbose = 0;
-    Stream->DPVerbose = 0;
-    if (getenv("SstVerbose"))
+    Stream->CPVerbosityLevel = CriticalVerbose;
+    Stream->DPVerbosityLevel = CriticalVerbose;
+    if ((CPEnvValue = getenv("SstVerbose")))
     {
-        Stream->CPVerbose = 1;
-        Stream->DPVerbose = 1;
+        DPEnvValue = CPEnvValue;
     }
-    if (getenv("SstCPVerbose"))
+    else
     {
-        Stream->CPVerbose = 1;
+        CPEnvValue = getenv("SstCPVerbose");
+    }
+    if (CPEnvValue)
+    {
+        sscanf(CPEnvValue, "%d", &Stream->CPVerbosityLevel);
+    }
+    if (DPEnvValue)
+    {
+        sscanf(DPEnvValue, "%d", &Stream->DPVerbosityLevel);
     }
     return Stream;
 }
 
-static void DP_verbose(SstStream Stream, char *Format, ...);
+static void DP_verbose(SstStream Stream, int Level, char *Format, ...);
 static CManager CP_getCManager(SstStream Stream);
 static int CP_sendToPeer(SstStream Stream, CP_PeerCohort cohort, int rank,
                          CMFormat Format, void *data);
@@ -1438,38 +1458,61 @@ extern void SstSetStatsSave(SstStream Stream, SstStats Stats)
     Stream->Stats = Stats;
 }
 
-static void DP_verbose(SstStream s, char *Format, ...)
+static void DP_verbose(SstStream s, int Level, char *Format, ...)
 {
-    if (s->DPVerbose)
+    if (s->DPVerbosityLevel >= Level)
     {
         va_list Args;
         va_start(Args, Format);
+        char *Role = "Writer";
         if (s->Role == ReaderRole)
         {
-            fprintf(stderr, "DP Reader %d (%p): ", s->Rank, s);
+            Role = "Reader";
         }
-        else
+        switch (s->CPVerbosityLevel)
         {
-            fprintf(stderr, "DP Writer %d (%p): ", s->Rank, s);
+        case TraceVerbose:
+        case PerRankVerbose:
+        case CriticalVerbose:
+            fprintf(stderr, "DP %s %d (%p): ", Role, s->Rank, s);
+            break;
+        case PerStepVerbose:
+            fprintf(stderr, "DP %s (%p): ", Role, s);
+            break;
+        case SummaryVerbose:
+        default:
+            break;
         }
         vfprintf(stderr, Format, Args);
         va_end(Args);
     }
 }
 
-extern void CP_verbose(SstStream s, char *Format, ...)
+extern void CP_verbose(SstStream s, enum VerbosityLevel Level, char *Format,
+                       ...)
 {
-    if (s->CPVerbose)
+    if (s->CPVerbosityLevel >= (int)Level)
     {
         va_list Args;
         va_start(Args, Format);
+        char *Role = "Writer";
         if (s->Role == ReaderRole)
         {
-            fprintf(stderr, "Reader %d (%p): ", s->Rank, s);
+            Role = "Reader";
         }
-        else
+        switch (s->CPVerbosityLevel)
         {
-            fprintf(stderr, "Writer %d (%p): ", s->Rank, s);
+        case TraceVerbose:
+        case PerRankVerbose:
+        case CriticalVerbose:
+            fprintf(stderr, "%s %d (%p): ", Role, s->Rank, s);
+            break;
+        case PerStepVerbose:
+            fprintf(stderr, "%s (%p): ", Role, s);
+            break;
+        case SummaryVerbose:
+        default:
+            break;
         }
         vfprintf(stderr, Format, Args);
         va_end(Args);
@@ -1521,7 +1564,7 @@ static int CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
         if (s->Role == ReaderRole)
         {
             CP_verbose(
-                s,
+                s, TraceVerbose,
                 "Registering reader close handler for peer %d CONNECTION %p\n",
                 Rank, Peers[Rank].CMconn);
             CMconn_register_close_handler(Peers[Rank].CMconn,
@@ -1533,7 +1576,7 @@ static int CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
             {
                 if (Peers == s->Readers[i]->Connections)
                 {
-                    CP_verbose(s,
+                    CP_verbose(s, TraceVerbose,
                                "Registering writer close handler for peer %d, "
                                "CONNECTION %p\n",
                                Rank, Peers[Rank].CMconn);
@@ -1547,7 +1590,7 @@ static int CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
     }
     if (CMwrite(Peers[Rank].CMconn, Format, Data) != 1)
     {
-        CP_verbose(s,
+        CP_verbose(s, CriticalVerbose,
                    "Message failed to send to peer %d CONNECTION %p in "
                    "CP_sendToPeer()\n",
                    Rank, Peers[Rank].CMconn);

@@ -36,7 +36,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                                "BeginStep/EndStep pairs");
     }
 
-    if (m_MarshalMethod == SstMarshalFFS)
+    if (Params.MarshalMethod == SstMarshalFFS)
     {
         size_t *Shape = NULL;
         size_t *Start = NULL;
@@ -59,7 +59,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                       ToString(variable.m_Type).c_str(), variable.m_ElementSize,
                       DimCount, Shape, Count, Start, values);
     }
-    else if (m_MarshalMethod == SstMarshalBP)
+    else if (Params.MarshalMethod == SstMarshalBP)
     {
         auto &blockInfo = variable.SetBlockInfo(
             values, m_BP3Serializer->m_MetadataSet.CurrentStep);

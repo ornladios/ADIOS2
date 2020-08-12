@@ -75,13 +75,14 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
     int FoundPreferred = 0;
     if (Params->DataTransport)
     {
-        Svcs->verbose(CP_Stream, "Prefered dataplane name is \"%s\"\n",
+        Svcs->verbose(CP_Stream, DPPerStepVerbose,
+                      "Prefered dataplane name is \"%s\"\n",
                       Params->DataTransport);
     }
     while (List[i].Interface)
     {
         Svcs->verbose(
-            CP_Stream,
+            CP_Stream, DPPerStepVerbose,
             "Considering DataPlane \"%s\" for possible use, priority is %d\n",
             List[i].Name, List[i].Priority);
         if (Params->DataTransport)
@@ -117,13 +118,13 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
     }
     if (SelectedDP != -1)
     {
-        Svcs->verbose(CP_Stream,
+        Svcs->verbose(CP_Stream, DPSummaryVerbose,
                       "Selecting DataPlane \"%s\" (preferred) for use\n",
                       List[SelectedDP].Name);
     }
     else
     {
-        Svcs->verbose(CP_Stream,
+        Svcs->verbose(CP_Stream, DPSummaryVerbose,
                       "Selecting DataPlane \"%s\", priority %d for use\n",
                       List[BestPrioDP].Name, List[BestPrioDP].Priority);
         SelectedDP = BestPrioDP;
