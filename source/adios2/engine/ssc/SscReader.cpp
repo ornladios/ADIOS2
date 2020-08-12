@@ -471,7 +471,7 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
 
     size_t bufferPosition = 0;
 
-    for (size_t rank = 0; rank < bvv.size(); ++rank)
+    for (int rank = 0; rank < bvv.size(); ++rank)
     {
         bool hasOverlap = false;
         for (const auto r : allRanks)
