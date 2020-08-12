@@ -387,7 +387,8 @@ void SscWriter::DoClose(const int transportIndex)
                 MPI_Isend(m_Buffer.data(), 1, MPI_CHAR, i.first, 0,
                           m_StreamComm, &requests.back());
             }
-            MPI_Waitall(requests.size(), requests.data(), MPI_STATUS_IGNORE);
+            MPI_Waitall(static_cast<int>(requests.size()), requests.data(),
+                        MPI_STATUS_IGNORE);
         }
         else if (m_MpiMode == "onesidedfencepush")
         {

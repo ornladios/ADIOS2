@@ -58,8 +58,8 @@ void GenDataRecursive(std::vector<size_t> start, std::vector<size_t> count,
         {
             for (size_t j = 0; j < count_next[0]; j++)
             {
-                vec[i0 * count_next[0] + j] =
-                    z * shape_next[0] + (j + start_next[0]) + step;
+                vec[i0 * count_next[0] + j] = static_cast<T>(
+                    z * shape_next[0] + (j + start_next[0]) + step);
             }
         }
         else
