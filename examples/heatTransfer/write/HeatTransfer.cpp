@@ -11,6 +11,9 @@
  *
  */
 
+#include <cstring>
+
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <math.h>
@@ -20,36 +23,28 @@
 
 #include "HeatTransfer.h"
 
-HeatTransfer::HeatTransfer(const Settings &settings) : m_s{settings}
+HeatTransfer::HeatTransfer(const Settings &settings)
+: m_s(settings), m_T1Buf(new double[(m_s.ndx + 2) * (m_s.ndy + 2)]),
+  m_T2Buf(new double[(m_s.ndx + 2) * (m_s.ndy + 2)]),
+  m_T1(new double *[m_s.ndx + 2]), m_T2(new double *[m_s.ndx + 2])
 {
-    m_T1 = new double *[m_s.ndx + 2];
-    m_T1[0] = new double[(m_s.ndx + 2) * (m_s.ndy + 2)];
-    m_T2 = new double *[m_s.ndx + 2];
-    m_T2[0] = new double[(m_s.ndx + 2) * (m_s.ndy + 2)];
-    for (unsigned int i = 1; i < m_s.ndx + 2; i++)
+    m_T1[0] = m_T1Buf.get();
+    m_T2[0] = m_T2Buf.get();
+    for (size_t i = 1; i < m_s.ndx + 2; ++i)
     {
-        m_T1[i] = m_T1[i - 1] + m_s.ndy + 2;
-        m_T2[i] = m_T2[i - 1] + m_s.ndy + 2;
+        m_T1[i] = m_T1[0] + i * (m_s.ndy + 2);
+        m_T2[i] = m_T2[0] + i * (m_s.ndy + 2);
     }
-    m_TCurrent = m_T1;
-    m_TNext = m_T2;
-}
-
-HeatTransfer::~HeatTransfer()
-{
-    delete[] m_T1[0];
-    delete[] m_T1;
-    delete[] m_T2[0];
-    delete[] m_T2;
+    m_TCurrent = m_T1.get();
+    m_TNext = m_T2.get();
 }
 
 void HeatTransfer::init(bool init_with_rank)
 {
     if (init_with_rank)
     {
-        for (unsigned int i = 0; i < m_s.ndx + 2; i++)
-            for (unsigned int j = 0; j < m_s.ndy + 2; j++)
-                m_T1[i][j] = m_s.rank;
+        std::fill_n(m_T1Buf.get(), (m_s.ndx + 2) * (m_s.ndy + 2),
+                    static_cast<double>(m_s.rank));
     }
     else
     {
@@ -69,8 +64,8 @@ void HeatTransfer::init(bool init_with_rank)
             }
         }
     }
-    m_TCurrent = m_T1;
-    m_TNext = m_T2;
+    m_TCurrent = m_T1.get();
+    m_TNext = m_T2.get();
 }
 
 void HeatTransfer::printT(std::string message, MPI_Comm comm) const
@@ -104,13 +99,6 @@ void HeatTransfer::printT(std::string message, MPI_Comm comm) const
     }
 }
 
-void HeatTransfer::switchCurrentNext()
-{
-    double **tmp = m_TCurrent;
-    m_TCurrent = m_TNext;
-    m_TNext = tmp;
-}
-
 void HeatTransfer::iterate()
 {
     for (unsigned int i = 1; i <= m_s.ndx; ++i)
@@ -123,19 +111,17 @@ void HeatTransfer::iterate()
                             (1.0 - omega) * m_TCurrent[i][j];
         }
     }
-    switchCurrentNext();
+    std::swap(m_TCurrent, m_TNext);
 }
 
 void HeatTransfer::heatEdges()
 {
     // Heat the whole global edges
     if (m_s.posx == 0)
-        for (unsigned int j = 0; j < m_s.ndy + 2; ++j)
-            m_TCurrent[0][j] = edgetemp;
+        std::fill_n(m_TCurrent[0], m_s.ndy + 2, edgetemp);
 
     if (m_s.posx == m_s.npx - 1)
-        for (unsigned int j = 0; j < m_s.ndy + 2; ++j)
-            m_TCurrent[m_s.ndx + 1][j] = edgetemp;
+        std::fill_n(m_TCurrent[m_s.ndx + 1], m_s.ndy + 2, edgetemp);
 
     if (m_s.posy == 0)
         for (unsigned int i = 0; i < m_s.ndx + 2; ++i)
@@ -148,10 +134,12 @@ void HeatTransfer::heatEdges()
 
 void HeatTransfer::exchange(MPI_Comm comm)
 {
-    // Exchange ghost cells, in the order left-right-up-down
+    // Build a custom MPI type for the column vector to allow strided access
+    MPI_Datatype tColumnVector;
+    MPI_Type_vector(m_s.ndx + 2, 1, m_s.ndy + 2, MPI_REAL8, &tColumnVector);
+    MPI_Type_commit(&tColumnVector);
 
-    double *send_x = new double[m_s.ndx + 2];
-    double *recv_x = new double[m_s.ndx + 2];
+    // Exchange ghost cells, in the order left-right-up-down
 
     // send to left + receive from right
     int tag = 1;
@@ -160,18 +148,14 @@ void HeatTransfer::exchange(MPI_Comm comm)
     {
         // std::cout << "Rank " << m_s.rank << " send left to rank "
         //          << m_s.rank_left << std::endl;
-        for (unsigned int i = 0; i < m_s.ndx + 2; ++i)
-            send_x[i] = m_TCurrent[i][1];
-        MPI_Send(send_x, m_s.ndx + 2, MPI_REAL8, m_s.rank_left, tag, comm);
+        MPI_Send(m_TCurrent[0] + 1, 1, tColumnVector, m_s.rank_left, tag, comm);
     }
     if (m_s.rank_right >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from right from rank "
         //          << m_s.rank_right << std::endl;
-        MPI_Recv(recv_x, m_s.ndx + 2, MPI_REAL8, m_s.rank_right, tag, comm,
-                 &status);
-        for (unsigned int i = 0; i < m_s.ndx + 2; ++i)
-            m_TCurrent[i][m_s.ndy + 1] = recv_x[i];
+        MPI_Recv(m_TCurrent[0] + (m_s.ndy + 1), 1, tColumnVector,
+                 m_s.rank_right, tag, comm, &status);
     }
 
     // send to right + receive from left
@@ -180,19 +164,19 @@ void HeatTransfer::exchange(MPI_Comm comm)
     {
         // std::cout << "Rank " << m_s.rank << " send right to rank "
         //          << m_s.rank_right << std::endl;
-        for (unsigned int i = 0; i < m_s.ndx + 2; ++i)
-            send_x[i] = m_TCurrent[i][m_s.ndy];
-        MPI_Send(send_x, m_s.ndx + 2, MPI_REAL8, m_s.rank_right, tag, comm);
+        MPI_Send(m_TCurrent[0] + m_s.ndy, 1, tColumnVector, m_s.rank_right, tag,
+                 comm);
     }
     if (m_s.rank_left >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from left from rank "
         //          << m_s.rank_left << std::endl;
-        MPI_Recv(recv_x, m_s.ndx + 2, MPI_REAL8, m_s.rank_left, tag, comm,
+        MPI_Recv(m_TCurrent[0], 1, tColumnVector, m_s.rank_left, tag, comm,
                  &status);
-        for (unsigned int i = 0; i < m_s.ndx + 2; ++i)
-            m_TCurrent[i][0] = recv_x[i];
     }
+
+    // Cleanup the custom column vector type
+    MPI_Type_free(&tColumnVector);
 
     // send down + receive from above
     tag = 3;
@@ -227,12 +211,8 @@ void HeatTransfer::exchange(MPI_Comm comm)
         MPI_Recv(m_TCurrent[m_s.ndx + 1], m_s.ndy + 2, MPI_REAL8, m_s.rank_down,
                  tag, comm, &status);
     }
-
-    delete[] send_x;
-    delete[] recv_x;
 }
 
-#include <cstring>
 /* Copies the internal ndx*ndy section of the ndx+2 * ndy+2 local array
  * into a separate contiguous vector and returns it.
  * @return A vector with ndx*ndy elements
