@@ -78,8 +78,8 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     {
         if (m_MpiMode == "twosided")
         {
-            MPI_Waitall(m_MpiRequests.size(), m_MpiRequests.data(),
-                        MPI_STATUS_IGNORE);
+            MPI_Waitall(static_cast<int>(m_MpiRequests.size()),
+                        m_MpiRequests.data(), MPI_STATUS_IGNORE);
             m_MpiRequests.clear();
         }
         else if (m_MpiMode == "onesidedfencepush")
@@ -471,7 +471,7 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
 
     size_t bufferPosition = 0;
 
-    for (size_t rank = 0; rank < bvv.size(); ++rank)
+    for (int rank = 0; rank < bvv.size(); ++rank)
     {
         bool hasOverlap = false;
         for (const auto r : allRanks)
