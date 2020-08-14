@@ -958,12 +958,10 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
 
                 const uint64_t variablesIndexStart = position;
                 ptrs.push_back(variablesIndexStart);
-                if (!varIndicesInfo.empty())
+                const auto itvars = varIndicesInfo.find(t);
+                if (itvars != varIndicesInfo.end())
                 {
-
-                    std::unordered_map<std::string,
-                                       std::vector<std::tuple<size_t, size_t>>>
-                        perStepVarIndicesInfo = varIndicesInfo.at(t);
+                    const auto perStepVarIndicesInfo = itvars->second;
                     size_t perStepVarCountPosition = position;
                     const uint32_t perStepVarCountU32 =
                         static_cast<uint32_t>(perStepVarIndicesInfo.size());
@@ -1026,11 +1024,10 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                 const uint64_t attributesIndexStart = position;
                 ptrs.push_back(attributesIndexStart);
 
-                if (!attrIndicesInfo.empty())
+                const auto itattrs = attrIndicesInfo.find(t);
+                if (itattrs != attrIndicesInfo.end())
                 {
-                    std::unordered_map<std::string,
-                                       std::vector<std::tuple<size_t, size_t>>>
-                        perStepAttrIndicesInfo = attrIndicesInfo.at(t);
+                    const auto perStepAttrIndicesInfo = itattrs->second;
                     size_t perStepAttrCountPosition = position;
                     const uint32_t perStepAttrCountU32 =
                         static_cast<uint32_t>(perStepAttrIndicesInfo.size());
