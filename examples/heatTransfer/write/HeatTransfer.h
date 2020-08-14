@@ -13,6 +13,7 @@
 
 #include <mpi.h>
 
+#include <memory>
 #include <vector>
 
 #include "Settings.h"
@@ -22,7 +23,7 @@ class HeatTransfer
 public:
     HeatTransfer(const Settings &settings); // Create two 2D arrays with ghost
                                             // cells to compute
-    ~HeatTransfer();
+    ~HeatTransfer() = default;
     void init(bool init_with_rank); // set up array values with either rank or
                                     // real demo values
     void iterate();                 // one local calculation step
@@ -41,15 +42,23 @@ public:
                 MPI_Comm comm) const; // debug: print local TCurrent on stdout
 
 private:
+    const Settings &m_s;
+
     const double edgetemp = 3.0; // temperature at the edges of the global plate
     const double omega =
-        0.8;       // weight for current temp is (1-omega) in iteration
-    double **m_T1; // 2D array (ndx+2) * (ndy+2) size, including ghost cells
-    double **m_T2; // another 2D array
-    double **m_TCurrent; // pointer to T1 or T2
-    double **m_TNext;    // pointer to T2 or T1
-    const Settings &m_s;
-    void switchCurrentNext(); // switch the current array with the next array
+        0.8; // weight for current temp is (1-omega) in iteration
+
+    // 2D data arrays (ndx+2) * (ndy+2) size, including ghost cells
+    std::unique_ptr<double[]> m_T1Buf;
+    std::unique_ptr<double[]> m_T2Buf;
+
+    // Double indexable view into the data arrays to allow for m_T1[i][j]
+    std::unique_ptr<double *[]> m_T1;
+    std::unique_ptr<double *[]> m_T2;
+
+    // Track which data array is active
+    double **m_TCurrent;
+    double **m_TNext;
 };
 
 #endif /* HEATTRANSFER_H_ */

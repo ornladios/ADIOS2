@@ -114,3 +114,41 @@ jobs:
       run: scripts/ci/gh-actions/run.sh build
     - name: Test
       run: scripts/ci/gh-actions/run.sh test
+
+  linux_spack:
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    env:
+      GH_YML_JOBNAME: ${{ matrix.jobname }}
+      GH_YML_OS: Linux
+
+    strategy:
+      fail-fast: false
+      matrix:
+        jobname: [
+          el7-spack,
+          ubuntu1804-spack ]
+        include:
+        - jobname: el7-spack
+          container: ornladios/adios2:ci-el7-spack
+        - jobname: ubuntu1804-spack
+          container: ornladios/adios2:ci-ubuntu1804-spack
+   
+    defaults:
+      run:
+        shell: bash -c "source /opt/spack/share/spack/setup-env.sh && spack env activate adios2-ci && bash {0}"
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+      env:
+        PATH: /opt/spack/var/spack/environments/adios2-ci/.spack-env/view/bin:/usr/bin:/bin
+    - name: Update
+      run: scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: scripts/ci/gh-actions/run.sh build
+    - name: Test
+      run: scripts/ci/gh-actions/run.sh test
