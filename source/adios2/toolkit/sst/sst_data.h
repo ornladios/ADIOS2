@@ -25,6 +25,26 @@ struct _SstBlock
     char *BlockData;
 };
 
+/*
+ * Struct that represents statistics tracked by SST
+ */
+typedef struct _SstStats
+{
+    double StreamValidTimeSecs;
+    size_t BytesTransferred;
+    size_t TimestepsCreated;
+    size_t TimestepsDelivered;
+
+    size_t TimestepMetadataReceived;
+    size_t TimestepsConsumed;
+    size_t MetadataBytesReceived;
+    size_t DataBytesReceived;
+    size_t PreloadBytesReceived;
+    size_t PreloadTimestepsReceived;
+    size_t BytesRead;
+    double RunningFanIn;
+} * SstStats;
+
 #define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(MarshalMethod, MarshalMethod, size_t, SstMarshalBP)                  \
     MACRO(verbose, Int, int, 0)                                                \

@@ -1009,6 +1009,97 @@ extern void AddToLastCallFreeList(void *Block)
     SharedCMInfo->LastCallFreeCount++;
 }
 
+static void ReadableSizeString(size_t SizeInBytes, char *Output, size_t size)
+{
+    int i = 0;
+    size_t LastSizeInBytes = SizeInBytes;
+    char *byteUnits[] = {"bytes", "kB", "MB", "GB", "TB",
+                         "PB",    "EB", "ZB", "YB"};
+
+    while (SizeInBytes > 1024)
+    {
+        LastSizeInBytes = SizeInBytes;
+        SizeInBytes = SizeInBytes / 1024;
+        i++;
+    }
+
+    if ((SizeInBytes < 100) && (i != 0))
+    {
+        snprintf(Output, size, "%.1f %s", ((double)LastSizeInBytes) / 1024,
+                 byteUnits[i]);
+    }
+    else
+    {
+        snprintf(Output, size, "%ld %s", SizeInBytes, byteUnits[i]);
+    }
+};
+
+extern void DoStreamSummary(SstStream Stream)
+{
+    SstStats AllStats = NULL;
+
+    if (Stream->Rank == 0)
+        AllStats = malloc(sizeof(struct _SstStats) * Stream->CohortSize);
+
+    SMPI_Gather(&Stream->Stats, sizeof(struct _SstStats), SMPI_CHAR, AllStats,
+                sizeof(struct _SstStats), SMPI_CHAR, 0, Stream->mpiComm);
+
+    if (Stream->Rank != 0)
+    {
+        return;
+    }
+
+    for (int i = 1; i < Stream->CohortSize; i++)
+    {
+        AllStats[0].MetadataBytesReceived += AllStats[i].MetadataBytesReceived;
+        AllStats[0].DataBytesReceived += AllStats[i].DataBytesReceived;
+        AllStats[0].PreloadBytesReceived += AllStats[i].PreloadBytesReceived;
+        AllStats[0].RunningFanIn += AllStats[i].RunningFanIn;
+    }
+    AllStats[0].RunningFanIn /= Stream->CohortSize;
+
+    CP_verbose(Stream, SummaryVerbose, "\nStream \"%s\" (%p) summary info:\n",
+               Stream->Filename, (void *)Stream);
+    CP_verbose(Stream, SummaryVerbose, "\tDuration (secs) = %g\n",
+               Stream->Stats.StreamValidTimeSecs);
+    if (Stream->Role == WriterRole)
+    {
+        CP_verbose(Stream, SummaryVerbose, "\tTimesteps Created = %zu\n",
+                   Stream->Stats.TimestepsCreated);
+        CP_verbose(Stream, SummaryVerbose, "\tTimesteps Delivered = %zu\n",
+                   Stream->Stats.TimestepsDelivered);
+    }
+    else if (Stream->Role == ReaderRole)
+    {
+        char OutputString[256];
+        CP_verbose(Stream, SummaryVerbose,
+                   "\tTimestep Metadata Received = %zu\n",
+                   Stream->Stats.TimestepMetadataReceived);
+        CP_verbose(Stream, SummaryVerbose, "\tTimesteps Consumed = %zu\n",
+                   Stream->Stats.TimestepsConsumed);
+        ReadableSizeString(AllStats[0].MetadataBytesReceived, OutputString,
+                           sizeof(OutputString));
+        CP_verbose(Stream, SummaryVerbose,
+                   "\tMetadataBytesReceived = %zu (%s)\n",
+                   AllStats[0].MetadataBytesReceived, OutputString);
+        ReadableSizeString(AllStats[0].DataBytesReceived, OutputString,
+                           sizeof(OutputString));
+        CP_verbose(Stream, SummaryVerbose, "\tDataBytesReceived = %zu (%s)\n",
+                   AllStats[0].DataBytesReceived, OutputString);
+        ReadableSizeString(AllStats[0].PreloadBytesReceived, OutputString,
+                           sizeof(OutputString));
+        CP_verbose(Stream, SummaryVerbose,
+                   "\tPreloadBytesReceived = %zu (%s)\n",
+                   AllStats[0].PreloadBytesReceived, OutputString);
+        CP_verbose(Stream, SummaryVerbose, "\tPreloadTimestepsReceived = %zu\n",
+                   Stream->Stats.PreloadTimestepsReceived);
+        CP_verbose(Stream, SummaryVerbose, "\tAverageReadRankFanIn = %.1f\n",
+                   AllStats[0].RunningFanIn);
+    }
+    CP_verbose(Stream, SummaryVerbose, "\n");
+    free(AllStats);
+}
+
 extern void SstStreamDestroy(SstStream Stream)
 {
     /*
@@ -1120,6 +1211,8 @@ extern void SstStreamDestroy(SstStream Stream)
             Stream->ConnectionsToWriter = NULL;
         }
         free(Stream->Peers);
+        if (Stream->RanksRead)
+            free(Stream->RanksRead);
     }
     else if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)
     {
@@ -1450,12 +1543,6 @@ extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
             free(reverse);
         }
     }
-}
-
-extern void SstSetStatsSave(SstStream Stream, SstStats Stats)
-{
-    Stats->OpenTimeSecs = Stream->OpenTimeSecs;
-    Stream->Stats = Stats;
 }
 
 static void DP_verbose(SstStream s, int Level, char *Format, ...)

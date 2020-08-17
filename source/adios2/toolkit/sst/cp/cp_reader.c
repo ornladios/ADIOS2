@@ -478,7 +478,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     CP_validateParams(Stream, Params, 0 /* reader */);
     Stream->ConfigParams = Params;
 
-    Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams);
+    Stream->DP_Interface =
+        SelectDP(&Svcs, Stream, Stream->ConfigParams, Stream->Rank);
 
     Stream->CPInfo =
         CP_getCPInfo(Stream->DP_Interface, Stream->ConfigParams->ControlModule);
@@ -500,7 +501,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     }
 
     Stream->DP_Stream = Stream->DP_Interface->initReader(
-        &Svcs, Stream, &dpInfo, Stream->ConfigParams, WriterContactAttributes);
+        &Svcs, Stream, &dpInfo, Stream->ConfigParams, WriterContactAttributes,
+        &Stream->Stats);
 
     free_attr_list(WriterContactAttributes);
 
@@ -617,23 +619,27 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 
     Stream->WriterCohortSize = ReturnData->WriterCohortSize;
     Stream->WriterConfigParams = ReturnData->WriterConfigParams;
-    if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
+    if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) &&
+        (Stream->Rank == 0))
     {
         CP_verbose(Stream, SummaryVerbose,
                    "Writer is doing FFS-based marshalling\n");
     }
-    if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP)
+    if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalBP) &&
+        (Stream->Rank == 0))
     {
         CP_verbose(Stream, SummaryVerbose,
                    "Writer is doing BP-based marshalling\n");
     }
-    if (Stream->WriterConfigParams->CPCommPattern == SstCPCommMin)
+    if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommMin) &&
+        (Stream->Rank == 0))
     {
         CP_verbose(
             Stream, SummaryVerbose,
             "Writer is using Minimum Connection Communication pattern (min)\n");
     }
-    if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
+    if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer) &&
+        (Stream->Rank == 0))
     {
         CP_verbose(Stream, SummaryVerbose,
                    "Writer is using Peer-based Communication pattern (peer)\n");
@@ -816,6 +822,12 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
     else
     {
         Stream->Timesteps = New;
+    }
+    Stream->Stats.TimestepMetadataReceived++;
+    if (tsm->Metadata)
+    {
+        Stream->Stats.MetadataBytesReceived +=
+            (tsm->Metadata->DataSize + tsm->AttributeData->DataSize);
     }
     CP_verbose(Stream, PerRankVerbose,
                "Received a Timestep metadata message for timestep %d, "
@@ -1345,14 +1357,52 @@ extern SstFullMetadata SstGetCurMetadata(SstStream Stream)
     return Stream->CurrentMetadata;
 }
 
+static void AddToReadStats(SstStream Stream, int Rank, long Timestep,
+                           size_t Length)
+{
+    if (!Stream->RanksRead)
+        Stream->RanksRead = calloc(1, Stream->WriterCohortSize);
+    Stream->RanksRead[Rank] = 1;
+    Stream->Stats.BytesRead += Length;
+}
+
+#ifndef min
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
+static void ReleaseTSReadStats(SstStream Stream, long Timestep)
+{
+    int ThisFanIn = 0;
+    if (Stream->RanksRead)
+    {
+        for (int i = 0; i < Stream->WriterCohortSize; i++)
+        {
+            if (Stream->RanksRead[i])
+                ThisFanIn++;
+        }
+        memset(Stream->RanksRead, 0, Stream->WriterCohortSize);
+    }
+    if (Stream->Stats.TimestepsConsumed == 1)
+    {
+        Stream->Stats.RunningFanIn = ThisFanIn;
+    }
+    else
+    {
+        Stream->Stats.RunningFanIn =
+            Stream->Stats.RunningFanIn +
+            ((double)ThisFanIn - Stream->Stats.RunningFanIn) /
+                min(Stream->Stats.TimestepsConsumed, 100);
+    }
+}
+
 //  SstReadRemotememory is only called by the main
 //  program thread.
 extern void *SstReadRemoteMemory(SstStream Stream, int Rank, long Timestep,
                                  size_t Offset, size_t Length, void *Buffer,
                                  void *DP_TimestepInfo)
 {
-    if (Stream->Stats)
-        Stream->Stats->BytesTransferred += Length;
+    Stream->Stats.BytesTransferred += Length;
+    AddToReadStats(Stream, Rank, Timestep, Length);
     return Stream->DP_Interface->readRemoteMemory(
         &Svcs, Stream->DP_Stream, Rank, Timestep, Offset, Length, Buffer,
         DP_TimestepInfo);
@@ -1428,6 +1478,7 @@ extern void SstReleaseStep(SstStream Stream)
         (Stream->DP_Interface->RSReleaseTimestep)(&Svcs, Stream->DP_Stream,
                                                   Timestep);
     }
+    ReleaseTSReadStats(Stream, Timestep);
     STREAM_MUTEX_UNLOCK(Stream);
 
     if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer) ||
@@ -2000,6 +2051,10 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
     {
         result = SstAdvanceStepMin(Stream, mode, timeout_sec);
     }
+    if (result == SstSuccess)
+    {
+        Stream->Stats.TimestepsConsumed++;
+    }
     STREAM_MUTEX_UNLOCK(Stream);
     return result;
 }
@@ -2020,9 +2075,13 @@ extern void SstReaderClose(SstStream Stream)
     memset(&Msg, 0, sizeof(Msg));
     sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderCloseFormat,
                             &Msg, &Msg.WSR_Stream);
-    if (Stream->Stats)
-        Stream->Stats->ValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
+    Stream->Stats.StreamValidTimeSecs =
+        (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
+    if (Stream->CPVerbosityLevel >= (int)SummaryVerbose)
+    {
+        DoStreamSummary(Stream);
+    }
     CMusleep(Stream->CPInfo->SharedCM->cm, 100000);
     if (Stream->CurrentMetadata != NULL)
     {
