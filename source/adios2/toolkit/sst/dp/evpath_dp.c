@@ -81,6 +81,8 @@ typedef struct _Evpath_RS_Stream
     long PreloadActiveTimestep;
     long TotalReadRequests;
     long ReadRequestsFromPreload;
+    SstStats Stats;
+    long LastPreloadTimestep;
 } * Evpath_RS_Stream;
 
 typedef struct _Evpath_WSR_Stream
@@ -135,6 +137,7 @@ typedef struct _Evpath_WS_Stream
 
     int ReaderCount;
     Evpath_WSR_Stream *Readers;
+    SstStats Stats;
 } * Evpath_WS_Stream;
 
 typedef struct _EvpathReaderContactInfo
@@ -253,7 +256,7 @@ static void SendSpeculativePreloadMsgs(CP_Services Svcs,
 static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
                                      void **ReaderContactInfoPtr,
                                      struct _SstParams *Params,
-                                     attr_list WriterContact)
+                                     attr_list WriterContact, SstStats Stats)
 {
     Evpath_RS_Stream Stream = malloc(sizeof(struct _Evpath_RS_Stream));
     EvpathReaderContactInfo Contact =
@@ -272,6 +275,8 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
      * save the CP_stream value of later use
      */
     Stream->CP_Stream = CP_Stream;
+    Stream->Stats = Stats;
+    Stream->LastPreloadTimestep = -1;
 
     pthread_mutex_init(&Stream->DataLock, NULL);
 
@@ -520,6 +525,8 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
      */
     memcpy(Handle->Buffer, ReadReplyMsg->Data, ReadReplyMsg->DataLength);
 
+    RS_Stream->Stats->DataBytesReceived += ReadReplyMsg->DataLength;
+
     /*
      * Signal the condition to wake the reader if they are waiting.
      */
@@ -651,7 +658,15 @@ static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
     Entry->Data = PreloadMsg->Data;
     Entry->DataSize = PreloadMsg->DataLength;
     Entry->DataStart = 0;
-
+    RS_Stream->Stats->DataBytesReceived += PreloadMsg->DataLength;
+    RS_Stream->Stats->PreloadBytesReceived += PreloadMsg->DataLength;
+    if (PreloadMsg->Timestep > RS_Stream->LastPreloadTimestep)
+    {
+        // only incremenet PreloadTimesteps once, even if we get multiple
+        // preloads on a timestep (from different ranks)
+        RS_Stream->LastPreloadTimestep = PreloadMsg->Timestep;
+        RS_Stream->Stats->PreloadTimestepsReceived++;
+    }
     pthread_mutex_lock(&RS_Stream->DataLock);
     Entry->Next = RS_Stream->QueuedTimesteps;
     RS_Stream->QueuedTimesteps = Entry;
@@ -677,7 +692,7 @@ static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
 // writer-side routine, called from the main program
 static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream,
                                      struct _SstParams *Params,
-                                     attr_list DPAttrs)
+                                     attr_list DPAttrs, SstStats Stats)
 {
     Evpath_WS_Stream Stream = malloc(sizeof(struct _Evpath_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
@@ -694,6 +709,7 @@ static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream,
      * save the CP_stream value of later use
      */
     Stream->CP_Stream = CP_Stream;
+    Stream->Stats = Stats;
 
     /*
      * add a handler for read request messages
