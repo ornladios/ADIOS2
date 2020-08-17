@@ -77,7 +77,8 @@ typedef void *CP_PeerCohort;
 typedef DP_RS_Stream (*CP_DP_InitReaderFunc)(CP_Services Svcs, void *CP_Stream,
                                              void **ReaderContactInfoPtr,
                                              struct _SstParams *Params,
-                                             attr_list WriterContactAttributes);
+                                             attr_list WriterContactAttributes,
+                                             SstStats Stats);
 
 /*!
  * CP_DP_DestroyReaderFunc is the type of a dataplane reader-side
@@ -100,7 +101,7 @@ typedef void (*CP_DP_DestroyReaderFunc)(CP_Services Svcs, DP_RS_Stream Reader);
  */
 typedef DP_WS_Stream (*CP_DP_InitWriterFunc)(CP_Services Svcs, void *CP_Stream,
                                              struct _SstParams *Params,
-                                             attr_list DPAttrs);
+                                             attr_list DPAttrs, SstStats Stats);
 
 /*!
  * CP_DP_DestroyWriterFunc is the type of a dataplane writer-side
@@ -403,6 +404,6 @@ struct _CP_Services
 };
 
 CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
-                         struct _SstParams *Params);
+                         struct _SstParams *Params, int Rank);
 
 #endif

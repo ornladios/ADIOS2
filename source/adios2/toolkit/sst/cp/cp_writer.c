@@ -279,6 +279,10 @@ static void RemoveQueueEntries(SstStream Stream)
             }
 
             Stream->QueuedTimestepCount--;
+            if (ItemToFree->MetaDataSendCount)
+            {
+                Stream->Stats.TimestepsDelivered++;
+            }
             CP_verbose(Stream, PerRankVerbose,
                        "Remove queue Entries removing Timestep %ld (exp %d, "
                        "Prec %d, Ref %d), Count now %d\n",
@@ -1135,7 +1139,7 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
                        Entry->Timestep, rank);
         }
         Entry->ReferenceCount++;
-
+        Entry->MetaDataSendCount++;
         CP_verbose(Stream, PerRankVerbose,
                    "ADDING timestep %ld to sent list for reader cohort %d, "
                    "READER %p, reference count is now %d\n",
@@ -1289,7 +1293,8 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     //    printf("WRITER main program thread PID is %lx, TID %lx in writer
     //    open\n",
     //           (long)getpid(), (long)gettid());
-    Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams);
+    Stream->DP_Interface =
+        SelectDP(&Svcs, Stream, Stream->ConfigParams, Stream->Rank);
 
     if (!Stream->DP_Interface)
     {
@@ -1314,17 +1319,16 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 
     attr_list DPAttrs = create_attr_list();
     Stream->DP_Stream = Stream->DP_Interface->initWriter(
-        &Svcs, Stream, Stream->ConfigParams, DPAttrs);
+        &Svcs, Stream, Stream->ConfigParams, DPAttrs, &Stream->Stats);
 
     if (Stream->Rank == 0)
     {
         registerContactInfo(Filename, Stream, DPAttrs);
     }
 
-    CP_verbose(Stream, SummaryVerbose, "Opening Stream \"%s\"\n", Filename);
-
     if (Stream->Rank == 0)
     {
+        CP_verbose(Stream, SummaryVerbose, "Opening Stream \"%s\"\n", Filename);
         CP_verbose(Stream, SummaryVerbose, "Writer stream params are:\n");
         CP_dumpParams(Stream, Stream->ConfigParams, 0 /* writer side */);
     }
@@ -1353,8 +1357,6 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         }
         SMPI_Barrier(Stream->mpiComm);
 
-        struct timeval Start;
-        gettimeofday(&Start, NULL);
         reader = WriterParticipateInReaderOpen(Stream);
         if (!reader)
         {
@@ -1382,6 +1384,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         }
         Stream->RendezvousReaderCount--;
     }
+    gettimeofday(&Stream->ValidStartTime, NULL);
     Stream->Filename = Filename;
     Stream->Status = Established;
     CP_verbose(Stream, PerStepVerbose, "Finish opening Stream \"%s\"\n",
@@ -1640,9 +1643,13 @@ void SstWriterClose(SstStream Stream)
     STREAM_MUTEX_UNLOCK(Stream);
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
-    if (Stream->Stats)
-        Stream->Stats->ValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
+    Stream->Stats.StreamValidTimeSecs =
+        (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
+    if (Stream->CPVerbosityLevel >= (int)SummaryVerbose)
+    {
+        DoStreamSummary(Stream);
+    }
     CP_verbose(Stream, PerStepVerbose,
                "All timesteps are released in WriterClose\n");
 
@@ -2148,6 +2155,7 @@ extern void SstInternalProvideTimestep(
     Entry->Next = Stream->QueuedTimesteps;
     Stream->QueuedTimesteps = Entry;
     Stream->QueuedTimestepCount++;
+    Stream->Stats.TimestepsCreated++;
     /* no one waits on timesteps being added, so no condition signal to note
      * change */
 
@@ -2307,8 +2315,12 @@ extern void SstInternalProvideTimestep(
     while (PendingReaderCount--)
     {
         WS_ReaderInfo reader;
-        CP_verbose(Stream, SummaryVerbose,
-                   "Writer side ReaderLateArrival accepting incoming reader\n");
+        if (Stream->Rank == 0)
+        {
+            CP_verbose(
+                Stream, SummaryVerbose,
+                "Writer side ReaderLateArrival accepting incoming reader\n");
+        }
         reader = WriterParticipateInReaderOpen(Stream);
         if (!reader)
         {

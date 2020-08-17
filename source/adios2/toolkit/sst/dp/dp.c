@@ -52,7 +52,7 @@ static DPlist AddDPPossibility(CP_Services Svcs, void *CP_Stream, DPlist List,
 }
 
 CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
-                         struct _SstParams *Params)
+                         struct _SstParams *Params, int Rank)
 {
     CP_DP_Interface Ret;
     DPlist List = NULL;
@@ -93,6 +93,7 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
                 if (List[i].Priority >= 0)
                 {
                     SelectedDP = i;
+                    printf("Setting selected DP\n");
                     break;
                 }
                 else
@@ -116,17 +117,20 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
         fprintf(stderr, "Warning:  Preferred DataPlane \"%s\" not found.",
                 Params->DataTransport);
     }
+    printf("SelectedDP is %d\n", SelectedDP);
     if (SelectedDP != -1)
     {
-        Svcs->verbose(CP_Stream, DPSummaryVerbose,
-                      "Selecting DataPlane \"%s\" (preferred) for use\n",
-                      List[SelectedDP].Name);
+        if (Rank == 0)
+            Svcs->verbose(CP_Stream, DPSummaryVerbose,
+                          "Selecting DataPlane \"%s\" (preferred) for use\n",
+                          List[SelectedDP].Name);
     }
     else
     {
-        Svcs->verbose(CP_Stream, DPSummaryVerbose,
-                      "Selecting DataPlane \"%s\", priority %d for use\n",
-                      List[BestPrioDP].Name, List[BestPrioDP].Priority);
+        if (Rank == 0)
+            Svcs->verbose(CP_Stream, DPSummaryVerbose,
+                          "Selecting DataPlane \"%s\", priority %d for use\n",
+                          List[BestPrioDP].Name, List[BestPrioDP].Priority);
         SelectedDP = BestPrioDP;
     }
     i = 0;

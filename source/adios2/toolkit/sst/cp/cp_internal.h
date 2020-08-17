@@ -116,6 +116,7 @@ typedef struct _CPTimestepEntry
     long Timestep;
     struct _SstData Data;
     struct _TimestepMetadataMsg *Msg;
+    int MetaDataSendCount;
     int ReferenceCount;
     int Expired;
     int PreciousTimestep;
@@ -146,7 +147,8 @@ struct _SstStream
     int DPVerbosityLevel;
     double OpenTimeSecs;
     struct timeval ValidStartTime;
-    SstStats Stats;
+    struct _SstStats Stats;
+    char *RanksRead;
 
     /* MPI info */
     int Rank;
@@ -524,14 +526,19 @@ extern void FFSFreeMarshalData(SstStream Stream);
 extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
                           int **forwardArray, int **reverseArray);
 extern void AddToLastCallFreeList(void *Block);
+
 enum VerbosityLevel
 {
-    TraceVerbose = 5,
-    PerRankVerbose = 4,
-    PerStepVerbose = 3,
-    SummaryVerbose = 2,
-    CriticalVerbose = 1,
-    NoVerbose = 0,
+    NoVerbose = 0,       // Generally no output (but not absolutely quiet?)
+    CriticalVerbose = 1, // Informational output for failures only
+    SummaryVerbose =
+        2, // One-time summary output containing general info (transports used,
+           // timestep count, stream duration, etc.)
+    PerStepVerbose = 3, // One-per-step info, generally from rank 0 (metadata
+                        // read, Begin/EndStep verbosity, etc.)
+    PerRankVerbose = 4, // Per-step info from each rank (for those things that
+                        // might be different per rank).
+    TraceVerbose = 5,   // All debugging available
 };
 
 extern void CP_verbose(SstStream Stream, enum VerbosityLevel Level,
@@ -546,3 +553,4 @@ typedef void (*CPNetworkInfoFunc)(int dataID, const char *net_string,
 extern char *IPDiagString;
 extern CPNetworkInfoFunc globalNetinfoCallback;
 extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback);
+extern void DoStreamSummary(SstStream Stream);

@@ -47,17 +47,6 @@ typedef enum
     SstLatestAvailable // reader advance mode
 } SstStepMode;
 
-/*
- * Struct that represents statistics tracked by SST
- */
-typedef struct _SstStats
-{
-    double OpenTimeSecs;
-    double CloseTimeSecs;
-    double ValidTimeSecs;
-    size_t BytesTransferred;
-} * SstStats;
-
 typedef struct _SstParams *SstParams;
 
 typedef enum
@@ -180,11 +169,6 @@ extern SstStatusValue SstFFSPerformGets(SstStream Stream);
 extern int SstFFSWriterBeginStep(SstStream Stream, int mode,
                                  const float timeout_sec);
 extern void SstFFSWriterEndStep(SstStream Stream, size_t Step);
-
-/*
- *  General Operations
- */
-extern void SstSetStatsSave(SstStream Stream, SstStats Save);
 
 #include "sst_data.h"
 

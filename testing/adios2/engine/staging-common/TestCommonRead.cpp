@@ -332,7 +332,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
                 engine.Get(var_r32, in_R32.data());
                 engine.Get(var_r64, in_R64.data());
-                engine.Get(var_time, (int64_t *)&write_time);
+                if (!mpiRank)
+                    engine.Get(var_time, (int64_t *)&write_time);
             }
             else
             {
@@ -394,7 +395,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                     }
                 }
             }
-            write_times.push_back(write_time);
+            if (!mpiRank)
+                write_times.push_back(write_time);
         }
         else
         {
@@ -420,7 +422,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     }
 
     EXPECT_EQ(t, NSteps);
-    if (!NoData)
+    if (!NoData && !mpiRank)
     {
         if ((write_times.back() - write_times.front()) > 1)
         {
