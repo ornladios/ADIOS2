@@ -345,7 +345,7 @@ typedef struct _RdmaWriterContactInfo
 static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
                                    void **ReaderContactInfoPtr,
                                    struct _SstParams *Params,
-                                   attr_list WriterContact)
+                                   attr_list WriterContact, SstStats Stats)
 {
     Rdma_RS_Stream Stream = malloc(sizeof(struct _Rdma_RS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
@@ -394,7 +394,8 @@ typedef struct _RdmaCompletionHandle
 } * RdmaCompletionHandle;
 
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
-                                   struct _SstParams *Params, attr_list DPAttrs)
+                                   struct _SstParams *Params, attr_list DPAttrs,
+                                   SstStats Stats)
 {
     Rdma_WS_Stream Stream = malloc(sizeof(struct _Rdma_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
