@@ -30,7 +30,6 @@ int main(int argc, char *argv[])
 #else
     rank = 0;
     size = 1;
-#define MPI_COMM_WORLD 0
 #endif
 
     std::vector<float> myFloats = {
@@ -42,7 +41,11 @@ int main(int argc, char *argv[])
 
     try
     {
+#if ADIOS2_USE_MPI
         adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+        adios2::ADIOS adios;
+#endif
         adios2::IO sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
 
