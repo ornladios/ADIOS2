@@ -358,8 +358,7 @@ bool SscReader::SyncWritePattern()
         }
         for (const auto &attributeJson : attributesJson)
         {
-            const DataType type(helper::GetDataTypeFromString(
-                attributeJson["Type"].get<std::string>()));
+            const DataType type(attributeJson["Type"].get<DataType>());
             if (type == DataType::None)
             {
             }
