@@ -45,7 +45,7 @@ void SscReader::GetDeferredCommon(Variable<std::string> &variable,
             m_LocalReadPatternJson["Variables"].emplace_back();
             auto &jref = m_LocalReadPatternJson["Variables"].back();
             jref["Name"] = b.name;
-            jref["Type"] = ToString(b.type);
+            jref["Type"] = b.type;
             jref["ShapeID"] = variable.m_ShapeID;
             jref["Start"] = b.start;
             jref["Count"] = b.count;
@@ -145,7 +145,7 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         m_LocalReadPatternJson["Variables"].emplace_back();
         auto &jref = m_LocalReadPatternJson["Variables"].back();
         jref["Name"] = variable.m_Name;
-        jref["Type"] = ToString(helper::GetDataType<T>());
+        jref["Type"] = helper::GetDataType<T>();
         jref["ShapeID"] = variable.m_ShapeID;
         jref["Start"] = vStart;
         jref["Count"] = vCount;

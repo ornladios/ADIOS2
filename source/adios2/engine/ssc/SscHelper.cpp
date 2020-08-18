@@ -124,7 +124,7 @@ void BlockVecToJson(const BlockVec &input, nlohmann::json &output)
         output["Variables"].emplace_back();
         auto &jref = output["Variables"].back();
         jref["Name"] = b.name;
-        jref["Type"] = ToString(b.type);
+        jref["Type"] = b.type;
         jref["ShapeID"] = b.shapeId;
         jref["Shape"] = b.shape;
         jref["Start"] = b.start;
@@ -155,7 +155,7 @@ void AttributeMapToJson(IO &input, nlohmann::json &output)
         const auto &attribute = input.InquireAttribute<T>(name);               \
         nlohmann::json attributeJson;                                          \
         attributeJson["Name"] = attribute->m_Name;                             \
-        attributeJson["Type"] = ToString(attribute->m_Type);                   \
+        attributeJson["Type"] = attribute->m_Type;                             \
         attributeJson["IsSingleValue"] = attribute->m_IsSingleValue;           \
         if (attribute->m_IsSingleValue)                                        \
         {                                                                      \
@@ -213,8 +213,7 @@ void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
                 output[i].emplace_back();
                 auto &b = output[i].back();
                 b.name = j["Name"].get<std::string>();
-                b.type =
-                    helper::GetDataTypeFromString(j["Type"].get<std::string>());
+                b.type = j["Type"].get<DataType>();
                 b.shapeId = j["ShapeID"].get<ShapeID>();
                 b.start = j["Start"].get<Dims>();
                 b.count = j["Count"].get<Dims>();
@@ -472,7 +471,7 @@ void PrintBlock(const BlockInfo &b, const std::string &label)
 {
     std::cout << label << std::endl;
     std::cout << b.name << std::endl;
-    std::cout << "    DataType : " << ToString(b.type) << std::endl;
+    std::cout << "    DataType : " << b.type << std::endl;
     PrintDims(b.shape, "    Shape : ");
     PrintDims(b.start, "    Start : ");
     PrintDims(b.count, "    Count : ");
@@ -486,7 +485,7 @@ void PrintBlockVec(const BlockVec &bv, const std::string &label)
     for (const auto &i : bv)
     {
         std::cout << i.name << std::endl;
-        std::cout << "    DataType : " << ToString(i.type) << std::endl;
+        std::cout << "    DataType : " << i.type << std::endl;
         PrintDims(i.shape, "    Shape : ");
         PrintDims(i.start, "    Start : ");
         PrintDims(i.count, "    Count : ");
@@ -505,7 +504,7 @@ void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label)
         for (const auto &i : bv)
         {
             std::cout << "    " << i.name << std::endl;
-            std::cout << "        DataType : " << ToString(i.type) << std::endl;
+            std::cout << "        DataType : " << i.type << std::endl;
             PrintDims(i.shape, "        Shape : ");
             PrintDims(i.start, "        Start : ");
             PrintDims(i.count, "        Count : ");
