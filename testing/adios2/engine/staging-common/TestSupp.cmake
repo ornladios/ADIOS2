@@ -251,7 +251,10 @@ function(add_common_test basename engine)
        set (timeout "30")
     endif()
 
-    set_tests_properties(${testname} PROPERTIES TIMEOUT ${timeout} ${${basename}_PROPERTIES} )
+    set_tests_properties(${testname} PROPERTIES
+        TIMEOUT ${timeout} ${${basename}_PROPERTIES}
+        RUN_SERIAL TRUE
+    )
 endfunction()
 
 function(from_hex HEX DEC)
