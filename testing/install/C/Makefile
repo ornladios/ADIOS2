@@ -39,7 +39,7 @@ adios_c_serial_test: main_nompi.o
 main_nompi.o: main_nompi.c
 	$(CC) $(CFLAGS) $(ISYSROOT) -o main_nompi.o -c main_nompi.c $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -s --c-flags)
 
-adios_c_serial_test_2: main_nompi.o
+adios_c_serial_test_2: main_nompi.c
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_c_serial_test_2 main_nompi.c $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -s -c)
 
 
@@ -53,5 +53,5 @@ adios_c_mpi_test: main_mpi.o
 main_mpi.o: main_mpi.c
 	$(CC) $(CFLAGS) $(ISYSROOT) -o main_mpi.o -c main_mpi.c $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -m --c-flags)
 
-adios_c_mpi_test_2: main_mpi.o
+adios_c_mpi_test_2: main_mpi.c
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_c_mpi_test_2 main_mpi.c $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -m -c)

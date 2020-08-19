@@ -103,7 +103,7 @@ fi
 
 for variant in $variants
 do
-  echo "Extacting ADIOS flags for C bindings (${variant})"
+  echo "Extracting ADIOS flags for C bindings (${variant})"
   echo "  Without ADIOS"
   make_target_flags ${variant}_without_C
   without_C_CFLAGS=$(head -1 ${variant}_without_C.flags)
@@ -119,7 +119,7 @@ do
   echo ADIOS2_C_CFLAGS_${variant}=\"${ADIOS2_C_CFLAGS}\" >> adios2.flags
   echo ADIOS2_C_LDFLAGS_${variant}=\"${ADIOS2_C_LDFLAGS}\" >> adios2.flags
 
-  echo "Extacting ADIOS flags for C++ bindings (${variant})"
+  echo "Extracting ADIOS flags for C++ bindings (${variant})"
   echo "  Without ADIOS"
   make_target_flags ${variant}_without_CXX
   without_CXX_CXXFLAGS=$(head -1 ${variant}_without_CXX.flags)
@@ -137,7 +137,7 @@ do
 
   if [ @ADIOS2_CONFIG_FORTRAN@ -eq 1 ]
   then
-    echo "Extacting ADIOS flags for Fortran bindings (${variant})"
+    echo "Extracting ADIOS flags for Fortran bindings (${variant})"
     echo "  Without ADIOS"
     make_target_flags ${variant}_without_Fortran
     without_Fortran_FFLAGS=$(head -1 ${variant}_without_Fortran.flags)
