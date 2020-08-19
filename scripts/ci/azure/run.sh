@@ -66,6 +66,9 @@ then
   export OMPI_MCA_hwloc_base_binding_policy=none
 fi
 
+# Make sure staging tests use localhost
+export ADIOS2_IP=127.0.0.1
+
 echo "**********Env Begin**********"
 env | sort
 echo "**********Env End************"

@@ -75,6 +75,8 @@ then
   export OMPI_MCA_opal_warn_on_missing_libcuda=0
 fi
 
+# Make sure staging tests use localhost
+export ADIOS2_IP=127.0.0.1
 
 echo "**********Env Begin**********"
 env | sort

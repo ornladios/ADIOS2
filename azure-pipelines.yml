@@ -45,28 +45,28 @@ jobs:
     - bash: scripts/ci/azure/run.sh test
       name: Test
 
-#- job: macos
-#  timeoutInMinutes: 90
-#  strategy:
-#    matrix:
-#      macos1014_xcode103_ninja:
-#        hostImage: 'macOS-10.14'
-#      macos1015_xcode111_make:
-#        hostImage: 'macOS-10.15'
-#
-#  pool:
-#    vmImage: $[ variables['hostImage'] ]
-#  steps:
-#    - bash: scripts/ci/azure/macos-setup.sh
-#      name: Setup
-#    - bash: scripts/ci/azure/run.sh update
-#      name: Update
-#    - bash: scripts/ci/azure/run.sh configure
-#      name: Configure
-#    - bash: scripts/ci/azure/run.sh build
-#      name: Build
-#    - bash: scripts/ci/azure/run.sh test
-#      name: Test
+- job: macos
+  timeoutInMinutes: 90
+  strategy:
+    matrix:
+      macos1014_xcode103_ninja:
+        hostImage: 'macOS-10.14'
+      macos1015_xcode111_make:
+        hostImage: 'macOS-10.15'
+
+  pool:
+    vmImage: $[ variables['hostImage'] ]
+  steps:
+    - bash: scripts/ci/azure/macos-setup.sh
+      name: Setup
+    - bash: scripts/ci/azure/run.sh update
+      name: Update
+    - bash: scripts/ci/azure/run.sh configure
+      name: Configure
+    - bash: scripts/ci/azure/run.sh build
+      name: Build
+    - bash: scripts/ci/azure/run.sh test
+      name: Test
 
 - job: linux
   timeoutInMinutes: 90
