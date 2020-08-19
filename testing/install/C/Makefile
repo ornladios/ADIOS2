@@ -20,13 +20,13 @@ test: adios_c_test adios_c_test_2
 	$(mpiexec) ./adios_c_test_2
 
 adios_c_test: main.o
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o adios_c_test main.o $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) --c-libs)
+	$(CC) $(LDFLAGS) $(CFLAGS) -o adios_c_test main.o $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) --c-libs)
 
 main.o: $(main_c)
 	$(CC) $(CFLAGS) $(ISYSROOT) -o main.o -c $(main_c) $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) --c-flags)
 
 adios_c_test_2: $(main_c)
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_c_test_2 $(main_c) $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -c)
+	$(CC) $(LDFLAGS) $(CFLAGS) $(ISYSROOT) -o adios_c_test_2 $(main_c) $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -c)
 
 
 test_serial: adios_c_serial_test adios_c_serial_test_2
@@ -34,13 +34,13 @@ test_serial: adios_c_serial_test adios_c_serial_test_2
 	./adios_c_serial_test_2
 
 adios_c_serial_test: main_nompi.o
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o adios_c_serial_test main_nompi.o $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) --serial --c-libs)
+	$(CC) $(LDFLAGS) $(CFLAGS) -o adios_c_serial_test main_nompi.o $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) --serial --c-libs)
 
 main_nompi.o: main_nompi.c
 	$(CC) $(CFLAGS) $(ISYSROOT) -o main_nompi.o -c main_nompi.c $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -s --c-flags)
 
 adios_c_serial_test_2: main_nompi.o
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_c_serial_test_2 main_nompi.c $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -s -c)
+	$(CC) $(LDFLAGS) $(CFLAGS) $(ISYSROOT) -o adios_c_serial_test_2 main_nompi.c $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -s -c)
 
 
 test_mpi: adios_c_mpi_test adios_c_mpi_test_2
@@ -48,10 +48,10 @@ test_mpi: adios_c_mpi_test adios_c_mpi_test_2
 	$(MPIEXEC) ./adios_c_mpi_test_2
 
 adios_c_mpi_test: main_mpi.o
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o adios_c_mpi_test main_mpi.o $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) --mpi --c-libs)
+	$(CC) $(LDFLAGS) $(CFLAGS) -o adios_c_mpi_test main_mpi.o $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) --mpi --c-libs)
 
 main_mpi.o: main_mpi.c
 	$(CC) $(CFLAGS) $(ISYSROOT) -o main_mpi.o -c main_mpi.c $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -m --c-flags)
 
 adios_c_mpi_test_2: main_mpi.o
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) $(ISYSROOT) -o adios_c_mpi_test_2 main_mpi.c $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -m -c)
+	$(CC) $(LDFLAGS) $(CFLAGS) $(ISYSROOT) -o adios_c_mpi_test_2 main_mpi.c $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -m -c)

@@ -2,7 +2,6 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
-
 function(add_install_cmake_test name)
   add_test(NAME Install.CMake.${name} COMMAND "${CMAKE_COMMAND}"
     "-DADIOS2_SOURCE_DIR=${CMAKE_SOURCE_DIR}"

@@ -2,14 +2,14 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
-
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.12)
 project(adios_cxx11_test CXX)
+set(CMAKE_CXX_STANDARD 14)
 enable_testing()
 
 find_package(adios2 REQUIRED)
 
-# Test using serial C++11 bindings through adios2::cxx11 target.
+# Test using serial C++ bindings through adios2::cxx11 target.
 add_executable(adios_cxx11_test main_nompi.cxx)
 target_link_libraries(adios_cxx11_test adios2::cxx11)
 add_test(NAME adios_cxx11_test COMMAND adios_cxx11_test)
@@ -20,7 +20,7 @@ if(ADIOS2_HAVE_MPI)
   set(mpilib MPI::MPI_CXX)
   set(mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS})
 
-  # Test using mpi C++11 bindings through adios2::cxx11_mpi target.
+  # Test using mpi C++ bindings through adios2::cxx11_mpi target.
   add_executable(adios_cxx11_mpi_test main_mpi.cxx)
   target_link_libraries(adios_cxx11_mpi_test adios2::cxx11_mpi)
   add_test(NAME adios_cxx11_mpi_test COMMAND ${mpiexec} $<TARGET_FILE:adios_cxx11_mpi_test>)
@@ -30,7 +30,7 @@ else()
   set(mpiexec)
 endif()
 
-# Test using C++11 bindings through legacy adios2::adios2 target.
+# Test using C++ bindings through legacy adios2::adios2 target.
 add_executable(adios_adios2cxx11_test ${src})
 target_link_libraries(adios_adios2cxx11_test adios2::adios2 ${mpilib})
 add_test(NAME adios_adios2cxx11_test COMMAND ${mpiexec} $<TARGET_FILE:adios_adios2cxx11_test>)
