@@ -93,7 +93,6 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
                 if (List[i].Priority >= 0)
                 {
                     SelectedDP = i;
-                    printf("Setting selected DP\n");
                     break;
                 }
                 else
@@ -117,7 +116,6 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
         fprintf(stderr, "Warning:  Preferred DataPlane \"%s\" not found.",
                 Params->DataTransport);
     }
-    printf("SelectedDP is %d\n", SelectedDP);
     if (SelectedDP != -1)
     {
         if (Rank == 0)
