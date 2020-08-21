@@ -862,10 +862,10 @@ int requested_id_version;
 	    break;
 	case 2:
 	    if (!ioformat->server_ID.value) {
-		generate_format2_server_ID(&ioformat->server_ID, ioformat->server_format_rep);
+		generate_format3_server_ID(&ioformat->server_ID, ioformat->server_format_rep);
 	    } else {
 		server_ID_type tmp;
-		generate_format2_server_ID(&tmp, ioformat->server_format_rep);
+		generate_format3_server_ID(&tmp, ioformat->server_format_rep);
 		if (tmp.length != ioformat->server_ID.length) {
 		    LOG(fs, "Version 2 IDs differ in length\n");
 		}

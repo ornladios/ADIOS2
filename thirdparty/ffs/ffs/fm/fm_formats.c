@@ -428,6 +428,22 @@ void *buffer;
 	}
 	break;
     }
+    case 3:
+    {
+	UINT4 rep_len = ((version_3_format_ID*) buffer)->rep_len;
+	rep_len += (((version_3_format_ID*) buffer)->top_byte_rep_len) << 16;
+	/* shortcut on comparisons.  check likely difference first */
+	for (i = fmc->reg_format_count - 1; i >= 0; i--) {
+	    version_3_format_ID* id = (version_3_format_ID*)
+		fmc->format_list[i]->server_ID.value;
+	    if (rep_len != id->rep_len) continue;
+	    if (memcmp(buffer, fmc->format_list[i]->server_ID.value,
+		       fmc->format_list[i]->server_ID.length) == 0) {
+		return fmc->format_list[i];
+	    }
+	}
+	break;
+    }
     default:
 	for (i = fmc->reg_format_count - 1; i >= 0; i--) {
 	    if (memcmp(buffer, fmc->format_list[i]->server_ID.value,
@@ -479,6 +495,22 @@ char *buffer;
 	    version_2_format_ID* id = (version_2_format_ID*)
 		fmc->format_list[i]->server_ID.value;
 	    if (rep_len != (UINT2) id->rep_len) continue;
+	    if (memcmp(buffer, fmc->format_list[i]->server_ID.value,
+		       fmc->format_list[i]->server_ID.length) == 0) {
+		return fmc->format_list[i];
+	    }
+	}
+	break;
+    }
+    case 3:
+    {
+	UINT4 rep_len = ((version_3_format_ID*) buffer)->rep_len;
+	rep_len += (((version_3_format_ID*) buffer)->top_byte_rep_len) << 16;
+	/* shortcut on comparisons.  check likely difference first */
+	for (i = fmc->reg_format_count - 1; i >= 0; i--) {
+	    version_3_format_ID* id = (version_3_format_ID*)
+		fmc->format_list[i]->server_ID.value;
+	    if (rep_len != id->rep_len) continue;
 	    if (memcmp(buffer, fmc->format_list[i]->server_ID.value,
 		       fmc->format_list[i]->server_ID.length) == 0) {
 		return fmc->format_list[i];
@@ -1190,7 +1222,7 @@ FMFormat *formats;
 	free(fmformat->field_subformats);
     new_var_list = (FMVarInfoList)
 	malloc((size_t) sizeof(FMVarInfoStruct) * field_count);
-    fmformat->field_subformats = malloc(sizeof(FMFormat) * field_count);
+    fmformat->field_subformats = calloc(sizeof(FMFormat), field_count);
     fmformat->var_list = new_var_list;
     for (field = 0; field < field_count; field++) {
 	long elements;
@@ -1252,14 +1284,14 @@ char *super_rep;
 int *super_rep_size;
 {
     int byte_reversal = fmformat->byte_reversal;
-    int rep_size = (sizeof(struct _field_wire_format) *
+    int rep_size = (sizeof(struct _field_wire_format_1) *
 		     (fmformat->field_count));
     int i;
     int opt_info_count = 0;
     struct _subformat_wire_format *rep;
     char *string_base;
     int cur_offset;
-    struct _field_wire_format *fields;
+    struct _field_wire_format_1 *fields;
     int OUR_BYTE_ORDER = WORDS_BIGENDIAN;
     int OTHER_BYTE_ORDER = (WORDS_BIGENDIAN ? 0 : 1);
 
@@ -1269,7 +1301,7 @@ int *super_rep_size;
 	rep_size += strlen(fmformat->field_list[i].field_type) + 1;
     }
 
-    rep_size += sizeof(struct _subformat_wire_format_0);
+    rep_size += sizeof(struct _subformat_wire_format_1);
 
     rep_size = (rep_size + 3) & -4;  /* round up by even 4 */
     while (fmformat->opt_info && 
@@ -1282,46 +1314,46 @@ int *super_rep_size;
 
     super_rep = realloc(super_rep, *super_rep_size + rep_size+4); /* little extra */
     rep = (struct _subformat_wire_format *) (super_rep + *super_rep_size);
-    cur_offset = (sizeof(struct _subformat_wire_format_0) + 
-		  (sizeof(struct _field_wire_format) * 
+    cur_offset = (sizeof(struct _subformat_wire_format_1) + 
+		  (sizeof(struct _field_wire_format_1) * 
 		   (fmformat->field_count)));
-    rep->f.f0.server_rep_version = 0;
-    rep->f.f0.header_size = sizeof(struct _subformat_wire_format_0);
+    rep->f.f1.server_rep_version = 1;
+    rep->f.f1.header_size = sizeof(struct _subformat_wire_format_1);
     
-    rep->f.f0.column_major_arrays = fmformat->column_major_arrays;
-    rep->f.f0.alignment = fmformat->alignment;
-    rep->f.f0.opt_info_offset = 0; /* will be set later */
+    rep->f.f1.column_major_arrays = fmformat->column_major_arrays;
+    rep->f.f1.alignment = fmformat->alignment;
+    rep->f.f1.opt_info_offset = 0; /* will be set later */
 
     string_base = (char *) rep;
 
-    rep->f.f0.name_offset = cur_offset;
-    if (byte_reversal) byte_swap((char*) &rep->f.f0.name_offset, 2);
+    rep->f.f1.name_offset = cur_offset;
+    if (byte_reversal) byte_swap((char*) &rep->f.f1.name_offset, 4);
     strcpy(string_base + cur_offset, fmformat->format_name);
     cur_offset += strlen(fmformat->format_name) + 1;
 
-    rep->f.f0.field_count = fmformat->field_count;
-    if (byte_reversal) byte_swap((char*) &rep->f.f0.field_count, 2);
-    rep->f.f0.record_length = fmformat->record_length;
-    if (byte_reversal) byte_swap((char*) &rep->f.f0.record_length, 4);
-    rep->f.f0.record_byte_order = fmformat->byte_reversal ? 
+    rep->f.f1.field_count = fmformat->field_count;
+    if (byte_reversal) byte_swap((char*) &rep->f.f1.field_count, 4);
+    rep->f.f1.record_length = fmformat->record_length;
+    if (byte_reversal) byte_swap((char*) &rep->f.f1.record_length, 4);
+    rep->f.f1.record_byte_order = fmformat->byte_reversal ? 
 	OTHER_BYTE_ORDER : OUR_BYTE_ORDER;
-    rep->f.f0.pointer_size = fmformat->pointer_size;
-    rep->f.f0.floating_point_rep = fmformat->float_format;
+    rep->f.f1.pointer_size = fmformat->pointer_size;
+    rep->f.f1.floating_point_rep = fmformat->float_format;
 
-    fields = (struct _field_wire_format *) ((char*) rep + 
-					    rep->f.f0.header_size);
+    fields = (struct _field_wire_format_1 *) ((char*) rep + 
+					    rep->f.f1.header_size);
     for (i = 0; i < fmformat->field_count; i++) {
 	fields[i].field_size = fmformat->field_list[i].field_size;
 	if (byte_reversal) byte_swap((char*) &fields[i].field_size, 4);
 	fields[i].field_offset = fmformat->field_list[i].field_offset;
 	if (byte_reversal) byte_swap((char*) &fields[i].field_offset, 4);
 	fields[i].field_name_offset = cur_offset;
-	if (byte_reversal) byte_swap((char*) &fields[i].field_name_offset, 2);
+	if (byte_reversal) byte_swap((char*) &fields[i].field_name_offset, 4);
 	strcpy(string_base + cur_offset, 
 	       fmformat->field_list[i].field_name);
 	cur_offset += strlen(fmformat->field_list[i].field_name) + 1;
 	fields[i].field_type_offset = cur_offset;
-	if (byte_reversal) byte_swap((char*) &fields[i].field_type_offset, 2);
+	if (byte_reversal) byte_swap((char*) &fields[i].field_type_offset, 4);
 	strcpy(string_base + cur_offset,
 	       fmformat->field_list[i].field_type);
 	cur_offset += strlen(fmformat->field_list[i].field_type) +1;
@@ -1334,8 +1366,8 @@ int *super_rep_size;
 	while ((cur_offset & 0x3) != 0) {
 	    *(string_base + cur_offset++) = 0;
 	}
-	rep->f.f0.opt_info_offset = cur_offset;
-	if (byte_reversal) byte_swap((char*) &rep->f.f0.opt_info_offset, 2);
+	rep->f.f1.opt_info_offset = cur_offset;
+	if (byte_reversal) byte_swap((char*) &rep->f.f1.opt_info_offset, 2);
 	info_base = cur_offset +string_base;
 	cur_offset += (opt_info_count + 1) *
 	    sizeof(struct _opt_info_wire_format);
@@ -1369,7 +1401,10 @@ int *super_rep_size;
 	*(string_base + cur_offset++) = 0;
     }
     assert(cur_offset == rep_size);
-    rep->f.f0.subformat_rep_length = htons(rep_size);
+    rep->f.f1.subformat_rep_length = htons(rep_size);
+    rep->f.f1.top_bytes_subformat_rep_length = htons(rep_size>>16);
+    rep->f.f1.unused0_f1 = 0;
+    rep->f.f1.unused1_f1 = 0;
     *super_rep_size += rep_size;
     return (format_rep) super_rep;
 }
@@ -1396,14 +1431,13 @@ FMFormat fmformat;
 	    add_server_subformat_rep(subformats[i], (char*)rep, &rep_size);
     }
     
-    rep->f.f0.format_rep_length = htons(rep_size);
-    rep->f.f0.record_byte_order = fmformat->byte_reversal ? 
+    rep->f.f1.format_rep_length = htons(rep_size & 0xffff);
+    rep->f.f1.record_byte_order = fmformat->byte_reversal ? 
 	OTHER_BYTE_ORDER : OUR_BYTE_ORDER;
-    rep->f.f0.server_rep_version = 0;
-    rep->f.f0.subformat_count = subformat_count;
-    rep->f.f0.recursive_flag = 0;  /* GSE must set right */
-    rep->f.f0.unused1_in_format_0 = 0;
-    rep->f.f0.unused2_in_format_0 = 0;
+    rep->f.f1.server_rep_version = 1;
+    rep->f.f1.subformat_count = subformat_count;
+    rep->f.f1.recursive_flag = 0;  /* GSE must set right */
+    rep->f.f1.top_bytes_format_rep_length = htons(rep_size>>16);
     return (format_rep) rep;
 }
 
@@ -1425,6 +1459,9 @@ FMFormat fmformat;
 	return NULL;
     }
     search_rep_length = ntohs(fmformat->server_format_rep->format_rep_length);
+    if (fmformat->server_format_rep->server_rep_version > 0) {
+	search_rep_length += (ntohs(fmformat->server_format_rep->top_bytes_format_rep_length) >> 16);
+    }
 
     /* search locally first */
     for (i = 0; i < fmc->reg_format_count; i++) {
@@ -1927,20 +1964,24 @@ extern void hashlittle2(
 
 
 extern void
-generate_format2_server_ID(server_ID_type *server_ID,
-			   struct _format_wire_format_0 *server_format_rep)
+generate_format3_server_ID(server_ID_type *server_ID,
+			   struct _format_wire_format_1 *server_format_rep)
 {
     INT4 hash1 = 0, hash2 = 0;
+    UINT4 server_format_rep_length = ntohs(server_format_rep->format_rep_length);
+    if (server_format_rep->server_rep_version > 0) {
+	server_format_rep_length += (ntohs(server_format_rep->top_bytes_format_rep_length) >> 16);
+    }
+    if (server_format_rep_length > (1 << 26)) fprintf(stderr, "Format rep too long in generate_format_server_ID\n");
     server_ID->length = 12;
     server_ID->value = malloc(12);
-    ((version_2_format_ID *) server_ID->value)->version = 2;
-    ((version_2_format_ID *) server_ID->value)->unused = 0;
+    ((version_3_format_ID *) server_ID->value)->version = 2;
     hashlittle2((int*)server_format_rep, 
-		ntohs(server_format_rep->format_rep_length),
+		server_format_rep_length,
 		&hash1, &hash2);
     if (get_format_server_verbose()) {
 	unsigned char *tmp = (unsigned char*)server_format_rep;
-	int size = ntohs(server_format_rep->format_rep_length);
+	int size = server_format_rep_length;
 	int i;
 	printf("Server rep is : ");
 	for (i=0; i< size; i++) {
@@ -1948,10 +1989,12 @@ generate_format2_server_ID(server_ID_type *server_ID,
 	}
 	printf("\n");
     }
-    ((version_2_format_ID *) server_ID->value)->rep_len = 
-	htons(ntohs(server_format_rep->format_rep_length) >> 2);
-    ((version_2_format_ID *) server_ID->value)->hash1 = htonl(hash1);
-    ((version_2_format_ID *) server_ID->value)->hash2 = htonl(hash2);
+    ((version_3_format_ID *) server_ID->value)->rep_len = 
+	htons(server_format_rep_length >> 2);   // Mod length by 4
+    ((version_3_format_ID *) server_ID->value)->top_byte_rep_len = 
+	htons(server_format_rep_length >> 18);  // Essentially, we capture the top 26 bytes of the server length
+    ((version_3_format_ID *) server_ID->value)->hash1 = htonl(hash1);
+    ((version_3_format_ID *) server_ID->value)->hash2 = htonl(hash2);
 }
 
 static int
@@ -1974,7 +2017,7 @@ FMFormat fmformat;
     }
     server_format_rep = fmformat->server_format_rep;
 
-    generate_format2_server_ID(&fmformat->server_ID, server_format_rep);
+    generate_format3_server_ID(&fmformat->server_ID, server_format_rep);
     if (get_format_server_verbose()) {
 	printf("Registering %s to locally-issued format ID ",
 	       fmformat->format_name);
@@ -3375,12 +3418,12 @@ FMFormat format;
     return stringify_field_type(format->format_name, format, buffer, size);
 }
 
-extern FMFormat
-expand_subformat_from_rep(rep)
+static FMFormat
+expand_subformat_from_rep_0(rep)
 struct _subformat_wire_format *rep;
 {
     FMFormat format = new_FMFormat();
-    struct _field_wire_format *fields;
+    struct _field_wire_format_0 *fields;
     int field;
     UINT2 tmp;
     INT4 tmp2;
@@ -3418,15 +3461,15 @@ struct _subformat_wire_format *rep;
     format->var_list = NULL;
 
     if (rep->f.f0.server_rep_version == 0) {
-	fields = (struct _field_wire_format *) 
+	fields = (struct _field_wire_format_0 *) 
 	    ((char*)rep + sizeof(struct _subformat_wire_format_0));
     } else {
-	fields = (struct _field_wire_format *) 
+	fields = (struct _field_wire_format_0 *) 
 	    ((char*) rep + rep->f.f0.header_size);
     }
     for (field = 0; field < format->field_count; field++) {
 	FMField *fmfield = &(format->field_list[field]);
-	struct _field_wire_format *wire = &fields[field];
+	struct _field_wire_format_0 *wire = &fields[field];
 	tmp = wire->field_name_offset;
 	if (byte_reversal) byte_swap((char*)&tmp, 2);
 	fmfield->field_name = malloc(strlen((char *) rep + tmp) + 1);
@@ -3488,6 +3531,132 @@ struct _subformat_wire_format *rep;
 }
 
 
+static FMFormat
+expand_subformat_from_rep_1(rep)
+struct _subformat_wire_format *rep;
+{
+    FMFormat format = new_FMFormat();
+    struct _field_wire_format_1 *fields;
+    int field;
+    UINT2 tmp;
+    INT4 tmp2;
+    int OUR_BYTE_ORDER = WORDS_BIGENDIAN;
+    int OTHER_BYTE_ORDER = (WORDS_BIGENDIAN ? 0 : 1);
+    int byte_reversal = ((rep->f.f1.record_byte_order & 0x1) != OUR_BYTE_ORDER);
+
+    tmp2 = rep->f.f1.name_offset;
+    if (byte_reversal) byte_swap((char*)&tmp2, 4);
+    format->format_name = malloc(strlen((char *) rep + tmp2) + 1);
+    strcpy(format->format_name, (char *) rep + tmp2);
+    tmp2 = rep->f.f1.field_count;
+    if (byte_reversal) byte_swap((char*)&tmp2, 4);
+    format->field_count = tmp2;
+    format->variant = 0;
+    tmp2 = rep->f.f1.record_length;
+    if (byte_reversal) byte_swap((char*)&tmp2, 4);
+    format->record_length = tmp2;
+    format->byte_reversal = ((rep->f.f1.record_byte_order & 0x1) != OUR_BYTE_ORDER);
+    format->pointer_size = rep->f.f1.pointer_size;
+    tmp = rep->f.f1.floating_point_rep;
+    if (byte_reversal) byte_swap((char*)&tmp, 2);
+    format->float_format = (FMfloat_format) tmp;
+    if (format->float_format == Format_Unknown) {
+	/* old data must be pure-endian IEEE 754*/
+	if (rep->f.f1.record_byte_order == 1) {
+	    /* bigendian */
+	    format->float_format = Format_IEEE_754_bigendian;
+	} else {
+	    format->float_format = Format_IEEE_754_littleendian;
+	}
+    }
+    format->field_list = (FMFieldList) malloc(sizeof(FMField) *
+				      (format->field_count + 1));
+    format->var_list = NULL;
+
+    if (rep->f.f1.server_rep_version == 0) {
+	fields = (struct _field_wire_format_1 *) 
+	    ((char*)rep + sizeof(struct _subformat_wire_format_1));
+    } else {
+	fields = (struct _field_wire_format_1 *) 
+	    ((char*) rep + rep->f.f1.header_size);
+    }
+    for (field = 0; field < format->field_count; field++) {
+	FMField *fmfield = &(format->field_list[field]);
+	struct _field_wire_format_1 *wire = &fields[field];
+	tmp2 = wire->field_name_offset;
+	if (byte_reversal) byte_swap((char*)&tmp2, 4);
+	fmfield->field_name = malloc(strlen((char *) rep + tmp2) + 1);
+	strcpy((char*)fmfield->field_name, (char *) rep + tmp2);
+	tmp2 = wire->field_type_offset;
+	if (byte_reversal) byte_swap((char*)&tmp2, 4);
+	fmfield->field_type = malloc(strlen((char *) rep + tmp2) + 1);
+	strcpy((char*)fmfield->field_type, (char *) rep + tmp2);
+	fmfield->field_size = wire->field_size;
+	if (byte_reversal) byte_swap((char*)&fmfield->field_size, 4);
+	fmfield->field_offset = wire->field_offset;
+	if (byte_reversal) byte_swap((char*)&fmfield->field_offset, 4);
+    }
+    format->field_list[format->field_count].field_size = 0;
+    format->field_list[format->field_count].field_offset = 0;
+    format->field_list[format->field_count].field_name = NULL;
+    format->field_list[format->field_count].field_type = NULL;
+    format->column_major_arrays = 0;
+    {
+	struct _opt_info_wire_format tmp_info;
+	int offset, info_count = 0;
+
+	format->alignment = rep->f.f1.alignment;
+	format->column_major_arrays = rep->f.f1.column_major_arrays;
+	tmp = rep->f.f1.opt_info_offset;
+	if (byte_reversal) byte_swap((char*)&tmp, 2);
+
+	if (tmp != 0) {
+	    offset = tmp;
+	    format->opt_info = malloc(sizeof(FMOptInfo));
+	    do {
+		memcpy(&tmp_info, offset + (char*) rep, sizeof(tmp_info));
+		if (tmp_info.info_type != 0) {
+		    format->opt_info = 
+			realloc(format->opt_info,
+				sizeof(FMOptInfo) * (info_count + 2));
+		    tmp2 = tmp_info.info_type;
+		    if (byte_reversal) byte_swap((char*)&tmp2, 4);
+		    format->opt_info[info_count].info_type = tmp2;
+			
+		    tmp2 = tmp_info.info_len;
+		    if (byte_reversal) byte_swap((char*)&tmp2, 4);
+		    format->opt_info[info_count].info_len = tmp2;
+
+		    tmp2 = tmp_info.info_offset;
+		    if (byte_reversal) byte_swap((char*)&tmp2, 4);
+		    format->opt_info[info_count].info_block = 
+			(char*)rep + tmp2;
+		    info_count++;
+		    offset += sizeof(tmp_info);
+		}
+	    } while (tmp_info.info_type != 0);
+	    format->opt_info[info_count].info_type = 0;
+	    format->opt_info[info_count].info_len = 0;
+	    format->opt_info[info_count].info_block = 0;
+	}
+    }
+    return format;
+}
+
+
+static FMFormat
+expand_subformat_from_rep(rep)
+struct _subformat_wire_format *rep;
+{
+    if (rep->f.f0.server_rep_version == 0) {
+	return expand_subformat_from_rep_0(rep);
+    } else if (rep->f.f0.server_rep_version == 1) {
+	return expand_subformat_from_rep_1(rep);
+    } else {
+	return NULL;
+    }
+}
+
 extern FMFormat
 expand_format_from_rep(rep)
 format_rep rep;
@@ -3499,13 +3668,16 @@ format_rep rep;
     int i;
 
     struct _subformat_wire_format *subrep = (struct _subformat_wire_format*)
-	(((char*)rep ) + sizeof(struct _format_wire_format_0));
+	(((char*)rep ) + sizeof(struct _format_wire_format_1));
     format_count = rep->subformat_count;
     top_format = expand_subformat_from_rep(subrep);
     subformats = malloc(sizeof(subformats[0]) * (format_count + 1));
     master_struct_list = malloc(sizeof(master_struct_list[0]) * (format_count+2));
     for (i = 0; i < format_count; i++) {
-	UINT2 last_subrep_size = ntohs(subrep->f.f0.subformat_rep_length);
+	UINT4 last_subrep_size = ntohs(subrep->f.f1.subformat_rep_length);
+	if (subrep->f.f1.server_rep_version > 0) {
+	    last_subrep_size += (ntohs(subrep->f.f1.top_bytes_subformat_rep_length) << 16);
+	}
 	subrep = (struct _subformat_wire_format*)(((char*)subrep) + last_subrep_size);
 	subformats[i] = expand_subformat_from_rep(subrep);
 	master_struct_list[i+1].format_name = subformats[i]->format_name;
@@ -4014,6 +4186,9 @@ int *rep_length;
 	    build_server_format_rep(format);
     }
     *rep_length = ntohs(format->server_format_rep->format_rep_length);
+    if (format->server_format_rep->server_rep_version > 0) {
+	*rep_length += (ntohs(format->server_format_rep->top_bytes_format_rep_length) << 16);
+    }
     return (char*)format->server_format_rep;
 }
 

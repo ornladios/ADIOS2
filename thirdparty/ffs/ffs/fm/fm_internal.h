@@ -45,8 +45,8 @@ typedef struct _FMVarInfoStruct {
 
 typedef struct _xml_output_info *xml_output_info;
 
-struct _format_wire_format_0;
-typedef struct _format_wire_format_0 *format_rep;
+struct _format_wire_format_1;
+typedef struct _format_wire_format_1 *format_rep;
 
 typedef struct _server_ID_struct {
     int length;
@@ -131,14 +131,22 @@ typedef struct _format_server *format_server;
 
 #if SIZEOF_INT == 4
 #define INT4 int
+#define UINT4 unsigned int
 #endif
 
 #define INT2 short
 #define UINT2 unsigned short
 
-struct _field_wire_format {  /* 12 bytes total */
+struct _field_wire_format_0 {  /* 16 bytes total */
     UINT2 field_name_offset;
     UINT2 field_type_offset;
+    INT4 field_size;
+    INT4 field_offset;
+};
+
+struct _field_wire_format_1 {  /* 16 bytes total */
+    UINT4 field_name_offset;
+    UINT4 field_type_offset;
     INT4 field_size;
     INT4 field_offset;
 };
@@ -159,6 +167,15 @@ struct _format_wire_format_0 {
 /*byte 7*/    unsigned char unused2_in_format_0;
 };
 
+struct _format_wire_format_1 {
+/*byte 0*/    UINT2 format_rep_length;  /* transmitted in net byte order */
+/*byte 2*/    unsigned char record_byte_order;
+/*byte 3*/    unsigned char server_rep_version;
+/*byte 4*/    unsigned char subformat_count;
+/*byte 5*/    unsigned char recursive_flag;
+/*byte 6*/    UINT2 top_bytes_format_rep_length;  /* transmitted in net byte order */
+};
+
 struct _subformat_wire_format_0 {  /* 20 bytes for base */
 /*byte 0*/    UINT2 subformat_rep_length;  /* transmitted in net byte order */
 /*byte 2*/    unsigned char server_rep_version;
@@ -174,15 +191,35 @@ struct _subformat_wire_format_0 {  /* 20 bytes for base */
 /*byte 19*/   unsigned char alignment;
 };
 
+struct _subformat_wire_format_1 {  /* 28 bytes for base */
+/*byte 0*/    UINT2 subformat_rep_length;  /* transmitted in net byte order */
+/*byte 2*/    unsigned char server_rep_version;
+/*byte 3*/    unsigned char record_byte_order;
+/*byte 4*/    UINT4 name_offset;	/* native host byte order */
+/*byte 8*/    UINT4 field_count;
+/*byte 12*/   INT4 record_length;
+/*byte 16*/    unsigned char pointer_size;
+/*byte 17*/    unsigned char header_size;
+/*byte 18*/   UINT2 floating_point_rep;
+/*byte 20*/   UINT2 opt_info_offset;
+/*byte 22*/   unsigned char column_major_arrays;  /* false for C, true for Fortran */
+/*byte 23*/   unsigned char alignment;
+/*byte 24*/   UINT2 top_bytes_subformat_rep_length;  /* transmitted in net byte order */
+/*byte 26*/   unsigned char unused0_f1;
+/*byte 27*/   unsigned char unused1_f1;
+};
+
 struct _format_wire_format {
     union {
 	struct _format_wire_format_0 f0;
+	struct _format_wire_format_1 f1;
     }f;
 };
 
 struct _subformat_wire_format {
     union {
 	struct _subformat_wire_format_0 f0;
+	struct _subformat_wire_format_1 f1;
     }f;
 };
 
@@ -201,6 +238,14 @@ typedef struct {
     unsigned INT4 hash1;
     unsigned INT4 hash2;
 } version_2_format_ID;
+
+typedef struct {
+    unsigned char version;
+    unsigned char top_byte_rep_len;
+    unsigned INT2 rep_len;
+    unsigned INT4 hash1;
+    unsigned INT4 hash2;
+} version_3_format_ID;
 
 #define DEFAULT_FS_PORT 5347
 
@@ -262,8 +307,8 @@ extern int FFS_gen_authentication (unsigned char *outbuf);
 extern int serverAtomicRead(void *fd, void *buffer, int length);
 extern void stringify_server_ID(unsigned char *ID, char *buffer, int len);
 extern void 
-generate_format2_server_ID(server_ID_type *server_ID,
-			   struct _format_wire_format_0 *server_format_rep);
+generate_format3_server_ID(server_ID_type *server_ID,
+			   struct _format_wire_format_1 *server_format_rep);
 extern void
 add_format_to_iofile(FMContext fmc, FMFormat ioformat, int id_size, 
 		     void *id_buffer, int index);
