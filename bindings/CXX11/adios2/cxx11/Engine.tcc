@@ -264,16 +264,17 @@ void Engine::Get(const std::string &variableName,
 }
 
 template <class T>
-void Engine::Get(Variable<T> variable, T** data) const
+void Engine::Get(Variable<T> variable, T **data) const
 {
     if (m_Engine->m_EngineType != "InlineReader")
     {
-        throw std::domain_error("Get calls with T** are only supported with the InlineReader.");
+        throw std::domain_error(
+            "Get calls with T** are only supported with the InlineReader.");
     }
 
-    //std::cout << "Calling " << __func__ << " at line " << __LINE__ << "\n";
     using IOType = typename TypeInfo<T>::IOType;
-    m_Engine->Get<IOType>(*variable.m_Variable, reinterpret_cast<IOType**>(data));
+    m_Engine->Get<IOType>(*variable.m_Variable,
+                          reinterpret_cast<IOType **>(data));
     return;
 }
 

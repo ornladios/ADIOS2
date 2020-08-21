@@ -317,7 +317,6 @@ public:
     typename Variable<T>::Info *Get(Variable<T> &variable,
                                     const Mode launch = Mode::Deferred);
 
-
     /**
      * @brief Get version for block selection that accepts a variableName as
      * input.
@@ -346,7 +345,7 @@ public:
                                     const Mode launch = Mode::Deferred);
 
     template <class T>
-    void Get(core::Variable<T> &, T**) const;
+    void Get(core::Variable<T> &, T **) const;
 
     /**
      * Reader application indicates that no more data will be read from the
@@ -619,7 +618,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #define declare_template_instantiation(T)                                      \
     extern template typename Variable<T>::Span &Engine::Put(                   \
         Variable<T> &, const size_t, const T &);                               \
-    extern template void Engine::Get(Variable<T> &, T**) const;
+    extern template void Engine::Get(Variable<T> &, T **) const;
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 

@@ -882,9 +882,11 @@ TEST_F(InlineWriteRead, PointerArithmetic)
 
     size_t N = 256;
     // Test local array:
-    auto local_array = io.DefineVariable<double>("u", {}, {}, {N}, adios2::ConstantDims);
+    auto local_array =
+        io.DefineVariable<double>("u", {}, {}, {N}, adios2::ConstantDims);
     // Test global array:
-    auto global_array = io.DefineVariable<double>("v", {mpiSize*N}, {mpiRank*N}, {N}, adios2::ConstantDims);
+    auto global_array = io.DefineVariable<double>(
+        "v", {mpiSize * N}, {mpiRank * N}, {N}, adios2::ConstantDims);
     for (int64_t timeStep = 0; timeStep < 2; ++timeStep)
     {
         writer.BeginStep();
@@ -894,9 +896,9 @@ TEST_F(InlineWriteRead, PointerArithmetic)
         writer.EndStep();
 
         reader.BeginStep();
-        double* local_data = nullptr;
+        double *local_data = nullptr;
         reader.Get(local_array, &local_data);
-        double* global_data = nullptr;
+        double *global_data = nullptr;
         reader.Get(global_array, &global_data);
         // The data is valid before Endstep():
         EXPECT_EQ(sim_data.data(), local_data);
@@ -907,7 +909,6 @@ TEST_F(InlineWriteRead, PointerArithmetic)
         EXPECT_EQ(sim_data.data(), global_data);
         EXPECT_EQ(sim_data.data(), local_data);
     }
-
 }
 //******************************************************************************
 // main

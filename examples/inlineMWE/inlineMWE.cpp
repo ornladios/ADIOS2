@@ -16,15 +16,17 @@ int main(int argc, char *argv[])
     {
         writer.BeginStep();
         std::vector<double> v(N, 3.2);
-        std::cout << "Putting data at address   " << v.data() << " into inline writer.\n";
+        std::cout << "Putting data at address   " << v.data()
+                  << " into inline writer.\n";
         writer.Put(u, v.data());
         writer.EndStep();
 
         reader.BeginStep();
-        double* data = nullptr;
+        double *data = nullptr;
         reader.Get(u, &data);
-        std::cout << "Getting data from address " << data << " via inline reader\n";
+        std::cout << "Getting data from address " << data
+                  << " via inline reader\n";
         reader.EndStep();
-    } 
+    }
     return 0;
 }

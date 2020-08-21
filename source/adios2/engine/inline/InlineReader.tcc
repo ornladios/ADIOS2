@@ -44,7 +44,7 @@ inline void InlineReader::GetSyncCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-void InlineReader::Get(core::Variable<T> &variable, T** data) const
+void InlineReader::Get(core::Variable<T> &variable, T **data) const
 {
     if (m_Verbosity == 5)
     {

@@ -165,7 +165,7 @@ Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
     template typename Variable<T>::Span Engine::Put(Variable<T>, const size_t, \
                                                     const T &);                \
                                                                                \
-    template void Engine::Get<T>(Variable<T>, T**) const;                     \
+    template void Engine::Get<T>(Variable<T>, T **) const;                     \
     template typename Variable<T>::Span Engine::Put(Variable<T>);
 
 ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
