@@ -1,3 +1,23 @@
+enum DataType
+{
+    None,
+    Int8,
+    Int16,
+    Int32,
+    Int64,
+    UInt8,
+    UInt16,
+    UInt32,
+    UInt64,
+    Float,
+    Double,
+    LongDouble,
+    FloatComplex,
+    DoubleComplex,
+    String,
+    Compound
+};
+
 typedef struct _FFSWriterRec
 {
     void *Key;
@@ -5,7 +25,7 @@ typedef struct _FFSWriterRec
     size_t DataOffset;
     size_t MetaOffset;
     int DimCount;
-    char *Type;
+    int Type;
 } * FFSWriterRec;
 
 struct FFSWriterMarshalBase
@@ -35,7 +55,7 @@ typedef struct FFSVarRec
     FMFieldList *PerWriterMetaFieldDesc;
     FMFieldList *PerWriterDataFieldDesc;
     size_t DimCount;
-    char *Type;
+    int Type;
     int ElementSize;
     size_t *GlobalDims;
     size_t **PerWriterStart;

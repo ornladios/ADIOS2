@@ -185,7 +185,7 @@ void SstWriter::FFSMarshalAttributes()
             }
 
             SstFFSMarshalAttribute(m_Output, name.c_str(),
-                                   ToString(type).c_str(), sizeof(char *),
+                                   (int)type, sizeof(char *),
                                    element_count, data_addr);
         }
 #define declare_type(T)                                                        \
@@ -200,7 +200,7 @@ void SstWriter::FFSMarshalAttributes()
             data_addr = attribute.m_DataArray.data();                          \
         }                                                                      \
         SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(),             \
-                               ToString(type).c_str(), sizeof(T),              \
+                               (int)type, sizeof(T),			\
                                element_count, data_addr);                      \
     }
 

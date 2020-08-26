@@ -117,15 +117,15 @@ extern void SstReaderDefinitionLock(SstStream stream, long EffectiveTimestep);
  *  Calls that support FFS-based marshaling, source code in cp/ffs_marshal.c
  */
 typedef void *(*VarSetupUpcallFunc)(void *Reader, const char *Name,
-                                    const char *Type, void *Data);
+                                    const int Type, void *Data);
 typedef void (*AttrSetupUpcallFunc)(void *Reader, const char *Name,
-                                    const char *Type, void *Data);
+                                    const int Type, void *Data);
 typedef void *(*ArraySetupUpcallFunc)(void *Reader, const char *Name,
-                                      const char *Type, int DimsCount,
+                                      const int Type, int DimsCount,
                                       size_t *Shape, size_t *Start,
                                       size_t *Count);
 typedef void (*ArrayBlocksInfoUpcallFunc)(void *Reader, void *Variable,
-                                          const char *Type, int WriterRank,
+                                          const int Type, int WriterRank,
                                           int DimsCount, size_t *Shape,
                                           size_t *Start, size_t *Count);
 extern void SstReaderInitFFSCallback(
@@ -148,11 +148,11 @@ SstWriterInitMetadataCallback(SstStream stream, void *Writer,
                               FreeMetadataUpcallFunc FreeCallback);
 
 extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
-                          const char *Type, size_t ElemSize, size_t DimCount,
+                          const int Type, size_t ElemSize, size_t DimCount,
                           const size_t *Shape, const size_t *Count,
                           const size_t *Offsets, const void *data);
 extern void SstFFSMarshalAttribute(SstStream Stream, const char *Name,
-                                   const char *Type, size_t ElemSize,
+                                   const int Type, size_t ElemSize,
                                    size_t ElemCount, const void *data);
 /* GetDeferred calls return true if need later sync */
 extern int SstFFSGetDeferred(SstStream Stream, void *Variable, const char *Name,
