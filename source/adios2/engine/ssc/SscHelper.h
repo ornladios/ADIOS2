@@ -14,8 +14,8 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
 #include "nlohmann/json.hpp"
-#include <map>
 #include <mpi.h>
+#include <unordered_map>
 #include <vector>
 
 namespace adios2
@@ -40,7 +40,7 @@ struct BlockInfo
 };
 using BlockVec = std::vector<BlockInfo>;
 using BlockVecVec = std::vector<BlockVec>;
-using RankPosMap = std::map<int, std::pair<size_t, size_t>>;
+using RankPosMap = std::unordered_map<int, std::pair<size_t, size_t>>;
 using MpiInfo = std::vector<std::vector<int>>;
 
 void PrintDims(const Dims &dims, const std::string &label = std::string());
