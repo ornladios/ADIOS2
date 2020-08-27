@@ -56,8 +56,8 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             Count = variable.m_Count.data();
         }
         SstFFSMarshal(m_Output, (void *)&variable, variable.m_Name.c_str(),
-        	     (int) variable.m_Type, variable.m_ElementSize,
-                      DimCount, Shape, Count, Start, values);
+                      (int)variable.m_Type, variable.m_ElementSize, DimCount,
+                      Shape, Count, Start, values);
     }
     else if (Params.MarshalMethod == SstMarshalBP)
     {
