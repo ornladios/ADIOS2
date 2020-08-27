@@ -14,53 +14,53 @@
 #include "ffs_marshal.h"
 #include "zfp.h"
 
-static zfp_type GetZFPType(const char *Type)
+static zfp_type GetZFPType(int Type)
 {
-    if (strcmp(Type, "int") == 0)
+    if (Type == Int32)
     {
         return zfp_type_int32;
     }
-    else if (strcmp(Type, "unsigned int") == 0)
+    else if (Type == UInt32)
     {
         return zfp_type_int32;
     }
-    else if (strcmp(Type, "long int") == 0)
+    else if (Type == Int64)
     {
         return zfp_type_int64;
     }
-    else if (strcmp(Type, "long long int") == 0)
+    else if (Type == Int64)
     {
         return zfp_type_int64;
     }
-    else if (strcmp(Type, "unsigned long int") == 0)
+    else if (Type == UInt64)
     {
         return zfp_type_int64;
     }
-    else if (strcmp(Type, "unsigned long long int") == 0)
+    else if (Type == UInt64)
     {
         return zfp_type_int64;
     }
-    else if (strcmp(Type, "float") == 0)
+    else if (Type == Float)
     {
         return zfp_type_float;
     }
-    else if (strcmp(Type, "double") == 0)
+    else if (Type == Double)
     {
         return zfp_type_double;
     }
-    else if (strcmp(Type, "long double") == 0)
+    else if (Type == Double)
     {
         return zfp_type_double;
     }
     return zfp_type_none;
 }
 
-extern int ZFPcompressionPossible(const char *Type, int DimCount)
+extern int ZFPcompressionPossible(const int Type, int DimCount)
 {
     return ((GetZFPType(Type) != zfp_type_none) && (DimCount < 4));
 }
 
-static zfp_field *GetZFPField(void *Data, const size_t DimCount, char *Type,
+static zfp_field *GetZFPField(void *Data, const size_t DimCount, int Type,
                               const size_t *Dimensions)
 {
     zfp_type zfpType = GetZFPType(Type);
@@ -94,8 +94,7 @@ static atom_t ZFPToleranceAtom = -1;
 static atom_t ZFPRateAtom = -1;
 static atom_t ZFPPrecisionAtom = -1;
 
-zfp_stream *GetZFPStream(const size_t DimCount, char *Type,
-                         attr_list Parameters)
+zfp_stream *GetZFPStream(const size_t DimCount, int Type, attr_list Parameters)
 {
 
     zfp_stream *zstream = zfp_stream_open(NULL);
@@ -135,8 +134,8 @@ zfp_stream *GetZFPStream(const size_t DimCount, char *Type,
     return zstream;
 }
 
-extern char *FFS_ZFPCompress(SstStream Stream, const size_t DimCount,
-                             char *Type, void *Data, const size_t *Count,
+extern char *FFS_ZFPCompress(SstStream Stream, const size_t DimCount, int Type,
+                             void *Data, const size_t *Count,
                              size_t *ByteCountP)
 {
     struct FFSWriterMarshalBase *Info = Stream->WriterMarshalData;
@@ -158,7 +157,7 @@ extern char *FFS_ZFPCompress(SstStream Stream, const size_t DimCount,
     return bufferOut;
 }
 
-void *FFS_ZFPDecompress(SstStream Stream, const size_t DimCount, char *Type,
+void *FFS_ZFPDecompress(SstStream Stream, const size_t DimCount, int Type,
                         void *bufferIn, const size_t sizeIn,
                         const size_t *Dimensions, attr_list Parameters)
 {

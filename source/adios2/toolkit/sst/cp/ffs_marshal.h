@@ -112,10 +112,10 @@ struct FFSReaderMarshalBase
     FFSReaderPerWriterRec *WriterInfo;
 };
 
-extern char *FFS_ZFPCompress(SstStream Stream, const size_t DimCount,
-                             char *Type, void *Data, const size_t *Count,
+extern char *FFS_ZFPCompress(SstStream Stream, const size_t DimCount, int Type,
+                             void *Data, const size_t *Count,
                              size_t *ByteCountP);
 extern void *FFS_ZFPDecompress(SstStream Stream, const size_t DimCount,
-                               char *Type, void *bufferIn, const size_t sizeIn,
+                               int Type, void *bufferIn, const size_t sizeIn,
                                const size_t *Dimensions, attr_list Parameters);
-extern int ZFPcompressionPossible(const char *Type, const int DimCount);
+extern int ZFPcompressionPossible(const int Type, const int DimCount);
