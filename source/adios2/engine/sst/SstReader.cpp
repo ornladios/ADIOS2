@@ -51,14 +51,15 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     SstReaderGetParams(m_Input, &m_WriterMarshalMethod);
 
     auto varFFSCallback = [](void *reader, const char *variableName,
-                             const char *type, void *data) {
-        adios2::DataType Type(helper::GetDataTypeFromString(type));
+                             const int type, void *data) {
+        adios2::DataType Type = (adios2::DataType)type;
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
         if (Type == adios2::DataType::Compound)
         {
             return (void *)NULL;
         }
+
 #define declare_type(T)                                                        \
     else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
@@ -76,16 +77,16 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     };
 
     auto attrFFSCallback = [](void *reader, const char *attrName,
-                              const char *type, void *data) {
+                              const int type, void *data) {
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
+        adios2::DataType Type = (adios2::DataType)type;
         if (attrName == NULL)
         {
             // if attrName is NULL, prepare for attr reinstallation
             Reader->m_IO.RemoveAllAttributes();
             return;
         }
-        adios2::DataType Type(helper::GetDataTypeFromString(type));
         try
         {
             if (Type == adios2::DataType::Compound)
@@ -120,12 +121,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     };
 
     auto arrayFFSCallback = [](void *reader, const char *variableName,
-                               const char *type, int DimCount, size_t *Shape,
+                               const int type, int DimCount, size_t *Shape,
                                size_t *Start, size_t *Count) {
         std::vector<size_t> VecShape;
         std::vector<size_t> VecStart;
         std::vector<size_t> VecCount;
-        adios2::DataType Type(helper::GetDataTypeFromString(type));
+        adios2::DataType Type = (adios2::DataType)type;
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
         /*
@@ -169,12 +170,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     };
 
     auto arrayBlocksInfoCallback =
-        [](void *reader, void *variable, const char *type, int WriterRank,
+        [](void *reader, void *variable, const int type, int WriterRank,
            int DimCount, size_t *Shape, size_t *Start, size_t *Count) {
             std::vector<size_t> VecShape;
             std::vector<size_t> VecStart;
             std::vector<size_t> VecCount;
-            adios2::DataType Type(helper::GetDataTypeFromString(type));
+            adios2::DataType Type = (adios2::DataType)type;
             class SstReader::SstReader *Reader =
                 reinterpret_cast<class SstReader::SstReader *>(reader);
             size_t currentStep = SstCurrentStep(Reader->m_Input);

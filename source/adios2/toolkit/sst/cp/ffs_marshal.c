@@ -48,233 +48,147 @@ static char *ConcatName(const char *base_name, const char *postfix)
     return Ret;
 }
 
-static char *BuildVarName(const char *base_name, const char *type,
+static char *BuildVarName(const char *base_name, const int type,
                           const int element_size)
 {
-    int Len = strlen(base_name) + strlen(type) + strlen("SST_") + 16;
+    int Len = strlen(base_name) + 2 + strlen("SST_") + 16;
     char *Ret = malloc(Len);
-    sprintf(Ret, "SST%d_%d_", element_size, (int)strlen(type));
-    strcat(Ret, type);
-    strcat(Ret, "_");
+    sprintf(Ret, "SST%d_%d_", element_size, type);
     strcat(Ret, base_name);
     return Ret;
 }
 
-static void BreakdownVarName(const char *Name, char **base_name_p,
-                             char **type_p, int *element_size_p)
+static void BreakdownVarName(const char *Name, char **base_name_p, int *type_p,
+                             int *element_size_p)
 {
-    int TypeLen;
+    int Type;
     int ElementSize;
-    const char *NameStart;
-    char *TypeStart = strchr(Name, '_') + 1;
-    TypeStart = strchr(TypeStart, '_') + 1;
-    sscanf(Name, "SST%d_%d_", &ElementSize, &TypeLen);
-    NameStart = TypeStart + TypeLen + 1;
+    const char *NameStart = strchr(strchr(Name, '_') + 1, '_') + 1;
+    sscanf(Name, "SST%d_%d_", &ElementSize, &Type);
     *element_size_p = ElementSize;
-    *type_p = malloc(TypeLen + 1);
-    strncpy(*type_p, TypeStart, TypeLen);
-    (*type_p)[TypeLen] = 0;
+    *type_p = Type;
     *base_name_p = strdup(NameStart);
 }
 
-static char *BuildArrayName(const char *base_name, const char *type,
+static char *BuildArrayName(const char *base_name, const int type,
                             const int element_size)
 {
-    int Len = strlen(base_name) + strlen(type) + strlen("SST_") + 16;
+    int Len = strlen(base_name) + 3 + strlen("SST_") + 16;
     char *Ret = malloc(Len);
-    sprintf(Ret, "SST%d_%d_", element_size, (int)strlen(type));
-    strcat(Ret, type);
-    strcat(Ret, "_");
+    sprintf(Ret, "SST%d_%d_", element_size, type);
     strcat(Ret, base_name);
     strcat(Ret, "Dims");
     return Ret;
 }
 
 static void BreakdownArrayName(const char *Name, char **base_name_p,
-                               char **type_p, int *element_size_p)
+                               int *type_p, int *element_size_p)
 {
-    int TypeLen;
+    int Type;
     int ElementSize;
-    const char *NameStart;
-    char *TypeStart = strchr(Name, '_') + 1;
-    TypeStart = strchr(TypeStart, '_') + 1;
-    sscanf(Name, "SST%d_%d_", &ElementSize, &TypeLen);
-    NameStart = TypeStart + TypeLen + 1;
+    const char *NameStart = strchr(strchr(Name, '_') + 1, '_') + 1;
+    sscanf(Name, "SST%d_%d_", &ElementSize, &Type);
     *element_size_p = ElementSize;
-    *type_p = malloc(TypeLen + 1);
-    strncpy(*type_p, TypeStart, TypeLen);
-    (*type_p)[TypeLen] = 0;
+    *type_p = Type;
     *base_name_p = strdup(NameStart);
     (*base_name_p)[strlen(*base_name_p) - 4] = 0; // kill "Dims"
 }
 
-static char *TranslateADIOS2Type2FFS(const char *Type)
+static char *TranslateADIOS2Type2FFS(const int Type)
 {
-    if (strcmp(Type, "char") == 0)
+    switch (Type)
     {
+    case Int8:
+    case Int16:
+    case Int32:
+    case Int64:
         return strdup("integer");
-    }
-    else if (strcmp(Type, "signed char") == 0)
-    {
-        return strdup("integer");
-    }
-    else if (strcmp(Type, "unsigned char") == 0)
-    {
+        break;
+    case UInt8:
+    case UInt16:
+    case UInt32:
+    case UInt64:
         return strdup("unsigned integer");
-    }
-    else if (strcmp(Type, "short") == 0)
-    {
-        return strdup("integer");
-    }
-    else if (strcmp(Type, "unsigned short") == 0)
-    {
-        return strdup("unsigned integer");
-    }
-    else if (strcmp(Type, "int") == 0)
-    {
-        return strdup("integer");
-    }
-    else if (strcmp(Type, "unsigned int") == 0)
-    {
-        return strdup("unsigned integer");
-    }
-    else if (strcmp(Type, "long int") == 0)
-    {
-        return strdup("integer");
-    }
-    else if (strcmp(Type, "long long int") == 0)
-    {
-        return strdup("integer");
-    }
-    else if (strcmp(Type, "unsigned long int") == 0)
-    {
-        return strdup("unsigned integer");
-    }
-    else if (strcmp(Type, "unsigned long long int") == 0)
-    {
-        return strdup("unsigned integer");
-    }
-    else if (strcmp(Type, "float") == 0)
-    {
+        break;
+    case Float:
+    case Double:
         return strdup("float");
-    }
-    else if (strcmp(Type, "double") == 0)
-    {
-        return strdup("float");
-    }
-    else if (strcmp(Type, "long double") == 0)
-    {
-        return strdup("float");
-    }
-    else if (strcmp(Type, "float complex") == 0)
-    {
+        break;
+    case FloatComplex:
         return strdup("complex4");
-    }
-    else if (strcmp(Type, "double complex") == 0)
-    {
+    case DoubleComplex:
         return strdup("complex8");
+    case String:
+        return strdup("string");
     }
-    else if (strcmp(Type, "int8_t") == 0)
-    {
-        return strdup("integer");
-    }
-    else if (strcmp(Type, "int16_t") == 0)
-    {
-        return strdup("integer");
-    }
-    else if (strcmp(Type, "int32_t") == 0)
-    {
-        return strdup("integer");
-    }
-    else if (strcmp(Type, "int64_t") == 0)
-    {
-        return strdup("integer");
-    }
-    else if (strcmp(Type, "uint8_t") == 0)
-    {
-        return strdup("unsigned integer");
-    }
-    else if (strcmp(Type, "uint16_t") == 0)
-    {
-        return strdup("unsigned integer");
-    }
-    else if (strcmp(Type, "uint32_t") == 0)
-    {
-        return strdup("unsigned integer");
-    }
-    else if (strcmp(Type, "uint64_t") == 0)
-    {
-        return strdup("unsigned integer");
-    }
-
-    return strdup(Type);
+    return 0;
 }
 
-static char *TranslateFFSType2ADIOS(const char *Type, int size)
+static int TranslateFFSType2ADIOS(const char *Type, int size)
 {
     if (strcmp(Type, "integer") == 0)
     {
         if (size == 1)
         {
-            return strdup("int8_t");
+            return Int8;
         }
         else if (size == 2)
         {
-            return strdup("int16_t");
+            return Int16;
         }
         else if (size == 4)
         {
-            return strdup("int32_t");
+            return Int32;
         }
         else if (size == 8)
         {
-            return strdup("int64_t");
+            return Int64;
         }
     }
     else if (strcmp(Type, "unsigned integer") == 0)
     {
         if (size == 1)
         {
-            return strdup("uint8_t");
+            return UInt8;
         }
         else if (size == 2)
         {
-            return strdup("uint16_t");
+            return UInt16;
         }
         else if (size == 4)
         {
-            return strdup("uint32_t");
+            return UInt32;
         }
         else if (size == 8)
         {
-            return strdup("uint64_t");
+            return UInt64;
         }
     }
     else if ((strcmp(Type, "double") == 0) || (strcmp(Type, "float") == 0))
     {
         if (size == sizeof(float))
         {
-            return strdup("float");
+            return Float;
         }
         else if ((sizeof(long double) != sizeof(double)) &&
                  (size == sizeof(long double)))
         {
-            return strdup("long double");
+            return Double;
         }
         else
         {
-            return strdup("double");
+            return Double;
         }
     }
     else if (strcmp(Type, "complex4") == 0)
     {
-        return strdup("float complex");
+        return FloatComplex;
     }
     else if (strcmp(Type, "complex8") == 0)
     {
-        return strdup("double complex");
+        return DoubleComplex;
     }
-    return strdup(Type);
+    return 0;
 }
 
 static void RecalcMarshalStorageSize(SstStream Stream)
@@ -364,7 +278,7 @@ static void AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name,
 }
 
 static void AddField(FMFieldList *FieldP, int *CountP, const char *Name,
-                     const char *Type, int ElementSize)
+                     const int Type, int ElementSize)
 {
     char *TransType = TranslateADIOS2Type2FFS(Type);
     AddSimpleField(FieldP, CountP, Name, TransType, ElementSize);
@@ -372,7 +286,7 @@ static void AddField(FMFieldList *FieldP, int *CountP, const char *Name,
 }
 
 static void AddFixedArrayField(FMFieldList *FieldP, int *CountP,
-                               const char *Name, const char *Type,
+                               const char *Name, const int Type,
                                int ElementSize, int DimCount)
 {
     const char *TransType = TranslateADIOS2Type2FFS(Type);
@@ -384,7 +298,7 @@ static void AddFixedArrayField(FMFieldList *FieldP, int *CountP,
     (*FieldP)[*CountP - 1].field_size = ElementSize;
 }
 static void AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
-                             const char *Type, int ElementSize, char *SizeField)
+                             const int Type, int ElementSize, char *SizeField)
 {
     char *TransType = TranslateADIOS2Type2FFS(Type);
     char *TypeWithArray = malloc(strlen(TransType) + strlen(SizeField) + 8);
@@ -444,7 +358,7 @@ extern void FFSFreeMarshalData(SstStream Stream)
 
         for (int i = 0; i < Info->RecCount; i++)
         {
-            free(Info->RecList[i].Type);
+            //            free(Info->RecList[i].Type);
         }
         if (Info->RecList)
             free(Info->RecList);
@@ -507,8 +421,8 @@ extern void FFSFreeMarshalData(SstStream Stream)
 #endif
 
 static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
-                                    const char *Name, const char *Type,
-                                    size_t ElemSize, size_t DimCount)
+                                    const char *Name, int Type, size_t ElemSize,
+                                    size_t DimCount)
 {
     if (!Stream->WriterMarshalData)
     {
@@ -522,7 +436,7 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
     Rec->Key = Variable;
     Rec->FieldID = Info->RecCount;
     Rec->DimCount = DimCount;
-    Rec->Type = strdup(Type);
+    Rec->Type = Type;
     if (DimCount == 0)
     {
         // simple field, only add base value FMField to metadata
@@ -542,7 +456,7 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
         char *ArrayName = BuildArrayName(Name, Type, ElemSize);
-        AddField(&Info->MetaFields, &Info->MetaFieldCount, ArrayName, "integer",
+        AddField(&Info->MetaFields, &Info->MetaFieldCount, ArrayName, Int64,
                  sizeof(size_t));
         free(ArrayName);
         Rec->MetaOffset =
@@ -551,11 +465,11 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
         char *CountName = ConcatName(Name, "Count");
         char *OffsetsName = ConcatName(Name, "Offsets");
         AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount, ShapeName,
-                           "integer", sizeof(size_t), DimCount);
+                           Int64, sizeof(size_t), DimCount);
         AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount, CountName,
-                           "integer", sizeof(size_t), DimCount);
+                           Int64, sizeof(size_t), DimCount);
         AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
-                           OffsetsName, "integer", sizeof(size_t), DimCount);
+                           OffsetsName, Int64, sizeof(size_t), DimCount);
         free(ShapeName);
         free(CountName);
         free(OffsetsName);
@@ -564,13 +478,13 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
         if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) &&
             ZFPcompressionPossible(Type, DimCount))
         {
-            Type = "char";
+            Type = Int8;
             ElemSize = 1;
         }
         // To Data, add FMFields for ElemCount and Array matching _ArrayRec
         char *ElemCountName = ConcatName(Name, "ElemCount");
-        AddField(&Info->DataFields, &Info->DataFieldCount, ElemCountName,
-                 "integer", sizeof(size_t));
+        AddField(&Info->DataFields, &Info->DataFieldCount, ElemCountName, Int64,
+                 sizeof(size_t));
         Rec->DataOffset =
             Info->DataFields[Info->DataFieldCount - 1].field_offset;
         char *SstName = ConcatName(Name, "");
@@ -1389,7 +1303,7 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 size_t *SelOffset = Reqs->Start;
                 size_t *SelOffsetFree = NULL;
                 size_t *SelSize = Reqs->Count;
-                char *Type = Reqs->VarRec->Type;
+                int Type = Reqs->VarRec->Type;
                 void *IncomingData = Reqs->VarRec->PerWriterIncomingData[i];
                 int FreeIncoming = 0;
 
@@ -1671,7 +1585,7 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
 static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
 {
     static int DumpMetadata = -1;
-    Stream->AttrSetupUpcall(Stream->SetupUpcallReader, NULL, NULL, NULL);
+    Stream->AttrSetupUpcall(Stream->SetupUpcallReader, NULL, 0, NULL);
     for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize;
          WriterRank++)
     {
@@ -1736,13 +1650,12 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
             char *FieldName;
             void *field_data = (char *)BaseData + FieldList[i].field_offset;
 
-            char *Type;
+            int Type;
             int ElemSize;
             BreakdownVarName(FieldList[i].field_name, &FieldName, &Type,
                              &ElemSize);
             Stream->AttrSetupUpcall(Stream->SetupUpcallReader, FieldName, Type,
                                     field_data);
-            free(Type);
             free(FieldName);
             i++;
         }
@@ -1801,8 +1714,6 @@ extern void FFSClearTimestepData(SstStream Stream)
         free(Info->VarList[i].PerWriterCounts);
         free(Info->VarList[i].PerWriterIncomingData);
         free(Info->VarList[i].PerWriterIncomingSize);
-        if (Info->VarList[i].Type)
-            free(Info->VarList[i].Type);
     }
     Info->VarCount = 0;
 }
@@ -1917,7 +1828,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
         {
             MetaArrayRec *meta_base = field_data;
             char *ArrayName;
-            char *Type;
+            int Type;
             FFSVarRec VarRec = NULL;
             int ElementSize;
             if (!FFSBitfieldTest(BaseData, j))
@@ -1986,13 +1897,12 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             }
             if (!VarRec)
             {
-                char *Type = TranslateFFSType2ADIOS(FieldList[i].field_type,
-                                                    FieldList[i].field_size);
+                int Type = TranslateFFSType2ADIOS(FieldList[i].field_type,
+                                                  FieldList[i].field_size);
                 VarRec = CreateVarRec(Stream, FieldName);
                 VarRec->DimCount = 0;
                 VarRec->Variable = Stream->VarSetupUpcall(
                     Stream->SetupUpcallReader, FieldName, Type, field_data);
-                free(Type);
             }
             VarRec->PerWriterMetaFieldDesc[WriterRank] = &FieldList[i];
             VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
@@ -2073,7 +1983,7 @@ extern void SstFFSSetZFPParams(SstStream Stream, attr_list Attrs)
 }
 
 extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
-                          const char *Type, size_t ElemSize, size_t DimCount,
+                          const int Type, size_t ElemSize, size_t DimCount,
                           const size_t *Shape, const size_t *Count,
                           const size_t *Offsets, const void *Data)
 {
@@ -2136,20 +2046,20 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
 }
 
 extern void SstFFSMarshalAttribute(SstStream Stream, const char *Name,
-                                   const char *Type, size_t ElemSize,
+                                   const int Type, size_t ElemSize,
                                    size_t ElemCount, const void *Data)
 {
 
     struct FFSWriterMarshalBase *Info;
     Info = (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
-    const char *String = NULL;
+    const char *AttrString = NULL;
     const char *DataAddress = Data;
 
-    if (strcmp(Type, "string") == 0)
+    if (Type == String)
     {
         ElemSize = sizeof(char *);
-        String = Data;
-        DataAddress = (const char *)&String;
+        AttrString = Data;
+        DataAddress = (const char *)&AttrString;
     }
     if (ElemCount == -1)
     {

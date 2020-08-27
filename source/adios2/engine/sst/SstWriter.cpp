@@ -184,9 +184,8 @@ void SstWriter::FFSMarshalAttributes()
                 //
             }
 
-            SstFFSMarshalAttribute(m_Output, name.c_str(),
-                                   ToString(type).c_str(), sizeof(char *),
-                                   element_count, data_addr);
+            SstFFSMarshalAttribute(m_Output, name.c_str(), (int)type,
+                                   sizeof(char *), element_count, data_addr);
         }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
@@ -199,9 +198,8 @@ void SstWriter::FFSMarshalAttributes()
             element_count = attribute.m_Elements;                              \
             data_addr = attribute.m_DataArray.data();                          \
         }                                                                      \
-        SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(),             \
-                               ToString(type).c_str(), sizeof(T),              \
-                               element_count, data_addr);                      \
+        SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(), (int)type,  \
+                               sizeof(T), element_count, data_addr);           \
     }
 
         ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
