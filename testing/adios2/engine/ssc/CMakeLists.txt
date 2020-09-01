@@ -9,6 +9,9 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(Base MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBase.MPI "" TRUE)
 
+  gtest_add_tests_helper(LockBeforeEndStep MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscLockBeforeEndStep.MPI "" TRUE)
+
   gtest_add_tests_helper(OnlyOneStep MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOnlyOneStep.MPI "" TRUE)
 
