@@ -251,7 +251,7 @@ TEST_F(SscEngineTest, TestSscBaseUnlocked)
     Dims shape = {10, (size_t)mpiSize * 2};
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
-    size_t steps = 100;
+    size_t steps = 10;
 
     if (mpiGroup == 0)
     {
