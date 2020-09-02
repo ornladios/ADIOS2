@@ -578,7 +578,7 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
                 m_MDFileAbsolutePos = m_MDFileAlreadyReadSize;
                 m_MDFileAlreadyReadSize = expectedMinFileSize;
 
-                m_MDIndexFileAlreadyReadSize = idxFileSize;
+                m_MDIndexFileAlreadyReadSize += newIdxSize;
 
                 sizes[0] = newIdxSize;
                 sizes[1] = m_MDFileAlreadyReadSize;
