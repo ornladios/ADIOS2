@@ -13,6 +13,8 @@
 #include <chrono>
 #include <cstdio>
 #include <fstream>
+#include <sstream>
+#include <iostream>
 #include <thread>
 #include <unordered_set>
 
@@ -25,9 +27,9 @@ void HandshakeComm(const std::string &filename, const char mode,
                    const int timeoutSeconds, MPI_Comm localComm,
                    MPI_Group &streamGroup, MPI_Group &writerGroup,
                    MPI_Group &readerGroup, MPI_Comm &streamComm,
-                   MPI_Comm &writerComm, MPI_Comm &readerComm)
+                   MPI_Comm &writerComm, MPI_Comm &readerComm, int verbosity)
 {
-    auto appRankMaps = HandshakeRank(filename, mode, timeoutSeconds, localComm);
+    auto appRankMaps = HandshakeRank(filename, mode, timeoutSeconds, localComm, verbosity);
     MPI_Group worldGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
     MPI_Group_incl(worldGroup, static_cast<int>(appRankMaps[0].size()),
@@ -50,7 +52,7 @@ void HandshakeComm(const std::string &filename, const char mode,
 const std::vector<std::vector<int>> HandshakeRank(const std::string &filename,
                                                   const char mode,
                                                   const int timeoutSeconds,
-                                                  MPI_Comm localComm)
+                                                  MPI_Comm localComm, int verbosity)
 {
     std::vector<std::vector<int>> ret(3);
 
@@ -209,6 +211,24 @@ const std::vector<std::vector<int>> HandshakeRank(const std::string &filename,
     {
         MPI_Bcast(ret[i].data(), static_cast<int>(ret[i].size()), MPI_INT, 0,
                   localComm);
+    }
+
+    if(verbosity >=5)
+    {
+        std::stringstream output;
+        output << "World Rank " << worldRank << ": " << std::endl;
+        int s =0;
+        for(const auto &i : ret)
+        {
+            output << "    " << s << ": ";
+            for(const auto &j : i)
+            {
+                output << j << ", ";
+            }
+            output << std::endl;
+            ++s;
+        }
+        std::cout << output.str();
     }
 
     return ret;

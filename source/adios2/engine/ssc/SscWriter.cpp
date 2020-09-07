@@ -196,7 +196,7 @@ void SscWriter::SyncMpiPattern()
 
     helper::HandshakeComm(m_Name, 'w', m_OpenTimeoutSecs, CommAsMPI(m_Comm),
                           streamGroup, writerGroup, m_MpiAllReadersGroup,
-                          m_StreamComm, writerComm, readerComm);
+                          m_StreamComm, writerComm, readerComm, m_Verbosity);
 }
 
 void SscWriter::SyncWritePattern(bool finalStep)
@@ -368,6 +368,12 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void SscWriter::DoClose(const int transportIndex)
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "SscWriter::DoClose, World Rank " << m_StreamRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
+    }
 
     if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
     {
