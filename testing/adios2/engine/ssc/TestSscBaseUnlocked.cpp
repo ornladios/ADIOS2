@@ -192,10 +192,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             ASSERT_EQ(stringVar.Max(),
                       "sample string sample string sample string");
 
-            int i;
-            engine.Get(scalarInt, i);
-            ASSERT_EQ(i, currentStep);
-
             VerifyData(myChars.data(), currentStep, start, count, shape,
                        mpiRank);
             VerifyData(myUChars.data(), currentStep, start, count, shape,
