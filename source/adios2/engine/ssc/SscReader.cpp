@@ -237,7 +237,6 @@ void SscReader::EndStep()
     }
 
     m_StepBegun = false;
-
 }
 
 // PRIVATE
@@ -528,7 +527,7 @@ void SscReader::DoClose(const int transportIndex)
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
 
-    if(!m_StepBegun)
+    if (!m_StepBegun)
     {
         BeginStep();
     }

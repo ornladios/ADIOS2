@@ -86,7 +86,7 @@ private:
     void CalculatePosition(ssc::BlockVecVec &mapVec,
                            ssc::RankPosMap &allOverlapRanks);
 
-    int m_Verbosity = 10;
+    int m_Verbosity = 0;
     int m_OpenTimeoutSecs = 10;
 };
 
