@@ -50,6 +50,8 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 
     ++m_CurrentStep;
 
+    m_StepBegun = true;
+
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::BeginStep, World Rank " << m_StreamRank
@@ -233,6 +235,9 @@ void SscReader::EndStep()
             SyncReadPattern();
         }
     }
+
+    m_StepBegun = false;
+
 }
 
 // PRIVATE
@@ -522,6 +527,12 @@ void SscReader::DoClose(const int transportIndex)
         std::cout << "SscReader::DoClose, World Rank " << m_StreamRank
                   << ", Reader Rank " << m_ReaderRank << std::endl;
     }
+
+    if(!m_StepBegun)
+    {
+        BeginStep();
+    }
+
     if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
     {
         MPI_Win_free(&m_MpiWin);
