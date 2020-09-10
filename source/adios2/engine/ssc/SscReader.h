@@ -41,6 +41,7 @@ public:
 
 private:
     int64_t m_CurrentStep = -1;
+    bool m_StepBegun = false;
 
     ssc::BlockVecVec m_GlobalWritePattern;
     ssc::BlockVec m_LocalReadPattern;
