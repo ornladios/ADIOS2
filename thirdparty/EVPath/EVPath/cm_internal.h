@@ -136,6 +136,7 @@ typedef struct _CManager {
 
     func_entry *shutdown_functions;
     CMperf_upcall perf_upcall;
+    CMUnregCMHandler unregistered_format_handler;
 
     struct _event_path_data *evp;
     FILE * CMTrace_file;
@@ -566,3 +567,6 @@ extern void wait_for_pending_write(CMConnection conn);
 extern int
 INT_CMinstall_pull_schedule(CManager cm, struct timeval *base_time, 
 			    struct timeval *period, CMavail_period_ptr avail);
+extern void
+INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler);
+
