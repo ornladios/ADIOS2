@@ -135,6 +135,52 @@ void HDF5Common::ParseParameters(core::IO &io)
     }
 }
 
+void HDF5Common::Append(const std::string &name, helper::Comm const &comm)
+{
+    m_PropertyListId = H5Pcreate(H5P_FILE_ACCESS);
+
+    if (MPI_API const *mpi = GetHDF5Common_MPI_API())
+    {
+        if (mpi && mpi->init(comm, m_PropertyListId, &m_CommRank, &m_CommSize))
+        {
+            m_MPI = mpi;
+        }
+    }
+
+    m_FileId = H5Fopen(name.c_str(), H5F_ACC_RDWR, m_PropertyListId);
+    H5Pclose(m_PropertyListId);
+
+    std::string ts0;
+    StaticGetAdiosStepString(ts0, 0);
+
+    if (m_FileId >= 0)
+    {
+        if (H5Lexists(m_FileId, ts0.c_str(), H5P_DEFAULT) != 0)
+        {
+            m_IsGeneratedByAdios = true;
+        }
+        if (!m_IsGeneratedByAdios)
+            throw std::ios_base::failure(
+                "HDF5Engine Append error. Likely no such file." + name);
+
+        GetNumAdiosSteps(); // read how many steps exists in this file
+
+        if (0 == m_NumAdiosSteps)
+            throw std::ios_base::failure(
+                "HDF5Engine Append error. No valid steps found in " + name);
+        if (1 == m_NumAdiosSteps)
+            m_GroupId = H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT);
+        else
+            SetAdiosStep(m_NumAdiosSteps - 1);
+
+        m_WriteMode = true;
+        Advance();
+    }
+    else
+        throw std::ios_base::failure(
+            "HDF5Engine Append error. Likely no such file." + name);
+}
+
 void HDF5Common::Init(const std::string &name, helper::Comm const &comm,
                       bool toWrite)
 {
@@ -204,9 +250,13 @@ void HDF5Common::WriteAdiosSteps()
     }
 
     hid_t s = H5Screate(H5S_SCALAR);
-    hid_t attr =
-        H5Acreate(m_FileId, ATTRNAME_NUM_STEPS.c_str(),
-                  /*"NumSteps",*/ H5T_NATIVE_UINT, s, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t attr = H5Aexists(m_FileId, ATTRNAME_NUM_STEPS.c_str());
+    if (0 == attr)
+        attr = H5Acreate(m_FileId, ATTRNAME_NUM_STEPS.c_str(), H5T_NATIVE_UINT,
+                         s, H5P_DEFAULT, H5P_DEFAULT);
+    else
+        attr = H5Aopen(m_FileId, ATTRNAME_NUM_STEPS.c_str(), H5P_DEFAULT);
+
     unsigned int totalAdiosSteps = m_CurrentAdiosStep + 1;
 
     if (m_GroupId < 0)
