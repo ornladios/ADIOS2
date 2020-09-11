@@ -2552,7 +2552,11 @@ timeout_conn(CManager cm, void *client_data)
      local_format = FFS_target_from_encode(conn->cm->FFScontext, data_buffer);
      original_format = FFSTypeHandle_from_encode(conn->cm->FFScontext, data_buffer);
      if (local_format == NULL) {
-	 fprintf(stderr, "invalid format in incoming buffer\n");
+	 if (conn->cm->unregistered_format_handler) {
+	     conn->cm->unregistered_format_handler(conn, name_of_FMformat(FMFormat_of_original(original_format)));
+	 } else {
+	     fprintf(stderr, "No conversion found for incoming CM message\n");
+	 }
 	 return 0;
      }
      CMtrace_out(cm, CMDataVerbose, "CM - Receiving record of type %s, FFSformat %p\n", 
@@ -2715,6 +2719,12 @@ timeout_conn(CManager cm, void *client_data)
 	 }
      }
  }
+
+extern void
+INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
+{
+    cm->unregistered_format_handler = handler;
+}
 
  extern int
  INT_CMwrite(CMConnection conn, CMFormat format, void *data)

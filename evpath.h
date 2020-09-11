@@ -615,6 +615,16 @@ extern void
 CMregister_non_CM_message_handler (int header, CMNonCMHandler handler);
 
 /*!
+ * register a handler for CM messages that don't match registered handlers.
+ *
+ */
+typedef void (*CMUnregCMHandler) (CMConnection conn, char *format_name);
+
+/*NOLOCK*/
+extern void
+CMregister_invalid_message_handler (CManager cm, CMUnregCMHandler handler);
+
+/*!
  * return the pointer to the static transport services structure.
  *
  * All transports share a set of basic services provided by CM, whose function
