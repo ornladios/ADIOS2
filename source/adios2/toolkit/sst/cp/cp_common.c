@@ -1318,6 +1318,18 @@ extern char *CP_GetContactString(SstStream Stream, attr_list DPAttrs)
     return ret;
 }
 
+static void CP_versionError(CMConnection conn, char *formatName)
+{
+    fprintf(stderr,
+            " * An invalid message of type \"%s\" has been received on an "
+            "incoming connection.\n",
+            formatName);
+    fprintf(stderr, " * In ADIOS2/SST this likely means a version mismatch "
+                    "between stream participants.\n");
+    fprintf(stderr, " * Please ensure that all writers and readers are built "
+                    "with the same version of ADIOS2.\n");
+}
+
 extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
 {
     CP_Info StreamCP;
@@ -1346,6 +1358,7 @@ extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
         }
 
         CMlisten(SharedCMInfo->cm);
+        CMregister_invalid_message_handler(SharedCMInfo->cm, CP_versionError);
 
         if (!CP_SstParamsList)
         {
