@@ -184,6 +184,19 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         {
             if (b.name == variable.m_Name)
             {
+                bool empty = false;
+                for (const auto c : b.count)
+                {
+                    if (c == 0)
+                    {
+                        empty = true;
+                    }
+                }
+                if (empty)
+                {
+                    continue;
+                }
+
                 if (b.shapeId == ShapeID::GlobalArray ||
                     b.shapeId == ShapeID::LocalArray)
                 {

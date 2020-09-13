@@ -244,6 +244,11 @@ void SscWriter::SyncWritePattern(bool finalStep)
 
     // deserialize variables metadata
     ssc::JsonToBlockVecVec(globalJson, m_GlobalWritePattern);
+
+    if (m_Verbosity >= 10 && m_WriterRank == 0)
+    {
+        ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
+    }
 }
 
 void SscWriter::SyncReadPattern()
@@ -304,13 +309,6 @@ void SscWriter::SyncReadPattern()
         {
             m_ReaderSelectionsLocked = patternJson.get<bool>();
         }
-    }
-
-    if (m_Verbosity >= 10)
-    {
-        ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
-        ssc::PrintBlockVec(m_GlobalWritePattern[m_WriterRank],
-                           "Local Write Pattern");
     }
 }
 

@@ -13,8 +13,8 @@
 #include <chrono>
 #include <cstdio>
 #include <fstream>
-#include <sstream>
 #include <iostream>
+#include <sstream>
 #include <thread>
 #include <unordered_set>
 
@@ -29,7 +29,8 @@ void HandshakeComm(const std::string &filename, const char mode,
                    MPI_Group &readerGroup, MPI_Comm &streamComm,
                    MPI_Comm &writerComm, MPI_Comm &readerComm, int verbosity)
 {
-    auto appRankMaps = HandshakeRank(filename, mode, timeoutSeconds, localComm, verbosity);
+    auto appRankMaps =
+        HandshakeRank(filename, mode, timeoutSeconds, localComm, verbosity);
     MPI_Group worldGroup;
     MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
     MPI_Group_incl(worldGroup, static_cast<int>(appRankMaps[0].size()),
@@ -49,10 +50,9 @@ void HandshakeComm(const std::string &filename, const char mode,
 #endif
 }
 
-const std::vector<std::vector<int>> HandshakeRank(const std::string &filename,
-                                                  const char mode,
-                                                  const int timeoutSeconds,
-                                                  MPI_Comm localComm, int verbosity)
+const std::vector<std::vector<int>>
+HandshakeRank(const std::string &filename, const char mode,
+              const int timeoutSeconds, MPI_Comm localComm, int verbosity)
 {
     std::vector<std::vector<int>> ret(3);
 
@@ -213,15 +213,15 @@ const std::vector<std::vector<int>> HandshakeRank(const std::string &filename,
                   localComm);
     }
 
-    if(verbosity >=5)
+    if (verbosity >= 5)
     {
         std::stringstream output;
         output << "World Rank " << worldRank << ": " << std::endl;
-        int s =0;
-        for(const auto &i : ret)
+        int s = 0;
+        for (const auto &i : ret)
         {
             output << "    " << s << ": ";
-            for(const auto &j : i)
+            for (const auto &j : i)
             {
                 output << j << ", ";
             }
