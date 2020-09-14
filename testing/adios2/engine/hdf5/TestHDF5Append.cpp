@@ -117,8 +117,6 @@ TEST_F(AppendTimeStepTest, ADIOS2HDF5WriteAppendRead)
             // variable we write and its offsets in the global spaces
             adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
 
-            //....EXPECT_THROW(var_iString.SetSelection(sel),
-            //std::invalid_argument);
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -232,6 +230,135 @@ TEST_F(AppendTimeStepTest, ADIOS2HDF5WriteAppendRead)
 
         adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
         EXPECT_EQ(reader.Steps(), NSteps + ExtraSteps);
+
+        std::string IString;
+        std::array<int8_t, Nx> I8;
+        std::array<int16_t, Nx> I16;
+        std::array<int32_t, Nx> I32;
+        std::array<int64_t, Nx> I64;
+        std::array<uint8_t, Nx> U8;
+        std::array<uint16_t, Nx> U16;
+        std::array<uint32_t, Nx> U32;
+        std::array<uint64_t, Nx> U64;
+        std::array<float, Nx> R32;
+        std::array<double, Nx> R64;
+
+        auto var_iString = io.InquireVariable<std::string>("iString");
+        EXPECT_TRUE(var_iString);
+        EXPECT_EQ(var_iString.Steps(), NSteps + ExtraSteps);
+
+        auto var_i8 = io.InquireVariable<int8_t>("i8");
+        EXPECT_TRUE(var_i8);
+        EXPECT_EQ(var_i8.Steps(), NSteps + ExtraSteps);
+
+        auto var_i16 = io.InquireVariable<int16_t>("i16");
+        EXPECT_TRUE(var_i16);
+        EXPECT_EQ(var_i16.Steps(), NSteps + ExtraSteps);
+
+        auto var_i32 = io.InquireVariable<int32_t>("i32");
+        EXPECT_TRUE(var_i32);
+        EXPECT_EQ(var_i32.Steps(), NSteps + ExtraSteps);
+
+        auto var_i64 = io.InquireVariable<int64_t>("i64");
+        EXPECT_TRUE(var_i64);
+        EXPECT_EQ(var_i64.Steps(), NSteps + ExtraSteps);
+
+        auto var_u8 = io.InquireVariable<uint8_t>("u8");
+        EXPECT_TRUE(var_u8);
+        EXPECT_EQ(var_u8.Steps(), NSteps + ExtraSteps);
+
+        auto var_u16 = io.InquireVariable<uint16_t>("u16");
+        EXPECT_TRUE(var_u16);
+        EXPECT_EQ(var_u16.Steps(), NSteps + ExtraSteps);
+
+        auto var_u32 = io.InquireVariable<uint32_t>("u32");
+        EXPECT_TRUE(var_u32);
+        EXPECT_EQ(var_u32.Steps(), NSteps + ExtraSteps);
+
+        auto var_u64 = io.InquireVariable<uint64_t>("u64");
+        EXPECT_TRUE(var_u64);
+        EXPECT_EQ(var_u64.Steps(), NSteps + ExtraSteps);
+
+        auto var_r32 = io.InquireVariable<float>("r32");
+        EXPECT_TRUE(var_r32);
+        EXPECT_EQ(var_r32.Steps(), NSteps + ExtraSteps);
+
+        auto var_r64 = io.InquireVariable<double>("r64");
+        EXPECT_TRUE(var_r64);
+        EXPECT_EQ(var_r64.Steps(), NSteps + ExtraSteps);
+
+        adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
+
+        for (size_t step = 0; step < NSteps + ExtraSteps; ++step)
+        {
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
+
+            var_i8.SetStepSelection({step, 1});
+            var_i8.SetSelection(sel);
+            reader.Get(var_i8, I8.data());
+
+            var_i16.SetStepSelection({step, 1});
+            var_i16.SetSelection(sel);
+            reader.Get(var_i16, I16.data());
+
+            var_i32.SetStepSelection({step, 1});
+            var_i32.SetSelection(sel);
+            reader.Get(var_i32, I32.data());
+
+            var_i64.SetStepSelection({step, 1});
+            var_i64.SetSelection(sel);
+            reader.Get(var_i64, I64.data());
+
+            var_u8.SetStepSelection({step, 1});
+            var_u8.SetSelection(sel);
+            reader.Get(var_u8, U8.data());
+
+            var_u16.SetStepSelection({step, 1});
+            var_u16.SetSelection(sel);
+            reader.Get(var_u16, U16.data());
+
+            var_u32.SetStepSelection({step, 1});
+            var_u32.SetSelection(sel);
+            reader.Get(var_u32, U32.data());
+
+            var_u64.SetStepSelection({step, 1});
+            var_u64.SetSelection(sel);
+            reader.Get(var_u64, U64.data());
+
+            var_r32.SetStepSelection({step, 1});
+            var_r32.SetSelection(sel);
+            reader.Get(var_r32, R32.data());
+
+            var_r64.SetStepSelection({step, 1});
+            var_r64.SetSelection(sel);
+            reader.Get(var_r64, R64.data());
+
+            reader.Get(var_iString, IString);
+            reader.PerformGets();
+
+            EXPECT_EQ(IString, currentTestData.S1);
+
+            for (size_t i = 0; i < Nx; ++i)
+            {
+                std::stringstream ss;
+                ss << "step=" << step << " i=" << i << " rank=" << mpiRank;
+                std::string msg = ss.str();
+
+                EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
+                EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                EXPECT_EQ(I64[i], currentTestData.I64[i]) << msg;
+
+                EXPECT_EQ(U8[i], currentTestData.U8[i]) << msg;
+                EXPECT_EQ(U16[i], currentTestData.U16[i]) << msg;
+                EXPECT_EQ(U32[i], currentTestData.U32[i]) << msg;
+                EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
+
+                EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
+                EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
+            }
+        }
 
         reader.Close();
     }
