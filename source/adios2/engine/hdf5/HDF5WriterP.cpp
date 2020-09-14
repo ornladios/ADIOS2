@@ -87,6 +87,12 @@ void HDF5WriterP::Init()
             m_H5File.Init(m_Name, m_Comm, true);
     }
     m_H5File.ParseParameters(m_IO);
+
+    if (m_OpenMode == Mode::Append)
+    {
+        m_H5File.ReadAttrToIO(m_IO);
+        m_H5File.ReadAllVariables(m_IO);
+    }
 #endif
 }
 
