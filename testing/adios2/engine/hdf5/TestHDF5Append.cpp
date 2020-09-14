@@ -48,14 +48,14 @@ TEST_F(AppendTimeStepTest, ADIOS2HDF5WriteAppendRead)
 #endif
 
 #if ADIOS2_USE_MPI
-        adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-        adios2::ADIOS adios;
+    adios2::ADIOS adios;
 #endif
 
     // Write test data using HDF5 engine
     {
-      adios2::IO io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
@@ -117,7 +117,8 @@ TEST_F(AppendTimeStepTest, ADIOS2HDF5WriteAppendRead)
             // variable we write and its offsets in the global spaces
             adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
 
-            //....EXPECT_THROW(var_iString.SetSelection(sel), std::invalid_argument);
+            //....EXPECT_THROW(var_iString.SetSelection(sel),
+            //std::invalid_argument);
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -154,17 +155,17 @@ TEST_F(AppendTimeStepTest, ADIOS2HDF5WriteAppendRead)
     size_t ExtraSteps = 2;
 
     {
-      // Append
-      adios2::IO io = adios.DeclareIO("ioAppend");
+        // Append
+        adios2::IO io = adios.DeclareIO("ioAppend");
 
-      if (!engineName.empty())       
-	  io.SetEngine(engineName);
-      else        
-	  io.SetEngine("HDF5");        
+        if (!engineName.empty())
+            io.SetEngine(engineName);
+        else
+            io.SetEngine("HDF5");
 
-      adios2::Engine appender = io.Open(fname, adios2::Mode::Append);
-     
-      for (size_t step = NSteps; step < NSteps+ExtraSteps; ++step)
+        adios2::Engine appender = io.Open(fname, adios2::Mode::Append);
+
+        for (size_t step = NSteps; step < NSteps + ExtraSteps; ++step)
         {
             // Generate test data for each process uniquely
             SmallTestData currentTestData =
@@ -172,9 +173,9 @@ TEST_F(AppendTimeStepTest, ADIOS2HDF5WriteAppendRead)
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
-	    EXPECT_TRUE(var_iString);
+            EXPECT_TRUE(var_iString);
             auto var_i8 = io.InquireVariable<int8_t>("i8");
-	    EXPECT_TRUE(var_i8);
+            EXPECT_TRUE(var_i8);
             auto var_i16 = io.InquireVariable<int16_t>("i16");
             auto var_i32 = io.InquireVariable<int32_t>("i32");
             auto var_i64 = io.InquireVariable<int64_t>("i64");
@@ -218,24 +219,23 @@ TEST_F(AppendTimeStepTest, ADIOS2HDF5WriteAppendRead)
             appender.Put(var_r64, currentTestData.R64.data());
             appender.EndStep();
         }
-      appender.Close();
+        appender.Close();
     }
 
     {
-      // Read back
-      adios2::IO io = adios.DeclareIO("ioRead");
+        // Read back
+        adios2::IO io = adios.DeclareIO("ioRead");
         if (!engineName.empty())
-            io.SetEngine(engineName);        
-        else        
+            io.SetEngine(engineName);
+        else
             io.SetEngine("HDF5");
-        
-      adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
-      EXPECT_EQ(reader.Steps(), NSteps+ExtraSteps);
-      
-      reader.Close();
+
+        adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+        EXPECT_EQ(reader.Steps(), NSteps + ExtraSteps);
+
+        reader.Close();
     }
 }
-
 
 //******************************************************************************
 // main
