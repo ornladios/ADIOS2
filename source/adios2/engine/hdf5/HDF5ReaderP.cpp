@@ -372,6 +372,7 @@ void HDF5ReaderP::DoClose(const int transportIndex)
     m_H5File.Close();
 }
 
+size_t HDF5ReaderP::DoSteps() const { return m_H5File.GetAdiosStep(); }
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

@@ -97,6 +97,8 @@ private:
     void UseHDFRead(Variable<T> &variable, T *values, hid_t h5Type);
 
     std::vector<std::string> m_DeferredStack;
+
+    size_t DoSteps() const final;
 };
 
 } // end namespace engine
