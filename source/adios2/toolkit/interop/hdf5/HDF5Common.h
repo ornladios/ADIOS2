@@ -173,6 +173,7 @@ public:
     void SetAdiosStep(int ts);
 
     unsigned int GetNumAdiosSteps();
+    unsigned int GetAdiosStep() const;
     void WriteAdiosSteps();
 
     void ReadVariables(unsigned int ts, core::IO &io);

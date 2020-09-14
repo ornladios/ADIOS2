@@ -270,6 +270,8 @@ void HDF5Common::WriteAdiosSteps()
     H5Aclose(attr);
 }
 
+unsigned int HDF5Common::GetAdiosStep() const { return m_NumAdiosSteps; }
+
 unsigned int HDF5Common::GetNumAdiosSteps()
 {
     if (m_WriteMode)
