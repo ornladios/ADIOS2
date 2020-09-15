@@ -127,6 +127,7 @@ public:
 
     void ParseParameters(core::IO &io);
     void Init(const std::string &name, helper::Comm const &comm, bool toWrite);
+    void Append(const std::string &name, helper::Comm const &comm);
 
     template <class T>
     void Write(core::Variable<T> &variable, const T *values);
@@ -172,6 +173,7 @@ public:
     void SetAdiosStep(int ts);
 
     unsigned int GetNumAdiosSteps();
+    unsigned int GetAdiosStep() const;
     void WriteAdiosSteps();
 
     void ReadVariables(unsigned int ts, core::IO &io);

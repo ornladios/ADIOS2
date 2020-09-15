@@ -74,13 +74,25 @@ void HDF5WriterP::Init()
     {
         // is a file with .bp ending
         std::string updatedName = m_Name.substr(0, wpos) + suffix;
-        m_H5File.Init(updatedName, m_Comm, true);
+        if (m_OpenMode == Mode::Append)
+            m_H5File.Append(updatedName, m_Comm);
+        else
+            m_H5File.Init(updatedName, m_Comm, true);
     }
     else
     {
-        m_H5File.Init(m_Name, m_Comm, true);
+        if (m_OpenMode == Mode::Append)
+            m_H5File.Append(m_Name, m_Comm);
+        else
+            m_H5File.Init(m_Name, m_Comm, true);
     }
     m_H5File.ParseParameters(m_IO);
+
+    if (m_OpenMode == Mode::Append)
+    {
+        m_H5File.ReadAttrToIO(m_IO);
+        m_H5File.ReadAllVariables(m_IO);
+    }
 #endif
 }
 
