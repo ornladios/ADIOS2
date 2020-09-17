@@ -60,9 +60,18 @@ void HDF5WriterP::Init()
             ", in call to ADIOS Open or HDF5Writer constructor\n");
     }
 
-#ifdef NEVER
-    m_H5File.Init(m_Name, m_Comm, true);
-#else
+    m_H5File.ParseParameters(m_IO);
+
+    if (m_OpenMode == Mode::Append)
+    {
+        m_H5File.Append(m_Name, m_Comm);
+        m_H5File.ReadAttrToIO(m_IO);
+        m_H5File.ReadAllVariables(m_IO);
+    }
+    else
+        m_H5File.Init(m_Name, m_Comm, true);
+
+    /*
     // enforce .h5 ending
     std::string suffix = ".h5";
     std::string wrongSuffix = ".bp";
@@ -93,7 +102,7 @@ void HDF5WriterP::Init()
         m_H5File.ReadAttrToIO(m_IO);
         m_H5File.ReadAllVariables(m_IO);
     }
-#endif
+    */
 }
 
 #define declare_type(T)                                                        \
