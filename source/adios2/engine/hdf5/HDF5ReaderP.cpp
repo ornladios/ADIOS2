@@ -12,7 +12,7 @@
 #include "HDF5ReaderP.tcc"
 
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
-
+#include "adios2/helper/adiosFunctions.h" //IsHDF5
 #include <vector>
 
 namespace adios2
@@ -27,6 +27,10 @@ HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
 : Engine("HDF5Reader", io, name, openMode, std::move(comm))
 {
     m_EndMessage = ", in call to IO HDF5Reader Open " + m_Name + "\n";
+    if (!helper::IsHDF5File(name, m_Comm, {}))
+        throw std::invalid_argument("!ADIOS2 Error: Invalid HDF5 file found" +
+                                    m_EndMessage);
+
     Init();
 }
 
