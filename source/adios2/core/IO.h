@@ -27,6 +27,7 @@
 #include "adios2/core/Attribute.h"
 #include "adios2/core/Variable.h"
 #include "adios2/core/VariableCompound.h"
+#include "adios2/core/Group.h"
 
 namespace adios2
 {
@@ -40,6 +41,7 @@ using AttrMap = std::unordered_map<std::string, std::unique_ptr<AttributeBase>>;
 // forward declaration needed as IO is passed to Engine derived
 // classes
 class Engine;
+class Group;
 
 /** Factory class IO for settings, variables, and transports to an engine */
 class IO
@@ -48,6 +50,8 @@ class IO
 public:
     /** reference to object that created current IO */
     ADIOS &m_ADIOS;
+    /** a pointer to a Group Object created from IO */
+    Group *m_Gr;
 
     /** unique identifier */
     const std::string m_Name;
@@ -407,6 +411,8 @@ public:
      * @exception std::runtime_error if any engine Flush fails
      */
     void FlushAll();
+
+    Group &GetGroup(const std::string &path, char delimiter);
 
     // READ FUNCTIONS, not yet implemented:
     /**

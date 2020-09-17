@@ -109,7 +109,10 @@ Engine IO::Open(const std::string &name, const Mode mode)
                             "for engine " + name + ", in call to IO::Open");
     return Engine(&m_IO->Open(name, mode));
 }
-
+Group IO::GetGroup(const std::string &path, char delimiter)
+{
+    return Group(&m_IO->GetGroup(path, delimiter));
+};
 void IO::FlushAll()
 {
     helper::CheckForNullptr(m_IO, "in call to IO::FlushAll");
