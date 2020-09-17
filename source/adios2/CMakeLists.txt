@@ -18,7 +18,6 @@ target_link_libraries(taustubs PRIVATE ${CMAKE_DL_LIBS})
 
 add_library(adios2_core
   common/ADIOSTypes.cpp
-  
   core/Attribute.cpp 
   core/AttributeBase.cpp
   core/ADIOS.cpp
@@ -29,6 +28,10 @@ add_library(adios2_core
   core/Variable.cpp core/Variable.tcc
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
+  core/Group.cpp core/Group.tcc
+
+
+
 
 #operator callback
   operator/callback/Signature1.cpp

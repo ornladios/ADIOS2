@@ -33,5 +33,6 @@ constexpr bool DebugOFF = false;
 #include "adios2/cxx11/Types.h"
 #include "adios2/cxx11/Variable.h"
 #include "adios2/cxx11/fstream/ADIOS2fstream.h"
+#include "adios2/cxx11/Group.h"
 
 #endif /* ADIOS2_BINDINGS_CXX11_H_ */

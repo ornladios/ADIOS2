@@ -15,6 +15,7 @@
 #include "Engine.h"
 #include "Operator.h"
 #include "Variable.h"
+#include "Group.h"
 
 #if ADIOS2_USE_MPI
 #include <mpi.h>
@@ -256,6 +257,8 @@ public:
      * @return engine object
      */
     Engine Open(const std::string &name, const Mode mode);
+
+    Group GetGroup(const std::string &path, char delimiter = '/');
 
 #if ADIOS2_USE_MPI
     /**
