@@ -210,7 +210,30 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
                 3 * sizeof(uint64_t) * dimensionsSize + 2; // 2 is for length
             break;
         }
-        // TODO: implement operators
+        case (characteristic_transform_type):
+        {
+            const size_t typeLength =
+                static_cast<size_t>(helper::ReadValue<uint8_t>(
+                    buffer, currentPosition, isLittleEndian));
+            // skip over operator name (transform type) string
+            currentPosition += typeLength;
+
+            // skip over pre-data type (1) and dimensionsSize (1)
+            currentPosition += 2;
+
+            const uint16_t dimensionsLength = helper::ReadValue<uint16_t>(
+                buffer, currentPosition, isLittleEndian);
+            // skip over dimensions
+            currentPosition += dimensionsLength;
+
+            const size_t metadataLength =
+                static_cast<size_t>(helper::ReadValue<uint16_t>(
+                    buffer, currentPosition, isLittleEndian));
+            // skip over operator metadata
+            currentPosition += metadataLength;
+
+            break;
+        }
         default:
         {
             throw std::invalid_argument(
