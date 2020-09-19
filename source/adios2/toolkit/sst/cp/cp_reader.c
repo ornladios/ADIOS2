@@ -1408,42 +1408,68 @@ extern void *SstReadRemoteMemory(SstStream Stream, int Rank, long Timestep,
         DP_TimestepInfo);
 }
 
-static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
+static void sendOneToEachWriterRank(SstStream Stream, CMFormat f, void *Msg,
                                     void **WS_StreamPtr)
 {
-    if (s->WriterConfigParams->CPCommPattern == SstCPCommPeer)
+    if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
     {
         int i = 0;
-        while (s->Peers[i] != -1)
+        while (Stream->Peers[i] != -1)
         {
-            int peer = s->Peers[i];
-            CMConnection conn = s->ConnectionsToWriter[peer].CMconn;
+            int peer = Stream->Peers[i];
+            CMConnection conn = Stream->ConnectionsToWriter[peer].CMconn;
             /* add the writer Stream identifier to each outgoing
              * message */
-            *WS_StreamPtr = s->ConnectionsToWriter[peer].RemoteStreamID;
+            *WS_StreamPtr = Stream->ConnectionsToWriter[peer].RemoteStreamID;
             if (CMwrite(conn, f, Msg) != 1)
             {
-                CP_verbose(s, CriticalVerbose,
-                           "Message failed to send to writer %d (%p)\n", peer,
-                           *WS_StreamPtr);
+                switch (Stream->Status)
+                {
+                case NotOpen:
+                case Opening:
+                case Established:
+                    CP_verbose(Stream, CriticalVerbose,
+                               "Message failed to send to writer %d (%p)\n",
+                               peer, *WS_StreamPtr);
+                    break;
+                case PeerClosed:
+                case PeerFailed:
+                case Closed:
+                case Destroyed:
+                    // Don't warn on send failures for closing/closed clients
+                    break;
+                }
             }
             i++;
         }
     }
     else
     {
-        if (s->Rank == 0)
+        if (Stream->Rank == 0)
         {
             int peer = 0;
-            CMConnection conn = s->ConnectionsToWriter[peer].CMconn;
+            CMConnection conn = Stream->ConnectionsToWriter[peer].CMconn;
             /* add the writer Stream identifier to each outgoing
              * message */
-            *WS_StreamPtr = s->ConnectionsToWriter[peer].RemoteStreamID;
+            *WS_StreamPtr = Stream->ConnectionsToWriter[peer].RemoteStreamID;
             if (CMwrite(conn, f, Msg) != 1)
             {
-                CP_verbose(s, CriticalVerbose,
-                           "Message failed to send to writer %d (%p)\n", peer,
-                           *WS_StreamPtr);
+                switch (Stream->Status)
+                {
+                case NotOpen:
+                case Opening:
+                case Established:
+                    CP_verbose(Stream, CriticalVerbose,
+                               "Message failed to send to writer %d (%p)\n",
+                               peer, *WS_StreamPtr);
+                    break;
+                case PeerClosed:
+                case PeerFailed:
+                case Closed:
+                case Destroyed:
+                    // Don't warn on send failures for closing/closed clients
+                    break;
+                }
             }
         }
     }
