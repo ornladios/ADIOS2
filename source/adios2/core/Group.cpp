@@ -198,9 +198,7 @@ std::map<std::string, std::set<std::string>> &Group::getTreeMap()
 }
 
 std::string Group::InquirePath() { return currentPath; }
-Group::~Group(){
-
-};
+Group::~Group()= default;
 DataType Group::InquireVariableType(const std::string &name) const noexcept
 {
 

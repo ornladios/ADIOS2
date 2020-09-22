@@ -64,7 +64,7 @@ DataType Group::AttributeType(const std::string &name) const
     helper::CheckForNullptr(m_Group, "in call to IO::AttributeType");
     return m_Group->InquireAttributeType(name);
 }
-Group::~Group() { m_Group->~Group(); }
+Group::~Group(){};
 // Explicit declaration of the public template methods
 // Limits the types
 #define declare_template_instantiation(T)                                      \

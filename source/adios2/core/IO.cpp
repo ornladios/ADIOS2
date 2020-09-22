@@ -11,6 +11,7 @@
 #include "IO.h"
 #include "IO.tcc"
 
+#include <memory>
 #include <mutex>
 #include <sstream>
 #include <utility> // std::pair
@@ -656,7 +657,8 @@ Engine &IO::Open(const std::string &name, const Mode mode)
 }
 Group &IO::GetGroup(const std::string &path, char delimiter)
 {
-    m_Gr = new Group(path, delimiter, *this);
+
+    m_Gr = std::make_shared<Group>(path, delimiter, *this);
     m_Gr->BuildTree();
     return *m_Gr;
 }

@@ -51,7 +51,7 @@ public:
     /** reference to object that created current IO */
     ADIOS &m_ADIOS;
     /** a pointer to a Group Object created from IO */
-    Group *m_Gr;
+    std::shared_ptr<Group> m_Gr;
 
     /** unique identifier */
     const std::string m_Name;
