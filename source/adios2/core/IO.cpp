@@ -658,8 +658,6 @@ Group &IO::GetGroup(const std::string &path, char delimiter)
 {
     m_Gr = new Group(path, delimiter, *this);
     m_Gr->BuildTree();
-    m_Gr->BuildTree();
-
     return *m_Gr;
 }
 Engine &IO::GetEngine(const std::string &name)
