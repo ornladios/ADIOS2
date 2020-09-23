@@ -13,7 +13,6 @@
 
 #include "Attribute.h"
 #include "Variable.h"
-#include "adios2/core/Group.h"
 #include <iostream>
 #include <map>
 #include <set>
