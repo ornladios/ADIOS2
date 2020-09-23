@@ -23,10 +23,6 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 {
     std::string filename = "ADIOSHierarchicalReadVariable.bp";
 
-    int mpiRank = 0, mpiSize = 1;
-    // Number of rows
-    const std::size_t Nx = 8;
-
     // Number of steps
     const std::size_t NSteps = 1;
 
