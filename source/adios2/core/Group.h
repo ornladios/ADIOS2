@@ -21,7 +21,7 @@ namespace core
 {
 /** used for Variables and Attributes, name, type, type-index */
 using DataMap =
-std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
+    std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
 class Group
 {
 private:
@@ -158,4 +158,3 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 } // end namespace adios2
 
 #endif // ADIOS2_CORE_GROUP_H
-

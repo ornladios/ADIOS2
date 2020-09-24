@@ -36,7 +36,7 @@ void Group::setPath(std::string path) { currentPath = path; }
 void Group::setDelimiter(char delimiter) { groupDelimiter = delimiter; }
 
 Group::Group(std::string path, char delimiter, IO &io)
-    : currentPath(path), groupDelimiter(delimiter), m_IO(io)
+: currentPath(path), groupDelimiter(delimiter), m_IO(io)
 {
     if (mapPtr == nullptr)
     {
@@ -45,7 +45,7 @@ Group::Group(std::string path, char delimiter, IO &io)
 }
 // copy constructor
 Group::Group(const Group &G)
-    : currentPath(G.currentPath), groupDelimiter(G.groupDelimiter), m_IO(G.m_IO)
+: currentPath(G.currentPath), groupDelimiter(G.groupDelimiter), m_IO(G.m_IO)
 {
     mapPtr = G.mapPtr;
 }
@@ -198,17 +198,16 @@ std::map<std::string, std::set<std::string>> &Group::getTreeMap()
 }
 
 std::string Group::InquirePath() { return currentPath; }
-Group::~Group()= default;
+Group::~Group() = default;
 DataType Group::InquireVariableType(const std::string &name) const noexcept
 {
 
     return m_IO.InquireVariableType(currentPath + groupDelimiter + name);
 }
 
-DataType
-Group::InquireAttributeType(const std::string &name,
-                            const std::string &variableName,
-                            const std::string separator) const noexcept
+DataType Group::InquireAttributeType(const std::string &name,
+                                     const std::string &variableName,
+                                     const std::string separator) const noexcept
 {
     return m_IO.InquireAttributeType(name, variableName, separator);
 }

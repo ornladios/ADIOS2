@@ -13,9 +13,9 @@
 
 #include "Attribute.h"
 #include "Engine.h"
+#include "Group.h"
 #include "Operator.h"
 #include "Variable.h"
-#include "Group.h"
 #if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif

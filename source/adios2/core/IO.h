@@ -25,9 +25,9 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Attribute.h"
+#include "adios2/core/Group.h"
 #include "adios2/core/Variable.h"
 #include "adios2/core/VariableCompound.h"
-#include "adios2/core/Group.h"
 
 namespace adios2
 {
@@ -286,8 +286,8 @@ public:
      * @param itVariable
      * @return type primitive type
      */
-    DataType InquireVariableType(const VarMap::const_iterator itVariable) const
-        noexcept;
+    DataType
+    InquireVariableType(const VarMap::const_iterator itVariable) const noexcept;
 
     /**
      * Retrieves hash holding internal variable identifiers
@@ -325,10 +325,10 @@ public:
      * @param name input attribute name
      * @return type if found returns type as string, otherwise an empty string
      */
-    DataType InquireAttributeType(const std::string &name,
-                                  const std::string &variableName = "",
-                                  const std::string separator = "/") const
-        noexcept;
+    DataType
+    InquireAttributeType(const std::string &name,
+                         const std::string &variableName = "",
+                         const std::string separator = "/") const noexcept;
 
     /**
      * @brief Retrieve map with attributes info. Use when reading.

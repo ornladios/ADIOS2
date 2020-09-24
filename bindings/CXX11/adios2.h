@@ -27,12 +27,12 @@ constexpr bool DebugOFF = false;
 #include "adios2/cxx11/ADIOS.h"
 #include "adios2/cxx11/Attribute.h"
 #include "adios2/cxx11/Engine.h"
+#include "adios2/cxx11/Group.h"
 #include "adios2/cxx11/IO.h"
 #include "adios2/cxx11/Operator.h"
 #include "adios2/cxx11/Query.h"
 #include "adios2/cxx11/Types.h"
 #include "adios2/cxx11/Variable.h"
 #include "adios2/cxx11/fstream/ADIOS2fstream.h"
-#include "adios2/cxx11/Group.h"
 
 #endif /* ADIOS2_BINDINGS_CXX11_H_ */

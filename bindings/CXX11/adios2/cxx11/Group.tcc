@@ -20,7 +20,7 @@ template <class T>
 Variable<T> Group::InquireVariable(const std::string &name)
 {
     helper::CheckForNullptr(m_Group, "for variable name " + name +
-                                     ", in call to Group::InquireVariable");
+                                         ", in call to Group::InquireVariable");
     return Variable<T>(
         m_Group->InquireVariable<typename TypeInfo<T>::IOType>(name));
 }
@@ -32,7 +32,7 @@ Attribute<T> Group::InquireAttribute(const std::string &name,
 {
     using IOType = typename TypeInfo<T>::IOType;
     helper::CheckForNullptr(m_Group, "for attribute name " + name +
-                                     ", in call to IO::InquireAttribute");
+                                         ", in call to IO::InquireAttribute");
     return Attribute<T>(
         m_Group->InquireAttribute<IOType>(name, variableName, separator));
 }
