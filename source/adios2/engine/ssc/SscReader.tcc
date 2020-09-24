@@ -165,7 +165,9 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         m_Buffer.resize(totalDataSize);
         for (const auto &i : m_AllReceivingWriterRanks)
         {
-            if (m_ReceivedRanks.find(i.first) == m_ReceivedRanks.end())
+            // TODO: recover this mechanism
+            //            if (m_ReceivedRanks.find(i.first) ==
+            //            m_ReceivedRanks.end())
             {
                 MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
                 MPI_Get(m_Buffer.data() + i.second.first,

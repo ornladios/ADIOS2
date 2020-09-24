@@ -463,9 +463,17 @@ void SscReader::SyncReadPattern()
 
     if (m_Verbosity >= 10)
     {
-        ssc::PrintBlockVecVec(m_GlobalWritePattern,
-                              "Global Write Pattern on Rank " +
-                                  std::to_string(m_ReaderRank));
+        for (int i = 0; i < m_ReaderSize; ++i)
+        {
+            m_Comm.Barrier();
+            if (i == m_ReaderRank)
+            {
+                ssc::PrintBlockVec(m_LocalReadPattern,
+                                   "\n\nGlobal Read Pattern on Rank " +
+                                       std::to_string(m_ReaderRank));
+            }
+        }
+        m_Comm.Barrier();
     }
 }
 
