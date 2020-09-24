@@ -142,10 +142,10 @@ public:
      * @param name input attribute name
      * @return type if found returns type as string, otherwise an empty string
      */
-    DataType
-    InquireAttributeType(const std::string &name,
+    DataType InquireAttributeType(const std::string &name,
                          const std::string &variableName = "",
-                         const std::string separator = "/") const noexcept;
+                         const std::string separator = "/") const
+        noexcept;
 };
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \

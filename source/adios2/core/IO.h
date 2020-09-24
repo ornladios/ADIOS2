@@ -286,8 +286,8 @@ public:
      * @param itVariable
      * @return type primitive type
      */
-    DataType
-    InquireVariableType(const VarMap::const_iterator itVariable) const noexcept;
+    DataType InquireVariableType(const VarMap::const_iterator itVariable) const
+        noexcept;
 
     /**
      * Retrieves hash holding internal variable identifiers
@@ -325,10 +325,10 @@ public:
      * @param name input attribute name
      * @return type if found returns type as string, otherwise an empty string
      */
-    DataType
-    InquireAttributeType(const std::string &name,
+    DataType InquireAttributeType(const std::string &name,
                          const std::string &variableName = "",
-                         const std::string separator = "/") const noexcept;
+                         const std::string separator = "/") const
+        noexcept;
 
     /**
      * @brief Retrieve map with attributes info. Use when reading.
