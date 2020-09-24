@@ -13,9 +13,9 @@
 
 #include "Attribute.h"
 #include "Engine.h"
+#include "Group.h"
 #include "Operator.h"
 #include "Variable.h"
-
 #if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
@@ -256,6 +256,13 @@ public:
      * @return engine object
      */
     Engine Open(const std::string &name, const Mode mode);
+    /**
+     * Return a Group object for hierarchical reading.
+     * @param name starting path
+     * @param a delimiter to separate groups in a string representation
+     * @return Group object
+     */
+    Group GetGroup(const std::string &path, char delimiter = '/');
 
 #if ADIOS2_USE_MPI
     /**
