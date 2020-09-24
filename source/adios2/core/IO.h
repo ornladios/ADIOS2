@@ -326,8 +326,8 @@ public:
      * @return type if found returns type as string, otherwise an empty string
      */
     DataType InquireAttributeType(const std::string &name,
-                         const std::string &variableName = "",
-                         const std::string separator = "/") const
+                                  const std::string &variableName = "",
+                                  const std::string separator = "/") const
         noexcept;
 
     /**
