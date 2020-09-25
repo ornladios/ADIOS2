@@ -154,20 +154,20 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
         jref["BufferCount"] = 0;
 
         ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
+        size_t oldSize = m_AllReceivingWriterRanks.size();
         m_AllReceivingWriterRanks =
             ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
         CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
-        size_t totalDataSize = 0;
-        for (auto i : m_AllReceivingWriterRanks)
+        size_t newSize = m_AllReceivingWriterRanks.size();
+        if (oldSize != newSize)
         {
-            totalDataSize += i.second.second;
-        }
-        m_Buffer.resize(totalDataSize);
-        for (const auto &i : m_AllReceivingWriterRanks)
-        {
-            // TODO: recover this mechanism
-            //            if (m_ReceivedRanks.find(i.first) ==
-            //            m_ReceivedRanks.end())
+            size_t totalDataSize = 0;
+            for (auto i : m_AllReceivingWriterRanks)
+            {
+                totalDataSize += i.second.second;
+            }
+            m_Buffer.resize(totalDataSize);
+            for (const auto &i : m_AllReceivingWriterRanks)
             {
                 MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
                 MPI_Get(m_Buffer.data() + i.second.first,
