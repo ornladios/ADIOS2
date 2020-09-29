@@ -21,6 +21,7 @@
             <parameter key="BurstBufferDrain" value="On"/>
             <parameter key="BurstBufferVerbose" value="2"/>
             <parameter key="Substreams" value="2"/>
+	    <parameter key="StreamReader" value="on"/>
         </engine>
     </io>
 
