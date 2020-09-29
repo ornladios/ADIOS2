@@ -75,16 +75,18 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
     int FoundPreferred = 0;
     if (Params->DataTransport)
     {
-        Svcs->verbose(CP_Stream, DPPerStepVerbose,
-                      "Prefered dataplane name is \"%s\"\n",
-                      Params->DataTransport);
+        if (Rank == 0)
+            Svcs->verbose(CP_Stream, DPPerStepVerbose,
+                          "Prefered dataplane name is \"%s\"\n",
+                          Params->DataTransport);
     }
     while (List[i].Interface)
     {
-        Svcs->verbose(
-            CP_Stream, DPPerStepVerbose,
-            "Considering DataPlane \"%s\" for possible use, priority is %d\n",
-            List[i].Name, List[i].Priority);
+        if (Rank == 0)
+            Svcs->verbose(CP_Stream, DPPerStepVerbose,
+                          "Considering DataPlane \"%s\" for possible use, "
+                          "priority is %d\n",
+                          List[i].Name, List[i].Priority);
         if (Params->DataTransport)
         {
             if (strcasecmp(List[i].Name, Params->DataTransport) == 0)
@@ -97,10 +99,11 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
                 }
                 else
                 {
-                    fprintf(stderr,
-                            "Warning:  Perferred DataPlane \"%s\" is "
-                            "not available.",
-                            List[i].Name);
+                    if (Rank == 0)
+                        fprintf(stderr,
+                                "Warning:  Perferred DataPlane \"%s\" is "
+                                "not available.\n",
+                                List[i].Name);
                 }
             }
         }
@@ -113,8 +116,9 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
     }
     if (Params->DataTransport && (FoundPreferred == 0))
     {
-        fprintf(stderr, "Warning:  Preferred DataPlane \"%s\" not found.",
-                Params->DataTransport);
+        if (Rank == 0)
+            fprintf(stderr, "Warning:  Preferred DataPlane \"%s\" not found.\n",
+                    Params->DataTransport);
     }
     if (SelectedDP != -1)
     {
