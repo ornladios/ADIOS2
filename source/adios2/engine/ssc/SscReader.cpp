@@ -62,6 +62,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
     {
+        m_AllReceivingWriterRanks.clear();
         m_ReceivedRanks.clear();
         m_Buffer.resize(1, 0);
         m_GlobalWritePattern.clear();
@@ -463,7 +464,17 @@ void SscReader::SyncReadPattern()
 
     if (m_Verbosity >= 10)
     {
-        ssc::PrintBlockVec(m_LocalReadPattern, "Local Read Pattern");
+        for (int i = 0; i < m_ReaderSize; ++i)
+        {
+            m_Comm.Barrier();
+            if (i == m_ReaderRank)
+            {
+                ssc::PrintBlockVec(m_LocalReadPattern,
+                                   "\n\nGlobal Read Pattern on Rank " +
+                                       std::to_string(m_ReaderRank));
+            }
+        }
+        m_Comm.Barrier();
     }
 }
 

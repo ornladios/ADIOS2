@@ -132,7 +132,7 @@ if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
   )
 endif()
 
-if(ADIOS2_RUN_MPMD_TESTS)
+if(ADIOS2_RUN_MPI_MPMD_TESTS)
   if(MPIEXEC_MAX_NUMPROCS GREATER 1) 
     #------------------------------------------
     #  Pipe2 InsituMPI version 
@@ -349,7 +349,7 @@ SetupTestPipeline(
 #-------------------------------------------------
 #  BurstBuffer BP4 streaming test nproc = 2 
 #-------------------------------------------------
-if(ADIOS2_RUN_MPMD_TESTS)
+if(ADIOS2_RUN_MPI_MPMD_TESTS AND NOT WIN32)
   add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.Run
     COMMAND ${MPIEXEC_COMMAND} 
         ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>

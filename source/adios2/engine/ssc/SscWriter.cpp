@@ -196,7 +196,7 @@ void SscWriter::SyncMpiPattern()
 
     helper::HandshakeComm(m_Name, 'w', m_OpenTimeoutSecs, CommAsMPI(m_Comm),
                           streamGroup, writerGroup, m_MpiAllReadersGroup,
-                          m_StreamComm, writerComm, readerComm);
+                          m_StreamComm, writerComm, readerComm, m_Verbosity);
 }
 
 void SscWriter::SyncWritePattern(bool finalStep)
@@ -244,6 +244,11 @@ void SscWriter::SyncWritePattern(bool finalStep)
 
     // deserialize variables metadata
     ssc::JsonToBlockVecVec(globalJson, m_GlobalWritePattern);
+
+    if (m_Verbosity >= 10 && m_WriterRank == 0)
+    {
+        ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
+    }
 }
 
 void SscWriter::SyncReadPattern()
@@ -305,13 +310,6 @@ void SscWriter::SyncReadPattern()
             m_ReaderSelectionsLocked = patternJson.get<bool>();
         }
     }
-
-    if (m_Verbosity >= 10)
-    {
-        ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
-        ssc::PrintBlockVec(m_GlobalWritePattern[m_WriterRank],
-                           "Local Write Pattern");
-    }
 }
 
 void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
@@ -368,6 +366,12 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void SscWriter::DoClose(const int transportIndex)
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "SscWriter::DoClose, World Rank " << m_StreamRank
+                  << ", Writer Rank " << m_WriterRank << std::endl;
+    }
 
     if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
     {

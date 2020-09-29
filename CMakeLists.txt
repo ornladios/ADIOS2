@@ -234,7 +234,7 @@ option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree"
 cmake_dependent_option(ADIOS2_RUN_MPI_MPMD_TESTS
   "Enable the parallel MPMD tests" ON
   "ADIOS2_BUILD_TESTING;ADIOS2_HAVE_MPI" OFF)
-mark_as_advanced(ADIOS2_RUN_MPMD_TESTS)
+mark_as_advanced(ADIOS2_RUN_MPI_MPMD_TESTS)
 
 include(CTest)
 set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})

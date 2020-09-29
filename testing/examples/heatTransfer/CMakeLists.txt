@@ -15,7 +15,7 @@ if(ADIOS2_HAVE_ZFP)
   include(${CMAKE_CURRENT_SOURCE_DIR}/TestBPFileMx1_zfp.cmake)
 endif()
 
-if(ADIOS2_RUN_MPMD_TESTS)
+if(ADIOS2_RUN_MPI_MPMD_TESTS)
   if(ADIOS2_HAVE_SST)
     include(${CMAKE_CURRENT_SOURCE_DIR}/TestSSTBPMxM.cmake)
     include(${CMAKE_CURRENT_SOURCE_DIR}/TestSSTBPMxN.cmake)
