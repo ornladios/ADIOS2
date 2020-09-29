@@ -231,7 +231,7 @@ program TestBPWriteTypes
      call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_read, ierr)
 
      call adios2_steps(nsteps, bpReader, ierr)
-     if(nsteps /= 3)  write(*,*) 'nsteps: ', nsteps !stop 'ftypes.bp must have 3 steps'
+     if(nsteps /= 3) stop 'ftypes.bp must have 3 steps'
 
      call adios2_inquire_variable(variables(1), ioRead, "var_I8", ierr)
      if (variables(1)%name /= 'var_I8') stop 'var_I8 not recognized'
