@@ -15,7 +15,7 @@
 
 #include "adios2/core/Engine.h"
 #include "adios2/engine/dataman/DataManMonitor.h"
-#include "adios2/toolkit/format/dataman/DataManSerializer.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
 #include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 

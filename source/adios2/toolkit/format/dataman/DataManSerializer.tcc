@@ -239,155 +239,6 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
 }
 
 template <class T>
-bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
-                               const T *inputData, const Dims &varCount,
-                               const Params &params)
-{
-    TAU_SCOPED_TIMER_FUNC();
-#ifdef ADIOS2_HAVE_ZFP
-    Params p;
-    for (const auto &i : params)
-    {
-        std::string prefix = i.first.substr(0, 4);
-        if (prefix == "zfp:" || prefix == "Zfp:" || prefix == "ZFP:")
-        {
-            std::string key = i.first.substr(4);
-            metaj[i.first] = i.second;
-            p[key] = i.second;
-        }
-    }
-    core::compress::CompressZFP compressor(p);
-    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
-                                             sizeof(T),
-                                             std::multiplies<size_t>()));
-    try
-    {
-        Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), p, info);
-        return true;
-    }
-    catch (std::exception &e)
-    {
-        std::cout << "Got exception " << e.what()
-                  << " from ZFP. Turned off compression." << std::endl;
-    }
-#else
-    throw(std::invalid_argument(
-        "ZFP compression used but ZFP library is not linked to ADIOS2"));
-#endif
-    return false;
-}
-
-template <class T>
-bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
-                              const T *inputData, const Dims &varCount,
-                              const Params &params)
-{
-    TAU_SCOPED_TIMER_FUNC();
-#ifdef ADIOS2_HAVE_SZ
-    Params p;
-    for (const auto &i : params)
-    {
-        std::string prefix = i.first.substr(0, 3);
-        if (prefix == "sz:" || prefix == "Sz:" || prefix == "SZ:")
-        {
-            std::string key = i.first.substr(3);
-            metaj[i.first] = i.second;
-            p[key] = i.second;
-        }
-    }
-    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
-                                             sizeof(T),
-                                             std::multiplies<size_t>()));
-    core::compress::CompressSZ compressor(p);
-    try
-    {
-        Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), p, info);
-        return true;
-    }
-    catch (std::exception &e)
-    {
-        std::cout << "Got exception " << e.what()
-                  << " from SZ. Turned off compression." << std::endl;
-    }
-#else
-    throw(std::invalid_argument(
-        "SZ compression used but SZ library is not linked to ADIOS2"));
-#endif
-    return false;
-}
-
-template <class T>
-bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
-                                 const T *inputData, const Dims &varCount,
-                                 const Params &params)
-{
-    TAU_SCOPED_TIMER_FUNC();
-#ifdef ADIOS2_HAVE_BZIP2
-    Params p;
-    for (const auto &i : params)
-    {
-        std::string prefix = i.first.substr(0, 6);
-        if (prefix == "bzip2:" || prefix == "Bzip2:" || prefix == "BZip2:" ||
-            prefix == "BZIP2:")
-        {
-            std::string key = i.first.substr(6);
-            metaj[i.first] = i.second;
-            p[key] = i.second;
-        }
-    }
-    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
-                                             sizeof(T),
-                                             std::multiplies<size_t>()));
-    core::compress::CompressBZIP2 compressor(p);
-    try
-    {
-        Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), p, info);
-        return true;
-    }
-    catch (std::exception &e)
-    {
-        std::cout << "Got exception " << e.what()
-                  << " from BZip2. Turned off compression." << std::endl;
-    }
-#else
-    throw(std::invalid_argument(
-        "BZip2 compression used but BZip2 library is not linked to ADIOS2"));
-#endif
-    return false;
-}
-
-template <class T>
-void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute)
-{
-    TAU_SCOPED_TIMER_FUNC();
-    nlohmann::json staticVar;
-    staticVar["N"] = attribute.m_Name;
-    staticVar["Y"] = ToString(attribute.m_Type);
-    staticVar["V"] = attribute.m_IsSingleValue;
-    if (attribute.m_IsSingleValue)
-    {
-        staticVar["G"] = attribute.m_DataSingleValue;
-    }
-    else
-    {
-        staticVar["G"] = attribute.m_DataArray;
-    }
-
-    m_StaticDataJsonMutex.lock();
-    m_StaticDataJson["S"].emplace_back(std::move(staticVar));
-    m_StaticDataJsonMutex.unlock();
-}
-
-template <class T>
 int DataManSerializer::GetData(T *outputData, const std::string &varName,
                                const Dims &varStart, const Dims &varCount,
                                const size_t step, const Dims &varMemStart,
@@ -564,6 +415,155 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
         }
     }
     return 0;
+}
+
+template <class T>
+bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
+                               const T *inputData, const Dims &varCount,
+                               const Params &params)
+{
+    TAU_SCOPED_TIMER_FUNC();
+#ifdef ADIOS2_HAVE_ZFP
+    Params p;
+    for (const auto &i : params)
+    {
+        std::string prefix = i.first.substr(0, 4);
+        if (prefix == "zfp:" || prefix == "Zfp:" || prefix == "ZFP:")
+        {
+            std::string key = i.first.substr(4);
+            metaj[i.first] = i.second;
+            p[key] = i.second;
+        }
+    }
+    core::compress::CompressZFP compressor(p);
+    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
+                                             sizeof(T),
+                                             std::multiplies<size_t>()));
+    try
+    {
+        Params info;
+        datasize = compressor.Compress(inputData, varCount, sizeof(T),
+                                       helper::GetDataType<T>(),
+                                       m_CompressBuffer.data(), p, info);
+        return true;
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Got exception " << e.what()
+                  << " from ZFP. Turned off compression." << std::endl;
+    }
+#else
+    throw(std::invalid_argument(
+        "ZFP compression used but ZFP library is not linked to ADIOS2"));
+#endif
+    return false;
+}
+
+template <class T>
+bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
+                              const T *inputData, const Dims &varCount,
+                              const Params &params)
+{
+    TAU_SCOPED_TIMER_FUNC();
+#ifdef ADIOS2_HAVE_SZ
+    Params p;
+    for (const auto &i : params)
+    {
+        std::string prefix = i.first.substr(0, 3);
+        if (prefix == "sz:" || prefix == "Sz:" || prefix == "SZ:")
+        {
+            std::string key = i.first.substr(3);
+            metaj[i.first] = i.second;
+            p[key] = i.second;
+        }
+    }
+    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
+                                             sizeof(T),
+                                             std::multiplies<size_t>()));
+    core::compress::CompressSZ compressor(p);
+    try
+    {
+        Params info;
+        datasize = compressor.Compress(inputData, varCount, sizeof(T),
+                                       helper::GetDataType<T>(),
+                                       m_CompressBuffer.data(), p, info);
+        return true;
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Got exception " << e.what()
+                  << " from SZ. Turned off compression." << std::endl;
+    }
+#else
+    throw(std::invalid_argument(
+        "SZ compression used but SZ library is not linked to ADIOS2"));
+#endif
+    return false;
+}
+
+template <class T>
+bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
+                                 const T *inputData, const Dims &varCount,
+                                 const Params &params)
+{
+    TAU_SCOPED_TIMER_FUNC();
+#ifdef ADIOS2_HAVE_BZIP2
+    Params p;
+    for (const auto &i : params)
+    {
+        std::string prefix = i.first.substr(0, 6);
+        if (prefix == "bzip2:" || prefix == "Bzip2:" || prefix == "BZip2:" ||
+            prefix == "BZIP2:")
+        {
+            std::string key = i.first.substr(6);
+            metaj[i.first] = i.second;
+            p[key] = i.second;
+        }
+    }
+    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
+                                             sizeof(T),
+                                             std::multiplies<size_t>()));
+    core::compress::CompressBZIP2 compressor(p);
+    try
+    {
+        Params info;
+        datasize = compressor.Compress(inputData, varCount, sizeof(T),
+                                       helper::GetDataType<T>(),
+                                       m_CompressBuffer.data(), p, info);
+        return true;
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Got exception " << e.what()
+                  << " from BZip2. Turned off compression." << std::endl;
+    }
+#else
+    throw(std::invalid_argument(
+        "BZip2 compression used but BZip2 library is not linked to ADIOS2"));
+#endif
+    return false;
+}
+
+template <class T>
+void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute)
+{
+    TAU_SCOPED_TIMER_FUNC();
+    nlohmann::json staticVar;
+    staticVar["N"] = attribute.m_Name;
+    staticVar["Y"] = ToString(attribute.m_Type);
+    staticVar["V"] = attribute.m_IsSingleValue;
+    if (attribute.m_IsSingleValue)
+    {
+        staticVar["G"] = attribute.m_DataSingleValue;
+    }
+    else
+    {
+        staticVar["G"] = attribute.m_DataArray;
+    }
+
+    m_StaticDataJsonMutex.lock();
+    m_StaticDataJson["S"].emplace_back(std::move(staticVar));
+    m_StaticDataJsonMutex.unlock();
 }
 
 } // namespace format
