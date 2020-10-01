@@ -116,22 +116,8 @@ public:
     // attach attributes to local pack
     void AttachAttributesToLocalPack();
 
-    // aggregate metadata across all writer ranks and put it into map
-    void AggregateMetadata();
-
-    // get aggregated metadata pack for sending from staging writer to staging
-    // reader
-    VecPtr GetAggregatedMetadataPack(const int64_t stepRequested,
-                                     int64_t &stepProvided,
-                                     const int64_t appID);
-
     // put local metadata and data buffer together and return the merged buffer
     VecPtr GetLocalPack();
-
-    // generate reply on staging writer based on the request from reader
-    VecPtr GenerateReply(
-        const std::vector<char> &request, size_t &step,
-        const std::unordered_map<std::string, Params> &compressionParams);
 
     // ************ deserializer functions
 
@@ -153,18 +139,6 @@ public:
     // called after reader side received and put aggregated metadata into
     // deserializer
     DmvVecPtrMap GetFullMetadataMap();
-
-    DmvVecPtr GetStepMetadata(const size_t step);
-
-    void PutAggregatedMetadata(VecPtr input, helper::Comm const &comm);
-
-    int PutDeferredRequest(const std::string &variable, const size_t step,
-                           const Dims &start, const Dims &count, void *data);
-    DeferredRequestMapPtr GetDeferredRequest();
-
-    bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
-                          const Dims &outStart, const Dims &outCount,
-                          Dims &ovlpStart, Dims &ovlpCount);
 
     void SetDestination(const std::string &dest);
 
@@ -228,10 +202,6 @@ private:
     DmvVecPtrMap m_DataManVarMap;
     std::mutex m_DataManVarMapMutex;
 
-    std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsToAggregate;
-    std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsAggregated;
-    std::mutex m_ProtectedStepsMutex;
-
     // used to count buffers that have been put into deserializer, asynchronous
     // engines such as dataman use this to tell if a certain step has received
     // all blocks from all writers
@@ -247,10 +217,6 @@ private:
     nlohmann::json m_StaticDataJson;
     std::mutex m_StaticDataJsonMutex;
     bool m_StaticDataFinished = false;
-
-    // for generating deferred requests, only accessed from reader main thread,
-    // does not need mutex
-    DeferredRequestMapPtr m_DeferredRequestsToSend;
 
     // string, msgpack, cbor, ubjson
     std::string m_UseJsonSerialization = "string";
