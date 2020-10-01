@@ -140,10 +140,6 @@ public:
     // deserializer
     DmvVecPtrMap GetFullMetadataMap();
 
-    bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
-                          const Dims &outStart, const Dims &outCount,
-                          Dims &ovlpStart, Dims &ovlpCount);
-
     void SetDestination(const std::string &dest);
 
     std::string GetDestination();

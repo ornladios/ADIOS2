@@ -429,57 +429,6 @@ DmvVecPtrMap DataManSerializer::GetFullMetadataMap()
     return m_DataManVarMap;
 }
 
-bool DataManSerializer::CalculateOverlap(const Dims &inStart,
-                                         const Dims &inCount,
-                                         const Dims &outStart,
-                                         const Dims &outCount, Dims &ovlpStart,
-                                         Dims &ovlpCount)
-{
-    TAU_SCOPED_TIMER_FUNC();
-
-    if (inStart.size() != inCount.size() ||
-        outStart.size() != outCount.size() || inStart.size() != outStart.size())
-    {
-        return false;
-    }
-    if (ovlpStart.size() != inStart.size())
-    {
-        ovlpStart.resize(inStart.size());
-    }
-    if (ovlpCount.size() != inStart.size())
-    {
-        ovlpCount.resize(inStart.size());
-    }
-    for (size_t i = 0; i < inStart.size(); ++i)
-    {
-        if (inStart[i] + inCount[i] <= outStart[i])
-        {
-            return false;
-        }
-        if (outStart[i] + outCount[i] <= inStart[i])
-        {
-            return false;
-        }
-        if (inStart[i] < outStart[i])
-        {
-            ovlpStart[i] = outStart[i];
-        }
-        else
-        {
-            ovlpStart[i] = inStart[i];
-        }
-        if (inStart[i] + inCount[i] < outStart[i] + outCount[i])
-        {
-            ovlpCount[i] = inStart[i] + inCount[i] - ovlpStart[i];
-        }
-        else
-        {
-            ovlpCount[i] = outStart[i] + outCount[i] - ovlpStart[i];
-        }
-    }
-    return true;
-}
-
 size_t DataManSerializer::LocalBufferSize() { return m_LocalBuffer->size(); }
 
 VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
