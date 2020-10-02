@@ -155,35 +155,44 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         }
         else if (key == "substreams" || key == "numaggregators")
         {
-            parsedParameters.NumAggregators =
-                static_cast<int>(helper::StringTo<uint32_t>(
-                    value, " in Parameter key=SubStreams " + hint));
+            int n = static_cast<int>(helper::StringTo<int32_t>(
+                value, " in Parameter key=" + key + " " + hint));
 
-            if (parsedParameters.NumAggregators > m_SizeMPI)
+            if (n < 0)
             {
-                parsedParameters.NumAggregators = m_SizeMPI;
+                n = 0;
             }
+            if (n > m_SizeMPI)
+            {
+                n = m_SizeMPI;
+            }
+            parsedParameters.NumAggregators = n;
         }
         else if (key == "aggregatorratio")
         {
-            unsigned int ratio = static_cast<int>(helper::StringTo<int32_t>(
+            int ratio = static_cast<int>(helper::StringTo<int32_t>(
                 value, " in Parameter key=AggregatorRatio " + hint));
-            parsedParameters.NumAggregators = m_SizeMPI / ratio;
-            if ((m_SizeMPI % ratio))
+            if (ratio > 0)
             {
-                throw std::invalid_argument(
-                    "ERROR: value for Parameter key=AggregatorRatio must be "
-                    "an integer divisor of the number of processes (" +
-                    std::to_string(m_SizeMPI) + hint);
-            }
+                int n = m_SizeMPI / ratio;
+                if ((m_SizeMPI % ratio))
+                {
+                    throw std::invalid_argument(
+                        "ERROR: value for Parameter key=AggregatorRatio=" +
+                        std::to_string(ratio) + " must be " +
+                        "an integer divisor of the number of processes=" +
+                        std::to_string(m_SizeMPI) + " " + hint);
+                }
 
-            if (parsedParameters.NumAggregators < 1)
-            {
-                parsedParameters.NumAggregators = 1;
-            }
-            else if (parsedParameters.NumAggregators > m_SizeMPI)
-            {
-                parsedParameters.NumAggregators = m_SizeMPI;
+                if (n < 1)
+                {
+                    n = 1;
+                }
+                else if (n > m_SizeMPI)
+                {
+                    n = m_SizeMPI;
+                }
+                parsedParameters.NumAggregators = n;
             }
         }
         else if (key == "node-local" || key == "nodelocal")

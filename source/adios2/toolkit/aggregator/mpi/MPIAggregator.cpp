@@ -130,9 +130,9 @@ void MPIAggregator::InitCommOnePerNode(helper::Comm const &parentComm)
     /* Identify parent rank of aggregator process within each group */
     if (!m_Rank)
     {
-        m_ConsumerRank = static_cast<size_t>(parentComm.Rank());
+        m_ConsumerRank = parentComm.Rank();
     }
-    m_ConsumerRank = m_Comm.BroadcastValue<size_t>(m_ConsumerRank, 0);
+    m_ConsumerRank = m_Comm.BroadcastValue<int>(m_ConsumerRank, 0);
 }
 
 void MPIAggregator::HandshakeRank(const int rank)
