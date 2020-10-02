@@ -122,6 +122,8 @@ public:
     std::unique_ptr<CommImpl> Split(int color, int key,
                                     const std::string &hint) const override;
     std::unique_ptr<CommImpl> World(const std::string &hint) const override;
+    virtual std::unique_ptr<CommImpl>
+    GroupByShm(const std::string &hint) const override;
 
     int Rank() const override;
     int Size() const override;
@@ -222,6 +224,17 @@ std::unique_ptr<CommImpl> CommImplMPI::Split(int color, int key,
 std::unique_ptr<CommImpl> CommImplMPI::World(const std::string &) const
 {
     return std::unique_ptr<CommImpl>(new CommImplMPI(MPI_COMM_WORLD));
+}
+
+std::unique_ptr<CommImpl> CommImplMPI::GroupByShm(const std::string &hint) const
+{
+    MPI_Comm nodeComm;
+    MPI_Info info;
+    MPI_Info_create(&info);
+    CheckMPIReturn(MPI_Comm_split_type(m_MPIComm, MPI_COMM_TYPE_SHARED, 0, info,
+                                       &nodeComm),
+                   hint);
+    return std::unique_ptr<CommImpl>(new CommImplMPI(nodeComm));
 }
 
 int CommImplMPI::Rank() const

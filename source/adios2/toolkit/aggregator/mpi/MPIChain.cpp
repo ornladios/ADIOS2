@@ -20,8 +20,16 @@ MPIChain::MPIChain() : MPIAggregator() {}
 
 void MPIChain::Init(const size_t subStreams, helper::Comm const &parentComm)
 {
-    InitComm(subStreams, parentComm);
-    HandshakeRank(0);
+    if (subStreams > 0)
+    {
+        InitComm(subStreams, parentComm);
+        HandshakeRank(0);
+    }
+    else
+    {
+        InitCommOnePerNode(parentComm);
+    }
+
     HandshakeLinks();
 
     // add a receiving buffer except for the last rank (only sends)

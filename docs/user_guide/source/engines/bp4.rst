@@ -58,25 +58,27 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 7. **FlushStepsCount**: users can select how often to produce the more expensive collective metadata file in terms of steps: default is 1. Increase to reduce adios2 collective operations footprint, with the trade-off of reducing checkpoint frequency. Buffer size will increase until first steps count if ``MaxBufferSize`` is not set.
 
-8. **SubStreams**: (MPI-only) users can select how many sub-streams (``M`` sub-files) are produced during a run, ranges between 1 and the number of mpi processes from ``MPI_Size`` (``N``), adios2 will internally aggregate data buffers (``N-to-M``) to output the required number of sub-files. If Substream is out of bounds it will pick either 1 (``SubStreams`` < ``1 -> N-to-1``) or ``N`` ((``SubStreams`` > ``N -> N-to-N``) and ADIOS2 will issue a WARNING message. Use for performance tuning.
+8. **NumAggregators** (or **SubStreams**): Users can select how many sub-files (``M``) are produced during a run, ranges between 1 and the number of mpi processes from ``MPI_Size`` (``N``), adios2 will internally aggregate data buffers (``N-to-M``) to output the required number of sub-files. Default is 0, which will let adios2 to group processes per shared-memory-access (i.e. one per compute node) and use one process per node as an aggregator. If NumAggregators is larger than the number of processes then it will be set to the number of processes.
 
-9. **OpenTimeoutSecs**: (Streaming mode) Reader may want to wait for the creation of the file in ``io.Open()``. By default the Open() function returns with an error if file is not found.
+9. **AggregatorRatio**: An alternative option to NumAggregators to pick every Nth process as aggregator. An integer divider of the number of processes is required, otherwise a runtime exception is thrown. 
 
-10. **BeginStepPollingFrequencySecs**: (Streaming mode) Reader can set how frequently to check the file (and file system) for new steps. Default is 1 seconds which may be stressful for the file system and unnecessary for the application.
+10. **OpenTimeoutSecs**: (Streaming mode) Reader may want to wait for the creation of the file in ``io.Open()``. By default the Open() function returns with an error if file is not found.
 
-11. **StatsLevel**: Turn on/off calculating statistics for every variable (Min/Max). Default is On. It has some cost to generate this metadata so it can be turned off if there is no need for this information.
+11. **BeginStepPollingFrequencySecs**: (Streaming mode) Reader can set how frequently to check the file (and file system) for new steps. Default is 1 seconds which may be stressful for the file system and unnecessary for the application.
 
-12. **StatsBlockSize**: Calculate Min/Max for a given size of each process output. Default is one Min/Max per writer. More fine-grained min/max can be useful for querying the data. 
+12. **StatsLevel**: Turn on/off calculating statistics for every variable (Min/Max). Default is On. It has some cost to generate this metadata so it can be turned off if there is no need for this information.
 
-13. **NodeLocal** or **Node-Local**: For distributed file system. Every writer process must make sure the .bp/ directory is created on the local file system. Required when writing to local disk/SSD/NVMe in a cluster. Note: the BurstBuffer* parameters are newer and should be used for using the local storage as temporary instead of this parameter.
+13. **StatsBlockSize**: Calculate Min/Max for a given size of each process output. Default is one Min/Max per writer. More fine-grained min/max can be useful for querying the data. 
 
-14. **BurstBufferPath**: Redirect output file to another location and drain it to the original target location in an asynchronous thread. It requires to be able to launch one thread per aggregator (see SubStreams) on the system. This feature can be used on machines that have local NVMe/SSDs on each node to accelerate the output writing speed. On Summit at OLCF, use "/mnt/bb/<username>" for the path where <username> is your user account name. Temporary files on the accelerated storage will be automatically deleted after the application closes the output and ADIOS drains all data to the file system, unless draining is turned off (see the next parameter). Note: at this time, this feature cannot be used to append data to an existing dataset on the target system. 
+14. **NodeLocal** or **Node-Local**: For distributed file system. Every writer process must make sure the .bp/ directory is created on the local file system. Required when writing to local disk/SSD/NVMe in a cluster. Note: the BurstBuffer* parameters are newer and should be used for using the local storage as temporary instead of this parameter.
 
-15. **BurstBufferDrain**: To write only to the accelerated storage but to not drain it to the target file system, set this flag to false. Data will NOT be deleted from the accelerated storage on close. By default, setting the BurstBufferPath will turn on draining. 
+15. **BurstBufferPath**: Redirect output file to another location and drain it to the original target location in an asynchronous thread. It requires to be able to launch one thread per aggregator (see SubStreams) on the system. This feature can be used on machines that have local NVMe/SSDs on each node to accelerate the output writing speed. On Summit at OLCF, use "/mnt/bb/<username>" for the path where <username> is your user account name. Temporary files on the accelerated storage will be automatically deleted after the application closes the output and ADIOS drains all data to the file system, unless draining is turned off (see the next parameter). Note: at this time, this feature cannot be used to append data to an existing dataset on the target system. 
 
-16. **BurstBufferVerbose**: Verbose level 1 will cause each draining thread to print a one line report at the end (to standard output) about where it has spent its time and the number of bytes moved. Verbose level 2 will cause each thread to print a line for each draining operation (file creation, copy block, write block from memory, etc). 
+16. **BurstBufferDrain**: To write only to the accelerated storage but to not drain it to the target file system, set this flag to false. Data will NOT be deleted from the accelerated storage on close. By default, setting the BurstBufferPath will turn on draining. 
 
-17. **StreamReader**: By default the BP4 engine parses all available metadata in Open(). An application may turn this flag on to parse a limited number of steps at once, and update metadata when those steps have been processed. If the flag is ON, reading only works in streaming mode (using BeginStep/EndStep); file reading mode will not work as there will be zero steps processed in Open().
+17. **BurstBufferVerbose**: Verbose level 1 will cause each draining thread to print a one line report at the end (to standard output) about where it has spent its time and the number of bytes moved. Verbose level 2 will cause each thread to print a line for each draining operation (file creation, copy block, write block from memory, etc). 
+
+18. **StreamReader**: By default the BP4 engine parses all available metadata in Open(). An application may turn this flag on to parse a limited number of steps at once, and update metadata when those steps have been processed. If the flag is ON, reading only works in streaming mode (using BeginStep/EndStep); file reading mode will not work as there will be zero steps processed in Open().
 
 ============================== ===================== ===========================================================
  **Key**                       **Value Format**      **Default** and Examples
@@ -88,7 +90,8 @@ This engine allows the user to fine tune the buffering operations through the fo
  MaxBufferSize                  float+units >= 16Kb   **at EndStep**, 10Mb, 0.5Gb
  BufferGrowthFactor             float > 1             **1.05**, 1.01, 1.5, 2
  FlushStepsCount                integer > 1           **1**, 5, 1000, 50000
- SubStreams                     integer >= 1          **MPI_Size (N-to-N)**, ``MPI_Size``/2, ... , 2, (N-to-1) 1
+ NumAggregators                 integer >= 1          **0 (one file per compute node)**, ``MPI_Size``/2, ... , 2, (N-to-1) 1
+ AggregatorRatio                integer >= 1          not used unless set, ``MPI_Size``/N must be an integer value
  OpenTimeoutSecs                float                 **0**, ``10.0``, ``5``
  BeginStepPollingFrequencySecs  float                 **1**, ``10.0`` 
  StatsLevel                     integer, 0 or 1       **1**, ``0``

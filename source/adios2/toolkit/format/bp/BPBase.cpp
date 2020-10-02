@@ -49,8 +49,6 @@ void BPBase::Init(const Params &parameters, const std::string hint,
     struct Parameters parsedParameters;
     bool profilePresent = false;
     bool profileValue;
-    bool subStreamsPresent = false;
-    int32_t subStreamsValue;
     for (const auto &parameter : parameters)
     {
         const std::string key = helper::LowerCase(parameter.first);
@@ -155,24 +153,37 @@ void BPBase::Init(const Params &parameters, const std::string hint,
             parsedParameters.FlushStepsCount = helper::StringToSizeT(
                 value, " in Parameter key=FlushStepsCount " + hint);
         }
-        else if (key == "substreams")
+        else if (key == "substreams" || key == "numaggregators")
         {
-            int subStreams = static_cast<int>(helper::StringTo<int32_t>(
-                value, " in Parameter key=SubStreams " + hint));
+            parsedParameters.NumAggregators =
+                static_cast<int>(helper::StringTo<uint32_t>(
+                    value, " in Parameter key=SubStreams " + hint));
 
-            if (subStreams < 1)
+            if (parsedParameters.NumAggregators > m_SizeMPI)
             {
-                subStreams = 1;
+                parsedParameters.NumAggregators = m_SizeMPI;
             }
-            else if (subStreams > m_SizeMPI)
+        }
+        else if (key == "aggregatorratio")
+        {
+            unsigned int ratio = static_cast<int>(helper::StringTo<int32_t>(
+                value, " in Parameter key=AggregatorRatio " + hint));
+            parsedParameters.NumAggregators = m_SizeMPI / ratio;
+            if ((m_SizeMPI % ratio))
             {
-                subStreams = m_SizeMPI;
+                throw std::invalid_argument(
+                    "ERROR: value for Parameter key=AggregatorRatio must be "
+                    "an integer divisor of the number of processes (" +
+                    std::to_string(m_SizeMPI) + hint);
             }
 
-            if (subStreams < m_SizeMPI)
+            if (parsedParameters.NumAggregators < 1)
             {
-                subStreamsPresent = true;
-                subStreamsValue = subStreams;
+                parsedParameters.NumAggregators = 1;
+            }
+            else if (parsedParameters.NumAggregators > m_SizeMPI)
+            {
+                parsedParameters.NumAggregators = m_SizeMPI;
             }
         }
         else if (key == "node-local" || key == "nodelocal")
@@ -232,10 +243,6 @@ void BPBase::Init(const Params &parameters, const std::string hint,
             m_Profiler.m_IsActive = profileValue;
         }
         m_Parameters = parsedParameters;
-        if (subStreamsPresent)
-        {
-            m_Aggregator.Init(subStreamsValue, m_Comm);
-        }
     }
     // set timers if active
     if (m_Profiler.m_IsActive)

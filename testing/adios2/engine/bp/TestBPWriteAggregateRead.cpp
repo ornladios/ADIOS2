@@ -40,7 +40,7 @@ void WriteAggRead1D8(const std::string substreams)
 
         if (mpiSize > 1)
         {
-            io.SetParameter("Substreams", substreams);
+            io.SetParameter("NumAggregators", substreams);
         }
 
         // Declare 1D variables (NumOfProcesses * Nx)
@@ -69,6 +69,13 @@ void WriteAggRead1D8(const std::string substreams)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+
+            // add operations
+            adios2::Operator ZFPOp =
+                adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+
+            var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, "32"}});
+            var_r64.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, "64"}});
         }
 
         if (!engineName.empty())
@@ -954,7 +961,7 @@ TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
 }
 
 INSTANTIATE_TEST_SUITE_P(Substreams, BPWriteAggregateReadTest,
-                         ::testing::Values("1", "2", "3", "4", "5"));
+                         ::testing::Values("1", "2", "3", "4", "5", "0"));
 
 int main(int argc, char **argv)
 {
