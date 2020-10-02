@@ -70,12 +70,13 @@ void WriteAggRead1D8(const std::string substreams)
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
 
-            // add operations
+            /* add operations
             adios2::Operator ZFPOp =
                 adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
             var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, "32"}});
             var_r64.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, "64"}});
+            */
         }
 
         if (!engineName.empty())
