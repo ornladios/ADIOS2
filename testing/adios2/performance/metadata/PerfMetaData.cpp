@@ -265,8 +265,9 @@ void DoWriter(adios2::Params writerParams)
     adios2::Engine writer = io.Open("MetaDataTest", adios2::Mode::Write);
     std::chrono::time_point<std::chrono::high_resolution_clock> start, finish;
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    adios2::Variable<float> Floats[NumVars];
-    adios2::Variable<float> FloatArrays[NumArrays];
+    adios2::Variable<float> *Floats = new adios2::Variable<float>[NumVars];
+    adios2::Variable<float> *FloatArrays =
+        new adios2::Variable<float>[NumArrays];
     if (mpiRank == 0)
     {
         // attributes and globals on rank 0
