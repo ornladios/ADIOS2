@@ -2623,11 +2623,12 @@ timeout_conn(CManager cm, void *client_data)
 	 }
 	 fprintf(cm->CMTrace_file, "CM - record type %s, contents are:\n  ", name_of_FMformat(FMFormat_of_original(cm_format->format)));
 	 r = FMfdump_data(cm->CMTrace_file, FMFormat_of_original(cm_format->format), decode_buffer, dump_char_limit);
-	 if (r && !warned) {
+	 if (!r && !warned) {
 	     printf("\n\n  ****  Warning **** CM record dump truncated\n");
-	     printf("  To change size limits, set CMDumpSize environment variable.\n\n\n");
+	     printf("  To change size limits, set CMDumpSize environment variable.\n");
 	     warned++;
 	 }
+	 fprintf(cm->CMTrace_file, "\n=======\n");
      }
      if (attrs == NULL) {
 	 attrs = CMcreate_attr_list(cm);
@@ -3264,11 +3265,12 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	 }
 	 fprintf(cm->CMTrace_file, "CM - record type %s, contents are:\n  ", name_of_FMformat(format->fmformat));
 	 r = FMfdump_data(cm->CMTrace_file, format->fmformat, data, dump_char_limit);
-	 if (r && !warned) {
+	 if (!r && !warned) {
 	     fprintf(cm->CMTrace_file, "\n\n  ****  Warning **** CM record dump truncated\n");
-	     fprintf(cm->CMTrace_file, "  To change size limits, set CMDumpSize environment variable.\n\n\n");
+	     fprintf(cm->CMTrace_file, "  To change size limits, set CMDumpSize environment variable.\n");
 	     warned++;
 	 }
+	 fprintf(cm->CMTrace_file, "\n=======\n");
      }
 
      /* encode data with CM context */
@@ -3399,11 +3401,12 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	     r = FMfdump_encoded_data(cm->CMTrace_file, format->fmformat,
 				      event->encoded_event, dump_char_limit);
 	 }	    
-	 if (r && !warned) {
+	 if (!r && !warned) {
 	     fprintf(cm->CMTrace_file, "\n\n  ****  Warning **** CM record dump truncated\n");
-	     fprintf(cm->CMTrace_file, "  To change size limits, set CMDumpSize environment variable.\n\n\n");
+	     fprintf(cm->CMTrace_file, "  To change size limits, set CMDumpSize environment variable.\n");
 	     warned++;
 	 }
+	 fprintf(cm->CMTrace_file, "\n=======\n");
      }
 
      if (!event->encoded_event) {
