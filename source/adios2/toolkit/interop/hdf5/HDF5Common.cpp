@@ -833,13 +833,19 @@ void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
             varCreateProperty = m_ChunkPID;
     }
 
-    hid_t dsetID = H5Dcreate(topId, list.back().c_str(), h5Type, filespaceID,
-                             H5P_DEFAULT, varCreateProperty, H5P_DEFAULT);
-
-    if (list.back().compare(varName) != 0)
+    hid_t dsetID = -1;
+    if (H5Lexists(topId, list.back().c_str(), H5P_DEFAULT) == 0)
     {
-        StoreADIOSName(varName, dsetID); // only stores when not the same
+        dsetID = H5Dcreate(topId, list.back().c_str(), h5Type, filespaceID,
+                           H5P_DEFAULT, varCreateProperty, H5P_DEFAULT);
+        if (list.back().compare(varName) != 0)
+        {
+            StoreADIOSName(varName, dsetID); // only stores when not the same
+        }
     }
+    else
+        dsetID = H5Dopen(topId, list.back().c_str(), H5P_DEFAULT);
+
     datasetChain.push_back(dsetID);
     // return dsetID;
 }
