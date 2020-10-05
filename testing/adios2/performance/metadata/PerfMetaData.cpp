@@ -406,12 +406,12 @@ void DoReader()
                 Cont = 0;
             }
         }
-        LastVarSize = Floats.size();
+        LastVarSize = (int)Floats.size();
         for (auto Var : Floats)
         {
             reader.Get(Var, in.data());
         }
-        LastArraySize = FloatArrays.size();
+        LastArraySize = (int)FloatArrays.size();
         for (auto Var : FloatArrays)
         {
             if (Var.ShapeID() == adios2::ShapeID::GlobalArray)
@@ -432,7 +432,7 @@ void DoReader()
                 }
             }
         }
-        LastAttrsSize = Attributes.size();
+        LastAttrsSize = (int)Attributes.size();
         for (auto Attr : Attributes)
         {
             if (Attr.Data().front() != 0.0)
@@ -492,7 +492,7 @@ int main(int argc, char **argv)
             std::cout << "Metadata Consolidation Time " << elapsed.count()
                       << " seconds." << std::endl;
         }
-        ReaderDelay = elapsed.count() + 5;
+        ReaderDelay = (int)elapsed.count() + 5;
     }
 
     MPI_Bcast(&ReaderDelay, 1, MPI_INT, 1, MPI_COMM_WORLD);
