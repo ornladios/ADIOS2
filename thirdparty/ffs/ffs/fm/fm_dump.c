@@ -368,7 +368,7 @@ dump_subfields(void *base, FMFormat f, dstate s, int data_offset)
 			      &f->var_list[i].type_desc);
 	stop_field(s, fmfield, &f->var_list[i].type_desc);
 	if (ret != 1) return 0;
-	if ((s->output_limit != -1) && (s->output_len > s->output_limit)) return 0;
+	if ((s->output_limit != -1) && (s->output_len >= s->output_limit)) return 0;
     }
     return 1;
 }
