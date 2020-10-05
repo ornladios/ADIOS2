@@ -923,7 +923,8 @@ static SstStatusValue WaitForReadRequests(SstStream Stream)
             if (Result == SstSuccess)
             {
                 Info->WriterInfo[i].Status = Full;
-                DecodeAndPrepareData(Stream, i);
+                if (!Stream->ConfigParams->ReaderShortCircuitReads)
+                    DecodeAndPrepareData(Stream, i);
             }
             else
             {
@@ -1378,7 +1379,8 @@ extern SstStatusValue SstFFSPerformGets(SstStream Stream)
 
     if (Ret == SstSuccess)
     {
-        FillReadRequests(Stream, Info->PendingVarRequests);
+        if (!Stream->ConfigParams->ReaderShortCircuitReads)
+            FillReadRequests(Stream, Info->PendingVarRequests);
     }
     else
     {

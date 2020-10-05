@@ -3,6 +3,8 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(manyvars)
-add_subdirectory(query)
-add_subdirectory(metadata)
+if(ADIOS2_HAVE_MPI)
+  # just for executing manually for performance studies
+  add_executable(PerfMetaData PerfMetaData.cpp)
+  target_link_libraries(PerfMetaData adios2::cxx11_mpi MPI::MPI_C)
+endif()
