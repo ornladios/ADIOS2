@@ -515,6 +515,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         struct _ReaderRegisterMsg ReaderRegister;
 
         memset(&ReaderRegister, 0, sizeof(ReaderRegister));
+        memset(&WriterData, 0, sizeof(WriterData));
+        WriterData.WriterCohortSize = -1;
         ReaderRegister.WriterFile = WriterFileID;
         ReaderRegister.WriterResponseCondition =
             CMCondition_get(Stream->CPInfo->SharedCM->cm, rank0_to_rank0_conn);
@@ -549,7 +551,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         free(pointers);
 
         /* the response value is set in the handler */
-        struct _WriterResponseMsg *response = NULL;
+        volatile struct _WriterResponseMsg *response = NULL;
         CMCondition_set_client_data(Stream->CPInfo->SharedCM->cm,
                                     ReaderRegister.WriterResponseCondition,
                                     &response);
@@ -1401,6 +1403,8 @@ extern void *SstReadRemoteMemory(SstStream Stream, int Rank, long Timestep,
                                  size_t Offset, size_t Length, void *Buffer,
                                  void *DP_TimestepInfo)
 {
+    if (Stream->ConfigParams->ReaderShortCircuitReads)
+        return NULL;
     Stream->Stats.BytesTransferred += Length;
     AddToReadStats(Stream, Rank, Timestep, Length);
     return Stream->DP_Interface->readRemoteMemory(
@@ -2124,6 +2128,8 @@ extern void SstReaderClose(SstStream Stream)
 //  needs no locking
 extern SstStatusValue SstWaitForCompletion(SstStream Stream, void *handle)
 {
+    if (Stream->ConfigParams->ReaderShortCircuitReads)
+        return SstSuccess;
     if (Stream->DP_Interface->waitForCompletion(&Svcs, handle) != 1)
     {
         return SstFatalError;
