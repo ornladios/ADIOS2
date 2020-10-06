@@ -90,6 +90,7 @@ void TimeAggregation1D8(const std::string flushstepscount)
         }
 
         io.AddTransport("file");
+        io.SetParameter("AggregatorRatio", "1");
 
         SmallTestData m_TestData;
 
@@ -415,6 +416,7 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
         }
 
         io.AddTransport("file");
+        io.SetParameter("AggregatorRatio", "1");
 
         SmallTestData m_TestData;
 
