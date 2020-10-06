@@ -1753,8 +1753,10 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
     const std::string fname("BPWriteReadLocal1DSubFile.bp");
 
     int mpiRank = 0;
+    int mpiSize = 1;
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     const size_t Nx0 = 3 + static_cast<size_t>(mpiRank);
@@ -1770,6 +1772,12 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
     std::iota(data[0].begin(), data[0].end(), startBlock0);
     std::iota(data[1].begin(), data[1].end(), startBlock1);
 
+    /* This is a test for only BP3 */
+    if (engineName != "BP3")
+    {
+        return;
+    }
+
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
@@ -1778,6 +1786,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
         io.SetEngine("BP3");
+        io.SetParameter("AggregatorRatio", "1");
         const adios2::Dims shape{};
         const adios2::Dims start{};
         const adios2::Dims count{Nx0};
