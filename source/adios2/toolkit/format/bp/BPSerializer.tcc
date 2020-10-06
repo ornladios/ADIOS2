@@ -167,7 +167,7 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
             currentPosition += 2 * sizeof(T); // block min/max
             if (M > 1)
             {
-                currentPosition += 1 + 4; // method, blockSize
+                currentPosition += 1 + 8; // method (byte), blockSize (uint64_t)
                 currentPosition +=
                     dimensionsSize * sizeof(uint16_t); // N-dim division
                 currentPosition += 2 * M * sizeof(T);  // M * min/max
