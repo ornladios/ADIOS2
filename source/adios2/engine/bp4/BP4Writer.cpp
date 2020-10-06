@@ -123,8 +123,11 @@ void BP4Writer::Flush(const int transportIndex)
 void BP4Writer::Init()
 {
     InitParameters();
-    m_BP4Serializer.m_Aggregator.Init(
-        m_BP4Serializer.m_Parameters.NumAggregators, m_Comm);
+    if (m_BP4Serializer.m_Parameters.NumAggregators < m_BP4Serializer.m_SizeMPI)
+    {
+        m_BP4Serializer.m_Aggregator.Init(
+            m_BP4Serializer.m_Parameters.NumAggregators, m_Comm);
+    }
     InitTransports();
     InitBPBuffer();
 }

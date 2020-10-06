@@ -118,8 +118,11 @@ void BP3Writer::Flush(const int transportIndex)
 void BP3Writer::Init()
 {
     InitParameters();
-    m_BP3Serializer.m_Aggregator.Init(
-        m_BP3Serializer.m_Parameters.NumAggregators, m_Comm);
+    if (m_BP3Serializer.m_Parameters.NumAggregators < m_BP3Serializer.m_SizeMPI)
+    {
+        m_BP3Serializer.m_Aggregator.Init(
+            m_BP3Serializer.m_Parameters.NumAggregators, m_Comm);
+    }
     InitTransports();
     InitBPBuffer();
 }
