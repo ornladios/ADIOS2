@@ -137,6 +137,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
+        io.SetParameter("AggregatorRatio", "1");
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -459,6 +460,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
+        io.SetParameter("AggregatorRatio", "1");
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
