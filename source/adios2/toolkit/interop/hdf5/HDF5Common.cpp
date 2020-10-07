@@ -90,6 +90,8 @@ void HDF5Common::ParseParameters(core::IO &io)
 {
     if (m_MPI)
     {
+        m_MPI->set_dxpl_mpio(m_PropertyTxfID,
+                             H5FD_MPIO_INDEPENDENT); // explicit
         auto itKey = io.m_Parameters.find(PARAMETER_COLLECTIVE);
         if (itKey != io.m_Parameters.end())
         {
@@ -1335,8 +1337,6 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
-
-    // std::string attrType = attributesInfo[attrName]["Type"];
 }
 
 //
