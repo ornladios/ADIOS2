@@ -53,12 +53,25 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine hdf5Writer =
             hdf5IO.Open("myVector.h5", adios2::Mode::Write);
-
+#ifdef NOT_RECOMMENTED
+        // all Ranks must call Put
         /** Write variable for buffering */
         hdf5Writer.Put<float>(h5Floats, myFloats.data());
         hdf5Writer.Put(h5Ints, myInts.data());
         hdf5Writer.Put(h5ScalarDouble, &myScalar);
-
+#else
+        // using collective Begin/EndStep() to run the
+        // collective HDF5 calls. Now Ranks can skip writting if no data
+        // presented
+        hdf5Writer.BeginStep();
+        if (rank == 0)
+        {
+            hdf5Writer.Put<float>(h5Floats, myFloats.data());
+            hdf5Writer.Put(h5Ints, myInts.data());
+            hdf5Writer.Put(h5ScalarDouble, &myScalar);
+        }
+        hdf5Writer.EndStep();
+#endif
         std::vector<int64_t> m_globalDims = {10, 20, 30, 40};
         hdf5IO.DefineAttribute<std::string>(
             "adios2_schema/version_major",
@@ -79,13 +92,8 @@ int main(int argc, char *argv[])
         hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension-num",
                                              m_globalDims.size());
 
-#ifdef NEVER
-        /** Create h5 file, engine becomes unreachable after this*/
+
         hdf5Writer.Close();
-#else
-        hdf5Writer.Flush();
-        hdf5Writer.Flush();
-#endif
     }
     catch (std::invalid_argument &e)
     {
