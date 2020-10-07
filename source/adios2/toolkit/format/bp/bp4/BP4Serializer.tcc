@@ -620,8 +620,9 @@ void BP4Serializer::PutBoundsRecord(const bool singleValue,
                 uint8_t method =
                     static_cast<uint8_t>(stats.SubBlockInfo.DivisionMethod);
                 helper::InsertToBuffer(buffer, &method);
-                helper::InsertToBuffer(buffer,
-                                       &stats.SubBlockInfo.SubBlockSize);
+                uint64_t subBlockSize =
+                    static_cast<uint64_t>(stats.SubBlockInfo.SubBlockSize);
+                helper::InsertToBuffer(buffer, &subBlockSize);
 
                 const uint16_t N =
                     static_cast<uint16_t>(stats.SubBlockInfo.Div.size());
@@ -673,8 +674,9 @@ void BP4Serializer::PutBoundsRecord(const bool singleValue,
                 uint8_t method =
                     static_cast<uint8_t>(stats.SubBlockInfo.DivisionMethod);
                 helper::CopyToBuffer(buffer, position, &method);
-                helper::CopyToBuffer(buffer, position,
-                                     &stats.SubBlockInfo.SubBlockSize);
+                uint64_t subBlockSize =
+                    static_cast<uint64_t>(stats.SubBlockInfo.SubBlockSize);
+                helper::CopyToBuffer(buffer, position, &subBlockSize);
 
                 const uint16_t N =
                     static_cast<uint16_t>(stats.SubBlockInfo.Div.size());

@@ -118,6 +118,13 @@ public:
      */
     Comm World(const std::string &hint = std::string()) const;
 
+    /**
+     * @brief Create a communicator for processes that can share memory
+     * @param hint Description of std::runtime_error exception on error.
+     * Useful for grouping processes per compute node
+     */
+    Comm GroupByShm(const std::string &hint = std::string()) const;
+
     int Rank() const;
     int Size() const;
 
@@ -368,6 +375,8 @@ public:
     virtual std::unique_ptr<CommImpl> Split(int color, int key,
                                             const std::string &hint) const = 0;
     virtual std::unique_ptr<CommImpl> World(const std::string &hint) const = 0;
+    virtual std::unique_ptr<CommImpl>
+    GroupByShm(const std::string &hint) const = 0;
     virtual int Rank() const = 0;
     virtual int Size() const = 0;
     virtual bool IsMPI() const = 0;

@@ -215,6 +215,13 @@ public:
          * instead of parsing everything available
          */
         bool StreamReader = false;
+
+        /** Number of aggregators.
+         * Must be a value between 1 and number of MPI ranks
+         * 0 as default means that the engine must define the number of
+         * aggregators
+         */
+        unsigned int NumAggregators = 0;
     };
 
     /** Return type of the ResizeBuffer function. */
@@ -299,6 +306,7 @@ public:
      */
     void Init(const Params &parameters, const std::string hint,
               const std::string engineType = "");
+
     /****************** NEED to check if some are virtual */
 
     /**

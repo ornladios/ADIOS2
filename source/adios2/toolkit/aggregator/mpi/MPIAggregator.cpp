@@ -96,6 +96,45 @@ void MPIAggregator::InitComm(const size_t subStreams,
     m_SubStreams = subStreams;
 }
 
+void MPIAggregator::InitCommOnePerNode(helper::Comm const &parentComm)
+{
+    m_Comm = parentComm.GroupByShm("creating default aggregator setup at Open");
+    m_Rank = m_Comm.Rank();
+    m_Size = m_Comm.Size();
+
+    if (m_Rank != 0)
+    {
+        m_IsConsumer = false;
+    }
+
+    m_IsActive = true;
+
+    /* Determine number of aggregators (= nodes) */
+
+    /*
+     *  Communicators connecting rank N of each node
+     *  We are only interested in the chain of rank 0s
+     */
+    int color = (m_Rank ? 1 : 0);
+    helper::Comm onePerNodeComm =
+        parentComm.Split(color, 0, "creating default aggregator setup at Open");
+
+    if (!m_Rank)
+    {
+        m_SubStreamIndex = static_cast<size_t>(onePerNodeComm.Rank());
+        m_SubStreams = static_cast<size_t>(onePerNodeComm.Size());
+    }
+    m_SubStreams = m_Comm.BroadcastValue<size_t>(m_SubStreams, 0);
+    m_SubStreamIndex = m_Comm.BroadcastValue<size_t>(m_SubStreamIndex, 0);
+
+    /* Identify parent rank of aggregator process within each group */
+    if (!m_Rank)
+    {
+        m_ConsumerRank = parentComm.Rank();
+    }
+    m_ConsumerRank = m_Comm.BroadcastValue<int>(m_ConsumerRank, 0);
+}
+
 void MPIAggregator::HandshakeRank(const int rank)
 {
     int message = -1;

@@ -301,7 +301,8 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
                         helper::ReadValue<uint8_t>(buffer, position,
                                                    isLittleEndian));
                 characteristics.Statistics.SubBlockInfo.SubBlockSize =
-                    helper::ReadValue<size_t>(buffer, position, isLittleEndian);
+                    static_cast<size_t>(helper::ReadValue<uint64_t>(
+                        buffer, position, isLittleEndian));
 
                 characteristics.Statistics.SubBlockInfo.Div.resize(
                     dimensionsSize);
