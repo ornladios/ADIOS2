@@ -33,11 +33,12 @@ HDF5WriterP::~HDF5WriterP() { DoClose(); }
 StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_IO.m_ReadStreaming = false;
-#ifndef RELAY_DEFINE_TO_HDF5 // RELAY_DEFINE_TO_HDF5 = variables in io are
-                             // created at begin_step
-#else
+
+    // defines variables at this collective call.
+    // this will ensure all vars are defined in hdf5 for all processors
+    // (collective requirement) writing a variable is not a collective call
     m_H5File.CreateVarsFromIO(m_IO);
-#endif
+
     return StepStatus::OK;
 }
 
@@ -60,8 +61,6 @@ void HDF5WriterP::Init()
             ", in call to ADIOS Open or HDF5Writer constructor\n");
     }
 
-    m_H5File.ParseParameters(m_IO);
-
     if (m_OpenMode == Mode::Append)
     {
         m_H5File.Append(m_Name, m_Comm);
@@ -71,6 +70,7 @@ void HDF5WriterP::Init()
     else
         m_H5File.Init(m_Name, m_Comm, true);
 
+    m_H5File.ParseParameters(m_IO); // has to follow m_H5File Init/Append/
     /*
     // enforce .h5 ending
     std::string suffix = ".h5";
