@@ -39,6 +39,8 @@ int main(int argc, char *argv[])
          * Parameters, Transports, and Execution: Engines */
         adios2::IO hdf5IO = adios.DeclareIO("HDFFileIO");
         hdf5IO.SetEngine("HDF5");
+        hdf5IO.SetParameter("IdleH5Writer",
+                            "true"); // set this if not all ranks are writting
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
@@ -53,7 +55,7 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine hdf5Writer =
             hdf5IO.Open("myVector.h5", adios2::Mode::Write);
-#ifdef NOT_RECOMMENTED
+#ifdef ALL_RANKS_WRITE
         // all Ranks must call Put
         /** Write variable for buffering */
         hdf5Writer.Put<float>(h5Floats, myFloats.data());

@@ -124,6 +124,7 @@ public:
     static const std::string PARAMETER_COLLECTIVE;
     static const std::string PARAMETER_CHUNK_FLAG;
     static const std::string PARAMETER_CHUNK_VARS;
+    static const std::string PARAMETER_HAS_IDLE_WRITER_RANK;
 
     void ParseParameters(core::IO &io);
     void Init(const std::string &name, helper::Comm const &comm, bool toWrite);
@@ -258,6 +259,11 @@ private:
     hid_t m_ChunkPID;
     int m_ChunkDim;
     std::set<std::string> m_ChunkVarNames;
+    bool m_OrderByC = true; // C or fortran
+
+    // Some write rank can be idle. This causes conflict with HDF5 collective
+    // requirement in functions Guard this by load vars in beginStep
+    bool m_IdleWriterOn = false;
 };
 
 // Explicit declaration of the public template methods

@@ -47,6 +47,7 @@ const std::string HDF5Common::PREFIX_STAT = "ADIOS_STAT_";
 const std::string HDF5Common::PARAMETER_COLLECTIVE = "H5CollectiveMPIO";
 const std::string HDF5Common::PARAMETER_CHUNK_FLAG = "H5ChunkDim";
 const std::string HDF5Common::PARAMETER_CHUNK_VARS = "H5ChunkVars";
+const std::string HDF5Common::PARAMETER_HAS_IDLE_WRITER_RANK = "IdleH5Writer";
 
 /*
    //need to know ndim before defining this.
@@ -98,6 +99,13 @@ void HDF5Common::ParseParameters(core::IO &io)
             if (itKey->second == "yes" || itKey->second == "true")
                 m_MPI->set_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
         }
+
+        itKey = io.m_Parameters.find(PARAMETER_HAS_IDLE_WRITER_RANK);
+        if (itKey != io.m_Parameters.end())
+        {
+            if (itKey->second == "yes" || itKey->second == "true")
+                m_IdleWriterOn = true;
+        }
     }
 
     m_ChunkVarNames.clear();
@@ -135,6 +143,8 @@ void HDF5Common::ParseParameters(core::IO &io)
                 m_ChunkVarNames.insert(token);
         }
     }
+
+    m_OrderByC = helper::IsRowMajor(io.m_HostLanguage);
 }
 
 void HDF5Common::Append(const std::string &name, helper::Comm const &comm)
@@ -889,6 +899,9 @@ void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
         dsetID = H5Dopen(topId, list.back().c_str(), H5P_DEFAULT);
 
     datasetChain.push_back(dsetID);
+
+    hid_t dspace = H5Dget_space(dsetID);
+    const int ndims = H5Sget_simple_extent_ndims(dspace);
     // return dsetID;
 }
 
@@ -1364,6 +1377,12 @@ void HDF5Common::LocateAttrParent(const std::string &attrName,
 //
 void HDF5Common::CreateVarsFromIO(core::IO &io)
 {
+    if (!m_WriteMode)
+        return;
+
+    if (!m_IdleWriterOn)
+        return;
+
     CheckWriteGroup();
     const core::VarMap &variables = io.GetVariables();
     for (const auto &vpair : variables)

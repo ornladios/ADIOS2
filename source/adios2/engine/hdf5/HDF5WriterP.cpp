@@ -121,34 +121,6 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 template <class T>
 void HDF5WriterP::DoPutSyncCommon(Variable<T> &variable, const T *values)
 {
-
-    bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
-
-    if (!isOrderC)
-    {
-        int ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
-
-        if (ndims > 1)
-        {
-            Dims c_shape(ndims), c_offset(ndims), c_count(ndims);
-            for (int i = 0; i < ndims; i++)
-            {
-                c_shape[i] = variable.m_Shape[ndims - i - 1];
-                c_offset[i] = variable.m_Start[ndims - i - 1];
-                c_count[i] = variable.m_Count[ndims - i - 1];
-            }
-
-            Variable<T> dup = Variable<T>(variable.m_Name, c_shape, c_offset,
-                                          c_count, variable.IsConstantDims());
-
-            /*
-             * duplicate var attributes and convert to c order before saving.
-             */
-            dup.SetData(values);
-            m_H5File.Write(dup, values);
-            return;
-        }
-    }
     variable.SetData(values);
     m_H5File.Write(variable, values);
 }
