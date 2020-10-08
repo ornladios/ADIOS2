@@ -92,7 +92,6 @@ int main(int argc, char *argv[])
         hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension-num",
                                              m_globalDims.size());
 
-
         hdf5Writer.Close();
     }
     catch (std::invalid_argument &e)
