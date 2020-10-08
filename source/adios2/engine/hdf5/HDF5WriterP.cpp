@@ -44,6 +44,7 @@ StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeoutSeconds)
 
 void HDF5WriterP::EndStep()
 {
+    m_H5File.CleanUpNullVars(m_IO);
     m_H5File.Advance();
     m_H5File.WriteAttrFromIO(m_IO);
 }

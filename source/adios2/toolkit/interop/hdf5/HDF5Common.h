@@ -144,7 +144,7 @@ public:
     void CreateDataset(const std::string &varName, hid_t h5Type,
                        hid_t filespaceID, std::vector<hid_t> &chain);
     bool OpenDataset(const std::string &varName, std::vector<hid_t> &chain);
-
+    void RemoveEmptyDataset(const std::string &varName);
     void StoreADIOSName(const std::string adiosName, hid_t dsetID);
     void ReadADIOSName(hid_t dsetID, std::string &adiosName);
 
@@ -163,6 +163,7 @@ public:
      * required by HDF5
      */
     void CreateVarsFromIO(core::IO &io);
+    void CleanUpNullVars(core::IO &io);
 
     void WriteAttrFromIO(core::IO &io);
     void ReadAttrToIO(core::IO &io);

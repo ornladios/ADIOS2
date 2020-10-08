@@ -696,6 +696,46 @@ void HDF5Common::SetAdiosStep(int step)
     m_CurrentAdiosStep = step;
 }
 
+//
+// This function is intend to pair with CreateVarsFromIO().
+//
+// Because of the collective call requirement, we creata
+// all variables through CreateVarFromIO() at BeginStep().
+// At EndStep(), this function is called to remove unwritten variables
+// to comply with ADIOS custom that define all vars, use a few per step
+// and only see these few at the step.
+//
+// note that this works with 1 rank currently.
+// need to find a general way in parallel HDF5 to
+// detect whether a dataset called H5Dwrite  or not
+//
+void HDF5Common::CleanUpNullVars(core::IO &io)
+{
+    if (!m_WriteMode)
+        return;
+
+    if (m_CommSize != 1) // because the H5D_storage_size > 0 after H5Dcreate
+                         // when there are multiple processors
+        return;
+
+    const core::VarMap &variables = io.GetVariables();
+    for (const auto &vpair : variables)
+    {
+        const std::string &varName = vpair.first;
+        const DataType varType = vpair.second->m_Type;
+#define declare_template_instantiation(T)                                      \
+    if (varType == helper::GetDataType<T>())                                   \
+    {                                                                          \
+        core::Variable<T> *v = io.InquireVariable<T>(varName);                 \
+        if (!v)                                                                \
+            return;                                                            \
+        RemoveEmptyDataset(varName);                                           \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+}
+
 void HDF5Common::Advance()
 {
     if (m_WriteMode)
@@ -917,9 +957,17 @@ bool HDF5Common::OpenDataset(const std::string &varName,
 
     if (list.size() == 1)
     {
-        hid_t dsetID = H5Dopen(m_GroupId, list[0].c_str(), H5P_DEFAULT);
-        datasetChain.push_back(dsetID);
-        return true;
+        if (H5Lexists(m_GroupId, list[0].c_str(), H5P_DEFAULT) == 0)
+        {
+            datasetChain.push_back(-1);
+            return false;
+        }
+        else
+        {
+            hid_t dsetID = H5Dopen(m_GroupId, list[0].c_str(), H5P_DEFAULT);
+            datasetChain.push_back(dsetID);
+            return true;
+        }
     }
 
     hid_t topId = m_GroupId;
@@ -945,6 +993,74 @@ bool HDF5Common::OpenDataset(const std::string &varName,
 
     datasetChain.push_back(dsetID);
     return true;
+}
+
+//
+// We use H5Dget_storage_size to see whether H5Dwrite has been called.
+// and looks like when there are multiple processors, H5Dcreate causes
+// storage allcoation already. So we limit this function when there is only
+// one rank.
+//
+void HDF5Common::RemoveEmptyDataset(const std::string &varName)
+{
+    if (m_CommSize > 1)
+        return;
+
+    std::vector<std::string> list;
+    char delimiter = '/';
+    int delimiterLength = 1;
+    std::string s = std::string(varName);
+    size_t pos = 0;
+    std::string token;
+    while ((pos = s.find(delimiter)) != std::string::npos)
+    {
+        if (pos > 0)
+        { // "///a/b/c" == "a/b/c"
+            token = s.substr(0, pos);
+            list.push_back(token);
+        }
+        s.erase(0, pos + delimiterLength);
+    }
+    list.push_back(s);
+
+    if (list.size() == 1)
+    {
+        if (H5Lexists(m_GroupId, list[0].c_str(), H5P_DEFAULT) != 0)
+        {
+            hid_t dsetID = H5Dopen(m_GroupId, list[0].c_str(), H5P_DEFAULT);
+            HDF5TypeGuard d(dsetID, E_H5_DATASET);
+
+            H5D_space_status_t status;
+            herr_t s1 = H5Dget_space_status(dsetID, &status);
+
+            if (0 == H5Dget_storage_size(dsetID)) /*nothing is written */
+                H5Ldelete(m_GroupId, list[0].c_str(), H5P_DEFAULT);
+        }
+        return;
+    }
+
+    hid_t topId = m_GroupId;
+    std::vector<hid_t> datasetChain;
+
+    for (int i = 0; i < list.size() - 1; i++)
+    {
+        if (H5Lexists(topId, list[i].c_str(), H5P_DEFAULT) == 0)
+            break;
+        else
+            topId = H5Gopen(topId, list[i].c_str(), H5P_DEFAULT);
+
+        datasetChain.push_back(topId);
+    }
+    hid_t dsetID = H5Dopen(topId, list.back().c_str(), H5P_DEFAULT);
+    datasetChain.push_back(dsetID);
+
+    HDF5DatasetGuard g(datasetChain);
+
+    if (H5Lexists(topId, list.back().c_str(), H5P_DEFAULT) != 0)
+    {
+        if (0 == H5Dget_storage_size(dsetID)) // nothing is written
+            H5Ldelete(topId, list.back().c_str(), H5P_DEFAULT);
+    }
 }
 
 // trim from right
