@@ -124,6 +124,7 @@ public:
     static const std::string PARAMETER_COLLECTIVE;
     static const std::string PARAMETER_CHUNK_FLAG;
     static const std::string PARAMETER_CHUNK_VARS;
+    static const std::string PARAMETER_HAS_IDLE_WRITER_RANK;
 
     void ParseParameters(core::IO &io);
     void Init(const std::string &name, helper::Comm const &comm, bool toWrite);
@@ -144,7 +145,7 @@ public:
     void CreateDataset(const std::string &varName, hid_t h5Type,
                        hid_t filespaceID, std::vector<hid_t> &chain);
     bool OpenDataset(const std::string &varName, std::vector<hid_t> &chain);
-
+    void RemoveEmptyDataset(const std::string &varName);
     void StoreADIOSName(const std::string adiosName, hid_t dsetID);
     void ReadADIOSName(hid_t dsetID, std::string &adiosName);
 
@@ -163,6 +164,7 @@ public:
      * required by HDF5
      */
     void CreateVarsFromIO(core::IO &io);
+    void CleanUpNullVars(core::IO &io);
 
     void WriteAttrFromIO(core::IO &io);
     void ReadAttrToIO(core::IO &io);
@@ -257,6 +259,11 @@ private:
     hid_t m_ChunkPID;
     int m_ChunkDim;
     std::set<std::string> m_ChunkVarNames;
+    bool m_OrderByC = true; // C or fortran
+
+    // Some write rank can be idle. This causes conflict with HDF5 collective
+    // requirement in functions Guard this by load vars in beginStep
+    bool m_IdleWriterOn = false;
 };
 
 // Explicit declaration of the public template methods
