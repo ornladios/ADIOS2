@@ -167,13 +167,14 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
     }
 }
 
-void Engine::Get(Variable variable, std::string &string, const Mode launch)
+std::string Engine::Get(Variable variable, const Mode launch)
 {
+    std::string string;
     helper::CheckForNullptr(m_Engine,
                             "for engine, in call to Engine::Get a numpy array");
     if (m_Engine->m_EngineType == "NULL")
     {
-        return;
+        return "";
     }
 
     helper::CheckForNullptr(variable.m_VariableBase,
@@ -194,8 +195,8 @@ void Engine::Get(Variable variable, std::string &string, const Mode launch)
                                     " of type " + variable.Type() +
                                     " is not string, in call to Engine::Get");
     }
+    return string;
 }
-
 void Engine::PerformGets()
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::PerformGets");

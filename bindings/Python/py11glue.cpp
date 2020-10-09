@@ -462,11 +462,10 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              pybind11::arg("launch") = adios2::Mode::Deferred)
 
         .def("Get",
-             (void (adios2::py11::Engine::*)(adios2::py11::Variable,
-                                             std::string &,
+             (std::string(adios2::py11::Engine::*)(adios2::py11::Variable,
                                              const adios2::Mode launch)) &
                  adios2::py11::Engine::Get,
-             pybind11::arg("variable"), pybind11::arg("string"),
+             pybind11::arg("variable"),
              pybind11::arg("launch") = adios2::Mode::Deferred)
 
         .def("PerformGets", &adios2::py11::Engine::PerformGets)
