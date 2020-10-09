@@ -1380,10 +1380,11 @@ void HDF5Common::CreateVarsFromIO(core::IO &io)
     if (!m_WriteMode)
         return;
 
+    CheckWriteGroup(); // making sure all processors are creating new step
+
     if (!m_IdleWriterOn)
         return;
 
-    CheckWriteGroup();
     const core::VarMap &variables = io.GetVariables();
     for (const auto &vpair : variables)
     {
