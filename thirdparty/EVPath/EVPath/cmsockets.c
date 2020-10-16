@@ -1175,6 +1175,7 @@ free_socket_data(CManager cm, void *sdv)
 	close(sd->listen_fds[i]);
     }
     svc->free_func(sd->listen_fds);
+    svc->free_func(sd->listen_ports);
     svc->free_func(sd);
 }
 
