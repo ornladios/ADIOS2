@@ -799,6 +799,7 @@ attr_list listen_info;
 	svc->fd_add_select(cm, conn_sock, socket_accept_conn,
 			   (void *) trans, (void *) (long)conn_sock);
 
+	length = sizeof(sock_addr);
 	if (getsockname(conn_sock, (struct sockaddr *) &sock_addr, &length) < 0) {
 	    fprintf(stderr, "Cannot get socket name\n");
 	    return NULL;
@@ -811,7 +812,7 @@ attr_list listen_info;
 	sd->listen_ports[sd->listen_count] = ntohs(sock_addr.sin_port);
 	sd->listen_count++;
     } else {
-	length = sizeof sock_addr;
+	length = sizeof(sock_addr);
 	if (getsockname(conn_sock, (struct sockaddr *) &sock_addr, &length) < 0) {
 	    fprintf(stderr, "Cannot get socket name\n");
 	    return NULL;
