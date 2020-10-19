@@ -7,7 +7,7 @@
 !
 
 #ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
-# define ADIOS2_MODULE_PROCEDURE module &
+# define ADIOS2_MODULE_PROCEDURE module
 #else
 # define ADIOS2_MODULE_PROCEDURE
 #endif
@@ -29,8 +29,8 @@ module adios2_io_open_mod_serial
 
 contains
 
-    ADIOS2_MODULE_PROCEDURE
-    subroutine adios2_open_old_comm(engine, io, name, adios2_mode, ierr)
+    ADIOS2_MODULE_PROCEDURE subroutine adios2_open_old_comm( &
+            engine, io, name, adios2_mode, ierr)
         type(adios2_engine), intent(out) :: engine
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name

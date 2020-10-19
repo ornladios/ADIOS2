@@ -9,7 +9,12 @@ FortranCInterface_HEADER(FC.h MACRO_NAMESPACE "FC_")
 FortranCInterface_VERIFY(CXX QUIET)
 
 # Check whether the compiler supports Fortran submodule constructs we need.
-adios2_check_fortran_submodules(ADIOS2_HAVE_FORTRAN_SUBMODULES)
+if(CMAKE_Fortran_COMPILER_ID MATCHES "Cray")
+  # Cray submodules have naming issues so just don't use them for now
+  set(ADIOS2_HAVE_FORTRAN_SUBMODULES 0 CACHE INTERNAL "" FORCE)
+else()
+  adios2_check_fortran_submodules(ADIOS2_HAVE_FORTRAN_SUBMODULES)
+endif()
 
 if(ADIOS2_USE_Fortran_flag_argument_mismatch)
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
