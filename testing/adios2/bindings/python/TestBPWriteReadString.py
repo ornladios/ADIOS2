@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 #
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
@@ -14,32 +13,32 @@ import adios2
 
 class TestAdiosWriteReadString(unittest.TestCase):
 
-    def test_adios_read_string(self):
+    def TestAdiosWriteReadString(self):
         # MPI
         comm = MPI.COMM_WORLD
-        the_string = 'hello adios'
-        bpfilename = 'string_test.bp'
+        theString = 'hello adios'
+        bpFilename = 'string_test.bp'
         varname = 'mystringvar'
-        N_steps = 10
+        NSteps = 10
         adios = adios2.ADIOS(comm)
         ioWrite = adios.DeclareIO('ioWriter')
-        ad_engine = ioWrite.Open(bpfilename, adios2.Mode.Write)
-        var_mystringvar = ioWrite.DefineVariable(varname)
-        for step in range(N_steps):
-            ad_engine.BeginStep()
-            ad_engine.Put(var_mystringvar, the_string + str(step))
-            ad_engine.EndStep()
-        ad_engine.Close()
+        adEngine = ioWrite.Open(bpFilename, adios2.Mode.Write)
+        varMyStringVar = ioWrite.DefineVariable(varname)
+        for step in range(NSteps):
+            adEngine.BeginStep()
+            adEngine.Put(varMyStringVar, theString + str(step))
+            adEngine.EndStep()
+        adEngine.Close()
 
         ioRead = adios.DeclareIO('ioReader')
-        ad_engine = ioRead.Open(bpfilename, adios2.Mode.Read)
-        var_read_mystringvar = ioRead.InquireVariable(varname)
-        for step in range(N_steps):
-            ad_engine.BeginStep()
-            result = ad_engine.Get(var_read_mystringvar)
-            ad_engine.EndStep()
-            self.assertEqual(result, the_string + str(step))
-        ad_engine.Close()
+        adEngine = ioRead.Open(bpFilename, adios2.Mode.Read)
+        varReadMyStringVar = ioRead.InquireVariable(varname)
+        for step in range(NSteps):
+            adEngine.BeginStep()
+            result = adEngine.Get(varReadMyStringVar)
+            adEngine.EndStep()
+            self.assertEqual(result, theString + str(step))
+        adEngine.Close()
 
 
 if __name__ == '__main__':

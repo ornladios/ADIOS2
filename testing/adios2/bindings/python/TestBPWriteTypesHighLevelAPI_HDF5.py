@@ -31,7 +31,7 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
     for i in range(0, 5):
         data.update(rank, i, size)
 
-        if(rank == 0 and i == 0):
+        if rank == 0 and i == 0:
             fw.write("tag", "Testing ADIOS2 high-level API")
             fw.write("gvarI8", np.array(data.I8[0]))
             fw.write("gvarI16", np.array(data.I16[0]))
@@ -82,7 +82,7 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
         fw.write("varR32", data.R32, shape, start, count)
         fw.write("varR64", data.R64, shape, start, count)
 
-        if(rank == 0 and i == 0):
+        if rank == 0 and i == 0:
             fw.write_attribute("varattrStrArray", [
                 "varattr1", "varattr2", "varattr3"], "steps")
             fw.write_attribute("varattrI8Array", data.I8, "varI8")
@@ -119,7 +119,7 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
 #                 print("\t" + key + ": " + value)
 #             print("\n")
 
-        if(step == 0):
+        if step == 0:
             inTag = fr_step.read_string("tag")
             inI8 = fr_step.read("gvarI8")
             inI16 = fr_step.read("gvarI16")
@@ -132,38 +132,38 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inR32 = fr_step.read("gvarR32")
             inR64 = fr_step.read("gvarR64")
 
-            if(inTag[0] != "Testing ADIOS2 high-level API"):
+            if inTag[0] != "Testing ADIOS2 high-level API":
                 print("InTag: " + str(inTag))
                 raise ValueError('tag variable read failed')
 
-            if(inI8 != data.I8[0]):
+            if inI8 != data.I8[0]:
                 raise ValueError('gvarI8 read failed')
 
-            if(inI16 != data.I16[0]):
+            if inI16 != data.I16[0]:
                 raise ValueError('gvarI16 read failed')
 
-            if(inI32 != data.I32[0]):
+            if inI32 != data.I32[0]:
                 raise ValueError('gvarI32 read failed')
 
-            if(inI64 != data.I64[0]):
+            if inI64 != data.I64[0]:
                 raise ValueError('gvarI64 read failed')
 
-            if(inU8 != data.U8[0]):
+            if inU8 != data.U8[0]:
                 raise ValueError('gvarU8 read failed')
 
-            if(inU16 != data.U16[0]):
+            if inU16 != data.U16[0]:
                 raise ValueError('gvarU16 read failed')
 
-            if(inU32 != data.U32[0]):
+            if inU32 != data.U32[0]:
                 raise ValueError('gvarU32 read failed')
 
-            if(inU64 != data.U64[0]):
+            if inU64 != data.U64[0]:
                 raise ValueError('gvarU64 read failed')
 
-            if(inR32 != data.R32[0]):
+            if inR32 != data.R32[0]:
                 raise ValueError('gvarR32 read failed')
 
-            if(inR64 != data.R64[0]):
+            if inR64 != data.R64[0]:
                 raise ValueError('gvarR64 read failed')
 
             # attributes
@@ -179,37 +179,37 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inR32 = fr_step.read_attribute("attrR32")
             inR64 = fr_step.read_attribute("attrR64")
 
-            if(inTag[0] != "Testing single string attribute"):
+            if inTag[0] != "Testing single string attribute":
                 raise ValueError('attr string read failed')
 
-            if(inI8[0] != data.I8[0]):
+            if inI8[0] != data.I8[0]:
                 raise ValueError('attrI8 read failed')
 
-            if(inI16[0] != data.I16[0]):
+            if inI16[0] != data.I16[0]:
                 raise ValueError('attrI16 read failed')
 
-            if(inI32[0] != data.I32[0]):
+            if inI32[0] != data.I32[0]:
                 raise ValueError('attrI32 read failed')
 
-            if(inI64[0] != data.I64[0]):
+            if inI64[0] != data.I64[0]:
                 raise ValueError('attrI64 read failed')
 
-            if(inU8[0] != data.U8[0]):
+            if inU8[0] != data.U8[0]:
                 raise ValueError('attrU8 read failed')
 
-            if(inU16[0] != data.U16[0]):
+            if inU16[0] != data.U16[0]:
                 raise ValueError('attrU16 read failed')
 
-            if(inU32[0] != data.U32[0]):
+            if inU32[0] != data.U32[0]:
                 raise ValueError('attrU32 read failed')
 
-            if(inU64[0] != data.U64[0]):
+            if inU64[0] != data.U64[0]:
                 raise ValueError('attrU64 read failed')
 
-            if(inR32[0] != data.R32[0]):
+            if inR32[0] != data.R32[0]:
                 raise ValueError('attrR32 read failed')
 
-            if(inR64[0] != data.R64[0]):
+            if inR64[0] != data.R64[0]:
                 raise ValueError('attrR64 read failed')
 
             # Array attribute
@@ -225,37 +225,37 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inR32 = fr_step.read_attribute("attrR32Array")
             inR64 = fr_step.read_attribute("attrR64Array")
 
-            if(inTag != ["string1", "string2", "string3"]):
+            if inTag != ["string1", "string2", "string3"]:
                 raise ValueError('attrStrArray read failed')
 
-            if((inI8 == data.I8).all() is False):
+            if (inI8 == data.I8).all() is False:
                 raise ValueError('attrI8 array read failed')
 
-            if((inI16 == data.I16).all() is False):
+            if (inI16 == data.I16).all() is False:
                 raise ValueError('attrI16 array read failed')
 
-            if((inI32 == data.I32).all() is False):
+            if (inI32 == data.I32).all() is False:
                 raise ValueError('attrI32 array read failed')
 
-            if((inI64 == data.I64).all() is False):
+            if (inI64 == data.I64).all() is False:
                 raise ValueError('attrI64 array read failed')
 
-            if((inU8 == data.U8).all() is False):
+            if (inU8 == data.U8).all() is False:
                 raise ValueError('attrU8 array read failed')
 
-            if((inU16 == data.U16).all() is False):
+            if (inU16 == data.U16).all() is False:
                 raise ValueError('attrU16 array read failed')
 
-            if((inU32 == data.U32).all() is False):
+            if (inU32 == data.U32).all() is False:
                 raise ValueError('attrU32 array read failed')
 
-            if((inU64 == data.U64).all() is False):
+            if (inU64 == data.U64).all() is False:
                 raise ValueError('attrU64 array read failed')
 
-            if((inR32 == data.R32).all() is False):
+            if (inR32 == data.R32).all() is False:
                 raise ValueError('attrR32 array read failed')
 
-            if((inR64 == data.R64).all() is False):
+            if (inR64 == data.R64).all() is False:
                 raise ValueError('attrR64 array read failed')
 
             inTags = fr_step.read_attribute_string("varattrStrArray", "steps")
@@ -270,44 +270,44 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inR32 = fr_step.read_attribute("varattrR32Array", "varR32")
             inR64 = fr_step.read_attribute("varattrR64Array", "varR64")
 
-            if(inTags != ["varattr1", "varattr2", "varattr3"]):
+            if inTags != ["varattr1", "varattr2", "varattr3"]:
                 print(inTags)
                 raise ValueError('var attrStrArray read failed')
 
-            if((inI8 == data.I8).all() is False):
+            if (inI8 == data.I8).all() is False:
                 raise ValueError('var attrI8 array read failed')
 
-            if((inI16 == data.I16).all() is False):
+            if (inI16 == data.I16).all() is False:
                 raise ValueError('var attrI16 array read failed')
 
-            if((inI32 == data.I32).all() is False):
+            if (inI32 == data.I32).all() is False:
                 raise ValueError('var attrI32 array read failed')
 
-            if((inI64 == data.I64).all() is False):
+            if (inI64 == data.I64).all() is False:
                 raise ValueError('var attrI64 array read failed')
 
-            if((inU8 == data.U8).all() is False):
+            if (inU8 == data.U8).all() is False:
                 raise ValueError('var attrU8 array read failed')
 
-            if((inU16 == data.U16).all() is False):
+            if (inU16 == data.U16).all() is False:
                 raise ValueError('var attrU16 array read failed')
 
-            if((inU32 == data.U32).all() is False):
+            if (inU32 == data.U32).all() is False:
                 raise ValueError('var attrU32 array read failed')
 
-            if((inU64 == data.U64).all() is False):
+            if (inU64 == data.U64).all() is False:
                 raise ValueError('var attrU64 array read failed')
 
-            if((inR32 == data.R32).all() is False):
+            if (inR32 == data.R32).all() is False:
                 raise ValueError('var attrR32 array read failed')
 
-            if((inR64 == data.R64).all() is False):
+            if (inR64 == data.R64).all() is False:
                 raise ValueError('var attrR64 array read failed')
 
         stepStr = "Step:" + str(step)
 
         instepStr = fr_step.read_string("steps")
-        if(instepStr[0] != stepStr):
+        if instepStr[0] != stepStr:
             raise ValueError('steps variable read failed: ' +
                              instepStr + " " + stepStr)
 
@@ -323,32 +323,32 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
         indataR64 = fr_step.read("varR64", start, count)
         fr_step.end_step()
 
-        if((indataI8 == data.I8).all() is False):
+        if (indataI8 == data.I8).all() is False:
             raise ValueError('I8 array read failed')
 
-        if((indataI16 == data.I16).all() is False):
+        if (indataI16 == data.I16).all() is False:
             raise ValueError('I16 array read failed')
 
-        if((indataI32 == data.I32).all() is False):
+        if (indataI32 == data.I32).all() is False:
             raise ValueError('I32 array read failed')
 
-        if((indataI64 == data.I64).all() is False):
+        if (indataI64 == data.I64).all() is False:
             raise ValueError('I64 array read failed')
 
-        if((indataU8 == data.U8).all() is False):
+        if (indataU8 == data.U8).all() is False:
             raise ValueError('U8 array read failed')
 
-        if((indataU16 == data.U16).all() is False):
+        if (indataU16 == data.U16).all() is False:
             raise ValueError('U16 array read failed')
 
-        if((indataU32 == data.U32).all() is False):
+        if (indataU32 == data.U32).all() is False:
             raise ValueError('U32 array read failed')
 
-        if((indataU64 == data.U64).all() is False):
+        if (indataU64 == data.U64).all() is False:
             raise ValueError('U64 array read failed')
 
-        if((indataR32 == data.R32).all() is False):
+        if (indataR32 == data.R32).all() is False:
             raise ValueError('R32 array read failed')
 
-        if((indataR64 == data.R64).all() is False):
+        if (indataR64 == data.R64).all() is False:
             raise ValueError('R64 array read failed')
