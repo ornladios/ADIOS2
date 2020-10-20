@@ -31,14 +31,14 @@ private:
     };
     /** current path of the Group object */
     std::string currentPath;
-    /** demiliter symbol between groups */
+    /** delimiter symbol between groups */
     char groupDelimiter;
     /** shared pointer to a map representing the tree structure */
     std::shared_ptr<TreeMap> mapPtr = nullptr;
 
 public:
     /**
-     * @brief Constructor called from IO factory class GetGroup function.
+     * @brief Constructor called from IO factory class InquireGroup function.
      * Not to be used directly in applications.
      * @param current path
      * @param a separate symbol
@@ -90,7 +90,7 @@ public:
      * @param name of the group
      * @return new group object
      */
-    Group *OpenGroup(std::string groupName);
+    Group *InquireGroup(std::string groupName);
     /**
      * @brief set the path, points to a particular node on the tree
      * @param next possible path extension

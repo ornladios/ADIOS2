@@ -655,7 +655,7 @@ Engine &IO::Open(const std::string &name, const Mode mode)
 {
     return Open(name, mode, m_ADIOS.GetComm().Duplicate());
 }
-Group &IO::GetGroup(const std::string &path, char delimiter)
+Group &IO::CreateGroup(const std::string &path, char delimiter)
 {
 
     m_Gr = std::make_shared<Group>(path, delimiter, *this);
