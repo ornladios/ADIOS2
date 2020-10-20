@@ -14,7 +14,7 @@ import adios2
 
 
 def check_array(np1, np2, hint):
-    if((np1 == np2).all() is False):
+    if (np1 == np2).all() is False:
         print("InData: " + str(np1))
         print("Data: " + str(np2))
         raise ValueError('Array read failed ' + str(hint))

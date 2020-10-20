@@ -25,7 +25,7 @@ def check_name(name, name_list):
 
 
 def check_array(np1, np2, hint):
-    if((np1 == np2).all() is False):
+    if (np1 == np2).all() is False:
         print("InData: " + str(np1))
         print("Data: " + str(np2))
         raise ValueError('Array read failed ' + str(hint))
@@ -95,13 +95,11 @@ attR32 = ioWriter.DefineAttribute("attrR32", data.R32)
 attR64 = ioWriter.DefineAttribute("attrR64", data.R64)
 
 ioWriter.SetEngine("BPFile")
-ioParams = {}
-ioParams['Threads'] = '1'
-ioParams['InitialBufferSize'] = '17Kb'
+ioParams = {'Threads': '1', 'InitialBufferSize': '17Kb'}
 ioWriter.SetParameters(ioParams)
 
 engineType = ioWriter.EngineType()
-if(engineType != "BPFile"):
+if engineType != "BPFile":
     raise ValueError(str(engineType) +
                      ' incorrect engine type, should be BPFile')
 
@@ -172,11 +170,11 @@ check_object(attrR32, "attrR32")
 check_object(attrR64, "attrR64")
 
 attrStringData = attrString.DataString()
-if(attrStringData[0] != "one"):
+if attrStringData[0] != "one":
     raise ValueError('attrStringData[0] failed')
-if(attrStringData[1] != "two"):
+if attrStringData[1] != "two":
     raise ValueError('attrStringData[1] failed')
-if(attrStringData[2] != "three"):
+if attrStringData[2] != "three":
     raise ValueError('attrStringData[2] failed')
 
 attrI8Data = attrI8.Data()
@@ -245,7 +243,7 @@ for name, info in variablesInfo.items():
 
 
 result = adios.RemoveIO('writer')
-if(result is False):
+if result is False:
     raise ValueError('Could not remove IO writer')
 
 assert (reader.Steps() == nsteps)
@@ -255,7 +253,7 @@ reader.Close()
 
 ioReader.RemoveAllVariables()
 varStr = ioReader.InquireVariable("varStr")
-if(varStr is True):
+if varStr is True:
     raise ValueError('Could remove reader variables')
 
 adios.RemoveAllIOs()
