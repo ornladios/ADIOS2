@@ -74,7 +74,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
         for (int step = 0; step < NSteps; step++)
         {
             engine.BeginStep();
-            auto g = io.GetGroup("group1", '/');
+            auto g = io.InquireGroup("group1", '/');
             auto res = g.AvailableGroups();
             EXPECT_EQ(res[0], "group2");
             g.setPath("group1/group2");

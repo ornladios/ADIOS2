@@ -90,7 +90,7 @@ public:
      * @param name of the group
      * @return new group object
      */
-    Group OpenGroup(std::string group_name);
+    Group InquireGroup(std::string group_name);
     /**
      * @brief returns  a reference to the map representing the tree stucture
      * @param delimiter symbol

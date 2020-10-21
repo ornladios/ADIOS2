@@ -16,9 +16,9 @@ namespace adios2
 {
 Group::Group(core::Group *group) : m_Group(group) {}
 
-Group Group::OpenGroup(std::string group_name)
+Group Group::InquireGroup(std::string group_name)
 {
-    auto m = m_Group->OpenGroup(group_name);
+    auto m = m_Group->InquireGroup(group_name);
     return Group(m);
 }
 void Group::PrintTree()

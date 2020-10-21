@@ -49,7 +49,7 @@ Group::Group(const Group &G)
 {
     mapPtr = G.mapPtr;
 }
-Group *Group::OpenGroup(std::string groupName)
+Group *Group::InquireGroup(std::string groupName)
 {
     Group *g_out = new Group(currentPath + groupDelimiter + groupName,
                              this->groupDelimiter, this->m_IO);
