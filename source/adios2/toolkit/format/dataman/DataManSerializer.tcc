@@ -106,6 +106,24 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
             " Var " + varName,
         true, true);
 
+    for (const VariableBase::Operation &op : variable.m_Operations)
+    {
+        const auto opName = op.Op->m_Type;
+        if (opName == "zfp" or opName == "bzip2" or opName == "sz")
+        {
+            /*
+            m_CompressionParams[variable.m_Name]["CompressionMethod"] =
+                opName;
+            for (const auto &p : op.Parameters)
+            {
+                m_CompressionParams[variable.m_Name]
+                    [opName + ":" + p.first] = p.second;
+            }
+            break;
+            */
+        }
+    }
+
     if (localBuffer == nullptr)
     {
         localBuffer = m_LocalBuffer;
