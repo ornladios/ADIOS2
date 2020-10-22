@@ -142,6 +142,28 @@ endif()
 if(CMAKE_Fortran_COMPILER_LOADED)
   set(ADIOS2_HAVE_Fortran TRUE)
   list(APPEND mpi_find_components Fortran)
+
+  include(CheckFortranSourceCompiles)
+  check_fortran_source_compiles("
+    program testargs
+      integer :: n
+      character(len=256) :: v
+      n = command_argument_count()
+      call get_command_argument(0, v)
+    end program testargs"
+    ADIOS2_HAVE_FORTRAN_F03_ARGS
+    SRC_EXT F90
+  )
+  check_fortran_source_compiles("
+    program testargs
+      integer :: n
+      character(len=256) :: v
+      n = iargc()
+      call getarg(0, v)
+    end program testargs"
+    ADIOS2_HAVE_FORTRAN_GNU_ARGS
+    SRC_EXT F90
+  )
 endif()
 
 # MPI
