@@ -13,9 +13,9 @@
 #endif
 
 #ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
-submodule ( adios2_adios_init_mod ) serial
+submodule ( adios2_adios_init_mod ) adios2_adios_init_serial_smod
 #else
-module adios2_adios_init_mod_serial
+module adios2_adios_init_serial_mod
 #endif
 
     use adios2_parameters_mod

@@ -13,9 +13,9 @@
 #endif
 
 #ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
-submodule ( adios2_adios_init_mod ) mpi
+submodule ( adios2_adios_init_mod ) adios2_adios_init_mpi_smod
 #else
-module adios2_adios_init_mod_mpi
+module adios2_adios_init_mpi_mod
 #endif
 
     use adios2_parameters_mod
