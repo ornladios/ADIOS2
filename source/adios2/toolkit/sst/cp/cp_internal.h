@@ -135,6 +135,7 @@ struct _SstStream
 {
     CP_Info CPInfo;
 
+    struct timeval MarshalSum;
     SMPI_Comm mpiComm;
     enum StreamRole Role;
 
@@ -260,9 +261,9 @@ struct _CP_DP_PairInfo
 struct FFSFormatBlock
 {
     char *FormatServerRep;
-    int FormatServerRepLen;
+    size_t FormatServerRepLen;
     char *FormatIDRep;
-    int FormatIDRepLen;
+    size_t FormatIDRepLen;
     struct FFSFormatBlock *Next;
 };
 

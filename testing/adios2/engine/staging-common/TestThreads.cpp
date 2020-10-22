@@ -16,7 +16,7 @@ int value_errors = 0;
 
 std::mutex StdOutMtx;
 
-int Read()
+int Read(int ID)
 {
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("IO");
@@ -35,7 +35,8 @@ int Read()
 
     try
     {
-        adios2::Engine Reader = io.Open("communicate", adios2::Mode::Read);
+	std::string FName = "File" + std::to_string(ID);
+        adios2::Engine Reader = io.Open(FName, adios2::Mode::Read);
         {
             std::lock_guard<std::mutex> guard(StdOutMtx);
             std::cout << "Reader: passed Open" << std::endl;
@@ -91,7 +92,7 @@ int Read()
     return true;
 }
 
-bool Write()
+bool Write(int ID)
 {
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("IO");
@@ -109,7 +110,8 @@ bool Write()
 
     try
     {
-        adios2::Engine Writer = io.Open("communicate", adios2::Mode::Write);
+	std::string FName = "File" + std::to_string(ID);
+        adios2::Engine Writer = io.Open(FName, adios2::Mode::Write);
 
         {
             std::lock_guard<std::mutex> guard(StdOutMtx);
@@ -143,14 +145,36 @@ public:
 
 TEST_F(TestThreads, Basic)
 {
-    auto read_fut = std::async(std::launch::async, Read);
-    auto write_fut = std::async(std::launch::async, Write);
+    auto read_fut = std::async(std::launch::async, Read, 0);
+    auto write_fut = std::async(std::launch::async, Write, 0);
     bool reader_success = read_fut.get();
     bool writer_success = write_fut.get();
     EXPECT_TRUE(reader_success);
     EXPECT_TRUE(writer_success);
     EXPECT_EQ(value_errors, 0)
         << "We got " << value_errors << " erroneous values at the reader";
+}
+
+TEST_F(TestThreads, Repeated)
+{
+    auto high_write_fut = std::async(std::launch::async, Write, 0);
+    for (int i = 0; i < 1024; i++) {
+	auto read_fut = std::async(std::launch::async, Read, i+1);
+	auto write_fut = std::async(std::launch::async, Write, i+1);
+	bool reader_success = read_fut.get();
+	bool writer_success = write_fut.get();
+	EXPECT_TRUE(reader_success);
+	EXPECT_TRUE(writer_success);
+	EXPECT_EQ(value_errors, 0)
+	    << "We got " << value_errors << " erroneous values at the reader";
+	std::cout << "finished pair " <<  i << std::endl;
+    }
+    auto high_read_fut = std::async(std::launch::async, Read, 0);
+    bool reader_success = high_read_fut.get();
+    bool writer_success = high_write_fut.get();
+    EXPECT_TRUE(reader_success);
+    EXPECT_TRUE(writer_success);
+    EXPECT_EQ(value_errors, 0);
 }
 
 int main(int argc, char **argv)

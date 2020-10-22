@@ -1746,8 +1746,16 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
 
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
+            static int count = 0;
             TAU_START("FFS marshaling case");
+            struct timeval Start, Stop, Diff;
+            gettimeofday(&Start, NULL);
             FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
+            gettimeofday(&Stop, NULL);
+            timersub(&Stop, &Start, &Diff);
+            timeradd(&Stream->MarshalSum, &Diff, &Stream->MarshalSum);
+            printf("Adding %g secs, count %d\n",
+                   (double)Diff.tv_usec / 1e6 + Diff.tv_sec, count++);
             TAU_STOP("FFS marshaling case");
         }
         Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;
@@ -1978,10 +1986,18 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) &&
             (ReturnData->TSmsg))
         {
+            int count = 0;
             CP_verbose(
                 Stream, PerRankVerbose,
                 "SstAdvanceStep installing precious metadata before exiting\n");
+            struct timeval Start, Stop, Diff;
+            gettimeofday(&Start, NULL);
             FFSMarshalInstallPreciousMetadata(Stream, ReturnData->TSmsg);
+            gettimeofday(&Stop, NULL);
+            timersub(&Stop, &Start, &Diff);
+            printf("Adding %g secs, count2 %d\n",
+                   (double)Diff.tv_usec / 1e6 + Diff.tv_sec, count++);
+            timeradd(&Stream->MarshalSum, &Diff, &Stream->MarshalSum);
         }
 
         free(free_block);
@@ -2008,15 +2024,22 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     {
         NotifyDPArrivedMetadata(Stream, MetadataMsg);
 
+        Stream->ReaderTimestep = MetadataMsg->Timestep;
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
-            CP_verbose(
-                Stream, TraceVerbose,
-                "Calling install precious metadata from metadata block %p\n",
-                MetadataMsg);
+            static int count = 0;
+            CP_verbose(Stream, TraceVerbose,
+                       "Calling install  metadata from metadata block %p\n",
+                       MetadataMsg);
+            struct timeval Start, Stop, Diff;
+            gettimeofday(&Start, NULL);
             FFSMarshalInstallMetadata(Stream, MetadataMsg);
+            gettimeofday(&Stop, NULL);
+            timersub(&Stop, &Start, &Diff);
+            timeradd(&Stream->MarshalSum, &Diff, &Stream->MarshalSum);
+            printf("Adding %g secs, count3 %d\n",
+                   (double)Diff.tv_usec / 1e6 + Diff.tv_sec, count++);
         }
-        Stream->ReaderTimestep = MetadataMsg->Timestep;
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
         memset(Mdata, 0, sizeof(struct _SstFullMetadata));
         Mdata->WriterCohortSize = MetadataMsg->CohortSize;
@@ -2099,6 +2122,9 @@ extern void SstReaderClose(SstStream Stream)
     struct timeval CloseTime, Diff;
     struct _ReaderCloseMsg Msg;
     /* wait until each reader rank has done SstReaderClose() */
+    printf("FFSMetadataInstall time is %g secs\n",
+           (double)Stream->MarshalSum.tv_usec / 1e6 +
+               Stream->MarshalSum.tv_sec);
     SMPI_Barrier(Stream->mpiComm);
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
