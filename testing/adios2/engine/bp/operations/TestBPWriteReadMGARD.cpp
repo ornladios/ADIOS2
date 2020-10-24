@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include <iostream> //std::cout
+#include <algorithm>
 #include <numeric>  //std::iota
 #include <stdexcept>
 
