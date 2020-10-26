@@ -80,49 +80,29 @@ template <class T>
 void DataManSerializer::PutData(const core::Variable<T> &variable,
                                 const std::string &doid, const size_t step,
                                 const int rank, const std::string &address,
-                                const Params &params, VecPtr localBuffer,
-                                JsonPtr metadataJson)
+                                VecPtr localBuffer, JsonPtr metadataJson)
 {
     TAU_SCOPED_TIMER_FUNC();
     PutData(variable.GetData(), variable.m_Name, variable.m_Shape,
             variable.m_Start, variable.m_Count, variable.m_MemoryStart,
-            variable.m_MemoryCount, doid, step, rank, address, params,
-            localBuffer, metadataJson);
+            variable.m_MemoryCount, doid, step, rank, address,
+            variable.m_Operations, localBuffer, metadataJson);
 }
 
 template <class T>
-void DataManSerializer::PutData(const T *inputData, const std::string &varName,
-                                const Dims &varShape, const Dims &varStart,
-                                const Dims &varCount, const Dims &varMemStart,
-                                const Dims &varMemCount,
-                                const std::string &doid, const size_t step,
-                                const int rank, const std::string &address,
-                                const Params &params, VecPtr localBuffer,
-                                JsonPtr metadataJson)
+void DataManSerializer::PutData(
+    const T *inputData, const std::string &varName, const Dims &varShape,
+    const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
+    const Dims &varMemCount, const std::string &doid, const size_t step,
+    const int rank, const std::string &address,
+    const std::vector<core::VariableBase::Operation> &ops, VecPtr localBuffer,
+    JsonPtr metadataJson)
 {
     TAU_SCOPED_TIMER_FUNC();
     Log(1,
         "DataManSerializer::PutData begin with Step " + std::to_string(step) +
             " Var " + varName,
         true, true);
-
-    for (const VariableBase::Operation &op : variable.m_Operations)
-    {
-        const auto opName = op.Op->m_Type;
-        if (opName == "zfp" or opName == "bzip2" or opName == "sz")
-        {
-            /*
-            m_CompressionParams[variable.m_Name]["CompressionMethod"] =
-                opName;
-            for (const auto &p : op.Parameters)
-            {
-                m_CompressionParams[variable.m_Name]
-                    [opName + ":" + p.first] = p.second;
-            }
-            break;
-            */
-        }
-    }
 
     if (localBuffer == nullptr)
     {
@@ -157,60 +137,74 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
         metaj["E"] = m_IsLittleEndian;
     }
 
+    for (const auto &op : ops)
+    {
+        const auto opName = op.Op->m_Type;
+        if (opName == "zfp" or opName == "bzip2" or opName == "sz")
+        {
+            /*
+            m_CompressionParams[variable.m_Name]["CompressionMethod"] =
+                opName;
+            for (const auto &p : op.Parameters)
+            {
+                m_CompressionParams[variable.m_Name]
+                    [opName + ":" + p.first] = p.second;
+            }
+            break;
+            */
+        }
+    }
+
     size_t datasize = 0;
     bool compressed = false;
-    if (not params.empty())
+    if (not ops.empty())
     {
-        const auto i = params.find("CompressionMethod");
-        if (i != params.end())
+        std::string compressionMethod = ops[0].Op->m_Type;
+        std::transform(compressionMethod.begin(), compressionMethod.end(),
+                       compressionMethod.begin(), ::tolower);
+        if (compressionMethod == "zfp")
         {
-            std::string compressionMethod = i->second;
-            std::transform(compressionMethod.begin(), compressionMethod.end(),
-                           compressionMethod.begin(), ::tolower);
-            if (compressionMethod == "zfp")
+            if (IsCompressionAvailable(compressionMethod,
+                                       helper::GetDataType<T>(), varCount))
             {
-                if (IsCompressionAvailable(compressionMethod,
-                                           helper::GetDataType<T>(), varCount))
+                compressed = PutZfp<T>(metaj, datasize, inputData, varCount,
+                                       ops[0].Parameters);
+                if (compressed)
                 {
-                    compressed =
-                        PutZfp<T>(metaj, datasize, inputData, varCount, params);
-                    if (compressed)
-                    {
-                        metaj["Z"] = "zfp";
-                    }
+                    metaj["Z"] = "zfp";
                 }
             }
-            else if (compressionMethod == "sz")
+        }
+        else if (compressionMethod == "sz")
+        {
+            if (IsCompressionAvailable(compressionMethod,
+                                       helper::GetDataType<T>(), varCount))
             {
-                if (IsCompressionAvailable(compressionMethod,
-                                           helper::GetDataType<T>(), varCount))
+                compressed = PutSz<T>(metaj, datasize, inputData, varCount,
+                                      ops[0].Parameters);
+                if (compressed)
                 {
-                    compressed =
-                        PutSz<T>(metaj, datasize, inputData, varCount, params);
-                    if (compressed)
-                    {
-                        metaj["Z"] = "sz";
-                    }
+                    metaj["Z"] = "sz";
                 }
             }
-            else if (compressionMethod == "bzip2")
+        }
+        else if (compressionMethod == "bzip2")
+        {
+            if (IsCompressionAvailable(compressionMethod,
+                                       helper::GetDataType<T>(), varCount))
             {
-                if (IsCompressionAvailable(compressionMethod,
-                                           helper::GetDataType<T>(), varCount))
+                compressed = PutBZip2<T>(metaj, datasize, inputData, varCount,
+                                         ops[0].Parameters);
+                if (compressed)
                 {
-                    compressed = PutBZip2<T>(metaj, datasize, inputData,
-                                             varCount, params);
-                    if (compressed)
-                    {
-                        metaj["Z"] = "bzip2";
-                    }
+                    metaj["Z"] = "bzip2";
                 }
             }
-            else
-            {
-                throw(std::invalid_argument("Compression method " + i->second +
-                                            " not supported."));
-            }
+        }
+        else
+        {
+            throw(std::invalid_argument("Compression method " +
+                                        compressionMethod + " not supported."));
         }
     }
 

@@ -34,8 +34,7 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
     variable.SetData(values);
     if (helper::IsRowMajor(m_IO.m_HostLanguage))
     {
-        m_Serializer.PutData(variable, m_Name, CurrentStep(), m_MpiRank, "",
-                             Params());
+        m_Serializer.PutData(variable, m_Name, CurrentStep(), m_MpiRank, "");
     }
     else
     {
@@ -51,7 +50,7 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         std::reverse(memcount.begin(), memcount.end());
         m_Serializer.PutData(variable.m_Data, variable.m_Name, shape, start,
                              count, memstart, memcount, m_Name, CurrentStep(),
-                             m_MpiRank, "", Params());
+                             m_MpiRank, "", variable.m_Operations);
     }
 
     if (m_MonitorActive)
