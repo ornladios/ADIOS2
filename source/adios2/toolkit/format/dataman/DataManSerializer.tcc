@@ -436,18 +436,7 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
 {
     TAU_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_ZFP
-    Params p;
-    for (const auto &i : params)
-    {
-        std::string prefix = i.first.substr(0, 4);
-        if (prefix == "zfp:" || prefix == "Zfp:" || prefix == "ZFP:")
-        {
-            std::string key = i.first.substr(4);
-            metaj[i.first] = i.second;
-            p[key] = i.second;
-        }
-    }
-    core::compress::CompressZFP compressor(p);
+    core::compress::CompressZFP compressor(params);
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
@@ -456,7 +445,7 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
         Params info;
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), p, info);
+                                       m_CompressBuffer.data(), params, info);
         return true;
     }
     catch (std::exception &e)
@@ -478,27 +467,16 @@ bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
 {
     TAU_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_SZ
-    Params p;
-    for (const auto &i : params)
-    {
-        std::string prefix = i.first.substr(0, 3);
-        if (prefix == "sz:" || prefix == "Sz:" || prefix == "SZ:")
-        {
-            std::string key = i.first.substr(3);
-            metaj[i.first] = i.second;
-            p[key] = i.second;
-        }
-    }
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-    core::compress::CompressSZ compressor(p);
+    core::compress::CompressSZ compressor(params);
     try
     {
         Params info;
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), p, info);
+                                       m_CompressBuffer.data(), params, info);
         return true;
     }
     catch (std::exception &e)
@@ -520,28 +498,16 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
 {
     TAU_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_BZIP2
-    Params p;
-    for (const auto &i : params)
-    {
-        std::string prefix = i.first.substr(0, 6);
-        if (prefix == "bzip2:" || prefix == "Bzip2:" || prefix == "BZip2:" ||
-            prefix == "BZIP2:")
-        {
-            std::string key = i.first.substr(6);
-            metaj[i.first] = i.second;
-            p[key] = i.second;
-        }
-    }
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-    core::compress::CompressBZIP2 compressor(p);
+    core::compress::CompressBZIP2 compressor(params);
     try
     {
         Params info;
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), p, info);
+                                       m_CompressBuffer.data(), params, info);
         return true;
     }
     catch (std::exception &e)
