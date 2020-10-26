@@ -169,10 +169,6 @@ void DataManSerializer::PutData(
             {
                 compressed = PutZfp<T>(metaj, datasize, inputData, varCount,
                                        ops[0].Parameters);
-                if (compressed)
-                {
-                    metaj["Z"] = "zfp";
-                }
             }
         }
         else if (compressionMethod == "sz")
@@ -182,10 +178,6 @@ void DataManSerializer::PutData(
             {
                 compressed = PutSz<T>(metaj, datasize, inputData, varCount,
                                       ops[0].Parameters);
-                if (compressed)
-                {
-                    metaj["Z"] = "sz";
-                }
             }
         }
         else if (compressionMethod == "bzip2")
@@ -195,10 +187,6 @@ void DataManSerializer::PutData(
             {
                 compressed = PutBZip2<T>(metaj, datasize, inputData, varCount,
                                          ops[0].Parameters);
-                if (compressed)
-                {
-                    metaj["Z"] = "bzip2";
-                }
             }
         }
         else
@@ -208,7 +196,12 @@ void DataManSerializer::PutData(
         }
     }
 
-    if (compressed == false)
+    if (compressed)
+    {
+        metaj["Z"] = compressionMethod;
+        metaj["ZP"] = ops[0].Parameters;
+    }
+    else
     {
         datasize = std::accumulate(varCount.begin(), varCount.end(), sizeof(T),
                                    std::multiplies<size_t>());
