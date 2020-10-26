@@ -157,9 +157,10 @@ void DataManSerializer::PutData(
 
     size_t datasize = 0;
     bool compressed = false;
+    std::string compressionMethod;
     if (not ops.empty())
     {
-        std::string compressionMethod = ops[0].Op->m_Type;
+        compressionMethod = ops[0].Op->m_Type;
         std::transform(compressionMethod.begin(), compressionMethod.end(),
                        compressionMethod.begin(), ::tolower);
         if (compressionMethod == "zfp")
