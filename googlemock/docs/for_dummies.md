@@ -2,6 +2,8 @@
 
 <!-- GOOGLETEST_CM0013 DO NOT DELETE -->
 
+<!-- GOOGLETEST_CM0035 DO NOT DELETE -->
+
 ## What Is gMock?
 
 When you write a prototype or test, often it's not feasible or wise to rely on
@@ -106,7 +108,7 @@ the API in an interface (say, `Turtle`) and code to that interface:
 ```cpp
 class Turtle {
   ...
-  virtual ~Turtle() {};
+  virtual ~Turtle() {}
   virtual void PenUp() = 0;
   virtual void PenDown() = 0;
   virtual void Forward(int distance) = 0;
