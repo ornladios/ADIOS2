@@ -155,28 +155,32 @@ TEST_F(TestThreads, Basic)
         << "We got " << value_errors << " erroneous values at the reader";
 }
 
-TEST_F(TestThreads, Repeated)
-{
-    auto high_write_fut = std::async(std::launch::async, Write, 0);
-    for (int i = 0; i < 1024; i++)
-    {
-        auto read_fut = std::async(std::launch::async, Read, i + 1);
-        auto write_fut = std::async(std::launch::async, Write, i + 1);
-        bool reader_success = read_fut.get();
-        bool writer_success = write_fut.get();
-        EXPECT_TRUE(reader_success);
-        EXPECT_TRUE(writer_success);
-        EXPECT_EQ(value_errors, 0)
-            << "We got " << value_errors << " erroneous values at the reader";
-        std::cout << "finished pair " << i << std::endl;
-    }
-    auto high_read_fut = std::async(std::launch::async, Read, 0);
-    bool reader_success = high_read_fut.get();
-    bool writer_success = high_write_fut.get();
-    EXPECT_TRUE(reader_success);
-    EXPECT_TRUE(writer_success);
-    EXPECT_EQ(value_errors, 0);
-}
+//  This test tries to push up to the limits to see if we're leaking FDs, but it
+//  runs slowly, commenting it out until needed.
+//
+// TEST_F(TestThreads, Repeated)
+// {
+//     auto high_write_fut = std::async(std::launch::async, Write, 0);
+//     for (int i = 0; i < 1024; i++)
+//     {
+//         auto read_fut = std::async(std::launch::async, Read, i + 1);
+//         auto write_fut = std::async(std::launch::async, Write, i + 1);
+//         bool reader_success = read_fut.get();
+//         bool writer_success = write_fut.get();
+//         EXPECT_TRUE(reader_success);
+//         EXPECT_TRUE(writer_success);
+//         EXPECT_EQ(value_errors, 0)
+//             << "We got " << value_errors << " erroneous values at the
+//             reader";
+//         std::cout << "finished pair " << i << std::endl;
+//     }
+//     auto high_read_fut = std::async(std::launch::async, Read, 0);
+//     bool reader_success = high_read_fut.get();
+//     bool writer_success = high_write_fut.get();
+//     EXPECT_TRUE(reader_success);
+//     EXPECT_TRUE(writer_success);
+//     EXPECT_EQ(value_errors, 0);
+// }
 
 int main(int argc, char **argv)
 {
