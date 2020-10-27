@@ -135,7 +135,6 @@ struct _SstStream
 {
     CP_Info CPInfo;
 
-    struct timeval MarshalSum;
     SMPI_Comm mpiComm;
     enum StreamRole Role;
 
