@@ -35,7 +35,7 @@ int Read(int ID)
 
     try
     {
-	std::string FName = "File" + std::to_string(ID);
+        std::string FName = "File" + std::to_string(ID);
         adios2::Engine Reader = io.Open(FName, adios2::Mode::Read);
         {
             std::lock_guard<std::mutex> guard(StdOutMtx);
@@ -110,7 +110,7 @@ bool Write(int ID)
 
     try
     {
-	std::string FName = "File" + std::to_string(ID);
+        std::string FName = "File" + std::to_string(ID);
         adios2::Engine Writer = io.Open(FName, adios2::Mode::Write);
 
         {
@@ -158,16 +158,17 @@ TEST_F(TestThreads, Basic)
 TEST_F(TestThreads, Repeated)
 {
     auto high_write_fut = std::async(std::launch::async, Write, 0);
-    for (int i = 0; i < 1024; i++) {
-	auto read_fut = std::async(std::launch::async, Read, i+1);
-	auto write_fut = std::async(std::launch::async, Write, i+1);
-	bool reader_success = read_fut.get();
-	bool writer_success = write_fut.get();
-	EXPECT_TRUE(reader_success);
-	EXPECT_TRUE(writer_success);
-	EXPECT_EQ(value_errors, 0)
-	    << "We got " << value_errors << " erroneous values at the reader";
-	std::cout << "finished pair " <<  i << std::endl;
+    for (int i = 0; i < 1024; i++)
+    {
+        auto read_fut = std::async(std::launch::async, Read, i + 1);
+        auto write_fut = std::async(std::launch::async, Write, i + 1);
+        bool reader_success = read_fut.get();
+        bool writer_success = write_fut.get();
+        EXPECT_TRUE(reader_success);
+        EXPECT_TRUE(writer_success);
+        EXPECT_EQ(value_errors, 0)
+            << "We got " << value_errors << " erroneous values at the reader";
+        std::cout << "finished pair " << i << std::endl;
     }
     auto high_read_fut = std::async(std::launch::async, Read, 0);
     bool reader_success = high_read_fut.get();
