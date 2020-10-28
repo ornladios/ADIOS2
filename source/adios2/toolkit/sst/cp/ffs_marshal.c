@@ -411,6 +411,14 @@ extern void FFSFreeMarshalData(SstStream Stream)
             if (Info->VarList)
                 free(Info->VarList);
 
+            struct ControlInfo *tmp = Info->ControlBlocks;
+            Info->ControlBlocks = NULL;
+            while (tmp)
+            {
+                struct ControlInfo *next = tmp->Next;
+                free(tmp);
+                tmp = next;
+            }
             free(Info);
             Stream->ReaderMarshalData = NULL;
         }
@@ -1692,8 +1700,6 @@ static int NameIndicatesArray(const char *Name)
     return (strcmp("Dims", Name + Len - 4) == 0);
 }
 
-static void ClearPriorControl(SstStream Stream);
-
 extern void FFSClearTimestepData(SstStream Stream)
 {
 
@@ -1716,16 +1722,7 @@ extern void FFSClearTimestepData(SstStream Stream)
     for (int i = 0; i < Info->VarCount; i++)
     {
         Info->VarList[i]->Variable = NULL;
-        /*     free(Info->VarList[i]->VarName); */
-        /*     free(Info->VarList[i]->PerWriterDataFieldDesc); */
-        /*     free(Info->VarList[i]->PerWriterStart); */
-        /*     free(Info->VarList[i]->PerWriterCounts); */
-        /*     free(Info->VarList[i]->PerWriterIncomingData); */
-        /*     free(Info->VarList[i]->PerWriterIncomingSize); */
-        /*     free(Info->VarList[i]); */
     }
-    /* Info->VarCount = 0; */
-    ClearPriorControl(Stream);
 }
 
 static struct ControlInfo *BuildControl(SstStream Stream, FMFormat Format)
@@ -1771,7 +1768,6 @@ static struct ControlInfo *BuildControl(SstStream Stream, FMFormat Format)
                 VarRec->Type = Type;
                 VarRec->ElementSize = ElementSize;
                 C->ElementSize = ElementSize;
-                VarRec->VarName = strdup(ArrayName);
             }
             i += 4;
             free(ArrayName);
@@ -1821,28 +1817,10 @@ static struct ControlInfo *GetPriorControl(SstStream Stream, FMFormat Format)
     return NULL;
 }
 
-static void ClearPriorControl(SstStream Stream)
-{
-    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
-    struct ControlInfo *tmp = Info->ControlBlocks;
-    /* while (tmp) */
-    /* { */
-    /*   for (int i = 0; i < tmp->ControlCount; i++) { */
-    /* 	tmp->Controls[i].VarRec = NULL; */
-    /*   } */
-    /* 	tmp = tmp->Next; */
-    /* } */
-    /* if (Info->ControlBlocks) */
-    /*     free(Info->ControlBlocks); */
-    /* Info->ControlBlocks = NULL; */
-}
-
 static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                          int WriterRank)
 {
     FFSTypeHandle FFSformat;
-    FMFieldList FieldList;
-    FMStructDescList FormatList;
     void *BaseData;
     static int DumpMetadata = -1;
 
@@ -1941,7 +1919,6 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     Info->MetadataBaseAddrs[WriterRank] = BaseData;
     for (int i = 0; i < Control->ControlCount; i++)
     {
-        int FieldIndex = ControlArray[i].FieldIndex;
         int FieldOffset = ControlArray[i].FieldOffset;
         FFSVarRec VarRec = ControlArray[i].VarRec;
         void *field_data = (char *)BaseData + FieldOffset;
