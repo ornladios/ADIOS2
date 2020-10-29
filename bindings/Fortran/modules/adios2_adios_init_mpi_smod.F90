@@ -7,15 +7,15 @@
 !
 
 #ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
-# define ADIOS2_MODULE_PROCEDURE module &
+# define ADIOS2_MODULE_PROCEDURE module
 #else
 # define ADIOS2_MODULE_PROCEDURE
 #endif
 
 #ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
-submodule ( adios2_adios_init_mod ) mpi
+submodule ( adios2_adios_init_mod ) adios2_adios_init_mpi_smod
 #else
-module adios2_adios_init_mod_mpi
+module adios2_adios_init_mpi_mod
 #endif
 
     use adios2_parameters_mod
@@ -33,8 +33,8 @@ module adios2_adios_init_mod_mpi
 
 contains
 
-    ADIOS2_MODULE_PROCEDURE
-    subroutine adios2_init_mpi(adios, comm, adios2_debug_mode, ierr)
+    ADIOS2_MODULE_PROCEDURE subroutine adios2_init_mpi( &
+            adios, comm, adios2_debug_mode, ierr)
         type(adios2_adios), intent(out) :: adios
         integer, intent(in) :: comm
         logical, intent(in) :: adios2_debug_mode
@@ -44,8 +44,7 @@ contains
 
     end subroutine
 
-    ADIOS2_MODULE_PROCEDURE
-    subroutine adios2_init_debug_mpi(adios, comm, ierr)
+    ADIOS2_MODULE_PROCEDURE subroutine adios2_init_debug_mpi(adios, comm, ierr)
         type(adios2_adios), intent(out) :: adios
         integer, intent(in) :: comm
         integer, intent(out) :: ierr
@@ -54,9 +53,8 @@ contains
 
     end subroutine
 
-    ADIOS2_MODULE_PROCEDURE
-    subroutine adios2_init_config_mpi(adios, config_file, comm, adios2_debug_mode, &
-                                      ierr)
+    ADIOS2_MODULE_PROCEDURE subroutine adios2_init_config_mpi( &
+            adios, config_file, comm, adios2_debug_mode, ierr)
         type(adios2_adios), intent(out) :: adios
         character*(*), intent(in) :: config_file
         integer, intent(in) :: comm
@@ -73,8 +71,8 @@ contains
 
     end subroutine
 
-    ADIOS2_MODULE_PROCEDURE
-    subroutine adios2_init_config_debug_mpi(adios, config_file, comm, ierr)
+    ADIOS2_MODULE_PROCEDURE subroutine adios2_init_config_debug_mpi( &
+            adios, config_file, comm, ierr)
         type(adios2_adios), intent(out) :: adios
         character*(*), intent(in) :: config_file
         integer, intent(in) :: comm

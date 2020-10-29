@@ -12,13 +12,15 @@ program TestSstRead
   use adios2
   implicit none
 
-#ifndef __GFORTRAN__
-#ifndef __GNUC__
-  interface
-     integer function iargc()
-     end function iargc
-  end interface
-#endif
+#if defined(ADIOS2_HAVE_FORTRAN_F03_ARGS)
+# define ADIOS2_ARGC() command_argument_count()
+# define ADIOS2_ARGV(i, v) call get_command_argument(i, v)
+#elif defined(ADIOS2_HAVE_FORTRAN_GNU_ARGS)
+# define ADIOS2_ARGC() iargc()
+# define ADIOS2_ARGV(i, v) call getarg(i, v)
+#else
+# define ADIOS2_ARGC() 1
+# define ADIOS2_ARGV(i, v)
 #endif
 
   integer :: numargs
@@ -43,7 +45,7 @@ program TestSstRead
   integer(kind = 8), dimension(:), allocatable::shape_in
   integer::key, color
   
-  numargs = iargc()
+  numargs = ADIOS2_ARGC()
 
   if ( numargs < 2 ) then
      call usage()
@@ -51,10 +53,10 @@ program TestSstRead
   endif
 
 
-  call getarg(1, engine)
-  call getarg(2, filename)
+  ADIOS2_ARGV(1, engine)
+  ADIOS2_ARGV(2, filename)
   if ( numargs > 2 ) then
-     call getarg(3, params)
+     ADIOS2_ARGV(3, params)
   endif
 
   insteps = 0;

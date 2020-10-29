@@ -54,8 +54,16 @@ if(ADIOS2_HAVE_Fortran)
     TestCommonReadF.F90
     $<TARGET_OBJECTS:TestCommonData_f>
   )
+  target_compile_definitions(TestCommonRead_f PRIVATE
+    $<$<BOOL:${ADIOS2_HAVE_FORTRAN_F03_ARGS}>:ADIOS2_HAVE_FORTRAN_F03_ARGS>
+    $<$<BOOL:${ADIOS2_HAVE_FORTRAN_GNU_ARGS}>:ADIOS2_HAVE_FORTRAN_GNU_ARGS>
+  )
   set_target_properties(TestCommonWrite_f TestCommonRead_f PROPERTIES
     LINKER_LANGUAGE Fortran
+  )
+  target_compile_definitions(TestCommonWrite_f PRIVATE
+    $<$<BOOL:${ADIOS2_HAVE_FORTRAN_F03_ARGS}>:ADIOS2_HAVE_FORTRAN_F03_ARGS>
+    $<$<BOOL:${ADIOS2_HAVE_FORTRAN_GNU_ARGS}>:ADIOS2_HAVE_FORTRAN_GNU_ARGS>
   )
   if(ADIOS2_HAVE_MPI)
     target_link_libraries(TestCommonWrite_f adios2_fortran_mpi MPI::MPI_Fortran)

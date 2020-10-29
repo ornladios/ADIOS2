@@ -67,9 +67,9 @@ module adios2_adios_init_mod
 
 #else
 
-    use adios2_adios_init_mod_serial
+    use adios2_adios_init_serial_mod
 # ifdef ADIOS2_HAVE_MPI_F
-    use adios2_adios_init_mod_mpi
+    use adios2_adios_init_mpi_mod
 # endif
 
 #endif
