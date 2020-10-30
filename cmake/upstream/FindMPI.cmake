@@ -760,7 +760,7 @@ function (_MPI_interrogate_compiler LANG)
   # Save the explicitly given link directories
   set(MPI_LINK_DIRECTORIES_LEFTOVER "${MPI_LINK_DIRECTORIES_WORK}")
 
-  # An MPI compiler wrapper could have its MPI libraries in the implictly
+  # An MPI compiler wrapper could have its MPI libraries in the implicitly
   # linked directories of the compiler itself.
   if(DEFINED CMAKE_${LANG}_IMPLICIT_LINK_DIRECTORIES)
     list(APPEND MPI_LINK_DIRECTORIES_WORK "${CMAKE_${LANG}_IMPLICIT_LINK_DIRECTORIES}")
@@ -867,11 +867,11 @@ function(_MPI_guess_settings LANG)
       # We first attempt to locate the msmpi.lib. Should be find it, we'll assume that the MPI present is indeed
       # Microsoft MPI.
       if("${CMAKE_SIZEOF_VOID_P}" EQUAL 8)
-        set(MPI_MSMPI_LIB_PATH "$ENV{MSMPI_LIB64}")
-        set(MPI_MSMPI_INC_PATH_EXTRA "$ENV{MSMPI_INC}/x64")
+        file(TO_CMAKE_PATH "$ENV{MSMPI_LIB64}" MPI_MSMPI_LIB_PATH)
+        file(TO_CMAKE_PATH "$ENV{MSMPI_INC}/x64" MPI_MSMPI_INC_PATH_EXTRA)
       else()
-        set(MPI_MSMPI_LIB_PATH "$ENV{MSMPI_LIB32}")
-        set(MPI_MSMPI_INC_PATH_EXTRA "$ENV{MSMPI_INC}/x86")
+        file(TO_CMAKE_PATH "$ENV{MSMPI_LIB32}" MPI_MSMPI_LIB_PATH)
+        file(TO_CMAKE_PATH "$ENV{MSMPI_INC}/x86" MPI_MSMPI_INC_PATH_EXTRA)
       endif()
 
       find_library(MPI_msmpi_LIBRARY
@@ -1153,15 +1153,19 @@ macro(_MPI_create_imported_target LANG)
     add_library(MPI::MPI_${LANG} INTERFACE IMPORTED)
   endif()
 
-  # When this is consumed for compiling CUDA, use '-Xcompiler' to wrap '-pthread'.
-  string(REPLACE "-pthread" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-pthread"
+  # When this is consumed for compiling CUDA, use '-Xcompiler' to wrap '-pthread' and '-fexceptions'.
+  string(REPLACE "-pthread" "$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:SHELL:-Xcompiler >-pthread"
     _MPI_${LANG}_COMPILE_OPTIONS "${MPI_${LANG}_COMPILE_OPTIONS}")
+  string(REPLACE "-fexceptions" "$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:SHELL:-Xcompiler >-fexceptions"
+    _MPI_${LANG}_COMPILE_OPTIONS "${_MPI_${LANG}_COMPILE_OPTIONS}")
   set_property(TARGET MPI::MPI_${LANG} PROPERTY INTERFACE_COMPILE_OPTIONS "${_MPI_${LANG}_COMPILE_OPTIONS}")
   unset(_MPI_${LANG}_COMPILE_OPTIONS)
 
   set_property(TARGET MPI::MPI_${LANG} PROPERTY INTERFACE_COMPILE_DEFINITIONS "${MPI_${LANG}_COMPILE_DEFINITIONS}")
 
   if(MPI_${LANG}_LINK_FLAGS)
+    string(REPLACE "-pthread" "$<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:-Xlinker >-pthread"
+      _MPI_${LANG}_LINK_FLAGS "${MPI_${LANG}_LINK_FLAGS}")
     set_property(TARGET MPI::MPI_${LANG} PROPERTY INTERFACE_LINK_OPTIONS "SHELL:${MPI_${LANG}_LINK_FLAGS}")
   endif()
   # If the compiler links MPI implicitly, no libraries will be found as they're contained within
@@ -1691,12 +1695,11 @@ foreach(LANG IN ITEMS C CXX Fortran)
         list(APPEND MPI_${LANG}_REQUIRED_VARS "MPI_${LANG}_WORKS")
       endif()
     endif()
-    if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.17.0")
-      set(_FPHSA_NAME_MISMATCHED NAME_MISMATCHED)
-    endif()
-    find_package_handle_standard_args(MPI_${LANG} ${_FPHSA_NAME_MISMATCHED}
+    set(FPHSA_NAME_MISMATCHED TRUE)
+    find_package_handle_standard_args(MPI_${LANG}
       REQUIRED_VARS ${MPI_${LANG}_REQUIRED_VARS}
       VERSION_VAR MPI_${LANG}_VERSION)
+    unset(FPHSA_NAME_MISMATCHED)
 
     if(DEFINED MPI_${LANG}_VERSION)
       if(NOT _MPI_MIN_VERSION OR _MPI_MIN_VERSION VERSION_GREATER MPI_${LANG}_VERSION)
@@ -1720,6 +1723,7 @@ endif()
 find_package_handle_standard_args(MPI
     REQUIRED_VARS ${_MPI_REQ_VARS}
     VERSION_VAR ${_MPI_MIN_VERSION}
+    REASON_FAILURE_MESSAGE "${_MPI_FAIL_REASON}"
     HANDLE_COMPONENTS)
 
 #=============================================================================
