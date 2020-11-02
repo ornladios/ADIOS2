@@ -40,7 +40,6 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
         adEngine.Close()
 
     def test_write_read_string_highAPI(self):
-        comm = MPI.COMM_WORLD
         theString = 'hello adios'
         bpFilename = 'string_test_highAPI.bp'
         varname = 'mystringvar'
