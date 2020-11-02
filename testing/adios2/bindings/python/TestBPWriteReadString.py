@@ -45,7 +45,7 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
         bpFilename = 'string_test_highAPI.bp'
         varname = 'mystringvar'
         NSteps = 3
-        adios = adios2.ADIOS(comm)
+
         with adios2.open(bpFilename, "w") as fh:
 
             for step in range(NSteps):
@@ -55,7 +55,9 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
             for fstep in fh:
                 step = fstep.current_step()
                 result = fstep.read(varname)
-                self.assertEqual("".join([chr(s) for s in result]), theString + str(step))
+                self.assertEqual("".join([chr(s) for s in result]),
+                                 theString + str(step))
+
 
 if __name__ == '__main__':
     unittest.main()
