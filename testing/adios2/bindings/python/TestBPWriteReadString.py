@@ -40,17 +40,18 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
         adEngine.Close()
 
     def test_write_read_string_highAPI(self):
+        comm = MPI.COMM_WORLD
         theString = 'hello adios'
         bpFilename = 'string_test_highAPI.bp'
         varname = 'mystringvar'
         NSteps = 3
 
-        with adios2.open(bpFilename, "w") as fh:
+        with adios2.open(bpFilename, "w", comm) as fh:
 
             for step in range(NSteps):
                 fh.write(varname, theString + str(step), end_step=True)
 
-        with adios2.open(bpFilename, "r") as fh:
+        with adios2.open(bpFilename, "r", comm) as fh:
             for fstep in fh:
                 step = fstep.current_step()
                 result = fstep.read(varname)
