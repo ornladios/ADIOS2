@@ -310,7 +310,7 @@ bool SscReader::SyncWritePattern()
     else if (b.type == helper::GetDataType<T>())                               \
     {                                                                          \
         auto v = m_IO.InquireVariable<T>(b.name);                              \
-        if (not v)                                                             \
+        if (!v)                                                                \
         {                                                                      \
             Dims vStart = b.start;                                             \
             Dims vShape = b.shape;                                             \

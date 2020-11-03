@@ -90,7 +90,7 @@ RankPosMap CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
                         for (size_t i = 0; i < gBlock.start.size(); ++i)
                         {
                             if (gBlock.start[i] + gBlock.count[i] <=
-                                    lBlock.start[i] or
+                                    lBlock.start[i] ||
                                 lBlock.start[i] + lBlock.count[i] <=
                                     gBlock.start[i])
                             {
