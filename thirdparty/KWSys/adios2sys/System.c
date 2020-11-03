@@ -6,7 +6,7 @@
 /* Work-around CMake dependency scanning limitation.  This must
    duplicate the above list of headers.  */
 #if 0
-#include "System.h.in"
+#  include "System.h.in"
 #endif
 
 #include <ctype.h>  /* isspace */
@@ -22,7 +22,7 @@ typedef ptrdiff_t kwsysSystem_ptrdiff_t;
 typedef int kwsysSystem_ptrdiff_t;
 #endif
 
-static int kwsysSystem__AppendByte(char* local, char** begin, char** end,
+static int kwsysSystem__AppendByte(const char* local, char** begin, char** end,
                                    int* size, char c)
 {
   /* Allocate space for the character.  */

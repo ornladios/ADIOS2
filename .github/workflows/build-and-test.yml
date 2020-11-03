@@ -26,8 +26,6 @@ jobs:
           el7-gnu8-ohpc,
           el7-gnu8-openmpi-ohpc,
           el7-gnu8-openmpi-ohpc-static,
-          suse-pgi,
-          suse-pgi-openmpi,
           debian-sid,
           debian-sid-openmpi ]
         include:
@@ -39,10 +37,6 @@ jobs:
           container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
         - jobname: el7-gnu8-openmpi-ohpc-static
           container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
-        - jobname: suse-pgi
-          container: ornladios/adios2:ci-suse-pgi
-        - jobname: suse-pgi-openmpi
-          container: ornladios/adios2:ci-suse-pgi-openmpi
         - jobname: debian-sid
           container: ornladios/adios2:ci-debian-sid
         - jobname: debian-sid-openmpi
@@ -77,21 +71,13 @@ jobs:
       matrix:
         jobname: [
           power8-el7-xl,
-          power8-el7-xl-smpi,
-          power8-el7-pgi,
-          power8-el7-pgi-smpi ]
+          power8-el7-xl-smpi ]
         include:
         - jobname: power8-el7-xl
           container: ornladios/adios2:ci-x86_64-power8-el7-xl
           arch: ppc64le
         - jobname: power8-el7-xl-smpi
           container: ornladios/adios2:ci-x86_64-power8-el7-xl-smpi
-          arch: ppc64le
-        - jobname: power8-el7-pgi
-          container: ornladios/adios2:ci-x86_64-power8-el7-pgi
-          arch: ppc64le
-        - jobname: power8-el7-pgi-smpi
-          container: ornladios/adios2:ci-x86_64-power8-el7-pgi-smpi
           arch: ppc64le
 
     steps:

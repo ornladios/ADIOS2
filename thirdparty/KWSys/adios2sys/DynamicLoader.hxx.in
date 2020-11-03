@@ -8,16 +8,16 @@
 #include <string>
 
 #if defined(__hpux)
-#include <dl.h>
+#  include <dl.h>
 #elif defined(_WIN32) && !defined(__CYGWIN__)
-#include <windows.h>
+#  include <windows.h>
 #elif defined(__APPLE__)
-#include <AvailabilityMacros.h>
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1030
-#include <mach-o/dyld.h>
-#endif
+#  include <AvailabilityMacros.h>
+#  if MAC_OS_X_VERSION_MAX_ALLOWED < 1030
+#    include <mach-o/dyld.h>
+#  endif
 #elif defined(__BEOS__)
-#include <be/kernel/image.h>
+#  include <be/kernel/image.h>
 #endif
 
 namespace @KWSYS_NAMESPACE@ {
@@ -52,11 +52,11 @@ public:
 #elif defined(_WIN32) && !defined(__CYGWIN__)
   typedef HMODULE LibraryHandle;
 #elif defined(__APPLE__)
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1030
+#  if MAC_OS_X_VERSION_MAX_ALLOWED < 1030
   typedef NSModule LibraryHandle;
-#else
+#  else
   typedef void* LibraryHandle;
-#endif
+#  endif
 #elif defined(__BEOS__)
   typedef image_id LibraryHandle;
 #else // POSIX
@@ -66,10 +66,23 @@ public:
   // Return type from DynamicLoader::GetSymbolAddress.
   typedef void (*SymbolPointer)();
 
+  enum OpenFlags
+  {
+    // Search for dependent libraries beside the library being loaded.
+    //
+    // This is currently only supported on Windows.
+    SearchBesideLibrary = 0x00000001,
+
+    AllOpenFlags = SearchBesideLibrary
+  };
+
   /** Load a dynamic library into the current process.
    * The returned LibraryHandle can be used to access the symbols in the
-   * library. */
+   * library. The optional second argument is a set of flags to use when
+   * opening the library. If unrecognized or unsupported flags are specified,
+   * the library is not opened. */
   static LibraryHandle OpenLibrary(const std::string&);
+  static LibraryHandle OpenLibrary(const std::string&, int);
 
   /** Attempt to detach a dynamic library from the
    * process.  A value of true is returned if it is successful. */

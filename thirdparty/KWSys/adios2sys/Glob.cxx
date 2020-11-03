@@ -12,29 +12,29 @@
 // Work-around CMake dependency scanning limitation.  This must
 // duplicate the above list of headers.
 #if 0
-#include "Configure.hxx.in"
-#include "Directory.hxx.in"
-#include "Glob.hxx.in"
-#include "RegularExpression.hxx.in"
-#include "SystemTools.hxx.in"
+#  include "Configure.hxx.in"
+#  include "Directory.hxx.in"
+#  include "Glob.hxx.in"
+#  include "RegularExpression.hxx.in"
+#  include "SystemTools.hxx.in"
 #endif
 
 #include <algorithm>
 #include <string>
 #include <vector>
 
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
+#include <cctype>
+#include <cstdio>
+#include <cstring>
 namespace KWSYS_NAMESPACE {
-#if defined(_WIN32) || defined(__APPLE__) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__APPLE__)
 // On Windows and Apple, no difference between lower and upper case
-#define KWSYS_GLOB_CASE_INDEPENDENT
+#  define KWSYS_GLOB_CASE_INDEPENDENT
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 // Handle network paths
-#define KWSYS_GLOB_SUPPORT_NETWORK_PATHS
+#  define KWSYS_GLOB_SUPPORT_NETWORK_PATHS
 #endif
 
 class GlobInternals
@@ -182,7 +182,15 @@ bool Glob::RecurseDirectory(std::string::size_type start,
                             const std::string& dir, GlobMessages* messages)
 {
   kwsys::Directory d;
-  if (!d.Load(dir)) {
+  std::string errorMessage;
+  if (!d.Load(dir, &errorMessage)) {
+    if (messages) {
+      if (!errorMessage.empty()) {
+        messages->push_back(Message(Glob::warning,
+                                    "Error listing directory '" + dir +
+                                      "'! Reason: '" + errorMessage + "'"));
+      }
+    }
     return true;
   }
   unsigned long cc;
@@ -217,9 +225,10 @@ bool Glob::RecurseDirectory(std::string::size_type start,
 
         if (!realPathErrorMessage.empty()) {
           if (messages) {
-            messages->push_back(Message(
-              Glob::error, "Canonical path generation from path '" + dir +
-                "' failed! Reason: '" + realPathErrorMessage + "'"));
+            messages->push_back(
+              Message(Glob::error,
+                      "Canonical path generation from path '" + dir +
+                        "' failed! Reason: '" + realPathErrorMessage + "'"));
           }
           return false;
         }
@@ -262,7 +271,7 @@ bool Glob::RecurseDirectory(std::string::size_type start,
       }
     } else {
       if (!this->Internals->Expressions.empty() &&
-          this->Internals->Expressions.rbegin()->find(fname)) {
+          this->Internals->Expressions.back().find(fname)) {
         this->AddFile(this->Internals->Files, realname);
       }
     }
@@ -277,7 +286,9 @@ void Glob::ProcessDirectory(std::string::size_type start,
   // std::cout << "ProcessDirectory: " << dir << std::endl;
   bool last = (start == this->Internals->Expressions.size() - 1);
   if (last && this->Recurse) {
-    this->RecurseDirectory(start, dir, messages);
+    if (kwsys::SystemTools::FileIsDirectory(dir)) {
+      this->RecurseDirectory(start, dir, messages);
+    }
     return;
   }
 
@@ -384,10 +395,9 @@ bool Glob::FindFiles(const std::string& inexpr, GlobMessages* messages)
   }
 
   if (skip > 0) {
-    expr = expr.substr(skip);
+    expr.erase(0, skip);
   }
 
-  cexpr = "";
   for (cc = 0; cc < expr.size(); cc++) {
     int ch = expr[cc];
     if (ch == '/') {
@@ -414,8 +424,7 @@ bool Glob::FindFiles(const std::string& inexpr, GlobMessages* messages)
 
 void Glob::AddExpression(const std::string& expr)
 {
-  this->Internals->Expressions.push_back(
-    kwsys::RegularExpression(this->PatternToRegex(expr)));
+  this->Internals->Expressions.emplace_back(this->PatternToRegex(expr));
 }
 
 void Glob::SetRelative(const char* dir)
@@ -430,7 +439,7 @@ void Glob::SetRelative(const char* dir)
 const char* Glob::GetRelative()
 {
   if (this->Relative.empty()) {
-    return KWSYS_NULLPTR;
+    return nullptr;
   }
   return this->Relative.c_str();
 }

@@ -94,8 +94,8 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     bool found = false;
     for (const auto &b : m_GlobalWritePattern[m_StreamRank])
     {
-        if (b.name == variable.m_Name and ssc::AreSameDims(vStart, b.start) and
-            ssc::AreSameDims(vCount, b.count) and
+        if (b.name == variable.m_Name && ssc::AreSameDims(vStart, b.start) &&
+            ssc::AreSameDims(vCount, b.count) &&
             ssc::AreSameDims(vShape, b.shape))
         {
             std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);

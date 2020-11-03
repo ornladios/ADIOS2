@@ -1,5 +1,7 @@
 <b>P</b>ump is <b>U</b>seful for <b>M</b>eta <b>P</b>rogramming.
 
+<!-- GOOGLETEST_CM0035 DO NOT DELETE -->
+
 # The Problem
 
 Template and macro libraries often need to define many classes, functions, or
@@ -117,7 +119,7 @@ Func(a1 + a2 + a3);  // If n is 3.
 We support the following meta programming constructs:
 
 | `$var id = exp`                  | Defines a named constant value. `$id` is |
-:                                  : valid util the end of the current meta   :
+:                                  : valid until the end of the current meta  :
 :                                  : lexical block.                           :
 | :------------------------------- | :--------------------------------------- |
 | `$range id exp..exp`             | Sets the range of an iteration variable, |

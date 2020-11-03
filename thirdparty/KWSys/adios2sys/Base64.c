@@ -6,7 +6,7 @@
 /* Work-around CMake dependency scanning limitation.  This must
    duplicate the above list of headers.  */
 #if 0
-#include "Base64.h.in"
+#  include "Base64.h.in"
 #endif
 
 static const unsigned char kwsysBase64EncodeTable[65] =
@@ -130,7 +130,10 @@ size_t kwsysBase64_Encode(const unsigned char* input, size_t length,
 /* Decode 4 bytes into a 3 byte string. */
 int kwsysBase64_Decode3(const unsigned char* src, unsigned char* dest)
 {
-  unsigned char d0, d1, d2, d3;
+  unsigned char d0;
+  unsigned char d1;
+  unsigned char d2;
+  unsigned char d3;
 
   d0 = kwsysBase64DecodeChar(src[0]);
   d1 = kwsysBase64DecodeChar(src[1]);

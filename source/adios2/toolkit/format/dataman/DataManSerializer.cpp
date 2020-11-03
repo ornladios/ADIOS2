@@ -487,15 +487,15 @@ nlohmann::json DataManSerializer::DeserializeJson(const char *start,
     nlohmann::json message;
     if (m_UseJsonSerialization == "msgpack")
     {
-        message = nlohmann::json::from_msgpack(start, size);
+        message = nlohmann::json::from_msgpack(start, start + size);
     }
     else if (m_UseJsonSerialization == "cbor")
     {
-        message = nlohmann::json::from_cbor(start, size);
+        message = nlohmann::json::from_cbor(start, start + size);
     }
     else if (m_UseJsonSerialization == "ubjson")
     {
-        message = nlohmann::json::from_ubjson(start, size);
+        message = nlohmann::json::from_ubjson(start, start + size);
     }
     else if (m_UseJsonSerialization == "string")
     {

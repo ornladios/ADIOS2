@@ -13,24 +13,24 @@
 // Work-around CMake dependency scanning limitation.  This must
 // duplicate the above list of headers.
 #if 0
-#include "Encoding.hxx.in"
+#  include "Encoding.hxx.in"
 #endif
 
 #if defined(_WIN32)
 
-#include <algorithm>
-#include <iomanip>
-#include <iostream>
-#include <stdexcept>
-#include <string.h>
-#include <wchar.h>
-#include <windows.h>
+#  include <algorithm>
+#  include <iomanip>
+#  include <iostream>
+#  include <stdexcept>
+#  include <string.h>
+#  include <wchar.h>
+#  include <windows.h>
 
-#include "testConsoleBuf.hxx"
+#  include "testConsoleBuf.hxx"
 
-#if defined(_MSC_VER) && _MSC_VER >= 1800
-#define KWSYS_WINDOWS_DEPRECATED_GetVersion
-#endif
+#  if defined(_MSC_VER) && _MSC_VER >= 1800
+#    define KWSYS_WINDOWS_DEPRECATED_GetVersion
+#  endif
 // يونيكود
 static const WCHAR UnicodeInputTestString[] =
   L"\u064A\u0648\u0646\u064A\u0643\u0648\u062F!";
@@ -51,7 +51,7 @@ static void displayError(DWORD errorCode)
   LPWSTR message;
   if (FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
                        FORMAT_MESSAGE_FROM_SYSTEM,
-                     NULL, errorCode, 0, (LPWSTR)&message, 0, NULL)) {
+                     nullptr, errorCode, 0, (LPWSTR)&message, 0, nullptr)) {
     std::cerr << "Error message: " << kwsys::Encoding::ToNarrow(message)
               << std::endl;
     HeapFree(GetProcessHeap(), 0, message);
@@ -124,7 +124,7 @@ static bool createProcess(HANDLE hIn, HANDLE hOut, HANDLE hErr)
   }
 
   WCHAR cmd[MAX_PATH];
-  if (GetModuleFileNameW(NULL, cmd, MAX_PATH) == 0) {
+  if (GetModuleFileNameW(nullptr, cmd, MAX_PATH) == 0) {
     std::cerr << "GetModuleFileName failed!" << std::endl;
     return false;
   }
@@ -136,14 +136,14 @@ static bool createProcess(HANDLE hIn, HANDLE hOut, HANDLE hErr)
   wcscat(cmd, L".exe");
 
   bool success =
-    CreateProcessW(NULL,            // No module name (use command line)
+    CreateProcessW(nullptr,         // No module name (use command line)
                    cmd,             // Command line
-                   NULL,            // Process handle not inheritable
-                   NULL,            // Thread handle not inheritable
+                   nullptr,         // Process handle not inheritable
+                   nullptr,         // Thread handle not inheritable
                    bInheritHandles, // Set handle inheritance
                    dwCreationFlags,
-                   NULL,         // Use parent's environment block
-                   NULL,         // Use parent's starting directory
+                   nullptr,      // Use parent's environment block
+                   nullptr,      // Use parent's starting directory
                    &startupInfo, // Pointer to STARTUPINFO structure
                    &processInfo) !=
     0; // Pointer to PROCESS_INFORMATION structure
@@ -174,7 +174,7 @@ static bool createPipe(PHANDLE readPipe, PHANDLE writePipe)
   SECURITY_ATTRIBUTES securityAttributes;
   securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
   securityAttributes.bInheritHandle = TRUE;
-  securityAttributes.lpSecurityDescriptor = NULL;
+  securityAttributes.lpSecurityDescriptor = nullptr;
   return CreatePipe(readPipe, writePipe, &securityAttributes, 0) == 0 ? false
                                                                       : true;
 }
@@ -194,7 +194,7 @@ static HANDLE createFile(LPCWSTR fileName)
   SECURITY_ATTRIBUTES securityAttributes;
   securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
   securityAttributes.bInheritHandle = TRUE;
-  securityAttributes.lpSecurityDescriptor = NULL;
+  securityAttributes.lpSecurityDescriptor = nullptr;
 
   HANDLE file =
     CreateFileW(fileName, GENERIC_READ | GENERIC_WRITE,
@@ -202,7 +202,7 @@ static HANDLE createFile(LPCWSTR fileName)
                 &securityAttributes,
                 CREATE_ALWAYS, // overwrite existing
                 FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
-                NULL); // no template
+                nullptr); // no template
   if (file == INVALID_HANDLE_VALUE) {
     DWORD lastError = GetLastError();
     std::cerr << "CreateFile(" << kwsys::Encoding::ToNarrow(fileName) << ")"
@@ -219,9 +219,9 @@ static void finishFile(HANDLE file)
   }
 }
 
-#ifndef MAPVK_VK_TO_VSC
-#define MAPVK_VK_TO_VSC (0)
-#endif
+#  ifndef MAPVK_VK_TO_VSC
+#    define MAPVK_VK_TO_VSC (0)
+#  endif
 
 static void writeInputKeyEvent(INPUT_RECORD inputBuffer[], WCHAR chr)
 {
@@ -288,7 +288,7 @@ static int testPipe()
     DWORD bytesWritten = 0;
     if (!WriteFile(inPipeWrite, encodedInputTestString.c_str(),
                    (DWORD)encodedInputTestString.size(), &bytesWritten,
-                   NULL) ||
+                   nullptr) ||
         bytesWritten == 0) {
       throw std::runtime_error("WriteFile failed!");
     }
@@ -305,7 +305,8 @@ static int testPipe()
           throw std::runtime_error("WaitForSingleObject failed!");
         }
         DWORD bytesRead = 0;
-        if (!ReadFile(outPipeRead, buffer, sizeof(buffer), &bytesRead, NULL) ||
+        if (!ReadFile(outPipeRead, buffer, sizeof(buffer), &bytesRead,
+                      nullptr) ||
             bytesRead == 0) {
           throw std::runtime_error("ReadFile#1 failed!");
         }
@@ -313,7 +314,7 @@ static int testPipe()
         if ((bytesRead <
                encodedTestString.size() + 1 + encodedInputTestString.size() &&
              !ReadFile(outPipeRead, buffer + bytesRead,
-                       sizeof(buffer) - bytesRead, &bytesRead, NULL)) ||
+                       sizeof(buffer) - bytesRead, &bytesRead, nullptr)) ||
             bytesRead == 0) {
           throw std::runtime_error("ReadFile#2 failed!");
         }
@@ -324,7 +325,7 @@ static int testPipe()
                    encodedInputTestString.size()) == 0) {
           bytesRead = 0;
           if (!ReadFile(errPipeRead, buffer2, sizeof(buffer2), &bytesRead,
-                        NULL) ||
+                        nullptr) ||
               bytesRead == 0) {
             throw std::runtime_error("ReadFile#3 failed!");
           }
@@ -383,13 +384,13 @@ static int testFile()
     char buffer2[200];
 
     int length;
-    if ((length =
-           WideCharToMultiByte(TestCodepage, 0, UnicodeInputTestString, -1,
-                               buffer, sizeof(buffer), NULL, NULL)) == 0) {
+    if ((length = WideCharToMultiByte(TestCodepage, 0, UnicodeInputTestString,
+                                      -1, buffer, sizeof(buffer), nullptr,
+                                      nullptr)) == 0) {
       throw std::runtime_error("WideCharToMultiByte failed!");
     }
     buffer[length - 1] = '\n';
-    if (!WriteFile(inFile, buffer, length, &bytesWritten, NULL) ||
+    if (!WriteFile(inFile, buffer, length, &bytesWritten, nullptr) ||
         bytesWritten == 0) {
       throw std::runtime_error("WriteFile failed!");
     }
@@ -413,7 +414,7 @@ static int testFile()
             INVALID_SET_FILE_POINTER) {
           throw std::runtime_error("SetFilePointer#1 failed!");
         }
-        if (!ReadFile(outFile, buffer, sizeof(buffer), &bytesRead, NULL) ||
+        if (!ReadFile(outFile, buffer, sizeof(buffer), &bytesRead, nullptr) ||
             bytesRead == 0) {
           throw std::runtime_error("ReadFile#1 failed!");
         }
@@ -429,7 +430,8 @@ static int testFile()
             throw std::runtime_error("SetFilePointer#2 failed!");
           }
 
-          if (!ReadFile(errFile, buffer2, sizeof(buffer2), &bytesRead, NULL) ||
+          if (!ReadFile(errFile, buffer2, sizeof(buffer2), &bytesRead,
+                        nullptr) ||
               bytesRead == 0) {
             throw std::runtime_error("ReadFile#2 failed!");
           }
@@ -470,9 +472,9 @@ static int testFile()
   return didFail;
 }
 
-#ifndef _WIN32_WINNT_VISTA
-#define _WIN32_WINNT_VISTA 0x0600
-#endif
+#  ifndef _WIN32_WINNT_VISTA
+#    define _WIN32_WINNT_VISTA 0x0600
+#  endif
 
 static int testConsole()
 {
@@ -495,29 +497,36 @@ static int testConsole()
   DWORD FaceNameSize = sizeof(FaceName);
   DWORD FontFamily = TestFontFamily;
   DWORD FontSize = TestFontSize;
-#ifdef KWSYS_WINDOWS_DEPRECATED_GetVersion
-#pragma warning(push)
-#ifdef __INTEL_COMPILER
-#pragma warning(disable : 1478)
-#else
-#pragma warning(disable : 4996)
-#endif
-#endif
+#  ifdef KWSYS_WINDOWS_DEPRECATED_GetVersion
+#    pragma warning(push)
+#    ifdef __INTEL_COMPILER
+#      pragma warning(disable : 1478)
+#    elif defined __clang__
+#      pragma clang diagnostic push
+#      pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#    else
+#      pragma warning(disable : 4996)
+#    endif
+#  endif
   const bool isVistaOrGreater =
     LOBYTE(LOWORD(GetVersion())) >= HIBYTE(_WIN32_WINNT_VISTA);
-#ifdef KWSYS_WINDOWS_DEPRECATED_GetVersion
-#pragma warning(pop)
-#endif
+#  ifdef KWSYS_WINDOWS_DEPRECATED_GetVersion
+#    ifdef __clang__
+#      pragma clang diagnostic pop
+#    else
+#      pragma warning(pop)
+#    endif
+#  endif
   if (!isVistaOrGreater) {
     if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Console", 0, KEY_READ | KEY_WRITE,
                       &hConsoleKey) == ERROR_SUCCESS) {
       DWORD dwordSize = sizeof(DWORD);
-      if (RegQueryValueExW(hConsoleKey, L"FontFamily", NULL, NULL,
+      if (RegQueryValueExW(hConsoleKey, L"FontFamily", nullptr, nullptr,
                            (LPBYTE)&FontFamily, &dwordSize) == ERROR_SUCCESS) {
         if (FontFamily != TestFontFamily) {
-          RegQueryValueExW(hConsoleKey, L"FaceName", NULL, NULL,
+          RegQueryValueExW(hConsoleKey, L"FaceName", nullptr, nullptr,
                            (LPBYTE)FaceName, &FaceNameSize);
-          RegQueryValueExW(hConsoleKey, L"FontSize", NULL, NULL,
+          RegQueryValueExW(hConsoleKey, L"FontSize", nullptr, nullptr,
                            (LPBYTE)&FontSize, &dwordSize);
 
           RegSetValueExW(hConsoleKey, L"FontFamily", 0, REG_DWORD,
@@ -550,10 +559,10 @@ static int testConsole()
     SECURITY_ATTRIBUTES securityAttributes;
     securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
     securityAttributes.bInheritHandle = TRUE;
-    securityAttributes.lpSecurityDescriptor = NULL;
+    securityAttributes.lpSecurityDescriptor = nullptr;
     hIn = CreateFileW(L"CONIN$", GENERIC_READ | GENERIC_WRITE,
                       FILE_SHARE_READ | FILE_SHARE_WRITE, &securityAttributes,
-                      OPEN_EXISTING, 0, NULL);
+                      OPEN_EXISTING, 0, nullptr);
     if (hIn == INVALID_HANDLE_VALUE) {
       DWORD lastError = GetLastError();
       std::cerr << "CreateFile(CONIN$)" << std::endl;
@@ -561,7 +570,7 @@ static int testConsole()
     }
     hOut = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE,
                        FILE_SHARE_READ | FILE_SHARE_WRITE, &securityAttributes,
-                       OPEN_EXISTING, 0, NULL);
+                       OPEN_EXISTING, 0, nullptr);
     if (hOut == INVALID_HANDLE_VALUE) {
       DWORD lastError = GetLastError();
       std::cerr << "CreateFile(CONOUT$)" << std::endl;
@@ -573,7 +582,7 @@ static int testConsole()
     newConsole = true;
   }
 
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#  if _WIN32_WINNT >= _WIN32_WINNT_VISTA
   if (isVistaOrGreater) {
     CONSOLE_FONT_INFOEX consoleFont;
     memset(&consoleFont, 0, sizeof(consoleFont));
@@ -603,7 +612,7 @@ static int testConsole()
       std::cerr << "GetCurrentConsoleFontEx failed!" << std::endl;
     }
   } else {
-#endif
+#  endif
     if (restoreConsole &&
         RegOpenKeyExW(HKEY_CURRENT_USER, L"Console", 0, KEY_WRITE,
                       &hConsoleKey) == ERROR_SUCCESS) {
@@ -619,11 +628,11 @@ static int testConsole()
                      sizeof(FontSize));
       RegCloseKey(hConsoleKey);
     }
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#  if _WIN32_WINNT >= _WIN32_WINNT_VISTA
   }
-#endif
+#  endif
 
-  if (createProcess(NULL, NULL, NULL)) {
+  if (createProcess(nullptr, nullptr, nullptr)) {
     try {
       DWORD status;
       if ((status = WaitForSingleObject(beforeInputEvent, waitTimeout)) !=
@@ -739,7 +748,7 @@ int testConsoleBuf(int, char* [])
   int ret = 0;
 
 #if defined(_WIN32)
-  beforeInputEvent = CreateEventW(NULL,
+  beforeInputEvent = CreateEventW(nullptr,
                                   FALSE, // auto-reset event
                                   FALSE, // initial state is nonsignaled
                                   BeforeInputEventName); // object name
@@ -748,7 +757,7 @@ int testConsoleBuf(int, char* [])
     return 1;
   }
 
-  afterOutputEvent = CreateEventW(NULL, FALSE, FALSE, AfterOutputEventName);
+  afterOutputEvent = CreateEventW(nullptr, FALSE, FALSE, AfterOutputEventName);
   if (!afterOutputEvent) {
     std::cerr << "CreateEvent#2 failed " << GetLastError() << std::endl;
     return 1;
