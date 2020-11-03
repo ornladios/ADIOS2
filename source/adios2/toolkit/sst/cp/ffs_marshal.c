@@ -1961,9 +1961,12 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
         }
         else
         {
-            VarRec->Variable = Stream->VarSetupUpcall(Stream->SetupUpcallReader,
-                                                      VarRec->VarName,
-                                                      VarRec->Type, field_data);
+            if (!VarRec->Variable)
+            {
+                VarRec->Variable = Stream->VarSetupUpcall(
+                    Stream->SetupUpcallReader, VarRec->VarName, VarRec->Type,
+                    field_data);
+            }
             VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
             VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
         }
