@@ -2121,6 +2121,14 @@ extern void SstInternalProvideTimestep(
     Stream->DP_Interface->provideTimestep(&Svcs, Stream->DP_Stream, Data,
                                           LocalMetadata, Timestep,
                                           &DP_TimestepInfo);
+    if (Formats)
+    {
+        FFSFormatList tmp = Formats;
+        while (tmp)
+        {
+            tmp = tmp->Next;
+        }
+    }
     STREAM_MUTEX_LOCK(Stream);
 
     /* Md is the local contribution to MetaData */

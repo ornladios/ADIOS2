@@ -370,11 +370,11 @@ static FMField MetaDataPlusDPInfoList[] = {
 static FMField FFSFormatBlockList[] = {
     {"FormatServerRep", "char[FormatServerRepLen]", 1,
      FMOffset(struct FFSFormatBlock *, FormatServerRep)},
-    {"FormatServerRepLen", "integer", sizeof(int),
+    {"FormatServerRepLen", "integer", sizeof(size_t),
      FMOffset(struct FFSFormatBlock *, FormatServerRepLen)},
     {"FormatIDRep", "char[FormatIDRepLen]", 1,
      FMOffset(struct FFSFormatBlock *, FormatIDRep)},
-    {"FormatIDRepLen", "integer", sizeof(int),
+    {"FormatIDRepLen", "integer", sizeof(size_t),
      FMOffset(struct FFSFormatBlock *, FormatIDRepLen)},
     {"Next", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
      FMOffset(struct FFSFormatBlock *, Next)},

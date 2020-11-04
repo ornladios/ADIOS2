@@ -1746,6 +1746,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
 
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
+            static int count = 0;
             TAU_START("FFS marshaling case");
             FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
             TAU_STOP("FFS marshaling case");
@@ -1978,6 +1979,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) &&
             (ReturnData->TSmsg))
         {
+            int count = 0;
             CP_verbose(
                 Stream, PerRankVerbose,
                 "SstAdvanceStep installing precious metadata before exiting\n");
@@ -2008,15 +2010,15 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     {
         NotifyDPArrivedMetadata(Stream, MetadataMsg);
 
+        Stream->ReaderTimestep = MetadataMsg->Timestep;
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
-            CP_verbose(
-                Stream, TraceVerbose,
-                "Calling install precious metadata from metadata block %p\n",
-                MetadataMsg);
+            static int count = 0;
+            CP_verbose(Stream, TraceVerbose,
+                       "Calling install  metadata from metadata block %p\n",
+                       MetadataMsg);
             FFSMarshalInstallMetadata(Stream, MetadataMsg);
         }
-        Stream->ReaderTimestep = MetadataMsg->Timestep;
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
         memset(Mdata, 0, sizeof(struct _SstFullMetadata));
         Mdata->WriterCohortSize = MetadataMsg->CohortSize;
