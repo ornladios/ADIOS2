@@ -181,9 +181,10 @@ int main(int argc, char *argv[])
 
             // Arrays are read by scheduling one or more of them
             // and performing the reads at once
+            std::fill(Tin.begin(), Tin.end(), 0.0);
             reader.Get<double>(vTin, Tin.data());
-            /*printDataStep(Tin.data(), settings.readsize.data(),
-                          settings.offset.data(), rank, step); */
+            printDataStep(Tin.data(), settings.readsize.data(),
+                          settings.offset.data(), rank, step);
             reader.EndStep();
 
             /* Compute dT from current T (Tin) and previous T (Tout)
