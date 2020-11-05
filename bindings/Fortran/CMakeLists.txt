@@ -143,6 +143,9 @@ install(
   COMPONENT adios2_fortran-development
   FILES_MATCHING
     PATTERN "adios2*.mod"
+    PATTERN "adios2*.smod"
+    PATTERN "ADIOS2*.mod"
+    PATTERN "ADIOS2*.smod"
     PATTERN "CMakeFiles" EXCLUDE
 )
 

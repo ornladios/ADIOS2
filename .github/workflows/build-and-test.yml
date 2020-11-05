@@ -13,10 +13,12 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
-    container: ${{ matrix.container }}
-    env:
-      GH_YML_JOBNAME: ${{ matrix.jobname }}
-      GH_YML_OS: Linux
+    container:
+      image: ${{ matrix.container }}
+      options: --shm-size=1g
+      env:
+        GH_YML_JOBNAME: ${{ matrix.jobname }}
+        GH_YML_OS: Linux
 
     strategy:
       fail-fast: false
@@ -61,10 +63,10 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.container }}
-      options: --privileged
-    env:
-      GH_YML_JOBNAME: ${{ matrix.jobname }}
-      GH_YML_OS: Linux
+      options: --privileged --shm-size=1g
+      env:
+        GH_YML_JOBNAME: ${{ matrix.jobname }}
+        GH_YML_OS: Linux
 
     strategy:
       fail-fast: false
@@ -103,10 +105,12 @@ jobs:
 
   linux_spack:
     runs-on: ubuntu-latest
-    container: ${{ matrix.container }}
-    env:
-      GH_YML_JOBNAME: ${{ matrix.jobname }}
-      GH_YML_OS: Linux
+    container:
+      image: ${{ matrix.container }}
+      options: --shm-size=1g
+      env:
+        GH_YML_JOBNAME: ${{ matrix.jobname }}
+        GH_YML_OS: Linux
 
     strategy:
       fail-fast: false
