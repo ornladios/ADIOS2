@@ -13,8 +13,10 @@ resources:
   containers:
   - container: el7-intel-ohpc
     image: ornladios/adios2:ci-el7-intel-ohpc
+    options: --shm-size=1g
   - container: el7-intel-openmpi-ohpc
     image: ornladios/adios2:ci-el7-intel-openmpi-ohpc
+    options: --shm-size=1g
 
 jobs:
 - job: windows
