@@ -159,6 +159,12 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
     {                                                                          \
         ThrowUp("DoBlocksInfo");                                               \
         return std::vector<typename Variable<T>::Info>();                      \
+    }                                                                          \
+    std::vector<size_t> Engine::DoGetAbsoluteSteps(                            \
+        const Variable<T> &variable) const                                     \
+    {                                                                          \
+        ThrowUp("DoGetAbsoluteSteps");                                         \
+        return std::vector<size_t>();                                          \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -233,7 +239,9 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
     Engine::AllRelativeStepsBlocksInfo(const Variable<T> &) const;             \
                                                                                \
     template std::vector<typename Variable<T>::Info> Engine::BlocksInfo(       \
-        const Variable<T> &, const size_t) const;
+        const Variable<T> &, const size_t) const;                              \
+    template std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> &) \
+        const;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

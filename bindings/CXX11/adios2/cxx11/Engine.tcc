@@ -323,6 +323,24 @@ Engine::BlocksInfo(const Variable<T> variable, const size_t step) const
     return ToBlocksInfo<T>(blocksInfo);
 }
 
+template <class T>
+std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> variable) const
+{
+    using IOType = typename TypeInfo<T>::IOType;
+    adios2::helper::CheckForNullptr(
+        m_Engine, "for Engine in call to Engine::GetAbsoluteSteps");
+    if (m_Engine->m_EngineType == "NULL")
+    {
+        return std::vector<size_t>();
+    }
+
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable,
+        "for variable in call to Engine::GetAbsoluteSteps");
+
+    return m_Engine->GetAbsoluteSteps<IOType>(*variable.m_Variable);
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_TCC_ */
