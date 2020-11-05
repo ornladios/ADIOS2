@@ -137,7 +137,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
 
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
 
-        for (std::size_t step = 0; step < NSteps; ++step)
+        for (int step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
             m_TestData[step] = GenerateData(step, mpiRank, mpiSize);
@@ -369,7 +369,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
     fname = fname_prefix + ".Serial.bp";
 #endif
 
-    auto lf_VarName = [](int step) -> std::string {
+    auto lf_VarName = [](std::size_t step) -> std::string {
         return "i32_" + std::to_string(step);
     };
 
@@ -387,7 +387,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
 
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
-        for (std::size_t step = 0; step < NSteps; ++step)
+        for (int step = 0; step < NSteps; ++step)
         {
             const std::string varName = lf_VarName(step);
             auto var = io.DefineVariable<int32_t>(varName, shape, start, count);
@@ -425,7 +425,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
                 << "Read with File reading mode using explicit SetStepSelection"
                 << std::endl;
         }
-        for (std::size_t step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             const std::string varName = lf_VarName(step);
             auto var = io.InquireVariable<int32_t>(varName);
@@ -467,7 +467,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             std::cout << "Read with File reading mode without SetStepSelection"
                       << std::endl;
         }
-        for (std::size_t step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             const std::string varName = lf_VarName(step);
             auto var = io.InquireVariable<int32_t>(varName);
@@ -499,7 +499,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
                    ", block by block"
                 << std::endl;
         }
-        for (std::size_t step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             const std::string varName = lf_VarName(step);
             auto var = io.InquireVariable<int32_t>(varName);
@@ -533,7 +533,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             std::cout << "Read with Stream reading mode step by step"
                       << std::endl;
         }
-        for (std::size_t step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             engine.BeginStep();
             const std::string varName = lf_VarName(step);
@@ -568,7 +568,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
                 << "Read with Stream reading mode step by step, block by block"
                 << std::endl;
         }
-        for (std::size_t step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             engine.BeginStep();
             const std::string varName = lf_VarName(step);
@@ -670,8 +670,8 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
-        auto var_step = io.DefineVariable<size_t>("step");
-        for (std::size_t step = 0; step < NSteps; ++step)
+        auto var_step = io.DefineVariable<int>("step");
+        for (int step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
             engine.BeginStep();
