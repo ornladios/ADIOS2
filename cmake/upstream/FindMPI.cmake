@@ -1720,10 +1720,13 @@ if(MPICXX IN_LIST MPI_FIND_COMPONENTS)
   list(APPEND _MPI_REQ_VARS "MPI_MPICXX_FOUND")
 endif()
 
+if((CMAKE_VERSION VERSION_GREATER_EQUAL "3.16") AND _MPI_FAIL_REASON)
+  set(_MPI_FAIL_REASON_ARG REASON_FAILURE_MESSAGE "${_MPI_FAIL_REASON}")
+endif()
 find_package_handle_standard_args(MPI
     REQUIRED_VARS ${_MPI_REQ_VARS}
     VERSION_VAR ${_MPI_MIN_VERSION}
-    REASON_FAILURE_MESSAGE "${_MPI_FAIL_REASON}"
+    ${_MPI_FAIL_REASON_ARG}
     HANDLE_COMPONENTS)
 
 #=============================================================================
