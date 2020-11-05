@@ -192,6 +192,19 @@ Engine::BlocksInfo(const Variable<T> &variable, const size_t step) const
     return DoBlocksInfo(variable, step);
 }
 
+template <class T>
+std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> &variable) const
+{
+    const auto &m = variable.m_AvailableStepBlockIndexOffsets;
+    std::vector<size_t> keys;
+    keys.reserve(m.size());
+    for (auto it = m.cbegin(); it != m.cend(); ++it)
+    {
+        keys.push_back(it->first - 1);
+    }
+    return keys;
+}
+
 #define declare_type(T, L)                                                     \
     template <>                                                                \
     T *Engine::BufferData(const size_t payloadPosition,                        \

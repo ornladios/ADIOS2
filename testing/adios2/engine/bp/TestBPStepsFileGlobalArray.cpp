@@ -176,6 +176,19 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
         EXPECT_EQ(var_i32.Steps(), NSteps);
         EXPECT_EQ(var_i32.StepsStart(), 0);
 
+        auto absSteps = engine.GetAbsoluteSteps(var_i32);
+        EXPECT_EQ(absSteps.size(), NSteps);
+        std::cout << "Absolute steps of i32 = { ";
+        for (const auto s : absSteps)
+        {
+            std::cout << s << " ";
+        }
+        std::cout << "}" << std::endl;
+        for (std::size_t i = 0; i < NSteps; ++i)
+        {
+            EXPECT_EQ(absSteps[i], i);
+        }
+
         var_i32.SetStepSelection({0, NSteps});
         size_t start = static_cast<size_t>(mpiRank) * Nx;
         var_i32.SetSelection({{start}, {Nx}});
@@ -356,7 +369,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
     fname = fname_prefix + ".Serial.bp";
 #endif
 
-    auto lf_VarName = [](int step) -> std::string {
+    auto lf_VarName = [](std::size_t step) -> std::string {
         return "i32_" + std::to_string(step);
     };
 
@@ -412,13 +425,23 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
                 << "Read with File reading mode using explicit SetStepSelection"
                 << std::endl;
         }
-        for (int step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             const std::string varName = lf_VarName(step);
             auto var = io.InquireVariable<int32_t>(varName);
             EXPECT_TRUE(var);
             EXPECT_EQ(var.Steps(), 1);
             EXPECT_EQ(var.StepsStart(), 0);
+            auto absSteps = engine.GetAbsoluteSteps(var);
+            /*std::cout << "Absolute steps of " << varName << " = { ";
+            for (const auto s : absSteps)
+            {
+                std::cout << s << " ";
+            }
+            std::cout << "}" << std::endl;*/
+            EXPECT_EQ(absSteps.size(), 1);
+            EXPECT_EQ(absSteps[0], step);
+
             var.SetStepSelection({0, 1});
             size_t start = static_cast<size_t>(mpiRank) * Nx;
             var.SetSelection({{start}, {Nx}});
@@ -444,7 +467,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             std::cout << "Read with File reading mode without SetStepSelection"
                       << std::endl;
         }
-        for (int step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             const std::string varName = lf_VarName(step);
             auto var = io.InquireVariable<int32_t>(varName);
@@ -476,7 +499,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
                    ", block by block"
                 << std::endl;
         }
-        for (int step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             const std::string varName = lf_VarName(step);
             auto var = io.InquireVariable<int32_t>(varName);
@@ -510,7 +533,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             std::cout << "Read with Stream reading mode step by step"
                       << std::endl;
         }
-        for (int step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             engine.BeginStep();
             const std::string varName = lf_VarName(step);
@@ -545,7 +568,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
                 << "Read with Stream reading mode step by step, block by block"
                 << std::endl;
         }
-        for (int step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             engine.BeginStep();
             const std::string varName = lf_VarName(step);
@@ -667,7 +690,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
         }
         engine.Close();
     }
-#if ADIOS2_USE_MPI
+#if ADIOS2_USE_MPIstepsWritten
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
@@ -790,7 +813,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
         }
 
         size_t writtenStep = 0;
-        for (int step = 0; step < NSteps; ++step)
+        for (std::size_t step = 0; step < NSteps; ++step)
         {
             engine.BeginStep();
             if (step % 2 == Oddity)

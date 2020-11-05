@@ -194,7 +194,10 @@ ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
     Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \
                                                                                \
     template std::vector<typename Variable<T>::Info> Engine::BlocksInfo(       \
-        const Variable<T> variable, const size_t step) const;
+        const Variable<T> variable, const size_t step) const;                  \
+                                                                               \
+    template std::vector<size_t> Engine::GetAbsoluteSteps(                     \
+        const Variable<T> variable) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
