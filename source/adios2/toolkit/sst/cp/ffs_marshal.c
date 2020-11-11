@@ -103,17 +103,14 @@ static char *TranslateADIOS2Type2FFS(const int Type)
     case Int32:
     case Int64:
         return strdup("integer");
-        break;
     case UInt8:
     case UInt16:
     case UInt32:
     case UInt64:
         return strdup("unsigned integer");
-        break;
     case Float:
     case Double:
         return strdup("float");
-        break;
     case FloatComplex:
         return strdup("complex4");
     case DoubleComplex:
@@ -202,7 +199,8 @@ static void RecalcMarshalStorageSize(SstStream Stream)
         NewDataSize =
             (LastDataField->field_offset + LastDataField->field_size + 7) & ~7;
         Stream->D = realloc(Stream->D, NewDataSize + 8);
-        memset(Stream->D + Stream->DataSize, 0, NewDataSize - Stream->DataSize);
+        memset((char *)(Stream->D) + Stream->DataSize, 0,
+               NewDataSize - Stream->DataSize);
         Stream->DataSize = NewDataSize;
     }
     if (Info->MetaFieldCount)
@@ -213,7 +211,7 @@ static void RecalcMarshalStorageSize(SstStream Stream)
         NewMetaSize =
             (LastMetaField->field_offset + LastMetaField->field_size + 7) & ~7;
         Stream->M = realloc(Stream->M, NewMetaSize + 8);
-        memset(Stream->M + Stream->MetadataSize, 0,
+        memset((char *)(Stream->M) + Stream->MetadataSize, 0,
                NewMetaSize - Stream->MetadataSize);
         Stream->MetadataSize = NewMetaSize;
     }
@@ -233,7 +231,7 @@ static void RecalcAttributeStorageSize(SstStream Stream)
                            ~7;
         Info->AttributeData =
             realloc(Info->AttributeData, NewAttributeSize + 8);
-        memset(Info->AttributeData + Info->AttributeSize, 0,
+        memset((char *)(Info->AttributeData) + Info->AttributeSize, 0,
                NewAttributeSize - Info->AttributeSize);
         Info->AttributeSize = NewAttributeSize;
     }
@@ -2060,13 +2058,14 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
 
     if (Rec->DimCount == 0)
     {
-        char *base = Stream->M + Rec->MetaOffset;
-        memcpy(base, Data, ElemSize);
+        memcpy((char *)(Stream->M) + Rec->MetaOffset, Data, ElemSize);
     }
     else
     {
-        MetaArrayRec *MetaEntry = Stream->M + Rec->MetaOffset;
-        ArrayRec *DataEntry = Stream->D + Rec->DataOffset;
+        MetaArrayRec *MetaEntry =
+            (MetaArrayRec *)((char *)(Stream->M) + Rec->MetaOffset);
+        ArrayRec *DataEntry =
+            (ArrayRec *)((char *)(Stream->D) + Rec->DataOffset);
 
         /* handle metadata */
         MetaEntry->Dims = DimCount;
@@ -2120,7 +2119,7 @@ extern void SstFFSMarshalAttribute(SstStream Stream, const char *Name,
         AttrString = Data;
         DataAddress = (const char *)&AttrString;
     }
-    if (ElemCount == -1)
+    if (ElemCount == (size_t)(-1))
     {
         // simple field, only simple attribute name and value
         char *SstName = BuildVarName(Name, Type, ElemSize);
@@ -2130,7 +2129,8 @@ extern void SstFFSMarshalAttribute(SstStream Stream, const char *Name,
         RecalcAttributeStorageSize(Stream);
         int DataOffset =
             Info->AttributeFields[Info->AttributeFieldCount - 1].field_offset;
-        memcpy(Info->AttributeData + DataOffset, DataAddress, ElemSize);
+        memcpy((char *)(Info->AttributeData) + DataOffset, DataAddress,
+               ElemSize);
     }
     else
     {

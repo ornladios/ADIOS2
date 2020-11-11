@@ -206,14 +206,11 @@ static char *readContactInfo(const char *Name, SstStream Stream, int Timeout)
     {
     case SstRegisterFile:
         return readContactInfoFile(Name, Stream, Timeout);
-        break;
     case SstRegisterScreen:
         return readContactInfoScreen(Name, Stream);
-        break;
     case SstRegisterCloud:
         /* not yet */
         return NULL;
-        break;
     }
     return NULL;
 }
@@ -526,7 +523,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         case SpecPreloadOff:
         case SpecPreloadOn:
             ReaderRegister.SpecPreload =
-                Stream->ConfigParams->SpeculativePreloadMode;
+                (SpeculativePreloadMode)
+                    Stream->ConfigParams->SpeculativePreloadMode;
             break;
         case SpecPreloadAuto:
             ReaderRegister.SpecPreload = SpecPreloadOff;
@@ -735,7 +733,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 extern void SstReaderGetParams(SstStream Stream,
                                SstMarshalMethod *WriterMarshalMethod)
 {
-    *WriterMarshalMethod = Stream->WriterConfigParams->MarshalMethod;
+    *WriterMarshalMethod =
+        (SstMarshalMethod)Stream->WriterConfigParams->MarshalMethod;
 }
 
 /*
@@ -1746,7 +1745,6 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
 
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
-            static int count = 0;
             TAU_START("FFS marshaling case");
             FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
             TAU_STOP("FFS marshaling case");
@@ -1972,14 +1970,13 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
             &free_block);
         STREAM_MUTEX_LOCK(Stream);
     }
-    ret = ReturnData->ReturnValue;
+    ret = (SstStatusValue)ReturnData->ReturnValue;
 
     if (ReturnData->ReturnValue != SstSuccess)
     {
         if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) &&
             (ReturnData->TSmsg))
         {
-            int count = 0;
             CP_verbose(
                 Stream, PerRankVerbose,
                 "SstAdvanceStep installing precious metadata before exiting\n");
@@ -2013,7 +2010,6 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         Stream->ReaderTimestep = MetadataMsg->Timestep;
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
-            static int count = 0;
             CP_verbose(Stream, TraceVerbose,
                        "Calling install  metadata from metadata block %p\n",
                        MetadataMsg);

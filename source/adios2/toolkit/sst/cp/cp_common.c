@@ -39,8 +39,9 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
                 "Invalid QueueLimit parameter value (%d) for SST Stream %s\n",
                 Params->QueueLimit, Stream->Filename);
     }
-    Stream->QueueFullPolicy = Params->QueueFullPolicy;
-    Stream->RegistrationMethod = Params->RegistrationMethod;
+    Stream->QueueFullPolicy = (SstQueueFullPolicy)Params->QueueFullPolicy;
+    Stream->RegistrationMethod =
+        (SstRegistrationMethod)Params->RegistrationMethod;
     if (Params->DataTransport != NULL)
     {
         int i;
