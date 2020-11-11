@@ -3,16 +3,10 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(basics)
-add_subdirectory(hello)
-add_subdirectory(query)
-add_subdirectory(useCases)
-add_subdirectory(campaign)
+add_executable(bpCamWriteRead bpWriteRead.cpp)
+target_link_libraries(bpCamWriteRead adios2::cxx11)
 
 if(ADIOS2_HAVE_MPI)
-  add_subdirectory(heatTransfer)
-endif()
-
-if(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL)
-  add_subdirectory(experimental)
+    add_executable(bpCamWriteRead_mpi bpWriteRead.cpp)
+    target_link_libraries(bpCamWriteRead_mpi adios2::cxx11_mpi MPI::MPI_C)
 endif()
