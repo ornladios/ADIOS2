@@ -56,6 +56,9 @@ add_library(adios2_core
   engine/bp4/BP4Reader.cpp engine/bp4/BP4Reader.tcc
   engine/bp4/BP4Writer.cpp engine/bp4/BP4Writer.tcc
 
+  engine/cambp/CamBPReader.cpp engine/cambp/CamBPReader.tcc
+  engine/cambp/CamBPWriter.cpp engine/cambp/CamBPWriter.tcc
+
   engine/skeleton/SkeletonReader.cpp engine/skeleton/SkeletonReader.tcc
   engine/skeleton/SkeletonWriter.cpp engine/skeleton/SkeletonWriter.tcc
 

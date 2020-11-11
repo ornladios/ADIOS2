@@ -1446,14 +1446,17 @@ std::vector<std::string> getEnginesList(const std::string path)
     {
         list.push_back("HDF5");
         list.push_back("BPFile");
+        list.push_back("CamBP");
     }
     else
     {
         list.push_back("BPFile");
+        list.push_back("CamBP");
         list.push_back("HDF5");
     }
 #else
     list.push_back("BPFile");
+    list.push_back("CamBP");
 #endif
     return list;
 }

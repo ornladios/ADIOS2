@@ -22,6 +22,8 @@
 #include "adios2/engine/bp3/BP3Writer.h"
 #include "adios2/engine/bp4/BP4Reader.h"
 #include "adios2/engine/bp4/BP4Writer.h"
+#include "adios2/engine/cambp/CamBPReader.h"
+#include "adios2/engine/cambp/CamBPWriter.h"
 #include "adios2/engine/inline/InlineReader.h"
 #include "adios2/engine/inline/InlineWriter.h"
 #include "adios2/engine/null/NullEngine.h"
@@ -64,7 +66,9 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
     {"bp3",
      {IO::MakeEngine<engine::BP3Reader>, IO::MakeEngine<engine::BP3Writer>}},
     {"bp4",
-     {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>}},
+    {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>}},
+    {"cambp",
+     {IO::MakeEngine<engine::CamBPReader>, IO::MakeEngine<engine::CamBPWriter>}},
     {"hdfmixer",
 #ifdef ADIOS2_HAVE_HDF5
      IO_MakeEngine_HDFMixer()

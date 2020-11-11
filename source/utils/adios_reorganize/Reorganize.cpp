@@ -272,7 +272,8 @@ void Reorganize::ProcessParameters()
     }
     std::string s(rmethodname);
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-    if (s == "file" || s == "bpfile" || s == "bp3" || s == "hdf5")
+    if (s == "file" || s == "bpfile" || s == "cambp" ||
+        s == "bp3" || s == "hdf5")
     {
         handleAsStream = false;
     }
@@ -291,7 +292,7 @@ void Reorganize::PrintUsage() const noexcept
            "    input   Input stream path\n"
            "    output  Output file path\n"
            "    rmethod ADIOS method to read with\n"
-           "            Supported read methods: BPFile, HDF5, SST, DataMan, "
+           "    Supported read methods: BPFile, CamBP, HDF5, SST, DataMan, "
            "InSituMPI\n"
            "    params  Read method parameters (in quotes; comma-separated "
            "list)\n"
