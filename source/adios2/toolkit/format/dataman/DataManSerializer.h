@@ -103,15 +103,14 @@ public:
                  const Dims &varCount, const Dims &varMemStart,
                  const Dims &varMemCount, const std::string &doid,
                  const size_t step, const int rank, const std::string &address,
-                 const Params &params, VecPtr localBuffer = nullptr,
-                 JsonPtr metadataJson = nullptr);
+                 const std::vector<core::VariableBase::Operation> &ops,
+                 VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     // another wrapper for PutData which accepts adios2::core::Variable
     template <class T>
     void PutData(const core::Variable<T> &variable, const std::string &doid,
                  const size_t step, const int rank, const std::string &address,
-                 const Params &params, VecPtr localBuffer = nullptr,
-                 JsonPtr metadataJson = nullptr);
+                 VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     // attach attributes to local pack
     void AttachAttributesToLocalPack();

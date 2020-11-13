@@ -80,25 +80,23 @@ template <class T>
 void DataManSerializer::PutData(const core::Variable<T> &variable,
                                 const std::string &doid, const size_t step,
                                 const int rank, const std::string &address,
-                                const Params &params, VecPtr localBuffer,
-                                JsonPtr metadataJson)
+                                VecPtr localBuffer, JsonPtr metadataJson)
 {
     TAU_SCOPED_TIMER_FUNC();
     PutData(variable.GetData(), variable.m_Name, variable.m_Shape,
             variable.m_Start, variable.m_Count, variable.m_MemoryStart,
-            variable.m_MemoryCount, doid, step, rank, address, params,
-            localBuffer, metadataJson);
+            variable.m_MemoryCount, doid, step, rank, address,
+            variable.m_Operations, localBuffer, metadataJson);
 }
 
 template <class T>
-void DataManSerializer::PutData(const T *inputData, const std::string &varName,
-                                const Dims &varShape, const Dims &varStart,
-                                const Dims &varCount, const Dims &varMemStart,
-                                const Dims &varMemCount,
-                                const std::string &doid, const size_t step,
-                                const int rank, const std::string &address,
-                                const Params &params, VecPtr localBuffer,
-                                JsonPtr metadataJson)
+void DataManSerializer::PutData(
+    const T *inputData, const std::string &varName, const Dims &varShape,
+    const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
+    const Dims &varMemCount, const std::string &doid, const size_t step,
+    const int rank, const std::string &address,
+    const std::vector<core::VariableBase::Operation> &ops, VecPtr localBuffer,
+    JsonPtr metadataJson)
 {
     TAU_SCOPED_TIMER_FUNC();
     Log(1,
@@ -139,64 +137,72 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
         metaj["E"] = m_IsLittleEndian;
     }
 
-    size_t datasize = 0;
-    bool compressed = false;
-    if (not params.empty())
+    for (const auto &op : ops)
     {
-        const auto i = params.find("CompressionMethod");
-        if (i != params.end())
+        const auto opName = op.Op->m_Type;
+        if (opName == "zfp" or opName == "bzip2" or opName == "sz")
         {
-            std::string compressionMethod = i->second;
-            std::transform(compressionMethod.begin(), compressionMethod.end(),
-                           compressionMethod.begin(), ::tolower);
-            if (compressionMethod == "zfp")
+            /*
+            m_CompressionParams[variable.m_Name]["CompressionMethod"] =
+                opName;
+            for (const auto &p : op.Parameters)
             {
-                if (IsCompressionAvailable(compressionMethod,
-                                           helper::GetDataType<T>(), varCount))
-                {
-                    compressed =
-                        PutZfp<T>(metaj, datasize, inputData, varCount, params);
-                    if (compressed)
-                    {
-                        metaj["Z"] = "zfp";
-                    }
-                }
+                m_CompressionParams[variable.m_Name]
+                    [opName + ":" + p.first] = p.second;
             }
-            else if (compressionMethod == "sz")
-            {
-                if (IsCompressionAvailable(compressionMethod,
-                                           helper::GetDataType<T>(), varCount))
-                {
-                    compressed =
-                        PutSz<T>(metaj, datasize, inputData, varCount, params);
-                    if (compressed)
-                    {
-                        metaj["Z"] = "sz";
-                    }
-                }
-            }
-            else if (compressionMethod == "bzip2")
-            {
-                if (IsCompressionAvailable(compressionMethod,
-                                           helper::GetDataType<T>(), varCount))
-                {
-                    compressed = PutBZip2<T>(metaj, datasize, inputData,
-                                             varCount, params);
-                    if (compressed)
-                    {
-                        metaj["Z"] = "bzip2";
-                    }
-                }
-            }
-            else
-            {
-                throw(std::invalid_argument("Compression method " + i->second +
-                                            " not supported."));
-            }
+            break;
+            */
         }
     }
 
-    if (compressed == false)
+    size_t datasize = 0;
+    bool compressed = false;
+    std::string compressionMethod;
+    if (not ops.empty())
+    {
+        compressionMethod = ops[0].Op->m_Type;
+        std::transform(compressionMethod.begin(), compressionMethod.end(),
+                       compressionMethod.begin(), ::tolower);
+        if (compressionMethod == "zfp")
+        {
+            if (IsCompressionAvailable(compressionMethod,
+                                       helper::GetDataType<T>(), varCount))
+            {
+                compressed = PutZfp<T>(metaj, datasize, inputData, varCount,
+                                       ops[0].Parameters);
+            }
+        }
+        else if (compressionMethod == "sz")
+        {
+            if (IsCompressionAvailable(compressionMethod,
+                                       helper::GetDataType<T>(), varCount))
+            {
+                compressed = PutSz<T>(metaj, datasize, inputData, varCount,
+                                      ops[0].Parameters);
+            }
+        }
+        else if (compressionMethod == "bzip2")
+        {
+            if (IsCompressionAvailable(compressionMethod,
+                                       helper::GetDataType<T>(), varCount))
+            {
+                compressed = PutBZip2<T>(metaj, datasize, inputData, varCount,
+                                         ops[0].Parameters);
+            }
+        }
+        else
+        {
+            throw(std::invalid_argument("Compression method " +
+                                        compressionMethod + " not supported."));
+        }
+    }
+
+    if (compressed)
+    {
+        metaj["Z"] = compressionMethod;
+        metaj["ZP"] = ops[0].Parameters;
+    }
+    else
     {
         datasize = std::accumulate(varCount.begin(), varCount.end(), sizeof(T),
                                    std::multiplies<size_t>());
@@ -424,18 +430,7 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
 {
     TAU_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_ZFP
-    Params p;
-    for (const auto &i : params)
-    {
-        std::string prefix = i.first.substr(0, 4);
-        if (prefix == "zfp:" || prefix == "Zfp:" || prefix == "ZFP:")
-        {
-            std::string key = i.first.substr(4);
-            metaj[i.first] = i.second;
-            p[key] = i.second;
-        }
-    }
-    core::compress::CompressZFP compressor(p);
+    core::compress::CompressZFP compressor(params);
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
@@ -444,7 +439,7 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
         Params info;
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), p, info);
+                                       m_CompressBuffer.data(), params, info);
         return true;
     }
     catch (std::exception &e)
@@ -466,27 +461,16 @@ bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
 {
     TAU_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_SZ
-    Params p;
-    for (const auto &i : params)
-    {
-        std::string prefix = i.first.substr(0, 3);
-        if (prefix == "sz:" || prefix == "Sz:" || prefix == "SZ:")
-        {
-            std::string key = i.first.substr(3);
-            metaj[i.first] = i.second;
-            p[key] = i.second;
-        }
-    }
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-    core::compress::CompressSZ compressor(p);
+    core::compress::CompressSZ compressor(params);
     try
     {
         Params info;
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), p, info);
+                                       m_CompressBuffer.data(), params, info);
         return true;
     }
     catch (std::exception &e)
@@ -508,28 +492,16 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
 {
     TAU_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_BZIP2
-    Params p;
-    for (const auto &i : params)
-    {
-        std::string prefix = i.first.substr(0, 6);
-        if (prefix == "bzip2:" || prefix == "Bzip2:" || prefix == "BZip2:" ||
-            prefix == "BZIP2:")
-        {
-            std::string key = i.first.substr(6);
-            metaj[i.first] = i.second;
-            p[key] = i.second;
-        }
-    }
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-    core::compress::CompressBZIP2 compressor(p);
+    core::compress::CompressBZIP2 compressor(params);
     try
     {
         Params info;
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), p, info);
+                                       m_CompressBuffer.data(), params, info);
         return true;
     }
     catch (std::exception &e)

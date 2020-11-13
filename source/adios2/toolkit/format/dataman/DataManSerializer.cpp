@@ -306,13 +306,10 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
                     var.compression = it->get<std::string>();
                 }
 
-                for (auto i = varBlock.begin(); i != varBlock.end(); ++i)
+                it = varBlock.find("ZP");
+                if (it != varBlock.end())
                 {
-                    auto pos = i.key().find(":");
-                    if (pos != std::string::npos)
-                    {
-                        var.params[i.key().substr(pos + 1)] = i.value();
-                    }
+                    var.params = it->get<Params>();
                 }
 
                 if (m_DataManVarMap[var.step] == nullptr)
