@@ -1504,7 +1504,7 @@ static FMStructDescRec RdmaWriterContactStructs[] = {
      NULL},
     {NULL, NULL, 0, NULL}};
 
-static struct _CP_DP_Interface RdmaDPInterface;
+static struct _CP_DP_Interface RdmaDPInterface = {0};
 
 /* In RdmaGetPriority, the Rdma DP should do whatever is necessary to test to
  * see if it
