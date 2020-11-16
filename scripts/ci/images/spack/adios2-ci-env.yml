@@ -1,0 +1,26 @@
+# A Spack environment to be used for ADIOS 2.x CI testing
+# It contains every possible dependency for ADIOS
+spack:
+  packages:
+    all:
+      target: [x86_64]
+  specs:
+  - git
+  - cmake~ownlibs
+  - openmpi
+  - hdf5+mpi
+  - libfabric
+  - zfp
+  - sz
+  - bzip2
+  - python
+  - py-numpy
+  - py-mpi4py
+  - c-blosc
+  - libzmq
+  - py-pybind11
+  - yaml-cpp
+  - pugixml
+  - nlohmann-json
+  - libpng
+  - dataspaces

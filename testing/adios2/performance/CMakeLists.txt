@@ -5,3 +5,4 @@
 
 add_subdirectory(manyvars)
 add_subdirectory(query)
+add_subdirectory(metadata)

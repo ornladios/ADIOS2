@@ -396,6 +396,14 @@ public:
     BlocksInfo(const Variable<T> variable, const size_t step) const;
 
     /**
+     * Get the absolute steps of a variable in a file. This is for
+     * information purposes only, because absolute steps cannot be used
+     * in any ADIOS2 calls.
+     */
+    template <class T>
+    std::vector<size_t> GetAbsoluteSteps(const Variable<T> variable) const;
+
+    /**
      * Inspect total number of available steps, use for file engines in read
      * mode only
      * @return available steps in engine
@@ -418,6 +426,9 @@ public:
      * utilized by the input Engine to optimize data flow.
      */
     void LockReaderSelections();
+
+    /* Debug function for adios2 testing framework */
+    size_t DebugGetDataBufferSize() const;
 
 private:
     Engine(core::Engine *engine);

@@ -25,8 +25,9 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
             const size_t steps, const adios2::Params &engineParams,
             const std::string &name)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("ssc");
@@ -62,10 +63,11 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         "bpDComplexes", shape, start, count);
     auto scalarInt = dataManIO.DefineVariable<int>("scalarInt");
     dataManIO.DefineAttribute<int>("AttInt", 110);
-    adios2::Engine dataManWriter = dataManIO.Open(name, adios2::Mode::Write);
+    adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Write);
+    engine.LockWriterDefinitions();
     for (int i = 0; i < steps; ++i)
     {
-        dataManWriter.BeginStep();
+        engine.BeginStep();
         GenData(myChars, i, start, count, shape);
         GenData(myUChars, i, start, count, shape);
         GenData(myShorts, i, start, count, shape);
@@ -76,21 +78,20 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         GenData(myDoubles, i, start, count, shape);
         GenData(myComplexes, i, start, count, shape);
         GenData(myDComplexes, i, start, count, shape);
-        dataManWriter.Put(bpChars, myChars.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpInts, myInts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpDComplexes, myDComplexes.data(),
-                          adios2::Mode::Sync);
-        dataManWriter.Put(scalarInt, i);
-        dataManWriter.EndStep();
+        engine.Put(bpChars, myChars.data(), adios2::Mode::Sync);
+        engine.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
+        engine.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
+        engine.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
+        engine.Put(bpInts, myInts.data(), adios2::Mode::Sync);
+        engine.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
+        engine.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
+        engine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
+        engine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
+        engine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+        engine.Put(scalarInt, i);
+        engine.EndStep();
     }
-    dataManWriter.Close();
+    engine.Close();
 }
 
 void Reader(const Dims &shape, const Dims &start, const Dims &count,
@@ -101,10 +102,12 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     adios2::IO dataManIO = adios.DeclareIO("Test");
     dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
-    adios2::Engine dataManReader = dataManIO.Open(name, adios2::Mode::Read);
+    adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Read);
+    engine.LockReaderSelections();
 
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize =
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -118,12 +121,12 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
     while (true)
     {
-        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
+        adios2::StepStatus status = engine.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
             const auto &vars = dataManIO.AvailableVariables();
             ASSERT_EQ(vars.size(), 11);
-            size_t currentStep = dataManReader.CurrentStep();
+            size_t currentStep = engine.CurrentStep();
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
             adios2::Variable<unsigned char> bpUChars =
@@ -157,20 +160,18 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             bpComplexes.SetSelection({start, count});
             bpDComplexes.SetSelection({start, count});
 
-            dataManReader.Get(bpChars, myChars.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpInts, myInts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpComplexes, myComplexes.data(),
-                              adios2::Mode::Sync);
-            dataManReader.Get(bpDComplexes, myDComplexes.data(),
-                              adios2::Mode::Sync);
+            engine.Get(bpChars, myChars.data(), adios2::Mode::Sync);
+            engine.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
+            engine.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
+            engine.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
+            engine.Get(bpInts, myInts.data(), adios2::Mode::Sync);
+            engine.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
+            engine.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
+            engine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
+            engine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
+            engine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
             int i;
-            dataManReader.Get(scalarInt, &i);
+            engine.Get(scalarInt, &i);
 
             ASSERT_EQ(i, currentStep);
 
@@ -194,7 +195,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                        mpiRank);
             VerifyData(myDComplexes.data(), currentStep, start, count, shape,
                        mpiRank);
-            dataManReader.EndStep();
+            engine.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
@@ -209,7 +210,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
               << attInt.Data()[0] << ", expected 110" << std::endl;
     ASSERT_EQ(110, attInt.Data()[0]);
     ASSERT_NE(111, attInt.Data()[0]);
-    dataManReader.Close();
+    engine.Close();
 }
 
 TEST_F(SscEngineTest, TestSscOneSidedPostPush)

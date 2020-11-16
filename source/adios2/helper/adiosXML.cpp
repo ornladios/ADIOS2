@@ -147,9 +147,10 @@ void ParseConfigXML(
             helper::XMLAttribute("name", io, hint);
 
         // Build the IO object
-        auto itCurrentIO =
-            ios.emplace(ioName->value(), core::IO(adios, ioName->value(), true,
-                                                  adios.m_HostLanguage));
+        auto itCurrentIO = ios.emplace(
+            std::piecewise_construct, std::forward_as_tuple(ioName->value()),
+            std::forward_as_tuple(adios, ioName->value(), true,
+                                  adios.m_HostLanguage));
         core::IO &currentIO = itCurrentIO.first->second;
 
         // must be unique per io

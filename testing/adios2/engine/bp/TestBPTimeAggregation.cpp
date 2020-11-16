@@ -42,6 +42,8 @@ void TimeAggregation1D8(const std::string flushstepscount)
 #else
     adios2::ADIOS adios;
 #endif
+    const std::string TestName =
+        "TimeAggregation1D8 flush every " + flushstepscount + " steps";
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -73,6 +75,8 @@ void TimeAggregation1D8(const std::string flushstepscount)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+
+            io.DefineAttribute<std::string>("TestName", TestName);
         }
 
         if (!engineName.empty())
@@ -86,6 +90,7 @@ void TimeAggregation1D8(const std::string flushstepscount)
         }
 
         io.AddTransport("file");
+        io.SetParameter("AggregatorRatio", "1");
 
         SmallTestData m_TestData;
 
@@ -230,6 +235,12 @@ void TimeAggregation1D8(const std::string flushstepscount)
         ASSERT_EQ(var_r64.Steps(), NSteps);
         ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
 
+        auto attr = io.InquireAttribute<std::string>("TestName");
+        EXPECT_TRUE(attr);
+        ASSERT_EQ(attr.Data().size() == 1, true);
+        ASSERT_EQ(attr.Type(), adios2::GetType<std::string>());
+        ASSERT_EQ(attr.Data().front(), TestName);
+
         // TODO: other types
 
         SmallTestData testData;
@@ -355,6 +366,9 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
 #else
     adios2::ADIOS adios;
 #endif
+    const std::string TestName =
+        "TimeAggregation2D4x2 flush every " + flushstepscount + " steps";
+
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -387,6 +401,8 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+
+            io.DefineAttribute<std::string>("TestName", TestName);
         }
 
         if (!engineName.empty())
@@ -400,6 +416,7 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
         }
 
         io.AddTransport("file");
+        io.SetParameter("AggregatorRatio", "1");
 
         SmallTestData m_TestData;
 
@@ -552,6 +569,12 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
         ASSERT_EQ(var_r64.Shape()[0], Ny);
         ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
+        auto attr = io.InquireAttribute<std::string>("TestName");
+        EXPECT_TRUE(attr);
+        ASSERT_EQ(attr.Data().size() == 1, true);
+        ASSERT_EQ(attr.Type(), adios2::GetType<std::string>());
+        ASSERT_EQ(attr.Data().front(), TestName);
+
         std::string IString;
         std::array<int8_t, Nx * Ny> I8;
         std::array<int16_t, Nx * Ny> I16;
@@ -665,8 +688,8 @@ TEST_P(BPTestTimeAggregation, BPTimeAggregation2D4x2)
     TimeAggregation2D4x2(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(FlushStepsCount, BPTestTimeAggregation,
-                        ::testing::Values("1", "2", "3", "6", "8", "10"));
+INSTANTIATE_TEST_SUITE_P(FlushStepsCount, BPTestTimeAggregation,
+                         ::testing::Values("1", "2", "3", "6", "8", "10"));
 
 int main(int argc, char **argv)
 {

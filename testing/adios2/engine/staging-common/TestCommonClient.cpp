@@ -287,6 +287,31 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             EXPECT_EQ(validateCommonTestData(myStart, myLength, currentStep, 0),
                       0);
             write_times.push_back(write_time);
+            if (AdvancingAttrs)
+            {
+                /* we only succeed if every attribute from every prior step is
+                 * there, but not the next few */
+                for (int step = 0; step <= currentStep + 2; step++)
+                {
+                    const std::string r64_Single =
+                        std::string("r64_PerStep_") + std::to_string(step);
+                    auto attr_r64 = io.InquireAttribute<double>(r64_Single);
+                    std::cout << "Testing for attribute " << r64_Single
+                              << std::endl;
+                    if (step <= currentStep)
+                    {
+                        EXPECT_TRUE(attr_r64);
+                        ASSERT_EQ(attr_r64.Data().size() == 1, true);
+                        ASSERT_EQ(attr_r64.Type(), adios2::GetType<double>());
+                        ASSERT_EQ(attr_r64.Data().front(),
+                                  (double)(step * 10.0));
+                    }
+                    else
+                    {
+                        EXPECT_FALSE(attr_r64);
+                    }
+                }
+            }
         }
         catch (...)
         {
@@ -305,6 +330,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
                 break;
             }
         }
+        std::cout << "Reader finished with step " << ExpectedStep - 1
+                  << std::endl;
         if (IncreasingDelay && !DelayWhileHoldingStep)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(

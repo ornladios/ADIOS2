@@ -52,7 +52,7 @@ if rank == 0:
     ibpStream = ioRead.Open('HeatMap2D_py.bp', adios2.Mode.Read, MPI.COMM_SELF)
     var_inTemperature = ioRead.InquireVariable("temperature2D")
 
-    if(var_inTemperature is False):
+    if var_inTemperature is False:
         raise ValueError('var_inTemperature is False')
 
     assert var_inTemperature is not None

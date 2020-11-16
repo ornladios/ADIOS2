@@ -39,6 +39,8 @@ public:
     size_t appId = 0;
     bool isStrongScaling = true; // strong or weak scaling
     bool ioTimer = false;        // used to measure io time
+    bool fixedPattern = false;   // should Lock definitions?
+    bool isRatioDecomp = false;
     IOLib iolib = IOLib::ADIOS;
     //   process decomposition
     std::vector<size_t> processDecomp = {1, 1, 1, 1, 1, 1, 1, 1,
@@ -56,6 +58,8 @@ public:
     int processArguments(int argc, char *argv[], MPI_Comm worldComm);
     int extraArgumentChecks();
     size_t stringToNumber(const std::string &varName, const char *arg) const;
+    int parseCSDecomp(const char *arg);
+    int rescaleDecomp();
     size_t ndigits(size_t n) const;
 
 private:

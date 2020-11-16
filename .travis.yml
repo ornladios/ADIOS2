@@ -1,13 +1,18 @@
 sudo: false
 language: cpp
 dist: xenial
+addons:
+  apt:
+    update: true
+    packages:
+      - python3-pip
 env:
   matrix:
     - BUILD_MATRIX_ENTRY=format
     - BUILD_MATRIX_ENTRY=docker-ubuntu1804
     - BUILD_MATRIX_ENTRY=docker-ubuntu1910
     - BUILD_MATRIX_ENTRY=docker-centos7
-#    - BUILD_MATRIX_ENTRY=docker-centos8
+    - BUILD_MATRIX_ENTRY=docker-centos8
 script:
   - git reset --hard ${TRAVIS_PULL_REQUEST_SHA}
   - ${TRAVIS_BUILD_DIR}/scripts/travis/run.sh

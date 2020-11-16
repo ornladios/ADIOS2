@@ -225,34 +225,34 @@ reader.PerformGets()
 
 for i in range(0, 3):
     for j in range(0, Nx):
-        if(inI8[i][j] != i):
+        if inI8[i][j] != i:
             raise ValueError('failed reading I8')
 
-        if(inI16[i][j] != i):
+        if inI16[i][j] != i:
             raise ValueError('failed reading I16')
 
-        if(inI32[i][j] != i):
+        if inI32[i][j] != i:
             raise ValueError('failed reading I32')
 
-        if(inI64[i][j] != i):
+        if inI64[i][j] != i:
             raise ValueError('failed reading I64')
 
-        if(inU8[i][j] != i):
+        if inU8[i][j] != i:
             raise ValueError('failed reading U8')
 
-        if(inU16[i][j] != i):
+        if inU16[i][j] != i:
             raise ValueError('failed reading U16')
 
-        if(inU32[i][j] != i):
+        if inU32[i][j] != i:
             raise ValueError('failed reading U32')
 
-        if(inU64[i][j] != i):
+        if inU64[i][j] != i:
             raise ValueError('failed reading U64')
 
-        if(inR32[i][j] != i):
+        if inR32[i][j] != i:
             raise ValueError('failed reading R32')
 
-        if(inR64[i][j] != i):
+        if inR64[i][j] != i:
             raise ValueError('failed reading R64')
 
 

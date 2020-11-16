@@ -4,7 +4,7 @@ find_package(EnvModules REQUIRED)
 
 env_module(purge)
 env_module(load intel)
-env_module(load py2-numpy)
+env_module(load py3-numpy)
 env_module(load hdf5)
 
 set(ENV{CC}  icc)
@@ -25,8 +25,6 @@ ADIOS2_USE_Python:BOOL=ON
 ADIOS2_USE_SZ:BOOL=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
 ADIOS2_USE_ZFP:STRING=ON
-
-PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python2.7
 ")
 
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")

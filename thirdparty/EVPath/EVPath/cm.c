@@ -335,6 +335,15 @@ INT_CMget_contact_list(CManager cm)
 }
 
 extern attr_list
+INT_CMderef_and_copy_list(CManager cm, attr_list attrs)
+{
+  // done inside the CM lock, so a safe way to convert a shared list to an owned list
+  attr_list ret = attr_copy_list(attrs);
+  free_attr_list(attrs);
+  return ret;
+}
+
+extern attr_list
 INT_CMget_specific_contact_list(CManager cm, attr_list attrs)
 {
     char *chosen_transport = NULL, *chosen_net = NULL, *chosen_interface = NULL;
@@ -2543,7 +2552,11 @@ timeout_conn(CManager cm, void *client_data)
      local_format = FFS_target_from_encode(conn->cm->FFScontext, data_buffer);
      original_format = FFSTypeHandle_from_encode(conn->cm->FFScontext, data_buffer);
      if (local_format == NULL) {
-	 fprintf(stderr, "invalid format in incoming buffer\n");
+	 if (conn->cm->unregistered_format_handler) {
+	     conn->cm->unregistered_format_handler(conn, name_of_FMformat(FMFormat_of_original(original_format)));
+	 } else {
+	     fprintf(stderr, "No conversion found for incoming CM message\n");
+	 }
 	 return 0;
      }
      CMtrace_out(cm, CMDataVerbose, "CM - Receiving record of type %s, FFSformat %p\n", 
@@ -2610,11 +2623,12 @@ timeout_conn(CManager cm, void *client_data)
 	 }
 	 fprintf(cm->CMTrace_file, "CM - record type %s, contents are:\n  ", name_of_FMformat(FMFormat_of_original(cm_format->format)));
 	 r = FMfdump_data(cm->CMTrace_file, FMFormat_of_original(cm_format->format), decode_buffer, dump_char_limit);
-	 if (r && !warned) {
+	 if (!r && !warned) {
 	     printf("\n\n  ****  Warning **** CM record dump truncated\n");
-	     printf("  To change size limits, set CMDumpSize environment variable.\n\n\n");
+	     printf("  To change size limits, set CMDumpSize environment variable.\n");
 	     warned++;
 	 }
+	 fprintf(cm->CMTrace_file, "\n=======\n");
      }
      if (attrs == NULL) {
 	 attrs = CMcreate_attr_list(cm);
@@ -2706,6 +2720,12 @@ timeout_conn(CManager cm, void *client_data)
 	 }
      }
  }
+
+extern void
+INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
+{
+    cm->unregistered_format_handler = handler;
+}
 
  extern int
  INT_CMwrite(CMConnection conn, CMFormat format, void *data)
@@ -3245,11 +3265,12 @@ timeout_conn(CManager cm, void *client_data)
 	 }
 	 fprintf(cm->CMTrace_file, "CM - record type %s, contents are:\n  ", name_of_FMformat(format->fmformat));
 	 r = FMfdump_data(cm->CMTrace_file, format->fmformat, data, dump_char_limit);
-	 if (r && !warned) {
+	 if (!r && !warned) {
 	     fprintf(cm->CMTrace_file, "\n\n  ****  Warning **** CM record dump truncated\n");
-	     fprintf(cm->CMTrace_file, "  To change size limits, set CMDumpSize environment variable.\n\n\n");
+	     fprintf(cm->CMTrace_file, "  To change size limits, set CMDumpSize environment variable.\n");
 	     warned++;
 	 }
+	 fprintf(cm->CMTrace_file, "\n=======\n");
      }
 
      /* encode data with CM context */
@@ -3380,11 +3401,12 @@ timeout_conn(CManager cm, void *client_data)
 	     r = FMfdump_encoded_data(cm->CMTrace_file, format->fmformat,
 				      event->encoded_event, dump_char_limit);
 	 }	    
-	 if (r && !warned) {
+	 if (!r && !warned) {
 	     fprintf(cm->CMTrace_file, "\n\n  ****  Warning **** CM record dump truncated\n");
-	     fprintf(cm->CMTrace_file, "  To change size limits, set CMDumpSize environment variable.\n\n\n");
+	     fprintf(cm->CMTrace_file, "  To change size limits, set CMDumpSize environment variable.\n");
 	     warned++;
 	 }
+	 fprintf(cm->CMTrace_file, "\n=======\n");
      }
 
      if (!event->encoded_event) {

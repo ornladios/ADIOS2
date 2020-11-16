@@ -10,15 +10,10 @@
 
 #include <adios2.h>
 #include <gtest/gtest.h>
-#if ADIOS2_USE_MPI
-#include <mpi.h>
-#endif
 #include <numeric>
 #include <thread>
 
 using namespace adios2;
-int mpiRank = 0;
-int mpiSize = 1;
 size_t print_lines = 0;
 
 Dims shape = {4, 4, 4};
@@ -58,8 +53,7 @@ void PrintData(const T *data, const size_t step, const Dims &start,
 {
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
-    std::cout << "Rank: " << mpiRank << " Step: " << step << " Size:" << size
-              << "\n";
+    std::cout << "Step: " << step << " Size:" << size << "\n";
     size_t printsize = 128;
 
     if (size < printsize)
@@ -87,11 +81,6 @@ void VerifyData(const int *data, size_t step, const Dims &start,
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
     bool compressed = false;
-    if (print_lines < 32)
-    {
-        PrintData(data, step, start, count);
-        ++print_lines;
-    }
     for (size_t i = 0; i < size; ++i)
     {
         if (!compressed)
@@ -105,11 +94,7 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
                                const Dims &count, const size_t steps,
                                const adios2::Params &engineParams)
 {
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF);
-#else
     adios2::ADIOS adios;
-#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -130,17 +115,12 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                                const Dims &memCount, const size_t steps,
                                const adios2::Params &engineParams)
 {
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF);
-#else
     adios2::ADIOS adios;
-#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
     std::vector<int> myInts = reader_data;
-    size_t i;
     while (true)
     {
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
@@ -148,15 +128,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
         {
             const auto &vars = dataManIO.AvailableVariables();
             ASSERT_EQ(vars.size(), 1);
-            if (print_lines == 0)
-            {
-                std::cout << "All available variables : ";
-                for (const auto &var : vars)
-                {
-                    std::cout << var.first << ", ";
-                }
-                std::cout << std::endl;
-            }
             size_t currentStep = dataManReader.CurrentStep();
             adios2::Variable<int> bpInts =
                 dataManIO.InquireVariable<int>("bpInts");
@@ -168,8 +139,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << "DataManReader end of stream at Step " << i
-                      << std::endl;
             break;
         }
         else if (status == adios2::StepStatus::NotReady)
@@ -185,49 +154,29 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
 TEST_F(DataManEngineTest, 3D_MemSelect)
 {
 
-    size_t steps = 10000;
+    size_t steps = 5000;
     adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
                                    {"Port", "12340"}};
     // run workflow
 
     auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
                          memstart, memcount, steps, engineParams);
-    std::cout << "Reader thread started" << std::endl;
 
     auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
                          engineParams);
-    std::cout << "Writer thread started" << std::endl;
 
     w.join();
-    std::cout << "Writer thread ended" << std::endl;
 
     r.join();
-    std::cout << "Reader thread ended" << std::endl;
 }
 
 #endif // ZEROMQ
 
 int main(int argc, char **argv)
 {
-#if ADIOS2_USE_MPI
-    int mpi_provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
-    std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
-              << " and provided Mode " << mpi_provided << std::endl;
-    if (mpi_provided != MPI_THREAD_MULTIPLE)
-    {
-        MPI_Finalize();
-        return 0;
-    }
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
-#if ADIOS2_USE_MPI
-    MPI_Finalize();
-#endif
 
     return result;
 }

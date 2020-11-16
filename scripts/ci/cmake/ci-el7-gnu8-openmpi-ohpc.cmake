@@ -8,10 +8,10 @@ find_package(EnvModules REQUIRED)
 
 env_module(purge)
 env_module(load gnu8)
-env_module(load py2-numpy)
+env_module(load py3-numpy)
 env_module(load openmpi3)
 env_module(load phdf5)
-env_module(load py2-mpi4py)
+env_module(load py3-mpi4py)
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
@@ -34,7 +34,6 @@ ADIOS2_USE_ZFP:BOOL=ON
 
 MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
 MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
-PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python2.7
 ")
 
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)

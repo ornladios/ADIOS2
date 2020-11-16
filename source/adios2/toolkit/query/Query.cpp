@@ -186,14 +186,14 @@ void QueryVar::BlockIndexEvaluate(adios2::core::IO &io,
                                   adios2::core::Engine &reader,
                                   std::vector<Box<Dims>> &touchedBlocks)
 {
-    const std::string varType = io.InquireVariableType(m_VarName);
+    const DataType varType = io.InquireVariableType(m_VarName);
 
     // Variable<int> var = io.InquireVariable<int>(m_VarName);
     // BlockIndex<int> idx(io, reader);
 
     // var already exists when loading query. skipping validity checking
 #define declare_type(T)                                                        \
-    if (varType == adios2::helper::GetType<T>())                               \
+    if (varType == adios2::helper::GetDataType<T>())                           \
     {                                                                          \
         core::Variable<T> *var = io.InquireVariable<T>(m_VarName);             \
         BlockIndex<T> idx(*var, io, reader);                                   \

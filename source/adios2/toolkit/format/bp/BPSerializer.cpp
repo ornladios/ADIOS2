@@ -336,7 +336,7 @@ void BPSerializer::UpdateOffsetsInMetadata()
             currentPosition, TypeTraits<T>::type_enum, buffer);                \
         break;                                                                 \
     }
-                ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(make_case)
+                ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(make_case)
 #undef make_case
 
             default:
@@ -739,11 +739,11 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
 {
     size_t attributesSizeInData = 0;
 
-    auto &attributes = io.GetAttributesDataMap();
+    auto &attributes = io.GetAttributes();
 
     for (const auto &attribute : attributes)
     {
-        const std::string type = attribute.second.first;
+        const DataType type = attribute.second->m_Type;
 
         // each attribute is only written to output once
         // so filter out the ones already written
@@ -753,11 +753,11 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
             continue;
         }
 
-        if (type == "compound")
+        if (type == DataType::Compound)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         const std::string name = attribute.first;                              \
         const core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);   \
@@ -772,7 +772,7 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
 
 void BPSerializer::PutAttributes(core::IO &io)
 {
-    const auto &attributesDataMap = io.GetAttributesDataMap();
+    const auto &attributes = io.GetAttributes();
 
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
@@ -781,8 +781,7 @@ void BPSerializer::PutAttributes(core::IO &io)
     const size_t attributesCountPosition = position;
 
     // count is known ahead of time
-    const uint32_t attributesCount =
-        static_cast<uint32_t>(attributesDataMap.size());
+    const uint32_t attributesCount = static_cast<uint32_t>(attributes.size());
     helper::CopyToBuffer(buffer, position, &attributesCount);
 
     // will go back
@@ -793,10 +792,10 @@ void BPSerializer::PutAttributes(core::IO &io)
 
     uint32_t memberID = 0;
 
-    for (const auto &attributePair : attributesDataMap)
+    for (const auto &attributePair : attributes)
     {
         const std::string name(attributePair.first);
-        const std::string type(attributePair.second.first);
+        const DataType type(attributePair.second->m_Type);
 
         // each attribute is only written to output once
         // so filter out the ones already written
@@ -806,11 +805,11 @@ void BPSerializer::PutAttributes(core::IO &io)
             continue;
         }
 
-        if (type == "unknown")
+        if (type == DataType::None)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Stats<T> stats;                                                        \
         stats.Offset = absolutePosition + m_PreDataFileLength;                 \

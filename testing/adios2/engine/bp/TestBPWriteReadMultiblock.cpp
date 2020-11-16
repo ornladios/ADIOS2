@@ -1286,6 +1286,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
         }
 
         io.AddTransport("file");
+        io.SetParameter("AggregatorRatio", "1");
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 

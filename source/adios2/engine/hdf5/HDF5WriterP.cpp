@@ -33,16 +33,18 @@ HDF5WriterP::~HDF5WriterP() { DoClose(); }
 StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_IO.m_ReadStreaming = false;
-#ifndef RELAY_DEFINE_TO_HDF5 // RELAY_DEFINE_TO_HDF5 = variables in io are
-                             // created at begin_step
-#else
+
+    // defines variables at this collective call.
+    // this will ensure all vars are defined in hdf5 for all processors
+    // (collective requirement) writing a variable is not a collective call
     m_H5File.CreateVarsFromIO(m_IO);
-#endif
+
     return StepStatus::OK;
 }
 
 void HDF5WriterP::EndStep()
 {
+    m_H5File.CleanUpNullVars(m_IO);
     m_H5File.Advance();
     m_H5File.WriteAttrFromIO(m_IO);
 }
@@ -60,9 +62,17 @@ void HDF5WriterP::Init()
             ", in call to ADIOS Open or HDF5Writer constructor\n");
     }
 
-#ifdef NEVER
-    m_H5File.Init(m_Name, m_Comm, true);
-#else
+    if (m_OpenMode == Mode::Append)
+    {
+        m_H5File.Append(m_Name, m_Comm);
+        m_H5File.ReadAttrToIO(m_IO);
+        m_H5File.ReadAllVariables(m_IO);
+    }
+    else
+        m_H5File.Init(m_Name, m_Comm, true);
+
+    m_H5File.ParseParameters(m_IO); // has to follow m_H5File Init/Append/
+    /*
     // enforce .h5 ending
     std::string suffix = ".h5";
     std::string wrongSuffix = ".bp";
@@ -74,14 +84,26 @@ void HDF5WriterP::Init()
     {
         // is a file with .bp ending
         std::string updatedName = m_Name.substr(0, wpos) + suffix;
-        m_H5File.Init(updatedName, m_Comm, true);
+        if (m_OpenMode == Mode::Append)
+            m_H5File.Append(updatedName, m_Comm);
+        else
+            m_H5File.Init(updatedName, m_Comm, true);
     }
     else
     {
-        m_H5File.Init(m_Name, m_Comm, true);
+        if (m_OpenMode == Mode::Append)
+            m_H5File.Append(m_Name, m_Comm);
+        else
+            m_H5File.Init(m_Name, m_Comm, true);
     }
     m_H5File.ParseParameters(m_IO);
-#endif
+
+    if (m_OpenMode == Mode::Append)
+    {
+        m_H5File.ReadAttrToIO(m_IO);
+        m_H5File.ReadAllVariables(m_IO);
+    }
+    */
 }
 
 #define declare_type(T)                                                        \
@@ -99,34 +121,6 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 template <class T>
 void HDF5WriterP::DoPutSyncCommon(Variable<T> &variable, const T *values)
 {
-
-    bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
-
-    if (!isOrderC)
-    {
-        int ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
-
-        if (ndims > 1)
-        {
-            Dims c_shape(ndims), c_offset(ndims), c_count(ndims);
-            for (int i = 0; i < ndims; i++)
-            {
-                c_shape[i] = variable.m_Shape[ndims - i - 1];
-                c_offset[i] = variable.m_Start[ndims - i - 1];
-                c_count[i] = variable.m_Count[ndims - i - 1];
-            }
-
-            Variable<T> dup = Variable<T>(variable.m_Name, c_shape, c_offset,
-                                          c_count, variable.IsConstantDims());
-
-            /*
-             * duplicate var attributes and convert to c order before saving.
-             */
-            dup.SetData(values);
-            m_H5File.Write(dup, values);
-            return;
-        }
-    }
     variable.SetData(values);
     m_H5File.Write(variable, values);
 }

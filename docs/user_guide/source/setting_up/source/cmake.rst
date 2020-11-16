@@ -2,11 +2,6 @@
 Building, Testing, and Installing ADIOS 2
 *****************************************
 
-.. caution::
-
-   Always do a fresh build from scratch if your source is updated with considerable changes *e.g.* `git pull` 
-
-
 To build ADIOS v2.x, clone the repository and invoke the canonical CMake build sequence:
 
 .. code-block:: bash
@@ -99,6 +94,7 @@ VAR                            VALUE                     Description
 ``ADIOS2_USE_PNG``             **ON**/OFF      `PNG <https://libpng.org>`_ compression (experimental).
 ``ADIOS2_USE_Blosc``           **ON**/OFF      `Blosc <http://blosc.org/>`_ compression (experimental).
 ``ADIOS2_USE_Endian_Reverse``  ON/**OFF**      Enable endian conversion if a different endianness is detected between write and read.
+``ADIOS2_USE_IME``             ON/**OFF**      DDN IME transport.
 ============================= ================ ==========================================================================================================================================================================================================================
 
 In addition to the ``ADIOS2_USE_Feature`` options, the following options are also available to control how the library gets built:
@@ -136,12 +132,12 @@ Notes:
     $ export CMAKE_PREFIX_PATH=/opt/foo/bar
     $ cmake -DHDF5_ROOT=/opt/hdf5/1.12.0 ../ADIOS2
 
-Example: the following configuration will build, test and install under /opt/adios2/2.5.0 an optimized (Release) version of ADIOS2.
+Example: the following configuration will build, test and install under /opt/adios2/2.6.0 an optimized (Release) version of ADIOS2.
 
 .. code-block:: bash
 
     $ cd build
-    $ cmake -DADIOS2_USE_Fortran=ON -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.5.0 -DCMAKE_BUILD_Type=Release ../ADIOS2
+    $ cmake -DADIOS2_USE_Fortran=ON -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.6.0 -DCMAKE_BUILD_Type=Release ../ADIOS2
     $ make -j16
     $ ctest
     $ make install

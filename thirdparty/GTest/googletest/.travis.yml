@@ -1,9 +1,8 @@
 # Build matrix / environment variable are explained on:
-# http://about.travis-ci.org/docs/user/build-configuration/
+# https://docs.travis-ci.com/user/customizing-the-build/
 # This file can be validated on:
 # http://lint.travis-ci.org/
 
-sudo: false
 language: cpp
 
 # Define the matrix explicitly, manually expanding the combinations of (os, compiler, env).
@@ -11,48 +10,33 @@ language: cpp
 matrix:
   include:
     - os: linux
+      before_install: chmod -R +x ./ci/*platformio.sh
+      install: ./ci/install-platformio.sh
+      script: ./ci/build-platformio.sh
+    - os: linux
+      dist: bionic
       compiler: gcc
-      sudo : true
       install: ./ci/install-linux.sh && ./ci/log-config.sh
       script: ./ci/build-linux-bazel.sh
     - os: linux
+      dist: bionic
       compiler: clang
-      sudo : true
       install: ./ci/install-linux.sh && ./ci/log-config.sh
       script: ./ci/build-linux-bazel.sh
     - os: linux
-      group: deprecated-2017Q4
+      dist: bionic
       compiler: gcc
-      install: ./ci/install-linux.sh && ./ci/log-config.sh
-      script: ./ci/build-linux-autotools.sh
+      env: BUILD_TYPE=Debug VERBOSE=1 CXX_FLAGS="-std=c++11 -Wdeprecated"
     - os: linux
-      group: deprecated-2017Q4
-      compiler: gcc
-      env: BUILD_TYPE=Debug VERBOSE=1 CXX_FLAGS=-std=c++11
-    - os: linux
-      group: deprecated-2017Q4
+      dist: bionic
       compiler: clang
-      env: BUILD_TYPE=Debug VERBOSE=1
-    - os: linux
-      group: deprecated-2017Q4
-      compiler: clang
-      env: BUILD_TYPE=Release VERBOSE=1 CXX_FLAGS=-std=c++11
+      env: BUILD_TYPE=Release VERBOSE=1 CXX_FLAGS="-std=c++11 -Wdeprecated" NO_EXCEPTION=ON NO_RTTI=ON COMPILER_IS_GNUCXX=ON
     - os: osx
       compiler: gcc
-      env: BUILD_TYPE=Debug VERBOSE=1
-      if: type != pull_request
-    - os: osx
-      compiler: gcc
-      env: BUILD_TYPE=Release VERBOSE=1 CXX_FLAGS=-std=c++11
-      if: type != pull_request
+      env: BUILD_TYPE=Release VERBOSE=1 CXX_FLAGS="-std=c++11 -Wdeprecated" HOMEBREW_LOGS=~/homebrew-logs HOMEBREW_TEMP=~/homebrew-temp
     - os: osx
       compiler: clang
-      env: BUILD_TYPE=Debug VERBOSE=1
-      if: type != pull_request
-    - os: osx
-      compiler: clang
-      env: BUILD_TYPE=Release VERBOSE=1 CXX_FLAGS=-std=c++11
-      if: type != pull_request
+      env: BUILD_TYPE=Release VERBOSE=1 CXX_FLAGS="-std=c++11 -Wdeprecated" HOMEBREW_LOGS=~/homebrew-logs HOMEBREW_TEMP=~/homebrew-temp
 
 # These are the install and build (script) phases for the most common entries in the matrix.  They could be included
 # in each entry in the matrix, but that is just repetitive.
@@ -63,19 +47,19 @@ install:
 
 script: ./ci/travis.sh
 
-# For sudo=false builds this section installs the necessary dependencies.
+# This section installs the necessary dependencies.
 addons:
   apt:
-    # List of whitelisted in travis packages for ubuntu-precise can be found here:
-    #   https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
-    # List of whitelisted in travis apt-sources:
-    #   https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json
-    sources:
-    - ubuntu-toolchain-r-test
-    - llvm-toolchain-precise-3.7
     packages:
-    - g++-4.9
-    - clang-3.7
+    - g++
+    - clang
+    update: true
+  homebrew:
+    packages:
+    - ccache
+    - gcc@4.9
+    - llvm@4
+    update: true
 
 notifications:
   email: false

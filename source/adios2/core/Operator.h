@@ -86,7 +86,7 @@ public:
      * @return size of compressed buffer
      */
     virtual size_t Compress(const void *dataIn, const Dims &dimensions,
-                            const size_t elementSize, const std::string type,
+                            const size_t elementSize, DataType type,
                             void *bufferOut, const Params &parameters,
                             Params &info) const;
 
@@ -105,8 +105,7 @@ public:
      */
     virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
                               void *dataOut, const Dims &dimensions,
-                              const std::string type,
-                              const Params &parameters) const;
+                              DataType type, const Params &parameters) const;
 
 protected:
     /** Parameters associated with a particular Operator */
@@ -121,7 +120,7 @@ protected:
      * @return conservative buffer size for allocation
      */
     virtual size_t DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                                   const std::string type,
+                                   DataType type,
                                    const Params &parameters) const;
 
 private:

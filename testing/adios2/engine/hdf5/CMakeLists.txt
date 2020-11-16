@@ -23,6 +23,10 @@ gtest_add_tests_helper(WriteMemorySelectionRead  ${hdf5_mpi}
   HDF5 Engine.HDF5. ""
 )
 
+gtest_add_tests_helper(Append  ${hdf5_mpi}
+  HDF5 Engine.HDF5. ""
+)
+
 gtest_add_tests_helper(NativeHDF5WriteRead ${hdf5_mpi} "" Engine.HDF5. "")
 if(HDF5_C_INCLUDE_DIRS)
   target_include_directories(Test.Engine.HDF5.NativeHDF5WriteRead${hdf5_sfx}

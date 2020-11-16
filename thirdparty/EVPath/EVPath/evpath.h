@@ -257,6 +257,15 @@ extern attr_list
 CMget_specific_contact_list (CManager cm, attr_list attrs);
 
 /*!
+ * get a thread-owned version of a shared attribute list in a thread-safe way
+ * \param cm  the CManager which owns the attribute list.
+ * \param attrs the shared attribute list (from CMget_contact list, etc.)
+ * \return a single-owner contact list
+ */
+extern attr_list
+CMderef_and_copy_list(CManager cm, attr_list attrs);
+
+/*!
  * check to see if this is contact information for <b>this</b> CM.
  *
  * Since attribute lists are generally opaque, it is not necessarily obvious
@@ -604,6 +613,16 @@ typedef int (*CMNonCMHandler) (CMConnection conn, CMTransport transport,
 /*NOLOCK*/
 extern void
 CMregister_non_CM_message_handler (int header, CMNonCMHandler handler);
+
+/*!
+ * register a handler for CM messages that don't match registered handlers.
+ *
+ */
+typedef void (*CMUnregCMHandler) (CMConnection conn, char *format_name);
+
+/*NOLOCK*/
+extern void
+CMregister_invalid_message_handler (CManager cm, CMUnregCMHandler handler);
 
 /*!
  * return the pointer to the static transport services structure.

@@ -20,6 +20,72 @@ namespace adios2
 namespace helper
 {
 
+DataType GetDataTypeFromString(std::string const &type) noexcept
+{
+    // Keep in sync with adios2::ToString(DataType).
+    if (type == "int8_t")
+    {
+        return DataType::Int8;
+    }
+    if (type == "int16_t")
+    {
+        return DataType::Int16;
+    }
+    if (type == "int32_t")
+    {
+        return DataType::Int32;
+    }
+    if (type == "int64_t")
+    {
+        return DataType::Int64;
+    }
+    if (type == "uint8_t")
+    {
+        return DataType::UInt8;
+    }
+    if (type == "uint16_t")
+    {
+        return DataType::UInt16;
+    }
+    if (type == "uint32_t")
+    {
+        return DataType::UInt32;
+    }
+    if (type == "uint64_t")
+    {
+        return DataType::UInt64;
+    }
+    if (type == "float")
+    {
+        return DataType::Float;
+    }
+    if (type == "double")
+    {
+        return DataType::Double;
+    }
+    if (type == "long double")
+    {
+        return DataType::LongDouble;
+    }
+    if (type == "float complex")
+    {
+        return DataType::FloatComplex;
+    }
+    if (type == "double complex")
+    {
+        return DataType::DoubleComplex;
+    }
+    if (type == "string")
+    {
+        return DataType::String;
+    }
+    if (type == "compound")
+    {
+        return DataType::Compound;
+    }
+    return DataType::None;
+}
+
 std::string DimsToCSV(const Dims &dimensions) noexcept
 {
     std::string dimsCSV;

@@ -79,6 +79,10 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     while (true)
     {
+        if (EarlyExit && (t == NSteps))
+        {
+            break;
+        }
         ts = std::chrono::steady_clock::now();
         adios2::StepStatus status = engine.BeginStep();
         Seconds timeBeginStep = std::chrono::steady_clock::now() - ts;
@@ -328,7 +332,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
                 engine.Get(var_r32, in_R32.data());
                 engine.Get(var_r64, in_R64.data());
-                engine.Get(var_time, (int64_t *)&write_time);
+                if (!mpiRank)
+                    engine.Get(var_time, (int64_t *)&write_time);
             }
             else
             {
@@ -356,9 +361,42 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         if (!NoData)
         {
-            EXPECT_EQ(validateCommonTestData(myStart, myLength, t, !var_c32),
-                      0);
-            write_times.push_back(write_time);
+            int result = validateCommonTestData(myStart, myLength, t, !var_c32);
+            if (result != 0)
+            {
+                std::cout << "Read Data Validation failed on node " << mpiRank
+                          << " timestep " << t << std::endl;
+            }
+            EXPECT_EQ(result, 0);
+            if (AdvancingAttrs)
+            {
+                /* we only succeed if every attribute from every prior step is
+                 * there, but not the next few */
+                for (int step = 0; step <= currentStep + 2; step++)
+                {
+                    const std::string r64_Single =
+                        std::string("r64_PerStep_") + std::to_string(step);
+                    auto attr_r64 = io.InquireAttribute<double>(r64_Single);
+                    std::cout << "Testing for attribute " << r64_Single
+                              << std::endl;
+                    if (step <= currentStep)
+                    {
+                        EXPECT_TRUE(attr_r64);
+                        ASSERT_EQ(attr_r64.Data().size() == 1, true);
+                        ASSERT_EQ(attr_r64.Type(), adios2::GetType<double>());
+                        ASSERT_EQ(attr_r64.Data().front(),
+                                  (double)(step * 10.0));
+                    }
+                    else
+                    {
+                        // The file engines let attributes appear early, so only
+                        // enforce non-appearance if that changes.
+                        // EXPECT_FALSE(attr_r64);
+                    }
+                }
+            }
+            if (!mpiRank)
+                write_times.push_back(write_time);
         }
         else
         {
@@ -384,7 +422,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     }
 
     EXPECT_EQ(t, NSteps);
-    if (!NoData)
+    if (!NoData && !mpiRank)
     {
         if ((write_times.back() - write_times.front()) > 1)
         {

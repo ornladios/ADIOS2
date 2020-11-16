@@ -19,17 +19,17 @@ how to create an DataSpaces reader:
 
 .. code-block:: c++
 
- adios2::IO dspacesIO = adios.DeclareIO("SomeName");
- dspacesIO.SetEngine("DATASPACES");
- adios2::Engine dspacesReader = dspacesIO.Open(filename, adios2::Mode::Read);
+    adios2::IO dspacesIO = adios.DeclareIO("SomeName");
+    dspacesIO.SetEngine("DATASPACES");
+    adios2::Engine dspacesReader = dspacesIO.Open(filename, adios2::Mode::Read);
 
 and a sample code for DataSpaces writer is:
 
 .. code-block:: c++
 
- adios2::IO dspacesIO = adios.DeclareIO("SomeName");
- dspacesIO.SetEngine("DATASPACES");
- adios2::Engine dspacesWriter = dspacesIO.Open(filename, adios2::Mode::Write);
+    adios2::IO dspacesIO = adios.DeclareIO("SomeName");
+    dspacesIO.SetEngine("DATASPACES");
+    adios2::Engine dspacesWriter = dspacesIO.Open(filename, adios2::Mode::Write);
 
 To make use of the DataSpaces engine, an application job needs to also run the dataspaces_server
 component together with the application. The server should be configured and started 
@@ -52,9 +52,10 @@ How many output timesteps of the same dataset (called versions) should be kept i
 and served to readers should be specified in the file. If this file does not exist in the current directory, 
 the server will assume default values (only 1 timestep stored).
 .. code-block::
- ## Config file for DataSpaces
- max_versions = 5
- lock_type = 3
+
+    ## Config file for DataSpaces
+    max_versions = 5
+    lock_type = 3
 
 The dataspaces_server module is a stand-alone service that runs independently of a simulation 
 on a set of dedicated nodes in the staging area. It transfers data from the application through RDMA,  

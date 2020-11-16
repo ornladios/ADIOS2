@@ -781,23 +781,6 @@ get_format_from_master(format_server fs, IOFormatRep ioformat)
 }
 
 
-static int words_bigendian = -1;
-
-static int
-set_bigendian () {
-  /* Are we little or big endian?  From Harbison&Steele.  */
-  union
-  {
-    long l;
-    char c[sizeof (long)];
-  } u;
-  u.l = 1;
-  words_bigendian = (u.c[sizeof (long) - 1] == 1);
-  return words_bigendian;
-}
-
-#define WORDS_BIGENDIAN ((words_bigendian == -1) ? set_bigendian() : words_bigendian)
-
 static IOFormatRep
 find_format(fs, fsc, ioformat, new_format_mode, requested_id_version)
 format_server fs;
@@ -879,10 +862,10 @@ int requested_id_version;
 	    break;
 	case 2:
 	    if (!ioformat->server_ID.value) {
-		generate_format2_server_ID(&ioformat->server_ID, ioformat->server_format_rep);
+		generate_format3_server_ID(&ioformat->server_ID, ioformat->server_format_rep);
 	    } else {
 		server_ID_type tmp;
-		generate_format2_server_ID(&tmp, ioformat->server_format_rep);
+		generate_format3_server_ID(&tmp, ioformat->server_format_rep);
 		if (tmp.length != ioformat->server_ID.length) {
 		    LOG(fs, "Version 2 IDs differ in length\n");
 		}

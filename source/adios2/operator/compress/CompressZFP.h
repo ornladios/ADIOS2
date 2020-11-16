@@ -46,9 +46,8 @@ public:
      * @return size of compressed buffer in bytes
      */
     size_t Compress(const void *dataIn, const Dims &dimensions,
-                    const size_t elementSize, const std::string type,
-                    void *bufferOut, const Params &parameters,
-                    Params &info) const final;
+                    const size_t elementSize, DataType type, void *bufferOut,
+                    const Params &parameters, Params &info) const final;
 
     using Operator::Decompress;
 
@@ -62,17 +61,17 @@ public:
      * @return size of decompressed data in dataOut
      */
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const Dims &dimensions, const std::string type,
+                      const Dims &dimensions, DataType type,
                       const Params &parameters) const final;
 
 private:
     /**
      * Returns Zfp supported zfp_type based on adios string type
-     * @param type adios type as string, see GetType<T> in
+     * @param type adios type as string, see GetDataType<T> in
      * helper/adiosType.inl
      * @return zfp_type
      */
-    zfp_type GetZfpType(const std::string type) const;
+    zfp_type GetZfpType(DataType type) const;
 
     /**
      * Constructor Zfp zfp_field based on input information around the data
@@ -83,14 +82,13 @@ private:
      * @return zfp_field*
      */
     zfp_field *GetZFPField(const void *data, const Dims &shape,
-                           const std::string type) const;
+                           DataType type) const;
 
-    zfp_stream *GetZFPStream(const Dims &dimensions, const std::string type,
+    zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
                              const Params &parameters) const;
 
     size_t DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                           const std::string type,
-                           const Params &parameters) const final;
+                           DataType type, const Params &parameters) const final;
 
     /**
      * check status from BZip compression and decompression functions

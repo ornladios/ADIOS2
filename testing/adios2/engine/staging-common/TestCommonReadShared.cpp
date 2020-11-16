@@ -117,12 +117,16 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         engine1.EndStep();
         engine2.EndStep();
 
-        EXPECT_EQ(validateSimpleForwardData(in_R64_1, 0, myStart, myLength,
-                                            (writerSize + 1) * Nx),
-                  0);
-        EXPECT_EQ(validateSimpleReverseData(in_R64_2, 0, myStart, myLength,
-                                            (writerSize + 1) * Nx),
-                  0);
+        int result = validateSimpleForwardData(in_R64_1, 0, myStart, myLength,
+                                               (writerSize + 1) * Nx);
+        result |= validateSimpleReverseData(in_R64_2, 0, myStart, myLength,
+                                            (writerSize + 1) * Nx);
+        if (result != 0)
+        {
+            std::cout << "Read Data Validation failed on node " << mpiRank
+                      << " timestep " << t << std::endl;
+        }
+        EXPECT_EQ(result, 0);
 
         ++t;
     }

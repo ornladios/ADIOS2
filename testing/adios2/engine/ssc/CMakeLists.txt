@@ -9,6 +9,18 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(Base MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBase.MPI "" TRUE)
 
+  gtest_add_tests_helper(BaseUnlocked MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBaseUnlocked.MPI "" TRUE)
+
+  gtest_add_tests_helper(LockBeforeEndStep MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscLockBeforeEndStep.MPI "" TRUE)
+
+  gtest_add_tests_helper(OnlyOneStep MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOnlyOneStep.MPI "" TRUE)
+
+  gtest_add_tests_helper(OnlyTwoSteps MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOnlyTwoSteps.MPI "" TRUE)
+
   gtest_add_tests_helper(OneSidedFencePush MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedFencePush.MPI "" TRUE)
 
@@ -45,13 +57,18 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(MoreWritersThanReaders MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMoreWritersThanReaders.MPI "" TRUE)
 
-  gtest_add_tests_helper(MultiApp MPI_ONLY Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscMultiApp.MPI "" TRUE)
-
   gtest_add_tests_helper(Xgc2Way MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc2Way.MPI "" TRUE)
 
+if(NOT MSVC)
   gtest_add_tests_helper(Xgc3Way MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc3Way.MPI "" TRUE)
+
+  gtest_add_tests_helper(Xgc3WayMatchedSteps MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc3WayMatchedSteps.MPI "" TRUE)
+endif()
+
+  gtest_add_tests_helper(VaryingSteps MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscVaryingSteps.MPI "" TRUE)
 
 endif()

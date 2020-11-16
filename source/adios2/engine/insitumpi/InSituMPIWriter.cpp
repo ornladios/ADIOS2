@@ -281,14 +281,14 @@ void InSituMPIWriter::PerformPuts()
 void InSituMPIWriter::AsyncSendVariable(std::string variableName)
 {
     TAU_SCOPED_TIMER("InSituMPIWriter::AsyncSendVariable");
-    const std::string type(m_IO.InquireVariableType(variableName));
+    const DataType type(m_IO.InquireVariableType(variableName));
 
-    if (type == "compound")
+    if (type == DataType::Compound)
     {
         // not supported
     }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
         if (variable == nullptr)                                               \

@@ -49,6 +49,8 @@ public:
     std::unique_ptr<CommImpl> Split(int color, int key,
                                     const std::string &hint) const override;
     std::unique_ptr<CommImpl> World(const std::string &hint) const override;
+    virtual std::unique_ptr<CommImpl>
+    GroupByShm(const std::string &hint) const override;
 
     int Rank() const override;
     int Size() const override;
@@ -120,6 +122,11 @@ std::unique_ptr<CommImpl> CommImplDummy::Split(int, int,
 }
 
 std::unique_ptr<CommImpl> CommImplDummy::World(const std::string &) const
+{
+    return std::unique_ptr<CommImpl>(new CommImplDummy());
+}
+
+std::unique_ptr<CommImpl> CommImplDummy::GroupByShm(const std::string &) const
 {
     return std::unique_ptr<CommImpl>(new CommImplDummy());
 }

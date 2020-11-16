@@ -18,18 +18,9 @@ To enable the Python bindings in ADIOS2, based on `PyBind11 <http://pybind11.rea
 
     * Run the Python tests with ``ctest -R Python``
 
-    * Run `helloBPWriter.py <https://github.com/ornladios/ADIOS2/blob/master/examples/hello/bpWriter/helloBPWriter.py>`_ and `helloBPTimeWriter.py <https://github.com/ornladios/ADIOS2/blob/master/examples/hello/bpTimeWriter/helloBPTimeWriter.py>`_
-
-    * In Python 2.7:
+    * Run `helloBPWriter.py <https://github.com/ornladios/ADIOS2/blob/master/examples/hello/bpWriter/helloBPWriter.py>`_ and `helloBPTimeWriter.py <https://github.com/ornladios/ADIOS2/blob/master/examples/hello/bpTimeWriter/helloBPTimeWriter.py>`_ via
 
     .. code-block:: bash
 
             $ mpirun -n 4 python helloBPWriter.py
             $ python helloBPWriter.py
-
-    * In Python 3:
-
-    .. code-block:: bash
-
-            $ mpirun -n 4 python3 helloBPWriter.py
-            $ python3 helloBPWriter.py

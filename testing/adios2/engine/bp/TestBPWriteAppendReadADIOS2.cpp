@@ -171,6 +171,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             io.SetEngine("BP4");
         }
         io.AddTransport("file");
+        io.SetParameter("AggregatorRatio", "1");
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -322,6 +323,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             io.SetEngine("BP4");
         }
         io.AddTransport("file");
+        io.SetParameter("AggregatorRatio", "1");
 
         adios2::Engine bpAppender = io.Open(fname, adios2::Mode::Append);
 

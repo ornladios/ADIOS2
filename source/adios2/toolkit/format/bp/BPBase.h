@@ -210,6 +210,18 @@ public:
         bool BurstBufferDrain = true;
         /** Verbose level for burst buffer draining thread */
         int BurstBufferVerbose = 0;
+
+        /** Stream reader flag: process metadata step-by-step
+         * instead of parsing everything available
+         */
+        bool StreamReader = false;
+
+        /** Number of aggregators.
+         * Must be a value between 1 and number of MPI ranks
+         * 0 as default means that the engine must define the number of
+         * aggregators
+         */
+        unsigned int NumAggregators = 0;
     };
 
     /** Return type of the ResizeBuffer function. */
@@ -294,6 +306,7 @@ public:
      */
     void Init(const Params &parameters, const std::string hint,
               const std::string engineType = "");
+
     /****************** NEED to check if some are virtual */
 
     /**
@@ -317,6 +330,8 @@ public:
 
     /** Delete buffer memory manually */
     void DeleteBuffers();
+
+    size_t DebugGetDataBufferSize() const;
 
 protected:
     /** file I/O method type, adios1 legacy, only POSIX and MPI_AGG are used */

@@ -11,6 +11,7 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANWRITER_H_
 
+#include "DataManMonitor.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
@@ -45,6 +46,8 @@ private:
     int m_Timeout = 5;
     int m_Verbosity = 0;
     bool m_DoubleBuffer = false;
+    std::string m_TransportMode = "fast";
+    bool m_MonitorActive = false;
 
     std::string m_AllAddresses;
     std::string m_PublisherAddress;
@@ -52,12 +55,14 @@ private:
     int m_MpiRank;
     int m_MpiSize;
     int64_t m_CurrentStep = -1;
-    size_t m_SerializerBufferSize = 128 * 1024 * 1024;
+    size_t m_SerializerBufferSize = 1024 * 1024;
 
     format::DataManSerializer m_Serializer;
 
     zmq::ZmqPubSub m_Publisher;
     zmq::ZmqReqRep m_Replier;
+
+    DataManMonitor m_Monitor;
 
     std::thread m_ReplyThread;
     std::thread m_PublishThread;

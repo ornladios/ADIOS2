@@ -219,13 +219,13 @@ adios2_error adios2_variable_type(adios2_type *type,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        const std::string typeCpp = variableBase->m_Type;
-        if (typeCpp == adios2::helper::GetType<std::string>())
+        const adios2::DataType typeCpp = variableBase->m_Type;
+        if (typeCpp == adios2::helper::GetDataType<std::string>())
         {
             *type = adios2_type_string;
         }
 #define make_case(T)                                                           \
-    else if (typeCpp == adios2::helper::GetType<MapAdios2Type<T>::Type>())     \
+    else if (typeCpp == adios2::helper::GetDataType<MapAdios2Type<T>::Type>()) \
     {                                                                          \
         *type = T;                                                             \
     }
@@ -254,7 +254,7 @@ adios2_error adios2_variable_type_string(char *type, size_t *size,
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        return String2CAPI(variableBase->m_Type, type, size);
+        return String2CAPI(ToString(variableBase->m_Type), type, size);
     }
     catch (...)
     {
@@ -319,13 +319,13 @@ adios2_error adios2_variable_shape(size_t *shape,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        const std::string typeCpp = variableBase->m_Type;
-        if (typeCpp == "compound")
+        const adios2::DataType typeCpp = variableBase->m_Type;
+        if (typeCpp == adios2::DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                      \
     {                                                                          \
         const adios2::core::Variable<T> *variable =                            \
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
@@ -382,13 +382,13 @@ adios2_error adios2_variable_count(size_t *count,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        const std::string typeCpp = variableBase->m_Type;
-        if (typeCpp == "compound")
+        const adios2::DataType typeCpp = variableBase->m_Type;
+        if (typeCpp == adios2::DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                      \
     {                                                                          \
         const adios2::core::Variable<T> *variable =                            \
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
@@ -458,14 +458,14 @@ adios2_error adios2_selection_size(size_t *size,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        const std::string typeCpp = variableBase->m_Type;
+        const adios2::DataType typeCpp = variableBase->m_Type;
 
-        if (typeCpp == "compound")
+        if (typeCpp == adios2::DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                      \
     {                                                                          \
         const adios2::core::Variable<T> *variable =                            \
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
@@ -552,14 +552,14 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        const std::string type(variableBase->m_Type);
+        const adios2::DataType type(variableBase->m_Type);
 
-        if (type == "compound")
+        if (type == adios2::DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         T *minT = reinterpret_cast<T *>(min);                                  \
         const adios2::core::Variable<T> *variableT =                           \
@@ -589,14 +589,14 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        const std::string type(variableBase->m_Type);
+        const adios2::DataType type(variableBase->m_Type);
 
-        if (type == "compound")
+        if (type == adios2::DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         T *maxT = reinterpret_cast<T *>(max);                                  \
         const adios2::core::Variable<T> *variableT =                           \

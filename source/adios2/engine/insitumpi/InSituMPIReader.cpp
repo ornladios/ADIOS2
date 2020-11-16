@@ -265,8 +265,8 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         if (m_Verbosity == 5)
         {
             std::cout << "InSituMPI Reader " << m_ReaderRank << " found "
-                      << m_IO.GetVariablesDataMap().size() << " variables and "
-                      << m_IO.GetAttributesDataMap().size()
+                      << m_IO.GetVariables().size() << " variables and "
+                      << m_IO.GetAttributes().size()
                       << " attributes in metadata. Is source row major = "
                       << m_BP3Deserializer.m_IsRowMajor << std::endl;
         }
@@ -488,14 +488,14 @@ void InSituMPIReader::AsyncRecvAllVariables()
     for (const auto &variablePair : m_ReadScheduleMap)
     {
         // AsyncRecvVariable(variablePair.first, variablePair.second);
-        const std::string type(m_IO.InquireVariableType(variablePair.first));
+        const DataType type(m_IO.InquireVariableType(variablePair.first));
 
-        if (type == "compound")
+        if (type == DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         core::Variable<T> *variable =                                          \
             m_IO.InquireVariable<T>(variablePair.first);                       \

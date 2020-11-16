@@ -20,7 +20,6 @@
 #include "cp_internal.h"
 
 #define gettid() pthread_self()
-extern void CP_verbose(SstStream Stream, char *Format, ...);
 
 static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                                      enum StreamStatus NewState);
@@ -30,26 +29,28 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata);
 #define gettid() pthread_self()
 #ifdef MUTEX_DEBUG
 #define STREAM_MUTEX_LOCK(Stream)                                              \
-    printf("(PID %lx, TID %lx) CP_WRITER Trying lock line %d\n",               \
-           (long)getpid(), (long)gettid(), __LINE__);                          \
+    fprintf(stderr, "(PID %lx, TID %lx) CP_WRITER Trying lock line %d\n",      \
+            (long)getpid(), (long)gettid(), __LINE__);                         \
     pthread_mutex_lock(&Stream->DataLock);                                     \
     Stream->Locked++;                                                          \
-    printf("(PID %lx, TID %lx) CP_WRITER Got lock\n", (long)getpid(),          \
-           (long)gettid());
+    fprintf(stderr, "(PID %lx, TID %lx) CP_WRITER Got lock\n", (long)getpid(), \
+            (long)gettid());
 
 #define STREAM_MUTEX_UNLOCK(Stream)                                            \
-    printf("(PID %lx, TID %lx) CP_WRITER UNlocking line %d\n", (long)getpid(), \
-           (long)gettid(), __LINE__);                                          \
+    fprintf(stderr, "(PID %lx, TID %lx) CP_WRITER UNlocking line %d\n",        \
+            (long)getpid(), (long)gettid(), __LINE__);                         \
     Stream->Locked--;                                                          \
     pthread_mutex_unlock(&Stream->DataLock);
 #define STREAM_CONDITION_WAIT(Stream)                                          \
     {                                                                          \
-        printf(                                                                \
+        fprintf(                                                               \
+            stderr,                                                            \
             "(PID %lx, TID %lx) CP_WRITER Dropping Condition Lock line %d\n",  \
             (long)getpid(), (long)gettid(), __LINE__);                         \
         Stream->Locked = 0;                                                    \
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);          \
-        printf(                                                                \
+        fprintf(                                                               \
+            stderr,                                                            \
             "(PID %lx, TID %lx) CP_WRITER Acquired Condition Lock line %d\n",  \
             (long)getpid(), (long)gettid(), __LINE__);                         \
         Stream->Locked = 1;                                                    \
@@ -57,14 +58,20 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata);
 #define STREAM_CONDITION_SIGNAL(Stream)                                        \
     {                                                                          \
         assert(Stream->Locked == 1);                                           \
-        printf("(PID %lx, TID %lx) CP_WRITER Signalling Condition line %d\n",  \
-               (long)getpid(), (long)gettid(), __LINE__);                      \
+        fprintf(stderr,                                                        \
+                "(PID %lx, TID %lx) CP_WRITER Signalling Condition line %d\n", \
+                (long)getpid(), (long)gettid(), __LINE__);                     \
         pthread_cond_signal(&Stream->DataCondition);                           \
     }
 
 #define STREAM_ASSERT_LOCKED(Stream)                                           \
     {                                                                          \
         assert(Stream->Locked == 1);                                           \
+    }
+#define STREAM_ASSERT_UNLOCKED(Stream)                                         \
+    {                                                                          \
+        STREAM_MUTEX_LOCK(Stream);                                             \
+        STREAM_MUTEX_UNLOCK(Stream);                                           \
     }
 #else
 #define STREAM_MUTEX_LOCK(Stream)                                              \
@@ -84,6 +91,7 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata);
         pthread_cond_signal(&Stream->DataCondition);                           \
     }
 #define STREAM_ASSERT_LOCKED(Stream)
+#define STREAM_ASSERT_UNLOCKED(Stream)
 #endif
 
 static char *buildContactInfo(SstStream Stream, attr_list DPAttrs)
@@ -271,7 +279,11 @@ static void RemoveQueueEntries(SstStream Stream)
             }
 
             Stream->QueuedTimestepCount--;
-            CP_verbose(Stream,
+            if (ItemToFree->MetaDataSendCount)
+            {
+                Stream->Stats.TimestepsDelivered++;
+            }
+            CP_verbose(Stream, PerRankVerbose,
                        "Remove queue Entries removing Timestep %ld (exp %d, "
                        "Prec %d, Ref %d), Count now %d\n",
                        ItemToFree->Timestep, ItemToFree->Expired,
@@ -309,20 +321,6 @@ static void RemoveQueueEntries(SstStream Stream)
     }
 }
 
-static void ReleaseAndDiscardRemainingTimesteps(SstStream Stream)
-{
-    CPTimestepList List = Stream->QueuedTimesteps;
-
-    while (List)
-    {
-        List->Expired = 1;
-        List->PreciousTimestep = 0;
-        List->ReferenceCount = 0;
-        List = List->Next;
-    }
-    RemoveQueueEntries(Stream);
-}
-
 /*
 Queue maintenance:    (ASSUME LOCKED)
         calculate smallest entry for CurrentTimestep in a reader.  Update that
@@ -343,7 +341,7 @@ static void QueueMaintenance(SstStream Stream)
     CPTimestepList List;
     for (int i = 0; i < Stream->ReaderCount; i++)
     {
-        CP_verbose(Stream,
+        CP_verbose(Stream, TraceVerbose,
                    "Reader %d status %s has last released %ld, last sent %ld\n",
                    i, SSTStreamStatusStr[Stream->Readers[i]->ReaderStatus],
                    Stream->Readers[i]->LastReleasedTimestep,
@@ -363,21 +361,22 @@ static void QueueMaintenance(SstStream Stream)
     if (SmallestLastReleasedTimestep != LONG_MAX)
     {
         CP_verbose(
-            Stream,
+            Stream, TraceVerbose,
             "QueueMaintenance, smallest last released = %ld, count = %d\n",
             SmallestLastReleasedTimestep, Stream->QueuedTimestepCount);
     }
     else
     {
         CP_verbose(
-            Stream,
+            Stream, TraceVerbose,
             "QueueMaintenance, smallest last released = LONG_MAX, count = %d\n",
             Stream->QueuedTimestepCount);
     }
     if (SomeReaderIsOpening)
     {
-        CP_verbose(Stream, "Some Reader is in status \"Opening\", abandon "
-                           "queue maintenance until it's fully open");
+        CP_verbose(Stream, TraceVerbose,
+                   "Some Reader is in status \"Opening\", abandon "
+                   "queue maintenance until it's fully open");
         return;
     }
     /* Count precious */
@@ -403,7 +402,7 @@ static void QueueMaintenance(SstStream Stream)
             {
                 if (List->Expired == 0)
                 {
-                    CP_verbose(Stream,
+                    CP_verbose(Stream, PerRankVerbose,
                                "Writer tagging timestep %ld as expired\n",
                                List->Timestep);
                 }
@@ -420,9 +419,9 @@ static void QueueMaintenance(SstStream Stream)
         }
         List = List->Next;
     }
-    CP_verbose(Stream, "Removing dead entries\n");
+    CP_verbose(Stream, PerRankVerbose, "Removing dead entries\n");
     RemoveQueueEntries(Stream);
-    CP_verbose(Stream, "QueueMaintenance complete\n");
+    CP_verbose(Stream, PerRankVerbose, "QueueMaintenance complete\n");
 }
 
 /*
@@ -443,7 +442,7 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
     STREAM_MUTEX_LOCK(ParentWriterStream);
     if (ParentWriterStream->Status == Destroyed)
     {
-        CP_verbose(ParentWriterStream,
+        CP_verbose(ParentWriterStream, PerRankVerbose,
                    "Writer-side Rank received a "
                    "connection-close event on destroyed stream %p, ignored\n");
         STREAM_MUTEX_UNLOCK(ParentWriterStream);
@@ -456,9 +455,10 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
          * If any instance is failed, we should remove all, but that requires a
          * global operation, so prep.
          */
-        CP_verbose(ParentWriterStream, "Writer-side Rank received a "
-                                       "connection-close event during normal "
-                                       "operations, peer likely failed\n");
+        CP_verbose(ParentWriterStream, PerStepVerbose,
+                   "Writer-side Rank received a "
+                   "connection-close event during normal "
+                   "operations, peer likely failed\n");
         CP_PeerFailCloseWSReader(WSreader, PeerFailed);
     }
     else if (WSreader->ReaderStatus == Opening)
@@ -466,7 +466,7 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
         /* ignore this.  We expect a close after the connection is marked closed
          */
         CP_verbose(
-            ParentWriterStream,
+            ParentWriterStream, PerStepVerbose,
             "Writer-side Rank received a "
             "connection-close event in state opening, handling failure\n");
         /* main thread will be waiting for this */
@@ -477,14 +477,16 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
     {
         /* ignore this.  We expect a close after the connection is marked closed
          */
-        CP_verbose(ParentWriterStream, "Writer-side Rank received a "
-                                       "connection-close event after close, "
-                                       "not unexpected\n");
+        CP_verbose(ParentWriterStream, TraceVerbose,
+                   "Writer-side Rank received a "
+                   "connection-close event after close, "
+                   "not unexpected\n");
     }
     else
     {
-        fprintf(stderr, "Got an unexpected connection close event\n");
-        CP_verbose(ParentWriterStream,
+        CP_verbose(ParentWriterStream, CriticalVerbose,
+                   "Got an unexpected connection close event\n");
+        CP_verbose(ParentWriterStream, PerRankVerbose,
                    "Writer-side Rank received a "
                    "connection-close event in unexpected "
                    "state %s\n",
@@ -503,19 +505,18 @@ static void SendPeerSetupMsg(WS_ReaderInfo reader, int reversePeer, int myRank)
     CMConnection conn = reader->Connections[reversePeer].CMconn;
     SstStream Stream = reader->ParentStream;
     struct _PeerSetupMsg setup;
+    memset(&setup, 0, sizeof(setup));
     setup.RS_Stream = reader->Connections[reversePeer].RemoteStreamID;
     setup.WriterRank = myRank;
     setup.WriterCohortSize = Stream->CohortSize;
-    STREAM_MUTEX_LOCK(Stream);
-    STREAM_MUTEX_UNLOCK(Stream);
-    if (CMwrite(conn, Stream->CPInfo->PeerSetupFormat, &setup) != 1)
+    STREAM_ASSERT_UNLOCKED(Stream);
+    if (CMwrite(conn, Stream->CPInfo->SharedCM->PeerSetupFormat, &setup) != 1)
     {
-        CP_verbose(Stream,
-                   "Message failed to send to reader in sendPeerSetup in "
-                   "reader open\n");
-        printf("FAILED TO Send Peer setup message to rank %d remote stream "
-               "(%p) \n",
-               reversePeer, setup.RS_Stream);
+        CP_verbose(
+            Stream, CriticalVerbose,
+            "Message failed to send to reader peer rank %d in sendPeerSetup in "
+            "reader open\n",
+            reversePeer);
     }
 }
 
@@ -597,7 +598,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
             if (!reader->Connections[peer].CMconn)
             {
                 reader->Connections[peer].CMconn =
-                    CMget_conn(reader->ParentStream->CPInfo->cm,
+                    CMget_conn(reader->ParentStream->CPInfo->SharedCM->cm,
                                reader->Connections[peer].ContactList);
             }
 
@@ -614,7 +615,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
             }
 
             CP_verbose(
-                Stream,
+                Stream, TraceVerbose,
                 "Registering a close handler for connection %p, to peer %d\n",
                 reader->Connections[peer].CMconn, peer);
             CMconn_register_close_handler(reader->Connections[peer].CMconn,
@@ -623,13 +624,13 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
             if (i == 0)
             {
                 /* failure awareness for reader rank */
-                CP_verbose(reader->ParentStream,
+                CP_verbose(reader->ParentStream, TraceVerbose,
                            "Sending peer setup to rank %d\n", peer);
                 SendPeerSetupMsg(reader, peer, reader->ParentStream->Rank);
             }
             else
             {
-                CP_verbose(reader->ParentStream,
+                CP_verbose(reader->ParentStream, TraceVerbose,
                            "Sending peer setup to rank %d\n", peer);
                 /* failure awareness for reader rank */
                 SendPeerSetupMsg(reader, peer, -1);
@@ -651,7 +652,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
                 usleep(WriterRank *
                        reader->ParentStream->ConnectionUsleepMultiplier);
             reader->Connections[peer].CMconn =
-                CMget_conn(reader->ParentStream->CPInfo->cm,
+                CMget_conn(reader->ParentStream->CPInfo->SharedCM->cm,
                            reader->Connections[peer].ContactList);
 
             if (!reader->Connections[peer].CMconn)
@@ -670,8 +671,8 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
                                           WriterConnCloseHandler,
                                           (void *)reader);
             /* failure awareness for reader rank */
-            CP_verbose(reader->ParentStream, "Sending peer setup to rank %d\n",
-                       peer);
+            CP_verbose(reader->ParentStream, TraceVerbose,
+                       "Sending peer setup to rank %d\n", peer);
             SendPeerSetupMsg(reader, peer, reader->ParentStream->Rank);
             i++;
         }
@@ -685,7 +686,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
             if (!reader->Connections[0].CMconn)
             {
                 reader->Connections[0].CMconn =
-                    CMget_conn(reader->ParentStream->CPInfo->cm,
+                    CMget_conn(reader->ParentStream->CPInfo->SharedCM->cm,
                                reader->Connections[0].ContactList);
             }
             if (!reader->Connections[0].CMconn)
@@ -717,7 +718,7 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
     STREAM_MUTEX_LOCK(Stream);
     while (List)
     {
-        CP_verbose(Stream,
+        CP_verbose(Stream, TraceVerbose,
                    "Earliest available : Writer-side Timestep %ld "
                    "now has reference count %d, expired %d, precious %d\n",
                    List->Timestep, List->ReferenceCount, List->Expired,
@@ -741,7 +742,7 @@ static void UntagPreciousTimesteps(SstStream Stream)
     {
         if (List->PreciousTimestep)
         {
-            CP_verbose(Stream,
+            CP_verbose(Stream, TraceVerbose,
                        "Precious Timestep %d untagged, reference count is %d\n",
                        List->Timestep, List->ReferenceCount);
             List->PreciousTimestep = 0;
@@ -761,7 +762,7 @@ static void SubRefTimestep(SstStream Stream, long Timestep, int SetLast)
         if (List->Timestep == Timestep)
         {
             List->ReferenceCount--;
-            CP_verbose(Stream,
+            CP_verbose(Stream, TraceVerbose,
                        "SubRef : Writer-side Timestep %ld "
                        "now has reference count %d, expired %d, precious %d\n",
                        List->Timestep, List->ReferenceCount, List->Expired,
@@ -781,7 +782,8 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     long MyStartingTimestep, GlobalStartingTimestep;
     WS_ReaderInfo CP_WSR_Stream = malloc(sizeof(*CP_WSR_Stream));
 
-    CP_verbose(Stream, "Beginning writer-side reader open protocol\n");
+    CP_verbose(Stream, PerRankVerbose,
+               "Beginning writer-side reader open protocol\n");
     if (Stream->Rank == 0)
     {
         STREAM_MUTEX_LOCK(Stream);
@@ -802,7 +804,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
             &free_block);
         WriterResponseCondition = Req->Msg->WriterResponseCondition;
         conn = Req->Conn;
-        CMreturn_buffer(Stream->CPInfo->cm, Req->Msg);
+        CMreturn_buffer(Stream->CPInfo->SharedCM->cm, Req->Msg);
         free(Req);
     }
     else
@@ -865,7 +867,8 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
 
         CP_WSR_Stream->PreloadMode = SstPreloadSpeculative;
         CP_WSR_Stream->PreloadModeActiveTimestep = 0;
-        CP_verbose(Stream, "Setting SpeculativePreload ON for new reader\n");
+        CP_verbose(Stream, PerStepVerbose,
+                   "Setting SpeculativePreload ON for new reader\n");
     }
 
     int MySuccess = initWSReader(CP_WSR_Stream, ReturnData->ReaderCohortSize,
@@ -910,7 +913,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     SMPI_Allreduce(&MyStartingTimestep, &GlobalStartingTimestep, 1, SMPI_LONG,
                    SMPI_MAX, Stream->mpiComm);
 
-    CP_verbose(Stream,
+    CP_verbose(Stream, TraceVerbose,
                "My oldest timestep was %ld, global oldest timestep was %ld\n",
                MyStartingTimestep, GlobalStartingTimestep);
 
@@ -938,12 +941,12 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
                 (struct _CP_WriterInitInfo *)pointers[i]->CP_Info;
             response.DP_WriterInfo[i] = pointers[i]->DP_Info;
         }
-        STREAM_MUTEX_LOCK(Stream);
-        STREAM_MUTEX_UNLOCK(Stream);
-        if (CMwrite(conn, Stream->CPInfo->WriterResponseFormat, &response) != 1)
+        STREAM_ASSERT_UNLOCKED(Stream);
+        if (CMwrite(conn, Stream->CPInfo->SharedCM->WriterResponseFormat,
+                    &response) != 1)
         {
             CP_verbose(
-                Stream,
+                Stream, CriticalVerbose,
                 "Message failed to send to reader in participate in "
                 "reader open!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
         }
@@ -956,7 +959,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     if (pointers)
         free(pointers);
     Stream->NewReaderPresent = 1;
-    CP_verbose(Stream,
+    CP_verbose(Stream, PerStepVerbose,
                "Finish writer-side reader open protocol for reader %p, "
                "reader ready response pending\n",
                CP_WSR_Stream);
@@ -979,14 +982,23 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
             /* add the reader-rank-specific Stream identifier to each outgoing
              * message */
             *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
-            CP_verbose(Stream, "Sending a message to reader %d (%p)\n", peer,
+            CP_verbose(Stream, TraceVerbose,
+                       "Sending a message to reader %d (%p)\n", peer,
                        *RS_StreamPtr);
 
-            if ((!conn) || (CMwrite(conn, f, Msg) != 1))
+            if (conn)
             {
-                CP_verbose(Stream, "Message failed to send to reader %d (%p)\n",
-                           peer, *RS_StreamPtr);
-                CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
+                int res;
+                STREAM_MUTEX_UNLOCK(Stream);
+                res = CMwrite(conn, f, Msg);
+                STREAM_MUTEX_LOCK(Stream);
+                if (res != 1)
+                {
+                    CP_verbose(Stream, PerStepVerbose,
+                               "Message failed to send to reader %d (%p)\n",
+                               peer, *RS_StreamPtr);
+                    CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
+                }
             }
             j++;
         }
@@ -1001,13 +1013,23 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
             /* add the reader-rank-specific Stream identifier to each outgoing
              * message */
             *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
-            CP_verbose(Stream, "Sending a message to reader %d (%p)\n", peer,
+            CP_verbose(Stream, TraceVerbose,
+                       "Sending a message to reader %d (%p)\n", peer,
                        *RS_StreamPtr);
-            if ((!conn) || (CMwrite(conn, f, Msg) != 1))
+
+            if (conn)
             {
-                CP_verbose(Stream, "Message failed to send to reader %d (%p)\n",
-                           peer, *RS_StreamPtr);
-                CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
+                int res;
+                STREAM_MUTEX_UNLOCK(Stream);
+                res = CMwrite(conn, f, Msg);
+                STREAM_MUTEX_LOCK(Stream);
+                if (res != 1)
+                {
+                    CP_verbose(Stream, PerStepVerbose,
+                               "Message failed to send to reader %d (%p)\n",
+                               peer, *RS_StreamPtr);
+                    CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerFailed);
+                }
             }
         }
     }
@@ -1038,7 +1060,8 @@ static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader,
                               long Timestep)
 {
     struct _SentTimestepRec *List = Reader->SentTimestepList, *Last = NULL;
-    CP_verbose(Stream, "Reader sent timestep list %p, trying to release %ld\n",
+    CP_verbose(Stream, PerRankVerbose,
+               "Reader sent timestep list %p, trying to release %ld\n",
                Reader->SentTimestepList, Timestep);
 
     while (List)
@@ -1047,7 +1070,7 @@ static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader,
         int Freed = 0;
         struct _SentTimestepRec *Next = List->Next;
         CP_verbose(
-            Stream,
+            Stream, TraceVerbose,
             "Reader considering sent timestep %ld,trying to release %ld\n",
             List->Timestep, Timestep);
         if (List->Timestep == Timestep)
@@ -1086,16 +1109,18 @@ static void DerefAllSentTimesteps(SstStream Stream, WS_ReaderInfo Reader)
 {
     CPTimestepList List = Stream->QueuedTimesteps;
 
-    CP_verbose(Stream, "Dereferencing all timesteps sent to reader %p\n",
-               Reader);
+    STREAM_ASSERT_LOCKED(Stream);
+    CP_verbose(Stream, PerRankVerbose,
+               "Dereferencing all timesteps sent to reader %p\n", Reader);
     while (List)
     {
         CPTimestepList Next = List->Next;
-        CP_verbose(Stream, "Checking on timestep %d\n", List->Timestep);
+        CP_verbose(Stream, TraceVerbose, "Checking on timestep %d\n",
+                   List->Timestep);
         DerefSentTimestep(Stream, Reader, List->Timestep);
         List = Next;
     }
-    CP_verbose(Stream, "DONE DEREFERENCING\n");
+    CP_verbose(Stream, PerRankVerbose, "DONE DEREFERENCING\n");
 }
 
 static void SendTimestepEntryToSingleReader(SstStream Stream,
@@ -1109,12 +1134,13 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
         CP_WSR_Stream->LastSentTimestep = Entry->Timestep;
         if (rank != -1)
         {
-            CP_verbose(Stream, "Sent timestep %ld to reader cohort %d\n",
+            CP_verbose(Stream, PerRankVerbose,
+                       "Sent timestep %ld to reader cohort %d\n",
                        Entry->Timestep, rank);
         }
         Entry->ReferenceCount++;
-
-        CP_verbose(Stream,
+        Entry->MetaDataSendCount++;
+        CP_verbose(Stream, PerRankVerbose,
                    "ADDING timestep %ld to sent list for reader cohort %d, "
                    "READER %p, reference count is now %d\n",
                    Entry->Timestep, rank, CP_WSR_Stream, Entry->ReferenceCount);
@@ -1125,7 +1151,7 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
             (CP_WSR_Stream->PreloadMode != SstPreloadNone))
         {
             PMode = CP_WSR_Stream->PreloadMode;
-            CP_verbose(Stream,
+            CP_verbose(Stream, PerStepVerbose,
                        "PRELOADMODE for timestep %ld non-default for reader , "
                        "active at timestep %ld, mode %d\n",
                        Entry->Timestep,
@@ -1140,9 +1166,11 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
 
         Entry->Msg->PreloadMode = PMode;
         STREAM_MUTEX_LOCK(Stream);
-        sendOneToWSRCohort(CP_WSR_Stream,
-                           Stream->CPInfo->DeliverTimestepMetadataFormat,
-                           Entry->Msg, &Entry->Msg->RS_Stream);
+        if (CP_WSR_Stream->ReaderStatus == Established)
+            sendOneToWSRCohort(
+                CP_WSR_Stream,
+                Stream->CPInfo->SharedCM->DeliverTimestepMetadataFormat,
+                Entry->Msg, &Entry->Msg->RS_Stream);
     }
 }
 
@@ -1162,7 +1190,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
     STREAM_MUTEX_LOCK(Stream);
     while (Reader->ReaderStatus == Opening)
     {
-        CP_verbose(Stream,
+        CP_verbose(Stream, PerRankVerbose,
                    "(PID %lx, TID %lx) Waiting for Reader ready on WSR %p.\n",
                    (long)getpid(), (long)gettid(), Reader);
         STREAM_CONDITION_WAIT(Stream);
@@ -1170,7 +1198,8 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
 
     if (Reader->ReaderStatus != Established)
     {
-        CP_verbose(Stream, "Reader WSR %p, Failed during startup.\n", Reader);
+        CP_verbose(Stream, CriticalVerbose,
+                   "Reader WSR %p, Failed during startup.\n", Reader);
         STREAM_MUTEX_UNLOCK(Stream);
     }
     /* LOCK */
@@ -1190,7 +1219,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
 
     /* send any queued metadata necessary */
     Reader->OldestUnreleasedTimestep = Reader->StartingTimestep;
-    CP_verbose(Stream,
+    CP_verbose(Stream, PerStepVerbose,
                "Reader ready on WSR %p, Stream established, Starting %d "
                "LastProvided %d.\n",
                Reader, Reader->StartingTimestep, Stream->LastProvidedTimestep);
@@ -1201,7 +1230,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
         while (List)
         {
             CP_verbose(
-                Stream,
+                Stream, TraceVerbose,
                 "In send queued, trying to send TS %ld, examining TS %ld\n", TS,
                 List->Timestep);
             if (Reader->ReaderStatus != Established)
@@ -1214,7 +1243,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                 FFSFormatList SavedFormats = List->Msg->Formats;
                 if (List->Expired && !List->PreciousTimestep)
                 {
-                    CP_verbose(Stream,
+                    CP_verbose(Stream, TraceVerbose,
                                "Reader send queued skipping  TS %d, expired "
                                "and not precious\n",
                                List->Timestep, TS);
@@ -1227,7 +1256,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                     /* For first Msg, send all previous formats */
                     List->Msg->Formats = Stream->PreviousFormats;
                 }
-                CP_verbose(Stream,
+                CP_verbose(Stream, PerStepVerbose,
                            "Sending Queued TimestepMetadata for timestep %d, "
                            "reference count = %d\n",
                            TS, List->ReferenceCount);
@@ -1264,11 +1293,13 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     //    printf("WRITER main program thread PID is %lx, TID %lx in writer
     //    open\n",
     //           (long)getpid(), (long)gettid());
-    Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams);
+    Stream->DP_Interface =
+        SelectDP(&Svcs, Stream, Stream->ConfigParams, Stream->Rank);
 
     if (!Stream->DP_Interface)
     {
-        CP_verbose(Stream, "Failed to load DataPlane %s for Stream \"%s\"\n",
+        CP_verbose(Stream, CriticalVerbose,
+                   "Failed to load DataPlane %s for Stream \"%s\"\n",
                    Params->DataTransport, Filename);
         return NULL;
     }
@@ -1279,7 +1310,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     if (Stream->RendezvousReaderCount > 0)
     {
         Stream->FirstReaderCondition =
-            CMCondition_get(Stream->CPInfo->cm, NULL);
+            CMCondition_get(Stream->CPInfo->SharedCM->cm, NULL);
     }
     else
     {
@@ -1288,18 +1319,17 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 
     attr_list DPAttrs = create_attr_list();
     Stream->DP_Stream = Stream->DP_Interface->initWriter(
-        &Svcs, Stream, Stream->ConfigParams, DPAttrs);
+        &Svcs, Stream, Stream->ConfigParams, DPAttrs, &Stream->Stats);
 
     if (Stream->Rank == 0)
     {
         registerContactInfo(Filename, Stream, DPAttrs);
     }
 
-    CP_verbose(Stream, "Opening Stream \"%s\"\n", Filename);
-
     if (Stream->Rank == 0)
     {
-        CP_verbose(Stream, "Writer stream params are:\n");
+        CP_verbose(Stream, SummaryVerbose, "Opening Stream \"%s\"\n", Filename);
+        CP_verbose(Stream, SummaryVerbose, "Writer stream params are:\n");
         CP_dumpParams(Stream, Stream->ConfigParams, 0 /* writer side */);
     }
 
@@ -1312,7 +1342,8 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     while (Stream->RendezvousReaderCount > 0)
     {
         WS_ReaderInfo reader;
-        CP_verbose(Stream, "Stream \"%s\" waiting for %d readers\n", Filename,
+        CP_verbose(Stream, PerStepVerbose,
+                   "Stream \"%s\" waiting for %d readers\n", Filename,
                    Stream->RendezvousReaderCount);
         if (Stream->Rank == 0)
         {
@@ -1326,8 +1357,6 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         }
         SMPI_Barrier(Stream->mpiComm);
 
-        struct timeval Start;
-        gettimeofday(&Start, NULL);
         reader = WriterParticipateInReaderOpen(Stream);
         if (!reader)
         {
@@ -1355,9 +1384,11 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         }
         Stream->RendezvousReaderCount--;
     }
+    gettimeofday(&Stream->ValidStartTime, NULL);
     Stream->Filename = Filename;
     Stream->Status = Established;
-    CP_verbose(Stream, "Finish opening Stream \"%s\"\n", Filename);
+    CP_verbose(Stream, PerStepVerbose, "Finish opening Stream \"%s\"\n",
+               Filename);
     AddToLastCallFreeList(Stream);
     return Stream;
 }
@@ -1371,11 +1402,12 @@ void sendOneToEachReaderRank(SstStream Stream, CMFormat f, void *Msg,
         WS_ReaderInfo CP_WSR_Stream = Stream->Readers[i];
         if (CP_WSR_Stream->ReaderStatus == Established)
         {
-            CP_verbose(Stream, "Working on reader cohort %d\n", i);
+            CP_verbose(Stream, TraceVerbose, "Working on reader cohort %d\n",
+                       i);
         }
         else
         {
-            CP_verbose(Stream, "Skipping reader cohort %d\n", i);
+            CP_verbose(Stream, TraceVerbose, "Skipping reader cohort %d\n", i);
             continue;
         }
         sendOneToWSRCohort(CP_WSR_Stream, f, Msg, RS_StreamPtr);
@@ -1391,7 +1423,7 @@ static void CloseWSRStream(CManager cm, void *WSR_Stream_v)
     SstStream ParentStream = CP_WSR_Stream->ParentStream;
 
     STREAM_MUTEX_LOCK(ParentStream);
-    CP_verbose(ParentStream,
+    CP_verbose(ParentStream, PerRankVerbose,
                "Delayed task Moving Reader stream %p to status %s\n",
                CP_WSR_Stream, SSTStreamStatusStr[PeerClosed]);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
@@ -1406,7 +1438,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     if (ParentStream->Status != Established)
     {
         CP_verbose(
-            ParentStream,
+            ParentStream, TraceVerbose,
             "In PeerFailCloseWSReader, but Parent status not Established, %d\n",
             ParentStream->Status);
         return;
@@ -1414,17 +1446,20 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
 
     if (CP_WSR_Stream->ReaderStatus == NewState)
     {
-        CP_verbose(ParentStream,
+        CP_verbose(ParentStream, TraceVerbose,
                    "In PeerFailCloseWSReader, but status is already set% d\n",
                    ParentStream->Status);
         return;
     }
 
+    CP_WSR_Stream->ReaderStatus = NewState;
+    STREAM_CONDITION_SIGNAL(ParentStream);
+
     if ((NewState == PeerClosed) || (NewState == Closed) ||
         (NewState == PeerFailed))
     {
         // enter this on fail or deliberate close
-        CP_verbose(ParentStream,
+        CP_verbose(ParentStream, PerRankVerbose,
                    "In PeerFailCloseWSReader, releasing sent timesteps\n");
         DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
         CP_WSR_Stream->OldestUnreleasedTimestep =
@@ -1440,14 +1475,13 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         if (NewState == PeerFailed)
         {
             // move to fully closed state later
-            CMfree(CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0,
+            CMfree(CMadd_delayed_task(ParentStream->CPInfo->SharedCM->cm, 2, 0,
                                       CloseWSRStream, CP_WSR_Stream));
         }
     }
-    CP_verbose(ParentStream, "Moving Reader stream %p to status %s\n",
-               CP_WSR_Stream, SSTStreamStatusStr[NewState]);
-    CP_WSR_Stream->ReaderStatus = NewState;
-    STREAM_CONDITION_SIGNAL(ParentStream);
+    CP_verbose(ParentStream, PerStepVerbose,
+               "Moving Reader stream %p to status %s\n", CP_WSR_Stream,
+               SSTStreamStatusStr[NewState]);
 
     QueueMaintenance(ParentStream);
 }
@@ -1473,12 +1507,12 @@ void SstWriterClose(SstStream Stream)
     STREAM_MUTEX_LOCK(Stream);
     Msg.FinalTimestep = Stream->LastProvidedTimestep;
     CP_verbose(
-        Stream,
+        Stream, PerStepVerbose,
         "SstWriterClose, Sending Close at Timestep %d, one to each reader\n",
         Msg.FinalTimestep);
 
-    sendOneToEachReaderRank(Stream, Stream->CPInfo->WriterCloseFormat, &Msg,
-                            &Msg.RS_Stream);
+    sendOneToEachReaderRank(Stream, Stream->CPInfo->SharedCM->WriterCloseFormat,
+                            &Msg, &Msg.RS_Stream);
 
     UntagPreciousTimesteps(Stream);
     Stream->ConfigParams->ReserveQueueLimit = 0;
@@ -1507,9 +1541,9 @@ void SstWriterClose(SstStream Stream)
         }
         while (Stream->QueuedTimesteps)
         {
-            CP_verbose(Stream,
+            CP_verbose(Stream, PerStepVerbose,
                        "Waiting for timesteps to be released in WriterClose\n");
-            if (Stream->CPVerbose)
+            if (Stream->CPVerbosityLevel >= TraceVerbose)
             {
                 CPTimestepList List = Stream->QueuedTimesteps;
                 char *StringList = malloc(1);
@@ -1518,7 +1552,7 @@ void SstWriterClose(SstStream Stream)
                 while (List)
                 {
                     char tmp[20];
-                    CP_verbose(Stream,
+                    CP_verbose(Stream, TraceVerbose,
                                "IN TS WAIT, ENTRIES are Timestep %ld (exp %d, "
                                "Prec %d, Ref %d), Count now %d\n",
                                List->Timestep, List->Expired,
@@ -1530,15 +1564,16 @@ void SstWriterClose(SstStream Stream)
                     strcat(StringList, tmp);
                     List = List->Next;
                 }
-                CP_verbose(Stream, "The timesteps still queued are: %s\n",
-                           StringList);
+                CP_verbose(Stream, TraceVerbose,
+                           "The timesteps still queued are: %s\n", StringList);
                 free(StringList);
             }
-            CP_verbose(Stream, "Reader Count is %d\n", Stream->ReaderCount);
+            CP_verbose(Stream, TraceVerbose, "Reader Count is %d\n",
+                       Stream->ReaderCount);
             for (int i = 0; i < Stream->ReaderCount; i++)
             {
                 CP_verbose(
-                    Stream, "Reader [%d] status is %s\n", i,
+                    Stream, TraceVerbose, "Reader [%d] status is %s\n", i,
                     SSTStreamStatusStr[Stream->Readers[i]->ReaderStatus]);
             }
             /* NEED TO HANDLE FAILURE HERE */
@@ -1608,10 +1643,15 @@ void SstWriterClose(SstStream Stream)
     STREAM_MUTEX_UNLOCK(Stream);
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
-    if (Stream->Stats)
-        Stream->Stats->ValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
+    Stream->Stats.StreamValidTimeSecs =
+        (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
-    CP_verbose(Stream, "All timesteps are released in WriterClose\n");
+    if (Stream->CPVerbosityLevel >= (int)SummaryVerbose)
+    {
+        DoStreamSummary(Stream);
+    }
+    CP_verbose(Stream, PerStepVerbose,
+               "All timesteps are released in WriterClose\n");
 
     /*
      *  Only rank 0 removes contact info, and only when everything is closed.
@@ -1799,7 +1839,8 @@ static void ProcessReaderStatusList(SstStream Stream,
     {
         if (Stream->Readers[i]->ReaderStatus != Metadata->ReaderStatus[i])
         {
-            CP_verbose(Stream, "Adjusting reader %d status from %s to %s\n", i,
+            CP_verbose(Stream, PerRankVerbose,
+                       "Adjusting reader %d status from %s to %s\n", i,
                        SSTStreamStatusStr[Stream->Readers[i]->ReaderStatus],
                        SSTStreamStatusStr[Metadata->ReaderStatus[i]]);
             CP_PeerFailCloseWSReader(Stream->Readers[i],
@@ -1819,6 +1860,7 @@ static void ActOnTSLockStatus(SstStream Stream, long Timestep)
             (Stream->Readers[i]->CommPatternLockTimestep == -1))
         {
             struct _CommPatternLockedMsg Msg;
+            memset(&Msg, 0, sizeof(Msg));
             Stream->Readers[i]->CommPatternLockTimestep = Timestep;
             if (Stream->DP_Interface->WSRreadPatternLocked)
             {
@@ -1828,12 +1870,13 @@ static void ActOnTSLockStatus(SstStream Stream, long Timestep)
             }
             Msg.Timestep = Timestep;
             SomethingSent++;
-            sendOneToWSRCohort(Stream->Readers[i],
-                               Stream->CPInfo->CommPatternLockedFormat, &Msg,
-                               &Msg.RS_Stream);
+            sendOneToWSRCohort(
+                Stream->Readers[i],
+                Stream->CPInfo->SharedCM->CommPatternLockedFormat, &Msg,
+                &Msg.RS_Stream);
             Stream->Readers[i]->PreloadMode = SstPreloadLearned;
             Stream->Readers[i]->PreloadModeActiveTimestep = Timestep;
-            CP_verbose(Stream,
+            CP_verbose(Stream, PerStepVerbose,
                        "Setting preload mode Learned for reader %d, active at "
                        "timestep %ld\n",
                        i, Timestep);
@@ -1842,7 +1885,7 @@ static void ActOnTSLockStatus(SstStream Stream, long Timestep)
     if (SomethingSent)
     {
         CP_verbose(
-            Stream,
+            Stream, TraceVerbose,
             "Doing a barrier after notifying DP of preload mode changes\n");
         SMPI_Barrier(Stream->mpiComm);
     }
@@ -1856,7 +1899,7 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
     for (int i = 0; i < Metadata->ReleaseCount; i++)
     {
         CPTimestepList List = Stream->QueuedTimesteps;
-        CP_verbose(Stream, "Release List, TS %ld\n",
+        CP_verbose(Stream, TraceVerbose, "Release List, TS %ld\n",
                    Metadata->ReleaseList[i].Timestep);
         while (List)
         {
@@ -1876,12 +1919,12 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
                 assert(j < Stream->ReaderCount);
                 if (List->Timestep > Stream->Readers[j]->LastReleasedTimestep)
                 {
-                    CP_verbose(Stream,
+                    CP_verbose(Stream, TraceVerbose,
                                "Updating reader %d last released to %ld\n", j,
                                List->Timestep);
                     Stream->Readers[j]->LastReleasedTimestep = List->Timestep;
                 }
-                CP_verbose(Stream,
+                CP_verbose(Stream, TraceVerbose,
                            "Release List, and set ref count of timestep %ld\n",
                            Metadata->ReleaseList[i].Timestep);
                 /* per reader release here */
@@ -1920,7 +1963,7 @@ static void ProcessLockDefnsList(SstStream Stream, ReturnMetadataInfo Metadata)
         WS_ReaderInfo Reader = (WS_ReaderInfo)Stream->Readers[j];
 
         Reader->FullCommPatternLocked = 1;
-        CP_verbose(Stream, "LockDefns List, FOUND TS %ld\n",
+        CP_verbose(Stream, TraceVerbose, "LockDefns List, FOUND TS %ld\n",
                    Metadata->LockDefnsList[i].Timestep);
     }
     STREAM_MUTEX_UNLOCK(Stream);
@@ -2078,6 +2121,14 @@ extern void SstInternalProvideTimestep(
     Stream->DP_Interface->provideTimestep(&Svcs, Stream->DP_Stream, Data,
                                           LocalMetadata, Timestep,
                                           &DP_TimestepInfo);
+    if (Formats)
+    {
+        FFSFormatList tmp = Formats;
+        while (tmp)
+        {
+            tmp = tmp->Next;
+        }
+    }
     STREAM_MUTEX_LOCK(Stream);
 
     /* Md is the local contribution to MetaData */
@@ -2112,6 +2163,7 @@ extern void SstInternalProvideTimestep(
     Entry->Next = Stream->QueuedTimesteps;
     Stream->QueuedTimesteps = Entry;
     Stream->QueuedTimestepCount++;
+    Stream->Stats.TimestepsCreated++;
     /* no one waits on timesteps being added, so no condition signal to note
      * change */
 
@@ -2132,7 +2184,7 @@ extern void SstInternalProvideTimestep(
         QueueMaintenance(Stream);
         if (Stream->QueueFullPolicy == SstQueueFullDiscard)
         {
-            CP_verbose(Stream,
+            CP_verbose(Stream, TraceVerbose,
                        "Testing Discard Condition, Queued Timestep Count %d, "
                        "QueueLimit %d\n",
                        Stream->QueuedTimestepCount, Stream->QueueLimit);
@@ -2147,7 +2199,8 @@ extern void SstInternalProvideTimestep(
             while ((Stream->QueueLimit > 0) &&
                    (Stream->QueuedTimestepCount > Stream->QueueLimit))
             {
-                CP_verbose(Stream, "Blocking on QueueFull condition\n");
+                CP_verbose(Stream, PerStepVerbose,
+                           "Blocking on QueueFull condition\n");
                 STREAM_CONDITION_WAIT(Stream);
             }
         }
@@ -2238,15 +2291,15 @@ extern void SstInternalProvideTimestep(
         Msg->Metadata = NULL;
         Msg->DP_TimestepInfo = NULL;
 
-        CP_verbose(Stream,
+        CP_verbose(Stream, PerStepVerbose,
                    "Sending Empty TimestepMetadata for Discarded "
                    "timestep %d, one to each reader\n",
                    Timestep);
 
         STREAM_MUTEX_LOCK(Stream);
-        sendOneToEachReaderRank(Stream,
-                                Stream->CPInfo->DeliverTimestepMetadataFormat,
-                                Msg, &Msg->RS_Stream);
+        sendOneToEachReaderRank(
+            Stream, Stream->CPInfo->SharedCM->DeliverTimestepMetadataFormat,
+            Msg, &Msg->RS_Stream);
 
         Entry->Expired = 1;
         Entry->ReferenceCount = 0;
@@ -2256,7 +2309,7 @@ extern void SstInternalProvideTimestep(
     else
     {
 
-        CP_verbose(Stream,
+        CP_verbose(Stream, PerStepVerbose,
                    "Sending TimestepMetadata for timestep %d (ref count "
                    "%d), one to each reader\n",
                    Timestep, Entry->ReferenceCount);
@@ -2270,8 +2323,12 @@ extern void SstInternalProvideTimestep(
     while (PendingReaderCount--)
     {
         WS_ReaderInfo reader;
-        CP_verbose(Stream,
-                   "Writer side ReaderLateArrival accepting incoming reader\n");
+        if (Stream->Rank == 0)
+        {
+            CP_verbose(
+                Stream, SummaryVerbose,
+                "Writer side ReaderLateArrival accepting incoming reader\n");
+        }
         reader = WriterParticipateInReaderOpen(Stream);
         if (!reader)
         {
@@ -2335,7 +2392,8 @@ extern void SstWriterDefinitionLock(SstStream Stream, long EffectiveTimestep)
         }
     }
     STREAM_MUTEX_UNLOCK(Stream);
-    CP_verbose(Stream, "Writer-side definitions lock as of timestep %d\n",
+    CP_verbose(Stream, PerStepVerbose,
+               "Writer-side definitions lock as of timestep %d\n",
                EffectiveTimestep);
 }
 
@@ -2392,7 +2450,7 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
         return;
     }
 
-    CP_verbose(CP_WSR_Stream->ParentStream,
+    CP_verbose(CP_WSR_Stream->ParentStream, PerStepVerbose,
                "Reader Close message received for stream %p.  Setting state to "
                "PeerClosed and releasing timesteps.\n",
                CP_WSR_Stream);
@@ -2441,12 +2499,12 @@ void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *Msg_v,
     struct _ReaderActivateMsg *Msg = (struct _ReaderActivateMsg *)Msg_v;
 
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
-    CP_verbose(CP_WSR_Stream->ParentStream,
+    CP_verbose(CP_WSR_Stream->ParentStream, PerStepVerbose,
                "Reader Activate message received "
                "for Stream %p.  Setting state to "
                "Established.\n",
                CP_WSR_Stream);
-    CP_verbose(CP_WSR_Stream->ParentStream,
+    CP_verbose(CP_WSR_Stream->ParentStream, PerStepVerbose,
                "Parent stream reader count is now %d.\n",
                CP_WSR_Stream->ParentStream->ReaderCount);
     STREAM_MUTEX_LOCK(CP_WSR_Stream->ParentStream);
@@ -2477,13 +2535,14 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
             ReaderNum = i;
         }
     }
-    CP_verbose(ParentStream,
+    CP_verbose(ParentStream, TraceVerbose,
                "Received a release timestep message "
                "for timestep %d from reader cohort %d\n",
                Msg->Timestep, ReaderNum);
 
     /* decrement the reference count for the released timestep */
-    CP_verbose(ParentStream, "Got the lock in release timestep\n");
+    CP_verbose(ParentStream, TraceVerbose,
+               "Got the lock in release timestep\n");
     Reader->LastReleasedTimestep = Msg->Timestep;
     if ((ParentStream->Rank == 0) &&
         (ParentStream->ConfigParams->CPCommPattern == SstCPCommMin))
@@ -2496,13 +2555,14 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
         ParentStream->ReleaseList[ParentStream->ReleaseCount].Reader = Reader;
         ParentStream->ReleaseCount++;
     }
-    CP_verbose(ParentStream, "Doing dereference sent\n");
+    CP_verbose(ParentStream, TraceVerbose, "Doing dereference sent\n");
     DerefSentTimestep(ParentStream, Reader, Msg->Timestep);
-    CP_verbose(ParentStream, "Doing QueueMaint\n");
+    CP_verbose(ParentStream, TraceVerbose, "Doing QueueMaint\n");
     QueueMaintenance(ParentStream);
     Reader->OldestUnreleasedTimestep = Msg->Timestep + 1;
     STREAM_CONDITION_SIGNAL(ParentStream);
-    CP_verbose(ParentStream, "Releasing the lock in release timestep\n");
+    CP_verbose(ParentStream, TraceVerbose,
+               "Releasing the lock in release timestep\n");
     STREAM_MUTEX_UNLOCK(ParentStream);
     TAU_STOP_FUNC();
 }
@@ -2524,7 +2584,7 @@ extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
             ReaderNum = i;
         }
     }
-    CP_verbose(ParentStream,
+    CP_verbose(ParentStream, TraceVerbose,
                "Received a lock reader definitions message "
                "for timestep %d from reader cohort %d\n",
                Msg->Timestep, ReaderNum);

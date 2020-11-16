@@ -132,7 +132,7 @@ if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
   )
 endif()
 
-if(ADIOS2_RUN_MPMD_TESTS)
+if(ADIOS2_RUN_MPI_MPMD_TESTS)
   if(MPIEXEC_MAX_NUMPROCS GREATER 1) 
     #------------------------------------------
     #  Pipe2 InsituMPI version 
@@ -234,29 +234,15 @@ add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Write.Dump
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
-add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Write.DumpBB
-  COMMAND ${CMAKE_COMMAND}
-    -DARG1=-laD
-    -DINPUT_FILE=bb/burstbuffer-32KB.bp
-    -DOUTPUT_FILE=IOTest.BurstBuffer.1to1.BP4.Write.bpls-bb.txt
-    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-)
-
 add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Write.Validate
   COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.nproc1.BP4.Write.bpls.txt
     IOTest.BurstBuffer.1to1.BP4.Write.bpls.txt
 )
 
-add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Write.ValidateBB
-  COMMAND ${DIFF_COMMAND} -u -w
-    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.nproc1.BP4.Write.bpls.txt
-    IOTest.BurstBuffer.1to1.BP4.Write.bpls-bb.txt
-)
-
 SetupTestPipeline(
   Utils.IOTest.BurstBuffer.1to1.BP4
-  "Write;Write.Dump;Write.Validate;Write.DumpBB;Write.ValidateBB"
+  "Write;Write.Dump;Write.Validate"
   TRUE
 )
 
@@ -280,29 +266,15 @@ add_test(NAME Utils.IOTest.BurstBuffer.2to1.BP4.Write.Dump
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
-add_test(NAME Utils.IOTest.BurstBuffer.2to1.BP4.Write.DumpBB
-  COMMAND ${CMAKE_COMMAND}
-    -DARG1=-laD
-    -DINPUT_FILE=bb/burstbuffer-32KB.bp
-    -DOUTPUT_FILE=IOTest.BurstBuffer.2to1.BP4.Write.bpls-bb.txt
-    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-)
-
 add_test(NAME Utils.IOTest.BurstBuffer.2to1.BP4.Write.Validate
   COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.nproc2.BP4.Write.bpls.txt
     IOTest.BurstBuffer.2to1.BP4.Write.bpls.txt
 )
 
-add_test(NAME Utils.IOTest.BurstBuffer.2to1.BP4.Write.ValidateBB
-  COMMAND ${DIFF_COMMAND} -u -w
-    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.nproc2.BP4.Write.bpls.txt
-    IOTest.BurstBuffer.2to1.BP4.Write.bpls-bb.txt
-)
-
 SetupTestPipeline(
   Utils.IOTest.BurstBuffer.2to1.BP4
-  "Write;Write.Dump;Write.Validate;Write.DumpBB;Write.ValidateBB"
+  "Write;Write.Dump;Write.Validate"
   TRUE
 )
 
@@ -326,29 +298,46 @@ add_test(NAME Utils.IOTest.BurstBuffer.2to2.BP4.Write.Dump
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
-add_test(NAME Utils.IOTest.BurstBuffer.2to2.BP4.Write.DumpBB
-  COMMAND ${CMAKE_COMMAND}
-    -DARG1=-laD
-    -DINPUT_FILE=bb/burstbuffer-32KB.bp
-    -DOUTPUT_FILE=IOTest.BurstBuffer.2to2.BP4.Write.bpls-bb.txt
-    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-)
-
 add_test(NAME Utils.IOTest.BurstBuffer.2to2.BP4.Write.Validate
   COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.nproc2.BP4.Write.bpls.txt
     IOTest.BurstBuffer.2to2.BP4.Write.bpls.txt
 )
 
-add_test(NAME Utils.IOTest.BurstBuffer.2to2.BP4.Write.ValidateBB
+SetupTestPipeline(
+  Utils.IOTest.BurstBuffer.2to2.BP4
+  "Write;Write.Dump;Write.Validate"
+  TRUE
+)
+
+#-------------------------------------------------------
+#  BurstBuffer BP4 test nproc = 1, NO Draining to target
+#-------------------------------------------------------
+add_test(NAME Utils.IOTest.BurstBufferNoDrain.1to1.BP4.Write
+  COMMAND ${MPIEXEC_COMMAND} ${MPIEXEC_NUMPROC_FLAG} 1
+      $<TARGET_FILE:adios_iotest>
+        -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/burstbuffer-32KB.txt
+        -x ${CMAKE_CURRENT_SOURCE_DIR}/burstbuffer-nodrain-BP4-nsub1.xml -d 1 1 --strong-scaling
+)
+set_tests_properties(Utils.IOTest.BurstBufferNoDrain.1to1.BP4.Write PROPERTIES PROCESSORS 1)
+
+add_test(NAME Utils.IOTest.BurstBufferNoDrain.1to1.BP4.Write.DumpBB
+  COMMAND ${CMAKE_COMMAND}
+    -DARG1=-laD
+    -DINPUT_FILE=bb/burstbuffer-32KB.bp
+    -DOUTPUT_FILE=IOTest.BurstBufferNoDrain.1to1.BP4.Write.bpls-bb.txt
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+)
+
+add_test(NAME Utils.IOTest.BurstBufferNoDrain.1to1.BP4.Write.ValidateBB
   COMMAND ${DIFF_COMMAND} -u -w
-    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.nproc2.BP4.Write.bpls.txt
-    IOTest.BurstBuffer.2to2.BP4.Write.bpls-bb.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.BurstBuffer.nproc1.BP4.Write.bpls.txt
+    IOTest.BurstBufferNoDrain.1to1.BP4.Write.bpls-bb.txt
 )
 
 SetupTestPipeline(
-  Utils.IOTest.BurstBuffer.2to2.BP4
-  "Write;Write.Dump;Write.Validate;Write.DumpBB;Write.ValidateBB"
+  Utils.IOTest.BurstBufferNoDrain.1to1.BP4
+  "Write;Write.DumpBB;Write.ValidateBB"
   TRUE
 )
 
@@ -360,7 +349,7 @@ SetupTestPipeline(
 #-------------------------------------------------
 #  BurstBuffer BP4 streaming test nproc = 2 
 #-------------------------------------------------
-if(ADIOS2_RUN_MPMD_TESTS)
+if(ADIOS2_RUN_MPI_MPMD_TESTS AND NOT WIN32)
   add_test(NAME Utils.IOTest.BurstBuffer.1to1.BP4.Stream.Run
     COMMAND ${MPIEXEC_COMMAND} 
         ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>

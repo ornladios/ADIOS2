@@ -1,0 +1,6 @@
+sync-github-prs:
+  tags: linux
+  only:
+    - schedules
+  script:
+    - scripts/ci/scripts/github-prs-to-gitlab.sh ornladios/adios2 code.ornl.gov ecpcitest/adios2

@@ -67,9 +67,6 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -113,9 +110,7 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
         io.SetEngine("Inline");
 
         // writerID parameter makes sure the reader can find the writer.
-        io.SetParameters({{"verbose", "4"},
-                          {"writerID", fname + "_write"},
-                          {"readerID", fname + "_read"}});
+        io.SetParameter("verbose", "4");
 
         adios2::Engine inlineWriter =
             io.Open(fname + "_write", adios2::Mode::Write);
@@ -357,9 +352,6 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
     adios2::ADIOS adios;
@@ -403,9 +395,7 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
         io.SetEngine("Inline");
 
         // writerID parameter makes sure the reader can find the writer.
-        io.SetParameters({{"verbose", "4"},
-                          {"writerID", fname + "_write"},
-                          {"readerID", fname + "_read"}});
+        io.SetParameter("verbose", "4");
 
         adios2::Engine inlineWriter =
             io.Open(fname + "_write", adios2::Mode::Write);
@@ -630,12 +620,9 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -657,9 +644,7 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts)
         io.SetEngine("Inline");
 
         // writerID parameter makes sure the reader can find the writer.
-        io.SetParameters({{"verbose", "4"},
-                          {"writerID", fname + "_write"},
-                          {"readerID", fname + "_read"}});
+        io.SetParameter("verbose", "4");
 
         adios2::Engine inlineWriter =
             io.Open(fname + "_write", adios2::Mode::Write);
@@ -757,12 +742,9 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-#if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -784,9 +766,7 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
         io.SetEngine("Inline");
 
         // writerID parameter makes sure the reader can find the writer.
-        io.SetParameters({{"verbose", "4"},
-                          {"writerID", fname + "_write"},
-                          {"readerID", fname + "_read"}});
+        io.SetParameter("verbose", "4");
 
         adios2::Engine inlineWriter =
             io.Open(fname + "_write", adios2::Mode::Write);
@@ -856,6 +836,30 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
         inlineWriter.Close();
         inlineReader.Close();
     }
+}
+
+TEST_F(InlineWriteRead, IOInvariants)
+{
+#if ADIOS2_USE_MPI
+    int mpiRank = 0, mpiSize = 1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    adios2::IO io = adios.DeclareIO("TestIO");
+    io.SetEngine("Inline");
+
+    adios2::Engine inlineWriter = io.Open("writer", adios2::Mode::Write);
+    // The inline engine does not support multiple writers:
+    EXPECT_THROW(io.Open("another_writer", adios2::Mode::Write),
+                 std::exception);
+    // The inline engine does not support append mode:
+    EXPECT_THROW(io.Open("append_mode", adios2::Mode::Append), std::exception);
+    adios2::Engine inlineReader = io.Open("reader", adios2::Mode::Read);
+    // The inline engine does not support more than 2 writers or readers:
+    EXPECT_THROW(io.Open("reader2", adios2::Mode::Read), std::exception);
 }
 
 //******************************************************************************

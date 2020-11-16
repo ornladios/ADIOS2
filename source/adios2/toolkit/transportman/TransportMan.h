@@ -56,6 +56,7 @@ public:
      * @param nodeLocal true: all ranks create a directory
      */
     void MkDirsBarrier(const std::vector<std::string> &fileNames,
+                       const std::vector<Params> &parametersVector,
                        const bool nodeLocal);
 
     /**
@@ -161,9 +162,9 @@ public:
     /** Checks if all transports are closed */
     bool AllTransportsClosed() const noexcept;
 
-    void SeekToFileEnd(const int transportIndex = 0);
+    void SeekToFileEnd(const int transportIndex = -1);
 
-    void SeekToFileBegin(const int transportIndex = 0);
+    void SeekToFileBegin(const int transportIndex = -1);
 
     /**
      * Check if a file exists.

@@ -1,8 +1,6 @@
-stages:
-  - full
-
 .all-steps:
-  stage: full
+  except:
+    - schedules
   variables:
     GITLAB_SITE: "OLCF GitLab"
     CMAKE_ENV_MODULE: "cmake"

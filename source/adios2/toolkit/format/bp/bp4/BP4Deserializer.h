@@ -36,6 +36,8 @@ public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
 
+    bool m_WriterIsActive = false;
+
     /**
      * Unique constructor
      * @param comm multi-process communicator
@@ -44,9 +46,8 @@ public:
 
     ~BP4Deserializer() = default;
 
-    void ParseMetadataIndex(const BufferSTL &bufferSTL,
-                            const size_t absoluteStartPos,
-                            const bool hasHeader);
+    void ParseMetadataIndex(BufferSTL &bufferSTL, const size_t absoluteStartPos,
+                            const bool hasHeader, const bool oneStepOnly);
 
     /* Return the position in the buffer where processing ends. The processing
      * is controlled by the number of records in the Index, which may be less
@@ -175,6 +176,8 @@ public:
                     const std::vector<char> &contiguousMemory,
                     const Box<Dims> &blockBox,
                     const Box<Dims> &intersectionBox) const;
+
+    bool ReadActiveFlag(std::vector<char> &buffer);
 
     // TODO: will deprecate
     bool m_PerformedGets = false;

@@ -61,14 +61,26 @@ private:
     format::BP4Deserializer m_BP4Deserializer;
     /* transport manager for metadata file */
     transportman::TransportMan m_MDFileManager;
+    /* How many bytes of metadata have we already read in? */
+    size_t m_MDFileAlreadyReadSize = 0;
+    /* How many bytes of metadata have we already processed?
+     * It is <= m_MDFileAlreadyReadSize, at = we need to read more */
     size_t m_MDFileProcessedSize = 0;
+    /* The file position of the first byte that is currently
+     * residing in memory. Needed for skewing positions when
+     * processing metadata index.
+     */
+    size_t m_MDFileAbsolutePos = 0;
+    /* m_MDFileAbsolutePos <= m_MDFileProcessedSize <= m_MDFileAlreadyReadSize
+     */
 
     /* transport manager for managing data file(s) */
     transportman::TransportMan m_DataFileManager;
 
     /* transport manager for managing the metadata index file */
     transportman::TransportMan m_MDIndexFileManager;
-    size_t m_MDIndexFileProcessedSize = 0;
+    /* How many bytes of metadata index have we already read in? */
+    size_t m_MDIndexFileAlreadyReadSize = 0;
 
     /* transport manager for managing the active flag file */
     transportman::TransportMan m_ActiveFlagFileManager;
@@ -82,10 +94,26 @@ private:
     void Init();
     void InitTransports();
 
+    /* Sleep up to pollSeconds time if we have not reached timeoutInstant.
+     * Return true if slept
+     * return false if sleep was not needed because it was overtime
+     */
+    bool SleepOrQuit(const TimePoint &timeoutInstant,
+                     const Seconds &pollSeconds);
+    /** Open one category of files within timeout.
+     * @return: 0 = OK, 1 = timeout, 2 = error
+     * lasterrmsg contains the error message in case of error
+     */
+    size_t OpenWithTimeout(transportman::TransportMan &tm,
+                           const std::vector<std::string> &fileNames,
+                           const TimePoint &timeoutInstant,
+                           const Seconds &pollSeconds,
+                           std::string &lasterrmsg /*INOUT*/);
+
     /** Open files within timeout.
      * @return True if files are opened, False in case of timeout
      */
-    void OpenFiles(const TimePoint &timeoutInstant, const Seconds &pollSeconds,
+    void OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                    const Seconds &timeoutSeconds);
     void InitBuffer(const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                     const Seconds &timeoutSeconds);
@@ -107,6 +135,14 @@ private:
      *  It sets m_WriterIsActive.
      */
     bool CheckWriterActive();
+
+    /** Check for a step that is already in memory but haven't
+     * been processed yet.
+     *  @return true: if new step has been found and processed, false otherwise
+     *  Used by CheckForNewSteps() to get the next step from memory if there is
+     * one.
+     */
+    bool ProcessNextStepInMemory();
 
     /** Check for new steps withing timeout and only if writer is active.
      *  @return the status flag

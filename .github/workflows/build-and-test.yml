@@ -13,10 +13,12 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
-    container: ${{ matrix.container }}
-    env:
-      GH_YML_JOBNAME: ${{ matrix.jobname }}
-      GH_YML_OS: Linux
+    container:
+      image: ${{ matrix.container }}
+      options: --shm-size=1g
+      env:
+        GH_YML_JOBNAME: ${{ matrix.jobname }}
+        GH_YML_OS: Linux
 
     strategy:
       fail-fast: false
@@ -25,8 +27,7 @@ jobs:
           el7,
           el7-gnu8-ohpc,
           el7-gnu8-openmpi-ohpc,
-          suse-pgi,
-          suse-pgi-openmpi,
+          el7-gnu8-openmpi-ohpc-static,
           debian-sid,
           debian-sid-openmpi ]
         include:
@@ -36,23 +37,17 @@ jobs:
           container: ornladios/adios2:ci-el7-gnu8-ohpc
         - jobname: el7-gnu8-openmpi-ohpc
           container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
-        - jobname: suse-pgi
-          container: ornladios/adios2:ci-suse-pgi
-        - jobname: suse-pgi-openmpi
-          container: ornladios/adios2:ci-suse-pgi-openmpi
+        - jobname: el7-gnu8-openmpi-ohpc-static
+          container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
         - jobname: debian-sid
-          container: debian:sid
+          container: ornladios/adios2:ci-debian-sid
         - jobname: debian-sid-openmpi
-          container: debian:sid
+          container: ornladios/adios2:ci-debian-sid
 
     steps:
-    - name: Bootstrap
-      run: /bin/sh -c "apt-get update && apt-get dist-upgrade -y && apt-get install -y git"
-      if: contains(matrix.jobname, 'debian')
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.event.pull_request.head.sha }}
-        entrypoint: /usr/bin/sh -c
     - name: Setup
       run: scripts/ci/gh-actions/linux-setup.sh
     - name: Update
@@ -68,31 +63,23 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.container }}
-      options: --privileged
-    env:
-      GH_YML_JOBNAME: ${{ matrix.jobname }}
-      GH_YML_OS: Linux
+      options: --privileged --shm-size=1g
+      env:
+        GH_YML_JOBNAME: ${{ matrix.jobname }}
+        GH_YML_OS: Linux
 
     strategy:
       fail-fast: false
       matrix:
         jobname: [
           power8-el7-xl,
-          power8-el7-xl-smpi,
-          power8-el7-pgi,
-          power8-el7-pgi-smpi ]
+          power8-el7-xl-smpi ]
         include:
         - jobname: power8-el7-xl
           container: ornladios/adios2:ci-x86_64-power8-el7-xl
           arch: ppc64le
         - jobname: power8-el7-xl-smpi
           container: ornladios/adios2:ci-x86_64-power8-el7-xl-smpi
-          arch: ppc64le
-        - jobname: power8-el7-pgi
-          container: ornladios/adios2:ci-x86_64-power8-el7-pgi
-          arch: ppc64le
-        - jobname: power8-el7-pgi-smpi
-          container: ornladios/adios2:ci-x86_64-power8-el7-pgi-smpi
           arch: ppc64le
 
     steps:
@@ -107,6 +94,46 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha }}
     - name: Setup
       run: scripts/ci/gh-actions/linux-setup.sh
+    - name: Update
+      run: scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: scripts/ci/gh-actions/run.sh build
+    - name: Test
+      run: scripts/ci/gh-actions/run.sh test
+
+  linux_spack:
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.container }}
+      options: --shm-size=1g
+      env:
+        GH_YML_JOBNAME: ${{ matrix.jobname }}
+        GH_YML_OS: Linux
+
+    strategy:
+      fail-fast: false
+      matrix:
+        jobname: [
+          el7-spack,
+          ubuntu1804-spack ]
+        include:
+        - jobname: el7-spack
+          container: ornladios/adios2:ci-el7-spack
+        - jobname: ubuntu1804-spack
+          container: ornladios/adios2:ci-ubuntu1804-spack
+   
+    defaults:
+      run:
+        shell: bash -c "source /opt/spack/share/spack/setup-env.sh && spack env activate adios2-ci && bash {0}"
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+      env:
+        PATH: /opt/spack/var/spack/environments/adios2-ci/.spack-env/view/bin:/usr/bin:/bin
     - name: Update
       run: scripts/ci/gh-actions/run.sh update
     - name: Configure

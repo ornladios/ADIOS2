@@ -37,7 +37,7 @@ CompressBlosc::CompressBlosc(const Params &parameters)
 }
 
 size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
-                               const size_t elementSize, const std::string type,
+                               const size_t elementSize, DataType type,
                                void *bufferOut, const Params &parameters,
                                Params &info) const
 {

@@ -29,6 +29,7 @@ add_library(adios2_core
   core/Variable.cpp core/Variable.tcc
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
+  core/Group.cpp core/Group.tcc
 
 #operator callback
   operator/callback/Signature1.cpp
@@ -119,7 +120,7 @@ target_include_directories(adios2_core
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
 )
-target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml_impl taustubs adios2::thirdparty::yaml-cpp)
+target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml taustubs adios2::thirdparty::yaml-cpp)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 
@@ -175,6 +176,7 @@ endif()
 
 if(ADIOS2_HAVE_DataMan)
     target_sources(adios2_core PRIVATE
+        engine/dataman/DataManMonitor.cpp
         engine/dataman/DataManReader.cpp
         engine/dataman/DataManReader.tcc
         engine/dataman/DataManWriter.cpp
@@ -316,6 +318,11 @@ if(ADIOS2_HAVE_HDF5)
     endif()
   endforeach()
 
+endif()
+
+if(ADIOS2_HAVE_IME)
+  target_sources(adios2_core PRIVATE toolkit/transport/file/FileIME.cpp)
+  target_link_libraries(adios2_core PRIVATE IME::IME)
 endif()
 
 if(ADIOS2_HAVE_MPI)

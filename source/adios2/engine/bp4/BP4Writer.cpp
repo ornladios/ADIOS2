@@ -31,8 +31,7 @@ BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("BP4Writer", io, name, mode, std::move(comm)), m_BP4Serializer(m_Comm),
   m_FileDataManager(m_Comm), m_FileMetadataManager(m_Comm),
-  m_FileMetadataIndexManager(m_Comm), m_FileActiveFlagManager(m_Comm),
-  m_FileDrainer()
+  m_FileMetadataIndexManager(m_Comm), m_FileDrainer()
 {
     TAU_SCOPED_TIMER("BP4Writer::Open");
     m_IO.m_ReadStreaming = false;
@@ -68,13 +67,13 @@ void BP4Writer::PerformPuts()
 
     for (const std::string &variableName : m_BP4Serializer.m_DeferredVariables)
     {
-        const std::string type = m_IO.InquireVariableType(variableName);
-        if (type == "compound")
+        const DataType type = m_IO.InquireVariableType(variableName);
+        if (type == DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(                               \
             variableName, "in call to PerformPuts, EndStep or Close");         \
@@ -85,6 +84,7 @@ void BP4Writer::PerformPuts()
 #undef declare_template_instantiation
     }
     m_BP4Serializer.m_DeferredVariables.clear();
+    m_BP4Serializer.m_DeferredVariablesDataSize = 0;
 }
 
 void BP4Writer::EndStep()
@@ -123,6 +123,12 @@ void BP4Writer::Flush(const int transportIndex)
 void BP4Writer::Init()
 {
     InitParameters();
+    if (m_BP4Serializer.m_Parameters.NumAggregators <
+        static_cast<unsigned int>(m_BP4Serializer.m_SizeMPI))
+    {
+        m_BP4Serializer.m_Aggregator.Init(
+            m_BP4Serializer.m_Parameters.NumAggregators, m_Comm);
+    }
     InitTransports();
     InitBPBuffer();
 }
@@ -204,13 +210,14 @@ void BP4Writer::InitTransports()
 
     /* Create the directories either on target or burst buffer if used */
     m_BP4Serializer.m_Profiler.Start("mkdir");
-    m_FileDataManager.MkDirsBarrier(m_SubStreamNames,
-                                    m_BP4Serializer.m_Parameters.NodeLocal ||
-                                        m_WriteToBB);
+    m_FileDataManager.MkDirsBarrier(
+        m_SubStreamNames, m_IO.m_TransportsParameters,
+        m_BP4Serializer.m_Parameters.NodeLocal || m_WriteToBB);
     if (m_DrainBB)
     {
         /* Create the directories on target anyway by main thread */
         m_FileDataManager.MkDirsBarrier(m_DrainSubStreamNames,
+                                        m_IO.m_TransportsParameters,
                                         m_BP4Serializer.m_Parameters.NodeLocal);
     }
     m_BP4Serializer.m_Profiler.Stop("mkdir");
@@ -244,16 +251,6 @@ void BP4Writer::InitTransports()
             m_FileMetadataManager.GetFilesBaseNames(
                 m_BBName, m_IO.m_TransportsParameters);
 
-        /* Create active flag file now to indicate a producer is active.
-         * When the index file is created, a reader might start polling on it,
-         * so the active flag should already exist. */
-        m_ActiveFlagFileNames =
-            m_BP4Serializer.GetBPActiveFlagFileNames(transportsNames);
-
-        m_FileActiveFlagManager.OpenFiles(
-            m_ActiveFlagFileNames, Mode::Write, m_IO.m_TransportsParameters,
-            m_BP4Serializer.m_Profiler.m_IsActive);
-
         m_MetadataFileNames =
             m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
 
@@ -278,13 +275,7 @@ void BP4Writer::InitTransports()
             m_DrainMetadataIndexFileNames =
                 m_BP4Serializer.GetBPMetadataIndexFileNames(
                     drainTransportNames);
-            m_DrainActiveFlagFileNames =
-                m_BP4Serializer.GetBPActiveFlagFileNames(drainTransportNames);
 
-            for (const auto &name : m_DrainActiveFlagFileNames)
-            {
-                m_FileDrainer.AddOperationOpen(name, m_OpenMode);
-            }
             for (const auto &name : m_DrainMetadataFileNames)
             {
                 m_FileDrainer.AddOperationOpen(name, m_OpenMode);
@@ -301,8 +292,6 @@ void BP4Writer::InitBPBuffer()
 {
     if (m_OpenMode == Mode::Append)
     {
-        // throw std::invalid_argument(
-        //    "ADIOS2: OpenMode Append hasn't been implemented, yet");
         // TODO: Get last pg timestep and update timestep counter in
         format::BufferSTL preMetadataIndex;
         size_t preMetadataIndexFileSize;
@@ -362,18 +351,28 @@ void BP4Writer::InitBPBuffer()
     if (m_BP4Serializer.m_PreDataFileLength == 0)
     {
         /* This is a new file.
-         * Make headers in data buffer and metadata buffer
+         * Make headers in data buffer and metadata buffer (but do not write
+         * them yet so that Open() can stay free of writing to disk)
          */
         if (m_BP4Serializer.m_RankMPI == 0)
         {
             m_BP4Serializer.MakeHeader(m_BP4Serializer.m_Metadata, "Metadata",
                                        false);
             m_BP4Serializer.MakeHeader(m_BP4Serializer.m_MetadataIndex,
-                                       "Index Table", false);
+                                       "Index Table", true);
         }
         if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
         {
             m_BP4Serializer.MakeHeader(m_BP4Serializer.m_Data, "Data", false);
+        }
+    }
+    else
+    {
+        if (m_BP4Serializer.m_RankMPI == 0)
+        {
+            // Set the flag in the header of metadata index table to 1 again
+            // to indicate a new run begins
+            UpdateActiveFlag(true);
         }
     }
 
@@ -407,6 +406,14 @@ void BP4Writer::DoClose(const int transportIndex)
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
     {
         m_FileDataManager.CloseFiles(transportIndex);
+        // Delete files from temporary storage if draining was on
+        if (m_DrainBB)
+        {
+            for (const auto &name : m_SubStreamNames)
+            {
+                m_FileDrainer.AddOperationDelete(name);
+            }
+        }
     }
 
     if (m_BP4Serializer.m_Parameters.CollectiveMetadata &&
@@ -428,17 +435,30 @@ void BP4Writer::DoClose(const int transportIndex)
 
     if (m_BP4Serializer.m_RankMPI == 0)
     {
+        // Update the active flag in index to indicate current run is over.
+        UpdateActiveFlag(false);
+
         // close metadata file
         m_FileMetadataManager.CloseFiles();
 
         // close metadata index file
         m_FileMetadataIndexManager.CloseFiles();
 
-        // Delete the active flag file to indicate current run is over.
-        m_FileActiveFlagManager.DeleteFiles();
+        // Delete metadata files from temporary storage if draining was on
         if (m_DrainBB)
         {
-            for (const auto &name : m_DrainActiveFlagFileNames)
+            for (const auto &name : m_MetadataFileNames)
+            {
+                m_FileDrainer.AddOperationDelete(name);
+            }
+            for (const auto &name : m_MetadataIndexFileNames)
+            {
+                m_FileDrainer.AddOperationDelete(name);
+            }
+            const std::vector<std::string> transportsNames =
+                m_FileDataManager.GetFilesBaseNames(
+                    m_BBName, m_IO.m_TransportsParameters);
+            for (const auto &name : transportsNames)
             {
                 m_FileDrainer.AddOperationDelete(name);
             }
@@ -457,6 +477,17 @@ void BP4Writer::WriteProfilingJSONFile()
 {
     TAU_SCOPED_TIMER("BP4Writer::WriteProfilingJSONFile");
     auto transportTypes = m_FileDataManager.GetTransportsTypes();
+
+    // find first File type output, where we can write the profile
+    int fileTransportIdx = -1;
+    for (size_t i = 0; i < transportTypes.size(); ++i)
+    {
+        if (transportTypes[i].compare(0, 4, "File") == 0)
+        {
+            fileTransportIdx = static_cast<int>(i);
+        }
+    }
+
     auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
 
     auto transportTypesMD = m_FileMetadataManager.GetTransportsTypes();
@@ -479,18 +510,39 @@ void BP4Writer::WriteProfilingJSONFile()
     if (m_BP4Serializer.m_RankMPI == 0)
     {
         // std::cout << "write profiling file!" << std::endl;
-        transport::FileFStream profilingJSONStream(m_Comm);
-        auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
-        profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
-                                 Mode::Write);
-        profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
-        profilingJSONStream.Close();
+        std::string profileFileName;
         if (m_DrainBB)
         {
             auto bpTargetNames = m_BP4Serializer.GetBPBaseNames({m_Name});
-            std::string targetProfiler(bpTargetNames[0] + "/profiling.json");
+            if (fileTransportIdx > -1)
+            {
+                profileFileName =
+                    bpTargetNames[fileTransportIdx] + "/profiling.json";
+            }
+            else
+            {
+                profileFileName = bpTargetNames[0] + "_profiling.json";
+            }
             m_FileDrainer.AddOperationWrite(
-                targetProfiler, profilingJSON.size(), profilingJSON.data());
+                profileFileName, profilingJSON.size(), profilingJSON.data());
+        }
+        else
+        {
+            transport::FileFStream profilingJSONStream(m_Comm);
+            auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
+            if (fileTransportIdx > -1)
+            {
+                profileFileName =
+                    bpBaseNames[fileTransportIdx] + "/profiling.json";
+            }
+            else
+            {
+                profileFileName = bpBaseNames[0] + "_profiling.json";
+            }
+            profilingJSONStream.Open(profileFileName, Mode::Write);
+            profilingJSONStream.Write(profilingJSON.data(),
+                                      profilingJSON.size());
+            profilingJSONStream.Close();
         }
     }
 }
@@ -513,6 +565,25 @@ void BP4Writer::PopulateMetadataIndexFileContent(
     helper::CopyToBuffer(buffer, position, &currentStepEndPos);
     helper::CopyToBuffer(buffer, position, &currentTimeStamp);
     position += 8;
+}
+
+void BP4Writer::UpdateActiveFlag(const bool active)
+{
+    const char activeChar = (active ? '\1' : '\0');
+    m_FileMetadataIndexManager.WriteFileAt(
+        &activeChar, 1, m_BP4Serializer.m_ActiveFlagPosition);
+    m_FileMetadataIndexManager.FlushFiles();
+    m_FileMetadataIndexManager.SeekToFileEnd();
+    if (m_DrainBB)
+    {
+        for (size_t i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+        {
+            m_FileDrainer.AddOperationWriteAt(
+                m_DrainMetadataIndexFileNames[i],
+                m_BP4Serializer.m_ActiveFlagPosition, 1, &activeChar);
+            m_FileDrainer.AddOperationSeekEnd(m_DrainMetadataIndexFileNames[i]);
+        }
+    }
 }
 
 void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
@@ -539,7 +610,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
         if (m_DrainBB)
         {
-            for (int i = 0; i < m_MetadataFileNames.size(); ++i)
+            for (size_t i = 0; i < m_MetadataFileNames.size(); ++i)
             {
                 m_FileDrainer.AddOperationCopy(
                     m_MetadataFileNames[i], m_DrainMetadataFileNames[i],
@@ -602,7 +673,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
         if (m_DrainBB)
         {
-            for (int i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+            for (size_t i = 0; i < m_MetadataIndexFileNames.size(); ++i)
             {
                 m_FileDrainer.AddOperationWrite(
                     m_DrainMetadataIndexFileNames[i],
@@ -643,7 +714,7 @@ void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
     m_FileDataManager.FlushFiles(transportIndex);
     if (m_DrainBB)
     {
-        for (int i = 0; i < m_SubStreamNames.size(); ++i)
+        for (size_t i = 0; i < m_SubStreamNames.size(); ++i)
         {
             m_FileDrainer.AddOperationCopy(m_SubStreamNames[i],
                                            m_DrainSubStreamNames[i], dataSize);
@@ -693,7 +764,7 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
     if (m_DrainBB)
     {
-        for (int i = 0; i < m_SubStreamNames.size(); ++i)
+        for (size_t i = 0; i < m_SubStreamNames.size(); ++i)
         {
             m_FileDrainer.AddOperationCopy(m_SubStreamNames[i],
                                            m_DrainSubStreamNames[i],
@@ -720,6 +791,11 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
+
+size_t BP4Writer::DebugGetDataBufferSize() const
+{
+    return m_BP4Serializer.DebugGetDataBufferSize();
+}
 
 } // end namespace engine
 } // end namespace core

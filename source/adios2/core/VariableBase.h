@@ -41,7 +41,7 @@ public:
     const std::string m_Name;
 
     /** primitive from <T> or compound from struct */
-    const std::string m_Type;
+    const DataType m_Type;
 
     /** Variable -> sizeof(T),
      *  VariableCompound -> from constructor sizeof(struct) */
@@ -112,7 +112,7 @@ public:
     std::set<std::string> m_PrefixedVariables;
     std::set<std::string> m_PrefixedAttributes;
 
-    VariableBase(const std::string &name, const std::string type,
+    VariableBase(const std::string &name, const DataType type,
                  const size_t elementSize, const Dims &shape, const Dims &start,
                  const Dims &count, const bool constantShape);
 

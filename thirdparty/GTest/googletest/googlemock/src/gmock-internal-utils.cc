@@ -26,8 +26,7 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Author: wan@google.com (Zhanyong Wan)
+
 
 // Google Mock - a framework for writing C++ mock classes.
 //
@@ -94,8 +93,8 @@ GTEST_API_ std::string ConvertIdentifierNameToWords(const char* id_name) {
 // use Google Mock with a testing framework other than Google Test.
 class GoogleTestFailureReporter : public FailureReporterInterface {
  public:
-  virtual void ReportFailure(FailureType type, const char* file, int line,
-                             const std::string& message) {
+  void ReportFailure(FailureType type, const char* file, int line,
+                     const std::string& message) override {
     AssertHelper(type == kFatal ?
                  TestPartResult::kFatalFailure :
                  TestPartResult::kNonFatalFailure,
@@ -124,8 +123,8 @@ GTEST_API_ FailureReporterInterface* GetFailureReporter() {
 // Protects global resources (stdout in particular) used by Log().
 static GTEST_DEFINE_STATIC_MUTEX_(g_log_mutex);
 
-// Returns true iff a log with the given severity is visible according
-// to the --gmock_verbose flag.
+// Returns true if and only if a log with the given severity is visible
+// according to the --gmock_verbose flag.
 GTEST_API_ bool LogIsVisible(LogSeverity severity) {
   if (GMOCK_FLAG(verbose) == kInfoVerbosity) {
     // Always show the log if --gmock_verbose=info.
@@ -140,7 +139,7 @@ GTEST_API_ bool LogIsVisible(LogSeverity severity) {
   }
 }
 
-// Prints the given message to stdout iff 'severity' >= the level
+// Prints the given message to stdout if and only if 'severity' >= the level
 // specified by the --gmock_verbose flag.  If stack_frames_to_skip >=
 // 0, also prints the stack trace excluding the top
 // stack_frames_to_skip frames.  In opt mode, any positive
@@ -154,9 +153,6 @@ GTEST_API_ void Log(LogSeverity severity, const std::string& message,
 
   // Ensures that logs from different threads don't interleave.
   MutexLock l(&g_log_mutex);
-
-  // "using ::std::cout;" doesn't work with Symbian's STLport, where cout is a
-  // macro.
 
   if (severity == kWarning) {
     // Prints a GMOCK WARNING marker to make the warnings easily searchable.
@@ -188,7 +184,9 @@ GTEST_API_ void Log(LogSeverity severity, const std::string& message,
   std::cout << ::std::flush;
 }
 
-void IllegalDoDefault(const char* file, int line) {
+GTEST_API_ WithoutMatchers GetWithoutMatchers() { return WithoutMatchers(); }
+
+GTEST_API_ void IllegalDoDefault(const char* file, int line) {
   internal::Assert(
       false, file, line,
       "You are using DoDefault() inside a composite action like "

@@ -302,7 +302,13 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         engine.Get(var_time, (int64_t *)&write_time);
         engine.EndStep();
 
-        EXPECT_EQ(validateCommonTestData(myStart, myLength, t, !var_c32), 0);
+        int result = validateCommonTestData(myStart, myLength, t, !var_c32);
+        if (result != 0)
+        {
+            std::cout << "Read Data Validation failed on node " << mpiRank
+                      << " timestep " << t << std::endl;
+        }
+        EXPECT_EQ(result, 0);
         write_times.push_back(write_time);
         ++t;
     }

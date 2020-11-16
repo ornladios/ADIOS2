@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+
 import argparse
 from os.path import basename, exists, isdir
 import glob
@@ -37,31 +36,31 @@ def SetupArgs():
 
 
 def CheckFileName(args):
-    if (not exists(args.FILE)):
+    if not exists(args.FILE):
         print("ERROR: File " + args.FILE + " does not exist", flush=True)
         exit(1)
-    if (isdir(args.FILE)):
-        if (not args.no_indextable):
+    if isdir(args.FILE):
+        if not args.no_indextable:
             args.idxFileName = args.FILE + "/" + "md.idx"
             args.dumpIdx = True
-        if (not args.no_metadata):
+        if not args.no_metadata:
             args.metadataFileName = args.FILE + "/" + "md.[0-9]*"
             args.dumpMetadata = True
-        if (not args.no_data):
+        if not args.no_data:
             args.dataFileName = args.FILE + "/" + "data.[0-9]*"
             args.dumpData = True
         return
 
     name = basename(args.FILE)
-    if (name.startswith("data.")):
+    if name.startswith("data."):
         args.dataFileName = args.FILE
         args.dumpData = True
 
-    elif (name == "md.idx"):
+    elif name == "md.idx":
         args.idxFileName = args.FILE
         args.dumpIdx = True
 
-    elif (name.startswith("md.")):
+    elif name.startswith("md."):
         args.metadataFileName = args.FILE
         args.dumpMetadata = True
 
@@ -98,11 +97,11 @@ if __name__ == "__main__":
     CheckFileName(args)
     # print(args)
 
-    if (args.dumpIdx):
+    if args.dumpIdx:
         DumpIndexTableFile(args)
 
-    if (args.dumpMetadata):
+    if args.dumpMetadata:
         DumpMetadataFiles(args)
 
-    if (args.dumpData):
+    if args.dumpData:
         DumpDataFiles(args)

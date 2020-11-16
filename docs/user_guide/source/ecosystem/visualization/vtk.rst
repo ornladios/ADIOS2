@@ -2,25 +2,27 @@
 Using VTK and Paraview
 **********************
 
-ADIOS BP files can now be seamlessly integrated into the `Visualization Toolkit <https://vtk.org/>`_ (VTK) and `Paraview <https://www.paraview.org/>`_. Datasets can be described with an additional attribute that conforms to the `VTK XML data model formats <https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf>`_ as high-level descriptors that will allow interpretation of ADIOS 2 variables into a hierarchy understood by the VTK infrastructure. This XML data format is saved in ADIOS as either an attribute, and optionally, as an additional vtk.xml file inside file.bp.dir/vtk.xml from the default engine. For more details, see :ref:`BP3 (Default)`.
+ADIOS BP files can now be seamlessly integrated into the `Visualization Toolkit <https://vtk.org/>`_ and `Paraview <https://www.paraview.org/>`_.
+Datasets can be described with an additional attribute that conforms to the `VTK XML data model formats <https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf>`_ as high-level descriptors that will allow interpretation of ADIOS2 variables into a hierarchy understood by the VTK infrastructure.
+This XML data format is saved in ADIOS2 as either an attribute or as an additional ``vtk.xml`` file inside the ``file.bp.dir`` directory.
 
+There are currently a number of limitations:
 
-Current limitations:
-
-* Only works with MPI builds of VTK and Paraview
-* Support only one Block per ADIOS dataset
+* It only works with MPI builds of VTK and Paraview
+* Support only one block per ADIOS dataset
 * Only supports BP Files, streams are not supported
 * Currently working up to 3D (and linearized 1D) variables for scalars and vectors.
 * Image Data, vti, is supported with ADIOS2 Global Array Variables only
 * Unstructured Grid, vtu, is supported with ADIOS2 Local Arrays Variables only
  
 
-Two "VTK File" types are supported:
+Two VTK file types are supported:
 
 1. Image data (.vti)
 2. Unstructured Grid (.vtu)
 
-The main idea is to populate the above XML format contents describing the extent and the data arrays with ADIOS variables in the BP data set. The result is a more-than-compact typical VTK data file since extra information about the variable, such as dimensions and type, as they already exist in the BP data set.
+The main idea is to populate the above XML format contents describing the extent and the data arrays with ADIOS variables in the BP data set.
+The result is a more-than-compact typical VTK data file since extra information about the variable, such as dimensions and type, as they already exist in the BP data set.
 
 A typical VTK image data XML descriptor (.vti):
 
@@ -64,13 +66,14 @@ A typical VTK unstructured grid XML descriptor (.vtu):
    </VTKFile>
    
 
-In addition, VTK can interpret physical-time or output-step varying data stored with ADIOS by resusing the special "TIME" tag. This is better illustrated in the following section.
+In addition, VTK can interpret physical-time or output-step varying data stored with ADIOS by reusing the special "TIME" tag.
+This is better illustrated in the following section.
 
 
 Saving the vtk.xml data model
 -----------------------------
 
-For the full source code of the following illustration example see the `gray-scott adios2 tutorial <https://github.com/pnorbert/adiosvm/tree/master/Tutorial/gray-scott>`_
+For the full source code of the following illustration example see the `gray-scott adios2 tutorial <https://github.com/pnorbert/adiosvm/tree/master/Tutorial/gray-scott>`_.
 
 To incorporate the data model in a BP data file, the application has two options: 
 
@@ -99,7 +102,7 @@ To incorporate the data model in a BP data file, the application has two options
 
 .. tip::
 
-   C++11 users should take advantage C++11 string literals (R"( xml_here )") to simplify escaping characters in the XML.
+   C++11 users should take advantage C++11 string literals (``R"( xml_here )"``) to simplify escaping characters in the XML.
    
 The resulting bpls output should contain the "vtk.xml" attribute and the variables in the model:
 
@@ -158,14 +161,14 @@ The resulting bpls output should contain the "vtk.xml" attribute and the variabl
      </VTKFile>
 
 
-The result is that the generated BP file should be recognize by a branch of Paraview/VTK that must be built from source:
+This BP file should be recognize by Paraview:
 
 .. image:: https://i.imgur.com/ap3l9Z5.png : alt: my-picture2
 
 
 Similarly, unstructured grid (.vtu) support can be added with the limitations of using specific labels for the variable names setting the "connectivity", "vertices", and cell "types".
 
-The following example is taken from example 2 of the `MFEM product examples website <https://mfem.org/examples/>`_ using ADIOS 2:
+The following example is taken from example 2 of the `MFEM product examples website <https://mfem.org/examples/>`_ using ADIOS2:
 
 The resulting `bpls` output for unstructured grid data types: 
 
@@ -207,20 +210,3 @@ The resulting `bpls` output for unstructured grid data types:
 and resulting visualization in Paraview for different "cell" types:
 
 .. image:: https://i.imgur.com/ke1xiNh.png : alt: my-picture3
-
-Build VTK and Paraview with ADIOS 2 Support
--------------------------------------------
-
-.. note::
-
-   Currently the implementation for ADIOS 2 readers exist in VTK and Paraview nightly releases and master branches. We expect this to be part of the VTK and Paraview release cycle with their upcoming releases. Users must build from source and point to these branches until formal merge into their master branches is done.
-
-
-Paraview and its VTK dependency must be built with the following CMake options:
-
-1. `-DVTK_MODULE_ENABLE_VTK_IOADIOS2=YES`
-2. `-DVTK_USE_MPI=ON`
-3. `-DPARAVIEW_USE_MPI=ON`
-
-For comprehensive build instructions see the documentation for `VTK <https://vtk.org/>`_ (VTK) and `Paraview <https://www.paraview.org/>`_.
-

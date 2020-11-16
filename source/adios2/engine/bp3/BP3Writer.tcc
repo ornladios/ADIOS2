@@ -63,15 +63,21 @@ void BP3Writer::PutCommon(Variable<T> &variable,
 
 template <class T>
 void BP3Writer::PutSyncCommon(Variable<T> &variable,
-                              const typename Variable<T>::Info &blockInfo)
+                              const typename Variable<T>::Info &blockInfo,
+                              const bool resize)
 {
-    const size_t dataSize =
-        helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
-        m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, blockInfo.Count);
+    format::BP3Base::ResizeResult resizeResult =
+        format::BP3Base::ResizeResult::Success;
+    if (resize)
+    {
+        const size_t dataSize =
+            helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
+            m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name,
+                                                 blockInfo.Count);
 
-    const format::BP3Base::ResizeResult resizeResult =
-        m_BP3Serializer.ResizeBuffer(dataSize, "in call to variable " +
-                                                   variable.m_Name + " Put");
+        resizeResult = m_BP3Serializer.ResizeBuffer(
+            dataSize, "in call to variable " + variable.m_Name + " Put");
+    }
 
     // if first timestep Write create a new pg index or in time aggregation
     if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
@@ -133,7 +139,7 @@ void BP3Writer::PerformPutCommon(Variable<T> &variable)
         auto itSpanBlock = variable.m_BlocksSpan.find(b);
         if (itSpanBlock == variable.m_BlocksSpan.end())
         {
-            PutSyncCommon(variable, variable.m_BlocksInfo[b]);
+            PutSyncCommon(variable, variable.m_BlocksInfo[b], false);
         }
         else
         {

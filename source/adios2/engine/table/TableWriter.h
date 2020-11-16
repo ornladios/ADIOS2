@@ -49,7 +49,7 @@ private:
     struct VarInfo
     {
         Dims shape;
-        std::string type;
+        DataType type;
     };
     int m_Verbosity = 0;
     int m_Timeout = 5;

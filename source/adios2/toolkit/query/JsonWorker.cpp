@@ -94,8 +94,8 @@ void JsonWorker::ParseJson()
             throw std::ios_base::failure("No var name specified!!");
         auto varName = (varO)["name"];
         adios2::core::IO &currIO = m_SourceReader->m_IO;
-        const std::string varType = currIO.InquireVariableType(varName);
-        if (varType.size() == 0)
+        const DataType varType = currIO.InquireVariableType(varName);
+        if (varType == DataType::None)
         {
             std::cerr << "No such variable: " << varName << std::endl;
             return nullptr;

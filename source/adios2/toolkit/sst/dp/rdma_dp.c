@@ -475,7 +475,7 @@ static TimestepList GetStep(Rdma_WS_Stream Stream, long Timestep)
 static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
                                    void **ReaderContactInfoPtr,
                                    struct _SstParams *Params,
-                                   attr_list WriterContact)
+                                   attr_list WriterContact, SstStats Stats)
 {
     Rdma_RS_Stream Stream = malloc(sizeof(struct _Rdma_RS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
@@ -513,8 +513,9 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
         (strcmp(PreloadEnv, "1") == 0 || strcmp(PreloadEnv, "yes") == 0 ||
          strcmp(PreloadEnv, "Yes") == 0 || strcmp(PreloadEnv, "YES") == 0))
     {
-        Svcs->verbose(CP_Stream, "making preload available in RDMA DP based on "
-                                 "environment variable value.\n");
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "making preload available in RDMA DP based on "
+                      "environment variable value.\n");
         Stream->PreloadAvail = 1;
     }
     else
@@ -527,7 +528,8 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     if (!get_int_attr(WriterContact, attr_atom_from_string("RDMA_DRC_KEY"),
                       &attr_cred))
     {
-        Svcs->verbose(CP_Stream, "Didn't find DRC credential\n");
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "Didn't find DRC credential for Cray RDMA\n");
         return NULL;
     }
     Fabric->credential = attr_cred;
@@ -541,7 +543,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     }
     if (rc != DRC_SUCCESS)
     {
-        Svcs->verbose(CP_Stream,
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
                       "Could not access DRC credential. Last failed with %d.\n",
                       rc);
     }
@@ -550,7 +552,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     Fabric->auth_key->type = GNIX_AKT_RAW;
     Fabric->auth_key->raw.protection_key =
         drc_get_first_cookie(Fabric->drc_info);
-    Svcs->verbose(CP_Stream, "Using protection key %08x.\n",
+    Svcs->verbose(CP_Stream, "Using protection key %08x.\n", DPSummaryVerbose,
                   Fabric->auth_key->raw.protection_key);
 
 #endif /* SST_HAVE_CRAY_DRC */
@@ -558,11 +560,12 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     init_fabric(Stream->Fabric, Stream->Params);
     if (!Fabric->info)
     {
-        Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "Could not find a valid transport fabric.\n");
         return NULL;
     }
 
-    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n",
+    Svcs->verbose(CP_Stream, DPPerRankVerbose, "Fabric Parameters:\n%s\n",
                   fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     ContactInfo->Length = Fabric->info->src_addrlen;
@@ -591,14 +594,18 @@ static void RdmaReadPatternLocked(CP_Services Svcs, DP_WSR_Stream WSRStream_v,
 
     if (WS_Stream->PreloadAvail)
     {
-        Svcs->verbose(WS_Stream->CP_Stream, "read pattern is locked\n");
+        if (WS_Stream->Rank == 0)
+        {
+            Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                          "read pattern is locked\n");
+        }
         WSR_Stream->SelectLocked = EffectiveTimestep;
         WSR_Stream->Preload = 1;
     }
-    else
+    else if (WS_Stream->Rank == 0)
     {
         Svcs->verbose(
-            WS_Stream->CP_Stream,
+            WS_Stream->CP_Stream, DPSummaryVerbose,
             "RDMA dataplane is ignoring a read pattern lock notification "
             "because preloading is disabled. Enable by setting the environment "
             "variable SST_DP_PRELOAD to 'yes'\n");
@@ -613,12 +620,16 @@ static void RdmaWritePatternLocked(CP_Services Svcs, DP_RS_Stream Stream_v,
     if (Stream->PreloadAvail)
     {
         Stream->PreloadStep = EffectiveTimestep;
-        Svcs->verbose(Stream->CP_Stream, "write pattern is locked.\n");
+        if (Stream->Rank == 0)
+        {
+            Svcs->verbose(Stream->CP_Stream, DPSummaryVerbose,
+                          "write pattern is locked.\n");
+        }
     }
-    else
+    else if (Stream->Rank == 0)
     {
         Svcs->verbose(
-            Stream->CP_Stream,
+            Stream->CP_Stream, DPSummaryVerbose,
             "RDMA dataplane is ignoring a write pattern lock notification "
             "because preloading is disabled. Enable by setting the environment "
             "variable SST_DP_PRELOAD to 'yes'\n");
@@ -626,7 +637,8 @@ static void RdmaWritePatternLocked(CP_Services Svcs, DP_RS_Stream Stream_v,
 }
 
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
-                                   struct _SstParams *Params, attr_list DPAttrs)
+                                   struct _SstParams *Params, attr_list DPAttrs,
+                                   SstStats Stats)
 {
     Rdma_WS_Stream Stream = malloc(sizeof(struct _Rdma_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
@@ -645,8 +657,12 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
         (strcmp(PreloadEnv, "1") == 0 || strcmp(PreloadEnv, "yes") == 0 ||
          strcmp(PreloadEnv, "Yes") == 0 || strcmp(PreloadEnv, "YES") == 0))
     {
-        Svcs->verbose(CP_Stream, "making preload available in RDMA DP based on "
-                                 "environment variable value.\n");
+        if (Stream->Rank == 0)
+        {
+            Svcs->verbose(CP_Stream, DPSummaryVerbose,
+                          "making preload available in RDMA DP based on "
+                          "environment variable value.\n");
+        }
         Stream->PreloadAvail = 1;
     }
     else
@@ -662,14 +678,15 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
         rc = drc_acquire(&Fabric->credential, DRC_FLAGS_FLEX_CREDENTIAL);
         if (rc != DRC_SUCCESS)
         {
-            Svcs->verbose(CP_Stream,
+            Svcs->verbose(CP_Stream, DPCriticalVerbose,
                           "Could not acquire DRC credential. Failed with %d.\n",
                           rc);
             goto err_out;
         }
         else
         {
-            Svcs->verbose(CP_Stream, "DRC acquired credential id %d.\n",
+            Svcs->verbose(CP_Stream, DPTraceVerbose,
+                          "DRC acquired credential id %d.\n",
                           Fabric->credential);
         }
     }
@@ -686,7 +703,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     }
     if (rc != DRC_SUCCESS)
     {
-        Svcs->verbose(CP_Stream,
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
                       "Could not access DRC credential. Last failed with %d.\n",
                       rc);
         goto err_out;
@@ -696,7 +713,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     Fabric->auth_key->type = GNIX_AKT_RAW;
     Fabric->auth_key->raw.protection_key =
         drc_get_first_cookie(Fabric->drc_info);
-    Svcs->verbose(CP_Stream, "Using protection key %08x.\n",
+    Svcs->verbose(CP_Stream, DPTraceVerbose, "Using protection key %08x.\n",
                   Fabric->auth_key->raw.protection_key);
     long attr_cred = Fabric->credential;
     set_long_attr(DPAttrs, attr_atom_from_string("RDMA_DRC_CRED"), attr_cred);
@@ -706,11 +723,12 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     Fabric = Stream->Fabric;
     if (!Fabric->info)
     {
-        Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Could not find a valid transport fabric.\n");
         goto err_out;
     }
 
-    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n",
+    Svcs->verbose(CP_Stream, DPTraceVerbose, "Fabric Parameters:\n%s\n",
                   fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     /*
@@ -763,7 +781,7 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
     {
         fi_av_insert(Fabric->av, providedReaderInfo[i]->Address, 1,
                      &WSR_Stream->ReaderAddr[i], 0, NULL);
-        Svcs->verbose(WS_Stream->CP_Stream,
+        Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
                       "Received contact info for RS_Stream %p, WSR Rank %d\n",
                       providedReaderInfo[i]->RS_Stream, i);
     }
@@ -848,7 +866,7 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
         fi_av_insert(Fabric->av, providedWriterInfo[i]->Address, 1,
                      &RS_Stream->WriterAddr[i], 0, NULL);
         RS_Stream->WriterRoll[i] = providedWriterInfo[i]->ReaderRollHandle;
-        Svcs->verbose(RS_Stream->CP_Stream,
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                       "Received contact info for WS_stream %p, WSR Rank %d\n",
                       RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
@@ -940,7 +958,7 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank,
     Addr = Info->Block + Offset;
 
     Svcs->verbose(
-        RS_Stream->CP_Stream,
+        RS_Stream->CP_Stream, DPTraceVerbose,
         "Remote read target is Rank %d (Offset = %zi, Length = %zi)\n", Rank,
         Offset, Length);
 
@@ -952,14 +970,14 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank,
 
     if (rc != 0)
     {
-        Svcs->verbose(RS_Stream->CP_Stream, "fi_read failed with code %d.\n",
-                      rc);
+        Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
+                      "fi_read failed with code %d.\n", rc);
         return (rc);
     }
     else
     {
 
-        Svcs->verbose(RS_Stream->CP_Stream,
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                       "Posted RDMA get for Writer Rank %d for handle %p\n",
                       Rank, (void *)ret);
         RS_Stream->PendingReads++;
@@ -1002,19 +1020,20 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     int BufferSlot;
     int WRidx;
 
-    Svcs->verbose(RS_Stream->CP_Stream,
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                   "Performing remote read of Writer Rank %d at step %d\n", Rank,
                   Timestep);
 
     if (Info)
     {
-        Svcs->verbose(RS_Stream->CP_Stream,
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                       "Block address is %p, with a key of %d\n", Info->Block,
                       Info->Key);
     }
     else
     {
-        Svcs->verbose(RS_Stream->CP_Stream, "Timestep info is null\n");
+        Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
+                      "Timestep info is null\n");
         free(ret);
         return (NULL);
     }
@@ -1044,7 +1063,7 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
             else if (ret->Pending != 1)
             {
                 Svcs->verbose(
-                    RS_Stream->CP_Stream,
+                    RS_Stream->CP_Stream, DPCriticalVerbose,
                     "rank %d, wrank %d, entry %d, buffer slot %d, bad "
                     "handle pending value.\n",
                     RS_Stream->Rank, Rank, WRidx, BufferSlot);
@@ -1052,7 +1071,7 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
         }
         else
         {
-            Svcs->verbose(RS_Stream->CP_Stream,
+            Svcs->verbose(RS_Stream->CP_Stream, DPPerRankVerbose,
                           "read patterns are fixed, but new request to rank %d "
                           "(Offset = %zi, Length = %zi \n",
                           Rank, Offset, Length);
@@ -1092,7 +1111,7 @@ static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)
         Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
-    Svcs->verbose(Stream->CP_Stream,
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                   "received notification that writer peer "
                   "%d has failed, failing any pending "
                   "requests\n",
@@ -1121,7 +1140,7 @@ static int DoPushWait(CP_Services Svcs, Rdma_RS_Stream Stream,
         rc = fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
         if (rc < 1)
         {
-            Svcs->verbose(Stream->CP_Stream,
+            Svcs->verbose(Stream->CP_Stream, DPCriticalVerbose,
                           "failure while waiting for completions (%d).\n", rc);
             return 0;
         }
@@ -1131,11 +1150,11 @@ static int DoPushWait(CP_Services Svcs, Rdma_RS_Stream Stream,
             WRidx = (CQEntry.data >> 20) & 0x3FF;
             WRank = CQEntry.data & 0x0FFFFF;
 
-            Svcs->verbose(Stream->CP_Stream,
+            Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                           "got completion for Rank %d, push request %d.\n",
                           WRank, WRidx);
             RankLog = &StepLog->RankLog[WRank];
-            Svcs->verbose(Stream->CP_Stream,
+            Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                           "CQEntry.data = %" PRIu64
                           ", BufferSlot = %d, WRank = %d, WRidx = %d\n",
                           CQEntry.data, BufferSlot, WRank, WRidx);
@@ -1153,7 +1172,7 @@ static int DoPushWait(CP_Services Svcs, Rdma_RS_Stream Stream,
                 else if (Handle_t->Pending != -1)
                 {
                     Svcs->verbose(
-                        Stream->CP_Stream,
+                        Stream->CP_Stream, DPCriticalVerbose,
                         "rank %d, wrank %d, entry %d, buffer slot %d, bad "
                         "handle pending value.\n",
                         Stream->Rank, WRank, WRidx, BufferSlot);
@@ -1166,13 +1185,13 @@ static int DoPushWait(CP_Services Svcs, Rdma_RS_Stream Stream,
             else
             {
                 Svcs->verbose(
-                    Stream->CP_Stream,
+                    Stream->CP_Stream, DPCriticalVerbose,
                     "Got push completion without a known handle...\n");
             }
         }
         else
         {
-            Svcs->verbose(Stream->CP_Stream,
+            Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                           "got completion for request with handle %p.\n",
                           CQEntry.op_context);
             Handle_t = (RdmaCompletionHandle)CQEntry.op_context;
@@ -1201,14 +1220,14 @@ static int DoPullWait(CP_Services Svcs, Rdma_RS_Stream Stream,
         rc = fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
         if (rc < 1)
         {
-            Svcs->verbose(Stream->CP_Stream,
+            Svcs->verbose(Stream->CP_Stream, DPCriticalVerbose,
                           "failure while waiting for completions (%d).\n", rc);
             return 0;
         }
         else
         {
             Svcs->verbose(
-                Stream->CP_Stream,
+                Stream->CP_Stream, DPTraceVerbose,
                 "got completion for request with handle %p (flags %li).\n",
                 CQEntry.op_context, CQEntry.flags);
             Handle_t = (RdmaCompletionHandle)CQEntry.op_context;
@@ -1234,7 +1253,8 @@ static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
     RdmaCompletionHandle Handle = (RdmaCompletionHandle)Handle_v;
     Rdma_RS_Stream Stream = Handle->CPStream;
 
-    Svcs->verbose(Stream->CP_Stream, "Rank %d, %s\n", Stream->Rank, __func__);
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Rank %d, %s\n",
+                  Stream->Rank, __func__);
 
     if (Stream->PreloadPosted && Handle->PreloadBuffer)
     {
@@ -1285,7 +1305,7 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     pthread_mutex_unlock(&ts_mutex);
     Info->Block = (uint8_t *)Data->block;
 
-    Svcs->verbose(Stream->CP_Stream,
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                   "Providing timestep data with block %p and access key %d\n",
                   Info->Block, Info->Key);
 
@@ -1302,7 +1322,8 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     RdmaBufferHandle Info;
     int i;
 
-    Svcs->verbose(Stream->CP_Stream, "Releasing timestep %ld\n", Timestep);
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Releasing timestep %ld\n",
+                  Timestep);
 
     pthread_mutex_lock(&ts_mutex);
     while ((*List) && (*List)->Timestep != Timestep)
@@ -1316,7 +1337,7 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
          * Shouldn't ever get here because we should never release a
          * timestep that we don't have.
          */
-        Svcs->verbose(Stream->CP_Stream,
+        Svcs->verbose(Stream->CP_Stream, DPCriticalVerbose,
                       "Failed to release Timestep %ld, not found\n", Timestep);
         assert(0);
     }
@@ -1359,12 +1380,14 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     RdmaStepLogEntry StepLog = RS_Stream->StepLog;
     RdmaStepLogEntry tStepLog;
 
-    fprintf(stdout,
-            "Reader Rank %d: %li early reads of %li total reads (where preload "
-            "was possible.)\n",
-            RS_Stream->Rank, RS_Stream->EarlyReads, RS_Stream->TotalReads);
+    Svcs->verbose(
+        RS_Stream->CP_Stream, DPSummaryVerbose,
+        "Reader Rank %d: %li early reads of %li total reads (where preload "
+        "was possible.)\n",
+        RS_Stream->Rank, RS_Stream->EarlyReads, RS_Stream->TotalReads);
 
-    Svcs->verbose(RS_Stream->CP_Stream, "Tearing down RDMA state on reader.\n");
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                  "Tearing down RDMA state on reader.\n");
     if (RS_Stream->Fabric)
     {
         fini_fabric(RS_Stream->Fabric);
@@ -1467,7 +1490,8 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
     Credential = WS_Stream->Fabric->credential;
 #endif /* SST_HAVE_CRAY_DRC */
 
-    Svcs->verbose(WS_Stream->CP_Stream, "Tearing down RDMA state on writer.\n");
+    Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                  "Tearing down RDMA state on writer.\n");
     if (WS_Stream->Fabric)
     {
         fini_fabric(WS_Stream->Fabric);
@@ -1570,7 +1594,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
 
     if (!info)
     {
-        Svcs->verbose(CP_Stream,
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
                       "RDMA Dataplane could not find any viable fabrics.\n");
     }
 
@@ -1584,7 +1608,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
         domain_name = info->domain_attr->name;
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
-            Svcs->verbose(CP_Stream,
+            Svcs->verbose(CP_Stream, DPPerStepVerbose,
                           "RDMA Dataplane found the requested "
                           "interface %s, provider type %s.\n",
                           ifname, prov_name);
@@ -1595,7 +1619,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
             strstr(prov_name, "gni") || strstr(prov_name, "psm2"))
         {
 
-            Svcs->verbose(CP_Stream,
+            Svcs->verbose(CP_Stream, DPPerStepVerbose,
                           "RDMA Dataplane sees interface %s, "
                           "provider type %s, which should work.\n",
                           domain_name, prov_name);
@@ -1607,7 +1631,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     if (Ret == -1)
     {
         Svcs->verbose(
-            CP_Stream,
+            CP_Stream, DPPerStepVerbose,
             "RDMA Dataplane could not find an RDMA-compatible fabric.\n");
     }
 
@@ -1617,7 +1641,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     }
 
     Svcs->verbose(
-        CP_Stream,
+        CP_Stream, DPPerStepVerbose,
         "RDMA Dataplane evaluating viability, returning priority %d\n", Ret);
     return Ret;
 }
@@ -1628,7 +1652,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
  */
 static void RdmaUnGetPriority(CP_Services Svcs, void *CP_Stream)
 {
-    Svcs->verbose(CP_Stream, "RDMA Dataplane unloading\n");
+    Svcs->verbose(CP_Stream, DPPerStepVerbose, "RDMA Dataplane unloading\n");
 }
 
 static void PushData(CP_Services Svcs, Rdma_WSR_Stream Stream,
@@ -1655,7 +1679,7 @@ static void PushData(CP_Services Svcs, Rdma_WSR_Stream Stream,
             uint64_t Data = ((uint64_t)i << 20) | WS_Stream->Rank;
             Data |= BufferSlot << 31;
             Data &= 0xFFFFFFFF;
-            Svcs->verbose(WS_Stream->CP_Stream,
+            Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
                           "Sending Data = %" PRIu64
                           " ; BufferSlot = %d, Rank = %d, Entry = %d\n",
                           Data, BufferSlot, WS_Stream->Rank, i);
@@ -1671,7 +1695,7 @@ static void PushData(CP_Services Svcs, Rdma_WSR_Stream Stream,
             } while (rc == -EAGAIN);
             if (rc != 0)
             {
-                Svcs->verbose(WS_Stream->CP_Stream,
+                Svcs->verbose(WS_Stream->CP_Stream, DPCriticalVerbose,
                               "fi_read failed with code %d.\n", rc);
             }
         }
@@ -1693,7 +1717,8 @@ static void RdmaReaderRegisterTimestep(CP_Services Svcs,
         WS_Stream->DefLocked = Timestep;
         if (WSR_Stream->SelectLocked >= 0)
         {
-            Svcs->verbose(WS_Stream->CP_Stream, "enabling preload.\n");
+            Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                          "enabling preload.\n");
             WSR_Stream->Preload = 1;
         }
     }
@@ -1733,7 +1758,8 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
     int rc;
     int i, j;
 
-    Svcs->verbose(Stream->CP_Stream, "rank %d: %s\n", Stream->Rank, __func__);
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "rank %d: %s\n",
+                  Stream->Rank, __func__);
 
     StepLog = Stream->StepLog;
     while (StepLog)
@@ -1746,8 +1772,9 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
     }
     if (!StepLog)
     {
-        Svcs->verbose(Stream->CP_Stream, "trying to post preload data for a "
-                                         "timestep with no access history.");
+        Svcs->verbose(Stream->CP_Stream, DPCriticalVerbose,
+                      "trying to post preload data for a "
+                      "timestep with no access history.");
         return;
     }
 
@@ -1783,8 +1810,8 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
                          Stream->rbdesc, FI_ADDR_UNSPEC, Fabric->ctx);
             if (rc)
             {
-                Svcs->verbose(Stream->CP_Stream, "Rank %d, fi_recv failed.\n",
-                              Stream->Rank);
+                Svcs->verbose(Stream->CP_Stream, DPCriticalVerbose,
+                              "Rank %d, fi_recv failed.\n", Stream->Rank);
             }
             RecvBuffer += DP_DATA_RECV_SIZE;
         }
@@ -1844,7 +1871,7 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
         }
         else
         {
-            Svcs->verbose(Stream->CP_Stream,
+            Svcs->verbose(Stream->CP_Stream, DPCriticalVerbose,
                           "got unexpected completion while posting preload "
                           "pattern. This is probably an error.\n");
         }
@@ -1942,7 +1969,7 @@ static void PullSelection(CP_Services Svcs, Rdma_WSR_Stream Stream)
         else
         {
             Svcs->verbose(
-                WS_Stream->CP_Stream,
+                WS_Stream->CP_Stream, DPCriticalVerbose,
                 "got unexpected completion while fetching preload patterns."
                 " This is probably an error.\n");
         }
@@ -1977,7 +2004,7 @@ static void CompletePush(CP_Services Svcs, Rdma_WSR_Stream Stream,
             }
             else
             {
-                Svcs->verbose(WS_Stream->CP_Stream,
+                Svcs->verbose(WS_Stream->CP_Stream, DPCriticalVerbose,
                               "while completing step %d, saw completion notice "
                               "for step %d.\n",
                               Step->Timestep, CQTimestep);
@@ -1986,7 +2013,7 @@ static void CompletePush(CP_Services Svcs, Rdma_WSR_Stream Stream,
 
                 if (!CQStep)
                 {
-                    Svcs->verbose(WS_Stream->CP_Stream,
+                    Svcs->verbose(WS_Stream->CP_Stream, DPCriticalVerbose,
                                   "received completion for step %d, which we "
                                   "don't know about.\n",
                                   CQTimestep);
@@ -1996,7 +2023,7 @@ static void CompletePush(CP_Services Svcs, Rdma_WSR_Stream Stream,
         }
         else
         {
-            Svcs->verbose(WS_Stream->CP_Stream,
+            Svcs->verbose(WS_Stream->CP_Stream, DPCriticalVerbose,
                           "while waiting for push to complete, saw an unknown "
                           "completion. This is probably an error.\n");
         }
@@ -2031,7 +2058,7 @@ static void RdmaReleaseTimestepPerReader(CP_Services Svcs,
                     if (Stream->PreloadUsed[Step->Timestep & 1] == 1)
                     {
                         Svcs->verbose(
-                            WS_Stream->CP_Stream,
+                            WS_Stream->CP_Stream, DPPerStepVerbose,
                             "rank %d, RX preload buffers full, deferring"
                             " preload of step %li.\n",
                             WS_Stream->Rank, Step->Timestep);
@@ -2069,7 +2096,6 @@ static void RdmaReleaseTimestepPerReader(CP_Services Svcs,
 
 extern NO_SANITIZE_THREAD CP_DP_Interface LoadRdmaDP()
 {
-    memset(&RdmaDPInterface, 0, sizeof(RdmaDPInterface));
     RdmaDPInterface.ReaderContactFormats = RdmaReaderContactStructs;
     RdmaDPInterface.WriterContactFormats = RdmaWriterContactStructs;
     RdmaDPInterface.TimestepInfoFormats = RdmaBufferHandleStructs;
@@ -2087,6 +2113,7 @@ extern NO_SANITIZE_THREAD CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.WSRreadPatternLocked = RdmaReadPatternLocked;
     RdmaDPInterface.RSreadPatternLocked = RdmaWritePatternLocked;
     RdmaDPInterface.RSReleaseTimestep = RdmaReaderReleaseTimestep;
+    RdmaDPInterface.timestepArrived = NULL;
     RdmaDPInterface.destroyReader = RdmaDestroyReader;
     RdmaDPInterface.destroyWriter = RdmaDestroyWriter;
     RdmaDPInterface.destroyWriterPerReader = RdmaDestroyWriterPerReader;

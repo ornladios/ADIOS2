@@ -28,7 +28,7 @@ namespace adios2
 namespace core
 {
 
-VariableBase::VariableBase(const std::string &name, const std::string type,
+VariableBase::VariableBase(const std::string &name, const DataType type,
                            const size_t elementSize, const Dims &shape,
                            const Dims &start, const Dims &count,
                            const bool constantDims)
@@ -45,7 +45,7 @@ size_t VariableBase::TotalSize() const noexcept
 
 void VariableBase::SetShape(const adios2::Dims &shape)
 {
-    if (m_Type == helper::GetType<std::string>())
+    if (m_Type == helper::GetDataType<std::string>())
     {
         throw std::invalid_argument("ERROR: string variable " + m_Name +
                                     " is always LocalValue, can't change "
@@ -87,7 +87,7 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
     const Dims &start = boxDims.first;
     const Dims &count = boxDims.second;
 
-    if (m_Type == helper::GetType<std::string>() &&
+    if (m_Type == helper::GetDataType<std::string>() &&
         m_ShapeID != ShapeID::GlobalArray)
     {
         throw std::invalid_argument("ERROR: string variable " + m_Name +
@@ -304,24 +304,18 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
             return;
         }
 
-        auto itAttribute = io.m_Attributes.find(attributeName);
-        const std::string type = itAttribute->second.first;
+        auto itAttribute = io.GetAttributes().find(attributeName);
 
         const std::string key =
             fullNameKeys ? attributeName : attributeName.substr(prefix.size());
 
-        if (type == "compound")
+        if (itAttribute->second->m_Type == DataType::Compound)
         {
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        Attribute<T> &attribute =                                              \
-            io.GetAttributeMap<T>().at(itAttribute->second.second);            \
-        attributesInfo[key] = attribute.GetInfo();                             \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+        else
+        {
+            attributesInfo[key] = itAttribute->second->GetInfo();
+        }
     };
 
     // BODY OF FUNCTION STARTS HERE
@@ -339,7 +333,7 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
     }
     else
     { // get prefixed attributes on-the-fly (expensive)
-        for (const auto &attributePair : io.m_Attributes)
+        for (const auto &attributePair : io.GetAttributes())
         {
             const std::string &attributeName = attributePair.first;
             lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo,
@@ -353,7 +347,7 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
 // PRIVATE
 void VariableBase::InitShapeType()
 {
-    if (m_Type == helper::GetType<std::string>())
+    if (m_Type == helper::GetDataType<std::string>())
     {
         if (m_Shape.empty())
         {
@@ -521,12 +515,12 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
 
 Dims VariableBase::GetShape(const size_t step)
 {
-    if (m_Type == "compound")
+    if (m_Type == DataType::Compound)
     {
         // not supported
     }
 #define declare_template_instantiation(T)                                      \
-    else if (m_Type == helper::GetType<T>())                                   \
+    else if (m_Type == helper::GetDataType<T>())                               \
     {                                                                          \
         Variable<T> *variable = dynamic_cast<Variable<T> *>(this);             \
         m_Shape = variable->Shape(step);                                       \

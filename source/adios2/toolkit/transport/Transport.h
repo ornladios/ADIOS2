@@ -74,6 +74,12 @@ public:
     virtual void SetBuffer(char *buffer, size_t size);
 
     /**
+     * Set transport parameters
+     * @param parameters transport parameters to set
+     */
+    virtual void SetParameters(const Params &parameters);
+
+    /**
      * Writes to transport. Note that size is non-const due to the nature of
      * underlying transport libraries
      * @param buffer raw data to be written

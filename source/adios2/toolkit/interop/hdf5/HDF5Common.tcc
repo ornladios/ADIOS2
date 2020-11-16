@@ -95,6 +95,18 @@ void HDF5Common::GetHDF5SpaceSpec(const core::Variable<T> &variable,
             offset.push_back(0);
         }
     }
+
+    if (dimSize <= 1)
+        return;
+    if (m_OrderByC)
+        return;
+
+    for (int i = 0; i < dimSize / 2; ++i)
+    {
+        std::swap(dimsf[i], dimsf[dimSize - 1 - i]);
+        std::swap(count[i], count[dimSize - 1 - i]);
+        std::swap(offset[i], offset[dimSize - 1 - i]);
+    }
 }
 
 template <class T>

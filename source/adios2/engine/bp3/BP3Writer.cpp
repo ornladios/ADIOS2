@@ -62,13 +62,13 @@ void BP3Writer::PerformPuts()
 
     for (const std::string &variableName : m_BP3Serializer.m_DeferredVariables)
     {
-        const std::string type = m_IO.InquireVariableType(variableName);
-        if (type == "compound")
+        const DataType type = m_IO.InquireVariableType(variableName);
+        if (type == DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(                               \
             variableName, "in call to PerformPuts, EndStep or Close");         \
@@ -79,6 +79,7 @@ void BP3Writer::PerformPuts()
 #undef declare_template_instantiation
     }
     m_BP3Serializer.m_DeferredVariables.clear();
+    m_BP3Serializer.m_DeferredVariablesDataSize = 0;
 }
 
 void BP3Writer::EndStep()
@@ -117,6 +118,12 @@ void BP3Writer::Flush(const int transportIndex)
 void BP3Writer::Init()
 {
     InitParameters();
+    if (m_BP3Serializer.m_Parameters.NumAggregators <
+        static_cast<unsigned int>(m_BP3Serializer.m_SizeMPI))
+    {
+        m_BP3Serializer.m_Aggregator.Init(
+            m_BP3Serializer.m_Parameters.NumAggregators, m_Comm);
+    }
     InitTransports();
     InitBPBuffer();
 }
@@ -180,6 +187,7 @@ void BP3Writer::InitTransports()
 
     m_BP3Serializer.m_Profiler.Start("mkdir");
     m_FileDataManager.MkDirsBarrier(bpSubStreamNames,
+                                    m_IO.m_TransportsParameters,
                                     m_BP3Serializer.m_Parameters.NodeLocal);
     m_BP3Serializer.m_Profiler.Stop("mkdir");
 
@@ -202,8 +210,9 @@ void BP3Writer::InitBPBuffer()
 {
     if (m_OpenMode == Mode::Append)
     {
-        throw std::invalid_argument(
-            "ADIOS2: OpenMode Append hasn't been implemented, yet");
+        throw std::invalid_argument("ADIOS2: Mode::Append is only available in "
+                                    "BP4; it is not implemented "
+                                    "for BP3 files.");
         // TODO: Get last pg timestep and update timestep counter in
     }
     else
@@ -260,6 +269,17 @@ void BP3Writer::WriteProfilingJSONFile()
 {
     TAU_SCOPED_TIMER("BP3Writer::WriteProfilingJSONFile");
     auto transportTypes = m_FileDataManager.GetTransportsTypes();
+
+    // find first File type output, where we can write the profile
+    int fileTransportIdx = -1;
+    for (size_t i = 0; i < transportTypes.size(); ++i)
+    {
+        if (transportTypes[i].compare(0, 4, "File") == 0)
+        {
+            fileTransportIdx = static_cast<int>(i);
+        }
+    }
+
     auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
 
     auto transportTypesMD = m_FileMetadataManager.GetTransportsTypes();
@@ -282,9 +302,24 @@ void BP3Writer::WriteProfilingJSONFile()
     if (m_BP3Serializer.m_RankMPI == 0)
     {
         transport::FileFStream profilingJSONStream(m_Comm);
-        auto bpBaseNames = m_BP3Serializer.GetBPBaseNames({m_Name});
-        profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
-                                 Mode::Write);
+        std::string profileFileName;
+        if (fileTransportIdx > -1)
+        {
+            // write profile to <filename.bp>.dir/profiling.json
+            auto bpBaseNames = m_BP3Serializer.GetBPBaseNames({m_Name});
+            profileFileName = bpBaseNames[fileTransportIdx] + "/profiling.json";
+        }
+        else
+        {
+            // write profile to <filename.bp>_profiling.json
+            auto transportsNames = m_FileMetadataManager.GetFilesBaseNames(
+                m_Name, m_IO.m_TransportsParameters);
+
+            auto bpMetadataFileNames =
+                m_BP3Serializer.GetBPMetadataFileNames(transportsNames);
+            profileFileName = bpMetadataFileNames[0] + "_profiling.json";
+        }
+        profilingJSONStream.Open(profileFileName, Mode::Write);
         profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
         profilingJSONStream.Close();
     }
@@ -413,6 +448,10 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
+size_t BP3Writer::DebugGetDataBufferSize() const
+{
+    return m_BP3Serializer.DebugGetDataBufferSize();
+}
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

@@ -47,6 +47,8 @@ public:
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
+    size_t DebugGetDataBufferSize() const final;
+
 private:
     /** Single object controlling BP buffering */
     format::BP4Serializer m_BP4Serializer;
@@ -59,8 +61,6 @@ private:
 
     /* transport manager for managing the metadata index file */
     transportman::TransportMan m_FileMetadataIndexManager;
-
-    transportman::TransportMan m_FileActiveFlagManager;
 
     /*
      *  Burst buffer variables
@@ -87,7 +87,6 @@ private:
     std::vector<std::string> m_MetadataIndexFileNames;
     std::vector<std::string> m_DrainMetadataIndexFileNames;
     std::vector<std::string> m_ActiveFlagFileNames;
-    std::vector<std::string> m_DrainActiveFlagFileNames;
 
     void Init() final;
 
@@ -118,7 +117,8 @@ private:
 
     template <class T>
     void PutSyncCommon(Variable<T> &variable,
-                       const typename Variable<T>::Info &blockInfo);
+                       const typename Variable<T>::Info &blockInfo,
+                       const bool resize = true);
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *data);
@@ -136,6 +136,8 @@ private:
         const uint64_t mpirank, const uint64_t pgIndexStart,
         const uint64_t variablesIndexStart, const uint64_t attributesIndexStart,
         const uint64_t currentStepEndPos, const uint64_t currentTimeStamp);
+
+    void UpdateActiveFlag(const bool active);
 
     void WriteCollectiveMetadataFile(const bool isFinal = false);
 

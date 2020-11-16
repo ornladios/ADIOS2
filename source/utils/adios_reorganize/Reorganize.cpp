@@ -194,8 +194,8 @@ void Reorganize::Run()
         }
 
         curr_step = static_cast<int>(rStream.CurrentStep());
-        const core::DataMap &variables = io.GetVariablesDataMap();
-        const core::DataMap &attributes = io.GetAttributesDataMap();
+        const core::VarMap &variables = io.GetVariables();
+        const core::AttrMap &attributes = io.GetAttributes();
 
         print0("____________________\n\nFile info:");
         print0("  current step:   ", curr_step);
@@ -480,8 +480,8 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
 }
 
 int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
-                                const core::DataMap &variables,
-                                const core::DataMap &attributes, int step)
+                                const core::VarMap &variables,
+                                const core::AttrMap &attributes, int step)
 {
     int retval = 0;
 
@@ -494,17 +494,17 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
     for (const auto &variablePair : variables)
     {
         const std::string &name(variablePair.first);
-        const std::string &type(variablePair.second.first);
+        const DataType type(variablePair.second->m_Type);
         core::VariableBase *variable = nullptr;
         print0("Get info on variable ", varidx, ": ", name);
         size_t nBlocks = 1;
 
-        if (type == "compound")
+        if (type == DataType::Compound)
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         core::Variable<T> *v = io.InquireVariable<T>(variablePair.first);      \
         if (v->m_ShapeID == adios2::ShapeID::LocalArray)                       \
@@ -526,7 +526,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
             // print variable type and dimensions
             if (!m_Rank)
             {
-                std::cout << "    " << type << " " << name;
+                std::cout << "    " << ToString(type) << " " << name;
             }
             // if (variable->GetShape().size() > 0)
             if (variable->m_ShapeID == adios2::ShapeID::GlobalArray)
@@ -608,8 +608,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
 }
 
 int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
-                          core::IO &io, const core::DataMap &variables,
-                          int step)
+                          core::IO &io, const core::VarMap &variables, int step)
 {
     int retval = 0;
 
@@ -639,13 +638,13 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 // read variable subset
                 std::cout << "rank " << m_Rank << ": Read variable " << name
                           << std::endl;
-                const std::string &type = variables.at(name).first;
-                if (type == "compound")
+                const DataType type = variables.at(name)->m_Type;
+                if (type == DataType::Compound)
                 {
                     // not supported
                 }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         varinfo[varidx].readbuf = calloc(1, varinfo[varidx].writesize);        \
         if (varinfo[varidx].count.size() == 0)                                 \
@@ -683,13 +682,13 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 // Write variable subset
                 std::cout << "rank " << m_Rank << ": Write variable " << name
                           << std::endl;
-                const std::string &type = variables.at(name).first;
-                if (type == "compound")
+                const DataType type = variables.at(name)->m_Type;
+                if (type == DataType::Compound)
                 {
                     // not supported
                 }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         if (varinfo[varidx].count.size() == 0)                                 \
         {                                                                      \

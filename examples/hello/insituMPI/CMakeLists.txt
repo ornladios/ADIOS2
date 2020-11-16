@@ -5,6 +5,10 @@
 
 if(ADIOS2_HAVE_Fortran)
   add_library(helloInsituArgs OBJECT helloInsituArgs.F90)
+  target_compile_definitions(helloInsituArgs PRIVATE
+    $<$<BOOL:${ADIOS2_HAVE_FORTRAN_F03_ARGS}>:ADIOS2_HAVE_FORTRAN_F03_ARGS>
+    $<$<BOOL:${ADIOS2_HAVE_FORTRAN_GNU_ARGS}>:ADIOS2_HAVE_FORTRAN_GNU_ARGS>
+  )
 
   add_executable(hello_insituMPIWriter_f
     helloInsituMPIWriter.f90

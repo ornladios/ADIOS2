@@ -3,21 +3,18 @@
 
 #define SSTMAGICV0 "#ADIOS2-SST v0\n"
 
-typedef struct _CP_GlobalInfo
+typedef struct StructList
+{
+    int CustomStructCount;
+    FMStructDescList *CustomStructList;
+} CP_StructList;
+
+typedef struct _CP_GlobalCMInfo
 {
     /* exchange info */
     CManager cm;
-    FFSContext ffs_c;
-    FMContext fm_c;
-    FFSTypeHandle PerRankReaderInfoFormat;
-    FFSTypeHandle CombinedReaderInfoFormat;
     CMFormat ReaderRegisterFormat;
-    FFSTypeHandle PerRankWriterInfoFormat;
-    FFSTypeHandle CombinedWriterInfoFormat;
     CMFormat WriterResponseFormat;
-    FFSTypeHandle PerRankMetadataFormat;
-    FFSTypeHandle TimestepDistributionFormat;
-    FFSTypeHandle ReturnMetadataInfoFormat;
     CMFormat DeliverTimestepMetadataFormat;
     CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
@@ -26,11 +23,25 @@ typedef struct _CP_GlobalInfo
     CMFormat CommPatternLockedFormat;
     CMFormat WriterCloseFormat;
     CMFormat ReaderCloseFormat;
-    int CustomStructCount;
-    FMStructDescList *CustomStructList;
     int LastCallFreeCount;
     void **LastCallFreeList;
-} * CP_GlobalInfo;
+    struct StructList CustomStructs;
+} * CP_GlobalCMInfo;
+
+typedef struct _CP_Info
+{
+    CP_GlobalCMInfo SharedCM;
+    FFSContext ffs_c;
+    FMContext fm_c;
+    FFSTypeHandle PerRankReaderInfoFormat;
+    FFSTypeHandle CombinedReaderInfoFormat;
+    FFSTypeHandle PerRankWriterInfoFormat;
+    FFSTypeHandle CombinedWriterInfoFormat;
+    FFSTypeHandle PerRankMetadataFormat;
+    FFSTypeHandle TimestepDistributionFormat;
+    FFSTypeHandle ReturnMetadataInfoFormat;
+    struct StructList CustomStructs;
+} * CP_Info;
 
 struct _ReaderRegisterMsg;
 
@@ -105,6 +116,7 @@ typedef struct _CPTimestepEntry
     long Timestep;
     struct _SstData Data;
     struct _TimestepMetadataMsg *Msg;
+    int MetaDataSendCount;
     int ReferenceCount;
     int Expired;
     int PreciousTimestep;
@@ -121,7 +133,7 @@ typedef struct FFSFormatBlock *FFSFormatList;
 
 struct _SstStream
 {
-    CP_GlobalInfo CPInfo;
+    CP_Info CPInfo;
 
     SMPI_Comm mpiComm;
     enum StreamRole Role;
@@ -131,11 +143,12 @@ struct _SstStream
     SstRegistrationMethod RegistrationMethod;
 
     /* state */
-    int CPVerbose;
-    int DPVerbose;
+    int CPVerbosityLevel;
+    int DPVerbosityLevel;
     double OpenTimeSecs;
     struct timeval ValidStartTime;
-    SstStats Stats;
+    struct _SstStats Stats;
+    char *RanksRead;
 
     /* MPI info */
     int Rank;
@@ -247,9 +260,9 @@ struct _CP_DP_PairInfo
 struct FFSFormatBlock
 {
     char *FormatServerRep;
-    int FormatServerRepLen;
+    size_t FormatServerRepLen;
     char *FormatIDRep;
-    int FormatIDRepLen;
+    size_t FormatIDRepLen;
     struct FFSFormatBlock *Next;
 };
 
@@ -462,7 +475,7 @@ typedef struct _MetadataPlusDPInfo *MetadataPlusDPInfo;
 extern atom_t CM_TRANSPORT_ATOM;
 
 void CP_validateParams(SstStream stream, SstParams Params, int Writer);
-extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule);
+extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule);
 extern char *CP_GetContactString(SstStream s, attr_list DPAttrs);
 extern SstStream CP_newStream();
 extern void SstInternalProvideTimestep(
@@ -513,7 +526,23 @@ extern void FFSFreeMarshalData(SstStream Stream);
 extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
                           int **forwardArray, int **reverseArray);
 extern void AddToLastCallFreeList(void *Block);
-extern void CP_verbose(SstStream Stream, char *Format, ...);
+
+enum VerbosityLevel
+{
+    NoVerbose = 0,       // Generally no output (but not absolutely quiet?)
+    CriticalVerbose = 1, // Informational output for failures only
+    SummaryVerbose =
+        2, // One-time summary output containing general info (transports used,
+           // timestep count, stream duration, etc.)
+    PerStepVerbose = 3, // One-per-step info, generally from rank 0 (metadata
+                        // read, Begin/EndStep verbosity, etc.)
+    PerRankVerbose = 4, // Per-step info from each rank (for those things that
+                        // might be different per rank).
+    TraceVerbose = 5,   // All debugging available
+};
+
+extern void CP_verbose(SstStream Stream, enum VerbosityLevel Level,
+                       char *Format, ...);
 extern void CP_error(SstStream Stream, char *Format, ...);
 extern struct _CP_Services Svcs;
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
@@ -524,3 +553,4 @@ typedef void (*CPNetworkInfoFunc)(int dataID, const char *net_string,
 extern char *IPDiagString;
 extern CPNetworkInfoFunc globalNetinfoCallback;
 extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback);
+extern void DoStreamSummary(SstStream Stream);

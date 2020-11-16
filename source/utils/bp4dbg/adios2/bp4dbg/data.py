@@ -1,5 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 import numpy as np
 from os import fstat
 from .utils import *
@@ -16,7 +14,7 @@ def ReadEncodedString(f, ID, limit, lensize=2):
         print("CODING ERROR: bp4dbp_data.ReadEncodedString: "
               "lensize must be 2 or 4")
         return False, ""
-    if (namelen > limit):
+    if namelen > limit:
         print("ERROR: " + ID + " string length ({0}) is longer than the "
               "limit to stay inside the block ({1})".format(
                   namelen, limit))
@@ -31,7 +29,7 @@ def ReadEncodedStringArray(f, ID, limit, nStrings):
         # 2 bytes length + string
         # !!! String here INCLUDES Terminating \0 !!!
         namelen = np.fromfile(f, dtype=np.uint32, count=1)[0]
-        if (namelen > limit - 4):
+        if namelen > limit - 4:
             print("ERROR: " + ID + " string length ({0}) is longer than the "
                   "limit to stay inside the block ({1})".format(
                       namelen, limit - 4))
@@ -169,7 +167,7 @@ def ReadVarData(f, nElements, typeID, ldims, varLen,
     if typeID == 9:  # string type
         return ReadStringVarData(f, varLen, varsStartPosition)
     typeSize = GetTypeSize(typeID)
-    if (typeSize == 0):
+    if typeSize == 0:
         print("ERROR: Cannot process variable data block with "
               "unknown type size")
         return False
@@ -177,7 +175,7 @@ def ReadVarData(f, nElements, typeID, ldims, varLen,
     currentPosition = f.tell()
     print("      Payload offset  : {0}".format(currentPosition))
 
-    if (currentPosition + varLen > varsStartPosition + varsTotalLength):
+    if currentPosition + varLen > varsStartPosition + varsTotalLength:
         print("ERROR: Variable data block of size would reach beyond all "
               "variable blocks")
         print("VarsStartPosition = {0} varsTotalLength = {1}".format(
@@ -213,7 +211,7 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     print("      Starting offset : {0}".format(startPosition))
     # 4 bytes TAG
     tag = f.read(4)
-    if (tag != b"[VMD"):
+    if tag != b"[VMD":
         print("  Tag: " + str(tag))
         print("ERROR: VAR group does not start with [VMD")
         return False
@@ -224,8 +222,8 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     print("      Var block size  : {0} bytes (+4 for Tag)".format(vmdlen))
     expectedVarBlockLength = vmdlen + 4  # [VMD is not included in vmdlen
 
-    if (startPosition + expectedVarBlockLength >
-            varsStartPosition + varsTotalLength):
+    if startPosition + expectedVarBlockLength > \
+            varsStartPosition + varsTotalLength:
         print("ERROR: There is not enough bytes inside this PG to read "
               "this Var block")
         print("VarsStartPosition = {0} varsTotalLength = {1}".format(
@@ -299,13 +297,13 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
         # Read Local Dimensions (1 byte flag + 8 byte value)
         # Is Dimension a variable ID 1 byte, 'y' or 'n' or '\0'
         isDimensionVarID = f.read(1)
-        if (isDimensionVarID != b'y' and isDimensionVarID != b'n' and
-                isDimensionVarID != b'\0'):
+        if isDimensionVarID != b'y' and isDimensionVarID != b'n' and \
+                isDimensionVarID != b'\0':
             print(
                 "ERROR: Next byte for isDimensionVarID must be 'y' or 'n' "
                 "but it isn't = {0}".format(isDimensionVarID))
             return False
-        if (isDimensionVarID == b'\0'):
+        if isDimensionVarID == b'\0':
             isDimensionVarID = b'n'
         ldims[i] = np.fromfile(f, dtype=np.uint64, count=1)[0]
         print("           local  dim : {0}".format(ldims[i]))
@@ -313,13 +311,13 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
         # Read Global Dimensions (1 byte flag + 8 byte value)
         # Is Dimension a variable ID 1 byte, 'y' or 'n' or '\0'
         isDimensionVarID = f.read(1)
-        if (isDimensionVarID != b'y' and isDimensionVarID != b'n' and
-                isDimensionVarID != b'\0'):
+        if isDimensionVarID != b'y' and isDimensionVarID != b'n' \
+                and isDimensionVarID != b'\0':
             print(
                 "ERROR: Next byte for isDimensionVarID must be 'y' or 'n' "
                 "but it isn't = {0}".format(isDimensionVarID))
             return False
-        if (isDimensionVarID == b'\0'):
+        if isDimensionVarID == b'\0':
             isDimensionVarID = b'n'
         gdim = np.fromfile(f, dtype=np.uint64, count=1)[0]
         if i == 0 and ldims[i] == 0 and gdim == LocalValueDim:
@@ -331,13 +329,13 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
         # Read Offset Dimensions (1 byte flag + 8 byte value)
         # Is Dimension a variable ID 1 byte, 'y' or 'n' or '\0'
         isDimensionVarID = f.read(1)
-        if (isDimensionVarID != b'y' and isDimensionVarID != b'n' and
-                isDimensionVarID != b'\0'):
+        if isDimensionVarID != b'y' and isDimensionVarID != b'n' and \
+                isDimensionVarID != b'\0':
             print(
                 "ERROR: Next byte for isDimensionVarID must be 'y' or 'n' "
                 "but it isn't = {0}".format(isDimensionVarID))
             return False
-        if (isDimensionVarID == b'\0'):
+        if isDimensionVarID == b'\0':
             isDimensionVarID = b'n'
         offset = np.fromfile(f, dtype=np.uint64, count=1)[0]
         print("           offset dim : {0}".format(offset))
@@ -351,7 +349,7 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     # 1 byte length of tag
     endTagLen = np.fromfile(f, dtype=np.uint8, count=1)[0]
     tag = f.read(endTagLen)
-    if (not tag.endswith(b"VMD]")):
+    if not tag.endswith(b"VMD]"):
         print("  Tag: " + str(tag))
         print("ERROR: VAR group metadata does not end with VMD]")
         return False
@@ -382,7 +380,7 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
     print("      Starting offset : {0}".format(startPosition))
     # 4 bytes TAG
     tag = f.read(4)
-    if (tag != b"[AMD"):
+    if tag != b"[AMD":
         print("  Tag: " + str(tag))
         print("ERROR: ATTR group does not start with [AMD")
         return False
@@ -392,8 +390,8 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
     amdlen = np.fromfile(f, dtype=np.uint32, count=1)[0]
     print("      Attr block size : {0} bytes (+4 for Tag)".format(amdlen))
     expectedAttrBlockLength = amdlen + 4  # [AMD is not included in amdlen
-    if (startPosition + expectedAttrBlockLength >
-            attrsStartPosition + attrsTotalLength):
+    if startPosition + expectedAttrBlockLength > \
+            attrsStartPosition + attrsTotalLength:
         print("ERROR: There is not enough bytes inside this PG "
               "to read this Attr block")
         print("AttrsStartPosition = {0} attrsTotalLength = {1}".format(
@@ -423,7 +421,7 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
 
     # isAttrAVar 1 byte, 'y' or 'n'
     isAttrAVar = f.read(1)
-    if (isAttrAVar != b'y' and isAttrAVar != b'n'):
+    if isAttrAVar != b'y' and isAttrAVar != b'n':
         print(
             "ERROR: Next byte for isAttrAVar must be 'y' or 'n' "
             "but it isn't = {0}".format(isAttrAVar))
@@ -471,7 +469,7 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
 
     # End TAG AMD]
     tag = f.read(4)
-    if (tag != b"AMD]"):
+    if tag != b"AMD]":
         print("  Tag: " + str(tag))
         print("ERROR: PG group metadata does not end with AMD]")
         return False
@@ -490,7 +488,7 @@ def ReadPG(f, fileSize, pgidx):
     print("Process Group {0}: ".format(pgidx))
     print("  Starting offset : {0}".format(pgStartPosition))
     tag = f.read(4)
-    if (tag != b"[PGI"):
+    if tag != b"[PGI":
         print("  Tag: " + str(tag))
         print("ERROR: PG group does not start with [PGI")
         return False
@@ -502,13 +500,13 @@ def ReadPG(f, fileSize, pgidx):
     print("  PG length       : {0} bytes (+4 for Tag)".format(pglen))
     # pglen does not include the opening tag 4 bytes:
     expectedPGLength = pglen + 4
-    if (pgStartPosition + expectedPGLength > fileSize):
+    if pgStartPosition + expectedPGLength > fileSize:
         print("ERROR: There is not enough bytes in file to read this PG")
         return False
 
     # ColumnMajor (host language Fortran) 1 byte, 'y' or 'n'
     isColumnMajor = f.read(1)
-    if (isColumnMajor != b'y' and isColumnMajor != b'n'):
+    if isColumnMajor != b'y' and isColumnMajor != b'n':
         print(
             "ERROR: Next byte for isColumnMajor must be 'y' or 'n' "
             "but it isn't = {0}".format(isColumnMajor))
@@ -568,7 +566,7 @@ def ReadPG(f, fileSize, pgidx):
     print("  Vars length     : {0} bytes".format(varlen))
     sizeLimit = expectedPGLength - (f.tell() - pgStartPosition)
     expectedVarsLength = varlen  # need to read this more
-    if (expectedVarsLength > sizeLimit):
+    if expectedVarsLength > sizeLimit:
         print("ERROR: There is not enough bytes in PG to read the variables")
         return False
 
@@ -593,7 +591,7 @@ def ReadPG(f, fileSize, pgidx):
     sizeLimit = expectedPGLength - (attrsStartPosition - pgStartPosition) - 4
     expectedAttrsLength = attlen  # need to read this more before reaching PGI]
 
-    if (expectedAttrsLength > sizeLimit):
+    if expectedAttrsLength > sizeLimit:
         print("ERROR: There is not enough bytes in PG to read the attributes")
         return False
 
@@ -606,7 +604,7 @@ def ReadPG(f, fileSize, pgidx):
 
     # End TAG PGI]
     tag = f.read(4)
-    if (tag != b"PGI]"):
+    if tag != b"PGI]":
         print("  Tag: " + str(tag))
         print("ERROR: PG group metadata does not end with PGI]")
         return False

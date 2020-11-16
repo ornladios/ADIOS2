@@ -51,16 +51,17 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     SstReaderGetParams(m_Input, &m_WriterMarshalMethod);
 
     auto varFFSCallback = [](void *reader, const char *variableName,
-                             const char *type, void *data) {
-        std::string Type(type);
+                             const int type, void *data) {
+        adios2::DataType Type = (adios2::DataType)type;
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
-        if (Type == "compound")
+        if (Type == adios2::DataType::Compound)
         {
             return (void *)NULL;
         }
+
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *variable =                                                \
             &(Reader->m_IO.DefineVariable<T>(variableName));                   \
@@ -76,29 +77,29 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     };
 
     auto attrFFSCallback = [](void *reader, const char *attrName,
-                              const char *type, void *data) {
+                              const int type, void *data) {
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
+        adios2::DataType Type = (adios2::DataType)type;
         if (attrName == NULL)
         {
             // if attrName is NULL, prepare for attr reinstallation
             Reader->m_IO.RemoveAllAttributes();
             return;
         }
-        std::string Type(type);
         try
         {
-            if (Type == "compound")
+            if (Type == adios2::DataType::Compound)
             {
                 return;
             }
-            else if (Type == helper::GetType<std::string>())
+            else if (Type == helper::GetDataType<std::string>())
             {
                 Reader->m_IO.DefineAttribute<std::string>(attrName,
                                                           *(char **)data);
             }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Reader->m_IO.DefineAttribute<T>(attrName, *(T *)data);                 \
     }
@@ -107,8 +108,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 #undef declare_type
             else
             {
-                std::cout << "Loading attribute matched no type " << Type
-                          << std::endl;
+                std::cout << "Loading attribute matched no type "
+                          << ToString(Type) << std::endl;
             }
         }
         catch (...)
@@ -120,12 +121,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     };
 
     auto arrayFFSCallback = [](void *reader, const char *variableName,
-                               const char *type, int DimCount, size_t *Shape,
+                               const int type, int DimCount, size_t *Shape,
                                size_t *Start, size_t *Count) {
         std::vector<size_t> VecShape;
         std::vector<size_t> VecStart;
         std::vector<size_t> VecCount;
-        std::string Type(type);
+        adios2::DataType Type = (adios2::DataType)type;
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
         /*
@@ -151,12 +152,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             }
         }
 
-        if (Type == "compound")
+        if (Type == adios2::DataType::Compound)
         {
             return (void *)NULL;
         }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *variable = &(Reader->m_IO.DefineVariable<T>(              \
             variableName, VecShape, VecStart, VecCount));                      \
@@ -169,12 +170,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     };
 
     auto arrayBlocksInfoCallback =
-        [](void *reader, void *variable, const char *type, int WriterRank,
+        [](void *reader, void *variable, const int type, int WriterRank,
            int DimCount, size_t *Shape, size_t *Start, size_t *Count) {
             std::vector<size_t> VecShape;
             std::vector<size_t> VecStart;
             std::vector<size_t> VecCount;
-            std::string Type(type);
+            adios2::DataType Type = (adios2::DataType)type;
             class SstReader::SstReader *Reader =
                 reinterpret_cast<class SstReader::SstReader *>(reader);
             size_t currentStep = SstCurrentStep(Reader->m_Input);
@@ -201,12 +202,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
                 }
             }
 
-            if (Type == "compound")
+            if (Type == adios2::DataType::Compound)
             {
                 return;
             }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *Var = reinterpret_cast<class Variable<T> *>(variable);    \
         auto savedShape = Var->m_Shape;                                        \
@@ -406,10 +407,6 @@ void SstReader::Init()
     SstParamParser Parser;
 
     Parser.ParseParams(m_IO, Params);
-
-#define set_params(Param, Type, Typedecl, Default) m_##Param = Params.Param;
-    SST_FOREACH_PARAMETER_TYPE_4ARGS(set_params);
-#undef set_params
 }
 
 #define declare_gets(T)                                                        \
@@ -428,6 +425,7 @@ void SstReader::Init()
             size_t *Start = NULL;                                              \
             size_t *Count = NULL;                                              \
             size_t DimCount = 0;                                               \
+            int NeedSync;                                                      \
                                                                                \
             if (variable.m_SelectionType ==                                    \
                 adios2::SelectionType::BoundingBox)                            \
@@ -435,20 +433,23 @@ void SstReader::Init()
                 DimCount = variable.m_Shape.size();                            \
                 Start = variable.m_Start.data();                               \
                 Count = variable.m_Count.data();                               \
-                SstFFSGetDeferred(m_Input, (void *)&variable,                  \
-                                  variable.m_Name.c_str(), DimCount, Start,    \
-                                  Count, data);                                \
+                NeedSync = SstFFSGetDeferred(m_Input, (void *)&variable,       \
+                                             variable.m_Name.c_str(),          \
+                                             DimCount, Start, Count, data);    \
             }                                                                  \
             else if (variable.m_SelectionType ==                               \
                      adios2::SelectionType::WriteBlock)                        \
             {                                                                  \
                 DimCount = variable.m_Count.size();                            \
                 Count = variable.m_Count.data();                               \
-                SstFFSGetLocalDeferred(m_Input, (void *)&variable,             \
-                                       variable.m_Name.c_str(), DimCount,      \
-                                       variable.m_BlockID, Count, data);       \
+                NeedSync = SstFFSGetLocalDeferred(                             \
+                    m_Input, (void *)&variable, variable.m_Name.c_str(),       \
+                    DimCount, variable.m_BlockID, Count, data);                \
             }                                                                  \
-            SstFFSPerformGets(m_Input);                                        \
+            if (NeedSync)                                                      \
+            {                                                                  \
+                SstFFSPerformGets(m_Input);                                    \
+            }                                                                  \
         }                                                                      \
         if (m_WriterMarshalMethod == SstMarshalBP)                             \
         {                                                                      \
@@ -456,7 +457,12 @@ void SstReader::Init()
             /*  it's a bad idea in an SST-like environment.  But do */         \
             /*  whatever you do forDoGetDeferred() and then PerformGets() */   \
             DoGetDeferred(variable, data);                                     \
-            PerformGets();                                                     \
+            if (!variable.m_SingleValue)                                       \
+            {                                                                  \
+                /* Don't need to do gets if this was a SingleValue (in         \
+                 * metadata) */                                                \
+                PerformGets();                                                 \
+            }                                                                  \
         }                                                                      \
     }                                                                          \
                                                                                \
@@ -539,13 +545,13 @@ void SstReader::PerformGets()
 
         for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
         {
-            const std::string type = m_IO.InquireVariableType(name);
+            const DataType type = m_IO.InquireVariableType(name);
 
-            if (type == "compound")
+            if (type == DataType::Compound)
             {
             }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable =                                                \
             FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \
@@ -570,13 +576,13 @@ void SstReader::PerformGets()
 
         for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
         {
-            const std::string type = m_IO.InquireVariableType(name);
+            const DataType type = m_IO.InquireVariableType(name);
 
-            if (type == "compound")
+            if (type == DataType::Compound)
             {
             }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable =                                                \
             FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \

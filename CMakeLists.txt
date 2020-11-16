@@ -14,7 +14,7 @@ endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/ADIOSFunctions.cmake)
 
-setup_version(2.5.0)
+setup_version(2.6.0)
 
 project(ADIOS2 VERSION ${ADIOS2_VERSION})
 
@@ -88,14 +88,12 @@ mark_as_advanced(ADIOS2_LIBRARY_SUFFIX ADIOS2_EXECUTABLE_SUFFIX)
 
 # Use meta-compile features if available, otherwise use specific language
 # features
-if(CMAKE_VERSION VERSION_LESS 3.9 OR
-   CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
+if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
   set(ADIOS2_CXX11_FEATURES cxx_auto_type cxx_nullptr)
 else()
   set(ADIOS2_CXX11_FEATURES cxx_std_11)
 endif()
-if(CMAKE_VERSION VERSION_LESS 3.9 OR
-   CMAKE_C_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
+if(CMAKE_C_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
   set(ADIOS2_C99_FEATURES c_restrict)
 else()
   set(ADIOS2_C99_FEATURES c_std_99)
@@ -130,6 +128,7 @@ adios_option(Table     "Enable support for Table" AUTO)
 adios_option(SST       "Enable support for SST" AUTO)
 adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
+adios_option(IME       "Enable support for DDN IME transport" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
@@ -148,7 +147,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-    Blosc BZip2 ZFP SZ MGARD PNG MPI DataMan Table SSC SST DataSpaces ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
+    Blosc BZip2 ZFP SZ MGARD PNG MPI DataMan Table SSC SST DataSpaces ZeroMQ HDF5 IME Python Fortran SysVShMem Profiling Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
@@ -235,7 +234,7 @@ option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree"
 cmake_dependent_option(ADIOS2_RUN_MPI_MPMD_TESTS
   "Enable the parallel MPMD tests" ON
   "ADIOS2_BUILD_TESTING;ADIOS2_HAVE_MPI" OFF)
-mark_as_advanced(ADIOS2_RUN_MPMD_TESTS)
+mark_as_advanced(ADIOS2_RUN_MPI_MPMD_TESTS)
 
 include(CTest)
 set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})

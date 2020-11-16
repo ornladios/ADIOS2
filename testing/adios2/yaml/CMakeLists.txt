@@ -4,13 +4,9 @@
 #------------------------------------------------------------------------------#
 
 gtest_add_tests_helper(YAMLConfig MPI_ALLOW "" "" "")
-gtest_add_tests_helper(YAMLConfigSerial MPI_NOEXEC "" "" "")
 
-foreach(tgt
-    ${Test.YAMLConfig-TARGETS}
-    ${Test.YAMLConfigSerial-TARGETS}
-    )
+foreach(tgt IN LISTS Test.YAMLConfig-TARGETS)
   target_compile_definitions(${tgt} PRIVATE
     "YAML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
-    )
+  )
 endforeach()

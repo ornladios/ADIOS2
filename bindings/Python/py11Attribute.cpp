@@ -36,17 +36,17 @@ std::string Attribute::Name() const
 std::string Attribute::Type() const
 {
     helper::CheckForNullptr(m_Attribute, "in call to Attribute::Type");
-    return m_Attribute->m_Type;
+    return ToString(m_Attribute->m_Type);
 }
 
 std::vector<std::string> Attribute::DataString()
 {
     helper::CheckForNullptr(m_Attribute, "in call to Attribute::DataStrings");
-    const std::string type = m_Attribute->m_Type;
+    const adios2::DataType type = m_Attribute->m_Type;
 
     std::vector<std::string> data;
 
-    if (type == helper::GetType<std::string>())
+    if (type == helper::GetDataType<std::string>())
     {
         const core::Attribute<std::string> *attribute =
             dynamic_cast<core::Attribute<std::string> *>(m_Attribute);
@@ -73,14 +73,14 @@ std::vector<std::string> Attribute::DataString()
 pybind11::array Attribute::Data()
 {
     helper::CheckForNullptr(m_Attribute, "in call to Attribute::Data");
-    const std::string type = m_Attribute->m_Type;
+    const adios2::DataType type = m_Attribute->m_Type;
 
-    if (type == "compound")
+    if (type == adios2::DataType::Compound)
     {
         // not supported
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         pybind11::array pyArray(pybind11::dtype::of<T>(),                      \
                                 m_Attribute->m_Elements);                      \

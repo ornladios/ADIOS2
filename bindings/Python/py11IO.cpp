@@ -11,7 +11,7 @@
 #include "py11IO.h"
 
 #include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/helper/adiosFunctions.h" //GetDataType<T>
 
 #include "py11types.h"
 
@@ -111,14 +111,14 @@ Variable IO::InquireVariable(const std::string &name)
     helper::CheckForNullptr(m_IO, "for variable " + name +
                                       ", in call to IO::InquireVariable");
 
-    const std::string type(m_IO->InquireVariableType(name));
+    const DataType type(m_IO->InquireVariableType(name));
     core::VariableBase *variable = nullptr;
 
-    if (type == "unknown")
+    if (type == DataType::None)
     {
     }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         variable = m_IO->InquireVariable<T>(name);                             \
     }
@@ -193,13 +193,13 @@ Attribute IO::InquireAttribute(const std::string &name)
                                       ", in call to IO::InquireAttribute");
 
     core::AttributeBase *attribute = nullptr;
-    const std::string type(m_IO->InquireAttributeType(name));
+    const DataType type(m_IO->InquireAttributeType(name));
 
-    if (type == "unknown")
+    if (type == DataType::None)
     {
     }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         attribute = m_IO->InquireAttribute<T>(name);                           \
     }
@@ -264,14 +264,14 @@ std::string IO::VariableType(const std::string &name) const
 {
     helper::CheckForNullptr(m_IO, "for variable " + name +
                                       " in call to IO::VariableType");
-    return m_IO->InquireVariableType(name);
+    return ToString(m_IO->InquireVariableType(name));
 }
 
 std::string IO::AttributeType(const std::string &name) const
 {
     helper::CheckForNullptr(m_IO, "for attribute " + name +
                                       " in call to IO::AttributeType");
-    return m_IO->InquireAttributeType(name);
+    return ToString(m_IO->InquireAttributeType(name));
 }
 
 std::string IO::EngineType() const

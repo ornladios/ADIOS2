@@ -22,7 +22,7 @@ namespace adios2
 // forward declare
 class IO;     // friend
 class Engine; // friend
-
+class Group;  // friend
 namespace core
 {
 
@@ -131,6 +131,7 @@ class Variable
 
     friend class IO;
     friend class Engine;
+    friend class Group;
 
 public:
     /**

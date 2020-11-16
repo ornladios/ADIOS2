@@ -21,7 +21,9 @@ namespace engine
 DataManReader::DataManReader(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
 : Engine("DataManReader", io, name, openMode, std::move(comm)),
-  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
+  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)),
+  m_RequesterThreadActive(true), m_SubscriberThreadActive(true),
+  m_FinalStep(std::numeric_limits<size_t>::max())
 {
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
@@ -30,6 +32,8 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
+    helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
+    helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
 
     m_Requesters.emplace_back();
     m_Requesters[0].OpenRequester(m_Timeout, m_ReceiverBufferSize);
@@ -41,8 +45,10 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     }
     std::string address = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
     std::string request = "Address";
+
     auto reply =
         m_Requesters[0].Request(request.data(), request.size(), address);
+
     auto start_time = std::chrono::system_clock::now();
     while (reply == nullptr or reply->empty())
     {
@@ -59,20 +65,50 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     }
     auto addJson = nlohmann::json::parse(*reply);
     m_PublisherAddresses =
-        addJson["DataAddresses"].get<std::vector<std::string>>();
+        addJson["PublisherAddresses"].get<std::vector<std::string>>();
     m_ReplierAddresses =
-        addJson["ControlAddresses"].get<std::vector<std::string>>();
+        addJson["ReplierAddresses"].get<std::vector<std::string>>();
 
-    for (const auto &address : m_PublisherAddresses)
+    if (m_TransportMode == "fast")
     {
-        m_Subscribers.emplace_back();
-        m_Subscribers.back().OpenSubscriber(address, m_ReceiverBufferSize);
-        m_SubscriberThreads.emplace_back(
-            std::thread(&DataManReader::SubscribeThread, this,
-                        std::ref(m_Subscribers.back())));
+        for (const auto &address : m_PublisherAddresses)
+        {
+            m_Subscribers.emplace_back();
+            m_Subscribers.back().OpenSubscriber(address, m_ReceiverBufferSize);
+            m_SubscriberThreads.emplace_back(
+                std::thread(&DataManReader::SubscribeThread, this,
+                            std::ref(m_Subscribers.back())));
+        }
+    }
+    else if (m_TransportMode == "reliable")
+    {
+        m_Requesters.clear();
+        for (const auto &address : m_ReplierAddresses)
+        {
+            m_Requesters.emplace_back();
+            m_Requesters.back().OpenRequester(address, m_Timeout,
+                                              m_ReceiverBufferSize);
+        }
+    }
+    else
+    {
+        throw(std::invalid_argument("unknown transport mode"));
     }
 
-    m_Requesters[0].Request("Ready", 5, address);
+    for (auto &requester : m_Requesters)
+    {
+        requester.Request("Ready", 5, address);
+    }
+
+    if (m_TransportMode == "reliable")
+    {
+        for (const auto &address : m_ReplierAddresses)
+        {
+            m_RequesterThreads.emplace_back(
+                std::thread(&DataManReader::RequestThread, this,
+                            std::ref(m_Requesters.back())));
+        }
+    }
 }
 
 DataManReader::~DataManReader()
@@ -150,12 +186,12 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (i.step == m_CurrentStep)
         {
-            if (i.type.empty())
+            if (i.type == DataType::None)
             {
                 throw("unknown data type");
             }
 #define declare_type(T)                                                        \
-    else if (i.type == helper::GetType<T>())                                   \
+    else if (i.type == helper::GetDataType<T>())                               \
     {                                                                          \
         CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
     }
@@ -171,6 +207,11 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                   << ", Step " << m_CurrentStep << std::endl;
     }
 
+    if (m_MonitorActive)
+    {
+        m_Monitor.BeginStep(m_CurrentStep);
+    }
+
     return StepStatus::OK;
 }
 
@@ -182,11 +223,40 @@ void DataManReader::EndStep()
 {
     m_Serializer.Erase(m_CurrentStep, true);
     m_CurrentStepMetadata = nullptr;
+
+    if (m_MonitorActive)
+    {
+        m_Monitor.EndStep(m_CurrentStep);
+    }
 }
 
 void DataManReader::Flush(const int transportIndex) {}
 
 // PRIVATE
+
+void DataManReader::RequestThread(zmq::ZmqReqRep &requester)
+{
+    while (m_RequesterThreadActive)
+    {
+        auto buffer = requester.Request("Step", 4);
+        if (buffer != nullptr && buffer->size() > 0)
+        {
+            if (buffer->size() < 64)
+            {
+                try
+                {
+                    auto jmsg = nlohmann::json::parse(buffer->data());
+                    m_FinalStep = jmsg["FinalStep"].get<size_t>();
+                    continue;
+                }
+                catch (...)
+                {
+                }
+            }
+            m_Serializer.PutPack(buffer, m_DoubleBuffer);
+        }
+    }
+}
 
 void DataManReader::SubscribeThread(zmq::ZmqPubSub &subscriber)
 {
@@ -207,7 +277,7 @@ void DataManReader::SubscribeThread(zmq::ZmqPubSub &subscriber)
                 {
                 }
             }
-            m_Serializer.PutPack(buffer);
+            m_Serializer.PutPack(buffer, m_DoubleBuffer);
         }
     }
 }

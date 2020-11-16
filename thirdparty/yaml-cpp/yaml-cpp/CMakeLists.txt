@@ -34,5 +34,3 @@ target_sources(yaml-cpp INTERFACE
 target_include_directories(yaml-cpp INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-
-install(TARGETS yaml-cpp EXPORT adios2Exports)

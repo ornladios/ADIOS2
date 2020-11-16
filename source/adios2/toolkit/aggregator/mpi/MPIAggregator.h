@@ -98,6 +98,10 @@ protected:
      * the last rank) */
     void InitComm(const size_t subStreams, helper::Comm const &parentComm);
 
+    /** A default init function to select one process per node to be aggregator
+     */
+    void InitCommOnePerNode(helper::Comm const &parentComm);
+
     /** handshakes a single rank with the rest of the m_Comm ranks */
     void HandshakeRank(const int rank = 0);
 

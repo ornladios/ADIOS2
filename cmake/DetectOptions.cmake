@@ -142,6 +142,28 @@ endif()
 if(CMAKE_Fortran_COMPILER_LOADED)
   set(ADIOS2_HAVE_Fortran TRUE)
   list(APPEND mpi_find_components Fortran)
+
+  include(CheckFortranSourceCompiles)
+  check_fortran_source_compiles("
+    program testargs
+      integer :: n
+      character(len=256) :: v
+      n = command_argument_count()
+      call get_command_argument(0, v)
+    end program testargs"
+    ADIOS2_HAVE_FORTRAN_F03_ARGS
+    SRC_EXT F90
+  )
+  check_fortran_source_compiles("
+    program testargs
+      integer :: n
+      character(len=256) :: v
+      n = iargc()
+      call getarg(0, v)
+    end program testargs"
+    ADIOS2_HAVE_FORTRAN_GNU_ARGS
+    SRC_EXT F90
+  )
 endif()
 
 # MPI
@@ -166,37 +188,29 @@ if(ZeroMQ_FOUND)
 endif()
 
 # DataMan
-# DataMan currently breaks the PGI compiler
-if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
-    if(ZeroMQ_FOUND)
-        if(ADIOS2_USE_DataMan STREQUAL AUTO)
-            set(ADIOS2_HAVE_DataMan TRUE)
-        elseif(ADIOS2_USE_DataMan)
-            set(ADIOS2_HAVE_DataMan TRUE)
-        endif()
+if(ZeroMQ_FOUND)
+    if(ADIOS2_USE_DataMan STREQUAL AUTO)
+        set(ADIOS2_HAVE_DataMan TRUE)
+    elseif(ADIOS2_USE_DataMan)
+        set(ADIOS2_HAVE_DataMan TRUE)
     endif()
 endif()
 
 # SSC
-# SSC currently breaks the PGI compiler
-if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
-    if(ADIOS2_HAVE_MPI)
-        if(ADIOS2_USE_SSC STREQUAL AUTO)
-            set(ADIOS2_HAVE_SSC TRUE)
-        elseif(ADIOS2_USE_SSC)
-            set(ADIOS2_HAVE_SSC TRUE)
-        endif()
+if(ADIOS2_HAVE_MPI)
+    if(ADIOS2_USE_SSC STREQUAL AUTO)
+        set(ADIOS2_HAVE_SSC TRUE)
+    elseif(ADIOS2_USE_SSC)
+        set(ADIOS2_HAVE_SSC TRUE)
     endif()
 endif()
 
 # Table
-if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
-    if(ZeroMQ_FOUND)
-        if(ADIOS2_USE_Table STREQUAL AUTO)
-            set(ADIOS2_HAVE_Table TRUE)
-        elseif(ADIOS2_USE_Table)
-            set(ADIOS2_HAVE_Table TRUE)
-        endif()
+if(ZeroMQ_FOUND)
+    if(ADIOS2_USE_Table STREQUAL AUTO)
+        set(ADIOS2_HAVE_Table TRUE)
+    elseif(ADIOS2_USE_Table)
+        set(ADIOS2_HAVE_Table TRUE)
     endif()
 endif()
 
@@ -224,6 +238,17 @@ elseif(ADIOS2_USE_HDF5)
   set(ADIOS2_HAVE_HDF5 TRUE)
 endif()
 
+# IME
+if(ADIOS2_USE_IME STREQUAL AUTO)
+  find_package(IME)
+elseif(ADIOS2_USE_IME)
+  find_package(IME REQUIRED)
+endif()
+if(IME_FOUND)
+  set(ADIOS2_HAVE_IME TRUE)
+endif()
+
+
 # Python
 
 # Not supported on PGI
@@ -247,12 +272,12 @@ if(NOT SHARED_LIBS_SUPPORTED)
 endif()
 
 if(ADIOS2_USE_Python STREQUAL AUTO)
-  find_package(Python COMPONENTS Interpreter Development NumPy)
+  find_package(Python 3 COMPONENTS Interpreter Development NumPy)
   if(Python_FOUND AND ADIOS2_HAVE_MPI)
     find_package(PythonModule COMPONENTS mpi4py mpi4py/mpi4py.h)
   endif()
 elseif(ADIOS2_USE_Python)
-  find_package(Python REQUIRED COMPONENTS Interpreter Development NumPy)
+  find_package(Python 3 REQUIRED COMPONENTS Interpreter Development NumPy)
   if(ADIOS2_HAVE_MPI)
     find_package(PythonModule REQUIRED COMPONENTS mpi4py mpi4py/mpi4py.h)
   endif()
@@ -302,11 +327,6 @@ if(ADIOS2_USE_SST AND NOT MSVC)
       set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
     endif()
   endif()
-  find_package(NVStream)
-  if(NVStream_FOUND)
-    find_package(Boost OPTIONAL_COMPONENTS thread log filesystem system)
-    set(ADIOS2_SST_HAVE_NVStream TRUE)
-  endif()
 endif()
 
 #SysV IPC
@@ -343,13 +363,16 @@ find_package(Threads REQUIRED)
 # Floating point detection
 include(CheckTypeRepresentation)
 
-check_float_type_representation(float FLOAT_TYPE_C)
-check_float_type_representation(double DOUBLE_TYPE_C)
-check_float_type_representation("long double" LONG_DOUBLE_TYPE_C)
+#check_float_type_representation(float FLOAT_TYPE_C)
+#check_float_type_representation(double DOUBLE_TYPE_C)
+#check_float_type_representation("long double" LONG_DOUBLE_TYPE_C)
 
 if(ADIOS2_USE_Fortran)
-  check_float_type_representation(real REAL_TYPE_Fortran LANGUAGE Fortran)
-  check_float_type_representation("real(kind=4)" REAL4_TYPE_Fortran LANGUAGE Fortran)
-  check_float_type_representation("real(kind=8)" REAL8_TYPE_Fortran LANGUAGE Fortran)
-  check_float_type_representation("real(kind=16)" REAL16_TYPE_Fortran LANGUAGE Fortran)
+  #check_float_type_representation(real REAL_TYPE_Fortran LANGUAGE Fortran)
+  #check_float_type_representation("real(kind=4)" REAL4_TYPE_Fortran LANGUAGE Fortran)
+  #check_float_type_representation("real(kind=8)" REAL8_TYPE_Fortran LANGUAGE Fortran)
+  #check_float_type_representation("real(kind=16)" REAL16_TYPE_Fortran LANGUAGE Fortran)
+
+  include(CheckFortranCompilerFlag)
+  check_fortran_compiler_flag("-fallow-argument-mismatch" ADIOS2_USE_Fortran_flag_argument_mismatch)
 endif()

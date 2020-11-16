@@ -39,7 +39,7 @@ adios_fortran_serial_test: main_nompi.o
 main_nompi.o: main_nompi.f90
 	$(FC) $(FFLAGS) -o main_nompi.o -c main_nompi.f90 $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -s --fortran-flags)
 
-adios_fortran_serial_test_2: main_nompi.o
+adios_fortran_serial_test_2: main_nompi.f90
 	$(FC) $(FFLAGS) -o adios_fortran_serial_test_2 main_nompi.f90 $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -s -f)
 
 
@@ -53,5 +53,5 @@ adios_fortran_mpi_test: main_mpi.o
 main_mpi.o: main_mpi.f90
 	$(FC) $(FFLAGS) -o main_mpi.o -c main_mpi.f90 $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -m --fortran-flags)
 
-adios_fortran_mpi_test_2: main_mpi.o
+adios_fortran_mpi_test_2: main_mpi.f90
 	$(FC) $(FFLAGS) -o adios_fortran_mpi_test_2 main_mpi.f90 $(shell adios2-config$(ADIOS2_EXECUTABLE_SUFFIX) -m -f)

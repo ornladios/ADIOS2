@@ -4,8 +4,8 @@ FROM opensuse/leap:15.2
 RUN zypper addrepo -fc https://download.opensuse.org/repositories/devel:/tools:/scm/openSUSE_Leap_15.2/devel:tools:scm.repo
 RUN zypper --gpg-auto-import-keys ref
 RUN zypper in -y gcc gcc-c++ gcc-fortran git make curl tar f2c glibc-locale \
-  glibc-devel libbz2-devel pkg-config libzmq-devel zlib-devel gdb vim valgrind \
-  bzip2 gzip blosc-devel libzstd-devel openssl-devel environment-modules
+  glibc-devel libbz2-devel pkg-config zeromq-devel zlib-devel gdb vim valgrind \
+  bzip2 gzip blosc-devel libzstd-devel libopenssl-devel Modules
 
 # Workaround so pgi can find g77
 WORKDIR /usr/bin
@@ -13,19 +13,19 @@ RUN ln -s gfortran g77
 
 # Install PGI compiler
 WORKDIR /tmp/pgi-install
-RUN curl -L https://data.kitware.com/api/v1/file/5defe4f7af2e2eed35763524/download | tar -xz
-RUN export \
+COPY pgilinux-2019-1910-x86-64.tar.gz /tmp/pgi-install
+RUN tar -xzf pgilinux-2019-1910-x86-64.tar.gz && \
+    export \
       PGI_SILENT=true \
       PGI_ACCEPT_EULA=accept \
       PGI_INSTALL_DIR=/opt/pgi \
       PGI_INSTALL_NVIDIA=false \
       PGI_INSTALL_JAVA=false \
       PGI_INSTALL_MPI=false \
-      PGI_MPI_GPU_SUPPORT=false \
-  && ./install
-
-RUN  echo 'export MODULEPATH=/opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.sh \
-  && echo 'setenv MODULEPATH /opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.csh
+      PGI_MPI_GPU_SUPPORT=false && \
+    ./install && \
+    echo 'export MODULEPATH=/opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.sh && \
+    echo 'setenv MODULEPATH /opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.csh
 
 # Install the most recent CMake nightly binary
 WORKDIR /opt/cmake
@@ -54,7 +54,7 @@ ENV PATH=/opt/zfp/0.5.5/bin:${PATH} \
 
 # Install SZ
 WORKDIR /opt/sz
-RUN curl -L https://github.com/disheng222/SZ/archive/v2.1.8.0.tar.gz | tar -xvz && \
+RUN curl -L https://github.com/disheng222/SZ/archive/v2.1.8.3.tar.gz | tar -xvz && \
     mkdir build && \
     cd build && \
     source /etc/profile && \
@@ -63,14 +63,14 @@ RUN curl -L https://github.com/disheng222/SZ/archive/v2.1.8.0.tar.gz | tar -xvz 
     /opt/cmake/bin/cmake \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/opt/sz/2.1.8.0 \
-         ../SZ-2.1.8.0 && \
+        -DCMAKE_INSTALL_PREFIX=/opt/sz/2.1.8.3 \
+         ../SZ-2.1.8.3 && \
     make -j$(grep -c '^processor' /proc/cpuinfo) install && \
     cd .. && \
-    rm -rf SZ-2.1.8.0 build
-ENV PATH=/opt/sz/2.1.8.0/bin:${PATH} \
-    LD_LIBRARY_PATH=/opt/sz/2.1.8.0/lib64:${LD_LIBRARY_PATH} \
-    CMAKE_PREFIX_PATH=/opt/sz/2.1.8.0:${CMAKE_PREFIX_PATH}
+    rm -rf SZ-2.1.8.3 build
+ENV PATH=/opt/sz/2.1.8.3/bin:${PATH} \
+    LD_LIBRARY_PATH=/opt/sz/2.1.8.3/lib64:${LD_LIBRARY_PATH} \
+    CMAKE_PREFIX_PATH=/opt/sz/2.1.8.3:${CMAKE_PREFIX_PATH}
 
 # Misc cleanup of unneeded files
 RUN rm -rf /tmp/* && \

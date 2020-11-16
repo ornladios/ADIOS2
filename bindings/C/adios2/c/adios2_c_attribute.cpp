@@ -49,12 +49,12 @@ adios2_error adios2_attribute_type(adios2_type *type,
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
 
         auto type_s = attributeBase->m_Type;
-        if (type_s == adios2::helper::GetType<std::string>())
+        if (type_s == adios2::helper::GetDataType<std::string>())
         {
             *type = adios2_type_string;
         }
 #define make_case(T)                                                           \
-    else if (type_s == adios2::helper::GetType<MapAdios2Type<T>::Type>())      \
+    else if (type_s == adios2::helper::GetDataType<MapAdios2Type<T>::Type>())  \
     {                                                                          \
         *type = T;                                                             \
     }
@@ -84,7 +84,7 @@ adios2_error adios2_attribute_type_string(char *type, size_t *size,
 
         const adios2::core::AttributeBase *attributeBase =
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
-        return String2CAPI(attributeBase->m_Type, type, size);
+        return String2CAPI(ToString(attributeBase->m_Type), type, size);
     }
     catch (...)
     {
@@ -146,13 +146,13 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
         const adios2::core::AttributeBase *attributeBase =
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
 
-        const std::string type(attributeBase->m_Type);
+        const adios2::DataType type(attributeBase->m_Type);
 
-        if (type == "")
+        if (type == adios2::DataType::None)
         {
             // not supported
         }
-        else if (type == adios2::helper::GetType<std::string>())
+        else if (type == adios2::helper::GetDataType<std::string>())
         {
             const adios2::core::Attribute<std::string> *attributeCpp =
                 dynamic_cast<const adios2::core::Attribute<std::string> *>(
@@ -177,7 +177,7 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
             }
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         const adios2::core::Attribute<T> *attributeCpp =                       \
             dynamic_cast<const adios2::core::Attribute<T> *>(attributeBase);   \

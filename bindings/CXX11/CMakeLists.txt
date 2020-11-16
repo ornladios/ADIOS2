@@ -16,6 +16,8 @@ add_library(adios2_cxx11
   adios2/cxx11/Types.tcc
   adios2/cxx11/Variable.cpp
   adios2/cxx11/fstream/ADIOS2fstream.cpp
+  adios2/cxx11/Group.cpp
+  adios2/cxx11/Group.tcc
 )
 set_property(TARGET adios2_cxx11 PROPERTY EXPORT_NAME cxx11)
 set_property(TARGET adios2_cxx11 PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_cxx11)
@@ -78,6 +80,7 @@ install(
   FILES adios2/cxx11/ADIOS.h 
         adios2/cxx11/ADIOS.inl
         adios2/cxx11/IO.h
+        adios2/cxx11/Group.h
         adios2/cxx11/Variable.h 
         adios2/cxx11/Attribute.h
         adios2/cxx11/Engine.h

@@ -70,6 +70,11 @@ Comm Comm::World(const std::string &hint) const
     return Comm(m_Impl->World(hint));
 }
 
+Comm Comm::GroupByShm(const std::string &hint) const
+{
+    return Comm(m_Impl->GroupByShm(hint));
+}
+
 int Comm::Rank() const { return m_Impl->Rank(); }
 
 int Comm::Size() const { return m_Impl->Size(); }

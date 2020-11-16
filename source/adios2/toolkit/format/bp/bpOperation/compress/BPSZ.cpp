@@ -11,6 +11,7 @@
 #include "BPSZ.h"
 
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosType.h"
 
 #ifdef ADIOS2_HAVE_SZ
 #include "adios2/operator/compress/CompressSZ.h"
@@ -69,7 +70,8 @@ void BPSZ::GetData(const char *input,
     core::compress::CompressSZ op((Params()));
     op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
                   blockOperationInfo.PreCount,
-                  blockOperationInfo.Info.at("PreDataType"),
+                  helper::GetDataTypeFromString(
+                      blockOperationInfo.Info.at("PreDataType")),
                   blockOperationInfo.Info);
 
 #else

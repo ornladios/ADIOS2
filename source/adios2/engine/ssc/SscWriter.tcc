@@ -47,12 +47,13 @@ void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
 
     if (!found)
     {
-        if (m_CurrentStep == 0)
+        if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+            m_ReaderSelectionsLocked == false)
         {
             m_GlobalWritePattern[m_StreamRank].emplace_back();
             auto &b = m_GlobalWritePattern[m_StreamRank].back();
             b.name = variable.m_Name;
-            b.type = "string";
+            b.type = DataType::String;
             b.shapeId = variable.m_ShapeID;
             b.shape = variable.m_Shape;
             b.start = variable.m_Start;
@@ -93,8 +94,8 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     bool found = false;
     for (const auto &b : m_GlobalWritePattern[m_StreamRank])
     {
-        if (b.name == variable.m_Name and ssc::AreSameDims(vStart, b.start) and
-            ssc::AreSameDims(vCount, b.count) and
+        if (b.name == variable.m_Name && ssc::AreSameDims(vStart, b.start) &&
+            ssc::AreSameDims(vCount, b.count) &&
             ssc::AreSameDims(vShape, b.shape))
         {
             std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
@@ -104,12 +105,13 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 
     if (!found)
     {
-        if (m_CurrentStep == 0)
+        if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+            m_ReaderSelectionsLocked == false)
         {
             m_GlobalWritePattern[m_StreamRank].emplace_back();
             auto &b = m_GlobalWritePattern[m_StreamRank].back();
             b.name = variable.m_Name;
-            b.type = helper::GetType<T>();
+            b.type = helper::GetDataType<T>();
             b.shapeId = variable.m_ShapeID;
             b.shape = vShape;
             b.start = vStart;
@@ -127,7 +129,7 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         }
         else
         {
-            throw std::runtime_error("ssc only accepts fixed IO pattern");
+            throw std::runtime_error("IO pattern changed after locking");
         }
     }
 }

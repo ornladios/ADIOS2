@@ -38,9 +38,9 @@ module adios2_io_open_mod
 
 #else
 
-    use adios2_io_open_mod_serial
+    use adios2_io_open_serial_mod
 # ifdef ADIOS2_HAVE_MPI_F
-    use adios2_io_open_mod_mpi
+    use adios2_io_open_mpi_mod
 # endif
 
 #endif

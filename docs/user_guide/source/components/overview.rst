@@ -4,7 +4,8 @@ Components Overview
 
 .. note::
 
-   If you are doing simple tasks where performance is a non-critical aspect please go to the :ref:`High-Level APIs` section for a quick start. If you are an HPC application developer or you want to use ADIOS2 functionality in full please read this chapter.
+   If you are doing simple tasks where performance is a non-critical aspect please go to the :ref:`High-Level APIs` section for a quick start.
+   If you are an HPC application developer or you want to use ADIOS2 functionality in full please read this chapter.
 
 
 The simple way to understand the big picture for the ADIOS2 unified user interface components is to map each class to the actual definition of the ADIOS acronym.
@@ -46,7 +47,7 @@ The following section provides a common overview to all languages based on the C
 
 The following figure depicts the components hierarchy from the application's point of view.
 
-.. image:: https://i.imgur.com/y7bkQQt.png : alt: my-picture2
+.. image:: https://i.imgur.com/y7bkQQt.png
 
 * **ADIOS**: the ADIOS component is the starting point between an application and the ADIOS2 library. Applications provide:
     1. the scope of the ADIOS object through the MPI communicator,
@@ -65,4 +66,4 @@ The following figure depicts the components hierarchy from the application's poi
 
 * **Engine**: Engines define the actual system executing the heavy IO tasks at Open, BeginStep, Put, Get, EndStep and Close. Due to polymorphism, new IO system solutions can be developed quickly reusing internal components and reusing the same API. If IO.SetEngine is not called, the default engine is the binary-pack bp file reader and writer: **BPFile**.
 
-* **Operator**: (under development) this component defines possible operations to be applied on adios2 self-describing data. This higher level abstraction is needed to provide support for: Callback functions, Transforms, Analytics functions, Data Models functionality, etc. Any required task will be executed within the Engine. One or many operators can be associated with any of the adios2 objects or a group of them.
+* **Operator**: These define possible operations to be applied on adios2-managed data, for example, compression. This higher level abstraction is needed to provide support for callbacks, transforms, analytics, data models, etc. Any required task will be executed within the Engine. One or many operators can be associated with any of the adios2 objects or a group of them.

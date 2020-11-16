@@ -27,6 +27,7 @@ constexpr bool DebugOFF = false;
 #include "adios2/cxx11/ADIOS.h"
 #include "adios2/cxx11/Attribute.h"
 #include "adios2/cxx11/Engine.h"
+#include "adios2/cxx11/Group.h"
 #include "adios2/cxx11/IO.h"
 #include "adios2/cxx11/Operator.h"
 #include "adios2/cxx11/Query.h"

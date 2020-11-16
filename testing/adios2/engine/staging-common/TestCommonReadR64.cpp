@@ -119,7 +119,13 @@ TEST_F(CommonReadTest, ADIOS2CommonRead)
         in_R64.resize(myLength);
         engine.Get(var_r64, in_R64.data());
         engine.EndStep();
-        EXPECT_EQ(validateCommonTestR64(myStart, myLength, t), 0);
+        int result = validateCommonTestR64(myStart, myLength, t);
+        if (result != 0)
+        {
+            std::cout << "Read Data Validation failed on node " << mpiRank
+                      << " timestep " << t << std::endl;
+        }
+        EXPECT_EQ(result, 0);
 
         ++t;
     }

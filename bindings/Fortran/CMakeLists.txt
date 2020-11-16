@@ -11,6 +11,18 @@ FortranCInterface_VERIFY(CXX QUIET)
 # Check whether the compiler supports Fortran submodule constructs we need.
 adios2_check_fortran_submodules(ADIOS2_HAVE_FORTRAN_SUBMODULES)
 
+# Leaving this workaround in place but commented out just in case we need to
+# re-enable it in the future
+#
+# Cray submodules have naming issues so just don't use them for now
+#if(CMAKE_Fortran_COMPILER_ID MATCHES "Cray")
+#  set(ADIOS2_HAVE_FORTRAN_SUBMODULES 0 CACHE INTERNAL "" FORCE)
+#endif()
+
+if(ADIOS2_USE_Fortran_flag_argument_mismatch)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+endif()
+
 add_library(adios2_fortran
   f2c/adios2_f2c_adios.cpp
   f2c/adios2_f2c_attribute.cpp
@@ -25,12 +37,12 @@ add_library(adios2_fortran
   modules/adios2_parameters_mod.f90
   modules/adios2_adios_mod.f90
   modules/adios2_adios_init_mod.F90
-  modules/adios2_adios_init_mod_serial.F90
+  modules/adios2_adios_init_serial_smod.F90
   modules/adios2_attribute_mod.f90
   modules/adios2_attribute_data_mod.f90
   modules/adios2_io_mod.f90
   modules/adios2_io_open_mod.F90
-  modules/adios2_io_open_mod_serial.F90
+  modules/adios2_io_open_serial_smod.F90
   modules/adios2_io_define_variable_mod.f90
   modules/adios2_io_define_attribute_mod.f90
   modules/adios2_engine_mod.f90
@@ -75,8 +87,8 @@ if(ADIOS2_HAVE_MPI)
   target_compile_definitions(adios2_fortran PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_MPI_F>")
 
   set(adios2_fortran_mpi_srcs
-    modules/adios2_adios_init_mod_mpi.F90
-    modules/adios2_io_open_mod_mpi.F90
+    modules/adios2_adios_init_mpi_smod.F90
+    modules/adios2_io_open_mpi_smod.F90
     f2c/adios2_f2c_adios_mpi.cpp
     f2c/adios2_f2c_io_mpi.cpp
     )
@@ -131,6 +143,9 @@ install(
   COMPONENT adios2_fortran-development
   FILES_MATCHING
     PATTERN "adios2*.mod"
+    PATTERN "adios2*.smod"
+    PATTERN "ADIOS2*.mod"
+    PATTERN "ADIOS2*.smod"
     PATTERN "CMakeFiles" EXCLUDE
 )
 

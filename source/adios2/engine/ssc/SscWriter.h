@@ -42,8 +42,7 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    size_t m_CurrentStep = 0;
-    bool m_InitialStep = true;
+    int64_t m_CurrentStep = -1;
 
     ssc::BlockVecVec m_GlobalWritePattern;
     ssc::BlockVecVec m_GlobalReadPattern;
@@ -54,22 +53,17 @@ private:
     MPI_Group m_MpiAllReadersGroup;
     MPI_Comm m_StreamComm;
     std::string m_MpiMode = "twosided";
+    std::vector<MPI_Request> m_MpiRequests;
 
     int m_StreamRank;
     int m_StreamSize;
     int m_WriterRank;
     int m_WriterSize;
 
-    helper::MpiHandshake m_MpiHandshake;
-
     void SyncMpiPattern();
-    void SyncWritePattern();
+    void SyncWritePattern(bool finalStep = false);
     void SyncReadPattern();
-    void PutOneSidedFencePush();
-    void PutOneSidedPostPush();
-    void PutOneSidedFencePull();
-    void PutOneSidedPostPull();
-    void PutTwoSided();
+    void MpiWait();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
@@ -87,9 +81,6 @@ private:
                            ssc::RankPosMap &allOverlapRanks);
 
     int m_Verbosity = 0;
-    int m_MaxFilenameLength = 128;
-    int m_MaxStreamsPerApp = 1;
-    int m_RendezvousAppCount = 2;
     int m_OpenTimeoutSecs = 10;
 };
 

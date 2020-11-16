@@ -64,20 +64,24 @@ set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
 
 set (1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1")
 set (1x1.NoPreload_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
+set (1x1.SstRUDP_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=DataTransport=WAN,WANDataTransport=enet,RENGINE_PARAMS --warg=DataTransport=WAN,WANDataTransport=enet,WENGINE_PARAMS")
 set (1x1.NoData_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--no_data --rarg=--no_data")
 set (2x2.NoData_CMD "run_test.py.$<CONFIG> -nw 2 -nr 2 --warg=--no_data --rarg=--no_data")
 set (2x2.HalfNoData_CMD "run_test.py.$<CONFIG> -nw 2 -nr 2 --warg=--no_data --warg=--no_data_node --warg=1 --rarg=--no_data --rarg=--no_data_node --rarg=1" )
 set (1x1.ForcePreload_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=PreloadMode=SstPreloadOn,RENGINE_PARAMS")
 set (1x1Bulk_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--nx --warg=10000 --warg=--num_steps --warg=101 --rarg=--num_steps --rarg=101")
-set (1x1BulkLockGeometry_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  --warg=--num_steps --warg=101  --warg=--nx --warg=10000 --rarg=--num_steps --rarg=101 --warg=--lock_geometry --rarg=--lock_geometry")
+set (1x1LockGeometry_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  --warg=--num_steps --warg=101  --warg=--nx --warg=50 --rarg=--num_steps --rarg=101 --warg=--lock_geometry --rarg=--lock_geometry --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
 set (2x1_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1")
 set (2x1ZeroDataVar_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1 --warg=--zero_data_var")
 set (2x1ZeroDataR64_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1  -r $<TARGET_FILE:TestCommonReadR64> --warg=--zero_data_var")
 set (2x1.NoPreload_CMD "run_test.py.$<CONFIG> -nw 2 -nr 1 --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
 set (2x3.ForcePreload_CMD "run_test.py.$<CONFIG> -nw 2 -nr 3 --rarg=PreloadMode=SstPreloadOn,RENGINE_PARAMS")
+set (2x3.SstRUDP_CMD "run_test.py.$<CONFIG> -nw 2 -nr 3 --rarg=DataTransport=WAN,WANDataTransport=enet,RENGINE_PARAMS --warg=DataTransport=WAN,WANDataTransport=enet,WENGINE_PARAMS")
 set (1x2_CMD "run_test.py.$<CONFIG> -nw 1 -nr 2")
 set (3x5_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5")
 set (3x5LockGeometry_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 --warg=--num_steps --warg=50 --warg=--ms_delay --warg=10 --rarg=--num_steps --rarg=50 --warg=--lock_geometry --rarg=--lock_geometry")
+set (1x1EarlyExit_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--num_steps --warg=50 --rarg=--num_steps --rarg=5 --rarg=--early_exit")
+set (3x5EarlyExit_CMD "run_test.py.$<CONFIG> -nw 3 -nr 5 --warg=--num_steps --warg=50 --rarg=--num_steps --rarg=5 --rarg=--early_exit")
 set (3x5LockGeometry_TIMEOUT 60)
 set (5x3_CMD "run_test.py.$<CONFIG> -nw 5 -nr 3")
 set (1x1.Local_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteLocal> -r $<TARGET_FILE:TestCommonReadLocal>")
@@ -159,6 +163,9 @@ set (LatestReaderHold.1x1_CMD "run_test.py.$<CONFIG> --test_protocol one_client 
 # A faster writer and a queue policy that will cause timesteps to be discarded
 set (DiscardWriter.1x1_CMD "run_test.py.$<CONFIG> --test_protocol one_client -nw 1 -nr 1 --warg=--engine_params --warg=QueueLimit=1,QueueFullPolicy=discard,WENGINE_PARAMS --warg=--ms_delay --warg=250 --rarg=--discard")
 
+# Readers using Advancing attributes
+set (CumulativeAttr.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--advancing_attributes --rarg=--advancing_attributes")
+
 function(remove_engine_params_placeholder dst_str src_str )
     string(REGEX REPLACE "([^ 		  ]*),WENGINE_PARAMS" "\\1" src_str "${src_str}")
     string(REGEX REPLACE "([^ 		  ]*),RENGINE_PARAMS" "\\1" src_str "${src_str}")
@@ -228,7 +235,7 @@ function(add_common_test basename engine)
     remove_engine_params_placeholder(command  "${command}")
     separate_arguments(command)
     list(INSERT command 2 "${engine}" "${testname}")
-    if(NOT ADIOS2_RUN_MPMD_TESTS)
+    if(NOT ADIOS2_RUN_MPI_MPMD_TESTS)
       list(APPEND command "--disable_mpmd")
     endif()
     add_test(NAME ${testname} COMMAND ${command})
@@ -244,7 +251,10 @@ function(add_common_test basename engine)
        set (timeout "30")
     endif()
 
-    set_tests_properties(${testname} PROPERTIES TIMEOUT ${timeout} ${${basename}_PROPERTIES} )
+    set_tests_properties(${testname} PROPERTIES
+        TIMEOUT ${timeout} ${${basename}_PROPERTIES}
+        RUN_SERIAL TRUE
+    )
 endfunction()
 
 function(from_hex HEX DEC)

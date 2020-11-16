@@ -61,7 +61,7 @@ struct DataManVar
     Dims start;
     std::string name;
     std::string doid;
-    std::string type;
+    DataType type;
     std::vector<char> min;
     std::vector<char> max;
     std::vector<char> value;
@@ -86,6 +86,7 @@ class DataManSerializer
 {
 public:
     DataManSerializer(helper::Comm const &comm, const bool isRowMajor);
+    ~DataManSerializer();
 
     // ************ serializer functions
 
@@ -102,40 +103,26 @@ public:
                  const Dims &varCount, const Dims &varMemStart,
                  const Dims &varMemCount, const std::string &doid,
                  const size_t step, const int rank, const std::string &address,
-                 const Params &params, VecPtr localBuffer = nullptr,
-                 JsonPtr metadataJson = nullptr);
+                 const std::vector<core::VariableBase::Operation> &ops,
+                 VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     // another wrapper for PutData which accepts adios2::core::Variable
     template <class T>
     void PutData(const core::Variable<T> &variable, const std::string &doid,
                  const size_t step, const int rank, const std::string &address,
-                 const Params &params, VecPtr localBuffer = nullptr,
-                 JsonPtr metadataJson = nullptr);
+                 VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     // attach attributes to local pack
     void AttachAttributesToLocalPack();
 
-    // aggregate metadata across all writer ranks and put it into map
-    void AggregateMetadata();
-
-    // get aggregated metadata pack for sending from staging writer to staging
-    // reader
-    VecPtr GetAggregatedMetadataPack(const int64_t stepRequested,
-                                     int64_t &stepProvided,
-                                     const int64_t appID);
-
     // put local metadata and data buffer together and return the merged buffer
     VecPtr GetLocalPack();
-
-    // generate reply on staging writer based on the request from reader
-    VecPtr GenerateReply(
-        const std::vector<char> &request, size_t &step,
-        const std::unordered_map<std::string, Params> &compressionParams);
 
     // ************ deserializer functions
 
     // put binary pack for deserialization
-    int PutPack(const VecPtr data);
+    void PutPack(const VecPtr data, const bool useThread = true);
+    int PutPackThread(const VecPtr data);
 
     // get attributes form m_StaticDataJson and put into IO
     void GetAttributes(core::IO &io);
@@ -151,18 +138,6 @@ public:
     // called after reader side received and put aggregated metadata into
     // deserializer
     DmvVecPtrMap GetFullMetadataMap();
-
-    DmvVecPtr GetStepMetadata(const size_t step);
-
-    void PutAggregatedMetadata(VecPtr input, helper::Comm const &comm);
-
-    int PutDeferredRequest(const std::string &variable, const size_t step,
-                           const Dims &start, const Dims &count, void *data);
-    DeferredRequestMapPtr GetDeferredRequest();
-
-    bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
-                          const Dims &outStart, const Dims &outCount,
-                          Dims &ovlpStart, Dims &ovlpCount);
 
     void SetDestination(const std::string &dest);
 
@@ -191,8 +166,8 @@ private:
     template <class T>
     void PutAttribute(const core::Attribute<T> &attribute);
 
-    bool IsCompressionAvailable(const std::string &method,
-                                const std::string &type, const Dims &count);
+    bool IsCompressionAvailable(const std::string &method, DataType type,
+                                const Dims &count);
 
     void JsonToVarMap(nlohmann::json &metaJ, VecPtr pack);
 
@@ -226,10 +201,6 @@ private:
     DmvVecPtrMap m_DataManVarMap;
     std::mutex m_DataManVarMapMutex;
 
-    std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsToAggregate;
-    std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsAggregated;
-    std::mutex m_ProtectedStepsMutex;
-
     // used to count buffers that have been put into deserializer, asynchronous
     // engines such as dataman use this to tell if a certain step has received
     // all blocks from all writers
@@ -246,21 +217,18 @@ private:
     std::mutex m_StaticDataJsonMutex;
     bool m_StaticDataFinished = false;
 
-    // for generating deferred requests, only accessed from reader main thread,
-    // does not need mutex
-    DeferredRequestMapPtr m_DeferredRequestsToSend;
-
     // string, msgpack, cbor, ubjson
     std::string m_UseJsonSerialization = "string";
 
     std::string m_Destination;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
-    bool m_ContiguousMajor;
+    bool m_ContiguousMajor = true;
     bool m_EnableStat = true;
     int m_MpiRank;
     int m_MpiSize;
     helper::Comm const &m_Comm;
+    std::thread m_PutPackThread;
 
     int m_Verbosity = 0;
 };

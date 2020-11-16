@@ -13,7 +13,7 @@
 
 #include "SstWriter.h"
 
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/helper/adiosFunctions.h" //GetDataType<T>
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
@@ -36,7 +36,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                                "BeginStep/EndStep pairs");
     }
 
-    if (m_MarshalMethod == SstMarshalFFS)
+    if (Params.MarshalMethod == SstMarshalFFS)
     {
         size_t *Shape = NULL;
         size_t *Start = NULL;
@@ -56,10 +56,10 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             Count = variable.m_Count.data();
         }
         SstFFSMarshal(m_Output, (void *)&variable, variable.m_Name.c_str(),
-                      variable.m_Type.c_str(), variable.m_ElementSize, DimCount,
+                      (int)variable.m_Type, variable.m_ElementSize, DimCount,
                       Shape, Count, Start, values);
     }
-    else if (m_MarshalMethod == SstMarshalBP)
+    else if (Params.MarshalMethod == SstMarshalBP)
     {
         auto &blockInfo = variable.SetBlockInfo(
             values, m_BP3Serializer->m_MetadataSet.CurrentStep);

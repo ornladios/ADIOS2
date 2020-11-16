@@ -49,8 +49,6 @@ void BPBase::Init(const Params &parameters, const std::string hint,
     struct Parameters parsedParameters;
     bool profilePresent = false;
     bool profileValue;
-    bool subStreamsPresent = false;
-    int32_t subStreamsValue;
     for (const auto &parameter : parameters)
     {
         const std::string key = helper::LowerCase(parameter.first);
@@ -155,24 +153,46 @@ void BPBase::Init(const Params &parameters, const std::string hint,
             parsedParameters.FlushStepsCount = helper::StringToSizeT(
                 value, " in Parameter key=FlushStepsCount " + hint);
         }
-        else if (key == "substreams")
+        else if (key == "substreams" || key == "numaggregators")
         {
-            int subStreams = static_cast<int>(helper::StringTo<int32_t>(
-                value, " in Parameter key=SubStreams " + hint));
+            int n = static_cast<int>(helper::StringTo<int32_t>(
+                value, " in Parameter key=" + key + " " + hint));
 
-            if (subStreams < 1)
+            if (n < 0)
             {
-                subStreams = 1;
+                n = 0;
             }
-            else if (subStreams > m_SizeMPI)
+            if (n > m_SizeMPI)
             {
-                subStreams = m_SizeMPI;
+                n = m_SizeMPI;
             }
+            parsedParameters.NumAggregators = n;
+        }
+        else if (key == "aggregatorratio")
+        {
+            int ratio = static_cast<int>(helper::StringTo<int32_t>(
+                value, " in Parameter key=AggregatorRatio " + hint));
+            if (ratio > 0)
+            {
+                int n = m_SizeMPI / ratio;
+                if ((m_SizeMPI % ratio))
+                {
+                    throw std::invalid_argument(
+                        "ERROR: value for Parameter key=AggregatorRatio=" +
+                        std::to_string(ratio) + " must be " +
+                        "an integer divisor of the number of processes=" +
+                        std::to_string(m_SizeMPI) + " " + hint);
+                }
 
-            if (subStreams < m_SizeMPI)
-            {
-                subStreamsPresent = true;
-                subStreamsValue = subStreams;
+                if (n < 1)
+                {
+                    n = 1;
+                }
+                else if (n > m_SizeMPI)
+                {
+                    n = m_SizeMPI;
+                }
+                parsedParameters.NumAggregators = n;
             }
         }
         else if (key == "node-local" || key == "nodelocal")
@@ -195,6 +215,11 @@ void BPBase::Init(const Params &parameters, const std::string hint,
             parsedParameters.BurstBufferVerbose =
                 static_cast<int>(helper::StringTo<int32_t>(
                     value, " in Parameter key=BurstBufferVerbose " + hint));
+        }
+        else if (key == "streamreader")
+        {
+            parsedParameters.StreamReader = helper::StringTo<bool>(
+                value, " in Parameter key=StreamReader " + hint);
         }
     }
     if (!engineType.empty())
@@ -227,10 +252,6 @@ void BPBase::Init(const Params &parameters, const std::string hint,
             m_Profiler.m_IsActive = profileValue;
         }
         m_Parameters = parsedParameters;
-        if (subStreamsPresent)
-        {
-            m_Aggregator.Init(subStreamsValue, m_Comm);
-        }
     }
     // set timers if active
     if (m_Profiler.m_IsActive)
@@ -504,6 +525,8 @@ std::map<size_t, std::shared_ptr<BPOperation>> BPBase::SetBPOperations(
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
+
+size_t BPBase::DebugGetDataBufferSize() const { return m_Data.DebugGetSize(); }
 
 } // end namespace format
 } // end namespace adios2

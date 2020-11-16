@@ -876,7 +876,7 @@ TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2DSmallSel)
     ZfpRate2DSmallSel(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ZfpConfigFile, BPWriteReadZfpConfig,
     ::testing::Values("configZfp_rate8.xml", "configZfp_rate8Simple.xml",
                       "configZfp_rate9.xml", "configZfp_rate9Simple.xml",

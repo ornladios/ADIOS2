@@ -229,6 +229,15 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                  const bool opBool = adios ? true : false;
                  return opBool;
              })
+        .def(pybind11::init<const bool>(),
+             "adios2 module starting point "
+             "non-MPI, constructs an ADIOS class "
+             "object",
+             pybind11::arg("debugMode") = true)
+        .def(pybind11::init<const std::string &, const bool>(),
+             "adios2 module starting point non-MPI, constructs an ADIOS class "
+             "object",
+             pybind11::arg("configFile"), pybind11::arg("debugMode") = true)
 #if ADIOS2_USE_MPI
         .def(pybind11::init<const adios2::py11::MPI4PY_Comm, const bool>(),
              "adios2 module starting point, constructs an ADIOS class object",
@@ -239,15 +248,6 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              pybind11::arg("configFile"), pybind11::arg("comm"),
              pybind11::arg("debugMode") = true)
 #endif
-        .def(pybind11::init<const bool>(),
-             "adios2 module starting point "
-             "non-MPI, constructs an ADIOS class "
-             "object",
-             pybind11::arg("debugMode") = true)
-        .def(pybind11::init<const std::string &, const bool>(),
-             "adios2 module starting point non-MPI, constructs an ADIOS class "
-             "object",
-             pybind11::arg("configFile"), pybind11::arg("debugMode") = true)
         .def("DeclareIO", &adios2::py11::ADIOS::DeclareIO,
              "spawn IO object component returning a IO object with a unique "
              "name, throws an exception if IO with the same name is declared "
@@ -462,11 +462,10 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              pybind11::arg("launch") = adios2::Mode::Deferred)
 
         .def("Get",
-             (void (adios2::py11::Engine::*)(adios2::py11::Variable,
-                                             std::string &,
-                                             const adios2::Mode launch)) &
+             (std::string(adios2::py11::Engine::*)(adios2::py11::Variable,
+                                                   const adios2::Mode launch)) &
                  adios2::py11::Engine::Get,
-             pybind11::arg("variable"), pybind11::arg("string"),
+             pybind11::arg("variable"),
              pybind11::arg("launch") = adios2::Mode::Deferred)
 
         .def("PerformGets", &adios2::py11::Engine::PerformGets)

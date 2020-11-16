@@ -11,13 +11,15 @@ program TestSstWrite
   use adios2
   implicit none
 
-#ifndef __GFORTRAN__
-#ifndef __GNUC__
-  interface
-     integer function iargc()
-     end function iargc
-  end interface
-#endif
+#if defined(ADIOS2_HAVE_FORTRAN_F03_ARGS)
+# define ADIOS2_ARGC() command_argument_count()
+# define ADIOS2_ARGV(i, v) call get_command_argument(i, v)
+#elif defined(ADIOS2_HAVE_FORTRAN_GNU_ARGS)
+# define ADIOS2_ARGC() iargc()
+# define ADIOS2_ARGV(i, v) call getarg(i, v)
+#else
+# define ADIOS2_ARGC() 1
+# define ADIOS2_ARGV(i, v)
 #endif
 
   integer :: numargs
@@ -42,17 +44,17 @@ program TestSstWrite
   integer(kind = 8)::localtime
   integer::color, key, testComm
 
-  numargs = iargc()
+  numargs = ADIOS2_ARGC()
   if ( numargs < 2 ) then
      call usage()
      call exit(1)
   endif
 
 
-  call getarg(1, engine)
-  call getarg(2, filename)
+  ADIOS2_ARGV(1, engine)
+  ADIOS2_ARGV(2, filename)
   if ( numargs > 2 ) then
-     call getarg(3, params)
+     ADIOS2_ARGV(3, params)
   endif
 
 #if ADIOS2_USE_MPI
@@ -184,8 +186,10 @@ program TestSstWrite
      call adios2_put(sstWriter, variables(6), data_R64, ierr)
      call adios2_put(sstWriter, variables(7), data_R64_2d, ierr)
      call adios2_put(sstWriter, variables(8), data_R64_2d_rev, ierr)
+#if !defined(_CRAYFTN)
      localtime = 0    ! should be time(), but non-portable and value is unused
      call adios2_put(sstWriter, variables(9), loc(localtime), ierr)
+#endif
      call adios2_put(sstWriter, variables(10), data_C32, ierr)
      call adios2_put(sstWriter, variables(11), data_C64, ierr)
      call adios2_end_step(sstWriter, ierr)

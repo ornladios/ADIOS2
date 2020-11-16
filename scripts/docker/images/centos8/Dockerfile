@@ -11,9 +11,9 @@
 # Modify at your convenience.
 #
 # Usage examples:
-#   ADIOS v2.5.0 on CentOS 8
+#   ADIOS v2.6.0 on CentOS 8
 # 	$ cd /path/to/adios2-src/scripts/docker/images
-# 	$ docker build -t adios2:2.5.0-centos8 --build-arg adios_ver=v2.5.0 centos8
+# 	$ docker build -t adios2:2.6.0-centos8 --build-arg adios_ver=v2.6.0 centos8
 ###############################################################################
 
 FROM centos:centos8

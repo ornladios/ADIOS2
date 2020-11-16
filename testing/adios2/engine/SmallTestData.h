@@ -7,6 +7,7 @@
 
 #include <cstdint>
 
+#include <algorithm>
 #include <array>
 #include <limits>
 #include <string>

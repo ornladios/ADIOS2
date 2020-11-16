@@ -17,6 +17,7 @@
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include <mpi.h>
 #include <queue>
+#include <unordered_set>
 
 namespace adios2
 {
@@ -39,8 +40,8 @@ public:
     void EndStep() final;
 
 private:
-    size_t m_CurrentStep = 0;
-    bool m_InitialStep = true;
+    int64_t m_CurrentStep = -1;
+    bool m_StepBegun = false;
 
     ssc::BlockVecVec m_GlobalWritePattern;
     ssc::BlockVec m_LocalReadPattern;
@@ -53,22 +54,17 @@ private:
     MPI_Group m_MpiAllWritersGroup;
     MPI_Comm m_StreamComm;
     std::string m_MpiMode = "twosided";
+    std::vector<MPI_Request> m_MpiRequests;
+    std::unordered_set<int> m_ReceivedRanks;
 
     int m_StreamRank;
     int m_StreamSize;
     int m_ReaderRank;
     int m_ReaderSize;
 
-    helper::MpiHandshake m_MpiHandshake;
-
     void SyncMpiPattern();
-    void SyncWritePattern();
+    bool SyncWritePattern();
     void SyncReadPattern();
-    void GetOneSidedFencePush();
-    void GetOneSidedPostPush();
-    void GetOneSidedFencePull();
-    void GetOneSidedPostPull();
-    void GetTwoSided();
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
@@ -91,9 +87,6 @@ private:
                            ssc::RankPosMap &allOverlapRanks);
 
     int m_Verbosity = 0;
-    int m_MaxFilenameLength = 128;
-    int m_MaxStreamsPerApp = 1;
-    int m_RendezvousAppCount = 2;
     int m_OpenTimeoutSecs = 10;
 };
 

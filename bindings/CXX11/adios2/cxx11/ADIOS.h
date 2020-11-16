@@ -62,6 +62,20 @@ public:
      */
     ADIOS(const std::string &configFile, MPI_Comm comm,
           const bool debugMode = true);
+#else
+    // Client code that does not enable ADIOS2_USE_MPI may accidentally
+    // try to pass a MPI_Comm instance to our constructor.  If the type
+    // the MPI library uses to implement MPI_Comm happens to be convertible
+    // to one of the types offered by our serial constructors (e.g. 'bool'),
+    // the invocation will appear to succeed but will ignore the
+    // communicator passed.  Add explicitly deleted constructors that have
+    // better conversions for common MPI_Comm types.
+
+    // openmpi uses 'ompi_communicator_t*' for MPI_Comm
+    ADIOS(void *define_ADIOS2_USE_MPI_to_use_MPI_constructor) = delete;
+
+    // mpich uses 'int' for MPI_Comm
+    ADIOS(int define_ADIOS2_USE_MPI_to_use_MPI_constructor) = delete;
 #endif
 
     /**

@@ -7,7 +7,7 @@ else
   export CI_SITE_NAME="GitLab CI"
 fi
 
-export CI_BUILD_NAME="${CI_COMMIT_BRANCH}_${CI_JOB_NAME}"
+export CI_BUILD_NAME="${CI_COMMIT_BRANCH#github/}_${CI_JOB_NAME}"
 export CI_SOURCE_DIR="${CI_PROJECT_DIR}"
 export CI_ROOT_DIR="${CI_PROJECT_DIR}/.."
 export CI_BIN_DIR="${CI_ROOT_DIR}/${CI_BUILD_NAME}"

@@ -22,9 +22,9 @@ FROM centos:centos7
 # Install system dependencies
 RUN yum upgrade -y && \
     yum install -y epel-release && \
-    yum install -y https://centos7.iuscommunity.org/ius-release.rpm && \
+    yum install -y https://repo.ius.io/ius-release-el7.rpm && \
     yum install -y \
-        sudo curl vim git2u-all gdb gcc gcc-c++ gcc-gfortran make pkg-config \
+        sudo curl vim git222 gdb gcc gcc-c++ gcc-gfortran make pkg-config \
         openmpi-devel blosc-devel bzip2-devel zeromq-devel \
         libzstd-devel fftw-devel hdf5-openmpi-devel \
         python-devel numpy mpi4py-openmpi libfabric-devel

@@ -56,15 +56,15 @@ size_t Variable::SelectionSize() const
     helper::CheckForNullptr(m_VariableBase,
                             "in call to Variable::SelectionSize");
 
-    const std::string typeCpp = m_VariableBase->m_Type;
+    const adios2::DataType typeCpp = m_VariableBase->m_Type;
     size_t size = 0;
 
-    if (typeCpp == "compound")
+    if (typeCpp == adios2::DataType::Compound)
     {
         // not supported
     }
 #define declare_template_instantiation(T)                                      \
-    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                      \
     {                                                                          \
         const adios2::core::Variable<T> *variable =                            \
             dynamic_cast<const adios2::core::Variable<T> *>(m_VariableBase);   \
@@ -106,7 +106,7 @@ std::string Variable::Name() const
 std::string Variable::Type() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Type");
-    return m_VariableBase->m_Type;
+    return ToString(m_VariableBase->m_Type);
 }
 
 size_t Variable::Sizeof() const
@@ -125,15 +125,15 @@ Dims Variable::Shape(const size_t step) const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Shape");
 
-    const std::string typeCpp = m_VariableBase->m_Type;
+    const adios2::DataType typeCpp = m_VariableBase->m_Type;
     Dims shape;
 
-    if (typeCpp == "compound")
+    if (typeCpp == adios2::DataType::Compound)
     {
         // not supported
     }
 #define declare_template_instantiation(T)                                      \
-    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                      \
     {                                                                          \
         const adios2::core::Variable<T> *variable =                            \
             dynamic_cast<const adios2::core::Variable<T> *>(m_VariableBase);   \
@@ -155,15 +155,15 @@ Dims Variable::Count() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Count");
 
-    const std::string typeCpp = m_VariableBase->m_Type;
+    const adios2::DataType typeCpp = m_VariableBase->m_Type;
     Dims count;
 
-    if (typeCpp == "compound")
+    if (typeCpp == adios2::DataType::Compound)
     {
         // not supported
     }
 #define declare_template_instantiation(T)                                      \
-    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                      \
     {                                                                          \
         const adios2::core::Variable<T> *variable =                            \
             dynamic_cast<const adios2::core::Variable<T> *>(m_VariableBase);   \

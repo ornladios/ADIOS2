@@ -180,4 +180,45 @@ std::string ToString(SelectionType value)
     }
 }
 
+std::string ToString(DataType type)
+{
+    // Keep in sync with helper::GetDataTypeFromString
+    switch (type)
+    {
+    case DataType::None:
+        break;
+    case DataType::Int8:
+        return "int8_t";
+    case DataType::Int16:
+        return "int16_t";
+    case DataType::Int32:
+        return "int32_t";
+    case DataType::Int64:
+        return "int64_t";
+    case DataType::UInt8:
+        return "uint8_t";
+    case DataType::UInt16:
+        return "uint16_t";
+    case DataType::UInt32:
+        return "uint32_t";
+    case DataType::UInt64:
+        return "uint64_t";
+    case DataType::Float:
+        return "float";
+    case DataType::Double:
+        return "double";
+    case DataType::LongDouble:
+        return "long double";
+    case DataType::FloatComplex:
+        return "float complex";
+    case DataType::DoubleComplex:
+        return "double complex";
+    case DataType::String:
+        return "string";
+    case DataType::Compound:
+        return "compound";
+    }
+    return std::string();
+}
+
 } // end namespace adios2

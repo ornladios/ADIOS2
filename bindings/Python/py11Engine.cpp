@@ -67,14 +67,15 @@ void Engine::Put(Variable variable, const pybind11::array &array,
     helper::CheckForNullptr(variable.m_VariableBase,
                             "for variable, in call to Engine::Put numpy array");
 
-    const std::string type = variable.Type();
+    const adios2::DataType type =
+        helper::GetDataTypeFromString(variable.Type());
 
-    if (type == "compound")
+    if (type == adios2::DataType::Compound)
     {
         // not supported
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         m_Engine->Put(                                                         \
             *dynamic_cast<core::Variable<T> *>(variable.m_VariableBase),       \
@@ -103,7 +104,8 @@ void Engine::Put(Variable variable, const std::string &string)
     helper::CheckForNullptr(variable.m_VariableBase,
                             "for variable, in call to Engine::Put string");
 
-    if (variable.Type() != helper::GetType<std::string>())
+    if (helper::GetDataTypeFromString(variable.Type()) !=
+        helper::GetDataType<std::string>())
     {
         throw std::invalid_argument(
             "ERROR: variable " + variable.Name() +
@@ -138,14 +140,15 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
         variable.m_VariableBase,
         "for variable, in call to Engine::Get a numpy array");
 
-    const std::string type = variable.Type();
+    const adios2::DataType type =
+        helper::GetDataTypeFromString(variable.Type());
 
-    if (type == "compound")
+    if (type == adios2::DataType::Compound)
     {
         // not supported
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         m_Engine->Get(                                                         \
             *dynamic_cast<core::Variable<T> *>(variable.m_VariableBase),       \
@@ -164,21 +167,23 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
     }
 }
 
-void Engine::Get(Variable variable, std::string &string, const Mode launch)
+std::string Engine::Get(Variable variable, const Mode launch)
 {
+    std::string string;
     helper::CheckForNullptr(m_Engine,
                             "for engine, in call to Engine::Get a numpy array");
     if (m_Engine->m_EngineType == "NULL")
     {
-        return;
+        return "";
     }
 
     helper::CheckForNullptr(variable.m_VariableBase,
                             "for variable, in call to Engine::Get a string");
 
-    const std::string type = variable.Type();
+    const adios2::DataType type =
+        helper::GetDataTypeFromString(variable.Type());
 
-    if (type == helper::GetType<std::string>())
+    if (type == helper::GetDataType<std::string>())
     {
         m_Engine->Get(*dynamic_cast<core::Variable<std::string> *>(
                           variable.m_VariableBase),
@@ -190,8 +195,8 @@ void Engine::Get(Variable variable, std::string &string, const Mode launch)
                                     " of type " + variable.Type() +
                                     " is not string, in call to Engine::Get");
     }
+    return string;
 }
-
 void Engine::PerformGets()
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::PerformGets");
@@ -287,7 +292,7 @@ Engine::BlocksInfo(std::string &var_name, const size_t step) const
     std::vector<std::map<std::string, std::string>> rv;
 
     // Grab the specified variable object and get its type string
-    std::string var_type = m_Engine->GetIO().InquireVariableType(var_name);
+    adios2::DataType var_type = m_Engine->GetIO().InquireVariableType(var_name);
 
     // Use the macro incantation to call the right instantiation of
     // core::BlocksInfo<>() Note that we are flatting the Dims type items, and
@@ -296,7 +301,7 @@ Engine::BlocksInfo(std::string &var_name, const size_t step) const
     {
     }
 #define GET_BLOCKS_INFO(T)                                                     \
-    else if (var_type == helper::GetType<T>())                                 \
+    else if (var_type == helper::GetDataType<T>())                             \
     {                                                                          \
         auto variable = m_Engine->GetIO().InquireVariable<T>(var_name);        \
         auto infoVec = m_Engine->BlocksInfo<T>(*variable, step);               \

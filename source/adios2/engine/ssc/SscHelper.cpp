@@ -24,21 +24,20 @@ namespace engine
 namespace ssc
 {
 
-size_t GetTypeSize(const std::string &type)
+size_t GetTypeSize(DataType type)
 {
-    if (type.empty())
+    if (type == DataType::None)
     {
         throw(std::runtime_error("unknown data type"));
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>()) { return sizeof(T); }
+    else if (type == helper::GetDataType<T>()) { return sizeof(T); }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     else { throw(std::runtime_error("unknown data type")); }
 }
 
-size_t TotalDataSize(const Dims &dims, const std::string &type,
-                     const ShapeID &shapeId)
+size_t TotalDataSize(const Dims &dims, DataType type, const ShapeID &shapeId)
 {
     if (shapeId == ShapeID::GlobalArray || shapeId == ShapeID::LocalArray)
     {
@@ -49,11 +48,7 @@ size_t TotalDataSize(const Dims &dims, const std::string &type,
     {
         return GetTypeSize(type);
     }
-    else
-    {
-        throw(std::runtime_error("ShapeID not supported"));
-    }
-    return 0;
+    throw(std::runtime_error("ShapeID not supported"));
 }
 
 size_t TotalDataSize(const BlockVec &bv)
@@ -61,7 +56,7 @@ size_t TotalDataSize(const BlockVec &bv)
     size_t s = 0;
     for (const auto &b : bv)
     {
-        if (b.type == "string")
+        if (b.type == DataType::String)
         {
             s += b.bufferCount;
         }
@@ -95,7 +90,7 @@ RankPosMap CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
                         for (size_t i = 0; i < gBlock.start.size(); ++i)
                         {
                             if (gBlock.start[i] + gBlock.count[i] <=
-                                    lBlock.start[i] or
+                                    lBlock.start[i] ||
                                 lBlock.start[i] + lBlock.count[i] <=
                                     gBlock.start[i])
                             {
@@ -145,17 +140,17 @@ void BlockVecToJson(const BlockVec &input, nlohmann::json &output)
 
 void AttributeMapToJson(IO &input, nlohmann::json &output)
 {
-    const auto &attributeMap = input.GetAttributesDataMap();
+    const auto &attributeMap = input.GetAttributes();
     auto &attributesJson = output["Attributes"];
     for (const auto &attributePair : attributeMap)
     {
         const std::string name(attributePair.first);
-        const std::string type(attributePair.second.first);
-        if (type.empty())
+        const DataType type(attributePair.second->m_Type);
+        if (type == DataType::None)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         const auto &attribute = input.InquireAttribute<T>(name);               \
         nlohmann::json attributeJson;                                          \
@@ -218,7 +213,7 @@ void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
                 output[i].emplace_back();
                 auto &b = output[i].back();
                 b.name = j["Name"].get<std::string>();
-                b.type = j["Type"].get<std::string>();
+                b.type = j["Type"].get<DataType>();
                 b.shapeId = j["ShapeID"].get<ShapeID>();
                 b.start = j["Start"].get<Dims>();
                 b.count = j["Count"].get<Dims>();
@@ -281,6 +276,187 @@ bool AreSameDims(const Dims &a, const Dims &b)
     return true;
 }
 
+void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount,
+                   MPI_Datatype sendtype, void *recvbuf,
+                   const uint64_t *recvcounts, const uint64_t *displs,
+                   MPI_Datatype recvtype, int root, MPI_Comm comm,
+                   const int chunksize)
+{
+
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(comm, &mpiSize);
+    MPI_Comm_rank(comm, &mpiRank);
+
+    int recvTypeSize;
+    int sendTypeSize;
+
+    MPI_Type_size(recvtype, &recvTypeSize);
+    MPI_Type_size(sendtype, &sendTypeSize);
+
+    std::vector<MPI_Request> requests;
+    if (mpiRank == root)
+    {
+        for (int i = 0; i < mpiSize; ++i)
+        {
+            uint64_t recvcount = recvcounts[i];
+            while (recvcount > 0)
+            {
+                requests.emplace_back();
+                if (recvcount > chunksize)
+                {
+                    MPI_Irecv(reinterpret_cast<char *>(recvbuf) +
+                                  (displs[i] + recvcounts[i] - recvcount) *
+                                      recvTypeSize,
+                              chunksize, recvtype, i, 0, comm,
+                              &requests.back());
+                    recvcount -= chunksize;
+                }
+                else
+                {
+                    MPI_Irecv(reinterpret_cast<char *>(recvbuf) +
+                                  (displs[i] + recvcounts[i] - recvcount) *
+                                      recvTypeSize,
+                              static_cast<int>(recvcount), recvtype, i, 0, comm,
+                              &requests.back());
+                    recvcount = 0;
+                }
+            }
+        }
+    }
+
+    uint64_t sendcountvar = sendcount;
+
+    while (sendcountvar > 0)
+    {
+        requests.emplace_back();
+        if (sendcountvar > chunksize)
+        {
+            MPI_Isend(reinterpret_cast<const char *>(sendbuf) +
+                          (sendcount - sendcountvar) * sendTypeSize,
+                      chunksize, sendtype, root, 0, comm, &requests.back());
+            sendcountvar -= chunksize;
+        }
+        else
+        {
+            MPI_Isend(reinterpret_cast<const char *>(sendbuf) +
+                          (sendcount - sendcountvar) * sendTypeSize,
+                      static_cast<int>(sendcountvar), sendtype, root, 0, comm,
+                      &requests.back());
+            sendcountvar = 0;
+        }
+    }
+
+    MPI_Waitall(static_cast<int>(requests.size()), requests.data(),
+                MPI_STATUSES_IGNORE);
+}
+
+void MPI_Gatherv64OneSidedPull(const void *sendbuf, uint64_t sendcount,
+                               MPI_Datatype sendtype, void *recvbuf,
+                               const uint64_t *recvcounts,
+                               const uint64_t *displs, MPI_Datatype recvtype,
+                               int root, MPI_Comm comm, const int chunksize)
+{
+
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(comm, &mpiSize);
+    MPI_Comm_rank(comm, &mpiRank);
+
+    int recvTypeSize;
+    int sendTypeSize;
+
+    MPI_Type_size(recvtype, &recvTypeSize);
+    MPI_Type_size(sendtype, &sendTypeSize);
+
+    MPI_Win win;
+    MPI_Win_create(const_cast<void *>(sendbuf), sendcount * sendTypeSize,
+                   sendTypeSize, MPI_INFO_NULL, comm, &win);
+
+    if (mpiRank == root)
+    {
+        for (int i = 0; i < mpiSize; ++i)
+        {
+            uint64_t recvcount = recvcounts[i];
+            while (recvcount > 0)
+            {
+                if (recvcount > chunksize)
+                {
+                    MPI_Get(reinterpret_cast<char *>(recvbuf) +
+                                (displs[i] + recvcounts[i] - recvcount) *
+                                    recvTypeSize,
+                            chunksize, recvtype, i, recvcounts[i] - recvcount,
+                            chunksize, recvtype, win);
+                    recvcount -= chunksize;
+                }
+                else
+                {
+                    MPI_Get(reinterpret_cast<char *>(recvbuf) +
+                                (displs[i] + recvcounts[i] - recvcount) *
+                                    recvTypeSize,
+                            static_cast<int>(recvcount), recvtype, i,
+                            recvcounts[i] - recvcount,
+                            static_cast<int>(recvcount), recvtype, win);
+                    recvcount = 0;
+                }
+            }
+        }
+    }
+
+    MPI_Win_free(&win);
+}
+
+void MPI_Gatherv64OneSidedPush(const void *sendbuf, uint64_t sendcount,
+                               MPI_Datatype sendtype, void *recvbuf,
+                               const uint64_t *recvcounts,
+                               const uint64_t *displs, MPI_Datatype recvtype,
+                               int root, MPI_Comm comm, const int chunksize)
+{
+
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(comm, &mpiSize);
+    MPI_Comm_rank(comm, &mpiRank);
+
+    int recvTypeSize;
+    int sendTypeSize;
+
+    MPI_Type_size(recvtype, &recvTypeSize);
+    MPI_Type_size(sendtype, &sendTypeSize);
+
+    uint64_t recvsize = displs[mpiSize - 1] + recvcounts[mpiSize - 1];
+
+    MPI_Win win;
+    MPI_Win_create(recvbuf, recvsize * recvTypeSize, recvTypeSize,
+                   MPI_INFO_NULL, comm, &win);
+
+    uint64_t sendcountvar = sendcount;
+
+    while (sendcountvar > 0)
+    {
+        if (sendcountvar > chunksize)
+        {
+            MPI_Put(reinterpret_cast<const char *>(sendbuf) +
+                        (sendcount - sendcountvar) * sendTypeSize,
+                    chunksize, sendtype, root,
+                    displs[mpiRank] + sendcount - sendcountvar, chunksize,
+                    sendtype, win);
+            sendcountvar -= chunksize;
+        }
+        else
+        {
+            MPI_Put(reinterpret_cast<const char *>(sendbuf) +
+                        (sendcount - sendcountvar) * sendTypeSize,
+                    static_cast<int>(sendcountvar), sendtype, root,
+                    displs[mpiRank] + sendcount - sendcountvar,
+                    static_cast<int>(sendcountvar), sendtype, win);
+            sendcountvar = 0;
+        }
+    }
+
+    MPI_Win_free(&win);
+}
+
 void PrintDims(const Dims &dims, const std::string &label)
 {
     std::cout << label;
@@ -295,7 +471,7 @@ void PrintBlock(const BlockInfo &b, const std::string &label)
 {
     std::cout << label << std::endl;
     std::cout << b.name << std::endl;
-    std::cout << "    Type : " << b.type << std::endl;
+    std::cout << "    DataType : " << b.type << std::endl;
     PrintDims(b.shape, "    Shape : ");
     PrintDims(b.start, "    Start : ");
     PrintDims(b.count, "    Count : ");
@@ -309,7 +485,7 @@ void PrintBlockVec(const BlockVec &bv, const std::string &label)
     for (const auto &i : bv)
     {
         std::cout << i.name << std::endl;
-        std::cout << "    Type : " << i.type << std::endl;
+        std::cout << "    DataType : " << i.type << std::endl;
         PrintDims(i.shape, "    Shape : ");
         PrintDims(i.start, "    Start : ");
         PrintDims(i.count, "    Count : ");
@@ -328,7 +504,7 @@ void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label)
         for (const auto &i : bv)
         {
             std::cout << "    " << i.name << std::endl;
-            std::cout << "        Type : " << i.type << std::endl;
+            std::cout << "        DataType : " << i.type << std::endl;
             PrintDims(i.shape, "        Shape : ");
             PrintDims(i.start, "        Start : ");
             PrintDims(i.count, "        Count : ");

@@ -53,7 +53,7 @@ void FC_GLOBAL(adios2_steps_f2c, ADIOS2_STEPS_F2C)(int64_t *steps,
 {
     *steps = -1;
     size_t stepsC;
-    *ierr = static_cast<int>(adios2_current_step(&stepsC, *engine));
+    *ierr = static_cast<int>(adios2_steps(&stepsC, *engine));
 
     if (*ierr == static_cast<int>(adios2_error_none))
     {
