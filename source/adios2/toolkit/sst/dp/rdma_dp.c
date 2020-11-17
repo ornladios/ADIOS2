@@ -1380,11 +1380,14 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     RdmaStepLogEntry StepLog = RS_Stream->StepLog;
     RdmaStepLogEntry tStepLog;
 
-    Svcs->verbose(
-        RS_Stream->CP_Stream, DPSummaryVerbose,
-        "Reader Rank %d: %li early reads of %li total reads (where preload "
-        "was possible.)\n",
-        RS_Stream->Rank, RS_Stream->EarlyReads, RS_Stream->TotalReads);
+    if (RS_Stream->PreloadStep > -1)
+    {
+        Svcs->verbose(
+            RS_Stream->CP_Stream, DPSummaryVerbose,
+            "Reader Rank %d: %li early reads of %li total reads (where preload "
+            "was possible.)\n",
+            RS_Stream->Rank, RS_Stream->EarlyReads, RS_Stream->TotalReads);
+    }
 
     Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                   "Tearing down RDMA state on reader.\n");
@@ -1890,7 +1893,8 @@ static void RdmaReaderReleaseTimestep(CP_Services Svcs, DP_RS_Stream Stream_v,
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)Stream_v;
 
     pthread_mutex_lock(&ts_mutex);
-    if (Timestep >= Stream->PreloadStep && !Stream->PreloadPosted)
+    if (Stream->PreloadStep > -1 && Timestep >= Stream->PreloadStep &&
+        !Stream->PreloadPosted)
     {
         // TODO: Destroy all StepLog entries other than the one used for Preload
         PostPreload(Svcs, Stream, Timestep);
