@@ -365,7 +365,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params,
     fi_freeinfo(originfo);
 }
 
-static int fini_fabric(struct fabric_state *fabric)
+static void fini_fabric(struct fabric_state *fabric)
 {
 
     int status;
@@ -1818,7 +1818,7 @@ static void RdmaReaderRegisterTimestep(CP_Services Svcs,
     Rdma_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
     TimestepList Step;
 
-    if (PreloadMode != SstPreloadNone && WS_Stream->DefLocked < 0)
+    if (PreloadMode == SstPreloadLearned && WS_Stream->DefLocked < 0)
     {
         WS_Stream->DefLocked = Timestep;
         if (WSR_Stream->SelectLocked >= 0)
@@ -1988,6 +1988,37 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
         fi_close((struct fid *)sbmr);
     }
     free(SendBuffer);
+}
+
+static void RdmaTimestepArrived(CP_Services Svcs, DP_RS_Stream Stream_v,
+                                long Timestep, SstPreloadModeType PreloadMode)
+{
+    Rdma_RS_Stream Stream = (Rdma_RS_Stream)Stream_v;
+
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
+                  "%s with Timestep = %li, PreloadMode = %d\n", __func__,
+                  Timestep, PreloadMode);
+    if (PreloadMode == SstPreloadLearned && Stream->PreloadStep == -1)
+    {
+        if (Stream->PreloadAvail)
+        {
+            Stream->PreloadStep = Timestep;
+            if (Stream->Rank == 0)
+            {
+                Svcs->verbose(Stream->CP_Stream, DPSummaryVerbose,
+                              "write pattern is locked.\n");
+            }
+        }
+        else if (Stream->Rank == 0)
+        {
+            Svcs->verbose(
+                Stream->CP_Stream, DPSummaryVerbose,
+                "RDMA dataplane is ignoring a write pattern lock notification "
+                "because preloading is disabled. Enable by setting the "
+                "environment "
+                "variable SST_DP_PRELOAD to 'yes'\n");
+        }
+    }
 }
 
 static void RdmaReaderReleaseTimestep(CP_Services Svcs, DP_RS_Stream Stream_v,
@@ -2217,7 +2248,7 @@ extern NO_SANITIZE_THREAD CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.WSRreadPatternLocked = RdmaReadPatternLocked;
     RdmaDPInterface.RSreadPatternLocked = RdmaWritePatternLocked;
     RdmaDPInterface.RSReleaseTimestep = RdmaReaderReleaseTimestep;
-    RdmaDPInterface.timestepArrived = NULL;
+    RdmaDPInterface.timestepArrived = RdmaTimestepArrived;
     RdmaDPInterface.destroyReader = RdmaDestroyReader;
     RdmaDPInterface.destroyWriter = RdmaDestroyWriter;
     RdmaDPInterface.destroyWriterPerReader = RdmaDestroyWriterPerReader;
