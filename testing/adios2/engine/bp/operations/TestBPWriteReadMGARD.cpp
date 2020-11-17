@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 
+#include <algorithm>
 #include <iostream> //std::cout
 #include <numeric>  //std::iota
 #include <stdexcept>
