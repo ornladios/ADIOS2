@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -111,12 +112,14 @@ struct fabric_state
  *   plane would replace one or both of these with RDMA functionality.
  */
 
-static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
+static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params,
+                        CP_Services Svcs, void *CP_Stream)
 {
     struct fi_info *hints, *info, *originfo, *useinfo;
     struct fi_av_attr av_attr = {0};
     struct fi_cq_attr cq_attr = {0};
     char *ifname;
+    int result;
 
     hints = fi_allocinfo();
     hints->caps = FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ |
@@ -144,6 +147,8 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
     pthread_mutex_unlock(&fabric_mutex);
     if (!info)
     {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "no fabrics detected.\n");
+        fabric->info = NULL;
         return;
     }
     fi_freeinfo(hints);
@@ -157,6 +162,8 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
 
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
+            Svcs->verbose(CP_Stream, DPTraceVerbose,
+                          "using interface set by FABRIC_IFACE.\n");
             useinfo = info;
             break;
         }
@@ -166,13 +173,30 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
             (!useinfo || !ifname ||
              (strcmp(useinfo->domain_attr->name, ifname) != 0)))
         {
+            Svcs->verbose(CP_Stream, DPTraceVerbose,
+                          "seeing candidate fabric %s, will use this unless we "
+                          "see something better.\n",
+                          prov_name);
             useinfo = info;
         }
         else if (((strstr(prov_name, "verbs") && info->src_addr) ||
                   strstr(prov_name, "gni") || strstr(prov_name, "psm2")) &&
                  !useinfo)
         {
+            Svcs->verbose(CP_Stream, DPTraceVerbose,
+                          "seeing candidate fabric %s, will use this unless we "
+                          "see something better.\n",
+                          prov_name);
             useinfo = info;
+        }
+        else
+        {
+            Svcs->verbose(
+                CP_Stream, DPTraceVerbose,
+                "ignoring fabric %s because it's not of a supported type. It "
+                "may work to force this fabric to be used by setting "
+                "FABRIC_IFACE to %s, but it may not be stable or performant.\n",
+                prov_name, domain_name);
         }
         info = info->next;
     }
@@ -181,6 +205,14 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
 
     if (!info)
     {
+        Svcs->verbose(
+            CP_Stream, DPCriticalVerbose,
+            "none of the usable system fabrics are supported high speed "
+            "interfaces (verbs, gni, psm2.) To use a compatible fabric that is "
+            "being ignored (probably sockets), set the environment variable "
+            "FABRIC_IFACE to the interface name. Check the output of fi_info "
+            "to troubleshoot this message.\n");
+        fabric->info = NULL;
         return;
     }
 
@@ -235,31 +267,105 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
     }
 #endif /* SST_HAVE_CRAY_DRC */
     fabric->info = fi_dupinfo(info);
+    if (!fabric->info)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "copying the fabric failed.\n");
+        return;
+    }
 
-    fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
-    fi_domain(fabric->fabric, info, &fabric->domain, fabric->ctx);
+    Svcs->verbose(CP_Stream, DPTraceVerbose,
+                  "Fabric parameters to use at fabric initialization: %s\n",
+                  fi_tostr(fabric->info, FI_TYPE_INFO));
+
+    result = fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
+    if (result != FI_SUCCESS)
+    {
+        Svcs->verbose(
+            CP_Stream, DPCriticalVerbose,
+            "opening fabric access failed with %d (%s). This is fatal.\n",
+            result, fi_strerror(result));
+        return;
+    }
+    result = fi_domain(fabric->fabric, info, &fabric->domain, fabric->ctx);
+    if (result != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "accessing domain failed with %d (%s). This is fatal.\n",
+                      result, fi_strerror(result));
+        return;
+    }
     info->ep_attr->type = FI_EP_RDM;
-    fi_endpoint(fabric->domain, info, &fabric->signal, fabric->ctx);
+    result = fi_endpoint(fabric->domain, info, &fabric->signal, fabric->ctx);
+    if (result != FI_SUCCESS || !fabric->signal)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "opening endpoint failed with %d (%s). This is fatal.\n",
+                      result, fi_strerror(result));
+        return;
+    }
 
     av_attr.type = FI_AV_MAP;
     av_attr.count = DP_AV_DEF_SIZE;
     av_attr.ep_per_node = 0;
-    fi_av_open(fabric->domain, &av_attr, &fabric->av, fabric->ctx);
-    fi_ep_bind(fabric->signal, &fabric->av->fid, 0);
+    result = fi_av_open(fabric->domain, &av_attr, &fabric->av, fabric->ctx);
+    if (result != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "could not initialize address vector, failed with %d "
+                      "(%s). This is fatal.\n",
+                      result, fi_strerror(result));
+        return;
+    }
+    result = fi_ep_bind(fabric->signal, &fabric->av->fid, 0);
+    if (result != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "could not bind endpoint to address vector, failed with "
+                      "%d (%s). This is fatal.\n",
+                      result, fi_strerror(result));
+        return;
+    }
 
     cq_attr.size = 0;
     cq_attr.format = FI_CQ_FORMAT_DATA;
     cq_attr.wait_obj = FI_WAIT_UNSPEC;
     cq_attr.wait_cond = FI_CQ_COND_NONE;
-    fi_cq_open(fabric->domain, &cq_attr, &fabric->cq_signal, fabric->ctx);
-    fi_ep_bind(fabric->signal, &fabric->cq_signal->fid, FI_TRANSMIT | FI_RECV);
+    result =
+        fi_cq_open(fabric->domain, &cq_attr, &fabric->cq_signal, fabric->ctx);
+    if (result != FI_SUCCESS)
+    {
+        Svcs->verbose(
+            CP_Stream, DPCriticalVerbose,
+            "opening completion queue failed with %d (%s). This is fatal.\n",
+            result, fi_strerror(result));
+        return;
+    }
 
-    fi_enable(fabric->signal);
+    result = fi_ep_bind(fabric->signal, &fabric->cq_signal->fid,
+                        FI_TRANSMIT | FI_RECV);
+    if (result != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "could not bind endpoint to completion queue, failed "
+                      "with %d (%s). This is fatal.\n",
+                      result, fi_strerror(result));
+        return;
+    }
+
+    result = fi_enable(fabric->signal);
+    if (result != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "enable endpoint, failed with %d (%s). This is fatal.\n",
+                      result, fi_strerror(result));
+        return;
+    }
 
     fi_freeinfo(originfo);
 }
 
-static void fini_fabric(struct fabric_state *fabric)
+static int fini_fabric(struct fabric_state *fabric)
 {
 
     int status;
@@ -557,16 +663,13 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
 
 #endif /* SST_HAVE_CRAY_DRC */
 
-    init_fabric(Stream->Fabric, Stream->Params);
+    init_fabric(Stream->Fabric, Stream->Params, Svcs, CP_Stream);
     if (!Fabric->info)
     {
         Svcs->verbose(CP_Stream, DPCriticalVerbose,
                       "Could not find a valid transport fabric.\n");
         return NULL;
     }
-
-    Svcs->verbose(CP_Stream, DPPerRankVerbose, "Fabric Parameters:\n%s\n",
-                  fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     ContactInfo->Length = Fabric->info->src_addrlen;
     ContactInfo->Address = malloc(ContactInfo->Length);
@@ -719,7 +822,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     set_long_attr(DPAttrs, attr_atom_from_string("RDMA_DRC_CRED"), attr_cred);
 #endif /* SST_HAVE_CRAY_DRC */
 
-    init_fabric(Stream->Fabric, Params);
+    init_fabric(Stream->Fabric, Params, Svcs, CP_Stream);
     Fabric = Stream->Fabric;
     if (!Fabric->info)
     {
@@ -1904,7 +2007,6 @@ static void RdmaReaderReleaseTimestep(CP_Services Svcs, DP_RS_Stream Stream_v,
 
     // This might be be a good spot to flush the Step list if we aren't doing
     // preload (yet.)
-    // fprintf(stderr, "rank %d, leaving %s\n", Stream->Rank, __func__);
 }
 
 static void PullSelection(CP_Services Svcs, Rdma_WSR_Stream Stream)
@@ -1978,8 +2080,6 @@ static void PullSelection(CP_Services Svcs, Rdma_WSR_Stream Stream)
                 " This is probably an error.\n");
         }
     }
-
-    // fprintf(stderr, "Leaving %s\n", __func__);
 
     if (Fabric->local_mr_req)
     {
