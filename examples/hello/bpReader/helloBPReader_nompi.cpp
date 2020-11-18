@@ -32,6 +32,16 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpReader = bpIO.Open(filename, adios2::Mode::Read);
 
+        const std::map<std::string, adios2::Params> variables =
+            bpIO.AvailableVariables(true);
+
+        std::cout << "List of variables:";
+        for (const auto variablePair : variables)
+        {
+            std::cout << "  " << variablePair.first;
+        }
+        std::cout << std::endl;
+
         /** Write variable for buffering */
         adios2::Variable<float> bpFloats =
             bpIO.InquireVariable<float>("bpFloats");

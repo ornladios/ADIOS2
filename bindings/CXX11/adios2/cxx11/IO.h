@@ -283,16 +283,19 @@ public:
     void FlushAll();
 
     /**
-     * Returns a map with variable information
-     * @return map:
-     * <pre>
-     * key: variable name
-     * value: Params
-     * 		string key: variable info key
-     *      string value: variable info value
-     * </pre>
+     * Returns a map with variable information.
+     * - key: variable name
+     * - value: Params is a map<string,string>
+     * 	 - key: "Type", "Shape", "AvailableStepsCount", "Min", "Max",
+     * "SingleValue"
+     *   - value: variable info value as string
+     *
+     * @param namesOnly: returns a map with the variable names but with no
+     * Parameters. Use this if you only need the list of variable names
+     * and call VariableType() and InquireVariable() on the names individually.
+     * @return map<string, map<string, string>>
      */
-    std::map<std::string, Params> AvailableVariables();
+    std::map<std::string, Params> AvailableVariables(bool namesOnly = false);
 
     /**
      * Returns a map with available attributes information associated to a
