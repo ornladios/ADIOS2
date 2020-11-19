@@ -119,10 +119,17 @@ void IO::FlushAll()
     m_IO->FlushAll();
 }
 
-std::map<std::string, Params> IO::AvailableVariables()
+std::map<std::string, Params> IO::AvailableVariables(bool namesOnly)
 {
     helper::CheckForNullptr(m_IO, "in call to IO::AvailableVariables");
-    return m_IO->GetAvailableVariables();
+    if (namesOnly)
+    {
+        return m_IO->GetAvailableVariables({"name"});
+    }
+    else
+    {
+        return m_IO->GetAvailableVariables();
+    }
 }
 
 std::map<std::string, Params>
