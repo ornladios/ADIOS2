@@ -231,7 +231,8 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
          * size
          * */
         const size_t TotalDataSize = Nx * sizeof(double) * 3;
-        const size_t MaxExtra = 16777216; /* 16MB extra allowed in buffer */
+        const size_t MaxExtra =
+            18 * 1024 * 1024; /* 18MB extra allowed in buffer */
         for (size_t step = 0; step < NSteps; ++step)
         {
             EXPECT_LT(bufsize_sync_beginstep[step], TotalDataSize + MaxExtra);

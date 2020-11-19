@@ -372,13 +372,24 @@ void BP4Serializer::SerializeDataBuffer(core::IO &io) noexcept
     if (attributesSizeInData)
     {
         attributesSizeInData += 12; // count + length + end ID
-        m_Data.Resize(position + attributesSizeInData + 4,
-                      "when writing Attributes in rank=0\n");
+        // Take care not to shrink the buffer size in this.
+        // Otherwise, growing the buffer again later on is expensive
+        // - not because of reallocation, but because of (re)initialization
+        // with zeros by BufferSTL::Resize.
+        const size_t minSize = position + attributesSizeInData + 4;
+        if (m_Data.m_Buffer.size() < minSize)
+        {
+            m_Data.Resize(minSize, "when writing Attributes in rank=0\n");
+        }
         PutAttributes(io);
     }
     else
     {
-        m_Data.Resize(position + 12 + 4, "for empty Attributes\n");
+        const size_t minSize = position + 12 + 4;
+        if (m_Data.m_Buffer.size() < minSize)
+        {
+            m_Data.Resize(minSize, "for empty Attributes\n");
+        }
         // Attribute index header for zero attributes: 0, 0LL
         // Resize() already takes care of this
         position += 12;
