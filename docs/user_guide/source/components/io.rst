@@ -203,24 +203,24 @@ The available modes are ``adios2::Mode::Read``, ``adios2::Mode::Write``, ``adios
 
     /** Signatures */
     /** Provide a new MPI communicator other than from ADIOS->IO->Engine */
-    adios2::Engine &adios2::IO::Open( const std::string &name,
-                                      const adios2::Mode mode,
-                                      MPI_Comm mpiComm );
+    adios2::Engine adios2::IO::Open(const std::string &name,
+                                    const adios2::Mode mode,
+                                    MPI_Comm mpiComm );
 
     /** Reuse the MPI communicator from ADIOS->IO->Engine \n or non-MPI serial mode */
-    adios2::Engine &adios2::IO::Open(const std::string &name,
-                                     const adios2::Mode mode);
+    adios2::Engine adios2::IO::Open(const std::string &name,
+                                    const adios2::Mode mode);
 
 
     /** Examples */
 
     /** Engine derived class, spawned to start Write operations */
-    adios2::Engine& bpWriter = io.Open("myVector.bp", adios2::Mode::Write);
+    adios2::Engine bpWriter = io.Open("myVector.bp", adios2::Mode::Write);
 
     /** Engine derived class, spawned to start Read operations on rank 0 */
     if( rank == 0 )
     {
-        adios2::Engine& bpReader = io.Open("myVector.bp",
+        adios2::Engine bpReader = io.Open("myVector.bp",
                                            adios2::Mode::Read,
                                            MPI_COMM_SELF);
     }
