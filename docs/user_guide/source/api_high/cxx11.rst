@@ -46,7 +46,7 @@ C++11 Write example
        
    }
    
-   // optional, but is good practice to indicate oStream shouldn't be used 
+   // Calling close is mandatory!
    oStream.close(); 
 
 C++11 Read "step-by-step" example
@@ -81,7 +81,7 @@ C++11 Read "step-by-step" example
           const std::vector<float> temperature = iStream.read<float>( "temperature", start, count );
           const std::vector<float> pressure = iStream.read<float>( "pressure", start, count );
       }
-      // optional, but is good practice to indicate iStream shouldn't be used 
+      // Don't forget to call close!
       iStream.close(); 
    }
    
