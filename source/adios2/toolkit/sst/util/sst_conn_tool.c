@@ -58,10 +58,10 @@ extern SMPI_Comm SMPI_COMM_WORLD;
 
 static atom_t TRANSPORT = -1;
 static atom_t IP_PORT = -1;
-static atom_t IP_HOSTNAME = -1;
+/* static atom_t IP_HOSTNAME = -1; */
 static atom_t IP_ADDR = -1;
 static atom_t ENET_PORT = -1;
-static atom_t ENET_HOSTNAME = -1;
+/* static atom_t ENET_HOSTNAME = -1; */
 static atom_t ENET_ADDR = -1;
 
 struct option options[] = {{"help", no_argument, NULL, 'h'},
@@ -117,10 +117,10 @@ static void do_connect();
 static void init_atoms()
 {
     TRANSPORT = attr_atom_from_string("CM_TRANSPORT");
-    IP_HOSTNAME = attr_atom_from_string("IP_HOST");
+    /* IP_HOSTNAME = attr_atom_from_string("IP_HOST"); */
     IP_PORT = attr_atom_from_string("IP_PORT");
     IP_ADDR = attr_atom_from_string("IP_ADDR");
-    ENET_HOSTNAME = attr_atom_from_string("CM_ENET_HOST");
+    /* ENET_HOSTNAME = attr_atom_from_string("CM_ENET_HOST"); */
     ENET_PORT = attr_atom_from_string("CM_ENET_PORT");
     ENET_ADDR = attr_atom_from_string("CM_ENET_ADDR");
 }

@@ -3,11 +3,8 @@
 find_package(EnvModules REQUIRED)
 
 env_module(purge)
-env_module(load pgi)
+env_module(load nvhpc-nompi)
 
-set(ENV{CC}  pgcc)
-set(ENV{CXX} pgc++)
-set(ENV{FC}  pgfortran)
 #set(ENV{CFLAGS} -Werror)
 set(ENV{CXXFLAGS} --brief_diagnostics)
 #set(ENV{FFLAGS} "-warn errors")
