@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 foreach(tst IN ITEMS
-  1D
+  1D 2DZfp
   2DMemSelect 3DMemSelect
   WriterDoubleBuffer WriterSingleBuffer
   ReaderDoubleBuffer ReaderSingleBuffer
