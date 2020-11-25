@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 foreach(tst IN ITEMS
-  1D 2DZfp
+  1D
   2DMemSelect 3DMemSelect
   WriterDoubleBuffer WriterSingleBuffer
   ReaderDoubleBuffer ReaderSingleBuffer
@@ -16,3 +16,9 @@ foreach(tst IN ITEMS
   )
 endforeach()
 
+if(ADIOS2_HAVE_ZFP)
+    gtest_add_tests_helper(2DZfp MPI_NONE DataMan Engine.DataMan. "")
+    set_tests_properties(${Test.Engine.DataMan.2DZfp-TESTS}
+        PROPERTIES RUN_SERIAL TRUE
+        )
+endif()
