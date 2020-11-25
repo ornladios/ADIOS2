@@ -9,10 +9,10 @@
  */
 
 #include <adios2.h>
+#include <cmath>
 #include <gtest/gtest.h>
 #include <numeric>
 #include <thread>
-#include <cmath>
 
 using namespace adios2;
 size_t print_lines = 0;
@@ -130,7 +130,8 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
         dataManIO.DefineVariable<unsigned int>("bpUInts", shape, start, count);
     auto bpFloats =
         dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
-    adios2::Operator zfpOp = adios.DefineOperator("zfpCompressor", adios2::ops::LossyZFP);
+    adios2::Operator zfpOp =
+        adios.DefineOperator("zfpCompressor", adios2::ops::LossyZFP);
     bpFloats.AddOperation(zfpOp, {{adios2::ops::zfp::key::accuracy, "0.1"}});
     auto bpDoubles =
         dataManIO.DefineVariable<double>("bpDoubles", shape, start, count);
