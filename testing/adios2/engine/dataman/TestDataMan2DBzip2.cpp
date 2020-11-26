@@ -78,7 +78,7 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        ASSERT_EQ(data[i],tmpdata[i]);
+        ASSERT_EQ(data[i], tmpdata[i]);
     }
 }
 
@@ -92,7 +92,7 @@ void VerifyData(const T *data, size_t step, const Dims &start,
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        ASSERT_EQ(data[i],tmpdata[i]);
+        ASSERT_EQ(data[i], tmpdata[i]);
     }
 }
 
