@@ -111,7 +111,7 @@ private:
      */
     template <class T>
     void PutSyncCommon(Variable<T> &variable,
-                       const typename Variable<T>::Info &blockInfo);
+                       const typename Variable<T>::BPInfo &blockInfo);
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
@@ -122,7 +122,7 @@ private:
      */
     template <class T>
     void AsyncSendVariable(Variable<T> &variable,
-                           const typename Variable<T>::Info &blockInfo);
+                           const typename Variable<T>::BPInfo &blockInfo);
 
     void AsyncSendVariable(std::string variableName);
 

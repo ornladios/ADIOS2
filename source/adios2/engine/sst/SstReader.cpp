@@ -604,7 +604,7 @@ void SstReader::PerformGets()
 void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
 
 #define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     SstReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
@@ -620,7 +620,7 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
             "ERROR: Unknown marshal mechanism in DoAllStepsBlocksInfo\n");     \
     }                                                                          \
                                                                                \
-    std::vector<typename Variable<T>::Info> SstReader::DoBlocksInfo(           \
+    std::vector<typename Variable<T>::BPInfo> SstReader::DoBlocksInfo(         \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \

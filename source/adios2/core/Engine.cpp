@@ -126,11 +126,11 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
     {                                                                          \
         ThrowUp("DoGetDeferred");                                              \
     }                                                                          \
-    typename Variable<T>::Info *Engine::DoGetBlockSync(Variable<T> &v)         \
+    typename Variable<T>::BPInfo *Engine::DoGetBlockSync(Variable<T> &v)       \
     {                                                                          \
         return nullptr;                                                        \
     }                                                                          \
-    typename Variable<T>::Info *Engine::DoGetBlockDeferred(Variable<T> &v)     \
+    typename Variable<T>::BPInfo *Engine::DoGetBlockDeferred(Variable<T> &v)   \
     {                                                                          \
         return nullptr;                                                        \
     }
@@ -139,25 +139,25 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 #define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     Engine::DoAllStepsBlocksInfo(const Variable<T> &variable) const            \
     {                                                                          \
         ThrowUp("DoAllStepsBlocksInfo");                                       \
-        return std::map<size_t, std::vector<typename Variable<T>::Info>>();    \
+        return std::map<size_t, std::vector<typename Variable<T>::BPInfo>>();  \
     }                                                                          \
                                                                                \
-    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
     Engine::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const    \
     {                                                                          \
         ThrowUp("DoAllRelativeStepsBlocksInfo");                               \
-        return std::vector<std::vector<typename Variable<T>::Info>>();         \
+        return std::vector<std::vector<typename Variable<T>::BPInfo>>();       \
     }                                                                          \
                                                                                \
-    std::vector<typename Variable<T>::Info> Engine::DoBlocksInfo(              \
+    std::vector<typename Variable<T>::BPInfo> Engine::DoBlocksInfo(            \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         ThrowUp("DoBlocksInfo");                                               \
-        return std::vector<typename Variable<T>::Info>();                      \
+        return std::vector<typename Variable<T>::BPInfo>();                    \
     }                                                                          \
     std::vector<size_t> Engine::DoGetAbsoluteSteps(                            \
         const Variable<T> &variable) const                                     \
@@ -223,21 +223,21 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
     template void Engine::Get<T>(const std::string &, std::vector<T> &,        \
                                  const Mode);                                  \
                                                                                \
-    template typename Variable<T>::Info *Engine::Get<T>(Variable<T> &,         \
-                                                        const Mode);           \
-    template typename Variable<T>::Info *Engine::Get<T>(const std::string &,   \
-                                                        const Mode);           \
+    template typename Variable<T>::BPInfo *Engine::Get<T>(Variable<T> &,       \
+                                                          const Mode);         \
+    template typename Variable<T>::BPInfo *Engine::Get<T>(const std::string &, \
+                                                          const Mode);         \
                                                                                \
     template Variable<T> &Engine::FindVariable(                                \
         const std::string &variableName, const std::string hint);              \
                                                                                \
-    template std::map<size_t, std::vector<typename Variable<T>::Info>>         \
+    template std::map<size_t, std::vector<typename Variable<T>::BPInfo>>       \
     Engine::AllStepsBlocksInfo(const Variable<T> &) const;                     \
                                                                                \
-    template std::vector<std::vector<typename Variable<T>::Info>>              \
+    template std::vector<std::vector<typename Variable<T>::BPInfo>>            \
     Engine::AllRelativeStepsBlocksInfo(const Variable<T> &) const;             \
                                                                                \
-    template std::vector<typename Variable<T>::Info> Engine::BlocksInfo(       \
+    template std::vector<typename Variable<T>::BPInfo> Engine::BlocksInfo(     \
         const Variable<T> &, const size_t) const;                              \
     template std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> &) \
         const;

@@ -52,7 +52,7 @@ void BP4Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
 }
 
 template <class T>
-typename core::Variable<T>::Info &
+typename core::Variable<T>::BPInfo &
 BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
                                        T *data) const
 {
@@ -97,7 +97,7 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
         // BlocksInfo() expects absolute step, stepsStart is relative
         // BlocksInfo() adds +1 to match the step starting from 1
         // but absStep already is the actual step in the map
-        const std::vector<typename core::Variable<T>::Info> blocksInfo =
+        const std::vector<typename core::Variable<T>::BPInfo> blocksInfo =
             BlocksInfo(variable, absStep - 1);
 
         if (variable.m_BlockID >= blocksInfo.size())
@@ -132,7 +132,7 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
 template <class T>
 void BP4Deserializer::SetVariableBlockInfo(
     core::Variable<T> &variable,
-    typename core::Variable<T>::Info &blockInfo) const
+    typename core::Variable<T>::BPInfo &blockInfo) const
 {
     auto lf_SetSubStreamInfoOperations =
         [&](const BPOpInfo &bpOpInfo, const size_t payloadOffset,
@@ -161,7 +161,7 @@ void BP4Deserializer::SetVariableBlockInfo(
 
     auto lf_SetSubStreamInfoLocalArray =
         [&](const std::string &variableName, const Box<Dims> &selectionBox,
-            typename core::Variable<T>::Info &blockInfo, const size_t step,
+            typename core::Variable<T>::BPInfo &blockInfo, const size_t step,
             const size_t blockIndexOffset, const BufferSTL &bufferSTL,
             const bool isRowMajor)
 
@@ -276,7 +276,7 @@ void BP4Deserializer::SetVariableBlockInfo(
 
     auto lf_SetSubStreamInfoGlobalArray =
         [&](const std::string &variableName, const Box<Dims> &selectionBox,
-            typename core::Variable<T>::Info &blockInfo, const size_t step,
+            typename core::Variable<T>::BPInfo &blockInfo, const size_t step,
             const size_t blockIndexOffset, const BufferSTL &bufferSTL,
             const bool isRowMajor)
 
@@ -415,7 +415,7 @@ void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 {
     const auto &buffer = m_Metadata.m_Buffer;
 
-    const typename core::Variable<T>::Info &blockInfo =
+    const typename core::Variable<T>::BPInfo &blockInfo =
         InitVariableBlockInfo(variable, data);
 
     const size_t stepsStart = blockInfo.StepsStart;
@@ -470,7 +470,7 @@ void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 
 template <class T>
 void BP4Deserializer::PreDataRead(
-    core::Variable<T> &variable, typename core::Variable<T>::Info &blockInfo,
+    core::Variable<T> &variable, typename core::Variable<T>::BPInfo &blockInfo,
     const helper::SubStreamBoxInfo &subStreamBoxInfo, char *&buffer,
     size_t &payloadSize, size_t &payloadOffset, const size_t threadID)
 {
@@ -506,7 +506,7 @@ void BP4Deserializer::PreDataRead(
 
 template <class T>
 void BP4Deserializer::PostDataRead(
-    core::Variable<T> &variable, typename core::Variable<T>::Info &blockInfo,
+    core::Variable<T> &variable, typename core::Variable<T>::BPInfo &blockInfo,
     const helper::SubStreamBoxInfo &subStreamBoxInfo,
     const bool isRowMajorDestination, const size_t threadID)
 {
@@ -557,10 +557,10 @@ void BP4Deserializer::PostDataRead(
 }
 
 template <class T>
-std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
 BP4Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
 {
-    std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+    std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
         allStepsBlocksInfo;
 
     for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
@@ -575,11 +575,11 @@ BP4Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
 }
 
 template <class T>
-std::vector<std::vector<typename core::Variable<T>::Info>>
+std::vector<std::vector<typename core::Variable<T>::BPInfo>>
 BP4Deserializer::AllRelativeStepsBlocksInfo(
     const core::Variable<T> &variable) const
 {
-    std::vector<std::vector<typename core::Variable<T>::Info>>
+    std::vector<std::vector<typename core::Variable<T>::BPInfo>>
         allRelativeStepsBlocksInfo(
             variable.m_AvailableStepBlockIndexOffsets.size());
 
@@ -595,7 +595,7 @@ BP4Deserializer::AllRelativeStepsBlocksInfo(
 }
 
 template <class T>
-std::vector<typename core::Variable<T>::Info>
+std::vector<typename core::Variable<T>::BPInfo>
 BP4Deserializer::BlocksInfo(const core::Variable<T> &variable,
                             const size_t step) const
 {
@@ -603,14 +603,14 @@ BP4Deserializer::BlocksInfo(const core::Variable<T> &variable,
     auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(step + 1);
     if (itStep == variable.m_AvailableStepBlockIndexOffsets.end())
     {
-        return std::vector<typename core::Variable<T>::Info>();
+        return std::vector<typename core::Variable<T>::BPInfo>();
     }
     return BlocksInfoCommon(variable, itStep->second);
 }
 
 template <class T>
 void BP4Deserializer::ClipContiguousMemory(
-    typename core::Variable<T>::Info &blockInfo,
+    typename core::Variable<T>::BPInfo &blockInfo,
     const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
     const Box<Dims> &intersectionBox) const
 {
@@ -1139,11 +1139,12 @@ BP4Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
 
 // PRIVATE
 template <class T>
-std::vector<typename core::Variable<T>::Info> BP4Deserializer::BlocksInfoCommon(
+std::vector<typename core::Variable<T>::BPInfo>
+BP4Deserializer::BlocksInfoCommon(
     const core::Variable<T> &variable,
     const std::vector<size_t> &blocksIndexOffsets) const
 {
-    std::vector<typename core::Variable<T>::Info> blocksInfo;
+    std::vector<typename core::Variable<T>::BPInfo> blocksInfo;
     blocksInfo.reserve(blocksIndexOffsets.size());
 
     size_t n = 0;
@@ -1156,7 +1157,7 @@ std::vector<typename core::Variable<T>::Info> BP4Deserializer::BlocksInfoCommon(
                                                TypeTraits<T>::type_enum, false,
                                                m_Minifooter.IsLittleEndian);
 
-        typename core::Variable<T>::Info blockInfo;
+        typename core::Variable<T>::BPInfo blockInfo;
         blockInfo.Shape = blockCharacteristics.Shape;
         blockInfo.Start = blockCharacteristics.Start;
         blockInfo.Count = blockCharacteristics.Count;

@@ -33,19 +33,19 @@ public:
 #define declare_type(T)                                                        \
     virtual void SetData(                                                      \
         const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::Info &blockInfo,                     \
+        const typename core::Variable<T>::BPInfo &blockInfo,                   \
         const typename core::Variable<T>::Operation &operation,                \
         BufferSTL &bufferSTL) const noexcept;                                  \
                                                                                \
     virtual void SetMetadata(                                                  \
         const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::Info &blockInfo,                     \
+        const typename core::Variable<T>::BPInfo &blockInfo,                   \
         const typename core::Variable<T>::Operation &operation,                \
         std::vector<char> &buffer) const noexcept;                             \
                                                                                \
     virtual void UpdateMetadata(                                               \
         const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::Info &blockInfo,                     \
+        const typename core::Variable<T>::BPInfo &blockInfo,                   \
         const typename core::Variable<T>::Operation &operation,                \
         std::vector<char> &buffer) const noexcept;
 
@@ -67,21 +67,21 @@ public:
 protected:
     template <class T>
     void SetDataDefault(const core::Variable<T> &variable,
-                        const typename core::Variable<T>::Info &blockInfo,
+                        const typename core::Variable<T>::BPInfo &blockInfo,
                         const typename core::Variable<T>::Operation &operation,
                         BufferSTL &bufferSTL) const noexcept;
 
     template <class T>
     void
     SetMetadataDefault(const core::Variable<T> &variable,
-                       const typename core::Variable<T>::Info &blockInfo,
+                       const typename core::Variable<T>::BPInfo &blockInfo,
                        const typename core::Variable<T>::Operation &operation,
                        std::vector<char> &buffer) const noexcept;
 
     template <class T>
     void UpdateMetadataDefault(
         const core::Variable<T> &variable,
-        const typename core::Variable<T>::Info &blockInfo,
+        const typename core::Variable<T>::BPInfo &blockInfo,
         const typename core::Variable<T>::Operation &operation,
         std::vector<char> &buffer) const noexcept;
 };
@@ -89,17 +89,17 @@ protected:
 #define declare_type(T)                                                        \
                                                                                \
     extern template void BPOperation::SetDataDefault(                          \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
         const typename core::Variable<T>::Operation &, BufferSTL &bufferSTL)   \
         const noexcept;                                                        \
                                                                                \
     extern template void BPOperation::SetMetadataDefault(                      \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
         const typename core::Variable<T>::Operation &, std::vector<char> &)    \
         const noexcept;                                                        \
                                                                                \
     extern template void BPOperation::UpdateMetadataDefault(                   \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
         const typename core::Variable<T>::Operation &, std::vector<char> &)    \
         const noexcept;
 

@@ -160,13 +160,13 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <typename T>
-std::vector<typename Variable<T>::Info>
+std::vector<typename Variable<T>::BPInfo>
 SscReader::BlocksInfoCommon(const Variable<T> &variable,
                             const size_t step) const
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    std::vector<typename Variable<T>::Info> ret;
+    std::vector<typename Variable<T>::BPInfo> ret;
 
     for (const auto &r : m_GlobalWritePattern)
     {

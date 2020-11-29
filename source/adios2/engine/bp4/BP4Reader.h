@@ -169,13 +169,13 @@ private:
     void ReadVariableBlocks(Variable<T> &variable);
 
 #define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
                                                                                \
-    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
     DoAllRelativeStepsBlocksInfo(const Variable<T> &) const final;             \
                                                                                \
-    std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
+    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(                    \
         const Variable<T> &variable, const size_t step) const final;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

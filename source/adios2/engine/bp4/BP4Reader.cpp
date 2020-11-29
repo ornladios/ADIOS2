@@ -766,21 +766,21 @@ void BP4Reader::DoClose(const int transportIndex)
 }
 
 #define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     BP4Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
     {                                                                          \
         TAU_SCOPED_TIMER("BP4Reader::AllStepsBlocksInfo");                     \
         return m_BP4Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
-    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
     BP4Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const \
     {                                                                          \
         TAU_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");             \
         return m_BP4Deserializer.AllRelativeStepsBlocksInfo(variable);         \
     }                                                                          \
                                                                                \
-    std::vector<typename Variable<T>::Info> BP4Reader::DoBlocksInfo(           \
+    std::vector<typename Variable<T>::BPInfo> BP4Reader::DoBlocksInfo(         \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         TAU_SCOPED_TIMER("BP4Reader::BlocksInfo");                             \

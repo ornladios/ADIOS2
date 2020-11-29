@@ -67,7 +67,7 @@ Dims Variable<T>::DoCount() const
         const size_t step =
             !m_FirstStreamingStep ? m_Engine->CurrentStep() : lf_Step();
 
-        const std::vector<typename Variable<T>::Info> blocksInfo =
+        const std::vector<typename Variable<T>::BPInfo> blocksInfo =
             m_Engine->BlocksInfo<T>(*this, step);
 
         if (m_BlockID > blocksInfo.size())
@@ -106,7 +106,7 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
         const size_t stepInput =
             (step == DefaultSizeT) ? m_Engine->CurrentStep() : step;
 
-        const std::vector<typename Variable<T>::Info> blocksInfo =
+        const std::vector<typename Variable<T>::BPInfo> blocksInfo =
             m_Engine->BlocksInfo<T>(*this, stepInput);
 
         if (blocksInfo.size() == 0)
@@ -140,7 +140,7 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
         minMax.second =
             isValue ? blocksInfo.front().Value : blocksInfo.front().Max;
 
-        for (const typename Variable<T>::Info &blockInfo : blocksInfo)
+        for (const typename Variable<T>::BPInfo &blockInfo : blocksInfo)
         {
             const T minValue = isValue ? blockInfo.Value : blockInfo.Min;
 
@@ -166,7 +166,7 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
 }
 
 template <class T>
-std::vector<std::vector<typename Variable<T>::Info>>
+std::vector<std::vector<typename Variable<T>::BPInfo>>
 Variable<T>::DoAllStepsBlocksInfo() const
 {
     if (m_Engine == nullptr)

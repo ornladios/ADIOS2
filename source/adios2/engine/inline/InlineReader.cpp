@@ -149,13 +149,13 @@ bool InlineReader::IsInsideStep() const { return m_InsideStep; }
         TAU_SCOPED_TIMER("InlineReader::DoGetDeferred");                       \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
-    typename Variable<T>::Info *InlineReader::DoGetBlockSync(                  \
+    typename Variable<T>::BPInfo *InlineReader::DoGetBlockSync(                \
         Variable<T> &variable)                                                 \
     {                                                                          \
         TAU_SCOPED_TIMER("InlineReader::DoGetBlockSync");                      \
         return GetBlockSyncCommon(variable);                                   \
     }                                                                          \
-    typename Variable<T>::Info *InlineReader::DoGetBlockDeferred(              \
+    typename Variable<T>::BPInfo *InlineReader::DoGetBlockDeferred(            \
         Variable<T> &variable)                                                 \
     {                                                                          \
         TAU_SCOPED_TIMER("InlineReader::DoGetBlockDeferred");                  \
@@ -170,14 +170,14 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 // retrieve the current Core Info object at a later time.
 // See note on binding Engine::BlocksInfo
 #define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     InlineReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const      \
     {                                                                          \
         TAU_SCOPED_TIMER("InlineReader::AllStepsBlockInfo");                   \
-        return std::map<size_t, std::vector<typename Variable<T>::Info>>();    \
+        return std::map<size_t, std::vector<typename Variable<T>::BPInfo>>();  \
     }                                                                          \
                                                                                \
-    std::vector<typename Variable<T>::Info> InlineReader::DoBlocksInfo(        \
+    std::vector<typename Variable<T>::BPInfo> InlineReader::DoBlocksInfo(      \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         TAU_SCOPED_TIMER("InlineReader::DoBlocksInfo");                        \
@@ -231,9 +231,9 @@ void InlineReader::DoClose(const int transportIndex)
 
 void InlineReader::SetDeferredVariablePointers()
 {
-    // need to set core::Variable::Info::BufferP for each deferred variable
-    // to the ptr stored in core::Variable::Info::Data
-    // this will make Variable::Info::Data() work correctly for the user
+    // need to set core::Variable::BPInfo::BufferP for each deferred variable
+    // to the ptr stored in core::Variable::BPInfo::Data
+    // this will make Variable::BPInfo::Data() work correctly for the user
     for (const auto &varName : m_DeferredVariables)
     {
         const DataType type = m_IO.InquireVariableType(varName);

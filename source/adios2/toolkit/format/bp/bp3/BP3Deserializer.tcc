@@ -49,7 +49,7 @@ void BP3Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
 }
 
 template <class T>
-typename core::Variable<T>::Info &
+typename core::Variable<T>::BPInfo &
 BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
                                        T *data) const
 {
@@ -94,7 +94,7 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
         // BlocksInfo() expects absolute step, stepsStart is relative
         // BlocksInfo() adds +1 to match the step starting from 1
         // but absStep already is the actual step in the map
-        const std::vector<typename core::Variable<T>::Info> blocksInfo =
+        const std::vector<typename core::Variable<T>::BPInfo> blocksInfo =
             BlocksInfo(variable, absStep - 1);
 
         if (variable.m_BlockID >= blocksInfo.size())
@@ -129,7 +129,7 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
 template <class T>
 void BP3Deserializer::SetVariableBlockInfo(
     core::Variable<T> &variable,
-    typename core::Variable<T>::Info &blockInfo) const
+    typename core::Variable<T>::BPInfo &blockInfo) const
 {
     auto lf_SetSubStreamInfoOperations =
         [&](const BPOpInfo &bpOpInfo, const size_t payloadOffset,
@@ -158,7 +158,7 @@ void BP3Deserializer::SetVariableBlockInfo(
 
     auto lf_SetSubStreamInfoLocalArray =
         [&](const std::string &variableName, const Box<Dims> &selectionBox,
-            typename core::Variable<T>::Info &blockInfo, const size_t step,
+            typename core::Variable<T>::BPInfo &blockInfo, const size_t step,
             const size_t blockIndexOffset, const BufferSTL &bufferSTL,
             const bool isRowMajor)
 
@@ -273,7 +273,7 @@ void BP3Deserializer::SetVariableBlockInfo(
 
     auto lf_SetSubStreamInfoGlobalArray =
         [&](const std::string &variableName, const Box<Dims> &selectionBox,
-            typename core::Variable<T>::Info &blockInfo, const size_t step,
+            typename core::Variable<T>::BPInfo &blockInfo, const size_t step,
             const size_t blockIndexOffset, const BufferSTL &bufferSTL,
             const bool isRowMajor)
 
@@ -411,7 +411,7 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 {
     const auto &buffer = m_Metadata.m_Buffer;
 
-    const typename core::Variable<T>::Info &blockInfo =
+    const typename core::Variable<T>::BPInfo &blockInfo =
         InitVariableBlockInfo(variable, data);
 
     const size_t stepsStart = blockInfo.StepsStart;
@@ -466,7 +466,7 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 
 template <class T>
 void BP3Deserializer::PreDataRead(
-    core::Variable<T> &variable, typename core::Variable<T>::Info &blockInfo,
+    core::Variable<T> &variable, typename core::Variable<T>::BPInfo &blockInfo,
     const helper::SubStreamBoxInfo &subStreamBoxInfo, char *&buffer,
     size_t &payloadSize, size_t &payloadOffset, const size_t threadID)
 {
@@ -502,7 +502,7 @@ void BP3Deserializer::PreDataRead(
 
 template <class T>
 void BP3Deserializer::PostDataRead(
-    core::Variable<T> &variable, typename core::Variable<T>::Info &blockInfo,
+    core::Variable<T> &variable, typename core::Variable<T>::BPInfo &blockInfo,
     const helper::SubStreamBoxInfo &subStreamBoxInfo,
     const bool isRowMajorDestination, const size_t threadID)
 {
@@ -591,10 +591,10 @@ void BP3Deserializer::PostDataRead(
 }
 
 template <class T>
-std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
 BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
 {
-    std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+    std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
         allStepsBlocksInfo;
 
     for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
@@ -609,11 +609,11 @@ BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
 }
 
 template <class T>
-std::vector<std::vector<typename core::Variable<T>::Info>>
+std::vector<std::vector<typename core::Variable<T>::BPInfo>>
 BP3Deserializer::AllRelativeStepsBlocksInfo(
     const core::Variable<T> &variable) const
 {
-    std::vector<std::vector<typename core::Variable<T>::Info>>
+    std::vector<std::vector<typename core::Variable<T>::BPInfo>>
         allRelativeStepsBlocksInfo(
             variable.m_AvailableStepBlockIndexOffsets.size());
 
@@ -629,7 +629,7 @@ BP3Deserializer::AllRelativeStepsBlocksInfo(
 }
 
 template <class T>
-std::vector<typename core::Variable<T>::Info>
+std::vector<typename core::Variable<T>::BPInfo>
 BP3Deserializer::BlocksInfo(const core::Variable<T> &variable,
                             const size_t step) const
 {
@@ -637,14 +637,14 @@ BP3Deserializer::BlocksInfo(const core::Variable<T> &variable,
     auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(step + 1);
     if (itStep == variable.m_AvailableStepBlockIndexOffsets.end())
     {
-        return std::vector<typename core::Variable<T>::Info>();
+        return std::vector<typename core::Variable<T>::BPInfo>();
     }
     return BlocksInfoCommon(variable, itStep->second);
 }
 
 template <class T>
 void BP3Deserializer::ClipContiguousMemory(
-    typename core::Variable<T>::Info &blockInfo,
+    typename core::Variable<T>::BPInfo &blockInfo,
     const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
     const Box<Dims> &intersectionBox) const
 {
@@ -1052,11 +1052,12 @@ BP3Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
 
 // PRIVATE
 template <class T>
-std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
+std::vector<typename core::Variable<T>::BPInfo>
+BP3Deserializer::BlocksInfoCommon(
     const core::Variable<T> &variable,
     const std::vector<size_t> &blocksIndexOffsets) const
 {
-    std::vector<typename core::Variable<T>::Info> blocksInfo;
+    std::vector<typename core::Variable<T>::BPInfo> blocksInfo;
     blocksInfo.reserve(blocksIndexOffsets.size());
 
     size_t n = 0;
@@ -1070,7 +1071,7 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
                                                TypeTraits<T>::type_enum, false,
                                                m_Minifooter.IsLittleEndian);
 
-        typename core::Variable<T>::Info blockInfo;
+        typename core::Variable<T>::BPInfo blockInfo;
         blockInfo.Shape = blockCharacteristics.Shape;
         blockInfo.Start = blockCharacteristics.Start;
         blockInfo.Count = blockCharacteristics.Count;

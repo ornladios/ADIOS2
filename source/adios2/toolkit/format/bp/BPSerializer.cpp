@@ -877,18 +877,19 @@ ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
         size_t &) noexcept;                                                    \
                                                                                \
     template void BPSerializer::PutCharacteristicOperation(                    \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
         std::vector<char> &) noexcept;                                         \
                                                                                \
     template void BPSerializer::PutOperationPayloadInBuffer(                   \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &);
+        const core::Variable<T> &,                                             \
+        const typename core::Variable<T>::BPInfo &);
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
     template void BPSerializer::PutPayloadInBuffer(                            \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
         const bool) noexcept;
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)

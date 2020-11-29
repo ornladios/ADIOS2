@@ -81,7 +81,7 @@ protected:
 
     template <class T>
     void PutPayloadInBuffer(const core::Variable<T> &variable,
-                            const typename core::Variable<T>::Info &blockInfo,
+                            const typename core::Variable<T>::BPInfo &blockInfo,
                             const bool sourceRowMajor) noexcept;
 
     void PutNameRecord(const std::string name,
@@ -148,13 +148,13 @@ protected:
     template <class T>
     void PutCharacteristicOperation(
         const core::Variable<T> &variable,
-        const typename core::Variable<T>::Info &blockInfo,
+        const typename core::Variable<T>::BPInfo &blockInfo,
         std::vector<char> &buffer) noexcept;
 
     template <class T>
     void PutOperationPayloadInBuffer(
         const core::Variable<T> &variable,
-        const typename core::Variable<T>::Info &blockInfo);
+        const typename core::Variable<T>::BPInfo &blockInfo);
 };
 
 } // end namespace format

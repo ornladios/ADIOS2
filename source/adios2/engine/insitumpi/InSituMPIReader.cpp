@@ -613,14 +613,14 @@ void InSituMPIReader::DoClose(const int transportIndex)
 }
 
 #define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     InSituMPIReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const   \
     {                                                                          \
         TAU_SCOPED_TIMER("InSituMPIReader::AllStepsBlocksInfo");               \
         return m_BP3Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
-    std::vector<typename Variable<T>::Info> InSituMPIReader::DoBlocksInfo(     \
+    std::vector<typename Variable<T>::BPInfo> InSituMPIReader::DoBlocksInfo(   \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         TAU_SCOPED_TIMER("InSituMPIReader::BlocksInfo");                       \

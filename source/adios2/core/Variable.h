@@ -72,7 +72,7 @@ public:
     /** current value */
     T m_Value = T();
 
-    struct Info
+    struct BPInfo
     {
         /** Contains (seek) read information for available [step][blockID],
          *  used in Read mode only,
@@ -109,7 +109,7 @@ public:
     };
 
     /** use for multiblock info */
-    std::vector<Info> m_BlocksInfo;
+    std::vector<BPInfo> m_BlocksInfo;
 
     using Span = core::Span<T>;
 
@@ -122,8 +122,8 @@ public:
 
     ~Variable<T>() = default;
 
-    Info &SetBlockInfo(const T *data, const size_t stepsStart,
-                       const size_t stepsCount = 1) noexcept;
+    BPInfo &SetBlockInfo(const T *data, const size_t stepsStart,
+                         const size_t stepsCount = 1) noexcept;
 
     void SetData(const T *data) noexcept;
 
@@ -143,7 +143,7 @@ public:
 
     T Max(const size_t step = adios2::DefaultSizeT) const;
 
-    std::vector<std::vector<typename Variable<T>::Info>>
+    std::vector<std::vector<typename Variable<T>::BPInfo>>
     AllStepsBlocksInfo() const;
 
 private:
@@ -155,7 +155,7 @@ private:
 
     std::pair<T, T> DoMinMax(const size_t step) const;
 
-    std::vector<std::vector<typename Variable<T>::Info>>
+    std::vector<std::vector<typename Variable<T>::BPInfo>>
     DoAllStepsBlocksInfo() const;
 
     void CheckRandomAccess(const size_t step, const std::string hint) const;
