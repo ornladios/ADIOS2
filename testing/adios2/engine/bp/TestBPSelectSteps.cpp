@@ -82,19 +82,19 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 #endif
 
         adios2::IO ioRead = adios.DeclareIO("TestIORead");
-        ioRead.SetEngine("BPFile");
-        ioRead.SetParameter(filename, "0,1");
+        ioRead.SetEngine("Filestream");
+        ioRead.SetParameter(filename, "1,3");
         adios2::Engine enginer = ioRead.Open(filename, adios2::Mode::Read);
         EXPECT_TRUE(enginer);
         {
-            adios2::Variable<int> var0 = ioRead.InquireVariable<int>("variable0");
-            adios2::Variable<int> var1 = ioRead.InquireVariable<int>("variable1");
-            adios2::Variable<int> var2 = ioRead.InquireVariable<int>("variable2");
-            adios2::Variable<int> var3 = ioRead.InquireVariable<int>("variable3");
+
             for (int step = 0; step < NSteps; step++) {
                 std::cout << "***** " << step << " ***** " << std::endl;
                 enginer.BeginStep();
-
+                adios2::Variable<int> var0 = ioRead.InquireVariable<int>("variable0");
+                adios2::Variable<int> var1 = ioRead.InquireVariable<int>("variable1");
+                adios2::Variable<int> var2 = ioRead.InquireVariable<int>("variable2");
+                adios2::Variable<int> var3 = ioRead.InquireVariable<int>("variable3");
                 if (var0) {
                     std::vector<int> res;
                     const std::size_t Nx = 10;
@@ -122,6 +122,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
                         }
                         std::cout << "\n";
                     }
+                    EXPECT_EQ(res, Ints1);
                 }
                 if (var2) {
                     std::vector<int> res;
@@ -140,7 +141,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
                 if (var3) {
                     std::vector<int> res;
                     const std::size_t Nx = 10;
-                    var0.SetSelection({{Nx * mpiRank},
+                    var3.SetSelection({{Nx * mpiRank},
                                        {Nx}});
                     enginer.Get<int>(var3, res, adios2::Mode::Sync);
                     if (mpiRank == 0) {
@@ -150,9 +151,9 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
                         }
                         std::cout << "\n";
                     }
+                    EXPECT_EQ(res, Ints3);
                 }
 
-                //EXPECT_EQ(res[0], "group2");
 
                 enginer.EndStep();
             }
