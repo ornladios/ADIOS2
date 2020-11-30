@@ -70,6 +70,11 @@ gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 )
 
+gtest_add_tests_helper(SelectSteps MPI_ALLOW BP Engine.BP. .BP4
+  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
+)
+
+
 # FileStream is BP4 + StreamReader=true
 gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .FileStream
   WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
