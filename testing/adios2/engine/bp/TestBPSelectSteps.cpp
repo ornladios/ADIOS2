@@ -84,13 +84,12 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
         adios2::IO ioRead = adios.DeclareIO("TestIORead");
         ioRead.SetEngine("Filestream");
         ioRead.SetParameter(filename, "1,3");
-        adios2::Engine enginer = ioRead.Open(filename, adios2::Mode::Read);
-        EXPECT_TRUE(enginer);
+        adios2::Engine engine_s = ioRead.Open(filename, adios2::Mode::Read);
+        EXPECT_TRUE(engine_s);
         {
 
             for (int step = 0; step < NSteps; step++) {
-                std::cout << "***** " << step << " ***** " << std::endl;
-                enginer.BeginStep();
+                engine_s.BeginStep();
                 adios2::Variable<int> var0 = ioRead.InquireVariable<int>("variable0");
                 adios2::Variable<int> var1 = ioRead.InquireVariable<int>("variable1");
                 adios2::Variable<int> var2 = ioRead.InquireVariable<int>("variable2");
@@ -100,28 +99,15 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
                     const std::size_t Nx = 10;
                     var0.SetSelection({{Nx * mpiRank},
                                        {Nx}});
-                    enginer.Get<int>(var0, res, adios2::Mode::Sync);
-                    if (mpiRank == 0) {
-                        std::cout << "var0: \n";
-                        for (const auto number : res) {
-                            std::cout << number << " ";
-                        }
-                        std::cout << "\n";
-                    }
+                    engine_s.Get<int>(var0, res, adios2::Mode::Sync);
+                    EXPECT_NE(res, Ints0);
                 }
                 if (var1) {
                     std::vector<int> res;
                     const std::size_t Nx = 10;
                     var1.SetSelection({{Nx * mpiRank},
                                        {Nx}});
-                    enginer.Get<int>(var1, res, adios2::Mode::Sync);
-                    if (mpiRank == 0) {
-                        std::cout << "var1: \n";
-                        for (const auto number : res) {
-                            std::cout << number << " ";
-                        }
-                        std::cout << "\n";
-                    }
+                    engine_s.Get<int>(var1, res, adios2::Mode::Sync);
                     EXPECT_EQ(res, Ints1);
                 }
                 if (var2) {
@@ -129,36 +115,27 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
                     const std::size_t Nx = 10;
                     var2.SetSelection({{Nx * mpiRank},
                                        {Nx}});
-                    enginer.Get<int>(var2, res, adios2::Mode::Sync);
-                    if (mpiRank == 0) {
-                        std::cout << "var2: \n";
-                        for (const auto number : res) {
-                            std::cout << number << " ";
-                        }
-                        std::cout << "\n";
-                    }
+                    engine_s.Get<int>(var2, res, adios2::Mode::Sync);
+                    EXPECT_NE(res, Ints2);
                 }
                 if (var3) {
                     std::vector<int> res;
                     const std::size_t Nx = 10;
                     var3.SetSelection({{Nx * mpiRank},
                                        {Nx}});
-                    enginer.Get<int>(var3, res, adios2::Mode::Sync);
-                    if (mpiRank == 0) {
-                        std::cout << "var3: \n";
-                        for (const auto number : res) {
-                            std::cout << number << " ";
-                        }
-                        std::cout << "\n";
-                    }
+                    engine_s.Get<int>(var3, res, adios2::Mode::Sync);
                     EXPECT_EQ(res, Ints3);
                 }
 
 
-                enginer.EndStep();
+                engine_s.EndStep();
             }
         }
-        enginer.Close();
+        engine_s.Close();
+#if ADIOS2_USE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
     }
 }
 int main(int argc, char **argv)
