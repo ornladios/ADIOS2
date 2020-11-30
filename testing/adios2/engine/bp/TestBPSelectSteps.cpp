@@ -126,8 +126,6 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
                     engine_s.Get<int>(var3, res, adios2::Mode::Sync);
                     EXPECT_EQ(res, Ints3);
                 }
-
-
                 engine_s.EndStep();
             }
         }
@@ -135,7 +133,65 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
+        adios2::IO ioReadBP = adios.DeclareIO("ReadBP");
 
+        /** Engine derived class, spawned to start IO operations */
+        adios2::Engine engine_b = ioReadBP.Open(filename, adios2::Mode::Read);
+
+        EXPECT_TRUE(engine_b);
+        const std::map<std::string, adios2::Params> variables =
+                ioReadBP.AvailableVariables();
+
+        for (const auto variablePair : variables)
+        {
+            std::cout << "Name: " << variablePair.first;
+
+            for (const auto &parameter : variablePair.second)
+            {
+                std::cout << "\t" << parameter.first << ": " << parameter.second
+                          << "\n";
+            }
+        }
+        {
+            adios2::Variable<int> var0 = ioRead.InquireVariable<int>("variable0");
+            adios2::Variable<int> var1 = ioRead.InquireVariable<int>("variable1");
+            adios2::Variable<int> var2 = ioRead.InquireVariable<int>("variable2");
+            adios2::Variable<int> var3 = ioRead.InquireVariable<int>("variable3");
+            if (var0) {
+                std::vector<int> res;
+                const std::size_t Nx = 10;
+                var0.SetSelection({{Nx * mpiRank},
+                                   {Nx}});
+                engine_b.Get<int>(var0, res, adios2::Mode::Sync);
+                EXPECT_NE(res, Ints0);
+                EXPECT_EQ(res, Ints0);
+            }
+            if (var1) {
+                std::vector<int> res;
+                const std::size_t Nx = 10;
+                var1.SetSelection({{Nx * mpiRank},
+                                   {Nx}});
+                engine_b.Get<int>(var1, res, adios2::Mode::Sync);
+                EXPECT_EQ(res, Ints1);
+            }
+            if (var2) {
+                std::vector<int> res;
+                const std::size_t Nx = 10;
+                var2.SetSelection({{Nx * mpiRank},
+                                   {Nx}});
+                engine_b.Get<int>(var2, res, adios2::Mode::Sync);
+                EXPECT_NE(res, Ints2);
+            }
+            if (var3) {
+                std::vector<int> res;
+                const std::size_t Nx = 10;
+                var3.SetSelection({{Nx * mpiRank},
+                                   {Nx}});
+                engine_b.Get<int>(var3, res, adios2::Mode::Sync);
+                EXPECT_EQ(res, Ints3);
+            }
+        }
+        engine_b.Close();
     }
 }
 int main(int argc, char **argv)
