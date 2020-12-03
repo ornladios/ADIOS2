@@ -13,12 +13,12 @@
 
 #include <gtest/gtest.h>
 
-class ADIOSHierarchicalReadVariableTest : public ::testing::Test {
+class ADIOSReadSelectionStepsTest : public ::testing::Test {
 public:
-    ADIOSHierarchicalReadVariableTest() = default;
+    ADIOSReadSelectionStepsTest() = default;
 };
 
-TEST_F(ADIOSHierarchicalReadVariableTest, Read) {
+TEST_F(ADIOSReadSelectionStepsTest, Read) {
     std::string filename = "ADIOSSelectSteps.bp";
 
     // Number of steps

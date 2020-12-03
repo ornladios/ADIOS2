@@ -29,7 +29,7 @@ foreach(helper
     TestCommonServer
     TestCommonClient
     )
-  add_executable(${helper} ${helper}.cpp ../bp/TestBPSelectSteps.cpp)
+  add_executable(${helper} ${helper}.cpp)
 
   # Workaround for multiple versions of FindSst
   if(SST_INCLUDE_DIRS)
