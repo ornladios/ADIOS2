@@ -41,9 +41,11 @@ TEST_F(ADIOSReadSelectionStepsTest, Read) {
         ioWrite.SetEngine("BPFile");
 
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
-        const adios2::Dims shape = {10};
-        const adios2::Dims start = {0};
-        const adios2::Dims count = {10};
+        // Number of elements per process
+        const std::size_t Nx = 10;
+        adios2::Dims shape{static_cast<unsigned int>(mpiSize * Nx)};
+        adios2::Dims start{static_cast<unsigned int>(mpiRank * Nx)};
+        adios2::Dims count{static_cast<unsigned int>(Nx)};
 
         auto var0 = ioWrite.DefineVariable<int32_t>(
                 "variable0", shape, start, count);
