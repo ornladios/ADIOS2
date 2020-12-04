@@ -26,7 +26,7 @@ Dims Variable<T>::DoShape(const size_t step) const
 {
     CheckRandomAccess(step, "Shape");
 
-    if (m_FirstStreamingStep && step == DefaultSizeT)
+    if (m_FirstStreamingStep && step == adios2::EngineCurrentStep)
     {
         return m_Shape;
     }
@@ -36,21 +36,11 @@ Dims Variable<T>::DoShape(const size_t step) const
         const size_t stepInput =
             !m_FirstStreamingStep ? m_Engine->CurrentStep() : step;
 
-        const std::vector<typename Variable<T>::Info> blocksInfo =
-            m_Engine->BlocksInfo<T>(*this, stepInput);
-
-        if (blocksInfo.size() == 0)
+        const auto it = m_AvailableShapes.find(stepInput + 1);
+        if (it != m_AvailableShapes.end())
         {
-            return Dims();
+            return it->second;
         }
-
-        if (blocksInfo.front().Shape.size() == 1 &&
-            blocksInfo.front().Shape.front() == LocalValueDim)
-        {
-            return Dims{blocksInfo.size()};
-        }
-
-        return blocksInfo.front().Shape;
     }
     return m_Shape;
 }

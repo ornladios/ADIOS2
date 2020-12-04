@@ -309,39 +309,6 @@ void BP4Deserializer::SetVariableBlockInfo(
             return;
         }
 
-        const size_t dimensions = blockCharacteristics.Shape.size();
-        if (dimensions != blockInfo.Shape.size())
-        {
-            throw std::invalid_argument(
-                "ERROR: block Shape (available) and "
-                "selection Shape (requested) number of dimensions, do not "
-                "match "
-                "when reading global array variable " +
-                variableName + ", in call to Get");
-        }
-
-        Dims readInShape = blockCharacteristics.Shape;
-        if (m_ReverseDimensions)
-        {
-            std::reverse(readInShape.begin(), readInShape.end());
-        }
-
-        for (size_t i = 0; i < dimensions; ++i)
-        {
-            if (blockInfo.Start[i] + blockInfo.Count[i] > readInShape[i])
-            {
-                throw std::invalid_argument(
-                    "ERROR: selection Start " +
-                    helper::DimsToString(blockInfo.Start) + " and Count " +
-                    helper::DimsToString(blockInfo.Count) +
-                    " (requested) is out of bounds of (available) "
-                    "Shape " +
-                    helper::DimsToString(readInShape) +
-                    " , when reading global array variable " + variableName +
-                    ", in call to Get");
-            }
-        }
-
         // relative position
         subStreamInfo.Seeks.first =
             sizeof(T) * helper::LinearIndex(subStreamInfo.BlockBox,
@@ -393,6 +360,37 @@ void BP4Deserializer::SetVariableBlockInfo(
 
         if (variable.m_ShapeID == ShapeID::GlobalArray)
         {
+            // Check that dimensions and boundaries are okay
+            Dims readInShape = variable.m_AvailableShapes[step];
+            const size_t dimensions = readInShape.size();
+            if (dimensions != blockInfo.Shape.size())
+            {
+                throw std::invalid_argument(
+                    "ERROR: variable Shape (available) and "
+                    "selection Shape (requested) number of dimensions, do not "
+                    "match in step " +
+                    std::to_string(step) +
+                    " when reading global array variable " + variable.m_Name +
+                    ", in call to Get");
+            }
+
+            for (size_t i = 0; i < dimensions; ++i)
+            {
+                if (blockInfo.Start[i] + blockInfo.Count[i] > readInShape[i])
+                {
+                    throw std::invalid_argument(
+                        "ERROR: selection Start " +
+                        helper::DimsToString(blockInfo.Start) + " and Count " +
+                        helper::DimsToString(blockInfo.Count) +
+                        " (requested) is out of bounds of (available) "
+                        "Shape " +
+                        helper::DimsToString(readInShape) +
+                        " , when reading global array variable " +
+                        variable.m_Name + " in step " + std::to_string(step) +
+                        ", in call to Get");
+                }
+            }
+            // Get intersections with each block
             for (const size_t blockOffset : blockOffsets)
             {
                 lf_SetSubStreamInfoGlobalArray(variable.m_Name, selectionBox,
@@ -848,15 +846,15 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
             }
             else if (subsetCharacteristics.EntryShapeID == ShapeID::GlobalArray)
             {
-                if (subsetPosition == initialPosition)
-                {
-                    if (subsetCharacteristics.Shape !=
-                        variable->m_AvailableShapes.rbegin()->second)
-                    {
-                        variable->m_AvailableShapes[step] =
-                            subsetCharacteristics.Shape;
-                    }
-                }
+                // Shape definition is by the last block now, not the first
+                // block
+                const Dims shape =
+                    m_ReverseDimensions
+                        ? Dims(subsetCharacteristics.Shape.rbegin(),
+                               subsetCharacteristics.Shape.rend())
+                        : subsetCharacteristics.Shape;
+                variable->m_Shape = shape;
+                variable->m_AvailableShapes[step] = shape;
             }
 
             variable->m_AvailableStepBlockIndexOffsets[step].push_back(
@@ -957,6 +955,37 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
         const bool isNextStep =
             stepsFound.insert(subsetCharacteristics.Statistics.Step).second;
 
+        if (isNextStep)
+        {
+            currentStep = subsetCharacteristics.Statistics.Step;
+            ++variable->m_AvailableStepsCount;
+            if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
+            {
+                // reset shape and count
+                variable->m_Shape[0] = 1;
+                variable->m_Count[0] = 1;
+            }
+        }
+        else
+        {
+            if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
+            {
+                ++variable->m_Shape[0];
+                ++variable->m_Count[0];
+            }
+        }
+
+        // Shape definition is by the last block now, not the first block
+        if (subsetCharacteristics.EntryShapeID == ShapeID::GlobalArray)
+        {
+            const Dims shape = m_ReverseDimensions
+                                   ? Dims(subsetCharacteristics.Shape.rbegin(),
+                                          subsetCharacteristics.Shape.rend())
+                                   : subsetCharacteristics.Shape;
+            variable->m_Shape = shape;
+            variable->m_AvailableShapes[currentStep] = shape;
+        }
+
         // update min max for global values only if new step is found
         if ((isNextStep &&
              subsetCharacteristics.EntryShapeID == ShapeID::GlobalValue) ||
@@ -970,35 +999,6 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
             if (helper::GreaterThan(blockMax, variable->m_Max))
             {
                 variable->m_Max = blockMax;
-            }
-        }
-
-        if (isNextStep)
-        {
-            currentStep = subsetCharacteristics.Statistics.Step;
-            ++variable->m_AvailableStepsCount;
-            if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
-            {
-                // reset shape and count
-                variable->m_Shape[0] = 1;
-                variable->m_Count[0] = 1;
-            }
-            else if (subsetCharacteristics.EntryShapeID == ShapeID::GlobalArray)
-            {
-                if (subsetCharacteristics.Shape !=
-                    variable->m_AvailableShapes.rbegin()->second)
-                {
-                    variable->m_AvailableShapes[currentStep] =
-                        subsetCharacteristics.Shape;
-                }
-            }
-        }
-        else
-        {
-            if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
-            {
-                ++variable->m_Shape[0];
-                ++variable->m_Count[0];
             }
         }
 
