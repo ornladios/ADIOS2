@@ -111,7 +111,7 @@ void BP4Writer::Flush(const int transportIndex)
 {
     TAU_SCOPED_TIMER("BP4Writer::Flush");
     DoFlush(false, transportIndex);
-    m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Data);
+    m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Data, false, false);
 
     if (m_BP4Serializer.m_Parameters.CollectiveMetadata)
     {
@@ -683,10 +683,10 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
         }
     }
     /*Clear the local indices buffer at the end of each step*/
-    m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Metadata, true);
+    m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Metadata, true, true);
 
     /* clear the metadata index buffer*/
-    m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_MetadataIndex, true);
+    m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_MetadataIndex, true, true);
 
     /* reset the metadata index table*/
     m_BP4Serializer.ResetMetadataIndexTable();
