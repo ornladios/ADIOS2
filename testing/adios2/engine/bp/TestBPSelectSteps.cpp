@@ -148,7 +148,6 @@ TEST_F(ADIOSReadSelectionStepsTest, Read) {
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
         adios2::IO ioReadBP = adios.DeclareIO("ReadBP");
-
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine engine_b = ioReadBP.Open(filename, adios2::Mode::Read);
 
