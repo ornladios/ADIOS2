@@ -15,6 +15,7 @@ list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
   "Warning: stand-alone `data16' prefix"
   "Warning: Type mismatch between actual argument.*"
   "Warning: Rank mismatch between actual argument.*"
+  "zfp/types.h.*typedef"
 )
 list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
   ".*/thirdparty/.*"

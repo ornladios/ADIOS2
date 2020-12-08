@@ -28,6 +28,8 @@ jobs:
           el7-gnu8-ohpc,
           el7-gnu8-openmpi-ohpc,
           el7-gnu8-openmpi-ohpc-static,
+          suse-pgi,
+          suse-pgi-openmpi,
           debian-sid,
           debian-sid-openmpi ]
         include:
@@ -39,6 +41,10 @@ jobs:
           container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
         - jobname: el7-gnu8-openmpi-ohpc-static
           container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
+        - jobname: suse-pgi
+          container: ornladios/adios2:ci-suse-nvhpcsdk
+        - jobname: suse-pgi-openmpi
+          container: ornladios/adios2:ci-suse-nvhpcsdk-openmpi
         - jobname: debian-sid
           container: ornladios/adios2:ci-debian-sid
         - jobname: debian-sid-openmpi
