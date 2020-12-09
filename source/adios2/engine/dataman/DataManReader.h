@@ -43,7 +43,7 @@ private:
     std::string m_IPAddress;
     int m_Port = 50001;
     int m_Timeout = 5;
-    int m_Verbosity = 10;
+    int m_Verbosity = 0;
     bool m_DoubleBuffer = true;
     size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
     std::string m_TransportMode = "fast";

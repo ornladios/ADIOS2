@@ -118,6 +118,11 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
         m_Monitor.BeginStep(m_CurrentStep);
     }
 
+    if (m_Verbosity >= 10)
+    {
+        std::cout << "DataManWriter::BeginStep " << m_CurrentStep << std::endl;
+    }
+
     return StepStatus::OK;
 }
 
@@ -161,6 +166,11 @@ void DataManWriter::EndStep()
     {
         m_Monitor.EndStep(m_CurrentStep);
     }
+
+    if (m_Verbosity >= 10)
+    {
+        std::cout << "DataManWriter::EndStep " << m_CurrentStep << std::endl;
+    }
 }
 
 void DataManWriter::Flush(const int transportIndex) {}
@@ -198,11 +208,13 @@ void DataManWriter::DoClose(const int transportIndex)
 
     m_PublishThreadActive = false;
 
-    while (m_SentSteps < m_CurrentStep + 2)
+    if (m_ReplyThreadActive)
     {
+        while (m_SentSteps < m_CurrentStep + 2)
+        {
+        }
+        m_ReplyThreadActive = false;
     }
-
-    m_ReplyThreadActive = false;
 
     if (m_ReplyThread.joinable())
     {
@@ -215,6 +227,11 @@ void DataManWriter::DoClose(const int transportIndex)
     }
 
     m_IsClosed = true;
+
+    if (m_Verbosity >= 10)
+    {
+        std::cout << "DataManWriter::DoClose " << m_CurrentStep << std::endl;
+    }
 }
 
 void DataManWriter::PushBufferQueue(std::shared_ptr<std::vector<char>> buffer)
