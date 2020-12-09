@@ -8,7 +8,7 @@ foreach(tst IN ITEMS
   2DMemSelect 3DMemSelect
   WriterDoubleBuffer WriterSingleBuffer
   ReaderDoubleBuffer ReaderSingleBuffer
-  # Reliable
+  Reliable
   )
   gtest_add_tests_helper(${tst} MPI_NONE DataMan Engine.DataMan. "")
   set_tests_properties(${Test.Engine.DataMan.${tst}-TESTS}
