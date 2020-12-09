@@ -284,30 +284,10 @@ void DataManWriter::ReplyThread()
                 {
                     m_Replier.SendReply(buffer);
                     ++m_SentSteps;
-                    std::cout << " ============ SentSteps " << m_SentSteps
-                              << std::endl;
                     if (m_MonitorActive)
                     {
                         m_Monitor.EndTransport();
                     }
-                    /*
-                    std::cout << " ========== replied step " << std::endl;
-                    if (buffer->size() < 64)
-                    {
-                        try
-                        {
-                            auto jmsg = nlohmann::json::parse(buffer->data());
-                            auto finalStep = jmsg["FinalStep"].get<size_t>();
-                            if (finalStep == m_CurrentStep)
-                            {
-                                m_ReplyThreadActive = false;
-                            }
-                        }
-                        catch (...)
-                        {
-                        }
-                    }
-                    */
                 }
             }
         }
