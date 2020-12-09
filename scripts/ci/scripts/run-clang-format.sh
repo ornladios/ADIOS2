@@ -4,13 +4,12 @@ echo "---------- Begin ENV ----------"
 env | sort
 echo "----------  End ENV  ----------"
 
-if [ -z "${SOURCE_DIR}" ]
+# If a source dir is given, then change to it.  Otherwise assume we're already
+# in it
+if [ -n "${SOURCE_DIR}" ]
 then
-  echo "Error: SOURCE_DIR is empty or undefined"
-  exit 1
+  cd ${SOURCE_DIR}
 fi
-
-cd ${SOURCE_DIR}
 
 # Check C and C++ code with clang-format
 find source testing examples bindings -iname '*.h' -o -iname '*.c' -o -iname '*.cpp' -o -iname '*.tcc' | xargs clang-format -i
