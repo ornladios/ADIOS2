@@ -173,7 +173,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         if (m_Verbosity >= 5)
         {
             std::cout << "DataManReader::BeginStep() Rank " << m_MpiRank
-                      << "returned EndOfStream due "
+                      << " returned EndOfStream due "
                          "to timeout"
                       << std::endl;
         }
@@ -247,7 +247,7 @@ void DataManReader::RequestThread(zmq::ZmqReqRep &requester)
                 {
                     auto jmsg = nlohmann::json::parse(buffer->data());
                     m_FinalStep = jmsg["FinalStep"].get<size_t>();
-                    continue;
+                    return;
                 }
                 catch (...)
                 {

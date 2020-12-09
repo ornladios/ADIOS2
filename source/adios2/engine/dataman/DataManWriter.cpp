@@ -20,7 +20,7 @@ namespace engine
 DataManWriter::DataManWriter(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
 : Engine("DataManWriter", io, name, openMode, std::move(comm)),
-  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
+  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)), m_SentSteps(0)
 {
 
     m_MpiRank = m_Comm.Rank();
@@ -196,8 +196,13 @@ void DataManWriter::DoClose(const int transportIndex)
         m_Publisher.Send(cvp);
     }
 
-    m_ReplyThreadActive = false;
     m_PublishThreadActive = false;
+
+    while (m_SentSteps < m_CurrentStep + 2)
+    {
+    }
+
+    m_ReplyThreadActive = false;
 
     if (m_ReplyThread.joinable())
     {
@@ -278,10 +283,15 @@ void DataManWriter::ReplyThread()
                 if (buffer != nullptr && buffer->size() > 0)
                 {
                     m_Replier.SendReply(buffer);
+                    ++m_SentSteps;
+                    std::cout << " ============ SentSteps " << m_SentSteps
+                              << std::endl;
                     if (m_MonitorActive)
                     {
                         m_Monitor.EndTransport();
                     }
+                    /*
+                    std::cout << " ========== replied step " << std::endl;
                     if (buffer->size() < 64)
                     {
                         try
@@ -297,6 +307,7 @@ void DataManWriter::ReplyThread()
                         {
                         }
                     }
+                    */
                 }
             }
         }

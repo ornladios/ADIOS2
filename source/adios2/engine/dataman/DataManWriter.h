@@ -56,6 +56,7 @@ private:
     int m_MpiSize;
     int64_t m_CurrentStep = -1;
     size_t m_SerializerBufferSize = 1024 * 1024;
+    std::atomic<size_t> m_SentSteps;
 
     format::DataManSerializer m_Serializer;
 
