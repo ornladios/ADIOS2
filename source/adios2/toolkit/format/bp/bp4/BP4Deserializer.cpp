@@ -48,12 +48,31 @@ size_t BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
     size_t lastposition = 0;
     /* parse the metadata step by step using the pointers saved in the metadata
     index table */
+    auto itStepsString = engine.m_IO.m_Parameters.find(engine.m_Name);
+    std::vector<size_t> selectedSteps;
+    if (itStepsString != engine.m_IO.m_Parameters.end())
+    {
+        std::string selectedStepsStr = engine.m_IO.m_Parameters[engine.m_Name];
+        std::stringstream ss(selectedStepsStr);
+        std::string item;
+
+        while (std::getline(ss, item, ','))
+        {
+            selectedSteps.push_back(std::stoi(item));
+        }
+    }
     for (size_t i = oldSteps; i < allSteps; i++)
     {
-        ParsePGIndexPerStep(bufferSTL, engine.m_IO.m_HostLanguage, 0, i + 1);
-        ParseVariablesIndexPerStep(bufferSTL, engine, 0, i + 1);
-        ParseAttributesIndexPerStep(bufferSTL, engine, 0, i + 1);
-        lastposition = m_MetadataIndexTable[0][i + 1][3];
+        if (selectedSteps.size() == 0 ||
+            std::find(selectedSteps.begin(), selectedSteps.end(), i) !=
+                selectedSteps.end())
+        {
+            ParsePGIndexPerStep(bufferSTL, engine.m_IO.m_HostLanguage, 0,
+                                i + 1);
+            ParseVariablesIndexPerStep(bufferSTL, engine, 0, i + 1);
+            ParseAttributesIndexPerStep(bufferSTL, engine, 0, i + 1);
+            lastposition = m_MetadataIndexTable[0][i + 1][3];
+        }
     }
     return lastposition;
 }

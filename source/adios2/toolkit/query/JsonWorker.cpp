@@ -70,7 +70,6 @@ void LoadVarQuery(QueryVar *q, nlohmann::json &varO)
         adios2::query::JsonUtil::ConstructTree(q->m_RangeTree, opO);
     }
 } // LoadVarQuery
-
 }
 }
 }
@@ -167,6 +166,5 @@ void JsonWorker::ParseJson()
     m_Query = result;
     return;
 } // parse
-
 }
 }
