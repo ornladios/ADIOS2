@@ -65,7 +65,7 @@ size_t BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
     {
         if (selectedSteps.size() == 0 ||
             std::find(selectedSteps.begin(), selectedSteps.end(), i) !=
-            selectedSteps.end())
+                selectedSteps.end())
         {
             ParsePGIndexPerStep(bufferSTL, engine.m_IO.m_HostLanguage, 0,
                                 i + 1);
