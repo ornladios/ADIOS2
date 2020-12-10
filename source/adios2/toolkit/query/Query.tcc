@@ -69,6 +69,5 @@ bool RangeTree::CheckInterval(T &min, T &max) const
     // anything else are false
     return false;
 }
-
 }
 }
