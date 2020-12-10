@@ -89,7 +89,7 @@ void BP4Writer::PutSyncCommon(Variable<T> &variable,
     if (resizeResult == format::BP4Base::ResizeResult::Flush)
     {
         DoFlush(false);
-        m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Data);
+        m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Data, false, false);
 
         // new group index for incoming variable
         m_BP4Serializer.PutProcessGroupIndex(
