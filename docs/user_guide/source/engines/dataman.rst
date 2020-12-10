@@ -6,16 +6,8 @@ The DataMan engine is designed for data staging over the wide area network.
 It is supposed to be used in cases where a few writers send data to a few readers
 over long distance.
 
-DataMan does NOT guarantee that readers receive EVERY data step
-from writers. The idea behind this is that for experimental data, which is the target
-use case of this engine, the data rate of writers should not be slowed down
-by readers. If readers cannot keep up with the experiment, the experiment should still
-continue, and the readers should read the latest data steps. The design also helps
-improving performance because it saves the communication time for checking step completeness,
-which usually means ~100 milliseconds every step for transoceanic connections.
-
-For wide area data staging applications that require readers to receive EVERY data step,
-the SST engine is recommended.
+DataMan supports compression operators such as ZFP lossy compression and BZip2 lossless compression.
+Please refer to the operator section for usage.
 
 The DataMan engine takes the following parameters:
 
