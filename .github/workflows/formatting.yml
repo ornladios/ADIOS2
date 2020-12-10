@@ -1,0 +1,26 @@
+name: Formatting
+
+on: 
+  push: 
+    branches: 
+    - master 
+    - release* 
+  pull_request: 
+    branches: 
+    - master 
+    - release* 
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    container:
+      image: ornladios/adios2:ci-formatting
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: CXX
+      run: scripts/ci/scripts/run-clang-format.sh
+    - name: Python
+      run: scripts/ci/scripts/run-flake8.sh
