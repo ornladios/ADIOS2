@@ -2,13 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TestDataMan2DMemSelect.cpp
+ * TestDataMan2DZfp.cpp
  *
- *  Created on: Aug 16, 2018
+ *  Created on: Nov 24, 2020
  *      Author: Jason Wang
  */
 
 #include <adios2.h>
+#include <cmath>
 #include <gtest/gtest.h>
 #include <numeric>
 #include <thread>
@@ -61,7 +62,7 @@ void GenData(std::vector<T> &data, const size_t step, const Dims &start,
             for (size_t j = 0; j < count[1]; ++j)
             {
                 data[i * count[1] + j] =
-                    (i + start[1]) * shape[1] + j + start[0];
+                    (i + start[1]) * shape[1] + j + start[0] + 0.01;
             }
         }
     }
@@ -87,15 +88,11 @@ void VerifyData(const T *data, size_t step, const Dims &start,
 {
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
-    bool compressed = false;
     std::vector<T> tmpdata(size);
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        if (!compressed)
-        {
-            ASSERT_EQ(data[i], tmpdata[i]);
-        }
+        ASSERT_EQ(data[i], tmpdata[i]);
     }
 }
 
@@ -132,6 +129,9 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
         dataManIO.DefineVariable<unsigned int>("bpUInts", shape, start, count);
     auto bpFloats =
         dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
+    adios2::Operator bzip2Op =
+        adios.DefineOperator("Compressor", adios2::ops::LosslessBZIP2);
+    bpFloats.AddOperation(bzip2Op, {});
     auto bpDoubles =
         dataManIO.DefineVariable<double>("bpDoubles", shape, start, count);
     auto bpComplexes = dataManIO.DefineVariable<std::complex<float>>(
@@ -305,7 +305,7 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
 }
 
 #ifdef ADIOS2_HAVE_ZEROMQ
-TEST_F(DataManEngineTest, 2D_MemSelect)
+TEST_F(DataManEngineTest, 2D_Bzip2)
 {
     // set parameters
     Dims shape = {10, 10};

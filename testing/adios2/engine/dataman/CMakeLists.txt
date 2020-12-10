@@ -16,3 +16,16 @@ foreach(tst IN ITEMS
   )
 endforeach()
 
+if(ADIOS2_HAVE_ZFP)
+    gtest_add_tests_helper(2DZfp MPI_NONE DataMan Engine.DataMan. "")
+    set_tests_properties(${Test.Engine.DataMan.2DZfp-TESTS}
+        PROPERTIES RUN_SERIAL TRUE
+        )
+endif()
+
+if(ADIOS2_HAVE_BZip2)
+    gtest_add_tests_helper(2DBzip2 MPI_NONE DataMan Engine.DataMan. "")
+    set_tests_properties(${Test.Engine.DataMan.2DBzip2-TESTS}
+        PROPERTIES RUN_SERIAL TRUE
+        )
+endif()
