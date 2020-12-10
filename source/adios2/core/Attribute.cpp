@@ -33,7 +33,6 @@ template <>
 struct RequiresZeroPadding<long double> : std::true_type
 {
 };
-
 }
 
 #define declare_type(T)                                                        \
