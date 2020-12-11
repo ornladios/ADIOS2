@@ -20,7 +20,8 @@ namespace engine
 DataManWriter::DataManWriter(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
 : Engine("DataManWriter", io, name, openMode, std::move(comm)),
-  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)), m_SentSteps(0)
+  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)), m_SentSteps(0),
+  m_CurrentStep(-1)
 {
 
     m_MpiRank = m_Comm.Rank();
@@ -192,7 +193,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void DataManWriter::DoClose(const int transportIndex)
 {
     nlohmann::json endSignal;
-    endSignal["FinalStep"] = m_CurrentStep;
+    endSignal["FinalStep"] = static_cast<int64_t>(m_CurrentStep);
     std::string s = endSignal.dump() + '\0';
     auto cvp = std::make_shared<std::vector<char>>(s.size());
     std::memcpy(cvp->data(), s.c_str(), s.size());
