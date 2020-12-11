@@ -295,9 +295,9 @@ void DataManWriter::ReplyThread()
                 auto buffer = PopBufferQueue();
                 while (buffer == nullptr)
                 {
-                    auto buffer = PopBufferQueue();
+                    buffer = PopBufferQueue();
                 }
-                if (buffer != nullptr && buffer->size() > 0)
+                if (buffer->size() > 0)
                 {
                     m_Replier.SendReply(buffer);
                     ++m_SentSteps;
