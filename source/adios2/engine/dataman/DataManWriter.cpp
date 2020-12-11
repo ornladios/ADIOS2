@@ -20,8 +20,7 @@ namespace engine
 DataManWriter::DataManWriter(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
 : Engine("DataManWriter", io, name, openMode, std::move(comm)),
-  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)), m_SentSteps(0),
-  m_CurrentStep(-1)
+  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)), m_SentSteps(0)
 {
 
     m_MpiRank = m_Comm.Rank();
@@ -87,6 +86,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 
     if (m_RendezvousReaderCount == 0 || m_TransportMode == "reliable")
     {
+        m_ReplyThreadActive = true;
         m_ReplyThread = std::thread(&DataManWriter::ReplyThread, this);
     }
     else
@@ -97,6 +97,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 
     if (m_DoubleBuffer && m_TransportMode == "fast")
     {
+        m_PublishThreadActive = true;
         m_PublishThread = std::thread(&DataManWriter::PublishThread, this);
     }
 }
