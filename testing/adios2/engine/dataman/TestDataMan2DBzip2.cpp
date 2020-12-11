@@ -318,7 +318,7 @@ TEST_F(DataManEngineTest, 2D_Bzip2)
 
     size_t steps = 5000;
     adios2::Params engineParams = {
-        {"IPAddress", "127.0.0.1"}, {"Port", "12320"}, {"Verbose", "0"}};
+        {"IPAddress", "127.0.0.1"}, {"Port", "12310"}, {"Verbose", "0"}};
 
     auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
                          memstart, memcount, steps, engineParams);

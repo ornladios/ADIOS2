@@ -281,11 +281,11 @@ TEST_F(DataManEngineTest, WriterSingleBuffer)
 
     // run workflow
     adios2::Params readerEngineParams = {{"IPAddress", "127.0.0.1"},
-                                         {"Port", "12380"}};
+                                         {"Port", "12400"}};
     auto r = std::thread(DataManReader, shape, start, count, steps,
                          readerEngineParams);
     adios2::Params writerEngineParams = {{"IPAddress", "127.0.0.1"},
-                                         {"Port", "12380"},
+                                         {"Port", "12400"},
                                          {"DoubleBuffer", "false"}};
     auto w = std::thread(DataManWriter, shape, start, count, steps,
                          writerEngineParams);
