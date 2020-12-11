@@ -11,6 +11,9 @@ import unittest
 from mpi4py import MPI
 import adios2
 
+N_STEPS = 3
+
+
 class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
 
     def test_write_read_string_fullAPI(self):
@@ -18,12 +21,11 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
         theString = 'hello adios'
         bpFilename = 'string_test_fullAPI.bp'
         varname = 'mystringvar'
-        NSteps = 3
         adios = adios2.ADIOS(comm)
         ioWrite = adios.DeclareIO('ioWriter')
         adEngine = ioWrite.Open(bpFilename, adios2.Mode.Write)
         varMyString = ioWrite.DefineVariable(varname)
-        for step in range(NSteps):
+        for step in range(N_STEPS):
             adEngine.BeginStep()
             adEngine.Put(varMyString, theString + str(step))
             adEngine.EndStep()
@@ -32,7 +34,7 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
         ioRead = adios.DeclareIO('ioReader')
         adEngine = ioRead.Open(bpFilename, adios2.Mode.Read)
         varReadMyString = ioRead.InquireVariable(varname)
-        for step in range(NSteps):
+        for step in range(N_STEPS):
             adEngine.BeginStep()
             result = adEngine.Get(varReadMyString)
             adEngine.EndStep()
@@ -44,11 +46,10 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
         theString = 'hello adios'
         bpFilename = 'string_test_highAPI.bp'
         varname = 'mystringvar'
-        NSteps = 3
 
         with adios2.open(bpFilename, "w", comm) as fh:
 
-            for step in range(NSteps):
+            for step in range(N_STEPS):
                 fh.write(varname, theString + str(step), end_step=True)
 
         with adios2.open(bpFilename, "r", comm) as fh:
@@ -57,6 +58,20 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
                 result = fstep.read(varname)
                 self.assertEqual("".join([chr(s) for s in result]),
                                  theString + str(step))
+
+    def test_read_strings_all_steps(self):
+        fileName = 'string_test_all.bp'
+        with adios2.open(fileName, "w") as fh:
+            for i in range(N_STEPS):
+                fh.write("string_variable", "written {}".format(i))
+                fh.end_step()
+
+        with adios2.open(fileName, "r") as fh:
+            n = fh.steps()
+            name = "string_variable"
+            result = fh.read_string(name, 0, n)
+            expected_str = ["written {}".format(i) for i in range(n)]
+            self.assertEqual(result, expected_str)
 
 
 if __name__ == '__main__':
