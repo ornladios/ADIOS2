@@ -16,6 +16,7 @@
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
 #include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
+#include <atomic>
 
 namespace adios2
 {
@@ -54,8 +55,9 @@ private:
     std::string m_ReplierAddress;
     int m_MpiRank;
     int m_MpiSize;
-    int64_t m_CurrentStep = -1;
     size_t m_SerializerBufferSize = 1024 * 1024;
+    int64_t m_CurrentStep = -1;
+    std::atomic<size_t> m_SentSteps;
 
     format::DataManSerializer m_Serializer;
 
@@ -66,8 +68,8 @@ private:
 
     std::thread m_ReplyThread;
     std::thread m_PublishThread;
-    bool m_ReplyThreadActive = true;
-    bool m_PublishThreadActive = true;
+    std::atomic<bool> m_ReplyThreadActive;
+    bool m_PublishThreadActive;
 
     std::queue<std::shared_ptr<std::vector<char>>> m_BufferQueue;
     std::mutex m_BufferQueueMutex;
