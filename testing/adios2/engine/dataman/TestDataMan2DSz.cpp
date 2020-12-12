@@ -318,9 +318,9 @@ TEST_F(DataManEngineTest, 2D_Sz)
     memstart = {1, 1};
     memcount = {7, 9};
 
-    size_t steps = 5000;
+    size_t steps = 1;
     adios2::Params engineParams = {
-        {"IPAddress", "127.0.0.1"}, {"Port", "12330"}, {"Verbose", "0"}};
+        {"IPAddress", "127.0.0.1"}, {"Port", "12330"}, {"Verbose", "10"}};
 
     auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
                          memstart, memcount, steps, engineParams);
