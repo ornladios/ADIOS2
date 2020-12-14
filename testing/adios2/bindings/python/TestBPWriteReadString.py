@@ -33,9 +33,9 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
 
         ioRead = adios.DeclareIO('ioReader')
         adEngine = ioRead.Open(bpFilename, adios2.Mode.Read)
-        varReadMyString = ioRead.InquireVariable(varname)
         for step in range(N_STEPS):
             adEngine.BeginStep()
+            varReadMyString = ioRead.InquireVariable(varname)
             result = adEngine.Get(varReadMyString)
             adEngine.EndStep()
             self.assertEqual(result, theString + str(step))
@@ -60,13 +60,14 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
                                  theString + str(step))
 
     def test_read_strings_all_steps(self):
+        comm = MPI.COMM_WORLD
         fileName = 'string_test_all.bp'
-        with adios2.open(fileName, "w") as fh:
+        with adios2.open(fileName, "w", comm) as fh:
             for i in range(N_STEPS):
                 fh.write("string_variable", "written {}".format(i))
                 fh.end_step()
 
-        with adios2.open(fileName, "r") as fh:
+        with adios2.open(fileName, "r", comm) as fh:
             n = fh.steps()
             name = "string_variable"
             result = fh.read_string(name, 0, n)
