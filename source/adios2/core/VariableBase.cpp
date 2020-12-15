@@ -203,6 +203,15 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
     m_StepsStart = boxSteps.first;
     m_StepsCount = boxSteps.second;
     m_RandomAccess = true;
+    if (m_ShapeID == ShapeID::GlobalArray)
+    {
+        /* Handle Global Array with changing shape over steps */
+        const auto it = m_AvailableShapes.find(m_StepsStart + 1);
+        if (it != m_AvailableShapes.end())
+        {
+            m_Shape = it->second;
+        }
+    }
 }
 
 size_t VariableBase::AddOperation(Operator &op,
