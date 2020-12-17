@@ -24,13 +24,17 @@ class FileDrainerSingleThread : public FileDrainer
 {
 
 public:
-    static const size_t defaultBufferSize = 4194304; // 4MB
+    // Size of drain buffer (read/write buffer owned by the thread)
+    static constexpr size_t defaultBufferSize = 4194304; // 4MB
+    // Sync to disk when draining reaches flush size
+    static constexpr size_t defaultFlushSize = 32 * defaultBufferSize; // 128MB
 
     FileDrainerSingleThread();
 
     ~FileDrainerSingleThread();
 
-    void SetBufferSize(size_t bufferSizeBytes);
+    void SetBufferSize(size_t bytes);
+    void SetFlushSize(size_t bytes);
 
     /** Create thread.
      * This will create a thread to continuously run and idle if there
@@ -47,6 +51,7 @@ public:
 
 private:
     size_t bufferSize = defaultBufferSize;
+    size_t flushSize = defaultFlushSize;
     std::thread th; // created by constructor
     bool finish = false;
     std::mutex finishMutex;

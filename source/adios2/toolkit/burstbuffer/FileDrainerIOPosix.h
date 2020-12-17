@@ -87,6 +87,8 @@ protected:
     size_t Write(OutputFile &f, size_t count, const char *buffer,
                  const std::string &path);
 
+    int FileSync(OutputFile &f);
+
     void Delete(OutputFile &f, const std::string &path);
 
 private:
