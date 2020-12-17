@@ -23,6 +23,12 @@
 
 #include "adios2/common/ADIOSTypes.h"
 
+#ifdef _WIN32
+#include "FileDrainerIOFstream.h"
+#else
+#include "FileDrainerIOPosix.h"
+#endif
+
 namespace adios2
 {
 namespace burstbuffer
@@ -58,12 +64,7 @@ struct FileDrainOperation
                        size_t fromOffset, size_t toOffset, const void *data);
 };
 
-typedef std::map<std::string, std::shared_ptr<std::ifstream>> InputFileMap;
-typedef std::map<std::string, std::shared_ptr<std::ofstream>> OutputFileMap;
-typedef std::shared_ptr<std::ifstream> InputFile;
-typedef std::shared_ptr<std::ofstream> OutputFile;
-
-class FileDrainer
+class FileDrainer : public FileDrainerIO
 {
 public:
     FileDrainer() = default;
@@ -111,41 +112,6 @@ protected:
     int m_Rank = 0;
     int m_Verbose = 0;
     static const int errorState = -1;
-
-    /** instead for Open, use this function */
-    InputFile GetFileForRead(const std::string &path);
-    OutputFile GetFileForWrite(const std::string &path, bool append = false);
-
-    /** return true if the File is usable (no previous errors) */
-    bool Good(InputFile &f);
-    bool Good(OutputFile &f);
-
-    void CloseAll();
-
-    void Seek(InputFile &f, size_t offset, const std::string &path);
-    void Seek(OutputFile &f, size_t offset, const std::string &path);
-    void SeekEnd(OutputFile &f);
-
-    /** Read from file. Return a pair of
-     *  - number of bytes written
-     *  - time spent in waiting for file to be actually written to disk for this
-     * read to succeed.
-     */
-    std::pair<size_t, double> Read(InputFile &f, size_t count, char *buffer,
-                                   const std::string &path);
-    size_t Write(OutputFile &f, size_t count, const char *buffer,
-                 const std::string &path);
-
-    void Delete(OutputFile &f, const std::string &path);
-
-private:
-    InputFileMap m_InputFileMap;
-    OutputFileMap m_OutputFileMap;
-    void Open(InputFile &f, const std::string &path);
-    void Close(InputFile &f);
-    void Open(OutputFile &f, const std::string &path, bool append);
-    void Close(OutputFile &f);
-    size_t GetFileSize(InputFile &f);
 };
 
 } // end namespace burstbuffer
