@@ -227,12 +227,17 @@ size_t FileDrainerIO::Write(OutputFile &f, size_t count, const char *buffer,
         count -= writtenSize;
         totalWritten += writtenSize;
     }
-#if (_POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500)
-    fdatasync(f->m_fd);
-#else
-    fsync(f->m_fd);
-#endif
+
     return totalWritten;
+}
+
+int FileDrainerIO::FileSync(OutputFile &f)
+{
+#if (_POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500)
+    return fdatasync(f->m_fd);
+#else
+    return fsync(f->m_fd);
+#endif
 }
 
 void FileDrainerIO::Delete(OutputFile &f, const std::string &path)

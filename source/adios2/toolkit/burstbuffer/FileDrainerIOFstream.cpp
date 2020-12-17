@@ -178,6 +178,8 @@ size_t FileDrainerIO::Write(OutputFile &f, size_t count, const char *buffer,
     return count;
 }
 
+int FileDrainerIO::FileSync(OutputFile &f) { return 0; }
+
 void FileDrainerIO::Delete(OutputFile &f, const std::string &path)
 {
     Close(f);
