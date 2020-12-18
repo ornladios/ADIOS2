@@ -164,6 +164,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
+#if 0
         adios2::IO ioReadBP = adios.DeclareIO("ReadBP");
         ioReadBP.SetEngine("BPfile");
         ioReadBP.SetParameter(filename, "1,3");
@@ -253,7 +254,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
         }
 
         engine_b.Close();
-
+#endif
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
