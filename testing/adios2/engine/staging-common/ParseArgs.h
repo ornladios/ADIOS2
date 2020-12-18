@@ -37,6 +37,7 @@ bool AdvancingAttrs = false;
 int NoData = 0;
 int NoDataNode = -1;
 int EarlyExit = 0;
+int LocalCount = 1;
 
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
@@ -252,6 +253,15 @@ static void ParseArgs(int argc, char **argv)
             std::istringstream ss(argv[2]);
             if (!(ss >> NoDataNode))
                 std::cerr << "Invalid number for --no_data_node argument"
+                          << argv[1] << '\n';
+            argv++;
+            argc--;
+        }
+        else if (std::string(argv[1]) == "--local_count")
+        {
+            std::istringstream ss(argv[2]);
+            if (!(ss >> LocalCount))
+                std::cerr << "Invalid number for --local_count argument"
                           << argv[1] << '\n';
             argv++;
             argc--;
