@@ -76,7 +76,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#if 0
+#if 1
         adios2::IO ioRead = adios.DeclareIO("TestIORead");
         ioRead.SetEngine("Filestream");
         ioRead.SetParameter(filename, "1,3");
