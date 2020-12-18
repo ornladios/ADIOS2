@@ -290,9 +290,9 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 engine_bf.Get<int>(var0, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints0);
 
-                //var0.SetStepSelection({3, 1});
-                //engine_bf.Get<int>(var0, res, adios2::Mode::Sync);
-                //EXPECT_EQ(res, Ints0);
+                // var0.SetStepSelection({3, 1});
+                // engine_bf.Get<int>(var0, res, adios2::Mode::Sync);
+                // EXPECT_EQ(res, Ints0);
             }
 
             {
@@ -302,10 +302,10 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 engine_bf.Get<int>(var1, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints1);
 
-                //var1.SetStepSelection({3, 1});
-                //var1.SetSelection({{Nx * mpiRank}, {Nx}});
-                //engine_bf.Get<int>(var1, res, adios2::Mode::Sync);
-                //EXPECT_EQ(res, Ints1);
+                // var1.SetStepSelection({3, 1});
+                // var1.SetSelection({{Nx * mpiRank}, {Nx}});
+                // engine_bf.Get<int>(var1, res, adios2::Mode::Sync);
+                // EXPECT_EQ(res, Ints1);
             }
 
             {
@@ -315,10 +315,10 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 engine_bf.Get<int>(var2, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints2);
 
-                //var2.SetStepSelection({3, 1});
-                //var2.SetSelection({{Nx * mpiRank}, {Nx}});
-                //engine_bf.Get<int>(var2, res, adios2::Mode::Sync);
-                //EXPECT_EQ(res, Ints2);
+                // var2.SetStepSelection({3, 1});
+                // var2.SetSelection({{Nx * mpiRank}, {Nx}});
+                // engine_bf.Get<int>(var2, res, adios2::Mode::Sync);
+                // EXPECT_EQ(res, Ints2);
             }
 
             {
@@ -328,10 +328,10 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 engine_bf.Get<int>(var3, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints3);
 
-                //var3.SetStepSelection({3, 1});
-                //var3.SetSelection({{Nx * mpiRank}, {Nx}});
-                //engine_bf.Get<int>(var3, res, adios2::Mode::Sync);
-                //EXPECT_EQ(res, Ints3);
+                // var3.SetStepSelection({3, 1});
+                // var3.SetSelection({{Nx * mpiRank}, {Nx}});
+                // engine_bf.Get<int>(var3, res, adios2::Mode::Sync);
+                // EXPECT_EQ(res, Ints3);
             }
         }
         engine_bf.Close();
