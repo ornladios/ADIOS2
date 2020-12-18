@@ -289,7 +289,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 var0.SetSelection({{Nx * mpiRank}, {Nx}});
                 engine_bf.Get<int>(var0, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints0);
-                res.clear();
+
                 var0.SetStepSelection({3, 1});
                 engine_bf.Get<int>(var0, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints0);
@@ -301,7 +301,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 var1.SetSelection({{Nx * mpiRank}, {Nx}});
                 engine_bf.Get<int>(var1, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints1);
-                res.clear();
+
                 var1.SetStepSelection({3, 1});
                 var1.SetSelection({{Nx * mpiRank}, {Nx}});
                 engine_bf.Get<int>(var1, res, adios2::Mode::Sync);
@@ -314,7 +314,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 var2.SetSelection({{Nx * mpiRank}, {Nx}});
                 engine_bf.Get<int>(var2, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints2);
-                res.clear();
+
                 var2.SetStepSelection({3, 1});
                 var2.SetSelection({{Nx * mpiRank}, {Nx}});
                 engine_bf.Get<int>(var2, res, adios2::Mode::Sync);
@@ -327,7 +327,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 var3.SetSelection({{Nx * mpiRank}, {Nx}});
                 engine_bf.Get<int>(var3, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints3);
-                res.clear();
+
                 var3.SetStepSelection({3, 1});
                 var3.SetSelection({{Nx * mpiRank}, {Nx}});
                 engine_bf.Get<int>(var3, res, adios2::Mode::Sync);
