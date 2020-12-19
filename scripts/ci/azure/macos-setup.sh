@@ -16,7 +16,7 @@ case "$SYSTEM_JOBNAME" in
     ;;
 esac
 
-echo "Removing all existing brew package and update teh formule"
+echo "Removing all existing brew package and update the formule"
 brew remove --force $(brew list)
 brew update
 
@@ -31,6 +31,7 @@ brew install c-blosc
 
 echo "Installing python and friends"
 brew install python numpy
+brew link --overwrite python
 
 if [[ "$SYSTEM_JOBNAME" =~ .*openmpi.* ]]
 then
