@@ -2107,8 +2107,6 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
 {
 
     struct FFSMetadataInfoStruct *MBase;
-    struct FFSWriterMarshalBase *Info;
-    Info = (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
 
     FFSWriterRec Rec = LookupWriterRec(Stream, Variable);
     if (!Rec)
@@ -2154,7 +2152,6 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
             //  dimensions can change )
             // Also assume Dims is always right and consistent, otherwise, bad
             // things
-            size_t *PreviousCounts = MetaEntry->Count;
             MetaEntry->DBCount += DimCount;
             MetaEntry->Count =
                 AppendDims(MetaEntry->Count, PreviousDBCount, DimCount, Count);
@@ -2193,8 +2190,9 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
                 DataEntry->Array =
                     realloc(DataEntry->Array,
                             (DataEntry->ElemCount + ElemCount) * ElemSize);
-                memcpy(DataEntry->Array + DataEntry->ElemCount * ElemSize, Data,
-                       ElemCount * ElemSize);
+                memcpy((char *)DataEntry->Array +
+                           DataEntry->ElemCount * ElemSize,
+                       Data, ElemCount * ElemSize);
                 DataEntry->ElemCount += ElemCount;
             }
         }
