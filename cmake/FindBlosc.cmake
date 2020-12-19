@@ -27,7 +27,7 @@
 #                           as an environment variable.
 
 if(NOT BLOSC_FOUND)
-  if((NOT BLOSC_ROOT) AND (NOT (ENV{BLOSC_ROOT} STREQUAL "")))
+  if((NOT BLOSC_ROOT) AND (DEFINED ENV{BLOSC_ROOT}))
     set(BLOSC_ROOT "$ENV{BLOSC_ROOT}")
   endif()
   if(BLOSC_ROOT)
