@@ -76,7 +76,6 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#if 1
         adios2::IO ioRead = adios.DeclareIO("TestIORead");
         ioRead.SetEngine("Filestream");
         ioRead.SetParameter(filename, "1,3");
@@ -161,11 +160,9 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
             std::cout << "Exception " << e.what() << std::endl;
         }
         engine_s.Close();
-#endif
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#if 1
         adios2::IO ioReadBP = adios.DeclareIO("ReadBP");
         ioReadBP.SetEngine("BPfile");
         ioReadBP.SetParameter(filename, "1,3");
@@ -253,13 +250,11 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
         {
             std::cout << "Exception " << e.what() << std::endl;
         }
-
         engine_b.Close();
-#endif
+
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#if 1
         adios2::IO ioReadBPFull = adios.DeclareIO("ReadBPFull");
         ioReadBPFull.SetParameter(filename, "1,3");
         /** Engine derived class, spawned to start IO operations */
@@ -315,7 +310,6 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
             }
         }
         engine_bf.Close();
-#endif
     }
 }
 
