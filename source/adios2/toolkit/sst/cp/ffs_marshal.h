@@ -53,11 +53,12 @@ typedef struct FFSVarRec
     void *Variable;
     char *VarName;
     size_t *PerWriterMetaFieldOffset;
-    FMFieldList *PerWriterDataFieldDesc;
     size_t DimCount;
     int Type;
     int ElementSize;
     size_t *GlobalDims;
+    size_t *PerWriterBlockStart;
+    size_t *PerWriterBlockCount;
     size_t **PerWriterStart;
     size_t **PerWriterCounts;
     void **PerWriterIncomingData;
@@ -74,7 +75,7 @@ typedef struct FFSArrayRequest
 {
     FFSVarRec VarRec;
     enum FFSRequestTypeEnum RequestType;
-    size_t NodeID;
+    size_t BlockID;
     size_t *Start;
     size_t *Count;
     void *Data;

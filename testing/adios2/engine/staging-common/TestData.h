@@ -40,6 +40,7 @@ std::vector<int16_t> in_I16;
 std::vector<int32_t> in_I32;
 std::vector<int64_t> in_I64;
 std::vector<float> in_R32;
+std::vector<std::vector<float>> in_R32_blocks;
 std::vector<double> in_R64;
 std::vector<std::complex<float>> in_C32;
 std::vector<std::complex<double>> in_C64;
@@ -174,7 +175,7 @@ void generateCommonTestData(int step, int rank, int size, int Nx, int r64_Nx)
 
 int validateCommonTestData(int start, int length, size_t step,
                            int missing_end_data, bool varying = false,
-                           int writerRank = 0)
+                           int writerRank = 0, int LocalCount = 1)
 {
     int failures = 0;
     if (in_scalar_R64 != 1.5 * (step + 1))
@@ -191,8 +192,8 @@ int validateCommonTestData(int start, int length, size_t step,
             if (in_I8[i] != (int8_t)((i + start) * 10 + step))
             {
                 std::cout << "Expected 0x" << std::hex
-                          << (int8_t)((i + start) * 10 + step) << ", got 0x"
-                          << std::hex << in_I8[i] << " for in_I8[" << i
+                          << (int16_t)((i + start) * 10 + step) << ", got 0x"
+                          << std::hex << (int16_t)in_I8[i] << " for in_I8[" << i
                           << "](global[" << i + start << "])" << std::endl;
                 failures++;
             }
@@ -222,13 +223,33 @@ int validateCommonTestData(int start, int length, size_t step,
             failures++;
         }
 
-        if (in_R32[i] != (float)((i + start) * 10 + step))
+        if (in_R32_blocks.size() == 0)
         {
-            std::cout << "Expected " << (float)((i + start) * 10 + step)
-                      << ", got " << in_R32[i] << " for in_R32[" << i
-                      << "](global[" << i + start << "])" << std::endl;
-            failures++;
+            if (in_R32[i] != (float)((i + start) * 10 + step))
+            {
+                std::cout << "Expected " << (float)((i + start) * 10 + step)
+                          << ", got " << in_R32[i] << " for in_R32[" << i
+                          << "](global[" << i + start << "])" << std::endl;
+                failures++;
+            }
         }
+        else
+        {
+            for (int j = 0; j < in_R32_blocks.size(); j++)
+            {
+                if (in_R32_blocks[j][i] !=
+                    (float)((i + start) * 10 + step + 1000.0 * j))
+                {
+                    std::cout << "Expected "
+                              << (float)((i + start) * 10 + step + 1000.0 * j)
+                              << ", got " << in_R32_blocks[j][i]
+                              << " for in_R32[" << i << "][" << j << "(global["
+                              << i + start << "])" << std::endl;
+                    failures++;
+                }
+            }
+        }
+
         if (in_R64[i] != (double)((i + start) * 10 + step))
         {
             std::cout << "Expected " << (double)((i + start) * 10 + step)

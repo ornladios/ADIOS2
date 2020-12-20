@@ -70,14 +70,25 @@ static void BreakdownVarName(const char *Name, char **base_name_p, int *type_p,
     *base_name_p = strdup(NameStart);
 }
 
-static char *BuildArrayName(const char *base_name, const int type,
-                            const int element_size)
+static char *BuildArrayDimsName(const char *base_name, const int type,
+                                const int element_size)
 {
     int Len = strlen(base_name) + 3 + strlen("SST_") + 16;
     char *Ret = malloc(Len);
     sprintf(Ret, "SST%d_%d_", element_size, type);
     strcat(Ret, base_name);
     strcat(Ret, "Dims");
+    return Ret;
+}
+
+static char *BuildArrayDBCountName(const char *base_name, const int type,
+                                   const int element_size)
+{
+    int Len = strlen(base_name) + 3 + strlen("SST_") + 16;
+    char *Ret = malloc(Len);
+    sprintf(Ret, "SST%d_%d_", element_size, type);
+    strcat(Ret, base_name);
+    strcat(Ret, "DBCount");
     return Ret;
 }
 
@@ -399,7 +410,8 @@ extern void FFSFreeMarshalData(SstStream Stream)
             {
                 free(Info->VarList[i]->VarName);
                 free(Info->VarList[i]->PerWriterMetaFieldOffset);
-                free(Info->VarList[i]->PerWriterDataFieldDesc);
+                free(Info->VarList[i]->PerWriterBlockCount);
+                free(Info->VarList[i]->PerWriterBlockStart);
                 free(Info->VarList[i]->PerWriterStart);
                 free(Info->VarList[i]->PerWriterCounts);
                 free(Info->VarList[i]->PerWriterIncomingData);
@@ -462,7 +474,8 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
     {
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
-        char *ArrayName = BuildArrayName(Name, Type, ElemSize);
+        char *ArrayName = BuildArrayDimsName(Name, Type, ElemSize);
+        char *ArrayDBCount = BuildArrayDBCountName(Name, Type, ElemSize);
         AddField(&Info->MetaFields, &Info->MetaFieldCount, ArrayName, Int64,
                  sizeof(size_t));
         free(ArrayName);
@@ -471,12 +484,15 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
         char *ShapeName = ConcatName(Name, "Shape");
         char *CountName = ConcatName(Name, "Count");
         char *OffsetsName = ConcatName(Name, "Offsets");
+        AddField(&Info->MetaFields, &Info->MetaFieldCount, ArrayDBCount, Int64,
+                 sizeof(size_t));
         AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount, ShapeName,
                            Int64, sizeof(size_t), DimCount);
-        AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount, CountName,
-                           Int64, sizeof(size_t), DimCount);
-        AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
-                           OffsetsName, Int64, sizeof(size_t), DimCount);
+        AddVarArrayField(&Info->MetaFields, &Info->MetaFieldCount, CountName,
+                         Int64, sizeof(size_t), ArrayDBCount);
+        AddVarArrayField(&Info->MetaFields, &Info->MetaFieldCount, OffsetsName,
+                         Int64, sizeof(size_t), ArrayDBCount);
+        free(ArrayDBCount);
         free(ShapeName);
         free(CountName);
         free(OffsetsName);
@@ -516,10 +532,11 @@ typedef struct _ArrayRec
 
 typedef struct _MetaArrayRec
 {
-    size_t Dims;
-    size_t *Shape;
-    size_t *Count;
-    size_t *Offsets;
+    size_t Dims;     // How many dimensions does this array have
+    size_t DBCount;  // Dimens * BlockCount
+    size_t *Shape;   // Global dimensionality  [Dims]	NULL for local
+    size_t *Count;   // Per-block Counts	  [DBCount]
+    size_t *Offsets; // Per-block Offsets	  [DBCount]	NULL for local
 } MetaArrayRec;
 
 typedef struct _FFSTimestepInfo
@@ -571,6 +588,14 @@ static size_t *CopyDims(const size_t Count, const size_t *Vals)
 {
     size_t *Ret = malloc(Count * sizeof(Ret[0]));
     memcpy(Ret, Vals, Count * sizeof(Ret[0]));
+    return Ret;
+}
+
+static size_t *AppendDims(size_t *OldDims, const size_t OldCount,
+                          const size_t Count, const size_t *Vals)
+{
+    size_t *Ret = realloc(OldDims, (OldCount + Count) * sizeof(Ret[0]));
+    memcpy(Ret + OldCount, Vals, Count * sizeof(Ret[0]));
     return Ret;
 }
 
@@ -642,9 +667,11 @@ static FFSVarRec CreateVarRec(SstStream Stream, const char *ArrayName)
     Ret->VarName = strdup(ArrayName);
     Ret->PerWriterMetaFieldOffset =
         calloc(sizeof(size_t), Stream->WriterCohortSize);
-    Ret->PerWriterDataFieldDesc =
-        calloc(sizeof(FMFieldList), Stream->WriterCohortSize);
     Ret->PerWriterStart = calloc(sizeof(size_t *), Stream->WriterCohortSize);
+    Ret->PerWriterBlockStart =
+        calloc(sizeof(size_t *), Stream->WriterCohortSize);
+    Ret->PerWriterBlockCount =
+        calloc(sizeof(size_t *), Stream->WriterCohortSize);
     Ret->PerWriterCounts = calloc(sizeof(size_t *), Stream->WriterCohortSize);
     Ret->PerWriterIncomingData =
         calloc(sizeof(void *), Stream->WriterCohortSize);
@@ -743,8 +770,11 @@ extern int SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
         memset(Req, 0, sizeof(*Req));
         Req->VarRec = Var;
         Req->RequestType = Local;
-        Req->NodeID = BlockID;
+        Req->BlockID = BlockID;
         // make a copy of Count request
+        CP_verbose(Stream, TraceVerbose,
+                   "Get request local, Name %s, BlockID %d, Count %zu\n", Name,
+                   BlockID, Count[0]);
         Req->Count = malloc(sizeof(Count[0]) * Var->DimCount);
         memcpy(Req->Count, Count, sizeof(Count[0]) * Var->DimCount);
         Req->Data = Data;
@@ -758,7 +788,9 @@ static int NeedWriter(FFSArrayRequest Req, int i)
 {
     if (Req->RequestType == Local)
     {
-        return (Req->NodeID == i);
+        size_t NodeFirst = Req->VarRec->PerWriterBlockStart[i];
+        size_t NodeLast = Req->VarRec->PerWriterBlockCount[i] + NodeFirst - 1;
+        return (NodeFirst <= Req->BlockID) && (NodeLast >= Req->BlockID);
     }
     // else Global case
     for (int j = 0; j < Req->VarRec->DimCount; j++)
@@ -796,7 +828,7 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
     {
         for (int i = 0; i < Stream->WriterCohortSize; i++)
         {
-            if (NeedWriter(Reqs, i))
+            if ((Info->WriterInfo[i].Status != Needed) && (NeedWriter(Reqs, i)))
             {
                 Info->WriterInfo[i].Status = Needed;
             }
@@ -911,7 +943,6 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
         {
             VarRec->PerWriterIncomingData[Writer] = data_base->Array;
             VarRec->PerWriterIncomingSize[Writer] = data_base->ElemCount;
-            VarRec->PerWriterDataFieldDesc[Writer] = &FieldList[i + 1];
         }
         i += 2;
     }
@@ -1317,6 +1348,19 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
 
                 if (Reqs->RequestType == Local)
                 {
+                    int LocalBlockID =
+                        Reqs->BlockID - Reqs->VarRec->PerWriterBlockStart[i];
+                    size_t DataOffset = 0;
+                    for (int i = 0; i < LocalBlockID; i++)
+                    {
+                        int BlockElemCount = 1;
+                        for (int j = 0; j < DimCount; j++)
+                        {
+                            BlockElemCount *= RankSize[j];
+                        }
+                        DataOffset += BlockElemCount * ElementSize;
+                        RankSize += DimCount;
+                    }
                     RankOffset = calloc(DimCount, sizeof(RankOffset[0]));
                     RankOffsetFree = RankOffset;
                     GlobalDimensions =
@@ -1331,6 +1375,7 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                     {
                         GlobalDimensions[i] = RankSize[i];
                     }
+                    IncomingData = (char *)IncomingData + DataOffset;
                 }
                 if ((Stream->WriterConfigParams->CompressionMethod ==
                      SstCompressZFP) &&
@@ -1767,7 +1812,7 @@ static struct ControlInfo *BuildControl(SstStream Stream, FMFormat Format)
                 VarRec->ElementSize = ElementSize;
                 C->ElementSize = ElementSize;
             }
-            i += 4;
+            i += 5; // number of fields in MetaArrayRec
             free(ArrayName);
             C->VarRec = VarRec;
         }
@@ -1949,13 +1994,30 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                     meta_base->Count);
             }
             VarRec->DimCount = meta_base->Dims;
+            VarRec->PerWriterBlockCount[WriterRank] =
+                meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
             VarRec->PerWriterStart[WriterRank] = meta_base->Offsets;
             VarRec->PerWriterCounts[WriterRank] = meta_base->Count;
-            VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
-            Stream->ArrayBlocksInfoUpcall(
-                Stream->SetupUpcallReader, VarRec->Variable, VarRec->Type,
-                WriterRank, meta_base->Dims, meta_base->Shape,
-                meta_base->Offsets, meta_base->Count);
+            if (WriterRank == 0)
+            {
+                VarRec->PerWriterBlockStart[WriterRank] = 0;
+            }
+            if (WriterRank < Stream->WriterCohortSize - 1)
+            {
+                VarRec->PerWriterBlockStart[WriterRank + 1] =
+                    VarRec->PerWriterBlockStart[WriterRank] +
+                    VarRec->PerWriterBlockCount[WriterRank];
+            }
+            for (int i = 0; i < VarRec->PerWriterBlockCount[WriterRank]; i++)
+            {
+                size_t *Offsets = NULL;
+                if (meta_base->Offsets)
+                    Offsets = meta_base->Offsets + (i * meta_base->Dims);
+                Stream->ArrayBlocksInfoUpcall(
+                    Stream->SetupUpcallReader, VarRec->Variable, VarRec->Type,
+                    WriterRank, meta_base->Dims, meta_base->Shape, Offsets,
+                    meta_base->Count);
+            }
         }
         else
         {
@@ -1965,7 +2027,6 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                     Stream->SetupUpcallReader, VarRec->VarName, VarRec->Type,
                     field_data);
             }
-            VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
             VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
         }
     }
@@ -2054,6 +2115,7 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
     }
 
     MBase = Stream->M;
+    int AlreadyWritten = FFSBitfieldTest(MBase, Rec->FieldID);
     FFSBitfieldSet(MBase, Rec->FieldID);
 
     if (Rec->DimCount == 0)
@@ -2069,15 +2131,34 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
 
         /* handle metadata */
         MetaEntry->Dims = DimCount;
-        if (Shape)
-            MetaEntry->Shape = CopyDims(DimCount, Shape);
+        if (!AlreadyWritten)
+        {
+            if (Shape)
+                MetaEntry->Shape = CopyDims(DimCount, Shape);
+            else
+                MetaEntry->Shape = NULL;
+            MetaEntry->DBCount = DimCount;
+            MetaEntry->Count = CopyDims(DimCount, Count);
+            if (Offsets)
+                MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+            else
+                MetaEntry->Offsets = NULL;
+        }
         else
-            MetaEntry->Shape = NULL;
-        MetaEntry->Count = CopyDims(DimCount, Count);
-        if (Offsets)
-            MetaEntry->Offsets = CopyDims(DimCount, Offsets);
-        else
-            MetaEntry->Offsets = NULL;
+        {
+            /* already got some metadata, add blocks */
+            size_t PreviousDBCount = MetaEntry->DBCount;
+            //  Assume shape is still valid   (modify this if shape /global
+            //  dimensions can change )
+            // Also assume Dims is always right and consistent, otherwise, bad
+            // things
+            MetaEntry->DBCount += DimCount;
+            MetaEntry->Count =
+                AppendDims(MetaEntry->Count, PreviousDBCount, DimCount, Count);
+            if (Offsets)
+                MetaEntry->Offsets = AppendDims(
+                    MetaEntry->Offsets, PreviousDBCount, DimCount, Offsets);
+        }
 
         if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) &&
             ZFPcompressionPossible(Type, DimCount))
@@ -2093,12 +2174,27 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
         }
         else
         {
-            /* normal array case */
-            size_t ElemCount = CalcSize(DimCount, Count);
-            DataEntry->ElemCount = ElemCount;
-            /* this is PutSync case, so we have to copy the data NOW */
-            DataEntry->Array = malloc(ElemCount * ElemSize);
-            memcpy(DataEntry->Array, Data, ElemCount * ElemSize);
+            if (!AlreadyWritten)
+            {
+                /* normal array case */
+                size_t ElemCount = CalcSize(DimCount, Count);
+                DataEntry->ElemCount = ElemCount;
+                /* this is PutSync case, so we have to copy the data NOW */
+                DataEntry->Array = malloc(ElemCount * ElemSize);
+                memcpy(DataEntry->Array, Data, ElemCount * ElemSize);
+            }
+            else
+            {
+                size_t ElemCount = CalcSize(DimCount, Count);
+                /* this is PutSync case, so we have to copy the data NOW */
+                DataEntry->Array =
+                    realloc(DataEntry->Array,
+                            (DataEntry->ElemCount + ElemCount) * ElemSize);
+                memcpy((char *)DataEntry->Array +
+                           DataEntry->ElemCount * ElemSize,
+                       Data, ElemCount * ElemSize);
+                DataEntry->ElemCount += ElemCount;
+            }
         }
     }
 }
