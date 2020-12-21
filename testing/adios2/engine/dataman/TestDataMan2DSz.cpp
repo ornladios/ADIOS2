@@ -132,7 +132,7 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
         dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
     adios2::Operator szOp =
         adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
-    bpFloats.AddOperation(szOp, {{adios2::ops::sz::key::accuracy, "0.1"}});
+    bpFloats.AddOperation(szOp, {{adios2::ops::sz::key::accuracy, "0.01"}});
     auto bpDoubles =
         dataManIO.DefineVariable<double>("bpDoubles", shape, start, count);
     auto bpComplexes = dataManIO.DefineVariable<std::complex<float>>(
@@ -311,25 +311,20 @@ TEST_F(DataManEngineTest, 2D_Sz)
 {
     // set parameters
     Dims shape = {10, 10};
-    Dims start = {2, 2};
-    Dims count = {5, 5};
-    Dims memstart = start;
-    Dims memcount = count;
-    memstart = {1, 1};
-    memcount = {7, 9};
+    Dims start = {0, 0};
+    Dims count = {10, 10};
 
-    size_t steps = 1;
+    size_t steps = 100;
     adios2::Params engineParams = {
-        {"IPAddress", "127.0.0.1"}, {"Port", "12330"}, {"Verbose", "10"}};
+        {"IPAddress", "127.0.0.1"}, {"Port", "12330"}, {"Verbose", "0"}};
 
-    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
-                         memstart, memcount, steps, engineParams);
+    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count, start,
+                         count, steps, engineParams);
 
     auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
                          engineParams);
 
     w.join();
-
     r.join();
 }
 
