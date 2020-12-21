@@ -270,7 +270,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params,
     if (!fabric->info)
     {
         Svcs->verbose(CP_Stream, DPCriticalVerbose,
-                      "copying the fabric failed.\n");
+                      "copying the fabric info failed.\n");
         return;
     }
 
@@ -365,22 +365,56 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params,
     fi_freeinfo(originfo);
 }
 
-static void fini_fabric(struct fabric_state *fabric)
+static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs,
+                        void *CP_Stream)
 {
 
-    int status;
+    int res;
 
     do
     {
-        status = fi_close((struct fid *)fabric->cq_signal);
-    } while (status == FI_EBUSY);
+        res = fi_close((struct fid *)fabric->signal);
+    } while (res == -FI_EBUSY);
 
-    fi_close((struct fid *)fabric->domain);
-    fi_close((struct fid *)fabric->fabric);
-
-    if (status)
+    if (res != FI_SUCCESS)
     {
-        // TODO: error handling
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "could not close ep, failed with %d (%s).\n", res,
+                      fi_strerror(res));
+        return;
+    }
+
+    res = fi_close((struct fid *)fabric->cq_signal);
+    if (res != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "could not close cq, failed with %d (%s).\n", res,
+                      fi_strerror(res));
+    }
+
+    res = fi_close((struct fid *)fabric->av);
+    if (res != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "could not close av, failed with %d (%s).\n", res,
+                      fi_strerror(res));
+    }
+    res = fi_close((struct fid *)fabric->domain);
+    if (res != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "could not close domain, failed with %d (%s).\n", res,
+                      fi_strerror(res));
+        return;
+    }
+
+    res = fi_close((struct fid *)fabric->fabric);
+    if (res != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose,
+                      "could not close fabric, failed with %d (%s).\n", res,
+                      fi_strerror(res));
+        return;
     }
 
     fi_freeinfo(fabric->info);
@@ -1496,7 +1530,7 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
                   "Tearing down RDMA state on reader.\n");
     if (RS_Stream->Fabric)
     {
-        fini_fabric(RS_Stream->Fabric);
+        fini_fabric(RS_Stream->Fabric, Svcs, RS_Stream->CP_Stream);
     }
 
     while (StepLog)
@@ -1597,23 +1631,14 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 #endif /* SST_HAVE_CRAY_DRC */
 
     Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
-                  "Tearing down RDMA state on writer.\n");
-    if (WS_Stream->Fabric)
-    {
-        fini_fabric(WS_Stream->Fabric);
-    }
-
-#ifdef SST_HAVE_CRAY_DRC
-    if (WS_Stream->Rank == 0)
-    {
-        drc_release(Credential, 0);
-    }
-#endif /* SST_HAVE_CRAY_DRC */
-
+                  "Releasing reader-specific state for remaining readers.\n");
     while (WS_Stream->ReaderCount > 0)
     {
         RdmaDestroyWriterPerReader(Svcs, WS_Stream->Readers[0]);
     }
+
+    Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                  "Releasing remaining timesteps.\n");
 
     pthread_mutex_lock(&ts_mutex);
     while (WS_Stream->Timesteps)
@@ -1624,6 +1649,20 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
         pthread_mutex_lock(&ts_mutex);
     }
     pthread_mutex_unlock(&ts_mutex);
+
+    Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                  "Tearing down RDMA state on writer.\n");
+    if (WS_Stream->Fabric)
+    {
+        fini_fabric(WS_Stream->Fabric, Svcs, WS_Stream->CP_Stream);
+    }
+
+#ifdef SST_HAVE_CRAY_DRC
+    if (WS_Stream->Rank == 0)
+    {
+        drc_release(Credential, 0);
+    }
+#endif /* SST_HAVE_CRAY_DRC */
 
     free(WS_Stream->Fabric);
     free(WS_Stream);
