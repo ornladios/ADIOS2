@@ -829,7 +829,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                      (default = false).
         )md")
 
-        .def("read_string",
+        .def("read",
              (std::vector<std::string>(adios2::py11::File::*)(
                  const std::string &, const size_t)) &
                  adios2::py11::File::ReadString,
@@ -855,7 +855,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                      
         )md")
 
-        .def("read_string",
+        .def("read",
              (std::vector<std::string>(adios2::py11::File::*)(
                  const std::string &, const size_t, const size_t,
                  const size_t)) &

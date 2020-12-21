@@ -48,7 +48,6 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
         varname = 'mystringvar'
 
         with adios2.open(bpFilename, "w", comm) as fh:
-
             for step in range(N_STEPS):
                 fh.write(varname, theString + str(step), end_step=True)
 
@@ -56,8 +55,7 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
             for fstep in fh:
                 step = fstep.current_step()
                 result = fstep.read(varname)
-                self.assertEqual("".join([chr(s) for s in result]),
-                                 theString + str(step))
+                self.assertEqual(result, [theString + str(step)])
 
     def test_read_strings_all_steps(self):
         comm = MPI.COMM_WORLD
@@ -70,7 +68,7 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
         with adios2.open(fileName, "r", comm) as fh:
             n = fh.steps()
             name = "string_variable"
-            result = fh.read_string(name, 0, n)
+            result = fh.read(name, 0, n)
             expected_str = ["written {}".format(i) for i in range(n)]
             self.assertEqual(result, expected_str)
 
