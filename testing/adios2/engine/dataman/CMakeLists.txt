@@ -29,3 +29,10 @@ if(ADIOS2_HAVE_BZip2)
         PROPERTIES RUN_SERIAL TRUE
         )
 endif()
+
+if(ADIOS2_HAVE_SZ)
+    gtest_add_tests_helper(2DSz MPI_NONE DataMan Engine.DataMan. "")
+    set_tests_properties(${Test.Engine.DataMan.2DSz-TESTS}
+        PROPERTIES RUN_SERIAL TRUE
+        )
+endif()

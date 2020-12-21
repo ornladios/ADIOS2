@@ -86,7 +86,12 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
         {
             if (count.size() <= 5)
             {
-                return true;
+                size_t elements = std::accumulate(count.begin(), count.end(), 1,
+                                                  std::multiplies<size_t>());
+                if (elements >= 10)
+                {
+                    return true;
+                }
             }
         }
     }

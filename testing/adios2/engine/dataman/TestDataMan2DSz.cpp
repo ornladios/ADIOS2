@@ -1,89 +1,105 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
+ *
+ * TestDataMan2DSz.cpp
+ *
+ *  Created on: Dec 11, 2020
+ *      Author: Jason Wang
  */
 
+#include <adios2.h>
+#include <cmath>
+#include <gtest/gtest.h>
 #include <numeric>
 #include <thread>
 
-#include <adios2.h>
-#include <adios2/common/ADIOSMacros.h>
-#include <adios2/helper/adiosFunctions.h>
-#include <gtest/gtest.h>
-
 using namespace adios2;
-
-int mpiRank = 0;
-int mpiSize = 1;
-
 size_t print_lines = 0;
-size_t to_print_lines = 10;
+
+class DataManEngineTest : public ::testing::Test
+{
+public:
+    DataManEngineTest() = default;
+};
 
 template <class T>
-void GenData(std::vector<std::complex<T>> &data, const size_t step)
+void PrintData(const T *data, const size_t step, const Dims &start,
+               const Dims &count)
 {
-    for (size_t i = 0; i < data.size(); ++i)
-    {
-        data[i] = {static_cast<T>(i + mpiRank * 10000 + step * 100),
-                   static_cast<T>(i + mpiRank * 10000)};
-    }
-}
+    size_t size = std::accumulate(count.begin(), count.end(), 1,
+                                  std::multiplies<size_t>());
+    std::cout << "Step: " << step << " Size:" << size << "\n";
+    size_t printsize = 128;
 
-template <class T>
-void GenData(std::vector<T> &data, const size_t step)
-{
-    for (size_t i = 0; i < data.size(); ++i)
-    {
-        data[i] = i + mpiRank * 10000 + step * 100;
-    }
-}
-
-template <class T>
-void PrintData(const T *data, const size_t size, const size_t step)
-{
-    std::cout << "Rank: " << mpiRank << " Step: " << step << " [";
-    size_t printsize = 32;
     if (size < printsize)
     {
         printsize = size;
     }
+    int s = 0;
     for (size_t i = 0; i < printsize; ++i)
     {
+        ++s;
         std::cout << data[i] << " ";
+        if (s == count[1])
+        {
+            std::cout << std::endl;
+            s = 0;
+        }
     }
+
     std::cout << "]" << std::endl;
 }
 
 template <class T>
-void VerifyData(const std::complex<T> *data, const size_t size, size_t step)
+void GenData(std::vector<T> &data, const size_t step, const Dims &start,
+             const Dims &count, const Dims &shape)
 {
+    if (start.size() == 2)
+    {
+        for (size_t i = 0; i < count[0]; ++i)
+        {
+            for (size_t j = 0; j < count[1]; ++j)
+            {
+                data[i * count[1] + j] =
+                    (i + start[1]) * shape[1] + j + start[0] + 0.01;
+            }
+        }
+    }
+}
+
+template <class T>
+void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
+                const Dims &count, const Dims &shape)
+{
+    size_t size = std::accumulate(count.begin(), count.end(), 1,
+                                  std::multiplies<size_t>());
     std::vector<std::complex<T>> tmpdata(size);
-    GenData(tmpdata, step);
+    GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        ASSERT_EQ(data[i], tmpdata[i]);
+        ASSERT_EQ(abs(data[i].real() - tmpdata[i].real()) < 0.01, true);
+        ASSERT_EQ(abs(data[i].imag() - tmpdata[i].imag()) < 0.01, true);
     }
 }
 
 template <class T>
-void VerifyData(const T *data, const size_t size, size_t step)
+void VerifyData(const T *data, size_t step, const Dims &start,
+                const Dims &count, const Dims &shape)
 {
+    size_t size = std::accumulate(count.begin(), count.end(), 1,
+                                  std::multiplies<size_t>());
     std::vector<T> tmpdata(size);
-    GenData(tmpdata, step);
+    GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        ASSERT_EQ(data[i], tmpdata[i]);
+        ASSERT_EQ(abs((double)(data[i] - tmpdata[i])) < 0.01, true);
     }
 }
 
-template <class T>
-void VerifyData(const std::vector<T> &data, const size_t step)
-{
-    VerifyData(data.data(), data.size(), step);
-}
-
-void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
-                   const size_t steps, const adios2::Params &engineParams)
+void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
+                               const Dims &count, const size_t steps,
+                               const adios2::Params &engineParams)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -114,29 +130,31 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
         dataManIO.DefineVariable<unsigned int>("bpUInts", shape, start, count);
     auto bpFloats =
         dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
+    adios2::Operator szOp =
+        adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
+    bpFloats.AddOperation(szOp, {{adios2::ops::sz::key::accuracy, "0.01"}});
     auto bpDoubles =
         dataManIO.DefineVariable<double>("bpDoubles", shape, start, count);
     auto bpComplexes = dataManIO.DefineVariable<std::complex<float>>(
         "bpComplexes", shape, start, count);
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
-    auto bpUInt64s = dataManIO.DefineVariable<uint64_t>("bpUInt64s");
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter =
         dataManIO.Open("stream", adios2::Mode::Write);
-    for (uint64_t i = 0; i < steps; ++i)
+    for (int i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();
-        GenData(myChars, i);
-        GenData(myUChars, i);
-        GenData(myShorts, i);
-        GenData(myUShorts, i);
-        GenData(myInts, i);
-        GenData(myUInts, i);
-        GenData(myFloats, i);
-        GenData(myDoubles, i);
-        GenData(myComplexes, i);
-        GenData(myDComplexes, i);
+        GenData(myChars, i, start, count, shape);
+        GenData(myUChars, i, start, count, shape);
+        GenData(myShorts, i, start, count, shape);
+        GenData(myUShorts, i, start, count, shape);
+        GenData(myInts, i, start, count, shape);
+        GenData(myUInts, i, start, count, shape);
+        GenData(myFloats, i, start, count, shape);
+        GenData(myDoubles, i, start, count, shape);
+        GenData(myComplexes, i, start, count, shape);
+        GenData(myDComplexes, i, start, count, shape);
         dataManWriter.Put(bpChars, myChars.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
@@ -148,23 +166,24 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
         dataManWriter.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpDComplexes, myDComplexes.data(),
                           adios2::Mode::Sync);
-        dataManWriter.Put(bpUInt64s, i);
         dataManWriter.EndStep();
     }
     dataManWriter.Close();
 }
 
-void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
-                   const size_t steps, const adios2::Params &engineParams)
+void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
+                               const Dims &count, const Dims &memStart,
+                               const Dims &memCount, const size_t steps,
+                               const adios2::Params &engineParams)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
     adios2::ADIOS adios;
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
 
+    size_t datasize = std::accumulate(memCount.begin(), memCount.end(), 1,
+                                      std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -179,13 +198,23 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
     size_t currentStep;
     while (true)
     {
-        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
+        adios2::StepStatus status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)
         {
             received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
-            ASSERT_EQ(vars.size(), 11);
+            ASSERT_EQ(vars.size(), 10);
             currentStep = dataManReader.CurrentStep();
+            GenData(myChars, currentStep, memStart, memCount, shape);
+            GenData(myUChars, currentStep, memStart, memCount, shape);
+            GenData(myShorts, currentStep, memStart, memCount, shape);
+            GenData(myUShorts, currentStep, memStart, memCount, shape);
+            GenData(myInts, currentStep, memStart, memCount, shape);
+            GenData(myUInts, currentStep, memStart, memCount, shape);
+            GenData(myFloats, currentStep, memStart, memCount, shape);
+            GenData(myDoubles, currentStep, memStart, memCount, shape);
+            GenData(myComplexes, currentStep, memStart, memCount, shape);
+            GenData(myDComplexes, currentStep, memStart, memCount, shape);
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
             adios2::Variable<unsigned char> bpUChars =
@@ -206,9 +235,8 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<float>>("bpComplexes");
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
-            adios2::Variable<uint64_t> bpUInt64s =
-                dataManIO.InquireVariable<uint64_t>("bpUInt64s");
             auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
+
             bpChars.SetSelection({start, count});
             bpUChars.SetSelection({start, count});
             bpShorts.SetSelection({start, count});
@@ -219,6 +247,18 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
             bpDoubles.SetSelection({start, count});
             bpComplexes.SetSelection({start, count});
             bpDComplexes.SetSelection({start, count});
+
+            bpChars.SetMemorySelection({memStart, memCount});
+            bpUChars.SetMemorySelection({memStart, memCount});
+            bpShorts.SetMemorySelection({memStart, memCount});
+            bpUShorts.SetMemorySelection({memStart, memCount});
+            bpInts.SetMemorySelection({memStart, memCount});
+            bpUInts.SetMemorySelection({memStart, memCount});
+            bpFloats.SetMemorySelection({memStart, memCount});
+            bpDoubles.SetMemorySelection({memStart, memCount});
+            bpComplexes.SetMemorySelection({memStart, memCount});
+            bpDComplexes.SetMemorySelection({memStart, memCount});
+
             dataManReader.Get(bpChars, myChars.data(), adios2::Mode::Sync);
             dataManReader.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
             dataManReader.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
@@ -231,19 +271,20 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
                               adios2::Mode::Sync);
             dataManReader.Get(bpDComplexes, myDComplexes.data(),
                               adios2::Mode::Sync);
-            uint64_t stepValue;
-            dataManReader.Get(bpUInt64s, &stepValue, adios2::Mode::Sync);
-            ASSERT_EQ(currentStep, stepValue);
-            VerifyData(myChars, currentStep);
-            VerifyData(myUChars, currentStep);
-            VerifyData(myShorts, currentStep);
-            VerifyData(myUShorts, currentStep);
-            VerifyData(myInts, currentStep);
-            VerifyData(myUInts, currentStep);
-            VerifyData(myFloats, currentStep);
-            VerifyData(myDoubles, currentStep);
-            VerifyData(myComplexes, currentStep);
-            VerifyData(myDComplexes, currentStep);
+            VerifyData(myChars.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myUChars.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myShorts.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myUShorts.data(), currentStep, memStart, memCount,
+                       shape);
+            VerifyData(myInts.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myUInts.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myFloats.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myDoubles.data(), currentStep, memStart, memCount,
+                       shape);
+            VerifyData(myComplexes.data(), currentStep, memStart, memCount,
+                       shape);
+            VerifyData(myDComplexes.data(), currentStep, memStart, memCount,
+                       shape);
             dataManReader.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
@@ -262,36 +303,31 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
         ASSERT_NE(111, attInt.Data()[0]);
     }
     dataManReader.Close();
+    print_lines = 0;
 }
 
-class DataManEngineTest : public ::testing::Test
-{
-public:
-    DataManEngineTest() = default;
-};
-
 #ifdef ADIOS2_HAVE_ZEROMQ
-TEST_F(DataManEngineTest, WriterSingleBuffer)
+TEST_F(DataManEngineTest, 2D_Sz)
 {
     // set parameters
-    Dims shape = {10};
-    Dims start = {0};
-    Dims count = {10};
-    size_t steps = 5000;
+    Dims shape = {10, 10};
+    Dims start = {0, 0};
+    Dims count = {10, 10};
 
-    // run workflow
-    adios2::Params readerEngineParams = {{"IPAddress", "127.0.0.1"},
-                                         {"Port", "12400"}};
-    auto r = std::thread(DataManReader, shape, start, count, steps,
-                         readerEngineParams);
-    adios2::Params writerEngineParams = {{"IPAddress", "127.0.0.1"},
-                                         {"Port", "12400"},
-                                         {"DoubleBuffer", "false"}};
-    auto w = std::thread(DataManWriter, shape, start, count, steps,
-                         writerEngineParams);
+    size_t steps = 100;
+    adios2::Params engineParams = {
+        {"IPAddress", "127.0.0.1"}, {"Port", "12330"}, {"Verbose", "0"}};
+
+    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count, start,
+                         count, steps, engineParams);
+
+    auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
+                         engineParams);
+
     w.join();
     r.join();
 }
+
 #endif // ZEROMQ
 
 int main(int argc, char **argv)
