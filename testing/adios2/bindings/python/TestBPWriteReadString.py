@@ -55,9 +55,8 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
         with adios2.open(bpFilename, "r", comm) as fh:
             for fstep in fh:
                 step = fstep.current_step()
-                result = fstep.read(varname)
-                self.assertEqual("".join([chr(s) for s in result]),
-                                 theString + str(step))
+                result = fstep.read_string(varname)
+                self.assertEqual(result, [theString + str(step)])
 
     def test_read_strings_all_steps(self):
         comm = MPI.COMM_WORLD
