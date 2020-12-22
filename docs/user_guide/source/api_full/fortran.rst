@@ -518,21 +518,21 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
    
    .. code-block:: fortran
    
-      subroutine adios2_set_selection(variable, ndims, start_dims, count_dims, ierr)
+      subroutine adios2_set_selection(variable, step_start, step_count, ierr)
       
       ! WHERE
       
       ! variable handler
       type(adios2_variable), intent(in) :: variable
       
-      ! number of dimensions in start_dims and count_dims
-      integer, intent(in):: ndims
-      
       ! new step_start 
       integer(kind=8), intent(in):: step_start
       
       ! new step_count (or number of steps to read from step_start)
       integer(kind=8), intent(in):: step_count
+
+      ! error code
+      integer, intent(out) :: ierr
       
       
 :ref:`Engine` subroutines
