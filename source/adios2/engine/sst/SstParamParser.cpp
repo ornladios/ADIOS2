@@ -137,6 +137,10 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             {
                 parameter = SstMarshalBP;
             }
+            else if (method == "cp")
+            {
+                parameter = SstMarshalCP;
+            }
             else
             {
                 throw std::invalid_argument(

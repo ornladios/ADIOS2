@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 
 #include "adios2/common/ADIOSConfig.h"
+#include <SSTConfig.h>
 #include <atl.h>
 #include <evpath.h>
 
@@ -155,6 +156,14 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     {
         Params->ControlModule = strdup("select");
     }
+#ifndef SST_HAVE_CAPNPROTO
+    if (Params->MarshalMethod == SstMarshalCP)
+    {
+        fprintf(stderr, "CapnProto marshaling unavailable in this build, "
+                        "reverting to FFS marshaling\n");
+        Params->MarshalMethod = SstMarshalFFS;
+    }
+#endif
     if (Params->verbose > Stream->CPVerbosityLevel)
     {
         Stream->CPVerbosityLevel = Params->verbose;
@@ -166,7 +175,7 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 }
 
 static char *SstRegStr[] = {"File", "Screen", "Cloud"};
-static char *SstMarshalStr[] = {"FFS", "BP"};
+static char *SstMarshalStr[] = {"FFS", "BP", "CP"};
 static char *SstQueueFullStr[] = {"Block", "Discard"};
 static char *SstCompressStr[] = {"None", "ZFP"};
 static char *SstCommPatternStr[] = {"Min", "Peer"};
@@ -718,8 +727,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
     if (Stream->Rank == 0)
     {
         FFSContext context = Stream->CPInfo->ffs_c;
-        //        FFSTypeHandle ffs_type = FFSTypeHandle_from_encode(context,
-        //        RecvBuffer);
+        FFSTypeHandle ffs_type = FFSTypeHandle_from_encode(context, RecvBuffer);
 
         int i;
         Pointers = malloc(Stream->CohortSize * sizeof(Pointers[0]));
@@ -727,9 +735,10 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
         {
             FFSdecode_in_place(context, RecvBuffer + Displs[i],
                                (void **)&Pointers[i]);
-            // printf("Decode for rank %d :\n", i);
-            // FMdump_data(FMFormat_of_original(ffs_type), Pointers[i],
-            // 1024000);
+            //            printf("Decode for rank %d :\n", i);
+            //            FMdump_data(FMFormat_of_original(ffs_type),
+            //            Pointers[i],
+            //                        1024000);
         }
         free(Displs);
         free(RecvCounts);
@@ -1180,7 +1189,8 @@ extern void SstStreamDestroy(SstStream Stream)
         FFSList = Tmp;
     }
     if (Stream->WriterConfigParams &&
-        (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS))
+        ((Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS) ||
+         (Stream->WriterConfigParams->MarshalMethod == SstMarshalCP)))
     {
         FFSFreeMarshalData(Stream);
         if (Stream->M)
@@ -1215,7 +1225,8 @@ extern void SstStreamDestroy(SstStream Stream)
         if (Stream->RanksRead)
             free(Stream->RanksRead);
     }
-    else if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)
+    else if ((Stream->ConfigParams->MarshalMethod == SstMarshalFFS) ||
+             (Stream->ConfigParams->MarshalMethod == SstMarshalCP))
     {
         FFSFreeMarshalData(Stream);
     }

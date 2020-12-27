@@ -466,12 +466,6 @@ int main(int argc, char **argv)
         std::cerr << "PerfMetaData cannot run with MPI size < 2" << std::endl;
         exit(1);
     }
-    if ((NumBlocks > 1) && (key == 0))
-    {
-        std::cerr
-            << "Warning, metadata info for FFS not valid for num_blocks > 1"
-            << std::endl;
-    }
     unsigned int color = 0;
     if (key > 0)
     {

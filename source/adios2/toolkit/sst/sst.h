@@ -52,7 +52,8 @@ typedef struct _SstParams *SstParams;
 typedef enum
 {
     SstMarshalFFS,
-    SstMarshalBP
+    SstMarshalBP,
+    SstMarshalCP
 } SstMarshalMethod;
 
 typedef enum

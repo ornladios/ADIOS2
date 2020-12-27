@@ -329,7 +329,8 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         m_IO.ResetVariablesStepSelection(true,
                                          "in call to SST Reader BeginStep");
     }
-    else if (m_WriterMarshalMethod == SstMarshalFFS)
+    else if ((m_WriterMarshalMethod == SstMarshalFFS) ||
+             (m_WriterMarshalMethod == SstMarshalCP))
     {
         // For FFS-based marshaling, SstAdvanceStep takes care of installing
         // the metadata, creating variables using the varFFScallback and
@@ -360,7 +361,9 @@ void SstReader::EndStep()
         SstReaderDefinitionLock(m_Input, SstCurrentStep(m_Input));
         m_DefinitionsNotified = true;
     }
-    if (m_WriterMarshalMethod == SstMarshalFFS)
+    if ((m_WriterMarshalMethod == SstMarshalFFS) ||
+        (m_WriterMarshalMethod == SstMarshalCP))
+
     {
         SstStatusValue Result;
         // this does all the deferred gets and fills in the variable array data
@@ -420,7 +423,8 @@ void SstReader::Init()
                 "BeginStep/EndStep pairs");                                    \
         }                                                                      \
                                                                                \
-        if (m_WriterMarshalMethod == SstMarshalFFS)                            \
+        if ((m_WriterMarshalMethod == SstMarshalFFS) ||                        \
+            (m_WriterMarshalMethod == SstMarshalCP))                           \
         {                                                                      \
             size_t *Start = NULL;                                              \
             size_t *Count = NULL;                                              \
@@ -476,7 +480,8 @@ void SstReader::Init()
                 "BeginStep/EndStep pairs");                                    \
         }                                                                      \
                                                                                \
-        if (m_WriterMarshalMethod == SstMarshalFFS)                            \
+        if ((m_WriterMarshalMethod == SstMarshalFFS) ||                        \
+            (m_WriterMarshalMethod == SstMarshalCP))                           \
         {                                                                      \
             size_t *Start = NULL;                                              \
             size_t *Count = NULL;                                              \
@@ -528,7 +533,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_gets)
 
 void SstReader::PerformGets()
 {
-    if (m_WriterMarshalMethod == SstMarshalFFS)
+    if ((m_WriterMarshalMethod == SstMarshalFFS) ||
+        (m_WriterMarshalMethod == SstMarshalCP))
     {
         SstFFSPerformGets(m_Input);
     }
@@ -607,7 +613,8 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     SstReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
     {                                                                          \
-        if (m_WriterMarshalMethod == SstMarshalFFS)                            \
+        if ((m_WriterMarshalMethod == SstMarshalFFS) ||                        \
+            (m_WriterMarshalMethod == SstMarshalCP))                           \
         {                                                                      \
             throw std::invalid_argument("ERROR: SST Engine doesn't implement " \
                                         "function DoAllStepsBlocksInfo\n");    \
@@ -623,7 +630,8 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
     std::vector<typename Variable<T>::Info> SstReader::DoBlocksInfo(           \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
-        if (m_WriterMarshalMethod == SstMarshalFFS)                            \
+        if ((m_WriterMarshalMethod == SstMarshalFFS) ||                        \
+            (m_WriterMarshalMethod == SstMarshalCP))                           \
         {                                                                      \
             return variable.m_BlocksInfo;                                      \
         }                                                                      \
