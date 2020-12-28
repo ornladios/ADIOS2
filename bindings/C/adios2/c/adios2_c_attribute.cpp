@@ -173,6 +173,7 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
                 {
                     attributeCpp->m_DataArray[e].copy(
                         dataT[e], attributeCpp->m_DataArray[e].size());
+                    dataT[e][attributeCpp->m_DataArray[e].size()] = '\0';
                 }
             }
         }

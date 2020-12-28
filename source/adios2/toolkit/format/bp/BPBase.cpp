@@ -244,6 +244,15 @@ void BPBase::Init(const Params &parameters, const std::string hint,
             // SubStreams break SST
             // BurstBufferBasePath has no impact on SST
         }
+        else
+        {
+            // non sst bp format, now read input parameters
+            if (profilePresent)
+            {
+                m_Profiler.m_IsActive = profileValue;
+            }
+            m_Parameters = parsedParameters;
+        }
     }
     else
     {
