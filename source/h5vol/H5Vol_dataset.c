@@ -80,7 +80,7 @@ void *H5VL_adios2_dataset_open(void *obj, const H5VL_loc_params_t *loc_params,
 
     H5VL_ObjDef_t *result = gGetVarObjDef(name, vol);
     if (NULL == result)
-        SHOW_ERROR_MSG("H5VaL_ADIOS2: Error: No such variable: %s in file.\n ",
+        SHOW_ERROR_MSG("H5VL_ADIOS2: Error: No such variable: %s in file.\n ",
                        name);
     return result;
 }

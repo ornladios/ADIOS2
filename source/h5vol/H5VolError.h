@@ -76,15 +76,6 @@ static void *safe_ralloc(void *ptr, size_t newsize, unsigned long line)
         fflush(stderr);                                                        \
     }
 
-#define ADIOS_VOL_MPI_ERR(err)                                                 \
-    {                                                                          \
-        char e[MPI_MAX_ERROR_STRING];                                          \
-        int len = 0;                                                           \
-        memset(e, 0, MPI_MAX_ERROR_STRING);                                    \
-        MPI_Error_string(err, e, &len);                                        \
-        ADIOS_VOL_LOG_ERR("%s", e);                                            \
-    }
-
 #define ADIOS_VOL_NOT_SUPPORTED_ERR(...)                                       \
     {                                                                          \
         fprintf(stderr, "## ADIOS_VOL_NOT_SUPPORTED:");                        \

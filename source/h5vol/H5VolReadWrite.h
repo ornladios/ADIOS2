@@ -5,7 +5,6 @@
 
 #include "H5VolError.h"
 #include "H5VolUtil.h"
-#include "mpi.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -8,6 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if ADIOS2_USE_MPI
+#include <mpi.h>
+#endif
+
 #include "H5Epublic.h"
 #include "H5VolReadWrite.h"
 
@@ -135,15 +139,12 @@ void gInitADIOS2(hid_t acc_tpl)
     if (NULL != m_ADIOS2)
         return;
 
-#ifdef ADIOS2_HAVE_MPI
+#if ADIOS2_USE_MPI
     int flag = 0;
     MPI_Initialized(&flag);
     if (!flag)
     {
-        printf("MPI is not initialized, assume serial.\n");
-        // MPI_Init(NULL, NULL);
-        // m_ADIOS2 = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
-        m_ADIOS2 = adios2_init_serial();
+        SHOW_ERROR_MSG("H5VL_ADIOS2: Error: MPI is not initialized");
     }
     else
     {
@@ -153,13 +154,12 @@ void gInitADIOS2(hid_t acc_tpl)
             MPI_Info info;
             H5Pget_fapl_mpio(acc_tpl, &comm, &info);
             // int rank;
-            MPI_Comm_rank(comm, &m_MPIRank);
         }
-        m_ADIOS2 = adios2_init(comm, adios2_debug_mode_on);
+        MPI_Comm_rank(comm, &m_MPIRank);
+        m_ADIOS2 = adios2_init_mpi(comm);
     }
 #else
-    printf(" ... serial ..\n");
-    m_ADIOS2 = adios2_init(adios2_debug_mode_on);
+    m_ADIOS2 = adios2_init_serial();
 #endif
     REQUIRE_NOT_NULL(m_ADIOS2);
 }

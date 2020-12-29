@@ -10,11 +10,6 @@ add_subdirectory(useCases)
 
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(heatTransfer)
-  if(ADIOS2_HAVE_HDF5)
-    if(NOT (HDF5_VERSION VERSION_LESS 1.11))
-       add_subdirectory(h5vol)	   
-    endif()
-  endif()
 endif()
 
 if(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL)
