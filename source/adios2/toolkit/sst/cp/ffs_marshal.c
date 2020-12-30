@@ -381,7 +381,8 @@ extern void FFSFreeMarshalData(SstStream Stream)
     {
         /* reader side */
         struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
-        SstMarshalMethod Marshaling = Stream->WriterConfigParams->MarshalMethod;
+        SstMarshalMethod Marshaling =
+            (SstMarshalMethod)Stream->WriterConfigParams->MarshalMethod;
         if (Info)
         {
             for (int i = 0; i < Stream->WriterCohortSize; i++)
