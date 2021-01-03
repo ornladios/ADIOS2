@@ -162,6 +162,8 @@ static int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start,
                                    size_t *count, hsize_t ndims)
 {
     hsize_t npts = H5Sget_select_npoints(hyperSlab_id);
+    if (0 > npts)
+        return H5VL_CODE_FAIL;
     if (0 == npts)
         return npts;
     else

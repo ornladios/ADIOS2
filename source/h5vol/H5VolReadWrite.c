@@ -874,13 +874,16 @@ herr_t gADIOS2ReadVar(H5VL_VarDef_t *varDef)
     if (varDim < 0)
         return -1;
 
-    size_t start[varDim], count[varDim];
-    if (H5VL_CODE_FAIL ==
-        gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID, start, count, varDim))
-        return -1;
+    if (varDim > 0)
+    {
+        size_t start[varDim], count[varDim];
+        if (H5VL_CODE_FAIL == gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID,
+                                                      start, count, varDim))
+            return -1;
 
-    adios2_set_selection(varDef->m_Variable, varDef->m_DimCount, start, count);
-
+        adios2_set_selection(varDef->m_Variable, varDef->m_DimCount, start,
+                             count);
+    }
     adios2_get(varDef->m_Engine, varDef->m_Variable, varDef->m_Data,
                adios2_mode_sync);
 
