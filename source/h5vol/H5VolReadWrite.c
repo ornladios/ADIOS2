@@ -25,7 +25,6 @@ static hid_t H5VL_ADIOS_g = -1;
 
 static adios2_adios *m_ADIOS2 = NULL;
 // static adios2_io *m_IO = NULL;
-static const char *m_ADIOS2Separator = "/";
 static int m_MPIRank = 0;
 
 #define RANK_ZERO_MSG(...)                                                     \
@@ -237,9 +236,6 @@ void gFreeVol(H5VL_ObjDef_t *vol)
 {
     if (NULL == vol)
         return;
-
-    // m_ObjPtr is taken care of by caller
-    int i;
 
     if (NULL != vol->m_Vars)
     {
@@ -566,8 +562,8 @@ H5VL_VarDef_t *gCreateVarDef(const char *name, adios2_engine *engine,
 
     varDef->m_Engine = engine;
     varDef->m_Variable = var;
-    varDef->m_DimCount = -1; // default: unknown
-    varDef->m_TypeID = -1;   // default: unknown
+    varDef->m_DimCount = (size_t)-1; // default: unknown
+    varDef->m_TypeID = -1;           // default: unknown
     varDef->m_Data = NULL;
 
     if (space_id != -1) // most likely from H5Dcreate
@@ -1064,8 +1060,6 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input,
             return adios2_define_attribute_array(io, fullPath, attrType,
                                                  (input->m_Data), shape[0]);
     }
-
-    return NULL;
 }
 
 adios2_attribute *gADIOS2InqAttr(adios2_io *io, const char *name)
@@ -1078,44 +1072,6 @@ bool gADIOS2RemoveAttr(adios2_io *io, const char *name)
     adios2_bool result;
     adios2_remove_attribute(&result, io, name);
     return (adios2_true == result);
-}
-/*
-static int h5i_search_func(void *obj, hid_t id, void *key) {
-  if (key == obj) {
-    printf("id = %llu\n", id);
-    return 1;
-  } else
-    return 0;
-}
-*/
-//
-// either "ts_number" or ".../ts_number"
-// is a valid dataset name
-//
-static int isDatasetName(const char *name)
-{
-    size_t len = strlen(name);
-    while (true)
-    {
-        char c = name[len - 1];
-        if (c >= '0' && c <= '9')
-        {
-            len--;
-            if (len == 0)
-            {
-                return 1;
-            }
-        }
-        else if ((len < strlen(name)) && (c == '/'))
-        {
-            return 1;
-        }
-        else
-        {
-            break;
-        }
-    }
-    return 0;
 }
 
 hid_t H5VL_adios_register(void)

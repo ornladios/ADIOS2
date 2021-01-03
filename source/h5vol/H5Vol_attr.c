@@ -136,7 +136,6 @@ herr_t H5VL_adios2_attr_write(void *attr, hid_t mem_type_id, const void *buf,
 void GetFromAttribute(void *attrObj, hid_t *ret_id, H5VL_attr_get_t get_type)
 {
     H5VL_AttrDef_t *attrDef = (H5VL_AttrDef_t *)attrObj;
-    adios2_attribute *attr = attrDef->m_Attribute;
 
     switch (get_type)
     {
