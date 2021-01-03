@@ -99,3 +99,7 @@ endif()
 if(ADIOS2_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
+
+if(ADIOS2_HAVE_HDF5_VOL)
+  add_subdirectory(h5vol)
+endif()
