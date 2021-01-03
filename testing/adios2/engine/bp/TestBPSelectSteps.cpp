@@ -76,14 +76,14 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
         adios2::IO ioRead = adios.DeclareIO("TestIORead");
         ioRead.SetEngine("Filestream");
         ioRead.SetParameter(filename, "1,3");
+        ioRead.SetParameter("StreamReader", "On");
         adios2::Engine engine_s = ioRead.Open(filename, adios2::Mode::Read);
         EXPECT_TRUE(engine_s);
+        try
         {
-
             for (int step = 0; step < NSteps; step++)
             {
                 engine_s.BeginStep();
@@ -95,6 +95,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                     ioRead.InquireVariable<int>("variable2");
                 adios2::Variable<int> var3 =
                     ioRead.InquireVariable<int>("variable3");
+
                 if (step == 0)
                 {
                     EXPECT_FALSE(var0);
@@ -126,7 +127,6 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 if (var0)
                 {
                     std::vector<int> res;
-                    const std::size_t Nx = 10;
                     var0.SetSelection({{Nx * mpiRank}, {Nx}});
                     engine_s.Get<int>(var0, res, adios2::Mode::Sync);
                     EXPECT_EQ(res, Ints0);
@@ -134,7 +134,6 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 if (var1)
                 {
                     std::vector<int> res;
-                    const std::size_t Nx = 10;
                     var1.SetSelection({{Nx * mpiRank}, {Nx}});
                     engine_s.Get<int>(var1, res, adios2::Mode::Sync);
                     EXPECT_EQ(res, Ints1);
@@ -142,7 +141,6 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 if (var2)
                 {
                     std::vector<int> res;
-                    const std::size_t Nx = 10;
                     var2.SetSelection({{Nx * mpiRank}, {Nx}});
                     engine_s.Get<int>(var2, res, adios2::Mode::Sync);
                     EXPECT_EQ(res, Ints2);
@@ -150,7 +148,6 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 if (var3)
                 {
                     std::vector<int> res;
-                    const std::size_t Nx = 10;
                     var3.SetSelection({{Nx * mpiRank}, {Nx}});
                     engine_s.Get<int>(var3, res, adios2::Mode::Sync);
                     EXPECT_EQ(res, Ints3);
@@ -158,69 +155,161 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 engine_s.EndStep();
             }
         }
+        catch (std::exception &e)
+        {
+            std::cout << "Exception " << e.what() << std::endl;
+        }
         engine_s.Close();
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
         adios2::IO ioReadBP = adios.DeclareIO("ReadBP");
+        ioReadBP.SetEngine("BPfile");
+        ioReadBP.SetParameter(filename, "1,3");
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine engine_b = ioReadBP.Open(filename, adios2::Mode::Read);
-
         EXPECT_TRUE(engine_b);
+
+        try
+        {
+            for (size_t step = 0; step < NSteps; ++step)
+            {
+                engine_b.BeginStep();
+                adios2::Variable<int> var0 =
+                    ioReadBP.InquireVariable<int>("variable0");
+                adios2::Variable<int> var1 =
+                    ioReadBP.InquireVariable<int>("variable1");
+                adios2::Variable<int> var2 =
+                    ioReadBP.InquireVariable<int>("variable2");
+                adios2::Variable<int> var3 =
+                    ioReadBP.InquireVariable<int>("variable3");
+
+                /**  Variables are not updated */
+                /**  EXPECT_EQ(var0.Steps(), 2); */
+                /**  EXPECT_EQ(engine_b.GetAbsoluteSteps(var0), {1,3}); */
+                if (step == 0)
+                {
+                    EXPECT_FALSE(var0);
+                    EXPECT_FALSE(var1);
+                    EXPECT_FALSE(var2);
+                    EXPECT_FALSE(var3);
+                }
+                else if (step == 1)
+                {
+                    EXPECT_TRUE(var0);
+                    EXPECT_TRUE(var1);
+                    EXPECT_TRUE(var2);
+                    EXPECT_TRUE(var3);
+                }
+                else if (step == 2)
+                {
+                    EXPECT_FALSE(var0);
+                    EXPECT_FALSE(var1);
+                    EXPECT_FALSE(var2);
+                    EXPECT_FALSE(var3);
+                }
+                else if (step == 3)
+                {
+                    EXPECT_TRUE(var0);
+                    EXPECT_TRUE(var1);
+                    EXPECT_TRUE(var2);
+                    EXPECT_TRUE(var3);
+                }
+                if (var0)
+                {
+                    std::vector<int> res;
+                    var0.SetSelection({{Nx * mpiRank}, {Nx}});
+                    engine_b.Get<int>(var0, res, adios2::Mode::Sync);
+                    EXPECT_EQ(res, Ints0);
+                }
+                if (var1)
+                {
+                    std::vector<int> res;
+                    var1.SetSelection({{Nx * mpiRank}, {Nx}});
+                    engine_b.Get<int>(var1, res, adios2::Mode::Sync);
+                    EXPECT_EQ(res, Ints1);
+                }
+                if (var2)
+                {
+                    std::vector<int> res;
+                    var2.SetSelection({{Nx * mpiRank}, {Nx}});
+                    engine_b.Get<int>(var2, res, adios2::Mode::Sync);
+                    EXPECT_EQ(res, Ints2);
+                }
+                if (var3)
+                {
+                    std::vector<int> res;
+                    var3.SetSelection({{Nx * mpiRank}, {Nx}});
+                    engine_b.Get<int>(var3, res, adios2::Mode::Sync);
+                    EXPECT_EQ(res, Ints3);
+                }
+                engine_b.EndStep();
+            }
+        }
+        catch (std::exception &e)
+        {
+            std::cout << "Exception " << e.what() << std::endl;
+        }
+        engine_b.Close();
+
+#if ADIOS2_USE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+        adios2::IO ioReadBPFull = adios.DeclareIO("ReadBPFull");
+        ioReadBPFull.SetParameter(filename, "1,3");
+        /** Engine derived class, spawned to start IO operations */
+        adios2::Engine engine_bf =
+            ioReadBPFull.Open(filename, adios2::Mode::Read);
+
+        EXPECT_TRUE(engine_bf);
         {
             adios2::Variable<int> var0 =
-                ioReadBP.InquireVariable<int>("variable0");
+                ioReadBPFull.InquireVariable<int>("variable0");
             adios2::Variable<int> var1 =
-                ioReadBP.InquireVariable<int>("variable1");
+                ioReadBPFull.InquireVariable<int>("variable1");
             adios2::Variable<int> var2 =
-                ioReadBP.InquireVariable<int>("variable2");
+                ioReadBPFull.InquireVariable<int>("variable2");
             adios2::Variable<int> var3 =
-                ioReadBP.InquireVariable<int>("variable3");
+                ioReadBPFull.InquireVariable<int>("variable3");
             /**  Variables are not updated */
             /**  EXPECT_EQ(var0.Steps(), 2); */
             /**  EXPECT_EQ(engine_b.GetAbsoluteSteps(var0), {1,3}); */
-
-            if (var0)
+            EXPECT_TRUE(var0);
+            EXPECT_TRUE(var1);
+            EXPECT_TRUE(var2);
+            EXPECT_TRUE(var3);
             {
                 std::vector<int> res;
-                const std::size_t Nx = 10;
                 var0.SetStepSelection({1, 1});
                 var0.SetSelection({{Nx * mpiRank}, {Nx}});
-                engine_b.Get<int>(var0, res, adios2::Mode::Sync);
-                EXPECT_EQ(res, Ints0);
-                var0.SetStepSelection({3, 1});
-                engine_b.Get<int>(var0, res, adios2::Mode::Sync);
+                engine_bf.Get<int>(var0, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints0);
             }
-            if (var1)
             {
                 std::vector<int> res;
-                const std::size_t Nx = 10;
                 var1.SetStepSelection({1, 1});
                 var1.SetSelection({{Nx * mpiRank}, {Nx}});
-                engine_b.Get<int>(var1, res, adios2::Mode::Sync);
+                engine_bf.Get<int>(var1, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints1);
             }
-            if (var2)
+
             {
                 std::vector<int> res;
-                const std::size_t Nx = 10;
                 var2.SetStepSelection({1, 1});
                 var2.SetSelection({{Nx * mpiRank}, {Nx}});
-                engine_b.Get<int>(var2, res, adios2::Mode::Sync);
+                engine_bf.Get<int>(var2, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints2);
             }
-            if (var3)
+
             {
                 std::vector<int> res;
-                const std::size_t Nx = 10;
                 var3.SetStepSelection({1, 1});
                 var3.SetSelection({{Nx * mpiRank}, {Nx}});
-                engine_b.Get<int>(var3, res, adios2::Mode::Sync);
+                engine_bf.Get<int>(var3, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints3);
             }
         }
-        engine_b.Close();
+        engine_bf.Close();
     }
 }
 
