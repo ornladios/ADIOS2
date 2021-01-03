@@ -150,7 +150,7 @@ HDF5NativeWriter::~HDF5NativeWriter()
 
     H5Fclose(m_FileId);
     H5Pclose(m_FilePropertyListId);
-    
+
     H5VL_ADIOS2_unset();
 }
 
@@ -410,7 +410,7 @@ void HDF5NativeReader::ReadString(const std::string varName,
     size_t typesize = H5Tget_size(h5Type); // returns a fix number, 30
     char *val = (char *)(calloc(typesize, sizeof(char)));
     hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
-    //result.assign(val, typesize);
+    // result.assign(val, typesize);
     result.assign(val, strlen(val));
     free(val);
 
@@ -671,9 +671,7 @@ TEST_F(H5VolWriteReadTest, H5VolWriteHDF5Read1D8)
     }
 }
 
-
 // Native HDF5 write, ADIOS2 read
-
 
 //******************************************************************************
 // 2D 2x4 test data
@@ -695,7 +693,6 @@ TEST_F(H5VolWriteReadTest, H5VolWriteHDF5Read2D2x4)
 
     // Number of steps
     const std::size_t NSteps = 3;
-
 
     {
 #ifdef TEST_HDF5_MPI
@@ -890,9 +887,6 @@ TEST_F(H5VolWriteReadTest, H5VolWriteHDF5Read2D2x4)
     }
 }
 
-
-
-
 //******************************************************************************
 // 2D 4x2 test data
 //******************************************************************************
@@ -970,7 +964,6 @@ TEST_F(H5VolWriteReadTest, H5VolWriteHDF5Read2D4x2)
             h5writer.Advance();
         }
     }
-
 
     {
 
