@@ -25,9 +25,10 @@
 #include <thread>      // std::this_thread::sleep_for
 #include <unistd.h>    // write, close
 
-#ifdef __APPLE__ & __MACH__
+#if defined(__APPLE__) && defined(__MACH__)
 #define lseek64 lseek
 #define open64 open
+#define off64_t off_t
 #endif
 
 namespace adios2
