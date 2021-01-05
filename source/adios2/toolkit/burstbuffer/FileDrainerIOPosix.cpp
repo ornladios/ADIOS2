@@ -25,6 +25,11 @@
 #include <thread>      // std::this_thread::sleep_for
 #include <unistd.h>    // write, close
 
+#ifdef __APPLE__ & __MACH__
+#define lseek64 lseek
+#define open64 open
+#endif
+
 namespace adios2
 {
 namespace burstbuffer
