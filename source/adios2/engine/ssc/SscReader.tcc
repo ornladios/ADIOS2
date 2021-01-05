@@ -23,39 +23,58 @@ namespace core
 namespace engine
 {
 
-template <>
-void SscReader::GetDeferredCommon(Variable<std::string> &variable,
-                                  std::string *data)
+template <class T>
+void SscReader::GetDeferredDeltaCommon(Variable<T> &variable)
 {
     TAU_SCOPED_TIMER_FUNC();
-    variable.SetData(data);
 
-    if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
-        m_ReaderSelectionsLocked == false)
+    Dims vStart = variable.m_Start;
+    Dims vCount = variable.m_Count;
+    Dims vShape = variable.m_Shape;
+
+    if (!helper::IsRowMajor(m_IO.m_HostLanguage))
     {
-        m_LocalReadPattern.emplace_back();
-        auto &b = m_LocalReadPattern.back();
-        b.name = variable.m_Name;
-        b.count = variable.m_Count;
-        b.start = variable.m_Start;
-        b.shape = variable.m_Shape;
-        b.type = DataType::String;
+        std::reverse(vStart.begin(), vStart.end());
+        std::reverse(vCount.begin(), vCount.end());
+        std::reverse(vShape.begin(), vShape.end());
+    }
 
-        m_LocalReadPatternJson["Variables"].emplace_back();
-        auto &jref = m_LocalReadPatternJson["Variables"].back();
-        jref["Name"] = b.name;
-        jref["Type"] = b.type;
-        jref["ShapeID"] = variable.m_ShapeID;
-        jref["Start"] = b.start;
-        jref["Count"] = b.count;
-        jref["Shape"] = b.shape;
-        jref["BufferStart"] = 0;
-        jref["BufferCount"] = 0;
+    m_LocalReadPattern.emplace_back();
+    auto &b = m_LocalReadPattern.back();
+    b.name = variable.m_Name;
+    b.count = vCount;
+    b.start = vStart;
+    b.shape = vShape;
+    b.type = helper::GetDataType<T>();
 
-        ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
-        m_AllReceivingWriterRanks =
-            ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
-        CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
+    for (const auto &d : b.count)
+    {
+        if (d == 0)
+        {
+            throw(std::runtime_error(
+                "SetSelection count dimensions cannot be 0"));
+        }
+    }
+
+    m_LocalReadPatternJson["Variables"].emplace_back();
+    auto &jref = m_LocalReadPatternJson["Variables"].back();
+    jref["Name"] = variable.m_Name;
+    jref["Type"] = helper::GetDataType<T>();
+    jref["ShapeID"] = variable.m_ShapeID;
+    jref["Start"] = vStart;
+    jref["Count"] = vCount;
+    jref["Shape"] = vShape;
+    jref["BufferStart"] = 0;
+    jref["BufferCount"] = 0;
+
+    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
+    size_t oldSize = m_AllReceivingWriterRanks.size();
+    m_AllReceivingWriterRanks =
+        ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
+    CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
+    size_t newSize = m_AllReceivingWriterRanks.size();
+    if (oldSize != newSize)
+    {
         size_t totalDataSize = 0;
         for (auto i : m_AllReceivingWriterRanks)
         {
@@ -69,7 +88,22 @@ void SscReader::GetDeferredCommon(Variable<std::string> &variable,
                     static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
                     static_cast<int>(i.second.second), MPI_CHAR, m_MpiWin);
             MPI_Win_unlock(i.first, m_MpiWin);
+            m_ReceivedRanks.insert(i.first);
         }
+    }
+}
+
+template <>
+void SscReader::GetDeferredCommon(Variable<std::string> &variable,
+                                  std::string *data)
+{
+    TAU_SCOPED_TIMER_FUNC();
+    variable.SetData(data);
+
+    if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+        m_ReaderSelectionsLocked == false)
+    {
+        GetDeferredDeltaCommon(variable);
     }
     for (const auto &i : m_AllReceivingWriterRanks)
     {
@@ -88,7 +122,6 @@ template <class T>
 void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
-
     variable.SetData(data);
 
     Dims vStart = variable.m_Start;
@@ -105,58 +138,7 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
     {
-        m_LocalReadPattern.emplace_back();
-        auto &b = m_LocalReadPattern.back();
-        b.name = variable.m_Name;
-        b.count = vCount;
-        b.start = vStart;
-        b.shape = vShape;
-        b.type = helper::GetDataType<T>();
-
-        for (const auto &d : b.count)
-        {
-            if (d == 0)
-            {
-                throw(std::runtime_error(
-                    "SetSelection count dimensions cannot be 0"));
-            }
-        }
-
-        m_LocalReadPatternJson["Variables"].emplace_back();
-        auto &jref = m_LocalReadPatternJson["Variables"].back();
-        jref["Name"] = variable.m_Name;
-        jref["Type"] = helper::GetDataType<T>();
-        jref["ShapeID"] = variable.m_ShapeID;
-        jref["Start"] = vStart;
-        jref["Count"] = vCount;
-        jref["Shape"] = vShape;
-        jref["BufferStart"] = 0;
-        jref["BufferCount"] = 0;
-
-        ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
-        size_t oldSize = m_AllReceivingWriterRanks.size();
-        m_AllReceivingWriterRanks =
-            ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
-        CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
-        size_t newSize = m_AllReceivingWriterRanks.size();
-        if (oldSize != newSize)
-        {
-            size_t totalDataSize = 0;
-            for (auto i : m_AllReceivingWriterRanks)
-            {
-                totalDataSize += i.second.second;
-            }
-            m_Buffer.resize(totalDataSize);
-            for (const auto &i : m_AllReceivingWriterRanks)
-            {
-                MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
-                MPI_Get(m_Buffer.data() + i.second.first,
-                        static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
-                        static_cast<int>(i.second.second), MPI_CHAR, m_MpiWin);
-                MPI_Win_unlock(i.first, m_MpiWin);
-                m_ReceivedRanks.insert(i.first);
-            }
-        }
+        GetDeferredDeltaCommon(variable);
     }
 
     for (const auto &i : m_AllReceivingWriterRanks)
