@@ -407,12 +407,28 @@ void SscReader::SyncReadPattern()
                   << m_CurrentStep << std::endl;
     }
 
-    if (m_ReaderRank == 0)
+    nlohmann::json localReadPatternJson;
+
+    for (const auto &i : m_LocalReadPattern)
     {
-        m_LocalReadPatternJson["Pattern"] = m_ReaderSelectionsLocked;
+        localReadPatternJson["Variables"].emplace_back();
+        auto &jref = localReadPatternJson["Variables"].back();
+        jref["Name"] = i.name;
+        jref["Type"] = i.type;
+        jref["ShapeID"] = i.shapeId;
+        jref["Start"] = i.start;
+        jref["Count"] = i.count;
+        jref["Shape"] = i.shape;
+        jref["BufferStart"] = i.bufferStart;
+        jref["BufferCount"] = i.bufferCount;
     }
 
-    std::string localStr = m_LocalReadPatternJson.dump();
+    if (m_ReaderRank == 0)
+    {
+        localReadPatternJson["Pattern"] = m_ReaderSelectionsLocked;
+    }
+
+    std::string localStr = localReadPatternJson.dump();
 
     // aggregate global read pattern
     size_t localSize = localStr.size();

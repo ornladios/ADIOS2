@@ -42,10 +42,13 @@ void SscReader::GetDeferredDeltaCommon(Variable<T> &variable)
     m_LocalReadPattern.emplace_back();
     auto &b = m_LocalReadPattern.back();
     b.name = variable.m_Name;
-    b.count = vCount;
-    b.start = vStart;
-    b.shape = vShape;
     b.type = helper::GetDataType<T>();
+    b.shapeId = variable.m_ShapeID;
+    b.start = vStart;
+    b.count = vCount;
+    b.shape = vShape;
+    b.bufferStart = 0;
+    b.bufferCount = 0;
 
     for (const auto &d : b.count)
     {
@@ -55,17 +58,6 @@ void SscReader::GetDeferredDeltaCommon(Variable<T> &variable)
                 "SetSelection count dimensions cannot be 0"));
         }
     }
-
-    m_LocalReadPatternJson["Variables"].emplace_back();
-    auto &jref = m_LocalReadPatternJson["Variables"].back();
-    jref["Name"] = variable.m_Name;
-    jref["Type"] = helper::GetDataType<T>();
-    jref["ShapeID"] = variable.m_ShapeID;
-    jref["Start"] = vStart;
-    jref["Count"] = vCount;
-    jref["Shape"] = vShape;
-    jref["BufferStart"] = 0;
-    jref["BufferCount"] = 0;
 
     ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
     size_t oldSize = m_AllReceivingWriterRanks.size();
