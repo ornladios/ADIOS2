@@ -83,6 +83,9 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
+    template <class T>
+    void GetDeferredDeltaCommon(Variable<T> &variable);
+
     void CalculatePosition(ssc::BlockVecVec &mapVec,
                            ssc::RankPosMap &allOverlapRanks);
 
