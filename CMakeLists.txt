@@ -147,7 +147,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-    Blosc BZip2 ZFP SZ MGARD PNG MPI DataMan Table SSC SST DataSpaces ZeroMQ HDF5 IME Python Fortran SysVShMem Profiling Endian_Reverse
+    Blosc BZip2 ZFP SZ MGARD PNG MPI DataMan Table SSC SST DataSpaces ZeroMQ HDF5 HDF5_VOL IME Python Fortran SysVShMem Profiling Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
@@ -318,6 +318,7 @@ foreach(opt IN LISTS ADIOS2_CONFIG_OPTS)
     message("${label}: OFF")
   endif()
 endforeach()
+
 if (ADIOS2_HAVE_SST AND ADIOS2_SST_HAVE_LIBFABRIC) 
 message("    RDMA Transport for Staging: Available")
 else()

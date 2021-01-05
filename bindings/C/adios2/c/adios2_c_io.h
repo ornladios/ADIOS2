@@ -147,6 +147,13 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name);
 adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
                                           size_t *size, adios2_io *io);
 
+/*
+ * list all variables under full_group_name
+ */
+adios2_error adios2_inquire_group_variables(adios2_variable ***variables,
+                                            const char *full_group_name,
+                                            size_t *size, adios2_io *io);
+
 /**
  * @brief Define an attribute value inside io
  * @param io handler that owns the attribute
@@ -236,6 +243,17 @@ adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io,
  */
 adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
                                            size_t *size, adios2_io *io);
+adios2_error adios2_inquire_group_attributes(adios2_attribute ***attributes,
+                                             const char *full_prefix,
+                                             size_t *size, adios2_io *io);
+
+/**
+ * Return a list of list sub group names
+ *
+ */
+adios2_error adios2_inquire_subgroups(char ***subGroupNames,
+                                      const char *full_prefix, size_t *size,
+                                      adios2_io *io);
 
 /**
  * @brief DANGEROUS! Removes a variable identified by name. Might create
@@ -326,6 +344,8 @@ adios2_error adios2_flush_all_engines(adios2_io *io);
  */
 adios2_error adios2_engine_type(char *engine_type, size_t *size,
                                 const adios2_io *io);
+
+adios2_engine *adios2_get_engine(adios2_io *io, const char *name);
 
 #ifdef __cplusplus
 } // end extern C
