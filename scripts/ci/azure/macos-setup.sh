@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set +x
+
 echo "Setting up default XCode version"
 case "$SYSTEM_JOBNAME" in
   *xcode941*)
@@ -32,6 +34,7 @@ brew install c-blosc
 echo "Installing python and friends"
 brew install python numpy
 brew link --overwrite python
+brew link --overwrite numpy
 
 if [[ "$SYSTEM_JOBNAME" =~ .*openmpi.* ]]
 then

@@ -100,6 +100,7 @@ typedef enum
     adios2_type_uint16_t = 10,
     adios2_type_uint32_t = 11,
     adios2_type_uint64_t = 12,
+    adios2_type_long_double = 13 // junmin added
 } adios2_type;
 
 typedef enum

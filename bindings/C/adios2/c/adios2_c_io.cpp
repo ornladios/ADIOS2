@@ -336,6 +336,142 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
     }
 }
 
+adios2_error adios2_inquire_subgroups(char ***results, const char *full_prefix,
+                                      size_t *size, adios2_io *io)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_inquire_all_variables");
+
+        adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
+        const auto &dataMapVar = ioCpp.GetVariables();
+        const auto &dataMapAttr = ioCpp.GetAttributes();
+
+        std::set<std::string> subGrpNames;
+        size_t prefix_size = strlen(full_prefix);
+
+        for (auto &it : dataMapVar)
+        {
+            auto curr = it.first;
+            if ((curr.size() > prefix_size) && (0 == curr.find(full_prefix)))
+            {
+                auto pos = curr.find("/", prefix_size + 1);
+                if (pos != std::string::npos)
+                    subGrpNames.insert(
+                        curr.substr(prefix_size, pos - prefix_size));
+            }
+        }
+
+        for (auto &it : dataMapAttr)
+        {
+            auto curr = it.first;
+            if ((curr.size() > prefix_size) && (0 == curr.find(full_prefix)))
+            {
+                auto pos = curr.find("/", prefix_size + 1);
+                if (pos != std::string::npos)
+                {
+                    auto hasVar = dataMapVar.find(curr.substr(0, pos));
+                    if (hasVar == dataMapVar.end())
+                        subGrpNames.insert(
+                            curr.substr(prefix_size, pos - prefix_size));
+                    // else
+                    // std::cout<<" .. found a variable! "<<curr<<std::endl;
+                }
+            }
+        }
+
+        *size = subGrpNames.size();
+        *results = (char **)malloc(sizeof(char *) * (*size));
+
+        // std::cout<<" subgroup of: "<<full_prefix<<std::endl;
+        int i = 0;
+        for (auto &m : subGrpNames)
+        {
+            (*results)[i] = (char *)malloc(m.size() + 1);
+            sprintf((*results)[i], "%s", m.c_str());
+            (*results)[i][m.size()] = '\0';
+            i++;
+        }
+
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_inquire_all_variables"));
+    }
+}
+
+adios2_error adios2_inquire_group_variables(adios2_variable ***variables,
+                                            const char *full_prefix,
+                                            size_t *size, adios2_io *io)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_inquire_all_variables");
+
+        adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
+        const auto &dataMap = ioCpp.GetVariables();
+
+        // Sort the names so that we return the same order as the
+        // C++, python APIs
+
+        std::set<std::string> names;
+        size_t prefix_size = strlen(full_prefix);
+        for (auto &it : dataMap)
+        {
+            auto curr = it.first;
+            if ((curr.size() > prefix_size) && (0 == curr.find(full_prefix)))
+            {
+                auto pos = curr.rfind("/");
+                if (pos <= prefix_size)
+                {
+                    names.insert(curr);
+                }
+            }
+        }
+
+        *size = names.size();
+        if (*size == 0)
+            return adios2_error_none;
+
+        adios2_variable **list =
+            (adios2_variable **)calloc(*size, sizeof(adios2_variable *));
+
+        size_t n = 0;
+        for (auto &name : names)
+        {
+            auto it = dataMap.find(name);
+            const adios2::DataType type(it->second->m_Type);
+            adios2::core::VariableBase *variable = nullptr;
+
+            if (type == adios2::DataType::Compound)
+            {
+                // not supported
+            }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::helper::GetDataType<T>())                         \
+    {                                                                          \
+        variable = ioCpp.InquireVariable<T>(name);                             \
+        list[n] = reinterpret_cast<adios2_variable *>(variable);               \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+            n++;
+        }
+        *variables = list;
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_inquire_all_variables"));
+    }
+}
+
 adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
                                           const adios2_type type,
                                           const void *value)
@@ -596,6 +732,76 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
     }
 }
 
+adios2_error adios2_inquire_group_attributes(adios2_attribute ***attributes,
+                                             const char *full_prefix,
+                                             size_t *size, adios2_io *io)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_inquire_all_attributes");
+
+        adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
+        const auto &dataMap = ioCpp.GetAttributes();
+
+        // Sort the names so that we return the same order as the
+        // C++, python APIs
+
+        std::set<std::string> names;
+        size_t prefix_size = strlen(full_prefix);
+        for (auto &it : dataMap)
+        {
+            auto curr = it.first;
+            if ((curr.size() > prefix_size) && (0 == curr.find(full_prefix)))
+            {
+                auto pos = curr.rfind("/");
+                if (pos <= prefix_size)
+                {
+                    names.insert(curr);
+                }
+            }
+        }
+
+        *size = names.size();
+        if (0 == *size)
+            return adios2_error_none;
+
+        adios2_attribute **list =
+            (adios2_attribute **)calloc(*size, sizeof(adios2_attribute *));
+
+        size_t n = 0;
+        for (auto &name : names)
+        {
+            auto it = dataMap.find(name);
+            const adios2::DataType type(it->second->m_Type);
+            adios2::core::AttributeBase *attribute = nullptr;
+
+            if (type == adios2::DataType::Compound)
+            {
+                // not supported
+            }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::helper::GetDataType<T>())                         \
+    {                                                                          \
+        attribute = ioCpp.InquireAttribute<T>(name);                           \
+        list[n] = reinterpret_cast<adios2_attribute *>(attribute);             \
+    }
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(
+                declare_template_instantiation)
+#undef declare_template_instantiation
+
+            n++;
+        }
+        *attributes = list;
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_inquire_all_attributes"));
+    }
+}
+
 // DANGEROUS
 adios2_error adios2_remove_variable(adios2_bool *result, adios2_io *io,
                                     const char *name)
@@ -726,6 +932,23 @@ adios2_error adios2_engine_type(char *engine_type, size_t *size,
         return static_cast<adios2_error>(
             adios2::helper::ExceptionToError("adios2_engine_type"));
     }
+}
+
+adios2_engine *adios2_get_engine(adios2_io *io, const char *name)
+{
+    adios2_engine *engine = nullptr;
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_open");
+        engine = reinterpret_cast<adios2_engine *>(
+            &reinterpret_cast<adios2::core::IO *>(io)->GetEngine(name));
+    }
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_open");
+    }
+    return engine;
 }
 
 #ifdef __cplusplus
