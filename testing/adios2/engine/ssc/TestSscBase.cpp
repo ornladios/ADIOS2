@@ -215,6 +215,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
             std::string s;
             engine.Get(stringVar, s);
+            engine.PerformGets();
             ASSERT_EQ(s, "sample string sample string sample string");
             ASSERT_EQ(stringVar.Min(),
                       "sample string sample string sample string");
