@@ -137,7 +137,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::string>("stringVar");
 
             std::string s;
-            engine.Get(stringVar, s);
+            engine.Get(stringVar, s, adios2::Mode::Sync);
             ASSERT_EQ(s, "sample string sample string sample string");
             ASSERT_EQ(stringVar.Min(),
                       "sample string sample string sample string");
