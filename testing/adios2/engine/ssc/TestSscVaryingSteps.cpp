@@ -237,7 +237,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             engine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
             engine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
             std::string s;
-            engine.Get(stringVar, s);
+            engine.Get(stringVar, s, adios2::Mode::Sync);
             ASSERT_EQ(s, "sample string sample string sample string");
             ASSERT_EQ(stringVar.Min(),
                       "sample string sample string sample string");
@@ -245,7 +245,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                       "sample string sample string sample string");
 
             int i;
-            engine.Get(scalarInt, &i);
+            engine.Get(scalarInt, &i, adios2::Mode::Sync);
             ASSERT_EQ(i, currentStep);
 
             VerifyData(myChars.data(), currentStep, {0, 0}, vshape, vshape,

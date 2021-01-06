@@ -37,6 +37,8 @@ struct BlockInfo
     size_t bufferStart;
     size_t bufferCount;
     std::vector<char> value;
+    void *data;
+    bool performed;
 };
 using BlockVec = std::vector<BlockInfo>;
 using BlockVecVec = std::vector<BlockVec>;
