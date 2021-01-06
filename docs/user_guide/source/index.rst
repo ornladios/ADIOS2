@@ -33,9 +33,9 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
 .. toctree::
    :caption: Ecosystem Tools
    
+   ecosystem/h5vol
    ecosystem/utilities
    ecosystem/visualization
-
    
 .. toctree::
    :caption: Additional Information
