@@ -202,7 +202,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             auto scalarInt = dataManIO.InquireVariable<int>("scalarInt");
 
             int i;
-            engine.Get(scalarInt, &i);
+            engine.Get(scalarInt, &i, adios2::Mode::Sync);
             ASSERT_EQ(i, currentStep);
 
             adios2::Dims startTmp = start;

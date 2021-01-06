@@ -212,8 +212,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             engine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
             engine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
             int i;
-            engine.Get(scalarInt, &i);
-
+            engine.Get(scalarInt, &i, adios2::Mode::Sync);
             ASSERT_EQ(i, currentStep);
 
             VerifyData(myChars.data(), currentStep, start, shape, shape,
