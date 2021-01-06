@@ -183,21 +183,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             engine.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
             engine.Get(bpInts, myInts.data(), adios2::Mode::Sync);
             engine.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
-            engine.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
-            engine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-            engine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-            engine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
-            std::string s;
-            engine.Get(stringVar, s);
-            ASSERT_EQ(s, "sample string sample string sample string");
-            ASSERT_EQ(stringVar.Min(),
-                      "sample string sample string sample string");
-            ASSERT_EQ(stringVar.Max(),
-                      "sample string sample string sample string");
-
-            int i;
-            engine.Get(scalarInt, &i);
-            ASSERT_EQ(i, currentStep);
 
             VerifyData(myChars.data(), currentStep, start, count, shape,
                        mpiRank);
@@ -211,6 +196,14 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                        mpiRank);
             VerifyData(myUInts.data(), currentStep, start, count, shape,
                        mpiRank);
+
+            engine.Get(bpFloats, myFloats.data(), adios2::Mode::Deferred);
+            engine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Deferred);
+            engine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Deferred);
+            engine.Get(bpDComplexes, myDComplexes.data(),
+                       adios2::Mode::Deferred);
+            engine.PerformGets();
+
             VerifyData(myFloats.data(), currentStep, start, count, shape,
                        mpiRank);
             VerifyData(myDoubles.data(), currentStep, start, count, shape,
@@ -219,6 +212,19 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                        mpiRank);
             VerifyData(myDComplexes.data(), currentStep, start, count, shape,
                        mpiRank);
+
+            std::string s;
+            engine.Get(stringVar, s);
+            ASSERT_EQ(s, "sample string sample string sample string");
+            ASSERT_EQ(stringVar.Min(),
+                      "sample string sample string sample string");
+            ASSERT_EQ(stringVar.Max(),
+                      "sample string sample string sample string");
+
+            int i;
+            engine.Get(scalarInt, &i);
+            engine.PerformGets();
+            ASSERT_EQ(i, currentStep);
             engine.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)

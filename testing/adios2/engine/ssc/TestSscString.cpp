@@ -149,6 +149,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
             int i;
             engine.Get(scalarInt, &i);
+            engine.PerformGets();
             ASSERT_EQ(i, currentStep);
 
             VerifyData(myChars.data(), currentStep, start, count, shape,

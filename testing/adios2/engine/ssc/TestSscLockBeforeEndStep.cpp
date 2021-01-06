@@ -194,7 +194,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                       "sample string sample string sample string");
 
             int i;
-            engine.Get(scalarInt, &i);
+            engine.Get(scalarInt, &i, adios2::Mode::Sync);
             ASSERT_EQ(i, currentStep);
 
             VerifyData(myChars.data(), currentStep, start, count, shape,
