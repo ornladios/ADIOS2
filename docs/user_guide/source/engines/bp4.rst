@@ -120,5 +120,5 @@ buffer using the IME native API. To use the IME transport, IME must be
 avaiable on the target system and ADIOS2 needs to be configured with
 ``ADIOS2_USE_IME``. By default, data written to the IME is automatically
 flushed to the parallel filesystem at every ``EndStep()`` call. You can
-disable this automaic flush by setting the transport parameter ``SyncToPFS``
+disable this automatic flush by setting the transport parameter ``SyncToPFS``
 to ``OFF``.
