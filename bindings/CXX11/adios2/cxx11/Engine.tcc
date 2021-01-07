@@ -264,6 +264,21 @@ void Engine::Get(const std::string &variableName,
 }
 
 template <class T>
+void Engine::Get(Variable<T> variable, T **data) const
+{
+    if (m_Engine->m_EngineType != "InlineReader")
+    {
+        throw std::domain_error(
+            "Get calls with T** are only supported with the InlineReader.");
+    }
+
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Engine->Get<IOType>(*variable.m_Variable,
+                          reinterpret_cast<IOType **>(data));
+    return;
+}
+
+template <class T>
 std::map<size_t, std::vector<typename Variable<T>::Info>>
 Engine::AllStepsBlocksInfo(const Variable<T> variable) const
 {

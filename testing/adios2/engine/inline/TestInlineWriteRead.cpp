@@ -862,6 +862,54 @@ TEST_F(InlineWriteRead, IOInvariants)
     EXPECT_THROW(io.Open("reader2", adios2::Mode::Read), std::exception);
 }
 
+TEST_F(InlineWriteRead, PointerArithmetic)
+{
+    int mpiRank = 0, mpiSize = 1;
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+    std::cout << "Using " << mpiSize << " ranks\n";
+#else
+    adios2::ADIOS adios;
+    std::cout << "Using serial version of inline reader.\n";
+#endif
+    adios2::IO io = adios.DeclareIO("TestIO");
+    io.SetEngine("Inline");
+
+    adios2::Engine writer = io.Open("writer", adios2::Mode::Write);
+    adios2::Engine reader = io.Open("reader", adios2::Mode::Read);
+
+    size_t N = 256;
+    // Test local array:
+    auto local_array =
+        io.DefineVariable<double>("u", {}, {}, {N}, adios2::ConstantDims);
+    // Test global array:
+    auto global_array = io.DefineVariable<double>(
+        "v", {mpiSize * N}, {mpiRank * N}, {N}, adios2::ConstantDims);
+    for (int64_t timeStep = 0; timeStep < 2; ++timeStep)
+    {
+        writer.BeginStep();
+        std::vector<double> sim_data(N, 3.2);
+        writer.Put(local_array, sim_data.data());
+        writer.Put(global_array, sim_data.data());
+        writer.EndStep();
+
+        reader.BeginStep();
+        double *local_data = nullptr;
+        reader.Get(local_array, &local_data);
+        double *global_data = nullptr;
+        reader.Get(global_array, &global_data);
+        // The data is valid before Endstep():
+        EXPECT_EQ(sim_data.data(), local_data);
+        EXPECT_EQ(sim_data.data(), global_data);
+        reader.EndStep();
+
+        // And it is valid after EndStep():
+        EXPECT_EQ(sim_data.data(), global_data);
+        EXPECT_EQ(sim_data.data(), local_data);
+    }
+}
 //******************************************************************************
 // main
 //******************************************************************************
