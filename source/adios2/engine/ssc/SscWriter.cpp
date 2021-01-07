@@ -61,17 +61,15 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         m_GlobalReadPattern.resize(m_StreamSize);
     }
 
-    if (m_CurrentStep > 1 && (m_WriterDefinitionsLocked == false ||
-                              m_ReaderSelectionsLocked == false))
+    if (m_CurrenteStep > 1)
     {
-        MPI_Win_free(&m_MpiWin);
-    }
-
-    if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
-    {
-        if (m_CurrentStep > 1)
+        if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
         {
             MpiWait();
+        }
+        else
+        {
+            MPI_Win_free(&m_MpiWin);
         }
     }
 
