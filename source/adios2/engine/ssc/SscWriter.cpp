@@ -61,6 +61,12 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         m_GlobalReadPattern.resize(m_StreamSize);
     }
 
+    if (m_CurrentStep > 1 && (m_WriterDefinitionsLocked == false ||
+                              m_ReaderSelectionsLocked == false))
+    {
+        MPI_Win_free(&m_MpiWin);
+    }
+
     if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
     {
         if (m_CurrentStep > 1)
@@ -150,7 +156,6 @@ void SscWriter::EndStep()
             SyncWritePattern();
             MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
                            m_StreamComm, &m_MpiWin);
-            MPI_Win_free(&m_MpiWin);
         }
     }
 }
@@ -429,6 +434,7 @@ void SscWriter::DoClose(const int transportIndex)
     }
     else
     {
+        MPI_Win_free(&m_MpiWin);
         SyncWritePattern(true);
     }
 }
