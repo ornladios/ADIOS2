@@ -120,6 +120,8 @@ gen_anon()
 #define yyrestart cod_yyrestart
 #define yywrap cod_yywrap
 #define yyerror cod_yyerror
+#define yylineno cod_yylineno
+#define yy_flex_debug cod_yy_flex_debug
 #define yy_create_buffer cod_yy_create_buffer
 #define yy_delete_buffer cod_yy_delete_buffer
 #define yy_flush_buffer cod_yy_flush_buffer

@@ -189,6 +189,8 @@ gen_anon()
 #define yyrestart cod_yyrestart
 #define yywrap cod_yywrap
 #define yyerror cod_yyerror
+#define yylineno cod_yylineno
+#define yy_flex_debug cod_yy_flex_debug
 #define yy_create_buffer cod_yy_create_buffer
 #define yy_delete_buffer cod_yy_delete_buffer
 #define yy_flush_buffer cod_yy_flush_buffer
@@ -247,7 +249,7 @@ cod_dup_list(sm_list list)
     return ret_list;
 }
 
-#line 251 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 253 "/home/eisen/prog/ffs/build/cod.tab.c"
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus
@@ -375,7 +377,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 183 "cod/cod.y"
+#line 185 "cod/cod.y"
 
     lx_info info;
     sm_ref reference;
@@ -383,7 +385,7 @@ union YYSTYPE
     sm_list list;
     char *string;
 
-#line 387 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 389 "/home/eisen/prog/ffs/build/cod.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -696,27 +698,27 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   340,   340,   344,   350,   356,   358,   365,   367,   374,
-     381,   388,   394,   400,   407,   417,   423,   437,   438,   445,
-     452,   459,   466,   481,   484,   487,   490,   493,   496,   502,
-     503,   512,   514,   523,   532,   543,   545,   554,   565,   567,
-     576,   587,   589,   598,   607,   616,   627,   629,   638,   649,
-     651,   662,   664,   675,   677,   688,   690,   701,   703,   714,
-     716,   727,   729,   731,   733,   735,   737,   739,   741,   743,
-     745,   747,   752,   755,   766,   768,   778,   782,   787,   806,
-     813,   805,   896,   902,   907,   913,   918,   924,   929,   937,
-     939,   955,   960,   965,   974,   979,   984,   989,   994,   999,
-    1004,  1009,  1014,  1019,  1024,  1029,  1032,  1038,  1041,  1044,
-    1050,  1051,  1057,  1058,  1070,  1071,  1122,  1127,  1139,  1142,
-    1148,  1153,  1159,  1167,  1174,  1181,  1188,  1195,  1205,  1211,
-    1221,  1227,  1235,  1243,  1245,  1259,  1268,  1271,  1280,  1289,
-    1296,  1306,  1314,  1322,  1330,  1344,  1355,  1366,  1377,  1397,
-    1402,  1415,  1416,  1431,  1437,  1452,  1461,  1500,  1501,  1547,
-    1551,  1556,  1561,  1566,  1574,  1582,  1595,  1611,  1616,  1621,
-    1634,  1640,  1649,  1655,  1658,  1661,  1667,  1672,  1673,  1674,
-    1675,  1676,  1677,  1684,  1691,  1694,  1702,  1704,  1718,  1723,
-    1728,  1734,  1740,  1749,  1753,  1763,  1772,  1789,  1799,  1809,
-    1823,  1825,  1828,  1835,  1842,  1849,  1856
+       0,   342,   342,   346,   352,   358,   360,   367,   369,   376,
+     383,   390,   396,   402,   409,   419,   425,   439,   440,   447,
+     454,   461,   468,   483,   486,   489,   492,   495,   498,   504,
+     505,   514,   516,   525,   534,   545,   547,   556,   567,   569,
+     578,   589,   591,   600,   609,   618,   629,   631,   640,   651,
+     653,   664,   666,   677,   679,   690,   692,   703,   705,   716,
+     718,   729,   731,   733,   735,   737,   739,   741,   743,   745,
+     747,   749,   754,   757,   768,   770,   780,   784,   789,   808,
+     815,   807,   898,   904,   909,   915,   920,   926,   931,   939,
+     941,   957,   962,   967,   976,   981,   986,   991,   996,  1001,
+    1006,  1011,  1016,  1021,  1026,  1031,  1034,  1040,  1043,  1046,
+    1052,  1053,  1059,  1060,  1072,  1073,  1124,  1129,  1141,  1144,
+    1150,  1155,  1161,  1169,  1176,  1183,  1190,  1197,  1207,  1213,
+    1223,  1229,  1237,  1245,  1247,  1261,  1270,  1273,  1282,  1291,
+    1298,  1308,  1316,  1324,  1332,  1346,  1357,  1368,  1379,  1399,
+    1404,  1417,  1418,  1433,  1439,  1454,  1463,  1502,  1503,  1549,
+    1553,  1558,  1563,  1568,  1576,  1584,  1597,  1613,  1618,  1623,
+    1636,  1642,  1651,  1657,  1660,  1663,  1669,  1674,  1675,  1676,
+    1677,  1678,  1679,  1686,  1693,  1696,  1704,  1706,  1720,  1725,
+    1730,  1736,  1742,  1751,  1755,  1765,  1774,  1791,  1801,  1811,
+    1825,  1827,  1830,  1837,  1844,  1851,  1858
 };
 #endif
 
@@ -1874,94 +1876,94 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 340 "cod/cod.y"
+#line 342 "cod/cod.y"
     {
 	    yyparse_value = (sm_ref)(yyvsp[0].list);
 	}
-#line 1882 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1884 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 3:
-#line 344 "cod/cod.y"
+#line 346 "cod/cod.y"
     {
 	    yyparse_value = (yyvsp[0].reference);
 	}
-#line 1890 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1892 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 4:
-#line 350 "cod/cod.y"
+#line 352 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_identifier();
 	    (yyval.reference)->node.identifier.id = (yyvsp[0].info).string;
 	    (yyval.reference)->node.identifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 1900 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1902 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 6:
-#line 359 "cod/cod.y"
+#line 361 "cod/cod.y"
     { (yyval.reference) = (yyvsp[-1].reference); }
-#line 1906 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1908 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 8:
-#line 367 "cod/cod.y"
+#line 369 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_element_ref();
 	    (yyval.reference)->node.element_ref.lx_srcpos = (yyvsp[-2].info).lx_srcpos;
 	    (yyval.reference)->node.element_ref.expression = (yyvsp[-1].reference);
 	    (yyval.reference)->node.element_ref.array_ref = (yyvsp[-3].reference);
 	}
-#line 1917 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1919 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 9:
-#line 374 "cod/cod.y"
+#line 376 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_field_ref();
 	    (yyval.reference)->node.field_ref.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	    (yyval.reference)->node.field_ref.lx_field = (yyvsp[0].info).string;
 	    (yyval.reference)->node.field_ref.struct_ref = (yyvsp[-2].reference);
 	}
-#line 1928 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1930 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 10:
-#line 381 "cod/cod.y"
+#line 383 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_subroutine_call();
 	    (yyval.reference)->node.subroutine_call.lx_srcpos = (yyvsp[-2].info).lx_srcpos;
 	    (yyval.reference)->node.subroutine_call.arguments = (yyvsp[-1].list);
 	    (yyval.reference)->node.subroutine_call.sm_func_ref = (yyvsp[-3].reference);
 	}
-#line 1939 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1941 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 11:
-#line 388 "cod/cod.y"
+#line 390 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_subroutine_call();
 	    (yyval.reference)->node.subroutine_call.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	    (yyval.reference)->node.subroutine_call.arguments = NULL;
 	    (yyval.reference)->node.subroutine_call.sm_func_ref = (yyvsp[-2].reference);
 	}
-#line 1950 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1952 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 12:
-#line 394 "cod/cod.y"
+#line 396 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_field_ref();
 	    (yyval.reference)->node.field_ref.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	    (yyval.reference)->node.field_ref.lx_field = (yyvsp[0].info).string;
 	    (yyval.reference)->node.field_ref.struct_ref = (yyvsp[-2].reference);
 	}
-#line 1961 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1963 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 13:
-#line 400 "cod/cod.y"
+#line 402 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[0].info).lx_srcpos;
@@ -1969,11 +1971,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = NULL;
 	    (yyval.reference)->node.operator.left = (yyvsp[-1].reference);
 	}
-#line 1973 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1975 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 14:
-#line 407 "cod/cod.y"
+#line 409 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[0].info).lx_srcpos;
@@ -1981,21 +1983,21 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = NULL;
 	    (yyval.reference)->node.operator.left = (yyvsp[-1].reference);
 	}
-#line 1985 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1987 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 15:
-#line 417 "cod/cod.y"
+#line 419 "cod/cod.y"
     {
 		(yyval.list) = malloc(sizeof(struct list_struct));
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 1995 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 1997 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 16:
-#line 423 "cod/cod.y"
+#line 425 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-2].list);
 	    while (tmp->next != NULL) {
@@ -2006,11 +2008,11 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 2010 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2012 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 18:
-#line 438 "cod/cod.y"
+#line 440 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2018,11 +2020,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2022 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2024 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 19:
-#line 445 "cod/cod.y"
+#line 447 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2030,11 +2032,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2034 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2036 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 20:
-#line 452 "cod/cod.y"
+#line 454 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2042,11 +2044,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2046 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2048 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 21:
-#line 459 "cod/cod.y"
+#line 461 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2054,11 +2056,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2058 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2060 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 22:
-#line 466 "cod/cod.y"
+#line 468 "cod/cod.y"
     {
 	    /* dummy up a cast to hold the sm_list of the type */
 	    sm_ref cast = cod_new_cast();
@@ -2072,70 +2074,70 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = cast;
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2076 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2078 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 23:
-#line 481 "cod/cod.y"
+#line 483 "cod/cod.y"
     {
 	    (yyval.info).op = op_address;
 	}
-#line 2084 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2086 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 24:
-#line 484 "cod/cod.y"
+#line 486 "cod/cod.y"
     {
 	    (yyval.info).op = op_deref;
 	}
-#line 2092 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2094 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 25:
-#line 487 "cod/cod.y"
+#line 489 "cod/cod.y"
     {
 	    (yyval.info).op = op_plus;
 	}
-#line 2100 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2102 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 26:
-#line 490 "cod/cod.y"
+#line 492 "cod/cod.y"
     {
 	    (yyval.info).op = op_minus;
 	}
-#line 2108 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2110 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 27:
-#line 493 "cod/cod.y"
+#line 495 "cod/cod.y"
     {
 	    (yyval.info).op = op_not;
 	}
-#line 2116 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2118 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 28:
-#line 496 "cod/cod.y"
+#line 498 "cod/cod.y"
     {
 	    (yyval.info).op = op_log_neg;
 	  }
-#line 2124 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2126 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 30:
-#line 503 "cod/cod.y"
+#line 505 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_cast();
 	    (yyval.reference)->node.cast.lx_srcpos = (yyvsp[-3].info).lx_srcpos;
 	    (yyval.reference)->node.cast.type_spec = (yyvsp[-2].list);
 	    (yyval.reference)->node.cast.expression = (yyvsp[0].reference);
 	}
-#line 2135 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2137 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 32:
-#line 515 "cod/cod.y"
+#line 517 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2143,11 +2145,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2147 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2149 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 33:
-#line 524 "cod/cod.y"
+#line 526 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2155,11 +2157,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2159 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2161 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 34:
-#line 533 "cod/cod.y"
+#line 535 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2167,11 +2169,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2171 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2173 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 36:
-#line 546 "cod/cod.y"
+#line 548 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.op = op_plus;
@@ -2179,11 +2181,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2183 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2185 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 37:
-#line 555 "cod/cod.y"
+#line 557 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2191,11 +2193,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2195 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2197 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 39:
-#line 568 "cod/cod.y"
+#line 570 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2203,11 +2205,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2207 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2209 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 40:
-#line 577 "cod/cod.y"
+#line 579 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2215,11 +2217,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2219 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2221 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 42:
-#line 590 "cod/cod.y"
+#line 592 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2227,11 +2229,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2231 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2233 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 43:
-#line 599 "cod/cod.y"
+#line 601 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2239,11 +2241,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2243 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2245 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 44:
-#line 608 "cod/cod.y"
+#line 610 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2251,11 +2253,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2255 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2257 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 45:
-#line 617 "cod/cod.y"
+#line 619 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2263,11 +2265,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2267 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2269 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 47:
-#line 630 "cod/cod.y"
+#line 632 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2275,11 +2277,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2279 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2281 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 48:
-#line 639 "cod/cod.y"
+#line 641 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2287,11 +2289,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2291 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2293 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 50:
-#line 652 "cod/cod.y"
+#line 654 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2299,11 +2301,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2303 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2305 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 52:
-#line 665 "cod/cod.y"
+#line 667 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2311,11 +2313,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2315 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2317 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 54:
-#line 678 "cod/cod.y"
+#line 680 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2323,11 +2325,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2327 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2329 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 56:
-#line 691 "cod/cod.y"
+#line 693 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2335,11 +2337,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2339 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2341 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 58:
-#line 704 "cod/cod.y"
+#line 706 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2347,11 +2349,11 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2351 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2353 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 60:
-#line 717 "cod/cod.y"
+#line 719 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_conditional_operator();
 	    (yyval.reference)->node.conditional_operator.lx_srcpos = (yyvsp[-3].info).lx_srcpos;
@@ -2359,83 +2361,83 @@ yyreduce:
 	    (yyval.reference)->node.conditional_operator.e1 = (yyvsp[-2].reference);
 	    (yyval.reference)->node.conditional_operator.e2 = (yyvsp[0].reference);
 	}
-#line 2363 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2365 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 61:
-#line 728 "cod/cod.y"
+#line 730 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_eq;}
-#line 2369 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2371 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 62:
-#line 730 "cod/cod.y"
+#line 732 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_mult;}
-#line 2375 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2377 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 63:
-#line 732 "cod/cod.y"
+#line 734 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_div;}
-#line 2381 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2383 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 64:
-#line 734 "cod/cod.y"
+#line 736 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_modulus;}
-#line 2387 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2389 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 65:
-#line 736 "cod/cod.y"
+#line 738 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_plus;}
-#line 2393 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2395 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 66:
-#line 738 "cod/cod.y"
+#line 740 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_minus;}
-#line 2399 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2401 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 67:
-#line 740 "cod/cod.y"
+#line 742 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_left_shift;}
-#line 2405 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2407 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 68:
-#line 742 "cod/cod.y"
+#line 744 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_right_shift;}
-#line 2411 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2413 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 69:
-#line 744 "cod/cod.y"
+#line 746 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_arith_and;}
-#line 2417 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2419 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 70:
-#line 746 "cod/cod.y"
+#line 748 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_arith_xor;}
-#line 2423 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2425 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 71:
-#line 748 "cod/cod.y"
+#line 750 "cod/cod.y"
     { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_arith_or;}
-#line 2429 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2431 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 72:
-#line 753 "cod/cod.y"
+#line 755 "cod/cod.y"
     { (yyval.reference) = (yyvsp[0].reference);}
-#line 2435 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2437 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 73:
-#line 756 "cod/cod.y"
+#line 758 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_assignment_expression();
 	    (yyval.reference)->node.assignment_expression.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -2443,38 +2445,38 @@ yyreduce:
 	    (yyval.reference)->node.assignment_expression.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.assignment_expression.op = (yyvsp[-1].info).op;
 	}
-#line 2447 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2449 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 74:
-#line 767 "cod/cod.y"
+#line 769 "cod/cod.y"
     {(yyval.reference) = (yyvsp[0].reference);}
-#line 2453 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2455 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 75:
-#line 769 "cod/cod.y"
+#line 771 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_comma_expression();
 	    (yyval.reference)->node.comma_expression.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	    (yyval.reference)->node.comma_expression.left = (yyvsp[-2].reference);
 	    (yyval.reference)->node.comma_expression.right = (yyvsp[0].reference);
 	}
-#line 2464 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2466 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 77:
-#line 782 "cod/cod.y"
+#line 784 "cod/cod.y"
     {
 		(yyval.list) = malloc(sizeof(struct list_struct));
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 2474 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2476 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 78:
-#line 787 "cod/cod.y"
+#line 789 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-2].list);
 	    while (tmp->next != NULL) {
@@ -2486,22 +2488,22 @@ yyreduce:
 	    tmp->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 2490 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2492 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 79:
-#line 806 "cod/cod.y"
+#line 808 "cod/cod.y"
     { 
 		 if (parsing_type) {
 		     yyparse_value = (sm_ref) (yyvsp[0].list);
 		     YYACCEPT;
 		 }
 	     }
-#line 2501 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2503 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 80:
-#line 813 "cod/cod.y"
+#line 815 "cod/cod.y"
     {  /* stop here if we're just doing a proc decl */
 		if (parsing_param_spec) {
 		    (yyval.reference) = (yyvsp[0].list)->node;
@@ -2529,11 +2531,11 @@ yyreduce:
 		    YYACCEPT;
 		}
 	    }
-#line 2533 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2535 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 81:
-#line 841 "cod/cod.y"
+#line 843 "cod/cod.y"
     {
 		(yyval.list) = (yyvsp[-2].list);
 		sm_list dtmp = (yyvsp[-2].list);
@@ -2589,82 +2591,82 @@ yyreduce:
 		}
 		(void)(yyvsp[-1].reference);
 	    }
-#line 2593 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2595 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 82:
-#line 896 "cod/cod.y"
+#line 898 "cod/cod.y"
     {
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 2601 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2603 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 83:
-#line 902 "cod/cod.y"
+#line 904 "cod/cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2611 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2613 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 84:
-#line 907 "cod/cod.y"
+#line 909 "cod/cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[-1].reference);
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2622 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2624 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 85:
-#line 913 "cod/cod.y"
+#line 915 "cod/cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2632 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2634 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 86:
-#line 918 "cod/cod.y"
+#line 920 "cod/cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[-1].reference);
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2643 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2645 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 87:
-#line 924 "cod/cod.y"
+#line 926 "cod/cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2653 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2655 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 88:
-#line 929 "cod/cod.y"
+#line 931 "cod/cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[-1].reference);
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2664 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2666 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 90:
-#line 940 "cod/cod.y"
+#line 942 "cod/cod.y"
     {
 		if ((yyvsp[-2].reference)->node_type == cod_declaration) {
 		    (yyvsp[-2].reference)->node.declaration.init_value = (yyvsp[0].reference);
@@ -2677,199 +2679,199 @@ yyreduce:
 		    tmp->node.declaration.init_value = (yyvsp[0].reference);
 		}
 	    }
-#line 2681 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2683 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 91:
-#line 955 "cod/cod.y"
+#line 957 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = TYPEDEF;
 	}
-#line 2691 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2693 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 92:
-#line 960 "cod/cod.y"
+#line 962 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = STATIC;
 	}
-#line 2701 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2703 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 93:
-#line 965 "cod/cod.y"
+#line 967 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = EXTERN_TOKEN;
 	}
-#line 2711 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2713 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 94:
-#line 974 "cod/cod.y"
+#line 976 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = CHAR;
 	}
-#line 2721 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2723 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 95:
-#line 979 "cod/cod.y"
+#line 981 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = SHORT;
 	}
-#line 2731 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2733 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 96:
-#line 984 "cod/cod.y"
+#line 986 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = INT;
 	}
-#line 2741 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2743 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 97:
-#line 989 "cod/cod.y"
+#line 991 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = LONG;
 	}
-#line 2751 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2753 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 98:
-#line 994 "cod/cod.y"
+#line 996 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = FLOAT;
 	}
-#line 2761 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2763 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 99:
-#line 999 "cod/cod.y"
+#line 1001 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = DOUBLE;
 	}
-#line 2771 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2773 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 100:
-#line 1004 "cod/cod.y"
+#line 1006 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = VOID;
 	}
-#line 2781 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2783 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 101:
-#line 1009 "cod/cod.y"
+#line 1011 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = SIGNED;
 	}
-#line 2791 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2793 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 102:
-#line 1014 "cod/cod.y"
+#line 1016 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = UNSIGNED;
 	}
-#line 2801 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2803 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 103:
-#line 1019 "cod/cod.y"
+#line 1021 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = STRING;
 	}
-#line 2811 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2813 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 104:
-#line 1024 "cod/cod.y"
+#line 1026 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_identifier();
 	    (yyval.reference)->node.identifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.identifier.id = (yyvsp[0].info).string;
 	}
-#line 2821 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2823 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 105:
-#line 1029 "cod/cod.y"
+#line 1031 "cod/cod.y"
     {
 	    (yyval.reference) = (yyvsp[0].reference);
 	}
-#line 2829 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2831 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 106:
-#line 1032 "cod/cod.y"
+#line 1034 "cod/cod.y"
     {
 	    (yyval.reference) = (yyvsp[0].reference);
 	}
-#line 2837 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2839 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 107:
-#line 1038 "cod/cod.y"
+#line 1040 "cod/cod.y"
     {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, (yyvsp[-3].info).string, (yyvsp[-1].list));
 	}
-#line 2845 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2847 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 108:
-#line 1041 "cod/cod.y"
+#line 1043 "cod/cod.y"
     {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, strdup("anon"), (yyvsp[-1].list));
 	}
-#line 2853 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2855 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 109:
-#line 1044 "cod/cod.y"
+#line 1046 "cod/cod.y"
     {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, (yyvsp[0].info).string, NULL);
 	}
-#line 2861 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2863 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 111:
-#line 1051 "cod/cod.y"
+#line 1053 "cod/cod.y"
     {
             yyerror("UNIONs not supported!");
 	}
-#line 2869 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2871 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 113:
-#line 1058 "cod/cod.y"
+#line 1060 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-1].list);
 	    while (tmp->next != NULL) {
@@ -2878,17 +2880,17 @@ yyreduce:
 	    tmp->next =(yyvsp[0].list);
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 2882 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2884 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 114:
-#line 1070 "cod/cod.y"
+#line 1072 "cod/cod.y"
     { }
-#line 2888 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2890 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 115:
-#line 1071 "cod/cod.y"
+#line 1073 "cod/cod.y"
     {
 	    sm_list type_spec = (yyvsp[-2].list);
 	    sm_list decl_list = (yyvsp[-1].list);
@@ -2936,21 +2938,21 @@ yyreduce:
 		}
 	    }
 	}
-#line 2940 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2942 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 116:
-#line 1122 "cod/cod.y"
+#line 1124 "cod/cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2950 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2952 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 117:
-#line 1127 "cod/cod.y"
+#line 1129 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-2].list);
 	    while (tmp->next != NULL) {
@@ -2961,53 +2963,53 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 2965 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2967 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 119:
-#line 1142 "cod/cod.y"
+#line 1144 "cod/cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[-1].reference);
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2976 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2978 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 120:
-#line 1148 "cod/cod.y"
+#line 1150 "cod/cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2986 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2988 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 121:
-#line 1153 "cod/cod.y"
+#line 1155 "cod/cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[-1].reference);
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2997 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 2999 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 122:
-#line 1159 "cod/cod.y"
+#line 1161 "cod/cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 3007 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3009 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 123:
-#line 1167 "cod/cod.y"
+#line 1169 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_enum_type_decl();
 	    (yyval.reference)->node.enum_type_decl.id = gen_anon();
@@ -3015,11 +3017,11 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-3].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3019 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3021 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 124:
-#line 1174 "cod/cod.y"
+#line 1176 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_enum_type_decl();
 	    (yyval.reference)->node.enum_type_decl.id = gen_anon();
@@ -3027,11 +3029,11 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-4].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3031 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3033 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 125:
-#line 1181 "cod/cod.y"
+#line 1183 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_enum_type_decl();
 	    (yyval.reference)->node.enum_type_decl.id = (yyvsp[-3].info).string;
@@ -3039,11 +3041,11 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-4].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3043 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3045 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 126:
-#line 1188 "cod/cod.y"
+#line 1190 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_enum_type_decl();
 	    (yyval.reference)->node.enum_type_decl.id = (yyvsp[-4].info).string;
@@ -3051,11 +3053,11 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-5].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3055 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3057 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 127:
-#line 1195 "cod/cod.y"
+#line 1197 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_enum_type_decl();
 	    (yyval.reference)->node.enum_type_decl.id = (yyvsp[0].info).string;
@@ -3063,63 +3065,63 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3067 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3069 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 128:
-#line 1205 "cod/cod.y"
+#line 1207 "cod/cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[0].reference);
 	    tmp->next = NULL;
 	    (yyval.list) = tmp;
 	}
-#line 3078 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3080 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 129:
-#line 1211 "cod/cod.y"
+#line 1213 "cod/cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[0].reference);
 	    tmp->next = (yyvsp[-2].list);
 	    (yyval.list) = tmp;
 	}
-#line 3089 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3091 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 130:
-#line 1221 "cod/cod.y"
+#line 1223 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_enumerator();
 	    (yyval.reference)->node.enumerator.id = (yyvsp[-2].info).string;
 	    (yyval.reference)->node.enumerator.const_expression = (yyvsp[0].reference);
 	}
-#line 3099 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3101 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 131:
-#line 1227 "cod/cod.y"
+#line 1229 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_enumerator();
 	    (yyval.reference)->node.enumerator.id = (yyvsp[0].info).string;
 	    (yyval.reference)->node.enumerator.const_expression = NULL;
 	}
-#line 3109 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3111 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 132:
-#line 1235 "cod/cod.y"
+#line 1237 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = CONST;
 	}
-#line 3119 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3121 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 134:
-#line 1245 "cod/cod.y"
+#line 1247 "cod/cod.y"
     {
 	    (yyval.reference) = (yyvsp[0].reference);
 	    if ((yyval.reference)->node_type == cod_declaration) {
@@ -3131,11 +3133,11 @@ yyreduce:
 		cod_print((yyval.reference));
 	    }
 	}
-#line 3135 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3137 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 135:
-#line 1259 "cod/cod.y"
+#line 1261 "cod/cod.y"
     {
 		(yyval.reference) = cod_new_declaration();
 		(yyval.reference)->node.declaration.param_num = -1;
@@ -3145,19 +3147,19 @@ yyreduce:
 		(yyval.reference)->node.declaration.is_subroutine = 0;
 		(yyval.reference)->node.declaration.params = NULL;
 	    }
-#line 3149 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3151 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 136:
-#line 1268 "cod/cod.y"
+#line 1270 "cod/cod.y"
     {
 	    (yyval.reference) = (yyvsp[-1].reference);
 	}
-#line 3157 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3159 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 137:
-#line 1271 "cod/cod.y"
+#line 1273 "cod/cod.y"
     {
 		(yyval.reference) = cod_new_declaration();
 		(yyval.reference)->node.declaration.param_num = -1;
@@ -3167,11 +3169,11 @@ yyreduce:
 		(yyval.reference)->node.declaration.is_subroutine = 1;
 		(yyval.reference)->node.declaration.params = (yyvsp[-1].list);
 	}
-#line 3171 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3173 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 138:
-#line 1280 "cod/cod.y"
+#line 1282 "cod/cod.y"
     {
 		(yyval.reference) = cod_new_declaration();
 		(yyval.reference)->node.declaration.param_num = -1;
@@ -3181,11 +3183,11 @@ yyreduce:
 		(yyval.reference)->node.declaration.is_subroutine = 1;
 		(yyval.reference)->node.declaration.params = NULL;
 	}
-#line 3185 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3187 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 139:
-#line 1289 "cod/cod.y"
+#line 1291 "cod/cod.y"
     {
 		(yyval.reference) = cod_new_array_type_decl();
 		(yyval.reference)->node.array_type_decl.lx_srcpos = (yyvsp[-2].info).lx_srcpos;
@@ -3193,11 +3195,11 @@ yyreduce:
 		(yyval.reference)->node.array_type_decl.element_ref = (yyvsp[-3].reference);
 		(yyval.reference)->node.array_type_decl.sm_dynamic_size = NULL;
 	}
-#line 3197 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3199 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 140:
-#line 1296 "cod/cod.y"
+#line 1298 "cod/cod.y"
     {
 		(yyval.reference) = cod_new_array_type_decl();
 		(yyval.reference)->node.array_type_decl.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -3205,11 +3207,11 @@ yyreduce:
 		(yyval.reference)->node.array_type_decl.element_ref = (yyvsp[-2].reference);
 		(yyval.reference)->node.array_type_decl.sm_dynamic_size = NULL;
 	}
-#line 3209 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3211 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 141:
-#line 1306 "cod/cod.y"
+#line 1308 "cod/cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    star->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
@@ -3218,11 +3220,11 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = NULL;
 	}
-#line 3222 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3224 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 142:
-#line 1314 "cod/cod.y"
+#line 1316 "cod/cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    star->node.type_specifier.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -3231,11 +3233,11 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3235 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3237 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 143:
-#line 1322 "cod/cod.y"
+#line 1324 "cod/cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    star->node.type_specifier.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
@@ -3244,11 +3246,11 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3248 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3250 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 144:
-#line 1330 "cod/cod.y"
+#line 1332 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-1].list);
 	    sm_ref star = cod_new_type_specifier();
@@ -3263,11 +3265,11 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[-1].list);
 	}
-#line 3267 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3269 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 145:
-#line 1344 "cod/cod.y"
+#line 1346 "cod/cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    if(!cod_segmented_pointers) { 
@@ -3279,11 +3281,11 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = NULL;
 	}
-#line 3283 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3285 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 146:
-#line 1355 "cod/cod.y"
+#line 1357 "cod/cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    if(!cod_segmented_pointers) {
@@ -3295,11 +3297,11 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3299 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3301 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 147:
-#line 1366 "cod/cod.y"
+#line 1368 "cod/cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    if(!cod_segmented_pointers) {
@@ -3311,11 +3313,11 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3315 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3317 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 148:
-#line 1377 "cod/cod.y"
+#line 1379 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-1].list);
 	    sm_ref star = cod_new_type_specifier();
@@ -3333,21 +3335,21 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[-1].list);
 	}
-#line 3337 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3339 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 149:
-#line 1397 "cod/cod.y"
+#line 1399 "cod/cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 3347 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3349 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 150:
-#line 1402 "cod/cod.y"
+#line 1404 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-1].list);
 	    while (tmp->next != NULL) {
@@ -3358,11 +3360,11 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 3362 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3364 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 152:
-#line 1416 "cod/cod.y"
+#line 1418 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-2].list);
 	    sm_ref id = cod_new_declaration();
@@ -3375,21 +3377,21 @@ yyreduce:
 	    id->node.declaration.id = strdup("...");
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 3379 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3381 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 153:
-#line 1431 "cod/cod.y"
+#line 1433 "cod/cod.y"
     {
 		(yyval.list) = malloc(sizeof(struct list_struct));
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 3389 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3391 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 154:
-#line 1437 "cod/cod.y"
+#line 1439 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-2].list);
 	    while (tmp->next != NULL) {
@@ -3400,11 +3402,11 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 3404 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3406 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 155:
-#line 1452 "cod/cod.y"
+#line 1454 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_declaration();
 	    (yyval.reference)->node.declaration.param_num = -1;
@@ -3414,11 +3416,11 @@ yyreduce:
 	    (yyval.reference)->node.declaration.params = NULL;
 	    (yyval.reference)->node.declaration.type_spec = (yyvsp[0].list);
 	}
-#line 3418 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3420 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 156:
-#line 1461 "cod/cod.y"
+#line 1463 "cod/cod.y"
     {
 		(yyval.reference) = (yyvsp[0].reference);
 		if ((yyval.reference)->node_type == cod_declaration) {
@@ -3456,11 +3458,11 @@ yyreduce:
 		    printf("unexpected node in parameter_declaration");
 		}
 	}
-#line 3460 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3462 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 158:
-#line 1501 "cod/cod.y"
+#line 1503 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-1].list);
 	    while (tmp->next != NULL) {
@@ -3469,35 +3471,35 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 3473 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3475 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 160:
-#line 1552 "cod/cod.y"
+#line 1554 "cod/cod.y"
     { 
 	    (yyval.reference) = cod_new_initializer_list();
 	    (yyval.reference)->node.initializer_list.initializers = (yyvsp[-1].list);
 	}
-#line 3482 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3484 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 161:
-#line 1557 "cod/cod.y"
+#line 1559 "cod/cod.y"
     { 
 	    (yyval.reference) = cod_new_initializer_list();
 	    (yyval.reference)->node.initializer_list.initializers = (yyvsp[-2].list);
 	}
-#line 3491 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3493 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 162:
-#line 1561 "cod/cod.y"
+#line 1563 "cod/cod.y"
     { (yyval.reference) = (yyvsp[0].reference);}
-#line 3497 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3499 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 163:
-#line 1566 "cod/cod.y"
+#line 1568 "cod/cod.y"
     {
 	    sm_ref initializer = cod_new_initializer();
 	    initializer->node.initializer.designation = (yyvsp[-1].list);
@@ -3506,11 +3508,11 @@ yyreduce:
 	    (yyval.list)->node = initializer;
 	    (yyval.list)->next = NULL;
 	}
-#line 3510 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3512 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 164:
-#line 1574 "cod/cod.y"
+#line 1576 "cod/cod.y"
     {
 	    sm_ref initializer = cod_new_initializer();
 	    initializer->node.initializer.designation = NULL;
@@ -3519,11 +3521,11 @@ yyreduce:
 	    (yyval.list)->node = initializer;
 	    (yyval.list)->next = NULL;
 	}
-#line 3523 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3525 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 165:
-#line 1582 "cod/cod.y"
+#line 1584 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-3].list);
 	    sm_ref initializer = cod_new_initializer();
@@ -3537,11 +3539,11 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-3].list);
 	}
-#line 3541 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3543 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 166:
-#line 1595 "cod/cod.y"
+#line 1597 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-2].list);
 	    sm_ref initializer = cod_new_initializer();
@@ -3555,27 +3557,27 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 3559 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3561 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 167:
-#line 1612 "cod/cod.y"
+#line 1614 "cod/cod.y"
     { (yyval.list) = (yyvsp[-1].list);}
-#line 3565 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3567 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 168:
-#line 1616 "cod/cod.y"
+#line 1618 "cod/cod.y"
     {
 		(yyval.list) = malloc(sizeof(struct list_struct));
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 3575 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3577 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 169:
-#line 1621 "cod/cod.y"
+#line 1623 "cod/cod.y"
     {
 	    sm_list tmp = (yyvsp[-1].list);
 	    while (tmp->next != NULL) {
@@ -3586,112 +3588,112 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 3590 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3592 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 170:
-#line 1635 "cod/cod.y"
+#line 1637 "cod/cod.y"
     { 
 	    (yyval.reference) = cod_new_designator();
 	    (yyval.reference)->node.designator.expression = (yyvsp[-1].reference);
 	    (yyval.reference)->node.designator.id = NULL;
 	}
-#line 3600 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3602 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 171:
-#line 1641 "cod/cod.y"
+#line 1643 "cod/cod.y"
     { 
 	    (yyval.reference) = cod_new_designator();
 	    (yyval.reference)->node.designator.expression = NULL;
 	    (yyval.reference)->node.designator.id = (yyvsp[0].info).string;
 	}
-#line 3610 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3612 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 172:
-#line 1649 "cod/cod.y"
+#line 1651 "cod/cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[0].reference);
 	    tmp->next = NULL;
 	    (yyval.list) = tmp;
 	}
-#line 3621 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3623 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 173:
-#line 1655 "cod/cod.y"
+#line 1657 "cod/cod.y"
     {
 	    (yyval.list) = (yyvsp[0].list);
 	   }
-#line 3629 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3631 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 174:
-#line 1658 "cod/cod.y"
+#line 1660 "cod/cod.y"
     {
 	      (yyval.list) = NULL;
 	  }
-#line 3637 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3639 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 175:
-#line 1661 "cod/cod.y"
+#line 1663 "cod/cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[0].reference);
 	    tmp->next = NULL;
 	    (yyval.list) = cod_append_list((yyvsp[-1].list), tmp);
 	}
-#line 3648 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3650 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 176:
-#line 1667 "cod/cod.y"
+#line 1669 "cod/cod.y"
     {
 	    (yyval.list) = cod_append_list((yyvsp[-1].list), (yyvsp[0].list));
 	}
-#line 3656 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3658 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 183:
-#line 1684 "cod/cod.y"
+#line 1686 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_label_statement();
 	    (yyval.reference)->node.label_statement.name =  (yyvsp[-2].info).string;
 	    (yyval.reference)->node.label_statement.statement = (yyvsp[0].reference);
 	}
-#line 3666 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3668 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 184:
-#line 1691 "cod/cod.y"
+#line 1693 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_compound_statement();
 	}
-#line 3674 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3676 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 185:
-#line 1694 "cod/cod.y"
+#line 1696 "cod/cod.y"
     {
 	    int count = (yyvsp[-2].info).type_stack_count;
 	    (yyval.reference) = cod_new_compound_statement();
 	    (yyval.reference)->node.compound_statement.decls = (yyvsp[-1].list);
 	    cod_remove_defined_types(yycontext, count);
 	}
-#line 3685 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3687 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 186:
-#line 1702 "cod/cod.y"
+#line 1704 "cod/cod.y"
     { (yyval.list) = (yyvsp[0].list); }
-#line 3691 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3693 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 187:
-#line 1704 "cod/cod.y"
+#line 1706 "cod/cod.y"
     {
 	    if ((yyvsp[-1].list) == NULL) {
 		(yyval.list) = (yyvsp[0].list);
@@ -3704,81 +3706,81 @@ yyreduce:
 		(yyval.list) = (yyvsp[-1].list);
 	    }
 	}
-#line 3708 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3710 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 188:
-#line 1718 "cod/cod.y"
+#line 1720 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_return_statement();
 	    (yyval.reference)->node.return_statement.expression = (yyvsp[-1].reference);
 	    (yyval.reference)->node.return_statement.lx_srcpos = (yyvsp[-2].info).lx_srcpos;
 	}
-#line 3718 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3720 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 189:
-#line 1723 "cod/cod.y"
+#line 1725 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_return_statement();
 	    (yyval.reference)->node.return_statement.expression = NULL;
 	    (yyval.reference)->node.return_statement.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	}
-#line 3728 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3730 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 190:
-#line 1728 "cod/cod.y"
+#line 1730 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_jump_statement();
 	    (yyval.reference)->node.jump_statement.continue_flag = 1;
 	    (yyval.reference)->node.jump_statement.goto_target = NULL;
 	    (yyval.reference)->node.jump_statement.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	}
-#line 3739 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3741 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 191:
-#line 1734 "cod/cod.y"
+#line 1736 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_jump_statement();
 	    (yyval.reference)->node.jump_statement.continue_flag = 0;
 	    (yyval.reference)->node.jump_statement.goto_target = NULL;
 	    (yyval.reference)->node.jump_statement.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	}
-#line 3750 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3752 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 192:
-#line 1740 "cod/cod.y"
+#line 1742 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_jump_statement();
 	    (yyval.reference)->node.jump_statement.continue_flag = 0;
 	    (yyval.reference)->node.jump_statement.goto_target = (yyvsp[-1].info).string;
 	    (yyval.reference)->node.jump_statement.lx_srcpos = (yyvsp[-2].info).lx_srcpos;
 	}
-#line 3761 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3763 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 193:
-#line 1749 "cod/cod.y"
+#line 1751 "cod/cod.y"
     {
 	    (yyval.reference) = NULL;
 	}
-#line 3769 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3771 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 194:
-#line 1753 "cod/cod.y"
+#line 1755 "cod/cod.y"
     { 
 	    (yyval.reference) = cod_new_expression_statement();
 	    (yyval.reference)->node.expression_statement.expression = (yyvsp[-1].reference);
 	}
-#line 3778 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3780 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 195:
-#line 1764 "cod/cod.y"
+#line 1766 "cod/cod.y"
     { 
 	    (yyval.reference) = cod_new_selection_statement();
 	    (yyval.reference)->node.selection_statement.lx_srcpos = (yyvsp[-4].info).lx_srcpos;
@@ -3786,11 +3788,11 @@ yyreduce:
 	    (yyval.reference)->node.selection_statement.then_part = (yyvsp[0].reference);
 	    (yyval.reference)->node.selection_statement.else_part = NULL;
 	}
-#line 3790 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3792 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 196:
-#line 1773 "cod/cod.y"
+#line 1775 "cod/cod.y"
     { 
 	    (yyval.reference) = cod_new_selection_statement();
 	    (yyval.reference)->node.selection_statement.lx_srcpos = (yyvsp[-6].info).lx_srcpos;
@@ -3798,11 +3800,11 @@ yyreduce:
 	    (yyval.reference)->node.selection_statement.then_part = (yyvsp[-2].reference);
 	    (yyval.reference)->node.selection_statement.else_part = (yyvsp[0].reference);
 	}
-#line 3802 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3804 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 197:
-#line 1790 "cod/cod.y"
+#line 1792 "cod/cod.y"
     { 
 	    (yyval.reference) = cod_new_iteration_statement();
 	    (yyval.reference)->node.iteration_statement.lx_srcpos = (yyvsp[-8].info).lx_srcpos;
@@ -3811,11 +3813,11 @@ yyreduce:
 	    (yyval.reference)->node.iteration_statement.iter_expr = (yyvsp[-2].reference);
 	    (yyval.reference)->node.iteration_statement.statement = (yyvsp[0].reference);
 	}
-#line 3815 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3817 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 198:
-#line 1800 "cod/cod.y"
+#line 1802 "cod/cod.y"
     { 
 	    (yyval.reference) = cod_new_iteration_statement();
 	    (yyval.reference)->node.iteration_statement.lx_srcpos = (yyvsp[-4].info).lx_srcpos;
@@ -3824,11 +3826,11 @@ yyreduce:
 	    (yyval.reference)->node.iteration_statement.iter_expr = NULL;
 	    (yyval.reference)->node.iteration_statement.statement = (yyvsp[0].reference);
 	}
-#line 3828 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3830 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 199:
-#line 1810 "cod/cod.y"
+#line 1812 "cod/cod.y"
     { 
 	    (yyval.reference) = cod_new_iteration_statement();
 	    (yyval.reference)->node.iteration_statement.lx_srcpos = (yyvsp[-6].info).lx_srcpos;
@@ -3838,72 +3840,72 @@ yyreduce:
 	    (yyval.reference)->node.iteration_statement.iter_expr = NULL;
 	    (yyval.reference)->node.iteration_statement.statement = (yyvsp[-5].reference);
 	}
-#line 3842 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3844 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 200:
-#line 1823 "cod/cod.y"
+#line 1825 "cod/cod.y"
     { (yyval.reference) = NULL; }
-#line 3848 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3850 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 202:
-#line 1828 "cod/cod.y"
+#line 1830 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_constant();
 	    (yyval.reference)->node.constant.token = integer_constant;
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3859 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3861 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 203:
-#line 1835 "cod/cod.y"
+#line 1837 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_constant();
 	    (yyval.reference)->node.constant.token = floating_constant;
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3870 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3872 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 204:
-#line 1842 "cod/cod.y"
+#line 1844 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_constant();
 	    (yyval.reference)->node.constant.token = string_constant;
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3881 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3883 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 205:
-#line 1849 "cod/cod.y"
+#line 1851 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_constant();
 	    (yyval.reference)->node.constant.token = character_constant;
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3892 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3894 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
   case 206:
-#line 1856 "cod/cod.y"
+#line 1858 "cod/cod.y"
     {
 	    (yyval.reference) = cod_new_constant();
 	    (yyval.reference)->node.constant.token = character_constant;
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3903 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3905 "/home/eisen/prog/ffs/build/cod.tab.c"
     break;
 
 
-#line 3907 "/home/eisen/prog/ffs/build/cod.tab.c"
+#line 3909 "/home/eisen/prog/ffs/build/cod.tab.c"
 
       default: break;
     }
@@ -4135,7 +4137,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 1864 "cod/cod.y"
+#line 1866 "cod/cod.y"
 
 #include "lex.yy.c"
 
