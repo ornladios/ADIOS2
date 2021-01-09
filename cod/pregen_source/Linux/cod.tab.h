@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.4.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,8 +31,11 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_HOME_EISEN_PROG_GTKORVO_BUILD_AREA_FFS_UB18_64_COD_TAB_H_INCLUDED
-# define YY_YY_HOME_EISEN_PROG_GTKORVO_BUILD_AREA_FFS_UB18_64_COD_TAB_H_INCLUDED
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
+
+#ifndef YY_YY_HOME_EISEN_PROG_FFS_BUILD_COD_TAB_H_INCLUDED
+# define YY_YY_HOME_EISEN_PROG_FFS_BUILD_COD_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -132,10 +136,9 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 183 "cod/cod.y" /* yacc.c:1909  */
+#line 185 "cod/cod.y"
 
     lx_info info;
     sm_ref reference;
@@ -143,9 +146,9 @@ union YYSTYPE
     sm_list list;
     char *string;
 
-#line 147 "/home/eisen/prog/GTkorvo/build_area/ffs/ub18-64/cod.tab.h" /* yacc.c:1909  */
-};
+#line 150 "/home/eisen/prog/ffs/build/cod.tab.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -156,4 +159,4 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_HOME_EISEN_PROG_GTKORVO_BUILD_AREA_FFS_UB18_64_COD_TAB_H_INCLUDED  */
+#endif /* !YY_YY_HOME_EISEN_PROG_FFS_BUILD_COD_TAB_H_INCLUDED  */
