@@ -16,9 +16,9 @@
 # 	$ cd /path/to/adios2-src/scripts/docker/images
 # 	$ docker build -f ubuntu/Dockerfile -t adios2:master-ubuntu1804
 #
-#   ADIOS v2.6.0 on Ubuntu 19.10
+#   ADIOS v2.7.0 on Ubuntu 19.10
 # 	$ cd /path/to/adios2-src/scripts/docker/images
-# 	$ docker build -f ubuntu/Dockerfile -t adios2:2.6.0-ubuntu1910 --build-arg ubuntu_ver=19.10 --build-arg adios_ver=v2.6.0
+# 	$ docker build -f ubuntu/Dockerfile -t adios2:2.7.0-ubuntu1910 --build-arg ubuntu_ver=19.10 --build-arg adios_ver=v2.7.0
 ###############################################################################
 
 ARG ubuntu_ver=18.04
