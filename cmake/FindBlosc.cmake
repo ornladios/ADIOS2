@@ -27,7 +27,7 @@
 #                           as an environment variable.
 
 if(NOT BLOSC_FOUND)
-  if((NOT BLOSC_ROOT) AND (NOT (ENV{BLOSC_ROOT} STREQUAL "")))
+  if((NOT BLOSC_ROOT) AND (DEFINED ENV{BLOSC_ROOT}))
     set(BLOSC_ROOT "$ENV{BLOSC_ROOT}")
   endif()
   if(BLOSC_ROOT)
@@ -37,9 +37,14 @@ if(NOT BLOSC_FOUND)
       NO_DEFAULT_PATHS
     )
   endif()
+  if(WIN32) # uses a Unix-like library prefix on Windows
+    set(BLOSC_LIBRARY_OPTS
+      libblosc ${BLOSC_LIBRARY_OPTS}
+    )
+  endif()
 
   find_path(BLOSC_INCLUDE_DIR blosc.h ${BLOSC_INCLUDE_OPTS})
-  find_library(BLOSC_LIBRARY blosc ${BLOSC_LIBRARY_OPTS})
+  find_library(BLOSC_LIBRARY NAMES blosc ${BLOSC_LIBRARY_OPTS})
   if(BLOSC_INCLUDE_DIR)
     file(STRINGS ${BLOSC_INCLUDE_DIR}/blosc.h _ver_string
       REGEX [=[BLOSC_VERSION_STRING +"[^"]*"]=]
