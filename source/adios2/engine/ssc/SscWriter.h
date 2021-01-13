@@ -64,6 +64,9 @@ private:
     void SyncWritePattern(bool finalStep = false);
     void SyncReadPattern();
     void MpiWait();
+    void EndStepFirst();
+    void EndStepConsequentFixed();
+    void EndStepConsequentFlexible();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
