@@ -84,17 +84,14 @@ configure_file(
   ${PROJECT_BINARY_DIR}/adios2_reorganize_wrapper
   @ONLY
 )
+
 if(ADIOS2_HAVE_HDF5)
   install(PROGRAMS ${PROJECT_BINARY_DIR}/adios2_reorganize_wrapper
-    RENAME adios2_reorganize_wrapper${ADIOS2_EXECUTABLE_SUFFIX}
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-  ) 
-  install(PROGRAMS adios_reorganize/bp2h5
     RENAME bp2h5${ADIOS2_EXECUTABLE_SUFFIX}
     DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
   if(ADIOS2_HAVE_MPI)
-    install(PROGRAMS adios_reorganize/bp2h5_mpi
+    install(PROGRAMS ${PROJECT_BINARY_DIR}/adios2_reorganize_wrapper
       RENAME bp2h5_mpi${ADIOS2_EXECUTABLE_SUFFIX}
       DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
