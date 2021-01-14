@@ -1,4 +1,4 @@
-name: GitHub Actions
+name: GitHub Actions (Build)
 
 on: 
   push: 
@@ -19,6 +19,7 @@ jobs:
       env:
         GH_YML_JOBNAME: ${{ matrix.jobname }}
         GH_YML_OS: Linux
+        GH_SHA_BEFORE: ${{ github.event.before }}
 
     strategy:
       fail-fast: false
@@ -73,6 +74,7 @@ jobs:
       env:
         GH_YML_JOBNAME: ${{ matrix.jobname }}
         GH_YML_OS: Linux
+        GH_SHA_BEFORE: ${{ github.event.before }}
 
     strategy:
       fail-fast: false
@@ -117,6 +119,7 @@ jobs:
       env:
         GH_YML_JOBNAME: ${{ matrix.jobname }}
         GH_YML_OS: Linux
+        GH_SHA_BEFORE: ${{ github.event.before }}
 
     strategy:
       fail-fast: false

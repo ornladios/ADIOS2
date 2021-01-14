@@ -1,5 +1,7 @@
 #!/bin/bash --login
 
+#set -x
+
 if [[ "${GITHUB_JOB}" =~ emu ]]
 then
   export CI_SITE_NAME="GitHub Actions (QEMU)"
@@ -81,6 +83,26 @@ export ADIOS2_IP=127.0.0.1
 echo "**********Env Begin**********"
 env | sort
 echo "**********Env End************"
+
+echo "**********Doc Check Begin************"
+git fetch origin
+if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]
+then
+  REF0=$(git merge-base --octopus origin/${GITHUB_BASE_REF} HEAD)
+else
+  REF0=${GH_SHA_BEFORE}
+fi
+echo "Cheching from ${REF0}..HEAD"
+git diff --name-only ${REF0}..HEAD
+NFILES=$(git diff --name-only ${REF0}..HEAD | wc -l)
+NNOTDOCS=$(git diff --name-only ${REF0}..HEAD | grep -v '^docs/' | wc -l)
+echo "${NFILES} files changed, ${NNOTDOCS} not in docs/."
+if [ ${NFILES} -ne 0 -a ${NNOTDOCS} -eq 0 ]
+then
+  echo "Only changes in docs/; skipping all other CI actions."
+  exit 0
+fi
+echo "**********Doc Check End**************"
 
 echo "**********CTest Begin**********"
 ${CTEST} --version
