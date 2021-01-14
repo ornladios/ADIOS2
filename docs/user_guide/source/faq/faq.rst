@@ -35,11 +35,48 @@ FAQs Answered
 Can I use the same library for MPI and non-MPI code?
 ----------------------------------------------------
 
-Short answer: No.
+Short answer: Yes, since version 2.6.0. 
 
-Long answer: This created conflicts in the past, as the MPI APIs were mocked in the sequential version.
-If you need "sequential" behavior with the MPI library, use ``MPI_COMM_SELF``.
-Always pass a communicator in the MPI version
+Long answer: One build of ADIOS can be used by both serial and parallel applications. Use the ``-s`` and ``-m`` flags in the ``adios2-config`` command. By default, or with the ``-m`` flag, the command gives the flags for a parallel build, which add ``-DADIOS2_USE_MPI`` to the compilation flags and include extra libaries containing the MPI implementations into the linker flags. The ``-s`` flag will omit these flags. For example, if ADIOS is installed into /opt/adios2, the flags for a Fortran application will look like these:
+
+    .. code-block:: bash
+
+        $ /opt/adios2/bin/adios2-config --fortran-flags
+        -DADIOS2_USE_MPI -I/opt/adios2/include/adios2/fortran
+        $ /opt/adios2/bin/adios2-config --fortran-flags -m
+        -DADIOS2_USE_MPI -I/opt/adios2/include/adios2/fortran
+        $ /opt/adios2/bin/adios2-config --fortran-flags -s
+        -I/opt/adios2/include/adios2/fortran
+
+        $ /opt/adios2/bin/adios2-config --fortran-libs
+        -Wl,-rpath,/opt/adios2/lib /opt/adios2/lib/libadios2_fortran_mpi.so.2.6.0 /opt/adios2/lib/libadios2_fortran.so.2.6.0 -Wl,-rpath-link,/opt/adios2/lib
+        $ /opt/adios2/bin/adios2-config --fortran-libs -s
+        -Wl,-rpath,/opt/adios2/lib /opt/adios2/lib/libadios2_fortran.so.2.6.0 -Wl,-rpath-link,/opt/adios2/lib
+
+If using cmake, there are different targets to build parallel
+
+    .. code-block:: cmake
+
+        find_package(MPI REQUIRED)
+        find_package(ADIOS2 REQUIRED)
+        #...
+        add_library(my_library src1.cxx src2.cxx)
+        target_link_libraries(my_library PRIVATE adios2::cxx11_mpi MPI::MPI_C)
+        #...
+        add_library(my_f_library src1.F90 src2.F90)
+        target_link_libraries(my_f_library PRIVATE adios2::fortran_mpi adios2::fortran MPI::MPI_Fortran)
+
+and serial applications:
+
+    .. code-block:: cmake
+
+        find_package(ADIOS2 REQUIRED)
+        #...
+        add_library(my_library src1.cxx src2.cxx)
+        target_link_libraries(my_library PRIVATE adios2::cxx11)
+        #...
+        add_library(my_f_library src1.F90 src2.F90)
+        target_link_libraries(my_f_library PRIVATE adios2::fortran)
 
 
 Can I use ADIOS 2 C++11 library with C++98 codes?

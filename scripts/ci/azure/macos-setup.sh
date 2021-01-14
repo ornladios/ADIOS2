@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set +x
+set -x
 
 echo "Setting up default XCode version"
 case "$SYSTEM_JOBNAME" in
@@ -18,12 +18,9 @@ case "$SYSTEM_JOBNAME" in
     ;;
 esac
 
-echo "Removing all existing brew package and update the formule"
-brew remove --force $(brew list)
+echo "Removing all existing brew package and update the formula"
+brew remove --force --ignore-dependencies $(brew list --formula)
 brew update
-
-echo "Installing Kitware CMake and Ninja"
-brew install cmake ninja
 
 echo "Installing GCC"
 brew install gcc
@@ -35,6 +32,9 @@ echo "Installing python and friends"
 brew install python numpy
 brew link --overwrite python
 brew link --overwrite numpy
+
+echo "Installing CMake and Ninja"
+brew install cmake ninja
 
 if [[ "$SYSTEM_JOBNAME" =~ .*openmpi.* ]]
 then
