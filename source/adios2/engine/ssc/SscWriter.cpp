@@ -28,8 +28,25 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 
     helper::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
     helper::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs",
                          m_OpenTimeoutSecs);
+
+    int providedMpiMode;
+    MPI_Query_thread(&providedMpiMode);
+    if (providedMpiMode != MPI_THREAD_MULTIPLE)
+    {
+        if (m_Threading == true)
+        {
+            m_Threading = false;
+            if (m_WriterRank == 0)
+            {
+                std::cout << "SSC Threading disabled as MPI is not initialized "
+                             "with multi-threads"
+                          << std::endl;
+            }
+        }
+    }
 
     SyncMpiPattern();
     m_WriterRank = m_Comm.Rank();
@@ -41,6 +58,11 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    if (m_Threading && m_EndStepThread.joinable())
+    {
+        m_EndStepThread.join();
+    }
 
     ++m_CurrentStep;
 
@@ -160,7 +182,14 @@ void SscWriter::EndStep()
 
     if (m_CurrentStep == 0)
     {
-        EndStepFirst();
+        if (m_Threading)
+        {
+            m_EndStepThread = std::thread(&SscWriter::EndStepFirst, this);
+        }
+        else
+        {
+            EndStepFirst();
+        }
     }
     else
     {
@@ -170,7 +199,15 @@ void SscWriter::EndStep()
         }
         else
         {
-            EndStepConsequentFlexible();
+            if (m_Threading)
+            {
+                m_EndStepThread =
+                    std::thread(&SscWriter::EndStepConsequentFlexible, this);
+            }
+            else
+            {
+                EndStepConsequentFlexible();
+            }
         }
     }
 }
@@ -391,6 +428,11 @@ void SscWriter::DoClose(const int transportIndex)
     {
         std::cout << "SscWriter::DoClose, World Rank " << m_StreamRank
                   << ", Writer Rank " << m_WriterRank << std::endl;
+    }
+
+    if (m_Threading && m_EndStepThread.joinable())
+    {
+        m_EndStepThread.join();
     }
 
     if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
