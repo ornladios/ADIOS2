@@ -52,8 +52,8 @@ private:
     MPI_Win m_MpiWin;
     MPI_Group m_MpiAllReadersGroup;
     MPI_Comm m_StreamComm;
-    std::string m_MpiMode = "twosided";
     std::vector<MPI_Request> m_MpiRequests;
+    std::thread m_EndStepThread;
 
     int m_StreamRank;
     int m_StreamSize;
@@ -64,6 +64,9 @@ private:
     void SyncWritePattern(bool finalStep = false);
     void SyncReadPattern();
     void MpiWait();
+    void EndStepFirst();
+    void EndStepConsequentFixed();
+    void EndStepConsequentFlexible();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
@@ -82,6 +85,8 @@ private:
 
     int m_Verbosity = 0;
     int m_OpenTimeoutSecs = 10;
+    bool m_Threading = false;
+    std::string m_MpiMode = "twosided";
 };
 
 } // end namespace engine

@@ -10,11 +10,14 @@ The SSC engine takes the following parameters:
 
 2. ``MpiMode``: Default **TwoSided**. MPI communication modes to use. Besides the default TwoSided mode using two sided MPI communications, MPI_Isend and MPI_Irecv, for data transport, there are four one sided MPI modes: OneSidedFencePush, OneSidedPostPush, OneSidedFencePull, and OneSidedPostPull. Modes with **Push** are based on the push model and use MPI_Put for data transport, while modes with **Pull** are based on the pull model and use MPI_Get. Modes with **Fence** use MPI_Win_fence for synchronization, while modes with **Post** use MPI_Win_start, MPI_Win_complete, MPI_Win_post and MPI_Win_wait.
 
+3. ``Threading``: Default **False**. SSC will use threads to hide the time cost of metadata manipulation and data transfer when this parameter is set to **true**. SSC will check if MPI is initialized with multi-thread enabled, and if not, then SSC will force this parameter to be **false**.
+
 =============================== ================== ================================================
  **Key**                         **Value Format**   **Default** and Examples
 =============================== ================== ================================================
- OpenTimeoutSecs                        integer             **10**, 2, 20, 200
+ OpenTimeoutSecs                        integer            **10**, 2, 20, 200
  MpiMode                                string             **TwoSided**, OneSidedFencePush, OneSidedPostPush, OneSidedFencePull, OneSidedPostPull
+ Threading                              bool               **false**, true
 =============================== ================== ================================================
 
 
