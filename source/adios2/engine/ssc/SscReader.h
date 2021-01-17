@@ -63,8 +63,11 @@ private:
     void SyncMpiPattern();
     bool SyncWritePattern();
     void SyncReadPattern();
-    void MpiWait();
+    void BeginStepConsequentFixed();
     void BeginStepFlexible(StepStatus &status);
+    void EndStepFixed();
+    void EndStepFirstFlexible();
+    void EndStepConsequentFlexible();
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \

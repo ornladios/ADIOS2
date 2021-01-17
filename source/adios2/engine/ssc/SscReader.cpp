@@ -43,7 +43,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 
 SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
 
-void SscReader::MpiWait()
+void SscReader::BeginStepConsequentFixed()
 {
     if (m_MpiMode == "twosided")
     {
@@ -114,7 +114,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     }
     else
     {
-        MpiWait();
+        BeginStepConsequentFixed();
     }
 
     for (const auto &r : m_GlobalWritePattern)
@@ -269,6 +269,63 @@ void SscReader::PerformGets()
 
 size_t SscReader::CurrentStep() const { return m_CurrentStep; }
 
+void SscReader::EndStepFixed()
+{
+    if (m_CurrentStep == 0)
+    {
+        MPI_Win_free(&m_MpiWin);
+        SyncReadPattern();
+        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
+                       m_StreamComm, &m_MpiWin);
+    }
+    if (m_MpiMode == "twosided")
+    {
+        for (const auto &i : m_AllReceivingWriterRanks)
+        {
+            m_MpiRequests.emplace_back();
+            MPI_Irecv(m_Buffer.data() + i.second.first,
+                      static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
+                      m_StreamComm, &m_MpiRequests.back());
+        }
+    }
+    else if (m_MpiMode == "onesidedfencepush")
+    {
+        MPI_Win_fence(0, m_MpiWin);
+    }
+    else if (m_MpiMode == "onesidedpostpush")
+    {
+        MPI_Win_post(m_MpiAllWritersGroup, 0, m_MpiWin);
+    }
+    else if (m_MpiMode == "onesidedfencepull")
+    {
+        MPI_Win_fence(0, m_MpiWin);
+        for (const auto &i : m_AllReceivingWriterRanks)
+        {
+            MPI_Get(m_Buffer.data() + i.second.first,
+                    static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
+                    static_cast<int>(i.second.second), MPI_CHAR, m_MpiWin);
+        }
+    }
+    else if (m_MpiMode == "onesidedpostpull")
+    {
+        MPI_Win_start(m_MpiAllWritersGroup, 0, m_MpiWin);
+        for (const auto &i : m_AllReceivingWriterRanks)
+        {
+            MPI_Get(m_Buffer.data() + i.second.first,
+                    static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
+                    static_cast<int>(i.second.second), MPI_CHAR, m_MpiWin);
+        }
+    }
+}
+
+void SscReader::EndStepFirstFlexible()
+{
+    MPI_Win_free(&m_MpiWin);
+    SyncReadPattern();
+}
+
+void SscReader::EndStepConsequentFlexible() { MPI_Win_free(&m_MpiWin); }
+
 void SscReader::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -284,58 +341,17 @@ void SscReader::EndStep()
 
     if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
     {
-        if (m_CurrentStep == 0)
-        {
-            MPI_Win_free(&m_MpiWin);
-            SyncReadPattern();
-            MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
-                           m_StreamComm, &m_MpiWin);
-        }
-        if (m_MpiMode == "twosided")
-        {
-            for (const auto &i : m_AllReceivingWriterRanks)
-            {
-                m_MpiRequests.emplace_back();
-                MPI_Irecv(m_Buffer.data() + i.second.first,
-                          static_cast<int>(i.second.second), MPI_CHAR, i.first,
-                          0, m_StreamComm, &m_MpiRequests.back());
-            }
-        }
-        else if (m_MpiMode == "onesidedfencepush")
-        {
-            MPI_Win_fence(0, m_MpiWin);
-        }
-        else if (m_MpiMode == "onesidedpostpush")
-        {
-            MPI_Win_post(m_MpiAllWritersGroup, 0, m_MpiWin);
-        }
-        else if (m_MpiMode == "onesidedfencepull")
-        {
-            MPI_Win_fence(0, m_MpiWin);
-            for (const auto &i : m_AllReceivingWriterRanks)
-            {
-                MPI_Get(m_Buffer.data() + i.second.first,
-                        static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
-                        static_cast<int>(i.second.second), MPI_CHAR, m_MpiWin);
-            }
-        }
-        else if (m_MpiMode == "onesidedpostpull")
-        {
-            MPI_Win_start(m_MpiAllWritersGroup, 0, m_MpiWin);
-            for (const auto &i : m_AllReceivingWriterRanks)
-            {
-                MPI_Get(m_Buffer.data() + i.second.first,
-                        static_cast<int>(i.second.second), MPI_CHAR, i.first, 0,
-                        static_cast<int>(i.second.second), MPI_CHAR, m_MpiWin);
-            }
-        }
+        EndStepFixed();
     }
     else
     {
-        MPI_Win_free(&m_MpiWin);
         if (m_CurrentStep == 0)
         {
-            SyncReadPattern();
+            EndStepFirstFlexible();
+        }
+        else
+        {
+            EndStepConsequentFlexible();
         }
     }
 
