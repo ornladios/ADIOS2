@@ -31,6 +31,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 
     helper::GetParameter(m_IO.m_Parameters, "MpiMode", m_MpiMode);
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
     helper::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs",
                          m_OpenTimeoutSecs);
 
@@ -105,9 +106,15 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
     {
-        StepStatus stepStatus;
-        BeginStepFlexible(stepStatus);
-        if (stepStatus == StepStatus::EndOfStream)
+        if (m_Threading && m_EndStepThread.joinable())
+        {
+            m_EndStepThread.join();
+        }
+        else
+        {
+            BeginStepFlexible(m_StepStatus);
+        }
+        if (m_StepStatus == StepStatus::EndOfStream)
         {
             return StepStatus::EndOfStream;
         }
@@ -326,6 +333,18 @@ void SscReader::EndStepFirstFlexible()
 
 void SscReader::EndStepConsequentFlexible() { MPI_Win_free(&m_MpiWin); }
 
+void SscReader::EndBeginStepFirstFlexible()
+{
+    EndStepFirstFlexible();
+    BeginStepFlexible(m_StepStatus);
+}
+
+void SscReader::EndBeginStepConsequentFlexible()
+{
+    EndStepConsequentFlexible();
+    BeginStepFlexible(m_StepStatus);
+}
+
 void SscReader::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -347,11 +366,27 @@ void SscReader::EndStep()
     {
         if (m_CurrentStep == 0)
         {
-            EndStepFirstFlexible();
+            if (m_Threading)
+            {
+                m_EndStepThread =
+                    std::thread(&SscReader::EndBeginStepFirstFlexible, this);
+            }
+            else
+            {
+                EndStepFirstFlexible();
+            }
         }
         else
         {
-            EndStepConsequentFlexible();
+            if (m_Threading)
+            {
+                m_EndStepThread = std::thread(
+                    &SscReader::EndBeginStepConsequentFlexible, this);
+            }
+            else
+            {
+                EndStepConsequentFlexible();
+            }
         }
     }
 
