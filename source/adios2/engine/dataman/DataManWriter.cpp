@@ -36,6 +36,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
     helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
+    helper::GetParameter(m_IO.m_Parameters, "CombiningSteps", m_CombiningSteps);
 
     if (m_IPAddress.empty())
     {
@@ -140,34 +141,45 @@ void DataManWriter::EndStep()
         m_Serializer.PutAttributes(m_IO);
     }
 
-    m_Serializer.AttachAttributesToLocalPack();
-    const auto buffer = m_Serializer.GetLocalPack();
-    if (buffer->size() > m_SerializerBufferSize)
-    {
-        m_SerializerBufferSize = buffer->size();
-    }
+    ++m_CombinedSteps;
 
-    if (m_MonitorActive)
+    if (m_CombinedSteps == m_CombiningSteps)
     {
-        m_Monitor.BeginTransport(m_CurrentStep);
-    }
-
-    if (m_DoubleBuffer || m_TransportMode == "reliable")
-    {
-        PushBufferQueue(buffer);
+        m_CombinedSteps = 0;
+        m_Serializer.AttachAttributesToLocalPack();
+        const auto buffer = m_Serializer.GetLocalPack();
+        if (buffer->size() > m_SerializerBufferSize)
+        {
+            m_SerializerBufferSize = buffer->size();
+        }
+        if (m_MonitorActive)
+        {
+            m_Monitor.BeginTransport(m_CurrentStep);
+        }
+        if (m_DoubleBuffer || m_TransportMode == "reliable")
+        {
+            PushBufferQueue(buffer);
+        }
+        else
+        {
+            m_Publisher.Send(buffer);
+            if (m_MonitorActive)
+            {
+                m_Monitor.EndTransport();
+            }
+        }
+        if (m_MonitorActive)
+        {
+            m_Monitor.EndStep(m_CurrentStep);
+        }
     }
     else
     {
-        m_Publisher.Send(buffer);
         if (m_MonitorActive)
         {
-            m_Monitor.EndTransport();
+            m_Monitor.BeginTransport(m_CurrentStep);
+            m_Monitor.EndStep(m_CurrentStep);
         }
-    }
-
-    if (m_MonitorActive)
-    {
-        m_Monitor.EndStep(m_CurrentStep);
     }
 
     if (m_Verbosity >= 10)
