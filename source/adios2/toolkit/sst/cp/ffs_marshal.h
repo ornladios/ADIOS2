@@ -56,6 +56,7 @@ typedef struct FFSVarRec
     size_t DimCount;
     int Type;
     int ElementSize;
+    void *MinVarInfo;
     size_t *GlobalDims;
     size_t *PerWriterBlockStart;
     size_t *PerWriterBlockCount;

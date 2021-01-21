@@ -1988,10 +1988,11 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             }
             if (!VarRec->Variable)
             {
+                VarRec->MinVarInfo = NULL;
                 VarRec->Variable = Stream->ArraySetupUpcall(
                     Stream->SetupUpcallReader, VarRec->VarName, VarRec->Type,
                     meta_base->Dims, meta_base->Shape, meta_base->Offsets,
-                    meta_base->Count);
+                    meta_base->Count, &VarRec->MinVarInfo);
             }
             VarRec->DimCount = meta_base->Dims;
             VarRec->PerWriterBlockCount[WriterRank] =
@@ -2013,8 +2014,13 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                 size_t *Offsets = NULL;
                 if (meta_base->Offsets)
                     Offsets = meta_base->Offsets + (i * meta_base->Dims);
+                void *Variable = VarRec->Variable;
+                if (VarRec->MinVarInfo)
+                {
+                    Variable = VarRec->MinVarInfo;
+                }
                 Stream->ArrayBlocksInfoUpcall(
-                    Stream->SetupUpcallReader, VarRec->Variable, VarRec->Type,
+                    Stream->SetupUpcallReader, Variable, VarRec->Type,
                     WriterRank, meta_base->Dims, meta_base->Shape, Offsets,
                     meta_base->Count);
             }

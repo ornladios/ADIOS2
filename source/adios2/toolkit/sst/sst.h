@@ -123,7 +123,7 @@ typedef void (*AttrSetupUpcallFunc)(void *Reader, const char *Name,
 typedef void *(*ArraySetupUpcallFunc)(void *Reader, const char *Name,
                                       const int Type, int DimsCount,
                                       size_t *Shape, size_t *Start,
-                                      size_t *Count);
+                                      size_t *Count, void **MinVarInfoP);
 typedef void (*ArrayBlocksInfoUpcallFunc)(void *Reader, void *Variable,
                                           const int Type, int WriterRank,
                                           int DimsCount, size_t *Shape,

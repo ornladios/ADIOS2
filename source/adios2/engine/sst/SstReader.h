@@ -49,6 +49,7 @@ public:
     void EndStep();
     void PerformGets();
     void Flush(const int transportIndex = -1) final;
+    MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
 
 private:
     template <class T>
@@ -76,6 +77,7 @@ private:
 
     struct _SstParams Params;
 
+    std::unordered_map<const VariableBase *, MinVarInfo *> m_InfoMap;
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;                              \
