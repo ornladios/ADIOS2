@@ -77,7 +77,8 @@ private:
 
     struct _SstParams Params;
 
-    std::unordered_map<const VariableBase *, MinVarInfo *> m_InfoMap;
+    std::unordered_map<const VariableBase *, std::unique_ptr<MinVarInfo>>
+        m_InfoMap;
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;                              \

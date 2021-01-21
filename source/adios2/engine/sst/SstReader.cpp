@@ -236,7 +236,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             adios2::DataType Type = (adios2::DataType)type;
             class SstReader::SstReader *Reader =
                 reinterpret_cast<class SstReader::SstReader *>(reader);
-            struct MinVarInfo *MV = new MinVarInfo(DimCount, Shape);
+            std::unique_ptr<MinVarInfo> MV(new MinVarInfo(DimCount, Shape));
             /*
              * setup shape of array variable as global (I.E. Count == Shape,
              * Start == 0)
@@ -269,8 +269,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         Variable<T> *variable = &(Reader->m_IO.DefineVariable<T>(              \
             variableName, VecShape, VecStart, VecCount));                      \
         variable->m_AvailableStepsCount = 1;                                   \
-        Reader->m_InfoMap.emplace(variable, MV);                               \
-        *MinVarInfoP = (void *)MV;                                             \
+        Reader->m_InfoMap[variable] = std::move(MV);                           \
+        *MinVarInfoP = (void *)&(*(Reader->m_InfoMap[variable]));              \
         return (void *)variable;                                               \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -302,7 +302,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     static int UseMin = -1;
     if (UseMin == -1)
     {
-        if (getenv("MinBlocksInfo") == NULL)
+        if (getenv("OldBlocksInfo") == NULL)
         {
             UseMin = 0;
         }
@@ -702,7 +702,7 @@ Engine::MinVarInfo *SstReader::MinBlocksInfo(const VariableBase &Var,
     if (it == m_InfoMap.end())
         return nullptr;
     else
-        return it->second;
+        return &(*it->second);
 }
 
 #define declare_type(T)                                                        \
