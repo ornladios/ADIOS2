@@ -284,7 +284,6 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             std::vector<size_t> VecShape;
             std::vector<size_t> VecStart;
             std::vector<size_t> VecCount;
-            adios2::DataType Type = (adios2::DataType)type;
             struct MinBlockInfo MBI;
             class SstReader::SstReader *Reader =
                 reinterpret_cast<class SstReader::SstReader *>(reader);
