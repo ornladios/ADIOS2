@@ -293,7 +293,7 @@ if(Python_FOUND)
 endif()
 
 # Even if no python support, we still want the interpreter for tests
-if(NOT Python_Interpreter_FOUND)
+if(BUILD_TESTING AND NOT Python_Interpreter_FOUND)
   find_package(Python REQUIRED COMPONENTS Interpreter)
 endif()
 
