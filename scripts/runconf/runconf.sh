@@ -46,7 +46,7 @@ cmake -DCMAKE_INSTALL_PREFIX=${PWD}/install \
           -DBUILD_SHARED_LIBS=ON \
           -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
           -DCMAKE_BUILD_TYPE=Release \
-          -DADIOS2_BUILD_TESTING=${VALUE} \
+          -DBUILD_TESTING=${VALUE} \
           -DADIOS2_BUILD_EXAMPLES=${VALUE} \
           -DADIOS2_USE_Endian_Reverse=OFF \
           ${ADIOS2_SOURCE}
