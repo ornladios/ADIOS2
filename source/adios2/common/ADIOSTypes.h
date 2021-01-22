@@ -387,6 +387,7 @@ constexpr char compressor[] = "compressor";
 constexpr char clevel[] = "clevel";
 constexpr char doshuffle[] = "doshuffle";
 constexpr char blocksize[] = "blocksize";
+constexpr char threshold[] = "threshold";
 }
 
 namespace value
