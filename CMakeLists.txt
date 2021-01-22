@@ -114,6 +114,8 @@ if((NOT BUILD_SHARED_LIBS) AND (NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE))
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+include(CTest)
+
 adios_option(Blosc     "Enable support for Blosc transforms" AUTO)
 adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
@@ -222,22 +224,11 @@ endif()
 #------------------------------------------------------------------------------#
 # Testing
 #------------------------------------------------------------------------------#
-if(DEFINED BUILD_TESTING)
-  set(ADIOS2_BUILD_TESTING_DEFAULT ${BUILD_TESTING})
-else()
-  set(ADIOS2_BUILD_TESTING_DEFAULT ON)
-endif()
-unset(BUILD_TESTING)
-option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree" 
-  ${ADIOS2_BUILD_TESTING_DEFAULT})
-
 cmake_dependent_option(ADIOS2_RUN_MPI_MPMD_TESTS
   "Enable the parallel MPMD tests" ON
-  "ADIOS2_BUILD_TESTING;ADIOS2_HAVE_MPI" OFF)
+  "BUILD_TESTING;ADIOS2_HAVE_MPI" OFF)
 mark_as_advanced(ADIOS2_RUN_MPI_MPMD_TESTS)
 
-include(CTest)
-set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})
 if(BUILD_TESTING)
   find_program(DIFF_EXECUTABLE diff)
   if(DIFF_EXECUTABLE)

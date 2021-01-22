@@ -68,7 +68,7 @@ if [ `hostname | cut -c 1-5` == "titan" ]; then
           -DADIOS2_USE_Python=OFF \
           -DADIOS2_BUILD_EXAMPLES_EXPERIMENTAL=OFF \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-          -DADIOS2_BUILD_TESTING=OFF \
+          -DBUILD_TESTING=OFF \
           ${EXTERNAL_OPTS} \
           ${SRCDIR}
 
@@ -118,7 +118,7 @@ elif [ `hostname -f | cut -c 1-9` == "summitdev" ]; then
           -DADIOS2_USE_Python=OFF \
           -DADIOS2_BUILD_EXAMPLES_EXPERIMENTAL=OFF \
           -DCMAKE_BUILD_TYPE=Debug \
-          -DADIOS2_BUILD_TESTING=ON \
+          -DBUILD_TESTING=ON \
           -DADIOS2_USE_DataMan=OFF \
           ${EXTERNAL_OPTS} \
           ${SRCDIR}
@@ -156,7 +156,7 @@ elif [ `hostname -f | cut -c 1-4` == "rhea" ]; then
           -DADIOS2_USE_SST=OFF \
           -DADIOS2_BUILD_EXAMPLES_EXPERIMENTAL=OFF \
           -DCMAKE_BUILD_TYPE=Debug \
-          -DADIOS2_BUILD_TESTING=ON \
+          -DBUILD_TESTING=ON \
           -DADIOS2_USE_DataMan=OFF \
           ${EXTERNAL_OPTS} \
           ${SRCDIR}
