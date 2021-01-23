@@ -117,7 +117,7 @@ DataManWriter::~DataManWriter()
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     ++m_CurrentStep;
-    if (m_CombiningSteps <= m_CombinedSteps)
+    if (m_CombinedSteps == 0)
     {
         m_Serializer.NewWriterBuffer(m_SerializerBufferSize);
     }
@@ -218,9 +218,30 @@ void DataManWriter::DoClose(const int transportIndex)
 {
     if (m_CombinedSteps != m_CombiningSteps)
     {
-        m_CombinedSteps = m_CombiningSteps;
-        EndStep();
+        m_Serializer.AttachAttributesToLocalPack();
+        const auto buffer = m_Serializer.GetLocalPack();
+        if (buffer->size() > m_SerializerBufferSize)
+        {
+            m_SerializerBufferSize = buffer->size();
+        }
+
+        if (m_DoubleBuffer || m_TransportMode == "reliable")
+        {
+            PushBufferQueue(buffer);
+        }
+        else
+        {
+            m_Publisher.Send(buffer);
+            if (m_MonitorActive)
+            {
+                for (int i = 0; i < m_CombiningSteps; ++i)
+                {
+                    m_Monitor.EndTransport();
+                }
+            }
+        }
     }
+
     nlohmann::json endSignal;
     endSignal["FinalStep"] = static_cast<int64_t>(m_CurrentStep);
     std::string s = endSignal.dump() + '\0';
