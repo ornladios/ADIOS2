@@ -121,7 +121,7 @@ void ZmqReqRep::SendReply(const void *reply, const size_t size)
 }
 
 std::shared_ptr<std::vector<char>>
-ZmqReqRep::Request(const void *request, const size_t size,
+ZmqReqRep::Request(const char *request, const size_t size,
                    const std::string &address)
 {
     auto reply = std::make_shared<std::vector<char>>();
@@ -183,7 +183,7 @@ ZmqReqRep::Request(const void *request, const size_t size,
     return reply;
 }
 
-std::shared_ptr<std::vector<char>> ZmqReqRep::Request(const void *request,
+std::shared_ptr<std::vector<char>> ZmqReqRep::Request(const char *request,
                                                       const size_t size)
 {
     auto reply = std::make_shared<std::vector<char>>();
