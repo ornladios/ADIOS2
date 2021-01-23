@@ -148,7 +148,7 @@ void DataManWriter::EndStep()
 
     ++m_CombinedSteps;
 
-    if (m_CombinedSteps == m_CombiningSteps)
+    if (m_CombinedSteps >= m_CombiningSteps)
     {
         m_CombinedSteps = 0;
         m_Serializer.AttachAttributesToLocalPack();
@@ -216,6 +216,11 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void DataManWriter::DoClose(const int transportIndex)
 {
+    if (m_CombinedSteps != m_CombiningSteps)
+    {
+        m_CombinedSteps = m_CombiningSteps;
+        EndStep();
+    }
     nlohmann::json endSignal;
     endSignal["FinalStep"] = static_cast<int64_t>(m_CurrentStep);
     std::string s = endSignal.dump() + '\0';
