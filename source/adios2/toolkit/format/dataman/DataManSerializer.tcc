@@ -137,24 +137,6 @@ void DataManSerializer::PutData(
         metaj["E"] = m_IsLittleEndian;
     }
 
-    for (const auto &op : ops)
-    {
-        const auto opName = op.Op->m_Type;
-        if (opName == "zfp" or opName == "bzip2" or opName == "sz")
-        {
-            /*
-            m_CompressionParams[variable.m_Name]["CompressionMethod"] =
-                opName;
-            for (const auto &p : op.Parameters)
-            {
-                m_CompressionParams[variable.m_Name]
-                    [opName + ":" + p.first] = p.second;
-            }
-            break;
-            */
-        }
-    }
-
     size_t datasize = 0;
     bool compressed = false;
     std::string compressionMethod;

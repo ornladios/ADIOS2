@@ -108,12 +108,12 @@ void DataManMonitor::EndTransport()
     {
         auto latency = std::chrono::duration_cast<std::chrono::microseconds>(
                            (std::chrono::system_clock::now() -
-                            m_TransportTimers.back().second))
+                            m_TransportTimers.front().second))
                            .count();
         if (m_Verbose)
         {
             std::lock_guard<std::mutex> l(m_PrintMutex);
-            std::cout << "Step " << m_TransportTimers.back().first
+            std::cout << "Step " << m_TransportTimers.front().first
                       << ", Latency milliseconds "
                       << static_cast<double>(latency) / 1000.0 << std::endl;
         }

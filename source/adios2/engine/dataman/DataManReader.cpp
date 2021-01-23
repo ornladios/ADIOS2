@@ -166,7 +166,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
 
     m_CurrentStepMetadata = m_Serializer.GetEarliestLatestStep(
-        m_CurrentStep, m_PublisherAddresses.size(), timeout, true);
+        m_CurrentStep, m_PublisherAddresses.size(), timeout, false);
 
     if (m_CurrentStepMetadata == nullptr)
     {
