@@ -216,7 +216,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void DataManWriter::DoClose(const int transportIndex)
 {
-    if (m_CombinedSteps != m_CombiningSteps)
+    if (m_CombinedSteps < m_CombiningSteps && m_CombinedSteps > 0)
     {
         m_Serializer.AttachAttributesToLocalPack();
         const auto buffer = m_Serializer.GetLocalPack();
