@@ -27,8 +27,6 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
 
-    m_Serializer.NewWriterBuffer(m_SerializerBufferSize);
-
     helper::GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);
     helper::GetParameter(m_IO.m_Parameters, "Port", m_Port);
     helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
