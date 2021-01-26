@@ -30,6 +30,7 @@ public:
     void BeginTransport(size_t step);
     void EndTransport();
     void AddBytes(size_t bytes);
+    void SetAverageSteps(size_t steps);
 
 private:
     using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
@@ -43,7 +44,7 @@ private:
 
     std::mutex m_PrintMutex;
 
-    size_t m_AverageSteps = 10;
+    size_t m_AverageSteps = 50;
     int64_t m_CurrentStep = -1;
 
     double m_TotalTime;

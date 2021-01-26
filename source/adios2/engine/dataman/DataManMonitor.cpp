@@ -18,6 +18,8 @@ namespace core
 namespace engine
 {
 
+void DataManMonitor::SetAverageSteps(size_t step) { m_AverageSteps = step; }
+
 void DataManMonitor::BeginStep(size_t step)
 {
     if (step == 0)
@@ -47,15 +49,15 @@ void DataManMonitor::EndStep(size_t step)
 {
     m_StepTimers.push(std::chrono::system_clock::now());
 
-    if (m_StepTimers.size() > m_AverageSteps)
+    while (m_StepTimers.size() > m_AverageSteps)
     {
         m_StepTimers.pop();
     }
-    if (m_TotalBytes.size() > m_AverageSteps)
+    while (m_TotalBytes.size() > m_AverageSteps)
     {
         m_TotalBytes.pop();
     }
-    if (m_StepBytes.size() > m_AverageSteps)
+    while (m_StepBytes.size() > m_AverageSteps)
     {
         m_StepBytes.pop();
     }

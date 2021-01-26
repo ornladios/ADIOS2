@@ -38,6 +38,18 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
     helper::GetParameter(m_IO.m_Parameters, "CombiningSteps", m_CombiningSteps);
 
+    if (m_MonitorActive)
+    {
+        if (m_CombiningSteps < 20)
+        {
+            m_Monitor.SetAverageSteps(40);
+        }
+        else
+        {
+            m_Monitor.SetAverageSteps(m_CombiningSteps * 2);
+        }
+    }
+
     if (m_IPAddress.empty())
     {
         throw(std::invalid_argument("IP address not specified"));
