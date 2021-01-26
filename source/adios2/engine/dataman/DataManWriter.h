@@ -49,6 +49,8 @@ private:
     bool m_DoubleBuffer = false;
     std::string m_TransportMode = "fast";
     bool m_MonitorActive = false;
+    int m_CombiningSteps = 1;
+    int m_CombinedSteps = 0;
 
     std::string m_AllAddresses;
     std::string m_PublisherAddress;
