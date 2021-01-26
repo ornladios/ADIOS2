@@ -695,11 +695,14 @@ extern int SstFFSWriterBeginStep(SstStream Stream, int mode,
  */
 void NO_SANITIZE_THREAD SstReaderInitFFSCallback(
     SstStream Stream, void *Reader, VarSetupUpcallFunc VarCallback,
-    ArraySetupUpcallFunc ArrayCallback, AttrSetupUpcallFunc AttrCallback,
+    ArraySetupUpcallFunc ArrayCallback,
+    MinArraySetupUpcallFunc MinArrayCallback, AttrSetupUpcallFunc AttrCallback,
     ArrayBlocksInfoUpcallFunc BlocksInfoCallback)
 {
     Stream->VarSetupUpcall = VarCallback;
     Stream->ArraySetupUpcall = ArrayCallback;
+    printf("Minarraycallback is %p\n", MinArrayCallback);
+    Stream->MinArraySetupUpcall = MinArrayCallback;
     Stream->AttrSetupUpcall = AttrCallback;
     Stream->ArrayBlocksInfoUpcall = BlocksInfoCallback;
     Stream->SetupUpcallReader = Reader;
@@ -742,6 +745,44 @@ extern int SstFFSGetDeferred(SstStream Stream, void *Variable, const char *Name,
         Info->PendingVarRequests = Req;
         return 1; // Later Sync needed
     }
+}
+
+extern void *SstFFSGetBlocksInfo(SstStream Stream, void *Variable)
+{
+    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    int GetFromWriter = 0;
+    FFSVarRec VarRec = LookupVarByKey(Stream, Variable);
+    MetaArrayRec *meta_base =
+        (MetaArrayRec *)(((char *)Info->MetadataBaseAddrs[0]) +
+                         VarRec->PerWriterMetaFieldOffset[0]);
+    if (!Stream->MinArraySetupUpcall)
+        return NULL;
+
+    void *Ret = Stream->MinArraySetupUpcall(Stream->SetupUpcallReader,
+                                            meta_base->Dims, meta_base->Shape);
+    for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize;
+         WriterRank++)
+    {
+        meta_base =
+            (MetaArrayRec *)(((char *)Info->MetadataBaseAddrs[WriterRank]) +
+                             VarRec->PerWriterMetaFieldOffset[WriterRank]);
+        int ElementSize = VarRec->ElementSize;
+        int DimCount = VarRec->DimCount;
+        int Type = VarRec->Type;
+        void *IncomingData = VarRec->PerWriterIncomingData[WriterRank];
+        int FreeIncoming = 0;
+
+        for (int i = 0; i < VarRec->PerWriterBlockCount[WriterRank]; i++)
+        {
+            size_t *Offsets = NULL;
+            if (meta_base->Offsets)
+                Offsets = meta_base->Offsets + (i * meta_base->Dims);
+            Stream->ArrayBlocksInfoUpcall(
+                Stream->SetupUpcallReader, Ret, VarRec->Type, WriterRank,
+                meta_base->Dims, meta_base->Shape, Offsets, meta_base->Count);
+        }
+    }
+    return Ret;
 }
 
 extern int SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
@@ -1988,11 +2029,10 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             }
             if (!VarRec->Variable)
             {
-                VarRec->MinVarInfo = NULL;
                 VarRec->Variable = Stream->ArraySetupUpcall(
                     Stream->SetupUpcallReader, VarRec->VarName, VarRec->Type,
                     meta_base->Dims, meta_base->Shape, meta_base->Offsets,
-                    meta_base->Count, &VarRec->MinVarInfo);
+                    meta_base->Count);
             }
             VarRec->DimCount = meta_base->Dims;
             VarRec->PerWriterBlockCount[WriterRank] =
@@ -2009,20 +2049,32 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                     VarRec->PerWriterBlockStart[WriterRank] +
                     VarRec->PerWriterBlockCount[WriterRank];
             }
-            for (int i = 0; i < VarRec->PerWriterBlockCount[WriterRank]; i++)
+            static int UseMin = 1;
+            if (UseMin == -1)
             {
-                size_t *Offsets = NULL;
-                if (meta_base->Offsets)
-                    Offsets = meta_base->Offsets + (i * meta_base->Dims);
-                void *Variable = VarRec->Variable;
-                if (VarRec->MinVarInfo)
+                if (getenv("OldBlocksInfo") == NULL)
                 {
-                    Variable = VarRec->MinVarInfo;
+                    UseMin = 0;
                 }
-                Stream->ArrayBlocksInfoUpcall(
-                    Stream->SetupUpcallReader, Variable, VarRec->Type,
-                    WriterRank, meta_base->Dims, meta_base->Shape, Offsets,
-                    meta_base->Count);
+                else
+                {
+                    UseMin = 1;
+                }
+            }
+            if (!UseMin)
+            {
+                for (int i = 0; i < VarRec->PerWriterBlockCount[WriterRank];
+                     i++)
+                {
+                    size_t *Offsets = NULL;
+                    if (meta_base->Offsets)
+                        Offsets = meta_base->Offsets + (i * meta_base->Dims);
+                    void *Variable = VarRec->Variable;
+                    Stream->ArrayBlocksInfoUpcall(
+                        Stream->SetupUpcallReader, Variable, VarRec->Type,
+                        WriterRank, meta_base->Dims, meta_base->Shape, Offsets,
+                        meta_base->Count);
+                }
             }
         }
         else
@@ -2033,8 +2085,8 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                     Stream->SetupUpcallReader, VarRec->VarName, VarRec->Type,
                     field_data);
             }
-            VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
         }
+        VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
     }
 }
 
@@ -2106,6 +2158,7 @@ extern void SstFFSSetZFPParams(SstStream Stream, attr_list Attrs)
     }
 }
 
+/* GetDeferred calls return true if need later sync */
 extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
                           const int Type, size_t ElemSize, size_t DimCount,
                           const size_t *Shape, const size_t *Count,

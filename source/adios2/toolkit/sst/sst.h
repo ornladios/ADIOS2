@@ -123,15 +123,20 @@ typedef void (*AttrSetupUpcallFunc)(void *Reader, const char *Name,
 typedef void *(*ArraySetupUpcallFunc)(void *Reader, const char *Name,
                                       const int Type, int DimsCount,
                                       size_t *Shape, size_t *Start,
-                                      size_t *Count, void **MinVarInfoP);
+                                      size_t *Count);
+typedef void *(*MinArraySetupUpcallFunc)(void *Reader, int DimsCount,
+                                         size_t *Shape);
 typedef void (*ArrayBlocksInfoUpcallFunc)(void *Reader, void *Variable,
                                           const int Type, int WriterRank,
                                           int DimsCount, size_t *Shape,
                                           size_t *Start, size_t *Count);
-extern void SstReaderInitFFSCallback(
-    SstStream stream, void *Reader, VarSetupUpcallFunc VarCallback,
-    ArraySetupUpcallFunc ArrayCallback, AttrSetupUpcallFunc AttrCallback,
-    ArrayBlocksInfoUpcallFunc BlocksInfoCallback);
+extern void
+SstReaderInitFFSCallback(SstStream stream, void *Reader,
+                         VarSetupUpcallFunc VarCallback,
+                         ArraySetupUpcallFunc ArrayCallback,
+                         MinArraySetupUpcallFunc MinArraySetupUpcall,
+                         AttrSetupUpcallFunc AttrCallback,
+                         ArrayBlocksInfoUpcallFunc BlocksInfoCallback);
 
 /*
  *  Calls that support SST-external writer-side aggregation of metadata
@@ -163,6 +168,8 @@ extern int SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
                                   const char *Name, size_t DimCount,
                                   const int BlockID, const size_t *Count,
                                   void *Data);
+/* GetDeferred calls return true if need later sync */
+extern void *SstFFSGetBlocksInfo(SstStream Stream, void *Variable);
 
 extern SstStatusValue SstFFSPerformGets(SstStream Stream);
 

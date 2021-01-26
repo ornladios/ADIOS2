@@ -120,42 +120,42 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         return;
     };
 
-    auto arrayFFSCallback =
-        [](void *reader, const char *variableName, const int type, int DimCount,
-           size_t *Shape, size_t *Start, size_t *Count, void **MinVarInfoP) {
-            std::vector<size_t> VecShape;
-            std::vector<size_t> VecStart;
-            std::vector<size_t> VecCount;
-            adios2::DataType Type = (adios2::DataType)type;
-            class SstReader::SstReader *Reader =
-                reinterpret_cast<class SstReader::SstReader *>(reader);
-            /*
-             * setup shape of array variable as global (I.E. Count == Shape,
-             * Start == 0)
-             */
-            if (Shape)
+    auto arrayFFSCallback = [](void *reader, const char *variableName,
+                               const int type, int DimCount, size_t *Shape,
+                               size_t *Start, size_t *Count) {
+        std::vector<size_t> VecShape;
+        std::vector<size_t> VecStart;
+        std::vector<size_t> VecCount;
+        adios2::DataType Type = (adios2::DataType)type;
+        class SstReader::SstReader *Reader =
+            reinterpret_cast<class SstReader::SstReader *>(reader);
+        /*
+         * setup shape of array variable as global (I.E. Count == Shape,
+         * Start == 0)
+         */
+        if (Shape)
+        {
+            for (int i = 0; i < DimCount; i++)
             {
-                for (int i = 0; i < DimCount; i++)
-                {
-                    VecShape.push_back(Shape[i]);
-                    VecStart.push_back(0);
-                    VecCount.push_back(Shape[i]);
-                }
+                VecShape.push_back(Shape[i]);
+                VecStart.push_back(0);
+                VecCount.push_back(Shape[i]);
             }
-            else
+        }
+        else
+        {
+            VecShape = {};
+            VecStart = {};
+            for (int i = 0; i < DimCount; i++)
             {
-                VecShape = {};
-                VecStart = {};
-                for (int i = 0; i < DimCount; i++)
-                {
-                    VecCount.push_back(Count[i]);
-                }
+                VecCount.push_back(Count[i]);
             }
+        }
 
-            if (Type == adios2::DataType::Compound)
-            {
-                return (void *)NULL;
-            }
+        if (Type == adios2::DataType::Compound)
+        {
+            return (void *)NULL;
+        }
 #define declare_type(T)                                                        \
     else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
@@ -164,10 +164,10 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         variable->m_AvailableStepsCount = 1;                                   \
         return (void *)variable;                                               \
     }
-            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-            return (void *)NULL;
-        };
+        return (void *)NULL;
+    };
 
     auto arrayBlocksInfoCallback =
         [](void *reader, void *variable, const int type, int WriterRank,
@@ -227,57 +227,10 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             return;
         };
 
-    auto arrayMinFFSCallback =
-        [](void *reader, const char *variableName, const int type, int DimCount,
-           size_t *Shape, size_t *Start, size_t *Count, void **MinVarInfoP) {
-            std::vector<size_t> VecShape;
-            std::vector<size_t> VecStart;
-            std::vector<size_t> VecCount;
-            adios2::DataType Type = (adios2::DataType)type;
-            class SstReader::SstReader *Reader =
-                reinterpret_cast<class SstReader::SstReader *>(reader);
-            std::unique_ptr<MinVarInfo> MV(new MinVarInfo(DimCount, Shape));
-            /*
-             * setup shape of array variable as global (I.E. Count == Shape,
-             * Start == 0)
-             */
-            if (Shape)
-            {
-                for (int i = 0; i < DimCount; i++)
-                {
-                    VecShape.push_back(Shape[i]);
-                    VecStart.push_back(0);
-                    VecCount.push_back(Shape[i]);
-                }
-            }
-            else
-            {
-                VecShape = {};
-                VecStart = {};
-                for (int i = 0; i < DimCount; i++)
-                {
-                    VecCount.push_back(Count[i]);
-                }
-            }
-            if (Type == adios2::DataType::Compound)
-            {
-                return (void *)NULL;
-            }
-#define declare_type(T)                                                        \
-    else if (Type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Variable<T> *variable = &(Reader->m_IO.DefineVariable<T>(              \
-            variableName, VecShape, VecStart, VecCount));                      \
-        variable->m_AvailableStepsCount = 1;                                   \
-        Reader->m_InfoMap[variable] = std::move(MV);                           \
-        *MinVarInfoP = (void *)&(*(Reader->m_InfoMap[variable]));              \
-        return (void *)variable;                                               \
-    }
-            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-            return (void *)NULL;
-        };
-
+    auto MinArraySetupUpcall = [](void *reader, int DimCount, size_t *Shape) {
+        MinVarInfo *MV = new MinVarInfo(DimCount, Shape);
+        return (void *)MV;
+    };
     auto arrayMinBlocksInfoCallback =
         [](void *reader, void *MV, const int type, int WriterRank, int DimCount,
            size_t *Shape, size_t *Start, size_t *Count) {
@@ -299,7 +252,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             return;
         };
 
-    static int UseMin = -1;
+    static int UseMin = 1;
     if (UseMin == -1)
     {
         if (getenv("OldBlocksInfo") == NULL)
@@ -313,11 +266,11 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     }
     if (UseMin)
         SstReaderInitFFSCallback(m_Input, this, varFFSCallback,
-                                 arrayMinFFSCallback, attrFFSCallback,
-                                 arrayMinBlocksInfoCallback);
+                                 arrayFFSCallback, MinArraySetupUpcall,
+                                 attrFFSCallback, arrayMinBlocksInfoCallback);
     else
         SstReaderInitFFSCallback(m_Input, this, varFFSCallback,
-                                 arrayFFSCallback, attrFFSCallback,
+                                 arrayFFSCallback, NULL, attrFFSCallback,
                                  arrayBlocksInfoCallback);
 
     delete[] cstr;
@@ -698,11 +651,14 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
 Engine::MinVarInfo *SstReader::MinBlocksInfo(const VariableBase &Var,
                                              const size_t Step) const
 {
-    auto it = m_InfoMap.find(&Var);
-    if (it == m_InfoMap.end())
+    if (m_WriterMarshalMethod == SstMarshalBP)
+    {
         return nullptr;
+    }
     else
-        return &(*it->second);
+    {
+        return (Engine::MinVarInfo *)SstFFSGetBlocksInfo(m_Input, (void *)&Var);
+    }
 }
 
 #define declare_type(T)                                                        \
