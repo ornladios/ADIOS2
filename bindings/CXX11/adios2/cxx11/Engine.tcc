@@ -390,7 +390,10 @@ Engine::BlocksInfo(const Variable<T> variable, const size_t step) const
 
     if (minBlocksInfo)
     {
-        return ToBlocksInfo<T>(minBlocksInfo);
+        std::vector<typename Variable<T>::Info> Ret =
+            ToBlocksInfo<T>(minBlocksInfo);
+        delete minBlocksInfo;
+        return Ret;
     }
 
     const auto blocksInfo =
