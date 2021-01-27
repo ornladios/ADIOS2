@@ -205,8 +205,7 @@ struct _subformat_wire_format_1 {  /* 28 bytes for base */
 /*byte 22*/   unsigned char column_major_arrays;  /* false for C, true for Fortran */
 /*byte 23*/   unsigned char alignment;
 /*byte 24*/   UINT2 top_bytes_subformat_rep_length;  /* transmitted in net byte order */
-/*byte 26*/   unsigned char unused0_f1;
-/*byte 27*/   unsigned char unused1_f1;
+/*byte 26*/   UINT2 top_bytes_opt_info_offset;
 };
 
 struct _format_wire_format {
