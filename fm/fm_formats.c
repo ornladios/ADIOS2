@@ -1323,6 +1323,7 @@ int *super_rep_size;
     rep->f.f1.column_major_arrays = fmformat->column_major_arrays;
     rep->f.f1.alignment = fmformat->alignment;
     rep->f.f1.opt_info_offset = 0; /* will be set later */
+    rep->f.f1.top_bytes_opt_info_offset = 0; /* will be set later */
 
     string_base = (char *) rep;
 
@@ -1366,8 +1367,10 @@ int *super_rep_size;
 	while ((cur_offset & 0x3) != 0) {
 	    *(string_base + cur_offset++) = 0;
 	}
-	rep->f.f1.opt_info_offset = cur_offset;
+	rep->f.f1.opt_info_offset = cur_offset & 0xffff;
+	rep->f.f1.top_bytes_opt_info_offset = cur_offset >> 16;
 	if (byte_reversal) byte_swap((char*) &rep->f.f1.opt_info_offset, 2);
+	if (byte_reversal) byte_swap((char*) &rep->f.f1.top_bytes_opt_info_offset, 2);
 	info_base = cur_offset +string_base;
 	cur_offset += (opt_info_count + 1) *
 	    sizeof(struct _opt_info_wire_format);
@@ -1403,8 +1406,6 @@ int *super_rep_size;
     assert(cur_offset == rep_size);
     rep->f.f1.subformat_rep_length = htons(rep_size);
     rep->f.f1.top_bytes_subformat_rep_length = htons(rep_size>>16);
-    rep->f.f1.unused0_f1 = 0;
-    rep->f.f1.unused1_f1 = 0;
     *super_rep_size += rep_size;
     return (format_rep) super_rep;
 }
@@ -3494,9 +3495,8 @@ struct _subformat_wire_format *rep;
 
 	format->alignment = rep->f.f0.alignment;
 	format->column_major_arrays = rep->f.f0.column_major_arrays;
-	tmp = rep->f.f0.opt_info_offset;
+	tmp = rep->f.f1.opt_info_offset;
 	if (byte_reversal) byte_swap((char*)&tmp, 2);
-
 	if (tmp != 0) {
 	    offset = tmp;
 	    format->opt_info = malloc(sizeof(FMOptInfo));
@@ -3609,9 +3609,12 @@ struct _subformat_wire_format *rep;
 	format->column_major_arrays = rep->f.f1.column_major_arrays;
 	tmp = rep->f.f1.opt_info_offset;
 	if (byte_reversal) byte_swap((char*)&tmp, 2);
-
-	if (tmp != 0) {
-	    offset = tmp;
+	tmp2 = tmp;
+	tmp = rep->f.f1.top_bytes_opt_info_offset;
+	if (byte_reversal) byte_swap((char*)&tmp, 2);
+	tmp2 |= tmp << 16;
+	if (tmp2 != 0) {
+	    offset = tmp2;
 	    format->opt_info = malloc(sizeof(FMOptInfo));
 	    do {
 		memcpy(&tmp_info, offset + (char*) rep, sizeof(tmp_info));
