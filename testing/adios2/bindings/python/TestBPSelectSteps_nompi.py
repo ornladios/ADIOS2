@@ -14,7 +14,9 @@ import adios2
 
 TESTDATA_FILENAME = "steps_int32.bp"
 
+
 class TestAdiosSelectSteps(unittest.TestCase):
+
     def setUp(self):
         total_steps = 10
         with adios2.open(TESTDATA_FILENAME, "w") as fh:
@@ -36,7 +38,9 @@ class TestAdiosSelectSteps(unittest.TestCase):
         var.SetStepSelection([0, len(selected_steps)])
         data = np.zeros(len(selected_steps), dtype=np.int32)
         fh.Get(var, data, adios2.Mode.Sync)
-        self.assertTrue(all([data[i] == selected_steps[i] for i in range(len(selected_steps))]))
+        self.assertTrue(all([data[i] == selected_steps[i] for i in
+                             range(len(selected_steps))]))
+
 
 if __name__ == '__main__':
     unittest.main()
