@@ -15,6 +15,7 @@ endfunction()
 python_add_test(NAME Bindings.Python.HighLevelAPI.Serial SCRIPT TestHighLevelAPI.py)
 
 python_add_test(NAME Bindings.Python.BPWriteReadTypes.Serial SCRIPT TestBPWriteReadTypes_nompi.py)
+python_add_test(NAME Bindings.Python.BPSelectSteps.Serial SCRIPT TestBPSelectSteps_nompi.py)
 
 if(ADIOS2_HAVE_MPI)
   add_python_mpi_test(BPWriteReadTypes)
