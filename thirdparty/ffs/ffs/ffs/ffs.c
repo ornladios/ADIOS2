@@ -101,6 +101,7 @@ ensure_writev_room(estate s, int add_count)
 	    tmpl[j].iov_offset = (s->iovec)[j].iov_offset;
 	}
 	s->iovec = tmpl;
+	s->iovec_is_stack = 0;
     } else if ((s->malloc_vec_size != 0) &&
 	       (s->iovcnt >= s->malloc_vec_size - add_count)) {
 	(s->malloc_vec_size) *= 2;
@@ -280,6 +281,9 @@ FFSencode_internal(FFSBuffer b, FMFormat fmformat, void *data, int *buf_size, in
     }
     free_addr_list(&state);
     *buf_size = state.output_len;
+    if (!state.iovec_is_stack) {
+	free(state.iovec);
+    }
     return b->tmp_buffer;
 }
 
