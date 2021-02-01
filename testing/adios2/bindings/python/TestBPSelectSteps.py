@@ -8,7 +8,6 @@
 #  Created on: Jan 29, 2021
 #      Author: Dmitry Ganyushin ganyushindi@ornl.gov
 import unittest
-import shutil
 import numpy as np
 from mpi4py import MPI
 import adios2
@@ -34,10 +33,6 @@ class TestAdiosSelectSteps(unittest.TestCase):
                 fh.write("step", np.full((Nx), i, dtype=np.int32),
                          shape, start, count)
                 fh.end_step()
-
-    def tearDown(self):
-        if rank == 0:
-            shutil.rmtree(TESTDATA_FILENAME)
 
     def test_select_steps_reading_fullAPI(self):
         selected_steps = [3, 5, 7]
