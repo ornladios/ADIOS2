@@ -20,6 +20,15 @@ namespace engine
 
 void DataManMonitor::SetAverageSteps(size_t step) { m_AverageSteps = step; }
 
+void DataManMonitor::SetClockError(uint64_t roundLatency,
+                                   uint64_t remoteTimeBase)
+{
+    m_ClockError = std::chrono::duration_cast<std::chrono::milliseconds>(
+                       std::chrono::system_clock::now().time_since_epoch())
+                       .count() -
+                   remoteTimeBase - roundLatency / 2;
+}
+
 void DataManMonitor::BeginStep(size_t step)
 {
     if (step == 0)
@@ -31,7 +40,7 @@ void DataManMonitor::BeginStep(size_t step)
         m_StepTimers.push(std::chrono::system_clock::now());
     }
 
-    m_StepBytes.push(0);
+    m_StepBytes = 0;
 
     if (m_TotalBytes.empty())
     {
@@ -57,10 +66,6 @@ void DataManMonitor::EndStep(size_t step)
     {
         m_TotalBytes.pop();
     }
-    while (m_StepBytes.size() > m_AverageSteps)
-    {
-        m_StepBytes.pop();
-    }
 
     m_TotalTime = std::chrono::duration_cast<std::chrono::microseconds>(
                       (m_StepTimers.back() - m_InitialTimer))
@@ -85,7 +90,7 @@ void DataManMonitor::EndStep(size_t step)
         std::cout << "Step " << step << ", Total MBs "
                   << static_cast<double>(m_TotalBytes.back()) / 1000000.0
                   << ", Step MBs "
-                  << static_cast<double>(m_StepBytes.back()) / 1000000.0
+                  << static_cast<double>(m_StepBytes) / 1000000.0
                   << ", Total seconds "
                   << static_cast<double>(m_TotalTime) / 1000000.0 << ", "
                   << m_StepTimers.size() << " step seconds "
@@ -103,7 +108,7 @@ void DataManMonitor::BeginTransport(size_t step)
     m_TransportTimers.push({step, std::chrono::system_clock::now()});
 }
 
-void DataManMonitor::EndTransport()
+void DataManMonitor::EndTransport(uint64_t remoteTimeStamp)
 {
     std::lock_guard<std::mutex> l(m_TransportTimersMutex);
     if (!m_TransportTimers.empty())
@@ -112,6 +117,7 @@ void DataManMonitor::EndTransport()
                            (std::chrono::system_clock::now() -
                             m_TransportTimers.front().second))
                            .count();
+        m_TransportTimers.pop();
         if (m_Verbose)
         {
             std::lock_guard<std::mutex> l(m_PrintMutex);
@@ -119,14 +125,13 @@ void DataManMonitor::EndTransport()
                       << ", Latency milliseconds "
                       << static_cast<double>(latency) / 1000.0 << std::endl;
         }
-        m_TransportTimers.pop();
     }
 }
 
 void DataManMonitor::AddBytes(size_t bytes)
 {
     m_TotalBytes.back() += bytes;
-    m_StepBytes.back() += bytes;
+    m_StepBytes += bytes;
 }
 
 } // end namespace engine

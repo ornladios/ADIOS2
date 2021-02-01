@@ -46,17 +46,22 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     std::string address = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
     std::string request = "Address";
 
+    auto timeBeforeRequest = std::chrono::system_clock::now();
     auto reply =
         m_Requesters[0].Request(request.data(), request.size(), address);
+    auto timeAfterRequest = std::chrono::system_clock::now();
+    auto roundLatency = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            timeAfterRequest - timeBeforeRequest)
+                            .count();
 
-    auto start_time = std::chrono::system_clock::now();
+    auto startTime = std::chrono::system_clock::now();
     while (reply == nullptr or reply->empty())
     {
         reply =
             m_Requesters[0].Request(request.data(), request.size(), address);
-        auto now_time = std::chrono::system_clock::now();
+        auto nowTime = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            now_time - start_time);
+            nowTime - startTime);
         if (duration.count() > m_Timeout)
         {
             m_InitFailed = true;
@@ -68,6 +73,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
         addJson["PublisherAddresses"].get<std::vector<std::string>>();
     m_ReplierAddresses =
         addJson["ReplierAddresses"].get<std::vector<std::string>>();
+    m_Monitor.SetClockError(roundLatency, addJson["TimeStamp"].get<uint64_t>());
 
     if (m_TransportMode == "fast")
     {

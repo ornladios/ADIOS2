@@ -89,6 +89,10 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     nlohmann::json addJson;
     addJson["PublisherAddresses"] = pubVec;
     addJson["ReplierAddresses"] = repVec;
+    addJson["TimeStamp"] =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
     m_AllAddresses = addJson.dump() + '\0';
 
     if (m_TransportMode == "fast")
