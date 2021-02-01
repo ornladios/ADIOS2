@@ -172,11 +172,6 @@ void DataManWriter::EndStep()
             m_SerializerBufferSize = buffer->size();
         }
 
-        if (m_MonitorActive)
-        {
-            m_Monitor.BeginTransport(m_CurrentStep);
-        }
-
         if (m_DoubleBuffer || m_TransportMode == "reliable")
         {
             PushBufferQueue(buffer);
@@ -184,20 +179,6 @@ void DataManWriter::EndStep()
         else
         {
             m_Publisher.Send(buffer);
-            if (m_MonitorActive)
-            {
-                for (int i = 0; i < m_CombiningSteps; ++i)
-                {
-                    m_Monitor.EndTransport();
-                }
-            }
-        }
-    }
-    else
-    {
-        if (m_MonitorActive)
-        {
-            m_Monitor.BeginTransport(m_CurrentStep);
         }
     }
 
@@ -246,13 +227,6 @@ void DataManWriter::DoClose(const int transportIndex)
         else
         {
             m_Publisher.Send(buffer);
-            if (m_MonitorActive)
-            {
-                for (int i = 0; i < m_CombiningSteps; ++i)
-                {
-                    m_Monitor.EndTransport();
-                }
-            }
         }
     }
 
@@ -328,13 +302,6 @@ void DataManWriter::PublishThread()
         if (buffer != nullptr && buffer->size() > 0)
         {
             m_Publisher.Send(buffer);
-            if (m_MonitorActive)
-            {
-                for (int i = 0; i < m_CombiningSteps; ++i)
-                {
-                    m_Monitor.EndTransport();
-                }
-            }
         }
     }
 }
@@ -369,10 +336,6 @@ void DataManWriter::ReplyThread()
                 {
                     m_Replier.SendReply(buffer);
                     ++m_SentSteps;
-                    if (m_MonitorActive)
-                    {
-                        m_Monitor.EndTransport();
-                    }
                 }
             }
         }

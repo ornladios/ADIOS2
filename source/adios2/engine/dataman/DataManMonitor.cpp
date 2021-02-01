@@ -102,32 +102,6 @@ void DataManMonitor::EndStep(size_t step)
     }
 }
 
-void DataManMonitor::BeginTransport(size_t step)
-{
-    std::lock_guard<std::mutex> l(m_TransportTimersMutex);
-    m_TransportTimers.push({step, std::chrono::system_clock::now()});
-}
-
-void DataManMonitor::EndTransport(uint64_t remoteTimeStamp)
-{
-    std::lock_guard<std::mutex> l(m_TransportTimersMutex);
-    if (!m_TransportTimers.empty())
-    {
-        auto latency = std::chrono::duration_cast<std::chrono::microseconds>(
-                           (std::chrono::system_clock::now() -
-                            m_TransportTimers.front().second))
-                           .count();
-        m_TransportTimers.pop();
-        if (m_Verbose)
-        {
-            std::lock_guard<std::mutex> l(m_PrintMutex);
-            std::cout << "Step " << m_TransportTimers.front().first
-                      << ", Latency milliseconds "
-                      << static_cast<double>(latency) / 1000.0 << std::endl;
-        }
-    }
-}
-
 void DataManMonitor::AddBytes(size_t bytes)
 {
     m_TotalBytes.back() += bytes;

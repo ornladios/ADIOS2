@@ -27,8 +27,6 @@ class DataManMonitor
 public:
     void BeginStep(size_t step);
     void EndStep(size_t step);
-    void BeginTransport(size_t step);
-    void EndTransport(uint64_t remoteTimeStamp = 0);
     void AddBytes(size_t bytes);
     void SetAverageSteps(size_t steps);
     void SetClockError(uint64_t roundLatency, uint64_t remoteTimeBase);
@@ -39,9 +37,6 @@ private:
     std::queue<TimePoint> m_StepTimers;
     std::queue<size_t> m_TotalBytes;
     size_t m_StepBytes;
-
-    std::queue<std::pair<size_t, TimePoint>> m_TransportTimers;
-    std::mutex m_TransportTimersMutex;
 
     std::mutex m_PrintMutex;
 
