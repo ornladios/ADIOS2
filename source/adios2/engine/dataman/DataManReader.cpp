@@ -35,79 +35,61 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
 
-    m_Requesters.emplace_back();
-    m_Requesters[0].OpenRequester(m_Timeout, m_ReceiverBufferSize);
-
     if (m_IPAddress.empty())
     {
         throw(std::invalid_argument(
             "IP address not specified in wide area staging"));
     }
-    std::string address = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
-    std::string request = "Address";
 
-    auto reply =
-        m_Requesters[0].Request(request.data(), request.size(), address);
+    std::string requesterAddress =
+        "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
+    std::string subscriberAddress =
+        "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + 1);
+    m_Requester.OpenRequester(requesterAddress, m_Timeout,
+                              m_ReceiverBufferSize);
 
-    auto start_time = std::chrono::system_clock::now();
+    auto timeBeforeRequest = std::chrono::system_clock::now();
+    auto reply = m_Requester.Request("Handshake", 9);
+    auto timeAfterRequest = std::chrono::system_clock::now();
+    auto roundLatency = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            timeAfterRequest - timeBeforeRequest)
+                            .count();
+
+    auto startTime = std::chrono::system_clock::now();
     while (reply == nullptr or reply->empty())
     {
-        reply =
-            m_Requesters[0].Request(request.data(), request.size(), address);
-        auto now_time = std::chrono::system_clock::now();
+        reply = m_Requester.Request("Handshake", 9);
+        auto nowTime = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            now_time - start_time);
+            nowTime - startTime);
+        roundLatency = duration.count() * 1000;
         if (duration.count() > m_Timeout)
         {
             m_InitFailed = true;
             return;
         }
     }
-    auto addJson = nlohmann::json::parse(*reply);
-    m_PublisherAddresses =
-        addJson["PublisherAddresses"].get<std::vector<std::string>>();
-    m_ReplierAddresses =
-        addJson["ReplierAddresses"].get<std::vector<std::string>>();
+    m_Monitor.SetClockError(roundLatency,
+                            *reinterpret_cast<uint64_t *>(reply->data()));
 
     if (m_TransportMode == "fast")
     {
-        for (const auto &address : m_PublisherAddresses)
-        {
-            m_Subscribers.emplace_back();
-            m_Subscribers.back().OpenSubscriber(address, m_ReceiverBufferSize);
-            m_SubscriberThreads.emplace_back(
-                std::thread(&DataManReader::SubscribeThread, this,
-                            std::ref(m_Subscribers.back())));
-        }
+        m_Subscriber.OpenSubscriber(subscriberAddress, m_ReceiverBufferSize);
+        m_SubscriberThread = std::thread(&DataManReader::SubscribeThread, this);
     }
     else if (m_TransportMode == "reliable")
     {
-        m_Requesters.clear();
-        for (const auto &address : m_ReplierAddresses)
-        {
-            m_Requesters.emplace_back();
-            m_Requesters.back().OpenRequester(address, m_Timeout,
-                                              m_ReceiverBufferSize);
-        }
     }
     else
     {
         throw(std::invalid_argument("unknown transport mode"));
     }
 
-    for (auto &requester : m_Requesters)
-    {
-        requester.Request("Ready", 5, address);
-    }
+    m_Requester.Request("Ready", 5);
 
     if (m_TransportMode == "reliable")
     {
-        for (const auto &address : m_ReplierAddresses)
-        {
-            m_RequesterThreads.emplace_back(
-                std::thread(&DataManReader::RequestThread, this,
-                            std::ref(m_Requesters.back())));
-        }
+        m_RequesterThread = std::thread(&DataManReader::RequestThread, this);
     }
 }
 
@@ -165,8 +147,8 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         return StepStatus::EndOfStream;
     }
 
-    m_CurrentStepMetadata = m_Serializer.GetEarliestLatestStep(
-        m_CurrentStep, m_PublisherAddresses.size(), timeout, false);
+    m_CurrentStepMetadata =
+        m_Serializer.GetEarliestLatestStep(m_CurrentStep, 1, timeout, false);
 
     if (m_CurrentStepMetadata == nullptr)
     {
@@ -234,11 +216,11 @@ void DataManReader::Flush(const int transportIndex) {}
 
 // PRIVATE
 
-void DataManReader::RequestThread(zmq::ZmqReqRep &requester)
+void DataManReader::RequestThread()
 {
     while (m_RequesterThreadActive)
     {
-        auto buffer = requester.Request("Step", 4);
+        auto buffer = m_Requester.Request("Step", 4);
         if (buffer != nullptr && buffer->size() > 0)
         {
             if (buffer->size() < 64)
@@ -254,15 +236,20 @@ void DataManReader::RequestThread(zmq::ZmqReqRep &requester)
                 }
             }
             m_Serializer.PutPack(buffer, m_DoubleBuffer);
+            auto timeStamps = m_Serializer.GetTimeStamps();
+            for (const auto &timeStamp : timeStamps)
+            {
+                m_Monitor.AddLatencyMilliseconds(timeStamp);
+            }
         }
     }
 }
 
-void DataManReader::SubscribeThread(zmq::ZmqPubSub &subscriber)
+void DataManReader::SubscribeThread()
 {
     while (m_SubscriberThreadActive)
     {
-        auto buffer = subscriber.Receive();
+        auto buffer = m_Subscriber.Receive();
         if (buffer != nullptr && buffer->size() > 0)
         {
             if (buffer->size() < 64)
@@ -278,6 +265,11 @@ void DataManReader::SubscribeThread(zmq::ZmqPubSub &subscriber)
                 }
             }
             m_Serializer.PutPack(buffer, m_DoubleBuffer);
+            auto timeStamps = m_Serializer.GetTimeStamps();
+            for (const auto &timeStamp : timeStamps)
+            {
+                m_Monitor.AddLatencyMilliseconds(timeStamp);
+            }
         }
     }
 }
@@ -308,19 +300,13 @@ void DataManReader::DoClose(const int transportIndex)
 {
     m_SubscriberThreadActive = false;
     m_RequesterThreadActive = false;
-    for (auto &t : m_SubscriberThreads)
+    if (m_SubscriberThread.joinable())
     {
-        if (t.joinable())
-        {
-            t.join();
-        }
+        m_SubscriberThread.join();
     }
-    for (auto &t : m_RequesterThreads)
+    if (m_RequesterThread.joinable())
     {
-        if (t.joinable())
-        {
-            t.join();
-        }
+        m_RequesterThread.join();
     }
     m_IsClosed = true;
 }

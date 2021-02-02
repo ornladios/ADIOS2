@@ -25,33 +25,34 @@ namespace engine
 class DataManMonitor
 {
 public:
-    void BeginStep(size_t step);
-    void EndStep(size_t step);
-    void BeginTransport(size_t step);
-    void EndTransport();
-    void AddBytes(size_t bytes);
+    void BeginStep(const size_t step);
+    void EndStep(const size_t step);
+    void AddLatencyMilliseconds(const uint64_t remoteStamp);
+    void AddBytes(const size_t bytes);
+    void SetAverageSteps(const size_t steps);
+    void SetClockError(const uint64_t roundLatency,
+                       const uint64_t remoteTimeBase);
 
 private:
     using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
-    std::queue<TimePoint> m_StepTimers;
     TimePoint m_InitialTimer;
-    std::queue<size_t> m_StepBytes;
+    std::queue<TimePoint> m_StepTimers;
     std::queue<size_t> m_TotalBytes;
-
-    std::queue<std::pair<size_t, TimePoint>> m_TransportTimers;
-    std::mutex m_TransportTimersMutex;
+    std::deque<uint64_t> m_LatencyMilliseconds;
+    size_t m_StepBytes;
 
     std::mutex m_PrintMutex;
 
-    size_t m_AverageSteps = 10;
+    size_t m_AverageSteps = 50;
     int64_t m_CurrentStep = -1;
+    uint64_t m_ClockError = 0;
 
-    double m_TotalTime;
-    double m_AverageTime;
-    double m_TotalRate;
-    double m_AverageRate;
-    double m_DropRate;
-    double m_StepsPerSecond;
+    double m_TotalTime = 0;
+    double m_AverageTime = 0;
+    double m_TotalRate = 0;
+    double m_AverageRate = 0;
+    double m_DropRate = 0;
+    double m_StepsPerSecond = 0;
 
     bool m_Verbose = true;
 };

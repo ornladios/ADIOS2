@@ -18,7 +18,23 @@ namespace core
 namespace engine
 {
 
-void DataManMonitor::BeginStep(size_t step)
+void DataManMonitor::SetAverageSteps(const size_t step)
+{
+    m_AverageSteps = step;
+}
+
+void DataManMonitor::SetClockError(const uint64_t roundLatency,
+                                   const uint64_t remoteTimeBase)
+{
+    uint64_t localTimeBase =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    m_ClockError = localTimeBase - remoteTimeBase -
+                   static_cast<double>(roundLatency) / 2.0;
+}
+
+void DataManMonitor::BeginStep(const size_t step)
 {
     if (step == 0)
     {
@@ -29,7 +45,7 @@ void DataManMonitor::BeginStep(size_t step)
         m_StepTimers.push(std::chrono::system_clock::now());
     }
 
-    m_StepBytes.push(0);
+    m_StepBytes = 0;
 
     if (m_TotalBytes.empty())
     {
@@ -43,21 +59,30 @@ void DataManMonitor::BeginStep(size_t step)
     ++m_CurrentStep;
 }
 
-void DataManMonitor::EndStep(size_t step)
+void DataManMonitor::AddLatencyMilliseconds(const uint64_t remoteStamp)
+{
+    uint64_t localStamp =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    m_LatencyMilliseconds.push_back(localStamp - remoteStamp - m_ClockError);
+}
+
+void DataManMonitor::EndStep(const size_t step)
 {
     m_StepTimers.push(std::chrono::system_clock::now());
 
-    if (m_StepTimers.size() > m_AverageSteps)
+    while (m_StepTimers.size() > m_AverageSteps)
     {
         m_StepTimers.pop();
     }
-    if (m_TotalBytes.size() > m_AverageSteps)
+    while (m_TotalBytes.size() > m_AverageSteps)
     {
         m_TotalBytes.pop();
     }
-    if (m_StepBytes.size() > m_AverageSteps)
+    while (m_LatencyMilliseconds.size() > m_AverageSteps)
     {
-        m_StepBytes.pop();
+        m_LatencyMilliseconds.pop_front();
     }
 
     m_TotalTime = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -77,13 +102,23 @@ void DataManMonitor::EndStep(size_t step)
     }
     m_StepsPerSecond = step / m_TotalTime * 1000000;
 
+    double averageLatency = 0;
+    if (m_LatencyMilliseconds.size() > 0)
+    {
+        for (const auto &l : m_LatencyMilliseconds)
+        {
+            averageLatency = averageLatency + l;
+        }
+        averageLatency = averageLatency / m_LatencyMilliseconds.size();
+    }
+
     if (m_Verbose)
     {
         std::lock_guard<std::mutex> l(m_PrintMutex);
         std::cout << "Step " << step << ", Total MBs "
                   << static_cast<double>(m_TotalBytes.back()) / 1000000.0
                   << ", Step MBs "
-                  << static_cast<double>(m_StepBytes.back()) / 1000000.0
+                  << static_cast<double>(m_StepBytes) / 1000000.0
                   << ", Total seconds "
                   << static_cast<double>(m_TotalTime) / 1000000.0 << ", "
                   << m_StepTimers.size() << " step seconds "
@@ -91,40 +126,16 @@ void DataManMonitor::EndStep(size_t step)
                   << ", Total MB/s " << m_TotalRate << ", "
                   << m_StepTimers.size() << " step average MB/s "
                   << m_AverageRate << ", Drop rate " << m_DropRate * 100 << "%"
-                  << ", Steps per second " << m_StepsPerSecond << std::endl;
+                  << ", Steps per second " << m_StepsPerSecond
+                  << ", Average latency milliseconds " << averageLatency
+                  << std::endl;
     }
 }
 
-void DataManMonitor::BeginTransport(size_t step)
-{
-    std::lock_guard<std::mutex> l(m_TransportTimersMutex);
-    m_TransportTimers.push({step, std::chrono::system_clock::now()});
-}
-
-void DataManMonitor::EndTransport()
-{
-    std::lock_guard<std::mutex> l(m_TransportTimersMutex);
-    if (!m_TransportTimers.empty())
-    {
-        auto latency = std::chrono::duration_cast<std::chrono::microseconds>(
-                           (std::chrono::system_clock::now() -
-                            m_TransportTimers.front().second))
-                           .count();
-        if (m_Verbose)
-        {
-            std::lock_guard<std::mutex> l(m_PrintMutex);
-            std::cout << "Step " << m_TransportTimers.front().first
-                      << ", Latency milliseconds "
-                      << static_cast<double>(latency) / 1000.0 << std::endl;
-        }
-        m_TransportTimers.pop();
-    }
-}
-
-void DataManMonitor::AddBytes(size_t bytes)
+void DataManMonitor::AddBytes(const size_t bytes)
 {
     m_TotalBytes.back() += bytes;
-    m_StepBytes.back() += bytes;
+    m_StepBytes += bytes;
 }
 
 } // end namespace engine
