@@ -313,7 +313,7 @@ void DataManWriter::ReplyThread()
                 if (buffer->size() > 0)
                 {
                     m_Replier.SendReply(buffer);
-                    ++m_SentSteps;
+                    m_SentSteps = m_SentSteps + m_CombiningSteps;
                 }
             }
         }
