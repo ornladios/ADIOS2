@@ -75,13 +75,10 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     if (m_TransportMode == "fast")
     {
         m_Subscriber.OpenSubscriber(subscriberAddress, m_ReceiverBufferSize);
-        m_SubscriberThread = std::thread(&DataManReader::SubscribeThread, this,
-                                         std::ref(m_Subscriber));
+        m_SubscriberThread = std::thread(&DataManReader::SubscribeThread, this);
     }
     else if (m_TransportMode == "reliable")
     {
-        m_Requester.OpenRequester(requesterAddress, m_Timeout,
-                                  m_ReceiverBufferSize);
     }
     else
     {
@@ -92,8 +89,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
 
     if (m_TransportMode == "reliable")
     {
-        m_RequesterThread = std::thread(&DataManReader::RequestThread, this,
-                                        std::ref(m_Requester));
+        m_RequesterThread = std::thread(&DataManReader::RequestThread, this);
     }
 }
 
@@ -220,11 +216,11 @@ void DataManReader::Flush(const int transportIndex) {}
 
 // PRIVATE
 
-void DataManReader::RequestThread(zmq::ZmqReqRep &requester)
+void DataManReader::RequestThread()
 {
     while (m_RequesterThreadActive)
     {
-        auto buffer = requester.Request("Step", 4);
+        auto buffer = m_Requester.Request("Step", 4);
         if (buffer != nullptr && buffer->size() > 0)
         {
             if (buffer->size() < 64)
@@ -249,11 +245,11 @@ void DataManReader::RequestThread(zmq::ZmqReqRep &requester)
     }
 }
 
-void DataManReader::SubscribeThread(zmq::ZmqPubSub &subscriber)
+void DataManReader::SubscribeThread()
 {
     while (m_SubscriberThreadActive)
     {
-        auto buffer = subscriber.Receive();
+        auto buffer = m_Subscriber.Receive();
         if (buffer != nullptr && buffer->size() > 0)
         {
             if (buffer->size() < 64)

@@ -69,8 +69,8 @@ private:
     std::atomic<bool> m_RequesterThreadActive;
     std::atomic<bool> m_SubscriberThreadActive;
 
-    void SubscribeThread(zmq::ZmqPubSub &subscriber);
-    void RequestThread(zmq::ZmqReqRep &requester);
+    void SubscribeThread();
+    void RequestThread();
 
     void DoClose(const int transportIndex = -1) final;
 
