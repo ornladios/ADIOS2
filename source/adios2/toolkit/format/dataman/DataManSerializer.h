@@ -115,6 +115,8 @@ public:
     // attach attributes to local pack
     void AttachAttributesToLocalPack();
 
+    void AttachTimeStamp(const uint64_t timeStamp);
+
     // put local metadata and data buffer together and return the merged buffer
     VecPtr GetLocalPack();
 
@@ -140,6 +142,8 @@ public:
     DmvVecPtrMap GetFullMetadataMap();
 
     void SetDestination(const std::string &dest);
+
+    std::vector<uint64_t> GetTimeStamps();
 
     std::string GetDestination();
 
@@ -219,6 +223,9 @@ private:
 
     // string, msgpack, cbor, ubjson
     std::string m_UseJsonSerialization = "string";
+
+    std::vector<uint64_t> m_TimeStamps;
+    std::mutex m_TimeStampsMutex;
 
     std::string m_Destination;
     bool m_IsRowMajor;

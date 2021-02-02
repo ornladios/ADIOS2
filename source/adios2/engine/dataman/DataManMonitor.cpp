@@ -18,18 +18,23 @@ namespace core
 namespace engine
 {
 
-void DataManMonitor::SetAverageSteps(size_t step) { m_AverageSteps = step; }
-
-void DataManMonitor::SetClockError(uint64_t roundLatency,
-                                   uint64_t remoteTimeBase)
+void DataManMonitor::SetAverageSteps(const size_t step)
 {
-    m_ClockError = std::chrono::duration_cast<std::chrono::milliseconds>(
-                       std::chrono::system_clock::now().time_since_epoch())
-                       .count() -
-                   remoteTimeBase - roundLatency / 2;
+    m_AverageSteps = step;
 }
 
-void DataManMonitor::BeginStep(size_t step)
+void DataManMonitor::SetClockError(const uint64_t roundLatency,
+                                   const uint64_t remoteTimeBase)
+{
+    uint64_t localTimeBase =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    m_ClockError = localTimeBase - remoteTimeBase -
+                   static_cast<double>(roundLatency) / 2.0;
+}
+
+void DataManMonitor::BeginStep(const size_t step)
 {
     if (step == 0)
     {
@@ -54,7 +59,16 @@ void DataManMonitor::BeginStep(size_t step)
     ++m_CurrentStep;
 }
 
-void DataManMonitor::EndStep(size_t step)
+void DataManMonitor::AddLatencyMilliseconds(const uint64_t remoteStamp)
+{
+    uint64_t localStamp =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    m_LatencyMilliseconds.push_back(localStamp - remoteStamp - m_ClockError);
+}
+
+void DataManMonitor::EndStep(const size_t step)
 {
     m_StepTimers.push(std::chrono::system_clock::now());
 
@@ -65,6 +79,10 @@ void DataManMonitor::EndStep(size_t step)
     while (m_TotalBytes.size() > m_AverageSteps)
     {
         m_TotalBytes.pop();
+    }
+    while (m_LatencyMilliseconds.size() > m_AverageSteps)
+    {
+        m_LatencyMilliseconds.pop_front();
     }
 
     m_TotalTime = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -84,6 +102,16 @@ void DataManMonitor::EndStep(size_t step)
     }
     m_StepsPerSecond = step / m_TotalTime * 1000000;
 
+    double averageLatency = 0;
+    if (m_LatencyMilliseconds.size() > 0)
+    {
+        for (const auto &l : m_LatencyMilliseconds)
+        {
+            averageLatency = averageLatency + l;
+        }
+        averageLatency = averageLatency / m_LatencyMilliseconds.size();
+    }
+
     if (m_Verbose)
     {
         std::lock_guard<std::mutex> l(m_PrintMutex);
@@ -98,11 +126,13 @@ void DataManMonitor::EndStep(size_t step)
                   << ", Total MB/s " << m_TotalRate << ", "
                   << m_StepTimers.size() << " step average MB/s "
                   << m_AverageRate << ", Drop rate " << m_DropRate * 100 << "%"
-                  << ", Steps per second " << m_StepsPerSecond << std::endl;
+                  << ", Steps per second " << m_StepsPerSecond
+                  << ", Average latency milliseconds " << averageLatency
+                  << std::endl;
     }
 }
 
-void DataManMonitor::AddBytes(size_t bytes)
+void DataManMonitor::AddBytes(const size_t bytes)
 {
     m_TotalBytes.back() += bytes;
     m_StepBytes += bytes;

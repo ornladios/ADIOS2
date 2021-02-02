@@ -27,6 +27,12 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
 
+    if (m_MpiSize > 1)
+    {
+        std::cerr << "DataMan does not support N-to-M decomposition!"
+                  << std::endl;
+    }
+
     helper::GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);
     helper::GetParameter(m_IO.m_Parameters, "Port", m_Port);
     helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
@@ -37,6 +43,11 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
     helper::GetParameter(m_IO.m_Parameters, "CombiningSteps", m_CombiningSteps);
+
+    if (m_IPAddress.empty())
+    {
+        throw(std::invalid_argument("IP address not specified"));
+    }
 
     if (m_MonitorActive)
     {
@@ -50,57 +61,17 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         }
     }
 
-    if (m_IPAddress.empty())
-    {
-        throw(std::invalid_argument("IP address not specified"));
-    }
-    m_Port += m_MpiRank;
-    m_ReplierAddress = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
-    m_PublisherAddress =
-        "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + m_MpiSize);
-
-    std::vector<std::string> pubVec;
-    std::vector<std::string> repVec;
-
-    if (m_MpiSize == 1)
-    {
-        pubVec.push_back(m_PublisherAddress);
-        repVec.push_back(m_ReplierAddress);
-    }
-    else
-    {
-        std::vector<char> allPubVec(32 * m_MpiSize, '\0');
-        std::vector<char> allRepVec(32 * m_MpiSize, '\0');
-
-        m_Comm.Allgather(m_PublisherAddress.data(), m_PublisherAddress.size(),
-                         allPubVec.data(), 32);
-        m_Comm.Allgather(m_ReplierAddress.data(), m_ReplierAddress.size(),
-                         allRepVec.data(), 32);
-
-        for (int i = 0; i < m_MpiSize; ++i)
-        {
-            pubVec.push_back(std::string(allPubVec.begin() + i * 32,
-                                         allPubVec.begin() + (i + 1) * 32));
-            repVec.push_back(std::string(allRepVec.begin() + i * 32,
-                                         allRepVec.begin() + (i + 1) * 32));
-        }
-    }
-
-    nlohmann::json addJson;
-    addJson["PublisherAddresses"] = pubVec;
-    addJson["ReplierAddresses"] = repVec;
-    addJson["TimeStamp"] =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count();
-    m_AllAddresses = addJson.dump() + '\0';
+    std::string replierAddress =
+        "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
+    std::string publisherAddress =
+        "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + 1);
 
     if (m_TransportMode == "fast")
     {
-        m_Publisher.OpenPublisher(m_PublisherAddress);
+        m_Publisher.OpenPublisher(publisherAddress);
     }
 
-    m_Replier.OpenReplier(m_ReplierAddress, m_Timeout, 64);
+    m_Replier.OpenReplier(replierAddress, m_Timeout, 64);
 
     if (m_RendezvousReaderCount == 0 || m_TransportMode == "reliable")
     {
@@ -110,7 +81,6 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     else
     {
         ReplyThread();
-        m_Comm.Barrier();
     }
 
     if (m_DoubleBuffer && m_TransportMode == "fast")
@@ -159,6 +129,11 @@ void DataManWriter::EndStep()
     {
         m_Serializer.PutAttributes(m_IO);
     }
+
+    m_Serializer.AttachTimeStamp(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count());
 
     ++m_CombinedSteps;
 
@@ -315,10 +290,13 @@ void DataManWriter::ReplyThread()
         if (request != nullptr && request->size() > 0)
         {
             std::string r(request->begin(), request->end());
-            if (r == "Address")
+            if (r == "Handshake")
             {
-                m_Replier.SendReply(m_AllAddresses.data(),
-                                    m_AllAddresses.size());
+                uint64_t timeStamp =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::system_clock::now().time_since_epoch())
+                        .count();
+                m_Replier.SendReply(&timeStamp, sizeof(timeStamp));
             }
             else if (r == "Ready")
             {

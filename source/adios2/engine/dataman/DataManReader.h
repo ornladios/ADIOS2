@@ -49,8 +49,6 @@ private:
     std::string m_TransportMode = "fast";
     bool m_MonitorActive = false;
 
-    std::vector<std::string> m_PublisherAddresses;
-    std::vector<std::string> m_ReplierAddresses;
     int m_MpiRank;
     int m_MpiSize;
     int64_t m_CurrentStep = -1;
@@ -60,13 +58,13 @@ private:
 
     format::DataManSerializer m_Serializer;
 
-    std::vector<zmq::ZmqPubSub> m_Subscribers;
-    std::vector<zmq::ZmqReqRep> m_Requesters;
+    zmq::ZmqPubSub m_Subscriber;
+    zmq::ZmqReqRep m_Requester;
 
     DataManMonitor m_Monitor;
 
-    std::vector<std::thread> m_SubscriberThreads;
-    std::vector<std::thread> m_RequesterThreads;
+    std::thread m_SubscriberThread;
+    std::thread m_RequesterThread;
 
     std::atomic<bool> m_RequesterThreadActive;
     std::atomic<bool> m_SubscriberThreadActive;

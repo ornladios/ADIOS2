@@ -51,6 +51,13 @@ void DataManSerializer::NewWriterBuffer(size_t bufferSize)
 VecPtr DataManSerializer::GetLocalPack()
 {
     TAU_SCOPED_TIMER_FUNC();
+    m_TimeStampsMutex.lock();
+    if (!m_TimeStamps.empty())
+    {
+        m_MetadataJson["T"] = m_TimeStamps;
+        m_TimeStamps.clear();
+    }
+    m_TimeStampsMutex.unlock();
     auto metapack = SerializeJson(m_MetadataJson);
     size_t metasize = metapack->size();
     (reinterpret_cast<uint64_t *>(m_LocalBuffer->data()))[0] =
@@ -60,6 +67,12 @@ VecPtr DataManSerializer::GetLocalPack()
     std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() - metasize,
                 metapack->data(), metasize);
     return m_LocalBuffer;
+}
+
+std::vector<uint64_t> DataManSerializer::GetTimeStamps()
+{
+    std::lock_guard<std::mutex> l(m_TimeStampsMutex);
+    return m_TimeStamps;
 }
 
 bool DataManSerializer::IsCompressionAvailable(const std::string &method,
@@ -192,6 +205,13 @@ void DataManSerializer::AttachAttributesToLocalPack()
     m_MetadataJson["S"] = m_StaticDataJson["S"];
 }
 
+void DataManSerializer::AttachTimeStamp(const uint64_t timeStamp)
+{
+    m_TimeStampsMutex.lock();
+    m_TimeStamps.push_back(timeStamp);
+    m_TimeStampsMutex.unlock();
+}
+
 void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -209,6 +229,13 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
             m_StaticDataJsonMutex.lock();
             m_StaticDataJson["S"] = stepMapIt.value();
             m_StaticDataJsonMutex.unlock();
+            continue;
+        }
+        if (stepMapIt.key() == "T")
+        {
+            m_TimeStampsMutex.lock();
+            m_TimeStamps = stepMapIt.value().get<std::vector<uint64_t>>();
+            m_TimeStampsMutex.unlock();
             continue;
         }
 

@@ -25,17 +25,20 @@ namespace engine
 class DataManMonitor
 {
 public:
-    void BeginStep(size_t step);
-    void EndStep(size_t step);
-    void AddBytes(size_t bytes);
-    void SetAverageSteps(size_t steps);
-    void SetClockError(uint64_t roundLatency, uint64_t remoteTimeBase);
+    void BeginStep(const size_t step);
+    void EndStep(const size_t step);
+    void AddLatencyMilliseconds(const uint64_t remoteStamp);
+    void AddBytes(const size_t bytes);
+    void SetAverageSteps(const size_t steps);
+    void SetClockError(const uint64_t roundLatency,
+                       const uint64_t remoteTimeBase);
 
 private:
     using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
     TimePoint m_InitialTimer;
     std::queue<TimePoint> m_StepTimers;
     std::queue<size_t> m_TotalBytes;
+    std::deque<uint64_t> m_LatencyMilliseconds;
     size_t m_StepBytes;
 
     std::mutex m_PrintMutex;

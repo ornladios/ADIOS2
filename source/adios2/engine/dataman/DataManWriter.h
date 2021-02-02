@@ -52,9 +52,6 @@ private:
     int m_CombiningSteps = 1;
     int m_CombinedSteps = 0;
 
-    std::string m_AllAddresses;
-    std::string m_PublisherAddress;
-    std::string m_ReplierAddress;
     int m_MpiRank;
     int m_MpiSize;
     size_t m_SerializerBufferSize = 1024 * 1024;
