@@ -412,7 +412,7 @@ public:
      */
     void FlushAll();
 
-    Group &CreateGroup(const std::string &path, char delimiter);
+    Group &CreateGroup(char delimiter);
 
     // READ FUNCTIONS, not yet implemented:
     /**

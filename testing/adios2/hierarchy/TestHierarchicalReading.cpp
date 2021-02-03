@@ -24,11 +24,16 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
     std::string filename = "ADIOSHierarchicalReadVariable.bp";
 
     // Number of steps
-    const std::size_t NSteps = 1;
+    const std::size_t NSteps = 3;
+
+    long unsigned int rank, size;
 
 #if ADIOS2_USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+#else
+    rank = 0;
+    size = 1;
 #endif
 
     // Write test data using BP
@@ -43,9 +48,10 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 
         io.AddTransport("file");
         adios2::Engine engine = io.Open(filename, adios2::Mode::Write);
-        const adios2::Dims shape = {10};
-        const adios2::Dims start = {0};
-        const adios2::Dims count = {10};
+        const int Nx = 10;
+        const adios2::Dims shape = {size * Nx};
+        const adios2::Dims start = {rank * Nx};
+        const adios2::Dims count = {Nx};
 
         auto var1 = io.DefineVariable<int32_t>(
             "group1/group2/group3/group4/variable1", shape, start, count);
@@ -57,7 +63,10 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
             "group1/group2/group3/group4/variable4", shape, start, count);
         auto var5 = io.DefineVariable<int32_t>(
             "group1/group2/group3/group4/variable5", shape, start, count);
+        auto var6 =
+            io.DefineVariable<int32_t>("variable6", shape, start, count);
         std::vector<int32_t> Ints = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
         for (size_t step = 0; step < NSteps; ++step)
         {
             engine.BeginStep();
@@ -67,16 +76,22 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
             engine.Put(var3, Ints.data());
             engine.Put(var4, Ints.data());
             engine.Put(var5, Ints.data());
+            engine.Put(var6, Ints.data());
 
             engine.EndStep();
         }
+        engine.Close();
 
+        engine = io.Open(filename, adios2::Mode::Read);
+        std::array<int32_t, 10> Int_read;
         for (int step = 0; step < NSteps; step++)
         {
             engine.BeginStep();
-            auto g = io.InquireGroup("group1", '/');
+            auto g = io.InquireGroup('/');
             auto res = g.AvailableGroups();
-            EXPECT_EQ(res[0], "group2");
+            EXPECT_EQ(res[0], "group1");
+            res = g.AvailableVariables();
+            EXPECT_EQ(res[0], "variable6");
             g.setPath("group1/group2");
             res = g.AvailableGroups();
             EXPECT_EQ(res[0], "group3");
@@ -91,6 +106,79 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
             res = g.AvailableAttributes();
             EXPECT_EQ(res.size(), 0);
             engine.EndStep();
+        }
+        for (int step = 0; step < NSteps; step++)
+        {
+            engine.BeginStep();
+            auto g = io.InquireGroup('/');
+            auto res = g.AvailableGroups();
+            EXPECT_EQ(res[0], "group1");
+            res = g.AvailableVariables();
+            EXPECT_EQ(res[0], "variable6");
+            auto g1 = g.InquireGroup("group1");
+            res = g1.AvailableGroups();
+            EXPECT_EQ(res[0], "group2");
+            auto g2 = g1.InquireGroup("group2");
+            res = g2.AvailableGroups();
+            EXPECT_EQ(res[0], "group3");
+            auto g3 = g2.InquireGroup("group3");
+            res = g3.AvailableGroups();
+            EXPECT_EQ(res[0], "group4");
+            auto g4 = g3.InquireGroup("group4");
+            res = g4.AvailableGroups();
+            EXPECT_EQ(res.size(), 0);
+            res = g4.AvailableVariables();
+            EXPECT_EQ(res.size(), 5);
+            res = g4.AvailableAttributes();
+            EXPECT_EQ(res.size(), 0);
+            engine.EndStep();
+        }
+        for (int step = 0; step < NSteps; step++)
+        {
+            auto g = io.InquireGroup('/');
+            auto var = g.InquireVariable<int32_t>("variable6");
+            EXPECT_TRUE(var);
+            if (var)
+            {
+                std::vector<int32_t> myInts;
+                var.SetSelection({{Nx * rank}, {Nx}});
+                engine.Get<int32_t>(var, myInts, adios2::Mode::Sync);
+
+                EXPECT_EQ(Ints, myInts);
+            }
+        }
+        for (int step = 0; step < NSteps; step++)
+        {
+            auto g = io.InquireGroup('/');
+            g.setPath("group1/group2/group3/group4");
+            auto var = g.InquireVariable<int32_t>("variable1");
+            EXPECT_TRUE(var);
+            if (var)
+            {
+                std::vector<int32_t> myInts;
+                var.SetSelection({{Nx * rank}, {Nx}});
+                engine.Get<int32_t>(var, myInts, adios2::Mode::Sync);
+
+                EXPECT_EQ(Ints, myInts);
+            }
+        }
+        for (int step = 0; step < NSteps; step++)
+        {
+            auto g = io.InquireGroup('/');
+            auto g1 = g.InquireGroup("group1");
+            auto g2 = g1.InquireGroup("group2");
+            auto g3 = g2.InquireGroup("group3");
+            auto g4 = g3.InquireGroup("group4");
+            auto var = g4.InquireVariable<int32_t>("variable1");
+            EXPECT_TRUE(var);
+            if (var)
+            {
+                std::vector<int32_t> myInts;
+                var.SetSelection({{Nx * rank}, {Nx}});
+                engine.Get<int32_t>(var, myInts, adios2::Mode::Sync);
+
+                EXPECT_EQ(Ints, myInts);
+            }
         }
         engine.Close();
     }

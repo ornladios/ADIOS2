@@ -20,8 +20,10 @@ namespace core
 template <class T>
 Variable<T> *Group::InquireVariable(const std::string &name) noexcept
 {
-    Variable<T> &variable =
-        *m_IO.InquireVariable<T>(currentPath + groupDelimiter + name);
+    std::string variablePath = currentPath + groupDelimiter + name;
+    variablePath = variablePath.substr(ADIOS_root.size() + 1,
+                                       variablePath.size() - ADIOS_root.size());
+    Variable<T> &variable = *m_IO.InquireVariable<T>(variablePath);
     return &variable;
 }
 
@@ -30,8 +32,11 @@ Attribute<T> *Group::InquireAttribute(const std::string &name,
                                       const std::string &variableName,
                                       const std::string separator) noexcept
 {
-    Attribute<T> &attribute = m_IO.InquireAttribute<T>(
-        currentPath + groupDelimiter + name, variableName, separator);
+    std::string variablePath = currentPath + groupDelimiter + name;
+    variablePath = variablePath.substr(ADIOS_root.size() + 1,
+                                       variablePath.size() - ADIOS_root.size());
+    Attribute<T> &attribute =
+        m_IO.InquireAttribute<T>(variablePath, variableName, separator);
     return &attribute;
 }
 } // end namespace core
