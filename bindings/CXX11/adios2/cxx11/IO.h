@@ -262,7 +262,7 @@ public:
      * @param a delimiter to separate groups in a string representation
      * @return Group object
      */
-    Group InquireGroup(const std::string &path, char delimiter = '/');
+    Group InquireGroup(char delimiter = '/');
 
 #if ADIOS2_USE_MPI
     /**

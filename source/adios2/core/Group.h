@@ -35,6 +35,8 @@ private:
     char groupDelimiter;
     /** shared pointer to a map representing the tree structure */
     std::shared_ptr<TreeMap> mapPtr = nullptr;
+    /** root of the tree */
+    const std::string ADIOS_root = "_ADIOS_ROOT_";
 
 public:
     /**
