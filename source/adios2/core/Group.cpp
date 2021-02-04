@@ -183,8 +183,7 @@ std::vector<std::string> Group::AvailableAttributes()
             std::string variablePath = currentPath + groupDelimiter + v;
             variablePath = variablePath.substr(
                 ADIOS_root.size() + 1, variablePath.size() - ADIOS_root.size());
-            if (attributes.find(variablePath) !=
-                attributes.end())
+            if (attributes.find(variablePath) != attributes.end())
             {
                 available_attributes.push_back(v);
             }
@@ -196,16 +195,15 @@ std::vector<std::string> Group::AvailableAttributes()
 
 std::vector<std::string> Group::AvailableGroups()
 {
-
     std::vector<std::string> available_groups;
     std::set<std::string> val = mapPtr->treeMap[currentPath];
     {
         for (auto v : val)
-            {
-                if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) !=
-                    mapPtr->treeMap.end())
-                    available_groups.push_back(v);
-            }
+        {
+            if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) !=
+                mapPtr->treeMap.end())
+                available_groups.push_back(v);
+        }
     }
     return available_groups;
 }
