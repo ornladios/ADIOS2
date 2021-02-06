@@ -236,10 +236,22 @@ void DataManReader::RequestThread()
                 }
             }
             m_Serializer.PutPack(buffer, m_DoubleBuffer);
-            auto timeStamps = m_Serializer.GetTimeStamps();
-            for (const auto &timeStamp : timeStamps)
+            if (m_MonitorActive)
             {
-                m_Monitor.AddLatencyMilliseconds(timeStamp);
+                size_t combiningSteps = m_Serializer.GetCombiningSteps();
+                if (combiningSteps < 20)
+                {
+                    m_Monitor.SetAverageSteps(40);
+                }
+                else
+                {
+                    m_Monitor.SetAverageSteps(combiningSteps * 2);
+                }
+                auto timeStamps = m_Serializer.GetTimeStamps();
+                for (const auto &timeStamp : timeStamps)
+                {
+                    m_Monitor.AddLatencyMilliseconds(timeStamp);
+                }
             }
         }
     }
@@ -265,10 +277,22 @@ void DataManReader::SubscribeThread()
                 }
             }
             m_Serializer.PutPack(buffer, m_DoubleBuffer);
-            auto timeStamps = m_Serializer.GetTimeStamps();
-            for (const auto &timeStamp : timeStamps)
+            if (m_MonitorActive)
             {
-                m_Monitor.AddLatencyMilliseconds(timeStamp);
+                size_t combiningSteps = m_Serializer.GetCombiningSteps();
+                if (combiningSteps < 20)
+                {
+                    m_Monitor.SetAverageSteps(40);
+                }
+                else
+                {
+                    m_Monitor.SetAverageSteps(combiningSteps * 2);
+                }
+                auto timeStamps = m_Serializer.GetTimeStamps();
+                for (const auto &timeStamp : timeStamps)
+                {
+                    m_Monitor.AddLatencyMilliseconds(timeStamp);
+                }
             }
         }
     }

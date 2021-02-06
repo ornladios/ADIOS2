@@ -212,6 +212,8 @@ void DataManSerializer::AttachTimeStamp(const uint64_t timeStamp)
     m_TimeStampsMutex.unlock();
 }
 
+size_t DataManSerializer::GetCombiningSteps() { return m_CombiningSteps; }
+
 void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -221,6 +223,8 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
     // deals with JSON metadata and data buffer already in allocated shared
     // pointers, so it should be cheap to lock.
     std::lock_guard<std::mutex> lDataManVarMapMutex(m_DataManVarMapMutex);
+
+    m_CombiningSteps = 0;
 
     for (auto stepMapIt = metaJ.begin(); stepMapIt != metaJ.end(); ++stepMapIt)
     {
@@ -239,6 +243,7 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
             continue;
         }
 
+        ++m_CombiningSteps;
         size_t step = stoull(stepMapIt.key());
         m_DeserializedBlocksForStepMutex.lock();
         auto blocksForStepIt = m_DeserializedBlocksForStep.find(step);
