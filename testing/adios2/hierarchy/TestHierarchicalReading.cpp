@@ -48,7 +48,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 
         io.AddTransport("file");
         adios2::Engine engine = io.Open(filename, adios2::Mode::Write);
-        const int Nx = 10;
+        const size_t Nx = 10;
         const adios2::Dims shape = {size * Nx};
         const adios2::Dims start = {rank * Nx};
         const adios2::Dims count = {Nx};
