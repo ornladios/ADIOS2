@@ -83,7 +83,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
         engine.Close();
 
         engine = io.Open(filename, adios2::Mode::Read);
-        std::array<int32_t, 10> Int_read;
+
         for (int step = 0; step < NSteps; step++)
         {
             engine.BeginStep();
@@ -115,22 +115,6 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
             EXPECT_EQ(res[0], "group1");
             res = g.AvailableVariables();
             EXPECT_EQ(res[0], "variable6");
-            auto g1 = g.InquireGroup("group1");
-            res = g1.AvailableGroups();
-            EXPECT_EQ(res[0], "group2");
-            auto g2 = g1.InquireGroup("group2");
-            res = g2.AvailableGroups();
-            EXPECT_EQ(res[0], "group3");
-            auto g3 = g2.InquireGroup("group3");
-            res = g3.AvailableGroups();
-            EXPECT_EQ(res[0], "group4");
-            auto g4 = g3.InquireGroup("group4");
-            res = g4.AvailableGroups();
-            EXPECT_EQ(res.size(), 0);
-            res = g4.AvailableVariables();
-            EXPECT_EQ(res.size(), 5);
-            res = g4.AvailableAttributes();
-            EXPECT_EQ(res.size(), 0);
             engine.EndStep();
         }
         for (int step = 0; step < NSteps; step++)
@@ -152,24 +136,6 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
             auto g = io.InquireGroup('/');
             g.setPath("group1/group2/group3/group4");
             auto var = g.InquireVariable<int32_t>("variable1");
-            EXPECT_TRUE(var);
-            if (var)
-            {
-                std::vector<int32_t> myInts;
-                var.SetSelection({{Nx * rank}, {Nx}});
-                engine.Get<int32_t>(var, myInts, adios2::Mode::Sync);
-
-                EXPECT_EQ(Ints, myInts);
-            }
-        }
-        for (int step = 0; step < NSteps; step++)
-        {
-            auto g = io.InquireGroup('/');
-            auto g1 = g.InquireGroup("group1");
-            auto g2 = g1.InquireGroup("group2");
-            auto g3 = g2.InquireGroup("group3");
-            auto g4 = g3.InquireGroup("group4");
-            auto var = g4.InquireVariable<int32_t>("variable1");
             EXPECT_TRUE(var);
             if (var)
             {
