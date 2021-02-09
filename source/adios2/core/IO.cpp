@@ -657,7 +657,6 @@ Engine &IO::Open(const std::string &name, const Mode mode)
 }
 Group &IO::CreateGroup(char delimiter)
 {
-
     m_Gr = std::make_shared<Group>("", delimiter, *this);
     m_Gr->BuildTree();
     return *m_Gr;

@@ -51,19 +51,13 @@ Group::Group(const Group &G)
 }
 Group *Group::InquireGroup(std::string groupName)
 {
-    Group *g_out;
-    if (currentPath == "")
+    if (currentPath.compare("") != 0)
     {
-        g_out = new Group(groupName, this->groupDelimiter, this->m_IO);
+        groupName = currentPath + groupDelimiter + groupName;
     }
-    else
-    {
-        g_out = new Group(currentPath + groupDelimiter + groupName,
-                          this->groupDelimiter, this->m_IO);
-    }
-
-    g_out->mapPtr = this->mapPtr;
-    return g_out;
+    m_Gr = std::make_shared<Group>(groupName, this->groupDelimiter, this->m_IO);
+    m_Gr->mapPtr = this->mapPtr;
+    return m_Gr.get();
 }
 void Group::PrintTree()
 {

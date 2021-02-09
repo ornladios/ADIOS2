@@ -24,7 +24,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
     std::string filename = "ADIOSHierarchicalReadVariable.bp";
 
     // Number of steps
-    const std::size_t NSteps = 3;
+    const std::size_t NSteps = 2;
 
     long unsigned int rank, size;
 
@@ -48,7 +48,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 
         io.AddTransport("file");
         adios2::Engine engine = io.Open(filename, adios2::Mode::Write);
-        const size_t Nx = 10;
+        const std::size_t Nx = 10;
         const adios2::Dims shape = {size * Nx};
         const adios2::Dims start = {rank * Nx};
         const adios2::Dims count = {Nx};
@@ -83,7 +83,6 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
         engine.Close();
 
         engine = io.Open(filename, adios2::Mode::Read);
-
         for (int step = 0; step < NSteps; step++)
         {
             engine.BeginStep();
@@ -127,7 +126,6 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
                 std::vector<int32_t> myInts;
                 var.SetSelection({{Nx * rank}, {Nx}});
                 engine.Get<int32_t>(var, myInts, adios2::Mode::Sync);
-
                 EXPECT_EQ(Ints, myInts);
             }
         }

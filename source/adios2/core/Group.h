@@ -52,6 +52,8 @@ public:
     Group(const Group &G);
     /** destructor */
     ~Group();
+    /** a pointer to a Group Object */
+    std::shared_ptr<Group> m_Gr;
     /**
      * @brief Builds map that represents tree structure from m_Variable and
      * m_Attributes from IO class
