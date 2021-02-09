@@ -14,7 +14,7 @@ endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/ADIOSFunctions.cmake)
 
-setup_version(2.7.0)
+setup_version(2.7.1)
 
 project(ADIOS2 VERSION ${ADIOS2_VERSION})
 
