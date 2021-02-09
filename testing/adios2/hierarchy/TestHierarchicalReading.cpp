@@ -83,7 +83,6 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
         engine.Close();
 
         engine = io.Open(filename, adios2::Mode::Read);
-        std::array<int32_t, 10> Int_read;
         for (int step = 0; step < NSteps; step++)
         {
             engine.BeginStep();
