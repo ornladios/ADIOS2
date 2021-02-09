@@ -126,6 +126,8 @@ public:
     void PutPack(const VecPtr data, const bool useThread = true);
     int PutPackThread(const VecPtr data);
 
+    size_t GetCombiningSteps();
+
     // get attributes form m_StaticDataJson and put into IO
     void GetAttributes(core::IO &io);
 
@@ -226,6 +228,8 @@ private:
 
     std::vector<uint64_t> m_TimeStamps;
     std::mutex m_TimeStampsMutex;
+
+    size_t m_CombiningSteps;
 
     std::string m_Destination;
     bool m_IsRowMajor;
