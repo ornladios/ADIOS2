@@ -26,7 +26,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
     // Number of steps
     const std::size_t NSteps = 3;
 
-    long unsigned int rank, size;
+    int rank, size;
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -48,7 +48,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 
         io.AddTransport("file");
         adios2::Engine engine = io.Open(filename, adios2::Mode::Write);
-        const int Nx = 10;
+        const size_t Nx = 10;
         const adios2::Dims shape = {size * Nx};
         const adios2::Dims start = {rank * Nx};
         const adios2::Dims count = {Nx};
