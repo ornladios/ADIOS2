@@ -35,6 +35,8 @@ private:
     char groupDelimiter;
     /** shared pointer to a map representing the tree structure */
     std::shared_ptr<TreeMap> mapPtr = nullptr;
+    /** root of the tree */
+    const std::string ADIOS_root = "_ADIOS_ROOT_";
 
 public:
     /**
@@ -50,6 +52,8 @@ public:
     Group(const Group &G);
     /** destructor */
     ~Group();
+    /** a pointer to a Group Object */
+    std::shared_ptr<Group> m_Gr;
     /**
      * @brief Builds map that represents tree structure from m_Variable and
      * m_Attributes from IO class

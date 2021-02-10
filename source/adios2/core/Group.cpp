@@ -32,7 +32,7 @@ std::vector<std::string> split(const std::string &s, char delimiter)
     }
     return tokens;
 }
-void Group::setPath(std::string path) { currentPath = path; }
+void Group::setPath(std::string path) { currentPath = ADIOS_root + "/" + path; }
 void Group::setDelimiter(char delimiter) { groupDelimiter = delimiter; }
 
 Group::Group(std::string path, char delimiter, IO &io)
@@ -51,10 +51,13 @@ Group::Group(const Group &G)
 }
 Group *Group::InquireGroup(std::string groupName)
 {
-    Group *g_out = new Group(currentPath + groupDelimiter + groupName,
-                             this->groupDelimiter, this->m_IO);
-    g_out->mapPtr = this->mapPtr;
-    return g_out;
+    if (currentPath.compare("") != 0)
+    {
+        groupName = currentPath + groupDelimiter + groupName;
+    }
+    m_Gr = std::make_shared<Group>(groupName, this->groupDelimiter, this->m_IO);
+    m_Gr->mapPtr = this->mapPtr;
+    return m_Gr.get();
 }
 void Group::PrintTree()
 {
@@ -74,6 +77,12 @@ void Group::BuildTree()
     {
         std::vector<std::string> tokens =
             split(variablePair.first, groupDelimiter);
+        // Adding artificial root element
+        if (tokens[0] == "")
+            tokens[0] = ADIOS_root;
+        else
+            tokens.insert(tokens.begin(), ADIOS_root);
+        currentPath = ADIOS_root;
 
         if (tokens.size() == 0)
         {
@@ -83,7 +92,7 @@ void Group::BuildTree()
         {
             // case record = "/group1" or "group/"
         }
-        if (tokens.size() > 1)
+        else
         {
             std::string key = tokens[0];
             for (int level = 1; level < tokens.size(); level++)
@@ -140,9 +149,10 @@ std::vector<std::string> Group::AvailableVariables()
             mapPtr->treeMap.end())
         {
             const core::VarMap &variables = m_IO.GetVariables();
-
-            if (variables.find(currentPath + groupDelimiter + v) !=
-                variables.end())
+            std::string variablePath = currentPath + groupDelimiter + v;
+            variablePath = variablePath.substr(
+                ADIOS_root.size() + 1, variablePath.size() - ADIOS_root.size());
+            if (variables.find(variablePath) != variables.end())
             {
                 available_variables.push_back(v);
             }
@@ -164,8 +174,10 @@ std::vector<std::string> Group::AvailableAttributes()
             mapPtr->treeMap.end())
         {
             const core::AttrMap &attributes = m_IO.GetAttributes();
-            if (attributes.find(currentPath + groupDelimiter + v) !=
-                attributes.end())
+            std::string variablePath = currentPath + groupDelimiter + v;
+            variablePath = variablePath.substr(
+                ADIOS_root.size() + 1, variablePath.size() - ADIOS_root.size());
+            if (attributes.find(variablePath) != attributes.end())
             {
                 available_attributes.push_back(v);
             }
@@ -180,14 +192,14 @@ std::vector<std::string> Group::AvailableGroups()
 
     std::vector<std::string> available_groups;
     std::set<std::string> val = mapPtr->treeMap[currentPath];
-
-    for (auto v : val)
     {
-        if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) !=
-            mapPtr->treeMap.end())
-            available_groups.push_back(v);
+        for (auto v : val)
+        {
+            if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) !=
+                mapPtr->treeMap.end())
+                available_groups.push_back(v);
+        }
     }
-
     return available_groups;
 }
 
