@@ -65,7 +65,9 @@ void DataManMonitor::AddLatencyMilliseconds(const uint64_t remoteStamp)
         std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch())
             .count();
-    m_LatencyMilliseconds.push_back(localStamp - remoteStamp - m_ClockError);
+    uint64_t latency = localStamp - remoteStamp - m_ClockError;
+    m_LatencyMilliseconds.push_back(latency);
+    m_AccumulatedLatency += latency;
 }
 
 void DataManMonitor::EndStep(const size_t step)
@@ -126,8 +128,12 @@ void DataManMonitor::EndStep(const size_t step)
                   << ", Total MB/s " << m_TotalRate << ", "
                   << m_StepTimers.size() << " step average MB/s "
                   << m_AverageRate << ", Drop rate " << m_DropRate * 100 << "%"
-                  << ", Steps per second " << m_StepsPerSecond
-                  << ", Average latency milliseconds " << averageLatency
+                  << ", Steps per second " << m_StepsPerSecond << ", "
+                  << m_StepTimers.size()
+                  << " step average latency milliseconds " << averageLatency
+                  << ", Average latency milliseconds "
+                  << m_AccumulatedLatency /
+                         static_cast<double>(m_CurrentStep + 1)
                   << std::endl;
     }
 }
