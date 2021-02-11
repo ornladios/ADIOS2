@@ -53,6 +53,7 @@ private:
     double m_AverageRate = 0;
     double m_DropRate = 0;
     double m_StepsPerSecond = 0;
+    double m_AccumulatedLatency = 0;
 
     bool m_Verbose = true;
 };
