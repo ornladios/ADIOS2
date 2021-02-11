@@ -32,6 +32,8 @@ public:
     void SetAverageSteps(const size_t steps);
     void SetClockError(const uint64_t roundLatency,
                        const uint64_t remoteTimeBase);
+    void AddCompression(const std::string &method, const float precision);
+    void AddTransport(const std::string &method);
 
 private:
     using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
@@ -54,8 +56,12 @@ private:
     double m_DropRate = 0;
     double m_StepsPerSecond = 0;
     double m_AccumulatedLatency = 0;
+    std::string m_CompressionMethod;
+    float m_CompressionPrecision;
+    std::string m_TransportMethod;
 
     bool m_Verbose = true;
+    bool m_JsonOutput = true;
 };
 
 } // end namespace engine

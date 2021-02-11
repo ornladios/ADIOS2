@@ -69,8 +69,12 @@ DataManReader::DataManReader(IO &io, const std::string &name,
             return;
         }
     }
-    m_Monitor.SetClockError(roundLatency,
-                            *reinterpret_cast<uint64_t *>(reply->data()));
+    if (m_MonitorActive)
+    {
+        m_Monitor.SetClockError(roundLatency,
+                                *reinterpret_cast<uint64_t *>(reply->data()));
+        m_Monitor.AddTransport(m_TransportMode);
+    }
 
     if (m_TransportMode == "fast")
     {

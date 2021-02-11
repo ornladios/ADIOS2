@@ -10,6 +10,7 @@
 
 #include "DataManMonitor.h"
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 namespace adios2
 {
@@ -142,6 +143,18 @@ void DataManMonitor::AddBytes(const size_t bytes)
 {
     m_TotalBytes.back() += bytes;
     m_StepBytes += bytes;
+}
+
+void DataManMonitor::AddCompression(const std::string &method,
+                                    const float precision)
+{
+    m_CompressionMethod = method;
+    m_CompressionPrecision = precision;
+}
+
+void DataManMonitor::AddTransport(const std::string &method)
+{
+    m_TransportMethod = method;
 }
 
 } // end namespace engine
