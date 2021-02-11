@@ -222,6 +222,19 @@ if(ADIOS2_BUILD_EXAMPLES)
 endif()
 
 #------------------------------------------------------------------------------#
+# Benchmarks
+#------------------------------------------------------------------------------#
+option(ADIOS2_BUILD_BENCHMARKS "Build benchmarks" OFF)
+if (ADIOS2_BUILD_BENCHMARKS)
+  find_package(benchmark REQUIRED)
+  add_subdirectory(benchmarks)
+    if (CMAKE_BUILD_TYPE STREQUAL Debug)
+      message(WARNING "Building benchmarks in debug mode.")
+    endif()
+endif()
+
+
+#------------------------------------------------------------------------------#
 # Testing
 #------------------------------------------------------------------------------#
 cmake_dependent_option(ADIOS2_RUN_MPI_MPMD_TESTS
@@ -299,6 +312,7 @@ message("    Library Type: ${msg_lib_type}")
 message("    Build Type:   ${CMAKE_BUILD_TYPE}")
 message("    Testing: ${BUILD_TESTING}")
 message("    Examples: ${ADIOS2_BUILD_EXAMPLES}")
+message("    Benchmarks: ${ADIOS2_BUILD_BENCHMARKS}")
 message("    Build Options:")
 
 foreach(opt IN LISTS ADIOS2_CONFIG_OPTS)
