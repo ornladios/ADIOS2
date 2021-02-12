@@ -727,6 +727,7 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
     TAU_SCOPED_TIMER("BP4Writer::AggregateWriteData");
     m_BP4Serializer.CloseStream(m_IO, false);
     size_t totalBytesWritten = 0;
+    const size_t dataBufferSize = m_BP4Serializer.m_Data.m_Position;
 
     // async?
     for (int r = 0; r < m_BP4Serializer.m_Aggregator.m_Size; ++r)
@@ -780,6 +781,13 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
     }
 
     m_BP4Serializer.m_Aggregator.ResetBuffers();
+
+    // Reset Data buffer to its final size on this process at EndStep
+    // The aggregation routine has resized it to some incoming process' data
+    // size
+    m_BP4Serializer.m_Data.Resize(dataBufferSize,
+                                  "Reset buffersize to final size" +
+                                      std::to_string(dataBufferSize));
 }
 
 #define declare_type(T, L)                                                     \
