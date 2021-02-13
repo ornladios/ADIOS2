@@ -146,10 +146,10 @@ void DataManMonitor::AddBytes(const size_t bytes)
 }
 
 void DataManMonitor::AddCompression(const std::string &method,
-                                    const float precision)
+                                    const float accuracy)
 {
     m_CompressionMethod = method;
-    m_CompressionPrecision = precision;
+    m_CompressionAccuracy = accuracy;
 }
 
 void DataManMonitor::AddTransport(const std::string &method)

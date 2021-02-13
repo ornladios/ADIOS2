@@ -212,6 +212,15 @@ void DataManReader::EndStep()
 
     if (m_MonitorActive)
     {
+        auto comMap = m_Serializer.GetOperatorMap();
+        for (const auto &i : comMap)
+        {
+            auto it = i.second.find("accuracy");
+            if (it != i.second.end())
+            {
+                m_Monitor.AddCompression(i.first, std::stof(it->second));
+            }
+        }
         m_Monitor.EndStep(m_CurrentStep);
     }
 }

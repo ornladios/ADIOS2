@@ -32,7 +32,7 @@ public:
     void SetAverageSteps(const size_t steps);
     void SetClockError(const uint64_t roundLatency,
                        const uint64_t remoteTimeBase);
-    void AddCompression(const std::string &method, const float precision);
+    void AddCompression(const std::string &method, const float accuracy);
     void AddTransport(const std::string &method);
 
 private:
@@ -57,7 +57,7 @@ private:
     double m_StepsPerSecond = 0;
     double m_AccumulatedLatency = 0;
     std::string m_CompressionMethod;
-    float m_CompressionPrecision;
+    float m_CompressionAccuracy;
     std::string m_TransportMethod;
 
     bool m_Verbose = true;
