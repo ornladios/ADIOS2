@@ -274,6 +274,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             {
                 m_OperatorMapMutex.lock();
                 m_OperatorMap[varName] = j.params;
+                m_OperatorMap[varName]["method"] = j.compression;
                 m_OperatorMapMutex.unlock();
             }
             if (j.compression == "zfp")

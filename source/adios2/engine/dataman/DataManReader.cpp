@@ -74,6 +74,10 @@ DataManReader::DataManReader(IO &io, const std::string &name,
         m_Monitor.SetClockError(roundLatency,
                                 *reinterpret_cast<uint64_t *>(reply->data()));
         m_Monitor.AddTransport(m_TransportMode);
+        if (m_DoubleBuffer)
+        {
+            m_Monitor.SetReaderThreading();
+        }
     }
 
     if (m_TransportMode == "fast")
@@ -215,11 +219,18 @@ void DataManReader::EndStep()
         auto comMap = m_Serializer.GetOperatorMap();
         for (const auto &i : comMap)
         {
+            std::string method, accuracy;
             auto it = i.second.find("accuracy");
             if (it != i.second.end())
             {
-                m_Monitor.AddCompression(i.first, std::stof(it->second));
+                accuracy = it->second;
             }
+            it = i.second.find("method");
+            if (it != i.second.end())
+            {
+                method = it->second;
+            }
+            m_Monitor.AddCompression(method, std::stof(accuracy));
         }
         m_Monitor.EndStep(m_CurrentStep);
     }
@@ -346,6 +357,10 @@ void DataManReader::DoClose(const int transportIndex)
         m_RequesterThread.join();
     }
     m_IsClosed = true;
+    if (m_MonitorActive)
+    {
+        m_Monitor.OutputJson(m_Name);
+    }
 }
 
 } // end namespace engine

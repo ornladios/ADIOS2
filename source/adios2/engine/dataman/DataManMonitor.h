@@ -30,10 +30,13 @@ public:
     void AddLatencyMilliseconds(const uint64_t remoteStamp);
     void AddBytes(const size_t bytes);
     void SetAverageSteps(const size_t steps);
+    void SetWriterThreading();
+    void SetReaderThreading();
     void SetClockError(const uint64_t roundLatency,
                        const uint64_t remoteTimeBase);
     void AddCompression(const std::string &method, const float accuracy);
     void AddTransport(const std::string &method);
+    void OutputJson(const std::string &filename);
 
 private:
     using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
@@ -59,6 +62,8 @@ private:
     std::string m_CompressionMethod;
     float m_CompressionAccuracy;
     std::string m_TransportMethod;
+    bool m_ReaderThreading = false;
+    bool m_WriterThreading = false;
 
     bool m_Verbose = true;
     bool m_JsonOutput = true;
