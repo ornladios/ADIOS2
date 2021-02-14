@@ -270,6 +270,13 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 input_data = reinterpret_cast<char *>(j.buffer->data());
             }
             std::vector<char> decompressBuffer;
+            if (!j.compression.empty())
+            {
+                m_OperatorMapMutex.lock();
+                m_OperatorMap[varName] = j.params;
+                m_OperatorMap[varName]["method"] = j.compression;
+                m_OperatorMapMutex.unlock();
+            }
             if (j.compression == "zfp")
             {
 #ifdef ADIOS2_HAVE_ZFP
@@ -296,10 +303,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
 
                 input_data = decompressBuffer.data();
 #else
-                throw std::runtime_error(
-                    "Data received is compressed using ZFP. However, ZFP "
-                    "library is not found locally and as a result it "
-                    "cannot be decompressed.");
+                throw std::runtime_error("ADIOS2 does not have ZFP");
                 return -101; // zfp library not found
 #endif
             }
@@ -328,10 +332,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 }
                 input_data = decompressBuffer.data();
 #else
-                throw std::runtime_error(
-                    "Data received is compressed using SZ. However, SZ "
-                    "library is not found locally and as a result it "
-                    "cannot be decompressed.");
+                throw std::runtime_error("ADIOS2 does not have SZ");
                 return -102; // sz library not found
 #endif
             }
@@ -361,10 +362,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 }
                 input_data = decompressBuffer.data();
 #else
-                throw std::runtime_error(
-                    "Data received is compressed using BZIP2. However, "
-                    "BZIP2 library is not found locally and as a result it "
-                    "cannot be decompressed.");
+                throw std::runtime_error("ADIOS2 does not have Bzip2");
                 return -103; // bzip2 library not found
 #endif
             }

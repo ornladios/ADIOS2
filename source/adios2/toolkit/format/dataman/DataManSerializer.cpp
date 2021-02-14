@@ -214,6 +214,12 @@ void DataManSerializer::AttachTimeStamp(const uint64_t timeStamp)
 
 size_t DataManSerializer::GetCombiningSteps() { return m_CombiningSteps; }
 
+OperatorMap DataManSerializer::GetOperatorMap()
+{
+    std::lock_guard<std::mutex> l(m_OperatorMapMutex);
+    return m_OperatorMap;
+}
+
 void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
 {
     TAU_SCOPED_TIMER_FUNC();

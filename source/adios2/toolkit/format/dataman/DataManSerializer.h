@@ -49,7 +49,6 @@ namespace format
 {
 
 using VecPtr = std::shared_ptr<std::vector<char>>;
-using VecPtrMap = std::unordered_map<int64_t, VecPtr>;
 using JsonPtr = std::shared_ptr<nlohmann::json>;
 
 struct DataManVar
@@ -77,10 +76,8 @@ struct DataManVar
 
 using DmvVecPtr = std::shared_ptr<std::vector<DataManVar>>;
 using DmvVecPtrMap = std::unordered_map<size_t, DmvVecPtr>;
-using DmvVecPtrMapPtr = std::shared_ptr<DmvVecPtrMap>;
-using DeferredRequestMap =
-    std::unordered_map<std::string, std::shared_ptr<std::vector<char>>>;
-using DeferredRequestMapPtr = std::shared_ptr<DeferredRequestMap>;
+using OperatorMap =
+    std::unordered_map<std::string, std::map<std::string, std::string>>;
 
 class DataManSerializer
 {
@@ -156,6 +153,8 @@ public:
                                     const float timeoutSeconds,
                                     const bool latest);
 
+    OperatorMap GetOperatorMap();
+
 private:
     template <class T>
     bool PutZfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
@@ -225,6 +224,9 @@ private:
 
     // string, msgpack, cbor, ubjson
     std::string m_UseJsonSerialization = "string";
+
+    OperatorMap m_OperatorMap;
+    std::mutex m_OperatorMapMutex;
 
     std::vector<uint64_t> m_TimeStamps;
     std::mutex m_TimeStampsMutex;

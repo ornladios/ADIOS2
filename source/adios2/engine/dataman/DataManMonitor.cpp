@@ -9,7 +9,9 @@
  */
 
 #include "DataManMonitor.h"
+#include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 namespace adios2
 {
@@ -142,6 +144,48 @@ void DataManMonitor::AddBytes(const size_t bytes)
 {
     m_TotalBytes.back() += bytes;
     m_StepBytes += bytes;
+}
+
+void DataManMonitor::AddCompression(const std::string &method,
+                                    const float accuracy)
+{
+    m_CompressionMethod = method;
+    m_CompressionAccuracy = accuracy;
+}
+
+void DataManMonitor::AddTransport(const std::string &method)
+{
+    m_TransportMethod = method;
+}
+
+void DataManMonitor::SetReaderThreading() { m_ReaderThreading = true; }
+
+void DataManMonitor::SetWriterThreading() { m_WriterThreading = true; }
+
+void DataManMonitor::OutputJson(const std::string &filename)
+{
+    nlohmann::json output;
+
+    output["measurements"]["bandwidth"] = m_TotalRate;
+    output["measurements"]["latency"] =
+        m_AccumulatedLatency / static_cast<double>(m_CurrentStep + 1);
+    output["measurements"]["drop_rate"] = m_DropRate;
+    output["measurements"]["step_data_size"] = m_StepBytes;
+    if (!m_CompressionMethod.empty())
+    {
+        output["measurements"]["accuracy"] = m_CompressionAccuracy;
+    }
+
+    output["parameters"]["combining_steps"] = m_AverageSteps;
+    output["parameters"]["compression_method"] = m_CompressionMethod;
+    output["parameters"]["reader_threading"] = m_ReaderThreading;
+    output["parameters"]["writer_threading"] = m_WriterThreading;
+    output["parameters"]["transport"] = m_TransportMethod;
+
+    std::ofstream file;
+    file.open((filename + ".json").c_str());
+    file << output.dump() << "\0";
+    file.close();
 }
 
 } // end namespace engine
