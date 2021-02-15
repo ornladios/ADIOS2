@@ -31,7 +31,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Port", m_Port);
     helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
-    helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
+    helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
     helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
 
@@ -74,7 +74,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
         m_Monitor.SetClockError(roundLatency,
                                 *reinterpret_cast<uint64_t *>(reply->data()));
         m_Monitor.AddTransport(m_TransportMode);
-        if (m_DoubleBuffer)
+        if (m_Threading)
         {
             m_Monitor.SetReaderThreading();
         }
@@ -259,7 +259,7 @@ void DataManReader::RequestThread()
                 {
                 }
             }
-            m_Serializer.PutPack(buffer, m_DoubleBuffer);
+            m_Serializer.PutPack(buffer, m_Threading);
             if (m_MonitorActive)
             {
                 size_t combiningSteps = m_Serializer.GetCombiningSteps();
@@ -300,7 +300,7 @@ void DataManReader::SubscribeThread()
                 {
                 }
             }
-            m_Serializer.PutPack(buffer, m_DoubleBuffer);
+            m_Serializer.PutPack(buffer, m_Threading);
             if (m_MonitorActive)
             {
                 size_t combiningSteps = m_Serializer.GetCombiningSteps();
