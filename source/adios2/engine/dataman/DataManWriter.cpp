@@ -39,7 +39,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "RendezvousReaderCount",
                          m_RendezvousReaderCount);
-    helper::GetParameter(m_IO.m_Parameters, "DoubleBuffer", m_DoubleBuffer);
+    helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
     helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
     helper::GetParameter(m_IO.m_Parameters, "CombiningSteps", m_CombiningSteps);
@@ -83,7 +83,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         ReplyThread();
     }
 
-    if (m_DoubleBuffer && m_TransportMode == "fast")
+    if (m_Threading && m_TransportMode == "fast")
     {
         m_PublishThreadActive = true;
         m_PublishThread = std::thread(&DataManWriter::PublishThread, this);
@@ -147,7 +147,7 @@ void DataManWriter::EndStep()
             m_SerializerBufferSize = buffer->size();
         }
 
-        if (m_DoubleBuffer || m_TransportMode == "reliable")
+        if (m_Threading || m_TransportMode == "reliable")
         {
             PushBufferQueue(buffer);
         }
@@ -195,7 +195,7 @@ void DataManWriter::DoClose(const int transportIndex)
             m_SerializerBufferSize = buffer->size();
         }
 
-        if (m_DoubleBuffer || m_TransportMode == "reliable")
+        if (m_Threading || m_TransportMode == "reliable")
         {
             PushBufferQueue(buffer);
         }
@@ -211,7 +211,7 @@ void DataManWriter::DoClose(const int transportIndex)
     auto cvp = std::make_shared<std::vector<char>>(s.size());
     std::memcpy(cvp->data(), s.c_str(), s.size());
 
-    if (m_DoubleBuffer || m_TransportMode == "reliable")
+    if (m_Threading || m_TransportMode == "reliable")
     {
         PushBufferQueue(cvp);
     }

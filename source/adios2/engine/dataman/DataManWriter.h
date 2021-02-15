@@ -46,7 +46,7 @@ private:
     int m_RendezvousReaderCount = 1;
     int m_Timeout = 5;
     int m_Verbosity = 0;
-    bool m_DoubleBuffer = false;
+    bool m_Threading = false;
     std::string m_TransportMode = "fast";
     bool m_MonitorActive = false;
     int m_CombiningSteps = 1;

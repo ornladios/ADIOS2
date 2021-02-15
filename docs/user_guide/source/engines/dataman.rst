@@ -24,8 +24,8 @@ The DataMan engine takes the following parameters:
    A number >1 will cause the writer to wait for more readers, and a value of 0 will allow the writer to proceed without any readers present.
    This value is interpreted by DataMan Writer engines only.
 
-5. ``DoubleBuffer``: Default **true** for reader, **false** for writer. Whether to use double buffer for caching send and receive operations.
-   Enabling double buffer will cause extra overhead for managing threads and buffer queues, but will improve the continuity of data steps for the reader, for the pub/sub mode.
+5. ``Threading``: Default **true** for reader, **false** for writer. Whether to use threads for send and receive operations.
+   Enabling threading will cause extra overhead for managing threads and buffer queues, but will improve the continuity of data steps for readers, and help overlap data transfers with computations for writers.
    Advice for generic uses cases is to keep the default values, true for reader and false for writer.
 
 6. ``TransportMode``: Default **fast**. The fast mode is optimized for latency-critical applications.
@@ -40,7 +40,7 @@ The DataMan engine takes the following parameters:
  Port                            integer            **50001**, 22000, 33000
  Timeout                         integer            **5**, 10, 30
  RendezvousReaderCount           integer            **1**, 0, 3
- DoubleBuffer                    bool               **true** for reader, **false** for writer
+ Threading                       bool               **true** for reader, **false** for writer
  TransportMode                   string             **fast**, reliable
 =============================== ================== ================================================
 
