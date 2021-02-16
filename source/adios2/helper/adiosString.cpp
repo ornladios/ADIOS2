@@ -265,6 +265,30 @@ bool GetParameter(const Params &params, const std::string &key, int &value)
 }
 
 template <>
+bool GetParameter(const Params &params, const std::string &key, float &value)
+{
+    auto it = params.find(key);
+    if (it == params.end())
+    {
+        return false;
+    }
+    else
+    {
+        try
+        {
+            value = std::stof(it->second);
+        }
+        catch (...)
+        {
+            std::string error =
+                "Engine parameter " + key + " can only be float numbers";
+            throw(std::invalid_argument(error));
+        }
+    }
+    return true;
+}
+
+template <>
 bool GetParameter(const Params &params, const std::string &key, bool &value)
 {
     auto it = params.find(key);

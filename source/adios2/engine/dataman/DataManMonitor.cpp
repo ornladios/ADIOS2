@@ -146,11 +146,16 @@ void DataManMonitor::AddBytes(const size_t bytes)
     m_StepBytes += bytes;
 }
 
+void DataManMonitor::SetRequiredAccuracy(const float accuracyRequired)
+{
+    m_RequiredAccuracy = accuracyRequired;
+}
+
 void DataManMonitor::AddCompression(const std::string &method,
-                                    const float accuracy)
+                                    const float accuracyUsed)
 {
     m_CompressionMethod = method;
-    m_CompressionAccuracy = accuracy;
+    m_CompressionAccuracy = accuracyUsed;
 }
 
 void DataManMonitor::AddTransport(const std::string &method)
@@ -171,16 +176,17 @@ void DataManMonitor::OutputJson(const std::string &filename)
         m_AccumulatedLatency / static_cast<double>(m_CurrentStep + 1);
     output["measurements"]["drop_rate"] = m_DropRate;
     output["measurements"]["step_data_size"] = m_StepBytes;
-    if (!m_CompressionMethod.empty())
-    {
-        output["measurements"]["accuracy"] = m_CompressionAccuracy;
-    }
+    output["measurements"]["accuracy"] = m_RequiredAccuracy;
 
     output["parameters"]["combining_steps"] = m_AverageSteps;
-    output["parameters"]["compression_method"] = m_CompressionMethod;
     output["parameters"]["reader_threading"] = m_ReaderThreading;
     output["parameters"]["writer_threading"] = m_WriterThreading;
     output["parameters"]["transport"] = m_TransportMethod;
+    if (!m_CompressionMethod.empty())
+    {
+        output["parameters"]["compression_method"] = m_CompressionMethod;
+        output["parameters"]["compression_accuracy"] = m_CompressionAccuracy;
+    }
 
     std::ofstream file;
     file.open((filename + ".json").c_str());
