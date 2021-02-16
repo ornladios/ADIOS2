@@ -81,6 +81,11 @@ DataManReader::DataManReader(IO &io, const std::string &name,
         {
             m_Monitor.SetReaderThreading();
         }
+        bool writerThreading = message["Threading"];
+        if (writerThreading)
+        {
+            m_Monitor.SetWriterThreading();
+        }
     }
 
     if (m_TransportMode == "fast")
