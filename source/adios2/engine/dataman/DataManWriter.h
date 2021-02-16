@@ -57,6 +57,7 @@ private:
     size_t m_SerializerBufferSize = 1024 * 1024;
     int64_t m_CurrentStep = -1;
     std::atomic<size_t> m_SentSteps;
+    nlohmann::json m_HandshakeJson;
 
     format::DataManSerializer m_Serializer;
 
@@ -76,6 +77,7 @@ private:
     void PushBufferQueue(std::shared_ptr<std::vector<char>> buffer);
     std::shared_ptr<std::vector<char>> PopBufferQueue();
 
+    void Handshake();
     void ReplyThread();
     void PublishThread();
 

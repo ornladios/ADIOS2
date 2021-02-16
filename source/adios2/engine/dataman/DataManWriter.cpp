@@ -44,6 +44,9 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
     helper::GetParameter(m_IO.m_Parameters, "CombiningSteps", m_CombiningSteps);
 
+    m_HandshakeJson["Threading"] = m_Threading;
+    m_HandshakeJson["Transport"] = m_TransportMode;
+
     if (m_IPAddress.empty())
     {
         throw(std::invalid_argument("IP address not specified"));
@@ -73,14 +76,25 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 
     m_Replier.OpenReplier(replierAddress, m_Timeout, 64);
 
-    if (m_RendezvousReaderCount == 0 || m_TransportMode == "reliable")
+    if (m_RendezvousReaderCount == 0)
     {
         m_ReplyThreadActive = true;
         m_ReplyThread = std::thread(&DataManWriter::ReplyThread, this);
     }
     else
     {
-        ReplyThread();
+        Handshake();
+    }
+
+    if (m_TransportMode == "reliable" && m_RendezvousReaderCount > 0)
+    {
+        m_ReplyThreadActive = true;
+        m_ReplyThread = std::thread(&DataManWriter::ReplyThread, this);
+    }
+
+    if (m_TransportMode == "fast")
+    {
+        m_ReplyThreadActive = false;
     }
 
     if (m_Threading && m_TransportMode == "fast")
@@ -221,7 +235,6 @@ void DataManWriter::DoClose(const int transportIndex)
     }
 
     m_PublishThreadActive = false;
-
     if (m_ReplyThreadActive)
     {
         while (m_SentSteps < m_CurrentStep + 2)
@@ -281,6 +294,38 @@ void DataManWriter::PublishThread()
     }
 }
 
+void DataManWriter::Handshake()
+{
+    int readerCount = 0;
+    while (true)
+    {
+        auto request = m_Replier.ReceiveRequest();
+        if (request != nullptr && request->size() > 0)
+        {
+            std::string r(request->begin(), request->end());
+            if (r == "Handshake")
+            {
+                m_HandshakeJson["TimeStamp"] =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::system_clock::now().time_since_epoch())
+                        .count();
+                std::string js = m_HandshakeJson.dump() + '\0';
+                m_Replier.SendReply(js.data(), js.size());
+            }
+            else if (r == "Ready")
+            {
+                m_Replier.SendReply("OK", 2);
+                ++readerCount;
+            }
+
+            if (readerCount >= m_RendezvousReaderCount)
+            {
+                break;
+            }
+        }
+    }
+}
+
 void DataManWriter::ReplyThread()
 {
     int readerCount = 0;
@@ -292,11 +337,12 @@ void DataManWriter::ReplyThread()
             std::string r(request->begin(), request->end());
             if (r == "Handshake")
             {
-                uint64_t timeStamp =
+                m_HandshakeJson["TimeStamp"] =
                     std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                m_Replier.SendReply(&timeStamp, sizeof(timeStamp));
+                std::string js = m_HandshakeJson.dump() + '\0';
+                m_Replier.SendReply(js.data(), js.size());
             }
             else if (r == "Ready")
             {
@@ -316,10 +362,6 @@ void DataManWriter::ReplyThread()
                     m_SentSteps = m_SentSteps + m_CombiningSteps;
                 }
             }
-        }
-        if (m_RendezvousReaderCount == readerCount && m_TransportMode == "fast")
-        {
-            m_ReplyThreadActive = false;
         }
     }
 }
