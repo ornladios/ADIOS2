@@ -32,7 +32,6 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
-    helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
 
     if (m_IPAddress.empty())
@@ -56,6 +55,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
                             .count();
 
     auto startTime = std::chrono::system_clock::now();
+
     while (reply == nullptr or reply->empty())
     {
         reply = m_Requester.Request("Handshake", 9);
@@ -69,14 +69,22 @@ DataManReader::DataManReader(IO &io, const std::string &name,
             return;
         }
     }
+
+    nlohmann::json message = nlohmann::json::parse(reply->data());
+    m_TransportMode = message["Transport"];
+
     if (m_MonitorActive)
     {
-        m_Monitor.SetClockError(roundLatency,
-                                *reinterpret_cast<uint64_t *>(reply->data()));
+        m_Monitor.SetClockError(roundLatency, message["TimeStamp"]);
         m_Monitor.AddTransport(m_TransportMode);
         if (m_Threading)
         {
             m_Monitor.SetReaderThreading();
+        }
+        bool writerThreading = message["Threading"];
+        if (writerThreading)
+        {
+            m_Monitor.SetWriterThreading();
         }
     }
 

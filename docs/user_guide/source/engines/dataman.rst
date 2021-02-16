@@ -26,9 +26,10 @@ The DataMan engine takes the following parameters:
 
 5. ``Threading``: Default **true** for reader, **false** for writer. Whether to use threads for send and receive operations.
    Enabling threading will cause extra overhead for managing threads and buffer queues, but will improve the continuity of data steps for readers, and help overlap data transfers with computations for writers.
-   Advice for generic uses cases is to keep the default values, true for reader and false for writer.
 
-6. ``TransportMode``: Default **fast**. The fast mode is optimized for latency-critical applications.
+6. ``TransportMode``: Default **fast**. Only DataMan writers take this parameter.
+   Readers are automatically synchronized at runtime to match writers' transport mode.
+   The fast mode is optimized for latency-critical applications.
    It enforces readers to only receive the latest step.
    Therefore, in cases where writers are faster than readers, readers will skip some data steps.
    The reliable mode ensures that all steps are received by readers, by sacrificing performance compared to the fast mode.
