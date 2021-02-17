@@ -44,14 +44,14 @@ void ZmqReqRep::OpenRequester(const int timeout,
                               const size_t receiverBufferSize)
 {
     m_Timeout = timeout;
-    m_ReceiverBuffer.resize(receiverBufferSize);
+    m_ReceiverBuffer.reserve(receiverBufferSize);
 }
 
 void ZmqReqRep::OpenRequester(const std::string &address, const int timeout,
                               const size_t receiverBufferSize)
 {
     m_Timeout = timeout;
-    m_ReceiverBuffer.resize(receiverBufferSize);
+    m_ReceiverBuffer.reserve(receiverBufferSize);
 
     m_Socket = zmq_socket(m_Context, ZMQ_REQ);
 
@@ -79,7 +79,7 @@ void ZmqReqRep::OpenReplier(const std::string &address, const int timeout,
                             const size_t receiverBufferSize)
 {
     m_Timeout = timeout;
-    m_ReceiverBuffer.resize(receiverBufferSize);
+    m_ReceiverBuffer.reserve(receiverBufferSize);
 
     m_Socket = zmq_socket(m_Context, ZMQ_REP);
     if (not m_Socket)
@@ -99,8 +99,8 @@ void ZmqReqRep::OpenReplier(const std::string &address, const int timeout,
 
 std::shared_ptr<std::vector<char>> ZmqReqRep::ReceiveRequest()
 {
-    int bytes =
-        zmq_recv(m_Socket, m_ReceiverBuffer.data(), m_ReceiverBuffer.size(), 0);
+    int bytes = zmq_recv(m_Socket, m_ReceiverBuffer.data(),
+                         m_ReceiverBuffer.capacity(), 0);
     if (bytes <= 0)
     {
         return nullptr;
