@@ -5,7 +5,7 @@
 
 foreach(tst IN ITEMS
   1D
-  1DSuperLarge
+  #  1DSuperLarge
   2DMemSelect 3DMemSelect
   WriterDoubleBuffer WriterSingleBuffer
   ReaderDoubleBuffer ReaderSingleBuffer
