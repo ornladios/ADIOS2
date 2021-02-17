@@ -1,11 +1,6 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
- *
- * TestDataMan1D.cpp
- *
- *  Created on: Jul 12, 2018
- *      Author: Jason Wang
  */
 
 #include <numeric>
@@ -43,7 +38,7 @@ void GenData(std::vector<T> &data, const size_t step)
 template <class T>
 void PrintData(const T *data, const size_t size, const size_t step)
 {
-    std::cout << "Step: " << step << " Size:" << size << "\n";
+    std::cout << "Step: " << step << " [";
     size_t printsize = 32;
     if (size < printsize)
     {
@@ -261,6 +256,7 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
     {
         auto attInt = dataManIO.InquireAttribute<int>("AttInt");
         ASSERT_EQ(110, attInt.Data()[0]);
+        ASSERT_NE(111, attInt.Data()[0]);
     }
     dataManReader.Close();
 }
@@ -275,20 +271,22 @@ public:
 TEST_F(DataManEngineTest, 1DSuperLarge)
 {
     // set parameters
-    Dims shape = {1000000};
+    Dims shape = {10};
     Dims start = {0};
-    Dims count = {1000000};
-    size_t steps = 10;
-    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
-                                   {"Port", "22300"},
-                                   {"MaxStepBufferSize", "100000000"},
-                                   {"TransportMode", "reliable"}};
+    Dims count = {10};
+    size_t steps = 500;
 
     // run workflow
-    auto r =
-        std::thread(DataManReader, shape, start, count, steps, engineParams);
-    auto w =
-        std::thread(DataManWriter, shape, start, count, steps, engineParams);
+    adios2::Params readerEngineParams = {{"IPAddress", "127.0.0.1"},
+                                         {"Port", "12480"},
+                                         {"TransportMode", "reliable"}};
+    auto r = std::thread(DataManReader, shape, start, count, steps,
+                         readerEngineParams);
+    adios2::Params writerEngineParams = {{"IPAddress", "127.0.0.1"},
+                                         {"Port", "12480"},
+                                         {"TransportMode", "reliable"}};
+    auto w = std::thread(DataManWriter, shape, start, count, steps,
+                         writerEngineParams);
     w.join();
     r.join();
 }
