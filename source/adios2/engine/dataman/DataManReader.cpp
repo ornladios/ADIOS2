@@ -255,7 +255,8 @@ void DataManReader::RequestThread()
 {
     while (m_RequesterThreadActive)
     {
-        auto buffer = m_Requester.Request("Step", 4);
+        std::string request = "Step";
+        auto buffer = m_Requester.Request(request.data(), request.size());
         if (buffer != nullptr && buffer->size() > 0)
         {
             if (buffer->size() < 64)
