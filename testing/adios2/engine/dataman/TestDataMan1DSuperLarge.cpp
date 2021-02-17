@@ -278,9 +278,10 @@ TEST_F(DataManEngineTest, 1DSuperLarge)
     Dims shape = {10000000};
     Dims start = {0};
     Dims count = {10000000};
-    size_t steps = 50;
+    size_t steps = 10;
     adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
                                    {"Port", "22300"},
+                                   {"MaxStepBufferSize", "1000000000"},
                                    {"TransportMode", "reliable"}};
 
     // run workflow

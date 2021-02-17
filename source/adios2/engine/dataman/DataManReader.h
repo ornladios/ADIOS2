@@ -45,7 +45,7 @@ private:
     int m_Timeout = 5;
     int m_Verbosity = 0;
     bool m_Threading = true;
-    size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
+    uint64_t m_ReceiverBufferSize = 128 * 1024 * 1024;
     std::string m_TransportMode = "fast";
     bool m_MonitorActive = false;
 
