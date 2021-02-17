@@ -103,22 +103,5 @@ std::shared_ptr<std::vector<char>> ZmqPubSub::Receive()
     return nullptr;
 }
 
-/*
-void ZmqPubSub::ReceiveThread()
-{
-    while (m_ThreadActive)
-    {
-        int ret = zmq_recv(m_ZmqSocket, m_ReceiverBuffer.data(),
-                           m_ReceiverBuffer.size(), ZMQ_DONTWAIT);
-        if (ret > 0)
-        {
-            auto buff = std::make_shared<std::vector<char>>(ret);
-            std::memcpy(buff->data(), m_ReceiverBuffer.data(), ret);
-            PushBufferQueue(buff);
-        }
-    }
-}
-*/
-
 } // end namespace zmq
 } // end namespace adios2

@@ -33,6 +33,8 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
+    helper::GetParameter(m_IO.m_Parameters, "MaxStepBufferSize",
+                         m_ReceiverBufferSize);
 
     if (m_IPAddress.empty())
     {
