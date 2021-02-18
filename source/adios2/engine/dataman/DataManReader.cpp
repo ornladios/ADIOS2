@@ -88,8 +88,11 @@ DataManReader::DataManReader(IO &io, const std::string &name,
         {
             m_Monitor.SetWriterThreading();
         }
-        m_Monitor.SetRequiredAccuracy(
-            stof(message["FloatAccuracy"].get<std::string>()));
+        auto it = message.find("FloatAccuracy");
+        if (it != message.end() && !it->get<std::string>().empty())
+        {
+            m_Monitor.SetRequiredAccuracy(stof(it->get<std::string>()));
+        }
     }
 
     if (m_TransportMode == "fast")
