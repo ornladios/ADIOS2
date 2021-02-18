@@ -171,26 +171,27 @@ void DataManMonitor::OutputJson(const std::string &filename)
 {
     nlohmann::json output;
 
-    output["measurements"]["bandwidth"] = m_TotalRate;
-    output["measurements"]["latency"] =
+    output["measurements"]["Bandwidth"] = m_TotalRate;
+    output["measurements"]["Latency"] =
         m_AccumulatedLatency / static_cast<double>(m_CurrentStep + 1);
-    output["measurements"]["drop_rate"] = m_DropRate;
-    output["measurements"]["step_data_size"] = m_StepBytes;
-    output["measurements"]["accuracy"] = m_RequiredAccuracy;
+    output["measurements"]["DropRate"] = m_DropRate;
+    output["measurements"]["StepDataSize"] = m_StepBytes;
+    output["measurements"]["AllowedError"] = m_RequiredAccuracy;
 
-    output["parameters"]["combining_steps"] = m_AverageSteps;
-    output["parameters"]["reader_threading"] = m_ReaderThreading;
-    output["parameters"]["writer_threading"] = m_WriterThreading;
-    output["parameters"]["transport"] = m_TransportMethod;
+    output["parameters"]["CombiningSteps"] = m_AverageSteps;
+    output["parameters"]["ReaderThreading"] = m_ReaderThreading;
+    output["parameters"]["WriterThreading"] = m_WriterThreading;
+    output["parameters"]["Transport"] = m_TransportMethod;
     if (!m_CompressionMethod.empty())
     {
-        output["parameters"]["compression_method"] = m_CompressionMethod;
-        output["parameters"]["compression_accuracy"] = m_CompressionAccuracy;
+        output["parameters"]["CompressionMethod"] = m_CompressionMethod;
+        output["parameters"]["CompressionAccuracy"] = m_CompressionAccuracy;
     }
 
     std::ofstream file;
-    file.open((filename + ".json").c_str());
-    file << output.dump() << "\0";
+    file.open((filename + ".json").c_str(),
+              std::fstream::out | std::fstream::app);
+    file << output.dump() << "\0" << std::endl;
     file.close();
 }
 
