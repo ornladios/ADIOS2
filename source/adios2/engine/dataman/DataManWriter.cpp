@@ -47,7 +47,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 
     m_HandshakeJson["Threading"] = m_Threading;
     m_HandshakeJson["Transport"] = m_TransportMode;
-    //    m_HandshakeJson["FloatAccuracy"] = m_FloatAccuracy;
+    m_HandshakeJson["FloatAccuracy"] = m_FloatAccuracy;
 
     if (m_IPAddress.empty())
     {
