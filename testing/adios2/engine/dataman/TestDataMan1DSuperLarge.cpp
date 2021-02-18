@@ -271,19 +271,20 @@ public:
 TEST_F(DataManEngineTest, 1DSuperLarge)
 {
     // set parameters
-    Dims shape = {10};
+    Dims shape = {10000000};
     Dims start = {0};
-    Dims count = {10};
-    size_t steps = 500;
+    Dims count = {10000000};
+    size_t steps = 20;
 
     // run workflow
     adios2::Params readerEngineParams = {{"IPAddress", "127.0.0.1"},
-                                         {"Port", "12480"},
+                                         {"Port", "13480"},
+                                         {"MaxStepBufferSize", "1000000000"},
                                          {"TransportMode", "reliable"}};
     auto r = std::thread(DataManReader, shape, start, count, steps,
                          readerEngineParams);
     adios2::Params writerEngineParams = {{"IPAddress", "127.0.0.1"},
-                                         {"Port", "12480"},
+                                         {"Port", "13480"},
                                          {"TransportMode", "reliable"}};
     auto w = std::thread(DataManWriter, shape, start, count, steps,
                          writerEngineParams);
