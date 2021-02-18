@@ -1,0 +1,100 @@
+name: Contract
+
+on: 
+  push: 
+    branches: 
+    - master 
+    - release* 
+  pull_request: 
+    branches: 
+    - master 
+    - release* 
+
+jobs:
+  install-adios2:
+    runs-on: ubuntu-latest
+    container:
+      image: ornladios/adios2:dependencies-ubuntu20.04
+      options: --user=root
+
+    defaults:
+      run:
+        shell: su adios -c "bash --login {0}"
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Configure
+      working-directory: /home/adios
+      run: |
+        mkdir build
+        cd build
+        cmake \
+          -DCMAKE_INSTALL_PREFIX=/opt/adios \
+          -DBUILD_TESTING=OFF \
+          -DADIOS2_BUILD_EXAMPLES=OFF \
+          ${GITHUB_WORKSPACE}
+    - name: Build
+      working-directory: /home/adios/build
+      run: |
+        make -j$(grep -c '^processor' /proc/cpuinfo)
+    - name: Install
+      shell: bash
+      working-directory: /home/adios/build
+      run: |
+        make install
+        echo 'export PATH="/opt/adios/bin:${PATH}"' >> /etc/profile.d/adios2.sh
+        echo 'export LD_LIBRARY_PATH="/opt/adios/lib:${LD_LIBRARY_PATH}"' \
+          >> /etc/profile.d/adios2.sh
+        echo 'export CMAKE_PREFIX_PATH="/opt/adios:${CMAKE_PREFIX_PATH}"' \
+          >> /etc/profile.d/adios2.sh
+        echo 'export PYTHONPATH="/opt/adios/lib/python3/dist-packages:${PYTHONPATH}"' \
+          >> /etc/profile.d/adios2.sh
+    - name: Archive
+      shell: bash
+      working-directory: /
+      run: |
+        tar -cvf adios-installation.tar /opt/adios /etc/profile.d/adios2.sh
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: adios-installation
+        path: /adios-installation.tar
+
+
+  examples:
+    runs-on: ubuntu-latest
+    needs: install-adios2
+    container:
+      image: ornladios/adios2:dependencies-ubuntu20.04
+      options: --user=root
+
+    defaults:
+      run:
+        shell: su adios -c "bash --login {0}"
+        working-directory: /home/adios
+
+    steps:
+    - name: Download adios
+      uses: actions/download-artifact@v2
+      with:
+        name: adios-installation
+    - name: Extract adios
+      shell: bash
+      run: tar -C / -xvf ${GITHUB_WORKSPACE}/adios-installation.tar
+    - name: Checkout
+      run: git clone https://github.com/ornladios/ADIOS2-Examples.git source
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake ../source
+    - name: Build
+      working-directory: /home/adios/build
+      run: |
+        make -j$(grep -c '^processor' /proc/cpuinfo)
+    - name: Test
+      working-directory: /home/adios/build
+      run: |
+        ctest -VV -j 1
