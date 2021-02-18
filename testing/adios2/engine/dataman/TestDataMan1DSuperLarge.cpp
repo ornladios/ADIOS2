@@ -274,7 +274,7 @@ TEST_F(DataManEngineTest, 1DSuperLarge)
     Dims shape = {10000000};
     Dims start = {0};
     Dims count = {10000000};
-    size_t steps = 20;
+    size_t steps = 10;
 
     // run workflow
     adios2::Params readerEngineParams = {{"IPAddress", "127.0.0.1"},
