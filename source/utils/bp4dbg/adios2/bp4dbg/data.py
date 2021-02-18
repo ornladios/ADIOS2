@@ -43,6 +43,8 @@ def ReadEncodedStringArray(f, ID, limit, nStrings):
 def readDataToNumpyArray(f, typeName, nElements):
     if typeName == 'byte':
         return np.fromfile(f, dtype=np.int8, count=nElements)
+    elif typeName == 'char':
+        return np.fromfile(f, dtype=np.uint8, count=nElements)
     elif typeName == 'short':
         return np.fromfile(f, dtype=np.int16, count=nElements)
     elif typeName == 'integer':

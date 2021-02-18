@@ -33,6 +33,7 @@
  </pre>
 */
 #define ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(MACRO)                 \
+    MACRO(char)                                                                \
     MACRO(int8_t)                                                              \
     MACRO(int16_t)                                                             \
     MACRO(int32_t)                                                             \
@@ -196,6 +197,7 @@
 #define ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)                          \
     MACRO(std::string, string)                                                 \
     MACRO(int8_t, int8)                                                        \
+    MACRO(char, char)                                                          \
     MACRO(uint8_t, uint8)                                                      \
     MACRO(int16_t, int16)                                                      \
     MACRO(uint16_t, uint16)                                                    \
@@ -211,6 +213,7 @@
 
 #define ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(MACRO)                           \
     MACRO(int8_t, int8)                                                        \
+    MACRO(char, char)                                                          \
     MACRO(uint8_t, uint8)                                                      \
     MACRO(int16_t, int16)                                                      \
     MACRO(uint16_t, uint16)                                                    \

@@ -19,7 +19,9 @@ dataTypes = {
     9: 'string',
     10: 'complex',
     11: 'double_complex',
-    12: 'string_array'
+    12: 'string_array',
+
+    55: 'char'
 }
 
 dataTypeSize = {
@@ -41,7 +43,9 @@ dataTypeSize = {
     9: 0,
     10: 8,
     11: 16,
-    12: 0
+    12: 0,
+
+    55: 1
 }
 
 

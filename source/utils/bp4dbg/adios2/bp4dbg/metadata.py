@@ -2,6 +2,7 @@ import numpy as np
 from os import fstat
 from .utils import *
 
+
 def ReadEncodedStringFromBuffer(buf, pos, ID, limit, lenbytes=2):
     # 'lenbytes' bytes length + string without \0
     if lenbytes == 1:
@@ -57,6 +58,9 @@ def ReadDimensionCharacteristics(buf, pos):
 def bDataToNumpyArray(cData, typeName, nElements, startPos=0):
     if typeName == 'byte':
         return np.frombuffer(cData, dtype=np.int8, count=nElements,
+                             offset=startPos)
+    elif typeName == 'char':
+        return np.frombuffer(cData, dtype=np.uint8, count=nElements,
                              offset=startPos)
     elif typeName == 'short':
         return np.frombuffer(cData, dtype=np.int16, count=nElements,

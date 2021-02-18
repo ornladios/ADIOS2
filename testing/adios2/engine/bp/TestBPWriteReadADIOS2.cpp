@@ -92,6 +92,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
             const adios2::Dims count{Nx};
 
+            // auto var_bool = io.DefineVariable<bool>("tf", shape, start,
+            // count);
+            auto var_char = io.DefineVariable<char>("ch", shape, start, count);
             auto var_iString = io.DefineVariable<std::string>("iString");
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             auto var_i16 =
@@ -140,6 +143,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
+            // auto var_bool = io.InquireVariable<bool>("bool");
+            auto var_char = io.InquireVariable<char>("ch");
             auto var_iString = io.InquireVariable<std::string>("iString");
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             auto var_i16 = io.InquireVariable<int16_t>("i16");
@@ -156,6 +161,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             // variable we write and its offsets in the global spaces
             adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
 
+            // var_bool.SetSelection(sel);
+            var_char.SetSelection(sel);
             EXPECT_THROW(var_iString.SetSelection(sel), std::invalid_argument);
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
@@ -173,6 +180,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             // starting index + count
             bpWriter.BeginStep();
 
+            // bpWriter.Put(var_bool, currentTestData.TF.data());
+            bpWriter.Put(var_char, currentTestData.CHAR.data());
             bpWriter.Put(var_iString, currentTestData.S1);
             bpWriter.Put(var_i8, currentTestData.I8.data());
             bpWriter.Put(var_i16, currentTestData.I16.data());
@@ -204,6 +213,18 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
+
+        // auto var_bool = io.InquireVariable<bool>("bool");
+        // EXPECT_TRUE(var_bool);
+        // ASSERT_EQ(var_bool.ShapeID(), adios2::ShapeID::GlobalArray);
+        // ASSERT_EQ(var_bool.Steps(), NSteps);
+        // ASSERT_EQ(var_bool.Shape()[0], mpiSize * Nx);
+
+        auto var_char = io.InquireVariable<char>("ch");
+        EXPECT_TRUE(var_char);
+        ASSERT_EQ(var_char.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_char.Steps(), NSteps);
+        ASSERT_EQ(var_char.Shape()[0], mpiSize * Nx);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -285,11 +306,16 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         std::array<uint64_t, Nx> U64;
         std::array<float, Nx> R32;
         std::array<double, Nx> R64;
+        std::array<char, Nx> CHAR;
+        // std::array<bool, Nx> TF;
 
         const adios2::Dims start{mpiRank * Nx};
         const adios2::Dims count{Nx};
 
         const adios2::Box<adios2::Dims> sel(start, count);
+
+        // var_bool.SetSelection(sel);
+        var_char.SetSelection(sel);
 
         var_i8.SetSelection(sel);
         var_i16.SetSelection(sel);
@@ -306,6 +332,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
         for (size_t t = 0; t < NSteps; ++t)
         {
+            // var_bool.SetStepSelection({t, 1});
+            var_char.SetStepSelection({t, 1});
+
             var_i8.SetStepSelection({t, 1});
             var_i16.SetStepSelection({t, 1});
             var_i32.SetStepSelection({t, 1});
@@ -323,6 +352,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
+            // bpReader.Get(var_bool, TF.data());
+            bpReader.Get(var_char, CHAR.data());
             bpReader.Get(var_iString, IString);
 
             bpReader.Get(var_i8, I8.data());
@@ -348,6 +379,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
+                // EXPECT_EQ(TF[i], currentTestData.TF[i]) << msg;
+                EXPECT_EQ(CHAR[i], currentTestData.CHAR[i]) << msg;
                 EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
                 EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
                 EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;

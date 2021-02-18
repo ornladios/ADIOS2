@@ -70,6 +70,11 @@ struct SmallTestData
          std::complex<double>(14.2, 15.2), std::complex<double>(15.2, 16.2),
          std::complex<double>(16.2, 17.2), std::complex<double>(17.2, 18.2),
          std::complex<double>(18.2, 19.2), std::complex<double>(19.2, 20.2)}};
+
+    std::array<char, 10> CHAR = {
+        {'a', 'b', 'c', 'y', 'z', 'A', 'B', 'C', 'Y', 'Z'}};
+    std::array<bool, 10> TF = {
+        {true, false, true, true, false, false, true, false, false, true}};
 };
 
 SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
@@ -98,6 +103,20 @@ SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
         v.imag(v.imag() + static_cast<double>(j));
     });
 
+    std::for_each(in.CHAR.begin(), in.CHAR.end(), [&](char &v) {
+        char jc = static_cast<char>(j);
+        char inc = jc % ('z' - 'a');
+        v += inc;
+        if (v > 'z')
+        {
+            v = 'a' + (v - 'z') - 1;
+        }
+        else if (v > 'Z' && v < 'a')
+        {
+            v = 'A' + (v - 'Z') - 1;
+        }
+    });
+
     return in;
 }
 
@@ -124,6 +143,20 @@ void UpdateSmallTestData(SmallTestData &in, int step, int rank, int size)
     std::for_each(in.CR64.begin(), in.CR64.end(), [&](std::complex<double> &v) {
         v.real(v.real() + static_cast<double>(j));
         v.imag(v.imag() + static_cast<double>(j));
+    });
+
+    std::for_each(in.CHAR.begin(), in.CHAR.end(), [&](char &v) {
+        char jc = static_cast<char>(j);
+        char inc = jc % ('z' - 'a');
+        v += inc;
+        if (v > 'z')
+        {
+            v = 'a' + (v - 'z') - 1;
+        }
+        else if (v > 'Z' && v < 'a')
+        {
+            v = 'A' + (v - 'Z') - 1;
+        }
     });
 }
 
