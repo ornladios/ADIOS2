@@ -49,7 +49,7 @@ public:
             return;
         }
 
-        for (int i = 0; i < m_Chain.size() - 1; i++)
+        for (size_t i = 0; i < m_Chain.size() - 1; i++)
         {
             H5Gclose(m_Chain[i]);
         }

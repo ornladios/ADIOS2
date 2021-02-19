@@ -60,6 +60,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
             const adios2::Dims count{Nx};
 
             io.DefineVariable<std::string>("iString");
+            io.DefineVariable<char>("ch", shape, start, count);
 
             io.DefineVariable<int8_t>("i8", shape, start, count,
                                       adios2::ConstantDims);
@@ -130,6 +131,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                 h5Writer.Put<double>("r64", currentTestData.R64.data());
             }
 
+            h5Writer.Put<char>("ch", currentTestData.CHAR.data());
             h5Writer.Put<std::complex<float>>("cr32",
                                               currentTestData.CR32.data());
             h5Writer.Put<std::complex<double>>("cr64",
@@ -149,6 +151,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
         adios2::Engine h5Reader = io.Open(fname, adios2::Mode::Read);
 
         std::string IString;
+        std::array<uint8_t, Nx> CHAR;
         std::array<int8_t, Nx> I8;
         std::array<int16_t, Nx> I16;
         std::array<int32_t, Nx> I32;
@@ -178,6 +181,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                 m_TestData, static_cast<int>(currentStep), mpiRank, mpiSize);
 
             auto var_iString = io.InquireVariable<std::string>("iString");
+            auto var_ch = io.InquireVariable<uint8_t>("ch");
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             auto var_i16 = io.InquireVariable<int16_t>("i16");
             auto var_i32 = io.InquireVariable<int32_t>("i32");
@@ -307,8 +311,13 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                 h5Reader.Get(var_r64, R64.data());
             }
 
+            EXPECT_TRUE(var_ch);
             EXPECT_TRUE(var_cr32);
             EXPECT_TRUE(var_cr64);
+
+            ASSERT_EQ(var_ch.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_ch.Steps(), NSteps);
+            ASSERT_EQ(var_ch.Shape()[0], mpiSize * Nx);
 
             ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
             ASSERT_EQ(var_cr32.Steps(), NSteps);
@@ -318,9 +327,11 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
             ASSERT_EQ(var_cr64.Steps(), NSteps);
             ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Nx);
 
+            var_ch.SetSelection(sel);
             var_cr32.SetSelection(sel);
             var_cr64.SetSelection(sel);
 
+            h5Reader.Get(var_ch, CHAR.data());
             h5Reader.Get(var_cr32, CR32.data());
             h5Reader.Get(var_cr64, CR64.data());
 
@@ -354,6 +365,10 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                 if (var_r64)
                     EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
 
+                if (var_ch)
+                    EXPECT_EQ(static_cast<char>(CHAR[i]),
+                              currentTestData.CHAR[i])
+                        << msg;
                 if (var_cr32)
                     EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
                 if (var_cr64)

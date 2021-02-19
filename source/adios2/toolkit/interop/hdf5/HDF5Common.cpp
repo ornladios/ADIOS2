@@ -331,7 +331,7 @@ void HDF5Common::ReadAllVariables(core::IO &io)
     }
 
     GetNumAdiosSteps();
-    int i = 0;
+    unsigned int i = 0;
 
     for (i = 0; i < m_NumAdiosSteps; i++)
     {
@@ -353,7 +353,7 @@ void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname,
     herr_t ret = H5Gget_num_objs(gid, &numObj);
     if (ret >= 0)
     {
-        int k = 0;
+        hsize_t k = 0;
         char name[100];
         for (k = 0; k < numObj; k++)
         {
@@ -451,7 +451,7 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
     herr_t ret = H5Gget_num_objs(gid, &numObj);
     if (ret >= 0)
     {
-        int k = 0;
+        hsize_t k = 0;
         char name[50];
         for (k = 0; k < numObj; k++)
         {
@@ -682,11 +682,12 @@ void HDF5Common::SetAdiosStep(int step)
 
     GetNumAdiosSteps();
 
-    if (step >= m_NumAdiosSteps)
+    unsigned int ustep = static_cast<unsigned int>(step);
+    if (ustep >= m_NumAdiosSteps)
         throw std::ios_base::failure(
             "ERROR: given time step is more than actual known steps.");
 
-    if (m_CurrentAdiosStep == step)
+    if (m_CurrentAdiosStep == ustep)
     {
         return;
     }
@@ -703,7 +704,7 @@ void HDF5Common::SetAdiosStep(int step)
                                      stepName + ", in call to Open\n");
     }
 
-    m_CurrentAdiosStep = step;
+    m_CurrentAdiosStep = ustep;
 }
 
 //
@@ -861,7 +862,7 @@ void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
     hid_t topId = m_GroupId;
     if (list.size() > 1)
     {
-        for (int i = 0; i < list.size() - 1; i++)
+        for (size_t i = 0; i < list.size() - 1; i++)
         {
             if (H5Lexists(topId, list[i].c_str(), H5P_DEFAULT) == 0)
             { // does not exist, so create
@@ -990,7 +991,7 @@ bool HDF5Common::OpenDataset(const std::string &varName,
 
     hid_t topId = m_GroupId;
 
-    for (int i = 0; i < list.size() - 1; i++)
+    for (size_t i = 0; i < list.size() - 1; i++)
     {
         if (H5Lexists(topId, list[i].c_str(), H5P_DEFAULT) == 0)
         { // does not exist, err
@@ -1060,7 +1061,7 @@ void HDF5Common::RemoveEmptyDataset(const std::string &varName)
     hid_t topId = m_GroupId;
     std::vector<hid_t> datasetChain;
 
-    for (int i = 0; i < list.size() - 1; i++)
+    for (size_t i = 0; i < list.size() - 1; i++)
     {
         if (H5Lexists(topId, list[i].c_str(), H5P_DEFAULT) == 0)
             break;
@@ -1130,7 +1131,7 @@ void HDF5Common::ReadInStringAttr(core::IO &io, const std::string &attrName,
         H5Aread(attrId, h5Type, val.get());
 
         std::vector<std::string> stringArray;
-        for (int i = 0; i < dims[0]; i++)
+        for (hsize_t i = 0; i < dims[0]; i++)
         {
             auto input = std::string(&val[i * typeSize], typeSize);
             // remove the padded empty space;
@@ -1253,11 +1254,11 @@ void HDF5Common::WriteStringAttr(core::IO &io,
     else if (adiosAttr->m_Elements >= 1)
     {
         // is array
-        int max = 0;
-        int idxWithMax = 0;
-        for (int i = 0; i < adiosAttr->m_Elements; i++)
+        size_t max = 0;
+        size_t idxWithMax = 0;
+        for (size_t i = 0; i < adiosAttr->m_Elements; i++)
         {
-            int curr = adiosAttr->m_DataArray[i].size();
+            size_t curr = adiosAttr->m_DataArray[i].size();
             if (max < curr)
             {
                 max = curr;
@@ -1268,7 +1269,7 @@ void HDF5Common::WriteStringAttr(core::IO &io,
         hid_t h5Type = GetTypeStringScalar(adiosAttr->m_DataArray[idxWithMax]);
         // std::vector<char> temp;
         std::string all;
-        for (int i = 0; i < adiosAttr->m_Elements; i++)
+        for (size_t i = 0; i < adiosAttr->m_Elements; i++)
         {
             std::string curr = adiosAttr->m_DataArray[i];
             curr.resize(max, ' ');
@@ -1349,10 +1350,10 @@ void HDF5Common::LocateAttrParent(const std::string &attrName,
     if (list.size() >= 1)
     {
         std::string ts;
-        for (int i = 0; i < m_CurrentAdiosStep; i++)
+        for (unsigned int i = 0; i < m_CurrentAdiosStep; i++)
         {
             StaticGetAdiosStepString(ts, i);
-            for (int j = 0; j < list.size() - 1; j++)
+            for (size_t j = 0; j < list.size() - 1; j++)
             {
                 ts += delimiter;
                 ts += list[j].c_str();
@@ -1499,7 +1500,7 @@ void HDF5Common::ReadAttrToIO(core::IO &io)
     if (ret >= 0)
     {
         numAttrs = oinfo.num_attrs;
-        int k = 0;
+        hsize_t k = 0;
         const int MAX_ATTR_NAME_SIZE = 100;
         for (k = 0; k < numAttrs; k++)
         {
@@ -1561,7 +1562,7 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
             return; // warning: reading attrs at every var can be very time
                     // consuimg
         }
-        int k = 0;
+        hsize_t k = 0;
         const int MAX_ATTR_NAME_SIZE = 100;
         for (k = 0; k < numAttrs; k++)
         {

@@ -83,7 +83,7 @@ struct TypeInfo
 // to translate between bindings API types to supported stdtypes
 template <>
 struct TypeInfo<char,
-                typename std::enable_if<std::is_integral<char>::value>::type>
+                typename std::enable_if<std::is_same<char, char>::value>::type>
 {
     using IOType = char;
     using ValueType = char;
