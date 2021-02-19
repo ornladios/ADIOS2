@@ -34,7 +34,8 @@ public:
     void SetReaderThreading();
     void SetClockError(const uint64_t roundLatency,
                        const uint64_t remoteTimeBase);
-    void AddCompression(const std::string &method, const float accuracy);
+    void AddCompression(const std::string &method, const float accuracyUsed);
+    void SetRequiredAccuracy(const float accuracyRequired);
     void AddTransport(const std::string &method);
     void OutputJson(const std::string &filename);
 
@@ -61,6 +62,7 @@ private:
     double m_AccumulatedLatency = 0;
     std::string m_CompressionMethod;
     float m_CompressionAccuracy;
+    float m_RequiredAccuracy = 0.0;
     std::string m_TransportMethod;
     bool m_ReaderThreading = false;
     bool m_WriterThreading = false;

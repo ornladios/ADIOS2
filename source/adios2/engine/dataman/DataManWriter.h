@@ -51,6 +51,7 @@ private:
     bool m_MonitorActive = false;
     int m_CombiningSteps = 1;
     int m_CombinedSteps = 0;
+    std::string m_FloatAccuracy;
 
     int m_MpiRank;
     int m_MpiSize;

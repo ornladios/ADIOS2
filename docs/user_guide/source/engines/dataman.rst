@@ -34,6 +34,12 @@ The DataMan engine takes the following parameters:
    Therefore, in cases where writers are faster than readers, readers will skip some data steps.
    The reliable mode ensures that all steps are received by readers, by sacrificing performance compared to the fast mode.
 
+7. ``MaxStepBufferSize``: Default **128000000**. In order to bring down the latency in wide area network staging use cases, DataMan uses a fixed receiver buffer size.
+   This saves an extra communication operation to sync the buffer size for each step, before sending actual data.
+   The default buffer size is 128 MB, which is sufficient for most use cases.
+   However, in case 128 MB is not enough, this parameter must be set correctly, otherwise DataMan will fail.
+
+
 =============================== ================== ================================================
  **Key**                         **Value Format**   **Default** and Examples
 =============================== ================== ================================================
@@ -43,6 +49,7 @@ The DataMan engine takes the following parameters:
  RendezvousReaderCount           integer            **1**, 0, 3
  Threading                       bool               **true** for reader, **false** for writer
  TransportMode                   string             **fast**, reliable
+ MaxStepBufferSize               integer            **128000000**, 512000000, 1024000000
 =============================== ================== ================================================
 
 

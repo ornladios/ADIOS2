@@ -43,9 +43,11 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
     helper::GetParameter(m_IO.m_Parameters, "CombiningSteps", m_CombiningSteps);
+    helper::GetParameter(m_IO.m_Parameters, "FloatAccuracy", m_FloatAccuracy);
 
     m_HandshakeJson["Threading"] = m_Threading;
     m_HandshakeJson["Transport"] = m_TransportMode;
+    m_HandshakeJson["FloatAccuracy"] = m_FloatAccuracy;
 
     if (m_IPAddress.empty())
     {

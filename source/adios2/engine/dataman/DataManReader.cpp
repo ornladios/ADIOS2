@@ -33,6 +33,8 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
+    helper::GetParameter(m_IO.m_Parameters, "MaxStepBufferSize",
+                         m_ReceiverBufferSize);
 
     if (m_IPAddress.empty())
     {
@@ -85,6 +87,11 @@ DataManReader::DataManReader(IO &io, const std::string &name,
         if (writerThreading)
         {
             m_Monitor.SetWriterThreading();
+        }
+        auto it = message.find("FloatAccuracy");
+        if (it != message.end() && !it->get<std::string>().empty())
+        {
+            m_Monitor.SetRequiredAccuracy(stof(it->get<std::string>()));
         }
     }
 
@@ -252,7 +259,8 @@ void DataManReader::RequestThread()
 {
     while (m_RequesterThreadActive)
     {
-        auto buffer = m_Requester.Request("Step", 4);
+        std::string request = "Step";
+        auto buffer = m_Requester.Request(request.data(), request.size());
         if (buffer != nullptr && buffer->size() > 0)
         {
             if (buffer->size() < 64)
