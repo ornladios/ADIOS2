@@ -47,6 +47,7 @@ make_TypeTraits(type_double, double)
 make_TypeTraits(type_long_double, long double)
 make_TypeTraits(type_complex, cfloat)
 make_TypeTraits(type_double_complex, cdouble)
+make_TypeTraits(type_char, char)
 /* clang-format on */
 #undef make_TypeTraits
 

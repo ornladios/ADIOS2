@@ -137,6 +137,7 @@ enum class DataType
     FloatComplex,
     DoubleComplex,
     String,
+    Char,
     Compound
 };
 

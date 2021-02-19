@@ -396,6 +396,8 @@ protected:
         type_complex = 10,        //!< type_complex
         type_double_complex = 11, //!< type_double_complex
         type_string_array = 12,   //!< type_string_array
+
+        type_char = 55 //!< type_char
     };
 
     /** Maps C++ type to DataTypes enum */

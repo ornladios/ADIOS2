@@ -2771,6 +2771,9 @@ int print_data(const void *data, int item, DataType adiosvartype,
     // print next data item
     switch (adiosvartype)
     {
+    case DataType::Char:
+        fprintf(outf, (f ? fmt : "%c"), ((char *)data)[item]);
+        break;
     case DataType::UInt8:
         fprintf(outf, (f ? fmt : "%hhu"), ((unsigned char *)data)[item]);
         break;

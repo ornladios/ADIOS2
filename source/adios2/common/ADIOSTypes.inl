@@ -79,6 +79,16 @@ struct TypeInfo
     using ValueType = T;
 };
 
+// Hack "char" type into this convoluted struct definition which is the key
+// to translate between bindings API types to supported stdtypes
+template <>
+struct TypeInfo<char,
+                typename std::enable_if<std::is_same<char, char>::value>::type>
+{
+    using IOType = char;
+    using ValueType = char;
+};
+
 template <typename T>
 struct TypeInfo<T, typename std::enable_if<std::is_integral<T>::value>::type>
 {

@@ -1039,6 +1039,9 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
 
             h5writer.CreateAndStoreScalar("iString", H5T_STRING,
                                           currentTestData.S1.data());
+            h5writer.CreateAndStoreVar("ch", dimSize, H5T_NATIVE_UCHAR,
+                                       global_dims, offset, count,
+                                       currentTestData.CHAR.data());
             h5writer.CreateAndStoreVar("i8", dimSize, H5T_NATIVE_INT8,
                                        global_dims, offset, count,
                                        currentTestData.I8.data());
@@ -1091,6 +1094,12 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
         EXPECT_TRUE(var_iString);
         ASSERT_EQ(var_iString.Shape().size(), 0);
         ASSERT_EQ(var_iString.Steps(), NSteps);
+
+        auto var_ch = io.InquireVariable<uint8_t>("ch");
+        EXPECT_TRUE(var_ch);
+        ASSERT_EQ(var_ch.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_ch.Steps(), NSteps);
+        ASSERT_EQ(var_ch.Shape()[0], mpiSize * Nx);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
@@ -1157,6 +1166,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
         SmallTestData testData;
 
         std::string IString;
+        std::array<uint8_t, Nx> CHAR;
         std::array<int8_t, Nx> I8;
         std::array<int16_t, Nx> I16;
         std::array<int32_t, Nx> I32;
@@ -1173,6 +1183,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
 
         const adios2::Box<adios2::Dims> sel(start, count);
 
+        var_ch.SetSelection(sel);
         var_i8.SetSelection(sel);
         var_i16.SetSelection(sel);
         var_i32.SetSelection(sel);
@@ -1188,6 +1199,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
 
         for (size_t t = 0; t < NSteps; ++t)
         {
+            var_ch.SetStepSelection({t, 1});
             var_i8.SetStepSelection({t, 1});
             var_i16.SetStepSelection({t, 1});
             var_i32.SetStepSelection({t, 1});
@@ -1207,6 +1219,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
 
             hdf5Reader.Get(var_iString, IString);
 
+            hdf5Reader.Get(var_ch, CHAR.data());
             hdf5Reader.Get(var_i8, I8.data());
             hdf5Reader.Get(var_i16, I16.data());
             hdf5Reader.Get(var_i32, I32.data());
@@ -1230,6 +1243,8 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
+                EXPECT_EQ(static_cast<char>(CHAR[i]), currentTestData.CHAR[i])
+                    << msg;
                 EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
                 EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
                 EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;

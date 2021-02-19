@@ -31,6 +31,12 @@ inline DataType GetDataType<std::string>() noexcept
 }
 
 template <>
+inline DataType GetDataType<char>() noexcept
+{
+    return DataType::Char;
+}
+
+template <>
 inline DataType GetDataType<int8_t>() noexcept
 {
     return DataType::Int8;

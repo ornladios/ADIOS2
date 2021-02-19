@@ -65,8 +65,8 @@ void HDF5Common::GetHDF5SpaceSpec(const core::Variable<T> &variable,
                                   std::vector<hsize_t> &count,
                                   std::vector<hsize_t> &offset)
 {
-    int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
-    for (int i = 0; i < dimSize; ++i)
+    size_t dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
+    for (size_t i = 0; i < dimSize; ++i)
     {
         if (variable.m_Shape.size() == dimSize)
         {
@@ -101,7 +101,7 @@ void HDF5Common::GetHDF5SpaceSpec(const core::Variable<T> &variable,
     if (m_OrderByC)
         return;
 
-    for (int i = 0; i < dimSize / 2; ++i)
+    for (size_t i = 0; i < dimSize / 2; ++i)
     {
         std::swap(dimsf[i], dimsf[dimSize - 1 - i]);
         std::swap(count[i], count[dimSize - 1 - i]);
@@ -320,6 +320,12 @@ template <>
 hid_t HDF5Common::GetHDF5Type<std::string>()
 {
     return H5T_C_S1;
+}
+
+template <>
+hid_t HDF5Common::GetHDF5Type<char>()
+{
+    return H5T_NATIVE_UCHAR;
 }
 
 template <>
