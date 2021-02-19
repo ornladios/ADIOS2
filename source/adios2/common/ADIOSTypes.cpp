@@ -189,7 +189,6 @@ std::string ToString(DataType type)
         break;
     case DataType::Char:
         return "char";
-        break;
     case DataType::Int8:
         return "int8_t";
     case DataType::Int16:
