@@ -23,6 +23,10 @@ namespace helper
 DataType GetDataTypeFromString(std::string const &type) noexcept
 {
     // Keep in sync with adios2::ToString(DataType).
+    if (type == "char")
+    {
+        return DataType::Char;
+    }
     if (type == "int8_t")
     {
         return DataType::Int8;
