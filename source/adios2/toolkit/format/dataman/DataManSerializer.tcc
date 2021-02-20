@@ -314,7 +314,6 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 input_data = decompressBuffer.data();
 #else
                 throw std::runtime_error("ADIOS2 does not have ZFP");
-                return -101; // zfp library not found
 #endif
             }
             else if (j.compression == "sz")
@@ -341,7 +340,6 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 input_data = decompressBuffer.data();
 #else
                 throw std::runtime_error("ADIOS2 does not have SZ");
-                return -102; // sz library not found
 #endif
             }
             else if (j.compression == "bzip2")
@@ -369,7 +367,6 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 input_data = decompressBuffer.data();
 #else
                 throw std::runtime_error("ADIOS2 does not have Bzip2");
-                return -103; // bzip2 library not found
 #endif
             }
             else if (j.compression == "mgard")
@@ -397,7 +394,6 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 input_data = decompressBuffer.data();
 #else
                 throw std::runtime_error("ADIOS2 does not have MGARD");
-                return -104; // mgard library not found
 #endif
             }
 
