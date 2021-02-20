@@ -25,6 +25,11 @@ void DataManMonitor::SetAverageSteps(const size_t step)
     m_AverageSteps = step;
 }
 
+void DataManMonitor::SetCombiningSteps(const size_t step)
+{
+    m_CombiningSteps = step;
+}
+
 void DataManMonitor::SetClockError(const uint64_t roundLatency,
                                    const uint64_t remoteTimeBase)
 {
@@ -34,6 +39,7 @@ void DataManMonitor::SetClockError(const uint64_t roundLatency,
             .count();
     m_ClockError = localTimeBase - remoteTimeBase -
                    static_cast<double>(roundLatency) / 2.0;
+    m_RoundLatency = roundLatency;
 }
 
 void DataManMonitor::BeginStep(const size_t step)
@@ -178,7 +184,7 @@ void DataManMonitor::OutputJson(const std::string &filename)
     output["Performance"]["StepDataSize"] = m_StepBytes;
     output["Performance"]["AllowedError"] = m_RequiredAccuracy;
 
-    output["Decisions"]["CombiningSteps"] = m_AverageSteps;
+    output["Decisions"]["CombiningSteps"] = m_CombiningSteps;
     output["Decisions"]["ReaderThreading"] = m_ReaderThreading;
     output["Decisions"]["WriterThreading"] = m_WriterThreading;
     output["Decisions"]["Transport"] = m_TransportMethod;
@@ -187,6 +193,9 @@ void DataManMonitor::OutputJson(const std::string &filename)
         output["Decisions"]["CompressionMethod"] = m_CompressionMethod;
         output["Decisions"]["CompressionAccuracy"] = m_CompressionAccuracy;
     }
+
+    output["Info"]["RoundLatency"] = m_RoundLatency;
+    output["Info"]["ClockError"] = m_ClockError;
 
     std::ofstream file;
     file.open((filename + ".json").c_str(),
