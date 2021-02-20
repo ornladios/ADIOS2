@@ -132,6 +132,11 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
         std::cout << "DataManWriter::BeginStep " << m_CurrentStep << std::endl;
     }
 
+    m_Serializer.AttachTimeStamp(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count());
+
     return StepStatus::OK;
 }
 
@@ -145,11 +150,6 @@ void DataManWriter::EndStep()
     {
         m_Serializer.PutAttributes(m_IO);
     }
-
-    m_Serializer.AttachTimeStamp(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count());
 
     ++m_CombinedSteps;
 
