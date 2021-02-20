@@ -274,9 +274,12 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
          */
     }
 
-    const unsigned char *bytes = SZ_compress(dtype, (void *)dataIn, &outsize,
-                                             r[4], r[3], r[2], r[1], r[0]);
+    unsigned char *bytes = SZ_compress(dtype, (void *)dataIn, &outsize, r[4],
+                                       r[3], r[2], r[1], r[0]);
     std::memcpy(bufferOut, bytes, outsize);
+    free(bytes);
+    bytes = nullptr;
+    SZ_Finalize();
     return static_cast<size_t>(outsize);
 }
 
@@ -323,7 +326,7 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
     const size_t dataSizeBytes =
         helper::GetTotalSize(dimensions) * typeSizeBytes;
 
-    const void *result = SZ_decompress(
+    void *result = SZ_decompress(
         dtype, reinterpret_cast<unsigned char *>(const_cast<void *>(bufferIn)),
         sizeIn, rs[4], rs[3], rs[2], rs[1], rs[0]);
 
@@ -332,7 +335,9 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
         throw std::runtime_error("ERROR: SZ_decompress failed\n");
     }
     std::memcpy(dataOut, result, dataSizeBytes);
-
+    free(result);
+    result = nullptr;
+    SZ_Finalize();
     return static_cast<size_t>(dataSizeBytes);
 }
 
