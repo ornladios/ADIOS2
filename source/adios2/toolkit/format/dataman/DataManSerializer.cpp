@@ -118,6 +118,10 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
             return true;
         }
     }
+    else if (method == "mgard")
+    {
+        return true;
+    }
     return false;
 }
 

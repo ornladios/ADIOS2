@@ -22,6 +22,9 @@
 #ifdef ADIOS2_HAVE_BZIP2
 #include "adios2/operator/compress/CompressBZIP2.h"
 #endif
+#ifdef ADIOS2_HAVE_MGARD
+#include "adios2/operator/compress/CompressMGARD.h"
+#endif
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -172,6 +175,15 @@ void DataManSerializer::PutData(
                                          ops[0].Parameters);
             }
         }
+        else if (compressionMethod == "mgard")
+        {
+            if (IsCompressionAvailable(compressionMethod,
+                                       helper::GetDataType<T>(), varCount))
+            {
+                compressed = PutMgard<T>(metaj, datasize, inputData, varCount,
+                                         ops[0].Parameters);
+            }
+        }
         else
         {
             throw(std::invalid_argument("Compression method " +
@@ -295,9 +307,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 }
                 catch (std::exception &e)
                 {
-                    std::cout << "[DataManDeserializer::Get] Zfp "
-                                 "decompression failed with exception: "
-                              << e.what() << std::endl;
+                    std::cout << e.what() << std::endl;
                     return -4; // decompression failed
                 }
 
@@ -325,9 +335,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 }
                 catch (std::exception &e)
                 {
-                    std::cout << "[DataManDeserializer::Get] Zfp "
-                                 "decompression failed with exception: "
-                              << e.what() << std::endl;
+                    std::cout << e.what() << std::endl;
                     return -4; // decompression failed
                 }
                 input_data = decompressBuffer.data();
@@ -355,15 +363,41 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 }
                 catch (std::exception &e)
                 {
-                    std::cout << "[DataManDeserializer::Get] Zfp "
-                                 "decompression failed with exception: "
-                              << e.what() << std::endl;
+                    std::cout << e.what() << std::endl;
                     return -4; // decompression failed
                 }
                 input_data = decompressBuffer.data();
 #else
                 throw std::runtime_error("ADIOS2 does not have Bzip2");
                 return -103; // bzip2 library not found
+#endif
+            }
+            else if (j.compression == "mgard")
+            {
+#ifdef ADIOS2_HAVE_MGARD
+                core::compress::CompressMGARD decompressor(j.params);
+                size_t datasize =
+                    std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
+                                    std::multiplies<size_t>());
+
+                decompressBuffer.reserve(datasize);
+                try
+                {
+                    decompressor.Decompress(j.buffer->data() + j.position,
+                                            j.size, decompressBuffer.data(),
+                                            j.count, j.type, j.params);
+                    decompressed = true;
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << e.what() << std::endl;
+                    return -4; // decompression failed
+                }
+
+                input_data = decompressBuffer.data();
+#else
+                throw std::runtime_error("ADIOS2 does not have MGARD");
+                return -104; // mgard library not found
 #endif
             }
 
@@ -492,6 +526,37 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
 #else
     throw(std::invalid_argument(
         "BZip2 compression used but BZip2 library is not linked to ADIOS2"));
+#endif
+    return false;
+}
+
+template <class T>
+bool DataManSerializer::PutMgard(nlohmann::json &metaj, size_t &datasize,
+                                 const T *inputData, const Dims &varCount,
+                                 const Params &params)
+{
+    TAU_SCOPED_TIMER_FUNC();
+#ifdef ADIOS2_HAVE_MGARD
+    core::compress::CompressZFP compressor(params);
+    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
+                                             sizeof(T),
+                                             std::multiplies<size_t>()));
+    try
+    {
+        Params info;
+        datasize = compressor.Compress(inputData, varCount, sizeof(T),
+                                       helper::GetDataType<T>(),
+                                       m_CompressBuffer.data(), params, info);
+        return true;
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Got exception " << e.what()
+                  << " from Mgard. Turned off compression." << std::endl;
+    }
+#else
+    throw(std::invalid_argument(
+        "MGARD compression used but MGARD library is not linked to ADIOS2"));
 #endif
     return false;
 }

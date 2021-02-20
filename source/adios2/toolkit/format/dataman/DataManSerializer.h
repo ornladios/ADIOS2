@@ -169,6 +169,10 @@ private:
                   const Dims &varCount, const Params &params);
 
     template <class T>
+    bool PutMgard(nlohmann::json &metaj, size_t &datasize, const T *inputData,
+                  const Dims &varCount, const Params &params);
+
+    template <class T>
     void PutAttribute(const core::Attribute<T> &attribute);
 
     bool IsCompressionAvailable(const std::string &method, DataType type,
