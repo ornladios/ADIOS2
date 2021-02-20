@@ -279,6 +279,7 @@ void DataManReader::RequestThread()
             if (m_MonitorActive)
             {
                 size_t combiningSteps = m_Serializer.GetCombiningSteps();
+                m_Monitor.SetCombiningSteps(combiningSteps);
                 if (combiningSteps < 20)
                 {
                     m_Monitor.SetAverageSteps(40);
