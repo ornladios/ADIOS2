@@ -91,7 +91,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
         auto it = message.find("FloatAccuracy");
         if (it != message.end() && !it->get<std::string>().empty())
         {
-            m_Monitor.SetRequiredAccuracy(stof(it->get<std::string>()));
+            m_Monitor.SetRequiredAccuracy(it->get<std::string>());
         }
     }
 
@@ -245,7 +245,7 @@ void DataManReader::EndStep()
             {
                 method = it->second;
             }
-            m_Monitor.AddCompression(method, std::stof(accuracy));
+            m_Monitor.AddCompression(method, accuracy);
         }
         m_Monitor.EndStep(m_CurrentStep);
     }

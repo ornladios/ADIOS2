@@ -146,13 +146,13 @@ void DataManMonitor::AddBytes(const size_t bytes)
     m_StepBytes += bytes;
 }
 
-void DataManMonitor::SetRequiredAccuracy(const float accuracyRequired)
+void DataManMonitor::SetRequiredAccuracy(const std::string &accuracyRequired)
 {
     m_RequiredAccuracy = accuracyRequired;
 }
 
 void DataManMonitor::AddCompression(const std::string &method,
-                                    const float accuracyUsed)
+                                    const std::string &accuracyUsed)
 {
     m_CompressionMethod = method;
     m_CompressionAccuracy = accuracyUsed;
@@ -171,21 +171,21 @@ void DataManMonitor::OutputJson(const std::string &filename)
 {
     nlohmann::json output;
 
-    output["measurements"]["Bandwidth"] = m_TotalRate;
-    output["measurements"]["Latency"] =
+    output["Performance"]["Bandwidth"] = m_TotalRate;
+    output["Performance"]["Latency"] =
         m_AccumulatedLatency / static_cast<double>(m_CurrentStep + 1);
-    output["measurements"]["DropRate"] = m_DropRate;
-    output["measurements"]["StepDataSize"] = m_StepBytes;
-    output["measurements"]["AllowedError"] = m_RequiredAccuracy;
+    output["Performance"]["DropRate"] = m_DropRate;
+    output["Performance"]["StepDataSize"] = m_StepBytes;
+    output["Performance"]["AllowedError"] = m_RequiredAccuracy;
 
-    output["parameters"]["CombiningSteps"] = m_AverageSteps;
-    output["parameters"]["ReaderThreading"] = m_ReaderThreading;
-    output["parameters"]["WriterThreading"] = m_WriterThreading;
-    output["parameters"]["Transport"] = m_TransportMethod;
+    output["Decisions"]["CombiningSteps"] = m_AverageSteps;
+    output["Decisions"]["ReaderThreading"] = m_ReaderThreading;
+    output["Decisions"]["WriterThreading"] = m_WriterThreading;
+    output["Decisions"]["Transport"] = m_TransportMethod;
     if (!m_CompressionMethod.empty())
     {
-        output["parameters"]["CompressionMethod"] = m_CompressionMethod;
-        output["parameters"]["CompressionAccuracy"] = m_CompressionAccuracy;
+        output["Decisions"]["CompressionMethod"] = m_CompressionMethod;
+        output["Decisions"]["CompressionAccuracy"] = m_CompressionAccuracy;
     }
 
     std::ofstream file;
