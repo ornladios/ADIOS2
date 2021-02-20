@@ -39,6 +39,7 @@ void DataManMonitor::SetClockError(const uint64_t roundLatency,
             .count();
     m_ClockError = localTimeBase - remoteTimeBase -
                    static_cast<double>(roundLatency) / 2.0;
+    m_RoundLatency = roundLatency;
 }
 
 void DataManMonitor::BeginStep(const size_t step)
@@ -192,6 +193,9 @@ void DataManMonitor::OutputJson(const std::string &filename)
         output["Decisions"]["CompressionMethod"] = m_CompressionMethod;
         output["Decisions"]["CompressionAccuracy"] = m_CompressionAccuracy;
     }
+
+    output["Info"]["RoundLatency"] = m_RoundLatency;
+    output["Info"]["ClockError"] = m_ClockError;
 
     std::ofstream file;
     file.open((filename + ".json").c_str(),

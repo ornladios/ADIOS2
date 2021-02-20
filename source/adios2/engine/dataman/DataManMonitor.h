@@ -56,6 +56,7 @@ private:
     int64_t m_CurrentStep = -1;
     uint64_t m_ClockError = 0;
 
+    double m_RoundLatency = 0.0;
     double m_TotalTime = 0;
     double m_AverageTime = 0;
     double m_TotalRate = 0;
