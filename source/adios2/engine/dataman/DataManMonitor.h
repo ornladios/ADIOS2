@@ -30,6 +30,7 @@ public:
     void AddLatencyMilliseconds(const uint64_t remoteStamp);
     void AddBytes(const size_t bytes);
     void SetAverageSteps(const size_t steps);
+    void SetCombiningSteps(const size_t steps);
     void SetWriterThreading();
     void SetReaderThreading();
     void SetClockError(const uint64_t roundLatency,
@@ -51,6 +52,7 @@ private:
     std::mutex m_PrintMutex;
 
     size_t m_AverageSteps = 50;
+    size_t m_CombiningSteps = 1;
     int64_t m_CurrentStep = -1;
     uint64_t m_ClockError = 0;
 

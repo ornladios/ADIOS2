@@ -25,6 +25,11 @@ void DataManMonitor::SetAverageSteps(const size_t step)
     m_AverageSteps = step;
 }
 
+void DataManMonitor::SetCombiningSteps(const size_t step)
+{
+    m_CombiningSteps = step;
+}
+
 void DataManMonitor::SetClockError(const uint64_t roundLatency,
                                    const uint64_t remoteTimeBase)
 {
@@ -178,7 +183,7 @@ void DataManMonitor::OutputJson(const std::string &filename)
     output["Performance"]["StepDataSize"] = m_StepBytes;
     output["Performance"]["AllowedError"] = m_RequiredAccuracy;
 
-    output["Decisions"]["CombiningSteps"] = m_AverageSteps;
+    output["Decisions"]["CombiningSteps"] = m_CombiningSteps;
     output["Decisions"]["ReaderThreading"] = m_ReaderThreading;
     output["Decisions"]["WriterThreading"] = m_WriterThreading;
     output["Decisions"]["Transport"] = m_TransportMethod;
