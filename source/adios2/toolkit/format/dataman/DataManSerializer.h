@@ -157,15 +157,19 @@ public:
 
 private:
     template <class T>
-    bool PutZfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
+    void PutZfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
                 const Dims &varCount, const Params &params);
 
     template <class T>
-    bool PutSz(nlohmann::json &metaj, size_t &datasize, const T *inputData,
+    void PutSz(nlohmann::json &metaj, size_t &datasize, const T *inputData,
                const Dims &varCount, const Params &params);
 
     template <class T>
-    bool PutBZip2(nlohmann::json &metaj, size_t &datasize, const T *inputData,
+    void PutBZip2(nlohmann::json &metaj, size_t &datasize, const T *inputData,
+                  const Dims &varCount, const Params &params);
+
+    template <class T>
+    void PutMgard(nlohmann::json &metaj, size_t &datasize, const T *inputData,
                   const Dims &varCount, const Params &params);
 
     template <class T>
