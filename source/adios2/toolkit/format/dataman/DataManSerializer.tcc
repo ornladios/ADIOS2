@@ -556,7 +556,7 @@ void DataManSerializer::PutMgard(nlohmann::json &metaj, size_t &datasize,
 {
     TAU_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_MGARD
-    core::compress::CompressZFP compressor(params);
+    core::compress::CompressMGARD compressor(params);
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
