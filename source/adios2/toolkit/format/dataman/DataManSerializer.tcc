@@ -153,8 +153,16 @@ void DataManSerializer::PutData(
             if (IsCompressionAvailable(compressionMethod,
                                        helper::GetDataType<T>(), varCount))
             {
-                compressed = PutZfp<T>(metaj, datasize, inputData, varCount,
-                                       ops[0].Parameters);
+                try
+                {
+                    PutZfp<T>(metaj, datasize, inputData, varCount,
+                              ops[0].Parameters);
+                    compressed = true;
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << e.what() << std::endl;
+                }
             }
         }
         else if (compressionMethod == "sz")
@@ -162,8 +170,16 @@ void DataManSerializer::PutData(
             if (IsCompressionAvailable(compressionMethod,
                                        helper::GetDataType<T>(), varCount))
             {
-                compressed = PutSz<T>(metaj, datasize, inputData, varCount,
-                                      ops[0].Parameters);
+                try
+                {
+                    PutSz<T>(metaj, datasize, inputData, varCount,
+                             ops[0].Parameters);
+                    compressed = true;
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << e.what() << std::endl;
+                }
             }
         }
         else if (compressionMethod == "bzip2")
@@ -171,8 +187,16 @@ void DataManSerializer::PutData(
             if (IsCompressionAvailable(compressionMethod,
                                        helper::GetDataType<T>(), varCount))
             {
-                compressed = PutBZip2<T>(metaj, datasize, inputData, varCount,
-                                         ops[0].Parameters);
+                try
+                {
+                    PutBZip2<T>(metaj, datasize, inputData, varCount,
+                                ops[0].Parameters);
+                    compressed = true;
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << e.what() << std::endl;
+                }
             }
         }
         else if (compressionMethod == "mgard")
@@ -180,8 +204,16 @@ void DataManSerializer::PutData(
             if (IsCompressionAvailable(compressionMethod,
                                        helper::GetDataType<T>(), varCount))
             {
-                compressed = PutMgard<T>(metaj, datasize, inputData, varCount,
-                                         ops[0].Parameters);
+                try
+                {
+                    PutMgard<T>(metaj, datasize, inputData, varCount,
+                                ops[0].Parameters);
+                    compressed = true;
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << e.what() << std::endl;
+                }
             }
         }
         else
@@ -434,7 +466,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
 }
 
 template <class T>
-bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
+void DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
                                const T *inputData, const Dims &varCount,
                                const Params &params)
 {
@@ -450,22 +482,19 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetDataType<T>(),
                                        m_CompressBuffer.data(), params, info);
-        return true;
     }
     catch (std::exception &e)
     {
-        std::cout << "Got exception " << e.what()
-                  << " from ZFP. Turned off compression." << std::endl;
+        throw(e);
     }
 #else
     throw(std::invalid_argument(
         "ZFP compression used but ZFP library is not linked to ADIOS2"));
 #endif
-    return false;
 }
 
 template <class T>
-bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
+void DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
                               const T *inputData, const Dims &varCount,
                               const Params &params)
 {
@@ -481,22 +510,19 @@ bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetDataType<T>(),
                                        m_CompressBuffer.data(), params, info);
-        return true;
     }
     catch (std::exception &e)
     {
-        std::cout << "Got exception " << e.what()
-                  << " from SZ. Turned off compression." << std::endl;
+        throw(e);
     }
 #else
     throw(std::invalid_argument(
         "SZ compression used but SZ library is not linked to ADIOS2"));
 #endif
-    return false;
 }
 
 template <class T>
-bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
+void DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
                                  const T *inputData, const Dims &varCount,
                                  const Params &params)
 {
@@ -512,22 +538,19 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetDataType<T>(),
                                        m_CompressBuffer.data(), params, info);
-        return true;
     }
     catch (std::exception &e)
     {
-        std::cout << "Got exception " << e.what()
-                  << " from BZip2. Turned off compression." << std::endl;
+        throw(e);
     }
 #else
     throw(std::invalid_argument(
         "BZip2 compression used but BZip2 library is not linked to ADIOS2"));
 #endif
-    return false;
 }
 
 template <class T>
-bool DataManSerializer::PutMgard(nlohmann::json &metaj, size_t &datasize,
+void DataManSerializer::PutMgard(nlohmann::json &metaj, size_t &datasize,
                                  const T *inputData, const Dims &varCount,
                                  const Params &params)
 {
@@ -543,18 +566,15 @@ bool DataManSerializer::PutMgard(nlohmann::json &metaj, size_t &datasize,
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetDataType<T>(),
                                        m_CompressBuffer.data(), params, info);
-        return true;
     }
     catch (std::exception &e)
     {
-        std::cout << "Got exception " << e.what()
-                  << " from Mgard. Turned off compression." << std::endl;
+        throw(e);
     }
 #else
     throw(std::invalid_argument(
         "MGARD compression used but MGARD library is not linked to ADIOS2"));
 #endif
-    return false;
 }
 
 template <class T>
