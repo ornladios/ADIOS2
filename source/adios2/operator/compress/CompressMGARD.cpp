@@ -55,9 +55,9 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
     }
 
     int r[3];
-    r[0] = 0;
-    r[1] = 0;
-    r[2] = 0;
+    r[0] = 1;
+    r[1] = 1;
+    r[2] = 1;
 
     for (size_t i = 0; i < ndims; i++)
     {
@@ -125,9 +125,9 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
 
     const size_t ndims = dimensions.size();
     int r[3];
-    r[0] = 0;
-    r[1] = 0;
-    r[2] = 0;
+    r[0] = 1;
+    r[1] = 1;
+    r[2] = 1;
 
     for (size_t i = 0; i < ndims; i++)
     {
