@@ -137,7 +137,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
 
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
 
-        for (int step = 0; step < NSteps; ++step)
+        for (int step = 0; step < static_cast<int>(NSteps); ++step)
         {
             // Generate test data for each process uniquely
             m_TestData[step] = GenerateData(step, mpiRank, mpiSize);
@@ -387,7 +387,7 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
 
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
-        for (int step = 0; step < NSteps; ++step)
+        for (int step = 0; step < static_cast<int>(NSteps); ++step)
         {
             const std::string varName = lf_VarName(step);
             auto var = io.DefineVariable<int32_t>(varName, shape, start, count);
@@ -671,12 +671,12 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
 
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
         auto var_step = io.DefineVariable<int>("step");
-        for (int step = 0; step < NSteps; ++step)
+        for (int step = 0; step < static_cast<int>(NSteps); ++step)
         {
             // Generate test data for each process uniquely
             engine.BeginStep();
             engine.Put(var_step, step);
-            if (step % 2 == Oddity)
+            if (step % 2 == static_cast<int>(Oddity))
             {
                 m_TestData.push_back(GenerateData(step, mpiRank, mpiSize));
                 std::cout << "Rank " << mpiRank << " write step " << step

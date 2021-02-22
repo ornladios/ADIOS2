@@ -387,7 +387,8 @@ void VariableBase::InitShapeType()
         if (std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) == 1)
         {
             if (!m_Start.empty() &&
-                std::count(m_Start.begin(), m_Start.end(), 0) != m_Start.size())
+                static_cast<size_t>(std::count(m_Start.begin(), m_Start.end(),
+                                               0)) != m_Start.size())
             {
                 throw std::invalid_argument("ERROR: The Start array must be "
                                             "empty or full-zero when defining "

@@ -263,7 +263,7 @@ public:
 
         size_t nwriters = p.npx_w * p.npy_w;
         size_t nreaders = p.npx_r * p.npy_r;
-        if (nwriters + nreaders > numprocs)
+        if (nwriters + nreaders > static_cast<size_t>(numprocs))
         {
             if (!wrank)
             {
@@ -278,11 +278,11 @@ public:
         MPI_Comm comm;
 
         unsigned int color;
-        if (wrank < nwriters)
+        if (static_cast<size_t>(wrank) < nwriters)
         {
             color = 0; // writers
         }
-        else if (wrank < nwriters + nreaders)
+        else if (static_cast<size_t>(wrank) < nwriters + nreaders)
         {
             color = 1; // readers
         }

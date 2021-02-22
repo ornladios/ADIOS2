@@ -370,7 +370,7 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
         if (rank == 0)
         {
             writesize = 1;
-            for (int i = 0; i < vi.v->m_Count.size(); i++)
+            for (size_t i = 0; i < vi.v->m_Count.size(); i++)
             {
                 writesize *= vi.v->m_Count[i];
                 // vi.start.push_back(0);

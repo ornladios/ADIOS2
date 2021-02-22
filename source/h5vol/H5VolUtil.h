@@ -135,7 +135,7 @@ static int gUtilADIOS2GetDim(hid_t space_id)
 //
 static void gUtilConvert(hsize_t *fromH5, size_t *to, uint ndims)
 {
-    int i = 0;
+    uint i = 0;
     for (i = 0; i < ndims; i++)
     {
         to[i] = fromH5[i];
@@ -172,7 +172,7 @@ static int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start,
         H5Sget_select_bounds(hyperSlab_id, s, e);
 
         hsize_t numElements = 1;
-        int k = 0;
+        hsize_t k = 0;
         for (k = 0; k < ndims; k++)
         {
             start[k] = s[k];

@@ -19,7 +19,7 @@ void QueryBase::ApplyOutputRegion(std::vector<Box<Dims>> &touchedBlocks,
     adios2::Dims diff;
     diff.resize(m_OutputRegion.first.size());
     bool isDifferent = false;
-    for (auto k = 0; k < m_OutputRegion.first.size(); k++)
+    for (size_t k = 0; k < m_OutputRegion.first.size(); k++)
     {
         diff[k] = m_OutputRegion.first[k] - referenceRegion.first[k];
         if (diff[k] != 0)
@@ -32,7 +32,7 @@ void QueryBase::ApplyOutputRegion(std::vector<Box<Dims>> &touchedBlocks,
     // blocks are usually part of the reference region
     for (auto it = touchedBlocks.begin(); it != touchedBlocks.end(); it++)
     {
-        for (auto k = 0; k < m_OutputRegion.first.size(); k++)
+        for (size_t k = 0; k < m_OutputRegion.first.size(); k++)
             it->first[k] += diff[k];
     }
 }
@@ -132,7 +132,7 @@ bool QueryVar::IsSelectionValid(adios2::Dims &shape) const
         return false; // different dimension
     }
 
-    for (int i = 0; i < shape.size(); i++)
+    for (size_t i = 0; i < shape.size(); i++)
     {
         if ((m_Selection.first[i] > shape[i]) ||
             (m_Selection.second[i] > shape[i]))

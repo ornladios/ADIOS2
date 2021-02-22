@@ -129,7 +129,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
             std::copy(currentTestData.I64.begin(),
                       currentTestData.I64.begin() + Nx, i64Span.data());
             // Testing operator[] and At
-            for (auto i = 0; i < Nx; ++i)
+            for (size_t i = 0; i < Nx; ++i)
             {
                 u8Span[i] = currentTestData.U8[i];
                 u16Span[i] = currentTestData.U16[i];
@@ -438,7 +438,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
             }
 
             // Testing operator[] and At
-            for (auto i = 0; i < Nx * Ny; ++i)
+            for (size_t i = 0; i < Nx * Ny; ++i)
             {
                 u8Span[i] = currentTestData.U8[i];
                 u16Span[i] = currentTestData.U16[i];
@@ -744,7 +744,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
             std::copy(currentTestData.I64.begin(),
                       currentTestData.I64.begin() + Nx, i64Span.data());
             // Testing operator[] and At
-            for (auto i = 0; i < Nx; ++i)
+            for (size_t i = 0; i < Nx; ++i)
             {
                 u8Span[i] = currentTestData.U8[i];
                 u16Span[i] = currentTestData.U16[i];
@@ -1027,7 +1027,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
             }
 
             // Testing operator[] and At
-            for (auto i = 0; i < Nx * Ny; ++i)
+            for (size_t i = 0; i < Nx * Ny; ++i)
             {
                 u8Span[i] = currentTestData.U8[i];
                 u16Span[i] = currentTestData.U16[i];

@@ -23,7 +23,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
 : Engine("DataManReader", io, name, openMode, std::move(comm)),
   m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)),
   m_RequesterThreadActive(true), m_SubscriberThreadActive(true),
-  m_FinalStep(std::numeric_limits<size_t>::max())
+  m_FinalStep(std::numeric_limits<signed long int>::max())
 {
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
@@ -171,7 +171,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 
     for (const auto &i : *m_CurrentStepMetadata)
     {
-        if (i.step == m_CurrentStep)
+        if (i.step == static_cast<size_t>(m_CurrentStep))
         {
             if (i.type == DataType::None)
             {
@@ -250,7 +250,7 @@ void DataManReader::RequestThread()
                 try
                 {
                     auto jmsg = nlohmann::json::parse(buffer->data());
-                    m_FinalStep = jmsg["FinalStep"].get<size_t>();
+                    m_FinalStep = jmsg["FinalStep"].get<int64_t>();
                     return;
                 }
                 catch (...)
@@ -292,7 +292,7 @@ void DataManReader::SubscribeThread()
                 try
                 {
                     auto jmsg = nlohmann::json::parse(buffer->data());
-                    m_FinalStep = jmsg["FinalStep"].get<size_t>();
+                    m_FinalStep = jmsg["FinalStep"].get<int64_t>();
                     continue;
                 }
                 catch (...)

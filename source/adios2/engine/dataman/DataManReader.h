@@ -52,7 +52,7 @@ private:
     int m_MpiRank;
     int m_MpiSize;
     int64_t m_CurrentStep = -1;
-    std::atomic<size_t> m_FinalStep;
+    std::atomic<int64_t> m_FinalStep;
     format::DmvVecPtr m_CurrentStepMetadata;
 
     format::DataManSerializer m_Serializer;

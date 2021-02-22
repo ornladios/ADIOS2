@@ -386,7 +386,7 @@ BlockDivisionInfo DivideBlock(const Dims &count, const size_t subblockSize,
     {
         /* Split the block into 'nBlocks' subblocks */
         /* FIXME: What about column-major dimension order here? */
-        int i = 0;
+        size_t i = 0;
         uint16_t n = info.NBlocks;
         size_t dim;
         uint16_t div = 1;
@@ -418,7 +418,7 @@ Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
 
     // calculate N-dim blockIDs from b
     std::vector<uint16_t> blockIds(ndim, 0); // blockID in N-dim
-    for (int j = 0; j < ndim; ++j)
+    for (size_t j = 0; j < ndim; ++j)
     {
         blockIds[j] = blockID / info.ReverseDivProduct[j];
         if (j > 0)
@@ -430,7 +430,7 @@ Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
     // calcute b-th subblock start/count
     Dims sbCount(ndim, 1);
     Dims sbStart(ndim, 0);
-    for (int j = 0; j < ndim; ++j)
+    for (size_t j = 0; j < ndim; ++j)
     {
         sbCount[j] = count[j] / info.Div[j];
         sbStart[j] = sbCount[j] * blockIds[j];

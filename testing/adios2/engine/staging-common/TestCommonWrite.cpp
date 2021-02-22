@@ -126,7 +126,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
-    for (size_t step = 0; step < NSteps; ++step)
+    for (int step = 0; step < NSteps; ++step)
     {
         // Generate test data for each process uniquely
         generateCommonTestData((int)step, mpiRank, mpiSize, (int)Nx,
@@ -206,7 +206,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
                 // we'll write all the data for one variable, nobody else does
                 // anything
                 data_R64.resize(Nx * mpiSize);
-                for (int i = 0; i < Nx * mpiSize; i++)
+                for (size_t i = 0; i < Nx * mpiSize; i++)
                     data_R64[i] = (double)10 * i + step;
                 sel_r64.first[0] = 0;
                 sel_r64.second[0] = mpiSize * Nx;

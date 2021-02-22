@@ -312,7 +312,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             EXPECT_EQ(var_cr64.Start().size(), 0);
             EXPECT_EQ(var_cr64.Count()[0], Nx);
 
-            for (size_t b = 0; b < mpiSize; ++b)
+            for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
             {
                 var_i8.SetBlockSelection(b);
                 var_i16.SetBlockSelection(b);

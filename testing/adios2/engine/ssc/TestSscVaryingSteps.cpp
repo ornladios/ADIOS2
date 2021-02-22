@@ -66,7 +66,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Write);
     //    engine.LockWriterDefinitions();
-    for (int i = 0; i < steps; ++i)
+    for (int i = 0; i < static_cast<int>(steps); ++i)
     {
         engine.BeginStep();
 

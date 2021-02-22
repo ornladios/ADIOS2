@@ -95,7 +95,7 @@ void Group::BuildTree()
         else
         {
             std::string key = tokens[0];
-            for (int level = 1; level < tokens.size(); level++)
+            for (size_t level = 1; level < tokens.size(); level++)
             {
                 std::string value = tokens[level];
                 // get previous vector
@@ -124,7 +124,7 @@ void Group::BuildTree()
         if (tokens.size() > 1)
         {
             std::string key = tokens[0];
-            for (int level = 1; level < tokens.size(); level++)
+            for (size_t level = 1; level < tokens.size(); level++)
             {
                 std::string value = tokens[level];
                 // get previous vector

@@ -45,7 +45,7 @@
 std::string DimsToString(const adios2::Dims &dims)
 {
     std::string s = "\"";
-    for (int i = 0; i < dims.size(); i++)
+    for (size_t i = 0; i < dims.size(); i++)
     {
         if (i > 0)
         {

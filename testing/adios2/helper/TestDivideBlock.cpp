@@ -21,7 +21,7 @@ void printVector(const std::vector<T> &v)
 {
     const size_t ndim = v.size();
     std::cout << "{";
-    for (int d = 0; d < ndim; ++d)
+    for (size_t d = 0; d < ndim; ++d)
     {
         std::cout << v[d];
         if (d < ndim - 1)
@@ -90,13 +90,13 @@ void assert_block(const adios2::Box<adios2::Dims> &block, const int blockID,
     const adios2::Dims &block_count = block.second;
     ASSERT_EQ(block_start.size(), expected_start.size());
     const size_t nstart = expected_start.size();
-    for (int d = 0; d < nstart; ++d)
+    for (size_t d = 0; d < nstart; ++d)
     {
         ASSERT_EQ(block_start[d], expected_start[d]);
     }
     ASSERT_EQ(block_count.size(), expected_count.size());
     const size_t ncount = expected_count.size();
-    for (int d = 0; d < nstart; ++d)
+    for (size_t d = 0; d < nstart; ++d)
     {
         ASSERT_EQ(block_count[d], expected_count[d]);
     }

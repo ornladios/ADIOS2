@@ -119,11 +119,11 @@ std::vector<RunParams> CreateRunParams()
         /*goto endread;*/                                                      \
     }
 
-#define CHECK_ARRAY(VARNAME, A, N, VALUE, STEP, BLOCK, i)                      \
-    for (i = 0; i < N; i++)                                                    \
+#define CHECK_ARRAY(VARNAME, A, N, VALUE, STEP, BLOCK)                         \
+    for (int i = 0; i < static_cast<int>(N); i++)                              \
         if (A[i] != VALUE)                                                     \
         {                                                                      \
-            printE("%s[%d] step %zu block %zu: wrote %zu but read %d\n",       \
+            printE("%s[%d] step %d block %zu: wrote %d but read %d\n",         \
                    VARNAME, i, STEP, BLOCK, VALUE, A[i]);                      \
             err = 104;                                                         \
             /*goto endread;*/                                                  \
@@ -168,15 +168,13 @@ public:
 
     void alloc_vars()
     {
-        int n, i;
-
-        n = ldim1 * ldim2;
+        size_t n = ldim1 * ldim2;
         a2 = (int *)malloc(n * sizeof(int));
         r2 = (int *)malloc(n * sizeof(int));
         varW = (adios2_variable **)malloc(NVARS * sizeof(adios2_variable *));
 
         varnames = (char **)malloc(NVARS * sizeof(char *));
-        for (i = 0; i < NVARS; i++)
+        for (size_t i = 0; i < NVARS; i++)
         {
             varnames[i] = (char *)malloc(16);
         }
@@ -191,7 +189,7 @@ public:
 
         char fmt[16];
         sprintf(fmt, "v%%%d.%dd", digit, digit);
-        for (i = 0; i < NVARS; i++)
+        for (size_t i = 0; i < NVARS; i++)
         {
             sprintf(varnames[i], fmt, i);
         }
@@ -211,23 +209,21 @@ public:
 
     void set_vars(int step, int block)
     {
-        int n, i;
         int v = VALUE(rank, step, block);
 
         set_offsets(block);
 
-        n = ldim1 * ldim2;
-        for (i = 0; i < n; i++)
+        size_t n = ldim1 * ldim2;
+        for (size_t i = 0; i < n; i++)
             a2[i] = v;
     }
 
     void fini_vars()
     {
-        int i;
         free(a2);
         free(r2);
         free(varW);
-        for (i = 0; i < NVARS; i++)
+        for (size_t i = 0; i < NVARS; i++)
         {
             free(varnames[i]);
         }
@@ -245,7 +241,7 @@ public:
 
     int Test(RunParams p, bool redefineVars)
     {
-        int err, i;
+        int err;
 
         NVARS = p.nvars;
         NBLOCKS = p.nblocks;
@@ -275,7 +271,7 @@ public:
         engineW = adios2_open(ioW, FILENAME, adios2_mode_write);
 
         err = 0;
-        for (i = 0; i < NSTEPS; i++)
+        for (size_t i = 0; i < NSTEPS; i++)
         {
             if (!err)
             {
@@ -323,7 +319,7 @@ public:
 
     int write_file(int step)
     {
-        int block, v, i;
+        int v;
         size_t count[2] = {ldim1, ldim2};
 
         log("Write step %d to %s\n", step, FILENAME);
@@ -331,13 +327,14 @@ public:
 
         adios2_step_status status;
         adios2_begin_step(engineW, adios2_step_mode_append, -1., &status);
-        for (block = 0; block < NBLOCKS; block++)
+        for (size_t block = 0; block < NBLOCKS; block++)
         {
             v = VALUE(rank, step, block);
-            log("  Write block %d, value %d to %s\n", block, v, FILENAME);
+            log("  Write block %d, value %d to %s\n", static_cast<int>(block),
+                v, FILENAME);
             set_vars(step, block);
             size_t start[2] = {offs1, offs2};
-            for (i = 0; i < NVARS; i++)
+            for (size_t i = 0; i < NVARS; i++)
             {
                 adios2_set_selection(varW[i], 2, start, count);
                 adios2_put(engineW, varW[i], a2, adios2_mode_sync);
@@ -371,8 +368,6 @@ public:
     {
         adios2_variable *vi;
         int err = 0;
-        size_t step, i, v;
-        int iMacro; // loop variable in macros
         std::chrono::time_point<std::chrono::high_resolution_clock> tb, te;
         std::chrono::duration<double>
             ts; // time for just scheduling for one step/block
@@ -395,7 +390,7 @@ public:
 
         log("  Check variable definitions... %s\n", FILENAME);
         tb = std::chrono::high_resolution_clock::now();
-        for (i = 0; i < NVARS; i++)
+        for (size_t i = 0; i < NVARS; i++)
         {
             CHECK_VARINFO(varnames[i], 2, NSTEPS)
         }
@@ -411,7 +406,7 @@ public:
         }
 
         log("  Check variable content...\n");
-        for (step = 0; step < NSTEPS; step++)
+        for (int step = 0; step < static_cast<int>(NSTEPS); step++)
         {
             tb = std::chrono::high_resolution_clock::now();
             ts = std::chrono::duration<double>::zero();
@@ -423,14 +418,14 @@ public:
             {
                 if (status == adios2_step_status_ok)
                 {
-                    v = VALUE(rank, step, block);
+                    int v = VALUE(rank, step, block);
                     set_offsets(block);
                     start[0] = offs1;
                     start[1] = offs2;
 
-                    log("    Step %zu block %zu: value=%zu\n", step, block, v);
+                    log("    Step %d block %zu: value=%d\n", step, block, v);
 
-                    for (i = 0; i < NVARS; i++)
+                    for (size_t i = 0; i < NVARS; i++)
                     {
                         auto tsb = std::chrono::high_resolution_clock::now();
                         adios2_variable *varH =
@@ -440,13 +435,13 @@ public:
                         auto tse = std::chrono::high_resolution_clock::now();
                         ts += tse - tsb;
                         CHECK_ARRAY(varnames[i], r2, ldim1 * ldim2, v, step,
-                                    block, iMacro)
+                                    block)
                     }
                 }
                 else
                 {
-                    printf("-- ERROR: Could not get Step %zu, status = %d\n", i,
-                           status);
+                    printf("-- ERROR: Could not get Step %d, status = %d\n",
+                           step, status);
                 }
             }
             adios2_end_step(engineR);
@@ -456,7 +451,7 @@ public:
             te = std::chrono::high_resolution_clock::now();
             if (rank == 0)
             {
-                log("  Read time for step %zu was %6.3lfs\n", step,
+                log("  Read time for step %d was %6.3lfs\n", step,
                     double(std::chrono::duration_cast<std::chrono::seconds>(ts)
                                .count()));
             }

@@ -101,7 +101,7 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     auto bpInts = dataManIO.DefineVariable<int>("bpInts", shape, start, count);
     adios2::Engine dataManWriter =
         dataManIO.Open("stream", adios2::Mode::Write);
-    for (int i = 0; i < steps; ++i)
+    for (size_t i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();
         dataManWriter.Put(bpInts, writer_data.data(), adios2::Mode::Sync);

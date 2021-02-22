@@ -195,7 +195,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         "bpDComplexes", shape, start, count);
     adios2::Engine tableWriter = dataManIO.Open(name, adios2::Mode::Write);
     tableWriter.BeginStep();
-    for (int i = 0; i < rows; ++i)
+    for (size_t i = 0; i < rows; ++i)
     {
         Dims startRow = start;
         startRow[0] = i;
