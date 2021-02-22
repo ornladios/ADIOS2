@@ -52,7 +52,6 @@ private:
     int m_MpiRank;
     int m_MpiSize;
     int64_t m_CurrentStep = -1;
-    bool m_InitFailed = false;
     std::atomic<size_t> m_FinalStep;
     format::DmvVecPtr m_CurrentStepMetadata;
 

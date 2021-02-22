@@ -56,20 +56,14 @@ DataManReader::DataManReader(IO &io, const std::string &name,
                             timeAfterRequest - timeBeforeRequest)
                             .count();
 
-    auto startTime = std::chrono::system_clock::now();
-
     while (reply == nullptr or reply->empty())
     {
+        timeBeforeRequest = std::chrono::system_clock::now();
         reply = m_Requester.Request("Handshake", 9);
-        auto nowTime = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            nowTime - startTime);
-        roundLatency = duration.count() * 1000;
-        if (duration.count() > m_Timeout)
-        {
-            m_InitFailed = true;
-            return;
-        }
+        timeAfterRequest = std::chrono::system_clock::now();
+        roundLatency = std::chrono::duration_cast<std::chrono::milliseconds>(
+                           timeAfterRequest - timeBeforeRequest)
+                           .count();
     }
 
     nlohmann::json message = nlohmann::json::parse(reply->data());
@@ -144,18 +138,6 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     if (timeout <= 0)
     {
         timeout = m_Timeout;
-    }
-
-    if (m_InitFailed)
-    {
-        if (m_Verbosity >= 5)
-        {
-            std::cout << "DataManReader::BeginStep(), Rank " << m_MpiRank
-                      << " returned EndOfStream due "
-                         "to initialization failure"
-                      << std::endl;
-        }
-        return StepStatus::EndOfStream;
     }
 
     if (m_CurrentStep >= m_FinalStep and m_CurrentStep >= 0)
