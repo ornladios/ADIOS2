@@ -138,7 +138,7 @@ void assert_minmax(const size_t nBlocks, const T &bmin, const T &bmax,
 TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_1D_100)
 {
     std::vector<int> data(100);
-    for (size_t i = 0; i < data.size(); ++i)
+    for (int i = 0; i < static_cast<int>(data.size()); ++i)
     {
         data[i] = i;
     }
@@ -300,7 +300,7 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_1D_100)
 TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_2D_10x10)
 {
     std::vector<int> data(100);
-    for (size_t i = 0; i < data.size(); ++i)
+    for (int i = 0; i < static_cast<int>(data.size()); ++i)
     {
         data[i] = i;
     }
@@ -615,7 +615,7 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_2D_10x10)
 TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_10x10x10)
 {
     std::vector<int> data(1000);
-    for (size_t i = 0; i < data.size(); ++i)
+    for (int i = 0; i < static_cast<int>(data.size()); ++i)
     {
         data[i] = i;
     }
@@ -1030,7 +1030,7 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_10x10x10)
 TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_24x24x48)
 {
     std::vector<int> data(27648);
-    for (size_t i = 0; i < data.size(); ++i)
+    for (int i = 0; i < static_cast<int>(data.size()); ++i)
     {
         data[i] = i;
     }
@@ -1090,7 +1090,7 @@ TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_3D_24x24x48)
 TEST(ADIOS2MinMaxs, ADIOS2MinMaxs_4D_3x2x5x4)
 {
     std::vector<int> data(120);
-    for (size_t i = 0; i < data.size(); ++i)
+    for (int i = 0; i < static_cast<int>(data.size()); ++i)
     {
         data[i] = i;
     }
