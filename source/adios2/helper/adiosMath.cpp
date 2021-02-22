@@ -412,7 +412,7 @@ BlockDivisionInfo DivideBlock(const Dims &count, const size_t subblockSize,
 }
 
 Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
-                      const int blockID) noexcept
+                      const unsigned int blockID) noexcept
 {
     const size_t ndim = count.size();
 
