@@ -99,6 +99,9 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
     const size_t sizeOutT = static_cast<size_t>(sizeOut);
     std::memcpy(bufferOut, dataOutPtr, sizeOutT);
 
+    free(dataOutPtr);
+    dataOutPtr = nullptr;
+
     return sizeOutT;
 }
 
@@ -140,6 +143,9 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
 
     const size_t dataSizeBytes = helper::GetTotalSize(dimensions) * elementSize;
     std::memcpy(dataOut, dataPtr, dataSizeBytes);
+
+    free(dataPtr);
+    dataPtr = nullptr;
 
     return static_cast<size_t>(dataSizeBytes);
 }
