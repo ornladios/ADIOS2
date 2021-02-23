@@ -291,7 +291,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             {
                 /* we only succeed if every attribute from every prior step is
                  * there, but not the next few */
-                for (int step = 0; step <= currentStep + 2; step++)
+                for (size_t step = 0; step <= currentStep + 2; step++)
                 {
                     const std::string r64_Single =
                         std::string("r64_PerStep_") + std::to_string(step);
@@ -322,7 +322,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
 
         ++ExpectedStep;
-        if (NSteps != adios2::MaxSizeT)
+        if (static_cast<size_t>(NSteps) != adios2::MaxSizeT)
         {
             NSteps--;
             if (NSteps == 0)

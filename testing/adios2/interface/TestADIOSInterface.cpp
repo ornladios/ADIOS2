@@ -335,7 +335,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutMixed)
     auto var = this->m_Io.template DefineVariable<T>("var", this->m_Shape);
     MyData<T> myData(this->m_Selections);
 
-    for (int b = 0; b < myData.NBlocks(); ++b)
+    for (int b = 0; b < static_cast<int>(myData.NBlocks()); ++b)
     {
         this->PopulateBlock(myData, b);
 
@@ -446,7 +446,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2File)
 
     MyData<T> myData(this->m_Selections);
 
-    for (int b = 0; b < myData.NBlocks(); ++b)
+    for (int b = 0; b < static_cast<int>(myData.NBlocks()); ++b)
     {
         var.SetSelection(myData.Selection(b));
         reader.Get(var, &myData[b][0], adios2::Mode::Sync);

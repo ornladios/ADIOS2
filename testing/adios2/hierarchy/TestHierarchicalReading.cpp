@@ -83,7 +83,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
         engine.Close();
 
         engine = io.Open(filename, adios2::Mode::Read);
-        for (int step = 0; step < NSteps; step++)
+        for (size_t step = 0; step < NSteps; step++)
         {
             engine.BeginStep();
             auto g = io.InquireGroup('/');
@@ -106,7 +106,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
             EXPECT_EQ(res.size(), 0);
             engine.EndStep();
         }
-        for (int step = 0; step < NSteps; step++)
+        for (size_t step = 0; step < NSteps; step++)
         {
             engine.BeginStep();
             auto g = io.InquireGroup('/');
@@ -116,7 +116,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
             EXPECT_EQ(res[0], "variable6");
             engine.EndStep();
         }
-        for (int step = 0; step < NSteps; step++)
+        for (size_t step = 0; step < NSteps; step++)
         {
             auto g = io.InquireGroup('/');
             auto var = g.InquireVariable<int32_t>("variable6");
@@ -129,7 +129,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
                 EXPECT_EQ(Ints, myInts);
             }
         }
-        for (int step = 0; step < NSteps; step++)
+        for (size_t step = 0; step < NSteps; step++)
         {
             auto g = io.InquireGroup('/');
             g.setPath("group1/group2/group3/group4");

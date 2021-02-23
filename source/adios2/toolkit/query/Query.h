@@ -196,7 +196,7 @@ public:
         if (box.first.size() != m_Selection.first.size())
             return false;
 
-        for (int n = 0; n < box.second.size(); n++)
+        for (size_t n = 0; n < box.second.size(); n++)
             if (box.second[n] != m_Selection.second[n])
                 return false;
 

@@ -25,7 +25,7 @@ void printData(double *xy, T *size, T *offset, int rank, size_t steps)
     myfile.open(filename);
     double *data = xy;
     uint64_t nelems = size[0] * size[1];
-    for (int step = 0; step < steps; step++)
+    for (size_t step = 0; step < steps; step++)
     {
         myfile << "rank=" << rank << " size=" << size[0] << "x" << size[1]
                << " offsets=" << offset[0] << ":" << offset[1]

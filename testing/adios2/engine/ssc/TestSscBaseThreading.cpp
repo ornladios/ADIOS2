@@ -65,7 +65,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     auto stringVar = dataManIO.DefineVariable<std::string>("stringVar");
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Write);
-    for (int i = 0; i < steps; ++i)
+    for (size_t i = 0; i < steps; ++i)
     {
         engine.BeginStep();
         GenData(myChars, i, start, count, shape);
@@ -88,7 +88,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         engine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
         engine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
         engine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
-        engine.Put(scalarInt, i);
+        engine.Put(scalarInt, static_cast<int>(i));
         std::string s = "sample string sample string sample string";
         engine.Put(stringVar, s);
         engine.EndStep();

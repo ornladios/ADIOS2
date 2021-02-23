@@ -178,7 +178,7 @@ void LocalJsonToGlobalJson(const std::vector<char> &input,
 {
     try
     {
-        for (size_t i = 0; i < streamSize; ++i)
+        for (int i = 0; i < streamSize; ++i)
         {
             if (input[i * maxLocalSize] == '\0')
             {
@@ -202,7 +202,7 @@ void LocalJsonToGlobalJson(const std::vector<char> &input,
 
 void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
 {
-    for (int i = 0; i < output.size(); ++i)
+    for (size_t i = 0; i < output.size(); ++i)
     {
         if (input[i] != nullptr)
         {
@@ -303,14 +303,14 @@ void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount,
             while (recvcount > 0)
             {
                 requests.emplace_back();
-                if (recvcount > chunksize)
+                if (recvcount > static_cast<uint64_t>(chunksize))
                 {
                     MPI_Irecv(reinterpret_cast<char *>(recvbuf) +
                                   (displs[i] + recvcounts[i] - recvcount) *
                                       recvTypeSize,
                               chunksize, recvtype, i, 0, comm,
                               &requests.back());
-                    recvcount -= chunksize;
+                    recvcount -= static_cast<uint64_t>(chunksize);
                 }
                 else
                 {
@@ -330,12 +330,12 @@ void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount,
     while (sendcountvar > 0)
     {
         requests.emplace_back();
-        if (sendcountvar > chunksize)
+        if (sendcountvar > static_cast<uint64_t>(chunksize))
         {
             MPI_Isend(reinterpret_cast<const char *>(sendbuf) +
                           (sendcount - sendcountvar) * sendTypeSize,
                       chunksize, sendtype, root, 0, comm, &requests.back());
-            sendcountvar -= chunksize;
+            sendcountvar -= static_cast<uint64_t>(chunksize);
         }
         else
         {
@@ -380,14 +380,14 @@ void MPI_Gatherv64OneSidedPull(const void *sendbuf, uint64_t sendcount,
             uint64_t recvcount = recvcounts[i];
             while (recvcount > 0)
             {
-                if (recvcount > chunksize)
+                if (recvcount > static_cast<uint64_t>(chunksize))
                 {
                     MPI_Get(reinterpret_cast<char *>(recvbuf) +
                                 (displs[i] + recvcounts[i] - recvcount) *
                                     recvTypeSize,
                             chunksize, recvtype, i, recvcounts[i] - recvcount,
                             chunksize, recvtype, win);
-                    recvcount -= chunksize;
+                    recvcount -= static_cast<uint64_t>(chunksize);
                 }
                 else
                 {
@@ -434,14 +434,14 @@ void MPI_Gatherv64OneSidedPush(const void *sendbuf, uint64_t sendcount,
 
     while (sendcountvar > 0)
     {
-        if (sendcountvar > chunksize)
+        if (sendcountvar > static_cast<uint64_t>(chunksize))
         {
             MPI_Put(reinterpret_cast<const char *>(sendbuf) +
                         (sendcount - sendcountvar) * sendTypeSize,
                     chunksize, sendtype, root,
                     displs[mpiRank] + sendcount - sendcountvar, chunksize,
                     sendtype, win);
-            sendcountvar -= chunksize;
+            sendcountvar -= static_cast<uint64_t>(chunksize);
         }
         else
         {
@@ -531,20 +531,20 @@ void PrintRankPosMap(const RankPosMap &m, const std::string &label)
 void PrintMpiInfo(const MpiInfo &writersInfo, const MpiInfo &readersInfo)
 {
     int s = 0;
-    for (int i = 0; i < writersInfo.size(); ++i)
+    for (size_t i = 0; i < writersInfo.size(); ++i)
     {
         std::cout << "App " << s << " Writer App " << i << " Wrold Ranks : ";
-        for (int j = 0; j < writersInfo[i].size(); ++j)
+        for (size_t j = 0; j < writersInfo[i].size(); ++j)
         {
             std::cout << writersInfo[i][j] << "  ";
         }
         std::cout << std::endl;
         ++s;
     }
-    for (int i = 0; i < readersInfo.size(); ++i)
+    for (size_t i = 0; i < readersInfo.size(); ++i)
     {
         std::cout << "App " << s << " Reader App " << i << " Wrold Ranks : ";
-        for (int j = 0; j < readersInfo[i].size(); ++j)
+        for (size_t j = 0; j < readersInfo[i].size(); ++j)
         {
             std::cout << readersInfo[i][j] << "  ";
         }

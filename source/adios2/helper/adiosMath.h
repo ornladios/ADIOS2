@@ -297,7 +297,7 @@ void CalculateSubblockInfo(const Dims &count, BlockDivisionInfo &info) noexcept;
  * block
  */
 Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
-                      const int blockID) noexcept;
+                      const unsigned int blockID) noexcept;
 
 /**
  * Gets mins and maxs from a values array of primitive types (not including

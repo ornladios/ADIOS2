@@ -23,7 +23,7 @@ void PrintData(const T *data, const size_t step, const Dims &start,
     {
         printsize = size;
     }
-    int s = 0;
+    size_t s = 0;
     for (size_t i = 0; i < printsize; ++i)
     {
         ++s;

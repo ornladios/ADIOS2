@@ -84,7 +84,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
         EXPECT_TRUE(engine_s);
         try
         {
-            for (int step = 0; step < NSteps; step++)
+            for (size_t step = 0; step < NSteps; step++)
             {
                 engine_s.BeginStep();
                 adios2::Variable<int> var0 =

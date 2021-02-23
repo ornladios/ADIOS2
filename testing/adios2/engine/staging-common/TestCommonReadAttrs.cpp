@@ -317,7 +317,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     {
         std::cout << "Reader Open took " << std::fixed << std::setprecision(9)
                   << timeOpen.count() << " seconds" << std::endl;
-        for (int i = 0; i < begin_times.size(); ++i)
+        for (size_t i = 0; i < begin_times.size(); ++i)
         {
             std::cout << "Reader BeginStep t = " << i
                       << " had status = " << begin_statuses[i] << " after "

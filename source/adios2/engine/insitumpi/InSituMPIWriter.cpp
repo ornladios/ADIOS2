@@ -41,7 +41,7 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
 
     m_RankAllPeers =
         insitumpi::FindPeers(CommAsMPI(m_Comm), m_Name, true, m_CommWorld);
-    for (int i = 0; i < m_RankAllPeers.size(); i++)
+    for (int i = 0; i < static_cast<int>(m_RankAllPeers.size()); i++)
     {
         m_RankToPeerID[m_RankAllPeers[i]] = i;
     }

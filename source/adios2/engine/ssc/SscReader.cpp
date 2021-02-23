@@ -597,7 +597,7 @@ void SscReader::SyncReadPattern()
     nlohmann::json globalJson;
     try
     {
-        for (size_t i = 0; i < m_StreamSize; ++i)
+        for (int i = 0; i < m_StreamSize; ++i)
         {
             if (globalVec[i * maxLocalSize] == '\0')
             {
@@ -652,7 +652,7 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
 
     size_t bufferPosition = 0;
 
-    for (int rank = 0; rank < bvv.size(); ++rank)
+    for (int rank = 0; rank < static_cast<int>(bvv.size()); ++rank)
     {
         bool hasOverlap = false;
         for (const auto r : allRanks)

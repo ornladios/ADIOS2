@@ -51,7 +51,7 @@ void xgc(const Dims &shape, const Dims &start, const Dims &count,
     x_to_g_engine.LockWriterDefinitions();
     g_to_x_engine.LockReaderSelections();
 
-    for (int i = 0; i < steps; ++i)
+    for (size_t i = 0; i < steps; ++i)
     {
         x_to_g_engine.BeginStep();
         GenData(x_to_g_data, i, start, count, shape);
@@ -103,7 +103,7 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<float> x_to_g_data;
     std::vector<float> g_to_x_data(datasize);
 
-    for (int i = 0; i < steps; ++i)
+    for (size_t i = 0; i < steps; ++i)
     {
         x_to_g_engine.BeginStep(StepMode::Read, 5);
         auto x_to_g_var = x_to_g_io.InquireVariable<float>("x_to_g");

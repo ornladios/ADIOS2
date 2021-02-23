@@ -187,7 +187,7 @@ int validateCommonTestData(int start, int length, size_t step,
     }
     for (int i = 0; i < length; i++)
     {
-        if ((!varying) || (i < length - step - writerRank))
+        if ((!varying) || (i < (int)(length - step - writerRank)))
         {
             if (in_I8[i] != (int8_t)((i + start) * 10 + step))
             {
@@ -235,7 +235,7 @@ int validateCommonTestData(int start, int length, size_t step,
         }
         else
         {
-            for (int j = 0; j < in_R32_blocks.size(); j++)
+            for (size_t j = 0; j < in_R32_blocks.size(); j++)
             {
                 if (in_R32_blocks[j][i] !=
                     (float)((i + start) * 10 + step + 1000.0 * j))

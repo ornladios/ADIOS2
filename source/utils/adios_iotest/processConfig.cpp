@@ -75,7 +75,7 @@ bool isComment(std::string &s)
     return comment;
 }
 
-size_t stringToSizet(std::vector<std::string> &words, int pos,
+size_t stringToSizet(std::vector<std::string> &words, size_t pos,
                      std::string lineID)
 {
     if (words.size() < pos + 1)
@@ -97,7 +97,7 @@ size_t stringToSizet(std::vector<std::string> &words, int pos,
     return n;
 }
 
-double stringToDouble(std::vector<std::string> &words, int pos,
+double stringToDouble(std::vector<std::string> &words, size_t pos,
                       std::string lineID)
 {
     if (words.size() < pos + 1)
@@ -128,7 +128,7 @@ void processSteps(std::vector<std::string> &words, Config &cfg)
         if (w == "over" && !isComment(words[2]))
         {
             cfg.nSteps = 0;
-            for (int i = 2; words.size() > i; ++i)
+            for (size_t i = 2; words.size() > i; ++i)
             {
                 if (isComment(words[i]))
                 {
@@ -145,7 +145,7 @@ void processSteps(std::vector<std::string> &words, Config &cfg)
 void PrintDims(const adios2::Dims &dims) noexcept
 {
     std::cout << "{";
-    for (int i = 0; i < dims.size(); i++)
+    for (size_t i = 0; i < dims.size(); i++)
     {
         std::cout << dims[i];
         if (i < dims.size() - 1)
@@ -157,7 +157,7 @@ void PrintDims(const adios2::Dims &dims) noexcept
 std::string DimsToString(const adios2::Dims &dims) noexcept
 {
     std::string s = "{";
-    for (int i = 0; i < dims.size(); i++)
+    for (size_t i = 0; i < dims.size(); i++)
     {
         s += std::to_string(dims[i]);
         if (i < dims.size() - 1)
@@ -254,15 +254,13 @@ VariableInfo processArray(std::vector<std::string> &words,
     {
         if (settings.isStrongScaling)
         {
-            ov.shape.push_back(
-                stringToSizet(words, static_cast<int>(4 + i),
-                              "dimension " + std::to_string(i + 1)));
+            ov.shape.push_back(stringToSizet(
+                words, 4 + i, "dimension " + std::to_string(i + 1)));
         }
         else
         {
-            ov.count.push_back(
-                stringToSizet(words, static_cast<int>(4 + i),
-                              "dimension " + std::to_string(i + 1)));
+            ov.count.push_back(stringToSizet(
+                words, 4 + i, "dimension " + std::to_string(i + 1)));
         }
     }
 
@@ -515,7 +513,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                 {
                     std::cout << "--> Application ID is set to: "
                               << currentAppId;
-                    if (currentAppId != settings.appId)
+                    if (currentAppId != static_cast<int>(settings.appId))
                     {
                         std::cout << "  Ignore commands set for this ID"
                                   << std::endl;
@@ -528,7 +526,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             }
             else if (key == "steps")
             {
-                if (currentAppId == settings.appId)
+                if (currentAppId == static_cast<int>(settings.appId))
                 {
                     processSteps(words, cfg);
                     if (verbose0)
@@ -552,7 +550,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             }
             else if (key == "sleep")
             {
-                if (currentAppId == settings.appId)
+                if (currentAppId == static_cast<int>(settings.appId))
                 {
                     double d = stringToDouble(words, 1, "sleep");
                     if (verbose0)
@@ -569,7 +567,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             }
             else if (key == "busy")
             {
-                if (currentAppId == settings.appId)
+                if (currentAppId == static_cast<int>(settings.appId))
                 {
                     double d = stringToDouble(words, 1, "busy");
                     if (verbose0)

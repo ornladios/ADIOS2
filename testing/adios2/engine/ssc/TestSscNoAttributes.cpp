@@ -63,7 +63,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         "bpDComplexes", shape, start, count);
     adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Write);
     engine.LockWriterDefinitions();
-    for (int i = 0; i < steps; ++i)
+    for (size_t i = 0; i < steps; ++i)
     {
         engine.BeginStep();
         GenData(myChars, i, start, count, shape);

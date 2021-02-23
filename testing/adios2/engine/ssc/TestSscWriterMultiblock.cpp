@@ -65,7 +65,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Write);
     engine.LockWriterDefinitions();
-    for (int i = 0; i < steps; ++i)
+    for (size_t i = 0; i < steps; ++i)
     {
         engine.BeginStep();
 
@@ -103,7 +103,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         engine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
         engine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
         engine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
-        engine.Put(scalarInt, i);
+        engine.Put(scalarInt, static_cast<int>(i));
 
         start = {(size_t)mpiRank * 2 + 1, 0};
 
@@ -139,7 +139,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         engine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
         engine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
         engine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
-        engine.Put(scalarInt, i);
+        engine.Put(scalarInt, static_cast<int>(i));
 
         engine.EndStep();
     }

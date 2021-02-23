@@ -332,7 +332,7 @@ void SscWriter::SyncReadPattern()
     nlohmann::json globalJson;
     try
     {
-        for (size_t i = 0; i < m_StreamSize; ++i)
+        for (int i = 0; i < m_StreamSize; ++i)
         {
             if (globalVec[i * maxLocalSize] == '\0')
             {
@@ -381,7 +381,7 @@ void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
         auto currentReaderOverlapWriterRanks =
             CalculateOverlap(writerVecVec, readerRankMap);
         size_t bufferPosition = 0;
-        for (int rank = 0; rank < writerVecVec.size(); ++rank)
+        for (int rank = 0; rank < static_cast<int>(writerVecVec.size()); ++rank)
         {
             bool hasOverlap = false;
             for (const auto r : currentReaderOverlapWriterRanks)

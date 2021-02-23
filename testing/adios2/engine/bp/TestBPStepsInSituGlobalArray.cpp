@@ -93,7 +93,7 @@ std::string ScheduleToString(const std::vector<Act> &schedule)
 {
     std::stringstream ss;
     ss << "[";
-    for (int i = 0; i < schedule.size(); ++i)
+    for (size_t i = 0; i < schedule.size(); ++i)
     {
         if (schedule[i] == Act::Write)
         {
@@ -551,7 +551,7 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
             // Generate test data for each process uniquely
             writer.BeginStep();
             writer.Put(var_step, stepsWritten);
-            if (stepsWritten % 2 == Oddity)
+            if (stepsWritten % 2 == static_cast<int>(Oddity))
             {
                 m_TestData.push_back(
                     GenerateData(stepsWritten, mpiRank, mpiSize));
@@ -579,7 +579,7 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
                 }
 
                 reader.BeginStep();
-                if (stepsRead % 2 == Oddity)
+                if (stepsRead % 2 == static_cast<int>(Oddity))
                 {
                     auto var_i32 = ior.InquireVariable<int32_t>("i32");
                     EXPECT_TRUE(var_i32);
@@ -611,7 +611,7 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
                               << " with Block selection" << std::endl;
                 }
                 reader.BeginStep();
-                if (stepsRead % 2 == Oddity)
+                if (stepsRead % 2 == static_cast<int>(Oddity))
                 {
                     auto var_i32 = ior.InquireVariable<int32_t>("i32");
                     EXPECT_TRUE(var_i32);

@@ -239,7 +239,7 @@ void DataManWriter::DoClose(const int transportIndex)
     m_PublishThreadActive = false;
     if (m_ReplyThreadActive)
     {
-        while (m_SentSteps < m_CurrentStep + 2)
+        while (m_SentSteps < static_cast<size_t>(m_CurrentStep + 2))
         {
         }
         m_ReplyThreadActive = false;

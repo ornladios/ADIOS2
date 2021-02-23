@@ -21,7 +21,7 @@ void printVector(const std::vector<T> &v)
 {
     const size_t ndim = v.size();
     std::cout << "{";
-    for (int d = 0; d < ndim; ++d)
+    for (size_t d = 0; d < ndim; ++d)
     {
         std::cout << v[d];
         if (d < ndim - 1)
@@ -57,7 +57,8 @@ void printBlockDivisionInfo(const adios2::helper::BlockDivisionInfo &info)
     std::cout << std::endl;
 }
 
-void printBlock(const adios2::Box<adios2::Dims> &block, const int blockID)
+void printBlock(const adios2::Box<adios2::Dims> &block,
+                const unsigned int blockID)
 {
     std::cout << "        block " << blockID << " start = ";
     printVector(block.first);
@@ -66,7 +67,8 @@ void printBlock(const adios2::Box<adios2::Dims> &block, const int blockID)
     std::cout << std::endl;
 }
 
-void printBlock(const adios2::Box<adios2::Dims> &block, const int blockID,
+void printBlock(const adios2::Box<adios2::Dims> &block,
+                const unsigned int blockID,
                 const std::vector<uint16_t> &expected_start,
                 const std::vector<uint16_t> &expected_count)
 {
@@ -81,7 +83,8 @@ void printBlock(const adios2::Box<adios2::Dims> &block, const int blockID,
     std::cout << std::endl;
 }
 
-void assert_block(const adios2::Box<adios2::Dims> &block, const int blockID,
+void assert_block(const adios2::Box<adios2::Dims> &block,
+                  const unsigned int blockID,
                   const std::vector<uint16_t> &expected_start,
                   const std::vector<uint16_t> &expected_count)
 {
@@ -90,13 +93,13 @@ void assert_block(const adios2::Box<adios2::Dims> &block, const int blockID,
     const adios2::Dims &block_count = block.second;
     ASSERT_EQ(block_start.size(), expected_start.size());
     const size_t nstart = expected_start.size();
-    for (int d = 0; d < nstart; ++d)
+    for (size_t d = 0; d < nstart; ++d)
     {
         ASSERT_EQ(block_start[d], expected_start[d]);
     }
     ASSERT_EQ(block_count.size(), expected_count.size());
     const size_t ncount = expected_count.size();
-    for (int d = 0; d < nstart; ++d)
+    for (size_t d = 0; d < nstart; ++d)
     {
         ASSERT_EQ(block_count[d], expected_count[d]);
     }
@@ -108,7 +111,7 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_1D_100)
     adios2::Dims count(1, 100);
 
     adios2::Box<adios2::Dims> block;
-    int blockID;
+    unsigned int blockID;
 
     {
         blockSize = 100;
@@ -268,7 +271,7 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_2D_10x10)
     adios2::Dims count(2, 10);
 
     adios2::Box<adios2::Dims> block;
-    int blockID;
+    unsigned int blockID;
 
     {
         blockSize = 100;
@@ -554,7 +557,7 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_10x10x10)
     adios2::Dims count(3, 10);
 
     adios2::Box<adios2::Dims> block;
-    int blockID;
+    unsigned int blockID;
 
     {
         blockSize = 100;
@@ -898,7 +901,7 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_24x24x48)
     adios2::Dims count({24, 24, 48});
 
     adios2::Box<adios2::Dims> block;
-    int blockID;
+    unsigned int blockID;
 
     {
         blockSize = 5000;
@@ -944,7 +947,7 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_3x2x5)
     adios2::Dims count({3, 2, 5});
 
     adios2::Box<adios2::Dims> block;
-    int blockID;
+    unsigned int blockID;
 
     {
         blockSize = 2;
@@ -1002,7 +1005,7 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_4D_3x2x5x4)
     adios2::Dims count({3, 2, 5, 4});
 
     adios2::Box<adios2::Dims> block;
-    int blockID;
+    unsigned int blockID;
 
     {
         blockSize = 6;

@@ -373,7 +373,7 @@ bool HDF5NativeReader::Advance()
         m_GroupId = -1;
     }
 
-    if (m_CurrentTimeStep + 1 >= m_TotalTimeSteps)
+    if (m_CurrentTimeStep + 1 >= static_cast<int>(m_TotalTimeSteps))
     {
         return false;
     }

@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
             {
                 std::ostringstream startStr;
                 std::ostringstream countStr;
-                for (auto k = 0; k < n.first.size(); k++)
+                for (size_t k = 0; k < n.first.size(); k++)
                 {
                     startStr << n.first[k] << " ";
                     countStr << n.second[k] << " ";

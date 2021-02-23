@@ -56,7 +56,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     /* we'll be dropping the size for some vars */
     if (VaryingDataSize)
     {
-        assert(Nx > NSteps + mpiSize);
+        assert(Nx > static_cast<size_t>(NSteps + mpiSize));
     }
 
     {
@@ -105,10 +105,10 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
-    for (size_t step = 0; step < NSteps; ++step)
+    for (int step = 0; step < NSteps; ++step)
     {
         // Generate test data for each process uniquely
-        generateCommonTestData((int)step, mpiRank, mpiSize, (int)Nx, (int)Nx);
+        generateCommonTestData(step, mpiRank, mpiSize, (int)Nx, (int)Nx);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -162,7 +162,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         engine.Put(var_r32, data_R32.data(), sync);
         for (int index = 1; index < LocalCount; index++)
         {
-            for (int i = 0; i < data_R32.size(); i++)
+            for (size_t i = 0; i < data_R32.size(); i++)
             {
                 data_R32[i] += 1000.0;
             }

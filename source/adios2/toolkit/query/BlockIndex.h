@@ -56,8 +56,9 @@ public:
             {
                 adios2::helper::CalculateSubblockInfo(blockInfo.Count,
                                                       blockInfo.SubBlockInfo);
-                auto numSubBlocks = blockInfo.MinMaxs.size() / 2;
-                for (auto i = 0; i < numSubBlocks; i++)
+                unsigned int numSubBlocks =
+                    static_cast<unsigned int>(blockInfo.MinMaxs.size() / 2);
+                for (unsigned int i = 0; i < numSubBlocks; i++)
                 {
                     bool isHit = query.m_RangeTree.CheckInterval(
                         blockInfo.MinMaxs[2 * i], blockInfo.MinMaxs[2 * i + 1]);

@@ -71,7 +71,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     Seconds timeOpen = std::chrono::steady_clock::now() - ts;
     EXPECT_TRUE(engine);
 
-    unsigned int t = 0;
+    size_t t = 0;
 
     std::vector<std::time_t> write_times;
     std::vector<Seconds> begin_times;
@@ -79,7 +79,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     while (true)
     {
-        if (EarlyExit && (t == NSteps))
+        if (EarlyExit && (t == static_cast<size_t>(NSteps)))
         {
             break;
         }
@@ -94,7 +94,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             break;
         }
         const size_t currentStep = engine.CurrentStep();
-        EXPECT_EQ(currentStep, static_cast<size_t>(t));
+        EXPECT_EQ(currentStep, t);
 
         size_t writerSize = 0;
 
@@ -372,7 +372,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             {
                 /* we only succeed if every attribute from every prior step is
                  * there, but not the next few */
-                for (int step = 0; step <= currentStep + 2; step++)
+                for (size_t step = 0; step <= currentStep + 2; step++)
                 {
                     const std::string r64_Single =
                         std::string("r64_PerStep_") + std::to_string(step);
@@ -412,7 +412,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     {
         std::cout << "Reader Open took " << std::fixed << std::setprecision(9)
                   << timeOpen.count() << " seconds" << std::endl;
-        for (int i = 0; i < begin_times.size(); ++i)
+        for (size_t i = 0; i < begin_times.size(); ++i)
         {
             std::cout << "Reader BeginStep t = " << i
                       << " had status = " << begin_statuses[i] << " after "
@@ -421,7 +421,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         }
     }
 
-    EXPECT_EQ(t, NSteps);
+    EXPECT_EQ(t, static_cast<size_t>(NSteps));
     if (!NoData && !mpiRank)
     {
         if ((write_times.back() - write_times.front()) > 1)

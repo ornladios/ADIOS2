@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 
                 std::cout << "Incoming temperature map:\n";
 
-                for (auto i = 0; i < inTemperatures.size(); ++i)
+                for (size_t i = 0; i < inTemperatures.size(); ++i)
                 {
                     std::cout << inTemperatures[i] << " ";
                     if ((i + 1) % inTemperature.Count().back() == 0)
