@@ -3319,7 +3319,6 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
         }
 
         size_t stepRelative = 0;
-        size_t stepAbsolute = fp->CurrentStep();
 
         for (size_t j = 0; j < blocksSize; j++)
         {

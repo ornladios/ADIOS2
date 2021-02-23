@@ -24,7 +24,7 @@ namespace engine
 {
 
 HDFVDSWriter::HDFVDSWriter(helper::Comm const &comm)
-: m_SubfileComm(comm), m_VDSFile(), m_Rank(-1)
+: m_VDSFile(), m_Rank(-1), m_SubfileComm(comm)
 {
     m_NumSubFiles = m_SubfileComm.Size();
     m_Rank = m_SubfileComm.Rank();
@@ -231,7 +231,7 @@ void HDFVDSWriter::Close(const int transportIndex)
 // class HDFSerialWriter
 //
 HDFSerialWriter::HDFSerialWriter(helper::Comm const &comm)
-: m_LocalComm(comm), m_H5File()
+: m_H5File(), m_LocalComm(comm)
 {
 }
 

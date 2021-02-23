@@ -618,13 +618,11 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
                                    attr_list WriterContact, SstStats Stats)
 {
     Rdma_RS_Stream Stream = malloc(sizeof(struct _Rdma_RS_Stream));
-    CManager cm = Svcs->getCManager(CP_Stream);
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     RdmaReaderContactInfo ContactInfo =
         malloc(sizeof(struct _RdmaReaderContactInfo));
     FabricState Fabric;
     char *PreloadEnv = NULL;
-    int rc;
 
     memset(Stream, 0, sizeof(*Stream));
     Stream->Fabric = calloc(1, sizeof(*Fabric));
@@ -664,7 +662,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     }
 
 #ifdef SST_HAVE_CRAY_DRC
-    int attr_cred, try_left;
+    int attr_cred, try_left, rc;
     if (!get_int_attr(WriterContact, attr_atom_from_string("RDMA_DRC_KEY"),
                       &attr_cred))
     {
@@ -778,12 +776,9 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
                                    SstStats Stats)
 {
     Rdma_WS_Stream Stream = malloc(sizeof(struct _Rdma_WS_Stream));
-    CManager cm = Svcs->getCManager(CP_Stream);
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     char *PreloadEnv;
     FabricState Fabric;
-    int rc;
-    int try_left;
 
     memset(Stream, 0, sizeof(struct _Rdma_WS_Stream));
 
@@ -810,6 +805,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
     Fabric = Stream->Fabric;
 #ifdef SST_HAVE_CRAY_DRC
+    int try_left, rc;
     if (Stream->Rank == 0)
     {
         rc = drc_acquire(&Fabric->credential, DRC_FLAGS_FLEX_CREDENTIAL);
@@ -902,7 +898,6 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
     RdmaWriterContactInfo ContactInfo;
     RdmaReaderContactInfo *providedReaderInfo =
         (RdmaReaderContactInfo *)providedReaderInfo_v;
-    SMPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
     RdmaBufferHandle ReaderRollHandle;
     int i;
 
@@ -978,9 +973,6 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
     FabricState Fabric = RS_Stream->Fabric;
     RdmaWriterContactInfo *providedWriterInfo =
         (RdmaWriterContactInfo *)providedWriterInfo_v;
-    void *CP_Stream = RS_Stream->CP_Stream;
-    int try_left;
-    int rc;
 
     RS_Stream->PeerCohort = PeerCohort;
     RS_Stream->WriterCohortSize = writerCohortSize;
@@ -1245,16 +1237,13 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
 static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
                                   int FailedPeerRank)
 {
-    Rdma_RS_Stream Stream = (Rdma_RS_Stream)
-        Stream_v; /* DP_RS_Stream is the return from InitReader */
-    CManager cm = Svcs->getCManager(Stream->CP_Stream);
+    /* DP_RS_Stream is the return from InitReader */
+    Rdma_RS_Stream Stream = (Rdma_RS_Stream)Stream_v;
     Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                   "received notification that writer peer "
                   "%d has failed, failing any pending "
                   "requests\n",
                   FailedPeerRank);
-    //   This is what EVPath does...
-    //   FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
 }
 
 /* We still have to handle Pull completions while waiting for push to complete
@@ -1265,7 +1254,6 @@ static int DoPushWait(CP_Services Svcs, Rdma_RS_Stream Stream,
     FabricState Fabric = Stream->Fabric;
     RdmaStepLogEntry StepLog = Stream->PreloadStepLog;
     RdmaRankReqLog RankLog;
-    RdmaBuffer Req;
     RdmaCompletionHandle Handle_t;
     struct fi_cq_data_entry CQEntry = {0};
     int WRank, WRidx;
@@ -1453,11 +1441,9 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                                 long Timestep)
 {
     Rdma_WS_Stream Stream = (Rdma_WS_Stream)Stream_v;
-    Rdma_WSR_Stream WSR_Stream;
     TimestepList *List = &Stream->Timesteps;
     TimestepList ReleaseTSL;
     RdmaBufferHandle Info;
-    int i;
 
     Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Releasing timestep %ld\n",
                   Timestep);
@@ -1498,7 +1484,6 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
 static void RdmaDestroyRankReqLog(Rdma_RS_Stream RS_Stream,
                                   RdmaRankReqLog RankReqLog)
 {
-    RdmaReqLogEntry tmp;
     int i;
 
     for (i = 0; i < RS_Stream->WriterCohortSize; i++)
@@ -1702,7 +1687,7 @@ static struct _CP_DP_Interface RdmaDPInterface = {0};
 static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
                            struct _SstParams *Params)
 {
-    struct fi_info *hints, *info, *originfo, *useinfo;
+    struct fi_info *hints, *info, *originfo;
     char *ifname;
     char *forkunsafe;
     int Ret = -1;
@@ -1807,7 +1792,6 @@ static void PushData(CP_Services Svcs, Rdma_WSR_Stream Stream,
     FabricState Fabric = WS_Stream->Fabric;
     RdmaRankReqLog RankReq = Stream->PreloadReq;
     RdmaBuffer Req, ReaderRoll, RollBuffer;
-    uint64_t RecvCounter;
     uint8_t *StepBuffer;
     int i, rc;
 

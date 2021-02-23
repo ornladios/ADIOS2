@@ -49,6 +49,11 @@ const std::string HDF5Common::PARAMETER_CHUNK_FLAG = "H5ChunkDim";
 const std::string HDF5Common::PARAMETER_CHUNK_VARS = "H5ChunkVars";
 const std::string HDF5Common::PARAMETER_HAS_IDLE_WRITER_RANK = "IdleH5Writer";
 
+#define CHECK_H5_RETURN(returnCode, reason)                                    \
+    {                                                                          \
+        if (returnCode < 0)                                                    \
+            throw std::runtime_error((reason));                                \
+    }
 /*
    //need to know ndim before defining this.
    //inconvenient
@@ -935,6 +940,7 @@ void HDF5Common::ReadStringScalarDataset(hid_t dataSetId, std::string &result)
 
     char *val = (char *)(calloc(typesize, sizeof(char)));
     hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
+    CHECK_H5_RETURN(ret2, "ReadStringScalarDataset");
 
     result.assign(val, typesize);
     free(val);
@@ -947,9 +953,9 @@ hid_t HDF5Common::GetTypeStringScalar(const std::string &input)
     /* Create a datatype to refer to. */
     hid_t type = H5Tcopy(H5T_C_S1);
     hid_t ret = H5Tset_size(type, input.size());
-
+    CHECK_H5_RETURN(ret, "GetTypeStringScalar, H5Tset_size");
     ret = H5Tset_strpad(type, H5T_STR_NULLTERM);
-
+    CHECK_H5_RETURN(ret, "GetTypeStringScalar, H5Tset_strpad");
     return type;
 }
 
@@ -1020,10 +1026,6 @@ void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
         dsetID = H5Dopen(topId, list.back().c_str(), H5P_DEFAULT);
 
     datasetChain.push_back(dsetID);
-
-    hid_t dspace = H5Dget_space(dsetID);
-    const int ndims = H5Sget_simple_extent_ndims(dspace);
-    // return dsetID;
 }
 
 void HDF5Common::StoreADIOSName(const std::string adiosName, hid_t dsetID)
@@ -1065,6 +1067,7 @@ void HDF5Common::ReadADIOSName(hid_t dsetID, std::string &adiosName)
     H5Tclose(attrType);
     H5Aclose(attrID);
 
+    CHECK_H5_RETURN(ret2, "ReadADIOSName");
     adiosName.assign(val, typeSize);
     free(val);
 }
@@ -1166,7 +1169,7 @@ void HDF5Common::RemoveEmptyDataset(const std::string &varName)
 
             H5D_space_status_t status;
             herr_t s1 = H5Dget_space_status(dsetID, &status);
-
+            CHECK_H5_RETURN(s1, "RemoveEmptyDataset");
             if (0 == H5Dget_storage_size(dsetID)) /*nothing is written */
                 H5Ldelete(m_GroupId, list[0].c_str(), H5P_DEFAULT);
         }
@@ -1241,7 +1244,7 @@ void HDF5Common::ReadInStringAttr(core::IO &io, const std::string &attrName,
         // ndims must be 1
         hsize_t dims[1];
         hid_t ret = H5Sget_simple_extent_dims(sid, dims, NULL);
-
+        CHECK_H5_RETURN(ret, "ReadInStringAttr");
         auto val = std::unique_ptr<char[]>(new char[typeSize * dims[0]]);
         H5Aread(attrId, h5Type, val.get());
 
@@ -1281,10 +1284,7 @@ void HDF5Common::AddNonStringAttribute(core::IO &io,
 void HDF5Common::ReadInNonStringAttr(core::IO &io, const std::string &attrName,
                                      hid_t attrId, hid_t h5Type, hid_t sid)
 {
-    H5S_class_t stype = H5Sget_simple_extent_type(sid);
-
     hsize_t ndims = H5Sget_simple_extent_ndims(sid);
-    size_t typesize = H5Tget_size(h5Type);
 
     if (ndims > 1)
     {
@@ -1294,7 +1294,10 @@ void HDF5Common::ReadInNonStringAttr(core::IO &io, const std::string &attrName,
     hsize_t dims[1];
     dims[0] = 0;
     if (ndims == 1)
+    {
         hid_t ret = H5Sget_simple_extent_dims(sid, dims, NULL);
+        CHECK_H5_RETURN(ret, "ReadInNonStringAttr");
+    }
 
     if (H5Tequal(H5T_NATIVE_INT8, h5Type))
     {
@@ -1640,7 +1643,7 @@ void HDF5Common::ReadAttrToIO(core::IO &io)
 
                 hid_t sid = H5Aget_space(attrId);
                 HDF5TypeGuard sg(sid, E_H5_SPACE);
-                H5S_class_t stype = H5Sget_simple_extent_type(sid);
+                // H5S_class_t stype = H5Sget_simple_extent_type(sid);
 
                 hid_t attrType = H5Aget_type(attrId);
                 bool isString = (H5Tget_class(attrType) == H5T_STRING);
@@ -1700,8 +1703,6 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
 
                 hid_t sid = H5Aget_space(attrId);
                 HDF5TypeGuard sg(sid, E_H5_SPACE);
-
-                H5S_class_t stype = H5Sget_simple_extent_type(sid);
 
                 hid_t attrType = H5Aget_type(attrId);
                 bool isString = (H5Tget_class(attrType) == H5T_STRING);

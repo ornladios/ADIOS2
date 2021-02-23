@@ -561,7 +561,6 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
                  * Those steps are read again here, starting in the beginning of
                  * the buffer now.
                  */
-                const size_t fileSize = m_MDFileManager.GetFileSize(0);
                 const size_t newMDSize =
                     expectedMinFileSize - m_MDFileAlreadyReadSize;
                 if (m_BP4Deserializer.m_Metadata.m_Buffer.size() < newMDSize)

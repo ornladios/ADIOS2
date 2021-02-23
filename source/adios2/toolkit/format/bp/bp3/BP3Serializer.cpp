@@ -29,7 +29,7 @@ namespace format
 {
 
 BP3Serializer::BP3Serializer(helper::Comm const &comm)
-: BPSerializer(comm, 3), BP3Base(comm), BPBase(comm)
+: BPBase(comm), BP3Base(comm), BPSerializer(comm, 3)
 {
 }
 

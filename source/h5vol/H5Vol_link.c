@@ -66,7 +66,6 @@ herr_t H5VL_adios2_link_get(void *obj, const H5VL_loc_params_t *loc_params,
     case H5VL_LINK_GET_NAME:
     {
         char *name = va_arg(arguments, char *);
-        size_t size = va_arg(arguments, size_t);
         ssize_t *ret = va_arg(arguments, ssize_t *);
 
         if ((GROUP == vol->m_ObjType) || (ROOT == vol->m_ObjType))

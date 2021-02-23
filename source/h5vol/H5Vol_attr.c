@@ -175,7 +175,6 @@ herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_t get_type, hid_t dxpl_id,
     {
     case H5VL_ATTR_GET_NAME:
     {
-        size_t buf_size = va_arg(arguments, size_t);
         char *buf = va_arg(arguments, char *);
         ssize_t *ret_val = va_arg(arguments, ssize_t *);
 

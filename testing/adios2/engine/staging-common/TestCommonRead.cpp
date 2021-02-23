@@ -401,9 +401,11 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         else
         {
             if (NoDataNode != -1)
+            {
                 EXPECT_EQ(
                     validateCommonTestDataR64(myStart, myLength, t, !var_c32),
                     0);
+            }
         }
         ++t;
     }

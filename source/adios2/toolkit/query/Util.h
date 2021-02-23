@@ -12,61 +12,33 @@ namespace adios2
 {
 namespace query
 {
+/*
 static size_t ToUIntValue(const adios2::Params &params, const std::string &key,
-                          size_t defaultValue)
+                        size_t defaultValue)
 {
-    auto it = params.find(key);
-    if (it != params.end())
-    {
-        try
-        {
-            auto value = (size_t)(std::stoul(it->second));
-            return value;
-        }
-        catch (std::exception &e)
-        {
-            std::cout << e.what() << std::endl;
-            return defaultValue;
-        }
-    }
-    return defaultValue;
+  auto it = params.find(key);
+  if (it != params.end())
+  {
+      try
+      {
+          auto value = (size_t)(std::stoul(it->second));
+          return value;
+      }
+      catch (std::exception &e)
+      {
+          std::cout << e.what() << std::endl;
+          return defaultValue;
+      }
+  }
+  return defaultValue;
 }
+*/
 
-static bool ToBoolValue(const adios2::Params &params, const std::string &key)
-{
-    auto keyPair = params.find(key);
-    if (keyPair != params.end())
-    {
-        std::string value = keyPair->second;
-        std::transform(value.begin(), value.end(), value.begin(),
-                       [](unsigned char c) { return std::tolower(c); });
-        if (value == "yes" || value == "true")
-        {
-            return true;
-        }
-    }
-    return false;
-}
+// The next three are implemented in Worker.cpp
+bool EndsWith(const std::string &hostStr, const std::string &fileTag);
+bool IsFileNameXML(const std::string &filename);
+bool IsFileNameJSON(const std::string &filename);
 
-static bool EndsWith(const std::string &hostStr, const std::string &fileTag)
-{
-    if (hostStr.size() >= fileTag.size() &&
-        hostStr.compare(hostStr.size() - fileTag.size(), fileTag.size(),
-                        fileTag) == 0)
-        return true;
-    else
-        return false;
-}
-
-static bool IsFileNameXML(const std::string &filename)
-{
-    return EndsWith(filename, ".xml");
-}
-
-static bool IsFileNameJSON(const std::string &filename)
-{
-    return EndsWith(filename, ".json");
-}
 }; // namespace query
 }; // name space adios2
 

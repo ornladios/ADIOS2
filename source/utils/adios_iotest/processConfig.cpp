@@ -395,11 +395,7 @@ void globalChecks(const Config &cfg, const Settings &settings)
     {
         if (!cmd->conditionalStream.empty())
         {
-            try
-            {
-                const auto f = cfg.condMap.at(cmd->conditionalStream);
-            }
-            catch (std::exception &)
+            if (cfg.condMap.find(cmd->conditionalStream) == cfg.condMap.end())
             {
                 throw std::invalid_argument(
                     "Name used in conditional is not a read stream: '" +
@@ -409,11 +405,7 @@ void globalChecks(const Config &cfg, const Settings &settings)
     }
     for (const auto &it : cfg.stepOverStreams)
     {
-        try
-        {
-            const auto f = cfg.condMap.at(it.first);
-        }
-        catch (std::exception &)
+        if (cfg.condMap.find(it.first) == cfg.condMap.end())
         {
             throw std::invalid_argument(
                 "Name used in step over command is not a read stream: '" +

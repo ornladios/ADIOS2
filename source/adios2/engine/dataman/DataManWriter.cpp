@@ -19,8 +19,8 @@ namespace engine
 
 DataManWriter::DataManWriter(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
-: Engine("DataManWriter", io, name, openMode, std::move(comm)),
-  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)), m_SentSteps(0),
+: Engine("DataManWriter", io, name, openMode, std::move(comm)), m_SentSteps(0),
+  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)),
   m_ReplyThreadActive(true), m_PublishThreadActive(true)
 {
 
