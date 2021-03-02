@@ -15,7 +15,12 @@
 
 #include "DataSpacesReader.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
+#include "adios2/toolkit/dataspaces/DSpacesConfig.h"
+#ifdef HAVE_DSPACES2
+#include "dspaces.h"
+#else
 #include "dataspaces.h"
+#endif /* HAVE_DSPACES2 */
 
 namespace adios2
 {
@@ -67,7 +72,9 @@ void DataSpacesReader::ReadDsData(Variable<T> &variable, T *data, int version)
         */
     if (variable.m_Shape.size() == 0)
     {
+#ifndef HAVE_DSPACES2
         gdims_in[0] = dspaces_get_num_space_server();
+#endif
         lb_in[0] = 0;
         ub_in[0] = 0;
         ndims = 1;
@@ -108,11 +115,12 @@ void DataSpacesReader::ReadDsData(Variable<T> &variable, T *data, int version)
     std::string l_Name = ds_in_name + std::to_string(version);
     char *cstr = new char[l_Name.length() + 1];
     strcpy(cstr, l_Name.c_str());
-
+#ifdef HAVE_DSPACES2
+#else
     dspaces_define_gdim(var_str, ndims, gdims_in);
     dspaces_get(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in,
                 (void *)data);
-
+#endif /* HAVE_DSPACES2 */
     delete[] cstr;
     delete[] var_str;
 }

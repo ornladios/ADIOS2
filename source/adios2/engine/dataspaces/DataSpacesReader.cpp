@@ -14,8 +14,13 @@
 #include "DataSpacesReader.tcc"
 #include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
+#include "adios2/toolkit/dataspaces/DSpacesConfig.h"
 #include "adios2/toolkit/dataspaces/ds_data.h"
+#ifdef HAVE_DSPACES2
+#include "dspaces.h"
+#else
 #include "dataspaces.h"
+#endif /* HAVE_DSPACES2 */
 
 namespace adios2
 {
@@ -83,23 +88,53 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
     strcpy(meta_lk, lk_name.c_str());
 
     MPI_Comm lock_comm = m_data.mpi_comm;
+#ifndef HAVE_DSPACES2
     dspaces_lock_on_read(meta_lk, &lock_comm);
+#endif /* HAVE_DSPACES2 */
 
     int nVars = 0;
     if (!m_ProvideLatest)
     {
         if (rank == 0)
         {
+#ifdef HAVE_DSPACES2
+            dspaces_client_t *client = get_client_handle();
+            char meta_str[256];
+            sprintf(meta_str, "VARMETA@%s", fstr);
+            unsigned int metalen;
+            int var_name_max_length = 128;
+            int var_size = 2 * sizeof(int) + MAX_DS_NDIM * sizeof(uint64_t) +
+                           var_name_max_length * sizeof(char);
+            int err = dspaces_get_meta(*client, meta_str, META_MODE_NEXT,
+                                       m_CurrentStep, &bcast_array[1],
+                                       (void **)&buffer, &metalen);
+            bcast_array[0] = metalen / var_size;
+#else
             buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &bcast_array[0],
                                            &bcast_array[1]);
+#endif /* HAVE_DSPACES2 */
         }
     }
     else
     {
         if (rank == 0)
         {
+#ifdef HAVE_DSPACES2
+            dspaces_client_t *client = get_client_handle();
+            char meta_str[256];
+            sprintf(meta_str, "VARMETA@%s", fstr);
+            unsigned int metalen;
+            int var_name_max_length = 128;
+            int var_size = 2 * sizeof(int) + MAX_DS_NDIM * sizeof(uint64_t) +
+                           var_name_max_length * sizeof(char);
+            int err = dspaces_get_meta(*client, meta_str, META_MODE_LAST,
+                                       m_CurrentStep, &bcast_array[1],
+                                       (void **)&buffer, &metalen);
+            bcast_array[0] = metalen / var_size;
+#else
             buffer = dspaces_get_latest_meta(m_CurrentStep, fstr,
                                              &bcast_array[0], &bcast_array[1]);
+#endif /* HAVE_DSPACES2 */
         }
     }
     MPI_Bcast(bcast_array, 2, MPI_INT, 0, m_data.mpi_comm);
@@ -228,7 +263,9 @@ void DataSpacesReader::EndStep()
     strcpy(meta_lk, lk_name.c_str());
 
     MPI_Comm lock_comm = m_data.mpi_comm;
+#ifndef HAVE_DSPACES2
     dspaces_unlock_on_read(meta_lk, &lock_comm);
+#endif /* HAVE_DSPACES2 */
 }
 
 void DataSpacesReader::DoClose(const int transportIndex)

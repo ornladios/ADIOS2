@@ -15,8 +15,13 @@
 #include "DataSpacesWriter.tcc"
 #include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
+#include "adios2/toolkit/dataspaces/DSpacesConfig.h"
 #include "adios2/toolkit/dataspaces/ds_data.h"
+#ifdef HAVE_DSPACES2
+#include "dspaces.h"
+#else
 #include "dataspaces.h"
+#endif /* HAVE_DSPACES2 */
 
 namespace adios2
 {
@@ -73,10 +78,13 @@ void DataSpacesWriter::EndStep()
     char *meta_lk = new char[local_file_var.length() + 1];
     strcpy(meta_lk, local_file_var.c_str());
     MPI_Comm lock_comm = m_data.mpi_comm;
-
+#ifndef HAVE_DSPACES2
     dspaces_lock_on_write(meta_lk, &lock_comm);
+#endif /* HAVE_DSPACES2 */
     WriteVarInfo();
+#ifndef HAVE_DSPACES2
     dspaces_unlock_on_write(meta_lk, &lock_comm);
+#endif /* HAVE_DSPACES2 */
 }
 void DataSpacesWriter::Flush(const int transportIndex) {}
 
@@ -88,8 +96,10 @@ void DataSpacesWriter::DoClose(const int transportIndex)
     char *meta_lk = new char[local_file_var.length() + 1];
     strcpy(meta_lk, local_file_var.c_str());
 
+#ifndef HAVE_DSPACES2
     dspaces_lock_on_write(meta_lk, &(m_data.mpi_comm));
     dspaces_unlock_on_write(meta_lk, &(m_data.mpi_comm));
+#endif /* HAVE_DSPACES2 */
 
     globals_adios_set_dataspaces_disconnected_from_writer();
 }
@@ -126,9 +136,9 @@ void DataSpacesWriter::WriteVarInfo()
         std::string ds_file_var;
         int var_num = ndim_vector.size();
         int var_name_max_length = 128;
-        int buf_len = var_num * sizeof(int) + var_num * sizeof(int) +
-                      MAX_DS_NDIM * var_num * sizeof(uint64_t) +
-                      var_num * var_name_max_length * sizeof(char);
+        int buf_len =
+            var_num * (2 * sizeof(int) + MAX_DS_NDIM * sizeof(uint64_t) +
+                       var_name_max_length * sizeof(char));
         int *dim_meta, *elemSize_meta;
         uint64_t *gdim_meta;
         dim_meta = (int *)malloc(var_num * sizeof(int));
@@ -174,12 +184,17 @@ void DataSpacesWriter::WriteVarInfo()
         ndim = 1;
         lb[0] = 0;
         ub[0] = buf_len - 1;
+#ifdef HAVE_DSPACES2
+        dspaces_client_t *client = get_client_handle();
+        dspaces_put_meta(*client, local_str, m_CurrentStep, buffer, buf_len);
+#else
         gdims[0] = (ub[0] - lb[0] + 1) * dspaces_get_num_space_server();
         dspaces_define_gdim(local_str, ndim, gdims);
 
         dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, buffer);
 
         dspaces_put_sync(); // wait on previous put to finish
+#endif /* HAVE_DSPACES2 */
         delete[] local_str;
         free(dim_meta);
         free(elemSize_meta);

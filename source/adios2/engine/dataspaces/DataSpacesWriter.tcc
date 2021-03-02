@@ -15,8 +15,14 @@
 
 #include "DataSpacesWriter.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/toolkit/dataspaces/DSpacesConfig.h"
+#include "adios2/toolkit/dataspaces/ds.h"
 #include "adios2/toolkit/dataspaces/ds_data.h"
+#ifdef HAVE_DSPACES2
+#include "dspaces.h"
+#else
 #include "dataspaces.h"
+#endif /* HAVE_DSPACES2 */
 
 namespace adios2
 {
@@ -48,7 +54,11 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
         */
     if (variable.m_SingleValue)
     {
+#ifdef HAVE_DSPACES2
+        gdims_in[0] = 1;
+#else
         gdims_in[0] = dspaces_get_num_space_server();
+#endif /* HAVE_DSPACES2 */
         lb_in[0] = 0;
         ub_in[0] = 0;
         ndims = 1;
@@ -110,11 +120,18 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
     char *cstr = new char[l_Name.length() + 1];
     strcpy(cstr, l_Name.c_str());
 
+#ifdef HAVE_DSPACES2
+    dspaces_client_t *client = get_client_handle();
+    dspaces_define_gdim(*client, var_str, ndims, gdims_in);
+    dspaces_put(*client, var_str, version, variable.m_ElementSize, ndims, lb_in,
+                ub_in, values);
+#else
     dspaces_define_gdim(var_str, ndims, gdims_in);
     dspaces_put(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in,
                 values);
     dspaces_put_sync();
     dspaces_put_sync();
+#endif /* HAVE_DSPACES2 */
     delete[] cstr;
     delete[] var_str;
 }
