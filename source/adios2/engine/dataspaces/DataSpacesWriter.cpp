@@ -99,19 +99,20 @@ void DataSpacesWriter::DoClose(const int transportIndex)
 #ifdef HAVE_DSPACES2
     int rank;
     MPI_Comm_rank(m_data.mpi_comm, &rank);
-    if(rank == 0) {
+    if (rank == 0)
+    {
         local_file_var = "VARMETA@" + f_Name;
         char *local_str = new char[local_file_var.length() + 1];
         strcpy(local_str, local_file_var.c_str());
         dspaces_client_t *client = get_client_handle();
-        dspaces_put_meta(*client, local_str, m_CurrentStep+1, NULL, 0);
+        dspaces_put_meta(*client, local_str, m_CurrentStep + 1, NULL, 0);
         delete[] local_str;
     }
+    MPI_Barrier(m_data.mpi_comm);
 #else
     dspaces_lock_on_write(meta_lk, &(m_data.mpi_comm));
     dspaces_unlock_on_write(meta_lk, &(m_data.mpi_comm));
 #endif /* HAVE_DSPACES2 */
-
     globals_adios_set_dataspaces_disconnected_from_writer();
 }
 
@@ -143,7 +144,6 @@ void DataSpacesWriter::WriteVarInfo()
 
     if (rank == 0)
     {
-
         std::string ds_file_var;
         int var_num = ndim_vector.size();
         int var_name_max_length = 128;

@@ -37,6 +37,7 @@ static dspaces_client_t client = NULL;
 dspaces_client_t *get_client_handle() { return (&client); }
 #endif /* HAVE_DSPACES2 */
 
+static int globals_rank;
 static int globals_adios_appid = -1;
 static int globals_adios_was_set = 0;
 void globals_adios_set_application_id(int id)
@@ -74,7 +75,15 @@ void globals_adios_set_dataspaces_disconnected_from_reader()
 {
     if (globals_adios_connected_to_dataspaces ==
         dataspaces_connected_from_reader)
+    {
         globals_adios_connected_to_dataspaces = dataspaces_disconnected;
+#ifdef HAVE_DSPACES2
+        if (globals_rank == 0)
+        {
+            dspaces_kill(client);
+        }
+#endif
+    }
     else if (globals_adios_connected_to_dataspaces ==
              dataspaces_connected_from_both)
         globals_adios_connected_to_dataspaces =
@@ -93,7 +102,15 @@ void globals_adios_set_dataspaces_disconnected_from_writer()
 {
     if (globals_adios_connected_to_dataspaces ==
         dataspaces_connected_from_writer)
+    {
         globals_adios_connected_to_dataspaces = dataspaces_disconnected;
+#ifdef HAVE_DSPACES2
+        if (globals_rank == 0)
+        {
+            dspaces_kill(client);
+        }
+#endif
+    }
     else if (globals_adios_connected_to_dataspaces ==
              dataspaces_connected_from_both)
         globals_adios_connected_to_dataspaces =
@@ -132,6 +149,7 @@ int adios_dataspaces_init(void *comm, DsData *md)
 
         MPI_Comm_rank(*(MPI_Comm *)comm, &rank);
         MPI_Comm_size(*(MPI_Comm *)comm, &nproc);
+        globals_rank = rank;
 
         if (md->appid == 0)
         {
@@ -182,6 +200,7 @@ int adios_read_dataspaces_init(void *comm, DsData *md)
 
         MPI_Comm_rank(*(MPI_Comm *)comm, &rank);
         MPI_Comm_size(*(MPI_Comm *)comm, &nproc);
+        globals_rank = rank;
 
         if (md->appid == 0)
         {

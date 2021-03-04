@@ -264,7 +264,6 @@ void DataSpacesReader::EndStep()
 
 void DataSpacesReader::DoClose(const int transportIndex)
 {
-
     globals_adios_set_dataspaces_disconnected_from_reader();
 }
 
