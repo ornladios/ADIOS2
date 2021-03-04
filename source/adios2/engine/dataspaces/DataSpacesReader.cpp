@@ -100,15 +100,12 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 #ifdef HAVE_DSPACES2
             dspaces_client_t *client = get_client_handle();
             char meta_str[256];
-            sprintf(meta_str, "VARMETA@%s", fstr);
             unsigned int metalen;
-            int var_name_max_length = 128;
-            int var_size = 2 * sizeof(int) + MAX_DS_NDIM * sizeof(uint64_t) +
-                           var_name_max_length * sizeof(char);
+            sprintf(meta_str, "VARMETA@%s", fstr);
             int err = dspaces_get_meta(*client, meta_str, META_MODE_NEXT,
                                        m_CurrentStep, &bcast_array[1],
                                        (void **)&buffer, &metalen);
-            bcast_array[0] = metalen / var_size;
+            bcast_array[0] = metalen;
 #else
             buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &bcast_array[0],
                                            &bcast_array[1]);
@@ -122,15 +119,12 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 #ifdef HAVE_DSPACES2
             dspaces_client_t *client = get_client_handle();
             char meta_str[256];
-            sprintf(meta_str, "VARMETA@%s", fstr);
             unsigned int metalen;
-            int var_name_max_length = 128;
-            int var_size = 2 * sizeof(int) + MAX_DS_NDIM * sizeof(uint64_t) +
-                           var_name_max_length * sizeof(char);
+            sprintf(meta_str, "VARMETA@%s", fstr);
             int err = dspaces_get_meta(*client, meta_str, META_MODE_LAST,
                                        m_CurrentStep, &bcast_array[1],
                                        (void **)&buffer, &metalen);
-            bcast_array[0] = metalen / var_size;
+            bcast_array[0] = metalen;
 #else
             buffer = dspaces_get_latest_meta(m_CurrentStep, fstr,
                                              &bcast_array[0], &bcast_array[1]);

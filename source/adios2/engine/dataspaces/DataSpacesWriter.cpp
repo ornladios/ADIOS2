@@ -96,7 +96,18 @@ void DataSpacesWriter::DoClose(const int transportIndex)
     char *meta_lk = new char[local_file_var.length() + 1];
     strcpy(meta_lk, local_file_var.c_str());
 
-#ifndef HAVE_DSPACES2
+#ifdef HAVE_DSPACES2
+    int rank;
+    MPI_Comm_rank(m_data.mpi_comm, &rank);
+    if(rank == 0) {
+        local_file_var = "VARMETA@" + f_Name;
+        char *local_str = new char[local_file_var.length() + 1];
+        strcpy(local_str, local_file_var.c_str());
+        dspaces_client_t *client = get_client_handle();
+        dspaces_put_meta(*client, local_str, m_CurrentStep+1, NULL, 0);
+        delete[] local_str;
+    }
+#else
     dspaces_lock_on_write(meta_lk, &(m_data.mpi_comm));
     dspaces_unlock_on_write(meta_lk, &(m_data.mpi_comm));
 #endif /* HAVE_DSPACES2 */
