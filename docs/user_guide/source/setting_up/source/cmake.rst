@@ -104,7 +104,7 @@ In addition to the ``ADIOS2_USE_Feature`` options, the following options are als
 ==================================== =============================================== ===============================
 ``BUILD_SHARED_LIBS``                  **ON**/OFF                                     Build shared libraries.
 ``ADIOS2_BUILD_EXAMPLES``              **ON**/OFF                                     Build examples.
-``ADIOS2_BUILD_TESTING``               **ON**/OFF                                     Build test code.
+``BUILD_TESTING``                      **ON**/OFF                                     Build test code.
 ``CMAKE_INSTALL_PREFIX``               /path/to/install (``/usr/local``)              Installation location.
 ``CMAKE_BUILD_TYPE``                   Debug/**Release**/RelWithDebInfo/MinSizeRel    Compiler optimization levels.
 ==================================== =============================================== ===============================
