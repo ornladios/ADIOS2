@@ -23,6 +23,5 @@ ADIOS 2 is packaged in Spack `adios2 package <https://spack.readthedocs.io/en/la
 Docker
 ******
 
-Docker images including building and installation of ADIOS 2 in a container: 
-* Ubuntu 18.04: under `scripts/docker/images/ubuntu/Dockerfile <https://github.com/ornladios/ADIOS2/tree/master/scripts/docker/images/ubuntu/Dockerfile>`_
-
+Docker images including building and installation of dependencies and ADIOS 2 containers for Ubuntu 20 and CentOS 7 can be found in: 
+under the directory `scripts/docker/ <https://github.com/ornladios/ADIOS2/tree/master/scripts/docker>`_
