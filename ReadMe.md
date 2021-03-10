@@ -55,21 +55,19 @@ If you find ADIOS2 useful, please cite our [SoftwareX paper](https://doi.org/10.
 For a `cmake` configuration example see [scripts/runconf/runconf.sh](https://github.com/ornladios/ADIOS2/blob/master/scripts/runconf/runconf.sh)
 
 
-* Conda packages: 
-* [https://anaconda.org/williamfgc](https://anaconda.org/williamfgc)
+* Conda packages:
 * [https://anaconda.org/conda-forge/adios2](https://anaconda.org/conda-forge/adios2)
 
 
 * Spack: [adios2 package](https://spack.readthedocs.io/en/latest/package_list.html#adios2)
 
 
-* Docker images: 
-* Ubuntu 18.04: under [scripts/docker/images/ubuntu18.04/Dockerfile](https://github.com/ornladios/ADIOS2/tree/master/scripts/docker/images/ubuntu18.04/Dockerfile)
+* Docker images: under [scripts/docker](https://github.com/ornladios/ADIOS2/tree/master/scripts/docker)
 
 
-Once ADIOS 2 is installed refer to: 
+Once ADIOS2 is installed refer to: 
 
-* [Linking ADIOS 2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
+* [Linking ADIO 2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
 
 
 ## Releases
