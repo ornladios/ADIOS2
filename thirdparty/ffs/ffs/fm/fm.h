@@ -8,7 +8,7 @@ typedef struct _FMContextStruct *FMContext;
 
 extern FMContext create_FMcontext();
 extern FMContext create_local_FMcontext();
-extern void free_FMcontext();
+extern void free_FMcontext(FMContext c);
 extern void add_ref_FMcontext();
 extern void FMcontext_allow_self_formats(FMContext fmc);
 extern int
