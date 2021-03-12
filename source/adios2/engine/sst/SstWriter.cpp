@@ -147,6 +147,18 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
         m_BP3Serializer->m_MetadataSet.TimeStep = 1;
         m_BP3Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
     }
+    else if (Params.MarshalMethod == SstMarshalBP5)
+    {
+        // initialize BP serializer, deleted in
+        // SstWriter::EndStep()::lf_FreeBlocks()
+        m_BP5Serializer =
+            std::unique_ptr<format::BP5Serializer>(new format::BP5Serializer());
+        //        m_BP5Serializer->Init(m_IO.m_Parameters,
+        //                              "in call to BP5::Open for writing",
+        //                              "sst");
+        //        m_BP5Serializer->m_MetadataSet.TimeStep = 1;
+        //        m_BP5Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
+    }
     else
     {
         // unknown marshaling method, shouldn't happen
@@ -228,6 +240,38 @@ void SstWriter::EndStep()
         FFSMarshalAttributes();
         TAU_STOP("SstMarshalFFS");
         SstFFSWriterEndStep(m_Output, m_WriterStep);
+    }
+    else if (Params.MarshalMethod == SstMarshalBP5)
+    {
+        auto TSInfo = m_BP5Serializer->CloseTimestep(m_WriterStep);
+        auto lf_FreeBlocks = [](void *vBlock) {
+            BP3DataBlock *BlockToFree =
+                reinterpret_cast<BP3DataBlock *>(vBlock);
+            //  Free data and metadata blocks here.  BlockToFree is the newblock
+            //  value in the enclosing function.
+            delete BlockToFree;
+        };
+
+        BP3DataBlock *newblock = new BP3DataBlock;
+        SstMetaMetaList MetaMetaBlocks = (SstMetaMetaList)malloc(
+            (TSInfo.NewMetaMetaBlocks.size() + 1) * sizeof(MetaMetaBlocks[0]));
+        int i = 0;
+        for (const auto &MM : TSInfo.NewMetaMetaBlocks)
+        {
+            MetaMetaBlocks[i].BlockData = MM.MetaMetaInfo;
+            MetaMetaBlocks[i].BlockSize = MM.MetaMetaInfoLen;
+            MetaMetaBlocks[i].ID = MM.MetaMetaID;
+            MetaMetaBlocks[i].IDSize = MM.MetaMetaIDLen;
+        }
+        MetaMetaBlocks[TSInfo.NewMetaMetaBlocks.size()] = {NULL, 0, NULL, 0};
+        newblock->metadata.DataSize = TSInfo.MetaEncodeBuffer->m_FixedSize;
+        newblock->metadata.block = TSInfo.MetaEncodeBuffer->Data();
+        newblock->data.DataSize = TSInfo.DataBuffer->DataVec()[0].iov_len;
+        newblock->data.block = (char *)TSInfo.DataBuffer->DataVec()[0].iov_base;
+        TAU_STOP("Marshaling overhead");
+        SstProvideTimestepMM(m_Output, &newblock->metadata, &newblock->data,
+                             m_WriterStep, lf_FreeBlocks, newblock, NULL, NULL,
+                             NULL, MetaMetaBlocks);
     }
     else if (Params.MarshalMethod == SstMarshalBP)
     {

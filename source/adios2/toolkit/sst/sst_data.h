@@ -25,6 +25,14 @@ struct _SstBlock
     char *BlockData;
 };
 
+struct _SstMetaMetaBlock
+{
+    char *BlockData;
+    size_t BlockSize;
+    char *ID;
+    size_t IDSize;
+};
+
 /*
  * Struct that represents statistics tracked by SST
  */

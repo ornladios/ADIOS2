@@ -273,7 +273,48 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 
     m_BetweenStepPairs = true;
 
-    if (m_WriterMarshalMethod == SstMarshalBP)
+    if (m_WriterMarshalMethod == SstMarshalBP5)
+    {
+        std::cout << "DOING BP5 DESERIALIZATION" << std::endl;
+        if (!m_BP5Deserializer)
+        {
+            m_BP5Deserializer = new format::BP5Deserializer();
+        }
+        SstMetaMetaList MMList =
+            SstGetNewMetaMetaData(m_Input, SstCurrentStep(m_Input));
+        //      m_BP5Deserializer->StepInit(m_IO.m_Parameters,
+        //                                "in call to BP5::BeginStep", "bp5");
+        int i = 0;
+        while (MMList && MMList[i].BlockData)
+        {
+            format::MetaMetaInfoBlock MM;
+            MM.MetaMetaID = MMList[i].ID;
+            MM.MetaMetaIDLen = MMList[i].IDSize;
+            MM.MetaMetaInfo = MMList[i].BlockData;
+            MM.MetaMetaInfoLen = MMList[i].BlockSize;
+            m_BP5Deserializer->InstallMetaMetaData(MM);
+            i++;
+        }
+        free(MMList);
+        m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
+
+        for (int i = 0; i < m_CurrentStepMetaData->WriterCohortSize; i++)
+        {
+            struct _SstData *tmp = m_CurrentStepMetaData->WriterMetadata[i];
+            m_BP5Deserializer->InstallMetaData(tmp->block, tmp->DataSize, i);
+        }
+        //     {
+        //       int WriterCohortSize;
+        //       struct _SstData **WriterMetadata;
+        //       void **DP_TimestepInfo;
+        //     };
+        m_IO.RemoveAllVariables();
+        //      m_BP5Deserializer->InstallMetadata(m_CurrentStepMetadata,
+        //      *this);
+        m_IO.ResetVariablesStepSelection(true,
+                                         "in call to SST Reader BeginStep");
+    }
+    else if (m_WriterMarshalMethod == SstMarshalBP)
     {
         TAU_SCOPED_TIMER(
             "BP Marshaling Case - deserialize and install metadata");
