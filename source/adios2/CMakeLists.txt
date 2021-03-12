@@ -67,7 +67,9 @@ add_library(adios2_core
   engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
 #toolkit
   toolkit/format/buffer/Buffer.cpp
+  toolkit/format/buffer/BufferV.cpp
   toolkit/format/buffer/heap/BufferSTL.cpp
+  toolkit/format/buffer/ffs/BufferFFS.cpp
 
   toolkit/format/bp/BPBase.cpp toolkit/format/bp/BPBase.tcc
   toolkit/format/bp/BPSerializer.cpp toolkit/format/bp/BPSerializer.tcc
@@ -80,6 +82,9 @@ add_library(adios2_core
   toolkit/format/bp/bp4/BP4Serializer.cpp toolkit/format/bp/bp4/BP4Serializer.tcc
   toolkit/format/bp/bp4/BP4Deserializer.cpp toolkit/format/bp/bp4/BP4Deserializer.tcc
   
+  toolkit/format/bp5/BP5Serializer.cpp
+  toolkit/format/bp5/BP5Deserializer.cpp
+
   toolkit/format/bp/bpOperation/BPOperation.cpp 
   toolkit/format/bp/bpOperation/BPOperation.tcc
   toolkit/format/bp/bpOperation/compress/BPZFP.cpp 
@@ -120,7 +125,7 @@ target_include_directories(adios2_core
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
 )
-target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml taustubs adios2::thirdparty::yaml-cpp)
+target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml taustubs adios2::thirdparty::yaml-cpp ffs::ffs)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 

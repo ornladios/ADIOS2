@@ -15,6 +15,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/format/bp/bp3/BP3Serializer.h"
+#include "adios2/toolkit/format/bp5/BP5Serializer.h"
 #include "adios2/toolkit/sst/sst.h"
 
 #include <memory>
@@ -64,6 +65,8 @@ private:
         format::BP3Serializer *serializer;
     };
     std::unique_ptr<format::BP3Serializer> m_BP3Serializer;
+
+    std::unique_ptr<format::BP5Serializer> m_BP5Serializer;
 
     SstStream m_Output;
     long m_WriterStep = -1;

@@ -17,6 +17,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/format/bp/bp3/BP3Deserializer.h"
+#include "adios2/toolkit/format/bp5/BP5Deserializer.h"
 
 namespace adios2
 {
@@ -72,6 +73,7 @@ private:
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;
     format::BP3Deserializer *m_BP3Deserializer;
+    format::BP5Deserializer *m_BP5Deserializer = nullptr;
     /* --- Used only with BP marshaling --- */
 
     struct _SstParams Params;
