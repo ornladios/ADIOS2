@@ -21,6 +21,12 @@ ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
 
 ADIOS::ADIOS(const bool debugMode) : ADIOS("", "C++") {}
 
+ADIOS::ADIOS(const std::string &configFile, const std::string &hostLanguage,
+             const bool debugMode)
+: m_ADIOS(std::make_shared<core::ADIOS>(configFile, hostLanguage))
+{
+}
+
 ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 
 IO ADIOS::DeclareIO(const std::string name)
