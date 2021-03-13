@@ -276,9 +276,12 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     if (m_WriterMarshalMethod == SstMarshalBP5)
     {
         std::cout << "DOING BP5 DESERIALIZATION" << std::endl;
+        m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
         if (!m_BP5Deserializer)
         {
-            m_BP5Deserializer = new format::BP5Deserializer();
+            m_BP5Deserializer = new format::BP5Deserializer(
+                m_CurrentStepMetaData->WriterCohortSize);
+            m_BP5Deserializer->m_Engine = this;
         }
         SstMetaMetaList MMList =
             SstGetNewMetaMetaData(m_Input, SstCurrentStep(m_Input));
@@ -287,7 +290,7 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         int i = 0;
         while (MMList && MMList[i].BlockData)
         {
-            format::MetaMetaInfoBlock MM;
+            format::BP5Base::MetaMetaInfoBlock MM;
             MM.MetaMetaID = MMList[i].ID;
             MM.MetaMetaIDLen = MMList[i].IDSize;
             MM.MetaMetaInfo = MMList[i].BlockData;
@@ -296,21 +299,14 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
             i++;
         }
         free(MMList);
-        m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
 
+        m_IO.RemoveAllVariables();
         for (int i = 0; i < m_CurrentStepMetaData->WriterCohortSize; i++)
         {
             struct _SstData *tmp = m_CurrentStepMetaData->WriterMetadata[i];
             m_BP5Deserializer->InstallMetaData(tmp->block, tmp->DataSize, i);
         }
-        //     {
-        //       int WriterCohortSize;
-        //       struct _SstData **WriterMetadata;
-        //       void **DP_TimestepInfo;
-        //     };
-        m_IO.RemoveAllVariables();
-        //      m_BP5Deserializer->InstallMetadata(m_CurrentStepMetadata,
-        //      *this);
+
         m_IO.ResetVariablesStepSelection(true,
                                          "in call to SST Reader BeginStep");
     }

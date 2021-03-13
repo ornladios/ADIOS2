@@ -388,37 +388,6 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
     return Rec;
 }
 
-void BP5Serializer::FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
-{
-    int Element = Bit / (sizeof(size_t) * 8);
-    int ElementBit = Bit % (sizeof(size_t) * 8);
-    if (Element >= MBase->BitFieldCount)
-    {
-        MBase->BitField =
-            (size_t *)realloc(MBase->BitField, sizeof(size_t) * (Element + 1));
-        memset(MBase->BitField + MBase->BitFieldCount, 0,
-               (Element - MBase->BitFieldCount + 1) * sizeof(size_t));
-        MBase->BitFieldCount = Element + 1;
-    }
-    MBase->BitField[Element] |= (1 << ElementBit);
-}
-
-int BP5Serializer::FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit)
-{
-    int Element = Bit / (sizeof(size_t) * 8);
-    int ElementBit = Bit % (sizeof(size_t) * 8);
-    if (Element >= MBase->BitFieldCount)
-    {
-        MBase->BitField =
-            (size_t *)realloc(MBase->BitField, sizeof(size_t) * (Element + 1));
-        memset(MBase->BitField + MBase->BitFieldCount, 0,
-               (Element - MBase->BitFieldCount + 1) * sizeof(size_t));
-        MBase->BitFieldCount = Element + 1;
-    }
-    return ((MBase->BitField[Element] & (1 << ElementBit)) ==
-            (1 << ElementBit));
-}
-
 size_t *BP5Serializer::CopyDims(const size_t Count, const size_t *Vals)
 {
     size_t *Ret = (size_t *)malloc(Count * sizeof(Ret[0]));
@@ -453,7 +422,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                             const void *Data, bool Sync)
 {
 
-    struct FFSMetadataInfoStruct *MBase;
+    FFSMetadataInfoStruct *MBase;
 
     FFSWriterRec Rec = LookupWriterRec(Variable);
 
