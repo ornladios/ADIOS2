@@ -25,7 +25,7 @@ namespace adios2
 namespace format
 {
 
-class BP5Serializer
+class BP5Serializer : virtual public BP5Base
 {
 
 public:
@@ -75,13 +75,6 @@ private:
         int AttributeSize;
         int CompressZFP;
         attr_list ZFPParams;
-    };
-
-    struct FFSMetadataInfoStruct
-    {
-        size_t BitFieldCount;
-        size_t *BitField;
-        size_t DataBlockSize;
     };
 
     FFSWriterMarshalBase Info;
@@ -153,8 +146,6 @@ private:
     char *BuildArrayBlockCountName(const char *base_name, const int type,
                                    const int element_size);
     char *TranslateADIOS2Type2FFS(const DataType Type);
-    void FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit);
-    int FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit);
     size_t *CopyDims(const size_t Count, const size_t *Vals);
     size_t *AppendDims(size_t *OldDims, const size_t OldCount,
                        const size_t Count, const size_t *Vals);
@@ -165,79 +156,6 @@ private:
         size_t ElemCount;
         void *Array;
     } ArrayRec;
-
-    typedef struct _MetaArrayRec
-    {
-        size_t Dims;       // How many dimensions does this array have
-        size_t BlockCount; // How many dimensions does this array have
-        size_t DBCount;    // Dimens * BlockCount
-        size_t *Shape;     // Global dimensionality  [Dims]	NULL for local
-        size_t *Count;     // Per-block Counts	  [DBCount]
-        size_t *Offsets;   // Per-block Offsets	  [DBCount]	NULL for local
-        size_t *DataLocation;
-    } MetaArrayRec;
-
-#ifdef NOTDEF
-    enum WriterDataStatusEnum
-    {
-        Empty = 0,
-        Needed = 1,
-        Requested = 2,
-        Full = 3
-    };
-
-    typedef struct FFSReaderPerWriterRec
-    {
-        enum WriterDataStatusEnum Status;
-        char *RawBuffer;
-        DP_CompletionHandle ReadHandle;
-    } FFSReaderPerWriterRec;
-
-    struct ControlStruct
-    {
-        int FieldIndex;
-        int FieldOffset;
-        FFSVarRec VarRec;
-        int IsArray;
-        int Type;
-        int ElementSize;
-    };
-
-    struct ControlInfo
-    {
-        FMFormat Format;
-        int ControlCount;
-        struct ControlInfo *Next;
-        struct ControlStruct Controls[1];
-    };
-
-    struct FFSReaderMarshalBase
-    {
-        int VarCount;
-        FFSVarRec *VarList;
-        FMContext LocalFMContext;
-        FFSArrayRequest PendingVarRequests;
-
-        void **MetadataBaseAddrs;
-        FMFieldList *MetadataFieldLists;
-
-        void **DataBaseAddrs;
-        FMFieldList *DataFieldLists;
-
-        FFSReaderPerWriterRec *WriterInfo;
-        struct ControlInfo *ControlBlocks;
-    };
-
-    extern char *FFS_ZFPCompress(SstStream Stream, const size_t DimCount,
-                                 int Type, void *Data, const size_t *Count,
-                                 size_t *ByteCountP);
-    extern void *FFS_ZFPDecompress(SstStream Stream, const size_t DimCount,
-                                   int Type, void *bufferIn,
-                                   const size_t sizeIn,
-                                   const size_t *Dimensions,
-                                   attr_list Parameters);
-    extern int ZFPcompressionPossible(const int Type, const int DimCount);
-#endif
 };
 
 } // end namespace format

@@ -24,14 +24,38 @@ namespace adios2
 namespace format
 {
 
-struct MetaMetaInfoBlock
+class BP5Base
 {
-    char *MetaMetaInfo;
-    size_t MetaMetaInfoLen;
-    char *MetaMetaID;
-    size_t MetaMetaIDLen;
-};
+public:
+    struct MetaMetaInfoBlock
+    {
+        char *MetaMetaInfo;
+        size_t MetaMetaInfoLen;
+        char *MetaMetaID;
+        size_t MetaMetaIDLen;
+    };
 
+    typedef struct _MetaArrayRec
+    {
+        size_t Dims;       // How many dimensions does this array have
+        size_t BlockCount; // How many dimensions does this array have
+        size_t DBCount;    // Dimens * BlockCount
+        size_t *Shape;     // Global dimensionality  [Dims]	NULL for local
+        size_t *Count;     // Per-block Counts	  [DBCount]
+        size_t *Offsets;   // Per-block Offsets	  [DBCount]	NULL for local
+        size_t *DataLocation;
+    } MetaArrayRec;
+
+    struct FFSMetadataInfoStruct
+    {
+        size_t BitFieldCount;
+        size_t *BitField;
+        size_t DataBlockSize;
+    };
+
+    void FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit);
+    int FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit);
+};
 } // end namespace format
 } // end namespace adios2
 
