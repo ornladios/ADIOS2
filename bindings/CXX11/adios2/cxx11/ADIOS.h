@@ -62,6 +62,18 @@ public:
      */
     ADIOS(const std::string &configFile, MPI_Comm comm,
           const bool debugMode = true);
+
+    /** extra constructor for R and other languages that use the
+     * public C++ API but has data in column-major. Pass "" for configfile
+     * if there is no config file. Last bool argument exist only to
+     * ensure matching this signature by having different number of
+     * arguments. Supported languages are
+     * "R", "Matlab", "Fortran", all these names mean the same thing:
+     * treat all arrays column-major
+     *     e.g. adios2::ADIOS("", comm, "Fortran", false);
+     */
+    ADIOS(const std::string &configFile, MPI_Comm comm,
+          const std::string &hostLanguage, const bool debugMode);
 #else
     // Client code that does not enable ADIOS2_USE_MPI may accidentally
     // try to pass a MPI_Comm instance to our constructor.  If the type
@@ -93,6 +105,18 @@ public:
      * @exception std::invalid_argument if user input is incorrect
      */
     ADIOS(const bool debugMode = true);
+
+    /** extra constructor for R and other languages that use the
+     * public C++ API but has data in column-major. Pass "" for configfile
+     * if there is no config file. Last bool argument exist only to
+     * ensure matching this signature by having different number of
+     * arguments. Supported languages are
+     * "R", "Matlab", "Fortran", all these names mean the same thing:
+     * treat all arrays column-major
+     *    e.g. adios2::ADIOS("", "Fortran", false);
+     */
+    ADIOS(const std::string &configFile, const std::string &hostLanguage,
+          const bool debugMode);
 
     /** object inspection true: valid object, false: invalid object */
     explicit operator bool() const noexcept;
@@ -202,7 +226,7 @@ public:
      */
     void RemoveAllIOs() noexcept;
 
-private:
+protected:
     std::shared_ptr<core::ADIOS> m_ADIOS;
 
     void CheckPointer(const std::string hint);

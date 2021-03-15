@@ -20,4 +20,11 @@ ADIOS::ADIOS(const std::string &configFile, MPI_Comm comm, const bool debugMode)
 
 ADIOS::ADIOS(MPI_Comm comm, const bool debugMode) : ADIOS("", comm) {}
 
+ADIOS::ADIOS(const std::string &configFile, MPI_Comm comm,
+             const std::string &hostLanguage, const bool debugMode = true)
+: m_ADIOS(std::make_shared<core::ADIOS>(configFile, helper::CommDupMPI(comm),
+                                        hostLanguage))
+{
+}
+
 } // end namespace adios2
