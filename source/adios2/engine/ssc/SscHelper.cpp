@@ -245,9 +245,15 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
     uint64_t pos = 2;
     for (int i = 0; i < output.size(); ++i)
     {
+        std::cout << " =================== " << pos << std::endl;
         output[i].clear();
         uint64_t blockSize =
             *reinterpret_cast<const uint64_t *>(input.data() + pos);
+
+        if (blockSize == 0)
+        {
+            break;
+        }
         pos += 8;
 
         uint8_t shapeId =
@@ -281,6 +287,7 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
                 {
                     if (type == DataType::None)
                     {
+                        throw(std::runtime_error("unknown data type"));
                     }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
@@ -299,6 +306,10 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
     }                                                                          \
     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
+                    else
+                    {
+                        throw(std::runtime_error("unknown data type"));
+                    }
                     pos += size;
                 }
             }
@@ -350,10 +361,12 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
 
             uint8_t valueSize =
                 *reinterpret_cast<const uint8_t *>(input.data() + pos);
+            pos++;
             b.value.resize(valueSize);
             if (valueSize > 0)
             {
                 std::memcpy(b.value.data(), input.data() + pos, valueSize);
+                pos += valueSize;
             }
 
             if (regVars)
@@ -411,7 +424,7 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
     std::vector<int> localSizes(mpiSize);
     MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, comm);
     int globalSize = std::accumulate(localSizes.begin(), localSizes.end(), 0);
-    globalBuffer.reserve(globalSize + 2);
+    globalBuffer.reserve(globalSize + 10);
 
     std::vector<int> displs(mpiSize);
     for (size_t i = 1; i < mpiSize; ++i)
@@ -424,6 +437,7 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
                 MPI_CHAR, 0, comm);
     globalBuffer[0] = finalStep;
     globalBuffer[1] = locked;
+    *reinterpret_cast<uint64_t *>(globalBuffer.data() + globalSize + 2) = 0;
 }
 
 void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm)

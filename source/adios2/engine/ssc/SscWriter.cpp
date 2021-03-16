@@ -320,14 +320,14 @@ void SscWriter::SyncReadPattern()
     ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,
                            m_StreamComm);
 
+    m_ReaderSelectionsLocked = globalBuffer[1];
+
     ssc::JsonToBlockVecVec(globalBuffer, m_GlobalReadPattern, m_IO, false,
                            false);
     m_AllSendingReaderRanks = ssc::CalculateOverlap(
         m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
     CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,
                       m_AllSendingReaderRanks);
-
-    m_ReaderSelectionsLocked = globalBuffer[2];
 }
 
 void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
