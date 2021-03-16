@@ -428,17 +428,15 @@ bool SscReader::SyncWritePattern()
                   << m_CurrentStep << std::endl;
     }
 
-    ssc::Buffer globalBuffer;
-
-    ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank,
+    ssc::BroadcastMetadata(m_GlobalWritePatternJson, m_WriterMasterStreamRank,
                            m_StreamComm);
 
-    if (globalBuffer[0] == 1)
+    if (m_GlobalWritePatternJson[0] == 1)
     {
         return true;
     }
 
-    m_WriterDefinitionsLocked = globalBuffer[1];
+    m_WriterDefinitionsLocked = m_GlobalWritePatternJson[1];
 
     ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO,
                            true, true);
