@@ -37,7 +37,7 @@ void *safe_malloc(size_t n, unsigned long line)
 
 void safe_free(void **p)
 {
-    if (p != NULL && *p != NULL)
+    if (p && *p)
     {
         free(*p);
         *p = NULL;
