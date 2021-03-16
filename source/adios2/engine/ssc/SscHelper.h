@@ -65,8 +65,10 @@ RankPosMap CalculateOverlap(BlockVecVec &globalPattern,
 
 void BlockVecToJson(const BlockVec &input, Buffer &output, const int rank);
 void AttributeMapToJson(IO &input, Buffer &output);
-void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io, const bool regVars, const bool regAttrs);
-void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer, MPI_Comm comm, const bool finalStep, const bool locked);
+void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
+                       const bool regVars, const bool regAttrs);
+void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
+                       MPI_Comm comm, const bool finalStep, const bool locked);
 void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm);
 
 void MPI_Gatherv64OneSidedPush(

@@ -154,22 +154,19 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                     }
                 }
 #define declare_type(T)                                                        \
-                else if (v.type == helper::GetDataType<T>())                               \
-                {                                                                          \
-                    auto variable = m_IO.InquireVariable<T>(v.name);                       \
-                    if (variable)                                                          \
-                    {                                                                      \
-                        std::memcpy(&variable->m_Min, value.data(), value.size());         \
-                        std::memcpy(&variable->m_Max, value.data(), value.size());         \
-                        std::memcpy(&variable->m_Value, value.data(), value.size());       \
-                    }                                                                      \
-                }
+    else if (v.type == helper::GetDataType<T>())                               \
+    {                                                                          \
+        auto variable = m_IO.InquireVariable<T>(v.name);                       \
+        if (variable)                                                          \
+        {                                                                      \
+            std::memcpy(&variable->m_Min, value.data(), value.size());         \
+            std::memcpy(&variable->m_Max, value.data(), value.size());         \
+            std::memcpy(&variable->m_Value, value.data(), value.size());       \
+        }                                                                      \
+    }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-                else
-                {
-                    throw(std::runtime_error("unknown data type"));
-                }
+                else { throw(std::runtime_error("unknown data type")); }
             }
         }
     }
@@ -188,7 +185,8 @@ void SscReader::PerformGets()
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
     {
-        ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO, false, false);
+        ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern,
+                               m_IO, false, false);
         size_t oldSize = m_AllReceivingWriterRanks.size();
         m_AllReceivingWriterRanks =
             ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
@@ -399,8 +397,8 @@ void SscReader::SyncMpiPattern()
     MPI_Comm writerComm;
 
     helper::HandshakeComm(m_Name, 'r', m_OpenTimeoutSecs, CommAsMPI(m_Comm),
-                          streamGroup, m_WriterGroup, readerGroup,
-                          m_StreamComm, writerComm, m_ReaderComm);
+                          streamGroup, m_WriterGroup, readerGroup, m_StreamComm,
+                          writerComm, m_ReaderComm);
 
     m_ReaderRank = m_Comm.Rank();
     m_ReaderSize = m_Comm.Size();
@@ -408,14 +406,16 @@ void SscReader::SyncMpiPattern()
     MPI_Comm_size(m_StreamComm, &m_StreamSize);
 
     int writerMasterStreamRank = -1;
-    MPI_Allreduce(&writerMasterStreamRank, &m_WriterMasterStreamRank, 1, MPI_INT, MPI_MAX, m_StreamComm);
+    MPI_Allreduce(&writerMasterStreamRank, &m_WriterMasterStreamRank, 1,
+                  MPI_INT, MPI_MAX, m_StreamComm);
 
     int readerMasterStreamRank = -1;
-    if(m_ReaderRank == 0)
+    if (m_ReaderRank == 0)
     {
         readerMasterStreamRank = m_StreamRank;
     }
-    MPI_Allreduce(&readerMasterStreamRank, &m_ReaderMasterStreamRank, 1, MPI_INT, MPI_MAX, m_StreamComm);
+    MPI_Allreduce(&readerMasterStreamRank, &m_ReaderMasterStreamRank, 1,
+                  MPI_INT, MPI_MAX, m_StreamComm);
 }
 
 bool SscReader::SyncWritePattern()
@@ -430,16 +430,18 @@ bool SscReader::SyncWritePattern()
 
     ssc::Buffer globalBuffer;
 
-    ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank,  m_StreamComm);
+    ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank,
+                           m_StreamComm);
 
-    if(globalBuffer[0] == 1)
+    if (globalBuffer[0] == 1)
     {
         return true;
     }
 
     m_WriterDefinitionsLocked = globalBuffer[1];
 
-    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO, true, true);
+    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO,
+                           true, true);
 
     return false;
 }
@@ -455,19 +457,23 @@ void SscReader::SyncReadPattern()
                   << m_CurrentStep << std::endl;
     }
 
-    ssc::Buffer localBuffer(8,0);
+    ssc::Buffer localBuffer(8, 0);
 
     ssc::BlockVecToJson(m_LocalReadPattern, localBuffer, m_StreamRank);
 
     ssc::Buffer globalBuffer;
 
-    ssc::AggregateMetadata(localBuffer, globalBuffer, m_ReaderComm, false, m_ReaderSelectionsLocked);
+    ssc::AggregateMetadata(localBuffer, globalBuffer, m_ReaderComm, false,
+                           m_ReaderSelectionsLocked);
 
-    ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,  m_StreamComm);
+    ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,
+                           m_StreamComm);
 
-    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalWritePattern, m_IO, false, false);
+    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalWritePattern, m_IO, false,
+                           false);
 
-    m_AllReceivingWriterRanks = ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
+    m_AllReceivingWriterRanks =
+        ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
     CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
 
     size_t totalDataSize = 0;

@@ -247,8 +247,8 @@ void SscWriter::SyncMpiPattern()
     MPI_Comm readerComm;
 
     helper::HandshakeComm(m_Name, 'w', m_OpenTimeoutSecs, CommAsMPI(m_Comm),
-                          streamGroup, writerGroup, m_ReaderGroup,
-                          m_StreamComm, m_WriterComm, readerComm, m_Verbosity);
+                          streamGroup, writerGroup, m_ReaderGroup, m_StreamComm,
+                          m_WriterComm, readerComm, m_Verbosity);
 
     m_WriterRank = m_Comm.Rank();
     m_WriterSize = m_Comm.Size();
@@ -256,14 +256,16 @@ void SscWriter::SyncMpiPattern()
     MPI_Comm_size(m_StreamComm, &m_StreamSize);
 
     int writerMasterStreamRank = -1;
-    if(m_WriterRank == 0)
+    if (m_WriterRank == 0)
     {
         writerMasterStreamRank = m_StreamRank;
     }
-    MPI_Allreduce(&writerMasterStreamRank, &m_WriterMasterStreamRank, 1, MPI_INT, MPI_MAX, m_StreamComm);
+    MPI_Allreduce(&writerMasterStreamRank, &m_WriterMasterStreamRank, 1,
+                  MPI_INT, MPI_MAX, m_StreamComm);
 
     int readerMasterStreamRank = -1;
-    MPI_Allreduce(&readerMasterStreamRank, &m_ReaderMasterStreamRank, 1, MPI_INT, MPI_MAX, m_StreamComm);
+    MPI_Allreduce(&readerMasterStreamRank, &m_ReaderMasterStreamRank, 1,
+                  MPI_INT, MPI_MAX, m_StreamComm);
 }
 
 void SscWriter::SyncWritePattern(bool finalStep)
@@ -276,9 +278,10 @@ void SscWriter::SyncWritePattern(bool finalStep)
                   << m_CurrentStep << std::endl;
     }
 
-    ssc::Buffer localBuffer(8,0);
+    ssc::Buffer localBuffer(8, 0);
 
-    ssc::BlockVecToJson(m_GlobalWritePattern[m_StreamRank], localBuffer, m_StreamRank);
+    ssc::BlockVecToJson(m_GlobalWritePattern[m_StreamRank], localBuffer,
+                        m_StreamRank);
 
     if (m_WriterRank == 0)
     {
@@ -287,11 +290,14 @@ void SscWriter::SyncWritePattern(bool finalStep)
 
     ssc::Buffer globalBuffer;
 
-    ssc::AggregateMetadata(localBuffer, globalBuffer, m_WriterComm, finalStep, m_WriterDefinitionsLocked);
+    ssc::AggregateMetadata(localBuffer, globalBuffer, m_WriterComm, finalStep,
+                           m_WriterDefinitionsLocked);
 
-    ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank,  m_StreamComm);
+    ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank,
+                           m_StreamComm);
 
-    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalWritePattern, m_IO, false, false);
+    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalWritePattern, m_IO, false,
+                           false);
 
     if (m_Verbosity >= 10 && m_WriterRank == 0)
     {
@@ -311,11 +317,15 @@ void SscWriter::SyncReadPattern()
 
     ssc::Buffer globalBuffer;
 
-    ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,  m_StreamComm);
+    ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,
+                           m_StreamComm);
 
-    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalReadPattern, m_IO, false, false);
-    m_AllSendingReaderRanks = ssc::CalculateOverlap( m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
-    CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank, m_AllSendingReaderRanks);
+    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalReadPattern, m_IO, false,
+                           false);
+    m_AllSendingReaderRanks = ssc::CalculateOverlap(
+        m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
+    CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,
+                      m_AllSendingReaderRanks);
 
     m_ReaderSelectionsLocked = globalBuffer[2];
 }
