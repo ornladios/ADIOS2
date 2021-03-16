@@ -13,7 +13,6 @@
 
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
-#include "nlohmann/json.hpp"
 #include <mpi.h>
 #include <unordered_map>
 #include <vector>
@@ -44,6 +43,7 @@ using BlockVec = std::vector<BlockInfo>;
 using BlockVecVec = std::vector<BlockVec>;
 using RankPosMap = std::unordered_map<int, std::pair<size_t, size_t>>;
 using MpiInfo = std::vector<std::vector<int>>;
+using Buffer = std::vector<char>;
 
 void PrintDims(const Dims &dims, const std::string &label = std::string());
 void PrintBlock(const BlockInfo &b, const std::string &label = std::string());
@@ -63,15 +63,11 @@ size_t TotalDataSize(const BlockVec &bv);
 RankPosMap CalculateOverlap(BlockVecVec &globalPattern,
                             const BlockVec &localPattern);
 
-void BlockVecToJson(const BlockVec &input, nlohmann::json &output);
-void AttributeMapToJson(IO &input, nlohmann::json &output);
-void LocalJsonToGlobalJson(const std::vector<char> &input,
-                           const size_t maxLocalSize, const int streamSize,
-                           nlohmann::json &output);
-
-void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output);
-void JsonToBlockVecVec(const std::vector<char> &input, BlockVecVec &output);
-void JsonToBlockVecVec(const std::string &input, BlockVecVec &output);
+void BlockVecToJson(const BlockVec &input, Buffer &output, const int rank);
+void AttributeMapToJson(IO &input, Buffer &output);
+void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io, const bool regVars, const bool regAttrs);
+void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer, MPI_Comm comm, const bool finalStep, const bool locked);
+void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm);
 
 void MPI_Gatherv64OneSidedPush(
     const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype,

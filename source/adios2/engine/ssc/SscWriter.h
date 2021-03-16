@@ -50,8 +50,9 @@ private:
     ssc::RankPosMap m_AllSendingReaderRanks;
     std::vector<char> m_Buffer;
     MPI_Win m_MpiWin;
-    MPI_Group m_MpiAllReadersGroup;
+    MPI_Group m_ReaderGroup;
     MPI_Comm m_StreamComm;
+    MPI_Comm m_WriterComm;
     std::vector<MPI_Request> m_MpiRequests;
     std::thread m_EndStepThread;
 
@@ -59,6 +60,8 @@ private:
     int m_StreamSize;
     int m_WriterRank;
     int m_WriterSize;
+    int m_WriterMasterStreamRank;
+    int m_ReaderMasterStreamRank;
 
     void SyncMpiPattern();
     void SyncWritePattern(bool finalStep = false);

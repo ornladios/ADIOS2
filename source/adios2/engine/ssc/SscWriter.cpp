@@ -49,10 +49,6 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     }
 
     SyncMpiPattern();
-    m_WriterRank = m_Comm.Rank();
-    m_WriterSize = m_Comm.Size();
-    MPI_Comm_rank(m_StreamComm, &m_StreamRank);
-    MPI_Comm_size(m_StreamComm, &m_StreamSize);
 }
 
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -143,7 +139,7 @@ void SscWriter::EndStepConsequentFixed()
     }
     else if (m_MpiMode == "onesidedpostpush")
     {
-        MPI_Win_start(m_MpiAllReadersGroup, 0, m_MpiWin);
+        MPI_Win_start(m_ReaderGroup, 0, m_MpiWin);
         for (const auto &i : m_AllSendingReaderRanks)
         {
             MPI_Put(m_Buffer.data(), static_cast<int>(m_Buffer.size()),
@@ -157,7 +153,7 @@ void SscWriter::EndStepConsequentFixed()
     }
     else if (m_MpiMode == "onesidedpostpull")
     {
-        MPI_Win_post(m_MpiAllReadersGroup, 0, m_MpiWin);
+        MPI_Win_post(m_ReaderGroup, 0, m_MpiWin);
     }
 }
 
@@ -248,12 +244,26 @@ void SscWriter::SyncMpiPattern()
 
     MPI_Group streamGroup;
     MPI_Group writerGroup;
-    MPI_Comm writerComm;
     MPI_Comm readerComm;
 
     helper::HandshakeComm(m_Name, 'w', m_OpenTimeoutSecs, CommAsMPI(m_Comm),
-                          streamGroup, writerGroup, m_MpiAllReadersGroup,
-                          m_StreamComm, writerComm, readerComm, m_Verbosity);
+                          streamGroup, writerGroup, m_ReaderGroup,
+                          m_StreamComm, m_WriterComm, readerComm, m_Verbosity);
+
+    m_WriterRank = m_Comm.Rank();
+    m_WriterSize = m_Comm.Size();
+    MPI_Comm_rank(m_StreamComm, &m_StreamRank);
+    MPI_Comm_size(m_StreamComm, &m_StreamSize);
+
+    int writerMasterStreamRank = -1;
+    if(m_WriterRank == 0)
+    {
+        writerMasterStreamRank = m_StreamRank;
+    }
+    MPI_Allreduce(&writerMasterStreamRank, &m_WriterMasterStreamRank, 1, MPI_INT, MPI_MAX, m_StreamComm);
+
+    int readerMasterStreamRank = -1;
+    MPI_Allreduce(&readerMasterStreamRank, &m_ReaderMasterStreamRank, 1, MPI_INT, MPI_MAX, m_StreamComm);
 }
 
 void SscWriter::SyncWritePattern(bool finalStep)
@@ -266,41 +276,22 @@ void SscWriter::SyncWritePattern(bool finalStep)
                   << m_CurrentStep << std::endl;
     }
 
-    nlohmann::json localRankMetaJ;
+    ssc::Buffer localBuffer(8,0);
 
-    ssc::BlockVecToJson(m_GlobalWritePattern[m_StreamRank], localRankMetaJ);
+    ssc::BlockVecToJson(m_GlobalWritePattern[m_StreamRank], localBuffer, m_StreamRank);
 
     if (m_WriterRank == 0)
     {
-        ssc::AttributeMapToJson(m_IO, localRankMetaJ);
-        localRankMetaJ["Pattern"] = m_WriterDefinitionsLocked;
-    }
-    if (finalStep)
-    {
-        localRankMetaJ["FinalStep"] = true;
+        ssc::AttributeMapToJson(m_IO, localBuffer);
     }
 
-    std::string localStr = localRankMetaJ.dump();
+    ssc::Buffer globalBuffer;
 
-    // aggregate global write pattern
-    size_t localSize = localStr.size();
-    size_t maxLocalSize;
-    MPI_Allreduce(&localSize, &maxLocalSize, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX,
-                  m_StreamComm);
-    std::vector<char> localVec(maxLocalSize, '\0');
-    std::memcpy(localVec.data(), localStr.data(), localStr.size());
-    std::vector<char> globalVec(maxLocalSize * m_StreamSize, '\0');
-    MPI_Allgather(localVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
-                  globalVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
-                  m_StreamComm);
+    ssc::AggregateMetadata(localBuffer, globalBuffer, m_WriterComm, finalStep, m_WriterDefinitionsLocked);
 
-    // deserialize global metadata Json
-    nlohmann::json globalJson;
-    ssc::LocalJsonToGlobalJson(globalVec, maxLocalSize, m_StreamSize,
-                               globalJson);
+    ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank,  m_StreamComm);
 
-    // deserialize variables metadata
-    ssc::JsonToBlockVecVec(globalJson, m_GlobalWritePattern);
+    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalWritePattern, m_IO, false, false);
 
     if (m_Verbosity >= 10 && m_WriterRank == 0)
     {
@@ -318,55 +309,15 @@ void SscWriter::SyncReadPattern()
                   << m_CurrentStep << std::endl;
     }
 
-    size_t localSize = 0;
-    size_t maxLocalSize;
-    MPI_Allreduce(&localSize, &maxLocalSize, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX,
-                  m_StreamComm);
-    std::vector<char> localVec(maxLocalSize, '\0');
-    std::vector<char> globalVec(maxLocalSize * m_StreamSize);
-    MPI_Allgather(localVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
-                  globalVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
-                  m_StreamComm);
+    ssc::Buffer globalBuffer;
 
-    // deserialize global metadata Json
-    nlohmann::json globalJson;
-    try
-    {
-        for (int i = 0; i < m_StreamSize; ++i)
-        {
-            if (globalVec[i * maxLocalSize] == '\0')
-            {
-                globalJson[i] = nullptr;
-            }
-            else
-            {
-                globalJson[i] = nlohmann::json::parse(
-                    globalVec.begin() + i * maxLocalSize,
-                    globalVec.begin() + (i + 1) * maxLocalSize);
-            }
-        }
-    }
-    catch (std::exception &e)
-    {
-        throw(std::runtime_error(
-            std::string("corrupted global read pattern metadata, ") +
-            std::string(e.what())));
-    }
+    ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,  m_StreamComm);
 
-    ssc::JsonToBlockVecVec(globalJson, m_GlobalReadPattern);
-    m_AllSendingReaderRanks = ssc::CalculateOverlap(
-        m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
-    CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,
-                      m_AllSendingReaderRanks);
+    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalReadPattern, m_IO, false, false);
+    m_AllSendingReaderRanks = ssc::CalculateOverlap( m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
+    CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank, m_AllSendingReaderRanks);
 
-    for (int i = 0; i < m_StreamSize; ++i)
-    {
-        auto &patternJson = globalJson[i]["Pattern"];
-        if (patternJson != nullptr)
-        {
-            m_ReaderSelectionsLocked = patternJson.get<bool>();
-        }
-    }
+    m_ReaderSelectionsLocked = globalBuffer[2];
 }
 
 void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
@@ -468,7 +419,7 @@ void SscWriter::DoClose(const int transportIndex)
         }
         else if (m_MpiMode == "onesidedpostpush")
         {
-            MPI_Win_start(m_MpiAllReadersGroup, 0, m_MpiWin);
+            MPI_Win_start(m_ReaderGroup, 0, m_MpiWin);
             for (const auto &i : m_AllSendingReaderRanks)
             {
                 MPI_Put(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, 1, MPI_CHAR,
@@ -483,7 +434,7 @@ void SscWriter::DoClose(const int transportIndex)
         }
         else if (m_MpiMode == "onesidedpostpull")
         {
-            MPI_Win_post(m_MpiAllReadersGroup, 0, m_MpiWin);
+            MPI_Win_post(m_ReaderGroup, 0, m_MpiWin);
             MPI_Win_wait(m_MpiWin);
         }
 

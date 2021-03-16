@@ -12,9 +12,7 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosFunctions.h"
-#include "adios2/helper/adiosJSONcomplex.h"
 #include "adios2/helper/adiosMpiHandshake.h"
-#include "nlohmann/json.hpp"
 
 namespace adios2
 {
@@ -36,10 +34,6 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
                          m_OpenTimeoutSecs);
 
     SyncMpiPattern();
-    m_ReaderRank = m_Comm.Rank();
-    m_ReaderSize = m_Comm.Size();
-    MPI_Comm_rank(m_StreamComm, &m_StreamRank);
-    MPI_Comm_size(m_StreamComm, &m_StreamSize);
 }
 
 SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
@@ -160,19 +154,22 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                     }
                 }
 #define declare_type(T)                                                        \
-    else if (v.type == helper::GetDataType<T>())                               \
-    {                                                                          \
-        auto variable = m_IO.InquireVariable<T>(v.name);                       \
-        if (variable)                                                          \
-        {                                                                      \
-            std::memcpy(&variable->m_Min, value.data(), value.size());         \
-            std::memcpy(&variable->m_Max, value.data(), value.size());         \
-            std::memcpy(&variable->m_Value, value.data(), value.size());       \
-        }                                                                      \
-    }
+                else if (v.type == helper::GetDataType<T>())                               \
+                {                                                                          \
+                    auto variable = m_IO.InquireVariable<T>(v.name);                       \
+                    if (variable)                                                          \
+                    {                                                                      \
+                        std::memcpy(&variable->m_Min, value.data(), value.size());         \
+                        std::memcpy(&variable->m_Max, value.data(), value.size());         \
+                        std::memcpy(&variable->m_Value, value.data(), value.size());       \
+                    }                                                                      \
+                }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-                else { throw(std::runtime_error("unknown data type")); }
+                else
+                {
+                    throw(std::runtime_error("unknown data type"));
+                }
             }
         }
     }
@@ -191,7 +188,7 @@ void SscReader::PerformGets()
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
     {
-        ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
+        ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO, false, false);
         size_t oldSize = m_AllReceivingWriterRanks.size();
         m_AllReceivingWriterRanks =
             ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
@@ -301,7 +298,7 @@ void SscReader::EndStepFixed()
     }
     else if (m_MpiMode == "onesidedpostpush")
     {
-        MPI_Win_post(m_MpiAllWritersGroup, 0, m_MpiWin);
+        MPI_Win_post(m_WriterGroup, 0, m_MpiWin);
     }
     else if (m_MpiMode == "onesidedfencepull")
     {
@@ -315,7 +312,7 @@ void SscReader::EndStepFixed()
     }
     else if (m_MpiMode == "onesidedpostpull")
     {
-        MPI_Win_start(m_MpiAllWritersGroup, 0, m_MpiWin);
+        MPI_Win_start(m_WriterGroup, 0, m_MpiWin);
         for (const auto &i : m_AllReceivingWriterRanks)
         {
             MPI_Get(m_Buffer.data() + i.second.first,
@@ -400,11 +397,25 @@ void SscReader::SyncMpiPattern()
     MPI_Group streamGroup;
     MPI_Group readerGroup;
     MPI_Comm writerComm;
-    MPI_Comm readerComm;
 
     helper::HandshakeComm(m_Name, 'r', m_OpenTimeoutSecs, CommAsMPI(m_Comm),
-                          streamGroup, m_MpiAllWritersGroup, readerGroup,
-                          m_StreamComm, writerComm, readerComm);
+                          streamGroup, m_WriterGroup, readerGroup,
+                          m_StreamComm, writerComm, m_ReaderComm);
+
+    m_ReaderRank = m_Comm.Rank();
+    m_ReaderSize = m_Comm.Size();
+    MPI_Comm_rank(m_StreamComm, &m_StreamRank);
+    MPI_Comm_size(m_StreamComm, &m_StreamSize);
+
+    int writerMasterStreamRank = -1;
+    MPI_Allreduce(&writerMasterStreamRank, &m_WriterMasterStreamRank, 1, MPI_INT, MPI_MAX, m_StreamComm);
+
+    int readerMasterStreamRank = -1;
+    if(m_ReaderRank == 0)
+    {
+        readerMasterStreamRank = m_StreamRank;
+    }
+    MPI_Allreduce(&readerMasterStreamRank, &m_ReaderMasterStreamRank, 1, MPI_INT, MPI_MAX, m_StreamComm);
 }
 
 bool SscReader::SyncWritePattern()
@@ -417,133 +428,19 @@ bool SscReader::SyncWritePattern()
                   << m_CurrentStep << std::endl;
     }
 
-    // aggregate global write pattern
-    size_t localSize = 0;
-    size_t maxLocalSize;
-    MPI_Allreduce(&localSize, &maxLocalSize, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX,
-                  m_StreamComm);
-    std::vector<char> localVec(maxLocalSize, '\0');
-    std::vector<char> globalVec(maxLocalSize * m_StreamSize);
-    MPI_Allgather(localVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
-                  globalVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
-                  m_StreamComm);
+    ssc::Buffer globalBuffer;
 
-    ssc::LocalJsonToGlobalJson(globalVec, maxLocalSize, m_StreamSize,
-                               m_GlobalWritePatternJson);
+    ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank,  m_StreamComm);
 
-    for (int i = 0; i < m_StreamSize; ++i)
+    if(globalBuffer[0] == 1)
     {
-        if (m_GlobalWritePatternJson[i] == nullptr)
-        {
-            continue;
-        }
-        auto &patternJson = m_GlobalWritePatternJson[i]["FinalStep"];
-        if (patternJson != nullptr)
-        {
-            if (patternJson.get<bool>())
-            {
-                return true;
-            }
-        }
+        return true;
     }
 
-    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
+    m_WriterDefinitionsLocked = globalBuffer[1];
 
-    for (const auto &blockVec : m_GlobalWritePattern)
-    {
-        for (const auto &b : blockVec)
-        {
-            if (b.type == DataType::None)
-            {
-                throw(std::runtime_error("unknown data type"));
-            }
-#define declare_type(T)                                                        \
-    else if (b.type == helper::GetDataType<T>())                               \
-    {                                                                          \
-        auto v = m_IO.InquireVariable<T>(b.name);                              \
-        if (!v)                                                                \
-        {                                                                      \
-            Dims vStart = b.start;                                             \
-            Dims vShape = b.shape;                                             \
-            if (!helper::IsRowMajor(m_IO.m_HostLanguage))                      \
-            {                                                                  \
-                std::reverse(vStart.begin(), vStart.end());                    \
-                std::reverse(vShape.begin(), vShape.end());                    \
-            }                                                                  \
-            if (b.shapeId == ShapeID::GlobalValue)                             \
-            {                                                                  \
-                m_IO.DefineVariable<T>(b.name);                                \
-            }                                                                  \
-            else if (b.shapeId == ShapeID::GlobalArray)                        \
-            {                                                                  \
-                m_IO.DefineVariable<T>(b.name, vShape, vStart, vShape);        \
-            }                                                                  \
-            else if (b.shapeId == ShapeID::LocalValue)                         \
-            {                                                                  \
-                m_IO.DefineVariable<T>(b.name, {adios2::LocalValueDim});       \
-            }                                                                  \
-            else if (b.shapeId == ShapeID::LocalArray)                         \
-            {                                                                  \
-                m_IO.DefineVariable<T>(b.name, {}, {}, vShape);                \
-            }                                                                  \
-        }                                                                      \
-    }
-            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-            else { throw(std::runtime_error("unknown data type")); }
-        }
-    }
+    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO, true, true);
 
-    for (int i = 0; i < m_StreamSize; ++i)
-    {
-        if (m_GlobalWritePatternJson[i] == nullptr)
-        {
-            continue;
-        }
-
-        auto &patternJson = m_GlobalWritePatternJson[i]["Pattern"];
-        if (patternJson != nullptr)
-        {
-            m_WriterDefinitionsLocked = patternJson.get<bool>();
-        }
-
-        auto &attributesJson = m_GlobalWritePatternJson[i]["Attributes"];
-        if (attributesJson == nullptr)
-        {
-            continue;
-        }
-        for (const auto &attributeJson : attributesJson)
-        {
-            const DataType type(attributeJson["Type"].get<DataType>());
-            if (type == DataType::None)
-            {
-            }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        const auto &attributes = m_IO.GetAttributes();                         \
-        auto it = attributes.find(attributeJson["Name"].get<std::string>());   \
-        if (it == attributes.end())                                            \
-        {                                                                      \
-            if (attributeJson["IsSingleValue"].get<bool>())                    \
-            {                                                                  \
-                m_IO.DefineAttribute<T>(                                       \
-                    attributeJson["Name"].get<std::string>(),                  \
-                    attributeJson["Value"].get<T>());                          \
-            }                                                                  \
-            else                                                               \
-            {                                                                  \
-                m_IO.DefineAttribute<T>(                                       \
-                    attributeJson["Name"].get<std::string>(),                  \
-                    attributeJson["Array"].get<std::vector<T>>().data(),       \
-                    attributeJson["Array"].get<std::vector<T>>().size());      \
-            }                                                                  \
-        }                                                                      \
-    }
-            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-        }
-    }
     return false;
 }
 
@@ -558,70 +455,21 @@ void SscReader::SyncReadPattern()
                   << m_CurrentStep << std::endl;
     }
 
-    nlohmann::json localReadPatternJson;
+    ssc::Buffer localBuffer(8,0);
 
-    for (const auto &i : m_LocalReadPattern)
-    {
-        localReadPatternJson["Variables"].emplace_back();
-        auto &jref = localReadPatternJson["Variables"].back();
-        jref["Name"] = i.name;
-        jref["Type"] = i.type;
-        jref["ShapeID"] = i.shapeId;
-        jref["Start"] = i.start;
-        jref["Count"] = i.count;
-        jref["Shape"] = i.shape;
-        jref["BufferStart"] = i.bufferStart;
-        jref["BufferCount"] = i.bufferCount;
-    }
+    ssc::BlockVecToJson(m_LocalReadPattern, localBuffer, m_StreamRank);
 
-    if (m_ReaderRank == 0)
-    {
-        localReadPatternJson["Pattern"] = m_ReaderSelectionsLocked;
-    }
+    ssc::Buffer globalBuffer;
 
-    std::string localStr = localReadPatternJson.dump();
+    ssc::AggregateMetadata(localBuffer, globalBuffer, m_ReaderComm, false, m_ReaderSelectionsLocked);
 
-    // aggregate global read pattern
-    size_t localSize = localStr.size();
-    size_t maxLocalSize;
-    MPI_Allreduce(&localSize, &maxLocalSize, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX,
-                  m_StreamComm);
-    std::vector<char> localVec(maxLocalSize, '\0');
-    std::memcpy(localVec.data(), localStr.c_str(), localStr.size());
-    std::vector<char> globalVec(maxLocalSize * m_StreamSize);
-    MPI_Allgather(localVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
-                  globalVec.data(), static_cast<int>(maxLocalSize), MPI_CHAR,
-                  m_StreamComm);
+    ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,  m_StreamComm);
 
-    // deserialize global metadata Json
-    nlohmann::json globalJson;
-    try
-    {
-        for (int i = 0; i < m_StreamSize; ++i)
-        {
-            if (globalVec[i * maxLocalSize] == '\0')
-            {
-                globalJson[i] = nullptr;
-            }
-            else
-            {
-                globalJson[i] = nlohmann::json::parse(
-                    globalVec.begin() + i * maxLocalSize,
-                    globalVec.begin() + (i + 1) * maxLocalSize);
-            }
-        }
-    }
-    catch (std::exception &e)
-    {
-        throw(std::runtime_error(
-            std::string("corrupted global read pattern metadata, ") +
-            std::string(e.what())));
-    }
+    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalWritePattern, m_IO, false, false);
 
-    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern);
-    m_AllReceivingWriterRanks =
-        ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
+    m_AllReceivingWriterRanks = ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
     CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
+
     size_t totalDataSize = 0;
     for (auto i : m_AllReceivingWriterRanks)
     {
