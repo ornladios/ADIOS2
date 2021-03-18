@@ -31,7 +31,7 @@ namespace format
 {
 
 BP4Serializer::BP4Serializer(helper::Comm const &comm)
-: BPSerializer(comm, 4), BP4Base(comm), BPBase(comm)
+: BPBase(comm), BP4Base(comm), BPSerializer(comm, 4)
 {
 }
 
@@ -518,7 +518,6 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                                                        BufferSTL &outBufferSTL)
 {
     int rank = comm.Rank();
-    int size = comm.Size();
 
     BufferSTL inBufferSTL;
 
@@ -929,7 +928,6 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
             auto &position = outBufferSTL.m_Position;
             auto &buffer = outBufferSTL.m_Buffer;
 
-            size_t totalStep = pgIndicesInfo.size();
             std::vector<size_t> timeSteps;
             timeSteps.reserve(pgIndicesInfo.size());
             for (auto const &pair : pgIndicesInfo)

@@ -175,8 +175,8 @@ void IO::RegisterEngine(const std::string &engineType, EngineFactoryEntry entry)
 
 IO::IO(ADIOS &adios, const std::string name, const bool inConfigFile,
        const std::string hostLanguage)
-: m_ADIOS(adios), m_Name(name), m_InConfigFile(inConfigFile),
-  m_HostLanguage(hostLanguage)
+: m_ADIOS(adios), m_Name(name), m_HostLanguage(hostLanguage),
+  m_InConfigFile(inConfigFile)
 {
 }
 
@@ -704,7 +704,6 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
     for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
          ++itVariable)
     {
-        const std::string &name = itVariable->first;
         const DataType type = InquireVariableType(itVariable);
 
         if (type == DataType::None)
@@ -733,7 +732,6 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
     for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
          ++itVariable)
     {
-        const std::string &name = itVariable->first;
         // if for each step (BP4), check if variable type is not empty (means
         // variable exist in that step)
         const DataType type = isStep ? InquireVariableType(itVariable)

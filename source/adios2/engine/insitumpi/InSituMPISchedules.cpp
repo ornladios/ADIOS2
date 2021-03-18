@@ -35,11 +35,7 @@ int GetNumberOfRequests(const std::map<std::string, helper::SubFileInfoMap>
             // <steps, <SubFileInfo>>  but there is only one step
             for (const auto &stepPair : subFileIndexPair.second)
             {
-                // <SubFileInfo>
-                for (const auto &sfi : stepPair.second)
-                {
-                    n++;
-                }
+                n += stepPair.second.size();
             }
         }
     }
@@ -175,11 +171,7 @@ int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept
         // <reader, <SubFileInfo>>
         for (auto &readerPair : variableNamePair.second)
         {
-            // <SubFileInfo>
-            for (auto &sfi : readerPair.second)
-            {
-                n++;
-            }
+            n += readerPair.second.size();
         }
     }
     return n;
