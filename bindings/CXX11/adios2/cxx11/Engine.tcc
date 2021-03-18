@@ -237,7 +237,6 @@ template <class T>
 void Engine::Get(Variable<T> variable, typename Variable<T>::Info &info,
                  const Mode launch)
 {
-    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     if (m_Engine->m_EngineType == "NULL")
     {
