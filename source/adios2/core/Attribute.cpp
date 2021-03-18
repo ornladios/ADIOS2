@@ -12,61 +12,15 @@
 #include "Attribute.tcc"
 
 #include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //GetDataType<T>
-
-#include <type_traits>
 
 namespace adios2
 {
 namespace core
 {
 
-namespace // anonymous
-{
-
-template <class T>
-struct RequiresZeroPadding : std::false_type
-{
-};
-
-template <>
-struct RequiresZeroPadding<long double> : std::true_type
-{
-};
-}
-
-#define declare_type(T)                                                        \
-                                                                               \
-    template <>                                                                \
-    Attribute<T>::Attribute(const Attribute<T> &other)                         \
-    : AttributeBase(other), m_DataArray(other.m_DataArray)                     \
-    {                                                                          \
-        if (RequiresZeroPadding<T>::value)                                     \
-            std::memset(&m_DataSingleValue, 0, sizeof(m_DataSingleValue));     \
-        m_DataSingleValue = other.m_DataSingleValue;                           \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    Attribute<T>::Attribute(const std::string &name, const T *array,           \
-                            const size_t elements)                             \
-    : AttributeBase(name, helper::GetDataType<T>(), elements)                  \
-    {                                                                          \
-        if (RequiresZeroPadding<T>::value)                                     \
-            std::memset(&m_DataSingleValue, 0, sizeof(m_DataSingleValue));     \
-        m_DataArray = std::vector<T>(array, array + elements);                 \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    Attribute<T>::Attribute(const std::string &name, const T &value)           \
-    : AttributeBase(name, helper::GetDataType<T>())                            \
-    {                                                                          \
-        if (RequiresZeroPadding<T>::value)                                     \
-            std::memset(&m_DataSingleValue, 0, sizeof(m_DataSingleValue));     \
-        m_DataSingleValue = value;                                             \
-    }
-
-ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
+#define declare_template_instantiation(T) template class Attribute<T>;
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace core
 } // end namespace adios2
