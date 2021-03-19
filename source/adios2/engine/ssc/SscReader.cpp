@@ -431,19 +431,22 @@ bool SscReader::SyncWritePattern()
     ssc::BroadcastMetadata(m_GlobalWritePatternJson, m_WriterMasterStreamRank,
                            m_StreamComm);
 
+    /*
     if (m_ReaderRank == 0)
     {
         std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "
                   << m_GlobalWritePatternJson.capacity() << std::endl;
         for (size_t i = 0; i < m_GlobalWritePatternJson.capacity(); ++i)
         {
-            std::cout << i << ": " << m_GlobalWritePatternJson[i] << ": "
-                      << static_cast<int>(m_GlobalWritePatternJson[i])
-                      << std::endl;
+            std::cout << i << " : " <<
+    static_cast<int>(m_GlobalWritePatternJson[i]) << " : " <<
+    *reinterpret_cast<uint64_t*>(m_GlobalWritePatternJson.data() +i) << " : " <<
+    m_GlobalWritePatternJson[i] <<std::endl;
         }
         std::cout << std::endl;
         std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " << std::endl;
     }
+    */
 
     if (m_GlobalWritePatternJson[0] == 1)
     {
@@ -469,7 +472,8 @@ void SscReader::SyncReadPattern()
                   << m_CurrentStep << std::endl;
     }
 
-    ssc::Buffer localBuffer(8, 0);
+    ssc::Buffer localBuffer(8);
+    *localBuffer.data<uint64_t>() = 0;
 
     ssc::BlockVecToJson(m_LocalReadPattern, localBuffer, m_StreamRank);
 

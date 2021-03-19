@@ -121,7 +121,7 @@ void BlockVecToJson(const BlockVec &input, Buffer &output, const int rank)
 {
     for (const auto &b : input)
     {
-        uint64_t pos = *reinterpret_cast<uint64_t *>(output.data());
+        uint64_t pos = *output.data<uint64_t>();
         if (pos + 256 > output.capacity())
         {
             output.reserve((output.capacity() + 256) * 2);
@@ -287,7 +287,8 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
                 {
                     if (type == DataType::None)
                     {
-                        throw(std::runtime_error("unknown data type"));
+                        throw(
+                            std::runtime_error("unknown attribute data type"));
                     }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
@@ -308,7 +309,8 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
 #undef declare_type
                     else
                     {
-                        throw(std::runtime_error("unknown data type"));
+                        throw(
+                            std::runtime_error("unknown attribute data type"));
                     }
                     pos += size;
                 }
@@ -373,7 +375,7 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
             {
                 if (b.type == DataType::None)
                 {
-                    throw(std::runtime_error("unknown data type"));
+                    throw(std::runtime_error("unknown variable data type"));
                 }
 #define declare_type(T)                                                        \
     else if (b.type == helper::GetDataType<T>())                               \
@@ -408,7 +410,10 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
     }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-                else { throw(std::runtime_error("unknown data type")); }
+                else
+                {
+                    throw(std::runtime_error("unknown variable data type"));
+                }
             }
         }
     }
@@ -430,6 +435,37 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
     for (size_t i = 1; i < mpiSize; ++i)
     {
         displs[i] = displs[i - 1] + localSizes[i - 1];
+    }
+
+    std::cout << " -------------- counts: ";
+    for (auto i : localSizes)
+    {
+        std::cout << i << ", ";
+    }
+    std::cout << std::endl;
+    std::cout << " -------------- displs: ";
+    for (auto i : displs)
+    {
+        std::cout << i << ", ";
+    }
+    std::cout << std::endl;
+
+    int mpiRank;
+    MPI_Comm_rank(comm, &mpiRank);
+    if (mpiRank == 0)
+    {
+        std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "
+                  << localBuffer.capacity() << std::endl;
+        for (size_t i = 0; i < localBuffer.capacity(); ++i)
+        {
+            std::cout << i << " : "
+                      << static_cast<int>(*(localBuffer.data() + i)) << " : "
+                      << *reinterpret_cast<const uint64_t *>(
+                             localBuffer.data() + i)
+                      << " : " << localBuffer[i] << std::endl;
+        }
+        std::cout << std::endl;
+        std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " << std::endl;
     }
 
     MPI_Gatherv(localBuffer.data(), localSize, MPI_CHAR,

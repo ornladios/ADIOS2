@@ -278,7 +278,8 @@ void SscWriter::SyncWritePattern(bool finalStep)
                   << m_CurrentStep << std::endl;
     }
 
-    ssc::Buffer localBuffer(8, 0);
+    ssc::Buffer localBuffer(8);
+    *localBuffer.data<uint64_t>() = 0;
 
     ssc::BlockVecToJson(m_GlobalWritePattern[m_StreamRank], localBuffer,
                         m_StreamRank);
