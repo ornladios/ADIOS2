@@ -79,7 +79,7 @@ inline size_t BPSerializer::GetAttributeSizeInData(
 template <>
 inline void BPSerializer::PutPayloadInBuffer(
     const core::Variable<std::string> &variable,
-    const typename core::Variable<std::string>::Info &blockInfo,
+    const typename core::Variable<std::string>::BPInfo &blockInfo,
     const bool /* sourceRowMajor*/) noexcept
 {
     PutNameRecord(*blockInfo.Data, m_Data.m_Buffer, m_Data.m_Position);

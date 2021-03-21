@@ -26,7 +26,7 @@ namespace format
 #define declare_type(T)                                                        \
     void BPZFP::SetData(                                                       \
         const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::Info &blockInfo,                     \
+        const typename core::Variable<T>::BPInfo &blockInfo,                   \
         const typename core::Variable<T>::Operation &operation,                \
         BufferSTL &bufferSTL) const noexcept                                   \
     {                                                                          \
@@ -35,7 +35,7 @@ namespace format
                                                                                \
     void BPZFP::SetMetadata(                                                   \
         const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::Info &blockInfo,                     \
+        const typename core::Variable<T>::BPInfo &blockInfo,                   \
         const typename core::Variable<T>::Operation &operation,                \
         std::vector<char> &buffer) const noexcept                              \
     {                                                                          \
@@ -44,7 +44,7 @@ namespace format
                                                                                \
     void BPZFP::UpdateMetadata(                                                \
         const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::Info &blockInfo,                     \
+        const typename core::Variable<T>::BPInfo &blockInfo,                   \
         const typename core::Variable<T>::Operation &operation,                \
         std::vector<char> &buffer) const noexcept                              \
     {                                                                          \

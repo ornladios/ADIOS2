@@ -331,12 +331,12 @@ void DataManReader::SubscribeThread()
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     DataManReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const     \
     {                                                                          \
         return AllStepsBlocksInfoCommon(variable);                             \
     }                                                                          \
-    std::vector<typename Variable<T>::Info> DataManReader::DoBlocksInfo(       \
+    std::vector<typename Variable<T>::BPInfo> DataManReader::DoBlocksInfo(     \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         return BlocksInfoCommon(variable, step);                               \

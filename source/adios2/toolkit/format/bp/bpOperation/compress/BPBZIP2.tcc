@@ -23,7 +23,7 @@ namespace format
 template <class T>
 void BPBZIP2::SetMetadataCommon(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
+    const typename core::Variable<T>::BPInfo &blockInfo,
     const typename core::Variable<T>::Operation &operation,
     std::vector<char> &buffer) const noexcept
 {
@@ -56,7 +56,7 @@ void BPBZIP2::SetMetadataCommon(
 template <class T>
 void BPBZIP2::UpdateMetadataCommon(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
+    const typename core::Variable<T>::BPInfo &blockInfo,
     const typename core::Variable<T>::Operation &operation,
     std::vector<char> &buffer) const noexcept
 {

@@ -19,7 +19,7 @@ namespace format
 #define declare_type(T)                                                        \
     void BPOperation::SetData(                                                 \
         const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::Info &blockInfo,                     \
+        const typename core::Variable<T>::BPInfo &blockInfo,                   \
         const typename core::Variable<T>::Operation &operation,                \
         BufferSTL &bufferSTL) const noexcept                                   \
     {                                                                          \
@@ -27,7 +27,7 @@ namespace format
                                                                                \
     void BPOperation::SetMetadata(                                             \
         const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::Info &blockInfo,                     \
+        const typename core::Variable<T>::BPInfo &blockInfo,                   \
         const typename core::Variable<T>::Operation &operation,                \
         std::vector<char> &buffer) const noexcept                              \
     {                                                                          \
@@ -35,7 +35,7 @@ namespace format
                                                                                \
     void BPOperation::UpdateMetadata(                                          \
         const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::Info &blockInfo,                     \
+        const typename core::Variable<T>::BPInfo &blockInfo,                   \
         const typename core::Variable<T>::Operation &operation,                \
         std::vector<char> &buffer) const noexcept                              \
     {                                                                          \
@@ -47,17 +47,17 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #define declare_type(T)                                                        \
                                                                                \
     template void BPOperation::SetDataDefault(                                 \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
         const typename core::Variable<T>::Operation &, BufferSTL &bufferSTL)   \
         const noexcept;                                                        \
                                                                                \
     template void BPOperation::SetMetadataDefault(                             \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
         const typename core::Variable<T>::Operation &, std::vector<char> &)    \
         const noexcept;                                                        \
                                                                                \
     template void BPOperation::UpdateMetadataDefault(                          \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
         const typename core::Variable<T>::Operation &, std::vector<char> &)    \
         const noexcept;
 

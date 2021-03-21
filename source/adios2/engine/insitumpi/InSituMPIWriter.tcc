@@ -22,8 +22,8 @@ namespace engine
 {
 
 template <class T>
-void InSituMPIWriter::PutSyncCommon(Variable<T> &variable,
-                                    const typename Variable<T>::Info &blockInfo)
+void InSituMPIWriter::PutSyncCommon(
+    Variable<T> &variable, const typename Variable<T>::BPInfo &blockInfo)
 {
     if (variable.m_SingleValue)
     {
@@ -102,7 +102,7 @@ void InSituMPIWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 
 template <class T>
 void InSituMPIWriter::AsyncSendVariable(
-    Variable<T> &variable, const typename Variable<T>::Info &blockInfo)
+    Variable<T> &variable, const typename Variable<T>::BPInfo &blockInfo)
 {
     const auto it = m_WriteScheduleMap.find(variable.m_Name);
     if (it != m_WriteScheduleMap.end())

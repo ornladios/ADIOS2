@@ -33,11 +33,11 @@ namespace core
     }                                                                          \
                                                                                \
     template <>                                                                \
-    typename Variable<T>::Info &Variable<T>::SetBlockInfo(                     \
+    typename Variable<T>::BPInfo &Variable<T>::SetBlockInfo(                   \
         const T *data, const size_t stepsStart,                                \
         const size_t stepsCount) noexcept                                      \
     {                                                                          \
-        Info info;                                                             \
+        BPInfo info;                                                           \
         info.Shape = m_Shape;                                                  \
         info.Start = m_Start;                                                  \
         info.Count = m_Count;                                                  \
@@ -102,7 +102,7 @@ namespace core
     }                                                                          \
                                                                                \
     template <>                                                                \
-    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
     Variable<T>::AllStepsBlocksInfo() const                                    \
     {                                                                          \
         return DoAllStepsBlocksInfo();                                         \

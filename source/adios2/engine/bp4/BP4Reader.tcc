@@ -38,7 +38,7 @@ inline void BP4Reader::GetSyncCommon(Variable<T> &variable, T *data)
         return;
     }
 
-    typename Variable<T>::Info &blockInfo =
+    typename Variable<T>::BPInfo &blockInfo =
         m_BP4Deserializer.InitVariableBlockInfo(variable, data);
     m_BP4Deserializer.SetVariableBlockInfo(variable, blockInfo);
     ReadVariableBlocks(variable);
@@ -65,7 +65,7 @@ void BP4Reader::ReadVariableBlocks(Variable<T> &variable)
 {
     const bool profile = m_BP4Deserializer.m_Profiler.m_IsActive;
 
-    for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
+    for (typename Variable<T>::BPInfo &blockInfo : variable.m_BlocksInfo)
     {
         T *originalBlockData = blockInfo.Data;
 

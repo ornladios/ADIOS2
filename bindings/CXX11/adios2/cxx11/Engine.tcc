@@ -25,14 +25,14 @@ namespace
 template <class T>
 static std::vector<typename Variable<T>::Info>
 ToBlocksInfo(const std::vector<typename core::Variable<
-                 typename TypeInfo<T>::IOType>::Info> &coreBlocksInfo)
+                 typename TypeInfo<T>::IOType>::BPInfo> &coreBlocksInfo)
 {
     using IOType = typename TypeInfo<T>::IOType;
 
     std::vector<typename Variable<T>::Info> blocksInfo;
     blocksInfo.reserve(coreBlocksInfo.size());
 
-    for (const typename core::Variable<IOType>::Info &coreBlockInfo :
+    for (const typename core::Variable<IOType>::BPInfo &coreBlockInfo :
          coreBlocksInfo)
     {
         typename Variable<T>::Info blockInfo;
@@ -294,7 +294,7 @@ Engine::AllStepsBlocksInfo(const Variable<T> variable) const
         variable.m_Variable,
         "for variable in call to Engine::AllStepsBlocksInfo");
 
-    const std::map<size_t, std::vector<typename core::Variable<IOType>::Info>>
+    const std::map<size_t, std::vector<typename core::Variable<IOType>::BPInfo>>
         coreAllStepsBlockInfo =
             m_Engine->AllStepsBlocksInfo(*variable.m_Variable);
 
@@ -304,7 +304,7 @@ Engine::AllStepsBlocksInfo(const Variable<T> variable) const
     for (const auto &pair : coreAllStepsBlockInfo)
     {
         const size_t step = pair.first;
-        const std::vector<typename core::Variable<IOType>::Info>
+        const std::vector<typename core::Variable<IOType>::BPInfo>
             &coreBlocksInfo = pair.second;
 
         allStepsBlocksInfo[step] = ToBlocksInfo<T>(coreBlocksInfo);

@@ -22,7 +22,7 @@ namespace format
 template <class T>
 void BPOperation::SetDataDefault(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
+    const typename core::Variable<T>::BPInfo &blockInfo,
     const typename core::Variable<T>::Operation &operation,
     BufferSTL &bufferSTL) const noexcept
 {
@@ -45,7 +45,7 @@ void BPOperation::SetDataDefault(
 template <class T>
 void BPOperation::SetMetadataDefault(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
+    const typename core::Variable<T>::BPInfo &blockInfo,
     const typename core::Variable<T>::Operation &operation,
     std::vector<char> &buffer) const noexcept
 {
@@ -67,7 +67,7 @@ void BPOperation::SetMetadataDefault(
 template <class T>
 void BPOperation::UpdateMetadataDefault(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
+    const typename core::Variable<T>::BPInfo &blockInfo,
     const typename core::Variable<T>::Operation &operation,
     std::vector<char> &buffer) const noexcept
 {

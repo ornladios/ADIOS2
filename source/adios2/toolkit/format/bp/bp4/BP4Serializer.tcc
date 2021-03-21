@@ -33,7 +33,7 @@ namespace format
 template <class T>
 inline void BP4Serializer::PutVariableMetadata(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
+    const typename core::Variable<T>::BPInfo &blockInfo,
     const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
     auto lf_SetOffset = [&](uint64_t &offset) {
@@ -81,7 +81,7 @@ inline void BP4Serializer::PutVariableMetadata(
 template <class T>
 inline void BP4Serializer::PutVariablePayload(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
+    const typename core::Variable<T>::BPInfo &blockInfo,
     const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
     m_Profiler.Start("buffering");
@@ -134,7 +134,7 @@ inline void BP4Serializer::PutVariablePayload(
 template <class T>
 void BP4Serializer::PutSpanMetadata(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
+    const typename core::Variable<T>::BPInfo &blockInfo,
     const typename core::Variable<T>::Span &span) noexcept
 {
     if (m_Parameters.StatsLevel > 0)
@@ -315,7 +315,7 @@ void BP4Serializer::PutAttributeInDataCommon(
 template <>
 inline BP4Serializer::Stats<std::string> BP4Serializer::GetBPStats(
     const bool /*singleValue*/,
-    const typename core::Variable<std::string>::Info & /*blockInfo*/,
+    const typename core::Variable<std::string>::BPInfo & /*blockInfo*/,
     const bool /*isRowMajor*/) noexcept
 {
     Stats<std::string> stats;
@@ -327,7 +327,7 @@ inline BP4Serializer::Stats<std::string> BP4Serializer::GetBPStats(
 template <class T>
 BP4Serializer::Stats<T>
 BP4Serializer::GetBPStats(const bool singleValue,
-                          const typename core::Variable<T>::Info &blockInfo,
+                          const typename core::Variable<T>::BPInfo &blockInfo,
                           const bool isRowMajor) noexcept
 {
     Stats<T> stats;
@@ -385,7 +385,7 @@ BP4Serializer::GetBPStats(const bool singleValue,
 template <class T>
 size_t BP4Serializer::PutVariableMetadataInData(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
+    const typename core::Variable<T>::BPInfo &blockInfo, const Stats<T> &stats,
     const typename core::Variable<T>::Span *span) noexcept
 {
     auto &buffer = m_Data.m_Buffer;
@@ -460,7 +460,7 @@ size_t BP4Serializer::PutVariableMetadataInData(
 template <>
 inline size_t BP4Serializer::PutVariableMetadataInData(
     const core::Variable<std::string> &variable,
-    const typename core::Variable<std::string>::Info &blockInfo,
+    const typename core::Variable<std::string>::BPInfo &blockInfo,
     const Stats<std::string> &stats,
     const typename core::Variable<std::string>::Span * /*span*/) noexcept
 {
@@ -520,7 +520,7 @@ inline size_t BP4Serializer::PutVariableMetadataInData(
 template <class T>
 void BP4Serializer::PutVariableMetadataInIndex(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
+    const typename core::Variable<T>::BPInfo &blockInfo, const Stats<T> &stats,
     const bool isNew, SerialElementIndex &index,
     typename core::Variable<T>::Span *span) noexcept
 {
@@ -698,7 +698,7 @@ void BP4Serializer::PutBoundsRecord(const bool singleValue,
 template <>
 inline void BP4Serializer::PutVariableCharacteristics(
     const core::Variable<std::string> &variable,
-    const core::Variable<std::string>::Info &blockInfo,
+    const core::Variable<std::string>::BPInfo &blockInfo,
     const Stats<std::string> &stats, std::vector<char> &buffer,
     typename core::Variable<std::string>::Span * /*span*/) noexcept
 {
@@ -753,7 +753,7 @@ inline void BP4Serializer::PutVariableCharacteristics(
 template <class T>
 void BP4Serializer::PutVariableCharacteristics(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
+    const typename core::Variable<T>::BPInfo &blockInfo, const Stats<T> &stats,
     std::vector<char> &buffer, typename core::Variable<T>::Span *span) noexcept
 {
     // going back at the end
@@ -837,7 +837,7 @@ void BP4Serializer::PutVariableCharacteristics(
 template <class T>
 void BP4Serializer::PutVariableCharacteristicsInData(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
+    const typename core::Variable<T>::BPInfo &blockInfo, const Stats<T> &stats,
     std::vector<char> &buffer, size_t &position) noexcept
 {
     // going back at the end
