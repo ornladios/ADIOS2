@@ -67,7 +67,7 @@ void BPSerializer::PutCharacteristicRecord(const uint8_t characteristicID,
 template <class T>
 inline void BPSerializer::PutPayloadInBuffer(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
+    const typename core::Variable<T>::BPInfo &blockInfo,
     const bool sourceRowMajor) noexcept
 {
     const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
@@ -351,7 +351,7 @@ void BPSerializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
 template <class T>
 void BPSerializer::PutCharacteristicOperation(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
+    const typename core::Variable<T>::BPInfo &blockInfo,
     std::vector<char> &buffer) noexcept
 {
     // TODO: we only take the first operation for now
@@ -385,7 +385,7 @@ void BPSerializer::PutCharacteristicOperation(
 template <class T>
 void BPSerializer::PutOperationPayloadInBuffer(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo)
+    const typename core::Variable<T>::BPInfo &blockInfo)
 {
     // TODO: we only take the first operation for now
     const std::map<size_t, std::shared_ptr<BPOperation>> bpOperations =

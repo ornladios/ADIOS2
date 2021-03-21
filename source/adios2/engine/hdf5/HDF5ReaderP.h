@@ -61,10 +61,10 @@ private:
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;                              \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
                                                                                \
-    std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
+    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(                    \
         const Variable<T> &variable, const size_t step) const final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -82,15 +82,15 @@ private:
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
     template <class T>
-    std::map<size_t, std::vector<typename Variable<T>::Info>>
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>
     GetAllStepsBlocksInfo(const Variable<T> &variable) const;
 
     template <class T>
-    std::vector<typename Variable<T>::Info>
+    std::vector<typename Variable<T>::BPInfo>
     GetBlocksInfo(const Variable<T> &variable, const size_t step) const;
 
     template <class T>
-    std::vector<typename core::Variable<T>::Info>
+    std::vector<typename core::Variable<T>::BPInfo>
     BlocksInfoCommon(const core::Variable<T> &variable) const;
 
     template <class T>

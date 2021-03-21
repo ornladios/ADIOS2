@@ -74,25 +74,25 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <typename T>
-std::map<size_t, std::vector<typename Variable<T>::Info>>
+std::map<size_t, std::vector<typename Variable<T>::BPInfo>>
 DataManReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
 {
-    return std::map<size_t, std::vector<typename Variable<T>::Info>>();
+    return std::map<size_t, std::vector<typename Variable<T>::BPInfo>>();
 }
 
 template <typename T>
-std::vector<typename Variable<T>::Info>
+std::vector<typename Variable<T>::BPInfo>
 DataManReader::BlocksInfoCommon(const Variable<T> &variable,
                                 const size_t step) const
 {
-    std::vector<typename Variable<T>::Info> v;
+    std::vector<typename Variable<T>::BPInfo> v;
     T max = std::numeric_limits<T>::min();
     T min = std::numeric_limits<T>::max();
     for (const auto &i : *m_CurrentStepMetadata)
     {
         if (i.name == variable.m_Name)
         {
-            typename Variable<T>::Info b;
+            typename Variable<T>::BPInfo b;
             b.Start = i.start;
             b.Count = i.count;
             b.Shape = i.shape;

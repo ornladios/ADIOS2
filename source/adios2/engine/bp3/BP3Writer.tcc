@@ -24,7 +24,7 @@ void BP3Writer::PutCommon(Variable<T> &variable,
                           typename Variable<T>::Span &span,
                           const size_t /*bufferID*/, const T &value)
 {
-    const typename Variable<T>::Info &blockInfo =
+    const typename Variable<T>::BPInfo &blockInfo =
         variable.SetBlockInfo(nullptr, CurrentStep());
     m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
 
@@ -63,7 +63,7 @@ void BP3Writer::PutCommon(Variable<T> &variable,
 
 template <class T>
 void BP3Writer::PutSyncCommon(Variable<T> &variable,
-                              const typename Variable<T>::Info &blockInfo,
+                              const typename Variable<T>::BPInfo &blockInfo,
                               const bool resize)
 {
     format::BP3Base::ResizeResult resizeResult =
@@ -113,7 +113,7 @@ void BP3Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
         return;
     }
 
-    const typename Variable<T>::Info blockInfo =
+    const typename Variable<T>::BPInfo blockInfo =
         variable.SetBlockInfo(data, CurrentStep());
     m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
     m_BP3Serializer.m_DeferredVariablesDataSize += static_cast<size_t>(

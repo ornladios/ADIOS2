@@ -2109,7 +2109,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 template <class T>
 int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
                  size_t step, size_t blockid,
-                 typename core::Variable<T>::Info &blockinfo)
+                 typename core::Variable<T>::BPInfo &blockinfo)
 {
     int i, j;
     uint64_t start_t[MAX_DIMS],
@@ -3024,7 +3024,7 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
 
     if (timestep)
     {
-        std::vector<typename core::Variable<T>::Info> blocks =
+        std::vector<typename core::Variable<T>::BPInfo> blocks =
             fp->BlocksInfo(*variable, fp->CurrentStep());
         nblocks = blocks.size();
         bool firstBlock = true;
@@ -3046,7 +3046,7 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
     }
     else
     {
-        std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+        std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
             allblocks = fp->AllStepsBlocksInfo(*variable);
 
         bool firstStep = true;
@@ -3054,7 +3054,7 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
 
         for (auto &blockpair : allblocks)
         {
-            std::vector<typename adios2::core::Variable<T>::Info> &blocks =
+            std::vector<typename adios2::core::Variable<T>::BPInfo> &blocks =
                 blockpair.second;
             const size_t blocksSize = blocks.size();
             if (firstStep)
@@ -3092,8 +3092,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
     DataType adiosvartype = variable->m_Type;
-    std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
-        fp->AllStepsBlocksInfo(*variable);
+    std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
+        allblocks = fp->AllStepsBlocksInfo(*variable);
     if (allblocks.empty())
     {
         return;
@@ -3107,7 +3107,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         for (auto &blockpair : allblocks)
         {
             size_t step = blockpair.first;
-            std::vector<typename adios2::core::Variable<T>::Info> &blocks =
+            std::vector<typename adios2::core::Variable<T>::BPInfo> &blocks =
                 blockpair.second;
             fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
                     step);
@@ -3173,7 +3173,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         for (auto &blockpair : allblocks)
         {
             size_t stepAbsolute = blockpair.first;
-            std::vector<typename adios2::core::Variable<T>::Info> &blocks =
+            std::vector<typename adios2::core::Variable<T>::BPInfo> &blocks =
                 blockpair.second;
             const size_t blocksSize = blocks.size();
             fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
@@ -3249,7 +3249,7 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
 {
     /* Print block info */
     DataType adiosvartype = variable->m_Type;
-    std::vector<typename core::Variable<T>::Info> blocks =
+    std::vector<typename core::Variable<T>::BPInfo> blocks =
         fp->BlocksInfo(*variable, fp->CurrentStep());
 
     if (blocks.empty())

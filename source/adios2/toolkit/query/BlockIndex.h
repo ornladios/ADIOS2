@@ -16,9 +16,9 @@ class BlockIndex
     {
         //
         // ** no need to keep the original block. might be smaller than
-        // blockIndex typename Variable<T>::info& m_BlockInfo;
+        // blockIndex typename Variable<T>::BPInfo& m_BlockInfo;
         //
-        std::vector<typename adios2::core::Variable<T>::Info> m_SubBlockInfo;
+        std::vector<typename adios2::core::Variable<T>::BPInfo> m_SubBlockInfo;
     };
 
 public:
@@ -44,7 +44,7 @@ public:
         if (!query.IsSelectionValid(currShape))
             return;
 
-        std::vector<typename adios2::core::Variable<T>::Info> varBlocksInfo =
+        std::vector<typename adios2::core::Variable<T>::BPInfo> varBlocksInfo =
             m_IdxReader.BlocksInfo(m_Var, currStep);
 
         for (auto &blockInfo : varBlocksInfo)
@@ -97,7 +97,7 @@ public:
         if (!query.IsSelectionValid(currShape))
             return;
 
-        std::vector<typename adios2::core::Variable<T>::Info> varBlocksInfo =
+        std::vector<typename adios2::core::Variable<T>::BPInfo> varBlocksInfo =
             m_IdxReader.BlocksInfo(m_Var, currStep);
 
         for (auto &blockInfo : varBlocksInfo)

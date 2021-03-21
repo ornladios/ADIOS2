@@ -688,7 +688,7 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
-    std::vector<typename Variable<T>::Info> SscReader::DoBlocksInfo(           \
+    std::vector<typename Variable<T>::BPInfo> SscReader::DoBlocksInfo(         \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         return BlocksInfoCommon(variable, step);                               \

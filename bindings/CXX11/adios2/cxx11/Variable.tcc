@@ -24,14 +24,14 @@ namespace
 template <class T>
 std::vector<typename Variable<T>::Info>
 ToBlocksInfo(const std::vector<typename core::Variable<
-                 typename TypeInfo<T>::IOType>::Info> &coreBlocksInfo)
+                 typename TypeInfo<T>::IOType>::BPInfo> &coreBlocksInfo)
 {
     using IOType = typename TypeInfo<T>::IOType;
 
     std::vector<typename Variable<T>::Info> blocksInfo;
     blocksInfo.reserve(coreBlocksInfo.size());
 
-    for (const typename core::Variable<IOType>::Info &coreBlockInfo :
+    for (const typename core::Variable<IOType>::BPInfo &coreBlockInfo :
          coreBlocksInfo)
     {
         typename Variable<T>::Info blockInfo;
@@ -69,7 +69,7 @@ Variable<T>::DoAllStepsBlocksInfo()
                             "in call to Variable<T>::AllStepsBlocksInfo");
 
     // PRIVATE INPUT
-    const std::vector<std::vector<typename core::Variable<IOType>::Info>>
+    const std::vector<std::vector<typename core::Variable<IOType>::BPInfo>>
         coreAllStepsBlocksInfo = m_Variable->AllStepsBlocksInfo();
 
     // PUBLIC OUTPUT

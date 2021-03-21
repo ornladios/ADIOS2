@@ -213,8 +213,8 @@ namespace adios2
     template <>                                                                \
     const T *Variable<T>::Info::Data() const                                   \
     {                                                                          \
-        const core::Variable<T>::Info *coreInfo =                              \
-            reinterpret_cast<const core::Variable<T>::Info *>(m_Info);         \
+        const core::Variable<T>::BPInfo *coreInfo =                            \
+            reinterpret_cast<const core::Variable<T>::BPInfo *>(m_Info);       \
                                                                                \
         return m_Info ? (coreInfo->BufferP ? coreInfo->BufferP                 \
                                            : coreInfo->BufferV.data())         \

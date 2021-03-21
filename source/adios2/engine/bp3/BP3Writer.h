@@ -87,7 +87,7 @@ private:
 
     template <class T>
     void PutSyncCommon(Variable<T> &variable,
-                       const typename Variable<T>::Info &blockInfo,
+                       const typename Variable<T>::BPInfo &blockInfo,
                        const bool resize = true);
 
     template <class T>

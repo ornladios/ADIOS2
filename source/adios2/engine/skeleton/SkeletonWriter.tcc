@@ -22,8 +22,8 @@ namespace engine
 {
 
 template <class T>
-void SkeletonWriter::PutSyncCommon(Variable<T> &variable,
-                                   const typename Variable<T>::Info &blockInfo)
+void SkeletonWriter::PutSyncCommon(
+    Variable<T> &variable, const typename Variable<T>::BPInfo &blockInfo)
 {
     if (m_Verbosity == 5)
     {

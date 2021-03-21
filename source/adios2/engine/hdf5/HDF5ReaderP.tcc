@@ -60,12 +60,12 @@ void HDF5ReaderP::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-std::vector<typename core::Variable<T>::Info>
+std::vector<typename core::Variable<T>::BPInfo>
 HDF5ReaderP::BlocksInfoCommon(const core::Variable<T> &variable) const
 {
-    std::vector<typename core::Variable<T>::Info> blocksInfo;
+    std::vector<typename core::Variable<T>::BPInfo> blocksInfo;
 
-    typename core::Variable<T>::Info blockInfo;
+    typename core::Variable<T>::BPInfo blockInfo;
     blockInfo.Start = variable.m_Start;
     blockInfo.Count = variable.m_Shape;
     if (variable.m_ShapeID == ShapeID::GlobalValue ||
@@ -83,10 +83,10 @@ HDF5ReaderP::BlocksInfoCommon(const core::Variable<T> &variable) const
 }
 
 template <class T>
-std::map<size_t, std::vector<typename Variable<T>::Info>>
+std::map<size_t, std::vector<typename Variable<T>::BPInfo>>
 HDF5ReaderP::GetAllStepsBlocksInfo(const Variable<T> &variable) const
 {
-    std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+    std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
         allStepsBlocksInfo;
 
     for (size_t step = variable.m_AvailableStepsStart;
@@ -99,7 +99,7 @@ HDF5ReaderP::GetAllStepsBlocksInfo(const Variable<T> &variable) const
 }
 
 template <class T>
-std::vector<typename Variable<T>::Info>
+std::vector<typename Variable<T>::BPInfo>
 HDF5ReaderP::GetBlocksInfo(const Variable<T> &variable, const size_t step) const
 {
     return BlocksInfoCommon(variable);

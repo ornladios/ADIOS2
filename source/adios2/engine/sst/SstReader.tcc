@@ -38,7 +38,7 @@ void SstReader::ReadVariableBlocksRequests(
 #endif
     size_t threadID = 0;
 
-    for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
+    for (typename Variable<T>::BPInfo &blockInfo : variable.m_BlocksInfo)
     {
         T *originalBlockData = blockInfo.Data;
         for (const auto &stepPair : blockInfo.StepBlockSubStreamsInfo)
@@ -137,7 +137,7 @@ void SstReader::ReadVariableBlocksFill(Variable<T> &variable,
     size_t threadID = 0;
 
     threadID = 0;
-    for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
+    for (typename Variable<T>::BPInfo &blockInfo : variable.m_BlocksInfo)
     {
         T *originalBlockData = blockInfo.Data;
         for (const auto &stepPair : blockInfo.StepBlockSubStreamsInfo)

@@ -64,7 +64,7 @@ void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-inline typename Variable<T>::Info *
+inline typename Variable<T>::BPInfo *
 InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 {
     if (variable.m_BlockID >= variable.m_BlocksInfo.size())
@@ -86,7 +86,7 @@ InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 }
 
 template <class T>
-inline typename Variable<T>::Info *
+inline typename Variable<T>::BPInfo *
 InlineReader::GetBlockDeferredCommon(Variable<T> &variable)
 {
     if (variable.m_BlockID >= variable.m_BlocksInfo.size())

@@ -157,10 +157,10 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
 
 // Get
 template <class T>
-typename Variable<T>::Info *Engine::Get(Variable<T> &variable,
-                                        const Mode launch)
+typename Variable<T>::BPInfo *Engine::Get(Variable<T> &variable,
+                                          const Mode launch)
 {
-    typename Variable<T>::Info *info = nullptr;
+    typename Variable<T>::BPInfo *info = nullptr;
     switch (launch)
     {
     case Mode::Deferred:
@@ -182,28 +182,28 @@ typename Variable<T>::Info *Engine::Get(Variable<T> &variable,
 }
 
 template <class T>
-typename Variable<T>::Info *Engine::Get(const std::string &variableName,
-                                        const Mode launch)
+typename Variable<T>::BPInfo *Engine::Get(const std::string &variableName,
+                                          const Mode launch)
 {
     return Get(FindVariable<T>(variableName, "in call to Get"), launch);
 }
 
 template <class T>
-std::map<size_t, std::vector<typename Variable<T>::Info>>
+std::map<size_t, std::vector<typename Variable<T>::BPInfo>>
 Engine::AllStepsBlocksInfo(const Variable<T> &variable) const
 {
     return DoAllStepsBlocksInfo(variable);
 }
 
 template <class T>
-std::vector<std::vector<typename Variable<T>::Info>>
+std::vector<std::vector<typename Variable<T>::BPInfo>>
 Engine::AllRelativeStepsBlocksInfo(const Variable<T> &variable) const
 {
     return DoAllRelativeStepsBlocksInfo(variable);
 }
 
 template <class T>
-std::vector<typename Variable<T>::Info>
+std::vector<typename Variable<T>::BPInfo>
 Engine::BlocksInfo(const Variable<T> &variable, const size_t step) const
 {
     return DoBlocksInfo(variable, step);

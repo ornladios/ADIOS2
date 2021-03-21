@@ -351,13 +351,13 @@ void HDF5ReaderP::PerformGets()
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
                                                                                \
-    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     HDF5ReaderP::DoAllStepsBlocksInfo(const Variable<T> &variable) const       \
     {                                                                          \
         return GetAllStepsBlocksInfo(variable);                                \
     }                                                                          \
                                                                                \
-    std::vector<typename Variable<T>::Info> HDF5ReaderP::DoBlocksInfo(         \
+    std::vector<typename Variable<T>::BPInfo> HDF5ReaderP::DoBlocksInfo(       \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         return GetBlocksInfo(variable, step);                                  \

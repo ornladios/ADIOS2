@@ -405,14 +405,14 @@ void BP3Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
     template void BP3Deserializer::GetSyncVariableDataFromStream(              \
         core::Variable<T> &, BufferSTL &) const;                               \
                                                                                \
-    template typename core::Variable<T>::Info &                                \
+    template typename core::Variable<T>::BPInfo &                              \
     BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *) const;    \
                                                                                \
     template void BP3Deserializer::SetVariableBlockInfo(                       \
-        core::Variable<T> &, typename core::Variable<T>::Info &) const;        \
+        core::Variable<T> &, typename core::Variable<T>::BPInfo &) const;      \
                                                                                \
     template void BP3Deserializer::ClipContiguousMemory<T>(                    \
-        typename core::Variable<T>::Info &, const std::vector<char> &,         \
+        typename core::Variable<T>::BPInfo &, const std::vector<char> &,       \
         const Box<Dims> &, const Box<Dims> &) const;                           \
                                                                                \
     template void BP3Deserializer::GetValueFromMetadata(                       \
@@ -433,24 +433,24 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
     template helper::SubFileInfoMap BP3Deserializer::GetSubFileInfo(           \
         const core::Variable<T> &) const;                                      \
                                                                                \
-    template std::map<size_t, std::vector<typename core::Variable<T>::Info>>   \
+    template std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>> \
     BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &) const;      \
                                                                                \
-    template std::vector<std::vector<typename core::Variable<T>::Info>>        \
+    template std::vector<std::vector<typename core::Variable<T>::BPInfo>>      \
     BP3Deserializer::AllRelativeStepsBlocksInfo(const core::Variable<T> &)     \
         const;                                                                 \
                                                                                \
-    template std::vector<typename core::Variable<T>::Info>                     \
+    template std::vector<typename core::Variable<T>::BPInfo>                   \
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
         const;                                                                 \
                                                                                \
     template void BP3Deserializer::PreDataRead(                                \
-        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        core::Variable<T> &, typename core::Variable<T>::BPInfo &,             \
         const helper::SubStreamBoxInfo &, char *&, size_t &, size_t &,         \
         const size_t);                                                         \
                                                                                \
     template void BP3Deserializer::PostDataRead(                               \
-        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        core::Variable<T> &, typename core::Variable<T>::BPInfo &,             \
         const helper::SubStreamBoxInfo &, const bool, const size_t);
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
