@@ -28,7 +28,7 @@ void BP5Serializer::Init()
 {
     memset(&Info, 0, sizeof(Info));
     Info.RecCount = 0;
-    Info.RecList = (BP5Serializer::FFSWriterRec)malloc(sizeof(Info.RecList[0]));
+    Info.RecList = (BP5Serializer::BP5WriterRec)malloc(sizeof(Info.RecList[0]));
     Info.MetaFieldCount = 0;
     Info.MetaFields = NULL;
     Info.DataFieldCount = 0;
@@ -47,7 +47,7 @@ void BP5Serializer::Init()
         (std::size_t *)malloc(sizeof(size_t));
     ((FFSMetadataInfoStruct *)MetadataBuf)->DataBlockSize = 0;
 }
-BP5Serializer::FFSWriterRec BP5Serializer::LookupWriterRec(void *Key)
+BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key)
 {
     for (int i = 0; i < Info.RecCount; i++)
     {
@@ -302,13 +302,13 @@ void BP5Serializer::AddVarArrayField(FMFieldList *FieldP, int *CountP,
     (*FieldP)[*CountP - 1].field_size = ElementSize;
 }
 
-BP5Serializer::FFSWriterRec
+BP5Serializer::BP5WriterRec
 BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
                                size_t ElemSize, size_t DimCount)
 {
-    Info.RecList = (FFSWriterRec)realloc(
+    Info.RecList = (BP5WriterRec)realloc(
         Info.RecList, (Info.RecCount + 1) * sizeof(Info.RecList[0]));
-    FFSWriterRec Rec = &Info.RecList[Info.RecCount];
+    BP5WriterRec Rec = &Info.RecList[Info.RecCount];
     Rec->Key = Variable;
     Rec->FieldID = Info.RecCount;
     Rec->DimCount = DimCount;
@@ -331,9 +331,9 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
         char *ArrayName = BuildArrayDimsName(Name, (int)Type, ElemSize);
-        char *ArrayDBCount = BuildArrayDBCountName(Name, (int)Type, ElemSize);
         char *ArrayBlockCount =
             BuildArrayBlockCountName(Name, (int)Type, ElemSize);
+        char *ArrayDBCount = BuildArrayDBCountName(Name, (int)Type, ElemSize);
         AddField(&Info.MetaFields, &Info.MetaFieldCount, ArrayName,
                  DataType::Int64, sizeof(size_t));
         free(ArrayName);
@@ -342,9 +342,9 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         char *CountName = ConcatName(Name, "Count");
         char *OffsetsName = ConcatName(Name, "Offsets");
         char *LocationsName = ConcatName(Name, "DataLocations");
-        AddField(&Info.MetaFields, &Info.MetaFieldCount, ArrayDBCount,
-                 DataType::Int64, sizeof(size_t));
         AddField(&Info.MetaFields, &Info.MetaFieldCount, ArrayBlockCount,
+                 DataType::Int64, sizeof(size_t));
+        AddField(&Info.MetaFields, &Info.MetaFieldCount, ArrayDBCount,
                  DataType::Int64, sizeof(size_t));
         AddFixedArrayField(&Info.MetaFields, &Info.MetaFieldCount, ShapeName,
                            DataType::Int64, sizeof(size_t), DimCount);
@@ -424,7 +424,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
 
     FFSMetadataInfoStruct *MBase;
 
-    FFSWriterRec Rec = LookupWriterRec(Variable);
+    BP5WriterRec Rec = LookupWriterRec(Variable);
 
     if (!Rec)
     {
@@ -455,7 +455,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         DataOffset =
             CurDataBuffer->AddToVec(ElemCount * ElemSize, Data, ElemSize, Sync);
 
-        printf("Data offset for variable %s is %ld\n", Name, DataOffset);
+        printf("Data offset for variable %s is %ld, first data bit is %lx\n",
+               Name, DataOffset, *(size_t *)Data);
         if (!AlreadyWritten)
         {
             if (Shape)
@@ -566,7 +567,9 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
     struct FFSMetadataInfoStruct *MBase =
         (struct FFSMetadataInfoStruct *)MetadataBuf;
 
-    MBase->DataBlockSize = DataSize;
+    MBase->DataBlockSize = CurDataBuffer->AddToVec(
+        0, NULL, 8, true); //  output block size multiple of 8, offset is size
+
     void *MetaDataBlock = FFSencode(MetaEncodeBuffer, Info.MetaFormat,
                                     MetadataBuf, &MetaDataSize);
     BufferFFS *Metadata =
@@ -582,7 +585,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
             new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
     }
 
-    printf("MetaDatablock is (Length %d):\n", MetaDataSize);
+    printf("MetaDatablock is (Length %d, Data length %zu):\n", MetaDataSize,
+           MBase->DataBlockSize);
     FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);
     /* free all those copied dimensions, etc */
     MBase = (struct FFSMetadataInfoStruct *)Metadata;

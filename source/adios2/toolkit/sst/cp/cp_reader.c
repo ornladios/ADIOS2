@@ -731,10 +731,12 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 //  only accesses data installed durinig initialization, it needs no
 //  locking.
 extern void SstReaderGetParams(SstStream Stream,
-                               SstMarshalMethod *WriterMarshalMethod)
+                               SstMarshalMethod *WriterMarshalMethod,
+                               int *WriterIsRowMajor)
 {
     *WriterMarshalMethod =
         (SstMarshalMethod)Stream->WriterConfigParams->MarshalMethod;
+    *WriterIsRowMajor = Stream->WriterConfigParams->IsRowMajor;
 }
 
 /*

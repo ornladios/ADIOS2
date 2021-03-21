@@ -34,15 +34,31 @@ public:
 
     ~BP5Deserializer();
 
+    struct ReadRequest
+    {
+        size_t Timestep;
+        size_t WriterRank;
+        size_t StartOffset;
+        size_t ReadLength;
+        char *DestinationAddr;
+        void *Internal;
+    };
     void InstallMetaMetaData(MetaMetaInfoBlock &MMList);
     void InstallMetaData(void *MetadataBlock, size_t BlockLen,
                          size_t WriterRank);
-    bool WriterIsRowMajor = 0;
-    bool ReaderIsRowMajor = 0;
+    void SetupForTimestep(size_t t);
+    // return from QueueGet is true if a sync is needed to fill the data
+    bool QueueGet(core::VariableBase &variable, void *DestData);
+
+    std::vector<ReadRequest> GenerateReadRequests();
+    void FinalizeGets(std::vector<ReadRequest>);
+
+    bool WriterIsRowMajor = 1;
+    bool ReaderIsRowMajor = 1;
     core::Engine *m_Engine = NULL;
 
 private:
-    struct FFSVarRec
+    struct BP5VarRec
     {
         void *Variable = NULL;
         char *VarName = NULL;
@@ -57,7 +73,8 @@ private:
         std::vector<size_t *> PerWriterCounts;
         std::vector<void *> PerWriterIncomingData;
         std::vector<size_t> PerWriterIncomingSize; // important for compression
-        FFSVarRec(int WriterSize)
+        std::vector<size_t *> PerWriterDataLocation;
+        BP5VarRec(int WriterSize)
         {
             PerWriterMetaFieldOffset.resize(WriterSize);
             PerWriterBlockStart.resize(WriterSize);
@@ -66,6 +83,7 @@ private:
             PerWriterCounts.resize(WriterSize);
             PerWriterIncomingData.resize(WriterSize);
             PerWriterIncomingSize.resize(WriterSize);
+            PerWriterDataLocation.resize(WriterSize);
         }
     };
 
@@ -73,7 +91,7 @@ private:
     {
         int FieldIndex;
         int FieldOffset;
-        FFSVarRec *VarRec;
+        BP5VarRec *VarRec;
         int IsArray;
         DataType Type;
         int ElementSize;
@@ -87,16 +105,31 @@ private:
         struct ControlStruct Controls[1];
     };
 
+    enum WriterDataStatusEnum
+    {
+        Empty = 0,
+        Needed = 1,
+        Requested = 2,
+        Full = 3
+    };
+
+    struct FFSReaderPerWriterRec
+    {
+        enum WriterDataStatusEnum Status = Empty;
+        char *RawBuffer = NULL;
+    };
+
     FFSContext ReaderFFSContext;
     int WriterCohortSize;
-    std::unordered_map<std::string, FFSVarRec *> VarByName;
+    std::unordered_map<std::string, BP5VarRec *> VarByName;
+    std::unordered_map<void *, BP5VarRec *> VarByKey;
     FMContext LocalFMContext;
-    //    FFSArrayRequest PendingVarRequests;
+    //    Ffsarrayrequest PendingVarRequests;
 
     std::vector<void *> MetadataBaseAddrs;
     std::vector<FMFieldList> MetadataFieldLists;
     std::vector<void *> DataBaseAddrs;
-    //  std::vector<FFSReaderPerWriterRec>WriterInfo;
+    std::vector<FFSReaderPerWriterRec> WriterInfo;
     //  struct ControlInfo *ControlBlocks;
 
     ControlInfo *ControlBlocks = nullptr;
@@ -104,9 +137,9 @@ private:
     ControlInfo *BuildControl(FMFormat Format);
     bool NameIndicatesArray(const char *Name);
     DataType TranslateFFSType2ADIOS(const char *Type, int size);
-    FFSVarRec *LookupVarByKey(void *Key);
-    FFSVarRec *LookupVarByName(const char *Name);
-    FFSVarRec *CreateVarRec(const char *ArrayName);
+    BP5VarRec *LookupVarByKey(void *Key);
+    BP5VarRec *LookupVarByName(const char *Name);
+    BP5VarRec *CreateVarRec(const char *ArrayName);
     void ReverseDimensions(size_t *Dimensions, int count);
     void BreakdownArrayName(const char *Name, char **base_name_p,
                             DataType *type_p, int *element_size_p);
@@ -115,6 +148,42 @@ private:
     void *ArrayVarSetup(core::Engine *engine, const char *variableName,
                         const DataType type, int DimCount, size_t *Shape,
                         size_t *Start, size_t *Count);
+    void MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex,
+                               const size_t *LocalOffsets, size_t *LocalIndex);
+    int FindOffset(size_t Dims, const size_t *Size, const size_t *Index);
+    void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
+                                       const size_t *GlobalDims,
+                                       const size_t *PartialOffsets,
+                                       const size_t *PartialCounts,
+                                       const size_t *SelectionOffsets,
+                                       const size_t *SelectionCounts,
+                                       const char *InData, char *OutData);
+    void ExtractSelectionFromPartialCM(int ElementSize, size_t Dims,
+                                       const size_t *GlobalDims,
+                                       const size_t *PartialOffsets,
+                                       const size_t *PartialCounts,
+                                       const size_t *SelectionOffsets,
+                                       const size_t *SelectionCounts,
+                                       const char *InData, char *OutData);
+
+    enum RequestTypeEnum
+    {
+        Global = 0,
+        Local = 1
+    };
+
+    struct BP5ArrayRequest
+    {
+        BP5VarRec *VarRec = NULL;
+        enum RequestTypeEnum RequestType;
+        size_t BlockID;
+        Dims Start;
+        Dims Count;
+        void *Data;
+    };
+    std::vector<BP5ArrayRequest> PendingRequests;
+    bool NeedWriter(BP5ArrayRequest Req, int i);
+    size_t CurTimestep = 0;
 };
 
 } // end namespace format

@@ -106,7 +106,8 @@ extern void SstWriterDefinitionLock(SstStream stream, long EffectiveTimestep);
 extern SstStream SstReaderOpen(const char *filename, SstParams Params,
                                SMPI_Comm comm);
 extern void SstReaderGetParams(SstStream stream,
-                               SstMarshalMethod *WriterMarshalMethod);
+                               SstMarshalMethod *WriterMarshalMethod,
+                               int *WriterIsRowMajor);
 extern SstFullMetadata SstGetCurMetadata(SstStream stream);
 extern SstMetaMetaList SstGetNewMetaMetaData(SstStream stream, long timestep);
 extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,

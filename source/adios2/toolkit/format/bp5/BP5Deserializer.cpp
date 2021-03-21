@@ -133,12 +133,16 @@ void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
     (*base_name_p)[strlen(*base_name_p) - 4] = 0; // kill "Dims"
 }
 
-BP5Deserializer::FFSVarRec *BP5Deserializer::LookupVarByKey(void *Key)
+BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key)
 {
-    return NULL;
+    auto ret = VarByKey[Key];
+    std::cout << "Lookup var by key for key " << Key << " returning " << ret
+              << std::endl;
+
+    return ret;
 }
 
-BP5Deserializer::FFSVarRec *BP5Deserializer::LookupVarByName(const char *Name)
+BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByName(const char *Name)
 {
     auto ret = VarByName[Name];
     std::cout << "Lookup var by name for name " << Name << " returning " << ret
@@ -147,9 +151,9 @@ BP5Deserializer::FFSVarRec *BP5Deserializer::LookupVarByName(const char *Name)
     return ret;
 }
 
-BP5Deserializer::FFSVarRec *BP5Deserializer::CreateVarRec(const char *ArrayName)
+BP5Deserializer::BP5VarRec *BP5Deserializer::CreateVarRec(const char *ArrayName)
 {
-    FFSVarRec *Ret = new FFSVarRec(WriterCohortSize);
+    BP5VarRec *Ret = new BP5VarRec(WriterCohortSize);
     Ret->VarName = strdup(ArrayName);
     Ret->Variable = nullptr;
     VarByName[Ret->VarName] = Ret;
@@ -186,7 +190,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
         {
             char *ArrayName;
             DataType Type;
-            FFSVarRec *VarRec = nullptr;
+            BP5VarRec *VarRec = nullptr;
             int ElementSize;
             C->IsArray = 1;
             printf("Working on Array Field %s\n", FieldList[i].field_name);
@@ -211,7 +215,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
         {
             /* simple field */
             char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
-            FFSVarRec *VarRec = NULL;
+            BP5VarRec *VarRec = NULL;
             C->IsArray = 0;
             printf("Working on Simple Field %s\n", FieldList[i].field_name);
             VarRec = LookupVarByName(FieldName);
@@ -326,6 +330,15 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine,
     return (void *)NULL;
 };
 
+void BP5Deserializer::SetupForTimestep(size_t Timestep)
+{
+    CurTimestep = Timestep;
+    PendingRequests.clear();
+    for (auto RecPair : VarByKey)
+    {
+        RecPair.second->Variable = NULL;
+    }
+}
 void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                                       size_t WriterRank)
 {
@@ -379,7 +392,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
     for (int i = 0; i < Control->ControlCount; i++)
     {
         int FieldOffset = ControlArray[i].FieldOffset;
-        FFSVarRec *VarRec = ControlArray[i].VarRec;
+        BP5VarRec *VarRec = ControlArray[i].VarRec;
         void *field_data = (char *)BaseData + FieldOffset;
         if (!FFSBitfieldTest((FFSMetadataInfoStruct *)BaseData, i))
         {
@@ -405,12 +418,14 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 VarRec->Variable = ArrayVarSetup(
                     m_Engine, VarRec->VarName, VarRec->Type, meta_base->Dims,
                     meta_base->Shape, meta_base->Offsets, meta_base->Count);
+                VarByKey[VarRec->Variable] = VarRec;
             }
             VarRec->DimCount = meta_base->Dims;
             VarRec->PerWriterBlockCount[WriterRank] =
                 meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
             VarRec->PerWriterStart[WriterRank] = meta_base->Offsets;
             VarRec->PerWriterCounts[WriterRank] = meta_base->Count;
+            VarRec->PerWriterDataLocation[WriterRank] = meta_base->DataLocation;
             if (WriterRank == 0)
             {
                 VarRec->PerWriterBlockStart[WriterRank] = 0;
@@ -441,10 +456,444 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             {
                 VarRec->Variable = VarSetup(m_Engine, VarRec->VarName,
                                             VarRec->Type, field_data);
+                VarByKey[VarRec->Variable] = VarRec;
             }
             VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
         }
     }
+}
+
+bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
+{
+    if (variable.m_SingleValue)
+    {
+        int WriterRank = 0;
+        if (variable.m_SelectionType == adios2::SelectionType::WriteBlock)
+            WriterRank = variable.m_BlockID;
+
+        BP5VarRec *VarRec = VarByKey[&variable];
+        char *src = ((char *)MetadataBaseAddrs[WriterRank]) +
+                    VarRec->PerWriterMetaFieldOffset[WriterRank];
+        memcpy(DestData, src, variable.m_ElementSize);
+        return false;
+    }
+    if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
+    {
+        BP5ArrayRequest Req;
+        Req.VarRec = VarByKey[&variable];
+        Req.RequestType = Global;
+        Req.BlockID = variable.m_BlockID;
+        Req.Count = variable.m_Count;
+        Req.Start = variable.m_Start;
+        Req.Data = DestData;
+        PendingRequests.push_back(Req);
+    }
+    else if (variable.m_SelectionType == adios2::SelectionType::WriteBlock)
+    {
+        BP5ArrayRequest Req;
+        Req.VarRec = VarByKey[&variable];
+        Req.RequestType = Local;
+        Req.BlockID = variable.m_BlockID;
+        Req.Count = variable.m_Count;
+        Req.Data = DestData;
+        PendingRequests.push_back(Req);
+    }
+    else
+    {
+    }
+    return false;
+}
+
+bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, int i)
+{
+    if (Req.RequestType == Local)
+    {
+        size_t NodeFirst = Req.VarRec->PerWriterBlockStart[i];
+        size_t NodeLast = Req.VarRec->PerWriterBlockCount[i] + NodeFirst - 1;
+        return (NodeFirst <= Req.BlockID) && (NodeLast >= Req.BlockID);
+    }
+    // else Global case
+    for (int j = 0; j < Req.VarRec->DimCount; j++)
+    {
+        size_t SelOffset = Req.Start[j];
+        size_t SelSize = Req.Count[j];
+        size_t RankOffset;
+        size_t RankSize;
+        if (Req.VarRec->PerWriterStart[i] == NULL)
+        /* this writer didn't write */
+        {
+            return false;
+        }
+        RankOffset = Req.VarRec->PerWriterStart[i][j];
+        RankSize = Req.VarRec->PerWriterCounts[i][j];
+        if ((SelSize == 0) || (RankSize == 0))
+        {
+            return false;
+        }
+        if ((RankOffset < SelOffset && (RankOffset + RankSize) <= SelOffset) ||
+            (RankOffset >= SelOffset + SelSize))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::vector<BP5Deserializer::ReadRequest>
+BP5Deserializer::GenerateReadRequests()
+{
+    std::vector<BP5Deserializer::ReadRequest> Ret;
+    WriterInfo.reserve(WriterCohortSize);
+    for (auto &W : WriterInfo)
+    {
+        W.Status = Empty;
+        W.RawBuffer = NULL;
+    }
+
+    for (const auto &Req : PendingRequests)
+    {
+        for (int i = 0; i < WriterCohortSize; i++)
+        {
+            if ((WriterInfo[i].Status != Needed) && (NeedWriter(Req, i)))
+            {
+                WriterInfo[i].Status = Needed;
+            }
+        }
+    }
+
+    for (int i = 0; i < WriterCohortSize; i++)
+    {
+        if (WriterInfo[i].Status == Needed)
+        {
+            ReadRequest RR;
+            RR.Timestep = CurTimestep;
+            RR.WriterRank = i;
+            RR.StartOffset = 0;
+            printf("Setting up read for writer %d, length %zu\n", i,
+                   ((struct FFSMetadataInfoStruct *)MetadataBaseAddrs[i])
+                       ->DataBlockSize);
+            RR.ReadLength =
+                ((struct FFSMetadataInfoStruct *)MetadataBaseAddrs[i])
+                    ->DataBlockSize;
+            RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+            RR.Internal = NULL;
+            Ret.push_back(RR);
+        }
+    }
+    return Ret;
+}
+
+void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
+{
+    for (const auto &Req : PendingRequests)
+    {
+        //        ImplementGapWarning(Reqs);
+        for (int i = 0; i < WriterCohortSize; i++)
+        {
+            printf("Looking at request for var %s , NeedWriter is %d\n",
+                   Req.VarRec->VarName, NeedWriter(Req, i));
+            if (NeedWriter(Req, i))
+            {
+                /* if needed this writer fill destination with acquired data */
+                int ElementSize = Req.VarRec->ElementSize;
+                int DimCount = Req.VarRec->DimCount;
+                size_t *GlobalDimensions = Req.VarRec->GlobalDims;
+                size_t *RankOffset = Req.VarRec->PerWriterStart[i];
+                const size_t *RankSize = Req.VarRec->PerWriterCounts[i];
+                std::vector<size_t> ZeroSel(DimCount);
+                const size_t *SelOffset = NULL;
+                const size_t *SelSize = Req.Count.data();
+                DataType Type = Req.VarRec->Type;
+                int ReqIndex = 0;
+                while (Requests[ReqIndex].WriterRank != i)
+                    ReqIndex++;
+                char *IncomingData =
+                    (char *)Requests[ReqIndex].DestinationAddr +
+                    Req.VarRec->PerWriterDataLocation[i][0];
+                int FreeIncoming = 0;
+
+                if (Req.Start.size())
+                {
+                    SelOffset = Req.Start.data();
+                }
+                if (Req.RequestType == Local)
+                {
+                    int LocalBlockID =
+                        Req.BlockID - Req.VarRec->PerWriterBlockStart[i];
+                    size_t DataOffset = 0;
+                    for (int i = 0; i < LocalBlockID; i++)
+                    {
+                        int BlockElemCount = 1;
+                        for (int j = 0; j < DimCount; j++)
+                        {
+                            BlockElemCount *= RankSize[j];
+                        }
+                        DataOffset += BlockElemCount * ElementSize;
+                        RankSize += DimCount;
+                    }
+                    std::vector<size_t> ZeroRankOffset(DimCount);
+                    std::vector<size_t> ZeroGlobalDimensions(DimCount);
+                    RankOffset = ZeroRankOffset.data();
+                    GlobalDimensions = ZeroGlobalDimensions.data();
+                    if (SelOffset == NULL)
+                    {
+                        SelOffset = ZeroSel.data();
+                    }
+                    for (int i = 0; i < DimCount; i++)
+                    {
+                        GlobalDimensions[i] = RankSize[i];
+                    }
+                    IncomingData = IncomingData + DataOffset;
+                }
+                printf("Incoming data for this var %s is at %p (%p + %zu)\n",
+                       Req.VarRec->VarName, IncomingData,
+                       (char *)Requests[i].DestinationAddr,
+                       Req.VarRec->PerWriterDataLocation[i][0]);
+                if (ReaderIsRowMajor)
+                {
+                    ExtractSelectionFromPartialRM(
+                        ElementSize, DimCount, GlobalDimensions, RankOffset,
+                        RankSize, SelOffset, SelSize, IncomingData,
+                        (char *)Req.Data);
+                }
+                else
+                {
+                    ExtractSelectionFromPartialCM(
+                        ElementSize, DimCount, GlobalDimensions, RankOffset,
+                        RankSize, SelOffset, SelSize, IncomingData,
+                        (char *)Req.Data);
+                }
+            }
+        }
+    }
+}
+
+void BP5Deserializer::MapGlobalToLocalIndex(size_t Dims,
+                                            const size_t *GlobalIndex,
+                                            const size_t *LocalOffsets,
+                                            size_t *LocalIndex)
+{
+    for (int i = 0; i < Dims; i++)
+    {
+        LocalIndex[i] = GlobalIndex[i] - LocalOffsets[i];
+    }
+}
+
+int BP5Deserializer::FindOffset(size_t Dims, const size_t *Size,
+                                const size_t *Index)
+{
+    int Offset = 0;
+    for (int i = 0; i < Dims; i++)
+    {
+        Offset = Index[i] + (Size[i] * Offset);
+    }
+    return Offset;
+}
+
+static int FindOffsetCM(size_t Dims, const size_t *Size, const size_t *Index)
+{
+    int Offset = 0;
+    for (int i = Dims - 1; i >= 0; i--)
+    {
+        Offset = Index[i] + (Size[i] * Offset);
+    }
+    return Offset;
+}
+
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
+/*
+ *  - ElementSize is the byte size of the array elements
+ *  - Dims is the number of dimensions in the variable
+ *  - GlobalDims is an array, Dims long, giving the size of each dimension
+ *  - PartialOffsets is an array, Dims long, giving the starting offsets per
+ *    dimension of this data block in the global array
+ *  - PartialCounts is an array, Dims long, giving the size per dimension
+ *    of this data block in the global array
+ *  - SelectionOffsets is an array, Dims long, giving the starting offsets in
+ * the
+ *    global array of the output selection.
+ *  - SelectionCounts is an array, Dims long, giving the size per dimension
+ *    of the output selection.
+ *  - InData is the input, a slab of the global array
+ *  - OutData is the output, to be filled with the selection array.
+ */
+// Row major version
+void BP5Deserializer::ExtractSelectionFromPartialRM(
+    int ElementSize, size_t Dims, const size_t *GlobalDims,
+    const size_t *PartialOffsets, const size_t *PartialCounts,
+    const size_t *SelectionOffsets, const size_t *SelectionCounts,
+    const char *InData, char *OutData)
+{
+    size_t BlockSize;
+    size_t SourceBlockStride = 0;
+    size_t DestBlockStride = 0;
+    size_t SourceBlockStartOffset;
+    size_t DestBlockStartOffset;
+    size_t BlockCount;
+    size_t OperantDims;
+    size_t OperantElementSize;
+
+    BlockSize = 1;
+    OperantDims = Dims;
+    OperantElementSize = ElementSize;
+    for (int Dim = Dims - 1; Dim >= 0; Dim--)
+    {
+        if ((GlobalDims[Dim] == PartialCounts[Dim]) &&
+            (SelectionCounts[Dim] == PartialCounts[Dim]))
+        {
+            BlockSize *= GlobalDims[Dim];
+            OperantDims--; /* last dimension doesn't matter, we got all and we
+                               want all */
+            OperantElementSize *= GlobalDims[Dim];
+        }
+        else
+        {
+            size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+            size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                               SelectionOffsets[Dim] + SelectionCounts[Dim]);
+            BlockSize *= (Right - Left);
+            break;
+        }
+    }
+    if (OperantDims > 0)
+    {
+        SourceBlockStride = PartialCounts[OperantDims - 1] * OperantElementSize;
+        DestBlockStride = SelectionCounts[OperantDims - 1] * OperantElementSize;
+    }
+
+    /* calculate first selected element and count */
+    BlockCount = 1;
+    size_t *FirstIndex = (size_t *)malloc(Dims * sizeof(FirstIndex[0]));
+    for (int Dim = 0; Dim < Dims; Dim++)
+    {
+        size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+        size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                           SelectionOffsets[Dim] + SelectionCounts[Dim]);
+        if (Dim < OperantDims - 1)
+        {
+            BlockCount *= (Right - Left);
+        }
+        FirstIndex[Dim] = Left;
+    }
+    size_t *SelectionIndex = (size_t *)malloc(Dims * sizeof(SelectionIndex[0]));
+    MapGlobalToLocalIndex(Dims, FirstIndex, SelectionOffsets, SelectionIndex);
+    DestBlockStartOffset = FindOffset(Dims, SelectionCounts, SelectionIndex);
+    free(SelectionIndex);
+    DestBlockStartOffset *= ElementSize;
+
+    size_t *PartialIndex = (size_t *)malloc(Dims * sizeof(PartialIndex[0]));
+    MapGlobalToLocalIndex(Dims, FirstIndex, PartialOffsets, PartialIndex);
+    SourceBlockStartOffset = FindOffset(Dims, PartialCounts, PartialIndex);
+    free(PartialIndex);
+    SourceBlockStartOffset *= ElementSize;
+
+    InData += SourceBlockStartOffset;
+    OutData += DestBlockStartOffset;
+    size_t i;
+    for (i = 0; i < BlockCount; i++)
+    {
+        memcpy(OutData, InData, BlockSize * ElementSize);
+        InData += SourceBlockStride;
+        OutData += DestBlockStride;
+    }
+    free(FirstIndex);
+}
+
+// Column-major version
+void BP5Deserializer::ExtractSelectionFromPartialCM(
+    int ElementSize, size_t Dims, const size_t *GlobalDims,
+    const size_t *PartialOffsets, const size_t *PartialCounts,
+    const size_t *SelectionOffsets, const size_t *SelectionCounts,
+    const char *InData, char *OutData)
+{
+    int BlockSize;
+    int SourceBlockStride = 0;
+    int DestBlockStride = 0;
+    int SourceBlockStartOffset;
+    int DestBlockStartOffset;
+    int BlockCount;
+    int OperantElementSize;
+
+    BlockSize = 1;
+    OperantElementSize = ElementSize;
+    for (int Dim = 0; Dim < Dims; Dim++)
+    {
+        if ((GlobalDims[Dim] == PartialCounts[Dim]) &&
+            (SelectionCounts[Dim] == PartialCounts[Dim]))
+        {
+            BlockSize *= GlobalDims[Dim];
+            OperantElementSize *= GlobalDims[Dim];
+            /* skip the first bit of everything */
+            GlobalDims++;
+            PartialOffsets++;
+            PartialCounts++;
+            SelectionOffsets++;
+            SelectionCounts++;
+            Dims--;
+            /* and make sure we do the next dimensions appropriately by
+             * repeating this iterator value */
+            Dim--;
+        }
+        else
+        {
+            int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+            int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                            SelectionOffsets[Dim] + SelectionCounts[Dim]);
+            BlockSize *= (Right - Left);
+            break;
+        }
+    }
+    if (Dims > 0)
+    {
+        SourceBlockStride = PartialCounts[0] * OperantElementSize;
+        DestBlockStride = SelectionCounts[0] * OperantElementSize;
+    }
+
+    /* calculate first selected element and count */
+    BlockCount = 1;
+    size_t *FirstIndex = (size_t *)malloc(Dims * sizeof(FirstIndex[0]));
+    for (int Dim = 0; Dim < Dims; Dim++)
+    {
+        int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+        int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                        SelectionOffsets[Dim] + SelectionCounts[Dim]);
+        if (Dim > 0)
+        {
+            BlockCount *= (Right - Left);
+        }
+        FirstIndex[Dim] = Left;
+    }
+    size_t *SelectionIndex = (size_t *)malloc(Dims * sizeof(SelectionIndex[0]));
+    MapGlobalToLocalIndex(Dims, FirstIndex, SelectionOffsets, SelectionIndex);
+    DestBlockStartOffset = FindOffsetCM(Dims, SelectionCounts, SelectionIndex);
+    free(SelectionIndex);
+    DestBlockStartOffset *= OperantElementSize;
+
+    size_t *PartialIndex = (size_t *)malloc(Dims * sizeof(PartialIndex[0]));
+    MapGlobalToLocalIndex(Dims, FirstIndex, PartialOffsets, PartialIndex);
+    SourceBlockStartOffset = FindOffsetCM(Dims, PartialCounts, PartialIndex);
+
+    free(PartialIndex);
+    SourceBlockStartOffset *= OperantElementSize;
+
+    InData += SourceBlockStartOffset;
+    OutData += DestBlockStartOffset;
+    printf("Copying %d blocks size %d * %d\n", BlockCount, BlockSize,
+           ElementSize);
+    for (int i = 0; i < BlockCount; i++)
+    {
+        for (int j = 0; j < BlockSize * ElementSize; j++)
+        {
+            printf("%02x ", (unsigned char)InData[j]);
+        }
+        printf("\n");
+        memcpy(OutData, InData, BlockSize * ElementSize);
+        InData += SourceBlockStride;
+        OutData += DestBlockStride;
+    }
+    free(FirstIndex);
 }
 
 BP5Deserializer::BP5Deserializer(int WriterCount)

@@ -47,7 +47,7 @@ public:
 
 private:
     void Init();
-    typedef struct _FFSWriterRec
+    typedef struct _BP5WriterRec
     {
         void *Key;
         int FieldID;
@@ -55,12 +55,12 @@ private:
         size_t MetaOffset;
         int DimCount;
         int Type;
-    } * FFSWriterRec;
+    } * BP5WriterRec;
 
     struct FFSWriterMarshalBase
     {
         int RecCount = 0;
-        FFSWriterRec RecList = NULL;
+        BP5WriterRec RecList = NULL;
         FMContext LocalFMContext;
         int MetaFieldCount = 0;
         FMFieldList MetaFields = NULL;
@@ -84,43 +84,8 @@ private:
     BufferV *CurDataBuffer = NULL;
     std::vector<MetaMetaInfoBlock> PreviousMetaMetaInfoBlocks;
 
-#ifdef NDEF
-    typedef struct FFSVarRec
-    {
-        void *Variable;
-        char *VarName;
-        size_t *PerWriterMetaFieldOffset;
-        size_t DimCount;
-        int Type;
-        int ElementSize;
-        size_t *GlobalDims;
-        size_t *PerWriterBlockStart;
-        size_t *PerWriterBlockCount;
-        size_t **PerWriterStart;
-        size_t **PerWriterCounts;
-        void **PerWriterIncomingData;
-        size_t *PerWriterIncomingSize; // important for compression
-    } * FFSVarRec;
-
-    enum FFSRequestTypeEnum
-    {
-        Global = 0,
-        Local = 1
-    };
-
-    typedef struct FFSArrayRequest
-    {
-        FFSVarRec VarRec;
-        enum FFSRequestTypeEnum RequestType;
-        size_t BlockID;
-        size_t *Start;
-        size_t *Count;
-        void *Data;
-        struct FFSArrayRequest *Next;
-    } * FFSArrayRequest;
-#endif
-    FFSWriterRec LookupWriterRec(void *Key);
-    FFSWriterRec CreateWriterRec(void *Variable, const char *Name,
+    BP5WriterRec LookupWriterRec(void *Key);
+    BP5WriterRec CreateWriterRec(void *Variable, const char *Name,
                                  DataType Type, size_t ElemSize,
                                  size_t DimCount);
     void RecalcMarshalStorageSize();

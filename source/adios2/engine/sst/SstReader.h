@@ -64,9 +64,11 @@ private:
 
     template <class T>
     void SstBPPerformGets();
+    void BP5PerformGets();
     void Init();
     SstStream m_Input;
     SstMarshalMethod m_WriterMarshalMethod;
+    int m_WriterIsRowMajor;
     bool m_DefinitionsNotified = false;
     bool m_BetweenStepPairs = false;
 
