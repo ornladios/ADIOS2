@@ -118,6 +118,8 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
         BeginStepConsequentFixed();
     }
 
+    std::cout << "current step " << m_CurrentStep << " buffer size  " <<  m_Buffer.size() << " =========== " << (int)m_Buffer[0]  << std::endl;
+
     for (const auto &r : m_GlobalWritePattern)
     {
         for (auto &v : r)
@@ -171,6 +173,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
         }
     }
 
+    std::cout << " ?????????????? m_Buffer[0] = " << (int)m_Buffer[0] << std::endl;
     if (m_Buffer[0] == 1)
     {
         return StepStatus::EndOfStream;
@@ -428,25 +431,28 @@ bool SscReader::SyncWritePattern()
                   << m_CurrentStep << std::endl;
     }
 
+
     ssc::BroadcastMetadata(m_GlobalWritePatternJson, m_WriterMasterStreamRank,
                            m_StreamComm);
+
 
     /*
     if (m_ReaderRank == 0)
     {
         std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "
-                  << m_GlobalWritePatternJson.capacity() << std::endl;
+            << m_GlobalWritePatternJson.capacity() << std::endl;
         for (size_t i = 0; i < m_GlobalWritePatternJson.capacity(); ++i)
         {
             std::cout << i << " : " <<
-    static_cast<int>(m_GlobalWritePatternJson[i]) << " : " <<
-    *reinterpret_cast<uint64_t*>(m_GlobalWritePatternJson.data() +i) << " : " <<
-    m_GlobalWritePatternJson[i] <<std::endl;
+                static_cast<int>(m_GlobalWritePatternJson[i]) << " : " <<
+                *reinterpret_cast<uint64_t*>(m_GlobalWritePatternJson.data() +i) << " : " <<
+                m_GlobalWritePatternJson[i] <<std::endl;
         }
         std::cout << std::endl;
         std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " << std::endl;
     }
     */
+
 
     if (m_GlobalWritePatternJson[0] == 1)
     {
