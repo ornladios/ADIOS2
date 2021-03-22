@@ -86,6 +86,19 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 {
     TAU_SCOPED_TIMER_FUNC();
 
+    if (m_Verbosity >= 10)
+    {
+        for (int i = 0; i < m_ReaderSize; ++i)
+        {
+            m_Comm.Barrier();
+            if (i == m_ReaderRank)
+            {
+                ssc::PrintRankPosMap(m_AllReceivingWriterRanks, "Rank Pos Map for Reader " + std::to_string(m_ReaderRank));
+            }
+        }
+        m_Comm.Barrier();
+    }
+
     ++m_CurrentStep;
 
     m_StepBegun = true;
@@ -118,7 +131,6 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
         BeginStepConsequentFixed();
     }
 
-    std::cout << "current step " << m_CurrentStep << " buffer size  " <<  m_Buffer.size() << " =========== " << (int)m_Buffer[0]  << std::endl;
 
     for (const auto &r : m_GlobalWritePattern)
     {
@@ -173,7 +185,6 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
         }
     }
 
-    std::cout << " ?????????????? m_Buffer[0] = " << (int)m_Buffer[0] << std::endl;
     if (m_Buffer[0] == 1)
     {
         return StepStatus::EndOfStream;
@@ -505,7 +516,7 @@ void SscReader::SyncReadPattern()
     }
     m_Buffer.resize(totalDataSize);
 
-    if (m_Verbosity >= 10)
+    if (m_Verbosity >= 20)
     {
         for (int i = 0; i < m_ReaderSize; ++i)
         {

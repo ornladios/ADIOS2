@@ -300,7 +300,7 @@ void SscWriter::SyncWritePattern(bool finalStep)
     ssc::JsonToBlockVecVec(globalBuffer, m_GlobalWritePattern, m_IO, false,
                            false);
 
-    if (m_Verbosity >= 10 && m_WriterRank == 0)
+    if (m_Verbosity >= 20 && m_WriterRank == 0)
     {
         ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
     }
@@ -329,6 +329,19 @@ void SscWriter::SyncReadPattern()
         m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
     CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,
                       m_AllSendingReaderRanks);
+
+    if (m_Verbosity >= 10)
+    {
+        for (int i = 0; i < m_WriterSize; ++i)
+        {
+            m_Comm.Barrier();
+            if (i == m_WriterRank)
+            {
+                ssc::PrintRankPosMap(m_AllSendingReaderRanks, "Rank Pos Map for Writer " + std::to_string(m_WriterRank));
+            }
+        }
+        m_Comm.Barrier();
+    }
 }
 
 void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
