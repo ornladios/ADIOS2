@@ -210,8 +210,6 @@ void SscWriter::EndStep()
 
 void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
 
-// PRIVATE
-
 void SscWriter::MpiWait()
 {
     if (m_MpiMode == "twosided")
@@ -337,7 +335,9 @@ void SscWriter::SyncReadPattern()
             m_Comm.Barrier();
             if (i == m_WriterRank)
             {
-                ssc::PrintRankPosMap(m_AllSendingReaderRanks, "Rank Pos Map for Writer " + std::to_string(m_WriterRank));
+                ssc::PrintRankPosMap(m_AllSendingReaderRanks,
+                                     "Rank Pos Map for Writer " +
+                                         std::to_string(m_WriterRank));
             }
         }
         m_Comm.Barrier();

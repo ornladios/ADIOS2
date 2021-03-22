@@ -202,41 +202,41 @@ void AttributeMapToJson(IO &input, Buffer &output)
         {
         }
 #define declare_type(T)                                                        \
-        else if (attributePair.second->m_Type == helper::GetDataType<T>())         \
-        {                                                                          \
-            const auto &attribute =                                                \
+    else if (attributePair.second->m_Type == helper::GetDataType<T>())         \
+    {                                                                          \
+        const auto &attribute =                                                \
             input.InquireAttribute<T>(attributePair.first);                    \
-            *(output.data() + pos) = 66;                                           \
-            ++pos;                                                                 \
-            *(output.data() + pos) = static_cast<uint8_t>(attribute->m_Type);      \
-            ++pos;                                                                 \
-            *(output.data() + pos) =                                               \
+        *(output.data() + pos) = 66;                                           \
+        ++pos;                                                                 \
+        *(output.data() + pos) = static_cast<uint8_t>(attribute->m_Type);      \
+        ++pos;                                                                 \
+        *(output.data() + pos) =                                               \
             static_cast<uint8_t>(attribute->m_Name.size());                    \
-            ++pos;                                                                 \
-            std::memcpy(output.data() + pos, attribute->m_Name.data(),             \
+        ++pos;                                                                 \
+        std::memcpy(output.data() + pos, attribute->m_Name.data(),             \
                     attribute->m_Name.size());                                 \
-            pos += attribute->m_Name.size();                                       \
-            if (attribute->m_IsSingleValue)                                        \
-            {                                                                      \
-                *reinterpret_cast<uint64_t *>(output.data() + pos) = sizeof(T);    \
-                pos += 8;                                                          \
-                *reinterpret_cast<T *>(output.data() + pos) =                      \
+        pos += attribute->m_Name.size();                                       \
+        if (attribute->m_IsSingleValue)                                        \
+        {                                                                      \
+            *reinterpret_cast<uint64_t *>(output.data() + pos) = sizeof(T);    \
+            pos += 8;                                                          \
+            *reinterpret_cast<T *>(output.data() + pos) =                      \
                 attribute->m_DataSingleValue;                                  \
-                pos += sizeof(T);                                                  \
-            }                                                                      \
-            else                                                                   \
-            {                                                                      \
-                uint64_t size = sizeof(T) * attribute->m_DataArray.size();         \
-                *reinterpret_cast<uint64_t *>(output.data() + pos) = size;         \
-                pos += 8;                                                          \
-                std::memcpy(output.data() + pos, attribute->m_DataArray.data(),    \
+            pos += sizeof(T);                                                  \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            uint64_t size = sizeof(T) * attribute->m_DataArray.size();         \
+            *reinterpret_cast<uint64_t *>(output.data() + pos) = size;         \
+            pos += 8;                                                          \
+            std::memcpy(output.data() + pos, attribute->m_DataArray.data(),    \
                         size);                                                 \
-                pos += size;                                                       \
-            }                                                                      \
-        }
+            pos += size;                                                       \
+        }                                                                      \
+    }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
-            *reinterpret_cast<uint64_t *>(output.data())= pos ;
+        *reinterpret_cast<uint64_t *>(output.data()) = pos;
     }
 }
 
@@ -250,11 +250,12 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
 
     uint64_t pos = 2;
 
-    uint64_t blockSize = *reinterpret_cast<const uint64_t *>(input.data() + pos);
+    uint64_t blockSize =
+        *reinterpret_cast<const uint64_t *>(input.data() + pos);
 
     pos += 8;
 
-    while(pos < blockSize)
+    while (pos < blockSize)
     {
 
         uint8_t shapeId =
@@ -264,20 +265,17 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
         if (shapeId == 66)
         {
             const DataType type = static_cast<DataType>(
-                    *reinterpret_cast<const uint8_t *>(input.data() + pos));
+                *reinterpret_cast<const uint8_t *>(input.data() + pos));
             ++pos;
-
 
             uint8_t nameSize =
                 *reinterpret_cast<const uint8_t *>(input.data() + pos);
             ++pos;
 
-
             std::vector<char> namev(nameSize);
             std::memcpy(namev.data(), input.data() + pos, nameSize);
             std::string name = std::string(namev.begin(), namev.end());
             pos += nameSize;
-
 
             uint64_t size =
                 *reinterpret_cast<const uint64_t *>(input.data() + pos);
@@ -297,22 +295,26 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
                             std::runtime_error("unknown attribute data type"));
                     }
 #define declare_type(T)                                                        \
-                    else if (type == helper::GetDataType<T>())                                 \
-                    {                                                                          \
-                        if (size == sizeof(T))                                                 \
-                        {                                                                      \
-                            io.DefineAttribute<T>(name, *reinterpret_cast<const T *>(input.data() + pos));             \
-                        }                                                                      \
-                        else                                                                   \
-                        {                                                                      \
-                            io.DefineAttribute<T>(name, reinterpret_cast<const T *>(input.data() + pos), size / sizeof(T));\
-                        }\
-                    }
+    else if (type == helper::GetDataType<T>())                                 \
+    {                                                                          \
+        if (size == sizeof(T))                                                 \
+        {                                                                      \
+            io.DefineAttribute<T>(                                             \
+                name, *reinterpret_cast<const T *>(input.data() + pos));       \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            io.DefineAttribute<T>(                                             \
+                name, reinterpret_cast<const T *>(input.data() + pos),         \
+                size / sizeof(T));                                             \
+        }                                                                      \
+    }
                     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
                     else
                     {
-                        throw( std::runtime_error("unknown attribute data type"));
+                        throw(
+                            std::runtime_error("unknown attribute data type"));
                     }
                 }
             }
@@ -380,36 +382,36 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
                     throw(std::runtime_error("unknown variable data type"));
                 }
 #define declare_type(T)                                                        \
-                else if (b.type == helper::GetDataType<T>())                               \
-                {                                                                          \
-                    auto v = io.InquireVariable<T>(b.name);                                \
-                    if (!v)                                                                \
-                    {                                                                      \
-                        Dims vStart = b.start;                                             \
-                        Dims vShape = b.shape;                                             \
-                        if (!helper::IsRowMajor(io.m_HostLanguage))                        \
-                        {                                                                  \
-                            std::reverse(vStart.begin(), vStart.end());                    \
-                            std::reverse(vShape.begin(), vShape.end());                    \
-                        }                                                                  \
-                        if (b.shapeId == ShapeID::GlobalValue)                             \
-                        {                                                                  \
-                            io.DefineVariable<T>(b.name);                                  \
-                        }                                                                  \
-                        else if (b.shapeId == ShapeID::GlobalArray)                        \
-                        {                                                                  \
-                            io.DefineVariable<T>(b.name, vShape, vStart, vShape);          \
-                        }                                                                  \
-                        else if (b.shapeId == ShapeID::LocalValue)                         \
-                        {                                                                  \
-                            io.DefineVariable<T>(b.name, {adios2::LocalValueDim});         \
-                        }                                                                  \
-                        else if (b.shapeId == ShapeID::LocalArray)                         \
-                        {                                                                  \
-                            io.DefineVariable<T>(b.name, {}, {}, vShape);                  \
-                        }                                                                  \
-                    }                                                                      \
-                }
+    else if (b.type == helper::GetDataType<T>())                               \
+    {                                                                          \
+        auto v = io.InquireVariable<T>(b.name);                                \
+        if (!v)                                                                \
+        {                                                                      \
+            Dims vStart = b.start;                                             \
+            Dims vShape = b.shape;                                             \
+            if (!helper::IsRowMajor(io.m_HostLanguage))                        \
+            {                                                                  \
+                std::reverse(vStart.begin(), vStart.end());                    \
+                std::reverse(vShape.begin(), vShape.end());                    \
+            }                                                                  \
+            if (b.shapeId == ShapeID::GlobalValue)                             \
+            {                                                                  \
+                io.DefineVariable<T>(b.name);                                  \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::GlobalArray)                        \
+            {                                                                  \
+                io.DefineVariable<T>(b.name, vShape, vStart, vShape);          \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::LocalValue)                         \
+            {                                                                  \
+                io.DefineVariable<T>(b.name, {adios2::LocalValueDim});         \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::LocalArray)                         \
+            {                                                                  \
+                io.DefineVariable<T>(b.name, {}, {}, vShape);                  \
+            }                                                                  \
+        }                                                                      \
+    }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
                 else
@@ -426,7 +428,9 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
 {
     int mpiSize;
     MPI_Comm_size(comm, &mpiSize);
-    int localSize = static_cast<int>(*reinterpret_cast<const uint64_t *>(localBuffer.data())) - 8;
+    int localSize = static_cast<int>(*reinterpret_cast<const uint64_t *>(
+                        localBuffer.data())) -
+                    8;
     std::vector<int> localSizes(mpiSize);
     MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, comm);
     int globalSize = std::accumulate(localSizes.begin(), localSizes.end(), 0);
@@ -438,7 +442,9 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
         displs[i] = displs[i - 1] + localSizes[i - 1];
     }
 
-    MPI_Gatherv(localBuffer.data() + 8, localSize, MPI_CHAR, globalBuffer.data() + 10, localSizes.data(), displs.data(), MPI_CHAR, 0, comm);
+    MPI_Gatherv(localBuffer.data() + 8, localSize, MPI_CHAR,
+                globalBuffer.data() + 10, localSizes.data(), displs.data(),
+                MPI_CHAR, 0, comm);
     globalBuffer[0] = finalStep;
     globalBuffer[1] = locked;
     *reinterpret_cast<uint64_t *>(globalBuffer.data() + 2) = globalSize;

@@ -86,14 +86,16 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    if (m_Verbosity >= 10)
+    if (m_Verbosity >= 20)
     {
         for (int i = 0; i < m_ReaderSize; ++i)
         {
             m_Comm.Barrier();
             if (i == m_ReaderRank)
             {
-                ssc::PrintRankPosMap(m_AllReceivingWriterRanks, "Rank Pos Map for Reader " + std::to_string(m_ReaderRank));
+                ssc::PrintRankPosMap(m_AllReceivingWriterRanks,
+                                     "Rank Pos Map for Reader " +
+                                         std::to_string(m_ReaderRank));
             }
         }
         m_Comm.Barrier();
@@ -130,7 +132,6 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     {
         BeginStepConsequentFixed();
     }
-
 
     for (const auto &r : m_GlobalWritePattern)
     {
@@ -442,10 +443,8 @@ bool SscReader::SyncWritePattern()
                   << m_CurrentStep << std::endl;
     }
 
-
     ssc::BroadcastMetadata(m_GlobalWritePatternJson, m_WriterMasterStreamRank,
                            m_StreamComm);
-
 
     /*
     if (m_ReaderRank == 0)
@@ -456,14 +455,13 @@ bool SscReader::SyncWritePattern()
         {
             std::cout << i << " : " <<
                 static_cast<int>(m_GlobalWritePatternJson[i]) << " : " <<
-                *reinterpret_cast<uint64_t*>(m_GlobalWritePatternJson.data() +i) << " : " <<
-                m_GlobalWritePatternJson[i] <<std::endl;
+                *reinterpret_cast<uint64_t*>(m_GlobalWritePatternJson.data() +i)
+    << " : " << m_GlobalWritePatternJson[i] <<std::endl;
         }
         std::cout << std::endl;
         std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " << std::endl;
     }
     */
-
 
     if (m_GlobalWritePatternJson[0] == 1)
     {
@@ -475,6 +473,10 @@ bool SscReader::SyncWritePattern()
     ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO,
                            true, true);
 
+    if (m_Verbosity >= 10 && m_ReaderRank == 0)
+    {
+        ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
+    }
     return false;
 }
 
@@ -502,9 +504,6 @@ void SscReader::SyncReadPattern()
     ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,
                            m_StreamComm);
 
-    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalWritePattern, m_IO, false,
-                           false);
-
     m_AllReceivingWriterRanks =
         ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
     CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
@@ -516,7 +515,7 @@ void SscReader::SyncReadPattern()
     }
     m_Buffer.resize(totalDataSize);
 
-    if (m_Verbosity >= 20)
+    if (m_Verbosity >= 10)
     {
         for (int i = 0; i < m_ReaderSize; ++i)
         {

@@ -13,8 +13,8 @@
 
 #include "SscWriter.h"
 #include "adios2/helper/adiosSystem.h"
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 namespace adios2
 {
