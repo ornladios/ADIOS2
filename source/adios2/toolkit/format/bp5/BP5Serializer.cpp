@@ -567,6 +567,10 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
     struct FFSMetadataInfoStruct *MBase =
         (struct FFSMetadataInfoStruct *)MetadataBuf;
 
+    if (CurDataBuffer == NULL)
+    {
+        CurDataBuffer = new BufferV("data buffer");
+    }
     MBase->DataBlockSize = CurDataBuffer->AddToVec(
         0, NULL, 8, true); //  output block size multiple of 8, offset is size
 

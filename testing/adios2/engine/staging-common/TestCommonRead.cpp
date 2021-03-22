@@ -221,7 +221,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             EXPECT_FALSE(var_r64_2d_rev);
         }
 
-#ifdef NDEF
         if (!NoData)
         {
             const std::vector<adios2::Variable<int8_t>::Info> i8Info =
@@ -267,7 +266,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                 EXPECT_FALSE(c64Info[0].IsValue);
             }
         }
-#endif
+
         long unsigned int myStart =
             (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
         long unsigned int myLength =

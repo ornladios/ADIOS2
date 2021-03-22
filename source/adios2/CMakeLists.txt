@@ -84,7 +84,7 @@ add_library(adios2_core
   
   toolkit/format/bp5/BP5Base.cpp
   toolkit/format/bp5/BP5Serializer.cpp
-  toolkit/format/bp5/BP5Deserializer.cpp
+  toolkit/format/bp5/BP5Deserializer.cpp  toolkit/format/bp5/BP5Deserializer.tcc
 
   toolkit/format/bp/bpOperation/BPOperation.cpp 
   toolkit/format/bp/bpOperation/BPOperation.tcc

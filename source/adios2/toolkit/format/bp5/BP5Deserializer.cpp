@@ -11,6 +11,7 @@
 #include "adios2/core/IO.h"
 
 #include "BP5Deserializer.h"
+#include "BP5Deserializer.tcc"
 
 #include <string.h>
 
@@ -387,6 +388,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         Control = BuildControl(FMFormat_of_original(FFSformat));
     }
     ControlArray = &Control->Controls[0];
+    ActiveControl[WriterRank] = Control;
 
     MetadataBaseAddrs[WriterRank] = BaseData;
     for (int i = 0; i < Control->ControlCount; i++)
@@ -601,6 +603,8 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                 size_t *RankOffset = Req.VarRec->PerWriterStart[i];
                 const size_t *RankSize = Req.VarRec->PerWriterCounts[i];
                 std::vector<size_t> ZeroSel(DimCount);
+                std::vector<size_t> ZeroRankOffset(DimCount);
+                std::vector<size_t> ZeroGlobalDimensions(DimCount);
                 const size_t *SelOffset = NULL;
                 const size_t *SelSize = Req.Count.data();
                 DataType Type = Req.VarRec->Type;
@@ -631,8 +635,6 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                         DataOffset += BlockElemCount * ElementSize;
                         RankSize += DimCount;
                     }
-                    std::vector<size_t> ZeroRankOffset(DimCount);
-                    std::vector<size_t> ZeroGlobalDimensions(DimCount);
                     RankOffset = ZeroRankOffset.data();
                     GlobalDimensions = ZeroGlobalDimensions.data();
                     if (SelOffset == NULL)
@@ -781,6 +783,7 @@ void BP5Deserializer::ExtractSelectionFromPartialRM(
     MapGlobalToLocalIndex(Dims, FirstIndex, SelectionOffsets, SelectionIndex);
     DestBlockStartOffset = FindOffset(Dims, SelectionCounts, SelectionIndex);
     free(SelectionIndex);
+    printf("DEstBlockStartOffset = %zu\n", DestBlockStartOffset);
     DestBlockStartOffset *= ElementSize;
 
     size_t *PartialIndex = (size_t *)malloc(Dims * sizeof(PartialIndex[0]));
@@ -906,9 +909,19 @@ BP5Deserializer::BP5Deserializer(int WriterCount)
     MetadataBaseAddrs.resize(WriterCohortSize);
     MetadataFieldLists.resize(WriterCohortSize);
     DataBaseAddrs.resize(WriterCohortSize);
+    ActiveControl.resize(WriterCohortSize);
 }
 
 BP5Deserializer::~BP5Deserializer() { free_FFSContext(ReaderFFSContext); }
 
+#define declare_template_instantiation(T)                                      \
+                                                                               \
+    template std::vector<typename core::Variable<T>::BPInfo>                   \
+    BP5Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
+        const;
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
 }
+
 }

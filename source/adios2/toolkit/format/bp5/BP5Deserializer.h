@@ -11,6 +11,7 @@
 
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
+#include "adios2/core/Variable.h"
 
 #include "BP5Base.h"
 #include "atl.h"
@@ -56,6 +57,10 @@ public:
     bool WriterIsRowMajor = 1;
     bool ReaderIsRowMajor = 1;
     core::Engine *m_Engine = NULL;
+
+    template <class T>
+    std::vector<typename core::Variable<T>::BPInfo>
+    BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
 
 private:
     struct BP5VarRec
@@ -184,7 +189,16 @@ private:
     std::vector<BP5ArrayRequest> PendingRequests;
     bool NeedWriter(BP5ArrayRequest Req, int i);
     size_t CurTimestep = 0;
+    std::vector<struct ControlInfo *> ActiveControl;
 };
+
+#define declare_template_instantiation(T)                                      \
+    extern template std::vector<typename core::Variable<T>::BPInfo>            \
+    BP5Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
+        const;
+
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace format
 } // end namespace adios2

@@ -713,6 +713,10 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
         {                                                                      \
             return m_BP3Deserializer->BlocksInfo(variable, 0);                 \
         }                                                                      \
+        else if (m_WriterMarshalMethod == SstMarshalBP5)                       \
+        {                                                                      \
+            return m_BP5Deserializer->BlocksInfo(variable, 0);                 \
+        }                                                                      \
         throw std::invalid_argument(                                           \
             "ERROR: Unknown marshal mechanism in DoBlocksInfo\n");             \
     }
