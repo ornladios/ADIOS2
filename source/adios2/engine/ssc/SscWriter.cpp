@@ -279,12 +279,12 @@ void SscWriter::SyncWritePattern(bool finalStep)
     ssc::Buffer localBuffer(8);
     *localBuffer.data<uint64_t>() = 0;
 
-    ssc::BlockVecToJson(m_GlobalWritePattern[m_StreamRank], localBuffer,
-                        m_StreamRank);
+    ssc::SerializeVariables(m_GlobalWritePattern[m_StreamRank], localBuffer,
+                            m_StreamRank);
 
     if (m_WriterRank == 0)
     {
-        ssc::AttributeMapToJson(m_IO, localBuffer);
+        ssc::SerializeAttributes(m_IO, localBuffer);
     }
 
     ssc::Buffer globalBuffer;
@@ -295,8 +295,7 @@ void SscWriter::SyncWritePattern(bool finalStep)
     ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank,
                            m_StreamComm);
 
-    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalWritePattern, m_IO, false,
-                           false);
+    ssc::Deserialize(globalBuffer, m_GlobalWritePattern, m_IO, false, false);
 
     if (m_Verbosity >= 20 && m_WriterRank == 0)
     {
@@ -321,8 +320,7 @@ void SscWriter::SyncReadPattern()
 
     m_ReaderSelectionsLocked = globalBuffer[1];
 
-    ssc::JsonToBlockVecVec(globalBuffer, m_GlobalReadPattern, m_IO, false,
-                           false);
+    ssc::Deserialize(globalBuffer, m_GlobalReadPattern, m_IO, false, false);
     m_AllSendingReaderRanks = ssc::CalculateOverlap(
         m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
     CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,

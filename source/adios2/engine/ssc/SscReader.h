@@ -45,7 +45,7 @@ private:
 
     ssc::BlockVecVec m_GlobalWritePattern;
     ssc::BlockVec m_LocalReadPattern;
-    ssc::Buffer m_GlobalWritePatternJson;
+    ssc::Buffer m_GlobalWritePatternBuffer;
 
     ssc::RankPosMap m_AllReceivingWriterRanks;
     std::vector<char> m_Buffer;

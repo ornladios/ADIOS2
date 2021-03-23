@@ -117,7 +117,7 @@ RankPosMap CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
     return ret;
 }
 
-void BlockVecToJson(const BlockVec &input, Buffer &output, const int rank)
+void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
 {
     for (const auto &b : input)
     {
@@ -183,7 +183,7 @@ void BlockVecToJson(const BlockVec &input, Buffer &output, const int rank)
     }
 }
 
-void AttributeMapToJson(IO &input, Buffer &output)
+void SerializeAttributes(IO &input, Buffer &output)
 {
     const auto &attributeMap = input.GetAttributes();
     for (const auto &attributePair : attributeMap)
@@ -259,8 +259,8 @@ void AttributeMapToJson(IO &input, Buffer &output)
     }
 }
 
-void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
-                       const bool regVars, const bool regAttrs)
+void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
+                 const bool regVars, const bool regAttrs)
 {
     for (auto &i : output)
     {

@@ -71,7 +71,7 @@ void SscReader::BeginStepFlexible(StepStatus &status)
     m_GlobalWritePattern.clear();
     m_GlobalWritePattern.resize(m_StreamSize);
     m_LocalReadPattern.clear();
-    m_GlobalWritePatternJson.clear();
+    m_GlobalWritePatternBuffer.clear();
     bool finalStep = SyncWritePattern();
     if (finalStep)
     {
@@ -185,8 +185,8 @@ void SscReader::PerformGets()
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
     {
-        ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern,
-                               m_IO, false, false);
+        ssc::Deserialize(m_GlobalWritePatternBuffer, m_GlobalWritePattern, m_IO,
+                         false, false);
         size_t oldSize = m_AllReceivingWriterRanks.size();
         m_AllReceivingWriterRanks =
             ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
@@ -428,18 +428,18 @@ bool SscReader::SyncWritePattern()
                   << m_CurrentStep << std::endl;
     }
 
-    ssc::BroadcastMetadata(m_GlobalWritePatternJson, m_WriterMasterStreamRank,
+    ssc::BroadcastMetadata(m_GlobalWritePatternBuffer, m_WriterMasterStreamRank,
                            m_StreamComm);
 
-    if (m_GlobalWritePatternJson[0] == 1)
+    if (m_GlobalWritePatternBuffer[0] == 1)
     {
         return true;
     }
 
-    m_WriterDefinitionsLocked = m_GlobalWritePatternJson[1];
+    m_WriterDefinitionsLocked = m_GlobalWritePatternBuffer[1];
 
-    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO,
-                           true, true);
+    ssc::Deserialize(m_GlobalWritePatternBuffer, m_GlobalWritePattern, m_IO,
+                     true, true);
 
     if (m_Verbosity >= 20 && m_ReaderRank == 0)
     {
@@ -462,7 +462,7 @@ void SscReader::SyncReadPattern()
     ssc::Buffer localBuffer(8);
     *localBuffer.data<uint64_t>() = 0;
 
-    ssc::BlockVecToJson(m_LocalReadPattern, localBuffer, m_StreamRank);
+    ssc::SerializeVariables(m_LocalReadPattern, localBuffer, m_StreamRank);
 
     ssc::Buffer globalBuffer;
 
@@ -472,8 +472,8 @@ void SscReader::SyncReadPattern()
     ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,
                            m_StreamComm);
 
-    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO,
-                           true, true);
+    ssc::Deserialize(m_GlobalWritePatternBuffer, m_GlobalWritePattern, m_IO,
+                     true, true);
 
     m_AllReceivingWriterRanks =
         ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
