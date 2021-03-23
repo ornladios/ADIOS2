@@ -460,7 +460,7 @@ void SscReader::SyncReadPattern()
     }
 
     ssc::Buffer localBuffer(8);
-    *localBuffer.data<uint64_t>() = 0;
+    localBuffer.value<uint64_t>() = 0;
 
     ssc::SerializeVariables(m_LocalReadPattern, localBuffer, m_StreamRank);
 

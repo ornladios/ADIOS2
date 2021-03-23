@@ -192,9 +192,7 @@ if(ADIOS2_HAVE_SSC)
         engine/ssc/SscWriter.tcc
         engine/ssc/SscHelper.cpp
         )
-    target_link_libraries(adios2_core_mpi PRIVATE adios2::thirdparty::nlohmann_json)
-    # SSC also activates code in main core library that uses nlohmann_json.
-    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
+    target_link_libraries(adios2_core_mpi)
 endif()
 
 if(ADIOS2_HAVE_Table)
