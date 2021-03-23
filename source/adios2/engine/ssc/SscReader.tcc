@@ -138,7 +138,7 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
                     if (b.shapeId == ShapeID::GlobalArray ||
                         b.shapeId == ShapeID::LocalArray)
                     {
-                        helper::NdCopy<T>(m_Buffer.data() + b.bufferStart,
+                        helper::NdCopy<T>(m_Buffer.data<char>() + b.bufferStart,
                                           b.start, b.count, true, true,
                                           reinterpret_cast<char *>(data),
                                           vStart, vCount, true, true);
