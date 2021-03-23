@@ -63,6 +63,11 @@ public:
     {
         return reinterpret_cast<T *>(m_Buffer);
     }
+    template <typename T>
+    const T *data() const
+    {
+        return reinterpret_cast<const T *>(m_Buffer);
+    }
     uint8_t *data() { return reinterpret_cast<uint8_t *>(m_Buffer); }
     const uint8_t *data() const
     {

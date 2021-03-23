@@ -198,8 +198,27 @@ void AttributeMapToJson(IO &input, Buffer &output)
             pos += 8;
         }
 
-        if (attributePair.second->m_Type == DataType::None)
+        if (attributePair.second->m_Type == DataType::String)
         {
+            const auto &attribute =
+                input.InquireAttribute<std::string>(attributePair.first);
+            *(output.data() + pos) = 66;
+            ++pos;
+            *(output.data() + pos) = static_cast<uint8_t>(attribute->m_Type);
+            ++pos;
+            *(output.data() + pos) =
+                static_cast<uint8_t>(attribute->m_Name.size());
+            ++pos;
+            std::memcpy(output.data() + pos, attribute->m_Name.data(),
+                        attribute->m_Name.size());
+            pos += attribute->m_Name.size();
+            *reinterpret_cast<uint64_t *>(output.data() + pos) =
+                attribute->m_DataSingleValue.size();
+            pos += 8;
+            std::memcpy(output.data() + pos,
+                        attribute->m_DataSingleValue.data(),
+                        attribute->m_DataSingleValue.size());
+            pos += attribute->m_DataSingleValue.size();
         }
 #define declare_type(T)                                                        \
     else if (attributePair.second->m_Type == helper::GetDataType<T>())         \
@@ -289,10 +308,11 @@ void JsonToBlockVecVec(const Buffer &input, BlockVecVec &output, IO &io,
                 {
                     int rank;
                     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-                    if (type == DataType::None)
+                    if (type == DataType::String)
                     {
-                        throw(
-                            std::runtime_error("unknown attribute data type"));
+                        io.DefineAttribute<std::string>(
+                            name,
+                            std::string(input.data<const char>() + pos, size));
                     }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
