@@ -15,8 +15,27 @@ if(BUILD_SHARED_LIBS)
   set_property(TARGET sst PROPERTY POSITION_INDEPENDENT_CODE 1)
 endif()
 
-target_link_libraries(sst PRIVATE taustubs)
+if (CapnProto_FOUND)
+   target_sources(sst PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/adios.capnp.c++ cp/capnp/marshal.cpp)
+   target_link_libraries(sst PRIVATE CapnProto::capnp CapnProto::capnp CapnProto::kj)
+   add_custom_command(
+      OUTPUT "adios.capnp.c++" "adios.capnp.h"
+      COMMAND "${CAPNP_EXECUTABLE}"
+      ARGS compile
+          -o ${CAPNPC_CXX_EXECUTABLE}:${CMAKE_CURRENT_BINARY_DIR}
+          --src-prefix ${CMAKE_CURRENT_SOURCE_DIR}/cp/capnp/
+          ${include_path}
+          ${CAPNPC_FLAGS}
+          ${CMAKE_CURRENT_SOURCE_DIR}/cp/capnp/adios.capnp
+      DEPENDS "cp/capnp/adios.capnp"
+      COMMENT "Compiling Cap'n Proto schema adios.capnp"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      VERBATIM
+    )
+endif()   
 
+
+target_link_libraries(sst PRIVATE taustubs)
 if(ADIOS2_SST_HAVE_LIBFABRIC)
   target_sources(sst PRIVATE dp/rdma_dp.c)
   target_link_libraries(sst PRIVATE libfabric::libfabric)
@@ -47,6 +66,7 @@ set(SST_CONFIG_OPTS
   FI_GNI
   CRAY_DRC
   NVStream
+  CapnProto
 )
 include(SSTFunctions)
 GenerateSSTHeaderConfig(${SST_CONFIG_OPTS})

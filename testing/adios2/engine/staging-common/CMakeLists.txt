@@ -8,9 +8,11 @@ find_package(Threads REQUIRED)
 gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".InSituMPI" EXTRA_ARGS "InSituMPI")
 if(ADIOS2_HAVE_SST)
   gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST" "MarshalMethod=FFS")
+  gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.CP" EXTRA_ARGS "SST" "MarshalMethod=CP")
   gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST" "MarshalMethod=BP")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST"  "--engine_params" "MarshalMethod=FFS")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST"  "--engine_params" "MarshalMethod=BP")
+  gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".SST.CP" EXTRA_ARGS "SST"  "--engine_params" "MarshalMethod=CP")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".BP4_stream" EXTRA_ARGS "BP4"  "--engine_params" "OpenTimeoutSecs=5")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".FileStream" EXTRA_ARGS "FileStream")
 endif()
@@ -157,10 +159,11 @@ MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" writer "CPCommPattern=Peer" "${BAS
 list (REMOVE_ITEM COMM_PEER_SST_TESTS "PreciousTimestep")
 
 MutateTestSet( FFS_SST_TESTS "FFS" writer "MarshalMethod=FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
+MutateTestSet( FFS_SST_TESTS "CP" writer "MarshalMethod=CP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod=BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 
 set (SST_TESTS "")
-LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${BP_SST_TESTS})
+LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${CP_SST_TESTS} ${BP_SST_TESTS})
 
 # Zero Data tests are unreliable with SST and BP marshaling
 list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")

@@ -131,7 +131,8 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     }
 
     m_BetweenStepPairs = true;
-    if (Params.MarshalMethod == SstMarshalFFS)
+    if ((Params.MarshalMethod == SstMarshalFFS) ||
+        (Params.MarshalMethod == SstMarshalCP))
     {
         return (StepStatus)SstFFSWriterBeginStep(m_Output, (int)mode,
                                                  timeout_sec);
@@ -221,7 +222,8 @@ void SstWriter::EndStep()
         SstWriterDefinitionLock(m_Output, m_WriterStep);
         m_DefinitionsNotified = true;
     }
-    if (Params.MarshalMethod == SstMarshalFFS)
+    if ((Params.MarshalMethod == SstMarshalFFS) ||
+        (Params.MarshalMethod == SstMarshalCP))
     {
         TAU_SCOPED_TIMER("Marshaling Overhead");
         TAU_START("SstMarshalFFS");

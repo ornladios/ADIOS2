@@ -36,7 +36,8 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                                "BeginStep/EndStep pairs");
     }
 
-    if (Params.MarshalMethod == SstMarshalFFS)
+    if ((Params.MarshalMethod == SstMarshalFFS) ||
+        (Params.MarshalMethod == SstMarshalCP))
     {
         size_t *Shape = NULL;
         size_t *Start = NULL;
