@@ -29,31 +29,33 @@ namespace ssc
 class Buffer
 {
 public:
-    Buffer() {}
+    Buffer()
+    {
+        m_Buffer = malloc(1);
+        m_Capacity = 1;
+    }
     Buffer(size_t capacity)
     {
         m_Buffer = malloc(capacity);
         m_Capacity = capacity;
     }
-    ~Buffer() { clear(); }
-    void clear()
+    ~Buffer()
     {
         if (m_Buffer)
         {
             free(m_Buffer);
+            m_Capacity = 0;
             m_Buffer = nullptr;
         }
     }
+    void clear()
+    {
+        m_Buffer = realloc(m_Buffer, 1);
+        m_Capacity = 1;
+    }
     void reserve(size_t capacity)
     {
-        if (m_Buffer == nullptr)
-        {
-            m_Buffer = malloc(capacity);
-        }
-        else
-        {
-            m_Buffer = realloc(m_Buffer, capacity);
-        }
+        m_Buffer = realloc(m_Buffer, capacity);
         m_Capacity = capacity;
     }
     template <typename T>

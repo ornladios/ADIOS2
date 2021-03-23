@@ -452,8 +452,6 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
 
 void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm)
 {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int globalBufferSize = globalBuffer.capacity();
     MPI_Bcast(&globalBufferSize, 1, MPI_INT, root, comm);
     if (globalBuffer.capacity() < globalBufferSize)
