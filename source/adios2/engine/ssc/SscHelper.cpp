@@ -131,10 +131,10 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
             pos += 8;
         }
 
-        *(output.data() + pos) = static_cast<uint8_t>(b.shapeId);
+        *output.data<uint8_t>(pos) = static_cast<uint8_t>(b.shapeId);
         ++pos;
 
-        *reinterpret_cast<int *>(output.data() + pos) = rank;
+        *output.data<int>(pos) = rank;
         pos += 4;
 
         *(output.data() + pos) = static_cast<uint8_t>(b.name.size());
@@ -151,26 +151,26 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
 
         for (const auto &s : b.shape)
         {
-            *reinterpret_cast<uint64_t *>(output.data() + pos) = s;
+            *output.data<uint64_t>(pos) = s;
             pos += 8;
         }
 
         for (const auto &s : b.start)
         {
-            *reinterpret_cast<uint64_t *>(output.data() + pos) = s;
+            *output.data<uint64_t>(pos) = s;
             pos += 8;
         }
 
         for (const auto &s : b.count)
         {
-            *reinterpret_cast<uint64_t *>(output.data() + pos) = s;
+            *output.data<uint64_t>(pos) = s;
             pos += 8;
         }
 
-        *reinterpret_cast<uint64_t *>(output.data() + pos) = b.bufferStart;
+        *output.data<uint64_t>(pos) = b.bufferStart;
         pos += 8;
 
-        *reinterpret_cast<uint64_t *>(output.data() + pos) = b.bufferCount;
+        *output.data<uint64_t>(pos) = b.bufferCount;
         pos += 8;
 
         *(output.data() + pos) = static_cast<uint8_t>(b.value.size());
@@ -179,7 +179,7 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
         std::memcpy(output.data() + pos, b.value.data(), b.value.size());
         pos += b.value.size();
 
-        *reinterpret_cast<uint64_t *>(output.data()) = pos;
+        *output.data<uint64_t>() = pos;
     }
 }
 
@@ -188,7 +188,7 @@ void SerializeAttributes(IO &input, Buffer &output)
     const auto &attributeMap = input.GetAttributes();
     for (const auto &attributePair : attributeMap)
     {
-        uint64_t pos = *reinterpret_cast<uint64_t *>(output.data());
+        uint64_t pos = *output.data<uint64_t>();
         if (pos + 1024 > output.capacity())
         {
             output.reserve(output.capacity() * 2);
@@ -202,21 +202,18 @@ void SerializeAttributes(IO &input, Buffer &output)
         {
             const auto &attribute =
                 input.InquireAttribute<std::string>(attributePair.first);
-            *(output.data() + pos) = 66;
+            output[pos] = 66;
             ++pos;
-            *(output.data() + pos) = static_cast<uint8_t>(attribute->m_Type);
+            output[pos] = static_cast<uint8_t>(attribute->m_Type);
             ++pos;
-            *(output.data() + pos) =
-                static_cast<uint8_t>(attribute->m_Name.size());
+            output[pos] = static_cast<uint8_t>(attribute->m_Name.size());
             ++pos;
-            std::memcpy(output.data() + pos, attribute->m_Name.data(),
+            std::memcpy(output.data(pos), attribute->m_Name.data(),
                         attribute->m_Name.size());
             pos += attribute->m_Name.size();
-            *reinterpret_cast<uint64_t *>(output.data() + pos) =
-                attribute->m_DataSingleValue.size();
+            *output.data<uint64_t>(pos) = attribute->m_DataSingleValue.size();
             pos += 8;
-            std::memcpy(output.data() + pos,
-                        attribute->m_DataSingleValue.data(),
+            std::memcpy(output.data(pos), attribute->m_DataSingleValue.data(),
                         attribute->m_DataSingleValue.size());
             pos += attribute->m_DataSingleValue.size();
         }
@@ -225,37 +222,35 @@ void SerializeAttributes(IO &input, Buffer &output)
     {                                                                          \
         const auto &attribute =                                                \
             input.InquireAttribute<T>(attributePair.first);                    \
-        *(output.data() + pos) = 66;                                           \
+        output[pos] = 66;                                                      \
         ++pos;                                                                 \
-        *(output.data() + pos) = static_cast<uint8_t>(attribute->m_Type);      \
+        output[pos] = static_cast<uint8_t>(attribute->m_Type);                 \
         ++pos;                                                                 \
-        *(output.data() + pos) =                                               \
-            static_cast<uint8_t>(attribute->m_Name.size());                    \
+        output[pos] = static_cast<uint8_t>(attribute->m_Name.size());          \
         ++pos;                                                                 \
-        std::memcpy(output.data() + pos, attribute->m_Name.data(),             \
+        std::memcpy(output.data(pos), attribute->m_Name.data(),                \
                     attribute->m_Name.size());                                 \
         pos += attribute->m_Name.size();                                       \
         if (attribute->m_IsSingleValue)                                        \
         {                                                                      \
-            *reinterpret_cast<uint64_t *>(output.data() + pos) = sizeof(T);    \
+            *output.data<uint64_t>(pos) = sizeof(T);                           \
             pos += 8;                                                          \
-            *reinterpret_cast<T *>(output.data() + pos) =                      \
-                attribute->m_DataSingleValue;                                  \
+            *output.data<T>(pos) = attribute->m_DataSingleValue;               \
             pos += sizeof(T);                                                  \
         }                                                                      \
         else                                                                   \
         {                                                                      \
             uint64_t size = sizeof(T) * attribute->m_DataArray.size();         \
-            *reinterpret_cast<uint64_t *>(output.data() + pos) = size;         \
+            *output.data<uint64_t>(pos) = size;                                \
             pos += 8;                                                          \
-            std::memcpy(output.data() + pos, attribute->m_DataArray.data(),    \
+            std::memcpy(output.data(pos), attribute->m_DataArray.data(),       \
                         size);                                                 \
             pos += size;                                                       \
         }                                                                      \
     }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
-        *reinterpret_cast<uint64_t *>(output.data()) = pos;
+        *output.data<uint64_t>() = pos;
     }
 }
 
@@ -269,26 +264,22 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
 
     uint64_t pos = 2;
 
-    uint64_t blockSize =
-        *reinterpret_cast<const uint64_t *>(input.data() + pos);
+    uint64_t blockSize = *input.data<const uint64_t>(pos);
 
     pos += 8;
 
     while (pos < blockSize)
     {
 
-        uint8_t shapeId =
-            *reinterpret_cast<const uint8_t *>(input.data() + pos);
+        uint8_t shapeId = input[pos];
         ++pos;
 
         if (shapeId == 66)
         {
-            const DataType type = static_cast<DataType>(
-                *reinterpret_cast<const uint8_t *>(input.data() + pos));
+            const DataType type = static_cast<DataType>(input[pos]);
             ++pos;
 
-            uint8_t nameSize =
-                *reinterpret_cast<const uint8_t *>(input.data() + pos);
+            uint8_t nameSize = input[pos];
             ++pos;
 
             std::vector<char> namev(nameSize);
@@ -296,8 +287,7 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
             std::string name = std::string(namev.begin(), namev.end());
             pos += nameSize;
 
-            uint64_t size =
-                *reinterpret_cast<const uint64_t *>(input.data() + pos);
+            uint64_t size = *input.data<const uint64_t>(pos);
             pos += 8;
 
             if (regAttrs)
@@ -319,14 +309,11 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
     {                                                                          \
         if (size == sizeof(T))                                                 \
         {                                                                      \
-            io.DefineAttribute<T>(                                             \
-                name, *reinterpret_cast<const T *>(input.data() + pos));       \
+            io.DefineAttribute<T>(name, *input.data<T>(pos));                  \
         }                                                                      \
         else                                                                   \
         {                                                                      \
-            io.DefineAttribute<T>(                                             \
-                name, reinterpret_cast<const T *>(input.data() + pos),         \
-                size / sizeof(T));                                             \
+            io.DefineAttribute<T>(name, input.data<T>(pos), size / sizeof(T)); \
         }                                                                      \
     }
                     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
@@ -342,14 +329,13 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
         }
         else
         {
-            int rank = *reinterpret_cast<const int *>(input.data() + pos);
+            int rank = *input.data<int>(pos);
             pos += 4;
             output[rank].emplace_back();
             auto &b = output[rank].back();
             b.shapeId = static_cast<ShapeID>(shapeId);
 
-            uint8_t nameSize =
-                *reinterpret_cast<const uint8_t *>(input.data() + pos);
+            uint8_t nameSize = input[pos];
             ++pos;
 
             std::vector<char> name(nameSize);
@@ -357,36 +343,31 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
             b.name = std::string(name.begin(), name.end());
             pos += nameSize;
 
-            b.type = static_cast<DataType>(
-                *reinterpret_cast<const uint8_t *>(input.data() + pos));
+            b.type = static_cast<DataType>(input[pos]);
             ++pos;
 
-            uint8_t shapeSize =
-                *reinterpret_cast<const uint8_t *>(input.data() + pos);
+            uint8_t shapeSize = input[pos];
             ++pos;
             b.shape.resize(shapeSize);
             b.start.resize(shapeSize);
             b.count.resize(shapeSize);
 
-            std::memcpy(b.shape.data(), input.data() + pos, 8 * shapeSize);
+            std::memcpy(b.shape.data(), input.data(pos), 8 * shapeSize);
             pos += 8 * shapeSize;
 
-            std::memcpy(b.start.data(), input.data() + pos, 8 * shapeSize);
+            std::memcpy(b.start.data(), input.data(pos), 8 * shapeSize);
             pos += 8 * shapeSize;
 
-            std::memcpy(b.count.data(), input.data() + pos, 8 * shapeSize);
+            std::memcpy(b.count.data(), input.data(pos), 8 * shapeSize);
             pos += 8 * shapeSize;
 
-            b.bufferStart =
-                *reinterpret_cast<const uint64_t *>(input.data() + pos);
+            b.bufferStart = *input.data<uint64_t>(pos);
             pos += 8;
 
-            b.bufferCount =
-                *reinterpret_cast<const uint64_t *>(input.data() + pos);
+            b.bufferCount = *input.data<uint64_t>(pos);
             pos += 8;
 
-            uint8_t valueSize =
-                *reinterpret_cast<const uint8_t *>(input.data() + pos);
+            uint8_t valueSize = input[pos];
             pos++;
             b.value.resize(valueSize);
             if (valueSize > 0)
@@ -448,9 +429,7 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
 {
     int mpiSize;
     MPI_Comm_size(comm, &mpiSize);
-    int localSize = static_cast<int>(*reinterpret_cast<const uint64_t *>(
-                        localBuffer.data())) -
-                    8;
+    int localSize = static_cast<int>(*localBuffer.data<const uint64_t>()) - 8;
     std::vector<int> localSizes(mpiSize);
     MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, comm);
     int globalSize = std::accumulate(localSizes.begin(), localSizes.end(), 0);
@@ -467,7 +446,7 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
                 MPI_CHAR, 0, comm);
     globalBuffer[0] = finalStep;
     globalBuffer[1] = locked;
-    *reinterpret_cast<uint64_t *>(globalBuffer.data() + 2) = globalSize;
+    *globalBuffer.data<uint64_t>(2) = globalSize;
 }
 
 void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm)

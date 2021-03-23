@@ -31,12 +31,12 @@ class Buffer
 public:
     Buffer()
     {
-        m_Buffer = malloc(1);
+        m_Buffer = reinterpret_cast<uint8_t *>(malloc(1));
         m_Capacity = 1;
     }
     Buffer(size_t capacity)
     {
-        m_Buffer = malloc(capacity);
+        m_Buffer = reinterpret_cast<uint8_t *>(malloc(capacity));
         m_Capacity = capacity;
     }
     ~Buffer()
@@ -50,42 +50,42 @@ public:
     }
     void clear()
     {
-        m_Buffer = realloc(m_Buffer, 1);
+        m_Buffer = reinterpret_cast<uint8_t *>(realloc(m_Buffer, 1));
         m_Capacity = 1;
     }
     void reserve(size_t capacity)
     {
-        m_Buffer = realloc(m_Buffer, capacity);
+        m_Buffer = reinterpret_cast<uint8_t *>(realloc(m_Buffer, capacity));
         m_Capacity = capacity;
     }
     template <typename T>
-    T *data()
+    T *data(const size_t pos = 0)
     {
-        return reinterpret_cast<T *>(m_Buffer);
+        return reinterpret_cast<T *>(m_Buffer + pos);
     }
     template <typename T>
-    const T *data() const
+    const T *data(const size_t pos = 0) const
     {
-        return reinterpret_cast<const T *>(m_Buffer);
+        return reinterpret_cast<const T *>(m_Buffer + pos);
     }
-    uint8_t *data() { return reinterpret_cast<uint8_t *>(m_Buffer); }
-    const uint8_t *data() const
+    uint8_t *data(const size_t pos = 0)
     {
-        return reinterpret_cast<const uint8_t *>(m_Buffer);
+        return reinterpret_cast<uint8_t *>(m_Buffer + pos);
+    }
+    const uint8_t *data(const size_t pos = 0) const
+    {
+        return reinterpret_cast<const uint8_t *>(m_Buffer + pos);
     }
     size_t capacity() const { return m_Capacity; }
-    uint8_t &operator[](const size_t i)
+    uint8_t &operator[](const size_t pos) { return *(m_Buffer + pos); }
+    const uint8_t &operator[](const size_t pos) const
     {
-        return *(reinterpret_cast<uint8_t *>(m_Buffer) + i);
-    }
-    const uint8_t &operator[](const size_t i) const
-    {
-        return *(reinterpret_cast<uint8_t *>(m_Buffer) + i);
+        return *(m_Buffer + pos);
     }
 
 private:
     size_t m_Capacity = 0;
-    void *m_Buffer = nullptr;
+    uint8_t *m_Buffer = nullptr;
 };
 
 struct BlockInfo
