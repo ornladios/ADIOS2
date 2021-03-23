@@ -88,12 +88,16 @@ size_t Settings::stringToNumber(const std::string &varName,
     return retval;
 }
 
+#ifdef _WIN32
+#define strdup _strdup
+#endif
+
 int Settings::parseCSDecomp(const char *arg)
 {
-    char *argCopy = (char *)malloc(strlen(arg) * sizeof(*argCopy));
+    char *argCopy;
     char *ratio;
 
-    strcpy(argCopy, arg);
+    argCopy = strdup(arg);
     ratio = strtok(argCopy, ",");
     while (ratio)
     {
