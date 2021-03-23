@@ -79,14 +79,13 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    /*
-    if((variable.m_ShapeID == ShapeID::GlobalValue || variable.m_ShapeID ==
-    ShapeID::LocalValue || variable.m_Type == DataType::String) && m_WriterRank
-    !=0)
+    if ((variable.m_ShapeID == ShapeID::GlobalValue ||
+         variable.m_ShapeID == ShapeID::LocalValue ||
+         variable.m_Type == DataType::String) &&
+        m_WriterRank != 0)
     {
         return;
     }
-    */
 
     variable.SetData(data);
 
