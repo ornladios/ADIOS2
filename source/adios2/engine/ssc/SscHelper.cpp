@@ -121,65 +121,65 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
 {
     for (const auto &b : input)
     {
-        uint64_t pos = *output.data<uint64_t>();
-        if (pos + 256 > output.capacity())
+        uint64_t pos = output.value<uint64_t>();
+        if (pos + 1024 > output.capacity())
         {
-            output.reserve((output.capacity() + 256) * 2);
+            output.reserve((pos + 1024) * 2);
         }
         if (pos == 0)
         {
             pos += 8;
         }
 
-        *output.data<uint8_t>(pos) = static_cast<uint8_t>(b.shapeId);
+        output.value<uint8_t>(pos) = static_cast<uint8_t>(b.shapeId);
         ++pos;
 
-        *output.data<int>(pos) = rank;
+        output.value<int>(pos) = rank;
         pos += 4;
 
-        *(output.data() + pos) = static_cast<uint8_t>(b.name.size());
+        output.value(pos) = static_cast<uint8_t>(b.name.size());
         ++pos;
 
-        std::memcpy(output.data() + pos, b.name.data(), b.name.size());
+        std::memcpy(output.data(pos), b.name.data(), b.name.size());
         pos += b.name.size();
 
-        *(output.data() + pos) = static_cast<uint8_t>(b.type);
+        output.value(pos) = static_cast<uint8_t>(b.type);
         ++pos;
 
-        *(output.data() + pos) = static_cast<uint8_t>(b.shape.size());
+        output.value(pos) = static_cast<uint8_t>(b.shape.size());
         ++pos;
 
         for (const auto &s : b.shape)
         {
-            *output.data<uint64_t>(pos) = s;
+            output.value<uint64_t>(pos) = s;
             pos += 8;
         }
 
         for (const auto &s : b.start)
         {
-            *output.data<uint64_t>(pos) = s;
+            output.value<uint64_t>(pos) = s;
             pos += 8;
         }
 
         for (const auto &s : b.count)
         {
-            *output.data<uint64_t>(pos) = s;
+            output.value<uint64_t>(pos) = s;
             pos += 8;
         }
 
-        *output.data<uint64_t>(pos) = b.bufferStart;
+        output.value<uint64_t>(pos) = b.bufferStart;
         pos += 8;
 
-        *output.data<uint64_t>(pos) = b.bufferCount;
+        output.value<uint64_t>(pos) = b.bufferCount;
         pos += 8;
 
-        *(output.data() + pos) = static_cast<uint8_t>(b.value.size());
+        output.value(pos) = static_cast<uint8_t>(b.value.size());
         ++pos;
 
-        std::memcpy(output.data() + pos, b.value.data(), b.value.size());
+        std::memcpy(output.data(pos), b.value.data(), b.value.size());
         pos += b.value.size();
 
-        *output.data<uint64_t>() = pos;
+        output.value<uint64_t>() = pos;
     }
 }
 
@@ -188,10 +188,10 @@ void SerializeAttributes(IO &input, Buffer &output)
     const auto &attributeMap = input.GetAttributes();
     for (const auto &attributePair : attributeMap)
     {
-        uint64_t pos = *output.data<uint64_t>();
+        uint64_t pos = output.value<uint64_t>();
         if (pos + 1024 > output.capacity())
         {
-            output.reserve(output.capacity() * 2);
+            output.reserve((pos + 1024) * 2);
         }
         if (pos == 0)
         {
@@ -211,7 +211,7 @@ void SerializeAttributes(IO &input, Buffer &output)
             std::memcpy(output.data(pos), attribute->m_Name.data(),
                         attribute->m_Name.size());
             pos += attribute->m_Name.size();
-            *output.data<uint64_t>(pos) = attribute->m_DataSingleValue.size();
+            output.value<uint64_t>(pos) = attribute->m_DataSingleValue.size();
             pos += 8;
             std::memcpy(output.data(pos), attribute->m_DataSingleValue.data(),
                         attribute->m_DataSingleValue.size());
@@ -233,15 +233,15 @@ void SerializeAttributes(IO &input, Buffer &output)
         pos += attribute->m_Name.size();                                       \
         if (attribute->m_IsSingleValue)                                        \
         {                                                                      \
-            *output.data<uint64_t>(pos) = sizeof(T);                           \
+            output.value<uint64_t>(pos) = sizeof(T);                           \
             pos += 8;                                                          \
-            *output.data<T>(pos) = attribute->m_DataSingleValue;               \
+            output.value<T>(pos) = attribute->m_DataSingleValue;               \
             pos += sizeof(T);                                                  \
         }                                                                      \
         else                                                                   \
         {                                                                      \
             uint64_t size = sizeof(T) * attribute->m_DataArray.size();         \
-            *output.data<uint64_t>(pos) = size;                                \
+            output.value<uint64_t>(pos) = size;                                \
             pos += 8;                                                          \
             std::memcpy(output.data(pos), attribute->m_DataArray.data(),       \
                         size);                                                 \
@@ -250,7 +250,7 @@ void SerializeAttributes(IO &input, Buffer &output)
     }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
-        *output.data<uint64_t>() = pos;
+        output.value<uint64_t>() = pos;
     }
 }
 
@@ -264,7 +264,7 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
 
     uint64_t pos = 2;
 
-    uint64_t blockSize = *input.data<const uint64_t>(pos);
+    uint64_t blockSize = input.value<uint64_t>(pos);
 
     pos += 8;
 
@@ -283,11 +283,11 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
             ++pos;
 
             std::vector<char> namev(nameSize);
-            std::memcpy(namev.data(), input.data() + pos, nameSize);
+            std::memcpy(namev.data(), input.data(pos), nameSize);
             std::string name = std::string(namev.begin(), namev.end());
             pos += nameSize;
 
-            uint64_t size = *input.data<const uint64_t>(pos);
+            uint64_t size = input.value<uint64_t>(pos);
             pos += 8;
 
             if (regAttrs)
@@ -301,15 +301,14 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
                     if (type == DataType::String)
                     {
                         io.DefineAttribute<std::string>(
-                            name,
-                            std::string(input.data<const char>() + pos, size));
+                            name, std::string(input.data<char>(pos), size));
                     }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         if (size == sizeof(T))                                                 \
         {                                                                      \
-            io.DefineAttribute<T>(name, *input.data<T>(pos));                  \
+            io.DefineAttribute<T>(name, input.value<T>(pos));                  \
         }                                                                      \
         else                                                                   \
         {                                                                      \
@@ -329,7 +328,7 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
         }
         else
         {
-            int rank = *input.data<int>(pos);
+            int rank = input.value<int>(pos);
             pos += 4;
             output[rank].emplace_back();
             auto &b = output[rank].back();
@@ -339,7 +338,7 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
             ++pos;
 
             std::vector<char> name(nameSize);
-            std::memcpy(name.data(), input.data() + pos, nameSize);
+            std::memcpy(name.data(), input.data(pos), nameSize);
             b.name = std::string(name.begin(), name.end());
             pos += nameSize;
 
@@ -361,10 +360,10 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
             std::memcpy(b.count.data(), input.data(pos), 8 * shapeSize);
             pos += 8 * shapeSize;
 
-            b.bufferStart = *input.data<uint64_t>(pos);
+            b.bufferStart = input.value<uint64_t>(pos);
             pos += 8;
 
-            b.bufferCount = *input.data<uint64_t>(pos);
+            b.bufferCount = input.value<uint64_t>(pos);
             pos += 8;
 
             uint8_t valueSize = input[pos];
@@ -429,7 +428,7 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
 {
     int mpiSize;
     MPI_Comm_size(comm, &mpiSize);
-    int localSize = static_cast<int>(*localBuffer.data<const uint64_t>()) - 8;
+    int localSize = static_cast<int>(localBuffer.value<const uint64_t>()) - 8;
     std::vector<int> localSizes(mpiSize);
     MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, comm);
     int globalSize = std::accumulate(localSizes.begin(), localSizes.end(), 0);
@@ -446,7 +445,7 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
                 MPI_CHAR, 0, comm);
     globalBuffer[0] = finalStep;
     globalBuffer[1] = locked;
-    *globalBuffer.data<uint64_t>(2) = globalSize;
+    globalBuffer.value<uint64_t>(2) = globalSize;
 }
 
 void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm)

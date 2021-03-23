@@ -59,6 +59,24 @@ public:
         m_Capacity = capacity;
     }
     template <typename T>
+    T &value(const size_t pos = 0)
+    {
+        return *reinterpret_cast<T *>(m_Buffer + pos);
+    }
+    uint8_t &value(const size_t pos = 0)
+    {
+        return *reinterpret_cast<uint8_t *>(m_Buffer + pos);
+    }
+    template <typename T>
+    T value(const size_t pos = 0) const
+    {
+        return *reinterpret_cast<T *>(m_Buffer + pos);
+    }
+    uint8_t value(const size_t pos = 0) const
+    {
+        return *reinterpret_cast<uint8_t *>(m_Buffer + pos);
+    }
+    template <typename T>
     T *data(const size_t pos = 0)
     {
         return reinterpret_cast<T *>(m_Buffer + pos);
