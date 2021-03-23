@@ -428,7 +428,7 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
 {
     int mpiSize;
     MPI_Comm_size(comm, &mpiSize);
-    int localSize = static_cast<int>(localBuffer.value<const uint64_t>()) - 8;
+    int localSize = static_cast<int>(localBuffer.value<uint64_t>()) - 8;
     std::vector<int> localSizes(mpiSize);
     MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, comm);
     int globalSize = std::accumulate(localSizes.begin(), localSizes.end(), 0);
