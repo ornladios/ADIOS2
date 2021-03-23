@@ -67,7 +67,8 @@ void SscReader::BeginStepConsequentFixed()
 void SscReader::BeginStepFlexible(StepStatus &status)
 {
     m_AllReceivingWriterRanks.clear();
-    m_Buffer.resize(1, 0);
+    m_Buffer.reserve(1);
+    m_Buffer[0] = 0;
     m_GlobalWritePattern.clear();
     m_GlobalWritePattern.resize(m_StreamSize);
     m_LocalReadPattern.clear();
@@ -199,7 +200,7 @@ void SscReader::PerformGets()
             {
                 totalDataSize += i.second.second;
             }
-            m_Buffer.resize(totalDataSize);
+            m_Buffer.reserve(totalDataSize);
             for (const auto &i : m_AllReceivingWriterRanks)
             {
                 MPI_Win_lock(MPI_LOCK_SHARED, i.first, 0, m_MpiWin);
@@ -246,7 +247,7 @@ void SscReader::PerformGets()
             {                                                                  \
                 continue;                                                      \
             }                                                                  \
-            helper::NdCopy<T>(m_Buffer.data() + b.bufferStart, b.start,        \
+            helper::NdCopy<T>(m_Buffer.data<char>() + b.bufferStart, b.start,  \
                               b.count, true, true,                             \
                               reinterpret_cast<char *>(br.data), br.start,     \
                               br.count, true, true);                           \
@@ -277,7 +278,7 @@ void SscReader::EndStepFixed()
     {
         MPI_Win_free(&m_MpiWin);
         SyncReadPattern();
-        MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
+        MPI_Win_create(m_Buffer.data(), m_Buffer.capacity(), 1, MPI_INFO_NULL,
                        m_StreamComm, &m_MpiWin);
     }
     if (m_MpiMode == "twosided")
@@ -484,7 +485,7 @@ void SscReader::SyncReadPattern()
     {
         totalDataSize += i.second.second;
     }
-    m_Buffer.resize(totalDataSize);
+    m_Buffer.reserve(totalDataSize);
 
     if (m_Verbosity >= 20)
     {

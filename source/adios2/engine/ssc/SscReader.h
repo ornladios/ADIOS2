@@ -48,7 +48,7 @@ private:
     ssc::Buffer m_GlobalWritePatternBuffer;
 
     ssc::RankPosMap m_AllReceivingWriterRanks;
-    std::vector<char> m_Buffer;
+    ssc::Buffer m_Buffer;
     MPI_Win m_MpiWin;
     MPI_Group m_WriterGroup;
     MPI_Comm m_StreamComm;
