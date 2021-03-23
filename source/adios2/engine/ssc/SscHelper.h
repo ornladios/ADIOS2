@@ -73,7 +73,7 @@ public:
     {
         return reinterpret_cast<const uint8_t *>(m_Buffer);
     }
-    const size_t capacity() const { return m_Capacity; }
+    size_t capacity() const { return m_Capacity; }
     uint8_t &operator[](const size_t i)
     {
         return *(reinterpret_cast<uint8_t *>(m_Buffer) + i);

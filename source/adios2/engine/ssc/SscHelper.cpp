@@ -472,7 +472,7 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
 
 void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm)
 {
-    int globalBufferSize = globalBuffer.capacity();
+    int globalBufferSize = static_cast<int>(globalBuffer.capacity());
     MPI_Bcast(&globalBufferSize, 1, MPI_INT, root, comm);
     if (globalBuffer.capacity() < globalBufferSize)
     {
