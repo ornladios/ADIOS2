@@ -86,21 +86,6 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    if (m_Verbosity >= 20)
-    {
-        for (int i = 0; i < m_ReaderSize; ++i)
-        {
-            m_Comm.Barrier();
-            if (i == m_ReaderRank)
-            {
-                ssc::PrintRankPosMap(m_AllReceivingWriterRanks,
-                                     "Rank Pos Map for Reader " +
-                                         std::to_string(m_ReaderRank));
-            }
-        }
-        m_Comm.Barrier();
-    }
-
     ++m_CurrentStep;
 
     m_StepBegun = true;
@@ -473,7 +458,7 @@ bool SscReader::SyncWritePattern()
     ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO,
                            true, true);
 
-    if (m_Verbosity >= 10 && m_ReaderRank == 0)
+    if (m_Verbosity >= 20 && m_ReaderRank == 0)
     {
         ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
     }
@@ -504,6 +489,9 @@ void SscReader::SyncReadPattern()
     ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,
                            m_StreamComm);
 
+    ssc::JsonToBlockVecVec(m_GlobalWritePatternJson, m_GlobalWritePattern, m_IO,
+                           true, true);
+
     m_AllReceivingWriterRanks =
         ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
     CalculatePosition(m_GlobalWritePattern, m_AllReceivingWriterRanks);
@@ -515,7 +503,7 @@ void SscReader::SyncReadPattern()
     }
     m_Buffer.resize(totalDataSize);
 
-    if (m_Verbosity >= 10)
+    if (m_Verbosity >= 20)
     {
         for (int i = 0; i < m_ReaderSize; ++i)
         {

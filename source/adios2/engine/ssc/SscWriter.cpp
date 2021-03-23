@@ -65,7 +65,7 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if (m_Verbosity >= 5)
     {
         std::cout << "SscWriter::BeginStep, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_WriterRank << ", Step "
+                  << ", Writer Rank " << m_WriterRank << ", Step "
                   << m_CurrentStep << std::endl;
     }
 
@@ -172,7 +172,7 @@ void SscWriter::EndStep()
     if (m_Verbosity >= 5)
     {
         std::cout << "SscWriter::EndStep, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_WriterRank << ", Step "
+                  << ", Writer Rank " << m_WriterRank << ", Step "
                   << m_CurrentStep << std::endl;
     }
 
