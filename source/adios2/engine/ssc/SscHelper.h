@@ -13,7 +13,6 @@
 
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
-#include "nlohmann/json.hpp"
 #include <mpi.h>
 #include <unordered_map>
 #include <vector>
@@ -26,6 +25,69 @@ namespace engine
 {
 namespace ssc
 {
+
+class Buffer
+{
+public:
+    Buffer()
+    {
+        m_Buffer = malloc(1);
+        m_Capacity = 1;
+    }
+    Buffer(size_t capacity)
+    {
+        m_Buffer = malloc(capacity);
+        m_Capacity = capacity;
+    }
+    ~Buffer()
+    {
+        if (m_Buffer)
+        {
+            free(m_Buffer);
+            m_Capacity = 0;
+            m_Buffer = nullptr;
+        }
+    }
+    void clear()
+    {
+        m_Buffer = realloc(m_Buffer, 1);
+        m_Capacity = 1;
+    }
+    void reserve(size_t capacity)
+    {
+        m_Buffer = realloc(m_Buffer, capacity);
+        m_Capacity = capacity;
+    }
+    template <typename T>
+    T *data()
+    {
+        return reinterpret_cast<T *>(m_Buffer);
+    }
+    template <typename T>
+    const T *data() const
+    {
+        return reinterpret_cast<const T *>(m_Buffer);
+    }
+    uint8_t *data() { return reinterpret_cast<uint8_t *>(m_Buffer); }
+    const uint8_t *data() const
+    {
+        return reinterpret_cast<const uint8_t *>(m_Buffer);
+    }
+    size_t capacity() const { return m_Capacity; }
+    uint8_t &operator[](const size_t i)
+    {
+        return *(reinterpret_cast<uint8_t *>(m_Buffer) + i);
+    }
+    const uint8_t &operator[](const size_t i) const
+    {
+        return *(reinterpret_cast<uint8_t *>(m_Buffer) + i);
+    }
+
+private:
+    size_t m_Capacity = 0;
+    void *m_Buffer = nullptr;
+};
+
 struct BlockInfo
 {
     std::string name;
@@ -63,15 +125,13 @@ size_t TotalDataSize(const BlockVec &bv);
 RankPosMap CalculateOverlap(BlockVecVec &globalPattern,
                             const BlockVec &localPattern);
 
-void BlockVecToJson(const BlockVec &input, nlohmann::json &output);
-void AttributeMapToJson(IO &input, nlohmann::json &output);
-void LocalJsonToGlobalJson(const std::vector<char> &input,
-                           const size_t maxLocalSize, const int streamSize,
-                           nlohmann::json &output);
-
-void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output);
-void JsonToBlockVecVec(const std::vector<char> &input, BlockVecVec &output);
-void JsonToBlockVecVec(const std::string &input, BlockVecVec &output);
+void SerializeVariables(const BlockVec &input, Buffer &output, const int rank);
+void SerializeAttributes(IO &input, Buffer &output);
+void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
+                 const bool regVars, const bool regAttrs);
+void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
+                       MPI_Comm comm, const bool finalStep, const bool locked);
+void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm);
 
 void MPI_Gatherv64OneSidedPush(
     const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype,

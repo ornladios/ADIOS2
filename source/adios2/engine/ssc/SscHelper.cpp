@@ -10,7 +10,7 @@
 
 #include "SscHelper.h"
 #include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosJSONcomplex.h"
+#include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosType.h"
 #include <iostream>
 #include <numeric>
@@ -117,147 +117,368 @@ RankPosMap CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
     return ret;
 }
 
-void BlockVecToJson(const BlockVec &input, nlohmann::json &output)
+void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
 {
     for (const auto &b : input)
     {
-        output["Variables"].emplace_back();
-        auto &jref = output["Variables"].back();
-        jref["Name"] = b.name;
-        jref["Type"] = b.type;
-        jref["ShapeID"] = b.shapeId;
-        jref["Shape"] = b.shape;
-        jref["Start"] = b.start;
-        jref["Count"] = b.count;
-        jref["BufferStart"] = b.bufferStart;
-        jref["BufferCount"] = b.bufferCount;
-        if (!b.value.empty())
+        uint64_t pos = *output.data<uint64_t>();
+        if (pos + 256 > output.capacity())
         {
-            jref["Value"] = b.value;
+            output.reserve((output.capacity() + 256) * 2);
         }
+        if (pos == 0)
+        {
+            pos += 8;
+        }
+
+        *(output.data() + pos) = static_cast<uint8_t>(b.shapeId);
+        ++pos;
+
+        *reinterpret_cast<int *>(output.data() + pos) = rank;
+        pos += 4;
+
+        *(output.data() + pos) = static_cast<uint8_t>(b.name.size());
+        ++pos;
+
+        std::memcpy(output.data() + pos, b.name.data(), b.name.size());
+        pos += b.name.size();
+
+        *(output.data() + pos) = static_cast<uint8_t>(b.type);
+        ++pos;
+
+        *(output.data() + pos) = static_cast<uint8_t>(b.shape.size());
+        ++pos;
+
+        for (const auto &s : b.shape)
+        {
+            *reinterpret_cast<uint64_t *>(output.data() + pos) = s;
+            pos += 8;
+        }
+
+        for (const auto &s : b.start)
+        {
+            *reinterpret_cast<uint64_t *>(output.data() + pos) = s;
+            pos += 8;
+        }
+
+        for (const auto &s : b.count)
+        {
+            *reinterpret_cast<uint64_t *>(output.data() + pos) = s;
+            pos += 8;
+        }
+
+        *reinterpret_cast<uint64_t *>(output.data() + pos) = b.bufferStart;
+        pos += 8;
+
+        *reinterpret_cast<uint64_t *>(output.data() + pos) = b.bufferCount;
+        pos += 8;
+
+        *(output.data() + pos) = static_cast<uint8_t>(b.value.size());
+        ++pos;
+
+        std::memcpy(output.data() + pos, b.value.data(), b.value.size());
+        pos += b.value.size();
+
+        *reinterpret_cast<uint64_t *>(output.data()) = pos;
     }
 }
 
-void AttributeMapToJson(IO &input, nlohmann::json &output)
+void SerializeAttributes(IO &input, Buffer &output)
 {
     const auto &attributeMap = input.GetAttributes();
-    auto &attributesJson = output["Attributes"];
     for (const auto &attributePair : attributeMap)
     {
-        const std::string name(attributePair.first);
-        const DataType type(attributePair.second->m_Type);
-        if (type == DataType::None)
+        uint64_t pos = *reinterpret_cast<uint64_t *>(output.data());
+        if (pos + 1024 > output.capacity())
         {
+            output.reserve(output.capacity() * 2);
+        }
+        if (pos == 0)
+        {
+            pos += 8;
+        }
+
+        if (attributePair.second->m_Type == DataType::String)
+        {
+            const auto &attribute =
+                input.InquireAttribute<std::string>(attributePair.first);
+            *(output.data() + pos) = 66;
+            ++pos;
+            *(output.data() + pos) = static_cast<uint8_t>(attribute->m_Type);
+            ++pos;
+            *(output.data() + pos) =
+                static_cast<uint8_t>(attribute->m_Name.size());
+            ++pos;
+            std::memcpy(output.data() + pos, attribute->m_Name.data(),
+                        attribute->m_Name.size());
+            pos += attribute->m_Name.size();
+            *reinterpret_cast<uint64_t *>(output.data() + pos) =
+                attribute->m_DataSingleValue.size();
+            pos += 8;
+            std::memcpy(output.data() + pos,
+                        attribute->m_DataSingleValue.data(),
+                        attribute->m_DataSingleValue.size());
+            pos += attribute->m_DataSingleValue.size();
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (attributePair.second->m_Type == helper::GetDataType<T>())         \
     {                                                                          \
-        const auto &attribute = input.InquireAttribute<T>(name);               \
-        nlohmann::json attributeJson;                                          \
-        attributeJson["Name"] = attribute->m_Name;                             \
-        attributeJson["Type"] = attribute->m_Type;                             \
-        attributeJson["IsSingleValue"] = attribute->m_IsSingleValue;           \
+        const auto &attribute =                                                \
+            input.InquireAttribute<T>(attributePair.first);                    \
+        *(output.data() + pos) = 66;                                           \
+        ++pos;                                                                 \
+        *(output.data() + pos) = static_cast<uint8_t>(attribute->m_Type);      \
+        ++pos;                                                                 \
+        *(output.data() + pos) =                                               \
+            static_cast<uint8_t>(attribute->m_Name.size());                    \
+        ++pos;                                                                 \
+        std::memcpy(output.data() + pos, attribute->m_Name.data(),             \
+                    attribute->m_Name.size());                                 \
+        pos += attribute->m_Name.size();                                       \
         if (attribute->m_IsSingleValue)                                        \
         {                                                                      \
-            attributeJson["Value"] = attribute->m_DataSingleValue;             \
+            *reinterpret_cast<uint64_t *>(output.data() + pos) = sizeof(T);    \
+            pos += 8;                                                          \
+            *reinterpret_cast<T *>(output.data() + pos) =                      \
+                attribute->m_DataSingleValue;                                  \
+            pos += sizeof(T);                                                  \
         }                                                                      \
         else                                                                   \
         {                                                                      \
-            attributeJson["Array"] = attribute->m_DataArray;                   \
+            uint64_t size = sizeof(T) * attribute->m_DataArray.size();         \
+            *reinterpret_cast<uint64_t *>(output.data() + pos) = size;         \
+            pos += 8;                                                          \
+            std::memcpy(output.data() + pos, attribute->m_DataArray.data(),    \
+                        size);                                                 \
+            pos += size;                                                       \
         }                                                                      \
-        output["Attributes"].emplace_back(std::move(attributeJson));           \
     }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
+        *reinterpret_cast<uint64_t *>(output.data()) = pos;
     }
 }
 
-void LocalJsonToGlobalJson(const std::vector<char> &input,
-                           const size_t maxLocalSize, const int streamSize,
-                           nlohmann::json &output)
+void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
+                 const bool regVars, const bool regAttrs)
 {
-    try
+    for (auto &i : output)
     {
-        for (int i = 0; i < streamSize; ++i)
-        {
-            if (input[i * maxLocalSize] == '\0')
-            {
-                output[i] = nullptr;
-            }
-            else
-            {
-                output[i] = nlohmann::json::parse(
-                    input.begin() + i * maxLocalSize,
-                    input.begin() + (i + 1) * maxLocalSize);
-            }
-        }
+        i.clear();
     }
-    catch (std::exception &e)
-    {
-        throw(std::runtime_error(
-            std::string("corrupted global write pattern metadata, ") +
-            std::string(e.what())));
-    }
-}
 
-void JsonToBlockVecVec(const nlohmann::json &input, BlockVecVec &output)
-{
-    for (size_t i = 0; i < output.size(); ++i)
+    uint64_t pos = 2;
+
+    uint64_t blockSize =
+        *reinterpret_cast<const uint64_t *>(input.data() + pos);
+
+    pos += 8;
+
+    while (pos < blockSize)
     {
-        if (input[i] != nullptr)
+
+        uint8_t shapeId =
+            *reinterpret_cast<const uint8_t *>(input.data() + pos);
+        ++pos;
+
+        if (shapeId == 66)
         {
-            auto &rankj = input[i]["Variables"];
-            output[i].clear();
-            for (const auto &j : rankj)
+            const DataType type = static_cast<DataType>(
+                *reinterpret_cast<const uint8_t *>(input.data() + pos));
+            ++pos;
+
+            uint8_t nameSize =
+                *reinterpret_cast<const uint8_t *>(input.data() + pos);
+            ++pos;
+
+            std::vector<char> namev(nameSize);
+            std::memcpy(namev.data(), input.data() + pos, nameSize);
+            std::string name = std::string(namev.begin(), namev.end());
+            pos += nameSize;
+
+            uint64_t size =
+                *reinterpret_cast<const uint64_t *>(input.data() + pos);
+            pos += 8;
+
+            if (regAttrs)
             {
-                output[i].emplace_back();
-                auto &b = output[i].back();
-                b.name = j["Name"].get<std::string>();
-                b.type = j["Type"].get<DataType>();
-                b.shapeId = j["ShapeID"].get<ShapeID>();
-                b.start = j["Start"].get<Dims>();
-                b.count = j["Count"].get<Dims>();
-                b.shape = j["Shape"].get<Dims>();
-                b.bufferStart = j["BufferStart"].get<size_t>();
-                b.bufferCount = j["BufferCount"].get<size_t>();
-                auto it = j.find("Value");
-                if (it != j.end())
+                const auto &attributes = io.GetAttributes();
+                auto it = attributes.find(name);
+                if (it == attributes.end())
                 {
-                    auto value = it->get<std::vector<char>>();
-                    b.value.resize(value.size());
-                    std::memcpy(b.value.data(), value.data(), value.size());
+                    int rank;
+                    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+                    if (type == DataType::String)
+                    {
+                        io.DefineAttribute<std::string>(
+                            name,
+                            std::string(input.data<const char>() + pos, size));
+                    }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetDataType<T>())                                 \
+    {                                                                          \
+        if (size == sizeof(T))                                                 \
+        {                                                                      \
+            io.DefineAttribute<T>(                                             \
+                name, *reinterpret_cast<const T *>(input.data() + pos));       \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            io.DefineAttribute<T>(                                             \
+                name, reinterpret_cast<const T *>(input.data() + pos),         \
+                size / sizeof(T));                                             \
+        }                                                                      \
+    }
+                    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+                    else
+                    {
+                        throw(
+                            std::runtime_error("unknown attribute data type"));
+                    }
+                }
+            }
+            pos += size;
+        }
+        else
+        {
+            int rank = *reinterpret_cast<const int *>(input.data() + pos);
+            pos += 4;
+            output[rank].emplace_back();
+            auto &b = output[rank].back();
+            b.shapeId = static_cast<ShapeID>(shapeId);
+
+            uint8_t nameSize =
+                *reinterpret_cast<const uint8_t *>(input.data() + pos);
+            ++pos;
+
+            std::vector<char> name(nameSize);
+            std::memcpy(name.data(), input.data() + pos, nameSize);
+            b.name = std::string(name.begin(), name.end());
+            pos += nameSize;
+
+            b.type = static_cast<DataType>(
+                *reinterpret_cast<const uint8_t *>(input.data() + pos));
+            ++pos;
+
+            uint8_t shapeSize =
+                *reinterpret_cast<const uint8_t *>(input.data() + pos);
+            ++pos;
+            b.shape.resize(shapeSize);
+            b.start.resize(shapeSize);
+            b.count.resize(shapeSize);
+
+            std::memcpy(b.shape.data(), input.data() + pos, 8 * shapeSize);
+            pos += 8 * shapeSize;
+
+            std::memcpy(b.start.data(), input.data() + pos, 8 * shapeSize);
+            pos += 8 * shapeSize;
+
+            std::memcpy(b.count.data(), input.data() + pos, 8 * shapeSize);
+            pos += 8 * shapeSize;
+
+            b.bufferStart =
+                *reinterpret_cast<const uint64_t *>(input.data() + pos);
+            pos += 8;
+
+            b.bufferCount =
+                *reinterpret_cast<const uint64_t *>(input.data() + pos);
+            pos += 8;
+
+            uint8_t valueSize =
+                *reinterpret_cast<const uint8_t *>(input.data() + pos);
+            pos++;
+            b.value.resize(valueSize);
+            if (valueSize > 0)
+            {
+                std::memcpy(b.value.data(), input.data() + pos, valueSize);
+                pos += valueSize;
+            }
+
+            if (regVars)
+            {
+                if (b.type == DataType::None)
+                {
+                    throw(std::runtime_error("unknown variable data type"));
+                }
+#define declare_type(T)                                                        \
+    else if (b.type == helper::GetDataType<T>())                               \
+    {                                                                          \
+        auto v = io.InquireVariable<T>(b.name);                                \
+        if (!v)                                                                \
+        {                                                                      \
+            Dims vStart = b.start;                                             \
+            Dims vShape = b.shape;                                             \
+            if (!helper::IsRowMajor(io.m_HostLanguage))                        \
+            {                                                                  \
+                std::reverse(vStart.begin(), vStart.end());                    \
+                std::reverse(vShape.begin(), vShape.end());                    \
+            }                                                                  \
+            if (b.shapeId == ShapeID::GlobalValue)                             \
+            {                                                                  \
+                io.DefineVariable<T>(b.name);                                  \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::GlobalArray)                        \
+            {                                                                  \
+                io.DefineVariable<T>(b.name, vShape, vStart, vShape);          \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::LocalValue)                         \
+            {                                                                  \
+                io.DefineVariable<T>(b.name, {adios2::LocalValueDim});         \
+            }                                                                  \
+            else if (b.shapeId == ShapeID::LocalArray)                         \
+            {                                                                  \
+                io.DefineVariable<T>(b.name, {}, {}, vShape);                  \
+            }                                                                  \
+        }                                                                      \
+    }
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+                else
+                {
+                    throw(std::runtime_error("unknown variable data type"));
                 }
             }
         }
     }
 }
 
-void JsonToBlockVecVec(const std::string &input, BlockVecVec &output)
+void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
+                       MPI_Comm comm, const bool finalStep, const bool locked)
 {
-    nlohmann::json j;
-    try
+    int mpiSize;
+    MPI_Comm_size(comm, &mpiSize);
+    int localSize = static_cast<int>(*reinterpret_cast<const uint64_t *>(
+                        localBuffer.data())) -
+                    8;
+    std::vector<int> localSizes(mpiSize);
+    MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, comm);
+    int globalSize = std::accumulate(localSizes.begin(), localSizes.end(), 0);
+    globalBuffer.reserve(globalSize + 10);
+
+    std::vector<int> displs(mpiSize);
+    for (size_t i = 1; i < mpiSize; ++i)
     {
-        j = nlohmann::json::parse(input);
+        displs[i] = displs[i - 1] + localSizes[i - 1];
     }
-    catch (...)
-    {
-        throw(std::runtime_error("corrupted json string"));
-    }
-    JsonToBlockVecVec(j, output);
+
+    MPI_Gatherv(localBuffer.data() + 8, localSize, MPI_CHAR,
+                globalBuffer.data() + 10, localSizes.data(), displs.data(),
+                MPI_CHAR, 0, comm);
+    globalBuffer[0] = finalStep;
+    globalBuffer[1] = locked;
+    *reinterpret_cast<uint64_t *>(globalBuffer.data() + 2) = globalSize;
 }
 
-void JsonToBlockVecVec(const std::vector<char> &input, BlockVecVec &output)
+void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm)
 {
-    nlohmann::json j;
-    try
+    int globalBufferSize = static_cast<int>(globalBuffer.capacity());
+    MPI_Bcast(&globalBufferSize, 1, MPI_INT, root, comm);
+    if (globalBuffer.capacity() < globalBufferSize)
     {
-        j = nlohmann::json::parse(input);
+        globalBuffer.reserve(globalBufferSize);
     }
-    catch (...)
-    {
-        throw(std::runtime_error("corrupted json char vector"));
-    }
-    JsonToBlockVecVec(j, output);
+    MPI_Bcast(globalBuffer.data(), globalBufferSize, MPI_CHAR, root, comm);
 }
 
 bool AreSameDims(const Dims &a, const Dims &b)

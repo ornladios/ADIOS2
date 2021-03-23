@@ -45,13 +45,14 @@ private:
 
     ssc::BlockVecVec m_GlobalWritePattern;
     ssc::BlockVec m_LocalReadPattern;
-    nlohmann::json m_GlobalWritePatternJson;
+    ssc::Buffer m_GlobalWritePatternBuffer;
 
     ssc::RankPosMap m_AllReceivingWriterRanks;
     std::vector<char> m_Buffer;
     MPI_Win m_MpiWin;
-    MPI_Group m_MpiAllWritersGroup;
+    MPI_Group m_WriterGroup;
     MPI_Comm m_StreamComm;
+    MPI_Comm m_ReaderComm;
     std::vector<MPI_Request> m_MpiRequests;
     StepStatus m_StepStatus;
     std::thread m_EndStepThread;
@@ -60,6 +61,8 @@ private:
     int m_StreamSize;
     int m_ReaderRank;
     int m_ReaderSize;
+    int m_WriterMasterStreamRank;
+    int m_ReaderMasterStreamRank;
 
     void SyncMpiPattern();
     bool SyncWritePattern();

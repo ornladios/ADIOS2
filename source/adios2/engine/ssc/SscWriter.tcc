@@ -13,6 +13,7 @@
 
 #include "SscWriter.h"
 #include "adios2/helper/adiosSystem.h"
+#include <cstring>
 #include <iostream>
 
 namespace adios2
@@ -68,7 +69,7 @@ void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
         }
         else
         {
-            throw std::runtime_error("ssc only accepts fixed IO pattern");
+            throw std::runtime_error("IO pattern changed after locking");
         }
     }
 }
@@ -77,6 +78,14 @@ template <class T>
 void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    if ((variable.m_ShapeID == ShapeID::GlobalValue ||
+         variable.m_ShapeID == ShapeID::LocalValue ||
+         variable.m_Type == DataType::String) &&
+        m_WriterRank != 0)
+    {
+        return;
+    }
 
     variable.SetData(data);
 
