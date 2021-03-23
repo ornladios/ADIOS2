@@ -159,6 +159,8 @@ private:
     DoAllStepsBlocksInfo() const;
 
     void CheckRandomAccess(const size_t step, const std::string hint) const;
+
+    size_t WriterIndex;
 };
 
 } // end namespace core

@@ -450,6 +450,51 @@ public:
     /* for adios2 internal testing */
     virtual size_t DebugGetDataBufferSize() const;
 
+    union PrimitiveStdtypeUnion
+    {
+        int8_t int8;
+        int16_t int16;
+        int32_t int32;
+        int64_t int64;
+        uint8_t uint8;
+        uint16_t uint16;
+        uint32_t uint32;
+        uint64_t uint64;
+        float f;
+        double d;
+        long double ld;
+    };
+
+    struct MinBlockInfo
+    {
+        int WriterID = 0;
+        size_t BlockID = 0;
+        size_t *Start;
+        size_t *Count;
+        union PrimitiveStdtypeUnion MinUnion;
+        union PrimitiveStdtypeUnion MaxUnion;
+        void *BufferP = NULL;
+    };
+    struct MinVarInfo
+    {
+        int Dims;
+        size_t *Shape;
+        bool IsValue = false;
+        bool IsReverseDims = false;
+        std::vector<struct MinBlockInfo> BlocksInfo;
+        MinVarInfo(int D, size_t *S)
+        : Dims(D), Shape(S), IsValue(false), IsReverseDims(false),
+          BlocksInfo({})
+        {
+        }
+    };
+
+    virtual MinVarInfo *MinBlocksInfo(const VariableBase &,
+                                      const size_t Step) const
+    {
+        return nullptr;
+    }
+
 protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no communicator is passed */
