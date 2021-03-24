@@ -14,8 +14,8 @@
 #include "adios2/toolkit/format/buffer/Buffer.h"
 
 #include "adios2/common/ADIOSMacros.h"
-#include "fm.h"
 #include "ffs.h"
+#include "fm.h"
 
 namespace adios2
 {
@@ -34,9 +34,7 @@ public:
     const char *Data() const noexcept final;
 
     void Delete();
-
 };
-
 
 } // end namespace format
 } // end namespace adios2
