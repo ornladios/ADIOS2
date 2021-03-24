@@ -2,10 +2,6 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Buffer.h : abstract class for all buffer memory types
- *
- *  Created on: Jul 9, 2019
- *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #ifndef ADIOS2_TOOLKIT_FORMAT_BUFFER_BUFFERV_H_

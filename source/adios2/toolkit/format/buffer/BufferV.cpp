@@ -40,14 +40,6 @@ size_t BufferV::AddToVec(const size_t size, const void *buf, int align,
     else
     {
         InternalBlock.Resize(m_internalPos + size, "");
-        printf("Adding data size %zu to offset %zu in buffer\n", size,
-               m_internalPos);
-        for (int j = 0; j < size; j++)
-        {
-            printf("%02x ", ((unsigned char *)buf)[j]);
-        }
-        printf("\n");
-
         memcpy(InternalBlock.Data() + m_internalPos, buf, size);
         if (DataV.size() && !DataV.back().External &&
             (m_internalPos == (DataV.back().Offset + DataV.back().Size)))

@@ -62,18 +62,6 @@ BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key)
 
 void BP5Serializer::RecalcMarshalStorageSize()
 {
-    // if (Info.DataFieldCount)
-    // {
-    //     FMFieldList LastDataField;
-    //     size_t NewDataSize;
-    //     LastDataField = &Info.DataFields[Info.DataFieldCount - 1];
-    //     NewDataSize =
-    //         (LastDataField->field_offset + LastDataField->field_size + 7) &
-    //         ~7;
-    //     Data = (void *)realloc(Data, NewDataSize + 8);
-    //     memset((char *)(Data) + DataSize, 0, NewDataSize - DataSize);
-    //     DataSize = NewDataSize;
-    // }
     if (Info.MetaFieldCount)
     {
         FMFieldList LastMetaField;
@@ -455,8 +443,6 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         DataOffset =
             CurDataBuffer->AddToVec(ElemCount * ElemSize, Data, ElemSize, Sync);
 
-        printf("Data offset for variable %s is %ld, first data bit is %lx\n",
-               Name, DataOffset, *(size_t *)Data);
         if (!AlreadyWritten)
         {
             if (Shape)
@@ -468,7 +454,6 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             MetaEntry->BlockCount = 1;
             MetaEntry->DataLocation = (size_t *)malloc(sizeof(size_t));
             MetaEntry->DataLocation[0] = DataOffset;
-            std::cout << "first block, location " << DataOffset << std::endl;
             if (Offsets)
                 MetaEntry->Offsets = CopyDims(DimCount, Offsets);
             else
@@ -490,8 +475,6 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                 (size_t *)realloc(MetaEntry->DataLocation,
                                   MetaEntry->BlockCount * sizeof(size_t));
             MetaEntry->DataLocation[MetaEntry->BlockCount - 1] = DataOffset;
-            std::cout << "additional block, location " << DataOffset
-                      << std::endl;
             if (Offsets)
                 MetaEntry->Offsets = AppendDims(
                     MetaEntry->Offsets, PreviousDBCount, DimCount, Offsets);
@@ -515,10 +498,92 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
     }
 }
 
+void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type,
+                                     size_t ElemSize, size_t ElemCount,
+                                     const void *Data)
+{
+
+    const char *AttrString = NULL;
+    const void *DataAddress = Data;
+
+    NewAttribute = true;
+    if (Type == DataType::String)
+    {
+        ElemSize = sizeof(char *);
+        AttrString = (char *)Data;
+        DataAddress = (const char *)&AttrString;
+    }
+    if (ElemCount == (size_t)(-1))
+    {
+        // simple field, only simple attribute name and value
+        char *SstName = BuildVarName(Name, (int)Type, ElemSize);
+        AddField(&Info.AttributeFields, &Info.AttributeFieldCount, SstName,
+                 Type, ElemSize);
+        free(SstName);
+        RecalcAttributeStorageSize();
+        int DataOffset =
+            Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
+        memcpy((char *)(Info.AttributeData) + DataOffset, DataAddress,
+               ElemSize);
+    }
+    else
+    {
+        /* // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
+         */
+        /* // and Offsets matching _MetaArrayRec */
+        /* char *ArrayName = BuildStaticArrayName(Name, Type, ElemCount); */
+        /* AddField(&Info->AttributeFields, &Info->AttributeFieldCount,
+         * ArrayName, Type, */
+        /*          sizeof(size_t)); */
+        /* free(ArrayName); */
+        /* Rec->MetaOffset = */
+        /*     Info->MetaFields[Info->MetaFieldCount - 1].field_offset; */
+        /* char *ShapeName = ConcatName(Name, "Shape"); */
+        /* char *CountName = ConcatName(Name, "Count"); */
+        /* char *OffsetsName = ConcatName(Name, "Offsets"); */
+        /* AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
+         * ShapeName, */
+        /*                    "integer", sizeof(size_t), DimCount); */
+        /* AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
+         * CountName, */
+        /*                    "integer", sizeof(size_t), DimCount); */
+        /* AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount, */
+        /*                    OffsetsName, "integer", sizeof(size_t), DimCount);
+         */
+        /* free(ShapeName); */
+        /* free(CountName); */
+        /* free(OffsetsName); */
+        /* RecalcMarshalStorageSize(Stream); */
+
+        /* if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) && */
+        /*     ZFPcompressionPossible(Type, DimCount)) */
+        /* { */
+        /*     Type = "char"; */
+        /*     ElemSize = 1; */
+        /* } */
+        /* // To Data, add FMFields for ElemCount and Array matching _ArrayRec
+         */
+        /* char *ElemCountName = ConcatName(Name, "ElemCount"); */
+        /* AddField(&Info->DataFields, &Info->DataFieldCount, ElemCountName, */
+        /*          "integer", sizeof(size_t)); */
+        /* Rec->DataOffset = */
+        /*     Info->DataFields[Info->DataFieldCount - 1].field_offset; */
+        /* char *SstName = ConcatName(Name, ""); */
+        /* AddVarArrayField(&Info->DataFields, &Info->DataFieldCount, SstName,
+         */
+        /*                  Type, ElemSize, ElemCountName); */
+        /* free(SstName); */
+        /* free(ElemCountName); */
+        /* RecalcMarshalStorageSize(Stream); */
+        /* // Changing the formats renders these invalid */
+        /* Info->MetaFormat = NULL; */
+        /* Info->DataFormat = NULL; */
+    }
+}
+
 BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
 {
     std::vector<MetaMetaInfoBlock> Formats;
-    FMFormat AttributeFormat = NULL;
     if (!Info.MetaFormat && Info.MetaFieldCount)
     {
         MetaMetaInfoBlock Block;
@@ -544,13 +609,13 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
         Block.MetaMetaIDLen = size;
         Formats.push_back(Block);
     }
-    if (Info.AttributeFields)
+    if (NewAttribute && Info.AttributeFields)
     {
         MetaMetaInfoBlock Block;
         FMFormat Format = FMregister_simple_format(
             Info.LocalFMContext, strdup("Attributes"), Info.AttributeFields,
             FMstruct_size_field_list(Info.AttributeFields, sizeof(char *)));
-        AttributeFormat = Format;
+        Info.AttributeFormat = Format;
         int size;
         Block.MetaMetaInfo = get_server_rep_FMformat(Format, &size);
         Block.MetaMetaInfoLen = size;
@@ -580,17 +645,17 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
         new BufferFFS(MetaEncodeBuffer, MetaDataBlock, MetaDataSize);
 
     BufferFFS *AttrData = NULL;
-    if (Info.AttributeFields)
+    if (NewAttribute && Info.AttributeFields)
     {
         AttributeEncodeBuffer = create_FFSBuffer();
-        void *AttributeBlock = FFSencode(AttributeEncodeBuffer, AttributeFormat,
-                                         Info.AttributeData, &AttributeSize);
+        void *AttributeBlock =
+            FFSencode(AttributeEncodeBuffer, Info.AttributeFormat,
+                      Info.AttributeData, &AttributeSize);
         AttrData =
             new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
+        FMdump_encoded_data(Info.AttributeFormat, AttributeBlock, 1024000);
     }
 
-    printf("MetaDatablock is (Length %d, Data length %zu):\n", MetaDataSize,
-           MBase->DataBlockSize);
     FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);
     /* free all those copied dimensions, etc */
     MBase = (struct FFSMetadataInfoStruct *)Metadata;
@@ -605,6 +670,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
     if (MetadataBuf && MetadataSize)
         memset(MetadataBuf, 0, MetadataSize);
     MBase->BitField = tmp;
+    NewAttribute = false;
 
     return {Formats, Metadata, AttrData, CurDataBuffer};
 #ifdef NDEF

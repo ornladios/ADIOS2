@@ -47,6 +47,7 @@ public:
     void InstallMetaMetaData(MetaMetaInfoBlock &MMList);
     void InstallMetaData(void *MetadataBlock, size_t BlockLen,
                          size_t WriterRank);
+    void InstallAttributeData(void *AttributeBlock, size_t BlockLen);
     void SetupForTimestep(size_t t);
     // return from QueueGet is true if a sync is needed to fill the data
     bool QueueGet(core::VariableBase &variable, void *DestData);
@@ -146,6 +147,8 @@ private:
     BP5VarRec *LookupVarByName(const char *Name);
     BP5VarRec *CreateVarRec(const char *ArrayName);
     void ReverseDimensions(size_t *Dimensions, int count);
+    void BreakdownVarName(const char *Name, char **base_name_p,
+                          DataType *type_p, int *element_size_p);
     void BreakdownArrayName(const char *Name, char **base_name_p,
                             DataType *type_p, int *element_size_p);
     void *VarSetup(core::Engine *engine, const char *variableName,

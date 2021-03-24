@@ -210,6 +210,9 @@ struct _SstStream
     SstFullMetadata CurrentMetadata;
     struct _SstMetaMetaBlockInternal *InternalMetaMetaInfo;
     int InternalMetaMetaCount;
+    struct _SstBlock *InternalAttrDataInfo;
+    size_t LastAttrGet;
+    int InternalAttrDataCount;
     struct _SstParams *WriterConfigParams;
     void *ParamsBlock;
     int CommPatternLocked;

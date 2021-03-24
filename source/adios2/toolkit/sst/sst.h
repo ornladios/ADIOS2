@@ -30,6 +30,7 @@ typedef struct _SstStream *SstStream;
 typedef struct _SstMetaMetaBlock *SstMetaMetaList;
 typedef struct _SstFullMetadata *SstFullMetadata;
 typedef struct _SstData *SstData;
+typedef struct _SstBlock *SstBlock;
 
 typedef enum
 {
@@ -110,6 +111,7 @@ extern void SstReaderGetParams(SstStream stream,
                                int *WriterIsRowMajor);
 extern SstFullMetadata SstGetCurMetadata(SstStream stream);
 extern SstMetaMetaList SstGetNewMetaMetaData(SstStream stream, long timestep);
+extern SstBlock SstGetAttributeData(SstStream stream, long timestep);
 extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  size_t offset, size_t length, void *buffer,
                                  void *DP_TimestepInfo);

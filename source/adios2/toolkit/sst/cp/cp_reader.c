@@ -468,6 +468,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     Stream = CP_newStream();
     Stream->Role = ReaderRole;
     Stream->mpiComm = comm;
+    Stream->LastAttrGet = -1;
 
     SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
@@ -890,6 +891,40 @@ void AddFormatsToMetaMetaInfo(SstStream Stream,
     }
 }
 
+void AddAttributesToAttrDataList(SstStream Stream,
+                                 struct _TimestepMetadataMsg *Msg)
+{
+    if (Stream->LastAttrGet != -1)
+    {
+        int i = 0;
+        while (Stream->InternalAttrDataInfo &&
+               Stream->InternalAttrDataInfo[i].BlockData)
+        {
+            free(Stream->InternalAttrDataInfo[i].BlockData);
+            i++;
+        }
+        free(Stream->InternalAttrDataInfo);
+        Stream->InternalAttrDataInfo = NULL;
+        Stream->InternalAttrDataCount = 0;
+        Stream->LastAttrGet = -1;
+    }
+    if (Msg->AttributeData->DataSize == 0)
+        return;
+
+    Stream->InternalAttrDataInfo = realloc(
+        Stream->InternalAttrDataInfo,
+        (sizeof(struct _SstBlock) * (Stream->InternalAttrDataCount + 2)));
+    struct _SstBlock *NewInfo =
+        &Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount];
+    Stream->InternalAttrDataCount++;
+    NewInfo->BlockData = malloc(Msg->AttributeData->DataSize);
+    NewInfo->BlockSize = Msg->AttributeData->DataSize;
+    memcpy(NewInfo->BlockData, Msg->AttributeData->block,
+           Msg->AttributeData->DataSize);
+    memset(&Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount], 0,
+           sizeof(struct _SstData));
+}
+
 // CP_TimestepMetadataHandler is called by the network handler thread
 // to handle incoming TimestepMetadata messages
 void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
@@ -922,6 +957,7 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
             else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
             {
                 AddFormatsToMetaMetaInfo(Stream, Msg);
+                AddAttributesToAttrDataList(Stream, Msg);
             }
             STREAM_MUTEX_UNLOCK(Stream);
 
@@ -1203,6 +1239,7 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
             else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
             {
                 AddFormatsToMetaMetaInfo(Stream, This->MetadataMsg);
+                AddAttributesToAttrDataList(Stream, This->MetadataMsg);
             }
 
             memset(&Msg, 0, sizeof(Msg));
@@ -1323,6 +1360,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
                 if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
                 {
                     AddFormatsToMetaMetaInfo(Stream, Next->MetadataMsg);
+                    AddAttributesToAttrDataList(Stream, Next->MetadataMsg);
                 }
                 TSMetadataList Tmp = Next;
                 Next = Next->Next;
@@ -1432,6 +1470,12 @@ extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
     }
     memset(&ret[j], 0, sizeof(ret[j]));
     return ret;
+}
+
+extern SstBlock SstGetAttributeData(SstStream Stream, long Timestep)
+{
+    Stream->LastAttrGet = Timestep;
+    return Stream->InternalAttrDataInfo;
 }
 
 static void AddToReadStats(SstStream Stream, int Rank, long Timestep,
@@ -1828,6 +1872,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
         {
             AddFormatsToMetaMetaInfo(Stream, Entry->MetadataMsg);
+            AddAttributesToAttrDataList(Stream, Entry->MetadataMsg);
         }
         Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
@@ -2066,6 +2111,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                  (ReturnData->TSmsg))
         {
             AddFormatsToMetaMetaInfo(Stream, ReturnData->TSmsg);
+            AddAttributesToAttrDataList(Stream, ReturnData->TSmsg);
         }
 
         free(free_block);
@@ -2103,6 +2149,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
         {
             AddFormatsToMetaMetaInfo(Stream, MetadataMsg);
+            AddAttributesToAttrDataList(Stream, MetadataMsg);
         }
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
         memset(Mdata, 0, sizeof(struct _SstFullMetadata));

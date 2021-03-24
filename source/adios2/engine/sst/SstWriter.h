@@ -64,6 +64,12 @@ private:
         _SstData metadata;
         format::BP3Serializer *serializer;
     };
+    struct BP5DataBlock
+    {
+        _SstData data;
+        _SstData metadata;
+        _SstData attribute_data;
+    };
     std::unique_ptr<format::BP3Serializer> m_BP3Serializer;
 
     std::unique_ptr<format::BP5Serializer> m_BP5Serializer;
@@ -72,10 +78,10 @@ private:
     long m_WriterStep = -1;
     bool m_BetweenStepPairs = false;
     bool m_DefinitionsNotified = false;
-    size_t m_FFSMarshaledAttributesCount = 0;
+    size_t m_MarshaledAttributesCount = 0;
     struct _SstParams Params;
 
-    void FFSMarshalAttributes();
+    void MarshalAttributes();
     void DoClose(const int transportIndex = -1) final;
 };
 

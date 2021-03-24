@@ -121,6 +121,18 @@ DataType BP5Deserializer::TranslateFFSType2ADIOS(const char *Type, int size)
     return DataType::None;
 }
 
+void BP5Deserializer::BreakdownVarName(const char *Name, char **base_name_p,
+                                       DataType *type_p, int *element_size_p)
+{
+    int Type;
+    int ElementSize;
+    const char *NameStart = strchr(strchr(Name, '_') + 1, '_') + 1;
+    sscanf(Name, "SST%d_%d_", &ElementSize, &Type);
+    *element_size_p = ElementSize;
+    *type_p = (DataType)Type;
+    *base_name_p = strdup(NameStart);
+}
+
 void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
                                          DataType *type_p, int *element_size_p)
 {
@@ -137,18 +149,12 @@ void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key)
 {
     auto ret = VarByKey[Key];
-    std::cout << "Lookup var by key for key " << Key << " returning " << ret
-              << std::endl;
-
     return ret;
 }
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByName(const char *Name)
 {
     auto ret = VarByName[Name];
-    std::cout << "Lookup var by name for name " << Name << " returning " << ret
-              << std::endl;
-
     return ret;
 }
 
@@ -158,8 +164,6 @@ BP5Deserializer::BP5VarRec *BP5Deserializer::CreateVarRec(const char *ArrayName)
     Ret->VarName = strdup(ArrayName);
     Ret->Variable = nullptr;
     VarByName[Ret->VarName] = Ret;
-    std::cout << "Creating variable Rec with name " << ArrayName << std::endl;
-
     return Ret;
 }
 
@@ -186,7 +190,6 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
         C->FieldIndex = i;
         C->FieldOffset = FieldList[i].field_offset;
 
-        printf("Working on Field %s\n", FieldList[i].field_name);
         if (NameIndicatesArray(FieldList[i].field_name))
         {
             char *ArrayName;
@@ -194,7 +197,6 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             BP5VarRec *VarRec = nullptr;
             int ElementSize;
             C->IsArray = 1;
-            printf("Working on Array Field %s\n", FieldList[i].field_name);
             BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
                                &ElementSize);
             //            if (WriterRank != 0)
@@ -218,7 +220,6 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
             BP5VarRec *VarRec = NULL;
             C->IsArray = 0;
-            printf("Working on Simple Field %s\n", FieldList[i].field_name);
             VarRec = LookupVarByName(FieldName);
             if (!VarRec)
             {
@@ -255,8 +256,6 @@ void BP5Deserializer::ReverseDimensions(size_t *Dimensions, int count)
 void *BP5Deserializer::VarSetup(core::Engine *engine, const char *variableName,
                                 const DataType Type, void *data)
 {
-    std::cout << "Setting up variable with name " << variableName
-              << " and type " << Type << std::endl;
     if (Type == adios2::DataType::Compound)
     {
         return (void *)NULL;
@@ -266,8 +265,6 @@ void *BP5Deserializer::VarSetup(core::Engine *engine, const char *variableName,
     {                                                                          \
         core::Variable<T> *variable =                                          \
             &(engine->m_IO.DefineVariable<T>(variableName));                   \
-        std::cout << "Really " << variableName << " and type " << Type         \
-                  << std::endl;                                                \
         variable->SetData((T *)data);                                          \
         variable->m_AvailableStepsCount = 1;                                   \
         return (void *)variable;                                               \
@@ -293,8 +290,6 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine,
      * setup shape of array variable as global (I.E. Count == Shape,
      * Start == 0)
      */
-    std::cout << "Setting up array variable with name " << variableName
-              << std::endl;
     if (Shape)
     {
         for (int i = 0; i < DimCount; i++)
@@ -465,6 +460,94 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
     }
 }
 
+void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
+                                           size_t BlockLen)
+{
+    static int DumpMetadata = -1;
+    m_Engine->m_IO.RemoveAllAttributes();
+    FMFieldList FieldList;
+    FMStructDescList FormatList;
+    void *BaseData;
+    FFSTypeHandle FFSformat;
+
+    if (BlockLen == 0)
+        return;
+
+    FFSformat =
+        FFSTypeHandle_from_encode(ReaderFFSContext, (char *)AttributeBlock);
+    if (!FFShas_conversion(FFSformat))
+    {
+        FMContext FMC = FMContext_from_FFS(ReaderFFSContext);
+        FMFormat Format = FMformat_from_ID(FMC, (char *)AttributeBlock);
+        FMStructDescList List =
+            FMcopy_struct_list(format_list_of_FMFormat(Format));
+        FMlocalize_structs(List);
+        establish_conversion(ReaderFFSContext, FFSformat, List);
+        FMfree_struct_list(List);
+    }
+
+    if (FFSdecode_in_place_possible(FFSformat))
+    {
+        FFSdecode_in_place(ReaderFFSContext, (char *)AttributeBlock, &BaseData);
+    }
+    else
+    {
+        int DecodedLength = FFS_est_decode_length(
+            ReaderFFSContext, (char *)AttributeBlock, BlockLen);
+        BaseData = malloc(DecodedLength);
+        FFSBuffer decode_buf =
+            create_fixed_FFSBuffer((char *)BaseData, DecodedLength);
+        FFSdecode_to_buffer(ReaderFFSContext, (char *)AttributeBlock,
+                            decode_buf);
+    }
+    if (DumpMetadata == -1)
+    {
+        DumpMetadata = (getenv("SstDumpMetadata") != NULL);
+    }
+    if (DumpMetadata)
+    {
+        printf("\nIncomingAttributeDatablock is %p :\n", BaseData);
+        FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
+        printf("\n\n");
+    }
+    FormatList = format_list_of_FMFormat(FMFormat_of_original(FFSformat));
+    FieldList = FormatList[0].field_list;
+    int i = 0;
+    while (FieldList[i].field_name)
+    {
+        char *FieldName;
+        void *field_data = (char *)BaseData + FieldList[i].field_offset;
+
+        DataType Type;
+        int ElemSize;
+        BreakdownVarName(FieldList[i].field_name, &FieldName, &Type, &ElemSize);
+        if (Type == adios2::DataType::Compound)
+        {
+            return;
+        }
+        else if (Type == helper::GetDataType<std::string>())
+        {
+            m_Engine->m_IO.DefineAttribute<std::string>(FieldName,
+                                                        *(char **)field_data);
+        }
+#define declare_type(T)                                                        \
+    else if (Type == helper::GetDataType<T>())                                 \
+    {                                                                          \
+        m_Engine->m_IO.DefineAttribute<T>(FieldName, *(T *)field_data);        \
+    }
+
+        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        else
+        {
+            std::cout << "Loading attribute matched no type " << ToString(Type)
+                      << std::endl;
+        }
+        free(FieldName);
+        i++;
+    }
+}
+
 bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
 {
     if (variable.m_SingleValue)
@@ -545,7 +628,7 @@ std::vector<BP5Deserializer::ReadRequest>
 BP5Deserializer::GenerateReadRequests()
 {
     std::vector<BP5Deserializer::ReadRequest> Ret;
-    WriterInfo.reserve(WriterCohortSize);
+    WriterInfo.resize(WriterCohortSize);
     for (auto &W : WriterInfo)
     {
         W.Status = Empty;
@@ -571,9 +654,6 @@ BP5Deserializer::GenerateReadRequests()
             RR.Timestep = CurTimestep;
             RR.WriterRank = i;
             RR.StartOffset = 0;
-            printf("Setting up read for writer %d, length %zu\n", i,
-                   ((struct FFSMetadataInfoStruct *)MetadataBaseAddrs[i])
-                       ->DataBlockSize);
             RR.ReadLength =
                 ((struct FFSMetadataInfoStruct *)MetadataBaseAddrs[i])
                     ->DataBlockSize;
@@ -592,8 +672,6 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
         //        ImplementGapWarning(Reqs);
         for (int i = 0; i < WriterCohortSize; i++)
         {
-            printf("Looking at request for var %s , NeedWriter is %d\n",
-                   Req.VarRec->VarName, NeedWriter(Req, i));
             if (NeedWriter(Req, i))
             {
                 /* if needed this writer fill destination with acquired data */
@@ -647,10 +725,6 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                     }
                     IncomingData = IncomingData + DataOffset;
                 }
-                printf("Incoming data for this var %s is at %p (%p + %zu)\n",
-                       Req.VarRec->VarName, IncomingData,
-                       (char *)Requests[i].DestinationAddr,
-                       Req.VarRec->PerWriterDataLocation[i][0]);
                 if (ReaderIsRowMajor)
                 {
                     ExtractSelectionFromPartialRM(
@@ -783,7 +857,6 @@ void BP5Deserializer::ExtractSelectionFromPartialRM(
     MapGlobalToLocalIndex(Dims, FirstIndex, SelectionOffsets, SelectionIndex);
     DestBlockStartOffset = FindOffset(Dims, SelectionCounts, SelectionIndex);
     free(SelectionIndex);
-    printf("DEstBlockStartOffset = %zu\n", DestBlockStartOffset);
     DestBlockStartOffset *= ElementSize;
 
     size_t *PartialIndex = (size_t *)malloc(Dims * sizeof(PartialIndex[0]));
@@ -883,15 +956,8 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
 
     InData += SourceBlockStartOffset;
     OutData += DestBlockStartOffset;
-    printf("Copying %d blocks size %d * %d\n", BlockCount, BlockSize,
-           ElementSize);
     for (int i = 0; i < BlockCount; i++)
     {
-        for (int j = 0; j < BlockSize * ElementSize; j++)
-        {
-            printf("%02x ", (unsigned char)InData[j]);
-        }
-        printf("\n");
         memcpy(OutData, InData, BlockSize * ElementSize);
         InData += SourceBlockStride;
         OutData += DestBlockStride;

@@ -43,7 +43,11 @@ public:
                  size_t ElemSize, size_t DimCount, const size_t *Shape,
                  const size_t *Count, const size_t *Offsets, const void *Data,
                  bool Sync);
+    void MarshalAttribute(const char *Name, const DataType Type,
+                          size_t ElemSize, size_t ElemCount, const void *Data);
     TimestepInfo CloseTimestep(int timestep);
+
+    core::Engine *m_Engine = NULL;
 
 private:
     void Init();
@@ -67,18 +71,19 @@ private:
         FMFormat MetaFormat;
         int DataFieldCount = 0;
         FMFieldList DataFields = NULL;
-        FMFormat DataFormat;
-        int AttributeFieldCount;
-        FMFieldList AttributeFields;
-        FMFormat AttributeFormat;
-        void *AttributeData;
-        int AttributeSize;
-        int CompressZFP;
-        attr_list ZFPParams;
+        FMFormat DataFormat = NULL;
+        int AttributeFieldCount = 0;
+        FMFieldList AttributeFields = NULL;
+        FMFormat AttributeFormat = NULL;
+        void *AttributeData = NULL;
+        int AttributeSize = 0;
+        int CompressZFP = 0;
+        attr_list ZFPParams = NULL;
     };
 
     FFSWriterMarshalBase Info;
     void *MetadataBuf = NULL;
+    bool NewAttribute = false;
 
     size_t MetadataSize = 0;
     BufferV *CurDataBuffer = NULL;
