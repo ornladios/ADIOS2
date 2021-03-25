@@ -627,7 +627,6 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
     FFSBuffer MetaEncodeBuffer = create_FFSBuffer();
     FFSBuffer AttributeEncodeBuffer = NULL;
     int MetaDataSize;
-    int DataSize;
     int AttributeSize = 0;
     struct FFSMetadataInfoStruct *MBase =
         (struct FFSMetadataInfoStruct *)MetadataBuf;

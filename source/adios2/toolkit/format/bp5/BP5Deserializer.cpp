@@ -685,14 +685,12 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                 std::vector<size_t> ZeroGlobalDimensions(DimCount);
                 const size_t *SelOffset = NULL;
                 const size_t *SelSize = Req.Count.data();
-                DataType Type = Req.VarRec->Type;
                 int ReqIndex = 0;
                 while (Requests[ReqIndex].WriterRank != i)
                     ReqIndex++;
                 char *IncomingData =
                     (char *)Requests[ReqIndex].DestinationAddr +
                     Req.VarRec->PerWriterDataLocation[i][0];
-                int FreeIncoming = 0;
 
                 if (Req.Start.size())
                 {

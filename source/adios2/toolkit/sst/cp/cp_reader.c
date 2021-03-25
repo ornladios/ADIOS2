@@ -468,7 +468,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     Stream = CP_newStream();
     Stream->Role = ReaderRole;
     Stream->mpiComm = comm;
-    Stream->LastAttrGet = -1;
+    Stream->AttrsRetrieved = 0;
 
     SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
@@ -894,7 +894,7 @@ void AddFormatsToMetaMetaInfo(SstStream Stream,
 void AddAttributesToAttrDataList(SstStream Stream,
                                  struct _TimestepMetadataMsg *Msg)
 {
-    if (Stream->LastAttrGet != -1)
+    if (Stream->AttrsRetrieved)
     {
         int i = 0;
         while (Stream->InternalAttrDataInfo &&
@@ -906,7 +906,7 @@ void AddAttributesToAttrDataList(SstStream Stream,
         free(Stream->InternalAttrDataInfo);
         Stream->InternalAttrDataInfo = NULL;
         Stream->InternalAttrDataCount = 0;
-        Stream->LastAttrGet = -1;
+        Stream->AttrsRetrieved = 0;
     }
     if (Msg->AttributeData->DataSize == 0)
         return;
@@ -1474,7 +1474,7 @@ extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
 
 extern SstBlock SstGetAttributeData(SstStream Stream, long Timestep)
 {
-    Stream->LastAttrGet = Timestep;
+    Stream->AttrsRetrieved = 1;
     return Stream->InternalAttrDataInfo;
 }
 

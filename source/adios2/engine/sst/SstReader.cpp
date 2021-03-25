@@ -319,7 +319,6 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         for (int i = 0; i < m_CurrentStepMetaData->WriterCohortSize; i++)
         {
             struct _SstData *tmp = m_CurrentStepMetaData->WriterMetadata[i];
-            struct _SstData *attrtmp = m_CurrentStepMetaData->WriterMetadata[i];
             m_BP5Deserializer->InstallMetaData(tmp->block, tmp->DataSize, i);
         }
 

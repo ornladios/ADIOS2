@@ -211,7 +211,7 @@ struct _SstStream
     struct _SstMetaMetaBlockInternal *InternalMetaMetaInfo;
     int InternalMetaMetaCount;
     struct _SstBlock *InternalAttrDataInfo;
-    size_t LastAttrGet;
+    int AttrsRetrieved;
     int InternalAttrDataCount;
     struct _SstParams *WriterConfigParams;
     void *ParamsBlock;

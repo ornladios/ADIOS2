@@ -53,7 +53,7 @@ BP5Deserializer::BlocksInfo(const core::Variable<T> &variable,
             std::vector<size_t> VecStart;
             std::vector<size_t> VecCount;
             size_t DimCount = meta_base->Dims;
-            size_t *Start = meta_base->Offsets;
+            size_t *Start = Offsets;
             size_t *Shape = meta_base->Shape;
             size_t *Count = meta_base->Count;
             if (Shape)
