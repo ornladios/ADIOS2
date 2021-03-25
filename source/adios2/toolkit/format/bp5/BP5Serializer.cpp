@@ -24,6 +24,22 @@ namespace format
 {
 
 BP5Serializer::BP5Serializer() { Init(); }
+BP5Serializer::~BP5Serializer()
+{
+    if (Info.RecList)
+        free(Info.RecList);
+    if (Info.MetaFieldCount)
+        free_FMfield_list(Info.MetaFields);
+    if (Info.LocalFMContext)
+        free_FMcontext(Info.LocalFMContext);
+    if (MetadataBuf)
+    {
+        if (((FFSMetadataInfoStruct *)MetadataBuf)->BitField)
+            free(((FFSMetadataInfoStruct *)MetadataBuf)->BitField);
+        free(MetadataBuf);
+    }
+}
+
 void BP5Serializer::Init()
 {
     memset(&Info, 0, sizeof(Info));

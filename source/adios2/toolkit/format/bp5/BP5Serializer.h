@@ -30,6 +30,7 @@ class BP5Serializer : virtual public BP5Base
 
 public:
     BP5Serializer();
+    ~BP5Serializer();
 
     typedef struct _TimestepInfo
     {

@@ -628,7 +628,6 @@ std::vector<BP5Deserializer::ReadRequest>
 BP5Deserializer::GenerateReadRequests()
 {
     std::vector<BP5Deserializer::ReadRequest> Ret;
-    WriterInfo.resize(WriterCohortSize);
     for (auto &W : WriterInfo)
     {
         W.Status = Empty;
@@ -969,14 +968,42 @@ BP5Deserializer::BP5Deserializer(int WriterCount)
     ReaderFFSContext = create_FFSContext_FM(Tmp);
     free_FMcontext(Tmp);
     WriterCohortSize = WriterCount;
-    //    WriterInfo.resize(WriterCohortSize);
+    WriterInfo.resize(WriterCohortSize);
     MetadataBaseAddrs.resize(WriterCohortSize);
     MetadataFieldLists.resize(WriterCohortSize);
     DataBaseAddrs.resize(WriterCohortSize);
     ActiveControl.resize(WriterCohortSize);
 }
 
-BP5Deserializer::~BP5Deserializer() { free_FFSContext(ReaderFFSContext); }
+BP5Deserializer::~BP5Deserializer()
+{
+    free_FFSContext(ReaderFFSContext);
+    for (int i = 0; i < WriterCohortSize; i++)
+    {
+        if (WriterInfo[i].RawBuffer)
+            free(WriterInfo[i].RawBuffer);
+    }
+    // for (int i = 0; i < Info.VarCount; i++)
+    // 	{
+    // 	    free(Info.VarList[i]->VarName);
+    // 	    free(Info.VarList[i]->PerWriterMetaFieldOffset);
+    // 	    free(Info.VarList[i]->PerWriterBlockCount);
+    // 	    free(Info.VarList[i]->PerWriterBlockStart);
+    // 	    free(Info.VarList[i]->PerWriterStart);
+    // 	    free(Info.VarList[i]->PerWriterCounts);
+    // 	    free(Info.VarList[i]->PerWriterIncomingData);
+    // 	    free(Info.VarList[i]->PerWriterIncomingSize);
+    // 	    free(Info.VarList[i]);
+    // 	}
+    struct ControlInfo *tmp = ControlBlocks;
+    ControlBlocks = NULL;
+    while (tmp)
+    {
+        struct ControlInfo *next = tmp->Next;
+        free(tmp);
+        tmp = next;
+    }
+}
 
 #define declare_template_instantiation(T)                                      \
                                                                                \
