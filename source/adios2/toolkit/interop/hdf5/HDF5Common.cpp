@@ -487,6 +487,59 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
     ///}
 }
 
+void HDF5Common::AddVarString(core::IO &io, std::string const &name,
+                              hid_t datasetId, unsigned int ts)
+{
+    core::Variable<std::string> *v = io.InquireVariable<std::string>(name);
+    if (v != NULL)
+    {
+        v->m_AvailableStepsCount++;
+        v->m_AvailableStepBlockIndexOffsets[ts + 1] = std::vector<size_t>({0});
+        return;
+    }
+
+    // create a new string var if it is a single value
+    hid_t dspace = H5Dget_space(datasetId);
+    const int ndims = H5Sget_simple_extent_ndims(dspace);
+    std::vector<hsize_t> dims(ndims);
+    H5Sget_simple_extent_dims(dspace, dims.data(), NULL);
+    H5Sclose(dspace);
+
+    if ((ndims > 1) || ((ndims == 1) && (dims[0] > 1)))
+    {
+        printf("WARNING: IO is not accepting definition of array string "
+               "variable: %s. dim: %d "
+               "Skipping. \n",
+               name.c_str(), ndims);
+        return;
+    }
+
+    // Dims shape;
+    // shape.resize(ndims);
+
+    try
+    {
+        auto &foo = io.DefineVariable<std::string>(name);
+        // 0 is a dummy holder. Just to make sure the ts entry is in there
+        foo.m_AvailableStepBlockIndexOffsets[ts + 1] = std::vector<size_t>({0});
+        foo.m_AvailableStepsStart = ts;
+        // default was set to 0 while m_AvailabelStepsStart is 1.
+        // correcting
+
+        if (0 == foo.m_AvailableStepsCount)
+        {
+            foo.m_AvailableStepsCount++;
+        }
+    }
+    catch (std::exception &e)
+    {
+        // invalid variable, do not define
+        printf("WARNING: IO is not accepting definition of variable: %s. "
+               "Skipping. \n",
+               name.c_str());
+    }
+}
+
 template <class T>
 void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId,
                         unsigned int ts)
@@ -575,7 +628,12 @@ void HDF5Common::CreateVar(core::IO &io, hid_t datasetId,
     if (H5Tget_class(h5Type) == H5T_STRING)
     // if (H5Tequal(H5T_STRING, h5Type))
     {
-        AddVar<std::string>(io, name, datasetId, ts);
+        // AddVar<std::string>(io, name, datasetId, ts);
+        // in ADIOS, a string var has to be a single value (not arrays)
+        // so we treat 1D-array of 1 string in hdf5 as a single value in adios
+        // otherwise direct mapping between hdf5 dataspace and adios global
+        // dimension will fail for string type
+        AddVarString(io, name, datasetId, ts);
         return;
     }
 
