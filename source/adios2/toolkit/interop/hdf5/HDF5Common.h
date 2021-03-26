@@ -192,6 +192,9 @@ public:
     void AddVar(core::IO &io, std::string const &name, hid_t datasetId,
                 unsigned int ts);
 
+    void AddVarString(core::IO &io, std::string const &name, hid_t datasetId,
+                      unsigned int ts);
+
     template <class T>
     void AddNonStringAttribute(core::IO &io, std::string const &attrName,
                                hid_t attrId, hid_t h5Type, hsize_t arraySize);
