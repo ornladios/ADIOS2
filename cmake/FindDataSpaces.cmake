@@ -34,7 +34,33 @@ if(NOT DATASPACES_FOUND)
       get_filename_component(DATASPACES_ROOT "${DSPACES_CONF}/../.." ABSOLUTE)
     endif()
   endif()
-  if(DATASPACES_ROOT)
+  find_package(PkgConfig)
+  if(PKG_CONFIG_FOUND)
+    set(_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
+    if(DATASPACES_ROOT)
+      list(INSERT CMAKE_PREFIX_PATH 0 "${DATASPACES_ROOT}")
+    elseif(NOT ENV{DATASPACES_ROOT} STREQUAL "")
+      list(INSERT CMAKE_PREFIX_PATH 0 "$ENV{DATASPACES_ROOT}")
+    endif()
+    set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
+    pkg_check_modules(PC_DSPACES dspaces)
+    set(CMAKE_PREFIX_PATH ${_CMAKE_PREFIX_PATH})
+    unset(_CMAKE_PREFIX_PATH)
+    if(PC_DSPACES_FOUND)
+      if(BUILD_SHARED_LIBS)
+        set(_PC_TYPE)
+      else()
+        set(_PC_TYPE _STATIC)
+      endif()
+      set(DATASPACES_LIBRARIES ${PC_DSPACES${_PC_TYPE}_LINK_LIBRARIES})
+      set(DATASPACES_LIBRARY_HINT ${PC_DSPACES${_PC_TYPE}_LIBRARY_DIRS})
+      set(DATASPACES_INCLUDE_DIR ${PC_DSPACES${_PC_TYPE}_INCLUDE_DIRS})
+      set(DATASPACES_VERSION ${PC_DSPACES_VERSION})
+      find_library(DATASPACES_LIBRARY dspaces HINTS ${DATASPACES_LIBRARY_HINT})
+      set(HAVE_DSPACES2 TRUE)
+    endif()
+  endif()
+  if(DATASPACES_ROOT AND NOT PC_DSPACES_FOUND)
     find_program(DSPACES_CONF dspaces_config ${DATASPACES_ROOT}/bin)
     if(DSPACES_CONF)
 	  execute_process(COMMAND ${DSPACES_CONF} -l
@@ -50,50 +76,47 @@ if(NOT DATASPACES_FOUND)
 	  foreach(LOOP_VAR ${LINK_LIBS})
 	    STRING(FIND ${LOOP_VAR} "-u" DEL_FLG)
 	    if(("${DEL_FLG}" EQUAL "-1"))
-	        STRING(FIND ${LOOP_VAR} "/" HINT_FLG)
-		if(NOT("${HINT_FLG}" EQUAL "-1"))
+	      STRING(FIND ${LOOP_VAR} "/" HINT_FLG)
+		  if(NOT("${HINT_FLG}" EQUAL "-1"))
 		    list(APPEND DATASPACES_LIBRARY_HINT ${LOOP_VAR})
-		else()
+		  else()
 		    unset(LOCAL_LIBRARY CACHE)
 		    unset(LOCAL_LIBRARY-NOTFOUND CACHE)
 		    STRING(FIND ${LOOP_VAR} "stdc++" CPP_FLG)
 		    if("${CPP_FLG}" EQUAL "-1")
-		        find_library(LOCAL_LIBRARY NAMES "${LOOP_VAR}" HINTS ${DATASPACES_LIBRARY_HINT})
-		        if(LOCAL_LIBRARY)
+		      find_library(LOCAL_LIBRARY NAMES "${LOOP_VAR}" HINTS ${DATASPACES_LIBRARY_HINT})
+		      if(LOCAL_LIBRARY)
 			    list(APPEND DATASPACES_LIBRARIES ${LOCAL_LIBRARY})
-		        else()
+		      else()
 			    list(APPEND DATASPACES_LIBRARIES ${LOOP_VAR})
-		        endif()
+		      endif()
 		    endif()
-		endif()
-	      endif()
-  	    endforeach()
-	execute_process(COMMAND ${DSPACES_CONF} -v
+		  endif()
+	    endif()
+  	  endforeach()
+	  execute_process(COMMAND ${DSPACES_CONF} -v
         RESULT_VARIABLE RESULT_VAR
         OUTPUT_VARIABLE DATASPACES_VERSION
         ERROR_QUIET
         OUTPUT_STRIP_TRAILING_WHITESPACE)	
-    endif ()
-	
+    endif()
     set(DATASPACES_INCLUDE_OPTS HINTS ${DATASPACES_ROOT}/include)
-
+    find_path(DATASPACES_INCLUDE_DIR dataspaces.h ${DATASPACES_INCLUDE_OPTS})
+    find_library(DATASPACES_LIBRARY dspaces HINTS ${DATASPACES_LIBRARY_HINT}) 
   endif()
-
-  find_path(DATASPACES_INCLUDE_DIR dataspaces.h ${DATASPACES_INCLUDE_OPTS})
-  find_library(DSPACES_LIBRARY dspaces HINTS ${DATASPACES_LIBRARY_HINT}) 
 
   include(FindPackageHandleStandardArgs)
   find_package_handle_standard_args(DataSpaces
     FOUND_VAR DATASPACES_FOUND
     VERSION_VAR DATASPACES_VERSION
     REQUIRED_VARS DATASPACES_VERSION DATASPACES_INCLUDE_DIR 
-      DATASPACES_LIBRARIES DSPACES_LIBRARY
+      DATASPACES_LIBRARIES #DATASPACES_LIBRARY
   )
   if(DATASPACES_FOUND)
     if(DATASPACES_FOUND AND NOT TARGET DataSpaces::DataSpaces)
       add_library(DataSpaces::DataSpaces UNKNOWN IMPORTED)
       set_target_properties(DataSpaces::DataSpaces PROPERTIES
-       	IMPORTED_LOCATION             "${DSPACES_LIBRARY}"
+       	IMPORTED_LOCATION             "${DATASPACES_LIBRARY}"
         INTERFACE_LINK_LIBRARIES      "${DATASPACES_LIBRARIES}"
         INTERFACE_INCLUDE_DIRECTORIES "${DATASPACES_INCLUDE_DIR}"
       )

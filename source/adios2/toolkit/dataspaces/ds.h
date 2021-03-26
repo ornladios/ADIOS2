@@ -16,14 +16,21 @@
 extern "C" {
 #endif
 
+#include "adios2/toolkit/dataspaces/DSpacesConfig.h"
 #include "ds_data.h"
 #include <stddef.h>
+#ifdef HAVE_DSPACES2
+#include <dspaces.h>
+#endif /* HAVE_DSPACES2 */
 
 typedef struct adios_ds_data_struct DsData;
 
 extern int adios_dataspaces_init(void *comm, DsData *md);
 extern int adios_read_dataspaces_init(void *comm, DsData *data);
 
+#ifdef HAVE_DSPACES2
+extern dspaces_client_t *get_client_handle();
+#endif /* HAVE_DSPACES2 */
 extern void adios_dataspaces_open(char *fname, DsData *md);
 extern void globals_adios_set_dataspaces_connected_from_reader();
 extern void globals_adios_set_dataspaces_disconnected_from_reader();

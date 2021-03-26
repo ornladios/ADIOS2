@@ -213,6 +213,7 @@ if(ADIOS2_HAVE_SST)
 endif()
 
 if(ADIOS2_HAVE_DataSpaces)
+  add_subdirectory(toolkit/dataspaces)
   target_sources(adios2_core_mpi PRIVATE
      toolkit/dataspaces/ds_writer.c
      engine/dataspaces/DataSpacesWriter.cpp engine/dataspaces/DataSpacesWriter.tcc 
