@@ -183,9 +183,26 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
             elementsRead *= count[i];
         }
 
-        ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT,
-                      values);
-        // H5Sclose(memDataSpace);
+        if (H5Tget_class(h5Type) != H5T_STRING)
+        {
+            ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace,
+                          H5P_DEFAULT, values);
+            // H5Sclose(memDataSpace);
+        }
+        else if (1 == elementsRead)
+        {
+            hid_t h5Type = H5Dget_type(dataSetId); // get actual type;
+            size_t typesize = H5Tget_size(h5Type);
+
+            char *val = (char *)(calloc(typesize, sizeof(char)));
+            hid_t ret2 = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace,
+                                 H5P_DEFAULT, val);
+
+            ((std::string *)values)->assign(val, typesize);
+            free(val);
+
+            H5Tclose(h5Type);
+        }
     }
 
     return slabsize;
@@ -197,17 +214,32 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
 
     if (!m_H5File.m_IsGeneratedByAdios)
     {
-        // UseHDFReadNativeFile(variable, data, h5Type);
-        hid_t dataSetId =
-            H5Dopen(m_H5File.m_FileId, variable.m_Name.c_str(), H5P_DEFAULT);
-        if (dataSetId < 0)
+        std::size_t found = variable.m_Name.find("__");
+        if (found != std::string::npos)
         {
+            std::string h5name = variable.m_Name.substr(0, found);
+            hid_t dataSetId =
+                H5Dopen(m_H5File.m_FileId, h5name.c_str(), H5P_DEFAULT);
+            if (dataSetId < 0)
+                return;
+            interop::HDF5TypeGuard g_ds(dataSetId, interop::E_H5_DATASET);
+            ReadDataset(dataSetId, h5Type, variable, data);
             return;
         }
+        else
+        {
+            // UseHDFReadNativeFile(variable, data, h5Type);
+            hid_t dataSetId = H5Dopen(m_H5File.m_FileId,
+                                      variable.m_Name.c_str(), H5P_DEFAULT);
+            if (dataSetId < 0)
+            {
+                return;
+            }
 
-        interop::HDF5TypeGuard g_ds(dataSetId, interop::E_H5_DATASET);
-        ReadDataset(dataSetId, h5Type, variable, data);
-        return;
+            interop::HDF5TypeGuard g_ds(dataSetId, interop::E_H5_DATASET);
+            ReadDataset(dataSetId, h5Type, variable, data);
+            return;
+        }
     }
 
     T *values = data;
