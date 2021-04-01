@@ -1,0 +1,29 @@
+ARG baseos=ubuntu-bionic
+FROM spack/${baseos}
+
+# Setup sudo and the adios user
+COPY setup-user.sh /root/setup-user.sh
+RUN /root/setup-user.sh && \
+    rm -f /root/setup-user.sh
+
+# Switch to spack@develop
+RUN cd ${SPACK_ROOT} && \
+    git init && \
+    git remote add origin https://github.com/spack/spack.git && \
+    git fetch origin develop && \
+    git checkout -f develop && \
+    rm -rf .git
+
+# Setup the modified entrypoint
+ENV SPACK_PYTHON=/usr/bin/python3.6
+COPY entrypoint.bash $SPACK_ROOT/share/spack/docker/entrypoint.bash
+RUN rm -f /usr/local/bin/spack-named-env && \
+    ln -s $SPACK_ROOT/share/spack/docker/entrypoint.bash \
+          /usr/local/bin/spack-named-env
+
+# Install dependencies
+ENV ADIOS2_SPACK_SPEC="adios2+mpi+blosc+bzip2+zfp+sz+png+sst+dataman+ssc+hdf5+python+fortran"
+RUN spack install \
+        -v -j$(grep -c '^processor' /proc/cpuinfo) --only dependencies \
+        ${ADIOS2_SPACK_SPEC} arch=x86_64 && \
+    spack clean -a

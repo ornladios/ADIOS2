@@ -1,0 +1,261 @@
+# Ideally this would be done in seperate workflows but placing them all # in one is currently necessary to enforce job dependencies
+
+name: GitHub Actions
+
+on: 
+  push: 
+    branches: 
+    - master 
+    - release* 
+  pull_request: 
+    branches: 
+    - master 
+    - release* 
+
+jobs:
+
+#######################################
+# Formatting jobs
+#######################################
+
+  format:
+    runs-on: ubuntu-latest
+    container:
+      image: ornladios/adios2:ci-formatting
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: CXX
+      run: scripts/ci/scripts/run-clang-format.sh
+    - name: Python
+      run: scripts/ci/scripts/run-flake8.sh
+
+
+#######################################
+# Build and test jobs
+#######################################
+
+  linux:
+    needs: format
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.container }}
+      options: --shm-size=1g
+      env:
+        GH_YML_JOBNAME: ${{ matrix.jobname }}
+        GH_YML_OS: Linux
+
+    strategy:
+      fail-fast: false
+      matrix:
+        jobname: [
+          el7,
+          el7-gnu8-ohpc,
+          el7-gnu8-openmpi-ohpc,
+          el7-gnu8-openmpi-ohpc-static,
+          suse-pgi,
+          suse-pgi-openmpi,
+          debian-sid,
+          debian-sid-openmpi ]
+        include:
+        - jobname: el7
+          container: ornladios/adios2:ci-el7
+        - jobname: el7-gnu8-ohpc
+          container: ornladios/adios2:ci-el7-gnu8-ohpc
+        - jobname: el7-gnu8-openmpi-ohpc
+          container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
+        - jobname: el7-gnu8-openmpi-ohpc-static
+          container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
+        - jobname: suse-pgi
+          container: ornladios/adios2:ci-suse-nvhpcsdk
+        - jobname: suse-pgi-openmpi
+          container: ornladios/adios2:ci-suse-nvhpcsdk-openmpi
+        - jobname: debian-sid
+          container: ornladios/adios2:ci-debian-sid
+        - jobname: debian-sid-openmpi
+          container: ornladios/adios2:ci-debian-sid
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Setup
+      run: scripts/ci/gh-actions/linux-setup.sh
+    - name: Update
+      run: scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: scripts/ci/gh-actions/run.sh build
+    - name: Test
+      run: scripts/ci/gh-actions/run.sh test
+
+  linux_emu:
+    needs: format
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.container }}
+      options: --privileged --shm-size=1g
+      env:
+        GH_YML_JOBNAME: ${{ matrix.jobname }}
+        GH_YML_OS: Linux
+
+    strategy:
+      fail-fast: false
+      matrix:
+        jobname: [
+          power8-el7-xl,
+          power8-el7-xl-smpi ]
+        include:
+        - jobname: power8-el7-xl
+          container: ornladios/adios2:ci-x86_64-power8-el7-xl
+          arch: ppc64le
+        - jobname: power8-el7-xl-smpi
+          container: ornladios/adios2:ci-x86_64-power8-el7-xl-smpi
+          arch: ppc64le
+
+    steps:
+    - name: Emulation Setup
+      run: /x86_64/bin/register --reset --targets ${{ matrix.arch }}
+      env:
+        PATH: /x86_64/bin
+    - name: Node.js Setup
+      run: mount --bind /x86_64/bin/node /__e/node12/bin/node
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Setup
+      run: scripts/ci/gh-actions/linux-setup.sh
+    - name: Update
+      run: scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: scripts/ci/gh-actions/run.sh build
+    - name: Test
+      run: scripts/ci/gh-actions/run.sh test
+
+
+#######################################
+# Docker container jobs
+#######################################
+
+  docker:
+    needs: format
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        baseos: [
+          ubuntu-bionic ]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        path: ci-source
+    - name: Re-configure docker daemon
+      run: |
+          sudo systemctl stop docker
+          echo $'{\n    "experimental": true\n}' | \
+              sudo tee /etc/docker/daemon.json
+          sudo systemctl start docker
+    - name: Build image
+      run: |
+          docker build \
+              --rm --squash \
+              -t ornladios/adios2:ci-tmp \
+              --build-arg baseos=${{ matrix.baseos }} \
+              -f ci-source/scripts/ci/images/spack/Dockerfile \
+              .
+    - name: Save image as a tar file
+      run: |
+          docker save -o ci-docker.tar ornladios/adios2:ci-tmp
+          ls -lah ci-docker.tar
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        retention-days: 1
+        name: ci-docker ${{ matrix.baseos }} ${{ github.sha }}
+        path: ci-docker.tar
+    - name: Push image to Docker Hub
+      if: github.event_name == 'push'
+      env:
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      run: |
+          target_tag="${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}"
+          docker tag \
+              ornladios/adios2:ci-tmp \
+              ornladios/adios2:${target_tag}
+          docker login \
+              --username="${DOCKERHUB_USERNAME}" \
+              --password="${DOCKERHUB_PASSWORD}"
+          docker push \
+              ornladios/adios2:${target_tag}
+
+#######################################
+# Contract testing jobs
+#######################################
+
+  # These contract testing jobs use the container built in the previous 
+  # docker job and runs it in a way similar to how a typical GitHub
+  # Actions container job does.  Using the "messy" default shell for
+  # run steps lets the steps be written as though they too were using a
+  # standard container job.
+  contract:
+    needs: docker
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        code: [
+          examples,
+          lammps ]
+        include:
+        - code: examples
+          repo: ornladios/ADIOS2-Examples
+          ref: master
+        - code: lammps
+          repo: lammps/lammps
+          ref: patch_10Feb2021
+    defaults:
+      run:
+        shell: bash -c "docker exec adios2-ci spack-named-env adios2 bash -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        path: adios2-source
+    - uses: actions/checkout@v2
+      with:
+        repository: ${{ matrix.repo }}
+        ref: ${{ matrix.ref }}
+        path: source
+    - name: Download CI docker image
+      uses: actions/download-artifact@v2
+      with:
+        name: ci-docker ubuntu-bionic ${{ github.sha }}
+    - name: Initialize containers
+      shell: bash -e {0}
+      run: |
+          sudo chown 1000:1000 .
+          docker load -i ci-docker.tar
+          docker create \
+              --name adios2-ci --workdir /__w/ADIOS2/ADIOS2 \
+              -v "/home/runner/work":"/__w" \
+              --entrypoint "tail" ornladios/adios2:ci-tmp \
+              "-f" "/dev/null"
+          docker start adios2-ci
+    - name: Configure
+      run: adios2-source/testing/contract/${{ matrix.code }}/config.sh
+    - name: Build
+      run: adios2-source/testing/contract/${{ matrix.code }}/build.sh
+    - name: Install
+      run: adios2-source/testing/contract/${{ matrix.code }}/install.sh
+    - name: Test
+      run: adios2-source/testing/contract/${{ matrix.code }}/test.sh
