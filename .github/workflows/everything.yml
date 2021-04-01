@@ -190,96 +190,60 @@ jobs:
       fail-fast: false
       matrix:
         baseos: [
-          ubuntu18.04,
-          ubuntu20.04 ]
+          ubuntu-bionic ]
 
     steps:
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.event.pull_request.head.sha }}
+        path: ci-source
+    - name: Re-configure docker daemon
+      run: |
+          sudo systemctl stop docker
+          echo $'{\n    "experimental": true\n}' | \
+              sudo tee /etc/docker/daemon.json
+          sudo systemctl start docker
     - name: Build image
       run: |
-          adios_ver="pr${{ github.event.pull_request.number }}"
-          if [ "${adios_ver}" == "pr" ]
-          then
-              adios_ver="${GITHUB_REF#refs/heads/}"
-          fi
-          echo "adios_ver=${adios_ver}"
           docker build \
-              -t ornladios/adios2:${adios_ver}-${{ matrix.baseos }} \
-              --build-arg adios_ver=${adios_ver} \
-              --build-arg base=${{ matrix.baseos }} \
-              scripts/docker/complete
+              --rm --squash \
+              -t ornladios/adios2:ci-tmp \
+              --build-arg baseos=${{ matrix.baseos }} \
+              -f ci-source/scripts/ci/images/spack/Dockerfile \
+              .
+    - name: Save image as a tar file
+      run: |
+          docker save -o ci-docker.tar ornladios/adios2:ci-tmp
+          ls -lah ci-docker.tar
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        retention-days: 1
+        name: ci-docker ${{ matrix.baseos }} ${{ github.sha }}
+        path: ci-docker.tar
     - name: Push image to Docker Hub
       if: github.event_name == 'push'
       env:
         DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       run: |
+          target_tag="${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}"
+          docker tag \
+              ornladios/adios2:ci-tmp \
+              ornladios/adios2:${target_tag}
           docker login \
               --username="${DOCKERHUB_USERNAME}" \
-              --password="${DOCKERHUB_PASSWORD}" && \
+              --password="${DOCKERHUB_PASSWORD}"
           docker push \
-              ornladios/adios2:${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}
+              ornladios/adios2:${target_tag}
 
 #######################################
 # Contract testing jobs
 #######################################
 
-  contract-setup:
-    needs: format
-    runs-on: ubuntu-latest
-    container:
-      image: ornladios/adios2:dependencies-ubuntu20.04
-      options: --user=root
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-    - name: Configure
-      run: |
-        mkdir build
-        cd build
-        . /etc/profile
-        cmake \
-          -DCMAKE_INSTALL_PREFIX=/opt/adios \
-          -DBUILD_TESTING=OFF \
-          -DADIOS2_BUILD_EXAMPLES=OFF \
-          ..
-    - name: Build
-      run: |
-        cd build
-        make -j$(grep -c '^processor' /proc/cpuinfo)
-    - name: Install
-      run: |
-        cd build
-        . /etc/profile
-        make install
-        echo 'export PATH="/opt/adios/bin:${PATH}"' >> /etc/profile.d/adios2.sh
-        echo 'export LD_LIBRARY_PATH="/opt/adios/lib:${LD_LIBRARY_PATH}"' \
-          >> /etc/profile.d/adios2.sh
-        echo 'export CMAKE_PREFIX_PATH="/opt/adios:${CMAKE_PREFIX_PATH}"' \
-          >> /etc/profile.d/adios2.sh
-        echo 'export PYTHONPATH="/opt/adios/lib/python3/dist-packages:${PYTHONPATH}"' \
-          >> /etc/profile.d/adios2.sh
-    - name: Archive
-      run: |
-        tar -cvf adios-installation.tar /opt/adios /etc/profile.d/adios2.sh
-    - name: Upload
-      uses: actions/upload-artifact@v2
-      with:
-        retention-days: 1
-        name: contract-adios-installation ${{ github.sha }}
-        path: adios-installation.tar
-
-
   contract:
-    needs: contract-setup
+    needs: docker
     runs-on: ubuntu-latest
-    container:
-      image: ornladios/adios2:dependencies-ubuntu20.04
-      options: --user=root
 
     strategy:
       fail-fast: false
@@ -294,19 +258,11 @@ jobs:
         - code: lammps
           repo: lammps/lammps
           ref: patch_10Feb2021
-
     defaults:
       run:
-        shell: su adios -c "bash --login {0}"
+        shell: bash -c "docker exec adios2-ci spack-named-env adios2 bash -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
 
     steps:
-    - name: Download adios
-      uses: actions/download-artifact@v2
-      with:
-        name: contract-adios-installation ${{ github.sha }}
-    - name: Extract adios
-      shell: bash
-      run: tar -C / -xvf ${GITHUB_WORKSPACE}/adios-installation.tar
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.event.pull_request.head.sha }}
@@ -316,9 +272,21 @@ jobs:
         repository: ${{ matrix.repo }}
         ref: ${{ matrix.ref }}
         path: source
-    - name: Fixup permissions for adios user
-      shell: bash
-      run: chown -R adios:adios ${GITHUB_WORKSPACE}
+    - name: Download CI docker image
+      uses: actions/download-artifact@v2
+      with:
+        name: ci-docker ubuntu-bionic ${{ github.sha }}
+    - name: Initialize containers
+      shell: bash -e {0}
+      run: |
+          sudo chown 1000:1000 .
+          docker load -i ci-docker.tar
+          docker create \
+              --name adios2-ci --workdir /__w/ADIOS2/ADIOS2 \
+              -v "/home/runner/work":"/__w" \
+              --entrypoint "tail" ornladios/adios2:ci-tmp \
+              "-f" "/dev/null"
+          docker start adios2-ci
     - name: Configure
       run: adios2-source/testing/contract/${{ matrix.code }}/config.sh
     - name: Build
