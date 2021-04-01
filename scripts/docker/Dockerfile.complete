@@ -1,0 +1,25 @@
+ARG baseos=ubuntu-bionic
+FROM ornladios/adios2:spack-dependencies-${baseos}
+
+# Install adios
+RUN spack install \
+        -v -j$(grep -c '^processor' /proc/cpuinfo) \
+        ${ADIOS2_SPACK_SPEC} && \
+    spack clean -a
+
+# Build the envirponment
+RUN spack env create adios2 && \
+    spack -e adios2 add $(spack find --format "/{hash}") && \
+    spack -e adios2 install && \
+    rm -rf /root/.spack && \
+    spack env activate adios2 && \
+    spack env deactivate
+
+# Initialize the first-use-of-environment stuff for the adios user
+WORKDIR /home/adios
+USER adios
+RUN spack env activate adios2 && \
+    spack env deactivate
+
+ENTRYPOINT ["/usr/local/bin/spack-named-env", "adios2"]
+CMD ["bash"]
