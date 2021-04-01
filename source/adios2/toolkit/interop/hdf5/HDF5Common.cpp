@@ -487,36 +487,9 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
     ///}
 }
 
-void HDF5Common::AddVarString(core::IO &io, std::string const &name,
-                              hid_t datasetId, unsigned int ts)
+void HDF5Common::AddSingleString(core::IO &io, std::string const &name,
+                                 hid_t datasetId, unsigned int ts)
 {
-    core::Variable<std::string> *v = io.InquireVariable<std::string>(name);
-    if (v != NULL)
-    {
-        v->m_AvailableStepsCount++;
-        v->m_AvailableStepBlockIndexOffsets[ts + 1] = std::vector<size_t>({0});
-        return;
-    }
-
-    // create a new string var if it is a single value
-    hid_t dspace = H5Dget_space(datasetId);
-    const int ndims = H5Sget_simple_extent_ndims(dspace);
-    std::vector<hsize_t> dims(ndims);
-    H5Sget_simple_extent_dims(dspace, dims.data(), NULL);
-    H5Sclose(dspace);
-
-    if ((ndims > 1) || ((ndims == 1) && (dims[0] > 1)))
-    {
-        printf("WARNING: IO is not accepting definition of array string "
-               "variable: %s. dim: %d "
-               "Skipping. \n",
-               name.c_str(), ndims);
-        return;
-    }
-
-    // Dims shape;
-    // shape.resize(ndims);
-
     try
     {
         auto &foo = io.DefineVariable<std::string>(name);
@@ -538,6 +511,90 @@ void HDF5Common::AddVarString(core::IO &io, std::string const &name,
                "Skipping. \n",
                name.c_str());
     }
+}
+
+void HDF5Common::AddVarString(core::IO &io, std::string const &name,
+                              hid_t datasetId, unsigned int ts)
+{
+    core::Variable<std::string> *v = io.InquireVariable<std::string>(name);
+    if (v != NULL)
+    {
+        v->m_AvailableStepsCount++;
+        v->m_AvailableStepBlockIndexOffsets[ts + 1] = std::vector<size_t>({0});
+        return;
+    }
+
+    // create a new string var if it is a single value
+    hid_t dspace = H5Dget_space(datasetId);
+    const int ndims = H5Sget_simple_extent_ndims(dspace);
+    std::vector<hsize_t> dims(ndims);
+    H5Sget_simple_extent_dims(dspace, dims.data(), NULL);
+    H5Sclose(dspace);
+
+    // if ( (ndims > 1) || ( (ndims == 1) && (dims[0] > 1) ) ) {
+    if ((ndims > 0))
+    {
+        bool isSingleElement = true;
+        for (int i = 0; i < ndims; i++)
+        {
+            if (dims[i] > 1)
+            {
+                isSingleElement = false;
+                break;
+            }
+        } // for
+
+        if (!isSingleElement)
+        {
+            if (ndims != 2)
+            {
+                printf("WARNING: IO is not accepting definition of array "
+                       "string variable: %s. dim: %d "
+                       "Skipping! \n",
+                       name.c_str(), ndims);
+                return;
+            }
+
+            // adding special case from a dataset requirement
+            for (unsigned long i = 0; i < dims[0]; i++)
+                for (unsigned long j = 0; j < dims[1]; j++)
+                {
+                    std::string curr = name + "__" + std::to_string(i) + "_" +
+                                       std::to_string(j);
+                    // AddSingleString(io, curr, datasetId, ts);
+                    try
+                    {
+                        auto &foo = io.DefineVariable<std::string>(curr);
+                        // 0 is a dummy holder. Just to make sure the ts entry
+                        // is in there
+                        foo.m_AvailableStepBlockIndexOffsets[ts + 1] =
+                            std::vector<size_t>({0});
+                        foo.m_AvailableStepsStart = ts;
+                        // default was set to 0 while m_AvailabelStepsStart
+                        // is 1. correcting
+                        foo.m_Start = {i, j};
+                        foo.m_Count = {1, 1};
+                        if (0 == foo.m_AvailableStepsCount)
+                        {
+                            foo.m_AvailableStepsCount++;
+                        }
+                    }
+                    catch (std::exception &e)
+                    {
+                        // invalid variable, do not define
+                        printf("WARNING: IO is not accepting definition of "
+                               "variable: %s. "
+                               "Skipping. \n",
+                               name.c_str());
+                    }
+                }
+            return;
+        }
+    }
+
+    // Dims shape;
+    // shape.resize(ndims);
+    AddSingleString(io, name, datasetId, ts);
 }
 
 template <class T>

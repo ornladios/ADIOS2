@@ -192,6 +192,11 @@ public:
     void AddVar(core::IO &io, std::string const &name, hid_t datasetId,
                 unsigned int ts);
 
+    // adios only allows a scalar string var
+    void AddSingleString(core::IO &io, std::string const &name, hid_t datasetId,
+                         unsigned int ts);
+
+    // decompose array string vars
     void AddVarString(core::IO &io, std::string const &name, hid_t datasetId,
                       unsigned int ts);
 
