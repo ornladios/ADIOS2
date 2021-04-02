@@ -3,12 +3,12 @@ FROM ornladios/adios2:spack-dependencies-${baseos}
 
 # Install from CI source
 ARG ci_source_dir=ci-source
-COPY ci-source /opt/adios2/source
+COPY ${ci_source_dir} /opt/adios2/source
 RUN spack dev-build \
         -j$(grep -c '^processor' /proc/cpuinfo) \
         -d /opt/adios2/source \
         --skip-patch \
-        ${ADIOS2_SPACK_SPEC/adios2/adios2@develop} && \
+        adios2@develop && \
     spack clean -a
 
 # Build the environment

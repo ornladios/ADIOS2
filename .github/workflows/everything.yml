@@ -168,6 +168,7 @@ jobs:
               --rm --squash \
               -t ornladios/adios2:ci-tmp \
               --build-arg baseos=${{ matrix.baseos }} \
+              --build-arg ci_source_dir=ci-source \
               -f ci-source/scripts/ci/images/spack/Dockerfile \
               .
     - name: Save image as a tar file
@@ -233,10 +234,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        path: adios2-source
-    - uses: actions/checkout@v2
-      with:
         repository: ${{ matrix.repo }}
         ref: ${{ matrix.ref }}
         path: source
@@ -256,12 +253,12 @@ jobs:
               "-f" "/dev/null"
           docker start adios2-ci
     - name: Dependencies
-      run: adios2-source/testing/contract/${{ matrix.code }}/depends.sh
+      run: /opt/adios2/source/testing/contract/${{ matrix.code }}/depends.sh
     - name: Configure
-      run: adios2-source/testing/contract/${{ matrix.code }}/config.sh
+      run: /opt/adios2/source/testing/contract/${{ matrix.code }}/config.sh
     - name: Build
-      run: adios2-source/testing/contract/${{ matrix.code }}/build.sh
+      run: /opt/adios2/source/testing/contract/${{ matrix.code }}/build.sh
     - name: Install
-      run: adios2-source/testing/contract/${{ matrix.code }}/install.sh
+      run: /opt/adios2/source/testing/contract/${{ matrix.code }}/install.sh
     - name: Test
-      run: adios2-source/testing/contract/${{ matrix.code }}/test.sh
+      run: /opt/adios2/source/testing/contract/${{ matrix.code }}/test.sh

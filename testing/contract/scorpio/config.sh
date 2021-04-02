@@ -19,6 +19,6 @@ cmake \
   -DPIO_ENABLE_EXAMPLES=ON \
   -DWITH_NETCDF=OFF \
   -DWITH_PNETCDF=ON \
-  -DPnetCDF_PATH=$(spack env deactivate && spack location -i parallel-netcdf) \
+  -DPnetCDF_PATH=$(spack location -i parallel-netcdf) \
   -DWITH_ADIOS2=ON \
   ${source_dir}
