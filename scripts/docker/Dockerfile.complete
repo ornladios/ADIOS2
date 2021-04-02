@@ -4,7 +4,7 @@ FROM ornladios/adios2:spack-dependencies-${baseos}
 # Install adios
 RUN spack install \
         -v -j$(grep -c '^processor' /proc/cpuinfo) \
-        ${ADIOS2_SPACK_SPEC} && \
+        adios2 && \
     spack clean -a
 
 # Build the envirponment
