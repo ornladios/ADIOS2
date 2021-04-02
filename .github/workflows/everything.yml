@@ -214,7 +214,8 @@ jobs:
       matrix:
         code: [
           examples,
-          lammps ]
+          lammps,
+          scorpio ]
         include:
         - code: examples
           repo: ornladios/ADIOS2-Examples
@@ -222,6 +223,9 @@ jobs:
         - code: lammps
           repo: lammps/lammps
           ref: patch_10Feb2021
+        - code: scorpio
+          repo: E3SM-Project/scorpio
+          ref: scorpio-v1.2.1
     defaults:
       run:
         shell: bash -c "docker exec adios2-ci spack-named-env adios2 bash -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
@@ -251,6 +255,8 @@ jobs:
               --entrypoint "tail" ornladios/adios2:ci-tmp \
               "-f" "/dev/null"
           docker start adios2-ci
+    - name: Dependencies
+      run: adios2-source/testing/contract/${{ matrix.code }}/depends.sh
     - name: Configure
       run: adios2-source/testing/contract/${{ matrix.code }}/config.sh
     - name: Build
