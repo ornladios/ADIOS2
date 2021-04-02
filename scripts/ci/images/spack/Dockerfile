@@ -2,24 +2,22 @@ ARG baseos
 FROM ornladios/adios2:spack-dependencies-${baseos}
 
 # Install from CI source
-COPY ci-source /root/ci-source
+ARG ci_source_dir=ci-source
+COPY ${ci_source_dir} /opt/adios2/source
 RUN spack dev-build \
         -j$(grep -c '^processor' /proc/cpuinfo) \
-        -d /root/ci-source \
+        -d /opt/adios2/source \
         --skip-patch \
-        ${ADIOS2_SPACK_SPEC/adios2/adios2@develop} arch=x86_64 && \
+        adios2@develop && \
     spack clean -a
 
 # Build the environment
 RUN spack env create adios2 && \
     spack -e adios2 add $(spack find --format "/{hash}") && \
-    spack -e adios2 install && \
+    spack -e adios2 install -v && \
     rm -rf /root/.spack && \
     spack env activate adios2 && \
     spack env deactivate
-
-# Cleanup
-RUN rm -rf /root/ci-source 
 
 # Initialize the first-use-of-environment stuff for the adios user
 WORKDIR /home/adios

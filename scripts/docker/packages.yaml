@@ -1,0 +1,5 @@
+packages:
+  all:
+    target: [haswell]
+  adios2:
+    variants: +mpi+blosc+bzip2+zfp+sz+png+sst+dataman+ssc+hdf5+python+fortran
