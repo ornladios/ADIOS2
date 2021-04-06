@@ -104,7 +104,10 @@ DataManReader::BlocksInfoCommon(const Variable<T> &variable,
                     b.IsValue = true;
                 }
             }
-            AccumulateMinMax(min, max, i.min, i.max);
+            if (helper::GetDataType<T>() != DataType::String)
+            {
+                AccumulateMinMax(min, max, i.min, i.max);
+            }
             v.push_back(b);
         }
     }
