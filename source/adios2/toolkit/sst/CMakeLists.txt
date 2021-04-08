@@ -27,6 +27,12 @@ if(ADIOS2_SST_HAVE_LIBFABRIC)
   endif()
 endif()
 
+if(ADIOS2_HAVE_DAOS)
+  target_sources(sst PRIVATE dp/daos_dp.c)
+  target_link_libraries(sst PRIVATE DAOS::DAOS)
+  set(CMAKE_REQUIRED_INCLUDES ${DAOS_INCLUDE_DIRS})
+endif()
+
 if(ADIOS2_HAVE_ZFP)
   target_sources(sst PRIVATE cp/ffs_zfp.c)
   target_link_libraries(sst PRIVATE zfp::zfp)

@@ -19,6 +19,9 @@
 #ifndef _WIN32
 #include "adios2/toolkit/transport/file/FilePOSIX.h"
 #endif
+#ifdef ADIOS2_HAVE_DAOS
+#include "adios2/toolkit/transport/file/FileDaos.h"
+#endif
 #ifdef ADIOS2_HAVE_IME
 #include "adios2/toolkit/transport/file/FileIME.h"
 #endif
@@ -430,6 +433,18 @@ TransportMan::OpenFileTransport(const std::string &fileName,
         else if (library == "POSIX" || library == "posix")
         {
             transport = std::make_shared<transport::FilePOSIX>(m_Comm);
+            if (lf_GetBuffered("false"))
+            {
+                throw std::invalid_argument(
+                    "ERROR: " + library +
+                    " transport does not support buffered I/O.");
+            }
+        }
+#endif
+#ifdef ADIOS2_HAVE_DAOS
+        else if (library == "Daos" || library == "daos")
+        {
+            transport = std::make_shared<transport::FileDaos>(m_Comm);
             if (lf_GetBuffered("false"))
             {
                 throw std::invalid_argument(

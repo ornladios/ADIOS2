@@ -329,6 +329,11 @@ if(ADIOS2_USE_SST AND NOT MSVC)
   endif()
 endif()
 
+find_package(DAOS)
+  if(DAOS_FOUND)
+    set(ADIOS2_HAVE_DAOS TRUE)
+  endif()
+
 #SysV IPC
 if(UNIX)
   include(CheckSymbolExists)
