@@ -122,14 +122,7 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
     for (const auto &b : input)
     {
         uint64_t pos = output.value<uint64_t>();
-        if (pos + 1024 > output.size())
-        {
-            output.resize((pos + 1024) * 2);
-        }
-        if (pos == 0)
-        {
-            pos += 8;
-        }
+        output.resize((pos + 1024) * 2);
 
         output.value<uint8_t>(pos) = static_cast<uint8_t>(b.shapeId);
         ++pos;
@@ -189,14 +182,7 @@ void SerializeAttributes(IO &input, Buffer &output)
     for (const auto &attributePair : attributeMap)
     {
         uint64_t pos = output.value<uint64_t>();
-        if (pos + 1024 > output.size())
-        {
-            output.resize((pos + 1024) * 2);
-        }
-        if (pos == 0)
-        {
-            pos += 8;
-        }
+        output.resize((pos + 1024) * 2);
 
         if (attributePair.second->m_Type == DataType::String)
         {

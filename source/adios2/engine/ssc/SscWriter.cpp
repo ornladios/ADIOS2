@@ -277,7 +277,7 @@ void SscWriter::SyncWritePattern(bool finalStep)
     }
 
     ssc::Buffer localBuffer(8);
-    localBuffer.value<uint64_t>() = 0;
+    localBuffer.value<uint64_t>() = 8;
 
     ssc::SerializeVariables(m_GlobalWritePattern[m_StreamRank], localBuffer,
                             m_StreamRank);

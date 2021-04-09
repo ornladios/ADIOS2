@@ -96,6 +96,7 @@ public:
 
 private:
     size_t m_Capacity = 0;
+    size_t m_Size = 0;
     uint8_t *m_Buffer = nullptr;
 };
 
