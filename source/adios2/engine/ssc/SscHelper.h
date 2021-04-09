@@ -33,6 +33,7 @@ public:
     {
         m_Buffer = reinterpret_cast<uint8_t *>(malloc(capacity));
         m_Capacity = capacity;
+        m_Size = 0;
     }
     ~Buffer()
     {
@@ -45,11 +46,21 @@ public:
     {
         m_Buffer = reinterpret_cast<uint8_t *>(realloc(m_Buffer, 1));
         m_Capacity = 1;
+        m_Size = 0;
     }
-    void resize(const size_t capacity)
+    void resize(const size_t size)
     {
-        m_Buffer = reinterpret_cast<uint8_t *>(realloc(m_Buffer, capacity));
-        m_Capacity = capacity;
+        m_Size = size;
+        if (size > m_Capacity)
+        {
+            m_Capacity = size * m_Factor;
+            m_Buffer =
+                reinterpret_cast<uint8_t *>(realloc(m_Buffer, m_Capacity));
+        }
+        if (m_Buffer == nullptr)
+        {
+            throw("ssc buffer realloc failed");
+        }
     }
     template <typename T>
     T &value(const size_t pos = 0)
@@ -87,7 +98,7 @@ public:
     {
         return reinterpret_cast<const uint8_t *>(m_Buffer + pos);
     }
-    size_t size() const { return m_Capacity; }
+    size_t size() const { return m_Size; }
     uint8_t &operator[](const size_t pos) { return *(m_Buffer + pos); }
     const uint8_t &operator[](const size_t pos) const
     {
@@ -97,6 +108,7 @@ public:
 private:
     size_t m_Capacity = 0;
     size_t m_Size = 0;
+    float m_Factor = 1.5;
     uint8_t *m_Buffer = nullptr;
 };
 
