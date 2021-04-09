@@ -122,9 +122,9 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
     for (const auto &b : input)
     {
         uint64_t pos = output.value<uint64_t>();
-        if (pos + 1024 > output.capacity())
+        if (pos + 1024 > output.size())
         {
-            output.reserve((pos + 1024) * 2);
+            output.resize((pos + 1024) * 2);
         }
         if (pos == 0)
         {
@@ -189,9 +189,9 @@ void SerializeAttributes(IO &input, Buffer &output)
     for (const auto &attributePair : attributeMap)
     {
         uint64_t pos = output.value<uint64_t>();
-        if (pos + 1024 > output.capacity())
+        if (pos + 1024 > output.size())
         {
-            output.reserve((pos + 1024) * 2);
+            output.resize((pos + 1024) * 2);
         }
         if (pos == 0)
         {
@@ -432,7 +432,7 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
     std::vector<int> localSizes(mpiSize);
     MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, comm);
     int globalSize = std::accumulate(localSizes.begin(), localSizes.end(), 0);
-    globalBuffer.reserve(globalSize + 10);
+    globalBuffer.resize(globalSize + 10);
 
     std::vector<int> displs(mpiSize);
     for (size_t i = 1; i < mpiSize; ++i)
@@ -450,11 +450,11 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
 
 void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm)
 {
-    int globalBufferSize = static_cast<int>(globalBuffer.capacity());
+    int globalBufferSize = static_cast<int>(globalBuffer.size());
     MPI_Bcast(&globalBufferSize, 1, MPI_INT, root, comm);
-    if (globalBuffer.capacity() < globalBufferSize)
+    if (globalBuffer.size() < globalBufferSize)
     {
-        globalBuffer.reserve(globalBufferSize);
+        globalBuffer.resize(globalBufferSize);
     }
     MPI_Bcast(globalBuffer.data(), globalBufferSize, MPI_CHAR, root, comm);
 }
