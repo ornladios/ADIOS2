@@ -48,7 +48,7 @@ private:
     ssc::BlockVecVec m_GlobalReadPattern;
 
     ssc::RankPosMap m_AllSendingReaderRanks;
-    std::vector<char> m_Buffer;
+    ssc::Buffer m_Buffer;
     MPI_Win m_MpiWin;
     MPI_Group m_ReaderGroup;
     MPI_Comm m_StreamComm;

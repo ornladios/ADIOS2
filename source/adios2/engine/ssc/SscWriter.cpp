@@ -72,7 +72,8 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
     {
-        m_Buffer.resize(1, 0);
+        m_Buffer.resize(1);
+        m_Buffer[0] = 0;
         m_GlobalWritePattern.clear();
         m_GlobalWritePattern.resize(m_StreamSize);
         m_GlobalReadPattern.clear();
