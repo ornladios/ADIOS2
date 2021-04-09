@@ -29,12 +29,7 @@ namespace ssc
 class Buffer
 {
 public:
-    Buffer()
-    {
-        m_Buffer = reinterpret_cast<uint8_t *>(malloc(1));
-        m_Capacity = 1;
-    }
-    Buffer(const size_t capacity)
+    Buffer(const size_t capacity = 1)
     {
         m_Buffer = reinterpret_cast<uint8_t *>(malloc(capacity));
         m_Capacity = capacity;
@@ -44,8 +39,6 @@ public:
         if (m_Buffer)
         {
             free(m_Buffer);
-            m_Capacity = 0;
-            m_Buffer = nullptr;
         }
     }
     void clear()
