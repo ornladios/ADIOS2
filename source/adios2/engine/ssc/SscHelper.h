@@ -53,7 +53,7 @@ public:
         m_Size = size;
         if (size > m_Capacity)
         {
-            m_Capacity = size * m_Factor;
+            m_Capacity = size * 2;
             m_Buffer =
                 reinterpret_cast<uint8_t *>(realloc(m_Buffer, m_Capacity));
         }
@@ -108,7 +108,6 @@ public:
 private:
     size_t m_Capacity = 0;
     size_t m_Size = 0;
-    float m_Factor = 1.5;
     uint8_t *m_Buffer = nullptr;
 };
 
