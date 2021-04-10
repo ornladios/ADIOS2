@@ -254,9 +254,9 @@ TEST_F(SscEngineTest, TestSscSuperLarge)
     MPI_Comm_rank(mpiComm, &mpiRank);
     MPI_Comm_size(mpiComm, &mpiSize);
 
-    Dims shape = {500, (size_t)mpiSize * 20};
-    Dims start = {100, (size_t)mpiRank * 20};
-    Dims count = {300, 20};
+    Dims shape = {200, (size_t)mpiSize * 20};
+    Dims start = {10, (size_t)mpiRank * 20};
+    Dims count = {180, 20};
     size_t steps = 100;
 
     if (mpiGroup == 0)
