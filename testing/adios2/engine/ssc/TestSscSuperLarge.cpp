@@ -240,9 +240,9 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     engine.Close();
 }
 
-TEST_F(SscEngineTest, TestSscBase)
+TEST_F(SscEngineTest, TestSscSuperLarge)
 {
-    std::string filename = "TestSscBase";
+    std::string filename = "TestSscSuperLarge";
     adios2::Params engineParams = {{"Verbose", "0"}};
 
     int worldRank, worldSize;
@@ -254,10 +254,10 @@ TEST_F(SscEngineTest, TestSscBase)
     MPI_Comm_rank(mpiComm, &mpiRank);
     MPI_Comm_size(mpiComm, &mpiSize);
 
-    Dims shape = {10, (size_t)mpiSize * 2};
-    Dims start = {2, (size_t)mpiRank * 2};
-    Dims count = {5, 2};
-    size_t steps = 100;
+    Dims shape = {100, (size_t)mpiSize * 10};
+    Dims start = {10, (size_t)mpiRank * 10};
+    Dims count = {90, 10};
+    size_t steps = 50;
 
     if (mpiGroup == 0)
     {
