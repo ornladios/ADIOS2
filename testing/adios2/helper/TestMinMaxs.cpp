@@ -110,7 +110,6 @@ void assert_block(const adios2::Box<adios2::Dims> &block, const int blockID,
         ASSERT_EQ(block_start[d], expected_start[d]);
     }
     ASSERT_EQ(block_count.size(), expected_count.size());
-    const size_t ncount = expected_count.size();
     for (size_t d = 0; d < nstart; ++d)
     {
         ASSERT_EQ(block_count[d], expected_count[d]);

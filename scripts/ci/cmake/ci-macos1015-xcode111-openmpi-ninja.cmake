@@ -2,6 +2,9 @@
 set(ENV{CC}  clang)
 set(ENV{CXX} clang++)
 set(ENV{FC}  gfortran)
+set(ENV{CFLAGS}   "-Werror -Wall")
+set(ENV{CXXFLAGS} "-Werror -Wall")
+set(ENV{FFLAGS}   "-Werror -Wall")
 
 include(ProcessorCount)
 ProcessorCount(NCPUS)

@@ -7,6 +7,9 @@ math(EXPR N2CPUS "${NCPUS}*2")
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
+set(ENV{CFLAGS}   "-Werror -Wall")
+set(ENV{CXXFLAGS} "-Werror -Wall")
+set(ENV{FFLAGS}   "-Werror -Wall")
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON

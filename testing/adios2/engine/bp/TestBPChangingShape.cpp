@@ -274,7 +274,6 @@ TEST_F(BPChangingShape, MultiBlock)
                 break;
             }
 
-            size_t engineStep = reader.CurrentStep();
             size_t expected_shape = nblocks[step];
 
             auto var = inIO.InquireVariable<double>("v");

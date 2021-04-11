@@ -176,6 +176,10 @@ void HDF5NativeWriter::WriteScalar(const std::string &varName, const void *data,
 
     herr_t status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, data);
 
+    if (status < 0)
+    {
+        std::cerr << " Write failed. " << std::endl;
+    }
     H5Sclose(filespaceID);
     H5Dclose(dsetID);
 }

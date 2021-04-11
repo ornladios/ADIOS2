@@ -193,6 +193,7 @@ void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName,
                            H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         herr_t status =
             H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, values);
+        EXPECT_TRUE(status > 0);
     }
     else
     {
@@ -410,6 +411,7 @@ void HDF5NativeReader::ReadString(const std::string varName,
     size_t typesize = H5Tget_size(h5Type); // returns a fix number, 30
     char *val = (char *)(calloc(typesize, sizeof(char)));
     hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
+    EXPECT_TRUE(ret2 >= 0);
     // result.assign(val, typesize);
     result.assign(val, strlen(val));
     free(val);
@@ -464,11 +466,13 @@ void HDF5NativeReader::ReadVar(const std::string varName, void *dataArray,
 
         hid_t ret = H5Dread(dataSetId, h5type, memspace, dataspace, H5P_DEFAULT,
                             dataArray);
+        EXPECT_TRUE(ret >= 0);
     }
     else
     {
         hid_t ret = H5Dread(dataSetId, h5type, H5S_ALL, H5S_ALL, H5P_DEFAULT,
                             dataArray);
+        EXPECT_TRUE(ret >= 0);
     }
 
     H5Sclose(fileSpace);

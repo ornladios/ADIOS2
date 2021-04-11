@@ -20,8 +20,8 @@ namespace format
 
 DataManSerializer::DataManSerializer(helper::Comm const &comm,
                                      const bool isRowMajor)
-: m_Comm(comm), m_IsRowMajor(isRowMajor),
-  m_IsLittleEndian(helper::IsLittleEndian())
+: m_IsRowMajor(isRowMajor), m_IsLittleEndian(helper::IsLittleEndian()),
+  m_Comm(comm)
 {
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();

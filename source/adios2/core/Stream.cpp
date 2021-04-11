@@ -20,8 +20,9 @@ namespace core
 
 Stream::Stream(const std::string &name, const Mode mode, helper::Comm comm,
                const std::string engineType, const std::string hostLanguage)
-: m_Name(name), m_ADIOS(std::make_shared<ADIOS>(std::move(comm), hostLanguage)),
-  m_IO(&m_ADIOS->DeclareIO(name)), m_Mode(mode), m_EngineType(engineType)
+: m_ADIOS(std::make_shared<ADIOS>(std::move(comm), hostLanguage)),
+  m_IO(&m_ADIOS->DeclareIO(name)), m_Name(name), m_Mode(mode),
+  m_EngineType(engineType)
 {
     if (mode == adios2::Mode::Read)
     {
@@ -38,9 +39,8 @@ Stream::Stream(const std::string &name, const Mode mode,
 Stream::Stream(const std::string &name, const Mode mode, helper::Comm comm,
                const std::string configFile, const std::string ioInConfigFile,
                const std::string hostLanguage)
-: m_Name(name),
-  m_ADIOS(std::make_shared<ADIOS>(configFile, std::move(comm), hostLanguage)),
-  m_IO(&m_ADIOS->DeclareIO(ioInConfigFile)), m_Mode(mode)
+: m_ADIOS(std::make_shared<ADIOS>(configFile, std::move(comm), hostLanguage)),
+  m_IO(&m_ADIOS->DeclareIO(ioInConfigFile)), m_Name(name), m_Mode(mode)
 {
     if (mode == adios2::Mode::Read)
     {

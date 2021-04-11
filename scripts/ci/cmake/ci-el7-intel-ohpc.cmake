@@ -10,9 +10,9 @@ env_module(load hdf5)
 set(ENV{CC}  icc)
 set(ENV{CXX} icpc)
 set(ENV{FC}  ifort)
-set(ENV{CFLAGS} -Werror)
-set(ENV{CXXFLAGS} -Werror)
-set(ENV{FFLAGS} "-warn errors")
+set(ENV{CFLAGS}   "-Werror -Wall")
+set(ENV{CXXFLAGS} "-Werror -Wall")
+set(ENV{FFLAGS}   "-warn errors")
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON

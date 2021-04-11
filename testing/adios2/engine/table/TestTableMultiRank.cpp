@@ -88,6 +88,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<double>> myDComplexes(datasize);
 
     adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
+    ASSERT_EQ(status, adios2::StepStatus::OK);
+
     const auto &vars = dataManIO.AvailableVariables();
     std::cout << "All available variables : ";
     for (const auto &var : vars)

@@ -19,7 +19,7 @@ struct hdf5VarInfo
     hid_t dataspace;
     hid_t dataset;
     hdf5VarInfo(hid_t dataset, hid_t dataspace)
-    : dataset(dataset), dataspace(dataspace){};
+    : dataspace(dataspace), dataset(dataset){};
 };
 
 using H5VarMap = std::map<std::string, hdf5VarInfo>;

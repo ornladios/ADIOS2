@@ -5,6 +5,25 @@ namespace adios2
 {
 namespace query
 {
+bool EndsWith(const std::string &hostStr, const std::string &fileTag)
+{
+    if (hostStr.size() >= fileTag.size() &&
+        hostStr.compare(hostStr.size() - fileTag.size(), fileTag.size(),
+                        fileTag) == 0)
+        return true;
+    else
+        return false;
+}
+
+bool IsFileNameXML(const std::string &filename)
+{
+    return EndsWith(filename, ".xml");
+}
+
+bool IsFileNameJSON(const std::string &filename)
+{
+    return EndsWith(filename, ".json");
+}
 
 Worker::Worker(const std::string &queryFile, adios2::core::Engine *adiosEngine)
 : m_QueryFile(queryFile), m_SourceReader(adiosEngine)
@@ -15,6 +34,32 @@ Worker::~Worker()
 {
     if (m_Query != nullptr)
         delete m_Query;
+}
+
+Worker *GetWorker(const std::string &configFile,
+                  adios2::core::Engine *adiosEngine)
+{
+    std::ifstream fileStream(configFile);
+
+    if (!fileStream)
+    {
+        throw std::ios_base::failure("ERROR: file " + configFile +
+                                     " not found. ");
+    }
+
+    if (adios2::query::IsFileNameXML(configFile))
+    {
+        return new XmlWorker(configFile, adiosEngine);
+    }
+
+#ifdef ADIOS2_HAVE_DATAMAN // so json is included
+    if (adios2::query::IsFileNameJSON(configFile))
+    {
+        return new JsonWorker(configFile, adiosEngine);
+    }
+#endif
+    throw std::invalid_argument("ERROR: Unable to construct xml  query.");
+    // return nullptr;
 }
 
 QueryVar *Worker::GetBasicVarQuery(adios2::core::IO &currentIO,

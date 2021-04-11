@@ -97,31 +97,8 @@ private:
 
 }; // XmlWorker
 
-static Worker *GetWorker(const std::string &configFile,
-                         adios2::core::Engine *adiosEngine)
-{
-    std::ifstream fileStream(configFile);
-
-    if (!fileStream)
-    {
-        throw std::ios_base::failure("ERROR: file " + configFile +
-                                     " not found. ");
-    }
-
-    if (adios2::query::IsFileNameXML(configFile))
-    {
-        return new XmlWorker(configFile, adiosEngine);
-    }
-
-#ifdef ADIOS2_HAVE_DATAMAN // so json is included
-    if (adios2::query::IsFileNameJSON(configFile))
-    {
-        return new JsonWorker(configFile, adiosEngine);
-    }
-#endif
-    throw std::invalid_argument("ERROR: Unable to construct xml  query.");
-    // return nullptr;
-}
+Worker *GetWorker(const std::string &configFile,
+                  adios2::core::Engine *adiosEngine);
 
 } // namespace query
 } // name space adios2

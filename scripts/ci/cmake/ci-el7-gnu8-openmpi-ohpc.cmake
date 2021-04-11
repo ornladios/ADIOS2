@@ -16,9 +16,9 @@ env_module(load py3-mpi4py)
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
-set(ENV{CFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
-set(ENV{CXXFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
-set(ENV{FFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
+set(ENV{CFLAGS}   "-Werror -Wall -Wno-error=builtin-declaration-mismatch")
+set(ENV{CXXFLAGS} "-Werror -Wall -Wno-error=builtin-declaration-mismatch")
+set(ENV{FFLAGS}   "-Werror -Wall -Wno-error=builtin-declaration-mismatch")
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON

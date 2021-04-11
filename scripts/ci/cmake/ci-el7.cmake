@@ -3,9 +3,9 @@
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
-set(ENV{CFLAGS} -Werror)
-set(ENV{CXXFLAGS} -Werror)
-set(ENV{FFLAGS} -Werror)
+set(ENV{CFLAGS}   "-Werror -Wall")
+set(ENV{CXXFLAGS} "-Werror -Wall")
+set(ENV{FFLAGS}   "-Werror -Wall")
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:STRING=ON

@@ -194,6 +194,7 @@ void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName,
                            H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         herr_t status =
             H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, values);
+        EXPECT_TRUE(status >= 0);
     }
     else
     {
@@ -201,15 +202,15 @@ void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName,
         hid_t type = H5Tcopy(H5T_C_S1);
         char *strval = (char *)values;
         hid_t ret = H5Tset_size(type, strlen(strval));
-
+        EXPECT_TRUE(ret >= 0);
         ret = H5Tset_strpad(type, H5T_STR_NULLTERM);
-
+        EXPECT_TRUE(ret >= 0);
         /* Test creating a "normal" sized string attribute */
         dsetID = H5Dcreate(m_GroupId, variableName.c_str(), type, filespaceID,
                            H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
         ret = H5Dwrite(dsetID, type, H5S_ALL, H5S_ALL, plistID, values);
-
+        EXPECT_TRUE(ret >= 0);
 #ifdef DOUBLECHECK
         size_t typesize = H5Tget_size(type);
         char *val = (char *)(calloc(typesize, sizeof(char)));
@@ -410,7 +411,7 @@ void HDF5NativeReader::ReadString(const std::string varName,
 
     char *val = (char *)(calloc(typesize, sizeof(char)));
     hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
-
+    EXPECT_TRUE(ret2 >= 0);
     result.assign(val, typesize);
     free(val);
 
@@ -464,11 +465,13 @@ void HDF5NativeReader::ReadVar(const std::string varName, void *dataArray,
 
         hid_t ret = H5Dread(dataSetId, h5type, memspace, dataspace, H5P_DEFAULT,
                             dataArray);
+        EXPECT_TRUE(ret >= 0);
     }
     else
     {
         hid_t ret = H5Dread(dataSetId, h5type, H5S_ALL, H5S_ALL, H5P_DEFAULT,
                             dataArray);
+        EXPECT_TRUE(ret >= 0);
     }
 
     H5Sclose(fileSpace);
@@ -1307,23 +1310,34 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
             adios2::Dims count{static_cast<unsigned int>(Ny),
                                static_cast<unsigned int>(Nx)};
             auto var_iString = io.DefineVariable<std::string>("iString");
+            EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            EXPECT_TRUE(var_i8);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
+            EXPECT_TRUE(var_i16);
             auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
+            EXPECT_TRUE(var_i32);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
+            EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            EXPECT_TRUE(var_u8);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
+            EXPECT_TRUE(var_u16);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
+            EXPECT_TRUE(var_u32);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
+            EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            EXPECT_TRUE(var_r32);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            EXPECT_TRUE(var_r64);
         }
 
         // Create the HDF5 Engine
@@ -1571,24 +1585,34 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D2x4)
                                static_cast<unsigned int>(Nx)};
 
             auto var_iString = io.DefineVariable<std::string>("iString");
-
+            EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            EXPECT_TRUE(var_i8);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
+            EXPECT_TRUE(var_i16);
             auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
+            EXPECT_TRUE(var_i32);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
+            EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            EXPECT_TRUE(var_u8);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
+            EXPECT_TRUE(var_u16);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
+            EXPECT_TRUE(var_u32);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
+            EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            EXPECT_TRUE(var_r32);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            EXPECT_TRUE(var_r64);
         }
 
         // Create the HDF5 Engine
@@ -2128,23 +2152,34 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
                                static_cast<unsigned int>(Nx)};
 
             auto var_iString = io.DefineVariable<std::string>("iString");
+            EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            EXPECT_TRUE(var_i8);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
+            EXPECT_TRUE(var_i16);
             auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
+            EXPECT_TRUE(var_i32);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
+            EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            EXPECT_TRUE(var_u8);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
+            EXPECT_TRUE(var_u16);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
+            EXPECT_TRUE(var_u32);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
+            EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            EXPECT_TRUE(var_r32);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            EXPECT_TRUE(var_r64);
         }
 
         // Create the HDF5 Engine
@@ -2388,23 +2423,34 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
             adios2::Dims count{static_cast<unsigned int>(Ny),
                                static_cast<unsigned int>(Nx)};
             auto var_iString = io.DefineVariable<std::string>("iString");
+            EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            EXPECT_TRUE(var_i8);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
+            EXPECT_TRUE(var_i16);
             auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
+            EXPECT_TRUE(var_i32);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
+            EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            EXPECT_TRUE(var_u8);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
+            EXPECT_TRUE(var_u16);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
+            EXPECT_TRUE(var_u32);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
+            EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            EXPECT_TRUE(var_r32);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            EXPECT_TRUE(var_r64);
         }
 
         // Create the HDF5 Engine

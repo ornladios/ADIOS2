@@ -141,7 +141,7 @@ if(PythonModule_${module_NAME}_FOUND AND
   add_library(${module_NAME} INTERFACE)
   add_library(Python::${module_NAME} ALIAS ${module_NAME})
   foreach(inc_var IN LISTS include_vars)
-    target_include_directories(${module_NAME} INTERFACE ${${inc_var}})
+    target_include_directories(${module_NAME} SYSTEM INTERFACE ${${inc_var}})
   endforeach()
   foreach(lib_var IN LISTS library_vars)
     target_link_libraries(${module_NAME} INTERFACE ${${lib_var}})

@@ -6,6 +6,7 @@
 add_library(adios2_h5vol SHARED
   H5VolReadWrite.c
   H5Vol.c
+  H5VolUtil.c
   H5Vol_attr.c
   H5Vol_dataset.c
   H5Vol_file.c

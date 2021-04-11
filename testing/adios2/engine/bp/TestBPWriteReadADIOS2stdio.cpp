@@ -71,27 +71,40 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead1D8)
             const adios2::Dims count{Nx};
 
             auto var_iString = io.DefineVariable<std::string>("iString");
+            EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            EXPECT_TRUE(var_i8);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
+            EXPECT_TRUE(var_i16);
             auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
+            EXPECT_TRUE(var_i32);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
+            EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            EXPECT_TRUE(var_u8);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
+            EXPECT_TRUE(var_u16);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
+            EXPECT_TRUE(var_u32);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
+            EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            EXPECT_TRUE(var_r32);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            EXPECT_TRUE(var_r64);
             auto var_cr32 = io.DefineVariable<std::complex<float>>(
                 "cr32", shape, start, count);
+            EXPECT_TRUE(var_cr32);
             auto var_cr64 = io.DefineVariable<std::complex<double>>(
                 "cr64", shape, start, count);
+            EXPECT_TRUE(var_cr64);
         }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -407,27 +420,40 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D2x4)
             const adios2::Dims count{Ny, Nx};
 
             auto var_iString = io.DefineVariable<std::string>("iString");
+            EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            EXPECT_TRUE(var_i8);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
+            EXPECT_TRUE(var_i16);
             auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
+            EXPECT_TRUE(var_i32);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
+            EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            EXPECT_TRUE(var_u8);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
+            EXPECT_TRUE(var_u16);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
+            EXPECT_TRUE(var_u32);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
+            EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            EXPECT_TRUE(var_r32);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            EXPECT_TRUE(var_r64);
             auto var_cr32 = io.DefineVariable<std::complex<float>>(
                 "cr32", shape, start, count);
+            EXPECT_TRUE(var_cr32);
             auto var_cr64 = io.DefineVariable<std::complex<double>>(
                 "cr64", shape, start, count);
+            EXPECT_TRUE(var_cr64);
         }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -747,26 +773,38 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2)
             adios2::Dims count{static_cast<unsigned int>(Ny),
                                static_cast<unsigned int>(Nx)};
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            EXPECT_TRUE(var_i8);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
+            EXPECT_TRUE(var_i16);
             auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
+            EXPECT_TRUE(var_i32);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
+            EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            EXPECT_TRUE(var_u8);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
+            EXPECT_TRUE(var_u16);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
+            EXPECT_TRUE(var_u32);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
+            EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            EXPECT_TRUE(var_r32);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            EXPECT_TRUE(var_r64);
             auto var_cr32 = io.DefineVariable<std::complex<float>>(
                 "cr32", shape, start, count);
+            EXPECT_TRUE(var_cr32);
             auto var_cr64 = io.DefineVariable<std::complex<double>>(
                 "cr64", shape, start, count);
+            EXPECT_TRUE(var_cr64);
         }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -1071,26 +1109,38 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
             adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
             adios2::Dims count{Ny, Nx};
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            EXPECT_TRUE(var_i8);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
+            EXPECT_TRUE(var_i16);
             auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
+            EXPECT_TRUE(var_i32);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
+            EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            EXPECT_TRUE(var_u8);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
+            EXPECT_TRUE(var_u16);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
+            EXPECT_TRUE(var_u32);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
+            EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            EXPECT_TRUE(var_r32);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            EXPECT_TRUE(var_r64);
             auto var_cr32 = io.DefineVariable<std::complex<float>>(
                 "cr32", shape, start, count);
+            EXPECT_TRUE(var_cr32);
             auto var_cr64 = io.DefineVariable<std::complex<double>>(
                 "cr64", shape, start, count);
+            EXPECT_TRUE(var_cr64);
         }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -1396,22 +1446,32 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
             adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
             adios2::Dims count{Ny, Nx};
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            EXPECT_TRUE(var_i8);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
+            EXPECT_TRUE(var_i16);
             auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
+            EXPECT_TRUE(var_i32);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
+            EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            EXPECT_TRUE(var_u8);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
+            EXPECT_TRUE(var_u16);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
+            EXPECT_TRUE(var_u32);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
+            EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            EXPECT_TRUE(var_r32);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            EXPECT_TRUE(var_r64);
         }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
