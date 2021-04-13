@@ -6501,7 +6501,7 @@ uniqueify_names(FMStructDescList list, char *prefix)
 	    malloc(strlen(list[i].format_name) + prefix_len + 1);
 	strcpy(new_name, prefix);
 	strcpy(new_name + prefix_len, list[i].format_name);
-	free(list[i].format_name);
+	free((char*)list[i].format_name);
 	list[i].format_name = new_name;
 	while (fl[j].field_name != 0) {
 	    int field_type_len = strlen(fl[j].field_type);
