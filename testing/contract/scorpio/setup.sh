@@ -7,3 +7,5 @@ echo "source_dir  = \"${source_dir}\""
 echo "build_dir   = \"${build_dir}\""
 echo "install_dir = \"${install_dir}\""
 echo "test_dir    = \"${test_dir}\""
+
+module load parallel-netcdf

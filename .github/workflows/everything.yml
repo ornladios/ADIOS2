@@ -227,9 +227,10 @@ jobs:
         - code: scorpio
           repo: E3SM-Project/scorpio
           ref: scorpio-v1.2.1
+
     defaults:
       run:
-        shell: bash -c "docker exec adios2-ci spack-named-env adios2 bash -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
+        shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
 
     steps:
     - uses: actions/checkout@v2
