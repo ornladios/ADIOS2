@@ -43,8 +43,6 @@ endif()
 # Let windows builds auto-export dll symbols
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 #------------------------------------------------------------------------------#
 # Silence MSVC warnings
 #------------------------------------------------------------------------------#
