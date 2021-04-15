@@ -107,6 +107,18 @@ if(SZ_FOUND)
   set(ADIOS2_HAVE_SZ TRUE)
 endif()
 
+# LIBPRESSIO
+if(ADIOS2_USE_LIBPRESSIO STREQUAL AUTO)
+  find_package(LibPressio)
+  find_package(std_compat)
+elseif(ADIOS2_USE_LIBPRESSIO)
+  find_package(LibPressio REQUIRED)
+  find_package(std_compat REQUIRED)
+endif()
+if(TARGET LibPressio::libpressio)
+  set(ADIOS2_HAVE_LIBPRESSIO TRUE)
+endif()
+
 # MGARD
 if(ADIOS2_USE_MGARD STREQUAL AUTO)
   find_package(MGARD)
