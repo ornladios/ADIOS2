@@ -15,6 +15,7 @@
 
 #include "adios2/toolkit/format/bp/bpOperation/compress/BPBZIP2.h"
 #include "adios2/toolkit/format/bp/bpOperation/compress/BPBlosc.h"
+#include "adios2/toolkit/format/bp/bpOperation/compress/BPLIBPRESSIO.h"
 #include "adios2/toolkit/format/bp/bpOperation/compress/BPMGARD.h"
 #include "adios2/toolkit/format/bp/bpOperation/compress/BPPNG.h"
 #include "adios2/toolkit/format/bp/bpOperation/compress/BPSZ.h"
@@ -359,9 +360,8 @@ void BPBase::DeleteBuffers()
 }
 
 // PROTECTED
-std::vector<uint8_t>
-BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
-    noexcept
+std::vector<uint8_t> BPBase::GetTransportIDs(
+    const std::vector<std::string> &transportsTypes) const noexcept
 {
     auto lf_GetTransportID = [](const std::string method) -> uint8_t {
         int id = METHOD_UNKNOWN;
@@ -400,10 +400,10 @@ BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
     return transportsIDs;
 }
 
-size_t BPBase::GetProcessGroupIndexSize(const std::string name,
-                                        const std::string timeStepName,
-                                        const size_t transportsSize) const
-    noexcept
+size_t
+BPBase::GetProcessGroupIndexSize(const std::string name,
+                                 const std::string timeStepName,
+                                 const size_t transportsSize) const noexcept
 {
     // pgIndex + list of methods (transports)
     const size_t pgSize =
@@ -503,6 +503,10 @@ BPBase::SetBPOperation(const std::string type) const noexcept
     else if (type == "blosc")
     {
         bpOp = std::make_shared<BPBlosc>();
+    }
+    else if (type == "libpressio")
+    {
+        bpOp = std::make_shared<BPLIBPRESSIO>();
     }
 
     return bpOp;

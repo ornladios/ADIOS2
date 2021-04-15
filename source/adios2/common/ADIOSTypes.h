@@ -298,6 +298,15 @@ constexpr char s[] = "s";
 }
 #endif
 
+#ifdef ADIOS2_HAVE_LIBPRESSIO
+constexpr char LossyLIBPRESSIO[] = "libpressio";
+namespace libpressio
+{
+namespace key
+{}
+}
+#endif
+
 // PNG PARAMETERS
 #ifdef ADIOS2_HAVE_PNG
 

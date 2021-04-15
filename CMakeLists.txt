@@ -43,6 +43,8 @@ endif()
 # Let windows builds auto-export dll symbols
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 #------------------------------------------------------------------------------#
 # Silence MSVC warnings
 #------------------------------------------------------------------------------#
@@ -120,6 +122,7 @@ adios_option(Blosc     "Enable support for Blosc transforms" AUTO)
 adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
 adios_option(SZ        "Enable support for SZ transforms" AUTO)
+adios_option(LIBPRESSIO "Enable support for LIBPRESSIO transforms" AUTO)
 adios_option(MGARD     "Enable support for MGARD transforms" AUTO)
 adios_option(PNG       "Enable support for PNG transforms" AUTO)
 adios_option(MPI       "Enable support for MPI" AUTO)
@@ -151,7 +154,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-    Blosc BZip2 ZFP SZ MGARD PNG MPI DataMan DAOS Table SSC SST BP5 DataSpaces ZeroMQ HDF5 HDF5_VOL IME Python Fortran SysVShMem Profiling Endian_Reverse
+    Blosc BZip2 ZFP SZ MGARD PNG MPI DataMan DAOS Table SSC SST BP5 DataSpaces ZeroMQ HDF5 HDF5_VOL IME Python Fortran SysVShMem Profiling Endian_Reverse LIBPRESSIO
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
