@@ -208,6 +208,11 @@ struct _SstStream
     int FinalTimestep;
     int CurrentWorkingTimestep;
     SstFullMetadata CurrentMetadata;
+    struct _SstMetaMetaBlockInternal *InternalMetaMetaInfo;
+    int InternalMetaMetaCount;
+    struct _SstBlock *InternalAttrDataInfo;
+    int AttrsRetrieved;
+    int InternalAttrDataCount;
     struct _SstParams *WriterConfigParams;
     void *ParamsBlock;
     int CommPatternLocked;

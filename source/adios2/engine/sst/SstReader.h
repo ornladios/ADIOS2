@@ -17,6 +17,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/format/bp/bp3/BP3Deserializer.h"
+#include "adios2/toolkit/format/bp5/BP5Deserializer.h"
 
 namespace adios2
 {
@@ -63,15 +64,18 @@ private:
 
     template <class T>
     void SstBPPerformGets();
+    void BP5PerformGets();
     void Init();
     SstStream m_Input;
     SstMarshalMethod m_WriterMarshalMethod;
+    int m_WriterIsRowMajor;
     bool m_DefinitionsNotified = false;
     bool m_BetweenStepPairs = false;
 
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;
     format::BP3Deserializer *m_BP3Deserializer;
+    format::BP5Deserializer *m_BP5Deserializer = nullptr;
     /* --- Used only with BP marshaling --- */
 
     struct _SstParams Params;
