@@ -37,10 +37,12 @@ FileDrainerSingleThread::FileDrainerSingleThread() : FileDrainer() {}
 
 FileDrainerSingleThread::~FileDrainerSingleThread() { Join(); }
 
-void FileDrainerSingleThread::SetBufferSize(size_t bufferSizeBytes)
+void FileDrainerSingleThread::SetBufferSize(size_t bytes)
 {
-    bufferSize = bufferSizeBytes;
+    bufferSize = bytes;
 }
+
+void FileDrainerSingleThread::SetFlushSize(size_t bytes) { flushSize = bytes; }
 
 void FileDrainerSingleThread::Start()
 {
@@ -208,15 +210,50 @@ void FileDrainerSingleThread::DrainThread()
                         te = std::chrono::steady_clock::now();
                         timeWrite += te - ts;
                     }
+                    size_t nonflushed = 0;
+                    std::chrono::duration<double> sleeptime(0.001);
                     const size_t batches = fdo.countBytes / bufferSize;
-                    const size_t remainder = fdo.countBytes % bufferSize;
+                    const size_t remainderBytes = fdo.countBytes % bufferSize;
                     for (size_t b = 0; b < batches; ++b)
                     {
                         lf_Copy(fdo, fdr, fdw, bufferSize);
+                        nonflushed += bufferSize;
+                        if (nonflushed > flushSize)
+                        {
+
+                            if (m_Verbose >= 2)
+                            {
+#ifndef NO_SANITIZE_THREAD
+                                std::cout << "Sync " << m_Rank << ": sync "
+                                          << fdo.toFileName << " to disk "
+                                          << nonflushed << " bytes "
+                                          << std::endl;
+#endif
+                            }
+
+                            FileSync(fdw);
+                            nonflushed = 0;
+                        }
+                        std::this_thread::sleep_for(sleeptime);
                     }
-                    if (remainder)
+                    if (remainderBytes)
                     {
-                        lf_Copy(fdo, fdr, fdw, remainder);
+                        lf_Copy(fdo, fdr, fdw, remainderBytes);
+                        nonflushed += remainderBytes;
+                    }
+                    if (nonflushed > 0)
+                    {
+
+                        if (m_Verbose >= 2)
+                        {
+#ifndef NO_SANITIZE_THREAD
+                            std::cout << "Sync " << m_Rank << ": sync "
+                                      << fdo.toFileName << " to disk "
+                                      << nonflushed << " bytes " << std::endl;
+#endif
+                        }
+                        FileSync(fdw);
+                        std::this_thread::sleep_for(sleeptime);
                     }
                 }
                 catch (std::ios_base::failure &e)
