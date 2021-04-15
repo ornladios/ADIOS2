@@ -82,10 +82,6 @@ add_library(adios2_core
   toolkit/format/bp/bp4/BP4Serializer.cpp toolkit/format/bp/bp4/BP4Serializer.tcc
   toolkit/format/bp/bp4/BP4Deserializer.cpp toolkit/format/bp/bp4/BP4Deserializer.tcc
   
-  toolkit/format/bp5/BP5Base.cpp
-  toolkit/format/bp5/BP5Serializer.cpp
-  toolkit/format/bp5/BP5Deserializer.cpp  toolkit/format/bp5/BP5Deserializer.tcc
-
   toolkit/format/bp/bpOperation/BPOperation.cpp 
   toolkit/format/bp/bpOperation/BPOperation.tcc
   toolkit/format/bp/bpOperation/compress/BPZFP.cpp 
@@ -213,6 +209,11 @@ endif()
 if(ADIOS2_HAVE_SST)
   add_subdirectory(toolkit/sst)
   target_sources(adios2_core PRIVATE
+
+    toolkit/format/bp5/BP5Base.cpp
+    toolkit/format/bp5/BP5Serializer.cpp
+    toolkit/format/bp5/BP5Deserializer.cpp  toolkit/format/bp5/BP5Deserializer.tcc
+
     engine/sst/SstReader.cpp
     engine/sst/SstWriter.cpp
     engine/sst/SstParamParser.cpp

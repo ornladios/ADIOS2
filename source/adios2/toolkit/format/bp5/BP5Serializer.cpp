@@ -668,10 +668,11 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
                       Info.AttributeData, &AttributeSize);
         AttrData =
             new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
-        FMdump_encoded_data(Info.AttributeFormat, AttributeBlock, 1024000);
+        //        FMdump_encoded_data(Info.AttributeFormat, AttributeBlock,
+        //        1024000);
     }
 
-    FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);
+    //    FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);
     /* free all those copied dimensions, etc */
     MBase = (struct FFSMetadataInfoStruct *)Metadata;
     size_t *tmp = MBase->BitField;
