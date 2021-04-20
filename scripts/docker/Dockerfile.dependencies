@@ -14,15 +14,12 @@ RUN cd ${SPACK_ROOT} && \
     git checkout -f develop && \
     rm -rf .git
 
-# Setup the modified entrypoint
+# Fix the python version being used
 ENV SPACK_PYTHON=/usr/bin/python3.6
-COPY entrypoint.bash $SPACK_ROOT/share/spack/docker/entrypoint.bash
-RUN rm -f /usr/local/bin/spack-named-env && \
-    ln -s $SPACK_ROOT/share/spack/docker/entrypoint.bash \
-          /usr/local/bin/spack-named-env
 
 # Setup the default configuration
 COPY packages.yaml $SPACK_ROOT/etc/spack/packages.yaml
+COPY modules.yaml $SPACK_ROOT/etc/spack/modules.yaml
 RUN rm -rf /root/.spack && \
     spack compiler find --scope site
 
