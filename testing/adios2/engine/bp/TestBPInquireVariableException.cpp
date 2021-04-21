@@ -35,10 +35,9 @@ TEST_F(ADIOSInquireVariableException, Read)
 #else
         adios2::ADIOS adios;
 #endif
-        adios2::IO io_w = adios.DeclareIO("Test read");
+        adios2::IO io_w = adios.DeclareIO("Test");
         io_w.SetEngine("BPFile");
 
-        io_w.AddTransport("BPfile");
         adios2::Engine writer = io_w.Open(filename, adios2::Mode::Write);
         const std::size_t Nx = 10;
         const adios2::Dims shape = {size * Nx};
