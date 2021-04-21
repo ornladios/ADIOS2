@@ -2,16 +2,11 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  */
+#include <adios2.h>
 #include <cstdint>
-#include <cstring>
-
+#include <gtest/gtest.h>
 #include <limits>
 #include <stdexcept>
-
-#include <adios2.h>
-#include <adios2/common/ADIOSTypes.h>
-
-#include <gtest/gtest.h>
 
 class ADIOSInquireVariableException : public ::testing::Test
 {
