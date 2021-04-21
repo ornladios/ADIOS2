@@ -79,8 +79,9 @@ int main(int argc, char **argv)
     MPI_Init(nullptr, nullptr);
 #endif
     ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    int result = RUN_ALL_TESTS();
 #if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
+    return result;
 }
