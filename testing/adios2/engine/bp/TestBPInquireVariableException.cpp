@@ -21,14 +21,11 @@ TEST_F(ADIOSInquireVariableException, Read)
     // Number of steps
     const std::size_t NSteps = 5;
 
-    int rank, size;
+    int rank = 0, size = 1;
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-#else
-    rank = 0;
-    size = 1;
 #endif
 
     // Write test data using BP
@@ -41,7 +38,7 @@ TEST_F(ADIOSInquireVariableException, Read)
         adios2::IO io_w = adios.DeclareIO("Test read");
         io_w.SetEngine("BPFile");
 
-        io_w.AddTransport("file");
+        io_w.AddTransport("BPfile");
         adios2::Engine writer = io_w.Open(filename, adios2::Mode::Write);
         const std::size_t Nx = 10;
         const adios2::Dims shape = {size * Nx};
@@ -78,6 +75,12 @@ TEST_F(ADIOSInquireVariableException, Read)
 }
 int main(int argc, char **argv)
 {
+#if ADIOS2_USE_MPI
+    MPI_Init(nullptr, nullptr);
+#endif
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
+#if ADIOS2_USE_MPI
+    MPI_Finalize();
+#endif
 }
