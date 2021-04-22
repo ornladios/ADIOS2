@@ -14,6 +14,7 @@
 #include <chrono>
 #include <mutex>
 #include <queue>
+#include <string>
 
 namespace adios2
 {
