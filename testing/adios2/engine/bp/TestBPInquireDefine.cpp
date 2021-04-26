@@ -59,29 +59,39 @@ TEST_F(ADIOSInquireDefineTest, Read)
         for (size_t step = 0; step < NSteps; ++step)
         {
             engine.BeginStep();
-            if (step == 0) {
-                if (!ioWrite.InquireVariable<int>("variable0")){
-                    auto var0 =
-                        ioWrite.DefineVariable<int32_t>("variable0", shape, start, count);
+            if (step == 0)
+            {
+                if (!ioWrite.InquireVariable<int>("variable0"))
+                {
+                    auto var0 = ioWrite.DefineVariable<int32_t>(
+                        "variable0", shape, start, count);
                     engine.Put(var0, Ints0.data());
                 }
-
-            }else if (step == 1){
-                if (!ioWrite.InquireVariable<int>("variable1")){
-                    auto var1 =
-                        ioWrite.DefineVariable<int32_t>("variable1", shape, start, count);
+            }
+            else if (step == 1)
+            {
+                if (!ioWrite.InquireVariable<int>("variable1"))
+                {
+                    auto var1 = ioWrite.DefineVariable<int32_t>(
+                        "variable1", shape, start, count);
                     engine.Put(var1, Ints1.data());
                 }
-            }else if (step == 2){
-                if (!ioWrite.InquireVariable<int>("variable2")){
-                    auto var2 =
-                        ioWrite.DefineVariable<int32_t>("variable2", shape, start, count);
+            }
+            else if (step == 2)
+            {
+                if (!ioWrite.InquireVariable<int>("variable2"))
+                {
+                    auto var2 = ioWrite.DefineVariable<int32_t>(
+                        "variable2", shape, start, count);
                     engine.Put(var2, Ints2.data());
                 }
-            }else if (step == 3){
-                if (!ioWrite.InquireVariable<int>("variable3")){
-                    auto var3 =
-                        ioWrite.DefineVariable<int32_t>("variable3", shape, start, count);
+            }
+            else if (step == 3)
+            {
+                if (!ioWrite.InquireVariable<int>("variable3"))
+                {
+                    auto var3 = ioWrite.DefineVariable<int32_t>(
+                        "variable3", shape, start, count);
                     engine.Put(var3, Ints3.data());
                 }
             }
