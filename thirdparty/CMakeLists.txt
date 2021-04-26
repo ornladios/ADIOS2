@@ -35,6 +35,9 @@ option(ADIOS2_USE_EXTERNAL_YAMLCPP
 
 add_subdirectory(KWSys)
 
+add_subdirectory(perfstubs)
+adios2_add_thirdparty_target(perfstubs-interface perfstubs-interface)
+
 if(BUILD_TESTING)
   if(ADIOS2_USE_EXTERNAL_GTEST)
     find_package(GTest REQUIRED)
