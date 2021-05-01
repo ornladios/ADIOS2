@@ -122,7 +122,8 @@ target_include_directories(adios2_core
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
 )
-target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml taustubs adios2::thirdparty::yaml-cpp adios2::thirdparty::nlohmann_json)
+target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml taustubs
+  adios2::thirdparty::yaml-cpp adios2::thirdparty::nlohmann_json adios2::thirdparty::perfstubs)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 
@@ -164,7 +165,7 @@ if(ADIOS2_HAVE_MPI)
   )
   set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
   set_property(TARGET adios2_core_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_mpi)
-  target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_C PRIVATE taustubs)
+  target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_C PRIVATE taustubs adios2::thirdparty::perfstubs)
   target_compile_definitions(adios2_core_mpi PUBLIC "$<BUILD_INTERFACE:ADIOS2_USE_MPI>")
 endif()
 

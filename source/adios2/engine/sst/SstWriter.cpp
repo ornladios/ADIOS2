@@ -14,7 +14,7 @@
 #include "SstParamParser.h"
 #include "SstWriter.h"
 #include "SstWriter.tcc"
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <adios2-perfstubs-interface.h>
 
 namespace adios2
 {
@@ -122,7 +122,7 @@ SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
 
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     m_WriterStep++;
     if (m_BetweenStepPairs)
     {
@@ -167,7 +167,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 
 void SstWriter::MarshalAttributes()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     const auto &attributes = m_IO.GetAttributes();
 
     const uint32_t attributesCount = static_cast<uint32_t>(attributes.size());
@@ -233,7 +233,7 @@ void SstWriter::MarshalAttributes()
 
 void SstWriter::EndStep()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (!m_BetweenStepPairs)
     {
         throw std::logic_error(
@@ -247,10 +247,10 @@ void SstWriter::EndStep()
     }
     if (Params.MarshalMethod == SstMarshalFFS)
     {
-        TAU_SCOPED_TIMER("Marshaling Overhead");
-        TAU_START("SstMarshalFFS");
+        PERFSTUBS_SCOPED_TIMER("Marshaling Overhead");
+        PERFSTUBS_TIMER_START(timer, "SstMarshalFFS");
         MarshalAttributes();
-        TAU_STOP("SstMarshalFFS");
+        PERFSTUBS_TIMER_STOP(timer);
         SstFFSWriterEndStep(m_Output, m_WriterStep);
     }
     else if (Params.MarshalMethod == SstMarshalBP5)
@@ -302,7 +302,6 @@ void SstWriter::EndStep()
             newblock->attribute_data.DataSize = 0;
             newblock->attribute_data.block = NULL;
         }
-        TAU_STOP("Marshaling overhead");
         SstProvideTimestepMM(m_Output, &newblock->metadata, &newblock->data,
                              m_WriterStep, lf_FreeBlocks, newblock,
                              &newblock->attribute_data, NULL, newblock,
@@ -321,7 +320,7 @@ void SstWriter::EndStep()
         // here should not be deallocated when SstProvideTimestep returns!
         // They should not be deallocated until SST is done with them
         // (explicit deallocation callback).
-        TAU_START("Marshaling overhead");
+        PERFSTUBS_TIMER_START(timer, "Marshaling overhead");
         auto lf_FreeBlocks = [](void *vBlock) {
             BP3DataBlock *BlockToFree =
                 reinterpret_cast<BP3DataBlock *>(vBlock);
@@ -340,7 +339,7 @@ void SstWriter::EndStep()
         newblock->data.DataSize = m_BP3Serializer->m_Data.m_Position;
         newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
         newblock->serializer = m_BP3Serializer.release();
-        TAU_STOP("Marshaling overhead");
+        PERFSTUBS_TIMER_STOP(timer);
         SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
                            m_WriterStep, lf_FreeBlocks, newblock, NULL, NULL,
                            NULL);

@@ -24,7 +24,7 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("SscWriter", io, name, mode, std::move(comm))
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
@@ -49,7 +49,7 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     if (m_Threading && m_EndStepThread.joinable())
     {
@@ -95,11 +95,11 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
 size_t SscWriter::CurrentStep() const { return m_CurrentStep; }
 
-void SscWriter::PerformPuts() { TAU_SCOPED_TIMER_FUNC(); }
+void SscWriter::PerformPuts() { PERFSTUBS_SCOPED_TIMER_FUNC(); }
 
 void SscWriter::EndStepFirst()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     SyncWritePattern();
     MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
@@ -110,7 +110,7 @@ void SscWriter::EndStepFirst()
 
 void SscWriter::EndStepConsequentFixed()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     for (const auto &i : m_AllSendingReaderRanks)
     {
         m_MpiRequests.emplace_back();
@@ -121,7 +121,7 @@ void SscWriter::EndStepConsequentFixed()
 
 void SscWriter::EndStepConsequentFlexible()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     SyncWritePattern();
     MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
                    m_StreamComm, &m_MpiWin);
@@ -129,7 +129,7 @@ void SscWriter::EndStepConsequentFlexible()
 
 void SscWriter::EndStep()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     if (m_Verbosity >= 5)
     {
@@ -170,11 +170,14 @@ void SscWriter::EndStep()
     }
 }
 
-void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
+void SscWriter::Flush(const int transportIndex)
+{
+    PERFSTUBS_SCOPED_TIMER_FUNC();
+}
 
 void SscWriter::SyncMpiPattern()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     MPI_Group streamGroup;
     MPI_Group writerGroup;
@@ -204,7 +207,7 @@ void SscWriter::SyncMpiPattern()
 
 void SscWriter::SyncWritePattern(bool finalStep)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "SscWriter::SyncWritePattern, World Rank " << m_StreamRank
@@ -241,7 +244,7 @@ void SscWriter::SyncWritePattern(bool finalStep)
 
 void SscWriter::SyncReadPattern()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "SscWriter::SyncReadPattern, World Rank " << m_StreamRank
@@ -283,7 +286,7 @@ void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
                                   const int writerRank,
                                   ssc::RankPosMap &allOverlapRanks)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     for (auto &overlapRank : allOverlapRanks)
     {
         auto &readerRankMap = readerVecVec[overlapRank.first];
@@ -331,7 +334,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void SscWriter::DoClose(const int transportIndex)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     if (m_Verbosity >= 5)
     {

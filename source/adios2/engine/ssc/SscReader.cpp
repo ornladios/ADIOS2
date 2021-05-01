@@ -25,7 +25,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("SscReader", io, name, mode, std::move(comm))
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
@@ -35,7 +35,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     SyncMpiPattern();
 }
 
-SscReader::~SscReader() { TAU_SCOPED_TIMER_FUNC(); }
+SscReader::~SscReader() { PERFSTUBS_SCOPED_TIMER_FUNC(); }
 
 void SscReader::BeginStepConsequentFixed()
 {
@@ -65,7 +65,7 @@ void SscReader::BeginStepFlexible(StepStatus &status)
 StepStatus SscReader::BeginStep(const StepMode stepMode,
                                 const float timeoutSeconds)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     ++m_CurrentStep;
 
@@ -283,7 +283,7 @@ void SscReader::EndStepConsequentFlexible()
 
 void SscReader::EndStep()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     if (m_Verbosity >= 5)
     {
@@ -332,7 +332,7 @@ void SscReader::EndStep()
 
 void SscReader::SyncMpiPattern()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     MPI_Group streamGroup;
     MPI_Group readerGroup;
@@ -362,7 +362,7 @@ void SscReader::SyncMpiPattern()
 
 bool SscReader::SyncWritePattern()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::SyncWritePattern, World Rank " << m_StreamRank
@@ -392,7 +392,7 @@ bool SscReader::SyncWritePattern()
 
 void SscReader::SyncReadPattern()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     if (m_Verbosity >= 5)
     {
@@ -447,7 +447,7 @@ void SscReader::SyncReadPattern()
 void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
                                   ssc::RankPosMap &allRanks)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     size_t bufferPosition = 0;
 
@@ -497,7 +497,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void SscReader::DoClose(const int transportIndex)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "SscReader::DoClose, World Rank " << m_StreamRank

@@ -17,8 +17,8 @@
 
 #include "sst.h"
 
-#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "cp_internal.h"
+#include <adios2-perfstubs-interface.h>
 
 #define gettid() pthread_self()
 #ifdef MUTEX_DEBUG
@@ -220,7 +220,7 @@ static char *readContactInfo(const char *Name, SstStream Stream, int Timeout)
 extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                                    void *client_data)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     SstStream Stream = (SstStream)client_data;
     int FailedPeerRank = -1;
     STREAM_MUTEX_LOCK(Stream);
@@ -309,7 +309,7 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                    SSTStreamStatusStr[Stream->Status]);
         STREAM_MUTEX_UNLOCK(Stream);
     }
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 //  SstCurrentStep is only called by the main program thread and
@@ -747,7 +747,7 @@ extern void SstReaderGetParams(SstStream Stream,
 extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
                                 void *client_data, attr_list attrs)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     SstStream Stream;
     struct _PeerSetupMsg *Msg = (struct _PeerSetupMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
@@ -773,7 +773,7 @@ extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
     CMconn_register_close_handler(conn, ReaderConnCloseHandler, (void *)Stream);
     STREAM_CONDITION_SIGNAL(Stream);
     STREAM_MUTEX_UNLOCK(Stream);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 void queueTimestepMetadataMsgAndNotify(SstStream Stream,
@@ -930,7 +930,7 @@ void AddAttributesToAttrDataList(SstStream Stream,
 void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
                                 void *client_data, attr_list attrs)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     SstStream Stream;
     struct _TimestepMetadataMsg *Msg = (struct _TimestepMetadataMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
@@ -985,7 +985,7 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
         queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
     }
     STREAM_MUTEX_UNLOCK(Stream);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 // CP_WriterResponseHandler is called by the network handler thread to
@@ -997,8 +997,8 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
 void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
                               void *client_data, attr_list attrs)
 {
-    TAU_REGISTER_THREAD();
-    TAU_START_FUNC();
+    PERFSTUBS_REGISTER_THREAD();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     struct _WriterResponseMsg *Msg = (struct _WriterResponseMsg *)Msg_v;
     struct _WriterResponseMsg **response_ptr;
     //    fprintf(stderr, "Received a writer_response message for condition
@@ -1023,7 +1023,7 @@ void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
 
     /* wake the main thread */
     CMCondition_signal(cm, Msg->WriterResponseCondition);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 // CP_WriterCloseHandler is called by the network handler thread to
@@ -1035,7 +1035,7 @@ void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
 extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
                                   void *client_data, attr_list attrs)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     WriterCloseMsg Msg = (WriterCloseMsg)Msg_v;
     SstStream Stream = (SstStream)Msg->RS_Stream;
 
@@ -1050,7 +1050,7 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     /* wake anyone that might be waiting */
     STREAM_CONDITION_SIGNAL(Stream);
     STREAM_MUTEX_UNLOCK(Stream);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 // CP_CommPatternLockedHandler is called by the network handler thread
@@ -1625,7 +1625,7 @@ extern void SstReleaseStep(SstStream Stream)
     long Timestep = Stream->ReaderTimestep;
     struct _ReleaseTimestepMsg Msg;
 
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     STREAM_MUTEX_LOCK(Stream);
     if (Stream->DP_Interface->RSReleaseTimestep)
     {
@@ -1664,7 +1664,7 @@ extern void SstReleaseStep(SstStream Stream)
     {
         FFSClearTimestepData(Stream);
     }
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 static void NotifyDPArrivedMetadata(SstStream Stream,
@@ -1693,7 +1693,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
 
     TSMetadataList Entry;
 
-    TAU_START("Waiting on metadata per rank per timestep");
+    PERFSTUBS_TIMER_START(timer, "Waiting on metadata per rank per timestep");
 
     if ((timeout_sec >= 0.0) || (mode == SstLatestAvailable))
     {
@@ -1862,7 +1862,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
 
     Entry = waitForNextMetadata(Stream, Stream->ReaderTimestep);
 
-    TAU_STOP("Waiting on metadata per rank per timestep");
+    PERFSTUBS_TIMER_STOP(timer);
 
     if (Entry)
     {
@@ -1870,9 +1870,9 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
 
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
-            TAU_START("FFS marshaling case");
+            PERFSTUBS_TIMER_START(timerFFS, "FFS marshaling case");
             FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
-            TAU_STOP("FFS marshaling case");
+            PERFSTUBS_TIMER_STOP(timerFFS);
         }
         else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
         {

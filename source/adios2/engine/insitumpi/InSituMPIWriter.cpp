@@ -13,7 +13,7 @@
 
 #include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosMath.h"
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <adios2-perfstubs-interface.h>
 
 #include "InSituMPIFunctions.h"
 #include "InSituMPISchedules.h"
@@ -34,7 +34,7 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
 : Engine("InSituMPIWriter", io, name, mode, std::move(comm)),
   m_BP3Serializer(m_Comm)
 {
-    TAU_SCOPED_TIMER("InSituMPIWriter::Open");
+    PERFSTUBS_SCOPED_TIMER("InSituMPIWriter::Open");
     m_EndMessage = " in call to InSituMPIWriter " + m_Name + " Open\n";
     Init();
     m_BP3Serializer.Init(m_IO.m_Parameters, "in call to InSituMPI::Open write");
@@ -77,7 +77,7 @@ InSituMPIWriter::~InSituMPIWriter() {}
 
 StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    TAU_SCOPED_TIMER("InSituMPIWriter::BeginStep");
+    PERFSTUBS_SCOPED_TIMER("InSituMPIWriter::BeginStep");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " BeginStep()\n";
@@ -139,7 +139,7 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
 void InSituMPIWriter::PerformPuts()
 {
-    TAU_SCOPED_TIMER("InSituMPIWriter::PerformPuts");
+    PERFSTUBS_SCOPED_TIMER("InSituMPIWriter::PerformPuts");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " PerformPuts()\n";
@@ -280,7 +280,7 @@ void InSituMPIWriter::PerformPuts()
 
 void InSituMPIWriter::AsyncSendVariable(std::string variableName)
 {
-    TAU_SCOPED_TIMER("InSituMPIWriter::AsyncSendVariable");
+    PERFSTUBS_SCOPED_TIMER("InSituMPIWriter::AsyncSendVariable");
     const DataType type(m_IO.InquireVariableType(variableName));
 
     if (type == DataType::Compound)
@@ -311,7 +311,7 @@ void InSituMPIWriter::AsyncSendVariable(std::string variableName)
 
 void InSituMPIWriter::EndStep()
 {
-    TAU_SCOPED_TIMER("InSituMPIWriter::EndStep");
+    PERFSTUBS_SCOPED_TIMER("InSituMPIWriter::EndStep");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " EndStep()\n";
@@ -321,12 +321,12 @@ void InSituMPIWriter::EndStep()
         PerformPuts();
     }
 
-    TAU_START("InSituMPIWriter::CompleteRequests");
+    PERFSTUBS_TIMER_START(timerReq, "InSituMPIWriter::CompleteRequests");
     insitumpi::CompleteRequests(m_MPIRequests, true, m_WriterRank);
     m_MPIRequests.clear();
-    TAU_STOP("InSituMPIWriter::CompleteRequests");
+    PERFSTUBS_TIMER_STOP(timerReq);
 
-    TAU_START("WaitForReaderAck");
+    PERFSTUBS_TIMER_START(timerAck, "WaitForReaderAck");
     // Wait for final acknowledgment from the readers
     int dummy = 0;
     if (m_BP3Serializer.m_RankMPI == 0 && m_RankDirectPeers.size() > 0)
@@ -336,7 +336,7 @@ void InSituMPIWriter::EndStep()
                  insitumpi::MpiTags::ReadCompleted, m_CommWorld, &status);
     }
     m_Comm.Bcast(&dummy, 1, 0);
-    TAU_STOP("WaitForReaderAck");
+    PERFSTUBS_TIMER_STOP(timerAck);
 
     if (m_Verbosity == 5)
     {
@@ -347,7 +347,7 @@ void InSituMPIWriter::EndStep()
 
 size_t InSituMPIWriter::CurrentStep() const
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     return m_CurrentStep;
 }
 
@@ -356,14 +356,14 @@ size_t InSituMPIWriter::CurrentStep() const
 #define declare_type(T)                                                        \
     void InSituMPIWriter::DoPutSync(Variable<T> &variable, const T *values)    \
     {                                                                          \
-        TAU_SCOPED_TIMER("InSituMPIWriter::Put");                              \
+        PERFSTUBS_SCOPED_TIMER("InSituMPIWriter::Put");                        \
         PutSyncCommon(variable, variable.SetBlockInfo(values, m_CurrentStep)); \
         variable.m_BlocksInfo.clear();                                         \
     }                                                                          \
     void InSituMPIWriter::DoPutDeferred(Variable<T> &variable,                 \
                                         const T *values)                       \
     {                                                                          \
-        TAU_SCOPED_TIMER("InSituMPIWriter::Put");                              \
+        PERFSTUBS_SCOPED_TIMER("InSituMPIWriter::Put");                        \
         PutDeferredCommon(variable, values);                                   \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -396,7 +396,7 @@ void InSituMPIWriter::InitTransports()
 
 void InSituMPIWriter::DoClose(const int transportIndex)
 {
-    TAU_SCOPED_TIMER("InSituMPIWriter::Close");
+    PERFSTUBS_SCOPED_TIMER("InSituMPIWriter::Close");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " Close(" << m_Name
@@ -433,7 +433,7 @@ void InSituMPIWriter::DoClose(const int transportIndex)
 void InSituMPIWriter::ReceiveReadSchedule(
     insitumpi::WriteScheduleMap &writeScheduleMap)
 {
-    TAU_SCOPED_TIMER("InSituMPIWriter::ReceiveReadSchedule");
+    PERFSTUBS_SCOPED_TIMER("InSituMPIWriter::ReceiveReadSchedule");
     // Reader ID -> length of serialized read schedule
     std::map<int, int> rsLengths;
     // Reader ID -> serialized read schedule

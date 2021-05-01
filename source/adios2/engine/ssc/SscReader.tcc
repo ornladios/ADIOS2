@@ -14,6 +14,7 @@
 #include "SscReader.h"
 #include "adios2/helper/adiosMemory.h"
 #include "adios2/helper/adiosSystem.h"
+#include <adios2-perfstubs-interface.h>
 #include <iostream>
 
 namespace adios2
@@ -26,7 +27,7 @@ namespace engine
 template <class T>
 void SscReader::GetDeferredDeltaCommon(Variable<T> &variable, T *data)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     Dims vStart = variable.m_Start;
     Dims vCount = variable.m_Count;
@@ -66,7 +67,7 @@ template <>
 void SscReader::GetDeferredCommon(Variable<std::string> &variable,
                                   std::string *data)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     variable.SetData(data);
 
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
@@ -93,7 +94,7 @@ void SscReader::GetDeferredCommon(Variable<std::string> &variable,
 template <class T>
 void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     variable.SetData(data);
 
     Dims vStart = variable.m_Start;
@@ -164,7 +165,7 @@ std::vector<typename Variable<T>::BPInfo>
 SscReader::BlocksInfoCommon(const Variable<T> &variable,
                             const size_t step) const
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     std::vector<typename Variable<T>::BPInfo> ret;
 

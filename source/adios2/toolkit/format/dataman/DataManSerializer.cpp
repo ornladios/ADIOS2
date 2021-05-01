@@ -37,7 +37,7 @@ DataManSerializer::~DataManSerializer()
 
 void DataManSerializer::NewWriterBuffer(size_t bufferSize)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     // make a new shared object each time because the old shared object could
     // still be alive and needed somewhere in the workflow, for example the
     // queue in transport manager. It will be automatically released when the
@@ -50,7 +50,7 @@ void DataManSerializer::NewWriterBuffer(size_t bufferSize)
 
 VecPtr DataManSerializer::GetLocalPack()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     m_TimeStampsMutex.lock();
     if (!m_TimeStamps.empty())
     {
@@ -78,7 +78,7 @@ std::vector<uint64_t> DataManSerializer::GetTimeStamps()
 bool DataManSerializer::IsCompressionAvailable(const std::string &method,
                                                DataType type, const Dims &count)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (method == "zfp")
     {
         if (type == helper::GetDataType<int32_t>() ||
@@ -127,7 +127,7 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
 
 void DataManSerializer::PutAttributes(core::IO &io)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     const auto &attributes = io.GetAttributes();
     bool attributePut = false;
     for (const auto &attributePair : attributes)
@@ -167,7 +167,7 @@ void DataManSerializer::PutAttributes(core::IO &io)
 
 void DataManSerializer::GetAttributes(core::IO &io)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> lStaticDataJson(m_StaticDataJsonMutex);
     for (const auto &staticVar : m_StaticDataJson["S"])
     {
@@ -204,7 +204,7 @@ void DataManSerializer::GetAttributes(core::IO &io)
 
 void DataManSerializer::AttachAttributesToLocalPack()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l1(m_StaticDataJsonMutex);
     m_MetadataJson["S"] = m_StaticDataJson["S"];
 }
@@ -226,7 +226,7 @@ OperatorMap DataManSerializer::GetOperatorMap()
 
 void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     // the mutex has to be locked here through the entire function. Otherwise
     // reader engine could get incomplete step metadata. This function only
@@ -399,7 +399,7 @@ void DataManSerializer::PutPack(const VecPtr data, const bool useThread)
 
 int DataManSerializer::PutPackThread(const VecPtr data)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (data->size() == 0)
     {
         return -1;
@@ -414,7 +414,7 @@ int DataManSerializer::PutPackThread(const VecPtr data)
 
 void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l1(m_DataManVarMapMutex);
     std::lock_guard<std::mutex> l2(m_AggregatedMetadataJsonMutex);
     if (allPreviousSteps)
@@ -468,7 +468,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
 
 DmvVecPtrMap DataManSerializer::GetFullMetadataMap()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     return m_DataManVarMap;
 }
@@ -477,7 +477,7 @@ size_t DataManSerializer::LocalBufferSize() { return m_LocalBuffer->size(); }
 
 VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     auto pack = std::make_shared<std::vector<char>>();
     if (m_UseJsonSerialization == "msgpack")
     {
@@ -511,7 +511,7 @@ VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
 nlohmann::json DataManSerializer::DeserializeJson(const char *start,
                                                   size_t size)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 200)
     {
         std::cout << "DataManSerializer::DeserializeJson Json = ";
@@ -582,7 +582,7 @@ DmvVecPtr DataManSerializer::GetEarliestLatestStep(
     int64_t &currentStep, const int requireMinimumBlocks,
     const float timeoutSeconds, const bool latest)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     auto start_time = std::chrono::system_clock::now();
     while (true)
@@ -653,7 +653,7 @@ DmvVecPtr DataManSerializer::GetEarliestLatestStep(
 void DataManSerializer::Log(const int level, const std::string &message,
                             const bool mpi, const bool endline)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     const int rank = m_Comm.World().Rank();
 
     if (m_Verbosity >= level)

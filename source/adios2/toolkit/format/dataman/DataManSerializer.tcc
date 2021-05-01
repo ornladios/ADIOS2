@@ -28,6 +28,8 @@
 
 #include "adios2/helper/adiosFunctions.h"
 
+#include <adios2-perfstubs-interface.h>
+
 #include <iostream>
 
 namespace adios2
@@ -51,7 +53,7 @@ template <typename T>
 void DataManSerializer::CalculateMinMax(const T *data, const Dims &count,
                                         nlohmann::json &metaj)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
     T max = std::numeric_limits<T>::min();
@@ -85,7 +87,7 @@ void DataManSerializer::PutData(const core::Variable<T> &variable,
                                 const int rank, const std::string &address,
                                 VecPtr localBuffer, JsonPtr metadataJson)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     PutData(variable.GetData(), variable.m_Name, variable.m_Shape,
             variable.m_Start, variable.m_Count, variable.m_MemoryStart,
             variable.m_MemoryCount, doid, step, rank, address,
@@ -101,7 +103,7 @@ void DataManSerializer::PutData(
     const std::vector<core::VariableBase::Operation> &ops, VecPtr localBuffer,
     JsonPtr metadataJson)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     Log(1,
         "DataManSerializer::PutData begin with Step " + std::to_string(step) +
             " Var " + varName,
@@ -276,7 +278,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                                const size_t step, const Dims &varMemStart,
                                const Dims &varMemCount)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     DmvVecPtr vec = nullptr;
 
@@ -470,7 +472,7 @@ void DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
                                const T *inputData, const Dims &varCount,
                                const Params &params)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_ZFP
     core::compress::CompressZFP compressor(params);
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
@@ -498,7 +500,7 @@ void DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
                               const T *inputData, const Dims &varCount,
                               const Params &params)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_SZ
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
@@ -526,7 +528,7 @@ void DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
                                  const T *inputData, const Dims &varCount,
                                  const Params &params)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_BZIP2
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
@@ -554,7 +556,7 @@ void DataManSerializer::PutMgard(nlohmann::json &metaj, size_t &datasize,
                                  const T *inputData, const Dims &varCount,
                                  const Params &params)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_MGARD
     core::compress::CompressMGARD compressor(params);
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
@@ -580,7 +582,7 @@ void DataManSerializer::PutMgard(nlohmann::json &metaj, size_t &datasize,
 template <class T>
 void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     nlohmann::json staticVar;
     staticVar["N"] = attribute.m_Name;
     staticVar["Y"] = ToString(attribute.m_Type);

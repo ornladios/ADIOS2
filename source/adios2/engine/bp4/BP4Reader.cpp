@@ -11,7 +11,7 @@
 #include "BP4Reader.h"
 #include "BP4Reader.tcc"
 
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <adios2-perfstubs-interface.h>
 
 #include <chrono>
 #include <errno.h>
@@ -29,13 +29,13 @@ BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
   m_BP4Deserializer(m_Comm), m_MDFileManager(m_Comm), m_DataFileManager(m_Comm),
   m_MDIndexFileManager(m_Comm), m_ActiveFlagFileManager(m_Comm)
 {
-    TAU_SCOPED_TIMER("BP4Reader::Open");
+    PERFSTUBS_SCOPED_TIMER("BP4Reader::Open");
     Init();
 }
 
 StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    TAU_SCOPED_TIMER("BP4Reader::BeginStep");
+    PERFSTUBS_SCOPED_TIMER("BP4Reader::BeginStep");
     if (mode != StepMode::Read)
     {
         throw std::invalid_argument("ERROR: mode is not supported yet, "
@@ -101,13 +101,13 @@ size_t BP4Reader::CurrentStep() const { return m_CurrentStep; }
 
 void BP4Reader::EndStep()
 {
-    TAU_SCOPED_TIMER("BP4Reader::EndStep");
+    PERFSTUBS_SCOPED_TIMER("BP4Reader::EndStep");
     PerformGets();
 }
 
 void BP4Reader::PerformGets()
 {
-    TAU_SCOPED_TIMER("BP4Reader::PerformGets");
+    PERFSTUBS_SCOPED_TIMER("BP4Reader::PerformGets");
     if (m_BP4Deserializer.m_DeferredVariables.empty())
     {
         return;
@@ -746,12 +746,12 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
 #define declare_type(T)                                                        \
     void BP4Reader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
-        TAU_SCOPED_TIMER("BP4Reader::Get");                                    \
+        PERFSTUBS_SCOPED_TIMER("BP4Reader::Get");                              \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void BP4Reader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
-        TAU_SCOPED_TIMER("BP4Reader::Get");                                    \
+        PERFSTUBS_SCOPED_TIMER("BP4Reader::Get");                              \
         GetDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -759,7 +759,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void BP4Reader::DoClose(const int transportIndex)
 {
-    TAU_SCOPED_TIMER("BP4Reader::Close");
+    PERFSTUBS_SCOPED_TIMER("BP4Reader::Close");
     PerformGets();
     m_DataFileManager.CloseFiles();
     m_MDFileManager.CloseFiles();
@@ -769,21 +769,21 @@ void BP4Reader::DoClose(const int transportIndex)
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     BP4Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
     {                                                                          \
-        TAU_SCOPED_TIMER("BP4Reader::AllStepsBlocksInfo");                     \
+        PERFSTUBS_SCOPED_TIMER("BP4Reader::AllStepsBlocksInfo");               \
         return m_BP4Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
     std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
     BP4Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const \
     {                                                                          \
-        TAU_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");             \
+        PERFSTUBS_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");       \
         return m_BP4Deserializer.AllRelativeStepsBlocksInfo(variable);         \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::BPInfo> BP4Reader::DoBlocksInfo(         \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
-        TAU_SCOPED_TIMER("BP4Reader::BlocksInfo");                             \
+        PERFSTUBS_SCOPED_TIMER("BP4Reader::BlocksInfo");                       \
         return m_BP4Deserializer.BlocksInfo(variable, step);                   \
     }
 

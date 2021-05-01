@@ -16,8 +16,8 @@
 
 #include "sst.h"
 
-#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "cp_internal.h"
+#include <adios2-perfstubs-interface.h>
 
 static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                                      enum StreamStatus NewState);
@@ -433,7 +433,7 @@ static void QueueMaintenance(SstStream Stream)
 extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
                                    void *client_data)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     WS_ReaderInfo WSreader = (WS_ReaderInfo)client_data;
     SstStream ParentWriterStream = WSreader->ParentStream;
 
@@ -490,12 +490,12 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
                    "state %s\n",
                    SSTStreamStatusStr[WSreader->ReaderStatus]);
         STREAM_MUTEX_UNLOCK(ParentWriterStream);
-        TAU_STOP_FUNC();
+        PERFSTUBS_TIMER_STOP_FUNC(timer);
         return;
     }
     QueueMaintenance(ParentWriterStream);
     STREAM_MUTEX_UNLOCK(ParentWriterStream);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 static void SendPeerSetupMsg(WS_ReaderInfo reader, int reversePeer, int myRank)
@@ -2136,10 +2136,14 @@ extern void SstInternalProvideTimestep(
     Md.DP_TimestepInfo = DP_TimestepInfo;
 
     if (Data)
-        TAU_SAMPLE_COUNTER("Timestep local data size", Data->DataSize);
+    {
+        PERFSTUBS_SAMPLE_COUNTER("Timestep local data size", Data->DataSize);
+    }
     if (LocalMetadata)
-        TAU_SAMPLE_COUNTER("Timestep local metadata size",
-                           LocalMetadata->DataSize);
+    {
+        PERFSTUBS_SAMPLE_COUNTER("Timestep local metadata size",
+                                 LocalMetadata->DataSize);
+    }
 
     /* preliminary queue of message before metadata collection.  Timestep may
      * still be discarded.*/
@@ -2167,7 +2171,7 @@ extern void SstInternalProvideTimestep(
 
     STREAM_MUTEX_UNLOCK(Stream);
 
-    TAU_START("Metadata Consolidation time in EndStep()");
+    PERFSTUBS_TIMER_START(timerMD, "Metadata Consolidation time in EndStep()");
     pointers = (MetadataPlusDPInfo *)CP_consolidateDataToRankZero(
         Stream, &Md, Stream->CPInfo->PerRankMetadataFormat, &data_block1);
 
@@ -2259,7 +2263,7 @@ extern void SstInternalProvideTimestep(
     *Msg = ReturnData->Msg;
     Msg->CohortSize = Stream->CohortSize;
     Msg->Timestep = Timestep;
-    TAU_STOP("Metadata Consolidation time in EndStep()");
+    PERFSTUBS_TIMER_STOP(timerMD);
 
     /*
      * lock this Stream's data and queue the timestep
@@ -2279,7 +2283,7 @@ extern void SstInternalProvideTimestep(
         ProcessReleaseList(Stream, ReturnData);
     }
     ActOnTSLockStatus(Stream, Timestep);
-    TAU_START("provide timestep operations");
+    PERFSTUBS_TIMER_START(timerTS, "provide timestep operations");
     if (ReturnData->DiscardThisTimestep)
     {
         /* Data was actually discarded, but we want to send a message to each
@@ -2357,7 +2361,7 @@ extern void SstInternalProvideTimestep(
             }
         }
     }
-    TAU_STOP("provide timestep operations");
+    PERFSTUBS_TIMER_STOP(timerTS);
 }
 
 static void UpdateLockDefnsList(SstStream Stream, WS_ReaderInfo CP_WSR_Stream,
@@ -2467,7 +2471,7 @@ void queueReaderRegisterMsgAndNotify(SstStream Stream,
 void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
                            void *client_data, attr_list attrs)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     struct _ReaderCloseMsg *Msg = (struct _ReaderCloseMsg *)Msg_v;
 
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
@@ -2485,14 +2489,14 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
                CP_WSR_Stream);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
     STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 void CP_ReaderRegisterHandler(CManager cm, CMConnection conn, void *Msg_v,
                               void *client_data, attr_list attrs)
 {
-    TAU_REGISTER_THREAD();
-    TAU_START_FUNC();
+    PERFSTUBS_REGISTER_THREAD();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     SstStream Stream;
     struct _ReaderRegisterMsg *Msg = (struct _ReaderRegisterMsg *)Msg_v;
     //    fprintf(stderr,
@@ -2518,13 +2522,13 @@ void CP_ReaderRegisterHandler(CManager cm, CMConnection conn, void *Msg_v,
     CMtake_buffer(cm, Msg);
 
     queueReaderRegisterMsgAndNotify(Stream, Msg, conn);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *Msg_v,
                               void *client_data, attr_list attrs)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     struct _ReaderActivateMsg *Msg = (struct _ReaderActivateMsg *)Msg_v;
 
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
@@ -2543,14 +2547,14 @@ void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *Msg_v,
      */
     pthread_cond_signal(&CP_WSR_Stream->ParentStream->DataCondition);
     STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
                                       void *Msg_v, void *client_data,
                                       attr_list attrs)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     struct _ReleaseTimestepMsg *Msg = (struct _ReleaseTimestepMsg *)Msg_v;
     WS_ReaderInfo Reader = (WS_ReaderInfo)Msg->WSR_Stream;
     SstStream ParentStream = Reader->ParentStream;
@@ -2593,14 +2597,14 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
     CP_verbose(ParentStream, TraceVerbose,
                "Releasing the lock in release timestep\n");
     STREAM_MUTEX_UNLOCK(ParentStream);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
                                             void *Msg_v, void *client_data,
                                             attr_list attrs)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     struct _ReleaseTimestepMsg *Msg = (struct _ReleaseTimestepMsg *)Msg_v;
     WS_ReaderInfo Reader = (WS_ReaderInfo)Msg->WSR_Stream;
     SstStream ParentStream = Reader->ParentStream;
@@ -2625,7 +2629,7 @@ extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
         UpdateLockDefnsList(ParentStream, ParentStream->Readers[ReaderNum], -1);
     }
     STREAM_MUTEX_UNLOCK(ParentStream);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 void SstWriterInitMetadataCallback(SstStream Stream, void *Writer,

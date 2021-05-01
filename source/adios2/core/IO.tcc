@@ -22,7 +22,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosType.h"
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <adios2-perfstubs-interface.h>
 
 namespace adios2
 {
@@ -34,7 +34,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
                                 const Dims &start, const Dims &count,
                                 const bool constantDims)
 {
-    TAU_SCOPED_TIMER("IO::DefineVariable");
+    PERFSTUBS_SCOPED_TIMER("IO::DefineVariable");
 
     {
         auto itVariable = m_Variables.find(name);
@@ -71,7 +71,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
 template <class T>
 Variable<T> *IO::InquireVariable(const std::string &name) noexcept
 {
-    TAU_SCOPED_TIMER("IO::InquireVariable");
+    PERFSTUBS_SCOPED_TIMER("IO::InquireVariable");
     auto itVariable = m_Variables.find(name);
 
     if (itVariable == m_Variables.end())
@@ -101,7 +101,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                                   const std::string &variableName,
                                   const std::string separator)
 {
-    TAU_SCOPED_TIMER("IO::DefineAttribute");
+    PERFSTUBS_SCOPED_TIMER("IO::DefineAttribute");
     if (!variableName.empty() &&
         InquireVariableType(variableName) == DataType::None)
     {
@@ -144,7 +144,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
                                   const std::string &variableName,
                                   const std::string separator)
 {
-    TAU_SCOPED_TIMER("IO::DefineAttribute");
+    PERFSTUBS_SCOPED_TIMER("IO::DefineAttribute");
     if (!variableName.empty() &&
         InquireVariableType(variableName) == DataType::None)
     {
@@ -189,7 +189,7 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
                                    const std::string &variableName,
                                    const std::string separator) noexcept
 {
-    TAU_SCOPED_TIMER("IO::InquireAttribute");
+    PERFSTUBS_SCOPED_TIMER("IO::InquireAttribute");
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
     auto itAttribute = m_Attributes.find(globalName);
