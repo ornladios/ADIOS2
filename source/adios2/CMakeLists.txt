@@ -2,19 +2,6 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
-  
-add_library(taustubs
-  toolkit/profiling/taustubs/tautimer.cpp
-  toolkit/profiling/taustubs/tautimer.hpp
-  toolkit/profiling/taustubs/taustubs.h
-)
-
-target_include_directories(taustubs PRIVATE
-      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
-)
-set_property(TARGET taustubs PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_taustubs)
-
-target_link_libraries(taustubs PRIVATE ${CMAKE_DL_LIBS})
 
 add_library(adios2_core
   common/ADIOSTypes.cpp
@@ -122,8 +109,8 @@ target_include_directories(adios2_core
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
 )
-target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml taustubs
-  adios2::thirdparty::yaml-cpp adios2::thirdparty::nlohmann_json adios2::thirdparty::perfstubs)
+target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml
+  adios2::thirdparty::yaml-cpp adios2::thirdparty::nlohmann_json adios2::thirdparty::perfstubs-interface)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 
@@ -165,7 +152,7 @@ if(ADIOS2_HAVE_MPI)
   )
   set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
   set_property(TARGET adios2_core_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_mpi)
-  target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_C PRIVATE taustubs adios2::thirdparty::perfstubs)
+  target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_C PRIVATE adios2::thirdparty::perfstubs-interface)
   target_compile_definitions(adios2_core_mpi PUBLIC "$<BUILD_INTERFACE:ADIOS2_USE_MPI>")
 endif()
 
@@ -382,7 +369,7 @@ install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
 )
 
 # Library installation
-install(TARGETS adios2_core ${maybe_adios2_core_mpi} taustubs EXPORT adios2Exports
+install(TARGETS adios2_core ${maybe_adios2_core_mpi} EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development

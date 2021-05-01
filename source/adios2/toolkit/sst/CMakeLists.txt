@@ -15,7 +15,7 @@ if(BUILD_SHARED_LIBS)
   set_property(TARGET sst PROPERTY POSITION_INDEPENDENT_CODE 1)
 endif()
 
-target_link_libraries(sst PRIVATE taustubs adios2::thirdparty::perfstubs)
+target_link_libraries(sst PRIVATE adios2::thirdparty::perfstubs-interface)
 
 if(ADIOS2_SST_HAVE_LIBFABRIC)
   target_sources(sst PRIVATE dp/rdma_dp.c)
