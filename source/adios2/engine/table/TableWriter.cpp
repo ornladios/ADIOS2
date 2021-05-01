@@ -12,7 +12,8 @@
 #include "TableWriter.tcc"
 
 #include "adios2/helper/adiosFunctions.h"
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+
+#include <perfstubs_api/timer.h>
 
 #include <iostream>
 
@@ -45,7 +46,7 @@ TableWriter::~TableWriter()
 
 StepStatus TableWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::BeginStep " << m_MpiRank << std::endl;
@@ -61,7 +62,7 @@ void TableWriter::PerformPuts() {}
 
 void TableWriter::EndStep()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::EndStep " << m_MpiRank << std::endl;
@@ -164,7 +165,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void TableWriter::Init()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     InitParameters();
     InitTransports();
 }
@@ -227,7 +228,7 @@ void TableWriter::InitParameters()
 
 void TableWriter::InitTransports()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     m_SendStagingMan.OpenRequester(m_Timeout, 32);
 
@@ -256,7 +257,7 @@ void TableWriter::InitTransports()
 
 void TableWriter::PutAggregatorBuffer()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::PutAggregatorBuffer " << m_MpiRank
@@ -347,7 +348,7 @@ void TableWriter::PutAggregatorBuffer()
 
 void TableWriter::PutSubEngine(bool finalPut)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::PutSubEngine " << m_MpiRank << " begin"
@@ -428,7 +429,7 @@ void TableWriter::PutSubEngine(bool finalPut)
 
 void TableWriter::DoClose(const int transportIndex)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::DoClose " << m_MpiRank << std::endl;
@@ -440,7 +441,7 @@ void TableWriter::DoClose(const int transportIndex)
 std::vector<size_t> TableWriter::WhatBufferIndices(const Dims &start,
                                                    const Dims &count)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     std::vector<size_t> indices;
     if (start.size() > 0 and count.size() > 0)
     {
@@ -472,7 +473,7 @@ size_t TableWriter::WhatBufferIndex(const size_t row)
 std::vector<int> TableWriter::WhatAggregatorIndices(const Dims &start,
                                                     const Dims &count)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     std::vector<int> ranks;
     if (start.size() > 0 and count.size() > 0)
     {
@@ -499,7 +500,7 @@ std::vector<int> TableWriter::WhatAggregatorIndices(const Dims &start,
 std::vector<std::string>
 TableWriter::WhatAggregatorAddresses(const std::vector<int> &indices)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     std::vector<std::string> aggregators;
     for (const auto i : indices)
     {
@@ -511,7 +512,7 @@ TableWriter::WhatAggregatorAddresses(const std::vector<int> &indices)
 std::vector<std::string> TableWriter::WhatAggregatorAddresses(const Dims &start,
                                                               const Dims &count)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     std::vector<std::string> aggregators;
     auto ranks = WhatAggregatorIndices(start, count);
     for (const auto i : ranks)

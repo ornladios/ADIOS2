@@ -14,7 +14,7 @@
 #include "SstWriter.h"
 
 #include "adios2/helper/adiosFunctions.h" //GetDataType<T>
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <perfstubs_api/timer.h>
 
 namespace adios2
 {
@@ -26,7 +26,7 @@ namespace engine
 template <class T>
 void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     variable.SetData(values);
 
     if (m_BetweenStepPairs == false)

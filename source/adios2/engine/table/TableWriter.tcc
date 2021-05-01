@@ -50,7 +50,7 @@ void TableWriter::PutDeferredCommon<std::string>(
 template <class T>
 void TableWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::PutSyncCommon " << m_MpiRank << " begin"
@@ -68,7 +68,7 @@ void TableWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 template <class T>
 void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::PutDeferredCommon " << m_MpiRank << " begin"
