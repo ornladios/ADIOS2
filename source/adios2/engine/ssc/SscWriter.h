@@ -89,7 +89,6 @@ private:
     int m_Verbosity = 0;
     int m_OpenTimeoutSecs = 10;
     bool m_Threading = false;
-    std::string m_MpiMode = "twosided";
 };
 
 } // end namespace engine
