@@ -27,18 +27,6 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(OnlyTwoSteps MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOnlyTwoSteps.MPI "" TRUE)
 
-  gtest_add_tests_helper(OneSidedFencePush MPI_ONLY Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedFencePush.MPI "" TRUE)
-
-  gtest_add_tests_helper(OneSidedPostPush MPI_ONLY Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedPostPush.MPI "" TRUE)
-
-  gtest_add_tests_helper(OneSidedFencePull MPI_ONLY Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedFencePull.MPI "" TRUE)
-
-  gtest_add_tests_helper(OneSidedPostPull MPI_ONLY Ssc Engine.SSC. "")
-  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscOneSidedPostPull.MPI "" TRUE)
-
   gtest_add_tests_helper(Unbalanced MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscUnbalanced.MPI "" TRUE)
 
