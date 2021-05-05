@@ -66,7 +66,6 @@ private:
     void SyncMpiPattern();
     void SyncWritePattern(bool finalStep = false);
     void SyncReadPattern();
-    void MpiWait();
     void EndStepFirst();
     void EndStepConsequentFixed();
     void EndStepConsequentFlexible();

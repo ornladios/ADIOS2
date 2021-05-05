@@ -100,7 +100,7 @@ private:
 
     int m_Verbosity = 0;
     int m_OpenTimeoutSecs = 10;
-    bool m_Threading = false;
+    bool m_Threading = true;
 };
 
 } // end namespace engine

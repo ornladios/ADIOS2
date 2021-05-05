@@ -33,17 +33,14 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
 
     int providedMpiMode;
     MPI_Query_thread(&providedMpiMode);
-    if (providedMpiMode != MPI_THREAD_MULTIPLE)
+    if (m_Threading && providedMpiMode != MPI_THREAD_MULTIPLE)
     {
-        if (m_Threading == true)
+        m_Threading = false;
+        if (m_WriterRank == 0 && m_Verbosity > 0)
         {
-            m_Threading = false;
-            if (m_WriterRank == 0)
-            {
-                std::cout << "SSC Threading disabled as MPI is not initialized "
-                             "with multi-threads"
-                          << std::endl;
-            }
+            std::cout << "SSC Threading disabled as MPI is not initialized "
+                         "with multi-threads"
+                      << std::endl;
         }
     }
 
@@ -83,7 +80,9 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     {
         if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
         {
-            MpiWait();
+            MPI_Waitall(static_cast<int>(m_MpiRequests.size()),
+                        m_MpiRequests.data(), MPI_STATUSES_IGNORE);
+            m_MpiRequests.clear();
         }
         else
         {
@@ -172,13 +171,6 @@ void SscWriter::EndStep()
 }
 
 void SscWriter::Flush(const int transportIndex) { TAU_SCOPED_TIMER_FUNC(); }
-
-void SscWriter::MpiWait()
-{
-    MPI_Waitall(static_cast<int>(m_MpiRequests.size()), m_MpiRequests.data(),
-                MPI_STATUSES_IGNORE);
-    m_MpiRequests.clear();
-}
 
 void SscWriter::SyncMpiPattern()
 {
@@ -356,7 +348,9 @@ void SscWriter::DoClose(const int transportIndex)
     {
         if (m_CurrentStep > 0)
         {
-            MpiWait();
+            MPI_Waitall(static_cast<int>(m_MpiRequests.size()),
+                        m_MpiRequests.data(), MPI_STATUSES_IGNORE);
+            m_MpiRequests.clear();
         }
 
         m_Buffer[0] = 1;
