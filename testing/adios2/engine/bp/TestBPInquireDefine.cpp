@@ -27,7 +27,7 @@ TEST_F(ADIOSInquireDefineTest, Read)
     std::string filename = "ADIOSInquireDefine.bp";
 
     // Number of steps
-    const std::size_t NSteps = 5;
+    const int32_t NSteps = 5;
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -42,87 +42,95 @@ TEST_F(ADIOSInquireDefineTest, Read)
 #else
         adios2::ADIOS adios;
 #endif
-        adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
-
-        adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
         // Number of elements per process
         const std::size_t Nx = 10;
-        adios2::Dims shape{static_cast<unsigned int>(mpiSize * Nx)};
-        adios2::Dims start{static_cast<unsigned int>(mpiRank * Nx)};
-        adios2::Dims count{static_cast<unsigned int>(Nx)};
-
         std::vector<int32_t> Ints0 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         std::vector<int32_t> Ints1 = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
         std::vector<int32_t> Ints2 = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
         std::vector<int32_t> Ints3 = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
         std::vector<int32_t> Ints4 = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
-        auto var_g = ioWrite.DefineVariable<int32_t>("global_variable", shape,
-                                                     start, count);
-        for (size_t step = 0; step < NSteps; ++step)
+        try
         {
-            engine.BeginStep();
-            if (step == 0)
+            adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
+            adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
+            adios2::Dims shape{static_cast<unsigned int>(mpiSize * Nx)};
+            adios2::Dims start{static_cast<unsigned int>(mpiRank * Nx)};
+            adios2::Dims count{static_cast<unsigned int>(Nx)};
+
+            auto var_g = ioWrite.DefineVariable<int32_t>("global_variable",
+                                                         shape, start, count);
+            for (auto step = 0; step < NSteps; ++step)
             {
-                engine.Put(var_g, Ints0.data());
-                auto var0 = ioWrite.DefineVariable<int32_t>("variable0", shape,
-                                                            start, count);
-                engine.Put(var0, Ints0.data(), adios2::Mode::Deferred);
-                if (!ioWrite.InquireVariable<int>("variable0"))
+                engine.BeginStep();
+                if (step == 0)
                 {
+                    engine.Put(var_g, Ints0.data());
                     auto var0 = ioWrite.DefineVariable<int32_t>(
                         "variable0", shape, start, count);
-                    engine.Put(var0, Ints1.data(), adios2::Mode::Deferred);
+                    engine.Put(var0, Ints0.data(), adios2::Mode::Deferred);
+                    if (!ioWrite.InquireVariable<int>("variable0"))
+                    {
+                        auto var0 = ioWrite.DefineVariable<int32_t>(
+                            "variable0", shape, start, count);
+                        engine.Put(var0, Ints1.data(), adios2::Mode::Deferred);
+                    }
                 }
-            }
-            else if (step == 1)
-            {
-                engine.Put(var_g, Ints1.data());
-                if (!ioWrite.InquireVariable<int>("variable1"))
+                else if (step == 1)
                 {
-                    auto var1 = ioWrite.DefineVariable<int32_t>(
-                        "variable1", shape, start, count);
-                    engine.Put(var1, Ints1.data(), adios2::Mode::Deferred);
+                    engine.Put(var_g, Ints1.data());
+                    if (!ioWrite.InquireVariable<int>("variable1"))
+                    {
+                        auto var1 = ioWrite.DefineVariable<int32_t>(
+                            "variable1", shape, start, count);
+                        engine.Put(var1, Ints1.data(), adios2::Mode::Deferred);
+                    }
                 }
-            }
-            else if (step == 2)
-            {
-                engine.Put(var_g, Ints2.data());
-                if (!ioWrite.InquireVariable<int>("variable2"))
+                else if (step == 2)
                 {
-                    auto var2 = ioWrite.DefineVariable<int32_t>(
-                        "variable2", shape, start, count);
-                    engine.Put(var2, Ints2.data(), adios2::Mode::Deferred);
+                    engine.Put(var_g, Ints2.data());
+                    if (!ioWrite.InquireVariable<int>("variable2"))
+                    {
+                        auto var2 = ioWrite.DefineVariable<int32_t>(
+                            "variable2", shape, start, count);
+                        engine.Put(var2, Ints2.data(), adios2::Mode::Deferred);
+                    }
                 }
-            }
-            else if (step == 3)
-            {
-                engine.Put(var_g, Ints3.data());
-                if (!ioWrite.InquireVariable<int>("variable3"))
+                else if (step == 3)
                 {
-                    auto var3 = ioWrite.DefineVariable<int32_t>(
-                        "variable3", shape, start, count);
-                    engine.Put(var3, Ints3.data(), adios2::Mode::Deferred);
+                    engine.Put(var_g, Ints3.data());
+                    if (!ioWrite.InquireVariable<int>("variable3"))
+                    {
+                        auto var3 = ioWrite.DefineVariable<int32_t>(
+                            "variable3", shape, start, count);
+                        engine.Put(var3, Ints3.data(), adios2::Mode::Deferred);
+                    }
                 }
+                else if (step == 4)
+                {
+                    engine.Put(var_g, Ints4.data());
+                }
+                engine.EndStep();
             }
-            else if (step == 4)
-            {
-                engine.Put(var_g, Ints4.data());
-            }
-            engine.EndStep();
+            engine.Close();
         }
-        engine.Close();
+        catch (std::exception &e)
+        {
+            std::cout << "Exception " << e.what() << std::endl;
+            EXPECT_TRUE(false);
+        }
 
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
-        adios2::IO ioRead = adios.DeclareIO("TestIORead");
-        ioRead.SetEngine("BPFile");
-        adios2::Engine engine_s = ioRead.Open(filename, adios2::Mode::Read);
-        EXPECT_TRUE(engine_s);
         try
         {
+            adios2::IO ioRead = adios.DeclareIO("TestIORead");
+            ioRead.SetEngine("BPFile");
+            adios2::Engine engine_s = ioRead.Open(filename, adios2::Mode::Read);
+            EXPECT_TRUE(engine_s);
+
             auto var_gr = ioRead.InquireVariable<int>("global_variable");
-            for (size_t step = 0; step < NSteps; step++)
+            for (auto step = 0; step < NSteps; step++)
             {
                 engine_s.BeginStep();
                 auto var0r = ioRead.InquireVariable<int32_t>("variable0");
@@ -164,7 +172,7 @@ TEST_F(ADIOSInquireDefineTest, Read)
                 }
                 else if (step == 4)
                 {
-                    EXPECT_TRUE(var_g);
+                    EXPECT_TRUE(var_gr);
                 }
                 if (var0r)
                 {
@@ -203,13 +211,13 @@ TEST_F(ADIOSInquireDefineTest, Read)
                 }
                 engine_s.EndStep();
             }
+            engine_s.Close();
         }
         catch (std::exception &e)
         {
             std::cout << "Exception " << e.what() << std::endl;
             EXPECT_TRUE(false);
         }
-        engine_s.Close();
     }
 }
 
