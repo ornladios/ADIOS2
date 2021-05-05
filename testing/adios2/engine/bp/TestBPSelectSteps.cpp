@@ -158,6 +158,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
         catch (std::exception &e)
         {
             std::cout << "Exception " << e.what() << std::endl;
+            EXPECT_TRUE(false);
         }
         engine_s.Close();
 #if ADIOS2_USE_MPI
@@ -249,6 +250,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
         catch (std::exception &e)
         {
             std::cout << "Exception " << e.what() << std::endl;
+            EXPECT_TRUE(false);
         }
         engine_b.Close();
 
@@ -262,6 +264,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
             ioReadBPFull.Open(filename, adios2::Mode::Read);
 
         EXPECT_TRUE(engine_bf);
+        try
         {
             adios2::Variable<int> var0 =
                 ioReadBPFull.InquireVariable<int>("variable0");
@@ -308,6 +311,41 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 engine_bf.Get<int>(var3, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints3);
             }
+            {
+                std::vector<int> res;
+                var0.SetStepSelection({3, 1});
+                var0.SetSelection({{Nx * mpiRank}, {Nx}});
+                engine_bf.Get<int>(var0, res, adios2::Mode::Sync);
+                EXPECT_EQ(res, Ints0);
+            }
+            {
+                std::vector<int> res;
+                var1.SetStepSelection({3, 1});
+                var1.SetSelection({{Nx * mpiRank}, {Nx}});
+                engine_bf.Get<int>(var1, res, adios2::Mode::Sync);
+                EXPECT_EQ(res, Ints1);
+            }
+
+            {
+                std::vector<int> res;
+                var2.SetStepSelection({3, 1});
+                var2.SetSelection({{Nx * mpiRank}, {Nx}});
+                engine_bf.Get<int>(var2, res, adios2::Mode::Sync);
+                EXPECT_EQ(res, Ints2);
+            }
+
+            {
+                std::vector<int> res;
+                var3.SetStepSelection({3, 1});
+                var3.SetSelection({{Nx * mpiRank}, {Nx}});
+                engine_bf.Get<int>(var3, res, adios2::Mode::Sync);
+                EXPECT_EQ(res, Ints3);
+            }
+        }
+        catch (std::exception &e)
+        {
+            std::cout << "Exception " << e.what() << std::endl;
+            EXPECT_TRUE(false);
         }
         engine_bf.Close();
     }
