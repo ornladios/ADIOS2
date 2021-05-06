@@ -45,7 +45,6 @@ bp3_bp4_gtest_add_tests_helper(TimeAggregation MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(NoXMLRecovery MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(StepsFileGlobalArray MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(StepsFileLocalArray MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(SelectSteps MPI_ALLOW)
 
 if(NOT MSVC)
   bp3_bp4_gtest_add_tests_helper(BufferSize MPI_NONE)
@@ -75,6 +74,9 @@ gtest_add_tests_helper(InquireVariableException MPI_ALLOW BP Engine.BP. .BP4
         WORKING_DIRECTORY ${BP4_DIR}
 )
 gtest_add_tests_helper(InquireDefine MPI_ALLOW BP Engine.BP. .BP4
+        WORKING_DIRECTORY ${BP4_DIR}
+)
+gtest_add_tests_helper(SelectSteps MPI_ALLOW BP Engine.BP. .BP4
         WORKING_DIRECTORY ${BP4_DIR}
 )
 
