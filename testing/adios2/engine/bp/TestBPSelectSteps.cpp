@@ -82,7 +82,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
         ioRead.SetParameter("StreamReader", "On");
         adios2::Engine engine_s = ioRead.Open(filename, adios2::Mode::Read);
         EXPECT_TRUE(engine_s);
-        try
+
         {
             for (size_t step = 0; step < NSteps; step++)
             {
@@ -155,11 +155,6 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 engine_s.EndStep();
             }
         }
-        catch (std::exception &e)
-        {
-            std::cout << "Exception " << e.what() << std::endl;
-            EXPECT_TRUE(false);
-        }
         engine_s.Close();
 #if ADIOS2_USE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
@@ -171,7 +166,6 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
         adios2::Engine engine_b = ioReadBP.Open(filename, adios2::Mode::Read);
         EXPECT_TRUE(engine_b);
 
-        try
         {
             for (size_t step = 0; step < NSteps; ++step)
             {
@@ -247,11 +241,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 engine_b.EndStep();
             }
         }
-        catch (std::exception &e)
-        {
-            std::cout << "Exception " << e.what() << std::endl;
-            EXPECT_TRUE(false);
-        }
+
         engine_b.Close();
 
 #if ADIOS2_USE_MPI
@@ -264,7 +254,7 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
             ioReadBPFull.Open(filename, adios2::Mode::Read);
 
         EXPECT_TRUE(engine_bf);
-        try
+
         {
             adios2::Variable<int> var0 =
                 ioReadBPFull.InquireVariable<int>("variable0");
@@ -341,11 +331,6 @@ TEST_F(ADIOSReadSelectionStepsTest, Read)
                 engine_bf.Get<int>(var3, res, adios2::Mode::Sync);
                 EXPECT_EQ(res, Ints3);
             }
-        }
-        catch (std::exception &e)
-        {
-            std::cout << "Exception " << e.what() << std::endl;
-            EXPECT_TRUE(false);
         }
         engine_bf.Close();
     }
