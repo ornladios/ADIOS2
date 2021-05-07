@@ -272,19 +272,12 @@ void SscReader::EndStepFirstFlexible()
 {
     MPI_Win_free(&m_MpiWin);
     SyncReadPattern();
-}
-
-void SscReader::EndStepConsequentFlexible() { MPI_Win_free(&m_MpiWin); }
-
-void SscReader::EndBeginStepFirstFlexible()
-{
-    EndStepFirstFlexible();
     BeginStepFlexible(m_StepStatus);
 }
 
-void SscReader::EndBeginStepConsequentFlexible()
+void SscReader::EndStepConsequentFlexible()
 {
-    EndStepConsequentFlexible();
+    MPI_Win_free(&m_MpiWin);
     BeginStepFlexible(m_StepStatus);
 }
 
@@ -312,23 +305,24 @@ void SscReader::EndStep()
             if (m_Threading)
             {
                 m_EndStepThread =
-                    std::thread(&SscReader::EndBeginStepFirstFlexible, this);
+                    std::thread(&SscReader::EndStepFirstFlexible, this);
             }
             else
             {
-                EndStepFirstFlexible();
+                MPI_Win_free(&m_MpiWin);
+                SyncReadPattern();
             }
         }
         else
         {
             if (m_Threading)
             {
-                m_EndStepThread = std::thread(
-                    &SscReader::EndBeginStepConsequentFlexible, this);
+                m_EndStepThread =
+                    std::thread(&SscReader::EndStepConsequentFlexible, this);
             }
             else
             {
-                EndStepConsequentFlexible();
+                MPI_Win_free(&m_MpiWin);
             }
         }
     }
