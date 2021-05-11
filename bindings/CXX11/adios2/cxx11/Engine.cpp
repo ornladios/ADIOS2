@@ -39,6 +39,12 @@ std::string Engine::Type() const
     return m_Engine->m_EngineType;
 }
 
+Mode Engine::OpenMode() const
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::OpenMode");
+    return m_Engine->OpenMode();
+}
+
 StepStatus Engine::BeginStep()
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep");

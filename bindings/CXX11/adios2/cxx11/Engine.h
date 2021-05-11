@@ -63,6 +63,12 @@ public:
     std::string Type() const;
 
     /**
+     * Returns the Mode used at Open for current Engine
+     * @return
+     */
+    Mode OpenMode() const;
+
+    /**
      * Begin a logical adios2 step, overloaded version with timeoutSeconds = 0
      * and mode = Read
      * Check each engine documentation for MPI collective/non-collective

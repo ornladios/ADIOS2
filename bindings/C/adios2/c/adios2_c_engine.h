@@ -48,8 +48,18 @@ adios2_error adios2_engine_get_type(char *type, size_t *size,
                                     const adios2_engine *engine);
 
 /**
+ * @brief Return the engine's Open mode
+ * @param mode output, adios2_mode parameter used in adios2_open()
+ * @param engine handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_engine_openmode(adios2_mode *mode,
+                                    const adios2_engine *engine);
+
+/**
  * @brief Begin a logical adios2 step stream
- * Check each engine documentation for MPI collective/non-collective behavior.
+ * Check each engine documentation for MPI collective/non-collective
+ * behavior.
  * @param engine handler
  * @param mode see enum adios2_step_mode in adios2_c_types.h for options,
  * read is the common use case

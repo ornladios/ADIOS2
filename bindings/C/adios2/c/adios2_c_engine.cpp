@@ -35,6 +35,33 @@ adios2::Mode adios2_ToMode(const adios2_mode mode, const std::string &hint)
     return modeCpp;
 }
 
+adios2_mode adios2_fromMode(const adios2::Mode mode, const std::string &hint)
+{
+    adios2_mode modeC = adios2_mode_undefined;
+    switch (mode)
+    {
+    case (adios2::Mode::Read):
+        modeC = adios2_mode_read;
+        break;
+    case (adios2::Mode::Write):
+        modeC = adios2_mode_write;
+        break;
+    case (adios2::Mode::Append):
+        modeC = adios2_mode_append;
+        break;
+    case (adios2::Mode::Deferred):
+        modeC = adios2_mode_deferred;
+        break;
+    case (adios2::Mode::Sync):
+        modeC = adios2_mode_sync;
+        break;
+    default:
+        throw std::invalid_argument("ERROR: invalid adios2::Mode, " + hint +
+                                    "\n");
+    }
+    return modeC;
+}
+
 adios2::StepMode ToStepMode(const adios2_step_mode mode,
                             const std::string &hint)
 {
@@ -131,6 +158,29 @@ adios2_error adios2_engine_get_type(char *type, size_t *size,
     {
         return static_cast<adios2_error>(
             adios2::helper::ExceptionToError("adios2_engine_get_type"));
+    }
+}
+
+adios2_error adios2_engine_openmode(adios2_mode *mode,
+                                    const adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine,
+            "for const adios2_engine, in call to adios2_engine_openmode");
+
+        const adios2::core::Engine *engineCpp =
+            reinterpret_cast<const adios2::core::Engine *>(engine);
+
+        auto m = engineCpp->OpenMode();
+        *mode = adios2_fromMode(m, "in adios2_engine_openmode()");
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_engine_openmode"));
     }
 }
 

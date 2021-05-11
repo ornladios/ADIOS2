@@ -154,6 +154,11 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
 
         adios2_engine *engineH = adios2_open(ioH, fname, adios2_mode_write);
 
+        adios2_mode m;
+        adios2_error e = adios2_engine_openmode(&m, engineH);
+        EXPECT_EQ(e, adios2_error_none);
+        EXPECT_EQ(m, adios2_mode_write);
+
         adios2_put(engineH, varStr, dataStr, adios2_mode_sync);
         adios2_put(engineH, varI8, data_I8, adios2_mode_deferred);
         adios2_put(engineH, varI8, data_I8, adios2_mode_deferred);
@@ -192,6 +197,11 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         size_t steps;
         adios2_steps(&steps, engineH);
         EXPECT_EQ(steps, 1);
+
+        adios2_mode m;
+        adios2_error e = adios2_engine_openmode(&m, engineH);
+        EXPECT_EQ(e, adios2_error_none);
+        EXPECT_EQ(m, adios2_mode_read);
 
         adios2_bool result;
         char name[30];
