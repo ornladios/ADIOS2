@@ -29,7 +29,7 @@ public:
 // 1D 1x8 test data
 //******************************************************************************
 
-// ADIOS2 BP write, native ADIOS1 read
+// ADIOS2 BP write and read 1D arrays
 TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
@@ -136,6 +136,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         // then it works
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
+        EXPECT_EQ(bpWriter.OpenMode(), adios2::Mode::Write);
+
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
@@ -213,6 +215,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
+        EXPECT_EQ(bpReader.OpenMode(), adios2::Mode::Read);
 
         // auto var_bool = io.InquireVariable<bool>("bool");
         // EXPECT_TRUE(var_bool);
@@ -401,7 +404,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 // 2D 2x4 test data
 //******************************************************************************
 
-// ADIOS2 BP write, native ADIOS1 read
+// ADIOS2 BP write and read 2D array
 TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
