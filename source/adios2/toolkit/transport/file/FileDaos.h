@@ -11,6 +11,9 @@
 
 #include <future> //std::async, std::future
 
+#include <daos.h>
+#include <daos_fs.h>
+
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
 
@@ -53,11 +56,15 @@ public:
     void SeekToBegin() final;
 
 private:
+    dfs_t *dfs_mt;
+    dfs_obj_t *obj;
+    
     /** DAOS file handle returned by Open */
-    int m_FileDescriptor = -1;
+    bool m_DAOSOpenSucceed = false;
+    size_t m_GlobalOffset = 0;
     int m_Errno = 0;
     bool m_IsOpening = false;
-    std::future<int> m_OpenFuture;
+    std::future<bool> m_OpenFuture;
 
     /**
      * Check if m_FileDescriptor is -1 after an operation
