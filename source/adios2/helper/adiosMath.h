@@ -129,6 +129,7 @@ Box<Dims> StartEndBox(const Dims &start, const Dims &count,
                       const bool reverse = false) noexcept;
 
 Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept;
+void EndToCount(const Dims &start, const Dims &end, Box<Dims> &box) noexcept;
 
 /**
  * Returns the intersection box { start, end } where end is inclusive from box1

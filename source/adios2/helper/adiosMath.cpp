@@ -99,6 +99,16 @@ Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept
     return box;
 }
 
+void EndToCount(const Dims &start, const Dims &end, Dims &count) noexcept
+{
+    const size_t size = start.size();
+    count.resize(size);
+    for (size_t d = 0; d < size; ++d)
+    {
+        count[d] = end[d] - start[d] + 1; // end inclusive
+    }
+}
+
 Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
 {
     Box<Dims> intersectionBox;
@@ -277,10 +287,15 @@ size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
     }
 
     // normalize the point
-    Dims normalizedPoint;
-    normalizedPoint.reserve(point.size());
-    std::transform(point.begin(), point.end(), start.begin(),
-                   std::back_inserter(normalizedPoint), std::minus<size_t>());
+    static Dims normalizedPoint; // reuse a single vector for all calls
+    const size_t ndim = point.size();
+    normalizedPoint.resize(ndim);
+    for (size_t d = 0; d < ndim; ++d)
+    {
+        normalizedPoint[d] = point[d] - start[d];
+    }
+    // std::transform(point.begin(), point.end(), start.begin(),
+    //               std::back_inserter(normalizedPoint), std::minus<size_t>());
 
     size_t linearIndex = MaxSizeT - 1;
 
@@ -299,12 +314,10 @@ size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
 size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
                    const bool isRowMajor) noexcept
 {
-    const Box<Dims> localBoxStartCount =
-        StartCountBox(startEndBox.first, startEndBox.second);
-
-    const Dims &start = localBoxStartCount.first;
-    const Dims &count = localBoxStartCount.second;
-
+    static Dims count; // reuse one vector for all calls
+    count.clear();
+    EndToCount(startEndBox.first, startEndBox.second, count);
+    const Dims &start = startEndBox.first;
     return LinearIndex(start, count, point, isRowMajor);
 }
 
