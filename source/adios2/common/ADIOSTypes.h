@@ -188,6 +188,12 @@ constexpr float DefaultBufferGrowthFactor = 1.05f;
  *  2Gb - 100Kb (tolerance)*/
 constexpr size_t DefaultMaxFileBatchSize = 2147381248;
 
+/** maximum number of dimensions supported */
+constexpr size_t MaxDimensions = 24;
+
+static const size_t DimZeros[MaxDimensions] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
 constexpr char PathSeparator =
 #ifdef _WIN32
     '\\';

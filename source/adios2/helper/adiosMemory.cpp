@@ -106,28 +106,30 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
 
     /// start iteration
     Dims currentPoint(interStart); // current point for memory copy
-    const size_t interOffset =
-        LinearIndex(srcStart, srcCount, interStart, true);
+    const size_t interOffset = LinearIndex(
+        dimensions, srcStart.data(), srcCount.data(), interStart.data(), true);
 
     bool run = true;
 
     while (run)
     {
-
         // here copy current linear memory between currentPoint and end
         const size_t srcBeginOffset =
             srcMemStart.empty()
-                ? LinearIndex(srcStart, srcCount, currentPoint, true) -
+                ? LinearIndex(dimensions, srcStart.data(), srcCount.data(),
+                              currentPoint.data(), true) -
                       interOffset
-                : LinearIndex(Dims(srcMemCount.size(), 0), srcMemCount,
+                : LinearIndex(dimensions, DimZeros, srcMemCount.data(),
                               VectorsOp(std::plus<size_t>(),
                                         VectorsOp(std::minus<size_t>(),
                                                   currentPoint, interStart),
-                                        srcMemStart),
+                                        srcMemStart)
+                                  .data(),
                               true);
 
         const size_t destBeginOffset = helper::LinearIndex(
-            destStartFinal, destCountFinal, currentPoint, true);
+            dimensions, destStartFinal.data(), destCountFinal.data(),
+            currentPoint.data(), true);
 
         CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset,
                           endianReverse, destType);
@@ -193,8 +195,8 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
 
     /// start iteration
     Dims currentPoint(interStart); // current point for memory copy
-    const size_t interOffset =
-        LinearIndex(srcStart, srcCount, interStart, false);
+    const size_t interOffset = LinearIndex(
+        dimensions, srcStart.data(), srcCount.data(), interStart.data(), false);
 
     bool run = true;
 
@@ -203,17 +205,20 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
         // here copy current linear memory between currentPoint and end
         const size_t srcBeginOffset =
             srcMemStart.empty()
-                ? LinearIndex(srcStart, srcCount, currentPoint, false) -
+                ? LinearIndex(dimensions, srcStart.data(), srcCount.data(),
+                              currentPoint.data(), false) -
                       interOffset
-                : LinearIndex(Dims(srcMemCount.size(), 0), srcMemCount,
+                : LinearIndex(dimensions, DimZeros, srcMemCount.data(),
                               VectorsOp(std::plus<size_t>(),
                                         VectorsOp(std::minus<size_t>(),
                                                   currentPoint, interStart),
-                                        srcMemStart),
+                                        srcMemStart)
+                                  .data(),
                               false);
 
         const size_t destBeginOffset = helper::LinearIndex(
-            destStartFinal, destCountFinal, currentPoint, false);
+            dimensions, destStartFinal.data(), destCountFinal.data(),
+            currentPoint.data(), false);
 
         CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset,
                           endianReverse, destType);

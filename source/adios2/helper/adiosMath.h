@@ -129,7 +129,9 @@ Box<Dims> StartEndBox(const Dims &start, const Dims &count,
                       const bool reverse = false) noexcept;
 
 Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept;
-void EndToCount(const Dims &start, const Dims &end, Box<Dims> &box) noexcept;
+
+// Fastest version but caller must ensure count[] is allocated
+void EndToCount(const Dims &start, const Dims &end, size_t *count) noexcept;
 
 /**
  * Returns the intersection box { start, end } where end is inclusive from box1
@@ -172,15 +174,17 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
 
 /**
  * Get a linear index for a point inside a localBox depending on data layout
- * Linear index start count version
+ * Linear index start count version, faster versions but dimension has to be
+ * passed
+ * @param ndim
  * @param start
  * @param count
  * @param point
  * @param isRowMajor
  * @return
  */
-size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
-                   const bool isRowMajor) noexcept;
+size_t LinearIndex(const size_t ndim, const size_t *start, const size_t *count,
+                   const size_t *point, const bool isRowMajor) noexcept;
 
 /**
  * Get a linear index for a point inside a localBox depending on data layout
@@ -190,6 +194,10 @@ size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
  * @param isZeroIndex
  * @return linear index for contiguous memory
  */
+// size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
+//                   const bool isRowMajor) noexcept;
+
+/** Faster versions but caller must make sure count is preallocated */
 size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
                    const bool isRowMajor) noexcept;
 

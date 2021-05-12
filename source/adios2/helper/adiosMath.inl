@@ -16,7 +16,9 @@
 
 #include <algorithm> // std::minmax_element, std::min_element, std::max_element
                      // std::transform
-#include <limits>    //std::numeri_limits
+#include <cstdint>
+#include <cstring>
+#include <limits> //std::numeri_limits
 #include <thread>
 
 #include "adios2/common/ADIOSMacros.h"
@@ -39,7 +41,9 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
         const size_t stride = count.back();
         const size_t startCoord = dimensions - 2;
 
-        Dims currentPoint(start); // current point for contiguous memory
+        // current point for contiguous memory
+        size_t currentPoint[MaxDimensions];
+        std::memcpy(currentPoint, start.data(), dimensions * sizeof(size_t));
         bool run = true;
         bool firstStep = true;
 
@@ -47,7 +51,7 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
         {
             // here copy current linear memory between currentPoint and end
             const size_t startOffset = helper::LinearIndex(
-                Dims(shape.size(), 0), shape, currentPoint, true);
+                dimensions, DimZeros, shape.data(), currentPoint, true);
 
             T minStride, maxStride;
             GetMinMax(values + startOffset, stride, minStride, maxStride);
@@ -104,7 +108,9 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
         const size_t stride = count.front();
         const size_t startCoord = 1;
 
-        Dims currentPoint(start); // current point for contiguous memory
+        // current point for contiguous memory
+        size_t currentPoint[MaxDimensions];
+        std::memcpy(currentPoint, start.data(), dimensions * sizeof(size_t));
         bool run = true;
         bool firstStep = true;
 
@@ -112,7 +118,7 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
         {
             // here copy current linear memory between currentPoint and end
             const size_t startOffset = helper::LinearIndex(
-                Dims(shape.size(), 0), shape, currentPoint, false);
+                dimensions, DimZeros, shape.data(), currentPoint, false);
 
             T minStride, maxStride;
             GetMinMax(values + startOffset, stride, minStride, maxStride);
@@ -165,8 +171,8 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
 
     if (shape.size() == 1)
     {
-        const size_t startOffset =
-            helper::LinearIndex(Dims(1, 0), shape, start, isRowMajor);
+        const size_t startOffset = helper::LinearIndex(
+            1, DimZeros, shape.data(), start.data(), isRowMajor);
         const size_t totalSize = helper::GetTotalSize(count);
         GetMinMax(values + startOffset, totalSize, min, max);
         return;

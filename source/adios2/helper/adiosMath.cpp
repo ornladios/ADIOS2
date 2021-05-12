@@ -99,10 +99,9 @@ Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept
     return box;
 }
 
-void EndToCount(const Dims &start, const Dims &end, Dims &count) noexcept
+void EndToCount(const Dims &start, const Dims &end, size_t *count) noexcept
 {
     const size_t size = start.size();
-    count.resize(size);
     for (size_t d = 0; d < size; ++d)
     {
         count[d] = end[d] - start[d] + 1; // end inclusive
@@ -250,16 +249,15 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
     return true;
 }
 
-size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
-                   const bool isRowMajor) noexcept
+size_t LinearIndex(const size_t ndim, const size_t *start, const size_t *count,
+                   const size_t *point, const bool isRowMajor) noexcept
 {
-    auto lf_RowMajor = [](const Dims &count,
-                          const Dims &normalizedPoint) -> size_t {
-        const size_t countSize = count.size();
-        size_t linearIndex = normalizedPoint[countSize - 1]; // fastest
+    auto lf_RowMajor = [](const size_t ndim, const size_t *count,
+                          const size_t *normalizedPoint) -> size_t {
+        size_t linearIndex = normalizedPoint[ndim - 1]; // fastest
         size_t product = 1;
 
-        for (auto p = countSize - 1; p >= 1; --p)
+        for (size_t p = ndim - 1; p >= 1; --p)
         {
             product *= count[p];
             linearIndex += normalizedPoint[p - 1] * product;
@@ -267,13 +265,12 @@ size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
         return linearIndex;
     };
 
-    auto lf_ColumnMajor = [](const Dims &count,
-                             const Dims &normalizedPoint) -> size_t {
-        const size_t countSize = count.size();
+    auto lf_ColumnMajor = [](const size_t ndim, const size_t *count,
+                             const size_t *normalizedPoint) -> size_t {
         size_t linearIndex = normalizedPoint[0]; // fastest
         size_t product = 1;
 
-        for (size_t p = 1; p < countSize; ++p)
+        for (size_t p = 1; p < ndim; ++p)
         {
             product *= count[p - 1];
             linearIndex += normalizedPoint[p] * product;
@@ -281,31 +278,27 @@ size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
         return linearIndex;
     };
 
-    if (count.size() == 1)
+    if (ndim == 1)
     {
         return (point[0] - start[0]);
     }
 
     // normalize the point
-    static Dims normalizedPoint; // reuse a single vector for all calls
-    const size_t ndim = point.size();
-    normalizedPoint.resize(ndim);
+    size_t normalizedPoint[MaxDimensions];
     for (size_t d = 0; d < ndim; ++d)
     {
         normalizedPoint[d] = point[d] - start[d];
     }
-    // std::transform(point.begin(), point.end(), start.begin(),
-    //               std::back_inserter(normalizedPoint), std::minus<size_t>());
 
     size_t linearIndex = MaxSizeT - 1;
 
     if (isRowMajor)
     {
-        linearIndex = lf_RowMajor(count, normalizedPoint);
+        linearIndex = lf_RowMajor(ndim, count, normalizedPoint);
     }
     else
     {
-        linearIndex = lf_ColumnMajor(count, normalizedPoint);
+        linearIndex = lf_ColumnMajor(ndim, count, normalizedPoint);
     }
 
     return linearIndex;
@@ -314,11 +307,11 @@ size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
 size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
                    const bool isRowMajor) noexcept
 {
-    static Dims count; // reuse one vector for all calls
-    count.clear();
+    size_t count[MaxDimensions];
     EndToCount(startEndBox.first, startEndBox.second, count);
     const Dims &start = startEndBox.first;
-    return LinearIndex(start, count, point, isRowMajor);
+    return LinearIndex(start.size(), start.data(), count, point.data(),
+                       isRowMajor);
 }
 
 size_t GetDistance(const size_t end, const size_t start,
