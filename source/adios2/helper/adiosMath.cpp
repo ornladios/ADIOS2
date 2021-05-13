@@ -240,72 +240,122 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
     return true;
 }
 
-size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
-                   const bool isRowMajor) noexcept
+size_t LinearIndexWithStartCount(const Dims &start, const Dims &count,
+                                 const Dims &point,
+                                 const bool isRowMajor) noexcept
 {
-    auto lf_RowMajor = [](const Dims &count,
-                          const Dims &normalizedPoint) -> size_t {
-        const size_t countSize = count.size();
-        size_t linearIndex = normalizedPoint[countSize - 1]; // fastest
+    auto lf_RowMajor = [](const Dims &start, const Dims &count,
+                          const Dims &point) -> size_t {
+        auto sit = start.rbegin();
+        auto cit = count.rbegin();
+        auto pit = point.rbegin();
+        size_t linearIndex = 0;
         size_t product = 1;
-
-        for (auto p = countSize - 1; p >= 1; --p)
+        for (; pit != point.rend(); ++pit)
         {
-            product *= count[p];
-            linearIndex += normalizedPoint[p - 1] * product;
+            linearIndex += (*pit - *sit) * product;
+            product *= *cit;
+            ++sit;
+            ++cit;
         }
         return linearIndex;
     };
 
-    auto lf_ColumnMajor = [](const Dims &count,
-                             const Dims &normalizedPoint) -> size_t {
-        const size_t countSize = count.size();
-        size_t linearIndex = normalizedPoint[0]; // fastest
+    auto lf_ColumnMajor = [](const Dims &start, const Dims &count,
+                             const Dims &point) -> size_t {
+        auto sit = start.begin();
+        auto cit = count.begin();
+        auto pit = point.begin();
+        size_t linearIndex = 0;
         size_t product = 1;
-
-        for (size_t p = 1; p < countSize; ++p)
+        for (; pit != point.end(); ++pit)
         {
-            product *= count[p - 1];
-            linearIndex += normalizedPoint[p] * product;
+            linearIndex += (*pit - *sit) * product;
+            product *= *cit;
+            ++sit;
+            ++cit;
         }
         return linearIndex;
     };
-
-    if (count.size() == 1)
-    {
-        return (point[0] - start[0]);
-    }
-
-    // normalize the point
-    Dims normalizedPoint;
-    normalizedPoint.reserve(point.size());
-    std::transform(point.begin(), point.end(), start.begin(),
-                   std::back_inserter(normalizedPoint), std::minus<size_t>());
 
     size_t linearIndex = MaxSizeT - 1;
 
     if (isRowMajor)
     {
-        linearIndex = lf_RowMajor(count, normalizedPoint);
+        linearIndex = lf_RowMajor(start, count, point);
     }
     else
     {
-        linearIndex = lf_ColumnMajor(count, normalizedPoint);
+        linearIndex = lf_ColumnMajor(start, count, point);
     }
 
     return linearIndex;
 }
 
+size_t LinearIndexWithEnd(const Dims &start, const Dims &end, const Dims &point,
+                          const bool isRowMajor) noexcept
+{
+    auto lf_RowMajor = [](const Dims &start, const Dims &end,
+                          const Dims &point) -> size_t {
+        auto sit = start.rbegin();
+        auto eit = end.rbegin();
+        auto pit = point.rbegin();
+        size_t linearIndex = 0;
+        size_t product = 1;
+        for (; pit != point.rend(); ++pit)
+        {
+            linearIndex += (*pit - *sit) * product;
+            // count = end - start + 1;
+            product *= (*eit - *sit + 1);
+            ++sit;
+            ++eit;
+        }
+        return linearIndex;
+    };
+
+    auto lf_ColumnMajor = [](const Dims &start, const Dims &end,
+                             const Dims &point) -> size_t {
+        auto sit = start.begin();
+        auto eit = end.begin();
+        auto pit = point.begin();
+        size_t linearIndex = 0;
+        size_t product = 1;
+        for (; pit != point.end(); ++pit)
+        {
+            linearIndex += (*pit - *sit) * product;
+            // count = end - start + 1;
+            product *= (*eit - *sit + 1);
+            ++sit;
+            ++eit;
+        }
+        return linearIndex;
+    };
+
+    size_t linearIndex = MaxSizeT - 1;
+
+    if (isRowMajor)
+    {
+        linearIndex = lf_RowMajor(start, end, point);
+    }
+    else
+    {
+        linearIndex = lf_ColumnMajor(start, end, point);
+    }
+
+    return linearIndex;
+}
+
+size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
+                   const bool isRowMajor) noexcept
+{
+    return LinearIndexWithStartCount(start, count, point, isRowMajor);
+}
+
 size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
                    const bool isRowMajor) noexcept
 {
-    const Box<Dims> localBoxStartCount =
-        StartCountBox(startEndBox.first, startEndBox.second);
-
-    const Dims &start = localBoxStartCount.first;
-    const Dims &count = localBoxStartCount.second;
-
-    return LinearIndex(start, count, point, isRowMajor);
+    return LinearIndexWithEnd(startEndBox.first, startEndBox.second, point,
+                              isRowMajor);
 }
 
 size_t GetDistance(const size_t end, const size_t start,
