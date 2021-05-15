@@ -29,7 +29,7 @@ void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     if (endianReverse)
     {
-        if (destType == "")
+        if (destType == DataType::None)
         {
         }
 #define declare_type(T)                                                        \
