@@ -47,6 +47,8 @@ bp3_bp4_gtest_add_tests_helper(StepsFileGlobalArray MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(StepsFileLocalArray MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(SelectSteps MPI_ALLOW)
 
+bp3_bp4_gtest_add_tests_helper(Selections MPI_NONE)
+
 if(NOT MSVC)
   bp3_bp4_gtest_add_tests_helper(BufferSize MPI_NONE)
 endif()

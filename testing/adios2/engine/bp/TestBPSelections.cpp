@@ -1,0 +1,343 @@
+/*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ */
+#include <cstdint>
+#include <cstring>
+
+#include <array>
+#include <limits>
+#include <stdexcept>
+#include <vector>
+
+#include <adios2.h>
+#include <adios2/common/ADIOSTypes.h>
+
+#include <gtest/gtest.h>
+
+std::string engineName; // comes from command line
+
+class ADIOSSelectionTest : public ::testing::Test
+{
+public:
+    ADIOSSelectionTest() = default;
+};
+
+void copySelection3D(const double *a, const adios2::Dims &shape,
+                     const adios2::Dims &start, const adios2::Dims &count,
+                     double *b)
+{
+    /*std::cout << " copy Block: shape = " << adios2::ToString(shape)
+              << " start = " << adios2::ToString(start)
+              << " count = " << adios2::ToString(count) << std::endl;*/
+    double *bp = b;
+    for (size_t x = 0; x < count[0]; ++x)
+    {
+        for (size_t y = 0; y < count[1]; ++y)
+        {
+            for (size_t z = 0; z < count[2]; ++z)
+            {
+                const size_t aidx = (start[0] + x) * shape[1] * shape[2] +
+                                    (start[1] + y) * shape[2] + start[2] + z;
+                /*if (x == 0 && y == 0 && z == 0)
+                {
+                    std::cout << " idx of pos = " << adios2::ToString({x, y, z})
+                              << " => " << aidx << ", a = " << a[aidx]
+                              << std::endl;
+                }*/
+                *bp = a[aidx];
+                ++bp;
+            }
+        }
+    }
+}
+
+bool compareSelection3D(const double *a, const adios2::Dims &shape,
+                        const adios2::Dims &start, const adios2::Dims &count,
+                        double *b, adios2::Dims &firstNonEqPoint)
+{
+    std::cout << " compare Block: shape = " << adios2::ToString(shape)
+              << " start = " << adios2::ToString(start)
+              << " count = " << adios2::ToString(count) << std::endl;
+    double *bp = b;
+    for (size_t x = 0; x < count[0]; ++x)
+    {
+        for (size_t y = 0; y < count[1]; ++y)
+        {
+            for (size_t z = 0; z < count[2]; ++z)
+            {
+                const size_t aidx = (start[0] + x) * shape[1] * shape[2] +
+                                    (start[1] + y) * shape[2] + start[2] + z;
+
+                if (*bp != a[aidx])
+                {
+                    firstNonEqPoint = {x, y, z};
+                    return false;
+                }
+                ++bp;
+            }
+        }
+    }
+    return true;
+}
+
+TEST_F(ADIOSSelectionTest, 3D)
+{
+    constexpr size_t DIM1 = 15;
+    constexpr size_t DIM2 = 12;
+    constexpr size_t DIM3 = 9;
+    const std::string filename = "ADIOSSelection3D.bp";
+    const adios2::Dims shape = {DIM1, DIM2, DIM3};
+    const adios2::Dims count = {5, 4, 3};
+    double a[DIM1 * DIM2 * DIM3];
+
+    double *ap = a;
+    for (size_t x = 1; x <= DIM1; ++x)
+    {
+        for (size_t y = 1; y <= DIM2; ++y)
+        {
+            for (size_t z = 1; z <= DIM3; ++z)
+            {
+                *ap = x * 1.0 + y / 100.0 + z / 1000.0;
+                ++ap;
+            }
+        }
+    }
+    /* ./bin/bpls -la testing/adios2/engine/bp/bp4/ADIOSSelection3D.bp
+        -d a -n 9 -f "%6.3f"
+    */
+
+    adios2::ADIOS adios;
+    // Write test data using BP
+    {
+        adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
+        if (!engineName.empty())
+        {
+            ioWrite.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            ioWrite.SetEngine("BPFile");
+        }
+
+        adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
+        adios2::Dims start{0, 0, 0};
+        double b[count[0] * count[1] * count[2]];
+
+        adios2::Variable<double> var =
+            ioWrite.DefineVariable<double>("a", shape, start, count);
+
+        /*adios2::Variable<double> vara1 =
+            ioWrite.DefineVariable<double>("a1", shape, start, shape);*/
+
+        engine.BeginStep();
+        /*engine.Put(vara1, a);*/
+
+        for (size_t x = 0; x < DIM1; x += count[0])
+        {
+            for (size_t y = 0; y < DIM2; y += count[1])
+            {
+                for (size_t z = 0; z < DIM3; z += count[2])
+                {
+                    start = {x, y, z};
+                    copySelection3D(a, shape, start, count, b);
+                    var.SetSelection({start, count});
+                    engine.Put(var, b, adios2::Mode::Sync);
+                }
+            }
+        }
+
+        engine.EndStep();
+        engine.Close();
+    }
+
+    // Read data
+    {
+        adios2::IO ioRead = adios.DeclareIO("TestIORead");
+        ioRead.SetEngine("File");
+        adios2::Engine engine = ioRead.Open(filename, adios2::Mode::Read);
+        EXPECT_TRUE(engine);
+        engine.BeginStep();
+        adios2::Variable<double> var = ioRead.InquireVariable<double>("a");
+        EXPECT_TRUE(var);
+        adios2::Dims s{0, 0, 0};
+        adios2::Dims c = shape;
+        adios2::Dims firstNonMatch{0, 0, 0};
+        std::vector<double> res;
+
+        /* Entire array */
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), DIM1 * DIM2 * DIM3);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* Single block in the center */
+        s = {5, 4, 3};
+        c = count;
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* Two blocks in X direction */
+        s = {5, 4, 3};
+        c = {2 * count[0], count[1], count[2]};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* Three blocks in Y direction */
+        s = {5, 0, 3};
+        c = {count[0], 3 * count[1], count[2]};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* Two blocks in Z direction */
+        s = {5, 4, 0};
+        c = {count[0], count[1], 2 * count[2]};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* Four blocks in X-Z direction */
+        s = {5, 4, 3};
+        c = {2 * count[0], count[1], 2 * count[2]};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* 8 blocks in X-Y-Z direction */
+        s = {5, 4, 3};
+        c = {2 * count[0], 2 * count[1], 2 * count[2]};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /*
+         *   Partial blocks
+         */
+
+        /* center part of single block in center */
+        s = {6, 5, 4};
+        c = {count[0] - 2, count[1] - 2, count[2] - 2};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* partial selection cutting into two blocks in X direction */
+        s = {6, 5, 4};
+        c = {2 * count[0] - 2, count[1] - 1, count[2] - 1};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* partial selection cutting into two blocks in Y direction */
+        s = {6, 5, 4};
+        c = {count[0] - 1, 2 * count[1] - 2, count[2] - 1};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* partial selection cutting into three blocks in Y direction
+           while contiguous in Z direction, making the read of the
+           center of the three blocks as a single contiguous 4xYxZ copy */
+        s = {6, 1, 3};
+        c = {count[0] - 1, 3 * count[1] - 2, count[2]};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* partial selection cutting into two blocks in Z direction */
+        s = {6, 5, 4};
+        c = {count[0] - 1, count[1] - 1, 2 * count[2] - 2};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* partial selection cutting into four blocks in X-Y direction */
+        s = {1, 5, 4};
+        c = {2 * count[0] - 2, 2 * count[1] - 2, count[2] - 1};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* partial selection cutting into four blocks in X-Z direction */
+        s = {1, 5, 4};
+        c = {2 * count[0] - 2, count[1] - 2, 2 * count[2] - 2};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* partial selection cutting into four blocks in Y-Z direction */
+        s = {6, 5, 4};
+        c = {count[0] - 2, 2 * count[1] - 2, 2 * count[2] - 2};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* partial selection cutting into six blocks in X-Z direction */
+        s = {1, 5, 4};
+        c = {3 * count[0] - 2, count[1] - 2, 2 * count[2] - 2};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        /* Center block plus 1 in each direction, cutting into all blocks */
+        /* ./bin/bpls -la testing/adios2/engine/bp/bp4/ADIOSSelection3D.bp
+            -d a  -f "%6.3f " -s "4,3,2" -c "7,6,5" -n 5
+        */
+        s = {4, 3, 2};
+        c = {count[0] + 2, count[1] + 2, count[2] + 2};
+        var.SetSelection({s, c});
+        engine.Get<double>(var, res, adios2::Mode::Sync);
+        EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
+        EXPECT_TRUE(
+            compareSelection3D(a, shape, s, c, res.data(), firstNonMatch));
+
+        engine.EndStep();
+        engine.Close();
+    }
+}
+
+int main(int argc, char **argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
+    int result = RUN_ALL_TESTS();
+    return result;
+}
