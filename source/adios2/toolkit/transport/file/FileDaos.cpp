@@ -38,6 +38,16 @@ FileDaos::~FileDaos()
     if (m_IsOpen)
     {
       //close(m_FileDescriptor);
+      int rc;
+      rc = dfs_release(obj);
+      m_Errno = rc;
+
+      if (rc)
+      {
+	  throw std::ios_base::failure("ERROR: couldn't close file " + m_Name +
+				       ", in call to Destructor of Daos transport" +
+				       SysErrMsg());
+      }      
     }
 }
 
