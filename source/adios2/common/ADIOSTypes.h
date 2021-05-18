@@ -238,6 +238,8 @@ std::string ToString(StepStatus value);
 std::string ToString(TimeUnit value);
 std::string ToString(SelectionType value);
 std::string ToString(DataType type);
+std::string ToString(const Dims &dims);
+std::string ToString(const Box<Dims> &box);
 
 /**
  * os << [adios2_type] enables output of adios2 enums/classes directly
