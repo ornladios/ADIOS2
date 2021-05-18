@@ -157,6 +157,7 @@ MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" writer "CPCommPattern=Peer" "${BAS
 list (REMOVE_ITEM COMM_PEER_SST_TESTS "PreciousTimestep")
 
 MutateTestSet( FFS_SST_TESTS "FFS" writer "MarshalMethod=FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
+MutateTestSet( FFS_SST_TESTS "BP5" writer "MarshalMethod=BP5" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod=BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 
 set (SST_TESTS "")
@@ -229,6 +230,20 @@ if(NOT MSVC)    # not on windows
     list (FILTER BP_TESTS EXCLUDE REGEX "Bulk.*")
     foreach(test ${BP_TESTS})
         add_common_test(${test} BP3)
+    endforeach()
+endif()
+
+#  BP5 tests
+if(NOT MSVC)    # not on windows
+    set (BP5_TESTS ${ALL_SIMPLE_TESTS})
+    # Delayed reader not worth testing on file engines
+    list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
+    # Attribute's not implemented yet for BP5
+    list (FILTER BP5_TESTS EXCLUDE REGEX "Attr")
+    # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
+#    list (FILTER BP5_TESTS EXCLUDE REGEX ".*NoData$")
+    foreach(test ${BP5_TESTS})
+        add_common_test(${test} BP5)
     endforeach()
 endif()
 

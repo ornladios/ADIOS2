@@ -147,6 +147,17 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
         m_BP3Serializer->m_MetadataSet.TimeStep = 1;
         m_BP3Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
     }
+    else if (Params.MarshalMethod == SstMarshalBP5)
+    {
+        m_BP5Serializer =
+            std::unique_ptr<format::BP5Serializer>(new format::BP5Serializer());
+        m_BP5Serializer->m_Engine = this;
+        //        m_BP5Serializer->Init(m_IO.m_Parameters,
+        //                              "in call to BP5::Open for writing",
+        //                              "sst");
+        //        m_BP5Serializer->m_MetadataSet.TimeStep = 1;
+        //        m_BP5Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
+    }
     else
     {
         // unknown marshaling method, shouldn't happen
@@ -154,7 +165,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     return StepStatus::OK;
 }
 
-void SstWriter::FFSMarshalAttributes()
+void SstWriter::MarshalAttributes()
 {
     TAU_SCOPED_TIMER_FUNC();
     const auto &attributes = m_IO.GetAttributes();
@@ -162,7 +173,7 @@ void SstWriter::FFSMarshalAttributes()
     const uint32_t attributesCount = static_cast<uint32_t>(attributes.size());
 
     // if there are no new attributes, nothing to do
-    if (attributesCount == m_FFSMarshaledAttributesCount)
+    if (attributesCount == m_MarshaledAttributesCount)
         return;
 
     for (const auto &attributePair : attributes)
@@ -184,8 +195,14 @@ void SstWriter::FFSMarshalAttributes()
                 //
             }
 
-            SstFFSMarshalAttribute(m_Output, name.c_str(), (int)type,
-                                   sizeof(char *), element_count, data_addr);
+            if (Params.MarshalMethod == SstMarshalFFS)
+                SstFFSMarshalAttribute(m_Output, name.c_str(), (int)type,
+                                       sizeof(char *), element_count,
+                                       data_addr);
+            else if (Params.MarshalMethod == SstMarshalBP5)
+                m_BP5Serializer->MarshalAttribute(name.c_str(), type,
+                                                  sizeof(char *), element_count,
+                                                  data_addr);
         }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
@@ -198,13 +215,20 @@ void SstWriter::FFSMarshalAttributes()
             element_count = attribute.m_Elements;                              \
             data_addr = attribute.m_DataArray.data();                          \
         }                                                                      \
-        SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(), (int)type,  \
-                               sizeof(T), element_count, data_addr);           \
+        if (Params.MarshalMethod == SstMarshalFFS)                             \
+            SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(),         \
+                                   (int)type, sizeof(T), element_count,        \
+                                   data_addr);                                 \
+        else if (Params.MarshalMethod == SstMarshalBP5)                        \
+            m_BP5Serializer->MarshalAttribute(attribute.m_Name.c_str(), type,  \
+                                              sizeof(T), element_count,        \
+                                              data_addr);                      \
     }
 
         ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
+    m_MarshaledAttributesCount = attributesCount;
 }
 
 void SstWriter::EndStep()
@@ -225,9 +249,56 @@ void SstWriter::EndStep()
     {
         TAU_SCOPED_TIMER("Marshaling Overhead");
         TAU_START("SstMarshalFFS");
-        FFSMarshalAttributes();
+        MarshalAttributes();
         TAU_STOP("SstMarshalFFS");
         SstFFSWriterEndStep(m_Output, m_WriterStep);
+    }
+    else if (Params.MarshalMethod == SstMarshalBP5)
+    {
+        MarshalAttributes();
+        auto TSInfo = m_BP5Serializer->CloseTimestep(m_WriterStep);
+        auto lf_FreeBlocks = [](void *vBlock) {
+            BP3DataBlock *BlockToFree =
+                reinterpret_cast<BP3DataBlock *>(vBlock);
+            //  Free data and metadata blocks here.  BlockToFree is the newblock
+            //  value in the enclosing function.
+            delete BlockToFree;
+        };
+
+        BP5DataBlock *newblock = new BP5DataBlock;
+        SstMetaMetaList MetaMetaBlocks = (SstMetaMetaList)malloc(
+            (TSInfo.NewMetaMetaBlocks.size() + 1) * sizeof(MetaMetaBlocks[0]));
+        int i = 0;
+        for (const auto &MM : TSInfo.NewMetaMetaBlocks)
+        {
+            MetaMetaBlocks[i].BlockData = MM.MetaMetaInfo;
+            MetaMetaBlocks[i].BlockSize = MM.MetaMetaInfoLen;
+            MetaMetaBlocks[i].ID = MM.MetaMetaID;
+            MetaMetaBlocks[i].IDSize = MM.MetaMetaIDLen;
+            i++;
+        }
+        MetaMetaBlocks[TSInfo.NewMetaMetaBlocks.size()] = {NULL, 0, NULL, 0};
+        newblock->metadata.DataSize = TSInfo.MetaEncodeBuffer->m_FixedSize;
+        newblock->metadata.block = TSInfo.MetaEncodeBuffer->Data();
+        newblock->data.DataSize = TSInfo.DataBuffer->DataVec()[0].iov_len;
+        newblock->data.block = (char *)TSInfo.DataBuffer->DataVec()[0].iov_base;
+        if (TSInfo.AttributeEncodeBuffer)
+        {
+            newblock->attribute_data.DataSize =
+                TSInfo.AttributeEncodeBuffer->m_FixedSize;
+            newblock->attribute_data.block =
+                TSInfo.AttributeEncodeBuffer->Data();
+        }
+        else
+        {
+            newblock->attribute_data.DataSize = 0;
+            newblock->attribute_data.block = NULL;
+        }
+        TAU_STOP("Marshaling overhead");
+        SstProvideTimestepMM(m_Output, &newblock->metadata, &newblock->data,
+                             m_WriterStep, lf_FreeBlocks, newblock,
+                             &newblock->attribute_data, NULL, newblock,
+                             MetaMetaBlocks);
     }
     else if (Params.MarshalMethod == SstMarshalBP)
     {

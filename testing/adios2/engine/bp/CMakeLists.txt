@@ -5,9 +5,11 @@
 
 set(BP3_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp3)
 set(BP4_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp4)
+set(BP5_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp5)
 set(FS_DIR ${CMAKE_CURRENT_BINARY_DIR}/filestream)
 file(MAKE_DIRECTORY ${BP3_DIR})
 file(MAKE_DIRECTORY ${BP4_DIR})
+file(MAKE_DIRECTORY ${BP5_DIR})
 file(MAKE_DIRECTORY ${FS_DIR})
 
 macro(bp3_bp4_gtest_add_tests_helper testname mpi)
@@ -17,6 +19,9 @@ macro(bp3_bp4_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP4
     WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
   )
+#  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
+#    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+#  )
 endmacro()
 
 add_subdirectory(operations)
