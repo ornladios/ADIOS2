@@ -584,8 +584,8 @@ static FMField ReaderCloseList[] = {
      FMOffset(struct _ReaderCloseMsg *, WSR_Stream)},
     {NULL, NULL, 0, 0}};
 
-static void replaceFormatNameInFieldList(FMStructDescList l, char *orig,
-                                         char *repl, int repl_size)
+static void replaceFormatNameInFieldList(FMStructDescList l, const char *orig,
+                                         const char *repl, int repl_size)
 {
     int i = 0;
     while (l[i].format_name)

@@ -1563,6 +1563,7 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
     int field;
     FMFieldList new_field_list;
     int field_count = count_FMfield(field_list);
+    int simple_string = 0;
     new_field_list = (FMFieldList) malloc((size_t) sizeof(FMField) *
 					     (field_count + 1));
     for (field = 0; field < field_count; field++) {
@@ -1570,6 +1571,9 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
 	if (strchr(field_list[field].field_type, '[') == NULL) {
 	    /* not an array */
 	    if (index(field_list[field].field_type, '*') == NULL) {
+		if (FMstr_to_data_type(field_list[field].field_type) == string_type) {
+		    simple_string = 1;
+		}
 		field_size = field_list[field].field_size;
 	    } else {
 		field_size = fmformat->pointer_size;
@@ -1604,6 +1608,9 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
 			    field_list[field].field_size, elements);
 		    return NULL;
 		}
+		if (base_type == string_type) {
+		    simple_string = 1;
+		}
 	    }
 	}
 
@@ -1614,6 +1621,9 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
 	field_name_strip_default((char *)new_field_list[field].field_name);
 	new_field_list[field].field_type = strdup(field_list[field].field_type);
 	new_field_list[field].field_size = field_list[field].field_size;
+	if (simple_string) {
+	    new_field_list[field].field_size = sizeof(char*);
+	}
 	new_field_list[field].field_offset = field_list[field].field_offset;
     }
     new_field_list[field_count].field_name = NULL;
@@ -2321,7 +2331,7 @@ FMStructDescList list;
     while(list[format_count].format_name != NULL) format_count++;
 
     for (format = 0; format < format_count; format++) {
-	free(list[format].format_name);
+	free((char*)list[format].format_name);
 	free_field_list(list[format].field_list);
     }
     free(list);
@@ -2339,7 +2349,7 @@ free_FMFormatList(FMFormatList format_list)
 {
     int i = 0;
     while(format_list[i].format_name){
-	free(format_list[i].format_name);
+	free((char*)format_list[i].format_name);
 	free_field_list(format_list[i].field_list);
 	if (format_list[i].opt_info) free(format_list[i].opt_info);
 	i++;
