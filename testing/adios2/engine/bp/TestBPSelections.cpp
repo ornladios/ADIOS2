@@ -83,12 +83,15 @@ bool compareSelection3D(const double *a, const adios2::Dims &shape,
 
 TEST_F(ADIOSSelectionTest, 3D)
 {
-    constexpr size_t DIM1 = 15;
-    constexpr size_t DIM2 = 12;
-    constexpr size_t DIM3 = 9;
+    constexpr size_t C1 = 5;
+    constexpr size_t C2 = 4;
+    constexpr size_t C3 = 3;
+    constexpr size_t DIM1 = 3 * C1;
+    constexpr size_t DIM2 = 3 * C2;
+    constexpr size_t DIM3 = 3 * C3;
     const std::string filename = "ADIOSSelection3D.bp";
     const adios2::Dims shape = {DIM1, DIM2, DIM3};
-    const adios2::Dims count = {5, 4, 3};
+    const adios2::Dims count = {C1, C2, C3};
     double a[DIM1 * DIM2 * DIM3];
 
     double *ap = a;
@@ -123,7 +126,7 @@ TEST_F(ADIOSSelectionTest, 3D)
 
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
         adios2::Dims start{0, 0, 0};
-        double b[count[0] * count[1] * count[2]];
+        double b[C1 * C2 * C3];
 
         adios2::Variable<double> var =
             ioWrite.DefineVariable<double>("a", shape, start, count);
