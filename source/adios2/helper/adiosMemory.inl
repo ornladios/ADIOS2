@@ -351,49 +351,77 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
         [](T *dest, const Dims &destStart, const Dims &destCount,
            const char *contiguousMemory, const Box<Dims> &blockBox,
            const Box<Dims> &intersectionBox, const bool isRowMajor,
-           const bool reverseDimensions, const bool endianReverse) {
-            const Dims &start = intersectionBox.first;
-            const Dims &end = intersectionBox.second;
-            const size_t stride = (end.back() - start.back() + 1) * sizeof(T);
+           const bool reverseDimensions, const bool endianReverse)
 
-            Dims currentPoint(start); // current point for memory copy
-            const Box<Dims> selectionBox =
-                helper::StartEndBox(destStart, destCount, reverseDimensions);
+    {
+        const Dims &istart = intersectionBox.first;
+        const Dims &iend = intersectionBox.second;
 
-            const size_t dimensions = start.size();
-            bool run = true;
+        Dims currentPoint(istart); // current point for memory copy
+        // convert selection to EndBox and reverse if we are inside a
+        // column-major reader
+        const Box<Dims> selectionBox =
+            helper::StartEndBox(destStart, destCount, reverseDimensions);
 
-            const size_t intersectionStart =
-                helper::LinearIndex(blockBox, intersectionBox.first, true) *
-                sizeof(T);
+        const size_t dimensions = istart.size();
 
-            while (run)
+        /* Determine how many dimensions we can copy at once.
+           nContDim = dimensions: single contiguous copy
+           ncontDim = 2: a 2D slice
+           nContDim = 1: line by line
+        */
+        size_t nContDim = 1;
+        while (nContDim <= dimensions - 1 &&
+               blockBox.first[dimensions - nContDim] ==
+                   istart[dimensions - nContDim] &&
+               blockBox.second[dimensions - nContDim] ==
+                   iend[dimensions - nContDim] &&
+               blockBox.first[dimensions - nContDim] ==
+                   selectionBox.first[dimensions - nContDim] &&
+               blockBox.second[dimensions - nContDim] ==
+                   selectionBox.second[dimensions - nContDim])
+        {
+            ++nContDim;
+        }
+        // Note: 1 <= nContDim <= dimensions
+        size_t nContElems = 1;
+        for (size_t i = 1; i <= nContDim; ++i)
+        {
+            nContElems *= (iend[dimensions - i] - istart[dimensions - i] + 1);
+        }
+
+        const size_t stride = nContElems * sizeof(T);
+
+        const size_t intersectionStart =
+            helper::LinearIndex(blockBox, intersectionBox.first, true) *
+            sizeof(T);
+
+        bool run = true;
+        while (run)
+        {
+            // here copy current linear memory between currentPoint and end
+            const size_t contiguousStart =
+                helper::LinearIndex(blockBox, currentPoint, true) * sizeof(T) -
+                intersectionStart;
+
+            const size_t variableStart =
+                helper::LinearIndex(selectionBox, currentPoint, true);
+
+            CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
+                                 dest + variableStart, endianReverse);
+
+            // Here update each non-contiguous dim recursively
+            if (nContDim >= dimensions)
             {
-                // here copy current linear memory between currentPoint and end
-                const size_t contiguousStart =
-                    helper::LinearIndex(blockBox, currentPoint, true) *
-                        sizeof(T) -
-                    intersectionStart;
-
-                const size_t variableStart =
-                    helper::LinearIndex(selectionBox, currentPoint, true);
-
-                CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
-                                     dest + variableStart, endianReverse);
-
-                //            std::copy(contiguousMemory + contiguousStart,
-                //                      contiguousMemory + contiguousStart +
-                //                      stride, rawVariableData +
-                //                      variableStart);
-
-                // here update each index recursively, always starting from the
-                // 2nd fastest changing index, since fastest changing index is
-                // the continuous part in the previous std::copy
-                size_t p = dimensions - 2;
+                run = false; // we copied everything at once
+            }
+            else
+            {
+                size_t p = dimensions - nContDim - 1;
                 while (true)
                 {
                     ++currentPoint[p];
-                    if (currentPoint[p] > end[p])
+                    if (currentPoint[p] > iend[p])
                     {
                         if (p == 0)
                         {
@@ -402,7 +430,7 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                         }
                         else
                         {
-                            currentPoint[p] = start[p];
+                            currentPoint[p] = istart[p];
                             --p;
                         }
                     }
@@ -411,8 +439,9 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                         break; // break inner p loop
                     }
                 } // dimension index update
-            }     // run
-        };
+            }
+        } // run
+    };
 
     auto lf_ClipColumnMajor =
         [](T *dest, const Dims &destStart, const Dims &destCount,
@@ -421,22 +450,44 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
            const bool reverseDimensions, const bool endianReverse)
 
     {
-        const Dims &start = intersectionBox.first;
-        const Dims &end = intersectionBox.second;
-        const size_t stride = (end.front() - start.front() + 1) * sizeof(T);
+        const Dims &istart = intersectionBox.first;
+        const Dims &iend = intersectionBox.second;
 
-        Dims currentPoint(start); // current point for memory copy
+        Dims currentPoint(istart); // current point for memory copy
 
         const Box<Dims> selectionBox =
             helper::StartEndBox(destStart, destCount, reverseDimensions);
 
-        const size_t dimensions = start.size();
-        bool run = true;
+        const size_t dimensions = istart.size();
+        /* Determine how many dimensions we can copy at once.
+           nContDim = dimensions: single contiguous copy
+           ncontDim = 2: a 2D slice
+           nContDim = 1: line by line
+        */
+        size_t nContDim = 1;
+        while (
+            nContDim <= dimensions - 1 &&
+            blockBox.first[nContDim - 1] == istart[nContDim - 1] &&
+            blockBox.second[nContDim - 1] == iend[nContDim - 1] &&
+            blockBox.first[nContDim - 1] == selectionBox.first[nContDim - 1] &&
+            blockBox.second[nContDim - 1] == selectionBox.second[nContDim - 1])
+        {
+            ++nContDim;
+        }
+        // Note: 1 <= nContDim <= dimensions
+        size_t nContElems = 1;
+        for (size_t i = 0; i < nContDim; ++i)
+        {
+            nContElems *= (iend[i] - istart[i] + 1);
+        }
+
+        const size_t stride = nContElems * sizeof(T);
 
         const size_t intersectionStart =
             helper::LinearIndex(blockBox, intersectionBox.first, false) *
             sizeof(T);
 
+        bool run = true;
         while (run)
         {
             // here copy current linear memory between currentPoint and end
@@ -450,32 +501,36 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
             CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
                                  dest + variableStart, endianReverse);
 
-            //            std::copy(contiguousMemory + contiguousStart,
-            //                      contiguousMemory + contiguousStart + stride,
-            //                      rawVariableData + variableStart);
-
-            // here update each index recursively, always starting from the 2nd
-            // fastest changing index, since fastest changing index is the
-            // continuous part in the previous std::copy
-            size_t p = 1;
-            while (true)
+            // Here update each non-contiguous dim recursively.
+            if (nContDim >= dimensions)
             {
-                ++currentPoint[p];
-                if (currentPoint[p] > end[p])
+                run = false; // we copied everything at once
+            }
+            else
+            {
+                size_t p = nContDim;
+                while (true)
                 {
-                    if (p == dimensions - 1)
+                    ++currentPoint[p];
+                    if (currentPoint[p] > iend[p])
                     {
-                        run = false; // we are done
-                        break;
+                        if (p == dimensions - 1)
+                        {
+                            run = false; // we are done
+                            break;
+                        }
+                        else
+                        {
+                            currentPoint[p] = istart[p];
+                            ++p;
+                        }
                     }
-                    currentPoint[p] = start[p];
-                    ++p;
-                }
-                else
-                {
-                    break; // break inner p loop
-                }
-            } // dimension index update
+                    else
+                    {
+                        break; // break inner p loop
+                    }
+                } // dimension index update
+            }
         }
     };
 

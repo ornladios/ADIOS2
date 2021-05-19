@@ -243,7 +243,7 @@ program TestSstRead
     call adios2_end_step(sstReader, ierr)
 
     if(insteps == 0) then
-      call validateTestData(myStart, myLength, 0)
+      call ValidateTestData(myStart, myLength, 0)
     endif
     deallocate (in_I8);
     deallocate (in_I16);

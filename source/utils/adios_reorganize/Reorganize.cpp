@@ -599,9 +599,9 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
     if (largest_block > max_read_buffer_size)
     {
         std::cerr << "ERROR: rank " << m_Rank
-                  << ": read buffer size needs to hold at least " << bufsize
-                  << "bytes but max is set to " << max_read_buffer_size
-                  << std::endl;
+                  << ": read buffer size needs to hold at least "
+                  << largest_block << "bytes but max is set to "
+                  << max_read_buffer_size << std::endl;
         return 1;
     }
     return retval;
