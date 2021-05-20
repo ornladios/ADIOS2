@@ -11,6 +11,7 @@
 #ifndef ADIOS2_TOOLKIT_ZMQ_ZMQPUBSUB_H_
 #define ADIOS2_TOOLKIT_ZMQ_ZMQPUBSUB_H_
 
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <thread>
