@@ -295,7 +295,7 @@ adios2_error adios2_variable_ndims(size_t *ndims,
                                         "adios2_variable_ndims");
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        *ndims = variableBase->m_Shape.size();
+        *ndims = variableBase->m_Count.size();
         return adios2_error_none;
     }
     catch (...)
