@@ -552,8 +552,8 @@ static FMStructDescRec ReaderCloseStructs[] = {
     {"ReaderClose", ReaderCloseList, sizeof(struct _ReaderCloseMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
-static void replaceFormatNameInFieldList(FMStructDescList l, char *orig,
-                                         char *repl, int repl_size)
+static void replaceFormatNameInFieldList(FMStructDescList l, const char *orig,
+                                         const char *repl, int repl_size)
 {
     int i = 0;
     while (l[i].format_name)
