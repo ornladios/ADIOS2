@@ -4,7 +4,7 @@
 #ifdef HAVE_MALLOC_H
 #include "malloc.h"
 #endif
-#include "assert.h"
+
 #include <string.h>
 #include <stdio.h>
 #ifndef HAVE_ATL_H
@@ -13,6 +13,8 @@ main()
 {return 0;}
 #else
 #include "atl.h"
+
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 
 static int verbose = 0;
 

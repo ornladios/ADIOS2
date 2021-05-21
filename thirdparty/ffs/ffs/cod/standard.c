@@ -625,11 +625,6 @@ double nan(const char * a);\n\
 
 #include <limits.h>
 
-static cod_extern_entry limits_externs[] = 
-{
-    {NULL, NULL}
-};
-
 static char limits_extern_string[] = "\n\
 const char SCHAR_MAX = 127;\n\
 const char SCHAR_MIN = -128;\n\

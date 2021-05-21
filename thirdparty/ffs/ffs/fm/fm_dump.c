@@ -293,6 +293,7 @@ dump_subfield(void *base, FMFormat f, dstate s, int data_offset, void* parent_ba
 #define FALSE 0
 #define TRUE 1
 
+#ifdef NOTDEF
 static int
 field_is_flat(FMFormat f, FMTypeDesc *t)
 {
@@ -313,6 +314,7 @@ field_is_flat(FMFormat f, FMTypeDesc *t)
     /* notreached */
     return FALSE;
 }
+#endif
 
 static void
 do_indent(dstate s, int indent)

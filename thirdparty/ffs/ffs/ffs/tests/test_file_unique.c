@@ -14,7 +14,7 @@ file_checksum(char *filename)
     if ((f = fopen(filename, "r")) == NULL) {
 	fprintf(stderr, "sum: Can't open %s\n", filename);
 	errflg += 10;
-	return -1;
+	return 0xffffffff;
     }
     sum = 0;
     while ((c = getc(f)) != EOF) {

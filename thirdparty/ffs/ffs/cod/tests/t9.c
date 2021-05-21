@@ -1,6 +1,6 @@
 #include "config.h"
 #include "cod.h"
-#include "assert.h"
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <stdio.h>
 char code_string[] = "{return sizeof(int);}";
 char code_string2[] = "{return sizeof(int*);}";

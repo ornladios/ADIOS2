@@ -1,8 +1,9 @@
 #include "config.h"
 #include "cod.h"
-#include "assert.h"
 #include <stdlib.h>
 #include <stdio.h>
+
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 
 /*
  * This includes two MASSIVE global unsigned char arrays containing

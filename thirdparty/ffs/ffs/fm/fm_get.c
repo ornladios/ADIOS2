@@ -761,8 +761,6 @@ extern void *
 get_FMfieldAddr_by_name(FMFieldList field_list, const char *fieldname, void *data)
 {
     int index;
-    FMFieldPtr ret_val;
-    FMdata_type data_type;
 
     for (index = 0; field_list[index].field_name != NULL; index++) {
 	if (strcmp(field_list[index].field_name, fieldname) == 0) {
@@ -780,7 +778,6 @@ get_FMfieldInt_by_name(FMFieldList field_list, const char *fieldname, void *data
 {
     int index;
     FMgetFieldStruct descr;
-    FMdata_type data_type;
 
     for (index = 0; field_list[index].field_name != NULL; index++) {
 	if (strcmp(field_list[index].field_name, fieldname) == 0) {
@@ -805,7 +802,6 @@ get_FMfieldLong_by_name(FMFieldList field_list, const char *fieldname, void *dat
 {
     int index;
     FMgetFieldStruct descr;
-    FMdata_type data_type;
 
     for (index = 0; field_list[index].field_name != NULL; index++) {
 	if (strcmp(field_list[index].field_name, fieldname) == 0) {
@@ -830,7 +826,6 @@ get_FMPtrField_by_name(FMFieldList field_list, const char *fieldname, void *data
 {
     int index;
     struct _FMgetFieldStruct field;
-    FMdata_type data_type;
 
     for (index = 0; field_list[index].field_name != NULL; index++) {
 	if (strcmp(field_list[index].field_name, fieldname) == 0) {
@@ -859,8 +854,6 @@ extern int
 set_FMPtrField_by_name(FMFieldList field_list, const char *fieldname, void *data, void *ptr_value)
 {
     int index;
-    FMFieldPtr ret_val;
-    FMdata_type data_type;
 
     for (index = 0; field_list[index].field_name != NULL; index++) {
 	if (strcmp(field_list[index].field_name, fieldname) == 0) {

@@ -730,8 +730,6 @@ FFSContext iocontext;
 FFSTypeHandle ioformat;
 FMStructDescList struct_list;
 {
-    int i;
-    int format_index = 0;
     int use_package = 0;
 
     if (!(set_conversion_from_list(iocontext, ioformat, struct_list))) {

@@ -1,9 +1,10 @@
 #include "config.h"
 #include "cod.h"
-#include "assert.h"
 #include <stdio.h>
 
 #define IMGDEBUG
+
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 
 #if defined(IMGDEBUG)
 #include <sys/types.h>

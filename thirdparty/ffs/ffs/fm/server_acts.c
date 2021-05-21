@@ -166,7 +166,7 @@ action_t action;
 {
     int sock;
     int ret;
-    Server_Protocol protocol;
+    Server_Protocol protocol = Raw;
     int conn_is_dead = 0;
     int connected = 0;
 #ifndef MODULE

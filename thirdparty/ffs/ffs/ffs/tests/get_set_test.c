@@ -16,8 +16,6 @@
 
 #include "test_funcs.h"
 
-static int verbose = 0;
-
     /* 
        NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 

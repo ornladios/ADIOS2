@@ -239,33 +239,6 @@ int *diff2;			/* Number of fields present in format2 and
 }
 
 /* 
- * Not used anywhere yet. But may be useful later.
- * */
-static int
-count_total_IOfield_list(FMFieldList list, FMFormatList format_list)
-{
-    int count = 0, i = 0;
-    while (list[i].field_name != NULL) {
-	char *base_type = base_data_type(list[i].field_type);
-	if (FMstr_to_data_type(base_type) == unknown_type) {
-	    int j = -1;
-	    while (format_list[++j].format_name) {
-		if (strcmp(base_type, format_list[j].format_name) == 0) {
-		    count +=
-			count_total_IOfield_list(format_list[j].field_list,
-						 format_list);
-		    break;
-		}
-	    }
-	}
-	free(base_type);
-	count++;
-	i++;
-    }
-    return count;
-}
-
-/* 
  * Basically counts the total number of nodes in a data structure tree
  * */
 static int
