@@ -332,124 +332,6 @@ extern atom_t CM_TRANSPORT_ATOM;
 void *CP_distributeDataFromRankZero(FFSContext ffs_c, void *root_info,
                                     FFSTypeHandle type, void **ret_data_block);
 
-static FMField CP_ReaderInitList[] = {
-    {"ContactInfo", "string", sizeof(char *),
-     FMOffset(CP_ReaderInitInfo, ContactInfo)},
-    {"reader_ID", "integer", sizeof(void *),
-     FMOffset(CP_ReaderInitInfo, ReaderID)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec CP_ReaderInitStructs[] = {
-    {"cp_reader", CP_ReaderInitList, sizeof(struct _CP_ReaderInitInfo), NULL},
-    {NULL, NULL, 0, NULL}};
-
-static FMField CP_WriterInitList[] = {
-    {"ContactInfo", "string", sizeof(char *),
-     FMOffset(CP_WriterInitInfo, ContactInfo)},
-    {"WriterID", "integer", sizeof(void *),
-     FMOffset(CP_WriterInitInfo, WriterID)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec CP_WriterInitStructs[] = {
-    {"cp_writer", CP_WriterInitList, sizeof(struct _CP_WriterInitInfo), NULL},
-    {NULL, NULL, 0, NULL}};
-
-static FMField CP_DP_PairList[] = {
-    {"CP_Info", "*CP_STRUCT", 0, FMOffset(struct _CP_DP_PairInfo *, CP_Info)},
-    {"DP_Info", "*DP_STRUCT", 0, FMOffset(struct _CP_DP_PairInfo *, DP_Info)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec CP_DP_PairStructs[] = {
-    {"CP_DP_pair", CP_DP_PairList, sizeof(struct _CP_DP_PairInfo), NULL},
-    {NULL, NULL, 0, NULL}};
-
-static FMStructDescRec CP_DP_WriterPairStructs[] = {
-    {"CP_DP_WriterPair", CP_DP_PairList, sizeof(struct _CP_DP_PairInfo), NULL},
-    {NULL, NULL, 0, NULL}};
-
-static FMField CP_DP_ArrayReaderList[] = {
-    {"ReaderCohortSize", "integer", sizeof(int),
-     FMOffset(struct _CombinedReaderInfo *, ReaderCohortSize)},
-    {"CP_ReaderInfo", "(*CP_STRUCT)[ReaderCohortSize]",
-     sizeof(struct _CP_ReaderInitInfo),
-     FMOffset(struct _CombinedReaderInfo *, CP_ReaderInfo)},
-    {"DP_ReaderInfo", "(*DP_STRUCT)[ReaderCohortSize]", 0,
-     FMOffset(struct _CombinedReaderInfo *, DP_ReaderInfo)},
-    {"RankZeroID", "integer", sizeof(void *),
-     FMOffset(struct _CombinedReaderInfo *, RankZeroID)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec CP_DP_ReaderArrayStructs[] = {
-    {"CombinedReaderInfo", CP_DP_ArrayReaderList,
-     sizeof(struct _CombinedReaderInfo), NULL},
-    {NULL, NULL, 0, NULL}};
-
-static FMField CP_DP_ArrayWriterList[] = {
-    {"WriterCohortSize", "integer", sizeof(int),
-     FMOffset(struct _CombinedWriterInfo *, WriterCohortSize)},
-    {"StartingStepNumber", "integer", sizeof(size_t),
-     FMOffset(struct _CombinedWriterInfo *, StartingStepNumber)},
-    {"CP_WriterInfo", "(*CP_STRUCT)[WriterCohortSize]",
-     sizeof(struct _CP_WriterInitInfo),
-     FMOffset(struct _CombinedWriterInfo *, CP_WriterInfo)},
-    {"DP_WriterInfo", "(*DP_STRUCT)[WriterCohortSize]", 0,
-     FMOffset(struct _CombinedWriterInfo *, DP_WriterInfo)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec CP_DP_WriterArrayStructs[] = {
-    {"CombinedWriterInfo", CP_DP_ArrayWriterList,
-     sizeof(struct _CombinedWriterInfo), NULL},
-    {NULL, NULL, 0, NULL}};
-
-static FMField CP_ReaderRegisterList[] = {
-    {"writer_ID", "integer", sizeof(void *),
-     FMOffset(struct _ReaderRegisterMsg *, WriterFile)},
-    {"writer_response_condition", "integer", sizeof(int),
-     FMOffset(struct _ReaderRegisterMsg *, WriterResponseCondition)},
-    {"ReaderCohortSize", "integer", sizeof(int),
-     FMOffset(struct _ReaderRegisterMsg *, ReaderCohortSize)},
-    {"CP_ReaderInfo", "(*CP_STRUCT)[ReaderCohortSize]",
-     sizeof(struct _CP_ReaderInitInfo),
-     FMOffset(struct _ReaderRegisterMsg *, CP_ReaderInfo)},
-    {"DP_ReaderInfo", "(*DP_STRUCT)[ReaderCohortSize]", 0,
-     FMOffset(struct _ReaderRegisterMsg *, DP_ReaderInfo)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec CP_ReaderRegisterStructs[] = {
-    {"ReaderRegister", CP_ReaderRegisterList, sizeof(struct _ReaderRegisterMsg),
-     NULL},
-    {NULL, NULL, 0, NULL}};
-
-static FMField CP_WriterResponseList[] = {
-    {"WriterResponseCondition", "integer", sizeof(int),
-     FMOffset(struct _WriterResponseMsg *, WriterResponseCondition)},
-    {"WriterCohortSize", "integer", sizeof(int),
-     FMOffset(struct _WriterResponseMsg *, WriterCohortSize)},
-    {"NextStepNumber", "integer", sizeof(size_t),
-     FMOffset(struct _WriterResponseMsg *, NextStepNumber)},
-    {"cp_WriterInfo", "(*CP_STRUCT)[WriterCohortSize]",
-     sizeof(struct _CP_WriterInitInfo),
-     FMOffset(struct _WriterResponseMsg *, CP_WriterInfo)},
-    {"dp_WriterInfo", "(*DP_STRUCT)[WriterCohortSize]", 0,
-     FMOffset(struct _WriterResponseMsg *, DP_WriterInfo)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec CP_WriterResponseStructs[] = {
-    {"WriterResponse", CP_WriterResponseList, sizeof(struct _WriterResponseMsg),
-     NULL},
-    {NULL, NULL, 0, NULL}};
-
-static FMField MetaDataPlusDPInfoList[] = {
-    {"Metadata", "*SstBlock", sizeof(struct _SstBlock),
-     FMOffset(struct _MetadataPlusDPInfo *, Metadata)},
-    {"AttributeData", "*SstBlock", sizeof(struct _SstBlock),
-     FMOffset(struct _MetadataPlusDPInfo *, AttributeData)},
-    {"Formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
-     FMOffset(struct _MetadataPlusDPInfo *, Formats)},
-    {"DP_TimestepInfo", "*DP_STRUCT", 0,
-     FMOffset(struct _MetadataPlusDPInfo *, DP_TimestepInfo)},
-    {NULL, NULL, 0, 0}};
-
 static FMField FFSFormatBlockList[] = {
     {"FormatServerRep", "char[FormatServerRepLen]", 1,
      FMOffset(struct FFSFormatBlock *, FormatServerRep)},
@@ -469,13 +351,6 @@ static FMField SstBlockList[] = {{"BlockSize", "integer", sizeof(size_t),
                                   FMOffset(struct _SstBlock *, BlockData)},
                                  {NULL, NULL, 0, 0}};
 
-static FMStructDescRec MetaDataPlusDPInfoStructs[] = {
-    {"MetaDataPlusDPInfo", MetaDataPlusDPInfoList,
-     sizeof(struct _MetadataPlusDPInfo), NULL},
-    {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
-    {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
-    {NULL, NULL, 0, NULL}};
-
 static FMField TimestepMetadataList[] = {
     {"RS_Stream", "integer", sizeof(void *),
      FMOffset(struct _TimestepMetadataMsg *, RS_Stream)},
@@ -491,20 +366,6 @@ static FMField TimestepMetadataList[] = {
      FMOffset(struct _TimestepMetadataMsg *, AttributeData)},
     {"TP_TimestepInfo", "(*DP_STRUCT)[cohort_size]", 0,
      FMOffset(struct _TimestepMetadataMsg *, DP_TimestepInfo)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec TimestepMetadataStructs[] = {
-    {"timestepMetadata", TimestepMetadataList,
-     sizeof(struct _TimestepMetadataMsg), NULL},
-    {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
-    {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
-    {NULL, NULL, 0, NULL}};
-
-static FMField TimestepMetadataDistributionList[] = {
-    {"ReturnValue", "integer", sizeof(int),
-     FMOffset(struct _TimestepMetadataDistributionMsg *, ReturnValue)},
-    {"TSmsg", "*timestepMetadata", sizeof(struct _TimestepMetadataMsg),
-     FMOffset(struct _TimestepMetadataDistributionMsg *, TSmsg)},
     {NULL, NULL, 0, 0}};
 
 static FMField ReleaseRecList[] = {{"Timestep", "integer", sizeof(long),
@@ -532,15 +393,6 @@ static FMField ReturnMetadataInfoList[] = {
      FMOffset(struct _ReturnMetadataInfo *, Msg)},
     {NULL, NULL, 0, 0}};
 
-static FMStructDescRec TimestepMetadataDistributionStructs[] = {
-    {"TimestepDistribution", TimestepMetadataDistributionList,
-     sizeof(struct _TimestepMetadataDistributionMsg), NULL},
-    {"timestepMetadata", TimestepMetadataList,
-     sizeof(struct _TimestepMetadataMsg), NULL},
-    {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
-    {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
-    {NULL, NULL, 0, NULL}};
-
 static FMStructDescRec ReturnMetadataInfoStructs[] = {
     {"ReturnMetadataInfo", ReturnMetadataInfoList,
      sizeof(struct _TimestepMetadataDistributionMsg), NULL},
@@ -551,41 +403,8 @@ static FMStructDescRec ReturnMetadataInfoStructs[] = {
     {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
     {NULL, NULL, 0, NULL}};
 
-static FMField ReleaseTimestepList[] = {
-    {"WSR_Stream", "integer", sizeof(void *),
-     FMOffset(struct _ReleaseTimestepMsg *, WSR_Stream)},
-    {"Timestep", "integer", sizeof(int),
-     FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
-    {NULL, NULL, 0, 0}};
-
-static FMField PeerSetupList[] = {
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(struct _PeerSetupMsg *, RS_Stream)},
-    {"WriterRank", "integer", sizeof(int),
-     FMOffset(struct _PeerSetupMsg *, WriterRank)},
-    {"WriterCohortSize", "integer", sizeof(int),
-     FMOffset(struct _PeerSetupMsg *, WriterCohortSize)},
-    {NULL, NULL, 0, 0}};
-
-static FMField ReaderActivateList[] = {
-    {"WSR_Stream", "integer", sizeof(void *),
-     FMOffset(struct _ReaderActivateMsg *, WSR_Stream)},
-    {NULL, NULL, 0, 0}};
-
-static FMField WriterCloseList[] = {
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(struct _WriterCloseMsg *, RS_Stream)},
-    {"FinalTimestep", "integer", sizeof(int),
-     FMOffset(struct _WriterCloseMsg *, FinalTimestep)},
-    {NULL, NULL, 0, 0}};
-
-static FMField ReaderCloseList[] = {
-    {"WSR_Stream", "integer", sizeof(void *),
-     FMOffset(struct _ReaderCloseMsg *, WSR_Stream)},
-    {NULL, NULL, 0, 0}};
-
-static void replaceFormatNameInFieldList(FMStructDescList l, char *orig,
-                                         char *repl, int repl_size)
+static void replaceFormatNameInFieldList(FMStructDescList l, const char *orig,
+                                         const char *repl, int repl_size)
 {
     int i = 0;
     while (l[i].format_name)
@@ -729,7 +548,7 @@ FFSTypeHandle ReturnMetadataInfoFormat;
 
 static void doFormatRegistration(FFSContext ffs_c, FMContext fm_c)
 {
-    FMStructDescList CombinedMetadataStructs, CombinedTimestepMetadataStructs;
+    FMStructDescList CombinedMetadataStructs;
     FMFormat f;
 
     /*gse*/ CombinedMetadataStructs = combineCpDpFormats(
@@ -744,8 +563,6 @@ static void doFormatRegistration(FFSContext ffs_c, FMContext fm_c)
 static void FillMetadataMsg(int CohortSize, struct _TimestepMetadataMsg *Msg,
                             MetadataPlusDPInfo *pointers)
 {
-    FFSFormatList XmitFormats = NULL;
-
     /* build the Metadata Msg */
     Msg->CohortSize = CohortSize;
     Msg->CohortSize = 1;

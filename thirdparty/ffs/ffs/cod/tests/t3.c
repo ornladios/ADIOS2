@@ -8,7 +8,7 @@
 #include "cod.h"
 #include <string.h>
 #include <stdlib.h>
-#include <assert.h>
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <stdio.h>
 
 static double testd(){return 1.0;}
@@ -255,12 +255,6 @@ char code_string[] = {"\
 	cod_free_parse_context(context);
     }
     if ((test_to_run == 5) || (test_to_run == -1)) {
-	static char extern_string[] = "int printf(string format, ...);";
-	static cod_extern_entry externs[] = 
-	{
-	    {"printf", (void*)(long)printf},
-	    {(void*)0, (void*)0}
-	};
 	static char code[] = "{\
 		    int i;\
 		    int j;\
@@ -330,8 +324,7 @@ char code_string[] = {"\
 
 	cod_parse_context context = new_cod_parse_context();
 	cod_exec_context ec;
-	int i, j;
-	double levels[253][37], result;
+	double result;
 	cod_code gen_code;
 	double (*func)();
 
@@ -384,7 +377,6 @@ char code_string[] = {"\
 	};
 	cod_code gen_code;
 	long (*func)();
-	int ret;
 
 	if (verbose) printf("Running test 7 (-o 7)\n");
 	GEN_PARSE_CONTEXT(context);

@@ -195,7 +195,7 @@ return			{RETURN(RETURN_TOKEN);}
 
 \"      {
 	  buffer_len = 20;
-	  string_buffer = malloc(20);
+	  string_buffer = malloc(20 + 1);
 	  string_buf_ptr = string_buffer; BEGIN(string_cond);
 }
 
@@ -332,7 +332,7 @@ static void check_strbuf()
     int cur_len = string_buf_ptr - string_buffer;
     if ((cur_len + 1) == buffer_len) {
 	buffer_len += 20;
-	string_buffer = realloc(string_buffer, buffer_len);
+	string_buffer = realloc(string_buffer, buffer_len + 1);
 	string_buf_ptr = string_buffer + cur_len;
     }
 }

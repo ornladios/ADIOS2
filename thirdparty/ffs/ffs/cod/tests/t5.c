@@ -8,7 +8,7 @@
 #ifdef HAVE_MALLOC_H
 #include "malloc.h"
 #endif
-#include "assert.h"
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <stdio.h>
 #include <string.h>
 
@@ -290,7 +290,6 @@ main(int argc, char **argv)
 	cod_parse_for_context(extern_string, context);
 
 	if (read_file) {
-	    FMFieldList fields = NULL;
 	    FMContext c = create_local_FMcontext();
 	    char *buf = read_buffer(c, read_file, test_num);
 	    param = (struct station_order *)buf;

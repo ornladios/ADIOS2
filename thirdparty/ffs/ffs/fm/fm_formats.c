@@ -748,6 +748,7 @@ char *FMTypeEnumString[] = {"pointer", "array", "string", "subformat", "simple"}
 char *FMDatatypeString[] = {"unknown", "integer", "unsigned", "float", "char", "string", "enumeration",
 			    "boolean"};
 	
+#ifdef NOTDEF
 static void
 dump_FMTypeDesc(FMTypeDesc *l, int indent)
 {
@@ -757,7 +758,7 @@ dump_FMTypeDesc(FMTypeDesc *l, int indent)
     printf("Field index %d, static size %d, control_field_index %d\n", l->field_index, l->static_size, l->control_field_index);
     if (l->next) dump_FMTypeDesc(l->next, indent+1);
 }
-
+#endif
 
 extern FMTypeDesc*
 gen_FMTypeDesc(FMFieldList fl, int field, const char *typ)
@@ -1563,13 +1564,18 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
     int field;
     FMFieldList new_field_list;
     int field_count = count_FMfield(field_list);
+    int simple_string = 0;
     new_field_list = (FMFieldList) malloc((size_t) sizeof(FMField) *
 					     (field_count + 1));
     for (field = 0; field < field_count; field++) {
 	int field_size = 0;
+	int simple_string = 0;
 	if (strchr(field_list[field].field_type, '[') == NULL) {
 	    /* not an array */
 	    if (index(field_list[field].field_type, '*') == NULL) {
+		if (FMstr_to_data_type(field_list[field].field_type) == string_type) {
+		    simple_string = 1;
+		}
 		field_size = field_list[field].field_size;
 	    } else {
 		field_size = fmformat->pointer_size;
@@ -1604,6 +1610,9 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
 			    field_list[field].field_size, elements);
 		    return NULL;
 		}
+		if (base_type == string_type) {
+		    simple_string = 1;
+		}
 	    }
 	}
 
@@ -1614,6 +1623,9 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
 	field_name_strip_default((char *)new_field_list[field].field_name);
 	new_field_list[field].field_type = strdup(field_list[field].field_type);
 	new_field_list[field].field_size = field_list[field].field_size;
+	if (simple_string) {
+	    new_field_list[field].field_size = sizeof(char*);
+	}
 	new_field_list[field].field_offset = field_list[field].field_offset;
     }
     new_field_list[field_count].field_name = NULL;
@@ -2321,7 +2333,7 @@ FMStructDescList list;
     while(list[format_count].format_name != NULL) format_count++;
 
     for (format = 0; format < format_count; format++) {
-	free(list[format].format_name);
+	free((char*)list[format].format_name);
 	free_field_list(list[format].field_list);
     }
     free(list);
@@ -2339,7 +2351,7 @@ free_FMFormatList(FMFormatList format_list)
 {
     int i = 0;
     while(format_list[i].format_name){
-	free(format_list[i].format_name);
+	free((char*)format_list[i].format_name);
 	free_field_list(format_list[i].field_list);
 	if (format_list[i].opt_info) free(format_list[i].opt_info);
 	i++;
@@ -3034,7 +3046,6 @@ int verbose;
     FMFieldList iofield = &fmformat->field_list[field];
     FMVarInfoList iovar = &fmformat->var_list[field];
     int field_offset = iofield->field_offset;
-    int field_size = iofield->field_size;
     const char *field_type = iofield->field_type;
     int data_offset = field_offset;
     int byte_reversal = fmformat->byte_reversal;
@@ -3429,7 +3440,6 @@ struct _subformat_wire_format *rep;
     UINT2 tmp;
     INT4 tmp2;
     int OUR_BYTE_ORDER = WORDS_BIGENDIAN;
-    int OTHER_BYTE_ORDER = (WORDS_BIGENDIAN ? 0 : 1);
     int byte_reversal = ((rep->f.f0.record_byte_order & 0x1) != OUR_BYTE_ORDER);
 
     tmp = rep->f.f0.name_offset;
@@ -3541,7 +3551,6 @@ struct _subformat_wire_format *rep;
     UINT2 tmp;
     INT4 tmp2;
     int OUR_BYTE_ORDER = WORDS_BIGENDIAN;
-    int OTHER_BYTE_ORDER = (WORDS_BIGENDIAN ? 0 : 1);
     int byte_reversal = ((rep->f.f1.record_byte_order & 0x1) != OUR_BYTE_ORDER);
 
     tmp2 = rep->f.f1.name_offset;

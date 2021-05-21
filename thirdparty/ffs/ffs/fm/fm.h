@@ -50,7 +50,7 @@ typedef struct _FMOptInfo {
  */
 typedef struct _FMformat_list {
     /*! the name to be associated with this structure */
-    char *format_name;
+    const char *format_name;
     /*! the FFS-style list of fields within this structure */
     FMFieldList field_list;
     int struct_size;

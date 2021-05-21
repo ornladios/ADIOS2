@@ -15,7 +15,6 @@
 #include "cod.h"
 #include "ffs.h"
 
-static int verbose = 0;
 
     /* 
        NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
@@ -90,8 +89,7 @@ int argc;
 char **argv;
 {
     data_struct data;
-    void *tmp_ptr, *encode_buffer, *base_data, *base_of_encoded_array1, *base_of_encoded_array2;
-    char *tmp_string;
+    void *encode_buffer, *base_of_encoded_array1, *base_of_encoded_array2;
     FMContext fmcontext;
     cod_parse_context cod_context = new_cod_parse_context();
     cod_code gen_code1;
