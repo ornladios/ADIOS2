@@ -106,6 +106,8 @@ char *strdup(const char *s)
 	return p;
 }
 #endif
+#define YY_NO_INPUT
+
 static char*
 gen_anon()
 {
@@ -2856,6 +2858,7 @@ static sm_ref reduce_type_list(cod_parse_context context, sm_list type_list,
 static int 
 assignment_types_match(cod_parse_context context, sm_ref left, sm_ref right, int strict);
 
+#ifdef NOTDEF
 static int
 is_n_dimen_array(int dimen, sm_ref expr)
 {
@@ -2882,6 +2885,7 @@ is_n_dimen_array(int dimen, sm_ref expr)
     assert(0);
     return 0;
 }
+#endif
 
 static int 
 is_string(sm_ref expr)
@@ -3686,9 +3690,9 @@ static int semanticize_expr(cod_parse_context context, sm_ref expr,
 	    sm_ref ltyp = 
 		get_complex_type(context, 
 				 expr->node.assignment_expression.left);
-	    sm_ref rtyp = 
-		get_complex_type(context, 
-				 expr->node.assignment_expression.right);
+//	    sm_ref rtyp = 
+//		get_complex_type(context, 
+//				 expr->node.assignment_expression.right);
 	    if (ltyp == NULL) {
 		if (!is_string(expr->node.assignment_expression.left)) {
 		    cod_src_error(context, expr->node.assignment_expression.left, "Invalid assignment, left side must be simple, non-pointer type");
@@ -4100,7 +4104,6 @@ For hexadecimal, it is the first type the value can fit in: int, unsigned int, l
 unsigned long, long long, unsigned long long
 */
 
-    int ret = DILL_I;
     long i;
     int len = strlen(val);
     int hex = 0;
@@ -4853,7 +4856,6 @@ is_constant_expr(sm_ref expr)
 	if (!expr->node.declaration.const_var) return 0;
 	return is_constant_expr(expr->node.declaration.init_value);
     case cod_operator: {
-	long left, right;
 	if (expr->node.operator.left != NULL) {
 	    if (!is_constant_expr(expr->node.operator.left)) return 0;
 	}
@@ -6098,7 +6100,6 @@ semanticize_enum_type_node(cod_parse_context context, sm_ref decl,
 		      scope_ptr scope)
 {
     sm_list enums = decl->node.enum_type_decl.enums;
-    int value = 0;
     while(enums != NULL) {
 	if (enums->node->node.enumerator.const_expression) {
 	    if (!is_constant_expr(enums->node->node.enumerator.const_expression)) {
@@ -6501,7 +6502,7 @@ uniqueify_names(FMStructDescList list, char *prefix)
 	    malloc(strlen(list[i].format_name) + prefix_len + 1);
 	strcpy(new_name, prefix);
 	strcpy(new_name + prefix_len, list[i].format_name);
-	free(list[i].format_name);
+	free((char*)list[i].format_name);
 	list[i].format_name = new_name;
 	while (fl[j].field_name != 0) {
 	    int field_type_len = strlen(fl[j].field_type);

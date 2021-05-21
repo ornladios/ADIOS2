@@ -5,7 +5,7 @@
 #include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <string.h>
 #include "cod.h"
 
@@ -20,7 +20,6 @@ error_func(void *client_data, char *string)
 }
 
 static int verbose = 0;
-static int test_to_run = -1;
 
 int
 main(int argc, char **argv)
@@ -248,7 +247,7 @@ comment\n\
 	    int j;
 	    long k;
 	    short l;
-	} test_struct, *test_struct_p;
+	} *test_struct_p;
 
 	FMField struct_fields[] = {
 	    {"i", "integer", sizeof(int), FMOffset(test_struct_p, i)},
@@ -264,54 +263,82 @@ comment\n\
 	cod_add_simple_struct_type("struct_type", struct_fields, context);
 	cod_subroutine_declaration("int proc(struct_type *input)", context);
 
+	int i = 0;
+	FILE * out = output_file;
+	if (!out) out = stderr;
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string2, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string3, context);
 	assert(ret == 0);
-//	ret = cod_code_verify(code_string4, context);
+	fprintf(out, "Output for code string%d\n", ++i);
+	ret = cod_code_verify(code_string4, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string5, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string6, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string7, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string8, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string9, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string10, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string11, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string12, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string13, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string14, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string15, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string16, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string17, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string18, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string19, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string20, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string21, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string22, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string23, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string24, context);
 	assert(ret == 0);
+	fprintf(out, "Output for code string%d\n", ++i);
 	ret = cod_code_verify(code_string25, context);
 	assert(ret == 0);
 	cod_free_parse_context(context);

@@ -51,9 +51,7 @@ enum {
 #include "cod.h"
 #include "cod_internal.h"
 #include "structs.h"
-#ifndef LINUX_KERNEL_MODULE
 #include "string.h"
-#endif
 #if defined (__INTEL_COMPILER)
 #  pragma warning (disable: 2215)
 #endif
@@ -62,17 +60,6 @@ enum {
 #define FALSE 0
 #endif
 
-#ifdef LINUX_KERNEL_MODULE
-#include <linux/string.h>
-#include "kcod.h"
-#define fprintf(fmt, args...) printk(args)
-#define printf printk
-#define malloc (void *)DAllocMM
-#define realloc(a,b) (void *)DReallocMM((addrs_t)a,b)
-#define free(a) DFreeMM((addrs_t)a)
-
-extern char *getenv(const char *name);
-#endif
 #if defined(_MSC_VER)
 #define strdup _strdup
 #endif
@@ -147,6 +134,8 @@ cg_required_align(dill_stream s, sm_ref node)
   case cod_array_type_decl:
     if (node->node.array_type_decl.sm_complex_element_type == NULL) {
       required_align = dill_type_align(s, node->node.array_type_decl.cg_element_type);
+    } else {
+      required_align = cg_required_align(s, node->node.array_type_decl.sm_complex_element_type);
     }
     break;
   case cod_struct_type_decl:
@@ -159,63 +148,6 @@ cg_required_align(dill_stream s, sm_ref node)
     assert(0);
   }
   return required_align;
-}
-
-static void
-add_decl_to_static_description(sm_ref decl, cod_code cd)
-{
-    dill_stream s = cd->drisc_context;
-    int field_count = 0;
-    if (cd->static_formats == NULL) {
-	cd->static_formats = malloc(sizeof(FMStructDescRec) * 2);
-	cd->static_formats[1].format_name = NULL;
-	cd->static_formats[1].field_list = NULL;
-	cd->static_formats[1].struct_size = 0;
-	cd->static_formats[1].opt_info = NULL;
-	cd->static_formats[0].format_name = strdup("base static");
-	cd->static_formats[0].field_list = malloc(sizeof(FMField) * 2);
-	cd->static_formats[0].field_list[0].field_name = NULL;
-	cd->static_formats[0].field_list[1].field_name = NULL;
-	cd->static_formats[0].struct_size = 0;
-	cd->static_formats[0].opt_info = NULL;
-	field_count = 0;
-    } else {
-	while (cd->static_formats[0].field_list[field_count].field_name != NULL) {
-	    field_count++;
-	}
-	cd->static_formats[0].field_list = realloc(cd->static_formats[0].field_list, sizeof(FMField) * (field_count +2));
-	cd->static_formats[0].field_list[field_count+1].field_name = NULL;
-	cd->static_formats[0].field_list[field_count+1].field_type = NULL;
-	cd->static_formats[0].field_list[field_count+1].field_size = 0;
-	cd->static_formats[0].field_list[field_count+1].field_offset = 0;
-    }
-    if (decl->node.declaration.sm_complex_type == NULL) {
-	/* simple type */
-	cd->static_formats[0].field_list[field_count].field_name = 
-	    strdup(decl->node.declaration.id);
-	cd->static_formats[0].field_list[field_count].field_size = 
-	    dill_type_size(s, decl->node.declaration.cg_type);
-	cd->static_formats[0].field_list[field_count].field_offset = 
-	    (long)decl->node.declaration.cg_address;
-	switch(decl->node.declaration.cg_type) {
-	case DILL_C: case DILL_S: case DILL_I: case DILL_L:
-	    cd->static_formats[0].field_list[field_count].field_type = 
-		strdup("integer");
-	    break;
-	case DILL_UC: case DILL_US: case DILL_U: case DILL_UL:
-	    cd->static_formats[0].field_list[field_count].field_type = 
-		strdup("unsigned");
-	    break;
-	case DILL_F: case DILL_D:
-	    cd->static_formats[0].field_list[field_count].field_type = 
-		strdup("float");
-	    break;
-	default:
-	    assert(0);
-	}
-    } else {
-	/* more complex */
-    }
 }
 
 static void
@@ -574,14 +506,6 @@ cg_compound_statement(dill_stream s, sm_ref stmt, cod_code descr)
     cg_decls_stmts(s, stmt->node.compound_statement.decls, descr);
     cg_decls_stmts(s, stmt->node.compound_statement.statements, descr);
 }
-
-#ifndef LINUX_KERNEL_MODULE
-static void 
-kmemset(char *ptr, int value, int length)
-{
-    memset(ptr, value, length);
-}
-#endif
 
 static dill_reg 
 cg_get_static_block(dill_stream s, cod_code descr)
@@ -1037,7 +961,6 @@ static void
 cg_decl(dill_stream s, sm_ref decl, cod_code descr)
 {
     dill_reg lvar = -1;
-    void *var_base = NULL;
     switch(decl->node_type) {
     case cod_declaration: {
 	void *var_base = NULL;
@@ -1142,7 +1065,6 @@ cg_decl(dill_stream s, sm_ref decl, cod_code descr)
 	    } else {
 		if ((ctype != NULL) && (ctype->node_type == cod_array_type_decl)){
 		    /* array */
-		    char *val;
 		    if (decl->node.declaration.static_var) {
 			decl->node.declaration.cg_address = 
 			    (void*)(long)descr->static_size_required;
@@ -1250,11 +1172,7 @@ cg_decl(dill_stream s, sm_ref decl, cod_code descr)
 	    if (decl->node.declaration.static_var) {
 		memset(var_base, 0, cg_get_size(s, decl));
 	    } else {
-#ifndef LINUX_KERNEL_MODULE
 		(void) dill_scallv(s, (void*)memset, "memset", "%p%I%I", lvar, 0, cg_get_size(s, decl));
-#else 
-		(void) dill_scallv(s, (void*)kmemset, "kmemset", "%p%I%I", lvar, 0, cg_get_size(s, decl));
-#endif
 	    }
 	}
 	break;
@@ -1672,14 +1590,14 @@ handle_incdec(dill_stream s, sm_ref expr, cod_code descr)
 	}
     }
     
-    opnd = right;
-    store_op = right_op;
-
     if (expr->node.operator.right == NULL) {
 	/* post-increment/decrement, grab the result first */
 	dill_pmov(s, op_type, result, left);
 	opnd = left;
 	store_op = left_op;
+    } else {
+	opnd = right;
+	store_op = right_op;
     }
     if (op == op_inc) {
 	poly_addi(s, op_type, opnd, opnd, size);
@@ -2343,6 +2261,7 @@ cod_do_noop_statement(dill_stream s, sm_ref func_ref, dill_reg duration)
     dill_blei(s, count, duration, top_label);
 }
 
+#ifdef NOTDEF
 static int
 next_formal_is_cod_type_spec(sm_list formals)
 {
@@ -2358,7 +2277,7 @@ next_formal_is_cod_type_spec(sm_list formals)
     }
     return 0;
 }
-    
+#endif    
 
 #define MAX_ARG 128
 
@@ -2630,7 +2549,6 @@ is_var_array(sm_ref expr)
 static int 
 is_static_var(sm_ref expr)
 {
-    sm_ref typ;
     if (expr->node_type == cod_identifier) {
 	return is_static_var(expr->node.identifier.sm_declaration);
     } else if (expr->node_type == cod_declaration) {
@@ -2810,7 +2728,6 @@ cg_expr(dill_stream s, sm_ref expr, int need_assignable, cod_code descr)
 	    dill_setd(s, lvar, d);	/* op_i_setd */
 	} else if (expr->node.constant.token == character_constant) {
 	    long l;
-	    unsigned long ul;
 	    char *val = expr->node.constant.const_val;
 	    lvar = dill_getreg(s, DILL_I);
 	    if (*val == 'L') val++ ;
@@ -2861,6 +2778,7 @@ cg_expr(dill_stream s, sm_ref expr, int need_assignable, cod_code descr)
 		    l = 011;
 		    break;
 		default:
+		    l = 0;
 		    printf("Bad character constant %s\n", val);
 		}
 	    }
@@ -3160,7 +3078,6 @@ ROW MAJOR  (C-style):
     case cod_subroutine_call:
 	return cg_subroutine_call(s, expr, descr);
     case cod_conditional_operator: {
-	dill_reg e1, e2 = 0;
 	operand ret_op;
 	dill_reg result = dill_getreg(s, expr->node.conditional_operator.result_type);
 	int result_type = expr->node.conditional_operator.result_type;

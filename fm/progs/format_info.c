@@ -23,18 +23,6 @@ extern int sleep();
 #include "fm_internal.h"
 extern int (*establish_server_connection_ptr)(FMContext fmc, action_t action);
 
-static int
-serverAtomicWrite(fd, buffer, length)
-void* fd;
-void *buffer;
-int length;
-{
-     char *junk_result_str;
-     int junk_errno;
-     return os_server_write_func(fd, buffer, length, &junk_errno,
-				&junk_result_str);
-}
-
 int
 main(argc, argv)
 int argc;

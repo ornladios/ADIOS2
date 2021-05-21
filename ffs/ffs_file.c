@@ -212,120 +212,6 @@ exit:
 static void read_all_index_and_formats(FFSFile file);
 static void convert_last_index_block(FFSFile file);
 
-/*
- * 
- * returns 1 if attribute is present in index structure
- * and 0 otherwise
- */
-static CDLLnode *
-attr_in_reverse_index(FFSFile f, char *attr)
-{
-    CDLLnode *attrLLP = f->attr_list;
-    attr_node *attr_nodeP = NULL;
-
-    if (!attrLLP || !attr) {
-        return NULL;
-    }
-
-    do {
-        attr_nodeP = (attr_node *)(attrLLP->data);
-
-        if (!strcmp(attr, attr_nodeP->attr)) {
-            return attrLLP;
-        }
-
-        attrLLP = attrLLP->next;
-
-    }while(attrLLP != f->attr_list);
-
-    return NULL;
-}
-
-
-static int
-build_reverse_index(FFSFile f, char *attr_list, int attr_len)
-{
-    int ret = 1;
-    if (f->file_org != Indexed) return 0;
-
-    char *attr_startP = attr_list;
-    char *attr_endP = index(attr_list, '=');
-    char *attr = NULL;
-
-    for (attr_startP = attr_list - 1, attr_endP = index(attr_list, '=');
-         attr_startP; attr_startP = index(attr_endP, ';'),
-             attr_endP = index(attr_endP, '=')) {
-
-        CDLLnode *attrLLP;
-//        attr = strndup(attr_startP + 1, attr_endP - attr_startP - 1);
-        attr_endP++;
-
-        if (!attr)
-            goto exit;
-
-        attrLLP = attr_in_reverse_index(f, attr);
-        if (!attrLLP) {
-            // attribute not found in index
-            // add a new attribute node to index
-            attr_node tmp, *current_nodeP;
-            offset_node tmp_offset_node;
-
-            tmp.attr = attr;
-            tmp.offsetLL = NULL;
-            tmp.len_offsetLL = 0;
-            tmp.num_offsets = 0;
-
-            if (CDLLadd(&(f->attr_list), &tmp, sizeof(tmp)))
-                goto free_attr;
-
-            current_nodeP = (attr_node *)f->attr_list->data;
-            tmp_offset_node.data_offset[0] = f->fpos;
-
-            if (CDLLadd(&((attr_node *)f->attr_list->data)->offsetLL,
-                        tmp_offset_node.data_offset, NUM_OFFSETS*sizeof(int)))
-                goto free_attr;
-
-            current_nodeP->num_offsets = 1;
-            current_nodeP->len_offsetLL = 1;
-        }
-        else {
-            // attribute node is already in index
-            // add the offset of data block in the attribute offset list
-            attr_node *attr_nodeP = (attr_node *)attrLLP->data;
-
-            if (!(attr_nodeP->num_offsets) % NUM_OFFSETS) {
-                // need to add new node in the attribute LL
-                offset_node tmp_offset_node;
-                tmp_offset_node.data_offset[0] = f->fpos;
-
-                if (CDLLadd(&(attr_nodeP->offsetLL), &tmp_offset_node,
-                            sizeof(tmp_offset_node)))
-                    goto free_attr;
-
-                attr_nodeP->num_offsets++;
-                attr_nodeP->len_offsetLL++;
-            }
-            else {
-                // place the offset value in the exising block of attribute LL
-                offset_node *offset_nodeP = (offset_node *)
-                    (attr_nodeP->offsetLL->data);
-
-                offset_nodeP->data_offset[(attr_nodeP->num_offsets) %
-                                          NUM_OFFSETS] = f->fpos;
-                attr_nodeP->num_offsets++;
-                attr_nodeP->len_offsetLL++;
-            }
-        }
-    }
-
-    ret = 0;
-
-free_attr:
-    free(attr);
-
-exit:
-    return ret;
-}
 
 static FFSRecordType next_record_type(FFSFile ffsfile);
 
@@ -474,7 +360,6 @@ open_FFSfd(void *fd, const char *flags)
     if (allow_input) {
 	int magic_number;
 	int count;
-	int fd = (int)(long)f->file_id;
 
 	count = f->read_func(f->file_id, &magic_number, 4, NULL, NULL);
 	if ((count <= 0) && allow_input && allow_output) {
@@ -873,7 +758,6 @@ write_format_to_file(FFSFile f, FMFormat format)
     char *server_rep;
     int rep_len;
 
-    int fd = (int)(long)f->file_id;
     server_id = get_server_ID_FMformat(format, &id_len);
     server_rep = get_server_rep_FMformat(format, &rep_len);
 
@@ -924,8 +808,7 @@ write_comment_FFSfile(FFSFile f, const char *comment)
     vec[0].iov_base = &indicator;
     vec[1].iov_len = byte_size;
     vec[1].iov_base = (void*)comment;
-    int fd = (int)(long)f->file_id;
-   if (f->writev_func(f->file_id, vec, 2, NULL, NULL) != 2) {
+    if (f->writev_func(f->file_id, vec, 2, NULL, NULL) != 2) {
 	printf("Write failed errno %d\n", errno);
 	return 0;
     }
@@ -979,7 +862,6 @@ write_encoded_FFSfile(FFSFile f, void *data, DATA_LEN_TYPE byte_size, FFSContext
     vec[0].iov_base = indicator;
     vec[1].iov_len = byte_size;
     vec[1].iov_base = data;
-    int fd = (int)(long)f->file_id;
     if (f->writev_func(f->file_id, (struct iovec *)vec, 2, 
 		       NULL, NULL) != 2) {
 	printf("Write failed, errno %d\n", errno);
@@ -1035,7 +917,6 @@ write_FFSfile_attrs(FFSFile f, FMFormat format, void *data, attr_list attrs)
 	vec_count++;
     }
 
-    int fd = (int)(long)f->file_id;
     /*
      * next_data indicator is two 4-byte chunks in network byte order.
      * The top byte is 0x3.  The next byte is reserved for future use.
@@ -1201,7 +1082,6 @@ FFSread_index(FFSFile ffsfile)
     index_item = parse_index_block(index_data);
     ffsfile->read_index = index_item;
     if (index_item->next_index_offset == end) {
-	int block_size = htonl(*((int*)(index_data+4))) & 0xffffff;
 	ffsfile->cur_index = malloc(sizeof(*(ffsfile->cur_index)));
 	memcpy(ffsfile->cur_index, index_item, sizeof(*(ffsfile->cur_index)));
 	ffsfile->cur_index->write_info.base_file_pos = index_fpos;
@@ -1433,7 +1313,6 @@ FILE_INT *file_int_ptr;
 #else
     Baaad shit;
 #endif
-    ntohl(tmp_value);
     *file_int_ptr = tmp_value;
     return 1;
 }
@@ -1704,7 +1583,7 @@ FFSFile ffsfile;
 		break;
 	default:
 	    printf("CORRUPT FFSFILE\n");
-	    exit(0);
+	    exit(1);
 	}
 	}
 	ffsfile->read_ahead = TRUE;

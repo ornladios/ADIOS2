@@ -44,7 +44,6 @@ main(int argc, char **argv)
     second_rec rec2;
 
     FMStructDescRec str_list[5];
-    int verbose = 0, indexed = 0;
     char *output_file = "marshal_output";
     int i;
 

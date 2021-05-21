@@ -7,7 +7,6 @@
 #include "config.h"
 #include "data_funcs.h"
 #include "cod.h"
-#include "assert.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,16 +25,12 @@ cod_add_param("ec", "cod_exec_context", 0, x);
 #define EC_param1 ec,
 #endif
 
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
+
 extern void
 write_buffer(char *filename, FMStructDescList desc, void *data, 
              int test_num);
 extern char *read_buffer(FMContext c, char *read_file, int test_num);
-
-static int *
-dummy(int *p)
-{
-  return p;
-}
 
 int
 main(int argc, char**argv)

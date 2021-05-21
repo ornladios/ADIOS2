@@ -32,8 +32,7 @@ sub generate_cod_test($$$)
     unless (open (INT, ">$outputdir/$outputname")) { die "Failed to open $outputdir/$outputname";}
 print INT<<EOF;
 #include "cod.h"
-#undef NDEBUG
-#include "assert.h"
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

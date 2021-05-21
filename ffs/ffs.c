@@ -661,7 +661,6 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
     {
 	int elements = 1, i;
 	int element_size;
-	int var_array = 0;
 	FMTypeDesc *next = t;
 	while (next->type == FMType_array) {
 	    if (next->static_size == 0) {
@@ -672,7 +671,6 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
 		src_spec.offset = f->field_list[field].field_offset;
 		int tmp = quick_get_ulong(&src_spec, (char*)buf->tmp_buffer + parent_offset);
 		elements = elements * tmp;
-		var_array = 1;
 	    } else {
 		elements = elements * next->static_size;
 	    }
@@ -691,7 +689,6 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
 	int field_index = t->field_index;
 	FMFormat subformat = f->field_subformats[field_index];
 	return handle_subfields(buf, subformat, s, data_offset);
-	break;
     }
     default:
 	assert(0);
@@ -1711,12 +1708,12 @@ void *data;
 	break;
     case 4:{
 	unsigned int tmp = (unsigned int) value;
-	memcpy(data, &value, 4);
+	memcpy(data, &tmp, 4);
 	break;
 	}
     case 8:{
 	unsigned long tmp = value;
-	memcpy(data, &value, 8);
+	memcpy(data, &tmp, 8);
 	break;
 	}
     }

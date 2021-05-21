@@ -119,7 +119,6 @@ static char* templates[] = {
 static int
 generate_single_handler(FFSTypeHandle format, char *expression, func_table_entry *entry)
 {
-    char *format_name = NULL;
     char *prog = NULL;
     int i, j;
     FMFormat fmf = FMFormat_of_original(format);
@@ -269,9 +268,7 @@ char **argv;
     int buffer_size = 1024;
     char *buffer = NULL;
     int i;
-    int bitmap, format_count;
-    FFSTypeHandle *in_formats;
-    FMFormat *out_formats;
+    int bitmap;
     char *in_filename = NULL, *out_filename = NULL;
     char **expressions = malloc(sizeof(expressions[0]));
     char **names = malloc(sizeof(expressions[0]));
@@ -340,9 +337,6 @@ char **argv;
     bitmap = FFSdata | FFSformat;
     FFSset_visible(in_file, bitmap);
 
-    format_count = 0;
-    in_formats = malloc(sizeof(FMFormat));
-    out_formats = malloc(sizeof(FMFormat));
     while (1) {
         switch (FFSnext_record_type(in_file)) {
 	case FFSformat:{

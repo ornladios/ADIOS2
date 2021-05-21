@@ -2,10 +2,9 @@
 #include "cod.h"
 #include <string.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <stdio.h>
 
-static double testd(){return 1.0;}
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 
 #ifdef NO_EMULATION
 #define GEN_PARSE_CONTEXT(x) \

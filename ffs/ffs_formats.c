@@ -64,16 +64,13 @@ local_size(int field_index, FMFormat f, FMTypeDesc *type,
     switch(type->type) {
     case FMType_string:
 	return sizeof(char*);
-	break;
     case FMType_pointer:
 	/* pointer is sizeof(char*), but we want to return size of item */
 	if (immediate) return (sizeof(char*));
 	return local_size(field_index, f, type->next, subformats, 0);
-	break;
     case FMType_array:
 	/* here, we always return the size of the element */
 	return local_size(field_index, f, type->next, subformats, immediate);
-	break;
     case FMType_subformat: {
 	char *subformat_name = f->field_subformats[field_index]->format_name;
 	while (subformats && (subformats->format_name != NULL)) {

@@ -10,7 +10,7 @@
 #ifdef HAVE_MALLOC_H
 #include "malloc.h"
 #endif
-#include "assert.h"
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <stdio.h>
 #include <string.h>
 
@@ -120,7 +120,6 @@ main(int argc, char **argv)
 	cod_assoc_externs(context, externs);
 	cod_parse_for_context(extern_string, context);
 	if (read_file) {
-	    FMFieldList fields = NULL;
 	    FMContext c = create_local_FMcontext();
 	    char *buf = read_buffer(c, read_file, test_num);
 	    param = (test_struct*)buf;
@@ -193,7 +192,6 @@ main(int argc, char **argv)
 	cod_assoc_externs(context, externs);
 	cod_parse_for_context(extern_string, context);
 	if (read_file) {
-	    FMFieldList fields = NULL;
 	    FMContext c = create_local_FMcontext();
 	    char *buf = read_buffer(c, read_file, test_num);
 	    param = (test_struct*)buf;
@@ -263,7 +261,6 @@ main(int argc, char **argv)
 	cod_assoc_externs(context, externs);
 	cod_parse_for_context(extern_string, context);
 	if (read_file) {
-	    FMFieldList fields = NULL;
 	    FMContext c = create_local_FMcontext();
 	    char *buf = read_buffer(c, read_file, test_num);
 	    param = (test_struct*)buf;
@@ -336,7 +333,6 @@ main(int argc, char **argv)
 	cod_assoc_externs(context, externs);
 	cod_parse_for_context(extern_string, context);
 	if (read_file) {
-	    FMFieldList fields = NULL;
 	    FMContext c = create_local_FMcontext();
 	    char *buf = read_buffer(c, read_file, test_num);
 	    param = (test_struct*)buf;
@@ -415,7 +411,6 @@ return testing;\n\
 	cod_assoc_externs(context, externs);
 	cod_parse_for_context(extern_string, context);
 	if (read_file) {
-	    FMFieldList fields = NULL;
 	    FMContext c = create_local_FMcontext();
 	    char *buf = read_buffer(c, read_file, test_num);
 	    param = (test_struct*)buf;
@@ -440,6 +435,7 @@ return testing;\n\
 	gen_code = cod_code_gen(code, context);
 	func = (double (*)(test_struct_p))(long) gen_code->func;
 	assert((func)(param) == 46.00);
+	(void)func;
 	free(tmp.vals);
 	cod_code_free(gen_code);
 	cod_free_parse_context(context);

@@ -91,16 +91,26 @@ FFSContext context;
 	ninth_rec_ioformat = FFSset_fixed_target(context, ninth_format_list);
     if ((test_only == NULL) || (strcmp(test_only, "string_array") == 0))
 	string_array_ioformat = FFSset_fixed_target(context, string_array_format_list);
-    if ((test_only == NULL) || (strcmp(test_only, "derive") == 0))
+    if ((test_only == NULL) || (strcmp(test_only, "derive") == 0)) {
 	derive_ioformat = FFSset_fixed_target(context, derive_format_list);
-    if ((test_only == NULL) || (strcmp(test_only, "multi_array") == 0))
+	(void) derive_ioformat;
+    }
+    if ((test_only == NULL) || (strcmp(test_only, "multi_array") == 0)) {
 	multi_array_ioformat = FFSset_fixed_target(context, multi_array_format_list);
-    if ((test_only == NULL) || (strcmp(test_only, "triangle_param") == 0))
+	(void) multi_array_ioformat;
+    }
+    if ((test_only == NULL) || (strcmp(test_only, "triangle_param") == 0)) {
 	triangle_ioformat = FFSset_fixed_target(context, triangle_format_list);
-    if ((test_only == NULL) || (strcmp(test_only, "add_action") == 0))
+	(void) triangle_ioformat;
+    }
+    if ((test_only == NULL) || (strcmp(test_only, "add_action") == 0)) {
 	add_action_ioformat = FFSset_fixed_target(context, add_action_format_list);
-    if ((test_only == NULL) || (strcmp(test_only, "node") == 0))
+	(void) add_action_ioformat;
+    }
+    if ((test_only == NULL) || (strcmp(test_only, "node") == 0)) {
 	node_ioformat = FFSset_fixed_target(context, node_format_list);
+	(void) node_ioformat;
+    }
     if ((test_only == NULL) || (strcmp(test_only, "embedded") == 0))
 	embedded_rec_ioformat = FFSset_fixed_target(context, embedded_format_list);
 }
