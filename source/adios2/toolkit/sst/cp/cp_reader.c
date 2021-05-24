@@ -1448,6 +1448,7 @@ extern SstFullMetadata SstGetCurMetadata(SstStream Stream)
 extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
 {
     int RetCount = 0;
+    STREAM_MUTEX_LOCK(Stream);
     for (int i = 0; i < Stream->InternalMetaMetaCount; i++)
     {
         if (Stream->InternalMetaMetaInfo[i].TimestepAdded >= Timestep)
@@ -1470,6 +1471,7 @@ extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
         }
     }
     memset(&ret[j], 0, sizeof(ret[j]));
+    STREAM_MUTEX_UNLOCK(Stream);
     return ret;
 }
 
