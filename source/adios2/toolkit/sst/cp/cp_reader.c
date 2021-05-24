@@ -2257,6 +2257,7 @@ extern void SstReaderClose(SstStream Stream)
         free(Stream->CurrentMetadata);
         Stream->CurrentMetadata = NULL;
     }
+    STREAM_MUTEX_LOCK(Stream);
     for (int i = 0; i < Stream->InternalMetaMetaCount; i++)
     {
         free(Stream->InternalMetaMetaInfo[i].ID);
@@ -2271,6 +2272,7 @@ extern void SstReaderClose(SstStream Stream)
         }
         free(Stream->InternalAttrDataInfo);
     }
+    STREAM_MUTEX_UNLOCK(Stream);
 }
 
 //  SstWaitForCompletion is only called by the main program thread and
