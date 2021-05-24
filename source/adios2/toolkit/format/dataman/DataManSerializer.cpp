@@ -1143,5 +1143,15 @@ void DataManSerializer::Log(const int level, const std::string &message,
     }
 }
 
+#define declare_template_instantiation(T)                                      \
+    template int DataManSerializer::GetData<T>(                                \
+        T * outputData, const std::string &varName, const Dims &varStart,      \
+        const Dims &varCount, const size_t step, const Dims &varMemStart,      \
+        const Dims &varMemCount);
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
+declare_template_instantiation(std::string)
+#undef declare_template_instantiation
+
 } // namespace format
 } // namespace adios2
