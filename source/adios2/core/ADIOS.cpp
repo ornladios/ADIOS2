@@ -13,11 +13,14 @@
 #include <algorithm> // std::transform
 #include <fstream>
 #include <ios> //std::ios_base::failure
+#include <mutex>
 
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
 #include <adios2sys/SystemTools.hxx>
+
+#include <adios2-perfstubs-interface.h>
 
 // OPERATORS
 
@@ -63,11 +66,25 @@ namespace adios2
 namespace core
 {
 
+std::mutex PerfStubsMutex;
+
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
              const std::string hostLanguage)
 : m_ConfigFile(configFile), m_HostLanguage(hostLanguage),
   m_Comm(std::move(comm))
 {
+#ifdef PERFSTUBS_USE_TIMERS
+    {
+        std::lock_guard<std::mutex> lck(PerfStubsMutex);
+        static bool perfstubsInit(false);
+        if (!perfstubsInit)
+        {
+            PERFSTUBS_INITIALIZE();
+            perfstubsInit = true;
+            atexit(ps_finalize_);
+        }
+    }
+#endif
     if (!configFile.empty())
     {
         if (!adios2sys::SystemTools::FileExists(configFile))
