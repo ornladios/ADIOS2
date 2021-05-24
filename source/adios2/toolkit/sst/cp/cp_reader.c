@@ -468,7 +468,6 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     Stream = CP_newStream();
     Stream->Role = ReaderRole;
     Stream->mpiComm = comm;
-    Stream->AttrsRetrieved = 0;
 
     SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
@@ -1477,7 +1476,9 @@ extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
 
 extern SstBlock SstGetAttributeData(SstStream Stream, long Timestep)
 {
+    STREAM_MUTEX_LOCK(Stream);
     Stream->AttrsRetrieved = 1;
+    STREAM_MUTEX_UNLOCK(Stream);
     return Stream->InternalAttrDataInfo;
 }
 
