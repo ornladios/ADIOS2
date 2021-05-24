@@ -1477,9 +1477,10 @@ extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
 extern SstBlock SstGetAttributeData(SstStream Stream, long Timestep)
 {
     STREAM_MUTEX_LOCK(Stream);
+    struct _SstBlock *InternalAttrDataInfo = Stream->InternalAttrDataInfo;
     Stream->AttrsRetrieved = 1;
     STREAM_MUTEX_UNLOCK(Stream);
-    return Stream->InternalAttrDataInfo;
+    return InternalAttrDataInfo;
 }
 
 static void AddToReadStats(SstStream Stream, int Rank, long Timestep,
