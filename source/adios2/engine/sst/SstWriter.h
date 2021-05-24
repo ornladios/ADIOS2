@@ -70,6 +70,7 @@ private:
         _SstData metadata;
         _SstData attribute_data;
         SstMetaMetaList MetaMetaBlocks;
+        format::BP5Serializer::TimestepInfo *TSInfo;
     };
     std::unique_ptr<format::BP3Serializer> m_BP3Serializer;
 

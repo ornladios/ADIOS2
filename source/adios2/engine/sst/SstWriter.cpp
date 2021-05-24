@@ -256,21 +256,24 @@ void SstWriter::EndStep()
     else if (Params.MarshalMethod == SstMarshalBP5)
     {
         MarshalAttributes();
-        auto TSInfo = m_BP5Serializer->CloseTimestep(m_WriterStep);
+        format::BP5Serializer::TimestepInfo *TSInfo =
+            new format::BP5Serializer::TimestepInfo(
+                m_BP5Serializer->CloseTimestep(m_WriterStep));
         auto lf_FreeBlocks = [](void *vBlock) {
             BP5DataBlock *BlockToFree =
                 reinterpret_cast<BP5DataBlock *>(vBlock);
             //  Free data and metadata blocks here.  BlockToFree is the newblock
             //  value in the enclosing function.
             free(BlockToFree->MetaMetaBlocks);
+            delete BlockToFree->TSInfo;
             delete BlockToFree;
         };
 
         BP5DataBlock *newblock = new BP5DataBlock;
         SstMetaMetaList MetaMetaBlocks = (SstMetaMetaList)malloc(
-            (TSInfo.NewMetaMetaBlocks.size() + 1) * sizeof(MetaMetaBlocks[0]));
+            (TSInfo->NewMetaMetaBlocks.size() + 1) * sizeof(MetaMetaBlocks[0]));
         int i = 0;
-        for (const auto &MM : TSInfo.NewMetaMetaBlocks)
+        for (const auto &MM : TSInfo->NewMetaMetaBlocks)
         {
             MetaMetaBlocks[i].BlockData = MM.MetaMetaInfo;
             MetaMetaBlocks[i].BlockSize = MM.MetaMetaInfoLen;
@@ -278,20 +281,21 @@ void SstWriter::EndStep()
             MetaMetaBlocks[i].IDSize = MM.MetaMetaIDLen;
             i++;
         }
-        MetaMetaBlocks[TSInfo.NewMetaMetaBlocks.size()] = {NULL, 0, NULL, 0};
+        MetaMetaBlocks[TSInfo->NewMetaMetaBlocks.size()] = {NULL, 0, NULL, 0};
         newblock->MetaMetaBlocks = MetaMetaBlocks;
-        newblock->metadata.DataSize = TSInfo.MetaEncodeBuffer->m_FixedSize;
-        newblock->metadata.block = TSInfo.MetaEncodeBuffer->Data();
-        format::BufferV::BufferV_iovec iovec = TSInfo.DataBuffer->DataVec();
+        newblock->metadata.DataSize = TSInfo->MetaEncodeBuffer->m_FixedSize;
+        newblock->metadata.block = TSInfo->MetaEncodeBuffer->Data();
+        format::BufferV::BufferV_iovec iovec = TSInfo->DataBuffer->DataVec();
         newblock->data.DataSize = iovec[0].iov_len;
         newblock->data.block = (char *)iovec[0].iov_base;
+        newblock->TSInfo = TSInfo;
         delete[] iovec;
-        if (TSInfo.AttributeEncodeBuffer)
+        if (TSInfo->AttributeEncodeBuffer)
         {
             newblock->attribute_data.DataSize =
-                TSInfo.AttributeEncodeBuffer->m_FixedSize;
+                TSInfo->AttributeEncodeBuffer->m_FixedSize;
             newblock->attribute_data.block =
-                TSInfo.AttributeEncodeBuffer->Data();
+                TSInfo->AttributeEncodeBuffer->Data();
         }
         else
         {
