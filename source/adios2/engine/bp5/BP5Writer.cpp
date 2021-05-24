@@ -68,7 +68,8 @@ void BP5Writer::WriteMetaMetadata(
     }
 }
 
-uint64_t BP5Writer::WriteMetadata(const std::vector<iovec> MetaDataBlocks)
+uint64_t BP5Writer::WriteMetadata(
+    const std::vector<format::BufferV::iovec> MetaDataBlocks)
 {
     uint64_t MDataTotalSize = 0;
     uint64_t MetaDataSize = 0;
@@ -109,8 +110,8 @@ void BP5Writer::WriteData(format::BufferV *Data)
         DataSize += DataVec[i].iov_len;
         i++;
     }
-    std::cout << "before update m_DataPos is " << m_DataPos << std::endl;
     m_DataPos += DataSize;
+    delete[] DataVec;
 }
 
 void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
@@ -124,11 +125,6 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
     buf[0] = MetaDataPos;
     buf[1] = MetaDataSize;
     m_FileMetadataIndexManager.WriteFiles((char *)buf, sizeof(buf));
-    for (int i = 0; i < DataSizes.size(); i++)
-    {
-        std::cout << "Writer data pos rank " << i << " = " << m_WriterDataPos[i]
-                  << std::endl;
-    }
     m_FileMetadataIndexManager.WriteFiles((char *)m_WriterDataPos.data(),
                                           DataSizes.size() * sizeof(uint64_t));
     for (int i = 0; i < DataSizes.size(); i++)
@@ -148,8 +144,6 @@ void BP5Writer::EndStep()
      * AttributeEncodeBuffer and the data encode Vector */
     /* the first */
 
-    std::cout << "Endstp, data buffer size = " << TSInfo.DataBuffer->Size()
-              << std::endl;
     std::vector<char> MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
         TSInfo.NewMetaMetaBlocks, TSInfo.MetaEncodeBuffer,
         TSInfo.DataBuffer->Size());
@@ -174,7 +168,6 @@ void BP5Writer::EndStep()
         std::vector<uint64_t> DataSizes;
         auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
             RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, DataSizes);
-        std::cout << "Data sizes size " << DataSizes.size() << std::endl;
         WriteMetaMetadata(UniqueMetaMetaBlocks);
         uint64_t ThisMetaDataPos = m_MetaDataPos;
         uint64_t ThisMetaDataSize = WriteMetadata(Metadata);
@@ -228,7 +221,8 @@ void BP5Writer::InitTransports()
     m_BBName = m_Name;
     if (m_WriteToBB)
     {
-        m_BBName = m_Parameters.BurstBufferPath + PathSeparator + m_Name;
+        //        m_BBName = m_Parameters.BurstBufferPath + PathSeparator +
+        //        m_Name;
     }
 
     if (m_Aggregator.m_IsConsumer)
@@ -439,7 +433,7 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
 
     // byte 39: Minor file version
     const uint8_t subversion = 0;
-    helper::CopyToBuffer(buffer, position, &version);
+    helper::CopyToBuffer(buffer, position, &subversion);
 
     // bytes 40-43 writer count
     const uint32_t WriterCount = m_Comm.Size();

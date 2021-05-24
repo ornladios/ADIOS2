@@ -84,7 +84,6 @@ public:
     MACRO(StreamReader, Bool, bool, false)                                     \
     MACRO(BurstBufferDrain, Bool, bool, true)                                  \
     MACRO(NodeLocal, Bool, bool, false)                                        \
-    MACRO(BurstBufferPath, String, std::string, "\"\"")                        \
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)

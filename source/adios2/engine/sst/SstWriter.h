@@ -69,6 +69,7 @@ private:
         _SstData data;
         _SstData metadata;
         _SstData attribute_data;
+        SstMetaMetaList MetaMetaBlocks;
     };
     std::unique_ptr<format::BP3Serializer> m_BP3Serializer;
 

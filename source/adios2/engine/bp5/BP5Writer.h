@@ -16,6 +16,7 @@
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
+#include "adios2/toolkit/format/buffer/BufferV.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 namespace adios2
@@ -122,7 +123,8 @@ private:
     void WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize,
                                 std::vector<uint64_t> DataSizes);
 
-    uint64_t WriteMetadata(const std::vector<iovec> MetaDataBlocks);
+    uint64_t
+    WriteMetadata(const std::vector<format::BufferV::iovec> MetaDataBlocks);
 
     void WriteData(format::BufferV *Data);
 

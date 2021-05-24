@@ -232,7 +232,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     delete[] cstr;
 }
 
-SstReader::~SstReader() { SstStreamDestroy(m_Input); }
+SstReader::~SstReader()
+{
+    if (m_BP5Deserializer)
+        delete m_BP5Deserializer;
+    SstStreamDestroy(m_Input);
+}
 
 StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 {

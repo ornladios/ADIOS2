@@ -33,6 +33,12 @@ BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
+BP5Reader::~BP5Reader()
+{
+    if (m_BP5Deserializer)
+        delete m_BP5Deserializer;
+}
+
 StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER("BP5Reader::BeginStep");
@@ -125,16 +131,9 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
                          char *Destination)
 {
     size_t DataStartPos = m_MetadataIndexTable[Timestep][2];
-    std::cout << "DataOffsetsStart in MDatafile is " << DataStartPos
-              << std::endl;
     DataStartPos += WriterRank * sizeof(uint64_t);
-    std::cout << "DataOffsetsStart after addition is " << DataStartPos
-              << std::endl;
     size_t DataStart = helper::ReadValue<uint64_t>(
         m_MetadataIndex.m_Buffer, DataStartPos, m_Minifooter.IsLittleEndian);
-    std::cout << "Data start for timestep " << Timestep << " Rank "
-              << WriterRank << " is " << std::hex << DataStart << std::dec
-              << std::endl;
     // check if subfile is already opened
     if (m_DataFileManager.m_Transports.count(WriterRank) == 0)
     {
@@ -367,8 +366,6 @@ uint64_t BP5Reader::MetadataExpectedMinFileSize(const std::string &IdxFileName,
 {
     size_t cur_idxsize = m_MetadataIndex.m_Buffer.size();
     static constexpr size_t m_MinIndexRecordSize = 3 * sizeof(uint64_t);
-    std::cout << " metadata expected min file size Cur = " << cur_idxsize
-              << " has header " << hasHeader << std::endl;
     if ((hasHeader && cur_idxsize < m_IndexHeaderSize + m_MinIndexRecordSize) ||
         cur_idxsize < m_MinIndexRecordSize)
     {
@@ -377,8 +374,6 @@ uint64_t BP5Reader::MetadataExpectedMinFileSize(const std::string &IdxFileName,
     }
     uint64_t lastpos =
         *(uint64_t *)&(m_MetadataIndex.m_Buffer[cur_idxsize - 24]);
-    std::cout << " metadata expected min file size returning lastpos = "
-              << lastpos << std::endl;
     return lastpos;
 }
 
@@ -493,8 +488,6 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
         // now we are sure the index header has been parsed, first step parsing
         // done
 
-        std::cout << "Reader row major " << m_ReaderIsRowMajor << std::endl;
-        std::cout << "Writer row major " << m_WriterIsRowMajor << std::endl;
         m_BP5Deserializer = new format::BP5Deserializer(
             m_WriterCount, m_WriterIsRowMajor, m_ReaderIsRowMajor);
         m_BP5Deserializer->m_Engine = this;
@@ -577,20 +570,15 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
         position = m_ColumnMajorFlagPosition;
         const uint8_t val = helper::ReadValue<uint8_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
-        std::cout << "Row major char is '" << val << "'" << std::endl;
         m_WriterIsRowMajor = val == 'n';
         // move position to first row
         position = 64;
     }
-    std::cout << "Mini foot vers version " << (int)m_Minifooter.Version
-              << std::endl;
 
     for (uint64_t i = 0; i < m_WriterCount; i++)
     {
         m_WriterToFileMap.push_back(helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian));
-        std::cout << "Writer " << i << " wrote to file " << m_WriterToFileMap[i]
-                  << std::endl;
     }
 
     // Read each record now
@@ -598,7 +586,6 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
     do
     {
         std::vector<uint64_t> ptrs;
-        std::cout << "Start Timestep position " << position << std::endl;
         const uint64_t MetadataPos = helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
         const uint64_t MetadataSize = helper::ReadValue<uint64_t>(
@@ -608,15 +595,11 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
         ptrs.push_back(MetadataSize);
         ptrs.push_back(position);
         m_MetadataIndexTable[currentStep] = ptrs;
-        std::cout << "Timestep " << currentStep << " has MetadataStart "
-                  << ptrs[0] << " MetadataSize " << ptrs[1] << std::endl;
         for (uint64_t i = 0; i < m_WriterCount; i++)
         {
             size_t DataPosPos = ptrs[2] + sizeof(uint64_t) * i;
             const uint64_t DataPos = helper::ReadValue<uint64_t>(
                 buffer, DataPosPos, m_Minifooter.IsLittleEndian);
-            std::cout << "Writer " << i << " data starts at " << DataPos
-                      << std::endl;
         }
 
         position += sizeof(uint64_t) * m_WriterCount;

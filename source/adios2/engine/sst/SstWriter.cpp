@@ -258,10 +258,11 @@ void SstWriter::EndStep()
         MarshalAttributes();
         auto TSInfo = m_BP5Serializer->CloseTimestep(m_WriterStep);
         auto lf_FreeBlocks = [](void *vBlock) {
-            BP3DataBlock *BlockToFree =
-                reinterpret_cast<BP3DataBlock *>(vBlock);
+            BP5DataBlock *BlockToFree =
+                reinterpret_cast<BP5DataBlock *>(vBlock);
             //  Free data and metadata blocks here.  BlockToFree is the newblock
             //  value in the enclosing function.
+            free(BlockToFree->MetaMetaBlocks);
             delete BlockToFree;
         };
 
@@ -278,10 +279,13 @@ void SstWriter::EndStep()
             i++;
         }
         MetaMetaBlocks[TSInfo.NewMetaMetaBlocks.size()] = {NULL, 0, NULL, 0};
+        newblock->MetaMetaBlocks = MetaMetaBlocks;
         newblock->metadata.DataSize = TSInfo.MetaEncodeBuffer->m_FixedSize;
         newblock->metadata.block = TSInfo.MetaEncodeBuffer->Data();
-        newblock->data.DataSize = TSInfo.DataBuffer->DataVec()[0].iov_len;
-        newblock->data.block = (char *)TSInfo.DataBuffer->DataVec()[0].iov_base;
+        format::BufferV::BufferV_iovec iovec = TSInfo.DataBuffer->DataVec();
+        newblock->data.DataSize = iovec[0].iov_len;
+        newblock->data.block = (char *)iovec[0].iov_base;
+        delete[] iovec;
         if (TSInfo.AttributeEncodeBuffer)
         {
             newblock->attribute_data.DataSize =

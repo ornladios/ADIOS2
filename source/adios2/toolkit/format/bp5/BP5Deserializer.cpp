@@ -740,6 +740,10 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
             }
         }
     }
+    for (const auto &Req : Requests)
+    {
+        free((char *)Req.DestinationAddr);
+    }
     PendingRequests.clear();
 }
 
@@ -1006,6 +1010,11 @@ BP5Deserializer::~BP5Deserializer()
         struct ControlInfo *next = tmp->Next;
         free(tmp);
         tmp = next;
+    }
+    for (auto &VarRec : VarByName)
+    {
+        free(VarRec.second->VarName);
+        delete VarRec.second;
     }
 }
 

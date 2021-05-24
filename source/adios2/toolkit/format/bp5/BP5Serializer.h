@@ -8,8 +8,6 @@
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP5_BP5SERIALIZER_H_
 #define ADIOS2_TOOLKIT_FORMAT_BP5_BP5SERIALIZER_H_
 
-#include <sys/uio.h>
-
 #include "BP5Base.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
@@ -34,13 +32,21 @@ public:
     BP5Serializer();
     ~BP5Serializer();
 
-    typedef struct _TimestepInfo
+    struct TimestepInfo
     {
         std::vector<MetaMetaInfoBlock> NewMetaMetaBlocks;
         Buffer *MetaEncodeBuffer;
         Buffer *AttributeEncodeBuffer;
         BufferV *DataBuffer;
-    } TimestepInfo;
+
+        ~TimestepInfo()
+        {
+            delete MetaEncodeBuffer;
+            if (AttributeEncodeBuffer)
+                delete AttributeEncodeBuffer;
+            delete DataBuffer;
+        }
+    };
 
     typedef struct _MetadataInfo
     {
@@ -67,7 +73,7 @@ public:
         const std::vector<MetaMetaInfoBlock> NewmetaMetaBlocks,
         const format::Buffer *MetaEncodeBuffer, uint64_t DataSize) const;
 
-    std::vector<iovec> BreakoutContiguousMetadata(
+    std::vector<BufferV::iovec> BreakoutContiguousMetadata(
         std::vector<char> *Aggregate, const std::vector<size_t> Counts,
         std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
         std::vector<uint64_t> &DataSizes) const;

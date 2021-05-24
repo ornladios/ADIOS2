@@ -870,6 +870,7 @@ void AddFormatsToMetaMetaInfo(SstStream Stream,
                               struct _TimestepMetadataMsg *Msg)
 {
     FFSFormatList Formats = Msg->Formats;
+    STREAM_ASSERT_LOCKED(Stream);
     while (Formats)
     {
         Stream->InternalMetaMetaInfo =
@@ -2255,6 +2256,20 @@ extern void SstReaderClose(SstStream Stream)
             free(Stream->CurrentMetadata->WriterMetadata);
         free(Stream->CurrentMetadata);
         Stream->CurrentMetadata = NULL;
+    }
+    for (int i = 0; i < Stream->InternalMetaMetaCount; i++)
+    {
+        free(Stream->InternalMetaMetaInfo[i].ID);
+        free(Stream->InternalMetaMetaInfo[i].BlockData);
+    }
+    free(Stream->InternalMetaMetaInfo);
+    if (Stream->InternalAttrDataInfo)
+    {
+        for (int i = 0; i < Stream->InternalAttrDataCount; i++)
+        {
+            free(Stream->InternalAttrDataInfo[i].BlockData);
+        }
+        free(Stream->InternalAttrDataInfo);
     }
 }
 

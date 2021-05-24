@@ -215,7 +215,7 @@ endif()
 #   Setup tests for BP engines
 #
 
-if(NOT MSVC)    # not on windows
+if(NOT WIN32)    # not on windows
     set (BP_TESTS ${ALL_SIMPLE_TESTS})
     # Delayed reader not worth testing on file engines
     list (FILTER BP_TESTS EXCLUDE REGEX "DelayedReader")
@@ -234,7 +234,7 @@ if(NOT MSVC)    # not on windows
 endif()
 
 #  BP5 tests
-if(NOT MSVC)    # not on windows
+if(ADIOS2_HAVE_BP5)
     set (BP5_TESTS ${ALL_SIMPLE_TESTS})
     # Delayed reader not worth testing on file engines
     list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
