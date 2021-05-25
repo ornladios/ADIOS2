@@ -182,7 +182,6 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
     // };
 
 #define get_params(Param, Type, Typedecl, Default)                             \
-    std::cout << "GetParam, Param = " << #Param << std::endl;                  \
     lf_Set##Type##Parameter(#Param, Params.Param, Default);
     BP5_FOREACH_PARAMETER_TYPE_4ARGS(get_params);
 #undef get_params

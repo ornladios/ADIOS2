@@ -216,9 +216,9 @@ endif()
 
 # DataSpaces
 if(ADIOS2_USE_DataSpaces STREQUAL AUTO)
-  find_package(DataSpaces 1.8)
+  find_package(DataSpaces 2.1.1)
 elseif(ADIOS2_USE_DataSpaces)
-  find_package(DataSpaces 1.8 REQUIRED)
+  find_package(DataSpaces 2.1.1 REQUIRED)
 endif()
 if(DATASPACES_FOUND)
   set(ADIOS2_HAVE_DataSpaces TRUE)
@@ -293,7 +293,7 @@ if(Python_FOUND)
 endif()
 
 # Even if no python support, we still want the interpreter for tests
-if(NOT Python_Interpreter_FOUND)
+if(BUILD_TESTING AND NOT Python_Interpreter_FOUND)
   find_package(Python REQUIRED COMPONENTS Interpreter)
 endif()
 
@@ -327,6 +327,12 @@ if(ADIOS2_USE_SST AND NOT WIN32)
       set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
     endif()
   endif()
+endif()
+
+# DAOS
+find_package(DAOS)
+if(DAOS_FOUND)
+  set(ADIOS2_HAVE_DAOS TRUE)
 endif()
 
 # BP5
@@ -372,7 +378,7 @@ include(CheckTypeRepresentation)
 #check_float_type_representation(double DOUBLE_TYPE_C)
 #check_float_type_representation("long double" LONG_DOUBLE_TYPE_C)
 
-if(ADIOS2_USE_Fortran)
+if(ADIOS2_HAVE_Fortran)
   #check_float_type_representation(real REAL_TYPE_Fortran LANGUAGE Fortran)
   #check_float_type_representation("real(kind=4)" REAL4_TYPE_Fortran LANGUAGE Fortran)
   #check_float_type_representation("real(kind=8)" REAL8_TYPE_Fortran LANGUAGE Fortran)

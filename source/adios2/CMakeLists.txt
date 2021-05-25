@@ -229,7 +229,6 @@ endif()
 if(ADIOS2_HAVE_SST)
   add_subdirectory(toolkit/sst)
   target_sources(adios2_core PRIVATE
-
     engine/sst/SstReader.cpp
     engine/sst/SstWriter.cpp
     engine/sst/SstParamParser.cpp
