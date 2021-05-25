@@ -475,7 +475,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             CurDataBuffer = new BufferV("data buffer");
         }
         DataOffset =
-            CurDataBuffer->AddToVec(ElemCount * ElemSize, Data, ElemSize, true);
+            CurDataBuffer->AddToVec(ElemCount * ElemSize, Data, ElemSize, Sync);
 
         if (!AlreadyWritten)
         {
