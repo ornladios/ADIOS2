@@ -166,7 +166,7 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 }
 
 static char *SstRegStr[] = {"File", "Screen", "Cloud"};
-static char *SstMarshalStr[] = {"FFS", "BP"};
+static char *SstMarshalStr[] = {"FFS", "BP", "BP5"};
 static char *SstQueueFullStr[] = {"Block", "Discard"};
 static char *SstCompressStr[] = {"None", "ZFP"};
 static char *SstCommPatternStr[] = {"Min", "Peer"};

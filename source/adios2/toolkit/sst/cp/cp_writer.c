@@ -2409,6 +2409,37 @@ extern void SstProvideTimestep(SstStream Stream, SstData LocalMetadata,
                                FreeAttributeData, FreeAttributeClientData);
 }
 
+extern void SstProvideTimestepMM(SstStream Stream, SstData LocalMetadata,
+                                 SstData Data, long Timestep,
+                                 DataFreeFunc FreeTimestep,
+                                 void *FreeClientData, SstData AttributeData,
+                                 DataFreeFunc FreeAttributeData,
+                                 void *FreeAttributeClientData,
+                                 struct _SstMetaMetaBlock *MMBlocks)
+{
+    FFSFormatList Formats = NULL;
+    while (MMBlocks && MMBlocks->BlockData)
+    {
+        FFSFormatList New = malloc(sizeof(*New));
+        New->FormatServerRep = MMBlocks->BlockData;
+        New->FormatServerRepLen = MMBlocks->BlockSize;
+        New->FormatIDRep = MMBlocks->ID;
+        New->FormatIDRepLen = MMBlocks->IDSize;
+        New->Next = Formats;
+        Formats = New;
+        MMBlocks++;
+    }
+    SstInternalProvideTimestep(Stream, LocalMetadata, Data, Timestep, Formats,
+                               FreeTimestep, FreeClientData, AttributeData,
+                               FreeAttributeData, FreeAttributeClientData);
+    while (Formats)
+    {
+        FFSFormatList Tmp = Formats->Next;
+        free(Formats);
+        Formats = Tmp;
+    }
+}
+
 void queueReaderRegisterMsgAndNotify(SstStream Stream,
                                      struct _ReaderRegisterMsg *Req,
                                      CMConnection conn)

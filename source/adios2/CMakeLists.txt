@@ -67,6 +67,7 @@ add_library(adios2_core
   engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
 #toolkit
   toolkit/format/buffer/Buffer.cpp
+  toolkit/format/buffer/BufferV.cpp
   toolkit/format/buffer/heap/BufferSTL.cpp
 
   toolkit/format/bp/BPBase.cpp toolkit/format/bp/BPBase.tcc
@@ -126,6 +127,24 @@ target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEA
 
 if(UNIX)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FilePOSIX.cpp)
+endif()
+
+if (ADIOS2_HAVE_BP5)
+  target_sources(adios2_core PRIVATE 
+    engine/bp5/BP5Engine.cpp
+    engine/bp5/BP5Reader.cpp engine/bp5/BP5Reader.tcc
+    engine/bp5/BP5Writer.cpp engine/bp5/BP5Writer.tcc
+  )
+endif()
+
+if (ADIOS2_HAVE_BP5 OR ADIOS2_HAVE_SST)
+  target_sources(adios2_core PRIVATE 
+    toolkit/format/buffer/ffs/BufferFFS.cpp
+    toolkit/format/bp5/BP5Base.cpp
+    toolkit/format/bp5/BP5Serializer.cpp
+    toolkit/format/bp5/BP5Deserializer.cpp  toolkit/format/bp5/BP5Deserializer.tcc
+  )
+  target_link_libraries(adios2_core PRIVATE ffs::ffs)
 endif()
 
 if(ADIOS2_HAVE_DAOS)

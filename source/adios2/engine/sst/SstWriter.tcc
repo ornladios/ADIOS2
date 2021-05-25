@@ -36,7 +36,8 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                                "BeginStep/EndStep pairs");
     }
 
-    if (Params.MarshalMethod == SstMarshalFFS)
+    if ((Params.MarshalMethod == SstMarshalFFS) ||
+        (Params.MarshalMethod == SstMarshalBP5))
     {
         size_t *Shape = NULL;
         size_t *Start = NULL;
@@ -55,9 +56,19 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             DimCount = variable.m_Count.size();
             Count = variable.m_Count.data();
         }
-        SstFFSMarshal(m_Output, (void *)&variable, variable.m_Name.c_str(),
-                      (int)variable.m_Type, variable.m_ElementSize, DimCount,
-                      Shape, Count, Start, values);
+        if (Params.MarshalMethod == SstMarshalFFS)
+        {
+            SstFFSMarshal(m_Output, (void *)&variable, variable.m_Name.c_str(),
+                          (int)variable.m_Type, variable.m_ElementSize,
+                          DimCount, Shape, Count, Start, values);
+        }
+        else
+        {
+            m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(),
+                                     variable.m_Type, variable.m_ElementSize,
+                                     DimCount, Shape, Count, Start, values,
+                                     true);
+        }
     }
     else if (Params.MarshalMethod == SstMarshalBP)
     {

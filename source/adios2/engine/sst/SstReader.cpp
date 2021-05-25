@@ -47,8 +47,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     }
 
     // Maybe need other writer-side params in the future, but for now only
-    // marshal method.
-    SstReaderGetParams(m_Input, &m_WriterMarshalMethod);
+    // marshal method, and if the writer is row major.
+    SstReaderGetParams(m_Input, &m_WriterMarshalMethod, &m_WriterIsRowMajor);
 
     auto varFFSCallback = [](void *reader, const char *variableName,
                              const int type, void *data) {
@@ -232,7 +232,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     delete[] cstr;
 }
 
-SstReader::~SstReader() { SstStreamDestroy(m_Input); }
+SstReader::~SstReader()
+{
+    if (m_BP5Deserializer)
+        delete m_BP5Deserializer;
+    SstStreamDestroy(m_Input);
+}
 
 StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 {
@@ -273,7 +278,58 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 
     m_BetweenStepPairs = true;
 
-    if (m_WriterMarshalMethod == SstMarshalBP)
+    if (m_WriterMarshalMethod == SstMarshalBP5)
+    {
+        m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
+        if (!m_BP5Deserializer)
+        {
+            m_BP5Deserializer = new format::BP5Deserializer(
+                m_CurrentStepMetaData->WriterCohortSize, m_WriterIsRowMajor,
+                Params.IsRowMajor);
+            m_BP5Deserializer->m_Engine = this;
+        }
+        SstMetaMetaList MMList =
+            SstGetNewMetaMetaData(m_Input, SstCurrentStep(m_Input));
+        //      m_BP5Deserializer->StepInit(m_IO.m_Parameters,
+        //                                "in call to BP5::BeginStep", "bp5");
+        int i = 0;
+        while (MMList && MMList[i].BlockData)
+        {
+            format::BP5Base::MetaMetaInfoBlock MM;
+            MM.MetaMetaID = MMList[i].ID;
+            MM.MetaMetaIDLen = MMList[i].IDSize;
+            MM.MetaMetaInfo = MMList[i].BlockData;
+            MM.MetaMetaInfoLen = MMList[i].BlockSize;
+            m_BP5Deserializer->InstallMetaMetaData(MM);
+            i++;
+        }
+        free(MMList);
+
+        SstBlock AttributeBlockList =
+            SstGetAttributeData(m_Input, SstCurrentStep(m_Input));
+        i = 0;
+        while (AttributeBlockList && AttributeBlockList[i].BlockData)
+        {
+            m_IO.RemoveAllAttributes();
+            m_BP5Deserializer->InstallAttributeData(
+                AttributeBlockList[i].BlockData,
+                AttributeBlockList[i].BlockSize);
+            i++;
+        }
+
+        m_IO.RemoveAllVariables();
+        m_BP5Deserializer->SetupForTimestep(SstCurrentStep(m_Input));
+
+        for (int i = 0; i < m_CurrentStepMetaData->WriterCohortSize; i++)
+        {
+            struct _SstData *tmp = m_CurrentStepMetaData->WriterMetadata[i];
+            m_BP5Deserializer->InstallMetaData(tmp->block, tmp->DataSize, i);
+        }
+
+        m_IO.ResetVariablesStepSelection(true,
+                                         "in call to SST Reader BeginStep");
+    }
+    else if (m_WriterMarshalMethod == SstMarshalBP)
     {
         TAU_SCOPED_TIMER(
             "BP Marshaling Case - deserialize and install metadata");
@@ -372,7 +428,7 @@ void SstReader::EndStep()
                 "ERROR:  Writer failed before returning data");
         }
     }
-    if (m_WriterMarshalMethod == SstMarshalBP)
+    else if (m_WriterMarshalMethod == SstMarshalBP)
     {
 
         PerformGets();
@@ -391,6 +447,11 @@ void SstReader::EndStep()
         //	   ClearReadRequests()  Clean up as necessary
         //
         delete m_BP3Deserializer;
+    }
+    if (m_WriterMarshalMethod == SstMarshalBP5)
+    {
+
+        BP5PerformGets();
     }
     else
     {
@@ -451,7 +512,8 @@ void SstReader::Init()
                 SstFFSPerformGets(m_Input);                                    \
             }                                                                  \
         }                                                                      \
-        if (m_WriterMarshalMethod == SstMarshalBP)                             \
+        if ((m_WriterMarshalMethod == SstMarshalBP) ||                         \
+            (m_WriterMarshalMethod == SstMarshalBP5))                          \
         {                                                                      \
             /*  DoGetSync() is going to have terrible performance 'cause */    \
             /*  it's a bad idea in an SST-like environment.  But do */         \
@@ -522,15 +584,51 @@ void SstReader::Init()
                     variable.m_Name);                                          \
             }                                                                  \
         }                                                                      \
+        if (m_WriterMarshalMethod == SstMarshalBP5)                            \
+        {                                                                      \
+            bool need_sync = m_BP5Deserializer->QueueGet(variable, data);      \
+        }                                                                      \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_gets)
 #undef declare_gets
+
+void SstReader::BP5PerformGets()
+{
+    auto ReadRequests = m_BP5Deserializer->GenerateReadRequests();
+    std::vector<void *> sstReadHandlers;
+    for (const auto &Req : ReadRequests)
+    {
+        void *dp_info = NULL;
+        if (m_CurrentStepMetaData->DP_TimestepInfo)
+        {
+            dp_info = m_CurrentStepMetaData->DP_TimestepInfo[Req.WriterRank];
+        }
+        auto ret = SstReadRemoteMemory(m_Input, Req.WriterRank, Req.Timestep,
+                                       Req.StartOffset, Req.ReadLength,
+                                       Req.DestinationAddr, dp_info);
+        sstReadHandlers.push_back(ret);
+    }
+    for (const auto &i : sstReadHandlers)
+    {
+        if (SstWaitForCompletion(m_Input, i) != SstSuccess)
+        {
+            throw std::runtime_error(
+                "ERROR:  Writer failed before returning data");
+        }
+    }
+
+    m_BP5Deserializer->FinalizeGets(ReadRequests);
+}
 
 void SstReader::PerformGets()
 {
     if (m_WriterMarshalMethod == SstMarshalFFS)
     {
         SstFFSPerformGets(m_Input);
+    }
+    else if (m_WriterMarshalMethod == SstMarshalBP5)
+    {
+        BP5PerformGets();
     }
     else if (m_WriterMarshalMethod == SstMarshalBP)
     {
@@ -630,6 +728,10 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
         else if (m_WriterMarshalMethod == SstMarshalBP)                        \
         {                                                                      \
             return m_BP3Deserializer->BlocksInfo(variable, 0);                 \
+        }                                                                      \
+        else if (m_WriterMarshalMethod == SstMarshalBP5)                       \
+        {                                                                      \
+            return m_BP5Deserializer->BlocksInfo(variable, 0);                 \
         }                                                                      \
         throw std::invalid_argument(                                           \
             "ERROR: Unknown marshal mechanism in DoBlocksInfo\n");             \

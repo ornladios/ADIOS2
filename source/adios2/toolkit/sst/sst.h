@@ -27,8 +27,10 @@ typedef struct _SstStream *SstStream;
 /*
  *  metadata and typedefs are tentative and may come from ADIOS2 constructors.
  */
+typedef struct _SstMetaMetaBlock *SstMetaMetaList;
 typedef struct _SstFullMetadata *SstFullMetadata;
 typedef struct _SstData *SstData;
+typedef struct _SstBlock *SstBlock;
 
 typedef enum
 {
@@ -52,7 +54,8 @@ typedef struct _SstParams *SstParams;
 typedef enum
 {
     SstMarshalFFS,
-    SstMarshalBP
+    SstMarshalBP,
+    SstMarshalBP5
 } SstMarshalMethod;
 
 typedef enum
@@ -88,6 +91,11 @@ extern void SstProvideTimestep(SstStream s, SstData LocalMetadata,
                                SstData AttributeData,
                                DataFreeFunc FreeAttribute,
                                void *FreeAttributeClientData);
+extern void
+SstProvideTimestepMM(SstStream s, SstData LocalMetadata, SstData LocalData,
+                     long Timestep, DataFreeFunc FreeData, void *FreeClientData,
+                     SstData AttributeData, DataFreeFunc FreeAttribute,
+                     void *FreeAttributeClientData, SstMetaMetaList MMBlocks);
 extern void SstWriterClose(SstStream stream);
 /*  SstWriterDefinitionLock is called once only, on transition from unlock to
  * locked definitions */
@@ -99,8 +107,11 @@ extern void SstWriterDefinitionLock(SstStream stream, long EffectiveTimestep);
 extern SstStream SstReaderOpen(const char *filename, SstParams Params,
                                SMPI_Comm comm);
 extern void SstReaderGetParams(SstStream stream,
-                               SstMarshalMethod *WriterMarshalMethod);
+                               SstMarshalMethod *WriterMarshalMethod,
+                               int *WriterIsRowMajor);
 extern SstFullMetadata SstGetCurMetadata(SstStream stream);
+extern SstMetaMetaList SstGetNewMetaMetaData(SstStream stream, long timestep);
+extern SstBlock SstGetAttributeData(SstStream stream, long timestep);
 extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  size_t offset, size_t length, void *buffer,
                                  void *DP_TimestepInfo);

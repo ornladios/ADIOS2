@@ -317,7 +317,7 @@ if(Python_Interpreter_FOUND)
 endif()
 
 # Sst
-if(ADIOS2_USE_SST AND NOT MSVC)
+if(ADIOS2_USE_SST AND NOT WIN32)
   set(ADIOS2_HAVE_SST TRUE)
   find_package(LIBFABRIC 1.6)
   if(LIBFABRIC_FOUND)
@@ -329,10 +329,16 @@ if(ADIOS2_USE_SST AND NOT MSVC)
   endif()
 endif()
 
+# DAOS
 find_package(DAOS)
-  if(DAOS_FOUND)
-    set(ADIOS2_HAVE_DAOS TRUE)
-  endif()
+if(DAOS_FOUND)
+  set(ADIOS2_HAVE_DAOS TRUE)
+endif()
+
+# BP5
+if(ADIOS2_USE_BP5 AND NOT WIN32)
+  set(ADIOS2_HAVE_BP5 TRUE)
+endif()
 
 #SysV IPC
 if(UNIX)

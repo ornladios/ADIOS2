@@ -731,10 +731,12 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 //  only accesses data installed durinig initialization, it needs no
 //  locking.
 extern void SstReaderGetParams(SstStream Stream,
-                               SstMarshalMethod *WriterMarshalMethod)
+                               SstMarshalMethod *WriterMarshalMethod,
+                               int *WriterIsRowMajor)
 {
     *WriterMarshalMethod =
         (SstMarshalMethod)Stream->WriterConfigParams->MarshalMethod;
+    *WriterIsRowMajor = Stream->WriterConfigParams->IsRowMajor;
 }
 
 /*
@@ -854,6 +856,75 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
     }
 }
 
+struct _SstMetaMetaBlockInternal
+{
+    size_t TimestepAdded;
+    char *BlockData;
+    size_t BlockSize;
+    char *ID;
+    size_t IDSize;
+};
+
+void AddFormatsToMetaMetaInfo(SstStream Stream,
+                              struct _TimestepMetadataMsg *Msg)
+{
+    FFSFormatList Formats = Msg->Formats;
+    STREAM_ASSERT_LOCKED(Stream);
+    while (Formats)
+    {
+        Stream->InternalMetaMetaInfo =
+            realloc(Stream->InternalMetaMetaInfo,
+                    (sizeof(struct _SstMetaMetaBlockInternal) *
+                     (Stream->InternalMetaMetaCount + 1)));
+        struct _SstMetaMetaBlockInternal *NewInfo =
+            &Stream->InternalMetaMetaInfo[Stream->InternalMetaMetaCount];
+        Stream->InternalMetaMetaCount++;
+        NewInfo->TimestepAdded = Msg->Timestep;
+        NewInfo->ID = malloc(Formats->FormatIDRepLen);
+        NewInfo->IDSize = Formats->FormatIDRepLen;
+        NewInfo->BlockData = malloc(Formats->FormatServerRepLen);
+        NewInfo->BlockSize = Formats->FormatServerRepLen;
+        memcpy(NewInfo->ID, Formats->FormatIDRep, Formats->FormatIDRepLen);
+        memcpy(NewInfo->BlockData, Formats->FormatServerRep,
+               Formats->FormatServerRepLen);
+        Formats = Formats->Next;
+    }
+}
+
+void AddAttributesToAttrDataList(SstStream Stream,
+                                 struct _TimestepMetadataMsg *Msg)
+{
+    if (Stream->AttrsRetrieved)
+    {
+        int i = 0;
+        while (Stream->InternalAttrDataInfo &&
+               Stream->InternalAttrDataInfo[i].BlockData)
+        {
+            free(Stream->InternalAttrDataInfo[i].BlockData);
+            i++;
+        }
+        free(Stream->InternalAttrDataInfo);
+        Stream->InternalAttrDataInfo = NULL;
+        Stream->InternalAttrDataCount = 0;
+        Stream->AttrsRetrieved = 0;
+    }
+    if (Msg->AttributeData->DataSize == 0)
+        return;
+
+    Stream->InternalAttrDataInfo = realloc(
+        Stream->InternalAttrDataInfo,
+        (sizeof(struct _SstBlock) * (Stream->InternalAttrDataCount + 2)));
+    struct _SstBlock *NewInfo =
+        &Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount];
+    Stream->InternalAttrDataCount++;
+    NewInfo->BlockData = malloc(Msg->AttributeData->DataSize);
+    NewInfo->BlockSize = Msg->AttributeData->DataSize;
+    memcpy(NewInfo->BlockData, Msg->AttributeData->block,
+           Msg->AttributeData->DataSize);
+    memset(&Stream->InternalAttrDataInfo[Stream->InternalAttrDataCount], 0,
+           sizeof(struct _SstData));
+}
+
 // CP_TimestepMetadataHandler is called by the network handler thread
 // to handle incoming TimestepMetadata messages
 void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
@@ -882,6 +953,11 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
             if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
             {
                 FFSMarshalInstallPreciousMetadata(Stream, Msg);
+            }
+            else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
+            {
+                AddFormatsToMetaMetaInfo(Stream, Msg);
+                AddAttributesToAttrDataList(Stream, Msg);
             }
             STREAM_MUTEX_UNLOCK(Stream);
 
@@ -1160,6 +1236,11 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
             {
                 FFSMarshalInstallPreciousMetadata(Stream, This->MetadataMsg);
             }
+            else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
+            {
+                AddFormatsToMetaMetaInfo(Stream, This->MetadataMsg);
+                AddAttributesToAttrDataList(Stream, This->MetadataMsg);
+            }
 
             memset(&Msg, 0, sizeof(Msg));
             Msg.Timestep = This->MetadataMsg->Timestep;
@@ -1276,6 +1357,11 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
                            "metadata for discarded TS %d\n",
                            Next->MetadataMsg->Timestep);
                 FFSMarshalInstallPreciousMetadata(Stream, Next->MetadataMsg);
+                if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
+                {
+                    AddFormatsToMetaMetaInfo(Stream, Next->MetadataMsg);
+                    AddAttributesToAttrDataList(Stream, Next->MetadataMsg);
+                }
                 TSMetadataList Tmp = Next;
                 Next = Next->Next;
                 FreeTimestep(Stream, Tmp->MetadataMsg->Timestep);
@@ -1356,6 +1442,45 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
 extern SstFullMetadata SstGetCurMetadata(SstStream Stream)
 {
     return Stream->CurrentMetadata;
+}
+
+extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
+{
+    int RetCount = 0;
+    STREAM_MUTEX_LOCK(Stream);
+    for (int i = 0; i < Stream->InternalMetaMetaCount; i++)
+    {
+        if (Stream->InternalMetaMetaInfo[i].TimestepAdded >= Timestep)
+            RetCount++;
+    }
+    if (RetCount == 0)
+        return NULL;
+    SstMetaMetaList ret = malloc(sizeof(ret[0]) * (RetCount + 1));
+    int j = 0;
+    for (int i = 0; i < Stream->InternalMetaMetaCount; i++)
+    {
+        if (Stream->InternalMetaMetaInfo[i].TimestepAdded >= Timestep)
+        {
+            // no copies, keep memory ownership in SST
+            ret[j].BlockData = Stream->InternalMetaMetaInfo[i].BlockData;
+            ret[j].BlockSize = Stream->InternalMetaMetaInfo[i].BlockSize;
+            ret[j].ID = Stream->InternalMetaMetaInfo[i].ID;
+            ret[j].IDSize = Stream->InternalMetaMetaInfo[i].IDSize;
+            j++;
+        }
+    }
+    memset(&ret[j], 0, sizeof(ret[j]));
+    STREAM_MUTEX_UNLOCK(Stream);
+    return ret;
+}
+
+extern SstBlock SstGetAttributeData(SstStream Stream, long Timestep)
+{
+    STREAM_MUTEX_LOCK(Stream);
+    struct _SstBlock *InternalAttrDataInfo = Stream->InternalAttrDataInfo;
+    Stream->AttrsRetrieved = 1;
+    STREAM_MUTEX_UNLOCK(Stream);
+    return InternalAttrDataInfo;
 }
 
 static void AddToReadStats(SstStream Stream, int Rank, long Timestep,
@@ -1749,6 +1874,11 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
             FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
             TAU_STOP("FFS marshaling case");
         }
+        else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
+        {
+            AddFormatsToMetaMetaInfo(Stream, Entry->MetadataMsg);
+            AddAttributesToAttrDataList(Stream, Entry->MetadataMsg);
+        }
         Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
         memset(Mdata, 0, sizeof(struct _SstFullMetadata));
@@ -1982,6 +2112,12 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                 "SstAdvanceStep installing precious metadata before exiting\n");
             FFSMarshalInstallPreciousMetadata(Stream, ReturnData->TSmsg);
         }
+        else if ((Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5) &&
+                 (ReturnData->TSmsg))
+        {
+            AddFormatsToMetaMetaInfo(Stream, ReturnData->TSmsg);
+            AddAttributesToAttrDataList(Stream, ReturnData->TSmsg);
+        }
 
         free(free_block);
         CP_verbose(Stream, PerStepVerbose,
@@ -2014,6 +2150,11 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                        "Calling install  metadata from metadata block %p\n",
                        MetadataMsg);
             FFSMarshalInstallMetadata(Stream, MetadataMsg);
+        }
+        else if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
+        {
+            AddFormatsToMetaMetaInfo(Stream, MetadataMsg);
+            AddAttributesToAttrDataList(Stream, MetadataMsg);
         }
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
         memset(Mdata, 0, sizeof(struct _SstFullMetadata));
@@ -2120,6 +2261,22 @@ extern void SstReaderClose(SstStream Stream)
         free(Stream->CurrentMetadata);
         Stream->CurrentMetadata = NULL;
     }
+    STREAM_MUTEX_LOCK(Stream);
+    for (int i = 0; i < Stream->InternalMetaMetaCount; i++)
+    {
+        free(Stream->InternalMetaMetaInfo[i].ID);
+        free(Stream->InternalMetaMetaInfo[i].BlockData);
+    }
+    free(Stream->InternalMetaMetaInfo);
+    if (Stream->InternalAttrDataInfo)
+    {
+        for (int i = 0; i < Stream->InternalAttrDataCount; i++)
+        {
+            free(Stream->InternalAttrDataInfo[i].BlockData);
+        }
+        free(Stream->InternalAttrDataInfo);
+    }
+    STREAM_MUTEX_UNLOCK(Stream);
 }
 
 //  SstWaitForCompletion is only called by the main program thread and
