@@ -850,7 +850,7 @@ void BP5Deserializer::ExtractSelectionFromPartialRM(
         size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
         size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
                            SelectionOffsets[Dim] + SelectionCounts[Dim]);
-        if (Dim < OperantDims - 1)
+        if (OperantDims && (Dim < OperantDims - 1))
         {
             BlockCount *= (Right - Left);
         }
