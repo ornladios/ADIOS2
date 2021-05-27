@@ -168,7 +168,7 @@ public:
          * elements (not bytes). The default big number per Put() default will
          * result in the original single min/max value-pair per block
          */
-        size_t StatsBlockSize = 1125899906842624;
+        size_t StatsBlockSize = 1125899906842624ULL;
 
         /** buffer memory growth factor */
         float GrowthFactor = DefaultBufferGrowthFactor;
