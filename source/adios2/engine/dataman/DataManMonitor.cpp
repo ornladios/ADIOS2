@@ -11,6 +11,7 @@
 #include "DataManMonitor.h"
 #include <fstream>
 #include <iostream>
+#include <math.h>
 #include <nlohmann/json.hpp>
 
 namespace adios2
@@ -201,6 +202,44 @@ void DataManMonitor::OutputJson(const std::string &filename)
     file.open((filename + ".json").c_str(),
               std::fstream::out | std::fstream::app);
     file << output.dump() << "\0" << std::endl;
+    file.close();
+}
+
+void DataManMonitor::OutputCsv(const std::string &filename)
+{
+
+    bool fileExists;
+    std::ifstream checkFile((filename + ".csv").c_str());
+    if (checkFile.is_open())
+    {
+        fileExists = true;
+    }
+    else
+    {
+        fileExists = false;
+    }
+    checkFile.close();
+
+    std::ofstream file;
+    file.open((filename + ".csv").c_str(),
+              std::fstream::out | std::fstream::app);
+    if (!fileExists)
+    {
+        file << "bandwidth, latency, precision, completeness, size, "
+                "aggregation, compression, threading"
+             << std::endl;
+    }
+    file << floor(log2(m_TotalRate)) << ", ";
+    file << floor(log2(m_AccumulatedLatency /
+                       static_cast<double>(m_CurrentStep + 1)))
+         << ", ";
+    file << floor(log10(std::stof(m_RequiredAccuracy))) << ", ";
+    file << ceil(log2(m_DropRate * 100 + 1)) << ", ";
+    file << floor(log2(m_StepBytes)) << ", ";
+    file << ceil(log2(m_CombiningSteps + 1)) << ", ";
+    file << floor(log10(std::stof(m_CompressionAccuracy))) << ", ";
+    file << static_cast<int>(m_WriterThreading) * 2 +
+                static_cast<int>(m_ReaderThreading);
     file.close();
 }
 
