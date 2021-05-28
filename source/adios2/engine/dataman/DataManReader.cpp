@@ -359,6 +359,7 @@ void DataManReader::DoClose(const int transportIndex)
     m_IsClosed = true;
     if (m_MonitorActive)
     {
+        m_Monitor.OutputCsv(m_Name);
         m_Monitor.OutputJson(m_Name);
     }
 }

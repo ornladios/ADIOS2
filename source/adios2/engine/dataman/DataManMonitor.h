@@ -41,6 +41,7 @@ public:
     void SetRequiredAccuracy(const std::string &accuracyRequired);
     void AddTransport(const std::string &method);
     void OutputJson(const std::string &filename);
+    void OutputCsv(const std::string &filename);
 
 private:
     using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
