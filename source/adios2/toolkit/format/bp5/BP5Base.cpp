@@ -35,7 +35,7 @@ void BP5Base::FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
                (Element - MBase->BitFieldCount + 1) * sizeof(size_t));
         MBase->BitFieldCount = Element + 1;
     }
-    MBase->BitField[Element] |= (1 << ElementBit);
+    MBase->BitField[Element] |= ((size_t)1 << ElementBit);
 }
 
 int BP5Base::FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit)
@@ -50,8 +50,8 @@ int BP5Base::FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit)
                (Element - MBase->BitFieldCount + 1) * sizeof(size_t));
         MBase->BitFieldCount = Element + 1;
     }
-    return ((MBase->BitField[Element] & (1 << ElementBit)) ==
-            (1 << ElementBit));
+    return ((MBase->BitField[Element] & ((size_t)1 << ElementBit)) ==
+            ((size_t)1 << ElementBit));
 }
 
 }
