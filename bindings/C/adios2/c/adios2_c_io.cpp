@@ -434,9 +434,6 @@ adios2_error adios2_inquire_group_variables(adios2_variable ***variables,
         }
 
         *size = names.size();
-        if (*size == 0)
-            return adios2_error_none;
-
         adios2_variable **list =
             (adios2_variable **)calloc(*size, sizeof(adios2_variable *));
 
