@@ -67,8 +67,8 @@ private:
     double m_StepsPerSecond = 0;
     double m_AccumulatedLatency = 0;
     std::string m_CompressionMethod;
-    std::string m_CompressionAccuracy;
-    std::string m_RequiredAccuracy;
+    float m_CompressionAccuracy;
+    float m_RequiredAccuracy;
     std::string m_TransportMethod;
     bool m_ReaderThreading = false;
     bool m_WriterThreading = false;
