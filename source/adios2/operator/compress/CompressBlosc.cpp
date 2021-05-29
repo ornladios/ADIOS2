@@ -20,6 +20,7 @@ extern "C" {
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <iostream>
 
 namespace adios2
 {
@@ -139,6 +140,12 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
                 value, "when setting Blosc threshold parameter\n"));
             if (thresholdSize < 128u)
                 thresholdSize = 128u;
+        }
+        else
+        {
+            std::cerr << "ADIOS WARNING: Unknown parameter keyword '" << key
+                      << "' with value '" << value
+                      << "' passed to Blosc compression operator." << std::endl;
         }
     }
 
