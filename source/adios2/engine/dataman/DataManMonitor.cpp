@@ -155,14 +155,29 @@ void DataManMonitor::AddBytes(const size_t bytes)
 
 void DataManMonitor::SetRequiredAccuracy(const std::string &accuracyRequired)
 {
-    m_RequiredAccuracy = accuracyRequired;
+    if (accuracyRequired.empty())
+    {
+        m_RequiredAccuracy = 0.00000000001;
+    }
+    else
+    {
+        m_RequiredAccuracy = std::stof(accuracyRequired);
+    }
 }
 
 void DataManMonitor::AddCompression(const std::string &method,
                                     const std::string &accuracyUsed)
 {
     m_CompressionMethod = method;
-    m_CompressionAccuracy = accuracyUsed;
+
+    if (accuracyUsed.empty())
+    {
+        m_CompressionAccuracy = 0.00000000001;
+    }
+    else
+    {
+        m_CompressionAccuracy = std::stof(accuracyUsed);
+    }
 }
 
 void DataManMonitor::AddTransport(const std::string &method)
@@ -233,13 +248,14 @@ void DataManMonitor::OutputCsv(const std::string &filename)
     file << floor(log2(m_AccumulatedLatency /
                        static_cast<double>(m_CurrentStep + 1)))
          << ", ";
-    file << floor(log10(std::stof(m_RequiredAccuracy))) << ", ";
+    file << floor(log10(m_RequiredAccuracy)) << ", ";
     file << ceil(log2(m_DropRate * 100 + 1)) << ", ";
     file << floor(log2(m_StepBytes)) << ", ";
     file << ceil(log2(m_CombiningSteps + 1)) << ", ";
-    file << floor(log10(std::stof(m_CompressionAccuracy))) << ", ";
+    file << floor(log10(m_CompressionAccuracy)) << ", ";
     file << static_cast<int>(m_WriterThreading) * 2 +
-                static_cast<int>(m_ReaderThreading);
+                static_cast<int>(m_ReaderThreading)
+         << std::endl;
     file.close();
 }
 
