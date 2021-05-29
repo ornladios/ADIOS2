@@ -244,15 +244,16 @@ void DataManMonitor::OutputCsv(const std::string &filename)
                 "aggregation, compression, threading"
              << std::endl;
     }
-    file << floor(log2(m_TotalRate)) << ", ";
+    file << floor(log2(m_TotalRate)) - 4 << ", ";
     file << floor(log2(m_AccumulatedLatency /
-                       static_cast<double>(m_CurrentStep + 1)))
+                       static_cast<double>(m_CurrentStep + 1))) -
+                3
          << ", ";
-    file << floor(log10(m_RequiredAccuracy)) << ", ";
+    file << floor(log10(m_RequiredAccuracy)) + 6 << ", ";
     file << ceil(log2(m_DropRate * 100 + 1)) << ", ";
-    file << floor(log2(m_StepBytes)) << ", ";
-    file << ceil(log2(m_CombiningSteps + 1)) << ", ";
-    file << floor(log10(m_CompressionAccuracy)) << ", ";
+    file << floor(log2(m_StepBytes)) - 15 << ", ";
+    file << ceil(log2(m_CombiningSteps)) << ", ";
+    file << floor(log10(m_CompressionAccuracy)) + 6 << ", ";
     file << static_cast<int>(m_WriterThreading) * 2 +
                 static_cast<int>(m_ReaderThreading)
          << std::endl;
