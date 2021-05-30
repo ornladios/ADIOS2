@@ -44,6 +44,8 @@ public:
     void OutputCsv(const std::string &filename);
 
 private:
+    bool FileExisted(const std::string &filename);
+
     using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
     TimePoint m_InitialTimer;
     std::queue<TimePoint> m_StepTimers;
@@ -67,8 +69,8 @@ private:
     double m_StepsPerSecond = 0;
     double m_AccumulatedLatency = 0;
     std::string m_CompressionMethod;
-    float m_CompressionAccuracy;
-    float m_RequiredAccuracy;
+    float m_CompressionAccuracy = 0;
+    float m_RequiredAccuracy = 0.00001;
     std::string m_TransportMethod;
     bool m_ReaderThreading = false;
     bool m_WriterThreading = false;
