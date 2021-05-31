@@ -155,11 +155,7 @@ void DataManMonitor::AddBytes(const size_t bytes)
 
 void DataManMonitor::SetRequiredAccuracy(const std::string &accuracyRequired)
 {
-    if (accuracyRequired.empty())
-    {
-        m_RequiredAccuracy = 0.00000000001;
-    }
-    else
+    if (!accuracyRequired.empty())
     {
         m_RequiredAccuracy = std::stof(accuracyRequired);
     }
@@ -170,11 +166,7 @@ void DataManMonitor::AddCompression(const std::string &method,
 {
     m_CompressionMethod = method;
 
-    if (accuracyUsed.empty())
-    {
-        m_CompressionAccuracy = 0.00000000001;
-    }
-    else
+    if (!accuracyUsed.empty())
     {
         m_CompressionAccuracy = std::stof(accuracyUsed);
     }
@@ -213,31 +205,23 @@ void DataManMonitor::OutputJson(const std::string &filename)
     output["Info"]["RoundLatency"] = m_RoundLatency;
     output["Info"]["ClockError"] = m_ClockError;
 
-    std::ofstream file;
-    file.open((filename + ".json").c_str(),
-              std::fstream::out | std::fstream::app);
+    bool fileExists = FileExisted(filename + ".json");
+
+    std::ofstream file((filename + ".json").c_str(),
+                       std::fstream::out | std::fstream::app);
+    if (!fileExists)
+    {
+        file << "ADOPS2 DataMan performance measurements" << std::endl;
+    }
     file << output.dump() << "\0" << std::endl;
     file.close();
 }
 
 void DataManMonitor::OutputCsv(const std::string &filename)
 {
-
-    bool fileExists;
-    std::ifstream checkFile((filename + ".csv").c_str());
-    if (checkFile.is_open())
-    {
-        fileExists = true;
-    }
-    else
-    {
-        fileExists = false;
-    }
-    checkFile.close();
-
-    std::ofstream file;
-    file.open((filename + ".csv").c_str(),
-              std::fstream::out | std::fstream::app);
+    bool fileExists = FileExisted(filename + ".csv");
+    std::ofstream file((filename + ".csv").c_str(),
+                       std::fstream::out | std::fstream::app);
     if (!fileExists)
     {
         file << "bandwidth, latency, precision, completeness, size, "
@@ -248,15 +232,47 @@ void DataManMonitor::OutputCsv(const std::string &filename)
     file << floor(log2(m_AccumulatedLatency /
                        static_cast<double>(m_CurrentStep + 1)))
          << ", ";
-    file << floor(log10(m_RequiredAccuracy)) << ", ";
+    if (m_RequiredAccuracy == 0)
+    {
+        file << 0 << ", ";
+    }
+    else if (m_RequiredAccuracy < 0.00001)
+    {
+        file << 1 << ", ";
+    }
+    else
+    {
+        file << round(log10(m_RequiredAccuracy)) + 6 << ", ";
+    }
     file << ceil(log2(m_DropRate * 100 + 1)) << ", ";
-    file << floor(log2(m_StepBytes)) << ", ";
-    file << ceil(log2(m_CombiningSteps + 1)) << ", ";
-    file << floor(log10(m_CompressionAccuracy)) << ", ";
+    file << floor(log(m_StepBytes) / log(5)) - 4 << ", ";
+    file << ceil(log2(m_CombiningSteps)) << ", ";
+    if (m_CompressionAccuracy == 0)
+    {
+        file << 0 << ", ";
+    }
+    else if (m_CompressionAccuracy < 0.00001)
+    {
+        file << 1 << ", ";
+    }
+    else
+    {
+        file << round(log10(m_CompressionAccuracy)) + 6 << ", ";
+    }
     file << static_cast<int>(m_WriterThreading) * 2 +
                 static_cast<int>(m_ReaderThreading)
          << std::endl;
     file.close();
+}
+
+bool DataManMonitor::FileExisted(const std::string &filename)
+{
+    std::ifstream checkFile(filename.c_str());
+    if (checkFile.is_open())
+    {
+        return true;
+    }
+    return false;
 }
 
 } // end namespace engine
