@@ -19,8 +19,6 @@
 #include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "cp_internal.h"
 
-#define gettid() pthread_self()
-
 static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                                      enum StreamStatus NewState);
 
