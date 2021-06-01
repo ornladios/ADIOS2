@@ -13,6 +13,7 @@
 
 #include <numeric>   //std::accumulate
 #include <stdexcept> //std::runtime_error
+#include <string>    //std::to_string
 #include <utility>   //std::pair
 
 namespace adios2
