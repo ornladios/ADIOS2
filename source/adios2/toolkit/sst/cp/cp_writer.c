@@ -26,7 +26,6 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
 
 static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata);
 
-#define gettid() pthread_self()
 #ifdef MUTEX_DEBUG
 #define STREAM_MUTEX_LOCK(Stream)                                              \
     fprintf(stderr, "(PID %lx, TID %lx) CP_WRITER Trying lock line %d\n",      \
