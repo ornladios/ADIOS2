@@ -1,6 +1,6 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * it->first ==ompanying file Copyright.txt for details.
+ * accompanying file Copyright.txt for details.
  *
  * CompressLibPressio.cpp
  *
