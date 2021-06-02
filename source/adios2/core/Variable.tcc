@@ -70,7 +70,7 @@ Dims Variable<T>::DoCount() const
         const std::vector<typename Variable<T>::BPInfo> blocksInfo =
             m_Engine->BlocksInfo<T>(*this, step);
 
-        if (m_BlockID > blocksInfo.size())
+        if (m_BlockID >= blocksInfo.size())
         {
             throw std::invalid_argument(
                 "ERROR: blockID " + std::to_string(m_BlockID) +
