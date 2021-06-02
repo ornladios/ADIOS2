@@ -18,11 +18,12 @@
 #include <iostream>
 #include <thread>
 
-#include <arpa/inet.h> //AvailableIpAddresses() inet_ntoa
-#include <net/if.h>    //AvailableIpAddresses() struct if_nameindex
-#include <string.h>    //AvailableIpAddresses() strncp
-#include <sys/ioctl.h> //AvailableIpAddresses() ioctl
-#include <unistd.h>    //AvailableIpAddresses() close
+#include <arpa/inet.h>  //AvailableIpAddresses() inet_ntoa
+#include <net/if.h>     //AvailableIpAddresses() struct if_nameindex
+#include <netinet/in.h> //AvailableIpAddresses() struct sockaddr_in
+#include <string.h>     //AvailableIpAddresses() strncp
+#include <sys/ioctl.h>  //AvailableIpAddresses() ioctl
+#include <unistd.h>     //AvailableIpAddresses() close
 
 #include <nlohmann/json.hpp>
 
