@@ -60,6 +60,8 @@ adios2_error String2CAPI(const std::string &s, char *buf, size_t *size);
     MACRO(adios2_type_uint64_t)                                                \
     MACRO(adios2_type_float)                                                   \
     MACRO(adios2_type_double)                                                  \
-    MACRO(adios2_type_long_double)
+    MACRO(adios2_type_long_double)                                             \
+    MACRO(adios2_type_float_complex)                                           \
+    MACRO(adios2_type_double_complex)
 
 #endif /* ADIOS2_BINDINGS_C_C_ADIOS2_C_INTERNAL_H_ */
