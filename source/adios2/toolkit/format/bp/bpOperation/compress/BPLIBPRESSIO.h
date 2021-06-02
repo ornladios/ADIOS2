@@ -48,8 +48,8 @@ public:
     ADIOS2_FOREACH_LIBPRESSIO_TYPE_1ARG(declare_type)
 #undef declare_type
 
-    void GetMetadata(const std::vector<char> &buffer,
-                     Params &info) const noexcept final;
+    void GetMetadata(const std::vector<char> &buffer, Params &info) const
+        noexcept final;
 
     void GetData(const char *input,
                  const helper::BlockOperationInfo &blockOperationInfo,

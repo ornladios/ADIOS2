@@ -10,8 +10,8 @@
 
 #include "CompressLibPressio.h"
 
-#include <cmath> //std::ceil
-#include <ios>   //std::ios_base::failure
+#include <cmath>     //std::ceil
+#include <ios>       //std::ios_base::failure
 #include <stdexcept> //std::invalid_argument
 
 extern "C" {
