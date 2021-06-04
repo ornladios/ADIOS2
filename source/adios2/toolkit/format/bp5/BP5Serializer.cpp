@@ -686,8 +686,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
                       Info.AttributeData, &AttributeSize);
         AttrData =
             new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
-        //        FMdump_encoded_data(Info.AttributeFormat, AttributeBlock,
-        //        1024000);
+        // FMdump_encoded_data(Info.AttributeFormat, AttributeBlock,
+        //  1024000);
     }
 
     //    FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);
@@ -711,21 +711,6 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
         Formats, Metadata, AttrData, CurDataBuffer
     };
     CurDataBuffer = NULL;
-    return Ret;
-#ifdef NDEF
-    SstInternalProvideTimestep(Stream, &MetaDataRec, &DataRec, Timestep,
-                               Formats, FreeTSInfo, TSInfo, &AttributeRec,
-                               FreeAttrInfo, AttributeEncodeBuffer);
-    if (AttributeEncodeBuffer)
-    {
-        free_FFSBuffer(AttributeEncodeBuffer);
-    }
-    while (Formats)
-    {
-        struct FFSFormatBlock *Tmp = Formats->Next;
-        free(Formats);
-        Formats = Tmp;
-    }
     if (Info.AttributeFields)
         free_FMfield_list(Info.AttributeFields);
     Info.AttributeFields = NULL;
@@ -734,16 +719,20 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
         free(Info.AttributeData);
     Info.AttributeData = NULL;
     Info.AttributeSize = 0;
-#endif
+    return Ret;
 }
 
 std::vector<char> BP5Serializer::CopyMetadataToContiguous(
     const std::vector<BP5Base::MetaMetaInfoBlock> NewMetaMetaBlocks,
-    const format::Buffer *MetaEncodeBuffer, uint64_t DataSize) const
+    const format::Buffer *MetaEncodeBuffer,
+    const format::Buffer *AttributeEncodeBuffer, uint64_t DataSize) const
 {
     std::vector<char> Ret;
     uint64_t RetSize = 0;
     size_t Position = 0;
+    size_t MetadataEncodeBufferAlignedSize =
+        ((MetaEncodeBuffer->m_FixedSize + 7) & ~0x7);
+    size_t AttributeEncodeBufferAlignedSize = 0;
     int32_t NMMBCount = NewMetaMetaBlocks.size();
     RetSize += sizeof(NMMBCount); // NMMB count
 
@@ -753,7 +742,14 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
         RetSize += n.MetaMetaInfoLen + n.MetaMetaIDLen;
     }
     RetSize += sizeof(int64_t); // MencodeLen
-    RetSize += MetaEncodeBuffer->m_FixedSize;
+    RetSize += MetadataEncodeBufferAlignedSize;
+    RetSize += sizeof(int64_t); // AttrEncodeLen
+    if (AttributeEncodeBuffer)
+    {
+        AttributeEncodeBufferAlignedSize =
+            ((AttributeEncodeBuffer->m_FixedSize + 7) & ~0x7);
+        RetSize += AttributeEncodeBufferAlignedSize;
+    }
     RetSize += sizeof(DataSize);
     Ret.resize(RetSize);
 
@@ -769,10 +765,34 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
         helper::CopyToBuffer(Ret, Position, n.MetaMetaInfo, InfoLen);
     }
 
-    int64_t MEBSize = MetaEncodeBuffer->m_FixedSize;
+    int64_t MEBSize = MetadataEncodeBufferAlignedSize;
     helper::CopyToBuffer(Ret, Position, &MEBSize);
     helper::CopyToBuffer(Ret, Position, MetaEncodeBuffer->Data(),
                          MetaEncodeBuffer->m_FixedSize);
+    if (MetaEncodeBuffer->m_FixedSize != MetadataEncodeBufferAlignedSize)
+    {
+        uint64_t zero = 0;
+        helper::CopyToBuffer(Ret, Position, (char *)&zero,
+                             MetadataEncodeBufferAlignedSize -
+                                 MetaEncodeBuffer->m_FixedSize);
+    }
+    int64_t AEBSize = 0;
+    if (AttributeEncodeBuffer)
+        AEBSize = AttributeEncodeBufferAlignedSize;
+    helper::CopyToBuffer(Ret, Position, &AEBSize);
+    if (AttributeEncodeBuffer)
+    {
+        helper::CopyToBuffer(Ret, Position, AttributeEncodeBuffer->Data(),
+                             AttributeEncodeBuffer->m_FixedSize);
+        if (AttributeEncodeBuffer->m_FixedSize !=
+            AttributeEncodeBufferAlignedSize)
+        {
+            uint64_t zero = 0;
+            helper::CopyToBuffer(Ret, Position, (char *)&zero,
+                                 AttributeEncodeBufferAlignedSize -
+                                     AttributeEncodeBuffer->m_FixedSize);
+        }
+    }
     helper::CopyToBuffer(Ret, Position, &DataSize);
     return Ret;
 }
@@ -780,6 +800,7 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
 std::vector<BufferV::iovec> BP5Serializer::BreakoutContiguousMetadata(
     std::vector<char> *Aggregate, const std::vector<size_t> Counts,
     std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
+    std::vector<BufferV::iovec> &AttributeBlocks,
     std::vector<uint64_t> &DataSizes) const
 {
     size_t Position = 0;
@@ -820,6 +841,10 @@ std::vector<BufferV::iovec> BP5Serializer::BreakoutContiguousMetadata(
         helper::CopyFromBuffer(*Aggregate, Position, &MEBSize);
         MetadataBlocks.push_back({Aggregate->data() + Position, MEBSize});
         Position += MEBSize;
+        uint64_t AEBSize;
+        helper::CopyFromBuffer(*Aggregate, Position, &AEBSize);
+        AttributeBlocks.push_back({Aggregate->data() + Position, AEBSize});
+        Position += AEBSize;
         helper::CopyFromBuffer(*Aggregate, Position, &DataSizes[Rank]);
     }
     return MetadataBlocks;

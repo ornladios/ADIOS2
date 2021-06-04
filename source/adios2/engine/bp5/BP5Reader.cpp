@@ -4,8 +4,6 @@
  *
  * BP5Reader.cpp
  *
- *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
  */
 
 #include "BP5Reader.h"
@@ -96,16 +94,26 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
         size_t pgstart = m_MetadataIndexTable[m_CurrentStep][0];
         size_t Position = pgstart + sizeof(uint64_t); // skip total data size
-        size_t MDPosition = Position + sizeof(uint64_t) * m_WriterCount;
+        size_t MDPosition = Position + 2 * sizeof(uint64_t) * m_WriterCount;
         for (int i = 0; i < m_WriterCount; i++)
         {
+            // variable metadata for timestep
             size_t ThisMDSize = helper::ReadValue<uint64_t>(
                 m_Metadata.m_Buffer, Position, m_Minifooter.IsLittleEndian);
             char *ThisMD = m_Metadata.m_Buffer.data() + MDPosition;
             m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, i);
             MDPosition += ThisMDSize;
         }
-
+        for (int i = 0; i < m_WriterCount; i++)
+        {
+            // attribute metadata for timestep
+            size_t ThisADSize = helper::ReadValue<uint64_t>(
+                m_Metadata.m_Buffer, Position, m_Minifooter.IsLittleEndian);
+            char *ThisAD = m_Metadata.m_Buffer.data() + MDPosition;
+            if (ThisADSize > 0)
+                m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
+            MDPosition += ThisADSize;
+        }
         m_IO.ResetVariablesStepSelection(false,
                                          "in call to BP5 Reader BeginStep");
 
@@ -383,6 +391,7 @@ void BP5Reader::InstallMetaMetaData(format::BufferSTL buffer)
     while (Position < buffer.m_Buffer.size())
     {
         format::BP5Base::MetaMetaInfoBlock MMI;
+
         MMI.MetaMetaIDLen = helper::ReadValue<uint64_t>(
             buffer.m_Buffer, Position, m_Minifooter.IsLittleEndian);
         MMI.MetaMetaInfoLen = helper::ReadValue<uint64_t>(

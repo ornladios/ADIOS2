@@ -124,7 +124,8 @@ private:
                                 std::vector<uint64_t> DataSizes);
 
     uint64_t
-    WriteMetadata(const std::vector<format::BufferV::iovec> MetaDataBlocks);
+    WriteMetadata(const std::vector<format::BufferV::iovec> MetaDataBlocks,
+                  const std::vector<format::BufferV::iovec> AttributeBlocks);
 
     void WriteData(format::BufferV *Data);
 
@@ -137,6 +138,8 @@ private:
     void UpdateActiveFlag(const bool active);
 
     void WriteCollectiveMetadataFile(const bool isFinal = false);
+
+    void MarshalAttributes();
 
     /**
      * N-to-N data buffers writes, including metadata file
@@ -163,6 +166,9 @@ private:
 private:
     uint64_t m_MetaDataPos = 0; // updated during WriteMetaData
     uint64_t m_DataPos = 0;     // updated during WriteData
+    uint32_t m_MarshaledAttributesCount =
+        0; // updated during EndStep/MarshalAttributes
+
     std::vector<uint64_t> m_WriterDataPos;
     void MakeHeader(format::BufferSTL &b, const std::string fileType,
                     const bool isActive);
