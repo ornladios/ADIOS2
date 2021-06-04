@@ -238,8 +238,6 @@ if(ADIOS2_HAVE_BP5)
     set (BP5_TESTS ${ALL_SIMPLE_TESTS})
     # Delayed reader not worth testing on file engines
     list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
-    # Attribute's not implemented yet for BP5
-    list (FILTER BP5_TESTS EXCLUDE REGEX "Attr")
     # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
 #    list (FILTER BP5_TESTS EXCLUDE REGEX ".*NoData$")
     foreach(test ${BP5_TESTS})

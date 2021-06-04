@@ -71,11 +71,13 @@ public:
 
     std::vector<char> CopyMetadataToContiguous(
         const std::vector<MetaMetaInfoBlock> NewmetaMetaBlocks,
-        const format::Buffer *MetaEncodeBuffer, uint64_t DataSize) const;
+        const format::Buffer *MetaEncodeBuffer,
+        const format::Buffer *AttributeEncodeBuffer, uint64_t DataSize) const;
 
     std::vector<BufferV::iovec> BreakoutContiguousMetadata(
         std::vector<char> *Aggregate, const std::vector<size_t> Counts,
         std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
+        std::vector<BufferV::iovec> &AttributeBlocks,
         std::vector<uint64_t> &DataSizes) const;
 
 private:

@@ -25,6 +25,8 @@ namespace core
 namespace engine
 {
 
+using namespace adios2::format;
+
 BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(),
@@ -69,24 +71,42 @@ void BP5Writer::WriteMetaMetadata(
 }
 
 uint64_t BP5Writer::WriteMetadata(
-    const std::vector<format::BufferV::iovec> MetaDataBlocks)
+    const std::vector<format::BufferV::iovec> MetaDataBlocks,
+    const std::vector<format::BufferV::iovec> AttributeBlocks)
 {
     uint64_t MDataTotalSize = 0;
     uint64_t MetaDataSize = 0;
     std::vector<uint64_t> SizeVector;
+    std::vector<uint64_t> AttrSizeVector;
     SizeVector.reserve(MetaDataBlocks.size());
     for (auto &b : MetaDataBlocks)
     {
         MDataTotalSize += sizeof(uint64_t) + b.iov_len;
         SizeVector.push_back(b.iov_len);
     }
+    for (auto &b : AttributeBlocks)
+    {
+        MDataTotalSize += sizeof(uint64_t) + b.iov_len;
+        AttrSizeVector.push_back(b.iov_len);
+    }
     MetaDataSize = 0;
     m_FileMetadataManager.WriteFiles((char *)&MDataTotalSize, sizeof(uint64_t));
     MetaDataSize += sizeof(uint64_t);
     m_FileMetadataManager.WriteFiles((char *)SizeVector.data(),
                                      sizeof(uint64_t) * SizeVector.size());
-    MetaDataSize += sizeof(uint64_t) * SizeVector.size();
+    MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
+    m_FileMetadataManager.WriteFiles((char *)AttrSizeVector.data(),
+                                     sizeof(uint64_t) * AttrSizeVector.size());
+    MetaDataSize += sizeof(uint64_t) * AttrSizeVector.size();
     for (auto &b : MetaDataBlocks)
+    {
+        if (!b.iov_base)
+            continue;
+        m_FileMetadataManager.WriteFiles((char *)b.iov_base, b.iov_len);
+        MetaDataSize += b.iov_len;
+    }
+
+    for (auto &b : AttributeBlocks)
     {
         if (!b.iov_base)
             continue;
@@ -133,9 +153,67 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
     }
 }
 
+void BP5Writer::MarshalAttributes()
+{
+    TAU_SCOPED_TIMER_FUNC();
+    const auto &attributes = m_IO.GetAttributes();
+
+    const uint32_t attributesCount = static_cast<uint32_t>(attributes.size());
+
+    // if there are no new attributes, nothing to do
+    if (attributesCount == m_MarshaledAttributesCount)
+    {
+        return;
+    }
+
+    for (const auto &attributePair : attributes)
+    {
+        const std::string name(attributePair.first);
+        const DataType type(attributePair.second->m_Type);
+
+        if (type == DataType::None)
+        {
+        }
+        else if (type == helper::GetDataType<std::string>())
+        {
+            core::Attribute<std::string> &attribute =
+                *m_IO.InquireAttribute<std::string>(name);
+            int element_count = -1;
+            const char *data_addr = attribute.m_DataSingleValue.c_str();
+            if (!attribute.m_IsSingleValue)
+            {
+                //
+            }
+
+            m_BP5Serializer.MarshalAttribute(name.c_str(), type, sizeof(char *),
+                                             element_count, data_addr);
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetDataType<T>())                                 \
+    {                                                                          \
+        core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name);       \
+        int element_count = -1;                                                \
+        void *data_addr = &attribute.m_DataSingleValue;                        \
+        if (!attribute.m_IsSingleValue)                                        \
+        {                                                                      \
+            element_count = attribute.m_Elements;                              \
+            data_addr = attribute.m_DataArray.data();                          \
+        }                                                                      \
+        m_BP5Serializer.MarshalAttribute(attribute.m_Name.c_str(), type,       \
+                                         sizeof(T), element_count, data_addr); \
+    }
+
+        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    }
+    m_MarshaledAttributesCount = attributesCount;
+}
+
 void BP5Writer::EndStep()
 {
     TAU_SCOPED_TIMER("BP5Writer::EndStep");
+
+    MarshalAttributes();
 
     // true: advances step
     auto TSInfo = m_BP5Serializer.CloseTimestep(m_WriterStep);
@@ -146,7 +224,7 @@ void BP5Writer::EndStep()
 
     std::vector<char> MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
         TSInfo.NewMetaMetaBlocks, TSInfo.MetaEncodeBuffer,
-        TSInfo.DataBuffer->Size());
+        TSInfo.AttributeEncodeBuffer, TSInfo.DataBuffer->Size());
 
     size_t LocalSize = MetaBuffer.size();
     std::vector<size_t> RecvCounts = m_Comm.GatherValues(LocalSize, 0);
@@ -166,11 +244,13 @@ void BP5Writer::EndStep()
     {
         std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
         std::vector<uint64_t> DataSizes;
+        std::vector<BufferV::iovec> AttributeBlocks;
         auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
-            RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, DataSizes);
+            RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks,
+            DataSizes);
         WriteMetaMetadata(UniqueMetaMetaBlocks);
         uint64_t ThisMetaDataPos = m_MetaDataPos;
-        uint64_t ThisMetaDataSize = WriteMetadata(Metadata);
+        uint64_t ThisMetaDataSize = WriteMetadata(Metadata, AttributeBlocks);
         WriteMetadataFileIndex(ThisMetaDataPos, ThisMetaDataSize, DataSizes);
     }
     delete RecvBuffer;

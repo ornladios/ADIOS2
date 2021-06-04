@@ -465,7 +465,6 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
                                            size_t BlockLen)
 {
     static int DumpMetadata = -1;
-    m_Engine->m_IO.RemoveAllAttributes();
     FMFieldList FieldList;
     FMStructDescList FormatList;
     void *BaseData;
@@ -474,6 +473,7 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
     if (BlockLen == 0)
         return;
 
+    m_Engine->m_IO.RemoveAllAttributes();
     FFSformat =
         FFSTypeHandle_from_encode(ReaderFFSContext, (char *)AttributeBlock);
     if (!FFShas_conversion(FFSformat))
@@ -503,7 +503,7 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
     }
     if (DumpMetadata == -1)
     {
-        DumpMetadata = (getenv("SstDumpMetadata") != NULL);
+        DumpMetadata = (getenv("BP5DumpMetadata") != NULL);
     }
     if (DumpMetadata)
     {

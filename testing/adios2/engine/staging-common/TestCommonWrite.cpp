@@ -229,7 +229,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
             const std::string r64_Single =
                 std::string("r64_PerStep_") + std::to_string(step);
             io.DefineAttribute<double>(r64_Single, (double)(step * 10.0));
-            std::cout << "Dumping attribute " << r64_Single << std::endl;
+            std::cout << "Defining attribute " << r64_Single << std::endl;
         }
         engine.EndStep();
         std::this_thread::sleep_for(std::chrono::milliseconds(
