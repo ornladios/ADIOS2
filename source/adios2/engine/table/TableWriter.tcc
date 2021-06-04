@@ -69,10 +69,14 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
                 auto itAccuracy = i.find("Accuracy");
                 if (itAccuracy != i.end())
                 {
+#ifdef ADIOS2_HAVE_SZ
                     m_SzOperator = new compress::CompressSZ(Params());
                     var->AddOperation(
                         *m_SzOperator,
                         {{adios2::ops::sz::key::accuracy, itAccuracy->second}});
+#else
+                    std::err << "ADIOS2 is not compiled with SZ" << std::endl;
+#endif
                 }
                 auto itIndexing = i.find("Index");
                 if (itIndexing != i.end())

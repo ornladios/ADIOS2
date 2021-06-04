@@ -16,7 +16,10 @@
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosComm.h"
+
+#ifdef ADIOS2_HAVE_SZ
 #include "adios2/operator/compress/CompressSZ.h"
+#endif
 
 namespace adios2
 {

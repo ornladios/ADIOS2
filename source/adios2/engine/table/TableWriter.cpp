@@ -36,7 +36,10 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
 
 TableWriter::~TableWriter()
 {
-    delete m_SzOperator;
+    if (m_SzOperator)
+    {
+        delete m_SzOperator;
+    }
     m_SzOperator = nullptr;
 }
 
