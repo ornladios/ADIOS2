@@ -91,6 +91,7 @@ add_library(adios2_core
   toolkit/format/bp/bpOperation/compress/BPBZIP2.cpp 
   toolkit/format/bp/bpOperation/compress/BPBZIP2.tcc
   toolkit/format/bp/bpOperation/compress/BPBlosc.cpp
+  toolkit/format/bp/bpOperation/compress/BPLIBPRESSIO.cpp
   
   toolkit/profiling/iochrono/Timer.cpp
   toolkit/profiling/iochrono/IOChrono.cpp
@@ -264,6 +265,11 @@ endif()
 if(ADIOS2_HAVE_SZ)
   target_sources(adios2_core PRIVATE operator/compress/CompressSZ.cpp)
   target_link_libraries(adios2_core PRIVATE SZ::SZ)
+endif()
+
+if(ADIOS2_HAVE_LIBPRESSIO)
+  target_sources(adios2_core PRIVATE operator/compress/CompressLibPressio.cpp)
+  target_link_libraries(adios2_core PRIVATE LibPressio::libpressio)
 endif()
 
 if(ADIOS2_HAVE_MGARD)

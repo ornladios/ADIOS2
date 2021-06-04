@@ -131,6 +131,18 @@
     MACRO(float)                                                               \
     MACRO(double)
 
+#define ADIOS2_FOREACH_LIBPRESSIO_TYPE_1ARG(MACRO)                             \
+    MACRO(uint8_t)                                                             \
+    MACRO(uint16_t)                                                            \
+    MACRO(uint32_t)                                                            \
+    MACRO(uint64_t)                                                            \
+    MACRO(int8_t)                                                              \
+    MACRO(int16_t)                                                             \
+    MACRO(int32_t)                                                             \
+    MACRO(int64_t)                                                             \
+    MACRO(float)                                                               \
+    MACRO(double)
+
 #define ADIOS2_FOREACH_MGARD_TYPE_1ARG(MACRO) MACRO(double)
 
 #define ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(MACRO)                              \

@@ -15,6 +15,7 @@
 
 #include "adios2/toolkit/format/bp/bpOperation/compress/BPBZIP2.h"
 #include "adios2/toolkit/format/bp/bpOperation/compress/BPBlosc.h"
+#include "adios2/toolkit/format/bp/bpOperation/compress/BPLIBPRESSIO.h"
 #include "adios2/toolkit/format/bp/bpOperation/compress/BPMGARD.h"
 #include "adios2/toolkit/format/bp/bpOperation/compress/BPPNG.h"
 #include "adios2/toolkit/format/bp/bpOperation/compress/BPSZ.h"
@@ -503,6 +504,10 @@ BPBase::SetBPOperation(const std::string type) const noexcept
     else if (type == "blosc")
     {
         bpOp = std::make_shared<BPBlosc>();
+    }
+    else if (type == "libpressio")
+    {
+        bpOp = std::make_shared<BPLIBPRESSIO>();
     }
 
     return bpOp;

@@ -50,6 +50,10 @@
 #include "adios2/operator/compress/CompressBlosc.h"
 #endif
 
+#ifdef ADIOS2_HAVE_LIBPRESSIO
+#include "adios2/operator/compress/CompressLibPressio.h"
+#endif
+
 // callbacks
 #include "adios2/operator/callback/Signature1.h"
 #include "adios2/operator/callback/Signature2.h"
@@ -234,6 +238,16 @@ Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(lf_ErrorMessage("Blosc"));
+#endif
+    }
+    else if (typeLowerCase == "libpressio")
+    {
+#ifdef ADIOS2_HAVE_LIBPRESSIO
+        auto itPair = m_Operators.emplace(
+            name, std::make_shared<compress::CompressLibPressio>(parameters));
+        operatorPtr = itPair.first->second;
+#else
+        throw std::invalid_argument(lf_ErrorMessage("LibPressio"));
 #endif
     }
     else
