@@ -203,7 +203,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void BP5Writer::InitParameters()
 {
     ParseParams(m_IO, m_Parameters);
-    m_WriteToBB = false; // !(m_Parameters.BurstBufferPath.empty());
+    m_WriteToBB = !(m_Parameters.BurstBufferPath.empty());
     m_DrainBB = m_WriteToBB && m_Parameters.BurstBufferDrain;
 }
 
@@ -221,8 +221,7 @@ void BP5Writer::InitTransports()
     m_BBName = m_Name;
     if (m_WriteToBB)
     {
-        //        m_BBName = m_Parameters.BurstBufferPath + PathSeparator +
-        //        m_Name;
+        m_BBName = m_Parameters.BurstBufferPath + PathSeparator + m_Name;
     }
 
     if (m_Aggregator.m_IsConsumer)
