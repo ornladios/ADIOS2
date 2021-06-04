@@ -16,6 +16,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/operator/compress/CompressSZ.h"
 
 namespace adios2
 {
@@ -46,7 +47,7 @@ private:
     ADIOS m_SubAdios;
     IO &m_SubIO;
     Engine *m_SubEngine = nullptr;
-    Operator m_Operator;
+    Operator m_SzOperator;
     std::unordered_map<std::string, bool> m_Indexing;
 
     void PutSubEngine(bool finalPut = false);
