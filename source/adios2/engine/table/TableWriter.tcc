@@ -69,11 +69,9 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
                 auto itAccuracy = i.find("Accuracy");
                 if (itAccuracy != i.end())
                 {
-                    m_Operator = &m_SubAdios.DefineOperator(
-                        "szCompressor", adios2::ops::LossySZ);
-                    var->AddOperation(
-                        *m_Operator,
-                        {{adios2::ops::sz::key::accuracy, itAccuracy->second}});
+                    var->AddOperation(m_Operator,
+                                      {{adios2::ops::zfp::key::accuracy,
+                                        itAccuracy->second}});
                 }
                 auto itIndexing = i.find("Index");
                 if (itIndexing != i.end())
@@ -93,6 +91,7 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     }
     else
     {
+        var->SetSelection({variable.m_Start, variable.m_Count});
         m_SubEngine->Put(*var, data, Mode::Deferred);
     }
 }

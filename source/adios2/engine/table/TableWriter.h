@@ -15,7 +15,6 @@
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
-#include "adios2/engine/bp4/BP4Writer.h"
 #include "adios2/helper/adiosComm.h"
 
 namespace adios2
@@ -47,7 +46,7 @@ private:
     ADIOS m_SubAdios;
     IO &m_SubIO;
     Engine *m_SubEngine = nullptr;
-    Operator *m_Operator = nullptr;
+    Operator m_Operator;
     std::unordered_map<std::string, bool> m_Indexing;
 
     void PutSubEngine(bool finalPut = false);

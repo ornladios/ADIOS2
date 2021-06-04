@@ -26,7 +26,8 @@ namespace engine
 TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
                          helper::Comm comm)
 : Engine("TableWriter", io, name, mode, std::move(comm)),
-  m_SubAdios(m_Comm.World(), "C++"), m_SubIO(m_SubAdios.DeclareIO("SubIO"))
+  m_SubAdios(m_Comm.World(), "C++"), m_SubIO(m_SubAdios.DeclareIO("SubIO")),
+  m_Operator(m_SubAdios.DefineOperator("zfpCompressor", adios2::ops::LossyZFP))
 {
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
