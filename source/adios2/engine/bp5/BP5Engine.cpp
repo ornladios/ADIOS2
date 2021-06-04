@@ -131,8 +131,6 @@ BP5Engine::GetBPSubStreamNames(const std::vector<std::string> &names) const
 
 void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 {
-    std::memset(&Params, 0, sizeof(Params));
-
     auto lf_SetBoolParameter = [&](const std::string key, bool &parameter,
                                    bool def) {
         auto itKey = io.m_Parameters.find(key);
@@ -169,17 +167,16 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
         return false;
     };
 
-    // auto lf_SetStringParameter = [&](const std::string key,
-    //                                  std::string &parameter, char *def) {
-    //     std::cout << "Set String Param , key = " << key << std::endl;
-    //     auto itKey = io.m_Parameters.find(key);
-    //     if (itKey != io.m_Parameters.end())
-    //     {
-    //         parameter = (itKey->second).c_str();
-    //         return true;
-    //     }
-    //     return false;
-    // };
+    auto lf_SetStringParameter = [&](const std::string key,
+                                     std::string &parameter, const char *def) {
+        auto itKey = io.m_Parameters.find(key);
+        if (itKey != io.m_Parameters.end())
+        {
+            parameter = itKey->second;
+            return true;
+        }
+        return false;
+    };
 
 #define get_params(Param, Type, Typedecl, Default)                             \
     lf_Set##Type##Parameter(#Param, Params.Param, Default);

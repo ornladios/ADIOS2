@@ -83,6 +83,7 @@ public:
     MACRO(BeginStepPollingFrequencySecs, Int, int, 0)                          \
     MACRO(StreamReader, Bool, bool, false)                                     \
     MACRO(BurstBufferDrain, Bool, bool, true)                                  \
+    MACRO(BurstBufferPath, String, std::string, (char *)(intptr_t)0)           \
     MACRO(NodeLocal, Bool, bool, false)                                        \
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
