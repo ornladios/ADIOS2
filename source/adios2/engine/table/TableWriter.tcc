@@ -75,7 +75,7 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
                         *m_SzOperator,
                         {{adios2::ops::sz::key::accuracy, itAccuracy->second}});
 #else
-                    std::err << "ADIOS2 is not compiled with SZ" << std::endl;
+                    std::cerr << "ADIOS2 is not compiled with SZ" << std::endl;
 #endif
                 }
                 auto itIndexing = i.find("Index");
