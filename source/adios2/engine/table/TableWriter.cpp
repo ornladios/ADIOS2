@@ -26,8 +26,7 @@ namespace engine
 TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
                          helper::Comm comm)
 : Engine("TableWriter", io, name, mode, std::move(comm)),
-  m_SubAdios(m_Comm.World(), "C++"), m_SubIO(m_SubAdios.DeclareIO("SubIO")),
-  m_SzOperator(compress::CompressSZ(Params()))
+  m_SubAdios(m_Comm.World(), "C++"), m_SubIO(m_SubAdios.DeclareIO("SubIO"))
 {
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
@@ -35,7 +34,11 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
     m_SubEngine = &m_SubIO.Open(m_Name, adios2::Mode::Write);
 }
 
-TableWriter::~TableWriter() {}
+TableWriter::~TableWriter()
+{
+    delete m_SzOperator;
+    m_SzOperator = nullptr;
+}
 
 StepStatus TableWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {

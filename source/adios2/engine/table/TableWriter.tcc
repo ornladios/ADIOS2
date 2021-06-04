@@ -69,8 +69,9 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
                 auto itAccuracy = i.find("Accuracy");
                 if (itAccuracy != i.end())
                 {
+                    m_SzOperator = new compress::CompressSZ(Params());
                     var->AddOperation(
-                        m_SzOperator,
+                        *m_SzOperator,
                         {{adios2::ops::sz::key::accuracy, itAccuracy->second}});
                 }
                 auto itIndexing = i.find("Index");

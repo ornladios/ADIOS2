@@ -47,7 +47,7 @@ private:
     ADIOS m_SubAdios;
     IO &m_SubIO;
     Engine *m_SubEngine = nullptr;
-    Operator m_SzOperator;
+    Operator *m_SzOperator = nullptr;
     std::unordered_map<std::string, bool> m_Indexing;
 
     void PutSubEngine(bool finalPut = false);
