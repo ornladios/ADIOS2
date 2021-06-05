@@ -73,8 +73,11 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     adios2::IO io = adios.DeclareIO("Test");
     io.SetParameters(engineParams);
     adios2::Engine readerEngine = io.Open(name, adios2::Mode::Read);
-    size_t datasize = std::accumulate(shape.begin(), shape.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize = 1;
+    for (const auto &i : shape)
+    {
+        datasize *= i;
+    }
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);

@@ -121,7 +121,7 @@ target_include_directories(adios2_core
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
 )
-target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml taustubs adios2::thirdparty::yaml-cpp)
+target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml taustubs adios2::thirdparty::yaml-cpp adios2::thirdparty::nlohmann_json)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 
@@ -169,7 +169,7 @@ endif()
 
 if(ADIOS2_HAVE_SysVShMem)
   target_sources(adios2_core PRIVATE toolkit/format/buffer/ipc/BufferSystemV.cpp)
-  
+
   target_sources(adios2_core PRIVATE toolkit/transport/shm/ShmSystemV.cpp)
 endif()
 
@@ -181,12 +181,10 @@ if(ADIOS2_HAVE_ZeroMQ)
     target_link_libraries(adios2_core PRIVATE ZeroMQ::ZMQ)
 endif()
 
-#if (ADIOS2_HAVE_JSON)
 if (ADIOS2_HAVE_DataMan)
     target_sources(adios2_core PRIVATE
-	toolkit/query/JsonWorker.cpp			
-   	)
-    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
+    toolkit/query/JsonWorker.cpp
+    )
 endif()
 
 if(ADIOS2_HAVE_DataMan)
@@ -194,7 +192,6 @@ if(ADIOS2_HAVE_DataMan)
         toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
     )
-    target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
 
