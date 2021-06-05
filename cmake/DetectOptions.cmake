@@ -206,12 +206,10 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 # Table
-if(ZeroMQ_FOUND)
-    if(ADIOS2_USE_Table STREQUAL AUTO)
-        set(ADIOS2_HAVE_Table TRUE)
-    elseif(ADIOS2_USE_Table)
-        set(ADIOS2_HAVE_Table TRUE)
-    endif()
+if(ADIOS2_USE_Table STREQUAL AUTO)
+    set(ADIOS2_HAVE_Table TRUE)
+elseif(ADIOS2_USE_Table)
+    set(ADIOS2_HAVE_Table TRUE)
 endif()
 
 # DataSpaces
