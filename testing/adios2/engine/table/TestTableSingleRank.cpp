@@ -87,7 +87,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 #else
     adios2::ADIOS adios;
 #endif
-    adios2::IO io = adios.DeclareIO("Test");
+    adios2::IO io = adios.DeclareIO("ms");
     io.SetParameters(engineParams);
     adios2::Engine readerEngine = io.Open(name, adios2::Mode::Read);
     size_t datasize = 1;
@@ -106,7 +106,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
 
-    adios2::StepStatus status = readerEngine.BeginStep(StepMode::Read, 5);
+    adios2::StepStatus status = readerEngine.BeginStep();
     const auto &vars = io.AvailableVariables();
     std::cout << "All available variables : ";
     for (const auto &var : vars)

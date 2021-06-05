@@ -90,7 +90,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 #else
     adios2::ADIOS adios;
 #endif
-    adios2::IO io = adios.DeclareIO("Test");
+    adios2::IO io = adios.DeclareIO("ms");
     io.SetParameters(engineParams);
     adios2::Engine readerEngine = io.Open(name, adios2::Mode::Read);
     size_t datasize = 1;
@@ -109,7 +109,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
 
-    adios2::StepStatus status = readerEngine.BeginStep(StepMode::Read, 5);
+    adios2::StepStatus status = readerEngine.BeginStep();
     const auto &vars = io.AvailableVariables();
     std::cout << "All available variables : ";
     for (const auto &var : vars)
@@ -168,6 +168,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     VerifyData(myDoubles.data(), rows, shape);
     VerifyData(myComplexes.data(), rows, shape);
     VerifyData(myDComplexes.data(), rows, shape);
+
     readerEngine.EndStep();
     readerEngine.Close();
 }
@@ -261,13 +262,12 @@ TEST_F(TableEngineTest, TestTableMultiRank)
     std::string filename = "TestTableMultiRank";
     adios2::Params engineParams = {{"Verbose", "0"}};
 
-    size_t rows = 1000;
-    Dims shape = {rows, 1, 128};
+    size_t rows = 100;
+    Dims shape = {rows, 8, 64};
     Dims start = {0, 0, 0};
-    Dims count = {1, 1, 128};
+    Dims count = {1, 8, 64};
 
     Writer(shape, start, count, rows, engineParams, filename);
-
     Reader(shape, start, count, rows, engineParams, filename);
 
 #if ADIOS2_USE_MPI
