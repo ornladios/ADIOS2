@@ -148,9 +148,9 @@ void DataManSerializer::PutAttributes(core::IO &io)
         attributePut = true;
     }
 
-    if (not m_StaticDataFinished)
+    if (!m_StaticDataFinished)
     {
-        if (not attributePut)
+        if (!attributePut)
         {
             nlohmann::json staticVar;
             staticVar["N"] = "NoAttributes";
