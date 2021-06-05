@@ -12,7 +12,6 @@
 #define ADIOS2_ENGINE_TABLEWRITER_TCC_
 
 #include "TableWriter.h"
-#include <iostream>
 
 namespace adios2
 {
@@ -26,7 +25,7 @@ void TableWriter::PutSyncCommon<std::string>(Variable<std::string> &variable,
                                              const std::string *data)
 {
     auto var = m_SubIO.InquireVariable<std::string>(variable.m_Name);
-    if (not var)
+    if (!var)
     {
         var = &m_SubIO.DefineVariable<std::string>(variable.m_Name,
                                                    {LocalValueDim});
@@ -39,7 +38,7 @@ void TableWriter::PutDeferredCommon<std::string>(
     Variable<std::string> &variable, const std::string *data)
 {
     auto var = m_SubIO.InquireVariable<std::string>(variable.m_Name);
-    if (not var)
+    if (!var)
     {
         var = &m_SubIO.DefineVariable<std::string>(variable.m_Name,
                                                    {LocalValueDim});
@@ -50,80 +49,54 @@ void TableWriter::PutDeferredCommon<std::string>(
 template <class T>
 void TableWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
-    TAU_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "TableWriter::PutSyncCommon " << m_MpiRank << " begin"
-                  << std::endl;
-    }
     PutDeferredCommon(variable, data);
     PerformPuts();
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "TableWriter::PutSyncCommon " << m_MpiRank << " end"
-                  << std::endl;
-    }
 }
 
 template <class T>
 void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    TAU_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= 5)
+    auto var = m_SubIO.InquireVariable<T>(variable.m_Name);
+    if (!var)
     {
-        std::cout << "TableWriter::PutDeferredCommon " << m_MpiRank << " begin"
-                  << std::endl;
-    }
-
-    if (variable.m_SingleValue)
-    {
-        variable.m_Shape = Dims(1, 1);
-        variable.m_Start = Dims(1, 0);
-        variable.m_Count = Dims(1, 1);
-    }
-    variable.SetData(data);
-
-    auto aggregatorIndices =
-        WhatAggregatorIndices(variable.m_Start, variable.m_Count);
-
-    for (auto i : aggregatorIndices)
-    {
-        auto serializer = m_Serializers[i];
-        serializer->PutData(variable, m_Name, CurrentStep(), m_MpiRank, "");
-        if (serializer->LocalBufferSize() > m_SerializerBufferSize / 2)
+        var = &m_SubIO.DefineVariable<T>(variable.m_Name, variable.m_Shape);
+        for (const auto &i : m_IO.m_TransportsParameters)
         {
-            if (m_MpiSize > 1)
+            auto itVar = i.find("Variable");
+            if (itVar != i.end() && itVar->second == variable.m_Name)
             {
-                auto localPack = serializer->GetLocalPack();
-                auto reply = m_SendStagingMan.Request(
-                    localPack->data(), localPack->size(),
-                    serializer->GetDestination());
-                serializer->NewWriterBuffer(m_SerializerBufferSize);
-                if (m_Verbosity >= 1)
+                auto itAccuracy = i.find("Accuracy");
+                if (itAccuracy != i.end())
                 {
-                    std::cout << "TableWriter::PutDeferredCommon Rank "
-                              << m_MpiRank << " Sent a package of size "
-                              << localPack->size() << " to "
-                              << serializer->GetDestination()
-                              << " and received reply " << reply->data()[0]
-                              << std::endl;
+#ifdef ADIOS2_HAVE_SZ
+                    m_SzOperator = new compress::CompressSZ(Params());
+                    var->AddOperation(
+                        *m_SzOperator,
+                        {{adios2::ops::sz::key::accuracy, itAccuracy->second}});
+#else
+                    std::cerr << "ADIOS2 is not compiled with SZ" << std::endl;
+#endif
                 }
-            }
-            else
-            {
-                auto localPack = serializer->GetLocalPack();
-                m_Deserializer.PutPack(localPack, false);
-                serializer->NewWriterBuffer(m_SerializerBufferSize);
-                PutAggregatorBuffer();
-                PutSubEngine();
+                auto itIndexing = i.find("Index");
+                if (itIndexing != i.end())
+                {
+                    m_Indexing[variable.m_Name] = true;
+                }
+                else
+                {
+                    m_Indexing[variable.m_Name] = false;
+                }
             }
         }
     }
-
-    if (m_Verbosity >= 5)
+    if (m_Indexing[variable.m_Name])
     {
-        std::cout << "TableWriter::PutDeferredCommon " << m_MpiRank << " end"
-                  << std::endl;
+        // TODO: implement indexing
+    }
+    else
+    {
+        var->SetSelection({variable.m_Start, variable.m_Count});
+        m_SubEngine->Put(*var, data, Mode::Deferred);
     }
 }
 
