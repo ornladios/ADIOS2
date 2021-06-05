@@ -17,6 +17,14 @@
 
 #include "adios2/core/Operator.h"
 
+#if defined(_MSC_VER)
+#define ADIOS2_CLASS_PACKED(name) __pragma(pack(push, 1)) class name
+#define ADIOS2_CLASS_PACKED_SUFFIX __pragma(pack(pop))
+#else
+#define ADIOS2_CLASS_PACKED(name) class __attribute__((packed)) name
+#define ADIOS2_CLASS_PACKED_SUFFIX
+#endif
+
 namespace adios2
 {
 namespace core
@@ -77,7 +85,7 @@ private:
                                void *dataOut, const size_t sizeOut,
                                Params &info) const;
 
-    class __attribute__((packed)) DataHeader
+    ADIOS2_CLASS_PACKED(DataHeader)
     {
         /** compatible to the first 4 byte of blosc header
          *
@@ -106,7 +114,8 @@ private:
         uint32_t GetNumChunks() const { return numberOfChunks; }
 
         bool IsChunked() const { return format == 0; }
-    };
+    }
+    ADIOS2_CLASS_PACKED_SUFFIX;
 
     static const std::map<std::string, uint32_t> m_Shuffles;
     static const std::set<std::string> m_Compressors;
@@ -115,5 +124,8 @@ private:
 } // end namespace compress
 } // end namespace core
 } // end namespace adios2
+
+#undef ADIOS2_CLASS_PACKED
+#undef ADIOS2_CLASS_PACKED_SUFFIX
 
 #endif /* ADIOS2_OPERATOR_COMPRESS_COMPRESSBLOSC_H_ */
