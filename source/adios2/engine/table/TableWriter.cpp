@@ -8,13 +8,7 @@
  *      Author: Jason Wang w4g@ornl.gov
  */
 
-#include "TableWriter.h"
 #include "TableWriter.tcc"
-
-#include "adios2/helper/adiosFunctions.h"
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
-
-#include <iostream>
 
 namespace adios2
 {

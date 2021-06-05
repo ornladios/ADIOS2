@@ -12,7 +12,6 @@
 #define ADIOS2_ENGINE_TABLEWRITER_TCC_
 
 #include "TableWriter.h"
-#include <iostream>
 
 namespace adios2
 {
