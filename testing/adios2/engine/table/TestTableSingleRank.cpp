@@ -5,11 +5,11 @@
 
 #include <adios2.h>
 #include <gtest/gtest.h>
+#include <numeric>
+#include <thread>
 #if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
-#include <numeric>
-#include <thread>
 
 using namespace adios2;
 
@@ -20,6 +20,19 @@ class TableEngineTest : public ::testing::Test
 public:
     TableEngineTest() = default;
 };
+
+template <class T>
+void GenData(std::complex<T> *data, const size_t row, const Dims &count)
+{
+    for (size_t i = 0; i < count[1]; ++i)
+    {
+        for (size_t j = 0; j < count[2]; ++j)
+        {
+            data[i * count[2] + j] = {static_cast<T>(i * count[2] + j + row),
+                                      static_cast<T>(i * count[2])};
+        }
+    }
+}
 
 template <class T>
 void GenData(T *data, const size_t row, const Dims &count)

@@ -24,6 +24,19 @@ public:
 };
 
 template <class T>
+void GenData(std::complex<T> *data, const size_t row, const Dims &count)
+{
+    for (size_t i = 0; i < count[1]; ++i)
+    {
+        for (size_t j = 0; j < count[2]; ++j)
+        {
+            data[i * count[2] + j] = {static_cast<T>(i * count[2] + j + row),
+                                      static_cast<T>(i * count[2])};
+        }
+    }
+}
+
+template <class T>
 void GenData(T *data, const size_t row, const Dims &count)
 {
     for (size_t i = 0; i < count[1]; ++i)
