@@ -189,7 +189,7 @@ if (ADIOS2_HAVE_DataMan)
     target_link_libraries(adios2_core PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
 
-if(ADIOS2_HAVE_DataMan OR ADIOS2_HAVE_Table)
+if(ADIOS2_HAVE_DataMan)
     target_sources(adios2_core PRIVATE
         toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
