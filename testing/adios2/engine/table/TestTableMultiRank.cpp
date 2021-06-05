@@ -44,10 +44,17 @@ void GenData(std::vector<T> &data, const size_t row, const Dims &count)
 template <class T>
 void VerifyData(const T *data, const size_t rows, const Dims &shape)
 {
-    size_t columnSize = std::accumulate(shape.begin(), shape.end(), 1,
-                                        std::multiplies<size_t>());
-    size_t rowSize = std::accumulate(shape.begin() + 1, shape.end(), 1,
-                                     std::multiplies<size_t>());
+    size_t columnSize = 1;
+    for (const auto &i : shape)
+    {
+        columnSize *= i;
+    }
+    size_t rowSize = 1;
+    for (size_t i = 1; i < shape.size(); ++i)
+    {
+        rowSize *= shape[i];
+    }
+
     std::vector<T> tmpdata(columnSize);
     size_t position = 0;
     for (size_t i = 0; i < rows; ++i)
@@ -156,8 +163,11 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
             const size_t rows, const adios2::Params &engineParams,
             const std::string &name)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize = 1;
+    for (const auto &i : count)
+    {
+        datasize *= i;
+    }
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
