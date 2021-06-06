@@ -252,10 +252,10 @@ TEST_F(TableEngineTest, TestTableMultiRank)
     std::string filename = "TestTableMultiRank";
     adios2::Params engineParams = {{"Verbose", "0"}};
 
-    size_t rows = 10;
-    Dims shape = {rows, 4, 8};
+    size_t rows = 800;
+    Dims shape = {rows, 8, 64};
     Dims start = {0, 0, 0};
-    Dims count = {1, 4, 8};
+    Dims count = {1, 8, 64};
 
     Writer(shape, start, count, rows, engineParams, filename);
     Reader(shape, start, count, rows, engineParams, filename);
