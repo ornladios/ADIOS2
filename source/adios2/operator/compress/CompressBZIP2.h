@@ -59,6 +59,8 @@ public:
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
                       const size_t sizeOut, Params &info) const final;
 
+    bool IsDataTypeValid(const DataType type) const final;
+
 private:
     /**
      * check status from BZip compression and decompression functions

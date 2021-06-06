@@ -64,6 +64,8 @@ public:
                       const Dims &dimensions, DataType type,
                       const Params &parameters) const final;
 
+    bool IsDataTypeValid(const DataType type) const final;
+
 private:
     /**
      * Returns Zfp supported zfp_type based on adios string type

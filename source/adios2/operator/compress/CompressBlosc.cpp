@@ -254,6 +254,8 @@ size_t CompressBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
     return decompressedSize;
 }
 
+bool CompressBlosc::IsDataTypeValid(const DataType type) const { return true; }
+
 size_t CompressBlosc::DecompressChunkedFormat(const void *bufferIn,
                                               const size_t sizeIn,
                                               void *dataOut,

@@ -199,6 +199,8 @@ size_t CompressPNG::Decompress(const void *bufferIn, const size_t sizeIn,
     return sizeOut;
 }
 
+bool CompressPNG::IsDataTypeValid(const DataType type) const { return true; }
+
 void CompressPNG::CheckStatus(const int status, const std::string hint) const {}
 
 } // end namespace compress

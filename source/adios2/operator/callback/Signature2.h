@@ -36,6 +36,8 @@ public:
                       const std::string &, const size_t, const Dims &,
                       const Dims &, const Dims &) const final;
 
+    bool IsDataTypeValid(const DataType type) const final;
+
 private:
     std::function<void(void *, const std::string &, const std::string &,
                        const std::string &, const size_t, const Dims &,

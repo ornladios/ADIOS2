@@ -217,8 +217,17 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 size_t VariableBase::AddOperation(Operator &op,
                                   const Params &parameters) noexcept
 {
-    m_Operations.push_back(
-        Operation{&op, helper::LowerCaseParams(parameters), Params()});
+    if (op.IsDataTypeValid(m_Type))
+    {
+        m_Operations.push_back(
+            Operation{&op, helper::LowerCaseParams(parameters), Params()});
+    }
+    else
+    {
+        std::cerr << "ADIOS2 ERROR: Operator " << op.m_Type
+                  << " does not support data type " << m_Type
+                  << ", operator not added" << std::endl;
+    }
     return m_Operations.size() - 1;
 }
 
