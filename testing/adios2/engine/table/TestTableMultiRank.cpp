@@ -8,6 +8,9 @@
 #include <mpi.h>
 #include <numeric>
 #include <thread>
+#if ADIOS2_USE_MPI
+#include <mpi.h>
+#endif
 
 using namespace adios2;
 int mpiRank = 0;
@@ -83,7 +86,11 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const size_t rows, const adios2::Params &engineParams,
             const std::string &name)
 {
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
     adios2::IO io = adios.DeclareIO("ms");
     io.SetParameters(engineParams);
     adios2::Engine readerEngine = io.Open(name, adios2::Mode::Read);
@@ -176,7 +183,11 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     {
         datasize *= i;
     }
+#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
     adios2::IO io = adios.DeclareIO("ms");
     io.SetEngine("table");
     io.SetParameters(engineParams);
@@ -260,17 +271,24 @@ TEST_F(TableEngineTest, TestTableMultiRank)
     Writer(shape, start, count, rows, engineParams, filename);
     Reader(shape, start, count, rows, engineParams, filename);
 
+#if ADIOS2_USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
+#endif
 }
 
 int main(int argc, char **argv)
 {
+
+#if ADIOS2_USE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
+#if ADIOS2_USE_MPI
     MPI_Finalize();
+#endif
     return result;
 }
