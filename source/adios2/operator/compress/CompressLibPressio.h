@@ -60,6 +60,8 @@ public:
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
                       const Dims &dimensions, DataType type,
                       const Params &parameters) const final;
+
+    bool IsDataTypeValid(const DataType type) const final;
 };
 
 } // end namespace compress

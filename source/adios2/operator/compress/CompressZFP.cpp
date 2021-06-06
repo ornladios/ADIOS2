@@ -107,6 +107,18 @@ size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
     return dataSizeBytes;
 }
 
+bool CompressZFP::IsDataTypeValid(const DataType type) const
+{
+#define declare_type(T)                                                        \
+    if (helper::GetDataType<T>() == type)                                      \
+    {                                                                          \
+        return true;                                                           \
+    }
+    ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
+#undef declare_type
+    return false;
+}
+
 // PRIVATE
 zfp_type CompressZFP::GetZfpType(DataType type) const
 {

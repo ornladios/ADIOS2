@@ -107,6 +107,8 @@ public:
                               void *dataOut, const Dims &dimensions,
                               DataType type, const Params &parameters) const;
 
+    virtual bool IsDataTypeValid(const DataType type) const = 0;
+
 protected:
     /** Parameters associated with a particular Operator */
     Params m_Parameters;

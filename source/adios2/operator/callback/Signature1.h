@@ -43,6 +43,8 @@ public:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    bool IsDataTypeValid(const DataType type) const final;
+
 private:
 #define declare_type(T, L)                                                     \
     std::function<void(const T *, const std::string &, const std::string &,    \

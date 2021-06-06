@@ -171,6 +171,8 @@ size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
     return expectedSizeOut;
 }
 
+bool CompressBZIP2::IsDataTypeValid(const DataType type) const { return true; }
+
 void CompressBZIP2::CheckStatus(const int status, const std::string hint) const
 {
     switch (status)

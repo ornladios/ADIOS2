@@ -340,6 +340,18 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
     return static_cast<size_t>(dataSizeBytes);
 }
 
+bool CompressSZ::IsDataTypeValid(const DataType type) const
+{
+#define declare_type(T)                                                        \
+    if (helper::GetDataType<T>() == type)                                      \
+    {                                                                          \
+        return true;                                                           \
+    }
+    ADIOS2_FOREACH_SZ_TYPE_1ARG(declare_type)
+#undef declare_type
+    return false;
+}
+
 } // end namespace compress
 } // end namespace core
 } // end namespace adios2

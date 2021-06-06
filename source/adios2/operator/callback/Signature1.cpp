@@ -49,6 +49,8 @@ ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)
 ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
+bool Signature1::IsDataTypeValid(const DataType type) const { return true; }
+
 } // end namespace callback
 } // end namespace core
 } // end namespace adios2

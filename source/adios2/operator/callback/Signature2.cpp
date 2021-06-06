@@ -42,6 +42,8 @@ void Signature2::RunCallback2(void *arg1, const std::string &arg2,
     }
 }
 
+bool Signature2::IsDataTypeValid(const DataType type) const { return true; }
+
 } // end namespace callback
 } // end namespace core
 } // end namespace adios2
