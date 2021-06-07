@@ -15,11 +15,6 @@
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
-#include "adios2/helper/adiosComm.h"
-
-#ifdef ADIOS2_HAVE_SZ
-#include "adios2/operator/compress/CompressSZ.h"
-#endif
 
 namespace adios2
 {
@@ -50,8 +45,9 @@ private:
     ADIOS m_SubAdios;
     IO &m_SubIO;
     Engine *m_SubEngine = nullptr;
-    Operator *m_SzOperator = nullptr;
-    std::unordered_map<std::string, bool> m_Indexing;
+    Operator *m_Compressor = nullptr;
+    std::unordered_map<std::string, bool> m_IndexerMap;
+    std::string m_UseCompressor;
 
     void PutSubEngine(bool finalPut = false);
 

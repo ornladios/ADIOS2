@@ -13,6 +13,14 @@
 
 #include "TableWriter.h"
 
+#ifdef ADIOS2_HAVE_BLOSC
+#include "adios2/operator/compress/CompressBlosc.h"
+#endif
+
+#ifdef ADIOS2_HAVE_BZIP2
+#include "adios2/operator/compress/CompressBZIP2.h"
+#endif
+
 namespace adios2
 {
 namespace core
@@ -60,36 +68,33 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     if (!var)
     {
         var = &m_SubIO.DefineVariable<T>(variable.m_Name, variable.m_Shape);
-        for (const auto &i : m_IO.m_TransportsParameters)
+        if (m_UseCompressor == "blosc")
         {
-            auto itVar = i.find("Variable");
-            if (itVar != i.end() && itVar->second == variable.m_Name)
-            {
-                auto itAccuracy = i.find("Accuracy");
-                if (itAccuracy != i.end())
-                {
-#ifdef ADIOS2_HAVE_SZ
-                    m_SzOperator = new compress::CompressSZ(Params());
-                    var->AddOperation(
-                        *m_SzOperator,
-                        {{adios2::ops::sz::key::accuracy, itAccuracy->second}});
+#ifdef ADIOS2_HAVE_BLOSC
+            m_Compressor = new compress::CompressBlosc({});
+            var->AddOperation(*m_Compressor, {});
 #else
-                    std::cerr << "ADIOS2 is not compiled with SZ" << std::endl;
+            std::cerr
+                << "ADIOS2 is not compiled with c-blosc "
+                   "(https://github.com/Blosc/c-blosc), compressor not added"
+                << std::endl;
 #endif
-                }
-                auto itIndexing = i.find("Index");
-                if (itIndexing != i.end())
-                {
-                    m_Indexing[variable.m_Name] = true;
-                }
-                else
-                {
-                    m_Indexing[variable.m_Name] = false;
-                }
-            }
+        }
+        else if (m_UseCompressor == "bzip2")
+        {
+#ifdef ADIOS2_HAVE_BZIP2
+            m_Compressor = new compress::CompressBZIP2({});
+            var->AddOperation(*m_Compressor, {});
+#else
+            std::cerr << "ADIOS2 is not compiled with Bzip2 "
+                         "(https://gitlab.com/federicomenaquintero/bzip2), "
+                         "compressor not added"
+                      << std::endl;
+#endif
         }
     }
-    if (m_Indexing[variable.m_Name])
+
+    if (m_IndexerMap[variable.m_Name])
     {
         // TODO: implement indexing
     }
