@@ -5,12 +5,11 @@
 
 #include <adios2.h>
 #include <gtest/gtest.h>
-#include <mpi.h>
-#include <numeric>
-#include <thread>
 #if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
+#include <numeric>
+#include <thread>
 
 using namespace adios2;
 int mpiRank = 0;
@@ -263,7 +262,7 @@ TEST_F(TableEngineTest, TestTableMultiRank)
     std::string filename = "TestTableMultiRank";
     adios2::Params engineParams = {{"Verbose", "0"}};
 
-    size_t rows = 800;
+    size_t rows = 100;
     Dims shape = {rows, 8, 64};
     Dims start = {0, 0, 0};
     Dims count = {1, 8, 64};
@@ -278,7 +277,6 @@ TEST_F(TableEngineTest, TestTableMultiRank)
 
 int main(int argc, char **argv)
 {
-
 #if ADIOS2_USE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
