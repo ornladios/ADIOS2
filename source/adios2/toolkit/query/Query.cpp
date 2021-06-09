@@ -38,6 +38,9 @@ void QueryBase::ApplyOutputRegion(std::vector<Box<Dims>> &touchedBlocks,
 }
 bool QueryComposite::AddNode(QueryBase *var)
 {
+    if (nullptr == var)
+        return false;
+
     if (adios2::query::Relation::NOT == m_Relation)
     {
         // if (m_Nodes.size() > 0) return false;
@@ -54,6 +57,68 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io,
                                         adios2::core::Engine &reader,
                                         std::vector<Box<Dims>> &touchedBlocks)
 {
+    auto lf_ApplyAND = [&](std::vector<Box<Dims>> &touched,
+                           const std::vector<Box<Dims>> &curr) -> void {
+        if (curr.size() == 0)
+        {
+            touched.clear();
+            return;
+        }
+
+        for (auto i = touched.size(); i >= 1; i--)
+        {
+            bool intersects = false;
+            for (auto b : curr)
+            {
+                adios2::Box<Dims> curr = GetIntersection(touched[i - 1], b);
+                if (curr.first.size() != 0) // has intersection
+                {
+                    intersects = true;
+                    break;
+                }
+            }
+            if (!intersects)
+                // it = touched.erase(it);
+                touched.erase(touched.begin() + i - 1);
+            // if (touched.end() == it)
+            // break;
+        }
+
+        for (auto b : curr)
+        {
+            for (auto it = touched.begin(); it != touched.end(); it++)
+            {
+                adios2::Box<Dims> curr = GetIntersection(*it, b);
+                if (curr.first.size() != 0) // has intersection
+                {
+                    *it = curr;
+                }
+            }
+        }
+    }; // lf_ApplyAND
+
+    auto lf_ApplyOR = [&](std::vector<Box<Dims>> &touched,
+                          const std::vector<Box<Dims>> &curr) -> void {
+        if (curr.size() == 0)
+            return;
+
+        for (auto b : curr)
+        {
+            bool duplicated = false;
+            for (auto box : touched)
+            {
+                if (adios2::helper::IdenticalBoxes(box, b))
+                {
+                    duplicated = true;
+                    continue;
+                }
+            }
+            if (!duplicated)
+                touched.push_back(b);
+        }
+    }; // lf_ApplyOR
+
+    /*
     auto lf_ApplyRelation = [&](std::vector<Box<Dims>> &collection,
                                 const Box<Dims> &block) -> void {
         if (adios2::query::Relation::AND == m_Relation)
@@ -64,10 +129,15 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io,
                 adios2::Box<Dims> curr = GetIntersection(*it, block);
                 // adios2::helper::IntersectionBox(*it, block);
                 if (curr.first.size() == 0) // no intersection
-                    touchedBlocks.erase(it);
+                  {
+                    it = touchedBlocks.erase(it);
+                    if (touchedBlocks.end() == it)
+                      return;
+                  }
                 else
-                    *it = curr;
+                  *it = curr;
             }
+
             return;
         }
 
@@ -82,6 +152,7 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io,
             return;
         }
     }; // local
+    */
 
     if (m_Nodes.size() == 0)
         return;
@@ -109,10 +180,10 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io,
                 continue;
         }
 
-        for (auto block : currBlocks)
-        {
-            lf_ApplyRelation(touchedBlocks, block);
-        }
+        if (adios2::query::Relation::AND == m_Relation)
+            lf_ApplyAND(touchedBlocks, currBlocks);
+        else if (adios2::query::Relation::OR == m_Relation)
+            lf_ApplyOR(touchedBlocks, currBlocks);
     }
     // plan to shift all var results to regions start at 0, and find out the
     // overlapped regions boxes can be different size especially if they are
