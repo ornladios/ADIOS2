@@ -94,8 +94,8 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
         const pugi::xml_node &variable = qTagNode.child("var");
         QueryVar *q =
             ParseVarNode(variable, m_SourceReader->m_IO, *m_SourceReader);
-        if ( !q )
-           continue;
+        if (!q)
+            continue;
 
         if (ref.first.size() == 0)
         {
@@ -143,7 +143,7 @@ QueryVar *XmlWorker::ParseVarNode(const pugi::xml_node &node,
     if (varType == DataType::None)
     {
         std::cerr << "No such variable: " << variableName << std::endl;
-        throw std::ios_base::failure("No such variable: "+variableName);
+        throw std::ios_base::failure("No such variable: " + variableName);
     }
 #define declare_type(T)                                                        \
     if (varType == helper::GetDataType<T>())                                   \
