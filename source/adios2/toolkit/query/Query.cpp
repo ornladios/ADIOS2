@@ -65,8 +65,7 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io,
             return;
         }
 
-        // for (auto it = touched.begin(); it != touched.end(); it++)
-        for (int i = touched.size(); i >= 1; i--)
+        for (auto i = touched.size(); i >= 1; i--)
         {
             bool intersects = false;
             for (auto b : curr)
