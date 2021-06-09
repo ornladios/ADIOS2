@@ -270,7 +270,7 @@ public:
     bool IsCompatible(const adios2::Box<adios2::Dims> &box)
     {
         if (m_Nodes.size() == 0)
-            return false;
+            return true;
         return (m_Nodes[0])->IsCompatible(box);
     }
 
