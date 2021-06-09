@@ -129,12 +129,14 @@ private:
  *number of different "formats" written by any rank.
  *
  *
- *   MetaData file (md.0) contains encoded metadata for each timestep, for each
- *rank BP5 header for "Metadata" (64 bytes) for each timestep: uint64_t
- *TotalSize of this metadata block (including this length) uint64_t[WriterCount]
- *Length of each writer rank's metadata for each rank FFS-encoded metadata block
- *of length corresponding to entry above
- *
+ *   MetaData file (md.0) contains encoded metadata/attribute data
+ *	BP5 header for "Metadata" (64 bytes)
+ *	for each timestep:
+ *		uint64_t  : TotalSize of this metadata block
+ *		uint64_t[WriterCount]  : Length of each rank's metadata
+ *		uint64_t[WriterCount]  : Length of each rank's attribute
+ *		FFS-encoded metadata block of the length above
+ *		FFS-encoded attribute data block of the length above
  *
  *   Data file (data.x) contains a block of data for each timestep, for each
  *rank
