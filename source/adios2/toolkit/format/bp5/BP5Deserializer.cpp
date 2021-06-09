@@ -798,6 +798,20 @@ static int FindOffsetCM(size_t Dims, const size_t *Size, const size_t *Index)
  *  - InData is the input, a slab of the global array
  *  - OutData is the output, to be filled with the selection array.
  */
+
+/*
+ * *******************************
+ *
+ * ExtractSelectionFromPartial*M both need to be extended to work when
+ * the reader and writer have different byte orders.  This involves at
+ * least supporting simple big/little-endian byte reversal, but a true
+ * archival format should also consider mixed and middle-endian
+ * hybrids.  This would require changes to the BP5 header so that the
+ * appropriate transformations could be determined.
+ *
+ * *******************************
+ */
+
 // Row major version
 void BP5Deserializer::ExtractSelectionFromPartialRM(
     int ElementSize, size_t Dims, const size_t *GlobalDims,
