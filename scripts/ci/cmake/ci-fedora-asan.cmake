@@ -4,6 +4,7 @@ set(ENV{CC}  clang)
 set(ENV{CXX} clang++)
 set(ASAN_FLAGS "-fsanitize=address -fno-omit-frame-pointer -pthread -mllvm -asan-use-private-alias=1 -Wno-unused-command-line-argument")
 set(ENV{ASAN_OPTIONS} "use_odr_indicator=1")
+set(ENV{LSAN_OPTIONS} "suppressions=${CMAKE_SOURCE_DIR}/thirdparty/perfstubs/perfstubs.supp")
 set(ENV{CFLAGS}   "${ASAN_FLAGS}")
 set(ENV{CXXFLAGS} "${ASAN_FLAGS}")
 
