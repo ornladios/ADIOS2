@@ -21,6 +21,10 @@
 #include "adios2/operator/compress/CompressBZIP2.h"
 #endif
 
+#ifdef ADIOS2_HAVE_ZFP
+#include "adios2/operator/compress/CompressZFP.h"
+#endif
+
 namespace adios2
 {
 namespace core
@@ -88,6 +92,25 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 #else
             std::cerr << "ADIOS2 is not compiled with Bzip2 "
                          "(https://gitlab.com/federicomenaquintero/bzip2), "
+                         "compressor not added"
+                      << std::endl;
+#endif
+        }
+        else if (m_UseCompressor == "zfp")
+        {
+#ifdef ADIOS2_HAVE_ZFP
+            if (var->m_Type == helper::GetDataType<float>() ||
+                var->m_Type == helper::GetDataType<double>() ||
+                var->m_Type == helper::GetDataType<std::complex<float>>() ||
+                var->m_Type == helper::GetDataType<std::complex<double>>())
+            {
+                m_Compressor = new compress::CompressZFP({});
+                var->AddOperation(*m_Compressor,
+                                  {{ops::zfp::key::accuracy, m_UseAccuracy}});
+            }
+#else
+            std::cerr << "ADIOS2 is not compiled with ZFP "
+                         "(https://github.com/LLNL/zfp), "
                          "compressor not added"
                       << std::endl;
 #endif
