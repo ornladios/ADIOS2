@@ -27,6 +27,7 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
     helper::GetParameter(m_IO.m_Parameters, "Compressor", m_UseCompressor);
+    helper::GetParameter(m_IO.m_Parameters, "Accuracy", m_UseAccuracy);
     m_SubEngine = &m_SubIO.Open(m_Name, adios2::Mode::Write);
 }
 
