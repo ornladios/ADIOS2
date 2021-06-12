@@ -125,7 +125,9 @@
     MACRO(int32_t)                                                             \
     MACRO(int64_t)                                                             \
     MACRO(float)                                                               \
-    MACRO(double)
+    MACRO(double)                                                              \
+    MACRO(std::complex<float>)                                                 \
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_SZ_TYPE_1ARG(MACRO)                                     \
     MACRO(float)                                                               \

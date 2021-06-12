@@ -26,8 +26,9 @@ size_t CompressZFP::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
                                     DataType type,
                                     const Params &parameters) const
 {
-    zfp_field *field = GetZFPField(dataIn, dimensions, type);
-    zfp_stream *stream = GetZFPStream(dimensions, type, parameters);
+    Dims convertedDims = ConvertDims(dimensions, type, 3);
+    zfp_field *field = GetZFPField(dataIn, convertedDims, type);
+    zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
     const size_t maxSize = zfp_stream_maximum_size(stream, field);
     zfp_field_free(field);
     zfp_stream_close(stream);
@@ -40,8 +41,10 @@ size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
                              Params &info) const
 {
 
-    zfp_field *field = GetZFPField(dataIn, dimensions, type);
-    zfp_stream *stream = GetZFPStream(dimensions, type, parameters);
+    Dims convertedDims = ConvertDims(dimensions, type, 3);
+
+    zfp_field *field = GetZFPField(dataIn, convertedDims, type);
+    zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
     size_t maxSize = zfp_stream_maximum_size(stream, field);
     // associate bitstream
     bitstream *bitstream = stream_open(bufferOut, maxSize);
@@ -79,8 +82,10 @@ size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
         return size;
     };
 
-    zfp_field *field = GetZFPField(dataOut, dimensions, type);
-    zfp_stream *stream = GetZFPStream(dimensions, type, parameters);
+    Dims convertedDims = ConvertDims(dimensions, type, 3);
+
+    zfp_field *field = GetZFPField(dataOut, convertedDims, type);
+    zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
 
     // associate bitstream
     bitstream *bitstream = stream_open(const_cast<void *>(bufferIn), sizeIn);
@@ -102,7 +107,7 @@ size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
 
     const size_t typeSizeBytes = lf_GetTypeSize(GetZfpType(type));
     const size_t dataSizeBytes =
-        helper::GetTotalSize(dimensions) * typeSizeBytes;
+        helper::GetTotalSize(convertedDims) * typeSizeBytes;
 
     return dataSizeBytes;
 }
@@ -139,6 +144,14 @@ zfp_type CompressZFP::GetZfpType(DataType type) const
     else if (type == helper::GetDataType<int32_t>())
     {
         zfpType = zfp_type_int32;
+    }
+    else if (type == helper::GetDataType<std::complex<float>>())
+    {
+        zfpType = zfp_type_float;
+    }
+    else if (type == helper::GetDataType<std::complex<double>>())
+    {
+        zfpType = zfp_type_double;
     }
     else
     {

@@ -113,6 +113,41 @@ size_t Operator::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
                                 m_Type + ", in call to BufferMaxSize\n");
 }
 
+Dims Operator::ConvertDims(const Dims &dimensions, const DataType type,
+                           const size_t targetDims) const
+{
+    Dims ret = dimensions;
+
+    while (true)
+    {
+        auto it = std::find(ret.begin(), ret.end(), 1);
+        if (it == ret.end())
+        {
+            break;
+        }
+        else
+        {
+            ret.erase(it);
+        }
+    }
+
+    if (targetDims > 0 && targetDims < dimensions.size())
+    {
+        while (ret.size() > targetDims)
+        {
+            ret[1] *= ret[0];
+            ret.erase(ret.begin());
+        }
+    }
+
+    if (type == helper::GetDataType<std::complex<float>>() ||
+        type == helper::GetDataType<std::complex<double>>())
+    {
+        ret.back() *= 2;
+    }
+    return ret;
+}
+
 // PRIVATE
 void Operator::CheckCallbackType(const std::string type) const
 {
