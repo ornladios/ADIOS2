@@ -104,9 +104,18 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
                 var->m_Type == helper::GetDataType<std::complex<float>>() ||
                 var->m_Type == helper::GetDataType<std::complex<double>>())
             {
-                m_Compressor = new compress::CompressZFP({});
-                var->AddOperation(*m_Compressor,
-                                  {{ops::zfp::key::accuracy, m_UseAccuracy}});
+                if (m_UseAccuracy.empty())
+                {
+                    std::cerr << "Parameter accuracy for lossy compression is "
+                                 "not specified, compressor not added"
+                              << std::endl;
+                }
+                else
+                {
+                    m_Compressor = new compress::CompressZFP({});
+                    var->AddOperation(*m_Compressor, {{ops::zfp::key::accuracy,
+                                                       m_UseAccuracy}});
+                }
             }
 #else
             std::cerr << "ADIOS2 is not compiled with ZFP "
