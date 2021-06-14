@@ -65,8 +65,8 @@ namespace core
 
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
              const std::string hostLanguage)
-: m_ConfigFile(configFile), m_HostLanguage(hostLanguage),
-  m_Comm(std::move(comm))
+: m_HostLanguage(hostLanguage), m_Comm(std::move(comm)),
+  m_ConfigFile(configFile)
 {
     if (!configFile.empty())
     {

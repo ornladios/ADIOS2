@@ -4,68 +4,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void *safe_calloc(size_t n, size_t s, unsigned long line)
-{
-    if (n == 0)
-    {
-        return NULL;
-    }
-
-    void *p = calloc(n, s);
-    if (!p)
-    {
-        fprintf(stderr, "[%s:%ld]Out of memory at calloc (%ld, %ld)\n",
-                __FILE__, line, (unsigned long)n, (unsigned long)s);
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-
+void *safe_calloc(size_t n, size_t s, unsigned long line);
 #define SAFE_CALLOC(n, s) safe_calloc(n, s, __LINE__)
 
-static void *safe_malloc(size_t n, unsigned long line)
-{
-    if (n == 0)
-    {
-        return NULL;
-    }
-
-    void *p = malloc(n);
-    if (!p)
-    {
-        fprintf(stderr, "[%s:%ld]Out of memory at malloc (%ld bytes)\n",
-                __FILE__, line, (unsigned long)n);
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-
+void *safe_malloc(size_t n, unsigned long line);
 #define SAFE_MALLOC(n) safe_malloc(n, __LINE__)
 
-static void safe_free(void *p)
-{
-    if (p == NULL)
-    {
-        return;
-    }
-    free(p);
-    p = NULL;
-}
-
+void safe_free(void *p);
 #define SAFE_FREE(ptr) safe_free(ptr)
 
-static void *safe_ralloc(void *ptr, size_t newsize, unsigned long line)
-{
-    void *p = realloc(ptr, newsize);
-    if (!p)
-    {
-        fprintf(stderr, "[%s:%ld]Out of memory at ralloc to (%ld bytes)\n",
-                __FILE__, line, (unsigned long)newsize);
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-
+void *safe_ralloc(void *ptr, size_t newsize, unsigned long line);
 #define SAFE_REALLOC(ptr, newsize) safe_ralloc(ptr, newsize, __LINE__)
 
 #define ADIOS_VOL_LOG_ERR(...)                                                 \

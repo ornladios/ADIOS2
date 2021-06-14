@@ -23,6 +23,10 @@ hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
     MPI_Info info = MPI_INFO_NULL;
     herr_t ret = H5Pset_fapl_mpio(acc_tpl, comm, info);
 
+    if (ret < 0)
+    {
+        throw std::runtime_error("Unable to call set_fapl_mpio");
+    }
     // int myRank;
     // MPI_Comm_rank(comm, &myRank);
     // double timeStart, timeEnd;
@@ -56,6 +60,10 @@ hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
     //     open_perf_log.close();
     // }
     ret = H5Pclose(acc_tpl);
+    if (ret < 0)
+    {
+        throw std::runtime_error("Unable to call set_fapl_mpio");
+    }
 }
 
 hdf5Stream::~hdf5Stream() {}
@@ -321,9 +329,7 @@ adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg,
         hid_t dataset = H5Dopen2(h5file, var->name.c_str(), H5P_DEFAULT);
         hid_t filespace = H5Dget_space(dataset);
         std::vector<hsize_t> dims(var->ndim + 1);
-        int ndim = H5Sget_simple_extent_ndims(filespace);
         H5Sget_simple_extent_dims(filespace, dims.data(), NULL);
-        /* ndim == var->ndim+1 */
         nSteps = dims[0];
         if (!settings.myRank && settings.verbose)
         {

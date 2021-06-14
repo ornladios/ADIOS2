@@ -21,9 +21,9 @@ namespace engine
 DataManReader::DataManReader(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
 : Engine("DataManReader", io, name, openMode, std::move(comm)),
+  m_FinalStep(std::numeric_limits<signed long int>::max()),
   m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)),
-  m_RequesterThreadActive(true), m_SubscriberThreadActive(true),
-  m_FinalStep(std::numeric_limits<signed long int>::max())
+  m_RequesterThreadActive(true), m_SubscriberThreadActive(true)
 {
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();

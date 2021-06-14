@@ -22,6 +22,12 @@ namespace core
 namespace engine
 {
 
+#define CHECK_H5_RETURN(returnCode, reason)                                    \
+    {                                                                          \
+        if (returnCode < 0)                                                    \
+            throw std::runtime_error((reason));                                \
+    }
+
 HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
                          helper::Comm comm)
 : Engine("HDF5Reader", io, name, openMode, std::move(comm))
@@ -138,7 +144,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
     size_t ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
     if (0u == ndims)
     { // is scalar
-        hid_t myclass = H5Tget_class(h5Type);
+      // hid_t myclass = H5Tget_class(h5Type);
         if (H5Tget_class(h5Type) == H5T_STRING)
         {
             m_H5File.ReadStringScalarDataset(dataSetId, *(std::string *)values);
@@ -147,6 +153,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
         {
             hid_t ret = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL,
                                 H5P_DEFAULT, values);
+            CHECK_H5_RETURN(ret, "ReadDataset, H5Dread");
         }
     }
     else

@@ -88,6 +88,11 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             m_BP3Serializer->ResizeBuffer(
                 dataSize, "in call to variable " + variable.m_Name +
                               " Put adios2::Mode::Sync");
+        if (resizeResult == format::BP3Base::ResizeResult::Failure)
+        {
+            throw std::runtime_error("Failed to resize BP3 serializer buffer");
+        }
+
         const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
         m_BP3Serializer->PutVariableMetadata(variable, blockInfo,
                                              sourceRowMajor);

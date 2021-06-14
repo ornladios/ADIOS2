@@ -125,6 +125,9 @@ bool testMe(std::string &queryConfigFile, std::string const &doubleVarName,
     adios2::IO inIO = ad.DeclareIO("query");
     adios2::Engine reader = inIO.Open(dataFileName, adios2::Mode::Read, comm);
 
+    //  to be continued
+    if (!reader)
+        return false;
     // std::vector<double> dataOutput;
     // std::vector<adios2::Dims> coordinateOutput;
 

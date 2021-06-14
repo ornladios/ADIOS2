@@ -35,49 +35,11 @@ enum Relation
     NOT
 };
 
-static adios2::query::Relation strToRelation(std::string relationStr) noexcept
-{
-    if ((relationStr.compare("or") == 0) || (relationStr.compare("OR") == 0))
-        return adios2::query::Relation::OR;
+adios2::query::Relation strToRelation(std::string relationStr) noexcept;
 
-    return adios2::query::Relation::AND; // default
-}
+adios2::query::Op strToQueryOp(std::string opStr) noexcept;
 
-static adios2::query::Op strToQueryOp(std::string opStr) noexcept
-{
-    if ((opStr.compare("lt") == 0) || (opStr.compare("LT") == 0))
-        return adios2::query::Op::LT;
-    if ((opStr.compare("gt") == 0) || (opStr.compare("GT") == 0))
-        return adios2::query::Op::GT;
-    if ((opStr.compare("ge") == 0) || (opStr.compare("GE") == 0))
-        return adios2::query::Op::GE;
-    if ((opStr.compare("le") == 0) || (opStr.compare("LE") == 0))
-        return adios2::query::Op::LE;
-    if ((opStr.compare("eq") == 0) || (opStr.compare("EQ") == 0))
-        return adios2::query::Op::EQ;
-    if ((opStr.compare("ne") == 0) || (opStr.compare("NE") == 0))
-        return adios2::query::Op::NE;
-
-    return adios2::query::Op::EQ; // default
-}
-
-static adios2::Dims split(const std::string &s, char delim)
-{
-    adios2::Dims dim;
-
-    std::stringstream ss(s);
-    std::string item;
-
-    while (getline(ss, item, delim))
-    {
-        std::stringstream curr(item);
-        size_t val;
-        curr >> val;
-        dim.push_back(val);
-    }
-
-    return dim;
-}
+adios2::Dims split(const std::string &s, char delim);
 
 //
 // classes

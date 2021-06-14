@@ -128,8 +128,8 @@ private:
     // blockid <=> vector of subcontents
     //
     // std::string& m_DataFileName;
-    adios2::core::Engine &m_IdxReader;
     adios2::core::IO &m_IdxIO;
+    adios2::core::Engine &m_IdxReader;
 
 }; // class blockIndex
 

@@ -181,6 +181,8 @@ void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios,
                 io.DefineVariable<int32_t>("intV", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("doubleV", shape, start, count);
+            EXPECT_TRUE(var_i32);
+            EXPECT_TRUE(var_r64);
         }
 
         if (!engineName.empty())

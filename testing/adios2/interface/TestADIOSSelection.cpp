@@ -132,7 +132,6 @@ MultiArray<T, 2> makeArray(std::initializer_list<std::initializer_list<T>> t)
 TEST(MultiArray, Constructor)
 {
     using MultiArrayT = MultiArray<double, 4>;
-    using MultiIndex = MultiArrayT::Index;
 
     auto arr = MultiArrayT({2, 3, 4, 5});
 }

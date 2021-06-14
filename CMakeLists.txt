@@ -58,6 +58,26 @@ if(MSVC)
   )
 endif()
 
+function(append_str_list_once var x)
+  foreach(item IN ITEMS ${${var}})
+    if(item STREQUAL x)
+      return()
+    endif()
+  endforeach()
+  set(out ${${var}} ${x})
+  string(REPLACE ";" " " out "${out}")
+  set(${var} "${out}" PARENT_SCOPE)
+endfunction()
+
+if(NOT MSVC)
+  set(CMAKE_C_COMPILER_FLAGS_DEBUG "${CMAKE_C_COMPILER_FLAGS_DEBUG}"
+    CACHE STRING "" FORCE
+  )
+  set(CMAKE_CXX_COMPILER_FLAGS_DEBUG "${CMAKE_CXX_COMPILER_FLAGS_DEBUG}"
+    CACHE STRING "" FORCE
+  )
+endif()
+
 #------------------------------------------------------------------------------#
 # Deal with any pre-installation cleanup tasks
 #------------------------------------------------------------------------------#
