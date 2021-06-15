@@ -100,6 +100,14 @@ public:
     ADIOS(const std::string &configFile, const bool debugMode = true);
 
     /**
+     * Starting point for non-MPI serial apps. Creates an ADIOS object allowing
+     * a runtime config file.
+     * @param configFile runtime config file
+     * @exception std::invalid_argument if user input is incorrect
+     */
+    ADIOS(const char *configFile);
+
+    /**
      * Starting point for non-MPI apps. Creates an ADIOS object
      * @param debugMode is deprecated and has no effect on library behavior
      * @exception std::invalid_argument if user input is incorrect

@@ -19,6 +19,8 @@ ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
 {
 }
 
+ADIOS::ADIOS(const char *configFile) : ADIOS(std::string(configFile), "C++") {}
+
 ADIOS::ADIOS(const bool debugMode) : ADIOS("", "C++") {}
 
 ADIOS::ADIOS(const std::string &configFile, const std::string &hostLanguage,
