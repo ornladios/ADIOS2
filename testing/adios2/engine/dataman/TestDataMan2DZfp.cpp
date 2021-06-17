@@ -135,10 +135,14 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     bpFloats.AddOperation(zfpOp, {{adios2::ops::zfp::key::accuracy, "0.1"}});
     auto bpDoubles =
         dataManIO.DefineVariable<double>("bpDoubles", shape, start, count);
+    bpDoubles.AddOperation(zfpOp, {{adios2::ops::zfp::key::accuracy, "0.1"}});
     auto bpComplexes = dataManIO.DefineVariable<std::complex<float>>(
         "bpComplexes", shape, start, count);
+    bpComplexes.AddOperation(zfpOp, {{adios2::ops::zfp::key::accuracy, "0.1"}});
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
+    bpDComplexes.AddOperation(zfpOp,
+                              {{adios2::ops::zfp::key::accuracy, "0.1"}});
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter =
         dataManIO.Open("stream", adios2::Mode::Write);
