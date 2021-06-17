@@ -29,8 +29,15 @@ int NumVars = 100;
 int NumArrays = 100;
 int NumAttrs = 100;
 int NumBlocks = 1;
-int ReaderDelay = 20;
+int ReaderDelay = 0;
 int WriterSize;
+int FileMode = 0;
+int FileWriter = 0;
+int FileReader = 0;
+int UseMPI = 1;
+int E3sm = 0;
+int Warpx = 0;
+char *ErrorStr = NULL;
 
 int LastVarSize;
 int LastArraySize;
@@ -86,19 +93,33 @@ static void Usage()
     std::cout << "  --num_vars <vars>" << std::endl;
     std::cout << "  --num_arrays <arrays>" << std::endl;
     std::cout << "  --num_attrs <attributes>" << std::endl;
-    std::cout << "  --num_attrs <attributes>" << std::endl;
     std::cout << "  --e3sm   (Approx E3SM characteristics)" << std::endl;
     std::cout << "  --warpx   (Approx WarpX characteristics)" << std::endl;
     std::cout << "  --engine <enginename>" << std::endl;
     std::cout << "  --engine_params <param=value,param=value>" << std::endl;
+    std::cout << "  --file  (run in file mode)" << std::endl;
 }
 
-static void ParseArgs(int argc, char **argv, int rank)
+static void ParseArgs(int argc, char **argv)
 {
     int bare_arg = 0;
     while (argc > 1)
     {
-        if (std::string(argv[1]) == "--num_steps")
+        if (std::string(argv[1]) == "--file_reader")
+        {
+            FileMode = 1;
+            FileReader = 1;
+        }
+        else if (std::string(argv[1]) == "--file_writer")
+        {
+            FileMode = 1;
+            FileWriter = 1;
+        }
+        else if (std::string(argv[1]) == "--no_mpi")
+        {
+            UseMPI = 0;
+        }
+        else if (std::string(argv[1]) == "--num_steps")
         {
             std::istringstream ss(argv[2]);
             if (!(ss >> NSteps))
@@ -148,10 +169,7 @@ static void ParseArgs(int argc, char **argv, int rank)
             NumVars = 1000;
             NumAttrs = 3800;
             NumBlocks = 1;
-            if (rank == 0)
-                std::cout
-                    << "E3SM mode.  Full run: 960 Timesteps, at 1344 ranks"
-                    << std::endl;
+            E3sm = 1;
         }
         else if (std::string(argv[1]) == "--warpx")
         {
@@ -159,9 +177,7 @@ static void ParseArgs(int argc, char **argv, int rank)
             NumVars = 1000;
             NumAttrs = 0;
             NumBlocks = 86;
-            if (rank == 0)
-                std::cout << "E3SM mode.  Full run: 50 Timesteps, at 3000 ranks"
-                          << std::endl;
+            Warpx = 1;
         }
         else if (std::string(argv[1]) == "--test_mode")
         {
@@ -214,9 +230,7 @@ static void ParseArgs(int argc, char **argv, int rank)
         {
             if (std::string(argv[1], 2) == "--")
             {
-                if (rank == 0)
-                    Usage();
-                exit(0);
+                ErrorStr = argv[1];
             }
             if (bare_arg == 0)
             {
@@ -251,14 +265,34 @@ void DoWriter(adios2::Params writerParams)
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
-    MPI_Comm_rank(testComm, &mpiRank);
-    MPI_Comm_size(testComm, &mpiSize);
+    if (UseMPI)
+    {
+        MPI_Comm_rank(testComm, &mpiRank);
+        MPI_Comm_size(testComm, &mpiSize);
+    }
 #endif
+    if ((mpiRank == 0) && E3sm)
+        std::cout << "E3SM mode.  Full run: 960 Timesteps, at 1344 ranks"
+                  << std::endl;
+    if ((mpiRank == 0) && Warpx)
+        std::cout << "Warpx mode.  Full run: 50 Timesteps, at 3000 ranks"
+                  << std::endl;
+    if ((mpiRank == 0) && ErrorStr)
+    {
+        std::cout << "Unknown arg " << ErrorStr << std::endl;
+        Usage();
+        exit(1);
+    }
 
     // Write test data using ADIOS2
 
-    adios2::ADIOS adios(testComm);
-    adios2::IO io = adios.DeclareIO("TestIO");
+    adios2::ADIOS *adios;
+    if (UseMPI)
+        adios = new adios2::ADIOS(testComm);
+    else
+        adios = new adios2::ADIOS();
+
+    adios2::IO io = adios->DeclareIO("TestIO");
 
     io.SetEngine(engine);
     io.SetParameters(writerParams);
@@ -329,12 +363,20 @@ void DoReader()
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
-    MPI_Comm_rank(testComm, &mpiRank);
-    MPI_Comm_size(testComm, &mpiSize);
+    if (UseMPI)
+    {
+        MPI_Comm_rank(testComm, &mpiRank);
+        MPI_Comm_size(testComm, &mpiSize);
+    }
 #endif
 
-    adios2::ADIOS adios(testComm);
-    adios2::IO io = adios.DeclareIO("TestIO");
+    adios2::ADIOS *adios;
+    if (UseMPI)
+        adios = new adios2::ADIOS(testComm);
+    else
+        adios = new adios2::ADIOS();
+
+    adios2::IO io = adios->DeclareIO("TestIO");
 
     io.SetEngine(engine);
     engineParams["SpeculativePreloadMode"] = "Off";
@@ -345,7 +387,7 @@ void DoReader()
         endBeginStep, finishTS;
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     std::this_thread::sleep_for(std::chrono::seconds(ReaderDelay));
-    std::vector<float> in;
+    std::vector<float> in(1);
 
     in.resize(WriterSize);
     while (1)
@@ -449,18 +491,77 @@ void DoReader()
     reader.Close();
 }
 
+void DoReaderOutput()
+{
+    std::cout << "Metadata Installation Time " << InstallTime.count()
+              << " seconds." << std::endl;
+
+    std::cout << "Metadata Traversal Time " << TraversalTime.count()
+              << " seconds." << std::endl;
+
+    std::cout << "Parameters Nsteps=" << NSteps << ", NumArrays=" << NumArrays
+              << ", NumVArs=" << NumVars << ", NumAttrs=" << NumAttrs
+              << ", NumBlocks=" << NumBlocks << std::endl;
+    if ((NumArrays != LastArraySize) || (NumVars != LastVarSize) ||
+        (NumAttrs != LastAttrsSize))
+    {
+        std::cout << "Arrays=" << LastArraySize << ", Vars=" << LastVarSize
+                  << ", Attrs=" << LastAttrsSize << ", NumBlocks=" << NumBlocks
+                  << std::endl;
+        std::cout << "Inconsistency" << std::endl;
+    }
+}
+
 int main(int argc, char **argv)
 {
     int key;
     std::string MeasurementString;
+    unsigned int color = 0;
 
-    MPI_Init(nullptr, nullptr);
+    ParseArgs(argc, argv);
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &key);
-    MPI_Comm_size(MPI_COMM_WORLD, &WriterSize);
+    if (UseMPI)
+    {
+        MPI_Init(nullptr, nullptr);
 
-    ParseArgs(argc, argv, key);
+        MPI_Comm_rank(MPI_COMM_WORLD, &key);
+        MPI_Comm_size(MPI_COMM_WORLD, &WriterSize);
+        if (!FileMode)
+        {
+            if (key > 0)
+            {
+                color = 1;
+                WriterSize--;
+            }
+        }
+        MPI_Comm_split(MPI_COMM_WORLD, color, key, &testComm);
+    }
 
+    if (FileMode)
+    {
+        if (FileWriter)
+        {
+            DoWriter(engineParams);
+            if (key == 0)
+                std::cout << "File Writer Time " << elapsed.count()
+                          << " seconds." << std::endl;
+        }
+        else
+        {
+            DoReader();
+            if (key == 0)
+                DoReaderOutput();
+        }
+        if (UseMPI)
+        {
+            MPI_Finalize();
+        }
+        exit(0);
+    }
+    /*
+     * Below here for staging solutions
+     * Always run with MPI, 1 or more writers running with 1 reader
+     */
     if (WriterSize < 2)
     {
         std::cerr << "PerfMetaData cannot run with MPI size < 2" << std::endl;
@@ -472,14 +573,6 @@ int main(int argc, char **argv)
             << "Warning, metadata info for FFS not valid for num_blocks > 1"
             << std::endl;
     }
-    unsigned int color = 0;
-    if (key > 0)
-    {
-        color = 1;
-        WriterSize--;
-    }
-    MPI_Comm_split(MPI_COMM_WORLD, color, key, &testComm);
-
     // first all writer ranks do Writer calcs with no reader
     if (key > 0)
     {
@@ -508,24 +601,7 @@ int main(int argc, char **argv)
 
     if (key == 0)
     {
-        std::cout << "Metadata Installation Time " << InstallTime.count()
-                  << " seconds." << std::endl;
-
-        std::cout << "Metadata Traversal Time " << TraversalTime.count()
-                  << " seconds." << std::endl;
-
-        std::cout << "Parameters Nsteps=" << NSteps
-                  << ", NumArrays=" << NumArrays << ", NumVArs=" << NumVars
-                  << ", NumAttrs=" << NumAttrs << ", NumBlocks=" << NumBlocks
-                  << std::endl;
-        if ((NumArrays != LastArraySize) || (NumVars != LastVarSize) ||
-            (NumAttrs != LastAttrsSize))
-        {
-            std::cout << "Arrays=" << LastArraySize << ", Vars=" << LastVarSize
-                      << ", Attrs=" << LastAttrsSize
-                      << ", NumBlocks=" << NumBlocks << std::endl;
-            std::cout << "Inconsistency" << std::endl;
-        }
+        DoReaderOutput();
     }
     MPI_Finalize();
 

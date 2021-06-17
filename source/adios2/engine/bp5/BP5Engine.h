@@ -112,7 +112,7 @@ private:
  *   MetadataIndex file (md.idx)
  *	BP5 header for "Index Table" (64 bytes)
  *      for each Writer, what aggregator writes its data
- *             uint16_t * WriterCount;
+ *             uint16_t [ WriterCount]
  *	for each timestep:
  *		uint64_t 0 :  CombinedMetaDataPos
  *		uint64_t 1 :  CombinedMetaDataSize
