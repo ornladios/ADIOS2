@@ -54,6 +54,24 @@ if(NOT BLOSC_FOUND)
     endif()
   endif()
 
+  # Blosc depends on pthreads
+  # https://github.com/Blosc/c-blosc/blob/master/blosc/CMakeLists.txt
+  # https://github.com/Blosc/c-blosc/pull/318
+  set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+  if(WIN32)
+    # try to use the system library
+    find_package(Threads)
+    if(NOT Threads_FOUND)
+      message(STATUS "Blosc: used the internal pthread library for win32 systems.")
+      set(BLOSC_LIBRARIES)
+    else()
+      set(BLOSC_LIBRARIES Threads::Threads)
+    endif()
+  else()
+    find_package(Threads REQUIRED)
+    set(BLOSC_LIBRARIES Threads::Threads)
+  endif()
+
   include(FindPackageHandleStandardArgs)
   find_package_handle_standard_args(Blosc
     FOUND_VAR BLOSC_FOUND
@@ -68,6 +86,7 @@ if(NOT BLOSC_FOUND)
       set_target_properties(Blosc::Blosc PROPERTIES
         IMPORTED_LOCATION             "${BLOSC_LIBRARY}"
         INTERFACE_INCLUDE_DIRECTORIES "${BLOSC_INCLUDE_DIR}"
+        INTERFACE_LINK_LIBRARIES      "${BLOSC_LIBRARIES}"
       )
     endif()
   endif()
