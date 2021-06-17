@@ -258,8 +258,9 @@ TEST_F(TableEngineTest, TestTableMultiRank)
     Dims count = {1, 8, 64};
 
     Writer(shape, start, count, rows, engineParams, filename);
-    Reader(shape, start, count, rows, engineParams, filename);
+    MPI_Barrier(MPI_COMM_WORLD);
 
+    Reader(shape, start, count, rows, engineParams, filename);
     MPI_Barrier(MPI_COMM_WORLD);
 }
 
