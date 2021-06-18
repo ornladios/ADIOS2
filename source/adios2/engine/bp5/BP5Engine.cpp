@@ -167,6 +167,23 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
         return false;
     };
 
+    auto lf_SetUIntParameter = [&](const std::string key,
+                                   unsigned int &parameter, unsigned int def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            unsigned long result = std::stoul(itKey->second);
+            if (result > std::numeric_limits<unsigned>::max())
+            {
+                result = std::numeric_limits<unsigned>::max();
+            }
+            parameter = static_cast<unsigned int>(result);
+            return true;
+        }
+        return false;
+    };
+
     auto lf_SetStringParameter = [&](const std::string key,
                                      std::string &parameter, const char *def) {
         auto itKey = io.m_Parameters.find(key);

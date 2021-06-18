@@ -37,7 +37,7 @@ inline void BP4Serializer::PutVariableMetadata(
     const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
     auto lf_SetOffset = [&](uint64_t &offset) {
-        if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsConsumer)
+        if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsAggregator)
         {
             offset = static_cast<uint64_t>(m_Data.m_Position);
         }

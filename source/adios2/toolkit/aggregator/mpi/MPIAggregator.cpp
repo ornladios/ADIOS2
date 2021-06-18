@@ -89,7 +89,7 @@ void MPIAggregator::InitComm(const size_t subStreams,
 
     if (m_Rank != 0)
     {
-        m_IsConsumer = false;
+        m_IsAggregator = false;
     }
 
     m_IsActive = true;
@@ -104,7 +104,7 @@ void MPIAggregator::InitCommOnePerNode(helper::Comm const &parentComm)
 
     if (m_Rank != 0)
     {
-        m_IsConsumer = false;
+        m_IsAggregator = false;
     }
 
     m_IsActive = true;

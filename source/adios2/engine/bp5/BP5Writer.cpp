@@ -147,7 +147,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
     m_FileMetadataIndexManager.WriteFiles((char *)buf, sizeof(buf));
     m_FileMetadataIndexManager.WriteFiles((char *)m_WriterDataPos.data(),
                                           DataSizes.size() * sizeof(uint64_t));
-    for (int i = 0; i < DataSizes.size(); i++)
+    for (size_t i = 0; i < DataSizes.size(); i++)
     {
         m_WriterDataPos[i] += DataSizes[i];
     }
@@ -263,6 +263,10 @@ void BP5Writer::Init()
     m_BP5Serializer.m_Engine = this;
     m_RankMPI = m_Comm.Rank();
     InitParameters();
+    if (m_Parameters.NumAggregators < static_cast<unsigned int>(m_Comm.Size()))
+    {
+        m_Aggregator.Init(m_Parameters.NumAggregators, m_Comm);
+    }
     InitTransports();
     InitBPBuffer();
 }
@@ -304,7 +308,7 @@ void BP5Writer::InitTransports()
         m_BBName = m_Parameters.BurstBufferPath + PathSeparator + m_Name;
     }
 
-    if (m_Aggregator.m_IsConsumer)
+    if (m_Aggregator.m_IsAggregator)
     {
         // Names passed to IO AddTransport option with key "Name"
         const std::vector<std::string> transportsNames =
@@ -351,7 +355,7 @@ void BP5Writer::InitTransports()
                                         m_Parameters.NodeLocal);
     }
 
-    if (m_Aggregator.m_IsConsumer)
+    if (m_Aggregator.m_IsAggregator)
     {
 #ifdef NOTDEF
         if (m_Parameters.AsyncTasks)
@@ -547,7 +551,7 @@ void BP5Writer::InitBPBuffer()
         m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
                                               bi.m_Position);
         std::vector<uint64_t> Assignment(m_Comm.Size());
-        for (uint64_t i = 0; i < m_Comm.Size(); i++)
+        for (int i = 0; i < m_Comm.Size(); i++)
         {
             Assignment[i] = i; // Change when we do aggregation
         }
@@ -556,7 +560,7 @@ void BP5Writer::InitBPBuffer()
                                               sizeof(Assignment[0]) *
                                                   Assignment.size());
     }
-    if (m_Aggregator.m_IsConsumer)
+    if (m_Aggregator.m_IsAggregator)
     {
         format::BufferSTL d;
         MakeHeader(d, "Data", false);
