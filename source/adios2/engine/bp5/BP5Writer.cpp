@@ -615,7 +615,6 @@ void BP5Writer::InitBPBuffer()
         MakeHeader(bi, "Index Table", true);
         m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
                                               bi.m_Position);
-
         // where each rank's data will end up
         m_FileMetadataIndexManager.WriteFiles((char *)Assignment.data(),
                                               sizeof(Assignment[0]) *
