@@ -18,6 +18,8 @@ if(ADIOS2_HAVE_ZFP)
   bp3_bp4_gtest_add_tests_helper(WriteReadZfpHighLevelAPI MPI_ALLOW)
   bp3_bp4_gtest_add_tests_helper(WriteReadZfpConfig MPI_ALLOW)
 
+  gtest_add_tests_helper(ZfpComplex MPI_ALLOW BPWriteRead Engine. "")
+
   foreach(tgt
       ${Test.Engine.BP.WriteReadZfpConfig-TARGETS}
       )

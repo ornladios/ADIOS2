@@ -125,6 +125,18 @@ protected:
                                    DataType type,
                                    const Params &parameters) const;
 
+    /**
+     * Used by lossy compressors with a limitation on complex data types or
+     * dimentions Returns a adios2::Dims object that meets the requirement of a
+     * compressor
+     * @param dimensions
+     * @param type
+     * @param targetDims
+     * @return refined dimensions
+     */
+    Dims ConvertDims(const Dims &dimensions, const DataType type,
+                     const size_t targetDims = 0) const;
+
 private:
     void CheckCallbackType(const std::string type) const;
 };
