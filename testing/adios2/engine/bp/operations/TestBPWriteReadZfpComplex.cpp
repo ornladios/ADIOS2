@@ -16,8 +16,8 @@
 
 using namespace adios2;
 
-std::string ioName="TestIO";
-std::string fileName="TestBPWriteReadZfpComplex";
+std::string ioName = "TestIO";
+std::string fileName = "TestBPWriteReadZfpComplex";
 
 class BPEngineTest : public ::testing::Test
 {
@@ -29,7 +29,8 @@ template <class T>
 void PrintData(const T *data, const size_t step, const Dims &start,
                const Dims &count)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1,
+                                  std::multiplies<size_t>());
     std::cout << "Step: " << step << " Size:" << size << "\n";
     size_t printsize = 128;
 
@@ -63,7 +64,7 @@ void GenData(std::vector<T> &data, const size_t step, const Dims &start,
             for (size_t j = 0; j < count[1]; ++j)
             {
                 data[i * count[1] + j] =
-                    (i + start[1]) * shape[1] + j + start[0] + 0.01*step;
+                    (i + start[1]) * shape[1] + j + start[0] + 0.01 * step;
             }
         }
     }
@@ -98,10 +99,16 @@ void VerifyData(const T *data, size_t step, const Dims &start,
     }
 }
 
-void Writer(const Dims &shape, const Dims &start, const Dims &count, const size_t steps)
+void Writer(const Dims &shape, const Dims &start, const Dims &count,
+            const size_t steps)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
+                                      std::multiplies<size_t>());
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
     adios2::ADIOS adios;
+#endif
     adios2::IO io = adios.DeclareIO(ioName);
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
@@ -114,19 +121,26 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count, const size_
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     auto bpChars = io.DefineVariable<char>("bpChars", shape, start, count);
-    auto bpUChars = io.DefineVariable<unsigned char>("bpUChars", shape, start, count);
+    auto bpUChars =
+        io.DefineVariable<unsigned char>("bpUChars", shape, start, count);
     auto bpShorts = io.DefineVariable<short>("bpShorts", shape, start, count);
-    auto bpUShorts = io.DefineVariable<unsigned short>( "bpUShorts", shape, start, count);
+    auto bpUShorts =
+        io.DefineVariable<unsigned short>("bpUShorts", shape, start, count);
     auto bpInts = io.DefineVariable<int>("bpInts", shape, start, count);
-    auto bpUInts = io.DefineVariable<unsigned int>("bpUInts", shape, start, count);
+    auto bpUInts =
+        io.DefineVariable<unsigned int>("bpUInts", shape, start, count);
     auto bpFloats = io.DefineVariable<float>("bpFloats", shape, start, count);
-    adios2::Operator zfpOp = adios.DefineOperator("zfpCompressor", adios2::ops::LossyZFP);
+    adios2::Operator zfpOp =
+        adios.DefineOperator("zfpCompressor", adios2::ops::LossyZFP);
     bpFloats.AddOperation(zfpOp, {{"accuracy", "0.1"}});
-    auto bpDoubles = io.DefineVariable<double>("bpDoubles", shape, start, count);
+    auto bpDoubles =
+        io.DefineVariable<double>("bpDoubles", shape, start, count);
     bpDoubles.AddOperation(zfpOp, {{"accuracy", "0.1"}});
-    auto bpComplexes = io.DefineVariable<std::complex<float>>( "bpComplexes", shape, start, count);
+    auto bpComplexes = io.DefineVariable<std::complex<float>>(
+        "bpComplexes", shape, start, count);
     bpComplexes.AddOperation(zfpOp, {{"accuracy", "0.1"}});
-    auto bpDComplexes = io.DefineVariable<std::complex<double>>( "bpDComplexes", shape, start, count);
+    auto bpDComplexes = io.DefineVariable<std::complex<double>>(
+        "bpDComplexes", shape, start, count);
     bpDComplexes.AddOperation(zfpOp, {{"accuracy", "0.1"}});
     io.DefineAttribute<int>("AttInt", 110);
     adios2::Engine writerEngine = io.Open(fileName, adios2::Mode::Write);
@@ -158,13 +172,19 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count, const size_
     writerEngine.Close();
 }
 
-void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_t steps)
+void Reader(const Dims &shape, const Dims &start, const Dims &count,
+            const size_t steps)
 {
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
     adios2::ADIOS adios;
+#endif
     adios2::IO io = adios.DeclareIO(ioName);
     adios2::Engine readerEngine = io.Open(fileName, adios2::Mode::Read);
 
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
+                                      std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -184,26 +204,35 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_
             const auto &vars = io.AvailableVariables();
             ASSERT_EQ(vars.size(), 10);
             currentStep = readerEngine.CurrentStep();
-            GenData(myChars, currentStep, start,count,  shape);
-            GenData(myUChars, currentStep,  start,count,  shape);
-            GenData(myShorts, currentStep,   start,count, shape);
-            GenData(myUShorts, currentStep,   start,count, shape);
-            GenData(myInts, currentStep,  start,count,  shape);
-            GenData(myUInts, currentStep,  start,count,  shape);
-            GenData(myFloats, currentStep,  start,count,  shape);
-            GenData(myDoubles, currentStep,  start,count,  shape);
-            GenData(myComplexes, currentStep,  start,count,  shape);
-            GenData(myDComplexes, currentStep,  start,count,  shape);
-            adios2::Variable<char> bpChars = io.InquireVariable<char>("bpChars");
-            adios2::Variable<unsigned char> bpUChars = io.InquireVariable<unsigned char>("bpUChars");
-            adios2::Variable<short> bpShorts = io.InquireVariable<short>("bpShorts");
-            adios2::Variable<unsigned short> bpUShorts = io.InquireVariable<unsigned short>("bpUShorts");
+            GenData(myChars, currentStep, start, count, shape);
+            GenData(myUChars, currentStep, start, count, shape);
+            GenData(myShorts, currentStep, start, count, shape);
+            GenData(myUShorts, currentStep, start, count, shape);
+            GenData(myInts, currentStep, start, count, shape);
+            GenData(myUInts, currentStep, start, count, shape);
+            GenData(myFloats, currentStep, start, count, shape);
+            GenData(myDoubles, currentStep, start, count, shape);
+            GenData(myComplexes, currentStep, start, count, shape);
+            GenData(myDComplexes, currentStep, start, count, shape);
+            adios2::Variable<char> bpChars =
+                io.InquireVariable<char>("bpChars");
+            adios2::Variable<unsigned char> bpUChars =
+                io.InquireVariable<unsigned char>("bpUChars");
+            adios2::Variable<short> bpShorts =
+                io.InquireVariable<short>("bpShorts");
+            adios2::Variable<unsigned short> bpUShorts =
+                io.InquireVariable<unsigned short>("bpUShorts");
             adios2::Variable<int> bpInts = io.InquireVariable<int>("bpInts");
-            adios2::Variable<unsigned int> bpUInts = io.InquireVariable<unsigned int>("bpUInts");
-            adios2::Variable<float> bpFloats = io.InquireVariable<float>("bpFloats");
-            adios2::Variable<double> bpDoubles = io.InquireVariable<double>("bpDoubles");
-            adios2::Variable<std::complex<float>> bpComplexes = io.InquireVariable<std::complex<float>>("bpComplexes");
-            adios2::Variable<std::complex<double>> bpDComplexes = io.InquireVariable<std::complex<double>>("bpDComplexes");
+            adios2::Variable<unsigned int> bpUInts =
+                io.InquireVariable<unsigned int>("bpUInts");
+            adios2::Variable<float> bpFloats =
+                io.InquireVariable<float>("bpFloats");
+            adios2::Variable<double> bpDoubles =
+                io.InquireVariable<double>("bpDoubles");
+            adios2::Variable<std::complex<float>> bpComplexes =
+                io.InquireVariable<std::complex<float>>("bpComplexes");
+            adios2::Variable<std::complex<double>> bpDComplexes =
+                io.InquireVariable<std::complex<double>>("bpDComplexes");
             auto charsBlocksInfo = readerEngine.AllStepsBlocksInfo(bpChars);
 
             bpChars.SetSelection({start, count});
@@ -225,8 +254,10 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_
             readerEngine.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
             readerEngine.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
             readerEngine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-            readerEngine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-            readerEngine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+            readerEngine.Get(bpComplexes, myComplexes.data(),
+                             adios2::Mode::Sync);
+            readerEngine.Get(bpDComplexes, myDComplexes.data(),
+                             adios2::Mode::Sync);
 
             VerifyData(myChars.data(), currentStep, start, count, shape);
             VerifyData(myUChars.data(), currentStep, start, count, shape);
@@ -257,15 +288,25 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_
 
 TEST_F(BPEngineTest, ZfpComplex)
 {
-    Dims shape = {10, 10};
-    Dims start = {2, 2};
-    Dims count = {5, 5};
+
+    int mpiRank = 0, mpiSize = 1;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+    Dims shape = {(size_t)mpiSize, 100, 100};
+    Dims start = {(size_t)mpiRank, 0, 0};
+    Dims count = {1, 80, 80};
     size_t steps = 500;
 
     Writer(shape, start, count, steps);
+#if ADIOS2_USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
     Reader(shape, start, count, steps);
 }
-
 
 int main(int argc, char **argv)
 {
