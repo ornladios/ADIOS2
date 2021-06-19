@@ -18,6 +18,7 @@ using namespace adios2;
 
 std::string ioName = "TestIO";
 std::string fileName = "TestBPWriteReadZfpComplex";
+std::string accuracy = "0.01";
 
 class BPEngineTest : public ::testing::Test
 {
@@ -54,6 +55,24 @@ void PrintData(const T *data, const size_t step, const Dims &start,
 }
 
 template <class T>
+void GenData(std::vector<std::complex<T>> &data, const size_t step,
+             const Dims &start, const Dims &count, const Dims &shape)
+{
+    if (start.size() == 2)
+    {
+        for (size_t i = 0; i < count[0]; ++i)
+        {
+            for (size_t j = 0; j < count[1]; ++j)
+            {
+                data[i * count[1] + j] =
+                    (i + start[1]) * shape[1] + j + start[0] +
+                    std::stof(accuracy) * 0.00001 * (T)step;
+            }
+        }
+    }
+}
+
+template <class T>
 void GenData(std::vector<T> &data, const size_t step, const Dims &start,
              const Dims &count, const Dims &shape)
 {
@@ -64,7 +83,8 @@ void GenData(std::vector<T> &data, const size_t step, const Dims &start,
             for (size_t j = 0; j < count[1]; ++j)
             {
                 data[i * count[1] + j] =
-                    (i + start[1]) * shape[1] + j + start[0] + 0.01 * step;
+                    (i + start[1]) * shape[1] + j + start[0] +
+                    std::stof(accuracy) * 0.00001 * (T)step;
             }
         }
     }
@@ -72,7 +92,7 @@ void GenData(std::vector<T> &data, const size_t step, const Dims &start,
 
 template <class T>
 void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape)
+                const Dims &count, const Dims &shape, bool &compressed)
 {
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
@@ -80,14 +100,23 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        ASSERT_EQ(abs(data[i].real() - tmpdata[i].real()) < 0.01, true);
-        ASSERT_EQ(abs(data[i].imag() - tmpdata[i].imag()) < 0.01, true);
+        ASSERT_EQ(std::abs(data[i].real() - tmpdata[i].real()) <
+                      std::stof(accuracy),
+                  true);
+        ASSERT_EQ(std::abs(data[i].imag() - tmpdata[i].imag()) <
+                      std::stof(accuracy),
+                  true);
+        if (data[i].real() != tmpdata[i].real() ||
+            data[i].imag() != tmpdata[i].imag())
+        {
+            compressed = true;
+        }
     }
 }
 
 template <class T>
 void VerifyData(const T *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape)
+                const Dims &count, const Dims &shape, bool &compressed)
 {
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
@@ -95,7 +124,13 @@ void VerifyData(const T *data, size_t step, const Dims &start,
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        ASSERT_EQ(abs((double)(data[i] - tmpdata[i])) < 0.01, true);
+        ASSERT_EQ(std::abs((double)(data[i] - tmpdata[i])) <
+                      std::stof(accuracy),
+                  true);
+        if (data[i] != tmpdata[i])
+        {
+            compressed = true;
+        }
     }
 }
 
@@ -132,16 +167,16 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     auto bpFloats = io.DefineVariable<float>("bpFloats", shape, start, count);
     adios2::Operator zfpOp =
         adios.DefineOperator("zfpCompressor", adios2::ops::LossyZFP);
-    bpFloats.AddOperation(zfpOp, {{"accuracy", "0.1"}});
+    bpFloats.AddOperation(zfpOp, {{"accuracy", accuracy}});
     auto bpDoubles =
         io.DefineVariable<double>("bpDoubles", shape, start, count);
-    bpDoubles.AddOperation(zfpOp, {{"accuracy", "0.1"}});
+    bpDoubles.AddOperation(zfpOp, {{"accuracy", accuracy}});
     auto bpComplexes = io.DefineVariable<std::complex<float>>(
         "bpComplexes", shape, start, count);
-    bpComplexes.AddOperation(zfpOp, {{"accuracy", "0.1"}});
+    bpComplexes.AddOperation(zfpOp, {{"accuracy", accuracy}});
     auto bpDComplexes = io.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
-    bpDComplexes.AddOperation(zfpOp, {{"accuracy", "0.1"}});
+    bpDComplexes.AddOperation(zfpOp, {{"accuracy", accuracy}});
     io.DefineAttribute<int>("AttInt", 110);
     adios2::Engine writerEngine = io.Open(fileName, adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
@@ -196,6 +231,11 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     size_t currentStep;
+    bool floatCompressed = false;
+    bool doubleCompressed = false;
+    bool complexCompressed = false;
+    bool dcomplexCompressed = false;
+    bool otherCompressed = false;
     while (true)
     {
         adios2::StepStatus status = readerEngine.BeginStep();
@@ -259,16 +299,26 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             readerEngine.Get(bpDComplexes, myDComplexes.data(),
                              adios2::Mode::Sync);
 
-            VerifyData(myChars.data(), currentStep, start, count, shape);
-            VerifyData(myUChars.data(), currentStep, start, count, shape);
-            VerifyData(myShorts.data(), currentStep, start, count, shape);
-            VerifyData(myUShorts.data(), currentStep, start, count, shape);
-            VerifyData(myInts.data(), currentStep, start, count, shape);
-            VerifyData(myUInts.data(), currentStep, start, count, shape);
-            VerifyData(myFloats.data(), currentStep, start, count, shape);
-            VerifyData(myDoubles.data(), currentStep, start, count, shape);
-            VerifyData(myComplexes.data(), currentStep, start, count, shape);
-            VerifyData(myDComplexes.data(), currentStep, start, count, shape);
+            VerifyData(myChars.data(), currentStep, start, count, shape,
+                       otherCompressed);
+            VerifyData(myUChars.data(), currentStep, start, count, shape,
+                       otherCompressed);
+            VerifyData(myShorts.data(), currentStep, start, count, shape,
+                       otherCompressed);
+            VerifyData(myUShorts.data(), currentStep, start, count, shape,
+                       otherCompressed);
+            VerifyData(myInts.data(), currentStep, start, count, shape,
+                       otherCompressed);
+            VerifyData(myUInts.data(), currentStep, start, count, shape,
+                       otherCompressed);
+            VerifyData(myFloats.data(), currentStep, start, count, shape,
+                       floatCompressed);
+            VerifyData(myDoubles.data(), currentStep, start, count, shape,
+                       doubleCompressed);
+            VerifyData(myComplexes.data(), currentStep, start, count, shape,
+                       complexCompressed);
+            VerifyData(myDComplexes.data(), currentStep, start, count, shape,
+                       dcomplexCompressed);
             readerEngine.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
@@ -283,6 +333,11 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
     auto attInt = io.InquireAttribute<int>("AttInt");
     ASSERT_EQ(110, attInt.Data()[0]);
+    ASSERT_EQ(otherCompressed, false);
+    ASSERT_EQ(floatCompressed, true);
+    ASSERT_EQ(doubleCompressed, true);
+    ASSERT_EQ(complexCompressed, true);
+    ASSERT_EQ(dcomplexCompressed, true);
     readerEngine.Close();
 }
 
@@ -296,9 +351,9 @@ TEST_F(BPEngineTest, ZfpComplex)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    Dims shape = {(size_t)mpiSize, 100, 100};
-    Dims start = {(size_t)mpiRank, 0, 0};
-    Dims count = {1, 80, 80};
+    Dims shape = {(size_t)mpiSize, 100};
+    Dims start = {(size_t)mpiRank, 0};
+    Dims count = {1, 80};
     size_t steps = 500;
 
     Writer(shape, start, count, steps);
