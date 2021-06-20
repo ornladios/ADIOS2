@@ -25,6 +25,10 @@
 #include "adios2/operator/compress/CompressZFP.h"
 #endif
 
+#ifdef ADIOS2_HAVE_SZ
+#include "adios2/operator/compress/CompressSZ.h"
+#endif
+
 namespace adios2
 {
 namespace core
@@ -120,6 +124,34 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 #else
             std::cerr << "ADIOS2 is not compiled with ZFP "
                          "(https://github.com/LLNL/zfp), "
+                         "compressor not added"
+                      << std::endl;
+#endif
+        }
+        else if (m_UseCompressor == "sz")
+        {
+#ifdef ADIOS2_HAVE_SZ
+            if (var->m_Type == helper::GetDataType<float>() ||
+                var->m_Type == helper::GetDataType<double>() ||
+                var->m_Type == helper::GetDataType<std::complex<float>>() ||
+                var->m_Type == helper::GetDataType<std::complex<double>>())
+            {
+                if (m_UseAccuracy.empty())
+                {
+                    std::cerr << "Parameter accuracy for lossy compression is "
+                                 "not specified, compressor not added"
+                              << std::endl;
+                }
+                else
+                {
+                    m_Compressor = new compress::CompressSZ({});
+                    var->AddOperation(*m_Compressor, {{ops::sz::key::accuracy,
+                                                       m_UseAccuracy}});
+                }
+            }
+#else
+            std::cerr << "ADIOS2 is not compiled with SZ "
+                         "(https://github.com/szcompressor/SZ), "
                          "compressor not added"
                       << std::endl;
 #endif

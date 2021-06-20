@@ -39,7 +39,6 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                             void *bufferOut, const Params &parameters,
                             Params &info) const
 {
-
     Dims convertedDims = ConvertDims(dimensions, varType, 3);
 
     const size_t ndims = convertedDims.size();
