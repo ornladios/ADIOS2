@@ -2,9 +2,9 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TestBPWriteReadZfpComplex.cpp
+ * TestBPWriteReadSzComplex.cpp
  *
- *  Created on: Jun 18, 2021
+ *  Created on: Jun 20, 2021
  *      Author: Jason Wang
  */
 
