@@ -131,7 +131,9 @@
 
 #define ADIOS2_FOREACH_SZ_TYPE_1ARG(MACRO)                                     \
     MACRO(float)                                                               \
-    MACRO(double)
+    MACRO(double)                                                              \
+    MACRO(std::complex<float>)                                                 \
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_LIBPRESSIO_TYPE_1ARG(MACRO)                             \
     MACRO(uint8_t)                                                             \
