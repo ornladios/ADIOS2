@@ -18,10 +18,11 @@ namespace format
 class MallocV : public BufferV
 {
 public:
-
     uint64_t Size() noexcept;
 
-    MallocV(const std::string type, const bool AlwaysCopy = false, size_t InitialBufferSize = DefaultInitialBufferSize, double GrowthFactor = DefaultBufferGrowthFactor);
+    MallocV(const std::string type, const bool AlwaysCopy = false,
+            size_t InitialBufferSize = DefaultInitialBufferSize,
+            double GrowthFactor = DefaultBufferGrowthFactor);
     virtual ~MallocV();
 
     virtual BufferV_iovec DataVec() noexcept;

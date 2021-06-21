@@ -6,8 +6,8 @@
  *
  */
 
-#include "adios2/toolkit/format/buffer/BufferV.h"
 #include "MallocV.h"
+#include "adios2/toolkit/format/buffer/BufferV.h"
 #include <string.h>
 
 namespace adios2
@@ -15,11 +15,25 @@ namespace adios2
 namespace format
 {
 
-    MallocV::MallocV(const std::string type, const bool AlwaysCopy, size_t InitialBufferSize, double GrowthFactor) : BufferV(type, AlwaysCopy), m_InitialBufferSize(InitialBufferSize), m_GrowthFactor(GrowthFactor) {}
+MallocV::MallocV(const std::string type, const bool AlwaysCopy,
+                 size_t InitialBufferSize, double GrowthFactor)
+: BufferV(type, AlwaysCopy), m_InitialBufferSize(InitialBufferSize),
+  m_GrowthFactor(GrowthFactor)
+{
+}
 
-MallocV::~MallocV() { if (m_InternalBlock) free(m_InternalBlock);}
+MallocV::~MallocV()
+{
+    if (m_InternalBlock)
+        free(m_InternalBlock);
+}
 
-void MallocV::Reset() { CurOffset = 0; m_internalPos = 0; DataV.clear();}
+void MallocV::Reset()
+{
+    CurOffset = 0;
+    m_internalPos = 0;
+    DataV.clear();
+}
 
 size_t MallocV::AddToVec(const size_t size, const void *buf, int align,
                          bool CopyReqd)
@@ -44,18 +58,22 @@ size_t MallocV::AddToVec(const size_t size, const void *buf, int align,
     }
     else
     {
-	if (m_internalPos + size > m_AllocatedSize) {
-	    // need to resize
-	    size_t NewSize;
-	    if (m_internalPos + size > m_AllocatedSize * m_GrowthFactor) {
-		// just grow as needed (more than GrowthFactor)
-		NewSize = m_internalPos + size;
-	    } else {
-		NewSize = m_AllocatedSize * m_GrowthFactor;
-	    }
-	    m_InternalBlock = (char*)realloc(m_InternalBlock, NewSize);
-	    m_AllocatedSize = NewSize;
-	}
+        if (m_internalPos + size > m_AllocatedSize)
+        {
+            // need to resize
+            size_t NewSize;
+            if (m_internalPos + size > m_AllocatedSize * m_GrowthFactor)
+            {
+                // just grow as needed (more than GrowthFactor)
+                NewSize = m_internalPos + size;
+            }
+            else
+            {
+                NewSize = m_AllocatedSize * m_GrowthFactor;
+            }
+            m_InternalBlock = (char *)realloc(m_InternalBlock, NewSize);
+            m_AllocatedSize = NewSize;
+        }
         memcpy(m_InternalBlock + m_internalPos, buf, size);
 
         if (DataV.size() && !DataV.back().External &&
