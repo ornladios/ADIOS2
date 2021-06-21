@@ -120,6 +120,86 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
     }
 }
 
+void FilePOSIX::OpenChain(const std::string &name, const Mode openMode,
+                          const helper::Comm &chainComm, const bool async)
+{
+    auto lf_AsyncOpenWrite = [&](const std::string &name) -> int {
+        ProfilerStart("open");
+        errno = 0;
+        int FD = open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        m_Errno = errno;
+        ProfilerStop("open");
+        return FD;
+    };
+
+    int token = 1;
+    m_Name = name;
+    CheckName();
+
+    if (chainComm.Rank() > 0)
+    {
+        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
+                       "Chain token in FilePOSIX::OpenChain");
+    }
+
+    m_OpenMode = openMode;
+    switch (m_OpenMode)
+    {
+
+    case (Mode::Write):
+        if (async)
+        {
+            m_IsOpening = true;
+            m_OpenFuture =
+                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+        }
+        else
+        {
+            ProfilerStart("open");
+            errno = 0;
+            m_FileDescriptor =
+                open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            m_Errno = errno;
+            ProfilerStop("open");
+        }
+        break;
+
+    case (Mode::Append):
+        ProfilerStart("open");
+        errno = 0;
+        // m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
+        m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
+        lseek(m_FileDescriptor, 0, SEEK_END);
+        m_Errno = errno;
+        ProfilerStop("open");
+        break;
+
+    case (Mode::Read):
+        ProfilerStart("open");
+        errno = 0;
+        m_FileDescriptor = open(m_Name.c_str(), O_RDONLY);
+        m_Errno = errno;
+        ProfilerStop("open");
+        break;
+
+    default:
+        CheckFile("unknown open mode for file " + m_Name +
+                  ", in call to POSIX open");
+    }
+
+    if (!m_IsOpening)
+    {
+        CheckFile("couldn't open file " + m_Name + ", in call to POSIX open");
+        m_IsOpen = true;
+    }
+
+    if (chainComm.Rank() < chainComm.Size() - 1)
+    {
+        chainComm.Isend(&token, 1, chainComm.Rank() + 1, 0,
+                        "Sending Chain token in FilePOSIX::OpenChain");
+    }
+}
+
 void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
 {
     auto lf_Write = [&](const char *buffer, size_t size) {

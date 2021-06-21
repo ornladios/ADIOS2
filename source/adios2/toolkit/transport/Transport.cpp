@@ -72,6 +72,14 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
         "close", profiling::Timer("close", TimeUnit::Microseconds));
 }
 
+void Transport::OpenChain(const std::string &name, const Mode openMode,
+                          const helper::Comm &chainComm, const bool async)
+{
+    std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type +
+                          " using library " + m_Library +
+                          " doesn't implement the OpenChain function\n");
+}
+
 void Transport::SetParameters(const Params &parameters) {}
 
 void Transport::SetBuffer(char * /*buffer*/, size_t /*size*/)

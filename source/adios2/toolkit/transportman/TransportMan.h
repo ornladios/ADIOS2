@@ -72,6 +72,20 @@ public:
                    const bool profile);
 
     /**
+     * OpenFiles passed from fileNames, in a chain to avoid DOS attacking of the
+     * file system
+     * @param fileNames
+     * @param openMode
+     * @param parametersVector from IO
+     * @param profile
+     * @oaram chainComm
+     */
+    void OpenFiles(const std::vector<std::string> &fileNames,
+                   const Mode openMode,
+                   const std::vector<Params> &parametersVector,
+                   const bool profile, const helper::Comm &chainComm);
+
+    /**
      * Used for sub-files defined by index
      * @param name
      * @param id
@@ -178,10 +192,10 @@ public:
 protected:
     helper::Comm const &m_Comm;
 
-    std::shared_ptr<Transport> OpenFileTransport(const std::string &fileName,
-                                                 const Mode openMode,
-                                                 const Params &parameters,
-                                                 const bool profile);
+    std::shared_ptr<Transport>
+    OpenFileTransport(const std::string &fileName, const Mode openMode,
+                      const Params &parameters, const bool profile,
+                      const bool useComm, const helper::Comm &chainComm);
 
     void CheckFile(
         std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator
