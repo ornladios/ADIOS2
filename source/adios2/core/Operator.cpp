@@ -114,8 +114,8 @@ size_t Operator::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
 }
 
 Dims Operator::ConvertDims(const Dims &dimensions, const DataType type,
-                           const size_t targetDims,
-                           const bool enforceDims) const
+                           const size_t targetDims, const bool enforceDims,
+                           const size_t defaultDimSize) const
 {
 
     if (targetDims < 1)
@@ -145,9 +145,9 @@ Dims Operator::ConvertDims(const Dims &dimensions, const DataType type,
         ret.erase(ret.begin());
     }
 
-    if (enforceDims && ret.size() < targetDims)
+    while (enforceDims && ret.size() < targetDims)
     {
-        ret.insert(ret.begin(), 1);
+        ret.insert(ret.begin(), defaultDimSize);
     }
 
     if (type == helper::GetDataType<std::complex<float>>() ||
