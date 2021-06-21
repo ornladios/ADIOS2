@@ -39,7 +39,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                             void *bufferOut, const Params &parameters,
                             Params &info) const
 {
-    Dims convertedDims = ConvertDims(dimensions, varType, 3);
+    Dims convertedDims = ConvertDims(dimensions, varType, 4);
 
     const size_t ndims = convertedDims.size();
 
@@ -65,8 +65,9 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
         static_cast<int>(std::pow(5., static_cast<double>(ndims)));
     sz.pwr_type = SZ_PWR_MIN_TYPE;
 
+    convertedDims = ConvertDims(dimensions, varType, 4, true, 1);
+
     size_t outsize;
-    size_t r[5] = {0, 0, 0, 0, 0};
 
     /* SZ parameters */
     int use_configfile = 0;
@@ -258,23 +259,9 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                                     ToString(varType) + " is unsupported\n");
     }
 
-    // r[0] is the fastest changing dimension and r[4] is the lowest changing
-    // dimension
-    // In C, r[0] is the last dimension. In Fortran, r[0] is the first dimension
-    for (size_t i = 0; i < ndims; i++)
-    {
-        r[ndims - i - 1] = convertedDims[i];
-        /*
-        if (fd->group->adios_host_language_fortran == adios_flag_yes)
-            r[i] = convertedDims[i];
-        else
-            r[ndims-i-1] = convertedDims[i];
-        d = d->next;
-         */
-    }
-
-    unsigned char *bytes = SZ_compress(dtype, (void *)dataIn, &outsize, r[4],
-                                       r[3], r[2], r[1], r[0]);
+    unsigned char *bytes =
+        SZ_compress(dtype, (void *)dataIn, &outsize, 0, convertedDims[0],
+                    convertedDims[1], convertedDims[2], convertedDims[3]);
     std::memcpy(bufferOut, bytes, outsize);
     free(bytes);
     bytes = nullptr;
@@ -287,7 +274,7 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
                               DataType varType,
                               const Params & /*parameters*/) const
 {
-    Dims convertedDims = ConvertDims(dimensions, varType, 3);
+    Dims convertedDims = ConvertDims(dimensions, varType, 4, true, 1);
 
     // Get type info
     int dtype = 0;
@@ -310,22 +297,13 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
             "ERROR: data type must be either double or float in SZ\n");
     }
 
-    // r[0] is the fastest changing dimension and r[4] is the lowest changing
-    // dimension
-    // In C, r[0] is the last dimension. In Fortran, r[0] is the first dimension
-    std::vector<size_t> rs(5, 0);
-    const size_t ndims = convertedDims.size();
-    for (size_t i = 0; i < ndims; ++i)
-    {
-        rs[ndims - i - 1] = convertedDims[i];
-    }
-
     const size_t dataSizeBytes =
         helper::GetTotalSize(convertedDims) * typeSizeBytes;
 
     void *result = SZ_decompress(
         dtype, reinterpret_cast<unsigned char *>(const_cast<void *>(bufferIn)),
-        sizeIn, rs[4], rs[3], rs[2], rs[1], rs[0]);
+        sizeIn, 0, convertedDims[0], convertedDims[1], convertedDims[2],
+        convertedDims[3]);
 
     if (result == nullptr)
     {
