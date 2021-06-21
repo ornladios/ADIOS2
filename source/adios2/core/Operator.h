@@ -135,7 +135,8 @@ protected:
      * @return refined dimensions
      */
     Dims ConvertDims(const Dims &dimensions, const DataType type,
-                     const size_t targetDims = 0) const;
+                     const size_t targetDims = 0,
+                     const bool enforceDims = false) const;
 
 private:
     void CheckCallbackType(const std::string type) const;

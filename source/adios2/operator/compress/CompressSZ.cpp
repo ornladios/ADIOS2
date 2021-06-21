@@ -39,7 +39,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                             void *bufferOut, const Params &parameters,
                             Params &info) const
 {
-    Dims convertedDims = ConvertDims(dimensions, varType, 3);
+    Dims convertedDims = ConvertDims(dimensions, varType, 5, true);
 
     const size_t ndims = convertedDims.size();
 
@@ -287,7 +287,7 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
                               DataType varType,
                               const Params & /*parameters*/) const
 {
-    Dims convertedDims = ConvertDims(dimensions, varType, 3);
+    Dims convertedDims = ConvertDims(dimensions, varType, 5, true);
 
     // Get type info
     int dtype = 0;
