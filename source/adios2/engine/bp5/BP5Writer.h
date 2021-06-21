@@ -127,6 +127,7 @@ private:
     WriteMetadata(const std::vector<format::BufferV::iovec> MetaDataBlocks,
                   const std::vector<format::BufferV::iovec> AttributeBlocks);
 
+    /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);
 
     void PopulateMetadataIndexFileContent(

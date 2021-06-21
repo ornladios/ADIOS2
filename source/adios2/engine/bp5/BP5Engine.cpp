@@ -103,28 +103,21 @@ std::string BP5Engine::GetBPSubStreamName(const std::string &name,
     }
 
     const std::string bpName = helper::RemoveTrailingSlash(name);
-
-    const size_t index = id;
-    //    isReader ? id
-    //	: m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex : id;
-
     /* the name of a data file starts with "data." */
     const std::string bpRankName(bpName + PathSeparator + "data." +
-                                 std::to_string(index));
+                                 std::to_string(id));
     return bpRankName;
 }
 
 std::vector<std::string>
-BP5Engine::GetBPSubStreamNames(const std::vector<std::string> &names) const
-    noexcept
+BP5Engine::GetBPSubStreamNames(const std::vector<std::string> &names,
+                               size_t subFileIndex) const noexcept
 {
     std::vector<std::string> bpNames;
     bpNames.reserve(names.size());
-
     for (const auto &name : names)
     {
-        bpNames.push_back(
-            GetBPSubStreamName(name, static_cast<unsigned int>(m_RankMPI)));
+        bpNames.push_back(GetBPSubStreamName(name, subFileIndex));
     }
     return bpNames;
 }

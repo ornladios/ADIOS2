@@ -121,16 +121,53 @@ uint64_t BP5Writer::WriteMetadata(
 void BP5Writer::WriteData(format::BufferV *Data)
 {
     format::BufferV::BufferV_iovec DataVec = Data->DataVec();
-    size_t DataSize = 0;
+
+    size_t m_StartDataPos = 0;
+    if (m_Aggregator.m_Comm.Rank() > 0)
+    {
+        m_Aggregator.m_Comm.Recv(&m_StartDataPos, 1,
+                                 m_Aggregator.m_Comm.Rank() - 1, 0,
+                                 "Chain token in BP5Writer::WriteData");
+        m_DataPos = m_StartDataPos;
+    }
+
     int i = 0;
     while (DataVec[i].iov_base != NULL)
     {
-        m_FileDataManager.WriteFiles((char *)DataVec[i].iov_base,
-                                     DataVec[i].iov_len);
-        DataSize += DataVec[i].iov_len;
+        m_FileDataManager.WriteFileAt((char *)DataVec[i].iov_base,
+                                      DataVec[i].iov_len, m_DataPos);
+        m_DataPos += DataVec[i].iov_len;
         i++;
     }
-    m_DataPos += DataSize;
+
+    if (m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
+    {
+        m_StartDataPos = m_DataPos;
+        m_Aggregator.m_Comm.Isend(&m_StartDataPos, 1,
+                                  m_Aggregator.m_Comm.Rank() + 1, 0,
+                                  "Chain token in BP5Writer::WriteData");
+    }
+
+    if (m_Aggregator.m_Comm.Size() > 1)
+    {
+        // at the end, last rank sends back the final data pos to first rank
+        // so it can update its data pos
+        if (m_Aggregator.m_Comm.Rank() == m_Aggregator.m_Comm.Size() - 1)
+        {
+            m_StartDataPos = m_DataPos;
+            m_Aggregator.m_Comm.Isend(
+                &m_StartDataPos, 1, 0, 0,
+                "Final chain token in BP5Writer::WriteData");
+        }
+        if (m_Aggregator.m_Comm.Rank() == 0)
+        {
+            m_Aggregator.m_Comm.Recv(&m_StartDataPos, 1,
+                                     m_Aggregator.m_Comm.Size() - 1, 0,
+                                     "Chain token in BP5Writer::WriteData");
+            m_DataPos = m_StartDataPos;
+        }
+    }
+
     delete[] DataVec;
 }
 
@@ -263,10 +300,15 @@ void BP5Writer::Init()
     m_BP5Serializer.m_Engine = this;
     m_RankMPI = m_Comm.Rank();
     InitParameters();
-    if (m_Parameters.NumAggregators < static_cast<unsigned int>(m_Comm.Size()))
+    if (m_Parameters.NumAggregators > static_cast<unsigned int>(m_Comm.Size()))
     {
-        m_Aggregator.Init(m_Parameters.NumAggregators, m_Comm);
+        m_Parameters.NumAggregators = static_cast<unsigned int>(m_Comm.Size());
     }
+    // in BP5, aggregation is "always on", but processes may be alone, so
+    // m_Aggregator.m_IsActive is always true
+    // m_Aggregator.m_Comm.Rank() will always succeed (not abort)
+    // m_Aggregator.m_SubFileIndex is always set
+    m_Aggregator.Init(m_Parameters.NumAggregators, m_Comm);
     InitTransports();
     InitBPBuffer();
 }
@@ -293,7 +335,6 @@ void BP5Writer::InitParameters()
 
 void BP5Writer::InitTransports()
 {
-    // TODO need to add support for aggregators here later
     if (m_IO.m_TransportsParameters.empty())
     {
         Params defaultTransportParameters;
@@ -301,28 +342,31 @@ void BP5Writer::InitTransports()
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
-    // only consumers will interact with transport managers
     m_BBName = m_Name;
     if (m_WriteToBB)
     {
         m_BBName = m_Parameters.BurstBufferPath + PathSeparator + m_Name;
     }
 
+    // Names passed to IO AddTransport option with key "Name"
+    const std::vector<std::string> transportsNames =
+        m_FileDataManager.GetFilesBaseNames(m_BBName,
+                                            m_IO.m_TransportsParameters);
+
+    // /path/name.bp.dir/name.bp.rank
+    m_SubStreamNames =
+        GetBPSubStreamNames(transportsNames, m_Aggregator.m_SubStreamIndex);
+
     if (m_Aggregator.m_IsAggregator)
     {
-        // Names passed to IO AddTransport option with key "Name"
-        const std::vector<std::string> transportsNames =
-            m_FileDataManager.GetFilesBaseNames(m_BBName,
-                                                m_IO.m_TransportsParameters);
-
-        // /path/name.bp.dir/name.bp.rank
-        m_SubStreamNames = GetBPSubStreamNames(transportsNames);
+        // Only aggregators will run draining processes
         if (m_DrainBB)
         {
             const std::vector<std::string> drainTransportNames =
                 m_FileDataManager.GetFilesBaseNames(
                     m_Name, m_IO.m_TransportsParameters);
-            m_DrainSubStreamNames = GetBPSubStreamNames(drainTransportNames);
+            m_DrainSubStreamNames = GetBPSubStreamNames(
+                drainTransportNames, m_Aggregator.m_SubStreamIndex);
             /* start up BB thread */
             //            m_FileDrainer.SetVerbose(
             //				     m_Parameters.BurstBufferVerbose,
@@ -355,20 +399,21 @@ void BP5Writer::InitTransports()
                                         m_Parameters.NodeLocal);
     }
 
+    /* Everyone opens its data file. Each aggregation chain opens
+       one data file and does so in chain, not everyone at once */
+    if (m_Parameters.AsyncTasks)
+    {
+        for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
+        {
+            m_IO.m_TransportsParameters[i]["asynctasks"] = "true";
+        }
+    }
+    m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
+                                m_IO.m_TransportsParameters, false,
+                                m_Aggregator.m_Comm);
+
     if (m_Aggregator.m_IsAggregator)
     {
-#ifdef NOTDEF
-        if (m_Parameters.AsyncTasks)
-        {
-            for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
-            {
-                m_IO.m_TransportsParameters[i]["asynctasks"] = "true";
-            }
-        }
-#endif
-        m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
-                                    m_IO.m_TransportsParameters, false);
-
         if (m_DrainBB)
         {
             for (const auto &name : m_DrainSubStreamNames)

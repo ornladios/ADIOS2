@@ -51,7 +51,7 @@ public:
 
     /** consumer original rank coming from the parent communicator in Init,
      *  corresponds to m_Rank = 0 */
-    int m_ConsumerRank = -1;
+    int m_AggregatorRank = -1;
 
     MPIAggregator();
 

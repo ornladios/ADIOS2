@@ -95,7 +95,7 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         size_t pgstart = m_MetadataIndexTable[m_CurrentStep][0];
         size_t Position = pgstart + sizeof(uint64_t); // skip total data size
         size_t MDPosition = Position + 2 * sizeof(uint64_t) * m_WriterCount;
-        for (int i = 0; i < m_WriterCount; i++)
+        for (size_t i = 0; i < m_WriterCount; i++)
         {
             // variable metadata for timestep
             size_t ThisMDSize = helper::ReadValue<uint64_t>(
@@ -104,7 +104,7 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
             m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, i);
             MDPosition += ThisMDSize;
         }
-        for (int i = 0; i < m_WriterCount; i++)
+        for (size_t i = 0; i < m_WriterCount; i++)
         {
             // attribute metadata for timestep
             size_t ThisADSize = helper::ReadValue<uint64_t>(

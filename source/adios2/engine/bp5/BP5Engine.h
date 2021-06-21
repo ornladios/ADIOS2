@@ -56,7 +56,8 @@ public:
     static constexpr size_t m_VersionTagLength = 32;
 
     std::vector<std::string>
-    GetBPSubStreamNames(const std::vector<std::string> &names) const noexcept;
+    GetBPSubStreamNames(const std::vector<std::string> &names,
+                        size_t subFileIndex) const noexcept;
 
     std::vector<std::string>
     GetBPMetadataFileNames(const std::vector<std::string> &names) const
@@ -88,6 +89,7 @@ public:
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
     MACRO(NumAggregators, UInt, unsigned int, 0)                               \
+    MACRO(AsyncTasks, Bool, bool, true)                                        \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)
 
     struct BP5Params
