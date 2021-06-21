@@ -39,12 +39,9 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                             void *bufferOut, const Params &parameters,
                             Params &info) const
 {
-    const size_t ndims = dimensions.size();
-    if (ndims > 5)
-    {
-        throw std::invalid_argument("ERROR: ADIOS2 SZ compression: no more "
-                                    "than 5 dimension is supported.\n");
-    }
+    Dims convertedDims = ConvertDims(dimensions, varType, 3);
+
+    const size_t ndims = convertedDims.size();
 
     sz_params sz;
     memset(&sz, 0, sizeof(sz_params));
@@ -244,11 +241,13 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 
     // Get type info
     int dtype = -1;
-    if (varType == helper::GetDataType<double>())
+    if (varType == helper::GetDataType<double>() ||
+        varType == helper::GetDataType<std::complex<double>>())
     {
         dtype = SZ_DOUBLE;
     }
-    else if (varType == helper::GetDataType<float>())
+    else if (varType == helper::GetDataType<float>() ||
+             varType == helper::GetDataType<std::complex<float>>())
     {
         dtype = SZ_FLOAT;
     }
@@ -264,12 +263,12 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     // In C, r[0] is the last dimension. In Fortran, r[0] is the first dimension
     for (size_t i = 0; i < ndims; i++)
     {
-        r[ndims - i - 1] = dimensions[i];
+        r[ndims - i - 1] = convertedDims[i];
         /*
         if (fd->group->adios_host_language_fortran == adios_flag_yes)
-            r[i] = dimensions[i];
+            r[i] = convertedDims[i];
         else
-            r[ndims-i-1] = dimensions[i];
+            r[ndims-i-1] = convertedDims[i];
         d = d->next;
          */
     }
@@ -288,21 +287,19 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
                               DataType varType,
                               const Params & /*parameters*/) const
 {
-    if (dimensions.size() > 5)
-    {
-        throw std::invalid_argument("ERROR: SZ decompression doesn't support "
-                                    "more than 5 dimension variables.\n");
-    }
+    Dims convertedDims = ConvertDims(dimensions, varType, 3);
 
     // Get type info
     int dtype = 0;
     size_t typeSizeBytes = 0;
-    if (varType == helper::GetDataType<double>())
+    if (varType == helper::GetDataType<double>() ||
+        varType == helper::GetDataType<std::complex<double>>())
     {
         dtype = SZ_DOUBLE;
         typeSizeBytes = 8;
     }
-    else if (varType == helper::GetDataType<float>())
+    else if (varType == helper::GetDataType<float>() ||
+             varType == helper::GetDataType<std::complex<float>>())
     {
         dtype = SZ_FLOAT;
         typeSizeBytes = 4;
@@ -317,14 +314,14 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
     // dimension
     // In C, r[0] is the last dimension. In Fortran, r[0] is the first dimension
     std::vector<size_t> rs(5, 0);
-    const size_t ndims = dimensions.size();
+    const size_t ndims = convertedDims.size();
     for (size_t i = 0; i < ndims; ++i)
     {
-        rs[ndims - i - 1] = dimensions[i];
+        rs[ndims - i - 1] = convertedDims[i];
     }
 
     const size_t dataSizeBytes =
-        helper::GetTotalSize(dimensions) * typeSizeBytes;
+        helper::GetTotalSize(convertedDims) * typeSizeBytes;
 
     void *result = SZ_decompress(
         dtype, reinterpret_cast<unsigned char *>(const_cast<void *>(bufferIn)),

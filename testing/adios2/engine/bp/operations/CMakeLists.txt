@@ -10,6 +10,7 @@ file(MAKE_DIRECTORY ${BP4_DIR})
 
 if(ADIOS2_HAVE_SZ)
   bp3_bp4_gtest_add_tests_helper(WriteReadSZ MPI_ALLOW)
+  gtest_add_tests_helper(SzComplex MPI_ALLOW BPWriteRead Engine. "")
 endif()
 
 
