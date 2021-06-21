@@ -12,8 +12,8 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include "adios2/toolkit/transport/file/FileFStream.h"
+#include <adios2-perfstubs-interface.h>
 
 #include <ctime>
 #include <iostream>
@@ -33,7 +33,7 @@ BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
   m_FileDataManager(m_Comm), m_FileMetadataManager(m_Comm),
   m_FileMetaMetadataManager(m_Comm), m_FileMetadataIndexManager(m_Comm)
 {
-    TAU_SCOPED_TIMER("BP5Writer::Open");
+    PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
     m_IO.m_ReadStreaming = false;
     m_EndMessage = " in call to IO Open BP5Writer " + m_Name + "\n";
 
@@ -50,7 +50,7 @@ size_t BP5Writer::CurrentStep() const { return m_WriterStep; }
 
 void BP5Writer::PerformPuts()
 {
-    TAU_SCOPED_TIMER("BP5Writer::PerformPuts");
+    PERFSTUBS_SCOPED_TIMER("BP5Writer::PerformPuts");
     return;
 }
 
@@ -155,7 +155,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
 
 void BP5Writer::MarshalAttributes()
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     const auto &attributes = m_IO.GetAttributes();
 
     const uint32_t attributesCount = static_cast<uint32_t>(attributes.size());
@@ -211,7 +211,7 @@ void BP5Writer::MarshalAttributes()
 
 void BP5Writer::EndStep()
 {
-    TAU_SCOPED_TIMER("BP5Writer::EndStep");
+    PERFSTUBS_SCOPED_TIMER("BP5Writer::EndStep");
 
     MarshalAttributes();
 
@@ -593,7 +593,7 @@ void BP5Writer::DoFlush(const bool isFinal, const int transportIndex)
 
 void BP5Writer::DoClose(const int transportIndex)
 {
-    TAU_SCOPED_TIMER("BP5Writer::Close");
+    PERFSTUBS_SCOPED_TIMER("BP5Writer::Close");
     PerformPuts();
 
     DoFlush(true, transportIndex);
@@ -621,7 +621,7 @@ void BP5Writer::PopulateMetadataIndexFileContent(
     const uint64_t attributesIndexStart, const uint64_t currentStepEndPos,
     const uint64_t currentTimeStamp)
 {
-    TAU_SCOPED_TIMER("BP5Writer::PopulateMetadataIndexFileContent");
+    PERFSTUBS_SCOPED_TIMER("BP5Writer::PopulateMetadataIndexFileContent");
     auto &buffer = b.m_Buffer;
     auto &position = b.m_Position;
     helper::CopyToBuffer(buffer, position, &currentStep);

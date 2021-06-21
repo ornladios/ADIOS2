@@ -42,7 +42,6 @@
 
 #include "sst_data.h"
 
-#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "dp_interface.h"
 
 #define DP_AV_DEF_SIZE 512

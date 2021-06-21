@@ -36,7 +36,6 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 #include "adios2/helper/adiosString.h"
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include <adios2sys/SystemTools.hxx> // FileIsDirectory()
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
@@ -251,7 +250,7 @@ void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; }
 
 void IO::SetParameters(const Params &parameters) noexcept
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     for (const auto &parameter : parameters)
     {
         m_Parameters[parameter.first] = parameter.second;
@@ -260,7 +259,7 @@ void IO::SetParameters(const Params &parameters) noexcept
 
 void IO::SetParameters(const std::string &parameters)
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     adios2::Params parameterMap =
         adios2::helper::BuildParametersMap(parameters, '=', ',');
     SetParameters(parameterMap);
@@ -268,7 +267,7 @@ void IO::SetParameters(const std::string &parameters)
 
 void IO::SetParameter(const std::string key, const std::string value) noexcept
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     m_Parameters[key] = value;
 }
 
@@ -276,13 +275,13 @@ Params &IO::GetParameters() noexcept { return m_Parameters; }
 
 void IO::ClearParameters() noexcept
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     m_Parameters.clear();
 }
 
 size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     Params parametersMap(parameters);
 
     if (parameters.count("transport") == 1 ||
@@ -303,7 +302,7 @@ size_t IO::AddTransport(const std::string type, const Params &parameters)
 void IO::SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value)
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     if (transportIndex >= m_TransportsParameters.size())
     {
         throw std::invalid_argument(
@@ -327,7 +326,7 @@ bool IO::IsDeclared() const noexcept { return m_IsDeclared; }
 
 bool IO::RemoveVariable(const std::string &name) noexcept
 {
-    TAU_SCOPED_TIMER("IO::RemoveVariable");
+    PERFSTUBS_SCOPED_TIMER("IO::RemoveVariable");
     bool isRemoved = false;
     auto itVariable = m_Variables.find(name);
     // variable exists
@@ -341,13 +340,13 @@ bool IO::RemoveVariable(const std::string &name) noexcept
 
 void IO::RemoveAllVariables() noexcept
 {
-    TAU_SCOPED_TIMER("IO::RemoveAllVariables");
+    PERFSTUBS_SCOPED_TIMER("IO::RemoveAllVariables");
     m_Variables.clear();
 }
 
 bool IO::RemoveAttribute(const std::string &name) noexcept
 {
-    TAU_SCOPED_TIMER("IO::RemoveAttribute");
+    PERFSTUBS_SCOPED_TIMER("IO::RemoveAttribute");
     bool isRemoved = false;
     auto itAttribute = m_Attributes.find(name);
     // attribute exists
@@ -372,14 +371,14 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
 
 void IO::RemoveAllAttributes() noexcept
 {
-    TAU_SCOPED_TIMER("IO::RemoveAllAttributes");
+    PERFSTUBS_SCOPED_TIMER("IO::RemoveAllAttributes");
     m_Attributes.clear();
 }
 
 std::map<std::string, Params>
 IO::GetAvailableVariables(const std::set<std::string> &keys) noexcept
 {
-    TAU_SCOPED_TIMER("IO::GetAvailableVariables");
+    PERFSTUBS_SCOPED_TIMER("IO::GetAvailableVariables");
 
     std::map<std::string, Params> variablesInfo;
     for (const auto &variablePair : m_Variables)
@@ -407,7 +406,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
                            const std::string separator,
                            const bool fullNameKeys) noexcept
 {
-    TAU_SCOPED_TIMER("IO::GetAvailableAttributes");
+    PERFSTUBS_SCOPED_TIMER("IO::GetAvailableAttributes");
     std::map<std::string, Params> attributesInfo;
 
     if (!variableName.empty())
@@ -444,7 +443,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
 
 DataType IO::InquireVariableType(const std::string &name) const noexcept
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     auto itVariable = m_Variables.find(name);
     return InquireVariableType(itVariable);
 }
@@ -480,7 +479,7 @@ DataType IO::InquireAttributeType(const std::string &name,
                                   const std::string &variableName,
                                   const std::string separator) const noexcept
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
@@ -495,7 +494,7 @@ DataType IO::InquireAttributeType(const std::string &name,
 
 size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     m_Operations.push_back(
         Operation{&op, helper::LowerCaseParams(parameters), Params()});
     return m_Operations.size() - 1;
@@ -503,7 +502,7 @@ size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
 
 Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
 {
-    TAU_SCOPED_TIMER("IO::Open");
+    PERFSTUBS_SCOPED_TIMER("IO::Open");
     auto itEngineFound = m_Engines.find(name);
     const bool isEngineFound = (itEngineFound != m_Engines.end());
     bool isEngineActive = false;
@@ -675,7 +674,7 @@ Group &IO::CreateGroup(char delimiter)
 }
 Engine &IO::GetEngine(const std::string &name)
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     auto itEngine = m_Engines.find(name);
     if (itEngine == m_Engines.end())
     {
@@ -698,7 +697,7 @@ void IO::RemoveEngine(const std::string &name)
 
 void IO::FlushAll()
 {
-    TAU_SCOPED_TIMER("IO::FlushAll");
+    PERFSTUBS_SCOPED_TIMER("IO::FlushAll");
     for (auto &enginePair : m_Engines)
     {
         auto &engine = enginePair.second;
@@ -712,7 +711,7 @@ void IO::FlushAll()
 void IO::ResetVariablesStepSelection(const bool zeroStart,
                                      const std::string hint)
 {
-    TAU_SCOPED_TIMER("IO::other");
+    PERFSTUBS_SCOPED_TIMER("IO::other");
     for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
          ++itVariable)
     {

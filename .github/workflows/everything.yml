@@ -216,7 +216,8 @@ jobs:
         code: [
           examples,
           lammps,
-          scorpio ]
+          scorpio,
+          tau ]
         include:
         - code: examples
           repo: ornladios/ADIOS2-Examples
@@ -227,6 +228,9 @@ jobs:
         - code: scorpio
           repo: E3SM-Project/scorpio
           ref: scorpio-v1.2.1
+        - code: tau
+          repo: ornladios/ADIOS2-Examples
+          ref: master
 
     defaults:
       run:

@@ -9,9 +9,9 @@
 
 #include "sst_data.h"
 
-#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "daos.h"
 #include "dp_interface.h"
+#include <adios2-perfstubs-interface.h>
 
 /*
  *  Some conventions:
@@ -248,7 +248,7 @@ static void DaosDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 static void DaosReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
                                    void *client_Data, attr_list attrs)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     DaosReadRequestMsg ReadRequestMsg = (DaosReadRequestMsg)msg_v;
     Daos_WSR_Stream WSR_Stream = ReadRequestMsg->WS_Stream;
 
@@ -291,7 +291,7 @@ static void DaosReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
             CMwrite(WSR_Stream->ReaderContactInfo[RequestingRank].Conn,
                     WS_Stream->ReadReplyFormat, &ReadReplyMsg);
 
-            TAU_STOP_FUNC();
+            PERFSTUBS_TIMER_STOP_FUNC(timer);
             return;
         }
         tmp = tmp->Next;
@@ -307,7 +307,7 @@ static void DaosReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
      * assert(0) here.  Probably this sort of error should close the link to
      * a reader though.
      */
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 typedef struct _DaosCompletionHandle
@@ -325,7 +325,7 @@ typedef struct _DaosCompletionHandle
 static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
                                  void *client_Data, attr_list attrs)
 {
-    TAU_START_FUNC();
+    PERFSTUBS_TIMER_START_FUNC(timer);
     DaosReadReplyMsg ReadReplyMsg = (DaosReadReplyMsg)msg_v;
     Daos_RS_Stream RS_Stream = ReadReplyMsg->RS_Stream;
     CP_Services Svcs = (CP_Services)client_Data;
@@ -337,7 +337,7 @@ static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
                       "Got a reply to remote memory "
                       "read, but the condition is "
                       "already signalled, returning\n");
-        TAU_STOP_FUNC();
+        PERFSTUBS_TIMER_STOP_FUNC(timer);
         return;
     }
     Handle = CMCondition_get_client_data(cm, ReadReplyMsg->NotifyCondition);
@@ -347,7 +347,7 @@ static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
         Svcs->verbose(
             RS_Stream->CP_Stream, DPTraceVerbose,
             "Got a reply to remote memory read, but condition not found\n");
-        TAU_STOP_FUNC();
+        PERFSTUBS_TIMER_STOP_FUNC(timer);
         return;
     }
     Svcs->verbose(
@@ -366,7 +366,7 @@ static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
      * Signal the condition to wake the reader if they are waiting.
      */
     CMCondition_signal(cm, ReadReplyMsg->NotifyCondition);
-    TAU_STOP_FUNC();
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 static DP_WS_Stream DaosInitWriter(CP_Services Svcs, void *CP_Stream,

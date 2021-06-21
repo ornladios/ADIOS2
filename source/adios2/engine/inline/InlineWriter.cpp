@@ -13,7 +13,7 @@
 #include "InlineWriter.tcc"
 
 #include "adios2/helper/adiosFunctions.h"
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <adios2-perfstubs-interface.h>
 
 #include <iostream>
 
@@ -28,7 +28,7 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
                            helper::Comm comm)
 : Engine("InlineWriter", io, name, mode, std::move(comm))
 {
-    TAU_SCOPED_TIMER("InlineWriter::Open");
+    PERFSTUBS_SCOPED_TIMER("InlineWriter::Open");
     m_EndMessage = " in call to InlineWriter " + m_Name + " Open\n";
     m_WriterRank = m_Comm.Rank();
     Init();
@@ -65,7 +65,7 @@ const InlineReader *InlineWriter::GetReader() const
 
 StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    TAU_SCOPED_TIMER("InlineWriter::BeginStep");
+    PERFSTUBS_SCOPED_TIMER("InlineWriter::BeginStep");
     if (m_InsideStep)
     {
         throw std::runtime_error("InlineWriter::BeginStep was called but the "
@@ -127,7 +127,7 @@ size_t InlineWriter::CurrentStep() const { return m_CurrentStep; }
 
 void InlineWriter::PerformPuts()
 {
-    TAU_SCOPED_TIMER("InlineWriter::PerformPuts");
+    PERFSTUBS_SCOPED_TIMER("InlineWriter::PerformPuts");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << "     PerformPuts()\n";
@@ -137,7 +137,7 @@ void InlineWriter::PerformPuts()
 
 void InlineWriter::EndStep()
 {
-    TAU_SCOPED_TIMER("InlineWriter::EndStep");
+    PERFSTUBS_SCOPED_TIMER("InlineWriter::EndStep");
     if (!m_InsideStep)
     {
         throw std::runtime_error("InlineWriter::EndStep() cannot be called "
@@ -153,7 +153,7 @@ void InlineWriter::EndStep()
 
 void InlineWriter::Flush(const int)
 {
-    TAU_SCOPED_TIMER("InlineWriter::Flush");
+    PERFSTUBS_SCOPED_TIMER("InlineWriter::Flush");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << "   Flush()\n";
@@ -167,12 +167,12 @@ bool InlineWriter::IsInsideStep() const { return m_InsideStep; }
 #define declare_type(T)                                                        \
     void InlineWriter::DoPutSync(Variable<T> &variable, const T *data)         \
     {                                                                          \
-        TAU_SCOPED_TIMER("InlineWriter::DoPutSync");                           \
+        PERFSTUBS_SCOPED_TIMER("InlineWriter::DoPutSync");                     \
         PutSyncCommon(variable, data);                                         \
     }                                                                          \
     void InlineWriter::DoPutDeferred(Variable<T> &variable, const T *data)     \
     {                                                                          \
-        TAU_SCOPED_TIMER("InlineWriter::DoPutDeferred");                       \
+        PERFSTUBS_SCOPED_TIMER("InlineWriter::DoPutDeferred");                 \
         PutDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -212,7 +212,7 @@ void InlineWriter::InitTransports()
 
 void InlineWriter::DoClose(const int transportIndex)
 {
-    TAU_SCOPED_TIMER("InlineWriter::DoClose");
+    PERFSTUBS_SCOPED_TIMER("InlineWriter::DoClose");
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << " Close(" << m_Name

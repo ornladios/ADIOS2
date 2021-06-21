@@ -17,7 +17,7 @@
 
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <adios2-perfstubs-interface.h>
 
 namespace adios2
 {
@@ -241,7 +241,7 @@ SstReader::~SstReader()
 
 StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     SstStatusValue result;
     if (m_BetweenStepPairs)
@@ -331,7 +331,7 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     }
     else if (m_WriterMarshalMethod == SstMarshalBP)
     {
-        TAU_SCOPED_TIMER(
+        PERFSTUBS_SCOPED_TIMER(
             "BP Marshaling Case - deserialize and install metadata");
         m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
         // At begin step, you get metadata from the writers.  You need to
@@ -410,7 +410,7 @@ void SstReader::EndStep()
             "ERROR: EndStep() is called without a successful BeginStep()");
     }
     m_BetweenStepPairs = false;
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     if (m_ReaderSelectionsLocked && !m_DefinitionsNotified)
     {
         SstReaderDefinitionLock(m_Input, SstCurrentStep(m_Input));

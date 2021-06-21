@@ -13,6 +13,7 @@
 
 #include "SscWriter.h"
 #include "adios2/helper/adiosSystem.h"
+#include <adios2-perfstubs-interface.h>
 #include <cstring>
 #include <iostream>
 
@@ -27,7 +28,7 @@ template <>
 void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
                                   const std::string *data)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
     variable.SetData(data);
 
     bool found = false;
@@ -77,7 +78,7 @@ void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
 template <class T>
 void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     if ((variable.m_ShapeID == ShapeID::GlobalValue ||
          variable.m_ShapeID == ShapeID::LocalValue ||

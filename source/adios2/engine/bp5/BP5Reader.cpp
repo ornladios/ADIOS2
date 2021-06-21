@@ -9,7 +9,7 @@
 #include "BP5Reader.h"
 #include "BP5Reader.tcc"
 
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <adios2-perfstubs-interface.h>
 
 #include <chrono>
 #include <errno.h>
@@ -27,7 +27,7 @@ BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode,
   m_FileMetaMetadataManager(m_Comm), m_DataFileManager(m_Comm),
   m_MDIndexFileManager(m_Comm), m_ActiveFlagFileManager(m_Comm)
 {
-    TAU_SCOPED_TIMER("BP5Reader::Open");
+    PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
 }
 
@@ -39,7 +39,7 @@ BP5Reader::~BP5Reader()
 
 StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    TAU_SCOPED_TIMER("BP5Reader::BeginStep");
+    PERFSTUBS_SCOPED_TIMER("BP5Reader::BeginStep");
     if (mode != StepMode::Read)
     {
         throw std::invalid_argument("ERROR: mode is not supported yet, "
@@ -130,7 +130,7 @@ size_t BP5Reader::CurrentStep() const { return m_CurrentStep; }
 
 void BP5Reader::EndStep()
 {
-    TAU_SCOPED_TIMER("BP5Reader::EndStep");
+    PERFSTUBS_SCOPED_TIMER("BP5Reader::EndStep");
     PerformGets();
 }
 
@@ -157,7 +157,7 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
 
 void BP5Reader::PerformGets()
 {
-    TAU_SCOPED_TIMER("BP5Reader::PerformGets");
+    PERFSTUBS_SCOPED_TIMER("BP5Reader::PerformGets");
     auto ReadRequests = m_BP5Deserializer->GenerateReadRequests();
     // Potentially optimize read requests, make contiguous, etc.
     for (const auto &Req : ReadRequests)
@@ -620,12 +620,12 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
 #define declare_type(T)                                                        \
     void BP5Reader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
-        TAU_SCOPED_TIMER("BP5Reader::Get");                                    \
+        PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");                              \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void BP5Reader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
-        TAU_SCOPED_TIMER("BP5Reader::Get");                                    \
+        PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");                              \
         GetDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -633,7 +633,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void BP5Reader::DoClose(const int transportIndex)
 {
-    TAU_SCOPED_TIMER("BP5Reader::Close");
+    PERFSTUBS_SCOPED_TIMER("BP5Reader::Close");
     m_DataFileManager.CloseFiles();
     m_MDFileManager.CloseFiles();
 }
@@ -642,7 +642,7 @@ void BP5Reader::DoClose(const int transportIndex)
     std::vector<typename Variable<T>::BPInfo> BP5Reader::DoBlocksInfo(         \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
-        TAU_SCOPED_TIMER("BP5Reader::BlocksInfo");                             \
+        PERFSTUBS_SCOPED_TIMER("BP5Reader::BlocksInfo");                       \
         return m_BP5Deserializer->BlocksInfo(variable, step);                  \
     }
 

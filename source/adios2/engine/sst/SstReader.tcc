@@ -14,7 +14,7 @@
 #include "SstReader.h"
 
 #include "adios2/helper/adiosFunctions.h" //GetDataType<T>
-#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <adios2-perfstubs-interface.h>
 
 namespace adios2
 {
@@ -28,7 +28,7 @@ void SstReader::ReadVariableBlocksRequests(
     Variable<T> &variable, std::vector<void *> &sstReadHandlers,
     std::vector<std::vector<char>> &buffers)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     const bool endianReverse = helper::IsLittleEndian() !=
@@ -66,7 +66,7 @@ void SstReader::ReadVariableBlocksRequests(
 
                     std::stringstream ss;
                     ss << "SST Bytes Read from remote rank " << rank;
-                    TAU_SAMPLE_COUNTER(ss.str().c_str(), payloadSize);
+                    PERFSTUBS_SAMPLE_COUNTER(ss.str().c_str(), payloadSize);
                     auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(),
                                                    payloadStart, payloadSize,
                                                    buffer, dp_info);
@@ -126,7 +126,7 @@ void SstReader::ReadVariableBlocksFill(Variable<T> &variable,
                                        std::vector<std::vector<char>> &buffers,
                                        size_t &iter)
 {
-    TAU_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC();
 
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     const bool endianReverse = helper::IsLittleEndian() !=
