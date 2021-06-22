@@ -59,6 +59,7 @@ add_library(adios2_core
   engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
 
   engine/plugin/PluginEngine.cpp engine/plugin/PluginEngineInterface.cpp
+  operator/plugin/PluginOperator.cpp operator/plugin/PluginOperatorInterface.cpp
 #toolkit
   toolkit/format/buffer/Buffer.cpp
   toolkit/format/buffer/BufferV.cpp
