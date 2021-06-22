@@ -122,30 +122,37 @@ void BP5Writer::WriteData(format::BufferV *Data)
 {
     format::BufferV::BufferV_iovec DataVec = Data->DataVec();
 
-    size_t m_StartDataPos = 0;
+    // new step writing starts at offset m_DataPos on aggregator
+    // others will wait for the position to arrive from the rank below
+
     if (m_Aggregator.m_Comm.Rank() > 0)
     {
-        m_Aggregator.m_Comm.Recv(&m_StartDataPos, 1,
-                                 m_Aggregator.m_Comm.Rank() - 1, 0,
-                                 "Chain token in BP5Writer::WriteData");
-        m_DataPos = m_StartDataPos;
+        m_Aggregator.m_Comm.Recv(&m_DataPos, 1, m_Aggregator.m_Comm.Rank() - 1,
+                                 0, "Chain token in BP5Writer::WriteData");
     }
+    m_StartDataPos = m_DataPos;
 
     int i = 0;
     while (DataVec[i].iov_base != NULL)
     {
-        m_FileDataManager.WriteFileAt((char *)DataVec[i].iov_base,
-                                      DataVec[i].iov_len, m_DataPos);
+        if (i == 0)
+        {
+            m_FileDataManager.WriteFileAt((char *)DataVec[i].iov_base,
+                                          DataVec[i].iov_len, m_StartDataPos);
+        }
+        else
+        {
+            m_FileDataManager.WriteFiles((char *)DataVec[i].iov_base,
+                                         DataVec[i].iov_len);
+        }
         m_DataPos += DataVec[i].iov_len;
         i++;
     }
 
     if (m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
     {
-        m_StartDataPos = m_DataPos;
-        m_Aggregator.m_Comm.Isend(&m_StartDataPos, 1,
-                                  m_Aggregator.m_Comm.Rank() + 1, 0,
-                                  "Chain token in BP5Writer::WriteData");
+        m_Aggregator.m_Comm.Isend(&m_DataPos, 1, m_Aggregator.m_Comm.Rank() + 1,
+                                  0, "Chain token in BP5Writer::WriteData");
     }
 
     if (m_Aggregator.m_Comm.Size() > 1)
@@ -154,26 +161,22 @@ void BP5Writer::WriteData(format::BufferV *Data)
         // so it can update its data pos
         if (m_Aggregator.m_Comm.Rank() == m_Aggregator.m_Comm.Size() - 1)
         {
-            m_StartDataPos = m_DataPos;
             m_Aggregator.m_Comm.Isend(
-                &m_StartDataPos, 1, 0, 0,
+                &m_DataPos, 1, 0, 0,
                 "Final chain token in BP5Writer::WriteData");
         }
         if (m_Aggregator.m_Comm.Rank() == 0)
         {
-            m_Aggregator.m_Comm.Recv(&m_StartDataPos, 1,
+            m_Aggregator.m_Comm.Recv(&m_DataPos, 1,
                                      m_Aggregator.m_Comm.Size() - 1, 0,
                                      "Chain token in BP5Writer::WriteData");
-            m_DataPos = m_StartDataPos;
         }
     }
-
     delete[] DataVec;
 }
 
 void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
-                                       uint64_t MetaDataSize,
-                                       std::vector<uint64_t> DataSizes)
+                                       uint64_t MetaDataSize)
 {
 
     m_FileMetadataManager.FlushFiles();
@@ -183,11 +186,18 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
     buf[1] = MetaDataSize;
     m_FileMetadataIndexManager.WriteFiles((char *)buf, sizeof(buf));
     m_FileMetadataIndexManager.WriteFiles((char *)m_WriterDataPos.data(),
-                                          DataSizes.size() * sizeof(uint64_t));
-    for (size_t i = 0; i < DataSizes.size(); i++)
+                                          m_WriterDataPos.size() *
+                                              sizeof(uint64_t));
+    std::cout << "Write Index positions = {";
+    for (size_t i = 0; i < m_WriterDataPos.size(); ++i)
     {
-        m_WriterDataPos[i] += DataSizes[i];
+        std::cout << m_WriterDataPos[i];
+        if (i < m_WriterDataPos.size() - 1)
+        {
+            std::cout << ", ";
+        }
     }
+    std::cout << "}" << std::endl;
 }
 
 void BP5Writer::MarshalAttributes()
@@ -259,9 +269,12 @@ void BP5Writer::EndStep()
      * AttributeEncodeBuffer and the data encode Vector */
     /* the first */
 
+    WriteData(TSInfo.DataBuffer);
+
     std::vector<char> MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
         TSInfo.NewMetaMetaBlocks, TSInfo.MetaEncodeBuffer,
-        TSInfo.AttributeEncodeBuffer, TSInfo.DataBuffer->Size());
+        TSInfo.AttributeEncodeBuffer, TSInfo.DataBuffer->Size(),
+        m_StartDataPos);
 
     size_t LocalSize = MetaBuffer.size();
     std::vector<size_t> RecvCounts = m_Comm.GatherValues(LocalSize, 0);
@@ -284,14 +297,13 @@ void BP5Writer::EndStep()
         std::vector<BufferV::iovec> AttributeBlocks;
         auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
             RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks,
-            DataSizes);
+            DataSizes, m_WriterDataPos);
         WriteMetaMetadata(UniqueMetaMetaBlocks);
         uint64_t ThisMetaDataPos = m_MetaDataPos;
         uint64_t ThisMetaDataSize = WriteMetadata(Metadata, AttributeBlocks);
-        WriteMetadataFileIndex(ThisMetaDataPos, ThisMetaDataSize, DataSizes);
+        WriteMetadataFileIndex(ThisMetaDataPos, ThisMetaDataSize);
     }
     delete RecvBuffer;
-    WriteData(TSInfo.DataBuffer);
 }
 
 // PRIVATE
@@ -585,6 +597,10 @@ void BP5Writer::InitBPBuffer()
      * Make headers in data buffer and metadata buffer (but do not write
      * them yet so that Open() can stay free of writing to disk)
      */
+
+    const uint64_t a = static_cast<uint64_t>(m_Aggregator.m_SubStreamIndex);
+    std::vector<uint64_t> Assignment = m_Comm.GatherValues(a, 0);
+
     if (m_Comm.Rank() == 0)
     {
         format::BufferSTL b;
@@ -595,11 +611,7 @@ void BP5Writer::InitBPBuffer()
         MakeHeader(bi, "Index Table", true);
         m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
                                               bi.m_Position);
-        std::vector<uint64_t> Assignment(m_Comm.Size());
-        for (int i = 0; i < m_Comm.Size(); i++)
-        {
-            Assignment[i] = i; // Change when we do aggregation
-        }
+
         // where each rank's data will end up
         m_FileMetadataIndexManager.WriteFiles((char *)Assignment.data(),
                                               sizeof(Assignment[0]) *
@@ -611,11 +623,11 @@ void BP5Writer::InitBPBuffer()
         MakeHeader(d, "Data", false);
         m_FileDataManager.WriteFiles(d.m_Buffer.data(), d.m_Position);
         m_DataPos = d.m_Position;
+    }
+
+    if (m_Comm.Rank() == 0)
+    {
         m_WriterDataPos.resize(m_Comm.Size());
-        for (auto &DataPos : m_WriterDataPos)
-        {
-            DataPos = m_DataPos;
-        }
     }
 }
 

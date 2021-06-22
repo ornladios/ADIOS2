@@ -139,20 +139,21 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
                          char *Destination)
 {
     size_t DataStartPos = m_MetadataIndexTable[Timestep][2];
+    size_t SubfileNum = m_WriterToFileMap[WriterRank];
     DataStartPos += WriterRank * sizeof(uint64_t);
     size_t DataStart = helper::ReadValue<uint64_t>(
         m_MetadataIndex.m_Buffer, DataStartPos, m_Minifooter.IsLittleEndian);
     // check if subfile is already opened
-    if (m_DataFileManager.m_Transports.count(WriterRank) == 0)
+    if (m_DataFileManager.m_Transports.count(SubfileNum) == 0)
     {
         const std::string subFileName = GetBPSubStreamName(
-            m_Name, WriterRank, m_Minifooter.HasSubFiles, true);
+            m_Name, SubfileNum, m_Minifooter.HasSubFiles, true);
 
-        m_DataFileManager.OpenFileID(subFileName, WriterRank, Mode::Read,
+        m_DataFileManager.OpenFileID(subFileName, SubfileNum, Mode::Read,
                                      {{"transport", "File"}}, false);
     }
     m_DataFileManager.ReadFile(Destination, Length, DataStart + StartOffset,
-                               WriterRank);
+                               SubfileNum);
 }
 
 void BP5Reader::PerformGets()

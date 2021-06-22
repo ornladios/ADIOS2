@@ -120,8 +120,7 @@ private:
     void WriteMetaMetadata(
         const std::vector<format::BP5Base::MetaMetaInfoBlock> MetaMetaBlocks);
 
-    void WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize,
-                                std::vector<uint64_t> DataSizes);
+    void WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize);
 
     uint64_t
     WriteMetadata(const std::vector<format::BufferV::iovec> MetaDataBlocks,
@@ -165,12 +164,28 @@ private:
     aggregator::MPIChain m_Aggregator;
 
 private:
-    uint64_t m_MetaDataPos = 0; // updated during WriteMetaData
-    uint64_t m_DataPos = 0;     // updated during WriteData
+    // updated during WriteMetaData
+    uint64_t m_MetaDataPos = 0;
+
+    /** On every process, at the end of writing, this holds the offset
+     *  where they started writing (needed for global metadata)
+     */
+    uint64_t m_StartDataPos = 0;
+    /** On aggregators, at the end of writing, this holds the starting offset
+     *  to the next step's writing; otherwise used as temporary offset variable
+     *  during writing on every process and points to the end of the process'
+     *  data block in the file (not used for anything)
+     */
+    uint64_t m_DataPos = 0;
+
+    /** rank 0 collects m_StartDataPos in this vector for writing it
+     *  to the index file
+     */
+    std::vector<uint64_t> m_WriterDataPos;
+
     uint32_t m_MarshaledAttributesCount =
         0; // updated during EndStep/MarshalAttributes
 
-    std::vector<uint64_t> m_WriterDataPos;
     void MakeHeader(format::BufferSTL &b, const std::string fileType,
                     const bool isActive);
 };
