@@ -229,7 +229,10 @@ void DataManMonitor::OutputCsv(const std::string &filename)
              << std::endl;
     }
     file << floor(log2(m_TotalRate)) << ", ";
-    file << floor(log2(m_AccumulatedLatency / static_cast<double>(m_CurrentStep + 1))) - 8 << ", ";
+    file << floor(log2(m_AccumulatedLatency /
+                       static_cast<double>(m_CurrentStep + 1))) -
+                8
+         << ", ";
     if (m_RequiredAccuracy == 0)
     {
         file << 0 << ", ";
