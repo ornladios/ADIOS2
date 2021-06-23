@@ -99,10 +99,22 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
         return DAOSOpenReturn;
     };
 
+    int rc;
     m_Name = name;
     CheckName();
+    if (m_Comm.Rank() == 0)
+    {
+        const auto lastPathSeparator(
+              m_Name.find_last_of(PathSeparator));
+	if (lastPathSeparator != std::string::npos)
+	{
+	    const std::string path(
+                  m_Name.substr(0, lastPathSeparator));
+	    rc = dfs_mkdir(dfs_mt, NULL, path.c_str(), S_IFDIR, 0);
+	}
+    }
     m_OpenMode = openMode;
-    int rc;
+    
     switch (m_OpenMode)
     {
 

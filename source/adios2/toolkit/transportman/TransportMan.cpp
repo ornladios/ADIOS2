@@ -55,6 +55,13 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
                 continue;
             }
             const Params &parameters = parametersVector[i];
+	    std::string library;
+	    helper::SetParameterValue("Library", parameters, library);
+	    helper::SetParameterValue("library", parameters, library);
+	    if (library == "Daos" || library == "daos")
+	    {
+	        continue;
+	    }
             const std::string type = parameters.at("transport");
             if (type == "File" || type == "file")
             {
