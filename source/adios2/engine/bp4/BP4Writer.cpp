@@ -184,13 +184,13 @@ void BP4Writer::InitTransports()
                    PathSeparator + m_Name;
     }
 
+    // Names passed to IO AddTransport option with key "Name"
+    const std::vector<std::string> transportsNames =
+        m_FileDataManager.GetFilesBaseNames(m_BBName,
+                                            m_IO.m_TransportsParameters);
+
     if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
     {
-        // Names passed to IO AddTransport option with key "Name"
-        const std::vector<std::string> transportsNames =
-            m_FileDataManager.GetFilesBaseNames(m_BBName,
-                                                m_IO.m_TransportsParameters);
-
         // /path/name.bp.dir/name.bp.rank
         m_SubStreamNames = m_BP4Serializer.GetBPSubStreamNames(transportsNames);
         if (m_DrainBB)
@@ -285,6 +285,19 @@ void BP4Writer::InitTransports()
                 m_FileDrainer.AddOperationOpen(name, m_OpenMode);
             }
         }
+    }
+
+    // last process create .bpversion file with content "4"
+    if (m_Comm.Rank() == m_Comm.Size() - 1)
+    {
+        std::vector<std::string> versionNames =
+            m_BP4Serializer.GetBPVersionFileNames(transportsNames);
+        auto emptyComm = helper::Comm();
+        transportman::TransportMan tm(emptyComm);
+        tm.OpenFiles(versionNames, Mode::Write, m_IO.m_TransportsParameters,
+                     false);
+        char b[1] = {'4'};
+        tm.WriteFiles(b, 1);
     }
 }
 

@@ -358,11 +358,19 @@ void BP5Writer::InitTransports()
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
-    m_BBName = m_Name;
     if (m_WriteToBB)
     {
         m_BBName = m_Parameters.BurstBufferPath + PathSeparator + m_Name;
     }
+    else
+    {
+        m_BBName = m_Name;
+    }
+    /* From this point, engine writes to m_BBName, which points to either
+        the BB file system if BB is turned on, or to the target file system.
+        m_Name always points to the target file system, to which the drainer
+        should write if BB is turned on
+    */
 
     // Names passed to IO AddTransport option with key "Name"
     const std::vector<std::string> transportsNames =
@@ -396,10 +404,6 @@ void BP5Writer::InitTransports()
 
     if (m_Comm.Rank() == 0)
     {
-        const std::vector<std::string> transportsNames =
-            m_FileMetadataManager.GetFilesBaseNames(
-                m_Name, m_IO.m_TransportsParameters);
-
         m_MetadataFileNames = GetBPMetadataFileNames(transportsNames);
         m_MetaMetadataFileNames = GetBPMetaMetadataFileNames(transportsNames);
         m_MetadataIndexFileNames = GetBPMetadataIndexFileNames(transportsNames);
@@ -471,6 +475,19 @@ void BP5Writer::InitTransports()
                 m_FileDrainer.AddOperationOpen(name, m_OpenMode);
             }
         }
+    }
+
+    // last process create .bpversion file with content "5"
+    if (m_Comm.Rank() == m_Comm.Size() - 1)
+    {
+        std::vector<std::string> versionNames =
+            GetBPVersionFileNames(transportsNames);
+        auto emptyComm = helper::Comm();
+        transportman::TransportMan tm(emptyComm);
+        tm.OpenFiles(versionNames, Mode::Write, m_IO.m_TransportsParameters,
+                     false);
+        char b[1] = {'5'};
+        tm.WriteFiles(b, 1);
     }
 }
 

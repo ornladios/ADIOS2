@@ -234,7 +234,7 @@ void IO::SetEngine(const std::string engineType) noexcept
     }
     else if (engineTypeLC == "filestream")
     {
-        finalEngineType = "BP4";
+        finalEngineType = "filestream";
         lf_InsertParam("OpenTimeoutSecs", "3600");
         lf_InsertParam("StreamReader", "true");
     }
@@ -542,7 +542,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     }
 
     /* Second step in handling virtual engines */
-    /* BPFile for read needs to use BP4 or BP3 depending on the file's version
+    /* BPFile for read needs to use BP5, BP4, or BP3 depending on the file's
+     * version
      */
     if ((engineTypeLC == "file" || engineTypeLC == "bpfile" ||
          engineTypeLC == "bp" || isDefaultEngine))
@@ -555,7 +556,9 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         {
             if (adios2sys::SystemTools::FileIsDirectory(name))
             {
-                engineTypeLC = "bp4";
+                char v = helper::BPVersion(name, comm, m_TransportsParameters);
+                engineTypeLC = "bp";
+                engineTypeLC.push_back(v);
             }
             else
             {
@@ -585,6 +588,20 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
     }
 
+    // filestream is either BP5 or BP4 depending on .bpversion
+    /* TODO: Timeout is not handled properly for BP5 streaming
+        since this selection picks BP4 Read engine if the BP5 stream is
+        not yet created
+    */
+    if (engineTypeLC == "filestream")
+    {
+        char v = helper::BPVersion(name, comm, m_TransportsParameters);
+        engineTypeLC = "bp";
+        engineTypeLC.push_back(v);
+        std::cout << "Engine " << engineTypeLC << " selected for FileStream"
+                  << std::endl;
+    }
+
     // For the inline engine, there must be exactly 1 reader, and exactly 1
     // writer.
     if (engineTypeLC == "inline")
@@ -612,8 +629,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
                    "added.";
             throw std::runtime_error(msg);
         }
-        // Now protect against declaration of two writers, or declaration of two
-        // readers:
+        // Now protect against declaration of two writers, or declaration of
+        // two readers:
         if (m_Engines.size() == 1)
         {
             auto engine_ptr = m_Engines.begin()->second;
@@ -743,8 +760,8 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
     for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
          ++itVariable)
     {
-        // if for each step (BP4), check if variable type is not empty (means
-        // variable exist in that step)
+        // if for each step (BP4), check if variable type is not empty
+        // (means variable exist in that step)
         const DataType type = isStep ? InquireVariableType(itVariable)
                                      : itVariable->second->m_Type;
 

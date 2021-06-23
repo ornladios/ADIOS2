@@ -84,6 +84,28 @@ std::string BP4Base::GetBPMetadataIndexFileName(const std::string &name) const
 }
 
 std::vector<std::string>
+BP4Base::GetBPVersionFileNames(const std::vector<std::string> &names) const
+    noexcept
+{
+    std::vector<std::string> versionFileNames;
+    versionFileNames.reserve(names.size());
+    for (const auto &name : names)
+    {
+        versionFileNames.push_back(GetBPVersionFileName(name));
+    }
+    return versionFileNames;
+}
+
+std::string BP4Base::GetBPVersionFileName(const std::string &name) const
+    noexcept
+{
+    const std::string bpName = helper::RemoveTrailingSlash(name);
+    /* the name of the version file is ".bpversion" */
+    const std::string bpVersionFileName(bpName + PathSeparator + ".bpversion");
+    return bpVersionFileName;
+}
+
+std::vector<std::string>
 BP4Base::GetBPActiveFlagFileNames(const std::vector<std::string> &names) const
     noexcept
 {

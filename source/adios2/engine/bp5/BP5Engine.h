@@ -79,6 +79,11 @@ public:
                                    const bool hasSubFiles = true,
                                    const bool isReader = false) const noexcept;
 
+    std::vector<std::string>
+    GetBPVersionFileNames(const std::vector<std::string> &names) const noexcept;
+
+    std::string GetBPVersionFileName(const std::string &name) const noexcept;
+
 #define BP5_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(OpenTimeoutSecs, Int, int, 3600)                                     \
     MACRO(BeginStepPollingFrequencySecs, Int, int, 0)                          \

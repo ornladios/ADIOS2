@@ -92,6 +92,28 @@ std::string BP5Engine::GetBPMetadataIndexFileName(const std::string &name) const
     return bpMetaDataIndexRankName;
 }
 
+std::vector<std::string>
+BP5Engine::GetBPVersionFileNames(const std::vector<std::string> &names) const
+    noexcept
+{
+    std::vector<std::string> versionFileNames;
+    versionFileNames.reserve(names.size());
+    for (const auto &name : names)
+    {
+        versionFileNames.push_back(GetBPVersionFileName(name));
+    }
+    return versionFileNames;
+}
+
+std::string BP5Engine::GetBPVersionFileName(const std::string &name) const
+    noexcept
+{
+    const std::string bpName = helper::RemoveTrailingSlash(name);
+    /* the name of the version file is ".bpversion" */
+    const std::string bpVersionFileName(bpName + PathSeparator + ".bpversion");
+    return bpVersionFileName;
+}
+
 std::string BP5Engine::GetBPSubStreamName(const std::string &name,
                                           const size_t id,
                                           const bool hasSubFiles,
