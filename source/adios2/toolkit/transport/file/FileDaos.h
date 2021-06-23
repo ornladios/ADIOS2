@@ -56,6 +56,10 @@ public:
     void SeekToBegin() final;
 
 private:
+    uuid_t cuuid;
+    daos_handle_t poh = DAOS_HDL_INVAL;
+    daos_handle_t coh = DAOS_HDL_INVAL;
+    daos_cont_info_t co_info;
     dfs_t *dfs_mt;
     dfs_obj_t *obj;
     

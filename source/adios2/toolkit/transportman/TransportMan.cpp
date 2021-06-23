@@ -64,7 +64,7 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
             }
         }
     };
-
+    
     if (nodeLocal)
     {
         lf_CreateDirectories(fileNames);

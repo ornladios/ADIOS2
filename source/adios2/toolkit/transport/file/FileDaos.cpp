@@ -30,7 +30,16 @@ namespace transport
 
 FileDaos::FileDaos(helper::Comm const &comm) : Transport("File", "Daos", comm)
 {
-    
+    if (comm.Rank() == 0)
+    {
+        int rc;
+        uuid_generate(cuuid);
+        rc = dfs_cont_create(poh, cuuid, NULL, NULL, NULL);
+        rc = daos_cont_open(poh, cuuid, DAOS_COO_RW,
+	          	    &coh, &co_info, NULL);
+	rc = dfs_mount(poh, coh, O_RDWR, &dfs_mt);
+    }
+
 }
 
 FileDaos::~FileDaos()
