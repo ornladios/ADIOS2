@@ -230,7 +230,8 @@ void DataManMonitor::OutputCsv(const std::string &filename)
     }
     file << floor(log2(m_TotalRate)) << ", ";
     file << floor(log2(m_AccumulatedLatency /
-                       static_cast<double>(m_CurrentStep + 1)))
+                       static_cast<double>(m_CurrentStep + 1))) -
+                8
          << ", ";
     if (m_RequiredAccuracy == 0)
     {
@@ -245,7 +246,7 @@ void DataManMonitor::OutputCsv(const std::string &filename)
         file << round(log10(m_RequiredAccuracy)) + 6 << ", ";
     }
     file << ceil(log2(m_DropRate * 100 + 1)) << ", ";
-    file << floor(log(m_StepBytes) / log(5)) - 4 << ", ";
+    file << floor(log2(m_StepBytes)) - 10 << ", ";
     file << ceil(log2(m_CombiningSteps)) << ", ";
     if (m_CompressionAccuracy == 0)
     {

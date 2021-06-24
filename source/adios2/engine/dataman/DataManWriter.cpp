@@ -211,13 +211,20 @@ void DataManWriter::DoClose(const int transportIndex)
             m_SerializerBufferSize = buffer->size();
         }
 
-        if (m_Threading || m_TransportMode == "reliable")
+        if (m_TransportMode == "reliable")
         {
             PushBufferQueue(buffer);
         }
-        else
+        else if (m_TransportMode == "fast")
         {
-            m_Publisher.Send(buffer);
+            if (m_Threading)
+            {
+                PushBufferQueue(buffer);
+            }
+            else
+            {
+                m_Publisher.Send(buffer);
+            }
         }
     }
 
@@ -227,16 +234,33 @@ void DataManWriter::DoClose(const int transportIndex)
     auto cvp = std::make_shared<std::vector<char>>(s.size());
     std::memcpy(cvp->data(), s.c_str(), s.size());
 
-    if (m_Threading || m_TransportMode == "reliable")
+    if (m_TransportMode == "reliable")
     {
         PushBufferQueue(cvp);
     }
-    else
+    else if (m_TransportMode == "fast")
     {
-        m_Publisher.Send(cvp);
+        if (m_Threading)
+        {
+            while (!IsBufferQueueEmpty())
+            {
+            }
+            for (int i = 0; i < 3; ++i)
+            {
+                PushBufferQueue(cvp);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+        }
+        else
+        {
+            for (int i = 0; i < 3; ++i)
+            {
+                m_Publisher.Send(cvp);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+        }
     }
 
-    m_PublishThreadActive = false;
     if (m_ReplyThreadActive)
     {
         while (m_SentSteps < static_cast<size_t>(m_CurrentStep + 2))
@@ -244,12 +268,12 @@ void DataManWriter::DoClose(const int transportIndex)
         }
         m_ReplyThreadActive = false;
     }
-
     if (m_ReplyThread.joinable())
     {
         m_ReplyThread.join();
     }
 
+    m_PublishThreadActive = false;
     if (m_PublishThread.joinable())
     {
         m_PublishThread.join();
@@ -261,6 +285,12 @@ void DataManWriter::DoClose(const int transportIndex)
     {
         std::cout << "DataManWriter::DoClose " << m_CurrentStep << std::endl;
     }
+}
+
+bool DataManWriter::IsBufferQueueEmpty()
+{
+    std::lock_guard<std::mutex> l(m_BufferQueueMutex);
+    return m_BufferQueue.empty();
 }
 
 void DataManWriter::PushBufferQueue(std::shared_ptr<std::vector<char>> buffer)
