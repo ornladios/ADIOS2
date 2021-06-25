@@ -184,7 +184,7 @@ void BP4Writer::InitTransports()
                    PathSeparator + m_Name;
     }
 
-    if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
     {
         // Names passed to IO AddTransport option with key "Name"
         const std::vector<std::string> transportsNames =
@@ -222,7 +222,7 @@ void BP4Writer::InitTransports()
     }
     m_BP4Serializer.m_Profiler.Stop("mkdir");
 
-    if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
     {
         if (m_BP4Serializer.m_Parameters.AsyncTasks)
         {
@@ -333,7 +333,7 @@ void BP4Writer::InitBPBuffer()
                 static_cast<uint32_t>(lastStep);
             m_BP4Serializer.m_MetadataSet.CurrentStep += lastStep;
 
-            if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+            if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
             {
                 m_BP4Serializer.m_PreDataFileLength =
                     m_FileDataManager.GetFileSize(0);
@@ -361,7 +361,7 @@ void BP4Writer::InitBPBuffer()
             m_BP4Serializer.MakeHeader(m_BP4Serializer.m_MetadataIndex,
                                        "Index Table", true);
         }
-        if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+        if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
         {
             m_BP4Serializer.MakeHeader(m_BP4Serializer.m_Data, "Data", false);
         }
@@ -403,7 +403,7 @@ void BP4Writer::DoClose(const int transportIndex)
 
     DoFlush(true, transportIndex);
 
-    if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
     {
         m_FileDataManager.CloseFiles(transportIndex);
         // Delete files from temporary storage if draining was on
@@ -465,7 +465,7 @@ void BP4Writer::DoClose(const int transportIndex)
         }
     }
 
-    if (m_BP4Serializer.m_Aggregator.m_IsConsumer && m_DrainBB)
+    if (m_BP4Serializer.m_Aggregator.m_IsAggregator && m_DrainBB)
     {
         /* Signal the BB thread that no more work is coming */
         m_FileDrainer.Finish();
@@ -740,7 +740,7 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
                 m_BP4Serializer.m_Aggregator.IExchangeAbsolutePosition(
                     m_BP4Serializer.m_Data, r);
 
-        if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+        if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
         {
             const format::Buffer &bufferSTL =
                 m_BP4Serializer.m_Aggregator.GetConsumerBuffer(

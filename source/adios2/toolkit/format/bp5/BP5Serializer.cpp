@@ -725,7 +725,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
 std::vector<char> BP5Serializer::CopyMetadataToContiguous(
     const std::vector<BP5Base::MetaMetaInfoBlock> NewMetaMetaBlocks,
     const format::Buffer *MetaEncodeBuffer,
-    const format::Buffer *AttributeEncodeBuffer, uint64_t DataSize) const
+    const format::Buffer *AttributeEncodeBuffer, uint64_t DataSize,
+    uint64_t WriterDataPos) const
 {
     std::vector<char> Ret;
     uint64_t RetSize = 0;
@@ -751,6 +752,7 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
         RetSize += AttributeEncodeBufferAlignedSize;
     }
     RetSize += sizeof(DataSize);
+    RetSize += sizeof(WriterDataPos);
     Ret.resize(RetSize);
 
     helper::CopyToBuffer(Ret, Position, &NMMBCount);
@@ -794,6 +796,7 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
         }
     }
     helper::CopyToBuffer(Ret, Position, &DataSize);
+    helper::CopyToBuffer(Ret, Position, &WriterDataPos);
     return Ret;
 }
 
@@ -801,13 +804,14 @@ std::vector<BufferV::iovec> BP5Serializer::BreakoutContiguousMetadata(
     std::vector<char> *Aggregate, const std::vector<size_t> Counts,
     std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
     std::vector<BufferV::iovec> &AttributeBlocks,
-    std::vector<uint64_t> &DataSizes) const
+    std::vector<uint64_t> &DataSizes,
+    std::vector<uint64_t> &WriterDataPositions) const
 {
     size_t Position = 0;
     std::vector<BufferV::iovec> MetadataBlocks;
     MetadataBlocks.reserve(Counts.size());
     DataSizes.resize(Counts.size());
-    for (int Rank = 0; Rank < Counts.size(); Rank++)
+    for (size_t Rank = 0; Rank < Counts.size(); Rank++)
     {
         int32_t NMMBCount;
         helper::CopyFromBuffer(*Aggregate, Position, &NMMBCount);
@@ -846,6 +850,8 @@ std::vector<BufferV::iovec> BP5Serializer::BreakoutContiguousMetadata(
         AttributeBlocks.push_back({Aggregate->data() + Position, AEBSize});
         Position += AEBSize;
         helper::CopyFromBuffer(*Aggregate, Position, &DataSizes[Rank]);
+        helper::CopyFromBuffer(*Aggregate, Position,
+                               &WriterDataPositions[Rank]);
     }
     return MetadataBlocks;
 }

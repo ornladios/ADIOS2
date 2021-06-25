@@ -95,7 +95,7 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         size_t pgstart = m_MetadataIndexTable[m_CurrentStep][0];
         size_t Position = pgstart + sizeof(uint64_t); // skip total data size
         size_t MDPosition = Position + 2 * sizeof(uint64_t) * m_WriterCount;
-        for (int i = 0; i < m_WriterCount; i++)
+        for (size_t i = 0; i < m_WriterCount; i++)
         {
             // variable metadata for timestep
             size_t ThisMDSize = helper::ReadValue<uint64_t>(
@@ -104,7 +104,7 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
             m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, i);
             MDPosition += ThisMDSize;
         }
-        for (int i = 0; i < m_WriterCount; i++)
+        for (size_t i = 0; i < m_WriterCount; i++)
         {
             // attribute metadata for timestep
             size_t ThisADSize = helper::ReadValue<uint64_t>(
@@ -139,20 +139,21 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
                          char *Destination)
 {
     size_t DataStartPos = m_MetadataIndexTable[Timestep][2];
+    size_t SubfileNum = m_WriterToFileMap[WriterRank];
     DataStartPos += WriterRank * sizeof(uint64_t);
     size_t DataStart = helper::ReadValue<uint64_t>(
         m_MetadataIndex.m_Buffer, DataStartPos, m_Minifooter.IsLittleEndian);
     // check if subfile is already opened
-    if (m_DataFileManager.m_Transports.count(WriterRank) == 0)
+    if (m_DataFileManager.m_Transports.count(SubfileNum) == 0)
     {
         const std::string subFileName = GetBPSubStreamName(
-            m_Name, WriterRank, m_Minifooter.HasSubFiles, true);
+            m_Name, SubfileNum, m_Minifooter.HasSubFiles, true);
 
-        m_DataFileManager.OpenFileID(subFileName, WriterRank, Mode::Read,
+        m_DataFileManager.OpenFileID(subFileName, SubfileNum, Mode::Read,
                                      {{"transport", "File"}}, false);
     }
     m_DataFileManager.ReadFile(Destination, Length, DataStart + StartOffset,
-                               WriterRank);
+                               SubfileNum);
 }
 
 void BP5Reader::PerformGets()

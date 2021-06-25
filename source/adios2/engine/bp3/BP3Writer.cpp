@@ -175,7 +175,7 @@ void BP3Writer::InitTransports()
     // only consumers will interact with transport managers
     std::vector<std::string> bpSubStreamNames;
 
-    if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP3Serializer.m_Aggregator.m_IsAggregator)
     {
         // Names passed to IO AddTransport option with key "Name"
         const std::vector<std::string> transportsNames =
@@ -192,7 +192,7 @@ void BP3Writer::InitTransports()
                                     m_BP3Serializer.m_Parameters.NodeLocal);
     m_BP3Serializer.m_Profiler.Stop("mkdir");
 
-    if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP3Serializer.m_Aggregator.m_IsAggregator)
     {
         if (m_BP3Serializer.m_Parameters.AsyncTasks)
         {
@@ -246,7 +246,7 @@ void BP3Writer::DoClose(const int transportIndex)
 
     DoFlush(true, transportIndex);
 
-    if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP3Serializer.m_Aggregator.m_IsAggregator)
     {
         m_FileDataManager.CloseFiles(transportIndex);
     }
@@ -396,7 +396,7 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
                 m_BP3Serializer.m_Aggregator.IExchangeAbsolutePosition(
                     m_BP3Serializer.m_Data, r);
 
-        if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+        if (m_BP3Serializer.m_Aggregator.m_IsAggregator)
         {
             const format::Buffer &bufferSTL =
                 m_BP3Serializer.m_Aggregator.GetConsumerBuffer(
@@ -425,7 +425,7 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
         m_BP3Serializer.AggregateCollectiveMetadata(
             m_BP3Serializer.m_Aggregator.m_Comm, bufferSTL, false);
 
-        if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+        if (m_BP3Serializer.m_Aggregator.m_IsAggregator)
         {
             m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
                                          bufferSTL.m_Position, transportIndex);

@@ -67,6 +67,19 @@ public:
                       const bool async = false) = 0;
 
     /**
+     * Opens transport, possibly asynchronously, in a chain to avoid
+     * DOS attack to the file system.
+     * Required before SetBuffer, Write, Read, Flush, Close
+     * @param name
+     * @param openMode
+     * @param chainComm
+     * @param async
+     */
+    virtual void OpenChain(const std::string &name, const Mode openMode,
+                           const helper::Comm &chainComm,
+                           const bool async = false);
+
+    /**
      * If OS buffered (FILE* or fstream), sets the buffer size
      * @param buffer address for OS buffering
      * @param size of OS buffer

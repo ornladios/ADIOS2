@@ -44,14 +44,14 @@ public:
      * true: consumes data from itself or other processes and interacts with
      * transport managers
      */
-    bool m_IsConsumer = true;
+    bool m_IsAggregator = true;
 
     /** true: doing aggregation, false: not doing aggregation */
     bool m_IsActive = false;
 
     /** consumer original rank coming from the parent communicator in Init,
      *  corresponds to m_Rank = 0 */
-    int m_ConsumerRank = -1;
+    int m_AggregatorRank = -1;
 
     MPIAggregator();
 
