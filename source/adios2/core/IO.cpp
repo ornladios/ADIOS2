@@ -557,6 +557,12 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
             if (adios2sys::SystemTools::FileIsDirectory(name))
             {
                 char v = helper::BPVersion(name, comm, m_TransportsParameters);
+                if (v == 'X')
+                {
+                    // BP4 did not create this file pre 2.8.0 so if not found,
+                    // lets assume bp4
+                    v = '4';
+                }
                 engineTypeLC = "bp";
                 engineTypeLC.push_back(v);
             }
@@ -584,22 +590,27 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
         else
         {
-            engineTypeLC = "bp4";
+            // File default for writing: BP5
+            engineTypeLC = "bp5";
         }
     }
 
     // filestream is either BP5 or BP4 depending on .bpversion
-    /* TODO: Timeout is not handled properly for BP5 streaming
-        since this selection picks BP4 Read engine if the BP5 stream is
-        not yet created
-    */
+    /* Note: Mismatch between BP4/BP5 writer and FileStream reader is not
+       handled if writer has not created the directory yet, when FileStream
+       falls back to default */
     if (engineTypeLC == "filestream")
     {
         char v = helper::BPVersion(name, comm, m_TransportsParameters);
+        if (v == 'X')
+        {
+            // FileStream default: BP4
+            v = '4';
+        }
         engineTypeLC = "bp";
         engineTypeLC.push_back(v);
-        std::cout << "Engine " << engineTypeLC << " selected for FileStream"
-                  << std::endl;
+        // std::cout << "Engine " << engineTypeLC << " selected for FileStream"
+        //          << std::endl;
     }
 
     // For the inline engine, there must be exactly 1 reader, and exactly 1

@@ -164,8 +164,7 @@ bool IsHDF5File(const std::string &name, helper::Comm &comm,
 char BPVersion(const std::string &name, helper::Comm &comm,
                const std::vector<Params> &transportsParameters) noexcept
 {
-    char version[] = {'4'};
-    // BP4 did not create this file pre 2.8.0 so if not found, lets assume bp4
+    char version[] = {'X'};
     std::string versionFileName = name + PathSeparator + ".bpversion";
     if (!comm.Rank())
     {

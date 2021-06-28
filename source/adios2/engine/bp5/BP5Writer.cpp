@@ -192,7 +192,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
     m_FileMetadataIndexManager.WriteFiles((char *)m_WriterDataPos.data(),
                                           m_WriterDataPos.size() *
                                               sizeof(uint64_t));
-    std::cout << "Write Index positions = {";
+    /*std::cout << "Write Index positions = {";
     for (size_t i = 0; i < m_WriterDataPos.size(); ++i)
     {
         std::cout << m_WriterDataPos[i];
@@ -201,7 +201,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
             std::cout << ", ";
         }
     }
-    std::cout << "}" << std::endl;
+    std::cout << "}" << std::endl;*/
 }
 
 void BP5Writer::MarshalAttributes()

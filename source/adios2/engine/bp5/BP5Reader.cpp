@@ -198,11 +198,9 @@ void BP5Reader::Init()
         std::chrono::steady_clock::now() + timeoutSeconds;
 
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
-    if (!m_Parameters.StreamReader)
-    {
-        /* non-stream reader gets as much steps as available now */
-        InitBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
-    }
+
+    /* non-stream reader gets as much steps as available now */
+    InitBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
 }
 
 bool BP5Reader::SleepOrQuit(const TimePoint &timeoutInstant,
