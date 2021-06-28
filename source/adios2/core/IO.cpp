@@ -590,8 +590,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
         else
         {
-            // File default for writing: BP5
-            engineTypeLC = "bp5";
+            // File default for writing: BP4
+            engineTypeLC = "bp4";
         }
     }
 
