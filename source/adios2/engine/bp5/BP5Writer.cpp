@@ -136,6 +136,20 @@ void BP5Writer::WriteData(format::BufferV *Data)
     }
     m_StartDataPos = m_DataPos;
 
+    if (m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
+    {
+        int i = 0;
+        uint64_t nextWriterPos = m_DataPos;
+        while (DataVec[i].iov_base != NULL)
+        {
+            nextWriterPos += DataVec[i].iov_len;
+            i++;
+        }
+        m_Aggregator.m_Comm.Isend(&nextWriterPos, 1,
+                                  m_Aggregator.m_Comm.Rank() + 1, 0,
+                                  "Chain token in BP5Writer::WriteData");
+    }
+
     int i = 0;
     while (DataVec[i].iov_base != NULL)
     {
@@ -151,12 +165,6 @@ void BP5Writer::WriteData(format::BufferV *Data)
         }
         m_DataPos += DataVec[i].iov_len;
         i++;
-    }
-
-    if (m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
-    {
-        m_Aggregator.m_Comm.Isend(&m_DataPos, 1, m_Aggregator.m_Comm.Rank() + 1,
-                                  0, "Chain token in BP5Writer::WriteData");
     }
 
     if (m_Aggregator.m_Comm.Size() > 1)
