@@ -10,6 +10,8 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
 
+#include "adios2/toolkit/format/buffer/BufferV.h"
+
 namespace adios2
 {
 namespace format
