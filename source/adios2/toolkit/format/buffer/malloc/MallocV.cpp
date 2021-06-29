@@ -69,7 +69,7 @@ size_t MallocV::AddToVec(const size_t size, const void *buf, int align,
             }
             else
             {
-                NewSize = m_AllocatedSize * m_GrowthFactor;
+                NewSize = (size_t)(m_AllocatedSize * m_GrowthFactor);
             }
             m_InternalBlock = (char *)realloc(m_InternalBlock, NewSize);
             m_AllocatedSize = NewSize;
