@@ -148,6 +148,33 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             }
         }
     };
+
+    auto lf_SetFloatParameter = [&](const std::string key, float &parameter,
+                                    float def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string value = itKey->second;
+            parameter =
+                helper::StringTo<float>(value, " in Parameter key=" + key);
+        }
+    };
+
+    auto lf_SetSizeBytesParameter = [&](const std::string key,
+                                        size_t &parameter, size_t def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string value = itKey->second;
+            parameter = helper::StringToByteUnits(
+                value, "for Parameter key=" + key + "in call to Open");
+            parameter =
+                helper::StringTo<float>(value, " in Parameter key=" + key);
+        }
+    };
+
     auto lf_SetIntParameter = [&](const std::string key, int &parameter,
                                   int def) {
         auto itKey = io.m_Parameters.find(key);

@@ -184,6 +184,10 @@ constexpr uint64_t DefaultMaxBufferSize = MaxSizeT - 1;
  * for optimizing applications*/
 constexpr float DefaultBufferGrowthFactor = 1.05f;
 
+/** default Buffer Chunk Size
+ *  2Gb - 100Kb (tolerance)*/
+constexpr uint64_t DefaultBufferChunkSize = 2147381248;
+
 /** default size for writing/reading files using POSIX/fstream/stdio write
  *  2Gb - 100Kb (tolerance)*/
 constexpr size_t DefaultMaxFileBatchSize = 2147381248;

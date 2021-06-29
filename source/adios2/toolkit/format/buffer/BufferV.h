@@ -9,7 +9,6 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
-#include "heap/BufferSTL.h"
 
 namespace adios2
 {
@@ -30,16 +29,22 @@ public:
 
     uint64_t Size() noexcept;
 
-    BufferV(const std::string type);
-    virtual ~BufferV() = default;
+    BufferV(const std::string type, const bool AlwaysCopy = false);
+    virtual ~BufferV();
 
-    virtual BufferV_iovec DataVec() noexcept;
-    //  virtual const BufferV_iovec DataVec() const noexcept;
+    virtual BufferV_iovec DataVec() noexcept = 0;
+
+    /**
+     * Reset the buffer to initial state (without freeing internal buffers)
+     */
+    virtual void Reset();
 
     virtual size_t AddToVec(const size_t size, const void *buf, int align,
-                            bool CopyReqd);
+                            bool CopyReqd) = 0;
 
-private:
+public:
+    const bool m_AlwaysCopy = false;
+
     struct VecEntry
     {
         bool External;
@@ -50,7 +55,6 @@ private:
     std::vector<VecEntry> DataV;
     size_t CurOffset = 0;
     size_t m_internalPos = 0;
-    BufferSTL InternalBlock;
 };
 
 } // end namespace format

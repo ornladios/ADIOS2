@@ -12,6 +12,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
+#include "adios2/toolkit/format/buffer/malloc/MallocV.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
 
@@ -43,6 +44,9 @@ BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
 StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_WriterStep++;
+    m_BP5Serializer.InitStep(new MallocV("BP5Writer", false,
+                                         m_Parameters.InitialBufferSize,
+                                         m_Parameters.GrowthFactor));
     return StepStatus::OK;
 }
 
