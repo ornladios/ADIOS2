@@ -93,7 +93,7 @@ public:
     MACRO(NodeLocal, Bool, bool, false)                                        \
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
-    MACRO(NumAggregators, UInt, unsigned int, 0)                               \
+    MACRO(NumAggregators, UInt, unsigned int, 999999)                          \
     MACRO(AsyncTasks, Bool, bool, true)                                        \
     MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)               \
     MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \
