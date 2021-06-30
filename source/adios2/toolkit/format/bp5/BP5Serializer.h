@@ -65,6 +65,8 @@ public:
                  bool Sync);
     void MarshalAttribute(const char *Name, const DataType Type,
                           size_t ElemSize, size_t ElemCount, const void *Data);
+
+    void InitStep(BufferV *DataBuffer);
     TimestepInfo CloseTimestep(int timestep);
 
     core::Engine *m_Engine = NULL;

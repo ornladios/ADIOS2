@@ -90,6 +90,9 @@ public:
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
     MACRO(NumAggregators, UInt, unsigned int, 999999999)                       \
     MACRO(AsyncTasks, Bool, bool, true)                                        \
+    MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)               \
+    MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \
+    MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)          \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)
 
     struct BP5Params

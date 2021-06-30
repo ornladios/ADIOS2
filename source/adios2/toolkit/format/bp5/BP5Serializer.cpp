@@ -472,7 +472,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         MetaEntry->Dims = DimCount;
         if (CurDataBuffer == NULL)
         {
-            CurDataBuffer = new BufferV("data buffer");
+            throw std::logic_error(
+                "BP5Serializer:: Marshall without Prior Init");
         }
         DataOffset =
             CurDataBuffer->AddToVec(ElemCount * ElemSize, Data, ElemSize, Sync);
@@ -615,6 +616,15 @@ void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type,
     }
 }
 
+void BP5Serializer::InitStep(BufferV *DataBuffer)
+{
+    if (CurDataBuffer != NULL)
+    {
+        throw std::logic_error("BP5Serializer:: InitStep without prior close");
+    }
+    CurDataBuffer = DataBuffer;
+}
+
 BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
 {
     std::vector<MetaMetaInfoBlock> Formats;
@@ -667,7 +677,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
 
     if (CurDataBuffer == NULL)
     {
-        CurDataBuffer = new BufferV("data buffer");
+        throw std::logic_error(
+            "BP5Serializer:: CloseTimestep without Prior Init");
     }
     MBase->DataBlockSize = CurDataBuffer->AddToVec(
         0, NULL, 8, true); //  output block size multiple of 8, offset is size

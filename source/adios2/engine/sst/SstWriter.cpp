@@ -14,6 +14,7 @@
 #include "SstParamParser.h"
 #include "SstWriter.h"
 #include "SstWriter.tcc"
+#include "adios2/toolkit/format/buffer/malloc/MallocV.h"
 #include <adios2-perfstubs-interface.h>
 
 namespace adios2
@@ -149,8 +150,12 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     }
     else if (Params.MarshalMethod == SstMarshalBP5)
     {
-        m_BP5Serializer =
-            std::unique_ptr<format::BP5Serializer>(new format::BP5Serializer());
+        if (!m_BP5Serializer)
+        {
+            m_BP5Serializer = std::unique_ptr<format::BP5Serializer>(
+                new format::BP5Serializer());
+        }
+        m_BP5Serializer->InitStep(new format::MallocV("SstWriter", true));
         m_BP5Serializer->m_Engine = this;
         //        m_BP5Serializer->Init(m_IO.m_Parameters,
         //                              "in call to BP5::Open for writing",

@@ -1448,18 +1448,24 @@ extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
 {
     int RetCount = 0;
     STREAM_MUTEX_LOCK(Stream);
+    int64_t LastRetTimestep = -1;
     for (int i = 0; i < Stream->InternalMetaMetaCount; i++)
     {
-        if (Stream->InternalMetaMetaInfo[i].TimestepAdded >= Timestep)
+        if ((LastRetTimestep == -1) ||
+            (Stream->InternalMetaMetaInfo[i].TimestepAdded >= LastRetTimestep))
             RetCount++;
     }
     if (RetCount == 0)
+    {
+        STREAM_MUTEX_UNLOCK(Stream);
         return NULL;
+    }
     SstMetaMetaList ret = malloc(sizeof(ret[0]) * (RetCount + 1));
     int j = 0;
     for (int i = 0; i < Stream->InternalMetaMetaCount; i++)
     {
-        if (Stream->InternalMetaMetaInfo[i].TimestepAdded >= Timestep)
+        if ((LastRetTimestep == -1) ||
+            (Stream->InternalMetaMetaInfo[i].TimestepAdded >= LastRetTimestep))
         {
             // no copies, keep memory ownership in SST
             ret[j].BlockData = Stream->InternalMetaMetaInfo[i].BlockData;
@@ -1470,6 +1476,7 @@ extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
         }
     }
     memset(&ret[j], 0, sizeof(ret[j]));
+    LastRetTimestep = Timestep;
     STREAM_MUTEX_UNLOCK(Stream);
     return ret;
 }

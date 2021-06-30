@@ -16,7 +16,6 @@
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
-#include "adios2/toolkit/format/buffer/BufferV.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 namespace adios2
