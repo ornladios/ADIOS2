@@ -11,6 +11,7 @@
 #define ADIOS2_ENGINE_BP5_BP5WRITER_TCC_
 
 #include "BP5Writer.h"
+#include "adios2/helper/adiosMath.h"
 
 namespace adios2
 {
@@ -40,6 +41,17 @@ void BP5Writer::PutCommon(Variable<T> &variable, const T *values, bool sync)
     {
         DimCount = variable.m_Count.size();
         Count = variable.m_Count.data();
+    }
+
+    if (!sync)
+    {
+        /* If arrays is small, force copying to internal buffer to aggregate
+         * small writes */
+        size_t n = helper::GetTotalSize(variable.m_Count) * sizeof(T);
+        if (n < 4194304 /* 4MB */)
+        {
+            sync = true;
+        }
     }
     m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
                             variable.m_Type, variable.m_ElementSize, DimCount,
