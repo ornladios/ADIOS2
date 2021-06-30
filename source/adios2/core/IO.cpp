@@ -234,7 +234,7 @@ void IO::SetEngine(const std::string engineType) noexcept
     }
     else if (engineTypeLC == "filestream")
     {
-        finalEngineType = "BP4";
+        finalEngineType = "filestream";
         lf_InsertParam("OpenTimeoutSecs", "3600");
         lf_InsertParam("StreamReader", "true");
     }
@@ -542,7 +542,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     }
 
     /* Second step in handling virtual engines */
-    /* BPFile for read needs to use BP4 or BP3 depending on the file's version
+    /* BPFile for read needs to use BP5, BP4, or BP3 depending on the file's
+     * version
      */
     if ((engineTypeLC == "file" || engineTypeLC == "bpfile" ||
          engineTypeLC == "bp" || isDefaultEngine))
@@ -555,7 +556,15 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         {
             if (adios2sys::SystemTools::FileIsDirectory(name))
             {
-                engineTypeLC = "bp4";
+                char v = helper::BPVersion(name, comm, m_TransportsParameters);
+                if (v == 'X')
+                {
+                    // BP4 did not create this file pre 2.8.0 so if not found,
+                    // lets assume bp4
+                    v = '4';
+                }
+                engineTypeLC = "bp";
+                engineTypeLC.push_back(v);
             }
             else
             {
@@ -581,8 +590,27 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
         else
         {
+            // File default for writing: BP4
             engineTypeLC = "bp4";
         }
+    }
+
+    // filestream is either BP5 or BP4 depending on .bpversion
+    /* Note: Mismatch between BP4/BP5 writer and FileStream reader is not
+       handled if writer has not created the directory yet, when FileStream
+       falls back to default */
+    if (engineTypeLC == "filestream")
+    {
+        char v = helper::BPVersion(name, comm, m_TransportsParameters);
+        if (v == 'X')
+        {
+            // FileStream default: BP4
+            v = '4';
+        }
+        engineTypeLC = "bp";
+        engineTypeLC.push_back(v);
+        // std::cout << "Engine " << engineTypeLC << " selected for FileStream"
+        //          << std::endl;
     }
 
     // For the inline engine, there must be exactly 1 reader, and exactly 1
@@ -612,8 +640,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
                    "added.";
             throw std::runtime_error(msg);
         }
-        // Now protect against declaration of two writers, or declaration of two
-        // readers:
+        // Now protect against declaration of two writers, or declaration of
+        // two readers:
         if (m_Engines.size() == 1)
         {
             auto engine_ptr = m_Engines.begin()->second;
@@ -743,8 +771,8 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
     for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
          ++itVariable)
     {
-        // if for each step (BP4), check if variable type is not empty (means
-        // variable exist in that step)
+        // if for each step (BP4), check if variable type is not empty
+        // (means variable exist in that step)
         const DataType type = isStep ? InquireVariableType(itVariable)
                                      : itVariable->second->m_Type;
 

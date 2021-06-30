@@ -136,6 +136,20 @@ void BP5Writer::WriteData(format::BufferV *Data)
     }
     m_StartDataPos = m_DataPos;
 
+    if (m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
+    {
+        int i = 0;
+        uint64_t nextWriterPos = m_DataPos;
+        while (DataVec[i].iov_base != NULL)
+        {
+            nextWriterPos += DataVec[i].iov_len;
+            i++;
+        }
+        m_Aggregator.m_Comm.Isend(&nextWriterPos, 1,
+                                  m_Aggregator.m_Comm.Rank() + 1, 0,
+                                  "Chain token in BP5Writer::WriteData");
+    }
+
     int i = 0;
     while (DataVec[i].iov_base != NULL)
     {
@@ -151,12 +165,6 @@ void BP5Writer::WriteData(format::BufferV *Data)
         }
         m_DataPos += DataVec[i].iov_len;
         i++;
-    }
-
-    if (m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
-    {
-        m_Aggregator.m_Comm.Isend(&m_DataPos, 1, m_Aggregator.m_Comm.Rank() + 1,
-                                  0, "Chain token in BP5Writer::WriteData");
     }
 
     if (m_Aggregator.m_Comm.Size() > 1)
@@ -192,7 +200,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
     m_FileMetadataIndexManager.WriteFiles((char *)m_WriterDataPos.data(),
                                           m_WriterDataPos.size() *
                                               sizeof(uint64_t));
-    std::cout << "Write Index positions = {";
+    /*std::cout << "Write Index positions = {";
     for (size_t i = 0; i < m_WriterDataPos.size(); ++i)
     {
         std::cout << m_WriterDataPos[i];
@@ -201,7 +209,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
             std::cout << ", ";
         }
     }
-    std::cout << "}" << std::endl;
+    std::cout << "}" << std::endl;*/
 }
 
 void BP5Writer::MarshalAttributes()
@@ -358,11 +366,19 @@ void BP5Writer::InitTransports()
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
-    m_BBName = m_Name;
     if (m_WriteToBB)
     {
         m_BBName = m_Parameters.BurstBufferPath + PathSeparator + m_Name;
     }
+    else
+    {
+        m_BBName = m_Name;
+    }
+    /* From this point, engine writes to m_BBName, which points to either
+        the BB file system if BB is turned on, or to the target file system.
+        m_Name always points to the target file system, to which the drainer
+        should write if BB is turned on
+    */
 
     // Names passed to IO AddTransport option with key "Name"
     const std::vector<std::string> transportsNames =
@@ -396,10 +412,6 @@ void BP5Writer::InitTransports()
 
     if (m_Comm.Rank() == 0)
     {
-        const std::vector<std::string> transportsNames =
-            m_FileMetadataManager.GetFilesBaseNames(
-                m_Name, m_IO.m_TransportsParameters);
-
         m_MetadataFileNames = GetBPMetadataFileNames(transportsNames);
         m_MetaMetadataFileNames = GetBPMetaMetadataFileNames(transportsNames);
         m_MetadataIndexFileNames = GetBPMetadataIndexFileNames(transportsNames);
@@ -471,6 +483,19 @@ void BP5Writer::InitTransports()
                 m_FileDrainer.AddOperationOpen(name, m_OpenMode);
             }
         }
+    }
+
+    // last process create .bpversion file with content "5"
+    if (m_Comm.Rank() == m_Comm.Size() - 1)
+    {
+        std::vector<std::string> versionNames =
+            GetBPVersionFileNames(transportsNames);
+        auto emptyComm = helper::Comm();
+        transportman::TransportMan tm(emptyComm);
+        tm.OpenFiles(versionNames, Mode::Write, m_IO.m_TransportsParameters,
+                     false);
+        char b[1] = {'5'};
+        tm.WriteFiles(b, 1);
     }
 }
 
@@ -615,7 +640,6 @@ void BP5Writer::InitBPBuffer()
         MakeHeader(bi, "Index Table", true);
         m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
                                               bi.m_Position);
-
         // where each rank's data will end up
         m_FileMetadataIndexManager.WriteFiles((char *)Assignment.data(),
                                               sizeof(Assignment[0]) *

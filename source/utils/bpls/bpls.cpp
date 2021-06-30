@@ -83,20 +83,21 @@ std::string format;       // format string for one data element (e.g. %6.2f)
 // Flags from arguments or defaults
 bool dump; // dump data not just list info(flag == 1)
 bool output_xml;
-bool use_regexp;       // use varmasks as regular expressions
-bool sortnames;        // sort names before listing
-bool listattrs;        // do list attributes too
-bool listmeshes;       // do list meshes too
-bool attrsonly;        // do list attributes only
-bool longopt;          // -l is turned on
-bool timestep;         // read step by step
-bool noindex;          // do no print array indices with data
-bool printByteAsChar;  // print 8 bit integer arrays as string
-bool plot;             // dump histogram related information
-bool hidden_attrs;     // show hidden attrs in BP file
-int hidden_attrs_flag; // to be passed on in option struct
-bool show_decomp;      // show decomposition of arrays
-bool show_version;     // print binary version info of file before work
+bool use_regexp;         // use varmasks as regular expressions
+bool sortnames;          // sort names before listing
+bool listattrs;          // do list attributes too
+bool listmeshes;         // do list meshes too
+bool attrsonly;          // do list attributes only
+bool longopt;            // -l is turned on
+bool timestep;           // read step by step
+bool filestream = false; // are we using an engine through FileStream?
+bool noindex;            // do no print array indices with data
+bool printByteAsChar;    // print 8 bit integer arrays as string
+bool plot;               // dump histogram related information
+bool hidden_attrs;       // show hidden attrs in BP file
+int hidden_attrs_flag;   // to be passed on in option struct
+bool show_decomp;        // show decomposition of arrays
+bool show_version;       // print binary version info of file before work
 
 // other global variables
 char *prgname; /* argv[0] */
@@ -915,7 +916,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
         {
             Entry e(vpair.second->m_Type, vpair.second.get());
             bool valid = true;
-            if (timestep)
+            if (timestep && !filestream)
             {
                 valid = e.var->IsValidStep(fp->CurrentStep() + 1);
                 // fprintf(stdout, "Entry: ptr = %p valid = %d\n", e.var,
@@ -1445,15 +1446,39 @@ std::vector<std::string> getEnginesList(const std::string path)
     if (slen >= 3 && path.compare(slen - 3, 3, ".h5") == 0)
     {
         list.push_back("HDF5");
-        list.push_back("BPFile");
+        if (timestep)
+        {
+            list.push_back("FileStream");
+            list.push_back("BP3");
+        }
+        else
+        {
+            list.push_back("BPFile");
+        }
+    }
+    else
+    {
+        if (timestep)
+        {
+            list.push_back("FileStream");
+            list.push_back("BP3");
+        }
+        else
+        {
+            list.push_back("BPFile");
+        }
+        list.push_back("HDF5");
+    }
+#else
+    if (timestep)
+    {
+        list.push_back("FileStream");
+        list.push_back("BP3");
     }
     else
     {
         list.push_back("BPFile");
-        list.push_back("HDF5");
     }
-#else
-    list.push_back("BPFile");
 #endif
     return list;
 }
@@ -1498,6 +1523,10 @@ int doList(const char *path)
         try
         {
             fp = &io.Open(path, Mode::Read);
+            if (engineName == "FileStream")
+            {
+                filestream = true;
+            }
         }
         catch (std::exception &e)
         {

@@ -77,7 +77,8 @@ int ExceptionToError(const std::string &function);
 
 bool IsHDF5File(const std::string &name, helper::Comm &comm,
                 const std::vector<Params> &transportsParameters) noexcept;
-
+char BPVersion(const std::string &name, helper::Comm &comm,
+               const std::vector<Params> &transportsParameters) noexcept;
 } // end namespace helper
 } // end namespace adios2
 

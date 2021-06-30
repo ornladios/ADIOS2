@@ -79,6 +79,11 @@ public:
                                    const bool hasSubFiles = true,
                                    const bool isReader = false) const noexcept;
 
+    std::vector<std::string>
+    GetBPVersionFileNames(const std::vector<std::string> &names) const noexcept;
+
+    std::string GetBPVersionFileName(const std::string &name) const noexcept;
+
 #define BP5_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(OpenTimeoutSecs, Int, int, 3600)                                     \
     MACRO(BeginStepPollingFrequencySecs, Int, int, 0)                          \
@@ -88,7 +93,7 @@ public:
     MACRO(NodeLocal, Bool, bool, false)                                        \
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
-    MACRO(NumAggregators, UInt, unsigned int, 999999999)                       \
+    MACRO(NumAggregators, UInt, unsigned int, 999999)                          \
     MACRO(AsyncTasks, Bool, bool, true)                                        \
     MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)               \
     MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \
