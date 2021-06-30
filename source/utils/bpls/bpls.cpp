@@ -1550,8 +1550,6 @@ int doList(const char *path)
         if (verbose)
         {
             printf("File info:\n");
-            printf("  adios2 engine: %s\n", fp->m_EngineType.c_str());
-            printf("  stream mode:   %s\n", (filestream ? "yes" : "no"));
             printf("  of variables:  %zu\n", io.GetVariables().size());
             printf("  of attributes: %zu\n", io.GetAttributes().size());
             // printf("  of meshes:     %d\n", fp->nmeshes);
