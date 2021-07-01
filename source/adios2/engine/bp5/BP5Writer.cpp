@@ -131,6 +131,7 @@ uint64_t BP5Writer::WriteMetadata(
     return MetaDataSize;
 }
 
+static const uint64_t PAGE_SIZE = 65536; // 64KB
 void BP5Writer::WriteData(format::BufferV *Data)
 {
     format::BufferV::BufferV_iovec DataVec = Data->DataVec();
@@ -154,6 +155,8 @@ void BP5Writer::WriteData(format::BufferV *Data)
             nextWriterPos += DataVec[i].iov_len;
             i++;
         }
+        // align to PAGE_SIZE
+        nextWriterPos += PAGE_SIZE - (nextWriterPos % PAGE_SIZE);
         m_Aggregator.m_Comm.Isend(&nextWriterPos, 1,
                                   m_Aggregator.m_Comm.Rank() + 1, 0,
                                   "Chain token in BP5Writer::WriteData");
@@ -164,6 +167,8 @@ void BP5Writer::WriteData(format::BufferV *Data)
     {
         if (i == 0)
         {
+            std::cout << "Rank " << m_Comm.Rank()
+                      << " write to position = " << m_StartDataPos << std::endl;
             m_FileDataManager.WriteFileAt((char *)DataVec[i].iov_base,
                                           DataVec[i].iov_len, m_StartDataPos);
         }
@@ -182,6 +187,8 @@ void BP5Writer::WriteData(format::BufferV *Data)
         // so it can update its data pos
         if (m_Aggregator.m_Comm.Rank() == m_Aggregator.m_Comm.Size() - 1)
         {
+            // align to PAGE_SIZE
+            m_DataPos += PAGE_SIZE - (m_DataPos % PAGE_SIZE);
             m_Aggregator.m_Comm.Isend(
                 &m_DataPos, 1, 0, 0,
                 "Final chain token in BP5Writer::WriteData");
