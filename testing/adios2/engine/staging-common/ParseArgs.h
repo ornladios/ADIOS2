@@ -41,6 +41,7 @@ int LocalCount = 1;
 
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
+adios2::Mode GlobalReadMode = adios2::Mode::Deferred;
 
 static std::string Trim(std::string &str)
 {
@@ -172,6 +173,24 @@ static void ParseArgs(int argc, char **argv)
             else if (strcasecmp(argv[2], "deferred") == 0)
             {
                 GlobalWriteMode = adios2::Mode::Deferred;
+            }
+            else
+            {
+                std::cerr << "Invalid mode for --write_mode " << argv[2]
+                          << std::endl;
+            }
+            argv++;
+            argc--;
+        }
+        else if (std::string(argv[1]) == "--read_mode")
+        {
+            if (strcasecmp(argv[2], "sync") == 0)
+            {
+                GlobalReadMode = adios2::Mode::Sync;
+            }
+            else if (strcasecmp(argv[2], "deferred") == 0)
+            {
+                GlobalReadMode = adios2::Mode::Deferred;
             }
             else
             {

@@ -323,39 +323,52 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             in_R64_2d_rev.resize(myLength * 2);
             if (!NoData)
             {
-                engine.Get(var_i8, in_I8.data());
-                engine.Get(var_i16, in_I16.data());
-                engine.Get(var_i32, in_I32.data());
-                engine.Get(var_i64, in_I64.data());
+                engine.Get(var_i8, in_I8.data(), GlobalReadMode);
+                engine.Get(var_i16, in_I16.data(), GlobalReadMode);
+                engine.Get(var_i32, in_I32.data(), GlobalReadMode);
+                engine.Get(var_i64, in_I64.data(), GlobalReadMode);
 
-                engine.Get(scalar_r64, in_scalar_R64);
+                engine.Get(scalar_r64, in_scalar_R64, GlobalReadMode);
 
-                engine.Get(var_r32, in_R32.data());
-                engine.Get(var_r64, in_R64.data());
+                engine.Get(var_r32, in_R32.data(), GlobalReadMode);
+                engine.Get(var_r64, in_R64.data(), GlobalReadMode);
                 if (!mpiRank)
-                    engine.Get(var_time, (int64_t *)&write_time);
+                    engine.Get(var_time, (int64_t *)&write_time,
+                               GlobalReadMode);
             }
             else
             {
                 if (NoDataNode != -1)
                 {
                     // someone wrote everything, get our part
-                    engine.Get(var_r64, in_R64.data());
+                    engine.Get(var_r64, in_R64.data(), GlobalReadMode);
                 }
             }
             if (var_c32)
-                engine.Get(var_c32, in_C32.data());
+                engine.Get(var_c32, in_C32.data(), GlobalReadMode);
             if (var_c64)
-                engine.Get(var_c64, in_C64.data());
+                engine.Get(var_c64, in_C64.data(), GlobalReadMode);
             if (var_r64_2d)
-                engine.Get(var_r64_2d, in_R64_2d.data());
+                engine.Get(var_r64_2d, in_R64_2d.data(), GlobalReadMode);
             if (var_r64_2d_rev)
-                engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
+                engine.Get(var_r64_2d_rev, in_R64_2d_rev.data(),
+                           GlobalReadMode);
             if (LockGeometry)
             {
                 // we'll never change our data decomposition
                 engine.LockReaderSelections();
             }
+        }
+        if (!NoData && (GlobalReadMode == adios2::Mode::Sync))
+        {
+            // go ahead and test data now, it should be valid
+            int result = validateCommonTestData(myStart, myLength, t, !var_c32);
+            if (result != 0)
+            {
+                std::cout << "Read Data Validation failed on node " << mpiRank
+                          << " timestep " << t << std::endl;
+            }
+            EXPECT_EQ(result, 0);
         }
         engine.EndStep();
 
