@@ -587,7 +587,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
     else
     {
     }
-    return false;
+    return true;
 }
 
 bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, int i)
