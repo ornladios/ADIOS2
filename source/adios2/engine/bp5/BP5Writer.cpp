@@ -167,8 +167,6 @@ void BP5Writer::WriteData(format::BufferV *Data)
     {
         if (i == 0)
         {
-            std::cout << "Rank " << m_Comm.Rank()
-                      << " write to position = " << m_StartDataPos << std::endl;
             m_FileDataManager.WriteFileAt((char *)DataVec[i].iov_base,
                                           DataVec[i].iov_len, m_StartDataPos);
         }
