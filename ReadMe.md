@@ -67,7 +67,7 @@ For a `cmake` configuration example see [scripts/runconf/runconf.sh](https://git
 
 Once ADIOS2 is installed refer to: 
 
-* [Linking ADIO 2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
+* [Linking ADIOS2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
 
 
 ## Releases
