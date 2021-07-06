@@ -237,6 +237,32 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
         return false;
     };
 
+    auto lf_SetBufferVTypeParameter = [&](const std::string key, int &parameter,
+                                          int def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string value = itKey->second;
+            std::transform(value.begin(), value.end(), value.begin(),
+                           ::tolower);
+            if (value == "malloc")
+            {
+                parameter = (int)BufferVType::MallocVType;
+            }
+            else if (value == "chunk")
+            {
+                parameter = (int)BufferVType::ChunkVType;
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown BP5 BufferVType parameter \"" + value +
+                    "\" (must be \"malloc\" or \"chunk\"");
+            }
+        }
+    };
+
 #define get_params(Param, Type, Typedecl, Default)                             \
     lf_Set##Type##Parameter(#Param, Params.Param, Default);
     BP5_FOREACH_PARAMETER_TYPE_4ARGS(get_params);
