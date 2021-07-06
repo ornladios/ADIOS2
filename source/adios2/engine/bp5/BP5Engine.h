@@ -84,6 +84,15 @@ public:
 
     std::string GetBPVersionFileName(const std::string &name) const noexcept;
 
+    enum class BufferVType
+    {
+        MallocVType,
+        ChunkVType,
+        Auto
+    };
+
+    BufferVType UseBufferV = BufferVType::ChunkVType;
+
 #define BP5_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(OpenTimeoutSecs, Int, int, 3600)                                     \
     MACRO(BeginStepPollingFrequencySecs, Int, int, 0)                          \
@@ -97,7 +106,9 @@ public:
     MACRO(AsyncTasks, Bool, bool, true)                                        \
     MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)               \
     MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \
+    MACRO(MinDeferredSize, SizeBytes, size_t, DefaultMinDeferredSize)          \
     MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)          \
+    MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)         \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)
 
     struct BP5Params

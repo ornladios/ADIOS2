@@ -48,7 +48,7 @@ void BP5Writer::PutCommon(Variable<T> &variable, const T *values, bool sync)
         /* If arrays is small, force copying to internal buffer to aggregate
          * small writes */
         size_t n = helper::GetTotalSize(variable.m_Count) * sizeof(T);
-        if (n < 4194304 /* 4MB */)
+        if (n < m_Parameters.MinDeferredSize)
         {
             sync = true;
         }

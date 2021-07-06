@@ -56,7 +56,7 @@ add_library(adios2_core
   toolkit/format/buffer/Buffer.cpp
   toolkit/format/buffer/BufferV.cpp
   toolkit/format/buffer/malloc/MallocV.cpp
-#  toolkit/format/buffer/chunk/ChunkV.cpp
+  toolkit/format/buffer/chunk/ChunkV.cpp
   toolkit/format/buffer/heap/BufferSTL.cpp
 
   toolkit/format/bp/BPBase.cpp toolkit/format/bp/BPBase.tcc
