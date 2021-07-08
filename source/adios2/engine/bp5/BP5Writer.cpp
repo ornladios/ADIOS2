@@ -64,6 +64,7 @@ size_t BP5Writer::CurrentStep() const { return m_WriterStep; }
 void BP5Writer::PerformPuts()
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::PerformPuts");
+    m_BP5Serializer.PerformPuts();
     return;
 }
 

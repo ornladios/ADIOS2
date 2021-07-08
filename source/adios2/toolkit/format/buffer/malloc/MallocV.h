@@ -37,6 +37,8 @@ public:
     virtual size_t AddToVec(const size_t size, const void *buf, int align,
                             bool CopyReqd);
 
+    void CopyExternalToInternal();
+
 private:
     char *m_InternalBlock = NULL;
     size_t m_AllocatedSize = 0;

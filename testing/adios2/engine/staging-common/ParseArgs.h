@@ -38,6 +38,8 @@ int NoData = 0;
 int NoDataNode = -1;
 int EarlyExit = 0;
 int LocalCount = 1;
+int DataSize = 4 * 1024 * 1024 / 8; /* DefaultMinDeferredSize is 4*1024*1024
+                                       This should be more than that. */
 
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;

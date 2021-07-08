@@ -21,6 +21,7 @@ foreach(helper
     TestCommonWriteAttrs
     TestCommonWriteLocal
     TestCommonWriteShared
+    TestDefSyncWrite
     TestCommonRead
     TestCommonReadR64
     TestCommonReadLocal
@@ -149,9 +150,9 @@ if(ADIOS2_HAVE_SST)
 endif()
 
 
-#  For the moment, only test the default comm pattern (Peer)
+#  For the moment, only test the default comm pattern (Min)
 MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern=Min" "${BASIC_SST_TESTS}" )
-MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" writer "CPCommPattern=Peer" "${BASIC_SST_TESTS}" )
+#MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" writer "CPCommPattern=Peer" "${BASIC_SST_TESTS}" )
 
 # temporarily remove PreciousTimestep CommPeer tests
 list (REMOVE_ITEM COMM_PEER_SST_TESTS "PreciousTimestep")

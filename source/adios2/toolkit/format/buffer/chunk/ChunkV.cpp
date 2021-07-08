@@ -30,6 +30,17 @@ ChunkV::~ChunkV()
     }
 }
 
+void ChunkV::CopyExternalToInternal()
+{
+    for (std::size_t i = 0; i < DataV.size(); ++i)
+    {
+        if (DataV[i].External)
+        {
+            size_t size = DataV[i].Size;
+        }
+    }
+}
+
 size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
                         bool CopyReqd)
 {
@@ -37,7 +48,7 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
     if (badAlign)
     {
         int addAlign = align - badAlign;
-        char zero[16] = {0};
+        static char zero[16] = {0};
         AddToVec(addAlign, zero, 1, true);
     }
     size_t retOffset = CurOffset;

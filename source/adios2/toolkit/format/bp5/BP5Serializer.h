@@ -68,6 +68,7 @@ public:
 
     void InitStep(BufferV *DataBuffer);
     TimestepInfo CloseTimestep(int timestep);
+    void PerformPuts();
 
     core::Engine *m_Engine = NULL;
 
