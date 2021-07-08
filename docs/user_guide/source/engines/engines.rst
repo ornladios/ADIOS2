@@ -24,4 +24,5 @@ Parameters are passed at:
 .. include:: dataman.rst
 .. include:: inline.rst
 .. include:: null.rst
+.. include:: plugin.rst
 .. include:: virtual_engines.rst
