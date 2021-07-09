@@ -218,13 +218,16 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
                 break;
             }
 
-            std::vector<std::string> correct_vars= {"varI16", "varI32", "varI64", "varI8", "varR32", "varR64", "varU16", "varU32", "varU64", "varU8"};
-            std::vector<std::string> correct_attrs= {"strvalue"};
+            std::vector<std::string> correct_vars = {
+                "varI16", "varI32", "varI64", "varI8",  "varR32",
+                "varR64", "varU16", "varU32", "varU64", "varU8"};
+            std::vector<std::string> correct_attrs = {"strvalue"};
 
             std::vector<std::string> vars;
             int var_size;
             char **var_names = adios2_available_variables(ioH, &var_size);
-            for (int i =0 ; i < var_size; i++){
+            for (int i = 0; i < var_size; i++)
+            {
                 vars.push_back(var_names[i]);
                 free(var_names[i]);
             }
@@ -236,7 +239,8 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
             int attr_size;
             std::vector<std::string> attrs;
             char **attr_names = adios2_available_attributes(ioH, &attr_size);
-            for (int i =0 ; i < attr_size; i++){
+            for (int i = 0; i < attr_size; i++)
+            {
                 attrs.push_back(attr_names[i]);
                 free(attr_names[i]);
             }
