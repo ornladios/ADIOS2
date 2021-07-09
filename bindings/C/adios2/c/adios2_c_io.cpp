@@ -874,7 +874,7 @@ adios2_error adios2_remove_all_attributes(adios2_io *io)
     }
 }
 
-char **adios2_available_variables(adios2_io *io, int *size)
+char **adios2_available_variables(adios2_io *io, size_t *size)
 {
     try
     {
@@ -885,7 +885,7 @@ char **adios2_available_variables(adios2_io *io, int *size)
         *size = varInfo.size();
         char **names = (char **)malloc(*size * sizeof(char *));
 
-        int cnt = 0;
+        size_t cnt = 0;
         for (auto var : varInfo)
         {
             int len = var.first.length();
@@ -901,7 +901,7 @@ char **adios2_available_variables(adios2_io *io, int *size)
         return NULL;
     }
 }
-char **adios2_available_attributes(adios2_io *io, int *size)
+char **adios2_available_attributes(adios2_io *io, size_t *size)
 {
     try
     {

@@ -281,7 +281,7 @@ adios2_error adios2_remove_all_variables(adios2_io *io);
  * @param length of array of strings
  * @return names of variables as an array of strings
  */
-char **adios2_available_variables(adios2_io *io, int *size);
+char **adios2_available_variables(adios2_io *io, size_t *size);
 
 /**
  * @brief returns an array or c strings for names of available attributes
@@ -290,7 +290,7 @@ char **adios2_available_variables(adios2_io *io, int *size);
  * @param length of array of strings
  * @return names of variables as an array of strings
  */
-char **adios2_available_attributes(adios2_io *io, int *size);
+char **adios2_available_attributes(adios2_io *io, size_t *size);
 
 /**
  * @brief DANGEROUS! Removes an attribute identified by name. Might create

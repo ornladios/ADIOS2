@@ -224,9 +224,9 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
             std::vector<std::string> correct_attrs = {"strvalue"};
 
             std::vector<std::string> vars;
-            int var_size;
+            size_t var_size;
             char **var_names = adios2_available_variables(ioH, &var_size);
-            for (int i = 0; i < var_size; i++)
+            for (size_t i = 0; i < var_size; i++)
             {
                 vars.push_back(var_names[i]);
                 free(var_names[i]);
@@ -236,10 +236,10 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
             std::sort(vars.begin(), vars.end());
             EXPECT_EQ(correct_vars, vars);
 
-            int attr_size;
+            size_t attr_size;
             std::vector<std::string> attrs;
             char **attr_names = adios2_available_attributes(ioH, &attr_size);
-            for (int i = 0; i < attr_size; i++)
+            for (size_t i = 0; i < attr_size; i++)
             {
                 attrs.push_back(attr_names[i]);
                 free(attr_names[i]);
