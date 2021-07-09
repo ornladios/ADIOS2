@@ -86,8 +86,8 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
     if (badAlign)
     {
         int addAlign = align - badAlign;
-        assert(addAlign < sizeof(std::max_align_t));
-        static char zero[sizeof(std::max_align_t)] = {0};
+        assert(addAlign < sizeof(max_align_t));
+        static char zero[sizeof(max_align_t)] = {0};
         AddToVec(addAlign, zero, 1, true);
     }
     size_t retOffset = CurOffset;
