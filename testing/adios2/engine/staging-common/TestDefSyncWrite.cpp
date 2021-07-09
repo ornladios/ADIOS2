@@ -89,7 +89,6 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
         {
             adios2::Mode write_mode;
             int this_var_mask = (mask & 0x3);
-            bool do_perform_puts = false;
             mask >>= 2;
             switch (this_var_mask)
             {
@@ -158,7 +157,6 @@ TEST(CommonWriteTest, ADIOS2CommonRead)
      */
     for (int step = StartStep; step < EndStep; ++step)
     {
-        int mask = step;
         EXPECT_TRUE(engine.BeginStep() == adios2::StepStatus::OK);
 
         std::vector<adios2::Variable<double>> vars;
