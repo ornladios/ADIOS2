@@ -874,6 +874,36 @@ adios2_error adios2_remove_all_attributes(adios2_io *io)
     }
 }
 
+char** adios2_available_variables(adios2_io *io, int *size)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_available_variables");
+        std::map<std::string, std::map<std::string, std::string>> varInfo =
+            reinterpret_cast<adios2::core::IO *>(io)->GetAvailableVariables();
+        *size = varInfo.size();
+        char **names = (char **)malloc(*size * sizeof(char *));
+
+        int cnt = 0;
+        for (auto var : varInfo)
+        {
+            int len = var.first.length();
+            names[cnt] = (char*)malloc((len + 1) * sizeof(char));
+            strcpy(names[cnt], var.first.c_str());
+            cnt++;
+        }
+
+        return names;
+    }
+    catch (...)
+    {
+        //return static_cast<adios2_error>(
+        //    adios2::helper::ExceptionToError("adios2_available_variables"));
+        return NULL;
+    }
+}
+
 adios2_engine *adios2_open(adios2_io *io, const char *name,
                            const adios2_mode mode)
 {

@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TestBPWriteTypes.c
+ * TestBPAvailableVariablesAttributes.cpp
  *
- *  Created on: Aug 9, 2017
- *      Author: Haocheng
+ *  Created on: 7/9/21.
+ *      Author: Dmitry Ganyushin ganyushindi@ornl.gov
  */
 
 #include <adios2_c.h>
@@ -16,15 +16,17 @@
 
 #include <gtest/gtest.h>
 
+#include <numeric> //std::iota
+#include <thread>
 #include "SmallTestData_c.h"
 
-class BPWriteReadMultiblockCC : public ::testing::Test
+class BPAvailableVariablesAttributes : public ::testing::Test
 {
 public:
-    BPWriteReadMultiblockCC() = default;
+    BPAvailableVariablesAttributes() = default;
 };
 
-TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
+TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
 {
     int rank = 0;
     int size = 1;
@@ -102,7 +104,7 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
                                    start, count, adios2_constant_dims_false);
 
         adios2_engine *engineH =
-            adios2_open(ioH, "cmblocks.bp", adios2_mode_write);
+            adios2_open(ioH, "available.bp", adios2_mode_write);
 
         for (size_t i = 0; i < steps; ++i)
         {
@@ -201,7 +203,7 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
 
         adios2_io *ioH = adios2_declare_io(adiosH, "Reader");
         adios2_engine *engineH =
-            adios2_open(ioH, "cmblocks.bp", adios2_mode_read);
+            adios2_open(ioH, "available.bp", adios2_mode_read);
 
         size_t nsteps;
         adios2_steps(&nsteps, engineH);
@@ -214,6 +216,17 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
             {
                 break;
             }
+
+            int size;
+            char **names = adios2_available_variables(ioH, &size);
+            for (int i =0 ; i < size; i++){
+                printf("%s\n", names[i]);
+            }
+            // remove memory
+            for (int i =0 ; i < size; i++){
+                free(names[i]);
+            }
+            free(names);
             adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
             adios2_set_selection(varI8, 1, startValid.data(),
                                  countValid.data());
