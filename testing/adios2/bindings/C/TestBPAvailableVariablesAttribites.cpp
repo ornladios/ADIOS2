@@ -18,6 +18,7 @@
 
 #include <numeric> //std::iota
 #include <thread>
+#include <algorithm>
 #include "SmallTestData_c.h"
 
 class BPAvailableVariablesAttributes : public ::testing::Test
@@ -217,16 +218,34 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
                 break;
             }
 
-            int size;
-            char **names = adios2_available_variables(ioH, &size);
-            for (int i =0 ; i < size; i++){
-                printf("%s\n", names[i]);
+            std::vector<std::string> correct_vars= {"varI16", "varI32", "varI64", "varI8", "varR32", "varR64", "varU16", "varU32", "varU64", "varU8"};
+            std::vector<std::string> correct_attrs= {"strvalue"};
+
+            std::vector<std::string> vars;
+            int var_size;
+            char **var_names = adios2_available_variables(ioH, &var_size);
+            for (int i =0 ; i < var_size; i++){
+                vars.push_back(var_names[i]);
+                free(var_names[i]);
+            }
+            free(var_names);
+            std::sort(correct_vars.begin(), correct_vars.end());
+            std::sort(vars.begin(), vars.end());
+            EXPECT_EQ(correct_vars, vars);
+
+            int attr_size;
+            std::vector<std::string> attrs;
+            char **attr_names = adios2_available_attributes(ioH, &attr_size);
+            for (int i =0 ; i < attr_size; i++){
+                attrs.push_back(attr_names[i]);
+                free(attr_names[i]);
             }
             // remove memory
-            for (int i =0 ; i < size; i++){
-                free(names[i]);
-            }
-            free(names);
+            free(attr_names);
+            std::sort(attrs.begin(), attrs.end());
+            std::sort(correct_attrs.begin(), correct_attrs.end());
+            EXPECT_EQ(correct_attrs, attrs);
+
             adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
             adios2_set_selection(varI8, 1, startValid.data(),
                                  countValid.data());
