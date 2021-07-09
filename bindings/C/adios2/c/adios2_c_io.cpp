@@ -874,7 +874,7 @@ adios2_error adios2_remove_all_attributes(adios2_io *io)
     }
 }
 
-char** adios2_available_variables(adios2_io *io, int *size)
+char **adios2_available_variables(adios2_io *io, int *size)
 {
     try
     {
@@ -889,7 +889,7 @@ char** adios2_available_variables(adios2_io *io, int *size)
         for (auto var : varInfo)
         {
             int len = var.first.length();
-            names[cnt] = (char*)malloc((len + 1) * sizeof(char));
+            names[cnt] = (char *)malloc((len + 1) * sizeof(char));
             strcpy(names[cnt], var.first.c_str());
             cnt++;
         }
@@ -898,8 +898,6 @@ char** adios2_available_variables(adios2_io *io, int *size)
     }
     catch (...)
     {
-        //return static_cast<adios2_error>(
-        //    adios2::helper::ExceptionToError("adios2_available_variables"));
         return NULL;
     }
 }

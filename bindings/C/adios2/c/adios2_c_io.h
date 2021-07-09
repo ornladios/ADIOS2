@@ -278,11 +278,10 @@ adios2_error adios2_remove_all_variables(adios2_io *io);
  * @brief returns an array or c strings for names of available variables
  * Might create dangling pointers
  * @param io handler variables io owner
- * @param names array of strings
  * @param length of array of strings
- * @return adios2_error 0: success, see enum adios2_error for errors
+ * @return names of variables as an array of strings
  */
-char ** adios2_available_variables(adios2_io *io, int *size);
+char **adios2_available_variables(adios2_io *io, int *size);
 /**
  * @brief DANGEROUS! Removes an attribute identified by name. Might create
  * dangling pointers
