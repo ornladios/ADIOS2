@@ -18,15 +18,12 @@
 #include "TestData.h"
 
 #include "ParseArgs.h"
-
-class CommonWriteTest : public ::testing::Test
-{
-public:
-    CommonWriteTest() = default;
-};
+int StartStep = 0;
+int EndStep = 4 * 4 * 4 * 4 * 4; // all 4 possibilities for all 5 variables
+int SmallSize = 100;
 
 // ADIOS2  write
-TEST_F(CommonWriteTest, ADIOS2CommonWrite)
+TEST(CommonWriteTest, ADIOS2CommonWrite)
 {
     adios2::ADIOS adios;
 
@@ -36,9 +33,9 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     adios2::Dims big_start{static_cast<unsigned int>(0)};
     adios2::Dims big_count{static_cast<unsigned int>(DataSize)};
 
-    adios2::Dims small_shape{static_cast<unsigned int>(100)};
+    adios2::Dims small_shape{static_cast<unsigned int>(SmallSize)};
     adios2::Dims small_start{static_cast<unsigned int>(0)};
-    adios2::Dims small_count{static_cast<unsigned int>(100)};
+    adios2::Dims small_count{static_cast<unsigned int>(SmallSize)};
 
     std::vector<adios2::Variable<double>> vars;
     vars.push_back(
@@ -58,7 +55,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         int size = DataSize;
         if ((i == 1) || (i == 3))
         {
-            size = 100;
+            size = SmallSize;
         }
         std::vector<double> tmp(size);
         data.push_back(tmp);
@@ -78,12 +75,12 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
      *		Deferred with immediate PerformPuts()  -  Destroy all prior data
      *
      */
-    for (int step = 0; step < 4 * 4 * 4 * 4 * 4; ++step)
+    for (int step = StartStep; step < EndStep; ++step)
     {
         int mask = step;
         engine.BeginStep();
 
-        std::cout << "Begin Step " << step << std::endl;
+        std::cout << "Begin Write Step " << step << std::endl;
         for (int j = 0; j < 5; j++)
         {
             std::fill(data[j].begin(), data[j].end(), (double)j + 1.0);
@@ -115,7 +112,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
             {
                 engine.PerformPuts();
                 for (int k = 0; k <= j; k++)
-                    std::fill(data[k].begin(), data[j].end(), -100.0);
+                    std::fill(data[k].begin(), data[k].end(), -100.0);
             }
         }
         engine.EndStep();
@@ -126,13 +123,11 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 }
 
 // ADIOS2  write
-TEST_F(CommonWriteTest, ADIOS2CommonRead)
+TEST(CommonWriteTest, ADIOS2CommonRead)
 {
     adios2::ADIOS adios;
 
     adios2::IO io = adios.DeclareIO("TestIO");
-
-    std::vector<adios2::Variable<double>> vars;
 
     std::vector<std::vector<double>> data;
     for (int i = 0; i < 5; i++)
@@ -140,7 +135,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonRead)
         int size = DataSize;
         if ((i == 1) || (i == 3))
         {
-            size = 100;
+            size = SmallSize;
         }
         std::vector<double> tmp(size);
         data.push_back(tmp);
@@ -151,6 +146,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonRead)
     io.SetParameters(engineParams);
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+    EXPECT_TRUE(engine);
 
     /*
      *   write possibilities:
@@ -160,27 +156,46 @@ TEST_F(CommonWriteTest, ADIOS2CommonRead)
      *		Deferred with immediate PerformPuts()  -  Destroy all prior data
      *
      */
-    for (int step = 0; step < 4 * 4 * 4 * 4 * 4; ++step)
+    for (int step = StartStep; step < EndStep; ++step)
     {
         int mask = step;
-        engine.BeginStep();
+        EXPECT_TRUE(engine.BeginStep() == adios2::StepStatus::OK);
 
+        std::vector<adios2::Variable<double>> vars;
         vars.push_back(io.InquireVariable<double>("big1"));
         vars.push_back(io.InquireVariable<double>("small1"));
         vars.push_back(io.InquireVariable<double>("big2"));
         vars.push_back(io.InquireVariable<double>("small2"));
         vars.push_back(io.InquireVariable<double>("big3"));
 
+        std::vector<bool> var_present(vars.size());
+        for (int i = 0; i <= 5; i++)
+            std::fill(data[i].begin(), data[i].end(), -200.0);
+        std::cout << "Variables Read in TS " << step << ": ";
         for (int j = 0; j < 5; j++)
         {
+            var_present[j] = (bool)vars[j];
             if (vars[j])
             {
-                std::cout << "Variable " << j << " Written in TS " << step
-                          << std::endl;
+                std::cout << " " << j;
+                var_present.push_back(true);
                 engine.Get(vars[j], data[j].data());
             }
         }
+        std::cout << std::endl;
         engine.EndStep();
+        for (int j = 0; j < 5; j++)
+        {
+            if (var_present[j])
+            {
+                for (std::size_t index = 0; index < data[j].size(); ++index)
+                {
+                    EXPECT_EQ(data[j][index], j + 1.0)
+                        << "Data isn't correct, for " << vars[j].Name() << "["
+                        << index << "]";
+                }
+            }
+        }
     }
 
     // Close the file
@@ -198,10 +213,6 @@ int main(int argc, char **argv)
     ParseArgs(argc, argv);
 
     result = RUN_ALL_TESTS();
-
-#if ADIOS2_USE_MPI
-    MPI_Finalize();
-#endif
 
     return result;
 }

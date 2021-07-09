@@ -693,7 +693,6 @@ void BP5Writer::DoFlush(const bool isFinal, const int transportIndex)
 void BP5Writer::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Close");
-    PerformPuts();
 
     DoFlush(true, transportIndex);
 

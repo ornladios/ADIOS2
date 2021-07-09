@@ -9,6 +9,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
+#include <iostream>
 
 namespace adios2
 {

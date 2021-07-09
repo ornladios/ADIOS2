@@ -92,6 +92,7 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
             if (size > m_ChunkSize)
                 NewSize = size;
             m_TailChunk = (char *)malloc(NewSize);
+            m_Chunks.push_back(m_TailChunk);
             memcpy(m_TailChunk, buf, size);
             m_TailChunkPos = size;
             VecEntry entry = {false, m_TailChunk, 0, size};
