@@ -53,7 +53,8 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
     }
     else
     {
-        m_BP5Serializer.InitStep(new ChunkV("BP5Writer", true /* always copy */,
+        m_BP5Serializer.InitStep(new ChunkV("BP5Writer",
+                                            false /* always copy */,
                                             m_Parameters.BufferChunkSize));
     }
     return StepStatus::OK;

@@ -8,6 +8,7 @@
 
 #include "MallocV.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
+#include <assert.h>
 #include <stddef.h> // max_align_t
 #include <string.h>
 
@@ -88,7 +89,8 @@ size_t MallocV::AddToVec(const size_t size, const void *buf, int align,
     if (badAlign)
     {
         int addAlign = align - badAlign;
-        char zero[16] = {0};
+        assert(addAlign < sizeof(std::max_align_t));
+        static char zero[sizeof(std::max_align_t)] = {0};
         AddToVec(addAlign, zero, 1, true);
     }
     size_t retOffset = CurOffset;

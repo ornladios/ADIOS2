@@ -80,7 +80,7 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
         int mask = step;
         engine.BeginStep();
 
-        std::cout << "Begin Write Step " << step << std::endl;
+        std::cout << "Begin Write Step " << step << " writing vars : ";
         for (int j = 0; j < 5; j++)
         {
             std::fill(data[j].begin(), data[j].end(), (double)j + 1.0);
@@ -88,6 +88,7 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
         for (int j = 0; j < 5; j++)
         {
             adios2::Mode write_mode;
+            char c;
             int this_var_mask = (mask & 0x3);
             mask >>= 2;
             switch (this_var_mask)
@@ -96,12 +97,15 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
                 continue;
             case 1:
                 write_mode = adios2::Mode::Sync;
+                c = 's';
                 break;
             case 2:
             case 3:
                 write_mode = adios2::Mode::Deferred;
+                c = 'd';
                 break;
             }
+            std::cout << j << c << " ";
             engine.Put(vars[j], data[j].data(), write_mode);
             if (this_var_mask == 1)
             {
@@ -109,11 +113,13 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
             }
             else if (this_var_mask == 3)
             {
+                std::cout << "P ";
                 engine.PerformPuts();
                 for (int k = 0; k <= j; k++)
                     std::fill(data[k].begin(), data[k].end(), -100.0);
             }
         }
+        std::cout << std::endl;
         engine.EndStep();
     }
 
