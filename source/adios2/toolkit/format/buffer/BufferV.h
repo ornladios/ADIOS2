@@ -9,6 +9,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
+#include <iostream>
 
 namespace adios2
 {
@@ -33,6 +34,12 @@ public:
     virtual ~BufferV();
 
     virtual BufferV_iovec DataVec() noexcept = 0;
+
+    /*
+     *  This is used in PerformPuts() to copy externally referenced data so that
+     * it can be modified by the application
+     */
+    virtual void CopyExternalToInternal() = 0;
 
     /**
      * Reset the buffer to initial state (without freeing internal buffers)

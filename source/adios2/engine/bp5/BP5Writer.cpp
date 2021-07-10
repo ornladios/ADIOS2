@@ -53,7 +53,8 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
     }
     else
     {
-        m_BP5Serializer.InitStep(new ChunkV("BP5Writer", true /* always copy */,
+        m_BP5Serializer.InitStep(new ChunkV("BP5Writer",
+                                            false /* always copy */,
                                             m_Parameters.BufferChunkSize));
     }
     return StepStatus::OK;
@@ -64,6 +65,7 @@ size_t BP5Writer::CurrentStep() const { return m_WriterStep; }
 void BP5Writer::PerformPuts()
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::PerformPuts");
+    m_BP5Serializer.PerformPuts();
     return;
 }
 
@@ -692,7 +694,6 @@ void BP5Writer::DoFlush(const bool isFinal, const int transportIndex)
 void BP5Writer::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Close");
-    PerformPuts();
 
     DoFlush(true, transportIndex);
 

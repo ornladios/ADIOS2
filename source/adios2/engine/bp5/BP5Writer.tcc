@@ -4,8 +4,6 @@
  *
  * BP5Writer.tcc implementation of template functions with known type
  *
- *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
  */
 #ifndef ADIOS2_ENGINE_BP5_BP5WRITER_TCC_
 #define ADIOS2_ENGINE_BP5_BP5WRITER_TCC_

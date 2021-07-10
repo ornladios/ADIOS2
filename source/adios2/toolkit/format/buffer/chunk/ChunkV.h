@@ -33,6 +33,8 @@ public:
     virtual size_t AddToVec(const size_t size, const void *buf, int align,
                             bool CopyReqd);
 
+    void CopyExternalToInternal();
+
 private:
     std::vector<char *> m_Chunks;
     size_t m_TailChunkPos = 0;
