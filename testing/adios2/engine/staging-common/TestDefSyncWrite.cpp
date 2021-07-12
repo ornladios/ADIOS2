@@ -57,8 +57,7 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
         {
             size = SmallSize;
         }
-        std::vector<double> tmp(size);
-        data.push_back(tmp);
+        data.push_back(std::vector<double>(size));
     }
 
     // Create the Engine
@@ -142,8 +141,7 @@ TEST(CommonWriteTest, ADIOS2CommonRead)
         {
             size = SmallSize;
         }
-        std::vector<double> tmp(size);
-        data.push_back(tmp);
+        data.push_back(std::vector<double>(size));
     }
 
     // Create the Engine
