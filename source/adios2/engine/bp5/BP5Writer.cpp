@@ -131,10 +131,29 @@ uint64_t BP5Writer::WriteMetadata(
     return MetaDataSize;
 }
 
-static const uint64_t PAGE_SIZE = 65536; // 64KB
 void BP5Writer::WriteData(format::BufferV *Data)
 {
     format::BufferV::BufferV_iovec DataVec = Data->DataVec();
+    if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites)
+    {
+        WriteData_EveryoneWrites(DataVec);
+    }
+    else if (m_Parameters.AggregationType == (int)AggregationType::TwoLevelShm)
+    {
+        WriteData_TwoLevelShm(DataVec);
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "Aggregation method " +
+            std::to_string(m_Parameters.AggregationType) +
+            "is not supported in BP5");
+    }
+}
+
+void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec)
+{
+    constexpr uint64_t PAGE_SIZE = 65536; // 64KB
 
     // new step writing starts at offset m_DataPos on aggregator
     // others will wait for the position to arrive from the rank below
@@ -338,15 +357,24 @@ void BP5Writer::Init()
     m_BP5Serializer.m_Engine = this;
     m_RankMPI = m_Comm.Rank();
     InitParameters();
-    if (m_Parameters.NumAggregators > static_cast<unsigned int>(m_Comm.Size()))
-    {
-        m_Parameters.NumAggregators = static_cast<unsigned int>(m_Comm.Size());
-    }
+
     // in BP5, aggregation is "always on", but processes may be alone, so
     // m_Aggregator.m_IsActive is always true
     // m_Aggregator.m_Comm.Rank() will always succeed (not abort)
     // m_Aggregator.m_SubFileIndex is always set
-    m_Aggregator.Init(m_Parameters.NumAggregators, m_Comm);
+    m_Aggregator.Init(m_Parameters.NumAggregators, m_Parameters.NumSubFiles,
+                      m_Comm);
+
+    std::cout << "Rank " << m_RankMPI << " aggr? "
+              << m_Aggregator.m_IsAggregator << " master? "
+              << m_Aggregator.m_IsMasterAggregator
+              << " aggr size = " << m_Aggregator.m_Size
+              << " rank = " << m_Aggregator.m_Rank
+              << " subfile = " << m_Aggregator.m_SubStreamIndex
+              << " type = " << m_Parameters.AggregationType
+
+              << std::endl;
+
     InitTransports();
     InitBPBuffer();
 }
@@ -369,6 +397,21 @@ void BP5Writer::InitParameters()
     ParseParams(m_IO, m_Parameters);
     m_WriteToBB = !(m_Parameters.BurstBufferPath.empty());
     m_DrainBB = m_WriteToBB && m_Parameters.BurstBufferDrain;
+
+    size_t numNodes = m_Aggregator.PreInit(m_Comm);
+    if (m_Parameters.NumAggregators > static_cast<unsigned int>(m_Comm.Size()))
+    {
+        m_Parameters.NumAggregators = static_cast<unsigned int>(m_Comm.Size());
+    }
+
+    if (m_Parameters.NumSubFiles > m_Parameters.NumAggregators)
+    {
+        m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
+    }
+    if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites)
+    {
+        m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
+    }
 }
 
 void BP5Writer::InitTransports()

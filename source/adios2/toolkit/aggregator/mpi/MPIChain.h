@@ -22,11 +22,13 @@ class MPIChain : public MPIAggregator
 {
 
 public:
+    /* Chain aggregator used by BP3/BP4 */
     MPIChain();
 
     ~MPIChain() = default;
 
-    void Init(const size_t subStreams, helper::Comm const &parentComm) final;
+    void Init(const size_t numAggregators, const size_t subStreams,
+              helper::Comm const &parentComm) final;
 
     ExchangeRequests IExchange(format::Buffer &buffer, const int step) final;
 

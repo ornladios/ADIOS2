@@ -123,6 +123,7 @@ void BP3Writer::Init()
         static_cast<unsigned int>(m_BP3Serializer.m_SizeMPI))
     {
         m_BP3Serializer.m_Aggregator.Init(
+            m_BP3Serializer.m_Parameters.NumAggregators,
             m_BP3Serializer.m_Parameters.NumAggregators, m_Comm);
     }
     InitTransports();

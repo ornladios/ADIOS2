@@ -13,7 +13,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/engine/bp5/BP5Engine.h"
 #include "adios2/helper/adiosComm.h"
-#include "adios2/toolkit/aggregator/mpi/MPIChain.h"
+#include "adios2/toolkit/aggregator/mpi/MPIShmChain.h"
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
@@ -127,6 +127,8 @@ private:
 
     /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);
+    void WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec);
+    void WriteData_TwoLevelShm(format::BufferV::BufferV_iovec DataVec);
 
     void PopulateMetadataIndexFileContent(
         format::BufferSTL &buffer, const uint64_t currentStep,
@@ -140,17 +142,8 @@ private:
 
     void MarshalAttributes();
 
-    /**
-     * N-to-N data buffers writes, including metadata file
-     * @param transportIndex
-     */
-    //    void WriteData(const bool isFinal, const int transportIndex = -1);
-
-    /**
-     * N-to-M (aggregation) data buffers writes, including metadata file
-     * @param transportIndex
-     */
-    void AggregateWriteData(const bool isFinal, const int transportIndex = -1);
+    /* Shmem aggregator functions */
+    void WriteMyOwnData(format::BufferV::BufferV_iovec DataVec);
 
     template <class T>
     T *BufferDataCommon(const size_t payloadOffset,
@@ -160,7 +153,7 @@ private:
     void PerformPutCommon(Variable<T> &variable);
 
     /** manages all communication tasks in aggregation */
-    aggregator::MPIChain m_Aggregator;
+    aggregator::MPIShmChain m_Aggregator;
 
 private:
     // updated during WriteMetaData

@@ -127,6 +127,7 @@ void BP4Writer::Init()
         static_cast<unsigned int>(m_BP4Serializer.m_SizeMPI))
     {
         m_BP4Serializer.m_Aggregator.Init(
+            m_BP4Serializer.m_Parameters.NumAggregators,
             m_BP4Serializer.m_Parameters.NumAggregators, m_Comm);
     }
     InitTransports();

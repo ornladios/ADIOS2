@@ -28,9 +28,12 @@ MPIAggregator::~MPIAggregator()
     }
 }
 
-void MPIAggregator::Init(const size_t subStreams,
+void MPIAggregator::Init(const size_t numAggregators, const size_t subStreams,
                          helper::Comm const &parentComm)
+
 {
+    m_NumAggregators = numAggregators;
+    m_SubStreams = subStreams;
 }
 
 void MPIAggregator::SwapBuffers(const int step) noexcept {}

@@ -31,6 +31,11 @@ public:
     /** current substream index from 0 to m_SubStreams-1 */
     size_t m_SubStreamIndex = 0;
 
+    /** total number of aggregators
+     * (BP3/BP4 uses aggregators = substreams)
+     */
+    size_t m_NumAggregators = 0;
+
     /** split Communicator for a substream: producers and consumer (rank=0) */
     helper::Comm m_Comm;
 
@@ -57,7 +62,8 @@ public:
 
     virtual ~MPIAggregator();
 
-    virtual void Init(const size_t subStreams, helper::Comm const &parentComm);
+    virtual void Init(const size_t numAggregators, const size_t subStreams,
+                      helper::Comm const &parentComm);
 
     struct ExchangeRequests
     {
