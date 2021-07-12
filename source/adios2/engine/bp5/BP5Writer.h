@@ -127,7 +127,8 @@ private:
 
     /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);
-    void WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec);
+    void WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec,
+                                  bool SerializedWriters);
     void WriteData_TwoLevelShm(format::BufferV::BufferV_iovec DataVec);
 
     void PopulateMetadataIndexFileContent(

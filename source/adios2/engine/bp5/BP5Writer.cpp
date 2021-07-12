@@ -134,16 +134,18 @@ uint64_t BP5Writer::WriteMetadata(
 void BP5Writer::WriteData(format::BufferV *Data)
 {
     format::BufferV::BufferV_iovec DataVec = Data->DataVec();
-    if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites)
+    switch (m_Parameters.AggregationType)
     {
-        WriteData_EveryoneWrites(DataVec);
-    }
-    else if (m_Parameters.AggregationType == (int)AggregationType::TwoLevelShm)
-    {
+    case (int)AggregationType::EveryoneWrites:
+        WriteData_EveryoneWrites(DataVec, false);
+        break;
+    case (int)AggregationType::EveryoneWritesSerial:
+        WriteData_EveryoneWrites(DataVec, true);
+        break;
+    case (int)AggregationType::TwoLevelShm:
         WriteData_TwoLevelShm(DataVec);
-    }
-    else
-    {
+        break;
+    default:
         throw std::invalid_argument(
             "Aggregation method " +
             std::to_string(m_Parameters.AggregationType) +
@@ -151,7 +153,8 @@ void BP5Writer::WriteData(format::BufferV *Data)
     }
 }
 
-void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec)
+void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec,
+                                         bool SerializedWriters)
 {
     constexpr uint64_t PAGE_SIZE = 65536; // 64KB
 
@@ -165,8 +168,10 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec)
     }
     m_StartDataPos = m_DataPos;
 
-    if (m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
+    if (!SerializedWriters &&
+        m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
     {
+        /* Send the token before writing so everyone can start writing asap */
         int i = 0;
         uint64_t nextWriterPos = m_DataPos;
         while (DataVec[i].iov_base != NULL)
@@ -196,6 +201,18 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec)
         }
         m_DataPos += DataVec[i].iov_len;
         i++;
+    }
+
+    if (SerializedWriters &&
+        m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
+    {
+        /* send token now, effectively serializing the writers in the chain */
+        uint64_t nextWriterPos = m_DataPos;
+        // align to PAGE_SIZE
+        nextWriterPos += PAGE_SIZE - (nextWriterPos % PAGE_SIZE);
+        m_Aggregator.m_Comm.Isend(&nextWriterPos, 1,
+                                  m_Aggregator.m_Comm.Rank() + 1, 0,
+                                  "Chain token in BP5Writer::WriteData");
     }
 
     if (m_Aggregator.m_Comm.Size() > 1)
@@ -408,7 +425,9 @@ void BP5Writer::InitParameters()
     {
         m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
     }
-    if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites)
+    if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites ||
+        m_Parameters.AggregationType ==
+            (int)AggregationType::EveryoneWritesSerial)
     {
         m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
     }

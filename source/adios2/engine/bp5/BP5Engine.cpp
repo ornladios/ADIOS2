@@ -276,6 +276,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             {
                 parameter = (int)AggregationType::EveryoneWrites;
             }
+            else if (value == "everyonewritesserial")
+            {
+                parameter = (int)AggregationType::EveryoneWritesSerial;
+            }
             else if (value == "twolevelshm")
             {
                 parameter = (int)AggregationType::TwoLevelShm;

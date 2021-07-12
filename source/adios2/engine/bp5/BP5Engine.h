@@ -96,7 +96,9 @@ public:
     enum class AggregationType
     {
         EveryoneWrites,
-        TwoLevelShm
+        EveryoneWritesSerial,
+        TwoLevelShm,
+        Auto
     };
 
 #define BP5_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
