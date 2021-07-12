@@ -300,6 +300,11 @@ static void ParseArgs(int argc, char **argv)
         {
             EarlyExit++;
         }
+        else if (std::string(argv[1]) == "--disable_mpmd")
+        {
+            // someone else should have eaten this arg, but if it gets here,
+            // ignore it
+        }
         else
         {
             if (bare_arg == 0)
