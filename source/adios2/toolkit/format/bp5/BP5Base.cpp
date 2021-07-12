@@ -53,6 +53,5 @@ int BP5Base::FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit)
     return ((MBase->BitField[Element] & ((size_t)1 << ElementBit)) ==
             ((size_t)1 << ElementBit));
 }
-
 }
 }

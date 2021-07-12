@@ -888,7 +888,7 @@ char **adios2_available_variables(adios2_io *io, size_t *size)
         size_t cnt = 0;
         for (auto var : varInfo)
         {
-            int len = var.first.length();
+            size_t len = var.first.length();
             names[cnt] = (char *)malloc((len + 1) * sizeof(char));
             strcpy(names[cnt], var.first.c_str());
             cnt++;
@@ -912,10 +912,10 @@ char **adios2_available_attributes(adios2_io *io, size_t *size)
         *size = varInfo.size();
         char **names = (char **)malloc(*size * sizeof(char *));
 
-        int cnt = 0;
+        size_t cnt = 0;
         for (auto var : varInfo)
         {
-            int len = var.first.length();
+            size_t len = var.first.length();
             names[cnt] = (char *)malloc((len + 1) * sizeof(char));
             strcpy(names[cnt], var.first.c_str());
             cnt++;

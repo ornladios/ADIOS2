@@ -866,6 +866,5 @@ std::vector<BufferV::iovec> BP5Serializer::BreakoutContiguousMetadata(
     }
     return MetadataBlocks;
 }
-
 }
 }

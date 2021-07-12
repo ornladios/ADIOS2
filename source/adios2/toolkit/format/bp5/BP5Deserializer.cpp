@@ -1039,7 +1039,5 @@ BP5Deserializer::~BP5Deserializer()
         const;
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
-
 }
-
 }

@@ -68,7 +68,7 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
 
         adios2_define_attribute(ioH, "strvalue", adios2_type_string,
                                 "Testing zero size blocks with null pointer");
-        int32_t attr = 137.036;
+        int32_t attr = 137;
         adios2_define_attribute(ioH, "intvalue", adios2_type_int32_t, &attr);
 
         // Define variables in ioH
