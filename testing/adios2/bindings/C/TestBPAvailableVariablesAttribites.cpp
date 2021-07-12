@@ -16,10 +16,10 @@
 
 #include <gtest/gtest.h>
 
+#include "SmallTestData_c.h"
+#include <algorithm>
 #include <numeric> //std::iota
 #include <thread>
-#include <algorithm>
-#include "SmallTestData_c.h"
 
 class BPAvailableVariablesAttributes : public ::testing::Test
 {
@@ -68,6 +68,8 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
 
         adios2_define_attribute(ioH, "strvalue", adios2_type_string,
                                 "Testing zero size blocks with null pointer");
+        int32_t attr = 137.036;
+        adios2_define_attribute(ioH, "intvalue", adios2_type_int32_t, &attr);
 
         // Define variables in ioH
 
@@ -221,7 +223,7 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
             std::vector<std::string> correct_vars = {
                 "varI16", "varI32", "varI64", "varI8",  "varR32",
                 "varR64", "varU16", "varU32", "varU64", "varU8"};
-            std::vector<std::string> correct_attrs = {"strvalue"};
+            std::vector<std::string> correct_attrs = {"strvalue", "intvalue"};
 
             std::vector<std::string> vars;
             size_t var_size;
@@ -250,73 +252,6 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
             std::sort(correct_attrs.begin(), correct_attrs.end());
             EXPECT_EQ(correct_attrs, attrs);
 
-            adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
-            adios2_set_selection(varI8, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varI8, inI8.data(), adios2_mode_deferred);
-
-            adios2_variable *varI16 = adios2_inquire_variable(ioH, "varI16");
-            adios2_set_selection(varI16, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varI16, inI16.data(), adios2_mode_deferred);
-
-            adios2_variable *varI32 = adios2_inquire_variable(ioH, "varI32");
-            adios2_set_selection(varI32, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varI32, inI32.data(), adios2_mode_deferred);
-
-            adios2_variable *varI64 = adios2_inquire_variable(ioH, "varI64");
-            adios2_set_selection(varI64, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varI64, inI64.data(), adios2_mode_deferred);
-
-            adios2_variable *varU8 = adios2_inquire_variable(ioH, "varU8");
-            adios2_set_selection(varU8, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varU8, inU8.data(), adios2_mode_deferred);
-
-            adios2_variable *varU16 = adios2_inquire_variable(ioH, "varU16");
-            adios2_set_selection(varU16, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varU16, inU16.data(), adios2_mode_deferred);
-
-            adios2_variable *varU32 = adios2_inquire_variable(ioH, "varU32");
-            adios2_set_selection(varU32, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varU32, inU32.data(), adios2_mode_deferred);
-
-            adios2_variable *varU64 = adios2_inquire_variable(ioH, "varU64");
-            adios2_set_selection(varU64, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varU64, inU64.data(), adios2_mode_deferred);
-
-            adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
-            adios2_set_selection(varR32, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varR32, inR32.data(), adios2_mode_deferred);
-
-            adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
-            adios2_set_selection(varR64, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varR64, inR64.data(), adios2_mode_deferred);
-
-            adios2_perform_gets(engineH);
-
-            for (size_t i = 0; i < data_Nx / 2; ++i)
-            {
-                EXPECT_EQ(inI8[i], data_I8[data_Nx / 2 + i]);
-                EXPECT_EQ(inI16[i], data_I16[data_Nx / 2 + i]);
-                EXPECT_EQ(inI32[i], data_I32[data_Nx / 2 + i]);
-                EXPECT_EQ(inI64[i], data_I64[data_Nx / 2 + i]);
-
-                EXPECT_EQ(inU8[i], data_U8[data_Nx / 2 + i]);
-                EXPECT_EQ(inU16[i], data_U16[data_Nx / 2 + i]);
-                EXPECT_EQ(inU32[i], data_U32[data_Nx / 2 + i]);
-                EXPECT_EQ(inU64[i], data_U64[data_Nx / 2 + i]);
-
-                EXPECT_EQ(inR32[i], data_R32[data_Nx / 2 + i]);
-                EXPECT_EQ(inR64[i], data_R64[data_Nx / 2 + i]);
-            }
             adios2_end_step(engineH);
         }
 
