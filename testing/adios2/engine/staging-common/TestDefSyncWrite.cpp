@@ -37,19 +37,19 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
     adios2::Dims small_start{static_cast<unsigned int>(0)};
     adios2::Dims small_count{static_cast<unsigned int>(SmallSize)};
 
-    std::vector<adios2::Variable<double>> vars;
-    vars.push_back(
-        io.DefineVariable<double>("big1", big_shape, big_start, big_count));
-    vars.push_back(io.DefineVariable<double>("small1", small_shape, small_start,
-                                             small_count));
-    vars.push_back(
-        io.DefineVariable<double>("big2", big_shape, big_start, big_count));
-    vars.push_back(io.DefineVariable<double>("small2", small_shape, small_start,
-                                             small_count));
-    vars.push_back(
-        io.DefineVariable<double>("big3", big_shape, big_start, big_count));
+    std::vector<adios2::Variable<double>> vars(5);
+    vars[0] =
+        io.DefineVariable<double>("big1", big_shape, big_start, big_count);
+    vars[1] = io.DefineVariable<double>("small1", small_shape, small_start,
+                                        small_count);
+    vars[2] =
+        io.DefineVariable<double>("big2", big_shape, big_start, big_count);
+    vars[3] = io.DefineVariable<double>("small2", small_shape, small_start,
+                                        small_count);
+    vars[4] =
+        io.DefineVariable<double>("big3", big_shape, big_start, big_count);
 
-    std::vector<std::vector<double>> data;
+    std::vector<std::vector<double>> data(5);
     for (int i = 0; i < 5; i++)
     {
         int size = DataSize;
@@ -57,7 +57,7 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
         {
             size = SmallSize;
         }
-        data.push_back(std::vector<double>(size));
+        data[i] = std::vector<double>(size);
     }
 
     // Create the Engine
@@ -133,7 +133,7 @@ TEST(CommonWriteTest, ADIOS2CommonRead)
 
     adios2::IO io = adios.DeclareIO("TestIO");
 
-    std::vector<std::vector<double>> data;
+    std::vector<std::vector<double>> data(5);
     for (int i = 0; i < 5; i++)
     {
         int size = DataSize;
@@ -141,7 +141,7 @@ TEST(CommonWriteTest, ADIOS2CommonRead)
         {
             size = SmallSize;
         }
-        data.push_back(std::vector<double>(size));
+        data[i] = (std::vector<double>(size));
     }
 
     // Create the Engine
@@ -163,15 +163,15 @@ TEST(CommonWriteTest, ADIOS2CommonRead)
     {
         EXPECT_TRUE(engine.BeginStep() == adios2::StepStatus::OK);
 
-        std::vector<adios2::Variable<double>> vars;
-        vars.push_back(io.InquireVariable<double>("big1"));
-        vars.push_back(io.InquireVariable<double>("small1"));
-        vars.push_back(io.InquireVariable<double>("big2"));
-        vars.push_back(io.InquireVariable<double>("small2"));
-        vars.push_back(io.InquireVariable<double>("big3"));
+        std::vector<adios2::Variable<double>> vars(5);
+        vars[0] = io.InquireVariable<double>("big1");
+        vars[1] = io.InquireVariable<double>("small1");
+        vars[2] = io.InquireVariable<double>("big2");
+        vars[3] = io.InquireVariable<double>("small2");
+        vars[4] = io.InquireVariable<double>("big3");
 
         std::vector<bool> var_present(vars.size());
-        for (int i = 0; i <= 5; i++)
+        for (int i = 0; i < data.size(); i++)
             std::fill(data[i].begin(), data[i].end(), -200.0);
         std::cout << "Variables Read in TS " << step << ": ";
         for (int j = 0; j < 5; j++)
@@ -180,7 +180,6 @@ TEST(CommonWriteTest, ADIOS2CommonRead)
             if (vars[j])
             {
                 std::cout << " " << j;
-                var_present.push_back(true);
                 engine.Get(vars[j], data[j].data());
             }
         }
