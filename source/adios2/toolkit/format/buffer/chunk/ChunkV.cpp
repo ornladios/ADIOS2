@@ -43,6 +43,7 @@ void ChunkV::CopyExternalToInternal()
             // is internal
             bool AppendPossible = DataV.size() && !DataV.back().External;
 
+	    std::cout << "Cpying external to internal" << std::endl;
             if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
             {
                 // No room in current chunk, close it out

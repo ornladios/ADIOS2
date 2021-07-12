@@ -287,6 +287,15 @@ static void ParseArgs(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--data_size")
+        {
+            std::istringstream ss(argv[2]);
+            if (!(ss >> DataSize))
+                std::cerr << "Invalid number for --data_size argument"
+                          << argv[1] << '\n';
+            argv++;
+            argc--;
+        }
         else if (std::string(argv[1]) == "--early_exit")
         {
             EarlyExit++;
