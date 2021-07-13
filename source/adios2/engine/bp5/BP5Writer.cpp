@@ -321,6 +321,22 @@ void BP5Writer::EndStep()
         auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
             RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks,
             DataSizes, m_WriterDataPos);
+        if (m_MetaDataPos == 0)
+        {
+            //  First time, write the headers
+            format::BufferSTL b;
+            MakeHeader(b, "Metadata", false);
+            m_FileMetadataManager.WriteFiles(b.m_Buffer.data(), b.m_Position);
+            m_MetaDataPos = b.m_Position;
+            format::BufferSTL bi;
+            MakeHeader(bi, "Index Table", true);
+            m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
+                                                  bi.m_Position);
+            // where each rank's data will end up
+            m_FileMetadataIndexManager.WriteFiles((char *)m_Assignment.data(),
+                                                  sizeof(m_Assignment[0]) *
+                                                      m_Assignment.size());
+        }
         WriteMetaMetadata(UniqueMetaMetaBlocks);
         uint64_t ThisMetaDataPos = m_MetaDataPos;
         uint64_t ThisMetaDataSize = WriteMetadata(Metadata, AttributeBlocks);
@@ -639,29 +655,12 @@ void BP5Writer::InitBPBuffer()
      */
 
     const uint64_t a = static_cast<uint64_t>(m_Aggregator.m_SubStreamIndex);
-    std::vector<uint64_t> Assignment = m_Comm.GatherValues(a, 0);
 
-    if (m_Comm.Rank() == 0)
-    {
-        format::BufferSTL b;
-        MakeHeader(b, "Metadata", false);
-        m_FileMetadataManager.WriteFiles(b.m_Buffer.data(), b.m_Position);
-        m_MetaDataPos = b.m_Position;
-        format::BufferSTL bi;
-        MakeHeader(bi, "Index Table", true);
-        m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
-                                              bi.m_Position);
-        // where each rank's data will end up
-        m_FileMetadataIndexManager.WriteFiles((char *)Assignment.data(),
-                                              sizeof(Assignment[0]) *
-                                                  Assignment.size());
-    }
+    m_Assignment = m_Comm.GatherValues(a, 0);
+
     if (m_Aggregator.m_IsAggregator)
     {
-        format::BufferSTL d;
-        MakeHeader(d, "Data", false);
-        m_FileDataManager.WriteFiles(d.m_Buffer.data(), d.m_Position);
-        m_DataPos = d.m_Position;
+        m_DataPos = 0;
     }
 
     if (m_Comm.Rank() == 0)
@@ -675,20 +674,28 @@ void BP5Writer::DoFlush(const bool isFinal, const int transportIndex)
     m_FileMetadataManager.FlushFiles();
     m_FileMetaMetadataManager.FlushFiles();
     m_FileDataManager.FlushFiles();
-    //    m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Data, false, false);
 
-    //    if (m_Parameters.CollectiveMetadata)
-    //    {
-    //        WriteCollectiveMetadataFile();
-    //    }
-    //    if (m_BP4Serializer.m_Aggregator.m_IsActive)
-    //    {
-    //        AggregateWriteData(isFinal, transportIndex);
-    //    }
-    //    else
-    //    {
-    //        WriteData(isFinal, transportIndex);
-    //    }
+    // true: advances step
+    //    BufferV *DataBuf;
+    if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
+    {
+        //        DataBuf = m_BP5Serializer.ReinitStepData(new
+        //        MallocV("BP5Writer", false,
+        //							 m_Parameters.InitialBufferSize,
+        //							 m_Parameters.GrowthFactor));
+    }
+    else
+    {
+        //        DataBuf = m_BP5Serializer.ReinitStepData(new
+        //        ChunkV("BP5Writer",
+        //							false /* always
+        // copy
+        //*/,
+        // m_Parameters.BufferChunkSize));
+    }
+
+    //    WriteData(DataBuf);
+    //    delete DataBuf;
 }
 
 void BP5Writer::DoClose(const int transportIndex)
