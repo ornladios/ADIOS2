@@ -104,7 +104,7 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;1x1GetSync;NoReaderNoWait;TimeoutOnOpen;1x1.NoData;1x1.Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;1x1EarlyExit;CumulativeAttr.1x1")
+set (SIMPLE_TESTS "1x1;1x1DefSync")
 
 set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
@@ -147,6 +147,7 @@ endif()
 SET (BASIC_SST_TESTS "")
 if(ADIOS2_HAVE_SST)
   list (APPEND BASIC_SST_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS} ${SST_SPECIFIC_TESTS})
+  list (REMOVE_ITEM BASIC_SST_TESTS 1x1DefSync)
 endif()
 
 
@@ -280,6 +281,7 @@ if(NOT MSVC)    # not on windows
 #list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*LocalVarying.BPS$")
     # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*NoData.BPS$")
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*1x1DefSync.*")
     
     foreach(test ${BP4_STREAM_TESTS})
         add_common_test(${test} BP4_stream)
@@ -312,6 +314,7 @@ if(NOT MSVC)    # not on windows
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*NoReaderNoWait.FS$")
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*TimeoutOnOpen.FS$")
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*NoReaderNoWait.FS$")
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*1x1DefSync.*")
 
     foreach(test ${FILESTREAM_TESTS})
         add_common_test(${test} FileStream)

@@ -105,7 +105,10 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
     {
         // we can possibly append this entry to the last if the last was
         // internal
-        bool AppendPossible = DataV.size() && !DataV.back().External;
+        bool AppendPossible =
+            DataV.size() && !DataV.back().External &&
+            (m_TailChunk + m_TailChunkPos - DataV.back().Size ==
+             DataV.back().Base);
 
         if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
         {
