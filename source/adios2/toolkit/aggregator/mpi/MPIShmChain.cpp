@@ -85,7 +85,7 @@ void MPIShmChain::Init(const size_t numAggregators, const size_t subStreams,
     size_t aggregatorPerNode = numAggregators / m_NumNodes;
     if (aggregatorPerNode == 0)
     {
-        aggregatorPerNode = 1;
+        aggregatorPerNode = 1; /* default */
     }
     if (aggregatorPerNode > NodeSize)
     {
@@ -130,7 +130,7 @@ void MPIShmChain::Init(const size_t numAggregators, const size_t subStreams,
     m_SubStreams = subStreams;
     if (m_SubStreams == 0)
     {
-        m_SubStreams = 1;
+        m_SubStreams = m_NumAggregators; /* default */
     }
     if (m_SubStreams > m_NumAggregators)
     {

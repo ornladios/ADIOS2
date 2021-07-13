@@ -297,5 +297,15 @@ size_t PaddingToAlignPointer(const void *ptr)
     return padSize;
 }
 
+uint64_t PaddingToAlignOffset(uint64_t offset, uint64_t alignment_size)
+{
+    uint64_t padSize = alignment_size - (offset % alignment_size);
+    if (padSize == alignment_size)
+    {
+        padSize = 0;
+    }
+    return padSize;
+}
+
 } // end namespace helper
 } // end namespace adios2

@@ -13,6 +13,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/engine/bp5/BP5Engine.h"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosMemory.h" // PaddingToAlignOffset
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/aggregator/mpi/MPIShmChain.h"
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
@@ -130,9 +131,9 @@ private:
 
     /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);
-    void WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec,
+    void WriteData_EveryoneWrites(format::BufferV *Data,
                                   bool SerializedWriters);
-    void WriteData_TwoLevelShm(format::BufferV::BufferV_iovec DataVec);
+    void WriteData_TwoLevelShm(format::BufferV *Data);
 
     void PopulateMetadataIndexFileContent(
         format::BufferSTL &buffer, const uint64_t currentStep,

@@ -53,9 +53,6 @@ public:
      */
     bool m_IsMasterAggregator = true;
 
-private:
-    void HandshakeLinks();
-
     /*
         Variables set in PreInit
     */
@@ -87,6 +84,9 @@ private:
        Useful only on aggregators themselves
        */
     helper::Comm m_AggregatorChainComm;
+
+private:
+    void HandshakeLinks();
 };
 
 } // end namespace aggregator

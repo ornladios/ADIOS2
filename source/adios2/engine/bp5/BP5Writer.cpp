@@ -137,13 +137,13 @@ void BP5Writer::WriteData(format::BufferV *Data)
     switch (m_Parameters.AggregationType)
     {
     case (int)AggregationType::EveryoneWrites:
-        WriteData_EveryoneWrites(DataVec, false);
+        WriteData_EveryoneWrites(Data, false);
         break;
     case (int)AggregationType::EveryoneWritesSerial:
-        WriteData_EveryoneWrites(DataVec, true);
+        WriteData_EveryoneWrites(Data, true);
         break;
     case (int)AggregationType::TwoLevelShm:
-        WriteData_TwoLevelShm(DataVec);
+        WriteData_TwoLevelShm(Data);
         break;
     default:
         throw std::invalid_argument(
@@ -153,11 +153,13 @@ void BP5Writer::WriteData(format::BufferV *Data)
     }
 }
 
-void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec,
+void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
                                          bool SerializedWriters)
 {
     const aggregator::MPIChain *a =
         dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
+
+    format::BufferV::BufferV_iovec DataVec = Data->DataVec();
 
     // new step writing starts at offset m_DataPos on aggregator
     // others will wait for the position to arrive from the rank below
@@ -169,8 +171,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec,
     }
 
     // align to PAGE_SIZE
-    m_DataPos += m_Parameters.FileSystemPageSize -
-                 (m_DataPos % m_Parameters.FileSystemPageSize);
+    m_DataPos += helper::PaddingToAlignOffset(m_DataPos,
+                                              m_Parameters.FileSystemPageSize);
     m_StartDataPos = m_DataPos;
 
     if (!SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
@@ -401,6 +403,16 @@ void BP5Writer::InitParameters()
     if (m_Parameters.NumSubFiles > m_Parameters.NumAggregators)
     {
         m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
+    }
+
+    if (m_Parameters.FileSystemPageSize == 0)
+    {
+        m_Parameters.FileSystemPageSize = 65536;
+    }
+    if (m_Parameters.FileSystemPageSize > 67108864)
+    {
+        // Limiting to max 64MB page size
+        m_Parameters.FileSystemPageSize = 67108864;
     }
 }
 
@@ -748,13 +760,13 @@ void BP5Writer::InitBPBuffer()
                                               sizeof(Assignment[0]) *
                                                   Assignment.size());
     }
-    if (m_IAmWritingDataHeader)
+    /*if (m_IAmWritingDataHeader)
     {
         format::BufferSTL d;
         MakeHeader(d, "Data", false);
         m_FileDataManager.WriteFiles(d.m_Buffer.data(), d.m_Position);
         m_DataPos = d.m_Position;
-    }
+    }*/
 
     if (m_Comm.Rank() == 0)
     {

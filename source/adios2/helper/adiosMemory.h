@@ -243,6 +243,10 @@ size_t PayloadSize(const T *data, const Dims &count) noexcept;
  */
 size_t PaddingToAlignPointer(const void *ptr);
 
+/** Calculate padding to an arbitrary offset to be aligned to
+ * the size alignment_size */
+uint64_t PaddingToAlignOffset(uint64_t offset, uint64_t alignment_size);
+
 } // end namespace helper
 } // end namespace adios2
 
