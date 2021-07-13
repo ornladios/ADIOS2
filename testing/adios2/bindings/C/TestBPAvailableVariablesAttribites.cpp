@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TestBPWriteTypes.c
+ * TestBPAvailableVariablesAttributes.cpp
  *
- *  Created on: Aug 9, 2017
- *      Author: Haocheng
+ *  Created on: 7/9/21.
+ *      Author: Dmitry Ganyushin ganyushindi@ornl.gov
  */
 
 #include <adios2_c.h>
@@ -17,14 +17,17 @@
 #include <gtest/gtest.h>
 
 #include "SmallTestData_c.h"
+#include <algorithm>
+#include <numeric> //std::iota
+#include <thread>
 
-class BPWriteReadMultiblockCC : public ::testing::Test
+class BPAvailableVariablesAttributes : public ::testing::Test
 {
 public:
-    BPWriteReadMultiblockCC() = default;
+    BPAvailableVariablesAttributes() = default;
 };
 
-TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
+TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
 {
     int rank = 0;
     int size = 1;
@@ -65,6 +68,8 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
 
         adios2_define_attribute(ioH, "strvalue", adios2_type_string,
                                 "Testing zero size blocks with null pointer");
+        int32_t attr = 137;
+        adios2_define_attribute(ioH, "intvalue", adios2_type_int32_t, &attr);
 
         // Define variables in ioH
 
@@ -102,7 +107,7 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
                                    start, count, adios2_constant_dims_false);
 
         adios2_engine *engineH =
-            adios2_open(ioH, "cmblocks.bp", adios2_mode_write);
+            adios2_open(ioH, "available.bp", adios2_mode_write);
 
         for (size_t i = 0; i < steps; ++i)
         {
@@ -201,7 +206,7 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
 
         adios2_io *ioH = adios2_declare_io(adiosH, "Reader");
         adios2_engine *engineH =
-            adios2_open(ioH, "cmblocks.bp", adios2_mode_read);
+            adios2_open(ioH, "available.bp", adios2_mode_read);
 
         size_t nsteps;
         adios2_steps(&nsteps, engineH);
@@ -214,73 +219,39 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
             {
                 break;
             }
-            adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
-            adios2_set_selection(varI8, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varI8, inI8.data(), adios2_mode_deferred);
 
-            adios2_variable *varI16 = adios2_inquire_variable(ioH, "varI16");
-            adios2_set_selection(varI16, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varI16, inI16.data(), adios2_mode_deferred);
+            std::vector<std::string> correct_vars = {
+                "varI16", "varI32", "varI64", "varI8",  "varR32",
+                "varR64", "varU16", "varU32", "varU64", "varU8"};
+            std::vector<std::string> correct_attrs = {"strvalue", "intvalue"};
 
-            adios2_variable *varI32 = adios2_inquire_variable(ioH, "varI32");
-            adios2_set_selection(varI32, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varI32, inI32.data(), adios2_mode_deferred);
-
-            adios2_variable *varI64 = adios2_inquire_variable(ioH, "varI64");
-            adios2_set_selection(varI64, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varI64, inI64.data(), adios2_mode_deferred);
-
-            adios2_variable *varU8 = adios2_inquire_variable(ioH, "varU8");
-            adios2_set_selection(varU8, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varU8, inU8.data(), adios2_mode_deferred);
-
-            adios2_variable *varU16 = adios2_inquire_variable(ioH, "varU16");
-            adios2_set_selection(varU16, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varU16, inU16.data(), adios2_mode_deferred);
-
-            adios2_variable *varU32 = adios2_inquire_variable(ioH, "varU32");
-            adios2_set_selection(varU32, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varU32, inU32.data(), adios2_mode_deferred);
-
-            adios2_variable *varU64 = adios2_inquire_variable(ioH, "varU64");
-            adios2_set_selection(varU64, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varU64, inU64.data(), adios2_mode_deferred);
-
-            adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
-            adios2_set_selection(varR32, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varR32, inR32.data(), adios2_mode_deferred);
-
-            adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
-            adios2_set_selection(varR64, 1, startValid.data(),
-                                 countValid.data());
-            adios2_get(engineH, varR64, inR64.data(), adios2_mode_deferred);
-
-            adios2_perform_gets(engineH);
-
-            for (size_t i = 0; i < data_Nx / 2; ++i)
+            std::vector<std::string> vars;
+            size_t var_size;
+            char **var_names = adios2_available_variables(ioH, &var_size);
+            for (size_t i = 0; i < var_size; i++)
             {
-                EXPECT_EQ(inI8[i], data_I8[data_Nx / 2 + i]);
-                EXPECT_EQ(inI16[i], data_I16[data_Nx / 2 + i]);
-                EXPECT_EQ(inI32[i], data_I32[data_Nx / 2 + i]);
-                EXPECT_EQ(inI64[i], data_I64[data_Nx / 2 + i]);
-
-                EXPECT_EQ(inU8[i], data_U8[data_Nx / 2 + i]);
-                EXPECT_EQ(inU16[i], data_U16[data_Nx / 2 + i]);
-                EXPECT_EQ(inU32[i], data_U32[data_Nx / 2 + i]);
-                EXPECT_EQ(inU64[i], data_U64[data_Nx / 2 + i]);
-
-                EXPECT_EQ(inR32[i], data_R32[data_Nx / 2 + i]);
-                EXPECT_EQ(inR64[i], data_R64[data_Nx / 2 + i]);
+                vars.push_back(var_names[i]);
+                free(var_names[i]);
             }
+            free(var_names);
+            std::sort(correct_vars.begin(), correct_vars.end());
+            std::sort(vars.begin(), vars.end());
+            EXPECT_EQ(correct_vars, vars);
+
+            size_t attr_size;
+            std::vector<std::string> attrs;
+            char **attr_names = adios2_available_attributes(ioH, &attr_size);
+            for (size_t i = 0; i < attr_size; i++)
+            {
+                attrs.push_back(attr_names[i]);
+                free(attr_names[i]);
+            }
+            // remove memory
+            free(attr_names);
+            std::sort(attrs.begin(), attrs.end());
+            std::sort(correct_attrs.begin(), correct_attrs.end());
+            EXPECT_EQ(correct_attrs, attrs);
+
             adios2_end_step(engineH);
         }
 

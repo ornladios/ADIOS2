@@ -54,7 +54,6 @@ struct Pad<T, typename std::enable_if<std::is_same<
             reinterpret_cast<typename T::value_type(&)[2]>(arg)[1]);
     }
 };
-
 }
 
 template <typename T>
