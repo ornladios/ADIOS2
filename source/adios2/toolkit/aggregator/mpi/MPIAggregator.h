@@ -65,39 +65,8 @@ public:
     virtual void Init(const size_t numAggregators, const size_t subStreams,
                       helper::Comm const &parentComm);
 
-    struct ExchangeRequests
-    {
-        helper::Comm::Req m_SendSize;
-        helper::Comm::Req m_SendData;
-        helper::Comm::Req m_RecvData;
-    };
-
-    virtual ExchangeRequests IExchange(format::Buffer &buffer,
-                                       const int step) = 0;
-
-    struct ExchangeAbsolutePositionRequests
-    {
-        helper::Comm::Req m_Send;
-        helper::Comm::Req m_Recv;
-    };
-
-    virtual ExchangeAbsolutePositionRequests
-    IExchangeAbsolutePosition(format::Buffer &buffer, const int step) = 0;
-
-    virtual void
-    WaitAbsolutePosition(ExchangeAbsolutePositionRequests &requests,
-                         const int step) = 0;
-
-    virtual void Wait(ExchangeRequests &requests, const int step) = 0;
-
-    virtual void SwapBuffers(const int step) noexcept;
-
-    virtual void ResetBuffers() noexcept;
-
-    virtual format::Buffer &GetConsumerBuffer(format::Buffer &buffer);
-
     /** closes current aggregator, frees m_Comm */
-    void Close();
+    virtual void Close();
 
 protected:
     /** Init m_Comm splitting assigning ranks to subStreams (balanced except for

@@ -49,20 +49,25 @@ void BP5Writer::WriteMyOwnData(format::BufferV::BufferV_iovec DataVec)
     }
 }
 
-constexpr uint64_t PAGE_SIZE = 65536; // 64KB
 void BP5Writer::WriteData_TwoLevelShm(format::BufferV::BufferV_iovec DataVec)
 {
+    const aggregator::MPIShmChain *a =
+        dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
+    ;
     // new step writing starts at offset m_DataPos on aggregator
     // others will wait for the position to arrive from the rank below
 
-    if (m_Aggregator.m_Comm.Rank() > 0)
+    if (a->m_Comm.Rank() > 0)
     {
-        m_Aggregator.m_Comm.Recv(&m_DataPos, 1, m_Aggregator.m_Comm.Rank() - 1,
-                                 0, "Chain token in BP5Writer::WriteData");
+        a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Rank() - 1, 0,
+                       "Chain token in BP5Writer::WriteData");
     }
+    // align to PAGE_SIZE
+    m_DataPos += m_Parameters.FileSystemPageSize -
+                 (m_DataPos % m_Parameters.FileSystemPageSize);
     m_StartDataPos = m_DataPos;
 
-    if (m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
+    if (a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
         int i = 0;
         uint64_t nextWriterPos = m_DataPos;
@@ -71,15 +76,12 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV::BufferV_iovec DataVec)
             nextWriterPos += DataVec[i].iov_len;
             i++;
         }
-        // align to PAGE_SIZE
-        nextWriterPos += PAGE_SIZE - (nextWriterPos % PAGE_SIZE);
-        m_Aggregator.m_Comm.Isend(&nextWriterPos, 1,
-                                  m_Aggregator.m_Comm.Rank() + 1, 0,
-                                  "Chain token in BP5Writer::WriteData");
+        a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
+                        "Chain token in BP5Writer::WriteData");
     }
 
     /* Aggregator starts with writing its own data */
-    if (m_Aggregator.m_Comm.Rank() == 0)
+    if (a->m_Comm.Rank() == 0)
     {
         WriteMyOwnData(DataVec);
     }
@@ -101,23 +103,19 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV::BufferV_iovec DataVec)
         i++;
     }
 
-    if (m_Aggregator.m_Comm.Size() > 1)
+    if (a->m_Comm.Size() > 1)
     {
         // at the end, last rank sends back the final data pos to first rank
         // so it can update its data pos
-        if (m_Aggregator.m_Comm.Rank() == m_Aggregator.m_Comm.Size() - 1)
+        if (a->m_Comm.Rank() == a->m_Comm.Size() - 1)
         {
-            // align to PAGE_SIZE
-            m_DataPos += PAGE_SIZE - (m_DataPos % PAGE_SIZE);
-            m_Aggregator.m_Comm.Isend(
-                &m_DataPos, 1, 0, 0,
-                "Final chain token in BP5Writer::WriteData");
+            a->m_Comm.Isend(&m_DataPos, 1, 0, 0,
+                            "Final chain token in BP5Writer::WriteData");
         }
-        if (m_Aggregator.m_Comm.Rank() == 0)
+        if (a->m_Comm.Rank() == 0)
         {
-            m_Aggregator.m_Comm.Recv(&m_DataPos, 1,
-                                     m_Aggregator.m_Comm.Size() - 1, 0,
-                                     "Chain token in BP5Writer::WriteData");
+            a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Size() - 1, 0,
+                           "Chain token in BP5Writer::WriteData");
         }
     }
     delete[] DataVec;

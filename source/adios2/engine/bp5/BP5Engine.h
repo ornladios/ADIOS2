@@ -112,6 +112,7 @@ public:
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
     MACRO(NumAggregators, UInt, unsigned int, 999999)                          \
     MACRO(NumSubFiles, UInt, unsigned int, 999999)                             \
+    MACRO(FileSystemPageSize, UInt, unsigned int, 65536)                       \
     MACRO(AggregationType, AggregationType, int,                               \
           (int)AggregationType::EveryoneWrites)                                \
     MACRO(AsyncTasks, Bool, bool, true)                                        \

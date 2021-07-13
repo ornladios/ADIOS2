@@ -42,6 +42,8 @@ void MPIChain::Init(const size_t numAggregators, const size_t subStreams,
     }
 }
 
+void MPIChain::Close() { MPIAggregator::Close(); }
+
 MPIChain::ExchangeRequests MPIChain::IExchange(format::Buffer &buffer,
                                                const int step)
 {

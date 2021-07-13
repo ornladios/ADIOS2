@@ -19,14 +19,7 @@ namespace aggregator
 
 MPIAggregator::MPIAggregator() {}
 
-MPIAggregator::~MPIAggregator()
-{
-    if (m_IsActive)
-    {
-        m_Comm.Free("freeing aggregators comm in MPIAggregator "
-                    "destructor, not recommended");
-    }
-}
+MPIAggregator::~MPIAggregator() { Close(); }
 
 void MPIAggregator::Init(const size_t numAggregators, const size_t subStreams,
                          helper::Comm const &parentComm)
@@ -34,15 +27,6 @@ void MPIAggregator::Init(const size_t numAggregators, const size_t subStreams,
 {
     m_NumAggregators = numAggregators;
     m_SubStreams = subStreams;
-}
-
-void MPIAggregator::SwapBuffers(const int step) noexcept {}
-
-void MPIAggregator::ResetBuffers() noexcept {}
-
-format::Buffer &MPIAggregator::GetConsumerBuffer(format::Buffer &buffer)
-{
-    return buffer;
 }
 
 void MPIAggregator::Close()

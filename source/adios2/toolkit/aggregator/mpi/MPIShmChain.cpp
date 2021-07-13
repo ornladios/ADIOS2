@@ -18,6 +18,20 @@ MPIShmChain::MPIShmChain() : MPIAggregator() {}
 
 MPIShmChain::~MPIShmChain()
 {
+    Close();
+    /*if (m_IsActive)
+    {
+        m_NodeComm.Free("free per-node comm in ~MPIShmChain()");
+        m_OnePerNodeComm.Free("free chain of nodes in ~MPIShmChain()");
+        m_AllAggregatorsComm.Free(
+            "free comm of all aggregators in ~MPIShmChain()");
+        m_AggregatorChainComm.Free(
+            "free chains of aggregators in ~MPIShmChain()");
+    }*/
+}
+
+void MPIShmChain::Close()
+{
     if (m_IsActive)
     {
         m_NodeComm.Free("free per-node comm in ~MPIShmChain()");
@@ -27,6 +41,7 @@ MPIShmChain::~MPIShmChain()
         m_AggregatorChainComm.Free(
             "free chains of aggregators in ~MPIShmChain()");
     }
+    MPIAggregator::Close();
 }
 
 size_t MPIShmChain::PreInit(helper::Comm const &parentComm)
@@ -176,32 +191,6 @@ void MPIShmChain::HandshakeLinks()
         sendRequest.Wait("Isend wait handshake with neighbor, MPIChain "
                          "aggregator, at Open");
     }
-}
-
-/***********************
- *    Remove these
- ***********************/
-
-MPIShmChain::ExchangeRequests MPIShmChain::IExchange(format::Buffer &buffer,
-                                                     const int step)
-{
-    ExchangeRequests requests;
-    return requests;
-}
-
-MPIShmChain::ExchangeAbsolutePositionRequests
-MPIShmChain::IExchangeAbsolutePosition(format::Buffer &buffer, const int step)
-{
-    ExchangeAbsolutePositionRequests requests;
-    return requests;
-}
-
-void MPIShmChain::Wait(ExchangeRequests &requests, const int step) { return; }
-
-void MPIShmChain::WaitAbsolutePosition(
-    ExchangeAbsolutePositionRequests &requests, const int step)
-{
-    return;
 }
 
 } // end namespace aggregator

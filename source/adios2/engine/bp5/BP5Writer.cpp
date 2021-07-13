@@ -156,20 +156,24 @@ void BP5Writer::WriteData(format::BufferV *Data)
 void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec,
                                          bool SerializedWriters)
 {
-    constexpr uint64_t PAGE_SIZE = 65536; // 64KB
+    const aggregator::MPIChain *a =
+        dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
 
     // new step writing starts at offset m_DataPos on aggregator
     // others will wait for the position to arrive from the rank below
 
-    if (m_Aggregator.m_Comm.Rank() > 0)
+    if (a->m_Comm.Rank() > 0)
     {
-        m_Aggregator.m_Comm.Recv(&m_DataPos, 1, m_Aggregator.m_Comm.Rank() - 1,
-                                 0, "Chain token in BP5Writer::WriteData");
+        a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Rank() - 1, 0,
+                       "Chain token in BP5Writer::WriteData");
     }
+
+    // align to PAGE_SIZE
+    m_DataPos += m_Parameters.FileSystemPageSize -
+                 (m_DataPos % m_Parameters.FileSystemPageSize);
     m_StartDataPos = m_DataPos;
 
-    if (!SerializedWriters &&
-        m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
+    if (!SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
         /* Send the token before writing so everyone can start writing asap */
         int i = 0;
@@ -179,11 +183,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec,
             nextWriterPos += DataVec[i].iov_len;
             i++;
         }
-        // align to PAGE_SIZE
-        nextWriterPos += PAGE_SIZE - (nextWriterPos % PAGE_SIZE);
-        m_Aggregator.m_Comm.Isend(&nextWriterPos, 1,
-                                  m_Aggregator.m_Comm.Rank() + 1, 0,
-                                  "Chain token in BP5Writer::WriteData");
+        a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
+                        "Chain token in BP5Writer::WriteData");
     }
 
     int i = 0;
@@ -191,6 +192,7 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec,
     {
         if (i == 0)
         {
+
             m_FileDataManager.WriteFileAt((char *)DataVec[i].iov_base,
                                           DataVec[i].iov_len, m_StartDataPos);
         }
@@ -203,37 +205,30 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV::BufferV_iovec DataVec,
         i++;
     }
 
-    if (SerializedWriters &&
-        m_Aggregator.m_Comm.Rank() < m_Aggregator.m_Comm.Size() - 1)
+    if (SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
         /* send token now, effectively serializing the writers in the chain */
         uint64_t nextWriterPos = m_DataPos;
-        // align to PAGE_SIZE
-        nextWriterPos += PAGE_SIZE - (nextWriterPos % PAGE_SIZE);
-        m_Aggregator.m_Comm.Isend(&nextWriterPos, 1,
-                                  m_Aggregator.m_Comm.Rank() + 1, 0,
-                                  "Chain token in BP5Writer::WriteData");
+        a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
+                        "Chain token in BP5Writer::WriteData");
     }
 
-    if (m_Aggregator.m_Comm.Size() > 1)
+    if (a->m_Comm.Size() > 1)
     {
         // at the end, last rank sends back the final data pos to first rank
         // so it can update its data pos
-        if (m_Aggregator.m_Comm.Rank() == m_Aggregator.m_Comm.Size() - 1)
+        if (a->m_Comm.Rank() == a->m_Comm.Size() - 1)
         {
-            // align to PAGE_SIZE
-            m_DataPos += PAGE_SIZE - (m_DataPos % PAGE_SIZE);
-            m_Aggregator.m_Comm.Isend(
-                &m_DataPos, 1, 0, 0,
-                "Final chain token in BP5Writer::WriteData");
+            a->m_Comm.Isend(&m_DataPos, 1, 0, 0,
+                            "Final chain token in BP5Writer::WriteData");
         }
-        if (m_Aggregator.m_Comm.Rank() == 0)
+        if (a->m_Comm.Rank() == 0)
         {
-            m_Aggregator.m_Comm.Recv(&m_DataPos, 1,
-                                     m_Aggregator.m_Comm.Size() - 1, 0,
-                                     "Chain token in BP5Writer::WriteData");
+            a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Size() - 1, 0,
+                           "Chain token in BP5Writer::WriteData");
         }
     }
+
     delete[] DataVec;
 }
 
@@ -374,24 +369,7 @@ void BP5Writer::Init()
     m_BP5Serializer.m_Engine = this;
     m_RankMPI = m_Comm.Rank();
     InitParameters();
-
-    // in BP5, aggregation is "always on", but processes may be alone, so
-    // m_Aggregator.m_IsActive is always true
-    // m_Aggregator.m_Comm.Rank() will always succeed (not abort)
-    // m_Aggregator.m_SubFileIndex is always set
-    m_Aggregator.Init(m_Parameters.NumAggregators, m_Parameters.NumSubFiles,
-                      m_Comm);
-
-    std::cout << "Rank " << m_RankMPI << " aggr? "
-              << m_Aggregator.m_IsAggregator << " master? "
-              << m_Aggregator.m_IsMasterAggregator
-              << " aggr size = " << m_Aggregator.m_Size
-              << " rank = " << m_Aggregator.m_Rank
-              << " subfile = " << m_Aggregator.m_SubStreamIndex
-              << " type = " << m_Parameters.AggregationType
-
-              << std::endl;
-
+    InitAggregator();
     InitTransports();
     InitBPBuffer();
 }
@@ -415,7 +393,6 @@ void BP5Writer::InitParameters()
     m_WriteToBB = !(m_Parameters.BurstBufferPath.empty());
     m_DrainBB = m_WriteToBB && m_Parameters.BurstBufferDrain;
 
-    size_t numNodes = m_Aggregator.PreInit(m_Comm);
     if (m_Parameters.NumAggregators > static_cast<unsigned int>(m_Comm.Size()))
     {
         m_Parameters.NumAggregators = static_cast<unsigned int>(m_Comm.Size());
@@ -425,11 +402,49 @@ void BP5Writer::InitParameters()
     {
         m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
     }
+}
+
+void BP5Writer::InitAggregator()
+{
+    // in BP5, aggregation is "always on", but processes may be alone, so
+    // m_Aggregator.m_IsActive is always true
+    // m_Aggregator.m_Comm.Rank() will always succeed (not abort)
+    // m_Aggregator.m_SubFileIndex is always set
     if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites ||
         m_Parameters.AggregationType ==
             (int)AggregationType::EveryoneWritesSerial)
     {
         m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
+        m_AggregatorEveroneWrites.Init(m_Parameters.NumAggregators,
+                                       m_Parameters.NumSubFiles, m_Comm);
+        m_IAmDraining = m_AggregatorEveroneWrites.m_IsAggregator;
+        m_IAmWritingDataHeader = m_AggregatorEveroneWrites.m_IsAggregator;
+        m_EveryoneWrites = true;
+        m_IAmWritingData = true;
+        m_Aggregator = static_cast<aggregator::MPIAggregator *>(
+            &m_AggregatorEveroneWrites);
+    }
+    else
+    {
+        size_t numNodes = m_AggregatorTwoLevelShm.PreInit(m_Comm);
+        m_AggregatorTwoLevelShm.Init(m_Parameters.NumAggregators,
+                                     m_Parameters.NumSubFiles, m_Comm);
+
+        std::cout << "Rank " << m_RankMPI << " aggr? "
+                  << m_AggregatorTwoLevelShm.m_IsAggregator << " master? "
+                  << m_AggregatorTwoLevelShm.m_IsMasterAggregator
+                  << " aggr size = " << m_AggregatorTwoLevelShm.m_Size
+                  << " rank = " << m_AggregatorTwoLevelShm.m_Rank
+                  << " subfile = " << m_AggregatorTwoLevelShm.m_SubStreamIndex
+                  << " type = " << m_Parameters.AggregationType
+
+                  << std::endl;
+
+        m_IAmDraining = m_AggregatorTwoLevelShm.m_IsMasterAggregator;
+        m_IAmWritingData = m_AggregatorTwoLevelShm.m_IsAggregator;
+        m_IAmWritingDataHeader = m_AggregatorTwoLevelShm.m_IsMasterAggregator;
+        m_Aggregator =
+            static_cast<aggregator::MPIAggregator *>(&m_AggregatorTwoLevelShm);
     }
 }
 
@@ -463,18 +478,18 @@ void BP5Writer::InitTransports()
 
     // /path/name.bp.dir/name.bp.rank
     m_SubStreamNames =
-        GetBPSubStreamNames(transportsNames, m_Aggregator.m_SubStreamIndex);
+        GetBPSubStreamNames(transportsNames, m_Aggregator->m_SubStreamIndex);
 
-    if (m_Aggregator.m_IsAggregator)
+    if (m_IAmDraining)
     {
-        // Only aggregators will run draining processes
+        // Only (master)aggregators will run draining processes
         if (m_DrainBB)
         {
             const std::vector<std::string> drainTransportNames =
                 m_FileDataManager.GetFilesBaseNames(
                     m_Name, m_IO.m_TransportsParameters);
             m_DrainSubStreamNames = GetBPSubStreamNames(
-                drainTransportNames, m_Aggregator.m_SubStreamIndex);
+                drainTransportNames, m_Aggregator->m_SubStreamIndex);
             /* start up BB thread */
             //            m_FileDrainer.SetVerbose(
             //				     m_Parameters.BurstBufferVerbose,
@@ -512,11 +527,23 @@ void BP5Writer::InitTransports()
             m_IO.m_TransportsParameters[i]["asynctasks"] = "true";
         }
     }
-    m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
-                                m_IO.m_TransportsParameters, false,
-                                m_Aggregator.m_Comm);
 
-    if (m_Aggregator.m_IsAggregator)
+    if (m_EveryoneWrites)
+    {
+        m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
+                                    m_IO.m_TransportsParameters, false,
+                                    m_Aggregator->m_Comm);
+    }
+    else
+    {
+        if (m_IAmWritingData)
+        {
+            m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
+                                        m_IO.m_TransportsParameters, false);
+        }
+    }
+
+    if (m_IAmDraining)
     {
         if (m_DrainBB)
         {
@@ -703,7 +730,7 @@ void BP5Writer::InitBPBuffer()
      * them yet so that Open() can stay free of writing to disk)
      */
 
-    const uint64_t a = static_cast<uint64_t>(m_Aggregator.m_SubStreamIndex);
+    const uint64_t a = static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
     std::vector<uint64_t> Assignment = m_Comm.GatherValues(a, 0);
 
     if (m_Comm.Rank() == 0)
@@ -721,7 +748,7 @@ void BP5Writer::InitBPBuffer()
                                               sizeof(Assignment[0]) *
                                                   Assignment.size());
     }
-    if (m_Aggregator.m_IsAggregator)
+    if (m_IAmWritingDataHeader)
     {
         format::BufferSTL d;
         MakeHeader(d, "Data", false);

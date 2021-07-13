@@ -44,23 +44,14 @@ public:
     void Init(const size_t numAggregators, const size_t subStreams,
               helper::Comm const &parentComm) final;
 
+    void Close() final;
+
     /**
      * true: the Master (aggregator) process in the chain
      * always m_Rank == m_Comm.Rank() == 0 for a master aggregator
      * same as (m_AggregatorChainComm.Rank() == 0)
      */
     bool m_IsMasterAggregator = true;
-
-    /* These are not used and must be removed */
-    ExchangeRequests IExchange(format::Buffer &buffer, const int step) final;
-
-    ExchangeAbsolutePositionRequests
-    IExchangeAbsolutePosition(format::Buffer &buffer, const int step) final;
-
-    void Wait(ExchangeRequests &requests, const int step) final;
-
-    void WaitAbsolutePosition(ExchangeAbsolutePositionRequests &requests,
-                              const int step) final;
 
 private:
     void HandshakeLinks();

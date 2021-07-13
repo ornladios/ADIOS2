@@ -746,10 +746,10 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
     // async?
     for (int r = 0; r < m_BP4Serializer.m_Aggregator.m_Size; ++r)
     {
-        aggregator::MPIAggregator::ExchangeRequests dataRequests =
+        aggregator::MPIChain::ExchangeRequests dataRequests =
             m_BP4Serializer.m_Aggregator.IExchange(m_BP4Serializer.m_Data, r);
 
-        aggregator::MPIAggregator::ExchangeAbsolutePositionRequests
+        aggregator::MPIChain::ExchangeAbsolutePositionRequests
             absolutePositionRequests =
                 m_BP4Serializer.m_Aggregator.IExchangeAbsolutePosition(
                     m_BP4Serializer.m_Data, r);
