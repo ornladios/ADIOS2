@@ -676,7 +676,7 @@ void BP5Writer::DoFlush(const bool isFinal, const int transportIndex)
     m_FileDataManager.FlushFiles();
 
     // true: advances step
-    BufferV *DataBuf;
+    //    BufferV *DataBuf;
     if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
     {
         //        DataBuf = m_BP5Serializer.ReinitStepData(new
