@@ -12,12 +12,37 @@
 #ifndef ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPICSHMHAIN_H_
 #define ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPISHMCHAIN_H_
 
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/aggregator/mpi/MPIAggregator.h"
+
+#include <chrono>
+#include <thread>
 
 namespace adios2
 {
 namespace aggregator
 {
+
+class Spinlock
+{
+    /* from
+     * https://wang-yimu.com/a-tutorial-on-shared-memory-inter-process-communication
+     */
+public:
+    std::atomic_flag flag_{ATOMIC_FLAG_INIT};
+    void lock()
+    {
+        while (!try_lock())
+        {
+            std::this_thread::sleep_for(std::chrono::duration<double>(0.00001));
+        }
+    }
+    inline bool try_lock() { return !flag_.test_and_set(); }
+    void unlock() { flag_.clear(); }
+};
+
+constexpr size_t SHM_BUF_SIZE = 4194304; // 4MB
+// we allocate 2x this size + a bit for shared memory segment
 
 /** A one- or two-layer aggregator chain for using Shared memory within a
  * compute node.
@@ -85,8 +110,53 @@ public:
        */
     helper::Comm m_AggregatorChainComm;
 
+    struct ShmDataBuffer
+    {
+        size_t max_size;    // max size for buf
+        size_t actual_size; // size of actual content
+        // points to data buffer in shared memory
+        // Warning: This is a different address on every process
+        char *buf;
+    };
+
+    ShmDataBuffer *LockProducerBuffer();
+    void UnlockProducerBuffer();
+    ShmDataBuffer *LockConsumerBuffer();
+    void UnlockConsumerBuffer();
+    void ResetBuffers() noexcept;
+
 private:
-    void HandshakeLinks();
+    helper::Comm::Req HandshakeLinks_Start();
+    void HandshakeLinks_Complete(helper::Comm::Req &req);
+
+    helper::Comm::Win m_Win;
+    void CreateShm();
+    void DestroyShm();
+
+    enum class BufferUse
+    {
+        None,
+        A,
+        B
+    };
+
+    struct ShmSegment
+    {
+        // -1: none 0-1: which buffer is being filled by producer
+        BufferUse producerBuffer;
+        // -1: none 0-1: which buffer is being used by consumer (aggregator)
+        BufferUse consumerBuffer;
+        // user facing structs
+        ShmDataBuffer sdbA;
+        ShmDataBuffer sdbB;
+        // locks for individual buffers (sdb and buf)
+        aggregator::Spinlock lockA;
+        aggregator::Spinlock lockB;
+        // the actual data buffers
+        char bufA[SHM_BUF_SIZE];
+        char bufB[SHM_BUF_SIZE];
+    };
+    ShmSegment *m_Shm;
 };
 
 } // end namespace aggregator

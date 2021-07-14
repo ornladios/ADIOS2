@@ -147,8 +147,11 @@ private:
 
     void MarshalAttributes();
 
-    /* Shmem aggregator functions */
+    /* Two-level-shm aggregator functions */
     void WriteMyOwnData(format::BufferV::BufferV_iovec DataVec);
+    void SendDataToAggregator(format::BufferV::BufferV_iovec DataVec,
+                              const size_t TotalSize);
+    void WriteOthersData(const size_t TotalSize);
 
     template <class T>
     T *BufferDataCommon(const size_t payloadOffset,
