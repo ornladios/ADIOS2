@@ -71,6 +71,7 @@ endif()
 
 if(Python_Interpreter_FOUND)
   add_subdirectory(bp4dbg)
+  add_subdirectory(bp5dbg)
 endif()
 
 install(PROGRAMS adios_deactivate_bp.sh
