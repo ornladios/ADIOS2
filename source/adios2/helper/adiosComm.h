@@ -19,6 +19,7 @@ namespace helper
 
 class CommImpl;
 class CommReqImpl;
+class CommWinImpl;
 
 /** @brief Encapsulation for communication in a multi-process environment.  */
 class Comm
@@ -26,6 +27,7 @@ class Comm
 public:
     class Req;
     class Status;
+    class Win;
 
     /**
      * @brief Enumeration of element-wise accumulation operations.
@@ -47,6 +49,15 @@ public:
         MinLoc,
         Replace,
         None,
+    };
+
+    /**
+     * @brief Enumeration of locking operations.
+     */
+    enum class LockType
+    {
+        Exclusive,
+        Shared
     };
 
     /**
@@ -254,6 +265,16 @@ public:
     Req Irecv(T *buffer, const size_t count, int source, int tag,
               const std::string &hint = std::string()) const;
 
+    Win Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
+                            const std::string &hint = std::string());
+    int Win_shared_query(Win &win, int rank, size_t *size, int *disp_unit,
+                         void *baseptr,
+                         const std::string &hint = std::string());
+    int Win_free(Win &win, const std::string &hint = std::string());
+    int Win_Lock(LockType lock_type, int rank, int assert, Win &win,
+                 const std::string &hint = std::string());
+    int Win_Unlock(int rank, Win &win, const std::string &hint = std::string());
+
 private:
     friend class CommImpl;
 
@@ -338,6 +359,59 @@ public:
      * @brief True if this is the status of a cancelled operation.
      */
     bool Cancelled = false;
+};
+
+class Comm::Win
+{
+public:
+    /**
+     * @brief Default constructor.  Produces an empty Win.
+     *
+     * An empty Win may not be used.
+     */
+    Win();
+
+    /**
+     * @brief Move constructor.  Moves Win state from that given.
+     *
+     * The moved-from Win is left empty and may not be used.
+     */
+    Win(Win &&);
+
+    /**
+     * @brief Deleted copy constructor.  A Win may not be copied.
+     */
+    Win(Win const &) = delete;
+
+    ~Win();
+
+    /**
+     * @brief Move assignment.  Moves Win state from that given.
+     *
+     * The moved-from Win is left empty and may not be used.
+     */
+    Win &operator=(Win &&);
+
+    /**
+     * @brief Deleted copy assignment.  A Win may not be copied.
+     */
+    Win &operator=(Win const &) = delete;
+
+    /**
+     * @brief Free the Win object.
+     *
+     * On return, the Win is empty.
+     * For an MPI Win object this is equivalent to the call MPI_Win_free()
+     */
+    int Free(const std::string &hint = std::string());
+
+private:
+    friend class CommImpl;
+    friend class CommWinImpl;
+
+    explicit Win(std::unique_ptr<CommWinImpl> impl);
+
+    std::unique_ptr<CommWinImpl> m_Impl;
 };
 
 class CommImpl
@@ -437,10 +511,23 @@ public:
                             int source, int tag,
                             const std::string &hint) const = 0;
 
+    virtual Comm::Win Win_allocate_shared(size_t size, int disp_unit,
+                                          void *baseptr,
+                                          const std::string &hint) const = 0;
+    virtual int Win_shared_query(Comm::Win &win, int rank, size_t *size,
+                                 int *disp_unit, void *baseptr,
+                                 const std::string &hint) const = 0;
+    virtual int Win_free(Comm::Win &win, const std::string &hint) const = 0;
+    virtual int Win_Lock(Comm::LockType lock_type, int rank, int assert,
+                         Comm::Win &win, const std::string &hint) const = 0;
+    virtual int Win_Unlock(int rank, Comm::Win &win,
+                           const std::string &hint) const = 0;
+
     static size_t SizeOf(Datatype datatype);
 
     static Comm MakeComm(std::unique_ptr<CommImpl> impl);
     static Comm::Req MakeReq(std::unique_ptr<CommReqImpl> impl);
+    static Comm::Win MakeWin(std::unique_ptr<CommWinImpl> impl);
     static CommImpl *Get(Comm const &comm);
 };
 
@@ -449,6 +536,14 @@ class CommReqImpl
 public:
     virtual ~CommReqImpl() = 0;
     virtual Comm::Status Wait(const std::string &hint) = 0;
+};
+
+class CommWinImpl
+{
+public:
+    virtual ~CommWinImpl() = 0;
+    virtual int Free(const std::string &hint) = 0;
+    static CommWinImpl *Get(Comm::Win const &win);
 };
 
 } // end namespace helper
