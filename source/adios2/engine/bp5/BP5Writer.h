@@ -192,6 +192,9 @@ private:
     uint32_t m_MarshaledAttributesCount =
         0; // updated during EndStep/MarshalAttributes
 
+    // where each writer rank writes its data, init in InitBPBuffer;
+    std::vector<uint64_t> m_Assignment;
+
     void MakeHeader(format::BufferSTL &b, const std::string fileType,
                     const bool isActive);
 };

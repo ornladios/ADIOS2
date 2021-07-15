@@ -8,6 +8,8 @@
 
 #include "MallocV.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
+#include <assert.h>
+#include <stddef.h> // max_align_t
 #include <string.h>
 
 namespace adios2
@@ -35,6 +37,51 @@ void MallocV::Reset()
     DataV.clear();
 }
 
+/*
+ *  This is used in PerformPuts() to copy externally referenced data
+ *  so that it can be modified by the application. It does *not*
+ *  change the metadata offset that was originally returned by
+ *  AddToVec.  That is, it relocates the data from application memory
+ *  into the internal buffer, but it does not change the position of
+ *  that data in the write order, which may result in non-contiguous
+ *  writes from the internal buffer.
+ */
+void MallocV::CopyExternalToInternal()
+{
+    for (std::size_t i = 0; i < DataV.size(); ++i)
+    {
+        if (DataV[i].External)
+        {
+            size_t size = DataV[i].Size;
+
+            /* force internal buffer alignment */
+            (void)AddToVec(0, NULL, sizeof(max_align_t), true);
+
+            if (m_internalPos + size > m_AllocatedSize)
+            {
+                // need to resize
+                size_t NewSize;
+                if (m_internalPos + size > m_AllocatedSize * m_GrowthFactor)
+                {
+                    // just grow as needed (more than GrowthFactor)
+                    NewSize = m_internalPos + size;
+                }
+                else
+                {
+                    NewSize = (size_t)(m_AllocatedSize * m_GrowthFactor);
+                }
+                m_InternalBlock = (char *)realloc(m_InternalBlock, NewSize);
+                m_AllocatedSize = NewSize;
+            }
+            memcpy(m_InternalBlock + m_internalPos, DataV[i].Base, size);
+            DataV[i].External = false;
+            DataV[i].Base = NULL;
+            DataV[i].Offset = m_internalPos;
+            m_internalPos += size;
+        }
+    }
+}
+
 size_t MallocV::AddToVec(const size_t size, const void *buf, int align,
                          bool CopyReqd)
 {
@@ -42,7 +89,8 @@ size_t MallocV::AddToVec(const size_t size, const void *buf, int align,
     if (badAlign)
     {
         int addAlign = align - badAlign;
-        char zero[16] = {0};
+        assert(addAlign < sizeof(max_align_t));
+        static char zero[sizeof(max_align_t)] = {0};
         AddToVec(addAlign, zero, 1, true);
     }
     size_t retOffset = CurOffset;

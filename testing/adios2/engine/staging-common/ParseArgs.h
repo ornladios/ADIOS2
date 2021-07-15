@@ -38,6 +38,8 @@ int NoData = 0;
 int NoDataNode = -1;
 int EarlyExit = 0;
 int LocalCount = 1;
+int DataSize = 5 * 1024 * 1024 / 8; /* DefaultMinDeferredSize is 4*1024*1024
+                                       This should be more than that. */
 
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
@@ -285,9 +287,23 @@ static void ParseArgs(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--data_size")
+        {
+            std::istringstream ss(argv[2]);
+            if (!(ss >> DataSize))
+                std::cerr << "Invalid number for --data_size argument"
+                          << argv[1] << '\n';
+            argv++;
+            argc--;
+        }
         else if (std::string(argv[1]) == "--early_exit")
         {
             EarlyExit++;
+        }
+        else if (std::string(argv[1]) == "--disable_mpmd")
+        {
+            // someone else should have eaten this arg, but if it gets here,
+            // ignore it
         }
         else
         {

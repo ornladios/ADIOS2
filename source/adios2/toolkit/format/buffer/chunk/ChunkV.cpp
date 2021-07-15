@@ -8,7 +8,9 @@
 
 #include "ChunkV.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
+#include <assert.h>
 #include <iostream>
+#include <stddef.h> // max_align_t
 #include <string.h>
 
 namespace adios2
@@ -30,6 +32,53 @@ ChunkV::~ChunkV()
     }
 }
 
+void ChunkV::CopyExternalToInternal()
+{
+    for (std::size_t i = 0; i < DataV.size(); ++i)
+    {
+        if (DataV[i].External)
+        {
+            size_t size = DataV[i].Size;
+            // we can possibly append this entry to the tail if the tail entry
+            // is internal
+            bool AppendPossible = DataV.size() && !DataV.back().External;
+
+            if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
+            {
+                // No room in current chunk, close it out
+                // realloc down to used size (helpful?) and set size in array
+                m_Chunks.back() =
+                    (char *)realloc(m_Chunks.back(), m_TailChunkPos);
+
+                m_TailChunkPos = 0;
+                m_TailChunk = NULL;
+                AppendPossible = false;
+            }
+            if (AppendPossible)
+            {
+                // We can use current chunk, just append the data and modify the
+                // DataV entry
+                memcpy(m_TailChunk + m_TailChunkPos, DataV[i].Base, size);
+                DataV[i].External = false;
+                DataV[i].Base = m_TailChunk + m_TailChunkPos;
+                m_TailChunkPos += size;
+            }
+            else
+            {
+                // We need a new chunk, get the larger of size or m_ChunkSize
+                size_t NewSize = m_ChunkSize;
+                if (size > m_ChunkSize)
+                    NewSize = size;
+                m_TailChunk = (char *)malloc(NewSize);
+                m_Chunks.push_back(m_TailChunk);
+                memcpy(m_TailChunk, DataV[i].Base, size);
+                m_TailChunkPos = size;
+                DataV[i] = {false, m_TailChunk, 0, size};
+            }
+        }
+    }
+}
+
 size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
                         bool CopyReqd)
 {
@@ -37,7 +86,8 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
     if (badAlign)
     {
         int addAlign = align - badAlign;
-        char zero[16] = {0};
+        assert(addAlign < sizeof(max_align_t));
+        static char zero[sizeof(max_align_t)] = {0};
         AddToVec(addAlign, zero, 1, true);
     }
     size_t retOffset = CurOffset;
@@ -55,7 +105,10 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
     {
         // we can possibly append this entry to the last if the last was
         // internal
-        bool AppendPossible = DataV.size() && !DataV.back().External;
+        bool AppendPossible =
+            DataV.size() && !DataV.back().External &&
+            (m_TailChunk + m_TailChunkPos - DataV.back().Size ==
+             DataV.back().Base);
 
         if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
         {
@@ -81,6 +134,7 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
             if (size > m_ChunkSize)
                 NewSize = size;
             m_TailChunk = (char *)malloc(NewSize);
+            m_Chunks.push_back(m_TailChunk);
             memcpy(m_TailChunk, buf, size);
             m_TailChunkPos = size;
             VecEntry entry = {false, m_TailChunk, 0, size};

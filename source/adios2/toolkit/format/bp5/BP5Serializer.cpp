@@ -10,6 +10,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosMemory.h"
 #include "adios2/toolkit/format/buffer/ffs/BufferFFS.h"
+#include <stddef.h> // max_align_t
 
 #include <cstring>
 
@@ -429,6 +430,8 @@ size_t BP5Serializer::CalcSize(const size_t Count, const size_t *Vals)
     return Elems;
 }
 
+void BP5Serializer::PerformPuts() { CurDataBuffer->CopyExternalToInternal(); }
+
 void BP5Serializer::Marshal(void *Variable, const char *Name,
                             const DataType Type, size_t ElemSize,
                             size_t DimCount, const size_t *Shape,
@@ -681,7 +684,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
             "BP5Serializer:: CloseTimestep without Prior Init");
     }
     MBase->DataBlockSize = CurDataBuffer->AddToVec(
-        0, NULL, 8, true); //  output block size multiple of 8, offset is size
+        0, NULL, sizeof(max_align_t), true); //  output block size aligned
 
     void *MetaDataBlock = FFSencode(MetaEncodeBuffer, Info.MetaFormat,
                                     MetadataBuf, &MetaDataSize);
@@ -866,6 +869,5 @@ std::vector<BufferV::iovec> BP5Serializer::BreakoutContiguousMetadata(
     }
     return MetadataBlocks;
 }
-
 }
 }
