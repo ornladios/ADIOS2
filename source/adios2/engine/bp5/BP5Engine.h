@@ -110,11 +110,11 @@ public:
     MACRO(NodeLocal, Bool, bool, false)                                        \
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
-    MACRO(NumAggregators, UInt, unsigned int, 999999)                          \
+    MACRO(NumAggregators, UInt, unsigned int, 0)                               \
     MACRO(NumSubFiles, UInt, unsigned int, 999999)                             \
-    MACRO(FileSystemPageSize, UInt, unsigned int, 65536)                       \
+    MACRO(FileSystemPageSize, UInt, unsigned int, 4096)                        \
     MACRO(AggregationType, AggregationType, int,                               \
-          (int)AggregationType::EveryoneWrites)                                \
+          (int)AggregationType::TwoLevelShm)                                   \
     MACRO(AsyncTasks, Bool, bool, true)                                        \
     MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)               \
     MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \
