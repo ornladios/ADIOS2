@@ -122,7 +122,7 @@ void FileFStream::OpenChain(const std::string &name, Mode openMode,
                        "Chain token in FileFStream::OpenChain");
         if (openMode == Mode::Write)
         {
-            openMode == Mode::Append;
+            openMode = Mode::Append;
             createOnAppend = false;
         }
     }

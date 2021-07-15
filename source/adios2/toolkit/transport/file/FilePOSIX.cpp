@@ -145,7 +145,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
                        "Chain token in FilePOSIX::OpenChain");
         if (openMode == Mode::Write)
         {
-            openMode == Mode::Append;
+            openMode = Mode::Append;
             createOnAppend = false;
         }
     }
