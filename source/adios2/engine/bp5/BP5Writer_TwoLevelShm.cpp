@@ -98,10 +98,12 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
             a->m_AggregatorChainComm.Isend(
                 &nextWriterPos, 1, 0, 0, "Chain token in BP5Writer::WriteData");
         }
-        std::cout << "Rank " << m_Comm.Rank()
+
+        /*std::cout << "Rank " << m_Comm.Rank()
                   << " aggregator start writing step " << m_WriterStep
                   << " to subfile " << a->m_SubStreamIndex << " at pos "
-                  << m_DataPos << " totalsize " << myTotalSize << std::endl;
+                  << m_DataPos << " totalsize " << myTotalSize << std::endl;*/
+
         // Send token to first non-aggregator to start filling shm
         // Also informs next process its starting offset (for correct metadata)
         if (a->m_Comm.Size() > 1)
@@ -136,9 +138,10 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
         // they also receive their starting offset this way
         a->m_Comm.Recv(&m_StartDataPos, 1, a->m_Comm.Rank() - 1, 0,
                        "Shm token in BP5Writer::WriteData_TwoLevelShm");
-        std::cout << "Rank " << m_Comm.Rank()
+
+        /*std::cout << "Rank " << m_Comm.Rank()
                   << " non-aggregator recv token to fill shm = "
-                  << m_StartDataPos << std::endl;
+                  << m_StartDataPos << std::endl;*/
 
         SendDataToAggregator(DataVec, Data->Size());
 
@@ -233,14 +236,15 @@ void BP5Writer::SendDataToAggregator(format::BufferV::BufferV_iovec DataVec,
             }
         }
         sent += b->actual_size;
-        std::cout << "Rank " << m_Comm.Rank()
+
+        /*std::cout << "Rank " << m_Comm.Rank()
                   << " filled shm, data_size = " << b->actual_size
                   << " block = " << block << " temp offset = " << temp_offset
                   << " sent = " << sent
                   << " buf = " << static_cast<void *>(b->buf) << " = ["
                   << (int)b->buf[0] << (int)b->buf[1] << "..."
                   << (int)b->buf[b->actual_size - 2]
-                  << (int)b->buf[b->actual_size - 1] << "]" << std::endl;
+                  << (int)b->buf[b->actual_size - 1] << "]" << std::endl;*/
 
         a->UnlockProducerBuffer();
     }
@@ -257,13 +261,13 @@ void BP5Writer::WriteOthersData(size_t TotalSize)
         // potentially blocking call waiting on some non-aggr process
         aggregator::MPIShmChain::ShmDataBuffer *b = a->LockConsumerBuffer();
 
-        std::cout << "Rank " << m_Comm.Rank()
+        /*std::cout << "Rank " << m_Comm.Rank()
                   << " write from shm, data_size = " << b->actual_size
                   << " total so far = " << wrote
                   << " buf = " << static_cast<void *>(b->buf) << " = ["
                   << (int)b->buf[0] << (int)b->buf[1] << "..."
                   << (int)b->buf[b->actual_size - 2]
-                  << (int)b->buf[b->actual_size - 1] << "]" << std::endl;
+                  << (int)b->buf[b->actual_size - 1] << "]" << std::endl;*/
 
         // b->actual_size: how much we need to write
         m_FileDataManager.WriteFiles(b->buf, b->actual_size);

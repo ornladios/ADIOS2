@@ -442,7 +442,7 @@ void BP5Writer::InitAggregator()
         m_AggregatorTwoLevelShm.Init(m_Parameters.NumAggregators,
                                      m_Parameters.NumSubFiles, m_Comm);
 
-        std::cout << "Rank " << m_RankMPI << " aggr? "
+        /*std::cout << "Rank " << m_RankMPI << " aggr? "
                   << m_AggregatorTwoLevelShm.m_IsAggregator << " master? "
                   << m_AggregatorTwoLevelShm.m_IsMasterAggregator
                   << " aggr size = " << m_AggregatorTwoLevelShm.m_Size
@@ -450,7 +450,7 @@ void BP5Writer::InitAggregator()
                   << " subfile = " << m_AggregatorTwoLevelShm.m_SubStreamIndex
                   << " type = " << m_Parameters.AggregationType
 
-                  << std::endl;
+                  << std::endl;*/
 
         m_IAmDraining = m_AggregatorTwoLevelShm.m_IsMasterAggregator;
         m_IAmWritingData = m_AggregatorTwoLevelShm.m_IsAggregator;

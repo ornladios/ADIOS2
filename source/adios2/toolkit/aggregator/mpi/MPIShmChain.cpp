@@ -237,9 +237,9 @@ void MPIShmChain::CreateShm()
     m_Shm->sdbB.buf = nullptr;
     m_Shm->sdbB.max_size = SHM_BUF_SIZE;
 
-    std::cout << "Rank " << m_Rank << " shm = " << ptr
+    /*std::cout << "Rank " << m_Rank << " shm = " << ptr
               << " bufA = " << static_cast<void *>(m_Shm->bufA)
-              << " bufB = " << static_cast<void *>(m_Shm->bufB) << std::endl;
+              << " bufB = " << static_cast<void *>(m_Shm->bufB) << std::endl;*/
 }
 
 void MPIShmChain::DestroyShm() { m_Comm.Win_free(m_Win); }
