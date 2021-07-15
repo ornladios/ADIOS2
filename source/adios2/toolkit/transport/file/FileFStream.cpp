@@ -101,6 +101,96 @@ void FileFStream::Open(const std::string &name, const Mode openMode,
     }
 }
 
+void FileFStream::OpenChain(const std::string &name, const Mode openMode,
+                            const helper::Comm &chainComm, const bool async)
+{
+    auto lf_AsyncOpenWrite = [&](const std::string &name) -> void {
+        ProfilerStart("open");
+        m_FileStream.open(name, std::fstream::out | std::fstream::binary |
+                                    std::fstream::trunc);
+        ProfilerStop("open");
+    };
+
+    bool createOnAppend = true;
+    int token = 1;
+    m_Name = name;
+    CheckName();
+
+    if (chainComm.Rank() > 0)
+    {
+        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
+                       "Chain token in FileFStream::OpenChain");
+        if (openMode == Mode::Write)
+        {
+            openMode == Mode::Append;
+            createOnAppend = false;
+        }
+    }
+
+    m_OpenMode = openMode;
+    switch (m_OpenMode)
+    {
+    case (Mode::Write):
+        if (async && chainComm.Size() == 1)
+        {
+            m_IsOpening = true;
+            m_OpenFuture =
+                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+        }
+        else
+        {
+            ProfilerStart("open");
+            m_FileStream.open(name, std::fstream::out | std::fstream::binary |
+                                        std::fstream::trunc);
+            ProfilerStop("open");
+        }
+        break;
+
+    case (Mode::Append):
+        ProfilerStart("open");
+
+        if (createOnAppend)
+        {
+            m_FileStream.open(name, std::fstream::in | std::fstream::out |
+                                        std::fstream::binary);
+            m_FileStream.seekp(0, std::ios_base::end);
+        }
+        else
+        {
+            m_FileStream.open(name, std::fstream::in | std::fstream::out |
+                                        std::fstream::binary);
+            m_FileStream.seekp(0, std::ios_base::beg);
+        }
+
+        ProfilerStop("open");
+        break;
+
+    case (Mode::Read):
+        ProfilerStart("open");
+        m_FileStream.open(name, std::fstream::in | std::fstream::binary);
+        ProfilerStop("open");
+        break;
+
+    default:
+        CheckFile("unknown open mode for file " + m_Name +
+                  ", in call to stream open");
+    }
+
+    if (!m_IsOpening)
+    {
+        CheckFile(
+            "couldn't open file " + m_Name +
+            ", check permissions or path existence, in call to fstream open");
+        m_IsOpen = true;
+    }
+
+    if (chainComm.Rank() < chainComm.Size() - 1)
+    {
+        chainComm.Isend(&token, 1, chainComm.Rank() + 1, 0,
+                        "Sending Chain token in FileFStream::OpenChain");
+    }
+}
+
 void FileFStream::SetBuffer(char *buffer, size_t size)
 {
     if (!buffer && size != 0)

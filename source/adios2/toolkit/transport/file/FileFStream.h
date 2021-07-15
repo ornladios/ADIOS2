@@ -35,6 +35,10 @@ public:
     void Open(const std::string &name, const Mode openMode,
               const bool async = false) final;
 
+    void OpenChain(const std::string &name, const Mode openMode,
+                   const helper::Comm &chainComm,
+                   const bool async = false) final;
+
     void SetBuffer(char *buffer, size_t size) final;
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;

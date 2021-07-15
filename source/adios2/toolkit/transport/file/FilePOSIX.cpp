@@ -184,6 +184,7 @@ void FilePOSIX::OpenChain(const std::string &name, const Mode openMode,
         }
         else
         {
+            /* This case runs on rank > 0 when called with Write mode */
             m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
             lseek(m_FileDescriptor, 0, SEEK_SET);
         }
@@ -266,10 +267,6 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         const auto pos = lseek(m_FileDescriptor, 0, SEEK_CUR);
         start = static_cast<size_t>(pos);
     }
-    std::cout << " Write to " << m_Name << " size = " << size
-              << " pos = " << start << " buf = [" << (int)buffer[0]
-              << (int)buffer[1] << "..." << (int)buffer[size - 2]
-              << (int)buffer[size - 1] << "]" << std::endl;
 
     if (size > DefaultMaxFileBatchSize)
     {
