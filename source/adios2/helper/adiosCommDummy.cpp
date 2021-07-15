@@ -328,6 +328,7 @@ int CommImplDummy::Win_shared_query(Comm::Win &win, int rank, size_t *size,
 int CommImplDummy::Win_free(Comm::Win &win, const std::string &) const
 {
     win.Free();
+    return 0;
 }
 
 int CommImplDummy::Win_Lock(Comm::LockType lock_type, int rank, int assert,
