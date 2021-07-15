@@ -122,7 +122,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
     }
 }
 
-void FilePOSIX::OpenChain(const std::string &name, const Mode openMode,
+void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
                           const helper::Comm &chainComm, const bool async)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> int {

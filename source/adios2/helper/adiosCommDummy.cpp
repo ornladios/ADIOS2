@@ -311,7 +311,7 @@ Comm::Win CommImplDummy::Win_allocate_shared(size_t size, int disp_unit,
                                              const std::string &) const
 {
     auto win = std::unique_ptr<CommWinImplDummy>(new CommWinImplDummy());
-    baseptr = nullptr;
+    // TODO: How do you set the out pointer to NULL? baseptr = nullptr;
     return MakeWin(std::move(win));
 }
 
@@ -321,7 +321,7 @@ int CommImplDummy::Win_shared_query(Comm::Win &win, int rank, size_t *size,
 {
     *size = 0;
     *disp_unit = 1;
-    baseptr = nullptr;
+    // TODO: How do you set the out pointer to NULL? baseptr = nullptr;
     return 0;
 }
 

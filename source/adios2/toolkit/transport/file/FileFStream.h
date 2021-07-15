@@ -35,7 +35,7 @@ public:
     void Open(const std::string &name, const Mode openMode,
               const bool async = false) final;
 
-    void OpenChain(const std::string &name, const Mode openMode,
+    void OpenChain(const std::string &name, Mode openMode,
                    const helper::Comm &chainComm,
                    const bool async = false) final;
 

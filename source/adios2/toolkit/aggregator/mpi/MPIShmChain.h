@@ -9,12 +9,13 @@
  *
  */
 
-#ifndef ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPICSHMHAIN_H_
+#ifndef ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPISHMCHAIN_H_
 #define ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPISHMCHAIN_H_
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/aggregator/mpi/MPIAggregator.h"
 
+#include <atomic>
 #include <chrono>
 #include <thread>
 
@@ -29,7 +30,7 @@ class Spinlock
      * https://wang-yimu.com/a-tutorial-on-shared-memory-inter-process-communication
      */
 public:
-    std::atomic_flag flag_{ATOMIC_FLAG_INIT};
+    Spinlock() { flag_.clear(); }
     void lock()
     {
         while (!try_lock())
@@ -37,8 +38,11 @@ public:
             std::this_thread::sleep_for(std::chrono::duration<double>(0.00001));
         }
     }
-    inline bool try_lock() { return !flag_.test_and_set(); }
     void unlock() { flag_.clear(); }
+
+private:
+    inline bool try_lock() { return !flag_.test_and_set(); }
+    std::atomic_flag flag_; //{ATOMIC_FLAG_INIT};
 };
 
 constexpr size_t SHM_BUF_SIZE = 4194304; // 4MB

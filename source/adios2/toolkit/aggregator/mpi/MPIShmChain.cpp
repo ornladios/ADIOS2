@@ -151,7 +151,7 @@ void MPIShmChain::Init(const size_t numAggregators, const size_t subStreams,
 
     /* Create the communicator to connect aggregators writing to the same
      * substream */
-    color = m_SubStreamIndex;
+    color = static_cast<int>(m_SubStreamIndex);
     m_AggregatorChainComm = m_AllAggregatorsComm.Split(
         color, 0, "creating chains of aggregators at Open");
 

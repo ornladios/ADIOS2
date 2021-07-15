@@ -425,7 +425,7 @@ void BP5Writer::InitParameters()
 
     if (m_Parameters.FileSystemPageSize == 0)
     {
-        m_Parameters.FileSystemPageSize = 65536;
+        m_Parameters.FileSystemPageSize = 4096;
     }
     if (m_Parameters.FileSystemPageSize > 67108864)
     {
