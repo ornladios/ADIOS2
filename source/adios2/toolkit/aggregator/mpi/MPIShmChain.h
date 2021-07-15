@@ -133,7 +133,7 @@ private:
     void CreateShm();
     void DestroyShm();
 
-    enum class BufferUse
+    enum class LastBufferUsed
     {
         None,
         A,
@@ -142,10 +142,9 @@ private:
 
     struct ShmSegment
     {
-        // -1: none 0-1: which buffer is being filled by producer
-        BufferUse producerBuffer;
-        // -1: none 0-1: which buffer is being used by consumer (aggregator)
-        BufferUse consumerBuffer;
+        LastBufferUsed producerBuffer;
+        LastBufferUsed consumerBuffer;
+        unsigned int NumBuffersFull;
         // user facing structs
         ShmDataBuffer sdbA;
         ShmDataBuffer sdbB;

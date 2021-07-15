@@ -229,8 +229,9 @@ void MPIShmChain::CreateShm()
         m_Comm.Win_shared_query(m_Win, 0, &shmsize, &disp_unit, &ptr);
     }
     m_Shm = reinterpret_cast<ShmSegment *>(ptr);
-    m_Shm->producerBuffer = BufferUse::None;
-    m_Shm->consumerBuffer = BufferUse::None;
+    m_Shm->producerBuffer = LastBufferUsed::None;
+    m_Shm->consumerBuffer = LastBufferUsed::None;
+    m_Shm->NumBuffersFull = 0;
     m_Shm->sdbA.buf = nullptr;
     m_Shm->sdbA.max_size = SHM_BUF_SIZE;
     m_Shm->sdbB.buf = nullptr;
@@ -243,23 +244,60 @@ void MPIShmChain::CreateShm()
 
 void MPIShmChain::DestroyShm() { m_Comm.Win_free(m_Win); }
 
+/*
+   The buffering strategy is the following.
+   Assumptions: 1. Only one Producer (and one Consumer) is active at a time.
+
+   The first Producer fills buffer A first then B and then is always
+   alternating, blocking when Consumer is behind (NumBuffersFull == 2).
+   The next Producer will continue with the alternating pattern where the
+   previous Producer has finished.
+
+   The Consumer is blocked until there is at least one buffer available.
+   It takes buffer A at the first call, then it alternates between the two
+   buffers.
+
+   MPI_Win locking is used to modify the m_Shm variables exclusively (very short
+   time) C++ atomic locks are used to give long term exclusive access to one
+   buffer to be filled or consumed.
+
+   The sleeping phases, to wait on the other party to catch up, are outside of
+   the locking code areas.
+
+   Note: the m_Shm->sdbX.buf pointers must be set on the local process every
+   time, even tough it is stored on the shared memory segment, because the
+   address of the segment is different on every process. Failing to set on the
+   local process causes this pointer pointing to an invalid address (set on
+   another process).
+
+   Note: the sdbA and sdbB structs are stored on the shared memory segment
+   because they contain 'actual_size' which is set on the Producer and used by
+   the Consumer.
+
+*/
+
 MPIShmChain::ShmDataBuffer *MPIShmChain::LockProducerBuffer()
 {
     MPIShmChain::ShmDataBuffer *sdb = nullptr;
 
+    // Sleep until there is a buffer available at all
+    while (m_Shm->NumBuffersFull == 2)
+    {
+        std::this_thread::sleep_for(std::chrono::duration<double>(0.00001));
+    }
+
     m_Comm.Win_Lock(helper::Comm::LockType::Exclusive, 0, 0, m_Win);
-    if (m_Shm->producerBuffer == BufferUse::A)
+    if (m_Shm->producerBuffer == LastBufferUsed::A)
 
     {
-        m_Shm->producerBuffer = BufferUse::B;
+        m_Shm->producerBuffer = LastBufferUsed::B;
         sdb = &m_Shm->sdbB;
         // point to shm data buffer (in local process memory)
         sdb->buf = m_Shm->bufB;
     }
-    else // (m_Shm->producerBuffer == BufferUse::None ||
-         // m_Shm->producerBuffer == BufferUse::B)
+    else // None or B
     {
-        m_Shm->producerBuffer = BufferUse::A;
+        m_Shm->producerBuffer = LastBufferUsed::A;
         sdb = &m_Shm->sdbA;
         // point to shm data buffer (in local process memory)
         sdb->buf = m_Shm->bufA;
@@ -268,7 +306,7 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockProducerBuffer()
 
     // We determined we want a specific buffer
     // Now we need to get a lock on it in case consumer is using it
-    if (m_Shm->producerBuffer == BufferUse::A)
+    if (m_Shm->producerBuffer == LastBufferUsed::A)
     {
         m_Shm->lockA.lock();
     }
@@ -282,7 +320,7 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockProducerBuffer()
 
 void MPIShmChain::UnlockProducerBuffer()
 {
-    if (m_Shm->producerBuffer == BufferUse::A)
+    if (m_Shm->producerBuffer == LastBufferUsed::A)
     {
         m_Shm->lockA.unlock();
     }
@@ -290,14 +328,15 @@ void MPIShmChain::UnlockProducerBuffer()
     {
         m_Shm->lockB.unlock();
     }
+    ++m_Shm->NumBuffersFull;
 }
 
 MPIShmChain::ShmDataBuffer *MPIShmChain::LockConsumerBuffer()
 {
     MPIShmChain::ShmDataBuffer *sdb = nullptr;
 
-    // Sleep until the very first production has started:
-    while (m_Shm->producerBuffer == BufferUse::None)
+    // Sleep until there is at least one buffer filled
+    while (m_Shm->NumBuffersFull < 1)
     {
         std::this_thread::sleep_for(std::chrono::duration<double>(0.00001));
     }
@@ -305,18 +344,17 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockConsumerBuffer()
     // when we successfully lock it
 
     m_Comm.Win_Lock(helper::Comm::LockType::Exclusive, 0, 0, m_Win);
-    if (m_Shm->consumerBuffer == BufferUse::A)
+    if (m_Shm->consumerBuffer == LastBufferUsed::A)
 
     {
-        m_Shm->consumerBuffer = BufferUse::B;
+        m_Shm->consumerBuffer = LastBufferUsed::B;
         sdb = &m_Shm->sdbB;
         // point to shm data buffer (in local process memory)
         sdb->buf = m_Shm->bufB;
     }
-    else // (m_Shm->consumerBuffer == BufferUse::None ||
-         // m_Shm->consumerBuffer == BufferUse::B)
+    else // None or B
     {
-        m_Shm->consumerBuffer = BufferUse::A;
+        m_Shm->consumerBuffer = LastBufferUsed::A;
         sdb = &m_Shm->sdbA;
         // point to shm data buffer (in local process memory)
         sdb->buf = m_Shm->bufA;
@@ -325,7 +363,7 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockConsumerBuffer()
 
     // We determined we want a specific buffer
     // Now we need to get a lock on it in case producer is using it
-    if (m_Shm->consumerBuffer == BufferUse::A)
+    if (m_Shm->consumerBuffer == LastBufferUsed::A)
     {
         m_Shm->lockA.lock();
     }
@@ -339,7 +377,7 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockConsumerBuffer()
 
 void MPIShmChain::UnlockConsumerBuffer()
 {
-    if (m_Shm->consumerBuffer == BufferUse::A)
+    if (m_Shm->consumerBuffer == LastBufferUsed::A)
     {
         m_Shm->lockA.unlock();
     }
@@ -347,6 +385,7 @@ void MPIShmChain::UnlockConsumerBuffer()
     {
         m_Shm->lockB.unlock();
     }
+    --m_Shm->NumBuffersFull;
 }
 
 } // end namespace aggregator
