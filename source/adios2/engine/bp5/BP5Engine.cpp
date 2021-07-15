@@ -192,8 +192,6 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             std::string value = itKey->second;
             parameter = helper::StringToByteUnits(
                 value, "for Parameter key=" + key + "in call to Open");
-            parameter =
-                helper::StringTo<size_t>(value, " in Parameter key=" + key);
         }
     };
 
