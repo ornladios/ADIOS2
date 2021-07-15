@@ -431,8 +431,8 @@ void BP5Writer::InitAggregator()
                                        m_Parameters.NumSubFiles, m_Comm);
         m_IAmDraining = m_AggregatorEveroneWrites.m_IsAggregator;
         m_IAmWritingDataHeader = m_AggregatorEveroneWrites.m_IsAggregator;
-        m_EveryoneWrites = true;
         m_IAmWritingData = true;
+        DataWritingComm = &m_AggregatorEveroneWrites.m_Comm;
         m_Aggregator = static_cast<aggregator::MPIAggregator *>(
             &m_AggregatorEveroneWrites);
     }
@@ -455,6 +455,7 @@ void BP5Writer::InitAggregator()
         m_IAmDraining = m_AggregatorTwoLevelShm.m_IsMasterAggregator;
         m_IAmWritingData = m_AggregatorTwoLevelShm.m_IsAggregator;
         m_IAmWritingDataHeader = m_AggregatorTwoLevelShm.m_IsMasterAggregator;
+        DataWritingComm = &m_AggregatorTwoLevelShm.m_AggregatorChainComm;
         m_Aggregator =
             static_cast<aggregator::MPIAggregator *>(&m_AggregatorTwoLevelShm);
     }
@@ -540,19 +541,11 @@ void BP5Writer::InitTransports()
         }
     }
 
-    if (m_EveryoneWrites)
+    if (m_IAmWritingData)
     {
         m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
                                     m_IO.m_TransportsParameters, false,
-                                    m_Aggregator->m_Comm);
-    }
-    else
-    {
-        if (m_IAmWritingData)
-        {
-            m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
-                                        m_IO.m_TransportsParameters, false);
-        }
+                                    *DataWritingComm);
     }
 
     if (m_IAmDraining)

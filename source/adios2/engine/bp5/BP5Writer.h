@@ -165,8 +165,8 @@ private:
     aggregator::MPIShmChain m_AggregatorTwoLevelShm;
     aggregator::MPIChain m_AggregatorEveroneWrites;
     bool m_IAmDraining = false;
-    bool m_EveryoneWrites = false;
     bool m_IAmWritingData = false;
+    helper::Comm *DataWritingComm; // processes that write the same data file
     bool m_IAmWritingDataHeader = false;
 
 private:
