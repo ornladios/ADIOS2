@@ -75,7 +75,7 @@ public:
      * @param chainComm
      * @param async
      */
-    virtual void OpenChain(const std::string &name, const Mode openMode,
+    virtual void OpenChain(const std::string &name, Mode openMode,
                            const helper::Comm &chainComm,
                            const bool async = false);
 

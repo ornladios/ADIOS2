@@ -22,27 +22,44 @@ class MPIChain : public MPIAggregator
 {
 
 public:
+    /* Chain aggregator used by BP3/BP4 */
     MPIChain();
 
     ~MPIChain() = default;
 
-    void Init(const size_t subStreams, helper::Comm const &parentComm) final;
+    void Init(const size_t numAggregators, const size_t subStreams,
+              helper::Comm const &parentComm) final;
 
-    ExchangeRequests IExchange(format::Buffer &buffer, const int step) final;
+    void Close() final;
+
+    struct ExchangeRequests
+    {
+        helper::Comm::Req m_SendSize;
+        helper::Comm::Req m_SendData;
+        helper::Comm::Req m_RecvData;
+    };
+
+    ExchangeRequests IExchange(format::Buffer &buffer, const int step);
+
+    struct ExchangeAbsolutePositionRequests
+    {
+        helper::Comm::Req m_Send;
+        helper::Comm::Req m_Recv;
+    };
 
     ExchangeAbsolutePositionRequests
-    IExchangeAbsolutePosition(format::Buffer &buffer, const int step) final;
-
-    void Wait(ExchangeRequests &requests, const int step) final;
+    IExchangeAbsolutePosition(format::Buffer &buffer, const int step);
 
     void WaitAbsolutePosition(ExchangeAbsolutePositionRequests &requests,
-                              const int step) final;
+                              const int step);
 
-    void SwapBuffers(const int step) noexcept final;
+    void Wait(ExchangeRequests &requests, const int step);
 
-    void ResetBuffers() noexcept final;
+    void SwapBuffers(const int step) noexcept;
 
-    format::Buffer &GetConsumerBuffer(format::Buffer &buffer) final;
+    void ResetBuffers() noexcept;
+
+    format::Buffer &GetConsumerBuffer(format::Buffer &buffer);
 
 private:
     bool m_IsInExchangeAbsolutePosition = false;

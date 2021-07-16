@@ -31,6 +31,11 @@ public:
     /** current substream index from 0 to m_SubStreams-1 */
     size_t m_SubStreamIndex = 0;
 
+    /** total number of aggregators
+     * (BP3/BP4 uses aggregators = substreams)
+     */
+    size_t m_NumAggregators = 0;
+
     /** split Communicator for a substream: producers and consumer (rank=0) */
     helper::Comm m_Comm;
 
@@ -57,41 +62,11 @@ public:
 
     virtual ~MPIAggregator();
 
-    virtual void Init(const size_t subStreams, helper::Comm const &parentComm);
-
-    struct ExchangeRequests
-    {
-        helper::Comm::Req m_SendSize;
-        helper::Comm::Req m_SendData;
-        helper::Comm::Req m_RecvData;
-    };
-
-    virtual ExchangeRequests IExchange(format::Buffer &buffer,
-                                       const int step) = 0;
-
-    struct ExchangeAbsolutePositionRequests
-    {
-        helper::Comm::Req m_Send;
-        helper::Comm::Req m_Recv;
-    };
-
-    virtual ExchangeAbsolutePositionRequests
-    IExchangeAbsolutePosition(format::Buffer &buffer, const int step) = 0;
-
-    virtual void
-    WaitAbsolutePosition(ExchangeAbsolutePositionRequests &requests,
-                         const int step) = 0;
-
-    virtual void Wait(ExchangeRequests &requests, const int step) = 0;
-
-    virtual void SwapBuffers(const int step) noexcept;
-
-    virtual void ResetBuffers() noexcept;
-
-    virtual format::Buffer &GetConsumerBuffer(format::Buffer &buffer);
+    virtual void Init(const size_t numAggregators, const size_t subStreams,
+                      helper::Comm const &parentComm);
 
     /** closes current aggregator, frees m_Comm */
-    void Close();
+    virtual void Close();
 
 protected:
     /** Init m_Comm splitting assigning ranks to subStreams (balanced except for

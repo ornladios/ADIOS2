@@ -43,6 +43,10 @@ const MPI_Op OpToMPI[] = {
 
 MPI_Op ToMPI(Comm::Op op) { return OpToMPI[int(op)]; }
 
+const int LockTypeToMPI[] = {MPI_LOCK_EXCLUSIVE, MPI_LOCK_SHARED};
+
+int ToMPI(Comm::LockType lock_type) { return LockTypeToMPI[int(lock_type)]; }
+
 const MPI_Datatype DatatypeToMPI[] = {
     MPI_SIGNED_CHAR,
     MPI_CHAR,
@@ -107,6 +111,19 @@ public:
 };
 
 CommReqImplMPI::~CommReqImplMPI() = default;
+
+class CommWinImplMPI : public CommWinImpl
+{
+public:
+    CommWinImplMPI() {}
+    ~CommWinImplMPI() override;
+
+    int Free(const std::string &hint) override;
+
+    MPI_Win m_Win;
+};
+
+CommWinImplMPI::~CommWinImplMPI() = default;
 
 class CommImplMPI : public CommImpl
 {
@@ -177,6 +194,16 @@ public:
 
     Comm::Req Irecv(void *buffer, size_t count, Datatype datatype, int source,
                     int tag, const std::string &hint) const override;
+
+    Comm::Win Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
+                                  const std::string &hint) const override;
+    int Win_shared_query(Comm::Win &win, int rank, size_t *size, int *disp_unit,
+                         void *baseptr, const std::string &hint) const override;
+    int Win_free(Comm::Win &win, const std::string &hint) const override;
+    int Win_Lock(Comm::LockType lock_type, int rank, int assert, Comm::Win &win,
+                 const std::string &hint) const override;
+    int Win_Unlock(int rank, Comm::Win &win,
+                   const std::string &hint) const override;
 };
 
 CommImplMPI::~CommImplMPI()
@@ -519,6 +546,56 @@ Comm::Req CommImplMPI::Irecv(void *buffer, size_t count, Datatype datatype,
     return MakeReq(std::move(req));
 }
 
+Comm::Win CommImplMPI::Win_allocate_shared(size_t size, int disp_unit,
+                                           void *baseptr,
+                                           const std::string &hint) const
+{
+    auto w = std::unique_ptr<CommWinImplMPI>(new CommWinImplMPI());
+    MPI_Aint asize = static_cast<MPI_Aint>(size);
+    CheckMPIReturn(MPI_Win_allocate_shared(asize, disp_unit, MPI_INFO_NULL,
+                                           m_MPIComm, baseptr, &w->m_Win),
+                   "in call to Win_allocate_shared " + hint + "\n");
+    return MakeWin(std::move(w));
+}
+
+int CommImplMPI::Win_shared_query(Comm::Win &win, int rank, size_t *size,
+                                  int *disp_unit, void *baseptr,
+                                  const std::string &hint) const
+{
+    CommWinImplMPI *w = dynamic_cast<CommWinImplMPI *>(CommWinImpl::Get(win));
+    MPI_Aint asize;
+    int ret = MPI_Win_shared_query(w->m_Win, rank, &asize, disp_unit, baseptr);
+    CheckMPIReturn(ret, "in call to Win_shared_query " + hint + "\n");
+    *size = static_cast<size_t>(asize);
+    return ret;
+}
+
+int CommImplMPI::Win_free(Comm::Win &win, const std::string &hint) const
+{
+    CommWinImplMPI *w = dynamic_cast<CommWinImplMPI *>(CommWinImpl::Get(win));
+    int ret = MPI_Win_free(&w->m_Win);
+    CheckMPIReturn(ret, "in call to Win_free " + hint + "\n");
+    return ret;
+}
+
+int CommImplMPI::Win_Lock(Comm::LockType lock_type, int rank, int assert,
+                          Comm::Win &win, const std::string &hint) const
+{
+    CommWinImplMPI *w = dynamic_cast<CommWinImplMPI *>(CommWinImpl::Get(win));
+    int mpi_lock_type = ToMPI(lock_type);
+    int ret = MPI_Win_lock(mpi_lock_type, rank, assert, w->m_Win);
+    CheckMPIReturn(ret, "in call to Win_Lock " + hint + "\n");
+    return ret;
+}
+int CommImplMPI::Win_Unlock(int rank, Comm::Win &win,
+                            const std::string &hint) const
+{
+    CommWinImplMPI *w = dynamic_cast<CommWinImplMPI *>(CommWinImpl::Get(win));
+    int ret = MPI_Win_unlock(rank, w->m_Win);
+    CheckMPIReturn(ret, "in call to Win_Lock " + hint + "\n");
+    return ret;
+}
+
 Comm::Status CommReqImplMPI::Wait(const std::string &hint)
 {
     Comm::Status status;
@@ -578,6 +655,11 @@ Comm::Status CommReqImplMPI::Wait(const std::string &hint)
     }
 
     return status;
+}
+
+int CommWinImplMPI::Free(const std::string &hint)
+{
+    return MPI_Win_free(&m_Win);
 }
 
 Comm CommWithMPI(MPI_Comm mpiComm)

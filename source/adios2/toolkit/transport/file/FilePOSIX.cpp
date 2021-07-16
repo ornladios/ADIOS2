@@ -18,6 +18,8 @@
 #include <sys/types.h> // open
 #include <unistd.h>    // write, close
 
+#include <iostream>
+
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> //std::ios_base::failure
 /// \endcond
@@ -120,7 +122,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
     }
 }
 
-void FilePOSIX::OpenChain(const std::string &name, const Mode openMode,
+void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
                           const helper::Comm &chainComm, const bool async)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> int {
@@ -132,6 +134,7 @@ void FilePOSIX::OpenChain(const std::string &name, const Mode openMode,
         return FD;
     };
 
+    bool createOnAppend = true;
     int token = 1;
     m_Name = name;
     CheckName();
@@ -140,6 +143,11 @@ void FilePOSIX::OpenChain(const std::string &name, const Mode openMode,
     {
         chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
                        "Chain token in FilePOSIX::OpenChain");
+        if (openMode == Mode::Write)
+        {
+            openMode = Mode::Append;
+            createOnAppend = false;
+        }
     }
 
     m_OpenMode = openMode;
@@ -147,8 +155,9 @@ void FilePOSIX::OpenChain(const std::string &name, const Mode openMode,
     {
 
     case (Mode::Write):
-        if (async)
+        if (async && chainComm.Size() == 1)
         {
+            // only single process open can do it asynchronously
             m_IsOpening = true;
             m_OpenFuture =
                 std::async(std::launch::async, lf_AsyncOpenWrite, name);
@@ -167,9 +176,19 @@ void FilePOSIX::OpenChain(const std::string &name, const Mode openMode,
     case (Mode::Append):
         ProfilerStart("open");
         errno = 0;
-        // m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
-        m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
-        lseek(m_FileDescriptor, 0, SEEK_END);
+
+        if (createOnAppend)
+        {
+            m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
+            lseek(m_FileDescriptor, 0, SEEK_END);
+        }
+        else
+        {
+            /* This case runs on rank > 0 when called with Write mode */
+            m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
+            lseek(m_FileDescriptor, 0, SEEK_SET);
+        }
+
         m_Errno = errno;
         ProfilerStop("open");
         break;
@@ -242,6 +261,11 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
                 std::to_string(start) + " in file " + m_Name +
                 ", in call to POSIX lseek" + SysErrMsg());
         }
+    }
+    else
+    {
+        const auto pos = lseek(m_FileDescriptor, 0, SEEK_CUR);
+        start = static_cast<size_t>(pos);
     }
 
     if (size > DefaultMaxFileBatchSize)

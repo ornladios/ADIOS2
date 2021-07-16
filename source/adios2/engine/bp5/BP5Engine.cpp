@@ -192,8 +192,6 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             std::string value = itKey->second;
             parameter = helper::StringToByteUnits(
                 value, "for Parameter key=" + key + "in call to Open");
-            parameter =
-                helper::StringTo<float>(value, " in Parameter key=" + key);
         }
     };
 
@@ -259,6 +257,37 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
                 throw std::invalid_argument(
                     "ERROR: Unknown BP5 BufferVType parameter \"" + value +
                     "\" (must be \"malloc\" or \"chunk\"");
+            }
+        }
+    };
+
+    auto lf_SetAggregationTypeParameter = [&](const std::string key,
+                                              int &parameter, int def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string value = itKey->second;
+            std::transform(value.begin(), value.end(), value.begin(),
+                           ::tolower);
+            if (value == "everyonewrites" || value == "auto")
+            {
+                parameter = (int)AggregationType::EveryoneWrites;
+            }
+            else if (value == "everyonewritesserial")
+            {
+                parameter = (int)AggregationType::EveryoneWritesSerial;
+            }
+            else if (value == "twolevelshm")
+            {
+                parameter = (int)AggregationType::TwoLevelShm;
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown BP5 AggregationType parameter \"" + value +
+                    "\" (must be \"auto\", \"everyonewrites\" or "
+                    "\"twolevelshm\"");
             }
         }
     };

@@ -13,7 +13,9 @@
 #include "adios2/core/Engine.h"
 #include "adios2/engine/bp5/BP5Engine.h"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosMemory.h" // PaddingToAlignOffset
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
+#include "adios2/toolkit/aggregator/mpi/MPIShmChain.h"
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
@@ -93,6 +95,8 @@ private:
 
     /** Parses parameters from IO SetParameters */
     void InitParameters() final;
+    /** Set up the aggregator */
+    void InitAggregator();
     /** Parses transports and parameters from IO AddTransport */
     void InitTransports() final;
     /** Allocates memory and starts a PG group */
@@ -127,6 +131,9 @@ private:
 
     /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);
+    void WriteData_EveryoneWrites(format::BufferV *Data,
+                                  bool SerializedWriters);
+    void WriteData_TwoLevelShm(format::BufferV *Data);
 
     void PopulateMetadataIndexFileContent(
         format::BufferSTL &buffer, const uint64_t currentStep,
@@ -140,17 +147,11 @@ private:
 
     void MarshalAttributes();
 
-    /**
-     * N-to-N data buffers writes, including metadata file
-     * @param transportIndex
-     */
-    //    void WriteData(const bool isFinal, const int transportIndex = -1);
-
-    /**
-     * N-to-M (aggregation) data buffers writes, including metadata file
-     * @param transportIndex
-     */
-    void AggregateWriteData(const bool isFinal, const int transportIndex = -1);
+    /* Two-level-shm aggregator functions */
+    void WriteMyOwnData(format::BufferV::BufferV_iovec DataVec);
+    void SendDataToAggregator(format::BufferV::BufferV_iovec DataVec,
+                              const size_t TotalSize);
+    void WriteOthersData(const size_t TotalSize);
 
     template <class T>
     T *BufferDataCommon(const size_t payloadOffset,
@@ -160,7 +161,13 @@ private:
     void PerformPutCommon(Variable<T> &variable);
 
     /** manages all communication tasks in aggregation */
-    aggregator::MPIChain m_Aggregator;
+    aggregator::MPIAggregator *m_Aggregator; // points to one of these below
+    aggregator::MPIShmChain m_AggregatorTwoLevelShm;
+    aggregator::MPIChain m_AggregatorEveroneWrites;
+    bool m_IAmDraining = false;
+    bool m_IAmWritingData = false;
+    helper::Comm *DataWritingComm; // processes that write the same data file
+    bool m_IAmWritingDataHeader = false;
 
 private:
     // updated during WriteMetaData

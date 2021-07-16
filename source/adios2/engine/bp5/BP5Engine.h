@@ -93,6 +93,14 @@ public:
 
     BufferVType UseBufferV = BufferVType::ChunkVType;
 
+    enum class AggregationType
+    {
+        EveryoneWrites,
+        EveryoneWritesSerial,
+        TwoLevelShm,
+        Auto
+    };
+
 #define BP5_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(OpenTimeoutSecs, Int, int, 3600)                                     \
     MACRO(BeginStepPollingFrequencySecs, Int, int, 0)                          \
@@ -103,6 +111,10 @@ public:
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
     MACRO(NumAggregators, UInt, unsigned int, 999999)                          \
+    MACRO(NumSubFiles, UInt, unsigned int, 999999)                             \
+    MACRO(FileSystemPageSize, UInt, unsigned int, 4096)                        \
+    MACRO(AggregationType, AggregationType, int,                               \
+          (int)AggregationType::TwoLevelShm)                                   \
     MACRO(AsyncTasks, Bool, bool, true)                                        \
     MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)               \
     MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \

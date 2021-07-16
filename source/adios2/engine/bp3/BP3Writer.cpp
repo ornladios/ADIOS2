@@ -123,6 +123,7 @@ void BP3Writer::Init()
         static_cast<unsigned int>(m_BP3Serializer.m_SizeMPI))
     {
         m_BP3Serializer.m_Aggregator.Init(
+            m_BP3Serializer.m_Parameters.NumAggregators,
             m_BP3Serializer.m_Parameters.NumAggregators, m_Comm);
     }
     InitTransports();
@@ -388,10 +389,10 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
     // async?
     for (int r = 0; r < m_BP3Serializer.m_Aggregator.m_Size; ++r)
     {
-        aggregator::MPIAggregator::ExchangeRequests dataRequests =
+        aggregator::MPIChain::ExchangeRequests dataRequests =
             m_BP3Serializer.m_Aggregator.IExchange(m_BP3Serializer.m_Data, r);
 
-        aggregator::MPIAggregator::ExchangeAbsolutePositionRequests
+        aggregator::MPIChain::ExchangeAbsolutePositionRequests
             absolutePositionRequests =
                 m_BP3Serializer.m_Aggregator.IExchangeAbsolutePosition(
                     m_BP3Serializer.m_Data, r);
