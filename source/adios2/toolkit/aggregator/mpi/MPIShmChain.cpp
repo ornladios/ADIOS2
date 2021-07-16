@@ -18,19 +18,7 @@ namespace aggregator
 
 MPIShmChain::MPIShmChain() : MPIAggregator() {}
 
-MPIShmChain::~MPIShmChain()
-{
-    Close();
-    /*if (m_IsActive)
-    {
-        m_NodeComm.Free("free per-node comm in ~MPIShmChain()");
-        m_OnePerNodeComm.Free("free chain of nodes in ~MPIShmChain()");
-        m_AllAggregatorsComm.Free(
-            "free comm of all aggregators in ~MPIShmChain()");
-        m_AggregatorChainComm.Free(
-            "free chains of aggregators in ~MPIShmChain()");
-    }*/
-}
+MPIShmChain::~MPIShmChain() { Close(); }
 
 void MPIShmChain::Close()
 {
@@ -286,7 +274,7 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockProducerBuffer()
         std::this_thread::sleep_for(std::chrono::duration<double>(0.00001));
     }
 
-    m_Comm.Win_Lock(helper::Comm::LockType::Exclusive, 0, 0, m_Win);
+    m_Shm->lockSegment.lock();
     if (m_Shm->producerBuffer == LastBufferUsed::A)
 
     {
@@ -302,7 +290,7 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockProducerBuffer()
         // point to shm data buffer (in local process memory)
         sdb->buf = m_Shm->bufA;
     }
-    m_Comm.Win_Unlock(0, m_Win);
+    m_Shm->lockSegment.unlock();
 
     // We determined we want a specific buffer
     // Now we need to get a lock on it in case consumer is using it
@@ -343,7 +331,7 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockConsumerBuffer()
     // At this point we know buffer A has content or going to have content
     // when we successfully lock it
 
-    m_Comm.Win_Lock(helper::Comm::LockType::Exclusive, 0, 0, m_Win);
+    m_Shm->lockSegment.lock();
     if (m_Shm->consumerBuffer == LastBufferUsed::A)
 
     {
@@ -359,7 +347,7 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockConsumerBuffer()
         // point to shm data buffer (in local process memory)
         sdb->buf = m_Shm->bufA;
     }
-    m_Comm.Win_Unlock(0, m_Win);
+    m_Shm->lockSegment.unlock();
 
     // We determined we want a specific buffer
     // Now we need to get a lock on it in case producer is using it

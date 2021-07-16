@@ -152,6 +152,7 @@ private:
         // user facing structs
         ShmDataBuffer sdbA;
         ShmDataBuffer sdbB;
+        aggregator::Spinlock lockSegment;
         // locks for individual buffers (sdb and buf)
         aggregator::Spinlock lockA;
         aggregator::Spinlock lockB;
