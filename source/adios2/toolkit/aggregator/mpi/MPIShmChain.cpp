@@ -308,6 +308,10 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockProducerBuffer()
 
 void MPIShmChain::UnlockProducerBuffer()
 {
+    m_Shm->lockSegment.lock();
+    ++m_Shm->NumBuffersFull;
+    m_Shm->lockSegment.unlock();
+
     if (m_Shm->producerBuffer == LastBufferUsed::A)
     {
         m_Shm->lockA.unlock();
@@ -316,7 +320,6 @@ void MPIShmChain::UnlockProducerBuffer()
     {
         m_Shm->lockB.unlock();
     }
-    ++m_Shm->NumBuffersFull;
 }
 
 MPIShmChain::ShmDataBuffer *MPIShmChain::LockConsumerBuffer()
@@ -365,6 +368,10 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockConsumerBuffer()
 
 void MPIShmChain::UnlockConsumerBuffer()
 {
+    m_Shm->lockSegment.lock();
+    --m_Shm->NumBuffersFull;
+    m_Shm->lockSegment.unlock();
+
     if (m_Shm->consumerBuffer == LastBufferUsed::A)
     {
         m_Shm->lockA.unlock();
@@ -373,7 +380,6 @@ void MPIShmChain::UnlockConsumerBuffer()
     {
         m_Shm->lockB.unlock();
     }
-    --m_Shm->NumBuffersFull;
 }
 
 } // end namespace aggregator
