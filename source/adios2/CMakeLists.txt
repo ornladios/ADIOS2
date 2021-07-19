@@ -349,6 +349,29 @@ install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common COMPONENT adios2_core-development
 )
 
+install(DIRECTORY core/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/core COMPONENT adios2_core-development
+  FILES_MATCHING PATTERN "*.h"
+)
+
+install(DIRECTORY engine/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/engine COMPONENT adios2_core-development
+  FILES_MATCHING PATTERN "*/*.h"
+  PATTERN "*/*.inl"
+)
+
+install(DIRECTORY helper/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/helper COMPONENT adios2_core-development
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN "*.inl"
+)
+
+install(DIRECTORY toolkit/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/toolkit COMPONENT adios2_core-development
+  FILES_MATCHING PATTERN "*/*.h"
+  PATTERN "*/*.inl"
+)
+
 # Library installation
 install(TARGETS adios2_core ${maybe_adios2_core_mpi} EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
