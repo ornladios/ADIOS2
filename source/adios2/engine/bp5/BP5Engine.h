@@ -110,7 +110,7 @@ public:
     MACRO(NodeLocal, Bool, bool, false)                                        \
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
-    MACRO(NumAggregators, UInt, unsigned int, 999999)                          \
+    MACRO(NumAggregators, UInt, unsigned int, 0)                               \
     MACRO(NumSubFiles, UInt, unsigned int, 999999)                             \
     MACRO(FileSystemPageSize, UInt, unsigned int, 4096)                        \
     MACRO(AggregationType, AggregationType, int,                               \
