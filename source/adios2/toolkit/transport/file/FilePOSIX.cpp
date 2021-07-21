@@ -134,7 +134,6 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
         return FD;
     };
 
-    bool createOnAppend = true;
     int token = 1;
     m_Name = name;
     CheckName();
@@ -143,11 +142,6 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
     {
         chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
                        "Chain token in FilePOSIX::OpenChain");
-        if (openMode == Mode::Write)
-        {
-            openMode = Mode::Append;
-            createOnAppend = false;
-        }
     }
 
     m_OpenMode = openMode;
@@ -157,7 +151,8 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
     case (Mode::Write):
         if (async && chainComm.Size() == 1)
         {
-            // only single process open can do it asynchronously
+            // only when process is a single writer, can create the file
+            // asynchronously, otherwise other processes are waiting on it
             m_IsOpening = true;
             m_OpenFuture =
                 std::async(std::launch::async, lf_AsyncOpenWrite, name);
@@ -166,8 +161,16 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
         {
             ProfilerStart("open");
             errno = 0;
-            m_FileDescriptor =
-                open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            if (chainComm.Rank() == 0)
+            {
+                m_FileDescriptor =
+                    open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            }
+            else
+            {
+                m_FileDescriptor = open(m_Name.c_str(), O_WRONLY, 0666);
+                lseek(m_FileDescriptor, 0, SEEK_SET);
+            }
             m_Errno = errno;
             ProfilerStop("open");
         }
@@ -176,19 +179,15 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
     case (Mode::Append):
         ProfilerStart("open");
         errno = 0;
-
-        if (createOnAppend)
+        if (chainComm.Rank() == 0)
         {
-            m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
-            lseek(m_FileDescriptor, 0, SEEK_END);
+            m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0666);
         }
         else
         {
-            /* This case runs on rank > 0 when called with Write mode */
             m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
-            lseek(m_FileDescriptor, 0, SEEK_SET);
         }
-
+        lseek(m_FileDescriptor, 0, SEEK_END);
         m_Errno = errno;
         ProfilerStop("open");
         break;
