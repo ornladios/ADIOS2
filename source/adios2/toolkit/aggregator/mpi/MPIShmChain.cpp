@@ -147,58 +147,69 @@ void MPIShmChain::Init(const size_t numAggregators, const size_t subStreams,
     {
         m_IsMasterAggregator = false;
     }
+    HandshakeStruct hsAC; // need persistence until complete
+    if (m_AggregatorChainComm.Size() > 1)
+    {
+        HandshakeLinks_Start(m_AggregatorChainComm, hsAC);
+    }
 
     m_IsActive = true;
 
-    helper::Comm::Req sendRequest = HandshakeLinks_Start();
-
-    /* Create the shared memory segment */
     if (m_Comm.Size() > 1)
     {
+        HandshakeStruct hs; // need persistence until complete
+        HandshakeLinks_Start(m_Comm, hs);
+
+        /* Create the shared memory segment */
         CreateShm();
+
+        HandshakeLinks_Complete(hs);
     }
 
-    HandshakeLinks_Complete(sendRequest);
+    if (m_AggregatorChainComm.Size() > 1)
+    {
+        HandshakeLinks_Complete(hsAC);
+    }
 }
 
 // PRIVATE
-helper::Comm::Req MPIShmChain::HandshakeLinks_Start()
+void MPIShmChain::HandshakeLinks_Start(helper::Comm &comm, HandshakeStruct &hs)
 {
-    int link = -1;
-
-    helper::Comm::Req sendRequest;
-    if (m_Rank > 0) // send
+    int rank = comm.Rank();
+    hs.sendToken = rank;
+    if (rank < comm.Size() - 1) // send to next
     {
-        sendRequest = m_Comm.Isend(
-            &m_Rank, 1, m_Rank - 1, 0,
+        hs.sendRequest = comm.Isend(
+            &hs.sendToken, 1, rank + 1, 0,
             "Isend handshake with neighbor, MPIChain aggregator, at Open");
     }
-
-    if (m_Rank < m_Size - 1) // receive
+    else // send to 0 to close the loop
     {
-        helper::Comm::Req receiveRequest = m_Comm.Irecv(
-            &link, 1, m_Rank + 1, 0,
+        hs.sendRequest = comm.Isend(
+            &hs.sendToken, 1, 0, 0,
+            "Isend handshake with rank 0, MPIChain aggregator, at Open");
+    }
+
+    if (comm.Rank() > 0) // receive from previous
+    {
+        hs.recvRequest = comm.Irecv(
+            &hs.recvToken, 1, rank - 1, 0,
             "Irecv handshake with neighbor, MPIChain aggregator, at Open");
-
-        receiveRequest.Wait("Irecv Wait handshake with neighbor, MPIChain "
-                            "aggregator, at Open");
     }
-
-    if (m_Rank > 0)
+    else // rank 0 receives from last
     {
-        sendRequest.Wait("Isend wait handshake with neighbor, MPIChain "
-                         "aggregator, at Open");
+        hs.recvRequest = comm.Irecv(
+            &hs.recvToken, 1, rank - 1, 0,
+            "Irecv handshake with neighbor, MPIChain aggregator, at Open");
     }
-    return sendRequest;
 }
 
-void MPIShmChain::HandshakeLinks_Complete(helper::Comm::Req &req)
+void MPIShmChain::HandshakeLinks_Complete(HandshakeStruct &hs)
 {
-    if (m_Rank > 0)
-    {
-        req.Wait("Isend wait handshake with neighbor, MPIChain "
-                 "aggregator, at Open");
-    }
+    hs.recvRequest.Wait("Wait handshake with neighbor (recv), MPIChain "
+                        "aggregator, at Open");
+    hs.sendRequest.Wait("Wait handshake with neighbor (send), MPIChain "
+                        "aggregator, at Open");
 }
 
 void MPIShmChain::CreateShm()
@@ -245,9 +256,10 @@ void MPIShmChain::DestroyShm() { m_Comm.Win_free(m_Win); }
    It takes buffer A at the first call, then it alternates between the two
    buffers.
 
-   MPI_Win locking is used to modify the m_Shm variables exclusively (very short
-   time) C++ atomic locks are used to give long term exclusive access to one
-   buffer to be filled or consumed.
+   C++ atomic locks in Shm for IPC locking:
+   - lockSegment is used to modify the m_Shm variables exclusively (short time),
+   - lockA and lockB are used to give long term exclusive access to one buffer
+   to be filled or consumed.
 
    The sleeping phases, to wait on the other party to catch up, are outside of
    the locking code areas.
