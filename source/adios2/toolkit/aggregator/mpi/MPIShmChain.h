@@ -130,8 +130,16 @@ public:
     void ResetBuffers() noexcept;
 
 private:
-    helper::Comm::Req HandshakeLinks_Start();
-    void HandshakeLinks_Complete(helper::Comm::Req &req);
+    struct HandshakeStruct
+    {
+        int sendToken;
+        int recvToken;
+        helper::Comm::Req sendRequest;
+        helper::Comm::Req recvRequest;
+    };
+
+    void HandshakeLinks_Start(helper::Comm &comm, HandshakeStruct &hs);
+    void HandshakeLinks_Complete(HandshakeStruct &hs);
 
     helper::Comm::Win m_Win;
     void CreateShm();
