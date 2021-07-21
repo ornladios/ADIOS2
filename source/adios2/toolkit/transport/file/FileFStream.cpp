@@ -111,7 +111,6 @@ void FileFStream::OpenChain(const std::string &name, Mode openMode,
         ProfilerStop("open");
     };
 
-    bool createOnAppend = true;
     int token = 1;
     m_Name = name;
     CheckName();
@@ -120,11 +119,6 @@ void FileFStream::OpenChain(const std::string &name, Mode openMode,
     {
         chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
                        "Chain token in FileFStream::OpenChain");
-        if (openMode == Mode::Write)
-        {
-            openMode = Mode::Append;
-            createOnAppend = false;
-        }
     }
 
     m_OpenMode = openMode;
@@ -140,28 +134,26 @@ void FileFStream::OpenChain(const std::string &name, Mode openMode,
         else
         {
             ProfilerStart("open");
-            m_FileStream.open(name, std::fstream::out | std::fstream::binary |
-                                        std::fstream::trunc);
+            if (chainComm.Rank() == 0)
+            {
+                m_FileStream.open(name, std::fstream::out |
+                                            std::fstream::binary |
+                                            std::fstream::trunc);
+            }
+            else
+            {
+                m_FileStream.open(name,
+                                  std::fstream::out | std::fstream::binary);
+            }
             ProfilerStop("open");
         }
         break;
 
     case (Mode::Append):
         ProfilerStart("open");
-
-        if (createOnAppend)
-        {
-            m_FileStream.open(name, std::fstream::in | std::fstream::out |
-                                        std::fstream::binary);
-            m_FileStream.seekp(0, std::ios_base::end);
-        }
-        else
-        {
-            m_FileStream.open(name, std::fstream::in | std::fstream::out |
-                                        std::fstream::binary);
-            m_FileStream.seekp(0, std::ios_base::beg);
-        }
-
+        m_FileStream.open(name, std::fstream::in | std::fstream::out |
+                                    std::fstream::binary);
+        m_FileStream.seekp(0, std::ios_base::end);
         ProfilerStop("open");
         break;
 
