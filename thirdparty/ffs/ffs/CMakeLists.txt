@@ -134,7 +134,7 @@ else()
   ADD_FLEX_BISON_DEPENDENCY(CODScanner CODParser)
 endif()
 add_custom_command(
-  OUTPUT "cod_node.c" "structs.h"
+  OUTPUT "cod_node.c" 
   COMMAND
     perl
       ${CMAKE_CURRENT_SOURCE_DIR}/cod/struct.pl
