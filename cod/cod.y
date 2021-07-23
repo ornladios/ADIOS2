@@ -5863,8 +5863,8 @@ int *must_free_p;
 	ret->node.reference_type_decl.cg_referenced_type = DILL_ERR;
 	ret->node.reference_type_decl.sm_complex_referenced_type = subtype;
 	if (must_free_flag) {
-	    if (ret->node.array_type_decl.freeable_complex_element_type) {
-	        cod_rfree(ret->node.array_type_decl.freeable_complex_element_type);
+	    if (ret->node.reference_type_decl.freeable_complex_referenced_type) {
+	        cod_rfree(ret->node.reference_type_decl.freeable_complex_referenced_type);
 	    }
 	    ret->node.reference_type_decl.freeable_complex_referenced_type = subtype;
 	}

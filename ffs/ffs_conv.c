@@ -214,7 +214,7 @@ void **default_val;
     char *s, *s1;
     char *base_type = base_data_type(io_field->field_type);
     FMdata_type data_type = FMstr_to_data_type(base_type);
-    strncpy(out_field_name, io_field->field_name, 64);
+    strncpy(out_field_name, io_field->field_name, 128);
     s = strchr(out_field_name, '(');
     *default_val = NULL;
     free(base_type);
@@ -345,7 +345,8 @@ FMStructDescList target_list;
 	FMdata_type in_data_type, target_data_type;
 	long in_elements, target_elements;
 	void *default_val = NULL;
-	char tmp_field_name[64];
+	char *tmp_field_name = NULL;
+	char *search_name;
 	int multi_dimen_array = 0;
 
 	/* 
@@ -354,8 +355,15 @@ FMStructDescList target_list;
 	 */
 	input_index = 0;
 	
-	field_name_strip_get_default(&nfl_sort[i], tmp_field_name, &default_val);
-	while (strcmp(tmp_field_name,
+	if (strchr(nfl_sort[i].field_name, '(') == NULL) {
+	    /* no default value */
+	    search_name = (char *) nfl_sort[i].field_name;
+	} else {
+	    tmp_field_name = malloc(strlen(nfl_sort[i].field_name)); /* certainly big enough */
+	    field_name_strip_get_default(&nfl_sort[i], tmp_field_name, &default_val);
+	    search_name = tmp_field_name;
+	}
+	while (strcmp(search_name,
 		      input_field_list[input_index].field_name) != 0) {
 	    input_index++;
 	    if (input_index >= src_ioformat->body->field_count) {
@@ -371,6 +379,7 @@ FMStructDescList target_list;
 			    default_val = NULL;
 			}
 			conv = buffer_and_convert;
+			if (tmp_field_name) free(tmp_field_name);
 			goto restart;
 		    }
 		}
@@ -378,9 +387,11 @@ FMStructDescList target_list;
 			"Requested field %s missing from input format\n",
 			nfl_sort[i].field_name);
 		FFSfree_conversion(conv_ptr);
+		if (tmp_field_name) free(tmp_field_name);
 		return NULL;
 	    }
 	}
+	if (tmp_field_name) free(tmp_field_name);
 	if(input_index == -1){
 	    create_default_conversion(nfl_sort[i], default_val, &conv_ptr, 
 				      conv_index);
