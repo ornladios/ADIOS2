@@ -51,9 +51,18 @@ void BP5Writer::PutCommon(Variable<T> &variable, const T *values, bool sync)
             sync = true;
         }
     }
-    m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
-                            variable.m_Type, variable.m_ElementSize, DimCount,
-                            Shape, Count, Start, values, sync);
+    if (std::is_same<T, std::string>::value)
+    {
+        std::string &source = *(std::string *)values;
+        void *p = &(source[0]);
+        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
+                                variable.m_Type, variable.m_ElementSize,
+                                DimCount, Shape, Count, Start, &p, sync);
+    }
+    else
+        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
+                                variable.m_Type, variable.m_ElementSize,
+                                DimCount, Shape, Count, Start, values, sync);
 }
 
 } // end namespace engine
