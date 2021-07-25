@@ -929,7 +929,6 @@ int field;
 		if ((size < sizeof(int))  || (size < sizeof(long)))
 		    return FMOffset(si, i);
 		return FMOffset(sl, l);
-		break;
 	    case unknown_type: case string_type:
 		assert(0);
 	    case float_type:
@@ -1564,7 +1563,6 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
     int field;
     FMFieldList new_field_list;
     int field_count = count_FMfield(field_list);
-    int simple_string = 0;
     new_field_list = (FMFieldList) malloc((size_t) sizeof(FMField) *
 					     (field_count + 1));
     for (field = 0; field < field_count; field++) {
@@ -3510,6 +3508,8 @@ struct _subformat_wire_format *rep;
 	if (tmp != 0) {
 	    offset = tmp;
 	    format->opt_info = malloc(sizeof(FMOptInfo));
+	    INT2 len = rep->f.f0.subformat_rep_length;
+	    if (byte_reversal) byte_swap((char*)&len, 2);
 	    do {
 		memcpy(&tmp_info, offset + (char*) rep, sizeof(tmp_info));
 		if (tmp_info.info_type != 0) {
@@ -3531,7 +3531,7 @@ struct _subformat_wire_format *rep;
 		    info_count++;
 		    offset += sizeof(tmp_info);
 		}
-	    } while (tmp_info.info_type != 0);
+	    } while ((tmp_info.info_type != 0) && (offset < len));
 	    format->opt_info[info_count].info_type = 0;
 	    format->opt_info[info_count].info_len = 0;
 	    format->opt_info[info_count].info_block = 0;
@@ -3739,6 +3739,7 @@ fill_derived_format_values(FMContext fmc, FMFormat format)
 	    }
 	    field_size = field_list[field].field_size * elements;
 	}
+	(void) field_size;
     }
     generate_var_list(format, format->subformats);
     for (field = 0; field < format->field_count; field++) {
@@ -4090,7 +4091,6 @@ void *format_ID;
 	    memcpy(&tmp, &id2->rep_len, 2);
 		tmp = ntohs(tmp);
 	    return tmp << 2;
-	    break;
 	}
     case 0:
     case 1:

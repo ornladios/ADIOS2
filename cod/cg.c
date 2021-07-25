@@ -558,7 +558,6 @@ evaluate_constant_expr(dill_stream s, sm_ref expr, long*value)
 	}
 	*value = l;
 	return 1;
-	break;
     }
     case cod_identifier:
 	return evaluate_constant_expr(s, expr->node.identifier.sm_declaration, value);
@@ -2214,7 +2213,6 @@ execute_operator_cg(dill_stream s, operator_t op, int op_type, dill_reg result, 
 	    right_op.in_kernel = 0;
 	}
 	return right_op;
-	break;
     }
     case  op_address:
 	ret_op.reg = right;
@@ -2288,7 +2286,6 @@ cg_subroutine_call(dill_stream s, sm_ref expr, cod_code descr)
     sm_list formals = func_ref->node.declaration.params;
     sm_list args = expr->node.subroutine_call.arguments;
     sm_ref arg, formal;
-    sm_ref last_arg = NULL;
     dill_reg args_array[MAX_ARG];  /* should be large enough */
     int types_array[MAX_ARG];  /* should be large enough */
     int start, i, direction;
@@ -2366,7 +2363,6 @@ cg_subroutine_call(dill_stream s, sm_ref expr, cod_code descr)
 	}
 	arg_count++;
 	args = args->next;
-	last_arg = arg;
 	if (formals) formals = formals->next;
 	if (next_formal_is_drisc_exec_ctx(formals)) {
 	    if (arg_count < MAX_ARG) {
