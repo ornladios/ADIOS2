@@ -261,7 +261,13 @@ void *conn;
     int ret_val;
 
     time.tv_sec = time.tv_usec = 0;
+#ifdef __NVCOMPILER
+#pragma diag_suppress 550
+#endif
     FD_ZERO(&read_fds);
+#ifdef __NVCOMPILER
+#pragma diag_default 550
+#endif
     FD_SET(fd, &read_fds);
     ret_val = select(FD_SETSIZE, &read_fds, NULL, NULL, &time);
     return (ret_val > 0);

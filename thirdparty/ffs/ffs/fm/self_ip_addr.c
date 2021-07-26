@@ -50,7 +50,7 @@ get_self_ip_addr()
     char *IP_string = getenv("CERCS_IP");
     if (IP_string != NULL) {
 	in_addr_t ip = inet_addr(IP_string);
-	if (ip != -1) return ntohl(ip);
+	if (ip != (in_addr_t) -1) return ntohl(ip);
     }
     gethostname(buf, sizeof(buf));
     host = gethostbyname(buf);

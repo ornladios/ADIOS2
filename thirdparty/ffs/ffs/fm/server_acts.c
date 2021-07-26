@@ -189,7 +189,13 @@ action_t action;
 	struct timeval timeout;
 	int ret;
 
+#ifdef __NVCOMPILER
+#pragma diag_suppress 550
+#endif
 	FD_ZERO(&rd_set);
+#ifdef __NVCOMPILER
+#pragma diag_default 550
+#endif
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
 	FD_SET( (int)(long)iofile->server_fd, &rd_set);

@@ -670,6 +670,7 @@ parse_index_block(char *index_base)
     int done = 0;
     item = malloc(sizeof(FFSIndexItemStruct));
     block_size = htonl(*((int*)(index_base+4))) & 0xffffff;
+    (void) block_size; /* avoid warning */
     item->next_index_offset = htonl(*((int*)(index_base+4)));
     item->start_data_count = htonl(*((int*)(index_base+8)));
     item->last_data_count = htonl(*((int*)(index_base+12)));
@@ -1249,9 +1250,6 @@ FFSseek(FFSFile file, int data_item)
     off_t fpos;
     int index_item;
     FFSIndexItem prev_index_tail = NULL;
-    int data_item_bak = data_item;
-
-    data_item_bak = file->data_block_no;
 
     if (data_item < 0)
         /* Or should it be set to 0  */
@@ -1363,9 +1361,9 @@ static void
 convert_last_index_block(FFSFile ffsfile)
 {
     FFSIndexItem read_index = ffsfile->index_tail;
-    FFSIndexType write_index;
+
     init_write_index_block(ffsfile);
-    write_index = ffsfile->cur_index;
+
     unsigned char *index_data;
 
     if (read_index == NULL) return;
@@ -1609,7 +1607,6 @@ FFSnext_data_length(FFSFile file)
 extern int
 FFSread(FFSFile file, void *dest)
 {
-    FFSTypeHandle f;
     int header_size;
     int read_size;
     char *tmp_buf;
@@ -1624,7 +1621,6 @@ FFSread(FFSFile file, void *dest)
 	if (!FFSconsume_next_item(file)) return 0;
     }
 
-    f = file->next_data_handle;
     header_size = FFSheader_size(file->next_actual_handle);
     read_size = file->next_data_len - header_size;
     tmp_buf = file->tmp_buffer->tmp_buffer;
@@ -1706,7 +1702,6 @@ FFSread_raw(FFSFile file, void *dest, int buffer_size, FFSTypeHandle *fp)
     FFSTypeHandle f;
     int header_size;
     int read_size;
-    char *tmp_buf;
 
     if (file->status != OpenForRead)
 	return 0;
@@ -1722,7 +1717,6 @@ FFSread_raw(FFSFile file, void *dest, int buffer_size, FFSTypeHandle *fp)
     *fp = f;
     header_size = FFSheader_size(f);
     read_size = file->next_data_len - header_size;
-    tmp_buf = file->tmp_buffer->tmp_buffer;
 
     if (file->read_func(file->file_id, dest, read_size, NULL, NULL) != read_size) {
 	file->next_record_type = (file->errno_val) ? FFSerror : FFSend;
