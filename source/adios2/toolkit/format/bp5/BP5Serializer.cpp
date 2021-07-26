@@ -459,7 +459,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         else
         {
             char **StrPtr = (char **)((char *)(MetadataBuf) + Rec->MetaOffset);
-            if (AlreadyWritten)
+            if (AlreadyWritten && (*StrPtr != NULL))
                 free(*StrPtr);
             *StrPtr = strdup(*(char **)Data);
         }
