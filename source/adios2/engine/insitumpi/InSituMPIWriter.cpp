@@ -38,6 +38,9 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     m_EndMessage = " in call to InSituMPIWriter " + m_Name + " Open\n";
     Init();
     m_BP3Serializer.Init(m_IO.m_Parameters, "in call to InSituMPI::Open write");
+    m_BP3Serializer.ResizeBuffer(
+        m_BP3Serializer.m_Parameters.InitialBufferSize,
+        "in call to BP3::Open for writing by InSituMPI engine");
 
     m_RankAllPeers =
         insitumpi::FindPeers(CommAsMPI(m_Comm), m_Name, true, m_CommWorld);
