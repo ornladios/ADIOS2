@@ -444,7 +444,7 @@ main(int argc, char** argv)
 	} 
 	func = (long(*)()) (long) gen_code->func;
 	result = func();
-	assert(result == -2*sizeof(double));
+	assert(result == -2*(long)sizeof(double));
 	cod_code_free(gen_code);
 	cod_free_parse_context(context);
     }
@@ -475,7 +475,7 @@ main(int argc, char** argv)
 	} 
 	func = (long(*)()) (long) gen_code->func;
 	result = func();
-	assert(result == -2*sizeof(double *));
+	assert(result == -2*(long)sizeof(double *));
 	cod_code_free(gen_code);
 	cod_free_parse_context(context);
     }

@@ -50,7 +50,7 @@ char **argv;
 	FMContext context = create_FMcontext();
 	FMcontext_allow_self_formats(context);
 	printf("Format server identifier is %x\n", FMcontext_get_format_server_identifier(context));
-	char id[] = {02, 00, 00, 37, 103, 189, 231, 165, 33, 254, 42, 32};
+	unsigned char id[] = {02, 00, 00, 37, 103, 189, 231, 165, 33, 254, 42, 32};
 	printf("Doing get test\n");
 	first_rec_ioformat = FMformat_from_ID(context, (char *) &id[0]);
 	printf("format is %lx\n", (long)first_rec_ioformat);

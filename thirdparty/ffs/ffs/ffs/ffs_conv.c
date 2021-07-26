@@ -2746,7 +2746,7 @@ int data_already_copied;
 	}
 	    
 	if (conv_status->register_args) {
-	    dill_reg new_src, new_dest, ret;
+	    dill_reg new_src, new_dest;
 	    if (!ffs_getreg(c, &new_src, DILL_P, DILL_TEMP) ||
 		!ffs_getreg(c, &new_dest, DILL_P, DILL_TEMP))
 		gen_fatal("temp vals in subcall\n");
@@ -2754,7 +2754,7 @@ int data_already_copied;
 		       new_src, new_dest));
 	    dill_addpi(c, new_src, src_addr, src_offset);
 	    dill_addpi(c, new_dest, dest_addr, dest_offset);
-	    ret = dill_scallp(c, (void*)conv->subconversion->conv_func, name, "%p%p%p", new_src,
+	    (void) dill_scallp(c, (void*)conv->subconversion->conv_func, name, "%p%p%p", new_src,
 			      new_dest, rt_conv_status);
 	    REG_DEBUG(("Putting %d and %d for new src & dest\n", 
 		       new_src, new_dest));
@@ -2934,6 +2934,7 @@ int data_already_copied;
 				   rt_conv_status, conv, next, 
 				   data_already_copied);
 	    
+	    (void)loop_var_type;  /* avoid warning */
 #if defined(NOT) & defined(RAW)
 	    /* generate end of loop */
 	    if (!register_args) {

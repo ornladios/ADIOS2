@@ -34,25 +34,9 @@ main(int argc, char**argv)
 {
     int test_num = 0;
     int run_only = -1;
-    char *read_file = NULL;
-    char *write_file = NULL;
     while (argc > 1) {
 	if (strcmp(argv[1], "-v") == 0) {
 	    verbose++;
-	} else if (strcmp(argv[1], "-w") == 0) {
-	    if (argc <= 1) {
-		printf("Need argument to \"-w\"\n");
-	    } else {
-		write_file = strdup(argv[2]);
-	    }
-	    argc--; argv++;
-	} else if (strcmp(argv[1], "-r") == 0) {
-	    if (argc <= 1) {
-		printf("Need argument to \"-r\"\n");
-	    } else {
-		read_file = strdup(argv[2]);
-	    }
-	    argc--; argv++;
 	} else if (strcmp(argv[1], "-o") == 0) {
 	    sscanf(argv[2], "%d", &run_only);
 	    argc--; argv++;

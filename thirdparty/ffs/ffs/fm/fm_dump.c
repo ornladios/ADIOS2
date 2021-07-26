@@ -570,7 +570,6 @@ dump_subfield(void*base, FMFormat f, dstate s, int data_offset, void* parent_bas
 	    add_to_addr_list(s, ptr_value, new_offset);
 	}
 	return dump_subfield(ptr_value, f, s, 0, parent_base, t->next);
-	break;
     }
     case FMType_string:
     {
@@ -594,7 +593,6 @@ dump_subfield(void*base, FMFormat f, dstate s, int data_offset, void* parent_bas
     {
 	int elements = 1, i;
 	int element_size;
-	int var_array = 0;
 	FMTypeDesc *next = t;
 	while (next->type == FMType_array) {
 	    if (next->static_size == 0) {
@@ -605,7 +603,6 @@ dump_subfield(void*base, FMFormat f, dstate s, int data_offset, void* parent_bas
 		src_spec.offset = f->field_list[field].field_offset;
 		int tmp = quick_get_ulong(&src_spec, parent_base);
 		elements = elements * tmp;
-		var_array = 1;
 	    } else {
 		elements = elements * next->static_size;
 	    }
@@ -628,7 +625,6 @@ dump_subfield(void*base, FMFormat f, dstate s, int data_offset, void* parent_bas
 	ret = dump_subfields(base, subformat, s, data_offset);
 	stop_field(s, fmfield, &f->var_list[field_index].type_desc);
 	return ret;
-	break;
     }
     case FMType_simple: {
 	FMFieldList fmfield = &f->field_list[t->field_index];
