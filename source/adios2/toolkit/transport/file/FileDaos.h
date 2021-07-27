@@ -9,13 +9,11 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_DAOS_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_FILE_DAOS_H_
 
-#include <future> //std::async, std::future
-
-#include <daos.h>
-#include <daos_fs.h>
-
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
+
+#include <future>
+#include <memory>
 
 namespace adios2
 {
@@ -34,6 +32,8 @@ public:
     FileDaos(helper::Comm const &comm);
 
     ~FileDaos();
+
+    void SetParameters(const Params &parameters);
 
     void Open(const std::string &name, const Mode openMode,
               const bool async = false) final;
@@ -56,14 +56,10 @@ public:
     void SeekToBegin() final;
 
 private:
-    uuid_t cuuid;
-    daos_handle_t poh = DAOS_HDL_INVAL;
-    daos_handle_t coh = DAOS_HDL_INVAL;
-    daos_cont_info_t co_info;
-    dfs_t *dfs_mt;
-    dfs_obj_t *obj;
-    
-    /** DAOS file handle returned by Open */
+    class Impl;
+    std::unique_ptr<Impl> m_Impl;
+
+    /** DAOS file handle reterned by Open */
     bool m_DAOSOpenSucceed = false;
     size_t m_GlobalOffset = 0;
     int m_Errno = 0;

@@ -16,9 +16,7 @@
 #include <sys/types.h> // open
 #include <unistd.h>    // write, close
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <ios> //std::ios_base::failure
-/// \endcond
+#include <ios>
 
 #include <daos.h>
 #include <daos_fs.h>
@@ -28,35 +26,251 @@ namespace adios2
 namespace transport
 {
 
-FileDaos::FileDaos(helper::Comm const &comm) : Transport("File", "Daos", comm)
+namespace
 {
-    if (comm.Rank() == 0)
+void GetUUIDFromEnv(const std::string &env, uuid_t &uuidValue)
+{
+    uuid_clear(uuidValue);
+
+    if (const char *uuidEnv = std::getenv(env.c_str()))
     {
-        int rc;
-        uuid_generate(cuuid);
-        rc = dfs_cont_create(poh, cuuid, NULL, NULL, NULL);
-        rc = daos_cont_open(poh, cuuid, DAOS_COO_RW,
-	          	    &coh, &co_info, NULL);
-	rc = dfs_mount(poh, coh, O_RDWR, &dfs_mt);
+        if (!uuid_parse(uuidEnv, uuidValue))
+        {
+            throw std::invalid_argument("Error: Unable to parse " + env +
+                                        " environment variable");
+        }
+    }
+    else
+    {
+        throw std::invalid_argument("Error: " + env +
+                                    " environment variable not found");
+    }
+}
+
+void CheckDAOSReturnCode(int rc)
+{
+    if (rc != 0)
+    {
+        std::string daosErr(d_errstr(rc));
+        throw std::ios_base::failure("ERROR: DAOS: " + daosErr);
+    }
+}
+}
+
+class FileDaos::Impl
+{
+public:
+    Impl()
+    {
+        uuid_clear(UUID);
+        try
+        {
+            GetUUIDFromEnv("ADIOS_DAOS_UUID", UUID);
+        }
+        catch (const std::invalid_argument &)
+        {
+        }
+
+        uuid_clear(CUUID);
+        try
+        {
+            GetUUIDFromEnv("ADIOS_DAOS_CUUID", CUUID);
+        }
+        catch (const std::invalid_argument &)
+        {
+        }
+
+        if (const char *groupEnv = std::getenv("ADIOS_DAOS_GROUP"))
+        {
+            Group = groupEnv;
+        }
     }
 
+    ~Impl()
+    {
+        if (Obj)
+        {
+            int rc = dfs_release(Obj);
+            CheckDAOSReturnCode(rc);
+            Obj = nullptr;
+        }
+        if (Mount)
+        {
+            int rc = dfs_umount(Mount);
+            CheckDAOSReturnCode(rc);
+            Mount = nullptr;
+        }
+    }
+
+    void InitMount(helper::Comm const &comm, const Mode openMode)
+    {
+        int rc;
+        int poolFlags, contFlags, mountFlags;
+
+        if (Mount)
+        {
+            throw std::ios_base::failure(
+                "ERROR: FileDaos: Mount handle already exists");
+        }
+
+        switch (openMode)
+        {
+        case (Mode::Write):
+        case (Mode::Append):
+            poolFlags = DAOS_PC_RW;
+            contFlags = DAOS_COO_RW;
+            mountFlags = O_RDWR;
+            break;
+        case (Mode::Read):
+            poolFlags = DAOS_PC_RO;
+            contFlags = DAOS_COO_RO;
+            mountFlags = O_RDONLY;
+            break;
+        default:
+            break;
+        }
+
+        daos_handle_t poh;
+        daos_handle_t coh;
+        d_iov_t gHandles[3];
+        if (comm.Rank() == 0)
+        {
+            rc = daos_pool_connect(UUID, Group.c_str(), poolFlags, &poh, NULL, NULL);
+            CheckDAOSReturnCode(rc);
+
+            rc = daos_cont_open(poh, CUUID, contFlags, &coh, NULL, NULL);
+            CheckDAOSReturnCode(rc);
+
+            rc = dfs_mount(poh, coh, mountFlags, &Mount);
+            CheckDAOSReturnCode(rc);
+
+            rc = daos_pool_local2global(poh, &gHandles[0]);
+            CheckDAOSReturnCode(rc);
+
+            rc = daos_cont_local2global(coh, &gHandles[1]);
+            CheckDAOSReturnCode(rc);
+
+            rc = dfs_local2global(Mount, &gHandles[2]);
+            CheckDAOSReturnCode(rc);
+
+            size_t bufLen = 6 * sizeof(size_t);
+            for (size_t i = 0; i < 3; ++i)
+            {
+                bufLen += gHandles[i].iov_buf_len;
+            }
+
+            std::vector<unsigned char> buf(bufLen);
+            unsigned char *bufPtr = buf.data();
+            for (size_t i = 0; i < 3; ++i)
+            {
+                std::memcpy(bufPtr, &gHandles[i].iov_len, sizeof(size_t));
+                bufPtr += sizeof(size_t);
+                std::memcpy(bufPtr, &gHandles[i].iov_buf_len, sizeof(size_t));
+                bufPtr += sizeof(gHandles[i].iov_buf_len);
+                std::memcpy(bufPtr, gHandles[i].iov_buf,
+                            gHandles[i].iov_buf_len);
+                bufPtr += gHandles[i].iov_buf_len;
+            }
+
+            comm.BroadcastVector(buf);
+        }
+        else
+        {
+            std::vector<unsigned char> buf;
+            comm.BroadcastVector(buf);
+            unsigned char *bufPtr = buf.data();
+            for (size_t i = 0; i < 3; ++i)
+            {
+                std::memcpy(&gHandles[i].iov_len, bufPtr, sizeof(size_t));
+                bufPtr += sizeof(size_t);
+                std::memcpy(&gHandles[i].iov_buf_len, bufPtr, sizeof(size_t));
+                bufPtr += sizeof(gHandles[i].iov_buf_len);
+                gHandles[i].iov_buf = bufPtr;
+                bufPtr += gHandles[i].iov_buf_len;
+            }
+
+            rc = daos_pool_global2local(gHandles[0], &poh);
+            CheckDAOSReturnCode(rc);
+
+            rc = daos_cont_global2local(poh, gHandles[1], &coh);
+            CheckDAOSReturnCode(rc);
+
+            rc = dfs_global2local(poh, coh, mountFlags, gHandles[2], &Mount);
+            CheckDAOSReturnCode(rc);
+        }
+    }
+
+    uuid_t UUID;
+    uuid_t CUUID;
+    std::string Group;
+    dfs_t *Mount = nullptr;
+    dfs_obj_t *Obj = nullptr;
+};
+
+FileDaos::FileDaos(helper::Comm const &comm)
+: Transport("File", "Daos", comm), m_Impl(new Impl)
+{
 }
 
 FileDaos::~FileDaos()
 {
-    if (m_IsOpen)
-    {
-      //close(m_FileDescriptor);
-      int rc;
-      rc = dfs_release(obj);
-      m_Errno = rc;
+    // Cleanup will happen in the destructor of Impl
+}
 
-      if (rc)
-      {
-	  throw std::ios_base::failure("ERROR: couldn't close file " + m_Name +
-				       ", in call to Destructor of Daos transport" +
-				       SysErrMsg());
-      }      
+void FileDaos::SetParameters(const Params &params)
+{
+    // The parameters are first initialized by environment variabels if present
+    // They are then overridden by config parameters if preset
+    // If neither config mechanisims are available then an error is thrown
+
+    // daos_pool_uuid
+    {
+        auto param = params.find("daos_pool_uuid");
+        if (param != params.end())
+        {
+            if (!uuid_parse(param->second.c_str(), m_Impl->UUID))
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unable to parse daos_pool_uuid parameter");
+            }
+        }
+        if (uuid_is_null(m_Impl->UUID))
+        {
+            throw std::ios_base::failure(
+                "ERROR: FileDaos: DAOS UUID is empty or not set");
+        }
+    }
+
+    // daos_pool_group
+    {
+        auto param = params.find("daos_pool_group");
+        if (param != params.end())
+        {
+            m_Impl->Group = param->second;
+        }
+        if (m_Impl->Group.empty())
+        {
+            throw std::ios_base::failure(
+                "ERROR: FileDaos: DAOS Group is empty or not set");
+        }
+    }
+
+    // daos_cont_uuid
+    {
+        auto param = params.find("daos_cont_uuid");
+        if (param != params.end())
+        {
+            if (!uuid_parse(param->second.c_str(), m_Impl->CUUID))
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unable to parse daos_cont_uuid parameter");
+            }
+        }
+        if (uuid_is_null(m_Impl->CUUID))
+        {
+            throw std::ios_base::failure(
+                "ERROR: FileDaos: DAOS CUUID is empty or not set");
+        }
     }
 }
 
@@ -78,43 +292,50 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
                     const bool async)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> bool {
-        
         ProfilerStart("open");
-        //errno = 0;
-        int rc = dfs_open(/*DFS*/ dfs_mt, /*PARENT*/ NULL, m_Name.c_str(),
-			  S_IFREG | S_IWUSR, 
-                          O_WRONLY | O_CREAT | O_TRUNC, /*CID*/ 0,
-                          /*chunksize*/ 0, NULL, &obj);
+        // errno = 0;
+        int rc =
+            dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ NULL, m_Name.c_str(),
+                     S_IFREG | S_IWUSR, O_WRONLY | O_CREAT | O_TRUNC, /*CID*/ 0,
+                     /*chunksize*/ 0, NULL, &m_Impl->Obj);
         m_Errno = rc;
         ProfilerStop("open");
-	bool DAOSOpenReturn;
-	if (rc == 0)
-	{
-	    DAOSOpenReturn = true;
-	}
-	else
-	{
-    	    DAOSOpenReturn = false;	    
-	}
+        bool DAOSOpenReturn;
+        if (rc == 0)
+        {
+            DAOSOpenReturn = true;
+        }
+        else
+        {
+            DAOSOpenReturn = false;
+        }
         return DAOSOpenReturn;
     };
 
     int rc;
     m_Name = name;
     CheckName();
+    if (!m_Impl->Mount)
+    {
+        ProfilerStart("mount");
+        m_Impl->InitMount(m_Comm, m_OpenMode);
+        ProfilerStop("mount");
+    }
     if (m_Comm.Rank() == 0)
     {
-        const auto lastPathSeparator(
-              m_Name.find_last_of(PathSeparator));
-	if (lastPathSeparator != std::string::npos)
-	{
-	    const std::string path(
-                  m_Name.substr(0, lastPathSeparator));
-	    rc = dfs_mkdir(dfs_mt, NULL, path.c_str(), S_IFDIR, 0);
-	}
+        const auto lastPathSeparator(m_Name.find_last_of(PathSeparator));
+        if (lastPathSeparator != std::string::npos)
+        {
+            const std::string path(m_Name.substr(0, lastPathSeparator));
+	    struct stat stbuf;
+	    if (dfs_stat(m_Impl->Mount, NULL, path.c_str(), &stbuf) != 0)
+	    {
+	        rc = dfs_mkdir(m_Impl->Mount, NULL, path.c_str(), S_IFDIR, 0);
+	    }
+        }
     }
     m_OpenMode = openMode;
-    
+
     switch (m_OpenMode)
     {
 
@@ -128,40 +349,38 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
         else
         {
             ProfilerStart("open");
-            //errno = 0;
-            //m_FileDescriptor =
+            // errno = 0;
+            // m_FileDescriptor =
             //    open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	    rc = dfs_open(/*DFS*/ dfs_mt, /*PARENT*/ NULL, m_Name.c_str(),
-			  S_IFREG | S_IWUSR,
+            rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ NULL,
+                          m_Name.c_str(), S_IFREG | S_IWUSR,
                           O_WRONLY | O_CREAT | O_TRUNC, /*CID*/ 0,
-                          /*chunksize*/ 0, NULL, &obj);
+                          /*chunksize*/ 0, NULL, &m_Impl->Obj);
             m_Errno = rc;
             ProfilerStop("open");
-
         }
         break;
 
     case (Mode::Append):
         ProfilerStart("open");
-        //errno = 0;
+        // errno = 0;
         // m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
-        //m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
-        //lseek(m_FileDescriptor, 0, SEEK_END);
-	rc = dfs_open(/*DFS*/ dfs_mt, /*PARENT*/ NULL, m_Name.c_str(),
-			  S_IFREG | S_IWUSR | S_IRUSR,
-                          O_RDWR | O_CREAT, /*CID*/ 0,
-                          /*chunksize*/ 0, NULL, &obj);
+        // m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
+        // lseek(m_FileDescriptor, 0, SEEK_END);
+        rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ NULL, m_Name.c_str(),
+                      S_IFREG | S_IWUSR | S_IRUSR, O_RDWR | O_CREAT, /*CID*/ 0,
+                      /*chunksize*/ 0, NULL, &m_Impl->Obj);
         m_Errno = rc;
         ProfilerStop("open");
         break;
 
     case (Mode::Read):
         ProfilerStart("open");
-        //errno = 0;
-        //m_FileDescriptor = open(m_Name.c_str(), O_RDONLY);
-	rc = dfs_open(/*DFS*/ dfs_mt, /*PARENT*/ NULL, m_Name.c_str(),
-			  S_IFREG | S_IRUSR,
-                          O_RDONLY, /*CID*/ 0, /*chunksize*/ 0, NULL, &obj);
+        // errno = 0;
+        // m_FileDescriptor = open(m_Name.c_str(), O_RDONLY);
+        rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ NULL, m_Name.c_str(),
+                      S_IFREG | S_IRUSR, O_RDONLY, /*CID*/ 0, /*chunksize*/ 0,
+                      NULL, &m_Impl->Obj);
         m_Errno = rc;
         ProfilerStop("open");
         break;
@@ -172,12 +391,12 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
     }
     if (rc == 0)
     {
-	m_DAOSOpenSucceed = true;
+        m_DAOSOpenSucceed = true;
     }
     else
     {
-	m_DAOSOpenSucceed = false;	    
-    }	        
+        m_DAOSOpenSucceed = false;
+    }
 
     if (!m_IsOpening)
     {
@@ -188,51 +407,51 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
 
 void FileDaos::Write(const char *buffer, size_t size, size_t start)
 {
-  auto lf_Write = [&](const char *buffer, size_t size) {
+    auto lf_Write = [&](const char *buffer, size_t size) {
         daos_size_t io_size;
-	daos_size_t written_size = 0;
+        daos_size_t written_size = 0;
         d_sg_list_t wsgl;
-	d_iov_t iov;
-	int rc = 0;
-	
-	d_iov_set(&iov, const_cast<char*>(buffer), size);
-	wsgl.sg_nr = 1;
-	wsgl.sg_nr_out = 1;
-	wsgl.sg_iovs = &iov;
+        d_iov_t iov;
+        int rc = 0;
+
+        d_iov_set(&iov, const_cast<char *>(buffer), size);
+        wsgl.sg_nr = 1;
+        wsgl.sg_nr_out = 1;
+        wsgl.sg_iovs = &iov;
         while (written_size < size)
         {
-            io_size = size-written_size;
-	    wsgl.sg_iovs[0].iov_len = io_size;
+            io_size = size - written_size;
+            wsgl.sg_iovs[0].iov_len = io_size;
             ProfilerStart("write");
-            //errno = 0;
+            // errno = 0;
 
-            //const auto writtenSize = write(m_FileDescriptor, buffer, size);
+            // const auto writtenSize = write(m_FileDescriptor, buffer, size);
 
-	    rc = dfs_write(dfs_mt, obj, &wsgl, m_GlobalOffset, NULL);
-	    
-	    if (rc)
-	    {
+            rc = dfs_write(m_Impl->Mount, m_Impl->Obj, &wsgl, m_GlobalOffset,
+                           NULL);
+
+            if (rc)
+            {
                 throw std::ios_base::failure(
                     "ERROR: couldn't write to file " + m_Name +
-                    ", in call to Daos Write" + SysErrMsg());	        
-	    }
+                    ", in call to Daos Write" + SysErrMsg());
+            }
             m_Errno = rc;
-            ProfilerStop("write");	    
+            ProfilerStop("write");
             /*if (writtenSize == -1)
             {
                 if (errno == EINTR)
                 {
                     continue;
                 }
-
                 throw std::ios_base::failure(
                     "ERROR: couldn't write to file " + m_Name +
                     ", in call to Daos Write" + SysErrMsg());
-	    }*/
+            }*/
 
             buffer += written_size;
             written_size += io_size;
-	    m_GlobalOffset += io_size;
+            m_GlobalOffset += io_size;
         }
     };
 
@@ -250,7 +469,7 @@ void FileDaos::Write(const char *buffer, size_t size, size_t start)
         size_t position = 0;
         for (size_t b = 0; b < batches; ++b)
         {
-	    lf_Write(&buffer[position], DefaultMaxFileBatchSize);
+            lf_Write(&buffer[position], DefaultMaxFileBatchSize);
             position += DefaultMaxFileBatchSize;
         }
         lf_Write(&buffer[position], remainder);
@@ -265,36 +484,37 @@ void FileDaos::Read(char *buffer, size_t size, size_t start)
 {
     auto lf_Read = [&](char *buffer, size_t size) {
         daos_size_t request_size;
-	daos_size_t got_size;
-	daos_size_t read_size = 0;
+        daos_size_t got_size;
+        daos_size_t read_size = 0;
         d_sg_list_t rsgl;
-	d_iov_t iov;
-	int rc = 0;
-	
-	d_iov_set(&iov, const_cast<char*>(buffer), size);
-	rsgl.sg_nr = 1;
-	rsgl.sg_nr_out = 1;
-	rsgl.sg_iovs = &iov;       
+        d_iov_t iov;
+        int rc = 0;
+
+        d_iov_set(&iov, const_cast<char *>(buffer), size);
+        rsgl.sg_nr = 1;
+        rsgl.sg_nr_out = 1;
+        rsgl.sg_iovs = &iov;
         while (read_size < size)
         {
-	    request_size = size-read_size;
-	    rsgl.sg_iovs[0].iov_len = request_size;
+            request_size = size - read_size;
+            rsgl.sg_iovs[0].iov_len = request_size;
             ProfilerStart("read");
 
-	    rc = dfs_read(dfs_mt, obj, &rsgl, m_GlobalOffset, &got_size, NULL);
+            rc = dfs_read(m_Impl->Mount, m_Impl->Obj, &rsgl, m_GlobalOffset,
+                          &got_size, NULL);
 
-	    if (rc)
-	    {
-                throw std::ios_base::failure(
-                    "ERROR: couldn't read from file " + m_Name +
-                    ", in call to Daos Read" + SysErrMsg());	        
-	    }
+            if (rc)
+            {
+                throw std::ios_base::failure("ERROR: couldn't read from file " +
+                                             m_Name + ", in call to Daos Read" +
+                                             SysErrMsg());
+            }
             m_Errno = rc;
-            ProfilerStop("read");	    
-	    
+            ProfilerStop("read");
+
             buffer += read_size;
             read_size += got_size;
-	    m_GlobalOffset += got_size;
+            m_GlobalOffset += got_size;
         }
     };
 
@@ -313,34 +533,33 @@ void FileDaos::Read(char *buffer, size_t size, size_t start)
         size_t position = 0;
         for (size_t b = 0; b < batches; ++b)
         {
-	    lf_Read(&buffer[position], DefaultMaxFileBatchSize);
+            lf_Read(&buffer[position], DefaultMaxFileBatchSize);
             position += DefaultMaxFileBatchSize;
         }
         lf_Read(&buffer[position], remainder);
     }
     else
     {
-      lf_Read(buffer, size);
+        lf_Read(buffer, size);
     }
 }
 
 size_t FileDaos::GetSize()
 {
-    //struct stat fileStat;
+    // struct stat fileStat;
     WaitForOpen();
     daos_size_t file_size;
     int rc = 0;
-    rc = dfs_get_size(dfs_mt, obj, &file_size);
-    //errno = 0;
+    rc = dfs_get_size(m_Impl->Mount, m_Impl->Obj, &file_size);
+    // errno = 0;
     /*if (fstat(m_FileDescriptor, &fileStat) == -1)
     {
         m_Errno = errno;
         throw std::ios_base::failure("ERROR: couldn't get size of file " +
                                      m_Name + SysErrMsg());
-				     }*/
+                                     }*/
     m_Errno = rc;
     return static_cast<size_t>(file_size);
-    
 }
 
 void FileDaos::Flush() {}
@@ -349,10 +568,10 @@ void FileDaos::Close()
 {
     WaitForOpen();
     ProfilerStart("close");
-    //errno = 0;
+    // errno = 0;
     int rc;
-    rc = dfs_release(obj);
-    //const int status = close(m_FileDescriptor);
+    rc = dfs_release(m_Impl->Obj);
+    // const int status = close(m_FileDescriptor);
     m_Errno = rc;
     ProfilerStop("close");
 
@@ -373,9 +592,9 @@ void FileDaos::Delete()
     {
         Close();
     }
-    //std::remove(m_Name.c_str());
+    // std::remove(m_Name.c_str());
     int rc;
-    dfs_remove(dfs_mt, NULL, m_Name.c_str(), true, NULL);
+    dfs_remove(m_Impl->Mount, NULL, m_Name.c_str(), true, NULL);
 }
 
 void FileDaos::CheckFile(const std::string hint) const
@@ -392,15 +611,9 @@ std::string FileDaos::SysErrMsg() const
     return std::string(": errno = " + std::to_string(m_Errno) + ": " + desc);
 }
 
-void FileDaos::SeekToEnd()
-{
-    m_GlobalOffset = GetSize();
-}
+void FileDaos::SeekToEnd() { m_GlobalOffset = GetSize(); }
 
-void FileDaos::SeekToBegin()
-{
-    m_GlobalOffset = 0;
-}
+void FileDaos::SeekToBegin() { m_GlobalOffset = 0; }
 
 } // end namespace transport
 } // end namespace adios2
