@@ -161,6 +161,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void BP3Writer::InitParameters()
 {
     m_BP3Serializer.Init(m_IO.m_Parameters, "in call to BP3::Open for writing");
+    m_BP3Serializer.ResizeBuffer(m_BP3Serializer.m_Parameters.InitialBufferSize,
+                                 "in call to BP3::Open to write");
 }
 
 void BP3Writer::InitTransports()

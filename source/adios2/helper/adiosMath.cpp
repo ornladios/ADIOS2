@@ -44,6 +44,10 @@ bool CheckIndexRange(const int index, const int upperLimit,
 size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
                            const float growthFactor) noexcept
 {
+    if (currentSize == 0)
+    {
+        return requiredSize;
+    }
     if (currentSize >= requiredSize)
     {
         return currentSize;

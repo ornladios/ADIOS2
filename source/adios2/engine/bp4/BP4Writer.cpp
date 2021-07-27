@@ -163,6 +163,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void BP4Writer::InitParameters()
 {
     m_BP4Serializer.Init(m_IO.m_Parameters, "in call to BP4::Open to write");
+    m_BP4Serializer.ResizeBuffer(m_BP4Serializer.m_Parameters.InitialBufferSize,
+                                 "in call to BP4::Open to write");
     m_WriteToBB = !(m_BP4Serializer.m_Parameters.BurstBufferPath.empty());
     m_DrainBB = m_WriteToBB && m_BP4Serializer.m_Parameters.BurstBufferDrain;
 }

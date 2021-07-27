@@ -281,11 +281,6 @@ void BPBase::Init(const Params &parameters, const std::string hint,
                                     profiling::Timer("mkdir", timeUnit));
         m_Profiler.m_Bytes.emplace("buffering", 0);
     }
-
-    // set initial buffer size
-    m_Profiler.Start("buffering");
-    m_Data.Resize(m_Parameters.InitialBufferSize, hint);
-    m_Profiler.Stop("buffering");
 }
 
 BPBase::ResizeResult BPBase::ResizeBuffer(const size_t dataIn,
