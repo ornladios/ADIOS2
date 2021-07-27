@@ -2074,12 +2074,9 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             printf("\n");
         }
 
-        if (!variable->m_SingleValue)
+        if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
-            if (variable->m_ShapeID == ShapeID::GlobalArray)
-            {
-                variable->SetSelection({startv, countv});
-            }
+            variable->SetSelection({startv, countv});
         }
 
         if (tidx)
