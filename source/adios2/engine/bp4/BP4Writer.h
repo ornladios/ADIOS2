@@ -154,14 +154,14 @@ private:
     void AggregateWriteData(const bool isFinal, const int transportIndex = -1);
 
 #define declare_type(T, L)                                                     \
-    T *DoBufferData_##L(const size_t payloadPosition,                          \
+    T *DoBufferData_##L(const int bufferIdx, const size_t payloadPosition,     \
                         const size_t bufferID = 0) noexcept final;
 
     ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
     template <class T>
-    T *BufferDataCommon(const size_t payloadOffset,
+    T *BufferDataCommon(const int bufferIdx, const size_t payloadOffset,
                         const size_t bufferID) noexcept;
 
     template <class T>

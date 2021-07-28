@@ -18,6 +18,7 @@
 #include "adios2/toolkit/aggregator/mpi/MPIShmChain.h"
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
+#include "adios2/toolkit/format/buffer/BufferV.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 namespace adios2
@@ -103,6 +104,17 @@ private:
     void InitBPBuffer();
 
 #define declare_type(T)                                                        \
+    void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \
+               const size_t bufferID, const T &value) final;
+
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+    template <class T>
+    void PutCommonSpan(Variable<T> &variable, typename Variable<T>::Span &span,
+                       const size_t bufferID, const T &value);
+
+#define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
     void DoPutDeferred(Variable<T> &, const T *) final;
 
@@ -111,6 +123,13 @@ private:
 
     template <class T>
     void PutCommon(Variable<T> &variable, const T *data, bool sync);
+
+#define declare_type(T, L)                                                     \
+    T *DoBufferData_##L(const int bufferIdx, const size_t payloadPosition,     \
+                        const size_t bufferID = 0) noexcept final;
+
+    ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
 
     void DoFlush(const bool isFinal = false, const int transportIndex = -1);
 
@@ -152,10 +171,6 @@ private:
     void SendDataToAggregator(format::BufferV::BufferV_iovec DataVec,
                               const size_t TotalSize);
     void WriteOthersData(const size_t TotalSize);
-
-    template <class T>
-    T *BufferDataCommon(const size_t payloadOffset,
-                        const size_t bufferID) noexcept;
 
     template <class T>
     void PerformPutCommon(Variable<T> &variable);

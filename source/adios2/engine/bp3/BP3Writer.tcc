@@ -123,7 +123,8 @@ void BP3Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
 }
 
 template <class T>
-T *BP3Writer::BufferDataCommon(const size_t payloadPosition,
+T *BP3Writer::BufferDataCommon(const int /*bufferIdx*/,
+                               const size_t payloadPosition,
                                const size_t /*bufferID*/) noexcept
 {
     T *data = reinterpret_cast<T *>(m_BP3Serializer.m_Data.m_Buffer.data() +

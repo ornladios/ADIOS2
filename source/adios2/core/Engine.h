@@ -425,7 +425,7 @@ public:
     std::vector<size_t> GetAbsoluteSteps(const Variable<T> &variable) const;
 
     template <class T>
-    T *BufferData(const size_t payloadOffset,
+    T *BufferData(const int bufferIdx, const size_t payloadOffset,
                   const size_t bufferID = 0) noexcept;
 
     size_t Steps() const;
@@ -527,7 +527,8 @@ protected:
 #undef declare_type
 
 #define declare_type(T, L)                                                     \
-    virtual T *DoBufferData_##L(const size_t payloadPosition,                  \
+    virtual T *DoBufferData_##L(const int bufferIdx,                           \
+                                const size_t payloadPosition,                  \
                                 const size_t bufferID) noexcept;
 
     ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)

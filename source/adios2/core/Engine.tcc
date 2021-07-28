@@ -224,10 +224,10 @@ std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> &variable) const
 
 #define declare_type(T, L)                                                     \
     template <>                                                                \
-    T *Engine::BufferData(const size_t payloadPosition,                        \
+    T *Engine::BufferData(const int bufferIdx, const size_t payloadPosition,   \
                           const size_t bufferID) noexcept                      \
     {                                                                          \
-        return DoBufferData_##L(payloadPosition, bufferID);                    \
+        return DoBufferData_##L(bufferIdx, payloadPosition, bufferID);         \
     }
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type

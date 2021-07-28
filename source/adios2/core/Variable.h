@@ -35,7 +35,13 @@ class Span
 public:
     std::pair<size_t, size_t> m_MinMaxDataPositions;
     std::pair<size_t, size_t> m_MinMaxMetadataPositions;
+
+    // internal position variables from which the engine
+    // can return a valid pointer any time
+    // BP5 needs two levels of reference, BP3/4 uses only one
     size_t m_PayloadPosition = 0;
+    int m_BufferIdx = -1;
+
     T m_Value = T{};
 
     Span(Engine &engine, const size_t size);

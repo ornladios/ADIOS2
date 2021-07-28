@@ -170,7 +170,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 #define declare_type(T, L)                                                     \
-    T *Engine::DoBufferData_##L(const size_t payloadPosition,                  \
+    T *Engine::DoBufferData_##L(const int bufferIdx,                           \
+                                const size_t payloadPosition,                  \
                                 const size_t bufferID) noexcept                \
     {                                                                          \
         T *data = nullptr;                                                     \

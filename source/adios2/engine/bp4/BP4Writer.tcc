@@ -122,7 +122,8 @@ void BP4Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
 }
 
 template <class T>
-T *BP4Writer::BufferDataCommon(const size_t payloadPosition,
+T *BP4Writer::BufferDataCommon(const int /*bufferIdx*/,
+                               const size_t payloadPosition,
                                const size_t /*bufferID*/) noexcept
 {
     T *data = reinterpret_cast<T *>(m_BP4Serializer.m_Data.m_Buffer.data() +

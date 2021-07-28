@@ -443,10 +443,11 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 }
 
 #define declare_type(T, L)                                                     \
-    T *BP3Writer::DoBufferData_##L(const size_t payloadPosition,               \
+    T *BP3Writer::DoBufferData_##L(const int bufferIdx,                        \
+                                   const size_t payloadPosition,               \
                                    const size_t bufferID) noexcept             \
     {                                                                          \
-        return BufferDataCommon<T>(payloadPosition, bufferID);                 \
+        return BufferDataCommon<T>(bufferIdx, payloadPosition, bufferID);      \
     }
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)

@@ -395,6 +395,18 @@ void BP5Writer::Init()
 }
 
 #define declare_type(T)                                                        \
+    void BP5Writer::DoPut(Variable<T> &variable,                               \
+                          typename Variable<T>::Span &span,                    \
+                          const size_t bufferID, const T &value)               \
+    {                                                                          \
+        PERFSTUBS_SCOPED_TIMER("BP5Writer::Put");                              \
+        PutCommonSpan(variable, span, bufferID, value);                        \
+    }
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                        \
     void BP5Writer::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
         PutCommon(variable, data, true);                                       \
@@ -405,6 +417,18 @@ void BP5Writer::Init()
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T, L)                                                     \
+    T *BP5Writer::DoBufferData_##L(const int bufferIdx,                        \
+                                   const size_t payloadPosition,               \
+                                   const size_t bufferID) noexcept             \
+    {                                                                          \
+        return reinterpret_cast<T *>(                                          \
+            m_BP5Serializer.GetPtr(bufferIdx, payloadPosition));               \
+    }
+
+ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
 void BP5Writer::InitParameters()
