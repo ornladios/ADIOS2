@@ -200,7 +200,7 @@ BufferV::BufferPos ChunkV::Allocate(const size_t size, int align)
         DataV.push_back(entry);
     }
 
-    BufferPos bp(DataV.size() - 1, bufferPos, CurOffset);
+    BufferPos bp(static_cast<int>(DataV.size() - 1), bufferPos, CurOffset);
     // valid ptr anytime <-- DataV[idx] + bufferPos;
 
     CurOffset += size;
