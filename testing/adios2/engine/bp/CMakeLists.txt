@@ -31,9 +31,11 @@ macro(bp_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP4
     WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
   )
-  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-  )
+  if(ADIOS2_HAVE_BP5)
+    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
+      WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+    )
+  endif()
 endmacro()
 
 add_subdirectory(operations)
