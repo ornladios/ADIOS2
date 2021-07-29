@@ -169,6 +169,8 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 
     m_Serializer.GetAttributes(m_IO);
 
+    m_IO.RemoveAllVariables();
+
     for (const auto &i : *m_CurrentStepMetadata)
     {
         if (i.step == static_cast<size_t>(m_CurrentStep))
