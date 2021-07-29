@@ -123,6 +123,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
     auto bpUInt64s = dataManIO.DefineVariable<uint64_t>("bpUInt64s");
+    auto scalarString = dataManIO.DefineVariable<std::string>("scalarString");
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter =
         dataManIO.Open("stream", adios2::Mode::Write);
@@ -151,6 +152,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
         dataManWriter.Put(bpDComplexes, myDComplexes.data(),
                           adios2::Mode::Sync);
         dataManWriter.Put(bpUInt64s, i);
+        dataManWriter.Put(scalarString, std::string("some text"));
         dataManWriter.EndStep();
     }
     dataManWriter.Close();
@@ -186,7 +188,7 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
         {
             received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
-            ASSERT_EQ(vars.size(), 11);
+            ASSERT_EQ(vars.size(), 12);
             currentStep = dataManReader.CurrentStep();
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
@@ -210,6 +212,8 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
             adios2::Variable<uint64_t> bpUInt64s =
                 dataManIO.InquireVariable<uint64_t>("bpUInt64s");
+            adios2::Variable<std::string> scalarString =
+                dataManIO.InquireVariable<std::string>("scalarString");
             auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
             bpChars.SetSelection({start, count});
             bpUChars.SetSelection({start, count});
@@ -233,6 +237,11 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
                               adios2::Mode::Sync);
             dataManReader.Get(bpDComplexes, myDComplexes.data(),
                               adios2::Mode::Sync);
+
+            std::string readString;
+            dataManReader.Get(scalarString, readString, adios2::Mode::Sync);
+            ASSERT_EQ(readString, "some text");
+
             uint64_t stepValue;
             dataManReader.Get(bpUInt64s, &stepValue, adios2::Mode::Sync);
             ASSERT_EQ(currentStep, stepValue);
