@@ -27,7 +27,7 @@ void BP5Base::FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
 {
     int Element = Bit / (sizeof(size_t) * 8);
     int ElementBit = Bit % (sizeof(size_t) * 8);
-    if (Element >= MBase->BitFieldCount)
+    if (static_cast<size_t>(Element) >= MBase->BitFieldCount)
     {
         MBase->BitField =
             (size_t *)realloc(MBase->BitField, sizeof(size_t) * (Element + 1));
@@ -42,7 +42,7 @@ int BP5Base::FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit)
 {
     int Element = Bit / (sizeof(size_t) * 8);
     int ElementBit = Bit % (sizeof(size_t) * 8);
-    if (Element >= MBase->BitFieldCount)
+    if (static_cast<size_t>(Element) >= MBase->BitFieldCount)
     {
         MBase->BitField =
             (size_t *)realloc(MBase->BitField, sizeof(size_t) * (Element + 1));

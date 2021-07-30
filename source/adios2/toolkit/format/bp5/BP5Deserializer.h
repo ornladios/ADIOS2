@@ -127,7 +127,7 @@ private:
     };
 
     FFSContext ReaderFFSContext;
-    int m_WriterCohortSize;
+    size_t m_WriterCohortSize;
     std::unordered_map<std::string, BP5VarRec *> VarByName;
     std::unordered_map<void *, BP5VarRec *> VarByKey;
     FMContext LocalFMContext;
@@ -191,7 +191,7 @@ private:
         void *Data;
     };
     std::vector<BP5ArrayRequest> PendingRequests;
-    bool NeedWriter(BP5ArrayRequest Req, int i);
+    bool NeedWriter(BP5ArrayRequest Req, size_t i);
     size_t CurTimestep = 0;
     std::vector<struct ControlInfo *> ActiveControl;
 };
