@@ -590,7 +590,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
     return true;
 }
 
-bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, int i)
+bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t i)
 {
     if (Req.RequestType == Local)
     {
@@ -599,7 +599,7 @@ bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, int i)
         return (NodeFirst <= Req.BlockID) && (NodeLast >= Req.BlockID);
     }
     // else Global case
-    for (int j = 0; j < Req.VarRec->DimCount; j++)
+    for (size_t j = 0; j < Req.VarRec->DimCount; j++)
     {
         size_t SelOffset = Req.Start[j];
         size_t SelSize = Req.Count[j];
@@ -637,7 +637,7 @@ BP5Deserializer::GenerateReadRequests()
 
     for (const auto &Req : PendingRequests)
     {
-        for (int i = 0; i < m_WriterCohortSize; i++)
+        for (size_t i = 0; i < m_WriterCohortSize; i++)
         {
             if ((WriterInfo[i].Status != Needed) && (NeedWriter(Req, i)))
             {
@@ -646,7 +646,7 @@ BP5Deserializer::GenerateReadRequests()
         }
     }
 
-    for (int i = 0; i < m_WriterCohortSize; i++)
+    for (size_t i = 0; i < m_WriterCohortSize; i++)
     {
         if (WriterInfo[i].Status == Needed)
         {
@@ -670,7 +670,7 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
     for (const auto &Req : PendingRequests)
     {
         //        ImplementGapWarning(Reqs);
-        for (int i = 0; i < m_WriterCohortSize; i++)
+        for (size_t i = 0; i < m_WriterCohortSize; i++)
         {
             if (NeedWriter(Req, i))
             {
@@ -752,7 +752,7 @@ void BP5Deserializer::MapGlobalToLocalIndex(size_t Dims,
                                             const size_t *LocalOffsets,
                                             size_t *LocalIndex)
 {
-    for (int i = 0; i < Dims; i++)
+    for (size_t i = 0; i < Dims; i++)
     {
         LocalIndex[i] = GlobalIndex[i] - LocalOffsets[i];
     }
@@ -762,7 +762,7 @@ int BP5Deserializer::FindOffset(size_t Dims, const size_t *Size,
                                 const size_t *Index)
 {
     int Offset = 0;
-    for (int i = 0; i < Dims; i++)
+    for (size_t i = 0; i < Dims; i++)
     {
         Offset = Index[i] + (Size[i] * Offset);
     }
@@ -859,7 +859,7 @@ void BP5Deserializer::ExtractSelectionFromPartialRM(
     /* calculate first selected element and count */
     BlockCount = 1;
     size_t *FirstIndex = (size_t *)malloc(Dims * sizeof(FirstIndex[0]));
-    for (int Dim = 0; Dim < Dims; Dim++)
+    for (size_t Dim = 0; Dim < Dims; Dim++)
     {
         size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
         size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
@@ -911,7 +911,7 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
 
     BlockSize = 1;
     OperantElementSize = ElementSize;
-    for (int Dim = 0; Dim < Dims; Dim++)
+    for (size_t Dim = 0; Dim < Dims; Dim++)
     {
         if ((GlobalDims[Dim] == PartialCounts[Dim]) &&
             (SelectionCounts[Dim] == PartialCounts[Dim]))
@@ -947,7 +947,7 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
     /* calculate first selected element and count */
     BlockCount = 1;
     size_t *FirstIndex = (size_t *)malloc(Dims * sizeof(FirstIndex[0]));
-    for (int Dim = 0; Dim < Dims; Dim++)
+    for (size_t Dim = 0; Dim < Dims; Dim++)
     {
         int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
         int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
@@ -984,8 +984,8 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
 
 BP5Deserializer::BP5Deserializer(int WriterCount, bool WriterIsRowMajor,
                                  bool ReaderIsRowMajor)
-: m_WriterCohortSize{WriterCount}, m_WriterIsRowMajor{WriterIsRowMajor},
-  m_ReaderIsRowMajor{ReaderIsRowMajor}
+: m_WriterCohortSize{static_cast<size_t>(WriterCount)},
+  m_WriterIsRowMajor{WriterIsRowMajor}, m_ReaderIsRowMajor{ReaderIsRowMajor}
 {
     FMContext Tmp = create_local_FMcontext();
     ReaderFFSContext = create_FFSContext_FM(Tmp);
@@ -1000,7 +1000,7 @@ BP5Deserializer::BP5Deserializer(int WriterCount, bool WriterIsRowMajor,
 BP5Deserializer::~BP5Deserializer()
 {
     free_FFSContext(ReaderFFSContext);
-    for (int i = 0; i < m_WriterCohortSize; i++)
+    for (size_t i = 0; i < m_WriterCohortSize; i++)
     {
         if (WriterInfo[i].RawBuffer)
             free(WriterInfo[i].RawBuffer);

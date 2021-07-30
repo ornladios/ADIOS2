@@ -82,21 +82,16 @@ void MallocV::CopyExternalToInternal()
     }
 }
 
-size_t MallocV::AddToVec(const size_t size, const void *buf, int align,
+size_t MallocV::AddToVec(const size_t size, const void *buf, size_t align,
                          bool CopyReqd)
 {
-    int badAlign = CurOffset % align;
-    if (badAlign)
-    {
-        int addAlign = align - badAlign;
-        assert(addAlign < sizeof(max_align_t));
-        static char zero[sizeof(max_align_t)] = {0};
-        AddToVec(addAlign, zero, 1, true);
-    }
-    size_t retOffset = CurOffset;
-
     if (size == 0)
+    {
         return CurOffset;
+    }
+
+    AlignBuffer(align);
+    size_t retOffset = CurOffset;
 
     if (!CopyReqd && !m_AlwaysCopy)
     {
@@ -138,6 +133,64 @@ size_t MallocV::AddToVec(const size_t size, const void *buf, int align,
     }
     CurOffset = retOffset + size;
     return retOffset;
+}
+
+BufferV::BufferPos MallocV::Allocate(const size_t size, size_t align)
+{
+    if (size == 0)
+    {
+        return BufferPos(-1, 0, CurOffset);
+    }
+
+    AlignBuffer(align);
+
+    if (m_internalPos + size > m_AllocatedSize)
+    {
+        // need to resize
+        size_t NewSize;
+        if (m_internalPos + size > m_AllocatedSize * m_GrowthFactor)
+        {
+            // just grow as needed (more than GrowthFactor)
+            NewSize = m_internalPos + size;
+        }
+        else
+        {
+            NewSize = (size_t)(m_AllocatedSize * m_GrowthFactor);
+        }
+        m_InternalBlock = (char *)realloc(m_InternalBlock, NewSize);
+        m_AllocatedSize = NewSize;
+    }
+
+    if (DataV.size() && !DataV.back().External &&
+        (m_internalPos == (DataV.back().Offset + DataV.back().Size)))
+    {
+        // just add to the size of the existing tail entry
+        DataV.back().Size += size;
+    }
+    else
+    {
+        DataV.push_back({false, NULL, m_internalPos, size});
+    }
+
+    BufferPos bp(0, m_internalPos, CurOffset);
+    // valid ptr anytime <-- m_InternalBlock + m_internalPos;
+
+    CurOffset += size;
+    m_internalPos += size;
+
+    return bp;
+}
+
+void *MallocV::GetPtr(int bufferIdx, size_t posInBuffer)
+{
+    if (bufferIdx == -1)
+    {
+        return nullptr;
+    }
+    else
+    {
+        return m_InternalBlock + posInBuffer;
+    }
 }
 
 MallocV::BufferV_iovec MallocV::DataVec() noexcept

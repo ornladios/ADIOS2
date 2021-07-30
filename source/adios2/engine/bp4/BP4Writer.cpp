@@ -137,10 +137,10 @@ void BP4Writer::Init()
 #define declare_type(T)                                                        \
     void BP4Writer::DoPut(Variable<T> &variable,                               \
                           typename Variable<T>::Span &span,                    \
-                          const size_t bufferID, const T &value)               \
+                          const bool initialize, const T &value)               \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER("BP4Writer::Put");                              \
-        PutCommon(variable, span, bufferID, value);                            \
+        PutCommon(variable, span, 0, value);                                   \
     }
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -807,10 +807,11 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 }
 
 #define declare_type(T, L)                                                     \
-    T *BP4Writer::DoBufferData_##L(const size_t payloadPosition,               \
+    T *BP4Writer::DoBufferData_##L(const int bufferIdx,                        \
+                                   const size_t payloadPosition,               \
                                    const size_t bufferID) noexcept             \
     {                                                                          \
-        return BufferDataCommon<T>(payloadPosition, bufferID);                 \
+        return BufferDataCommon<T>(bufferIdx, payloadPosition, bufferID);      \
     }
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)

@@ -32,7 +32,7 @@ BP5Deserializer::BlocksInfo(const core::Variable<T> &variable,
         return std::vector<typename core::Variable<T>::BPInfo>();
     }
     std::vector<typename core::Variable<T>::BPInfo> Ret;
-    for (int WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
+    for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
     {
         const void *BaseData = MetadataBaseAddrs[WriterRank];
         struct ControlStruct *ControlArray =
@@ -43,7 +43,7 @@ BP5Deserializer::BlocksInfo(const core::Variable<T> &variable,
         int FieldOffset = ControlArray[i].FieldOffset;
         void *field_data = (char *)BaseData + FieldOffset;
         MetaArrayRec *meta_base = (MetaArrayRec *)field_data;
-        for (int i = 0; i < VarRec->PerWriterBlockCount[WriterRank]; i++)
+        for (size_t i = 0; i < VarRec->PerWriterBlockCount[WriterRank]; i++)
         {
             size_t *Offsets = NULL;
             if (meta_base->Offsets)
@@ -58,7 +58,7 @@ BP5Deserializer::BlocksInfo(const core::Variable<T> &variable,
             size_t *Count = meta_base->Count;
             if (Shape)
             {
-                for (int i = 0; i < DimCount; i++)
+                for (size_t i = 0; i < DimCount; i++)
                 {
                     VecShape.push_back(Shape[i]);
                     VecStart.push_back(Start[i]);
@@ -69,7 +69,7 @@ BP5Deserializer::BlocksInfo(const core::Variable<T> &variable,
             {
                 VecShape = {};
                 VecStart = {};
-                for (int i = 0; i < DimCount; i++)
+                for (size_t i = 0; i < DimCount; i++)
                 {
                     VecCount.push_back(Count[i]);
                 }

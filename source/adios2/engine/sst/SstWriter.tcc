@@ -67,7 +67,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(),
                                      variable.m_Type, variable.m_ElementSize,
                                      DimCount, Shape, Count, Start, values,
-                                     true);
+                                     true, nullptr);
         }
     }
     else if (Params.MarshalMethod == SstMarshalBP)

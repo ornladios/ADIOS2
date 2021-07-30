@@ -79,21 +79,16 @@ void ChunkV::CopyExternalToInternal()
     }
 }
 
-size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
+size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
                         bool CopyReqd)
 {
-    int badAlign = CurOffset % align;
-    if (badAlign)
-    {
-        int addAlign = align - badAlign;
-        assert(addAlign < sizeof(max_align_t));
-        static char zero[sizeof(max_align_t)] = {0};
-        AddToVec(addAlign, zero, 1, true);
-    }
-    size_t retOffset = CurOffset;
-
     if (size == 0)
+    {
         return CurOffset;
+    }
+
+    AlignBuffer(align);
+    size_t retOffset = CurOffset;
 
     if (!CopyReqd && !m_AlwaysCopy)
     {
@@ -143,6 +138,82 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
     }
     CurOffset = retOffset + size;
     return retOffset;
+}
+
+BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
+{
+    if (size == 0)
+    {
+        return BufferPos(-1, 0, CurOffset);
+    }
+
+    AlignBuffer(align);
+
+    // we can possibly append this entry to the last if the last was
+    // internal
+    bool AppendPossible =
+        DataV.size() && !DataV.back().External &&
+        (m_TailChunk + m_TailChunkPos - DataV.back().Size == DataV.back().Base);
+
+    if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
+    {
+        // No room in current chunk, close it out
+        // realloc down to used size (helpful?) and set size in array
+        m_Chunks.back() = (char *)realloc(m_Chunks.back(), m_TailChunkPos);
+
+        m_TailChunkPos = 0;
+        m_TailChunk = NULL;
+        AppendPossible = false;
+    }
+
+    size_t bufferPos = 0;
+    if (AppendPossible)
+    {
+        // We can use current chunk, just append the data;
+        bufferPos = m_TailChunkPos;
+        DataV.back().Size += size;
+        m_TailChunkPos += size;
+    }
+    else
+    {
+        // We need a new chunk, get the larger of size or m_ChunkSize
+        size_t NewSize = m_ChunkSize;
+        if (size > m_ChunkSize)
+            NewSize = size;
+        m_TailChunk = (char *)malloc(NewSize);
+        m_Chunks.push_back(m_TailChunk);
+        bufferPos = 0;
+        m_TailChunkPos = size;
+        VecEntry entry = {false, m_TailChunk, 0, size};
+        DataV.push_back(entry);
+    }
+
+    BufferPos bp(static_cast<int>(DataV.size() - 1), bufferPos, CurOffset);
+    // valid ptr anytime <-- DataV[idx] + bufferPos;
+
+    CurOffset += size;
+
+    return bp;
+}
+
+void *ChunkV::GetPtr(int bufferIdx, size_t posInBuffer)
+{
+    if (bufferIdx == -1)
+    {
+        return nullptr;
+    }
+    else if (static_cast<size_t>(bufferIdx) > DataV.size() ||
+             DataV[bufferIdx].External)
+    {
+        throw std::invalid_argument(
+            "ChunkV::GetPtr(" + std::to_string(bufferIdx) + ", " +
+            std::to_string(posInBuffer) +
+            ") refers to a non-existing or deferred memory chunk.");
+    }
+    else
+    {
+        return (void *)((char *)DataV[bufferIdx].Base + posInBuffer);
+    }
 }
 
 ChunkV::BufferV_iovec ChunkV::DataVec() noexcept

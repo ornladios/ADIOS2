@@ -34,8 +34,12 @@ public:
      */
     virtual void Reset();
 
-    virtual size_t AddToVec(const size_t size, const void *buf, int align,
+    virtual size_t AddToVec(const size_t size, const void *buf, size_t align,
                             bool CopyReqd);
+
+    virtual BufferPos Allocate(const size_t size, size_t align);
+
+    virtual void *GetPtr(int bufferIdx, size_t posInBuffer);
 
     void CopyExternalToInternal();
 

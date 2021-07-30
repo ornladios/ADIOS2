@@ -218,7 +218,7 @@ size_t Span<T>::Size() const noexcept
 template <class T>
 T *Span<T>::Data() const noexcept
 {
-    return m_Engine.BufferData<T>(m_PayloadPosition);
+    return m_Engine.BufferData<T>(m_BufferIdx, m_PayloadPosition);
 }
 
 template <class T>
@@ -252,15 +252,16 @@ const T &Span<T>::At(const size_t position) const
 template <class T>
 T &Span<T>::operator[](const size_t position)
 {
-    T &data = *m_Engine.BufferData<T>(m_PayloadPosition + position * sizeof(T));
+    T &data = *m_Engine.BufferData<T>(m_BufferIdx,
+                                      m_PayloadPosition + position * sizeof(T));
     return data;
 }
 
 template <class T>
 const T &Span<T>::operator[](const size_t position) const
 {
-    const T &data =
-        *m_Engine.BufferData<T>(m_PayloadPosition + position * sizeof(T));
+    const T &data = *m_Engine.BufferData<T>(
+        m_BufferIdx, m_PayloadPosition + position * sizeof(T));
     return data;
 }
 

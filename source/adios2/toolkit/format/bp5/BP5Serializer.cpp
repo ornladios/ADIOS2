@@ -436,7 +436,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                             const DataType Type, size_t ElemSize,
                             size_t DimCount, const size_t *Shape,
                             const size_t *Count, const size_t *Offsets,
-                            const void *Data, bool Sync)
+                            const void *Data, bool Sync,
+                            BufferV::BufferPos *span)
 {
 
     FFSMetadataInfoStruct *MBase;
@@ -478,8 +479,17 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             throw std::logic_error(
                 "BP5Serializer:: Marshall without Prior Init");
         }
-        DataOffset =
-            CurDataBuffer->AddToVec(ElemCount * ElemSize, Data, ElemSize, Sync);
+
+        if (span == nullptr)
+        {
+            DataOffset = CurDataBuffer->AddToVec(ElemCount * ElemSize, Data,
+                                                 ElemSize, Sync);
+        }
+        else
+        {
+            *span = CurDataBuffer->Allocate(ElemCount * ElemSize, ElemSize);
+            DataOffset = span->globalPos;
+        }
 
         if (!AlreadyWritten)
         {
@@ -869,5 +879,11 @@ std::vector<BufferV::iovec> BP5Serializer::BreakoutContiguousMetadata(
     }
     return MetadataBlocks;
 }
+
+void *BP5Serializer::GetPtr(int bufferIdx, size_t posInBuffer)
+{
+    return CurDataBuffer->GetPtr(bufferIdx, posInBuffer);
 }
-}
+
+} // end namespace format
+} // end namespace adios2

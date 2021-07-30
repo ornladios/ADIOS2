@@ -63,7 +63,7 @@ ToBlocksInfo(const std::vector<typename core::Variable<
 
 template <class T>
 typename Variable<T>::Span Engine::Put(Variable<T> variable,
-                                       const size_t bufferID, const T &value)
+                                       const bool initialize, const T &value)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine,
@@ -79,7 +79,7 @@ typename Variable<T>::Span Engine::Put(Variable<T> variable,
 
     typename Variable<T>::Span::CoreSpan *coreSpan =
         reinterpret_cast<typename Variable<T>::Span::CoreSpan *>(
-            &m_Engine->Put(*variable.m_Variable, bufferID,
+            &m_Engine->Put(*variable.m_Variable, initialize,
                            reinterpret_cast<const IOType &>(value)));
 
     return typename Variable<T>::Span(coreSpan);
@@ -88,7 +88,23 @@ typename Variable<T>::Span Engine::Put(Variable<T> variable,
 template <class T>
 typename Variable<T>::Span Engine::Put(Variable<T> variable)
 {
-    return Put(variable, 0, T());
+    using IOType = typename TypeInfo<T>::IOType;
+    adios2::helper::CheckForNullptr(m_Engine,
+                                    "for Engine in call to Engine::Array");
+
+    if (m_Engine->m_EngineType == "NULL")
+    {
+        return typename Variable<T>::Span(nullptr);
+    }
+
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Array");
+
+    typename Variable<T>::Span::CoreSpan *coreSpan =
+        reinterpret_cast<typename Variable<T>::Span::CoreSpan *>(
+            &m_Engine->Put(*variable.m_Variable, false));
+
+    return typename Variable<T>::Span(coreSpan);
 }
 
 template <class T>

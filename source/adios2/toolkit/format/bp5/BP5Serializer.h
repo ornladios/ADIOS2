@@ -62,7 +62,7 @@ public:
     void Marshal(void *Variable, const char *Name, const DataType Type,
                  size_t ElemSize, size_t DimCount, const size_t *Shape,
                  const size_t *Count, const size_t *Offsets, const void *Data,
-                 bool Sync);
+                 bool Sync, BufferV::BufferPos *span);
     void MarshalAttribute(const char *Name, const DataType Type,
                           size_t ElemSize, size_t ElemCount, const void *Data);
 
@@ -84,6 +84,9 @@ public:
         std::vector<BufferV::iovec> &AttributeBlocks,
         std::vector<uint64_t> &DataSizes,
         std::vector<uint64_t> &WriterDataPositions) const;
+
+    void *GetPtr(int bufferIdx, size_t posInBuffer);
+    size_t CalcSize(const size_t Count, const size_t *Vals);
 
 private:
     void Init();
@@ -155,7 +158,6 @@ private:
     size_t *CopyDims(const size_t Count, const size_t *Vals);
     size_t *AppendDims(size_t *OldDims, const size_t OldCount,
                        const size_t Count, const size_t *Vals);
-    size_t CalcSize(const size_t Count, const size_t *Vals);
 
     typedef struct _ArrayRec
     {

@@ -113,7 +113,7 @@ public:
      */
     template <class T>
     typename Variable<T>::Span &
-    Put(Variable<T> &variable, const size_t bufferID = 0, const T &value = T{});
+    Put(Variable<T> &variable, const bool initialize, const T &value = T{});
 
     /**
      * @brief Put associates variable and data into adios2 in Engine Write mode.
@@ -425,7 +425,7 @@ public:
     std::vector<size_t> GetAbsoluteSteps(const Variable<T> &variable) const;
 
     template <class T>
-    T *BufferData(const size_t payloadOffset,
+    T *BufferData(const int bufferIdx, const size_t payloadOffset,
                   const size_t bufferID = 0) noexcept;
 
     size_t Steps() const;
@@ -479,8 +479,8 @@ protected:
 // Put
 #define declare_type(T)                                                        \
     virtual void DoPut(Variable<T> &variable,                                  \
-                       typename Variable<T>::Span &span, const size_t blockID, \
-                       const T &value);
+                       typename Variable<T>::Span &span,                       \
+                       const bool initialize, const T &value);
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -527,7 +527,8 @@ protected:
 #undef declare_type
 
 #define declare_type(T, L)                                                     \
-    virtual T *DoBufferData_##L(const size_t payloadPosition,                  \
+    virtual T *DoBufferData_##L(const int bufferIdx,                           \
+                                const size_t payloadPosition,                  \
                                 const size_t bufferID) noexcept;
 
     ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
@@ -618,7 +619,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 
 #define declare_template_instantiation(T)                                      \
     extern template typename Variable<T>::Span &Engine::Put(                   \
-        Variable<T> &, const size_t, const T &);                               \
+        Variable<T> &, const bool, const T &);                                 \
     extern template void Engine::Get(Variable<T> &, T **) const;
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

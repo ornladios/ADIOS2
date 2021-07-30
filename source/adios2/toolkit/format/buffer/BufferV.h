@@ -46,10 +46,32 @@ public:
      */
     virtual void Reset();
 
-    virtual size_t AddToVec(const size_t size, const void *buf, int align,
+    virtual size_t AddToVec(const size_t size, const void *buf, size_t align,
                             bool CopyReqd) = 0;
 
-public:
+    struct BufferPos
+    {
+        int bufferIdx = -1;     // buffer index
+        size_t posInBuffer = 0; // position in buffer[idx]
+        size_t globalPos = 0;   // global position in virtual buffer
+        BufferPos(int idx, size_t pos, size_t globalPos)
+        : bufferIdx(idx), posInBuffer(pos), globalPos(globalPos){};
+    };
+
+    /** Allocate size bytes and return BufferPos position.
+     * Used by Span functions to allocate memory on behalf of the user
+     * Return both the position in the virtual memory buffer as well
+     * as all info needed to retrieve a valid pointer any time
+     * during execution (even after reallocs)
+     */
+    virtual BufferPos Allocate(const size_t size, size_t align) = 0;
+
+    void AlignBuffer(const size_t align);
+
+    virtual void *GetPtr(int bufferIdx, size_t posInBuffer) = 0;
+
+protected:
+    static char zero[64];
     const bool m_AlwaysCopy = false;
 
     struct VecEntry
