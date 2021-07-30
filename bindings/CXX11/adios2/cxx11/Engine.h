@@ -100,11 +100,12 @@ public:
      * Put signature that provides access to the internal engine buffer for a
      * pre-allocated variable including a fill value. Returns a fixed size Span
      * (based on C++20 std::span) so applications can populate data value after
-     * this Put. Requires a call to PerformPuts, EndStep, or Close to extract
-     * the Min/Max bounds.
+     * this Put and before PerformPuts/EndStep. Requires a call to PerformPuts,
+     * EndStep, or Close to extract the Min/Max bounds.
      * @param variable input variable
      * @param initialize bool flag indicating if allocated memory should be
-     * initialized with the provided value
+     * initialized with the provided value. Some engines (BP3/BP4) may
+     * initialize the allocated memory anyway to zero if this flag is false.
      * @param value provide an initial fill value
      * @return span to variable data in engine internal buffer
      */
@@ -114,8 +115,9 @@ public:
 
     /**
      * Put signature that provides access to an internal engine buffer (decided
-     * by the engine) for a pre-allocated variable with the default fill value
-     * T().
+     * by the engine) for a pre-allocated variable. Allocated buffer may or may
+     * not be initialized to zero by the engine (e.g. BP3/BP4 does, BP5 does
+     * not).
      * @param variable input variable
      * @return span to variable data in engine internal buffer
      */
