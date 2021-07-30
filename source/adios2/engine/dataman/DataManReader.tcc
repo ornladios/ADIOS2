@@ -31,6 +31,10 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
+    if (helper::GetDataType<std::string>() == variable.m_Type)
+    {
+    }
+
     if (helper::IsRowMajor(m_IO.m_HostLanguage))
     {
         while (true)
