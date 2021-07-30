@@ -235,6 +235,7 @@ void DataManSerializer::PutData(
         datasize = std::accumulate(varCount.begin(), varCount.end(), sizeof(T),
                                    std::multiplies<size_t>());
     }
+
     metaj["I"] = datasize;
 
     if (localBuffer->capacity() < localBuffer->size() + datasize)
