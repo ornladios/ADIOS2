@@ -126,6 +126,9 @@ void BP3Reader::Init()
             " " + m_EndMessage);
     }
 
+    // if IO was involved in reading before this flag may be true now
+    m_IO.m_ReadStreaming = false;
+
     InitTransports();
     InitBuffer();
 }

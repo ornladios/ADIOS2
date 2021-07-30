@@ -148,6 +148,8 @@ void BP4Reader::Init()
                                     "supports OpenMode::Read from" +
                                     m_Name + " " + m_EndMessage);
     }
+    // if IO was involved in reading before this flag may be true now
+    m_IO.m_ReadStreaming = false;
 
     m_BP4Deserializer.Init(m_IO.m_Parameters, "in call to BP4::Open to write");
     InitTransports();

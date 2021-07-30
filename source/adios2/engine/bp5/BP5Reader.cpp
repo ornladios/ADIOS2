@@ -180,6 +180,9 @@ void BP5Reader::Init()
                                     m_Name + " " + m_EndMessage);
     }
 
+    // if IO was involved in reading before this flag may be true now
+    m_IO.m_ReadStreaming = false;
+
     ParseParams(m_IO, m_Parameters);
     m_ReaderIsRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
     InitTransports();
