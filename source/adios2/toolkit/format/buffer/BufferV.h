@@ -46,7 +46,7 @@ public:
      */
     virtual void Reset();
 
-    virtual size_t AddToVec(const size_t size, const void *buf, int align,
+    virtual size_t AddToVec(const size_t size, const void *buf, size_t align,
                             bool CopyReqd) = 0;
 
     struct BufferPos
@@ -64,11 +64,14 @@ public:
      * as all info needed to retrieve a valid pointer any time
      * during execution (even after reallocs)
      */
-    virtual BufferPos Allocate(const size_t size, int align) = 0;
+    virtual BufferPos Allocate(const size_t size, size_t align) = 0;
+
+    void AlignBuffer(const size_t align);
 
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer) = 0;
 
-public:
+protected:
+    static char zero[64];
     const bool m_AlwaysCopy = false;
 
     struct VecEntry

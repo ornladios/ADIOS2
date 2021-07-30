@@ -79,21 +79,16 @@ void ChunkV::CopyExternalToInternal()
     }
 }
 
-size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
+size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
                         bool CopyReqd)
 {
-    int badAlign = CurOffset % align;
-    if (badAlign)
-    {
-        int addAlign = align - badAlign;
-        assert(addAlign < sizeof(max_align_t));
-        static char zero[sizeof(max_align_t)] = {0};
-        AddToVec(addAlign, zero, 1, true);
-    }
-    size_t retOffset = CurOffset;
-
     if (size == 0)
+    {
         return CurOffset;
+    }
+
+    AlignBuffer(align);
+    size_t retOffset = CurOffset;
 
     if (!CopyReqd && !m_AlwaysCopy)
     {
@@ -145,21 +140,14 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, int align,
     return retOffset;
 }
 
-BufferV::BufferPos ChunkV::Allocate(const size_t size, int align)
+BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
 {
     if (size == 0)
     {
         return BufferPos(-1, 0, CurOffset);
     }
 
-    int badAlign = CurOffset % align;
-    if (badAlign)
-    {
-        int addAlign = align - badAlign;
-        assert(addAlign < sizeof(max_align_t));
-        static char zero[sizeof(max_align_t)] = {0};
-        AddToVec(addAlign, zero, 1, true);
-    }
+    AlignBuffer(align);
 
     // we can possibly append this entry to the last if the last was
     // internal
