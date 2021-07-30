@@ -792,8 +792,7 @@ int DataManSerializer::GetData(std::string *outputData,
 
             input_data += j.position;
 
-            outputData->resize(j.size);
-            std::memcpy(outputData->data(), input_data, j.size);
+            *outputData = std::string(input_data, j.size);
         }
     }
     return 0;
