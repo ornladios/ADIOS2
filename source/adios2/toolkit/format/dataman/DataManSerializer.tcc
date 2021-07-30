@@ -128,7 +128,7 @@ void DataManSerializer::PutData(
         metaj["A"] = address;
     }
 
-    if (m_EnableStat)
+    if (m_EnableStat && helper::GetDataType<T>() != DataType::String)
     {
         CalculateMinMax(inputData, varCount, metaj);
     }
