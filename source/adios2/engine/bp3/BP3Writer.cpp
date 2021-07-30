@@ -133,10 +133,10 @@ void BP3Writer::Init()
 #define declare_type(T)                                                        \
     void BP3Writer::DoPut(Variable<T> &variable,                               \
                           typename Variable<T>::Span &span,                    \
-                          const size_t bufferID, const T &value)               \
+                          const bool initialize, const T &value)               \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER("BP3Writer::Put");                              \
-        PutCommon(variable, span, bufferID, value);                            \
+        PutCommon(variable, span, 0, value);                                   \
     }
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)

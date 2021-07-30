@@ -103,13 +103,13 @@ public:
      * this Put. Requires a call to PerformPuts, EndStep, or Close to extract
      * the Min/Max bounds.
      * @param variable input variable
-     * @param bufferID if engine has multiple buffers, input 0 when this
-     * information is not known
+     * @param initialize bool flag indicating if allocated memory should be
+     * initialized with the provided value
      * @param value provide an initial fill value
      * @return span to variable data in engine internal buffer
      */
     template <class T>
-    typename Variable<T>::Span Put(Variable<T> variable, const size_t bufferID,
+    typename Variable<T>::Span Put(Variable<T> variable, const bool initialize,
                                    const T &value);
 
     /**
@@ -451,8 +451,7 @@ private:
 #define declare_template_instantiation(T)                                      \
                                                                                \
     extern template typename Variable<T>::Span Engine::Put(                    \
-        Variable<T>, const size_t, const T &);                                 \
-                                                                               \
+        Variable<T>, const bool, const T &);                                   \
     extern template typename Variable<T>::Span Engine::Put(Variable<T>);       \
     extern template void Engine::Get(Variable<T>, T **) const;
 

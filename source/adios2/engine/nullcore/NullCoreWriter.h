@@ -44,7 +44,7 @@ protected:
     // Put
 #define declare_type(T)                                                        \
     void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \
-               const size_t blockID, const T &value) override;
+               const bool initialize, const T &value) override;
 
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type

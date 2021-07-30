@@ -70,7 +70,7 @@ void BP5Writer::PutCommon(Variable<T> &variable, const T *values, bool sync)
 template <class T>
 void BP5Writer::PutCommonSpan(Variable<T> &variable,
                               typename Variable<T>::Span &span,
-                              const size_t /*bufferID*/, const T &value)
+                              const bool initialize, const T &value)
 {
     format::BufferV::BufferPos bp5span(0, 0, 0);
 
@@ -110,7 +110,7 @@ void BP5Writer::PutCommonSpan(Variable<T> &variable,
     span.m_Value = value;
 
     /* initialize buffer if needed */
-    if (value != T{})
+    if (initialize)
     {
         const size_t ElemCount = m_BP5Serializer.CalcSize(DimCount, Count);
         T *itBegin = reinterpret_cast<T *>(

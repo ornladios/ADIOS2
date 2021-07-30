@@ -25,7 +25,7 @@ namespace core
 
 template <class T>
 typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
-                                        const size_t bufferID, const T &value)
+                                        const bool initialize, const T &value)
 {
     CheckOpenModes({{Mode::Write}}, " for variable " + variable.m_Name +
                                         ", in call to Variable<T>::Span Put");
@@ -33,7 +33,7 @@ typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
     auto itSpan = variable.m_BlocksSpan.emplace(
         variable.m_BlocksInfo.size(),
         typename Variable<T>::Span(*this, variable.TotalSize()));
-    DoPut(variable, itSpan.first->second, bufferID, value);
+    DoPut(variable, itSpan.first->second, initialize, value);
     return itSpan.first->second;
 }
 

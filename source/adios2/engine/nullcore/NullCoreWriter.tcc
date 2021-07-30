@@ -22,7 +22,7 @@ namespace engine
 #define instantiate_type(T)                                                    \
     void NullCoreWriter::DoPut(Variable<T> &variable,                          \
                                typename Variable<T>::Span &span,               \
-                               const size_t blockID, const T &value)           \
+                               const bool initialize, const T &value)          \
     {                                                                          \
     }
 

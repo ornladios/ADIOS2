@@ -397,10 +397,10 @@ void BP5Writer::Init()
 #define declare_type(T)                                                        \
     void BP5Writer::DoPut(Variable<T> &variable,                               \
                           typename Variable<T>::Span &span,                    \
-                          const size_t bufferID, const T &value)               \
+                          const bool initialize, const T &value)               \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER("BP5Writer::Put");                              \
-        PutCommonSpan(variable, span, bufferID, value);                        \
+        PutCommonSpan(variable, span, initialize, value);                      \
     }
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)

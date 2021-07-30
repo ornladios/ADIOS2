@@ -1217,35 +1217,35 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
             // bpWriter.Put<std::string>("iString", std::to_string(step));
 
             adios2::Variable<int8_t>::Span i8Span =
-                bpWriter.Put(var_i8, 0, static_cast<int8_t>(step));
+                bpWriter.Put(var_i8, true, static_cast<int8_t>(step));
             adios2::Variable<int16_t>::Span i16Span =
-                bpWriter.Put(var_i16, 0, static_cast<int16_t>(step));
+                bpWriter.Put(var_i16, true, static_cast<int16_t>(step));
             adios2::Variable<int32_t>::Span i32Span =
-                bpWriter.Put(var_i32, 0, static_cast<int32_t>(step));
+                bpWriter.Put(var_i32, true, static_cast<int32_t>(step));
             adios2::Variable<int64_t>::Span i64Span =
-                bpWriter.Put(var_i64, 0, static_cast<int64_t>(step));
+                bpWriter.Put(var_i64, true, static_cast<int64_t>(step));
 
             adios2::Variable<uint8_t>::Span u8Span =
-                bpWriter.Put(var_u8, 0, static_cast<uint8_t>(step));
+                bpWriter.Put(var_u8, true, static_cast<uint8_t>(step));
             adios2::Variable<uint16_t>::Span u16Span =
-                bpWriter.Put(var_u16, 0, static_cast<uint16_t>(step));
+                bpWriter.Put(var_u16, true, static_cast<uint16_t>(step));
             adios2::Variable<uint32_t>::Span u32Span =
-                bpWriter.Put(var_u32, 0, static_cast<uint32_t>(step));
+                bpWriter.Put(var_u32, true, static_cast<uint32_t>(step));
             adios2::Variable<uint64_t>::Span u64Span =
-                bpWriter.Put(var_u64, 0, static_cast<uint64_t>(step));
+                bpWriter.Put(var_u64, true, static_cast<uint64_t>(step));
 
             adios2::Variable<float>::Span r32Span =
-                bpWriter.Put(var_r32, 0, static_cast<float>(step));
+                bpWriter.Put(var_r32, true, static_cast<float>(step));
 
             adios2::Variable<double>::Span r64Span =
-                bpWriter.Put(var_r64, 0, static_cast<double>(step));
+                bpWriter.Put(var_r64, true, static_cast<double>(step));
 
             adios2::Variable<std::complex<float>>::Span cr32Span = bpWriter.Put(
-                var_cr32, 0,
+                var_cr32, true,
                 {static_cast<float>(step), static_cast<float>(step)});
             adios2::Variable<std::complex<double>>::Span cr64Span =
                 bpWriter.Put(
-                    var_cr64, 0,
+                    var_cr64, true,
                     {static_cast<double>(step), static_cast<double>(step)});
 
             bpWriter.EndStep();

@@ -103,7 +103,7 @@ void Engine::InitTransports() {}
 // DoPut*
 #define declare_type(T)                                                        \
     void Engine::DoPut(Variable<T> &, typename Variable<T>::Span &,            \
-                       const size_t, const T &)                                \
+                       const bool, const T &)                                  \
     {                                                                          \
         ThrowUp("DoPut");                                                      \
     }
@@ -248,7 +248,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 
 #define declare_template_instantiation(T)                                      \
     template typename Variable<T>::Span &Engine::Put(Variable<T> &,            \
-                                                     const size_t, const T &); \
+                                                     const bool, const T &);   \
     template void Engine::Get<T>(core::Variable<T> &, T **) const;
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
