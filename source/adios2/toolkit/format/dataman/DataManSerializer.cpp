@@ -704,11 +704,6 @@ void DataManSerializer::PutData(
         metaj["A"] = address;
     }
 
-    if (m_EnableStat)
-    {
-        CalculateMinMax(inputData, varCount, metaj);
-    }
-
     if (not m_IsRowMajor)
     {
         metaj["M"] = m_IsRowMajor;
