@@ -75,6 +75,7 @@ add_library(adios2_core
   toolkit/format/bp/bpOperation/compress/BPZFP.cpp 
   toolkit/format/bp/bpOperation/compress/BPZFP.tcc
   toolkit/format/bp/bpOperation/compress/BPSZ.cpp
+  toolkit/format/bp/bpOperation/compress/BPSirius.cpp
   toolkit/format/bp/bpOperation/compress/BPMGARD.cpp
   toolkit/format/bp/bpOperation/compress/BPPNG.cpp
   toolkit/format/bp/bpOperation/compress/BPBZIP2.cpp 

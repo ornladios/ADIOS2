@@ -94,6 +94,10 @@ public:
                               void *dataOut, const size_t sizeOut,
                               Params &info) const;
 
+    virtual size_t Compress(const void *dataIn, const Dims &dimensions,
+                            const size_t elementSize, DataType type,
+                            void *bufferOut);
+
     /**
      * Zfp signature
      * @param bufferIn

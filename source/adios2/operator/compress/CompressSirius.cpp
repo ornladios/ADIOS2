@@ -18,24 +18,46 @@ namespace core
 namespace compress
 {
 
-CompressSirius::CompressSirius(const Params &parameters) : Operator("sirius", parameters) {}
+int CompressSirius::m_CurrentTier = 0;
 
-CompressSirius::~CompressSirius()
-{}
-
-size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
-                            const size_t elementSize, DataType varType,
-                            void *bufferOut, const Params &parameters,
-                            Params &info) const
+CompressSirius::CompressSirius(const Params &parameters)
+: Operator("sirius", parameters)
 {
-    return 0;
+    int tiers;
+    bool hasTiers = helper::GetParameter(parameters, "Tiers", tiers);
+    if (!hasTiers)
+    {
+        throw("sirius operator: must have parameter Tiers");
+    }
+    m_TierBuffers.resize(tiers);
 }
 
-size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
-                              void *dataOut, const Dims &dimensions,
-                              DataType varType,
-                              const Params & /*parameters*/) const
+size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
+                                const size_t elementSize, DataType varType,
+                                void *bufferOut)
 {
+
+    size_t totalBytes = std::accumulate(dimensions.begin(), dimensions.end(),
+                                        elementSize, std::multiplies<size_t>());
+
+    size_t currentTierSize = totalBytes;
+
+    if (m_CurrentTier == 0)
+    {
+        for (int i = 0; i < m_TierBuffers.size(); i++)
+        {
+            m_TierBuffers[i].resize(currentTierSize);
+            std::memcpy(m_TierBuffers[i].data(), dataIn, currentTierSize);
+            currentTierSize /= 2;
+        }
+    }
+
+    std::memcpy(bufferOut, m_TierBuffers[m_CurrentTier].data(),
+                m_TierBuffers[m_CurrentTier].size());
+
+    m_CurrentTier++;
+    m_CurrentTier %= m_TierBuffers.size();
+
     return 0;
 }
 

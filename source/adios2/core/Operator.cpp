@@ -81,6 +81,17 @@ size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
                                 m_Type + ", in call to Compress\n");
 }
 
+size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
+                          const size_t /*elementSize*/, DataType /*type*/,
+                          void * /*bufferOut*/)
+{
+    throw std::invalid_argument("ERROR: signature (const void*, const "
+                                "Dims, const size_t, const std::string, "
+                                "void*, const Params&) not supported "
+                                "by derived class implemented with " +
+                                m_Type + ", in call to Compress\n");
+}
+
 size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
                             void *dataOut, const size_t sizeOut,
                             Params &info) const
