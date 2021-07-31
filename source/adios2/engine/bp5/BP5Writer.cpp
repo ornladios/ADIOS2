@@ -57,6 +57,8 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
                                             false /* always copy */,
                                             m_Parameters.BufferChunkSize));
     }
+    m_ThisTimestepDataSize = 0;
+
     return StepStatus::OK;
 }
 
@@ -242,23 +244,50 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
 
     m_FileMetadataManager.FlushFiles();
 
-    uint64_t buf[2];
+    std::vector<uint64_t> buf;
+    buf.resize(3 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size());
     buf[0] = MetaDataPos;
     buf[1] = MetaDataSize;
-    m_FileMetadataIndexManager.WriteFiles((char *)buf, sizeof(buf));
-    m_FileMetadataIndexManager.WriteFiles((char *)m_WriterDataPos.data(),
-                                          m_WriterDataPos.size() *
-                                              sizeof(uint64_t));
-    /*std::cout << "Write Index positions = {";
-    for (size_t i = 0; i < m_WriterDataPos.size(); ++i)
+    buf[2] = FlushPosSizeInfo.size();
+
+    uint64_t pos = 3;
+
+    for (int writer = 0; writer < m_Comm.Size(); writer++)
     {
-        std::cout << m_WriterDataPos[i];
-        if (i < m_WriterDataPos.size() - 1)
+        for (int flushNum = 0; flushNum < FlushPosSizeInfo.size(); flushNum++)
         {
-            std::cout << ", ";
+            buf[pos + (flushNum * 2)] = FlushPosSizeInfo[flushNum][2 * writer];
+            buf[pos + (flushNum * 2) + 1] =
+                FlushPosSizeInfo[flushNum][2 * writer + 1];
         }
+        buf[pos + FlushPosSizeInfo.size() * 2] = m_WriterDataPos[writer];
+        pos += (FlushPosSizeInfo.size() * 2) + 1;
     }
-    std::cout << "}" << std::endl;*/
+
+    m_FileMetadataIndexManager.WriteFiles((char *)buf.data(),
+                                          buf.size() * sizeof(uint64_t));
+
+#ifdef DUMPDATALOCINFO
+    std::cout << "Flush count is :" << FlushPosSizeInfo.size() << std::endl;
+    std::cout << "Write Index positions = {" << std::endl;
+
+    for (size_t i = 0; i < m_Comm.Size(); ++i)
+    {
+        std::cout << "Writer " << i << " has data at: " << std::endl;
+        uint64_t eachWriterSize = FlushPosSizeInfo.size() * 2 + 1;
+        for (size_t j = 0; j < FlushPosSizeInfo.size(); ++j)
+        {
+            std::cout << "loc:" << buf[3 + eachWriterSize * i + j * 2]
+                      << " siz:" << buf[3 + eachWriterSize * i + j * 2 + 1]
+                      << std::endl;
+        }
+        std::cout << "loc:" << buf[3 + eachWriterSize * (i + 1) - 1]
+                  << std::endl;
+    }
+    std::cout << "}" << std::endl;
+#endif
+    /* reset for next timestep */
+    FlushPosSizeInfo.clear();
 }
 
 void BP5Writer::MarshalAttributes()
@@ -332,10 +361,11 @@ void BP5Writer::EndStep()
 
     WriteData(TSInfo.DataBuffer);
 
+    m_ThisTimestepDataSize += TSInfo.DataBuffer->Size();
+
     std::vector<char> MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
         TSInfo.NewMetaMetaBlocks, TSInfo.MetaEncodeBuffer,
-        TSInfo.AttributeEncodeBuffer, TSInfo.DataBuffer->Size(),
-        m_StartDataPos);
+        TSInfo.AttributeEncodeBuffer, m_ThisTimestepDataSize, m_StartDataPos);
 
     size_t LocalSize = MetaBuffer.size();
     std::vector<size_t> RecvCounts = m_Comm.GatherValues(LocalSize, 0);
@@ -765,7 +795,7 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
         (helper::IsRowMajor(m_IO.m_HostLanguage) == false) ? 'y' : 'n';
     helper::CopyToBuffer(buffer, position, &columnMajor);
 
-    // byte 45-63: unused
+    // byte 49-63: unused
     position += 15;
     absolutePosition = position;
 }
@@ -807,40 +837,52 @@ void BP5Writer::InitBPBuffer()
     }
 }
 
-void BP5Writer::DoFlush(const bool isFinal, const int transportIndex)
+void BP5Writer::FlushData(const bool isFinal)
 {
-    m_FileMetadataManager.FlushFiles();
-    m_FileMetaMetadataManager.FlushFiles();
-    m_FileDataManager.FlushFiles();
-
-    // true: advances step
-    //    BufferV *DataBuf;
+    BufferV *DataBuf;
     if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
     {
-        //        DataBuf = m_BP5Serializer.ReinitStepData(new
-        //        MallocV("BP5Writer", false,
-        //							 m_Parameters.InitialBufferSize,
-        //							 m_Parameters.GrowthFactor));
+        DataBuf = m_BP5Serializer.ReinitStepData(
+            new MallocV("BP5Writer", false, m_Parameters.InitialBufferSize,
+                        m_Parameters.GrowthFactor));
     }
     else
     {
-        //        DataBuf = m_BP5Serializer.ReinitStepData(new
-        //        ChunkV("BP5Writer",
-        //							false /* always
-        // copy
-        //*/,
-        // m_Parameters.BufferChunkSize));
+        DataBuf = m_BP5Serializer.ReinitStepData(
+            new ChunkV("BP5Writer", false /* always copy */,
+                       m_Parameters.BufferChunkSize));
     }
 
-    //    WriteData(DataBuf);
-    //    delete DataBuf;
+    WriteData(DataBuf);
+
+    m_ThisTimestepDataSize += DataBuf->Size();
+
+    if (!isFinal)
+    {
+        size_t tmp[2];
+        // aggregate start pos and data size to rank 0
+        tmp[0] = m_StartDataPos;
+        tmp[1] = DataBuf->Size();
+
+        std::vector<size_t> RecvBuffer;
+        if (m_Comm.Rank() == 0)
+        {
+            RecvBuffer.resize(m_Comm.Size() * 2);
+        }
+        m_Comm.GatherArrays(tmp, 2, RecvBuffer.data(), 0);
+        if (m_Comm.Rank() == 0)
+        {
+            FlushPosSizeInfo.push_back(RecvBuffer);
+        }
+    }
+    delete DataBuf;
 }
+
+void BP5Writer::Flush(const int transportIndex) { FlushData(false); }
 
 void BP5Writer::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Close");
-
-    DoFlush(true, transportIndex);
 
     m_FileDataManager.CloseFiles(transportIndex);
     // Delete files from temporary storage if draining was on

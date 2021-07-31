@@ -66,7 +66,22 @@ public:
     void MarshalAttribute(const char *Name, const DataType Type,
                           size_t ElemSize, size_t ElemCount, const void *Data);
 
+    /*
+     *  InitStep must be called with an appropriate BufferV subtype before a
+     * step can begin
+     */
     void InitStep(BufferV *DataBuffer);
+
+    /*
+     * ReinitStepData can be called to "flush" out already written
+     * data it returns a BufferV representing already-written data and
+     * provides the serializer with a new, empty BufferV This call
+     * does *not* reset the data offsets generated with Marshal, so
+     * those offsets are relative to the entire sequence of data
+     * produced by a writer rank.
+     */
+    BufferV *ReinitStepData(BufferV *DataBuffer);
+
     TimestepInfo CloseTimestep(int timestep);
     void PerformPuts();
 
@@ -127,6 +142,8 @@ private:
     size_t MetadataSize = 0;
     BufferV *CurDataBuffer = NULL;
     std::vector<MetaMetaInfoBlock> PreviousMetaMetaInfoBlocks;
+
+    size_t m_PriorDataBufferSizeTotal = 0;
 
     BP5WriterRec LookupWriterRec(void *Key);
     BP5WriterRec CreateWriterRec(void *Variable, const char *Name,

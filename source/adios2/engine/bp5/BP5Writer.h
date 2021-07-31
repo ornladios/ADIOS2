@@ -48,6 +48,7 @@ public:
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
+    void Flush(const int transportIndex = -1) final;
 
 private:
     /** Single object controlling BP buffering */
@@ -131,7 +132,7 @@ private:
     ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
-    void DoFlush(const bool isFinal = false, const int transportIndex = -1);
+    void FlushData(const bool isFinal = false);
 
     void DoClose(const int transportIndex = -1) final;
 
@@ -199,6 +200,11 @@ private:
      */
     uint64_t m_DataPos = 0;
 
+    /*
+     *  Total data written this timestep
+     */
+    uint64_t m_ThisTimestepDataSize = 0;
+
     /** rank 0 collects m_StartDataPos in this vector for writing it
      *  to the index file
      */
@@ -209,6 +215,8 @@ private:
 
     // where each writer rank writes its data, init in InitBPBuffer;
     std::vector<uint64_t> m_Assignment;
+
+    std::vector<std::vector<size_t>> FlushPosSizeInfo;
 
     void MakeHeader(format::BufferSTL &b, const std::string fileType,
                     const bool isActive);

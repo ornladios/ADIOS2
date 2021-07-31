@@ -482,13 +482,14 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
 
         if (span == nullptr)
         {
-            DataOffset = CurDataBuffer->AddToVec(ElemCount * ElemSize, Data,
+            DataOffset = m_PriorDataBufferSizeTotal +
+                         CurDataBuffer->AddToVec(ElemCount * ElemSize, Data,
                                                  ElemSize, Sync);
         }
         else
         {
             *span = CurDataBuffer->Allocate(ElemCount * ElemSize, ElemSize);
-            DataOffset = span->globalPos;
+            DataOffset = m_PriorDataBufferSizeTotal + span->globalPos;
         }
 
         if (!AlreadyWritten)
@@ -636,6 +637,21 @@ void BP5Serializer::InitStep(BufferV *DataBuffer)
         throw std::logic_error("BP5Serializer:: InitStep without prior close");
     }
     CurDataBuffer = DataBuffer;
+    m_PriorDataBufferSizeTotal = 0;
+}
+
+BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer)
+{
+    if (CurDataBuffer == NULL)
+    {
+        throw std::logic_error("BP5Serializer:: ReinitStep without prior Init");
+    }
+    m_PriorDataBufferSizeTotal += CurDataBuffer->AddToVec(
+        0, NULL, sizeof(max_align_t), true); //  output block size aligned
+
+    BufferV *tmp = CurDataBuffer;
+    CurDataBuffer = DataBuffer;
+    return tmp;
 }
 
 BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
@@ -695,6 +711,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
     }
     MBase->DataBlockSize = CurDataBuffer->AddToVec(
         0, NULL, sizeof(max_align_t), true); //  output block size aligned
+
+    MBase->DataBlockSize += m_PriorDataBufferSizeTotal;
 
     void *MetaDataBlock = FFSencode(MetaEncodeBuffer, Info.MetaFormat,
                                     MetadataBuf, &MetaDataSize);
