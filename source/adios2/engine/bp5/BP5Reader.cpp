@@ -138,11 +138,10 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
                          const size_t StartOffset, const size_t Length,
                          char *Destination)
 {
-    size_t DataStartPos = m_MetadataIndexTable[Timestep][2];
+    size_t FlushCount = m_MetadataIndexTable[Timestep][2];
+    size_t DataPosPos = m_MetadataIndexTable[Timestep][3];
     size_t SubfileNum = m_WriterToFileMap[WriterRank];
-    DataStartPos += WriterRank * sizeof(uint64_t);
-    size_t DataStart = helper::ReadValue<uint64_t>(
-        m_MetadataIndex.m_Buffer, DataStartPos, m_Minifooter.IsLittleEndian);
+
     // check if subfile is already opened
     if (m_DataFileManager.m_Transports.count(SubfileNum) == 0)
     {
@@ -152,7 +151,35 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
         m_DataFileManager.OpenFileID(subFileName, SubfileNum, Mode::Read,
                                      {{"transport", "File"}}, false);
     }
-    m_DataFileManager.ReadFile(Destination, Length, DataStart + StartOffset,
+
+    size_t InfoStartPos =
+        DataPosPos + (WriterRank * (2 * FlushCount + 1) * sizeof(uint64_t));
+    size_t ThisFlushInfo = InfoStartPos;
+    size_t RemainingLength = Length;
+    size_t ThisDataPos;
+    size_t Offset = StartOffset;
+    for (int flush = 0; flush < FlushCount; flush++)
+    {
+
+        ThisDataPos =
+            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, ThisFlushInfo,
+                                        m_Minifooter.IsLittleEndian);
+        size_t ThisDataSize =
+            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, ThisFlushInfo,
+                                        m_Minifooter.IsLittleEndian);
+        if (ThisDataSize > RemainingLength)
+            ThisDataSize = RemainingLength;
+        m_DataFileManager.ReadFile(Destination, ThisDataSize,
+                                   ThisDataPos + Offset, SubfileNum);
+        Destination += ThisDataSize;
+        RemainingLength -= ThisDataSize;
+        Offset = 0;
+        if (RemainingLength == 0)
+            return;
+    }
+    ThisDataPos = helper::ReadValue<uint64_t>(
+        m_MetadataIndex.m_Buffer, ThisFlushInfo, m_Minifooter.IsLittleEndian);
+    m_DataFileManager.ReadFile(Destination, RemainingLength, ThisDataPos,
                                SubfileNum);
 }
 
@@ -601,19 +628,34 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
             buffer, position, m_Minifooter.IsLittleEndian);
         const uint64_t MetadataSize = helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
+        const uint64_t FlushCount = helper::ReadValue<uint64_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
 
         ptrs.push_back(MetadataPos);
         ptrs.push_back(MetadataSize);
+        ptrs.push_back(FlushCount);
         ptrs.push_back(position);
         m_MetadataIndexTable[currentStep] = ptrs;
+#ifdef DUMPDATALOCINFO
         for (uint64_t i = 0; i < m_WriterCount; i++)
         {
-            size_t DataPosPos = ptrs[2] + sizeof(uint64_t) * i;
+            size_t DataPosPos = ptrs[3];
+            std::cout << "Writer " << i << " data at ";
+            for (uint64_t j = 0; j < FlushCount; j++)
+            {
+                const uint64_t DataPos = helper::ReadValue<uint64_t>(
+                    buffer, DataPosPos, m_Minifooter.IsLittleEndian);
+                const uint64_t DataSize = helper::ReadValue<uint64_t>(
+                    buffer, DataPosPos, m_Minifooter.IsLittleEndian);
+                std::cout << "loc:" << DataPos << " siz:" << DataSize << "; ";
+            }
             const uint64_t DataPos = helper::ReadValue<uint64_t>(
                 buffer, DataPosPos, m_Minifooter.IsLittleEndian);
+            std::cout << "loc:" << DataPos << std::endl;
         }
+#endif
 
-        position += sizeof(uint64_t) * m_WriterCount;
+        position += sizeof(uint64_t) * m_WriterCount * ((2 * FlushCount) + 1);
         m_StepsCount++;
         currentStep++;
     } while (!oneStepOnly && position < buffer.size());

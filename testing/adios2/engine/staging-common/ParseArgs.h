@@ -36,6 +36,7 @@ bool VaryingDataSize = false;
 bool AdvancingAttrs = false;
 int NoData = 0;
 int NoDataNode = -1;
+int Flush = 0;
 int EarlyExit = 0;
 int LocalCount = 1;
 int DataSize = 5 * 1024 * 1024 / 8; /* DefaultMinDeferredSize is 4*1024*1024
@@ -299,6 +300,10 @@ static void ParseArgs(int argc, char **argv)
         else if (std::string(argv[1]) == "--early_exit")
         {
             EarlyExit++;
+        }
+        else if (std::string(argv[1]) == "--flush")
+        {
+            Flush++;
         }
         else if (std::string(argv[1]) == "--disable_mpmd")
         {

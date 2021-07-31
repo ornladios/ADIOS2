@@ -147,11 +147,18 @@ private:
  *	BP5 header for "Index Table" (64 bytes)
  *      for each Writer, what aggregator writes its data
  *             uint16_t [ WriterCount]
- *	for each timestep:
- *		uint64_t 0 :  CombinedMetaDataPos
- *		uint64_t 1 :  CombinedMetaDataSize
- *		for each Writer
- *		 uint64_t  DataPos (in the file above)
+ *      for each timestep:   (size (WriterCount + 2 ) 64-bit ints
+ *             uint64_t 0 :  CombinedMetaDataPos
+ *             uint64_t 1 :  CombinedMetaDataSize
+ *	       uint64_t 2 :  FlushCount
+ *             for each Writer
+ *		   for each flush before the last:
+ *                   uint64_t  DataPos (in the file above)
+ *                   uint64_t  DataSize
+ *		    for the final flush:
+ *                    uint64_t  DataPos (in the file above)
+ *	     So, each timestep takes sizeof(uint64_t)* (3 + ((FlushCount-1)*2 +
+ *1) * WriterCount) bytes
  *
  *   MetaMetadata file (mmd.0) contains FFS format information
  *	for each meta metadata item:

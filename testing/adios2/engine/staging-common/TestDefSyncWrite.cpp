@@ -71,7 +71,8 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
      *		Don't write
      *          Sync   - always destroy data afterwards
      *		Deferred
-     *		Deferred with immediate PerformPuts()  -  Destroy all prior data
+     *		Deferred with immediate PerformPuts() or Flush() -  Destroy all
+     *prior data
      *
      */
     for (int step = StartStep; step < EndStep; ++step)
@@ -112,8 +113,16 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
             }
             else if (this_var_mask == 3)
             {
-                std::cout << "P ";
-                engine.PerformPuts();
+                if (Flush)
+                {
+                    std::cout << "F ";
+                    engine.Flush();
+                }
+                else
+                {
+                    std::cout << "P ";
+                    engine.PerformPuts();
+                }
                 for (int k = 0; k <= j; k++)
                     std::fill(data[k].begin(), data[k].end(), -100.0);
             }

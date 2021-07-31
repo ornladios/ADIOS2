@@ -104,7 +104,7 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;1x1DefSync")
+set (SIMPLE_TESTS "1x1;1x1DefSync;1x1Flush")
 
 set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
@@ -147,7 +147,7 @@ endif()
 SET (BASIC_SST_TESTS "")
 if(ADIOS2_HAVE_SST)
   list (APPEND BASIC_SST_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS} ${SST_SPECIFIC_TESTS})
-  list (REMOVE_ITEM BASIC_SST_TESTS 1x1DefSync)
+  list (REMOVE_ITEM BASIC_SST_TESTS 1x1DefSync 1x1Flush)
 endif()
 
 
@@ -225,6 +225,8 @@ if(NOT WIN32)    # not on windows
     list (FILTER BP_TESTS EXCLUDE REGEX ".*SharedVar$")
     # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
     list (FILTER BP_TESTS EXCLUDE REGEX ".*NoData$")
+    # BP3 and BP4 semantics on flush differ from BP5
+    list (FILTER BP_TESTS EXCLUDE REGEX ".*Flush.*")
     foreach(test ${BP_TESTS})
         add_common_test(${test} BP4)
     endforeach()
@@ -282,6 +284,7 @@ if(NOT MSVC)    # not on windows
     # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*NoData.BPS$")
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*1x1DefSync.*")
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Flush.*")
     
     foreach(test ${BP4_STREAM_TESTS})
         add_common_test(${test} BP4_stream)
@@ -315,6 +318,7 @@ if(NOT MSVC)    # not on windows
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*TimeoutOnOpen.FS$")
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*NoReaderNoWait.FS$")
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*1x1DefSync.*")
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*Flush.*")
 
     foreach(test ${FILESTREAM_TESTS})
         add_common_test(${test} FileStream)
