@@ -98,8 +98,8 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
                                                      std::vector<char> &buffer)
 {
     const bool isLittleEndian = helper::IsLittleEndian();
-    const uint8_t characteristicsCount =
-        helper::ReadValue<uint8_t>(buffer, currentPosition, isLittleEndian);
+
+    helper::ReadValue<uint8_t>(buffer, currentPosition, isLittleEndian);
 
     const uint32_t characteristicsLength =
         helper::ReadValue<uint32_t>(buffer, currentPosition, isLittleEndian);

@@ -67,6 +67,8 @@ int main(int argc, char *argv[])
 
         adios2::Attribute<int> attribute =
             bpIO.DefineAttribute<int>("attrINT", -1);
+        (void)attribute; // For the sake of the example we create an unused
+                         // variable
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpFileWriter =

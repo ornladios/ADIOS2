@@ -33,7 +33,7 @@ BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(),
   m_FileDataManager(m_Comm), m_FileMetadataManager(m_Comm),
-  m_FileMetaMetadataManager(m_Comm), m_FileMetadataIndexManager(m_Comm)
+  m_FileMetadataIndexManager(m_Comm), m_FileMetaMetadataManager(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
     m_IO.m_ReadStreaming = false;
@@ -138,6 +138,7 @@ uint64_t BP5Writer::WriteMetadata(
 void BP5Writer::WriteData(format::BufferV *Data)
 {
     format::BufferV::BufferV_iovec DataVec = Data->DataVec();
+    (void)DataVec;
     switch (m_Parameters.AggregationType)
     {
     case (int)AggregationType::EveryoneWrites:
@@ -254,7 +255,8 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
 
     for (int writer = 0; writer < m_Comm.Size(); writer++)
     {
-        for (int flushNum = 0; flushNum < FlushPosSizeInfo.size(); flushNum++)
+        for (size_t flushNum = 0; flushNum < FlushPosSizeInfo.size();
+             flushNum++)
         {
             buf[pos + (flushNum * 2)] = FlushPosSizeInfo[flushNum][2 * writer];
             buf[pos + (flushNum * 2) + 1] =
@@ -511,6 +513,7 @@ void BP5Writer::InitAggregator()
     else
     {
         size_t numNodes = m_AggregatorTwoLevelShm.PreInit(m_Comm);
+        (void)numNodes;
         m_AggregatorTwoLevelShm.Init(m_Parameters.NumAggregators,
                                      m_Parameters.NumSubFiles, m_Comm);
 
@@ -639,7 +642,6 @@ void BP5Writer::InitTransports()
         m_FileMetadataManager.OpenFiles(m_MetadataFileNames, m_OpenMode,
                                         m_IO.m_TransportsParameters, false);
 
-        uint64_t WriterCount = m_Comm.Size();
         m_FileMetadataIndexManager.OpenFiles(
             m_MetadataIndexFileNames, m_OpenMode, m_IO.m_TransportsParameters,
             false);

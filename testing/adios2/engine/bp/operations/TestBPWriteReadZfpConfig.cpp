@@ -64,6 +64,9 @@ void ZfpRate1D(const std::string configFile)
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
 
+        (void)var_r32;
+        (void)var_r64;
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -179,6 +182,9 @@ void ZfpRate2D(const std::string configFile)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
+
+        (void)var_r32;
+        (void)var_r64;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -296,6 +302,9 @@ void ZfpRate3D(const std::string configFile)
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
 
+        (void)var_r32;
+        (void)var_r64;
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -411,6 +420,9 @@ void ZfpRate1DSel(const std::string configFile)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
+
+        (void)var_r32;
+        (void)var_r64;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -533,6 +545,9 @@ void ZfpRate2DSel(const std::string configFile)
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
 
+        (void)var_r32;
+        (void)var_r64;
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -652,6 +667,9 @@ void ZfpRate3DSel(const std::string configFile)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
+
+        (void)var_r32;
+        (void)var_r64;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -777,6 +795,9 @@ void ZfpRate2DSmallSel(const std::string configFile)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
+
+        (void)var_r32;
+        (void)var_r64;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 

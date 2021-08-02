@@ -19,7 +19,7 @@
 #include <adios2.h>
 
 #include <gtest/gtest.h>
-#include <nlohmann/json.hpp>
+#include <nlohmann_json.hpp>
 
 #include "../SmallTestData.h"
 

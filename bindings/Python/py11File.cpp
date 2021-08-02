@@ -216,7 +216,7 @@ pybind11::array File::Read(const std::string &name, const Dims &start,
             m_Stream->Read<std::string>(name, blockID).front();
         pybind11::array_t<char> pyArray(Dims{value.size()});
         std::copy(value.begin(), value.end(), pyArray.mutable_data());
-        return pyArray;
+        return std::move(pyArray);
     }
 
     return Read(name, start, count, 0, 0, blockID);
@@ -270,7 +270,7 @@ pybind11::array File::ReadAttribute(const std::string &name,
         pybind11::array_t<T> pyArray(attribute->m_Elements);                   \
         m_Stream->ReadAttribute<T>(name, pyArray.mutable_data(), variableName, \
                                    separator);                                 \
-        return pyArray;                                                        \
+        return std::move(pyArray);                                             \
     }
     ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type

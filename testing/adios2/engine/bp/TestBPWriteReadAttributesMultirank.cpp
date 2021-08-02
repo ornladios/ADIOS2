@@ -57,6 +57,8 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
 
         auto var = io.DefineVariable<int>(varpath);
         auto attr = io.DefineAttribute<std::string>(attrpath, desc);
+        (void)var;
+        (void)attr;
 
         std::cout << "Rank " << mpiRank << " create variable " << varpath
                   << " = " << mpiRank << " and attribute " << attrpath

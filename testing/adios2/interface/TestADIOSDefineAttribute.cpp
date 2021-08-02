@@ -749,7 +749,7 @@ TEST_F(ADIOSDefineAttributeTest, VariableException)
                          "myVar1", separator),
                      std::invalid_argument);
 
-        auto var = io.DefineVariable<int>("myVar1");
+        io.DefineVariable<int>("myVar1");
 
         EXPECT_NO_THROW(
             io.DefineAttribute<std::string>("Hello Value", "Value", "myVar1"));

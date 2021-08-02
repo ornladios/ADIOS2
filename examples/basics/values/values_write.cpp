@@ -71,6 +71,8 @@ int main(int argc, char *argv[])
          */
         // 1. Global constant, same value across processes, constant over time
         adios2::Variable<int> varNproc = io.DefineVariable<int>("Nproc");
+        (void)varNproc; // For the sake of the example we create an unused
+                        // variable
 
         // 2. Global value, same value across processes, varying value over time
         adios2::Variable<int> varStep = io.DefineVariable<int>("Step");

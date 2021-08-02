@@ -11,7 +11,12 @@ void *safe_malloc(size_t n, unsigned long line);
 #define SAFE_MALLOC(n) safe_malloc(n, __LINE__)
 
 void safe_free(void *p);
-#define SAFE_FREE(ptr) safe_free(ptr)
+
+#ifdef __cplusplus
+#define SAFE_FREE(ptr) safe_free(reinterpret_cast<void *>(ptr))
+#else
+#define SAFE_FREE(ptr) safe_free((void *)(ptr))
+#endif
 
 void *safe_ralloc(void *ptr, size_t newsize, unsigned long line);
 #define SAFE_REALLOC(ptr, newsize) safe_ralloc(ptr, newsize, __LINE__)

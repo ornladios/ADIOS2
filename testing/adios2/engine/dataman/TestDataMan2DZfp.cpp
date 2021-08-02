@@ -146,7 +146,7 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter =
         dataManIO.Open("stream", adios2::Mode::Write);
-    for (int i = 0; i < steps; ++i)
+    for (size_t i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();
         GenData(myChars, i, start, count, shape);

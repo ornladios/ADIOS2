@@ -8,6 +8,8 @@
 
 #include "ChunkV.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
+
+#include <algorithm>
 #include <assert.h>
 #include <iostream>
 #include <stddef.h> // max_align_t

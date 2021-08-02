@@ -88,7 +88,6 @@ typename Variable<T>::Span Engine::Put(Variable<T> variable,
 template <class T>
 typename Variable<T>::Span Engine::Put(Variable<T> variable)
 {
-    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine,
                                     "for Engine in call to Engine::Array");
 

@@ -82,6 +82,17 @@ set_tests_properties(Install.Setup PROPERTIES
   FIXTURES_SETUP Install
   )
 
+# Remove -Wall -Werror in this scope
+if(CMAKE_C_FLAGS)
+  string(REPLACE "-Wall"    " " CMAKE_C_FLAGS   ${CMAKE_C_FLAGS})
+  string(REPLACE "-Werror"  " " CMAKE_C_FLAGS   ${CMAKE_C_FLAGS})
+endif()
+
+if(CMAKE_CXX_FLAGS)
+  string(REPLACE "-Wall"    " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-Werror"  " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+endif()
+
 add_install_cmake_test(C)
 add_install_cmake_test(CXX11)
 if(ADIOS2_HAVE_Fortran)

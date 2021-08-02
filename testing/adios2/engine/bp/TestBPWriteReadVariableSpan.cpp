@@ -65,7 +65,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
 
         auto var_Step = io.DefineVariable<size_t>("step");
         /* Why is there no Span for string variable? */
-        // auto var_String = io.DefineVariable<std::string>("iString");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
                                                 adios2::ConstantDims);
         auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
@@ -90,6 +89,19 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
             "cr32", shape, start, count, adios2::ConstantDims);
         auto var_cr64 = io.DefineVariable<std::complex<double>>(
             "cr64", shape, start, count, adios2::ConstantDims);
+
+        (void)var_i8;
+        (void)var_i16;
+        (void)var_i32;
+        (void)var_i64;
+        (void)var_u8;
+        (void)var_u16;
+        (void)var_u32;
+        (void)var_u64;
+        (void)var_r32;
+        (void)var_r64;
+        (void)var_cr32;
+        (void)var_cr64;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -121,6 +133,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
                 bpWriter.Put(var_cr64);
 
             auto ptr = i64Span.data();
+            (void)ptr;
 
             // Testing Data()
             std::copy(currentTestData.I8.begin(),
@@ -357,7 +370,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
         const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
         const adios2::Dims count{Ny, Nx};
 
-        // auto var_String = io.DefineVariable<std::string>("iString");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
                                                 adios2::ConstantDims);
         auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
@@ -382,6 +394,19 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
             "cr32", shape, start, count, adios2::ConstantDims);
         auto var_cr64 = io.DefineVariable<std::complex<double>>(
             "cr64", shape, start, count, adios2::ConstantDims);
+
+        (void)var_i8;
+        (void)var_i16;
+        (void)var_i32;
+        (void)var_i64;
+        (void)var_u8;
+        (void)var_u16;
+        (void)var_u32;
+        (void)var_u64;
+        (void)var_r32;
+        (void)var_r64;
+        (void)var_cr32;
+        (void)var_cr64;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -658,7 +683,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
         const adios2::Dims start{};
         const adios2::Dims count{Nx};
 
-        // auto var_String = io.DefineVariable<std::string>("iString");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
                                                 adios2::ConstantDims);
         auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
@@ -683,6 +707,19 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
             "cr32", shape, start, count, adios2::ConstantDims);
         auto var_cr64 = io.DefineVariable<std::complex<double>>(
             "cr64", shape, start, count, adios2::ConstantDims);
+
+        (void)var_i8;
+        (void)var_i16;
+        (void)var_i32;
+        (void)var_i64;
+        (void)var_u8;
+        (void)var_u16;
+        (void)var_u32;
+        (void)var_u64;
+        (void)var_r32;
+        (void)var_r64;
+        (void)var_cr32;
+        (void)var_cr64;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -909,7 +946,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
         const adios2::Dims start{};
         const adios2::Dims count{Ny, Nx};
 
-        // auto var_String = io.DefineVariable<std::string>("iString");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
                                                 adios2::ConstantDims);
         auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
@@ -934,6 +970,19 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
             "cr32", shape, start, count, adios2::ConstantDims);
         auto var_cr64 = io.DefineVariable<std::complex<double>>(
             "cr64", shape, start, count, adios2::ConstantDims);
+
+        (void)var_i8;
+        (void)var_i16;
+        (void)var_i32;
+        (void)var_i64;
+        (void)var_u8;
+        (void)var_u16;
+        (void)var_u32;
+        (void)var_u64;
+        (void)var_r32;
+        (void)var_r64;
+        (void)var_cr32;
+        (void)var_cr64;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -1182,7 +1231,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        // auto var_String = io.DefineVariable<std::string>("iString");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
                                                 adios2::ConstantDims);
         auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
@@ -1207,6 +1255,19 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
             "cr32", shape, start, count, adios2::ConstantDims);
         auto var_cr64 = io.DefineVariable<std::complex<double>>(
             "cr64", shape, start, count, adios2::ConstantDims);
+
+        (void)var_i8;
+        (void)var_i16;
+        (void)var_i32;
+        (void)var_i64;
+        (void)var_u8;
+        (void)var_u16;
+        (void)var_u32;
+        (void)var_u64;
+        (void)var_r32;
+        (void)var_r64;
+        (void)var_cr32;
+        (void)var_cr64;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -1247,6 +1308,19 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
                 bpWriter.Put(
                     var_cr64, true,
                     {static_cast<double>(step), static_cast<double>(step)});
+
+            (void)i8Span;
+            (void)i16Span;
+            (void)i32Span;
+            (void)i64Span;
+            (void)u8Span;
+            (void)u16Span;
+            (void)u32Span;
+            (void)u64Span;
+            (void)r32Span;
+            (void)r64Span;
+            (void)cr32Span;
+            (void)cr64Span;
 
             bpWriter.EndStep();
         }

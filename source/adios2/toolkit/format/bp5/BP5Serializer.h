@@ -119,7 +119,7 @@ private:
     {
         int RecCount = 0;
         BP5WriterRec RecList = NULL;
-        FMContext LocalFMContext;
+        FMContext LocalFMContext = {0};
         int MetaFieldCount = 0;
         FMFieldList MetaFields = NULL;
         FMFormat MetaFormat;

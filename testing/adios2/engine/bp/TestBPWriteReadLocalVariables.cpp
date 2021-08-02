@@ -1721,6 +1721,23 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DBlockInfo)
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
 
+        (void)var_StepsGlobalValue;
+        (void)var_StepsGlobalValueString;
+        (void)var_RanksLocalValue;
+        (void)var_RanksLocalValueString;
+        (void)var_i8;
+        (void)var_i16;
+        (void)var_i32;
+        (void)var_i64;
+        (void)var_u8;
+        (void)var_u16;
+        (void)var_u32;
+        (void)var_u64;
+        (void)var_r32;
+        (void)var_r64;
+        (void)var_cr32;
+        (void)var_cr64;
+
         for (size_t s = 0; s < NSteps; ++s)
         {
             const std::vector<typename adios2::Variable<int32_t>::Info>

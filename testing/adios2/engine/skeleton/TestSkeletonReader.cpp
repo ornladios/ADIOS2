@@ -113,9 +113,11 @@ int main(int argc, char *argv[])
                 adios2::Variable<float> varArray = io.DefineVariable<float>(
                     "myArray", {gndx}, {gndx / (size_t)nproc},
                     {gndx / (size_t)nproc});
+                (void)varArray;
 
                 adios2::Variable<std::string> varSyncString =
                     io.DefineVariable<std::string>("mySyncString");
+                (void)varSyncString;
             }
             else
             {

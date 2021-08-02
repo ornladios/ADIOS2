@@ -50,7 +50,8 @@ BP5Serializer::~BP5Serializer()
 
 void BP5Serializer::Init()
 {
-    memset(&Info, 0, sizeof(Info));
+    // Re-init Info to zero
+    Info = FFSWriterMarshalBase();
     Info.RecCount = 0;
     Info.RecList = (BP5Serializer::BP5WriterRec)malloc(sizeof(Info.RecList[0]));
     Info.MetaFieldCount = 0;

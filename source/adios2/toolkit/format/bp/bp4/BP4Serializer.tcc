@@ -624,14 +624,12 @@ void BP4Serializer::PutBoundsRecord(const bool singleValue,
                     static_cast<uint64_t>(stats.SubBlockInfo.SubBlockSize);
                 helper::InsertToBuffer(buffer, &subBlockSize);
 
-                const uint16_t N =
-                    static_cast<uint16_t>(stats.SubBlockInfo.Div.size());
                 for (auto const d : stats.SubBlockInfo.Div)
                 {
                     helper::InsertToBuffer(buffer, &d);
                 }
                 // insert min+max (alternating) elements (2*M values)
-                for (auto const m : stats.MinMaxs)
+                for (auto const &m : stats.MinMaxs)
                 {
                     helper::InsertToBuffer(buffer, &m);
                 }
@@ -678,14 +676,12 @@ void BP4Serializer::PutBoundsRecord(const bool singleValue,
                     static_cast<uint64_t>(stats.SubBlockInfo.SubBlockSize);
                 helper::CopyToBuffer(buffer, position, &subBlockSize);
 
-                const uint16_t N =
-                    static_cast<uint16_t>(stats.SubBlockInfo.Div.size());
                 for (auto const d : stats.SubBlockInfo.Div)
                 {
                     helper::CopyToBuffer(buffer, position, &d);
                 }
                 // insert min+max (alternating) elements (2*M values)
-                for (auto const m : stats.MinMaxs)
+                for (auto const &m : stats.MinMaxs)
                 {
                     helper::CopyToBuffer(buffer, position, &m);
                 }

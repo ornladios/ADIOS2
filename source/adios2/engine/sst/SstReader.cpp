@@ -486,7 +486,7 @@ void SstReader::Init()
             size_t *Start = NULL;                                              \
             size_t *Count = NULL;                                              \
             size_t DimCount = 0;                                               \
-            int NeedSync;                                                      \
+            int NeedSync = 0;                                                  \
                                                                                \
             if (variable.m_SelectionType ==                                    \
                 adios2::SelectionType::BoundingBox)                            \
@@ -586,7 +586,7 @@ void SstReader::Init()
         }                                                                      \
         if (m_WriterMarshalMethod == SstMarshalBP5)                            \
         {                                                                      \
-            bool need_sync = m_BP5Deserializer->QueueGet(variable, data);      \
+            m_BP5Deserializer->QueueGet(variable, data);                       \
         }                                                                      \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_gets)

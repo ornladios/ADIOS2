@@ -30,8 +30,8 @@ TEST_F(YAMLConfigTest, TwoIOs)
 #endif
 
     // must be declared at least once
-    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1"),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1");
+                 (void)io, std::invalid_argument);
 
     EXPECT_NO_THROW({
         adios2::IO io = adios.DeclareIO("Test IO 1");
@@ -47,10 +47,10 @@ TEST_F(YAMLConfigTest, TwoIOs)
             io.Open("Test BP Writer 1", adios2::Mode::Write);
         engine.Close();
     });
-    EXPECT_NO_THROW(adios2::IO io = adios.AtIO("Test IO 1"));
+    EXPECT_NO_THROW(adios2::IO io = adios.AtIO("Test IO 1"); (void)io);
 
-    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 2"),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 2");
+                 (void)io, std::invalid_argument);
     EXPECT_NO_THROW({
         adios2::IO io = adios.DeclareIO("Test IO 2");
         const adios2::Params params = io.Parameters();

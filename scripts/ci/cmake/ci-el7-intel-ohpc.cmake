@@ -10,11 +10,10 @@ env_module(load hdf5)
 set(ENV{CC}  icc)
 set(ENV{CXX} icpc)
 set(ENV{FC}  ifort)
-set(ENV{CFLAGS} -Werror)
-set(ENV{CXXFLAGS} -Werror)
-set(ENV{FFLAGS} "-warn errors")
 
 set(dashboard_cache "
+CMAKE_C_FLAGS:STRING=-Wall
+CMAKE_CXX_FLAGS:STRING=-Wall
 ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON

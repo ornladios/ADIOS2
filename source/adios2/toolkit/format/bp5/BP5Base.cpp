@@ -25,7 +25,7 @@ namespace format
 
 void BP5Base::FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
 {
-    int Element = Bit / (sizeof(size_t) * 8);
+    size_t Element = Bit / (sizeof(size_t) * 8);
     int ElementBit = Bit % (sizeof(size_t) * 8);
     if (static_cast<size_t>(Element) >= MBase->BitFieldCount)
     {
@@ -40,7 +40,7 @@ void BP5Base::FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
 
 int BP5Base::FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit)
 {
-    int Element = Bit / (sizeof(size_t) * 8);
+    size_t Element = Bit / (sizeof(size_t) * 8);
     int ElementBit = Bit % (sizeof(size_t) * 8);
     if (static_cast<size_t>(Element) >= MBase->BitFieldCount)
     {

@@ -8,6 +8,8 @@
 
 #include "MallocV.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
+
+#include <algorithm>
 #include <assert.h>
 #include <stddef.h> // max_align_t
 #include <string.h>

@@ -80,7 +80,7 @@ static adios2::Params ParseEngineParams(std::string Input)
     return Ret;
 }
 
-static void ParseArgs(int argc, char **argv)
+void ParseArgs(int argc, char **argv)
 {
     int bare_arg = 0;
     while (argc > 1)

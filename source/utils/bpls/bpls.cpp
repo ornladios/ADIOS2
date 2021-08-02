@@ -2413,7 +2413,8 @@ bool matchesAMask(const char *name)
             if (excode == 0 && // matches
                 (pmatch[0].rm_so == 0 ||
                  pmatch[0].rm_so == startpos) && // from the beginning
-                pmatch[0].rm_eo == strlen(name)  // to the very end of the name
+                static_cast<size_t>(pmatch[0].rm_eo) ==
+                    strlen(name) // to the very end of the name
             )
 #else
             bool matches = std::regex_match(name, varregex[i]);

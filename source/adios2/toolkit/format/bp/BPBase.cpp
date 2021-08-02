@@ -388,7 +388,7 @@ BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
     std::vector<uint8_t> transportsIDs;
     transportsIDs.reserve(transportsTypes.size());
 
-    for (const std::string transportType : transportsTypes)
+    for (const std::string &transportType : transportsTypes)
     {
         transportsIDs.push_back(lf_GetTransportID(transportType));
     }

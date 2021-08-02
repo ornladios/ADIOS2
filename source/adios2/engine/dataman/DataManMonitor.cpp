@@ -12,7 +12,7 @@
 #include <fstream>
 #include <iostream>
 #include <math.h>
-#include <nlohmann/json.hpp>
+#include <nlohmann_json.hpp>
 
 namespace adios2
 {

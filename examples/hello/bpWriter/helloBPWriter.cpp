@@ -63,6 +63,8 @@ int main(int argc, char *argv[])
 
         adios2::Variable<std::string> bpString =
             bpIO.DefineVariable<std::string>("bpString");
+        (void)bpString; // For the sake of the example we create an unused
+                        // variable
 
         std::string filename = "myVector_cpp.bp";
         /** Engine derived class, spawned to start IO operations */

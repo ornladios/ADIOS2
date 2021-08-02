@@ -24,8 +24,8 @@ namespace engine
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("BP5Reader", io, name, mode, std::move(comm)), m_MDFileManager(m_Comm),
-  m_FileMetaMetadataManager(m_Comm), m_DataFileManager(m_Comm),
-  m_MDIndexFileManager(m_Comm), m_ActiveFlagFileManager(m_Comm)
+  m_DataFileManager(m_Comm), m_MDIndexFileManager(m_Comm),
+  m_FileMetaMetadataManager(m_Comm), m_ActiveFlagFileManager(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
@@ -158,7 +158,7 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
     size_t RemainingLength = Length;
     size_t ThisDataPos;
     size_t Offset = StartOffset;
-    for (int flush = 0; flush < FlushCount; flush++)
+    for (size_t flush = 0; flush < FlushCount; flush++)
     {
 
         ThisDataPos =
