@@ -40,7 +40,7 @@ size_t CompressBZIP2::BufferMaxSize(const size_t sizeIn) const
 size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
                                const size_t elementSize, DataType type,
                                void *bufferOut, const Params &parameters,
-                               Params &info) const
+                               Params &info)
 {
     // defaults
     int blockSize100k = 1;
@@ -114,7 +114,7 @@ size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
                                  void *dataOut, const size_t sizeOut,
-                                 Params &info) const
+                                 Params &info)
 {
     // TODO: leave defaults at zero?
     int small = 0;

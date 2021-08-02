@@ -9,7 +9,7 @@
  */
 
 #include "TableWriter.tcc"
-#include "adios2/helper/adiosString.h"
+#include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
 {
@@ -24,36 +24,73 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
   m_SubAdios(m_Comm.Duplicate(), io.m_HostLanguage),
   m_SubIO(m_SubAdios.DeclareIO("SubIO"))
 {
-    m_MpiRank = m_Comm.Rank();
-    m_MpiSize = m_Comm.Size();
-    helper::GetParameter(m_IO.m_Parameters, "Compressor", m_UseCompressor);
-    helper::GetParameter(m_IO.m_Parameters, "Accuracy", m_UseAccuracy);
-    m_SubEngine = &m_SubIO.Open(m_Name, adios2::Mode::Write);
+    helper::GetParameter(io.m_Parameters, "tiers", m_Tiers);
+    for (const auto &params : io.m_TransportsParameters)
+    {
+        auto it = params.find("variable");
+        if (it == params.end())
+        {
+            continue;
+        }
+        for (const auto &param : params)
+        {
+            m_OperatorMap[it->second][param.first] = param.second;
+        }
+    }
+    for (int i = 0; i < m_Tiers; ++i)
+    {
+        m_SubEngines.push_back(&m_SubIO.Open(
+            m_Name + ".tier" + std::to_string(i), adios2::Mode::Write));
+    }
 }
 
 TableWriter::~TableWriter()
 {
-    if (m_Compressor)
-    {
-        delete m_Compressor;
-    }
-    m_Compressor = nullptr;
+    for (auto &c : m_Compressors)
+        if (c)
+        {
+            delete c;
+            c = nullptr;
+        }
 }
 
 StepStatus TableWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    return m_SubEngine->BeginStep(mode, timeoutSeconds);
+
+    for (auto &e : m_SubEngines)
+    {
+        e->BeginStep(mode, timeoutSeconds);
+    }
+    return StepStatus::OK;
 }
 
-size_t TableWriter::CurrentStep() const { return 0; }
+size_t TableWriter::CurrentStep() const
+{
+    return m_SubEngines[0]->CurrentStep();
+}
 
-void TableWriter::PerformPuts() { m_SubEngine->PerformPuts(); }
+void TableWriter::PerformPuts()
+{
+    for (auto &e : m_SubEngines)
+    {
+        e->PerformPuts();
+    }
+}
 
-void TableWriter::EndStep() { m_SubEngine->EndStep(); }
+void TableWriter::EndStep()
+{
+    for (auto &e : m_SubEngines)
+    {
+        e->EndStep();
+    }
+}
 
 void TableWriter::Flush(const int transportIndex)
 {
-    m_SubEngine->Flush(transportIndex);
+    for (auto &e : m_SubEngines)
+    {
+        e->Flush(transportIndex);
+    }
 }
 
 // PRIVATE
@@ -72,8 +109,11 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void TableWriter::DoClose(const int transportIndex)
 {
-    m_SubEngine->Close();
-    m_SubEngine = nullptr;
+    for (auto &e : m_SubEngines)
+    {
+        e->Close();
+        e = nullptr;
+    }
 }
 
 } // end namespace engine

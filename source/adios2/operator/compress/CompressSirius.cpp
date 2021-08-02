@@ -24,19 +24,19 @@ CompressSirius::CompressSirius(const Params &parameters)
 : Operator("sirius", parameters)
 {
     int tiers;
-    bool hasTiers = helper::GetParameter(parameters, "Tiers", tiers);
+    bool hasTiers = helper::GetParameter(parameters, "tiers", tiers);
     if (!hasTiers)
     {
-        throw("sirius operator: must have parameter Tiers");
+        throw("sirius operator: must have parameter tiers");
     }
     m_TierBuffers.resize(tiers);
 }
 
 size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
                                 const size_t elementSize, DataType varType,
-                                void *bufferOut)
+                                void *bufferOut, const Params &params,
+                                Params &info)
 {
-
     size_t totalBytes = std::accumulate(dimensions.begin(), dimensions.end(),
                                         elementSize, std::multiplies<size_t>());
 
@@ -63,10 +63,13 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
 
 bool CompressSirius::IsDataTypeValid(const DataType type) const
 {
-    if (helper::GetDataType<float>() == type)
-    {
-        return true;
+#define declare_type(T)                                                        \
+    if (helper::GetDataType<T>() == type)                                      \
+    {                                                                          \
+        return true;                                                           \
     }
+    ADIOS2_FOREACH_SIRIUS_TYPE_1ARG(declare_type)
+#undef declare_type
     return false;
 }
 

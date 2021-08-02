@@ -37,7 +37,7 @@ size_t CompressSZ::BufferMaxSize(const size_t sizeIn) const
 size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                             const size_t elementSize, DataType varType,
                             void *bufferOut, const Params &parameters,
-                            Params &info) const
+                            Params &info)
 {
     Dims convertedDims = ConvertDims(dimensions, varType, 4);
 
@@ -271,8 +271,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
                               void *dataOut, const Dims &dimensions,
-                              DataType varType,
-                              const Params & /*parameters*/) const
+                              DataType varType, const Params & /*parameters*/)
 {
     Dims convertedDims = ConvertDims(dimensions, varType, 4, true, 1);
 

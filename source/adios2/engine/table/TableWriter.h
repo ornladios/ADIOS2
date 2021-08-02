@@ -40,15 +40,14 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    int m_MpiRank;
-    int m_MpiSize;
     ADIOS m_SubAdios;
     IO &m_SubIO;
-    Engine *m_SubEngine = nullptr;
-    Operator *m_Compressor = nullptr;
-    std::unordered_map<std::string, bool> m_IndexerMap;
-    std::string m_UseCompressor;
-    std::string m_UseAccuracy;
+    std::vector<Engine *> m_SubEngines;
+    std::vector<Operator *> m_Compressors;
+    std::unordered_map<std::string,
+                       std::unordered_map<std::string, std::string>>
+        m_OperatorMap;
+    int m_Tiers = 1;
 
     void PutSubEngine(bool finalPut = false);
 

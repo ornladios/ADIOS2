@@ -38,7 +38,7 @@ size_t CompressZFP::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
 size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
                              const size_t elementSize, DataType type,
                              void *bufferOut, const Params &parameters,
-                             Params &info) const
+                             Params &info)
 {
 
     Dims convertedDims = ConvertDims(dimensions, type, 3);
@@ -67,7 +67,7 @@ size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
                                void *dataOut, const Dims &dimensions,
-                               DataType type, const Params &parameters) const
+                               DataType type, const Params &parameters)
 {
     auto lf_GetTypeSize = [](const zfp_type zfpType) -> size_t {
         size_t size = 0;

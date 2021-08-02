@@ -29,8 +29,8 @@ public:
     ~CompressSirius() = default;
 
     size_t Compress(const void *dataIn, const Dims &dimensions,
-                    const size_t elementSize, DataType type,
-                    void *bufferOut) final;
+                    const size_t elementSize, DataType type, void *bufferOut,
+                    const Params &params, Params &info) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 

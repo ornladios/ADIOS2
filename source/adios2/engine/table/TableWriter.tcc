@@ -12,6 +12,7 @@
 #define ADIOS2_ENGINE_TABLEWRITER_TCC_
 
 #include "TableWriter.h"
+#include "adios2/operator/compress/CompressSirius.h"
 
 #ifdef ADIOS2_HAVE_BLOSC
 #include "adios2/operator/compress/CompressBlosc.h"
@@ -46,7 +47,10 @@ void TableWriter::PutSyncCommon<std::string>(Variable<std::string> &variable,
         var = &m_SubIO.DefineVariable<std::string>(variable.m_Name,
                                                    {LocalValueDim});
     }
-    m_SubEngine->Put(*var, data, Mode::Sync);
+    for (auto &e : m_SubEngines)
+    {
+        e->Put(*var, data, Mode::Sync);
+    }
 }
 
 template <>
@@ -59,7 +63,10 @@ void TableWriter::PutDeferredCommon<std::string>(
         var = &m_SubIO.DefineVariable<std::string>(variable.m_Name,
                                                    {LocalValueDim});
     }
-    m_SubEngine->Put(*var, data, Mode::Deferred);
+    for (auto &e : m_SubEngines)
+    {
+        e->Put(*var, data, Mode::Deferred);
+    }
 }
 
 template <class T>
@@ -76,96 +83,94 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     if (!var)
     {
         var = &m_SubIO.DefineVariable<T>(variable.m_Name, variable.m_Shape);
-        if (m_UseCompressor == "blosc")
+        auto it = m_OperatorMap.find(variable.m_Name);
+        if (it != m_OperatorMap.end())
         {
+            auto itCompressor = it->second.find("transport");
+            if (itCompressor == it->second.end())
+            {
+                throw("compressor not specified");
+            }
+            if (itCompressor->second == "blosc")
+            {
 #ifdef ADIOS2_HAVE_BLOSC
-            m_Compressor = new compress::CompressBlosc({});
-            var->AddOperation(*m_Compressor, {});
+                auto compressor = new compress::CompressBlosc({});
+                m_Compressors.push_back(compressor);
+                var->AddOperation(*compressor, {});
 #else
-            std::cerr
-                << "ADIOS2 is not compiled with c-blosc "
-                   "(https://github.com/Blosc/c-blosc), compressor not added"
-                << std::endl;
+                std::cerr << "ADIOS2 is not compiled with c-blosc "
+                             "(https://github.com/Blosc/c-blosc), compressor "
+                             "not added"
+                          << std::endl;
 #endif
-        }
-        else if (m_UseCompressor == "bzip2")
-        {
+            }
+            else if (itCompressor->second == "bzip2")
+            {
 #ifdef ADIOS2_HAVE_BZIP2
-            m_Compressor = new compress::CompressBZIP2({});
-            var->AddOperation(*m_Compressor, {});
+                auto compressor = new compress::CompressBZIP2({});
+                m_Compressors.push_back(compressor);
+                var->AddOperation(*compressor, {});
 #else
-            std::cerr << "ADIOS2 is not compiled with Bzip2 "
-                         "(https://gitlab.com/federicomenaquintero/bzip2), "
-                         "compressor not added"
-                      << std::endl;
+                std::cerr << "ADIOS2 is not compiled with Bzip2 "
+                             "(https://gitlab.com/federicomenaquintero/bzip2), "
+                             "compressor not added"
+                          << std::endl;
 #endif
-        }
-        else if (m_UseCompressor == "zfp")
-        {
+            }
+            else if (itCompressor->second == "zfp")
+            {
 #ifdef ADIOS2_HAVE_ZFP
-            if (var->m_Type == helper::GetDataType<float>() ||
-                var->m_Type == helper::GetDataType<double>() ||
-                var->m_Type == helper::GetDataType<std::complex<float>>() ||
-                var->m_Type == helper::GetDataType<std::complex<double>>())
-            {
-                if (m_UseAccuracy.empty())
+                auto itAccuracy = it->second.find("accuracy");
+                if (itAccuracy != it->second.end())
                 {
-                    std::cerr << "Parameter accuracy for lossy compression is "
-                                 "not specified, compressor not added"
-                              << std::endl;
+                    auto compressor = new compress::CompressZFP({});
+                    m_Compressors.push_back(compressor);
+                    var->AddOperation(*compressor, {{ops::zfp::key::accuracy,
+                                                     itAccuracy->second}});
                 }
-                else
-                {
-                    m_Compressor = new compress::CompressZFP({});
-                    var->AddOperation(*m_Compressor, {{ops::zfp::key::accuracy,
-                                                       m_UseAccuracy}});
-                }
-            }
 #else
-            std::cerr << "ADIOS2 is not compiled with ZFP "
-                         "(https://github.com/LLNL/zfp), "
-                         "compressor not added"
-                      << std::endl;
+                std::cerr << "ADIOS2 is not compiled with ZFP "
+                             "(https://github.com/LLNL/zfp), "
+                             "compressor not added"
+                          << std::endl;
 #endif
-        }
-        else if (m_UseCompressor == "sz")
-        {
+            }
+            else if (itCompressor->second == "sz")
+            {
 #ifdef ADIOS2_HAVE_SZ
-            if (var->m_Type == helper::GetDataType<float>() ||
-                var->m_Type == helper::GetDataType<double>() ||
-                var->m_Type == helper::GetDataType<std::complex<float>>() ||
-                var->m_Type == helper::GetDataType<std::complex<double>>())
-            {
-                if (m_UseAccuracy.empty())
+                auto itAccuracy = it->second.find("accuracy");
+                if (itAccuracy != it->second.end())
                 {
-                    std::cerr << "Parameter accuracy for lossy compression is "
-                                 "not specified, compressor not added"
-                              << std::endl;
+                    auto compressor = new compress::CompressSZ({});
+                    m_Compressors.push_back(compressor);
+                    var->AddOperation(*compressor, {{ops::sz::key::accuracy,
+                                                     itAccuracy->second}});
                 }
-                else
-                {
-                    m_Compressor = new compress::CompressSZ({});
-                    var->AddOperation(*m_Compressor, {{ops::sz::key::accuracy,
-                                                       m_UseAccuracy}});
-                }
-            }
 #else
-            std::cerr << "ADIOS2 is not compiled with SZ "
-                         "(https://github.com/szcompressor/SZ), "
-                         "compressor not added"
-                      << std::endl;
+                std::cerr << "ADIOS2 is not compiled with SZ "
+                             "(https://github.com/szcompressor/SZ), "
+                             "compressor not added"
+                          << std::endl;
 #endif
+            }
+            else if (itCompressor->second == "sirius")
+            {
+                auto compressor =
+                    new compress::CompressSirius(m_IO.m_Parameters);
+                m_Compressors.push_back(compressor);
+                var->AddOperation(*compressor, {});
+            }
+            else
+            {
+                throw("invalid operator");
+            }
         }
     }
 
-    if (m_IndexerMap[variable.m_Name])
+    var->SetSelection({variable.m_Start, variable.m_Count});
+    for (auto &e : m_SubEngines)
     {
-        // TODO: implement indexing
-    }
-    else
-    {
-        var->SetSelection({variable.m_Start, variable.m_Count});
-        m_SubEngine->Put(*var, data, Mode::Deferred);
+        e->Put(*var, data, Mode::Deferred);
     }
 }
 
