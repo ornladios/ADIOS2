@@ -209,10 +209,10 @@ if(ADIOS2_HAVE_SSC)
     target_link_libraries(adios2_core_mpi)
 endif()
 
-if(ADIOS2_HAVE_Table)
+if(ADIOS2_HAVE_MHS)
     target_sources(adios2_core PRIVATE
-        engine/table/TableWriter.cpp
-        engine/table/TableWriter.tcc
+        engine/mhs/MhsWriter.cpp
+        engine/mhs/MhsWriter.tcc
     )
 endif()
 

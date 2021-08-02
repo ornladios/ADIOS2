@@ -2,13 +2,13 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TableWriter.cpp
+ * MhsWriter.cpp
  *
  *  Created on: Apr 6, 2019
  *      Author: Jason Wang w4g@ornl.gov
  */
 
-#include "TableWriter.tcc"
+#include "MhsWriter.tcc"
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -18,9 +18,9 @@ namespace core
 namespace engine
 {
 
-TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
-                         helper::Comm comm)
-: Engine("TableWriter", io, name, mode, std::move(comm)),
+MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
+                     helper::Comm comm)
+: Engine("MhsWriter", io, name, mode, std::move(comm)),
   m_SubAdios(m_Comm.Duplicate(), io.m_HostLanguage),
   m_SubIO(m_SubAdios.DeclareIO("SubIO"))
 {
@@ -44,7 +44,7 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
     }
 }
 
-TableWriter::~TableWriter()
+MhsWriter::~MhsWriter()
 {
     for (auto &c : m_Compressors)
         if (c)
@@ -54,7 +54,7 @@ TableWriter::~TableWriter()
         }
 }
 
-StepStatus TableWriter::BeginStep(StepMode mode, const float timeoutSeconds)
+StepStatus MhsWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
 
     for (auto &e : m_SubEngines)
@@ -64,12 +64,9 @@ StepStatus TableWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
-size_t TableWriter::CurrentStep() const
-{
-    return m_SubEngines[0]->CurrentStep();
-}
+size_t MhsWriter::CurrentStep() const { return m_SubEngines[0]->CurrentStep(); }
 
-void TableWriter::PerformPuts()
+void MhsWriter::PerformPuts()
 {
     for (auto &e : m_SubEngines)
     {
@@ -77,7 +74,7 @@ void TableWriter::PerformPuts()
     }
 }
 
-void TableWriter::EndStep()
+void MhsWriter::EndStep()
 {
     for (auto &e : m_SubEngines)
     {
@@ -85,7 +82,7 @@ void TableWriter::EndStep()
     }
 }
 
-void TableWriter::Flush(const int transportIndex)
+void MhsWriter::Flush(const int transportIndex)
 {
     for (auto &e : m_SubEngines)
     {
@@ -96,18 +93,18 @@ void TableWriter::Flush(const int transportIndex)
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void TableWriter::DoPutSync(Variable<T> &variable, const T *data)          \
+    void MhsWriter::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
         PutSyncCommon(variable, data);                                         \
     }                                                                          \
-    void TableWriter::DoPutDeferred(Variable<T> &variable, const T *data)      \
+    void MhsWriter::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
         PutDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void TableWriter::DoClose(const int transportIndex)
+void MhsWriter::DoClose(const int transportIndex)
 {
     for (auto &e : m_SubEngines)
     {

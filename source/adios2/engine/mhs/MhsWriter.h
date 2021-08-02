@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TableWriter.h
+ * MhsWriter.h
  *
  *  Created on: Apr 6, 2019
  *      Author: Jason Wang w4g@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_TABLEWRITER_H_
-#define ADIOS2_ENGINE_TABLEWRITER_H_
+#ifndef ADIOS2_ENGINE_MHSWRITER_H_
+#define ADIOS2_ENGINE_MHSWRITER_H_
 
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
@@ -23,14 +23,14 @@ namespace core
 namespace engine
 {
 
-class TableWriter : public Engine
+class MhsWriter : public Engine
 {
 
 public:
-    TableWriter(IO &adios, const std::string &name, const Mode mode,
-                helper::Comm comm);
+    MhsWriter(IO &adios, const std::string &name, const Mode mode,
+              helper::Comm comm);
 
-    virtual ~TableWriter();
+    virtual ~MhsWriter();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;

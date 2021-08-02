@@ -28,6 +28,7 @@
 #endif
 #include "adios2/engine/inline/InlineReader.h"
 #include "adios2/engine/inline/InlineWriter.h"
+#include "adios2/engine/mhs/MhsWriter.h"
 #include "adios2/engine/null/NullEngine.h"
 #include "adios2/engine/nullcore/NullCoreWriter.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
@@ -46,10 +47,6 @@
 #ifdef ADIOS2_HAVE_SST // external dependencies
 #include "adios2/engine/sst/SstReader.h"
 #include "adios2/engine/sst/SstWriter.h"
-#endif
-
-#ifdef ADIOS2_HAVE_TABLE // external dependencies
-#include "adios2/engine/table/TableWriter.h"
 #endif
 
 namespace adios2
@@ -95,15 +92,15 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
     },
     {"ssc", IO::NoEngineEntry("ERROR: this version didn't compile with "
                               "SSC library, can't use SSC engine\n")},
-    {"table",
-#ifdef ADIOS2_HAVE_TABLE
-     {IO::NoEngine("ERROR: Table engine only supports Write. It uses other "
+    {"mhs",
+#ifdef ADIOS2_HAVE_MHS
+     {IO::NoEngine("ERROR: MHS engine only supports Write. It uses other "
                    "engines as backend. Please use corresponding engines for "
                    "Read\n"),
-      IO::MakeEngine<engine::TableWriter>}
+      IO::MakeEngine<engine::MhsWriter>}
 #else
      IO::NoEngineEntry("ERROR: this version didn't compile with "
-                       "Table library, can't use Table engine\n")
+                       "MHS library, can't use MHS engine\n")
 #endif
     },
     {"sst",

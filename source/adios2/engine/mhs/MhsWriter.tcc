@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TableWriter.tcc implementation of template functions with known type
+ * MhsWriter.tcc implementation of template functions with known type
  *
  *  Created on: Apr 6, 2019
  *      Author: Jason Wang w4g@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_TABLEWRITER_TCC_
-#define ADIOS2_ENGINE_TABLEWRITER_TCC_
+#ifndef ADIOS2_ENGINE_MHSWRITER_TCC_
+#define ADIOS2_ENGINE_MHSWRITER_TCC_
 
-#include "TableWriter.h"
+#include "MhsWriter.h"
 #include "adios2/operator/compress/CompressSirius.h"
 
 #ifdef ADIOS2_HAVE_BLOSC
@@ -38,8 +38,8 @@ namespace engine
 {
 
 template <>
-void TableWriter::PutSyncCommon<std::string>(Variable<std::string> &variable,
-                                             const std::string *data)
+void MhsWriter::PutSyncCommon<std::string>(Variable<std::string> &variable,
+                                           const std::string *data)
 {
     auto var = m_SubIO.InquireVariable<std::string>(variable.m_Name);
     if (!var)
@@ -54,8 +54,8 @@ void TableWriter::PutSyncCommon<std::string>(Variable<std::string> &variable,
 }
 
 template <>
-void TableWriter::PutDeferredCommon<std::string>(
-    Variable<std::string> &variable, const std::string *data)
+void MhsWriter::PutDeferredCommon<std::string>(Variable<std::string> &variable,
+                                               const std::string *data)
 {
     auto var = m_SubIO.InquireVariable<std::string>(variable.m_Name);
     if (!var)
@@ -70,14 +70,14 @@ void TableWriter::PutDeferredCommon<std::string>(
 }
 
 template <class T>
-void TableWriter::PutSyncCommon(Variable<T> &variable, const T *data)
+void MhsWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
     PutDeferredCommon(variable, data);
     PerformPuts();
 }
 
 template <class T>
-void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
+void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     auto var = m_SubIO.InquireVariable<T>(variable.m_Name);
     if (!var)

@@ -15,10 +15,10 @@ int mpiSize = 1;
 
 char runMode;
 
-class TableEngineTest : public ::testing::Test
+class MhsEngineTest : public ::testing::Test
 {
 public:
-    TableEngineTest() = default;
+    MhsEngineTest() = default;
 };
 
 template <class T>
@@ -178,7 +178,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     }
     adios2::ADIOS adios(MPI_COMM_WORLD);
     adios2::IO io = adios.DeclareIO("ms");
-    io.SetEngine("table");
+    io.SetEngine("mhs");
     io.SetParameters(engineParams);
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
@@ -247,9 +247,9 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     writerEngine.Close();
 }
 
-TEST_F(TableEngineTest, TestTableMultiRank)
+TEST_F(MhsEngineTest, TestMhsMultiRank)
 {
-    std::string filename = "TestTableMultiRank";
+    std::string filename = "TestMhsMultiRank";
     adios2::Params engineParams = {{"Verbose", "0"}};
 
     size_t rows = 800;

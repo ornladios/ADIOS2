@@ -154,9 +154,6 @@ std::string IO::AttributeType(const std::string &name) const
 
 size_t IO::AddOperation(const Operator op, const Params &parameters)
 {
-    std::cout << " ===========IO::AddOperation(const Operator op, const Params "
-                 "&parameters) "
-              << std::endl;
     helper::CheckForNullptr(m_IO, "in call to IO::AddOperation");
     return m_IO->AddOperation(*op.m_Operator, parameters);
 }
