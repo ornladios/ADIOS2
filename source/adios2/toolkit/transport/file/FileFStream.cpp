@@ -257,5 +257,9 @@ void FileFStream::SeekToBegin()
               ", in call to fstream seekp");
 }
 
+void FileFStream::MkDir(const std::string &fileName)
+{
+}
+
 } // end namespace transport
 } // end namespace adios2

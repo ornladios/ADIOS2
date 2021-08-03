@@ -12,6 +12,7 @@
 
 #include <ios>
 #include <set>
+#include <iostream>
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
 
@@ -60,6 +61,12 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
 	    helper::SetParameterValue("library", parameters, library);
 	    if (library == "Daos" || library == "daos")
 	    {
+                const std::string path(
+                    fileNames[i].substr(0, lastPathSeparator));	      
+         	auto transport = std::make_shared<transport::FileDaos>(m_Comm);
+		std::cout << "start transport->MkDir(" << path << ")..." << std::endl;		
+		transport->MkDir(path);
+		std::cout << "transport->MkDir(" << path << ") succeeded!" << std::endl;
 	        continue;
 	    }
             const std::string type = parameters.at("transport");

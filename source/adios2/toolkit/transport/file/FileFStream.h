@@ -53,6 +53,8 @@ public:
 
     void SeekToBegin() final;
 
+    void MkDir(const std::string &fileName) final;
+    
 private:
     /** file stream using fstream library */
     std::fstream m_FileStream;

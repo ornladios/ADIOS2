@@ -56,7 +56,9 @@ public:
     void SeekToEnd() final;
 
     void SeekToBegin() final;
-
+    
+    void MkDir(const std::string &fileName) final;
+    
 private:
     /** POSIX file handle returned by Open */
     int m_FileDescriptor = -1;

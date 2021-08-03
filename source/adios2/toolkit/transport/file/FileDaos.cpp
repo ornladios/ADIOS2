@@ -17,6 +17,8 @@
 #include <unistd.h>    // write, close
 
 #include <ios>
+#include <algorithm>
+#include <iostream>
 
 #include <daos.h>
 #include <daos_fs.h>
@@ -113,6 +115,16 @@ public:
                 "ERROR: FileDaos: Mount handle already exists");
         }
 
+	daos_init();
+	
+	char uuid_c[100];
+	char cuuid_c[100];
+	uuid_unparse(UUID, uuid_c);
+	uuid_unparse(CUUID, cuuid_c);	
+	std::string uuid_s{uuid_c};
+	std::string cuuid_s{cuuid_c};	
+	std::cout << uuid_s << ", " << cuuid_s << std::endl;  
+
         switch (openMode)
         {
         case (Mode::Write):
@@ -129,29 +141,37 @@ public:
         default:
             break;
         }
+	std::cout << "poolFlags: " << poolFlags << std::endl;
 
         daos_handle_t poh;
         daos_handle_t coh;
         d_iov_t gHandles[3];
         if (comm.Rank() == 0)
         {
+   	    std::cout << "start daos_pool_connect..." << std::endl;
             rc = daos_pool_connect(UUID, Group.c_str(), poolFlags, &poh, NULL, NULL);
             CheckDAOSReturnCode(rc);
+	    std::cout << "daos_pool_connect succeeded!" << std::endl;
 
             rc = daos_cont_open(poh, CUUID, contFlags, &coh, NULL, NULL);
             CheckDAOSReturnCode(rc);
+	    std::cout << "daos_cont_open succeeded!" << std::endl;	    
 
             rc = dfs_mount(poh, coh, mountFlags, &Mount);
             CheckDAOSReturnCode(rc);
-
+	    std::cout << "dfs_mount succeeded!" << std::endl;
+	    
             rc = daos_pool_local2global(poh, &gHandles[0]);
             CheckDAOSReturnCode(rc);
+	    std::cout << "daos_pool_local2global succeeded!" << std::endl;	    	    
 
             rc = daos_cont_local2global(coh, &gHandles[1]);
             CheckDAOSReturnCode(rc);
+	    std::cout << "daos_cont_local2global succeeded!" << std::endl;	    	    	    
 
             rc = dfs_local2global(Mount, &gHandles[2]);
             CheckDAOSReturnCode(rc);
+	    std::cout << "dfs_local2global succeeded!" << std::endl;	    
 
             size_t bufLen = 6 * sizeof(size_t);
             for (size_t i = 0; i < 3; ++i)
@@ -274,6 +294,29 @@ void FileDaos::SetParameters(const Params &params)
     }
 }
 
+void FileDaos::MkDir(const std::string &fileName)
+{
+    if (!m_Impl->Mount)
+    {
+        ProfilerStart("mount");
+        m_Impl->InitMount(m_Comm, Mode::Write);
+        ProfilerStop("mount");
+    }  
+    if (m_Comm.Rank() == 0)
+    {
+        const auto lastPathSeparator(m_Name.find_last_of(PathSeparator));
+        if (lastPathSeparator != std::string::npos)
+        {
+            const std::string path(m_Name.substr(0, lastPathSeparator));
+	    struct stat stbuf;
+	    if (dfs_stat(m_Impl->Mount, NULL, path.c_str(), &stbuf) != 0)
+	    {
+	        int rc = dfs_mkdir(m_Impl->Mount, NULL, path.c_str(), S_IFDIR, 0);
+	    }
+        }
+    }
+}
+
 void FileDaos::WaitForOpen()
 {
     if (m_IsOpening)
@@ -314,6 +357,7 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
 
     int rc;
     m_Name = name;
+    //std::replace(m_Name.begin(), m_Name.end(), '/', '+');
     CheckName();
     if (!m_Impl->Mount)
     {
@@ -321,19 +365,19 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
         m_Impl->InitMount(m_Comm, m_OpenMode);
         ProfilerStop("mount");
     }
-    if (m_Comm.Rank() == 0)
-    {
-        const auto lastPathSeparator(m_Name.find_last_of(PathSeparator));
-        if (lastPathSeparator != std::string::npos)
-        {
-            const std::string path(m_Name.substr(0, lastPathSeparator));
-	    struct stat stbuf;
-	    if (dfs_stat(m_Impl->Mount, NULL, path.c_str(), &stbuf) != 0)
-	    {
-	        rc = dfs_mkdir(m_Impl->Mount, NULL, path.c_str(), S_IFDIR, 0);
-	    }
-        }
-    }
+//    if (m_Comm.Rank() == 0)
+//    {
+//        const auto lastPathSeparator(m_Name.find_last_of(PathSeparator));
+//        if (lastPathSeparator != std::string::npos)
+//        {
+//            const std::string path(m_Name.substr(0, lastPathSeparator));
+//	    struct stat stbuf;
+//	    if (dfs_stat(m_Impl->Mount, NULL, path.c_str(), &stbuf) != 0)
+//	    {
+//	        rc = dfs_mkdir(m_Impl->Mount, NULL, path.c_str(), S_IFDIR, 0);
+//	    }
+//        }
+//    }
     m_OpenMode = openMode;
 
     switch (m_OpenMode)

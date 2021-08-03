@@ -35,6 +35,7 @@ public:
     /* user arguments */
     std::string configFileName;
     std::string adiosConfigFileName;
+    std::string outputPath;
     unsigned int verbose = 0;
     size_t appId = 0;
     bool isStrongScaling = true; // strong or weak scaling

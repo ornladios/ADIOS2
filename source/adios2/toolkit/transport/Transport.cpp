@@ -115,16 +115,16 @@ void Transport::CheckName() const
     }
 }
 
-void Transport::MkDir(const std::string &fileName)
-{
-    const auto lastPathSeparator(fileName.find_last_of(PathSeparator));
-    if (lastPathSeparator == std::string::npos)
-    {
-        return;
-    }
-
-    const std::string path(fileName.substr(0, lastPathSeparator));
-    helper::CreateDirectory(path);
-}
-
+//void Transport::MkDir(const std::string &fileName)
+//{
+//    const auto lastPathSeparator(fileName.find_last_of(PathSeparator));
+//    if (lastPathSeparator == std::string::npos)
+//    {
+//        return;
+//    }
+//
+//    const std::string path(fileName.substr(0, lastPathSeparator));
+//    helper::CreateDirectory(path);
+//}
+//
 } // end namespace adios2

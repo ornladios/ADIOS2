@@ -55,6 +55,8 @@ public:
 
     void SeekToBegin() final;
 
+    void MkDir(const std::string &fileName) final; 
+    
 private:
     class Impl;
     std::unique_ptr<Impl> m_Impl;
