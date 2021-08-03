@@ -26,18 +26,16 @@ void BP5Writer::PutCommon(Variable<T> &variable, const T *values, bool sync)
     size_t *Shape = NULL;
     size_t *Start = NULL;
     size_t *Count = NULL;
-    size_t DimCount = 0;
+    size_t DimCount = variable.m_Count.size();
 
     if (variable.m_ShapeID == ShapeID::GlobalArray)
     {
-        DimCount = variable.m_Shape.size();
         Shape = variable.m_Shape.data();
-        Start = variable.m_Start.data();
         Count = variable.m_Count.data();
+        Start = variable.m_Start.data();
     }
     else if (variable.m_ShapeID == ShapeID::LocalArray)
     {
-        DimCount = variable.m_Count.size();
         Count = variable.m_Count.data();
     }
 
@@ -51,20 +49,42 @@ void BP5Writer::PutCommon(Variable<T> &variable, const T *values, bool sync)
             sync = true;
         }
     }
-    if (std::is_same<T, std::string>::value)
+
+    if (!variable.m_MemoryCount.empty())
     {
-        std::string &source = *(std::string *)values;
-        void *p = &(source[0]);
+        // get a temporary span then fill with memselection now
+        format::BufferV::BufferPos bp5span(0, 0, 0);
         m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
                                 variable.m_Type, variable.m_ElementSize,
-                                DimCount, Shape, Count, Start, &p, sync,
-                                nullptr);
+                                DimCount, Shape, Count, Start, nullptr, false,
+                                &bp5span);
+        T *ptr = reinterpret_cast<T *>(
+            m_BP5Serializer.GetPtr(bp5span.bufferIdx, bp5span.posInBuffer));
+
+        const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+
+        helper::CopyMemoryBlock(
+            ptr, variable.m_Start, variable.m_Count, sourceRowMajor, values,
+            variable.m_Start, variable.m_Count, sourceRowMajor, false, Dims(),
+            Dims(), variable.m_MemoryStart, variable.m_MemoryCount);
     }
     else
-        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
-                                variable.m_Type, variable.m_ElementSize,
-                                DimCount, Shape, Count, Start, values, sync,
-                                nullptr);
+    {
+        if (std::is_same<T, std::string>::value)
+        {
+            std::string &source = *(std::string *)values;
+            void *p = &(source[0]);
+            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
+                                    variable.m_Type, variable.m_ElementSize,
+                                    DimCount, Shape, Count, Start, &p, sync,
+                                    nullptr);
+        }
+        else
+            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
+                                    variable.m_Type, variable.m_ElementSize,
+                                    DimCount, Shape, Count, Start, values, sync,
+                                    nullptr);
+    }
 }
 
 template <class T>
