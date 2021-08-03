@@ -421,7 +421,7 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
     globalBuffer.resize(globalSize + 10);
 
     std::vector<int> displs(mpiSize);
-    for (size_t i = 1; i < mpiSize; ++i)
+    for (size_t i = 1; i < static_cast<size_t>(mpiSize); ++i)
     {
         displs[i] = displs[i - 1] + localSizes[i - 1];
     }
@@ -438,7 +438,7 @@ void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm)
 {
     int globalBufferSize = static_cast<int>(globalBuffer.size());
     MPI_Bcast(&globalBufferSize, 1, MPI_INT, root, comm);
-    if (globalBuffer.size() < globalBufferSize)
+    if (globalBuffer.size() < static_cast<size_t>(globalBufferSize))
     {
         globalBuffer.resize(globalBufferSize);
     }

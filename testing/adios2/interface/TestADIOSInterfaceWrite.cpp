@@ -49,8 +49,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_1x10)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(auto foo =
-                     io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{10}),
-                 std::invalid_argument);
+                     io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{10});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int8_t.Shape().size(), 0);
@@ -82,8 +82,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_1x10)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(auto foo =
-                     io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{10}),
-                 std::invalid_argument);
+                     io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{10});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int16_t.Shape().size(), 0);
@@ -115,8 +115,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_1x10)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(auto foo =
-                     io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{10}),
-                 std::invalid_argument);
+                     io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{10});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int32_t.Shape().size(), 0);
@@ -149,8 +149,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_1x10)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(auto foo =
-                     io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{10}),
-                 std::invalid_argument);
+                     io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{10});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int64_t.Shape().size(), 0);
@@ -184,8 +184,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_1x10)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(auto foo =
-                     io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{10}),
-                 std::invalid_argument);
+                     io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{10});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint8_t.Shape().size(), 0);
@@ -218,8 +218,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_1x10)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(
-        auto foo = io.DefineVariable<uint16_t>(name, {}, {}, adios2::Dims{10}),
-        std::invalid_argument);
+        auto foo = io.DefineVariable<uint16_t>(name, {}, {}, adios2::Dims{10});
+        (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint16_t.Shape().size(), 0);
@@ -252,8 +252,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_1x10)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(
-        auto foo = io.DefineVariable<uint32_t>(name, {}, {}, adios2::Dims{10}),
-        std::invalid_argument);
+        auto foo = io.DefineVariable<uint32_t>(name, {}, {}, adios2::Dims{10});
+        (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint32_t.Shape().size(), 0);
@@ -286,8 +286,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_1x10)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(
-        auto foo = io.DefineVariable<uint64_t>(name, {}, {}, adios2::Dims{10}),
-        std::invalid_argument);
+        auto foo = io.DefineVariable<uint64_t>(name, {}, {}, adios2::Dims{10});
+        (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint64_t.Shape().size(), 0);
@@ -324,8 +324,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_2x5)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(
-        auto foo = io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{2, 5}),
-        std::invalid_argument);
+        auto foo = io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{2, 5});
+        (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int8_t.Shape().size(), 0);
@@ -359,8 +359,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_2x5)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(
-        auto foo = io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{2, 5}),
-        std::invalid_argument);
+        auto foo = io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{2, 5});
+        (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int16_t.Shape().size(), 0);
@@ -394,8 +394,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_2x5)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(
-        auto foo = io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{2, 5}),
-        std::invalid_argument);
+        auto foo = io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{2, 5});
+        (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int32_t.Shape().size(), 0);
@@ -429,8 +429,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_2x5)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(
-        auto foo = io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{2, 5}),
-        std::invalid_argument);
+        auto foo = io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{2, 5});
+        (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int64_t.Shape().size(), 0);
@@ -465,8 +465,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_2x5)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(
-        auto foo = io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{2, 5}),
-        std::invalid_argument);
+        auto foo = io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{2, 5});
+        (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint8_t.Shape().size(), 0);
@@ -500,8 +500,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_2x5)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(auto foo = io.DefineVariable<uint16_t>(name, {}, {},
-                                                        adios2::Dims{2, 5}),
-                 std::invalid_argument);
+                                                        adios2::Dims{2, 5});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint16_t.Shape().size(), 0);
@@ -535,8 +535,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_2x5)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(auto foo = io.DefineVariable<uint32_t>(name, {}, {},
-                                                        adios2::Dims{2, 5}),
-                 std::invalid_argument);
+                                                        adios2::Dims{2, 5});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint32_t.Shape().size(), 0);
@@ -570,8 +570,8 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_2x5)
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(auto foo = io.DefineVariable<uint64_t>(name, {}, {},
-                                                        adios2::Dims{2, 5}),
-                 std::invalid_argument);
+                                                        adios2::Dims{2, 5});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint64_t.Shape().size(), 0);

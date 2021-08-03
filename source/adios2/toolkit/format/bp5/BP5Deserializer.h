@@ -130,7 +130,6 @@ private:
     size_t m_WriterCohortSize;
     std::unordered_map<std::string, BP5VarRec *> VarByName;
     std::unordered_map<void *, BP5VarRec *> VarByKey;
-    FMContext LocalFMContext;
     //    Ffsarrayrequest PendingVarRequests;
 
     std::vector<void *> MetadataBaseAddrs;

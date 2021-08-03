@@ -125,7 +125,7 @@ adios2::Params XMLGetParameters(const pugi::xml_node &node,
                                    ", " + hint);
     Params parameters;
 
-    for (const pugi::xml_node paramNode : node.children("parameter"))
+    for (const pugi::xml_node &paramNode : node.children("parameter"))
     {
         const std::unique_ptr<pugi::xml_attribute> key =
             XMLAttribute("key", paramNode, errorMessage);

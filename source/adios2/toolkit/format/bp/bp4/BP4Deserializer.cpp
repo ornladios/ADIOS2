@@ -33,7 +33,7 @@ namespace format
 std::mutex BP4Deserializer::m_Mutex;
 
 BP4Deserializer::BP4Deserializer(helper::Comm const &comm)
-: BP4Base(comm), BPBase(comm), m_Minifooter(4)
+: BPBase(comm), BP4Base(comm), m_Minifooter(4)
 {
 }
 
@@ -335,8 +335,7 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_MetadataIndexTable[submetadatafileId][step][1];
 
-    const uint32_t count = helper::ReadValue<uint32_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
+    helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
     const uint64_t length = helper::ReadValue<uint64_t>(
         buffer, position, m_Minifooter.IsLittleEndian);
 
@@ -528,8 +527,7 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_MetadataIndexTable[submetadatafileId][step][2];
 
-    const uint32_t count = helper::ReadValue<uint32_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
+    helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
     const uint64_t length = helper::ReadValue<uint64_t>(
         buffer, position, m_Minifooter.IsLittleEndian);
 

@@ -187,7 +187,7 @@ public:
             digit++;
         }
 
-        char fmt[16];
+        char fmt[32];
         sprintf(fmt, "v%%%d.%dd", digit, digit);
         for (size_t i = 0; i < NVARS; i++)
         {

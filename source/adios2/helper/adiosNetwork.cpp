@@ -25,7 +25,7 @@
 #include <sys/ioctl.h>  //AvailableIpAddresses() ioctl
 #include <unistd.h>     //AvailableIpAddresses() close
 
-#include <nlohmann/json.hpp>
+#include <nlohmann_json.hpp>
 
 namespace adios2
 {

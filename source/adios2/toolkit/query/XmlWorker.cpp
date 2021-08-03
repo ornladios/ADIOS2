@@ -169,7 +169,7 @@ void XmlWorker::ConstructTree(RangeTree &host, const pugi::xml_node &node)
     std::string relationStr =
         adios2::helper::XMLAttribute("value", node, "in query")->value();
     host.SetRelation(adios2::query::strToRelation(relationStr));
-    for (const pugi::xml_node rangeNode : node.children("range"))
+    for (const pugi::xml_node &rangeNode : node.children("range"))
     {
         std::string valStr =
             adios2::helper::XMLAttribute("value", rangeNode, "in query")
@@ -181,7 +181,7 @@ void XmlWorker::ConstructTree(RangeTree &host, const pugi::xml_node &node)
         host.AddLeaf(adios2::query::strToQueryOp(opStr), valStr);
     }
 
-    for (const pugi::xml_node opNode : node.children("op"))
+    for (const pugi::xml_node &opNode : node.children("op"))
     {
         adios2::query::RangeTree subNode;
         ConstructTree(subNode, opNode);

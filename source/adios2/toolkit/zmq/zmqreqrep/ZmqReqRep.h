@@ -45,7 +45,6 @@ public:
     void SendReply(const void *reply, const size_t size);
 
 private:
-    int m_Verbosity = 0;
     int m_Timeout;
 
     std::vector<char> m_ReceiverBuffer;

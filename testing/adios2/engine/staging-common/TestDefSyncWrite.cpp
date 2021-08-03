@@ -180,7 +180,7 @@ TEST(CommonWriteTest, ADIOS2CommonRead)
         vars[4] = io.InquireVariable<double>("big3");
 
         std::vector<bool> var_present(vars.size());
-        for (int i = 0; i < data.size(); i++)
+        for (size_t i = 0; i < data.size(); i++)
             std::fill(data[i].begin(), data[i].end(), -200.0);
         std::cout << "Variables Read in TS " << step << ": ";
         for (int j = 0; j < 5; j++)

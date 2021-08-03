@@ -13,6 +13,8 @@
 #include "BP5Deserializer.h"
 #include "BP5Deserializer.tcc"
 
+#include <limits.h>
+#include <math.h>
 #include <string.h>
 
 #ifdef _WIN32
@@ -428,7 +430,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             {
                 VarRec->PerWriterBlockStart[WriterRank] = 0;
             }
-            if (WriterRank < m_WriterCohortSize - 1)
+            if (WriterRank < static_cast<size_t>(m_WriterCohortSize - 1))
             {
                 VarRec->PerWriterBlockStart[WriterRank + 1] =
                     VarRec->PerWriterBlockStart[WriterRank] +
@@ -686,7 +688,7 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                 const size_t *SelOffset = NULL;
                 const size_t *SelSize = Req.Count.data();
                 int ReqIndex = 0;
-                while (Requests[ReqIndex].WriterRank != i)
+                while (Requests[ReqIndex].WriterRank != static_cast<size_t>(i))
                     ReqIndex++;
                 char *IncomingData =
                     (char *)Requests[ReqIndex].DestinationAddr +
@@ -771,12 +773,13 @@ int BP5Deserializer::FindOffset(size_t Dims, const size_t *Size,
 
 static int FindOffsetCM(size_t Dims, const size_t *Size, const size_t *Index)
 {
-    int Offset = 0;
-    for (int i = Dims - 1; i >= 0; i--)
+    size_t Offset = 0;
+    for (int i = static_cast<int>(Dims - 1); i >= 0; i--)
     {
         Offset = Index[i] + (Size[i] * Offset);
     }
-    return Offset;
+
+    return std::min(static_cast<size_t>(INT_MAX), Offset);
 }
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -830,8 +833,8 @@ void BP5Deserializer::ExtractSelectionFromPartialRM(
 
     BlockSize = 1;
     OperantDims = Dims;
-    OperantElementSize = ElementSize;
-    for (int Dim = Dims - 1; Dim >= 0; Dim--)
+    OperantElementSize = static_cast<size_t>(ElementSize);
+    for (int Dim = static_cast<int>(Dims - 1); Dim >= 0; Dim--)
     {
         if ((GlobalDims[Dim] == PartialCounts[Dim]) &&
             (SelectionCounts[Dim] == PartialCounts[Dim]))
@@ -984,8 +987,8 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
 
 BP5Deserializer::BP5Deserializer(int WriterCount, bool WriterIsRowMajor,
                                  bool ReaderIsRowMajor)
-: m_WriterCohortSize{static_cast<size_t>(WriterCount)},
-  m_WriterIsRowMajor{WriterIsRowMajor}, m_ReaderIsRowMajor{ReaderIsRowMajor}
+: m_WriterIsRowMajor{WriterIsRowMajor}, m_ReaderIsRowMajor{ReaderIsRowMajor},
+  m_WriterCohortSize{static_cast<size_t>(WriterCount)}
 {
     FMContext Tmp = create_local_FMcontext();
     ReaderFFSContext = create_FFSContext_FM(Tmp);

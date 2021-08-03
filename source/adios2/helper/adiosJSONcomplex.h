@@ -11,8 +11,8 @@
 #ifndef ADIOS2_HELPER_ADIOSJSONCOMPLEX_H_
 #define ADIOS2_HELPER_ADIOSJSONCOMPLEX_H_
 
-#include "nlohmann/json.hpp"
 #include <complex>
+#include <nlohmann_json.hpp>
 
 // JSON std::complex handling
 namespace std

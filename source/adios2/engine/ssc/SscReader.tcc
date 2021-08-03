@@ -197,11 +197,13 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
                         m_WriterDefinitionsLocked == false ||
                         m_ReaderSelectionsLocked == false)
                     {
-                        std::memcpy(&b.Value, v.value.data(), v.value.size());
+                        std::memcpy(reinterpret_cast<char *>(&b.Value),
+                                    v.value.data(), v.value.size());
                     }
                     else
                     {
-                        std::memcpy(&b.Value, m_Buffer.data() + v.bufferStart,
+                        std::memcpy(reinterpret_cast<char *>(&b.Value),
+                                    m_Buffer.data() + v.bufferStart,
                                     v.bufferCount);
                     }
                 }

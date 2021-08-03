@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
             bpIO.AvailableVariables(true);
 
         std::cout << "List of variables:";
-        for (const auto variablePair : variables)
+        for (const auto &variablePair : variables)
         {
             std::cout << "  " << variablePair.first;
         }

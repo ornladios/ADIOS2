@@ -3,9 +3,6 @@
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
-set(ENV{CFLAGS} -Werror)
-set(ENV{CXXFLAGS} -Werror)
-set(ENV{FFLAGS} -Werror)
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:STRING=ON
@@ -16,6 +13,9 @@ ADIOS2_USE_MPI:STRING=OFF
 ADIOS2_USE_Python:STRING=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
 ADIOS2_USE_ZFP:STRING=ON
+
+CMAKE_C_FLAGS:STRING=-Wall
+CMAKE_CXX_FLAGS:STRING=-Wall
 ")
 
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
