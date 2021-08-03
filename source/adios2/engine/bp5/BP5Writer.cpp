@@ -254,7 +254,8 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
 
     for (int writer = 0; writer < m_Comm.Size(); writer++)
     {
-        for (int flushNum = 0; flushNum < FlushPosSizeInfo.size(); flushNum++)
+        for (size_t flushNum = 0; flushNum < FlushPosSizeInfo.size();
+             flushNum++)
         {
             buf[pos + (flushNum * 2)] = FlushPosSizeInfo[flushNum][2 * writer];
             buf[pos + (flushNum * 2) + 1] =
