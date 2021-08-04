@@ -764,7 +764,7 @@ void BPSteps3D8x2x4(const size_t ghostCells)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
-            const size_t currentStep = bpReader.CurrentStep();
+            // const size_t currentStep = bpReader.CurrentStep();
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_TRUE(var_i8);
