@@ -10,7 +10,7 @@
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/IO.h"
-#include "adios2/helper/adiosFunctions.h" //CheckIndexRange
+#include "adios2/helper/adiosFunctions.h" //CheckIndexRange, PaddingToAlignOffset
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
@@ -31,7 +31,7 @@ using namespace adios2::format;
 
 void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
 {
-    const aggregator::MPIShmChain *a =
+    aggregator::MPIShmChain *a =
         dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
 
     format::BufferV::BufferV_iovec DataVec = Data->DataVec();
@@ -64,9 +64,19 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
     // This calculation is valid on aggregators only
     std::vector<uint64_t> mySizes = a->m_Comm.GatherValues(Data->Size());
     uint64_t myTotalSize = 0;
+    uint64_t maxSize = 0;
     for (auto s : mySizes)
     {
         myTotalSize += s;
+        if (s > maxSize)
+        {
+            maxSize = s;
+        }
+    }
+
+    if (a->m_Comm.Size() > 1)
+    {
+        a->CreateShm(static_cast<size_t>(maxSize), m_Parameters.MaxShmSize);
     }
 
     if (a->m_IsAggregator)
@@ -154,6 +164,10 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
         }
     }
 
+    if (a->m_Comm.Size() > 1)
+    {
+        a->DestroyShm();
+    }
     delete[] DataVec;
 }
 

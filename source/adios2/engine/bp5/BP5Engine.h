@@ -120,6 +120,7 @@ public:
     MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \
     MACRO(MinDeferredSize, SizeBytes, size_t, DefaultMinDeferredSize)          \
     MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)          \
+    MACRO(MaxShmSize, SizeBytes, size_t, DefaultMaxShmSize)                    \
     MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)         \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)
 
