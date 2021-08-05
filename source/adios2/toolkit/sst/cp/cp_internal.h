@@ -226,6 +226,7 @@ struct _SstStream
     FFSContext ReaderFFSContext;
     VarSetupUpcallFunc VarSetupUpcall;
     ArraySetupUpcallFunc ArraySetupUpcall;
+    MinArraySetupUpcallFunc MinArraySetupUpcall;
     AttrSetupUpcallFunc AttrSetupUpcall;
     ArrayBlocksInfoUpcallFunc ArrayBlocksInfoUpcall;
     void *SetupUpcallReader;

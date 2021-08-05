@@ -397,6 +397,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         {
             continue;
         }
+        VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
         if (ControlArray[i].IsArray)
         {
             MetaArrayRec *meta_base = (MetaArrayRec *)field_data;
@@ -429,6 +430,9 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             if (WriterRank == 0)
             {
                 VarRec->PerWriterBlockStart[WriterRank] = 0;
+                if (m_WriterCohortSize > 1)
+                    VarRec->PerWriterBlockStart[WriterRank + 1] =
+                        VarRec->PerWriterBlockCount[WriterRank];
             }
             if (WriterRank < static_cast<size_t>(m_WriterCohortSize - 1))
             {
@@ -436,19 +440,6 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                     VarRec->PerWriterBlockStart[WriterRank] +
                     VarRec->PerWriterBlockCount[WriterRank];
             }
-#ifdef NOTDEF
-            // needs to be replaced with Simple Blocks Info
-            for (int i = 0; i < VarRec->PerWriterBlockCount[WriterRank]; i++)
-            {
-                size_t *Offsets = NULL;
-                if (meta_base->Offsets)
-                    Offsets = meta_base->Offsets + (i * meta_base->Dims);
-                ArrayBlocksInfoUpcall(m_Engine, VarRec->Variable, VarRec->Type,
-                                      WriterRank, meta_base->Dims,
-                                      meta_base->Shape, Offsets,
-                                      meta_base->Count);
-            }
-#endif
         }
         else
         {
@@ -458,7 +449,6 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                                             VarRec->Type, field_data);
                 VarByKey[VarRec->Variable] = VarRec;
             }
-            VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
         }
     }
 }
@@ -598,7 +588,8 @@ bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t i)
     {
         size_t NodeFirst = Req.VarRec->PerWriterBlockStart[i];
         size_t NodeLast = Req.VarRec->PerWriterBlockCount[i] + NodeFirst - 1;
-        return (NodeFirst <= Req.BlockID) && (NodeLast >= Req.BlockID);
+        bool res = (NodeFirst <= Req.BlockID) && (NodeLast >= Req.BlockID);
+        return res;
     }
     // else Global case
     for (size_t j = 0; j < Req.VarRec->DimCount; j++)
@@ -702,17 +693,10 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                 {
                     int LocalBlockID =
                         Req.BlockID - Req.VarRec->PerWriterBlockStart[i];
-                    size_t DataOffset = 0;
-                    for (int i = 0; i < LocalBlockID; i++)
-                    {
-                        int BlockElemCount = 1;
-                        for (int j = 0; j < DimCount; j++)
-                        {
-                            BlockElemCount *= RankSize[j];
-                        }
-                        DataOffset += BlockElemCount * ElementSize;
-                        RankSize += DimCount;
-                    }
+                    IncomingData =
+                        (char *)Requests[ReqIndex].DestinationAddr +
+                        Req.VarRec->PerWriterDataLocation[i][LocalBlockID];
+
                     RankOffset = ZeroRankOffset.data();
                     GlobalDimensions = ZeroGlobalDimensions.data();
                     if (SelOffset == NULL)
@@ -723,7 +707,6 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                     {
                         GlobalDimensions[i] = RankSize[i];
                     }
-                    IncomingData = IncomingData + DataOffset;
                 }
                 if (m_ReaderIsRowMajor)
                 {
@@ -1035,12 +1018,56 @@ BP5Deserializer::~BP5Deserializer()
     }
 }
 
-#define declare_template_instantiation(T)                                      \
-                                                                               \
-    template std::vector<typename core::Variable<T>::BPInfo>                   \
-    BP5Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
-        const;
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
+                                                   const size_t Step)
+{
+    BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
+    MetaArrayRec *meta_base =
+        (MetaArrayRec *)(((char *)MetadataBaseAddrs[0]) +
+                         VarRec->PerWriterMetaFieldOffset[0]);
+    Engine::MinVarInfo *MV =
+        new Engine::MinVarInfo(meta_base->Dims, meta_base->Shape);
+
+    MV->Dims = meta_base->Dims;
+    MV->Shape = meta_base->Shape;
+    MV->IsReverseDims =
+        ((meta_base->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
+
+    int Id = 0;
+    for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
+    {
+        Id += VarRec->PerWriterBlockCount[WriterRank];
+    }
+    MV->BlocksInfo.reserve(Id);
+
+    Id = 0;
+    for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
+    {
+        MetaArrayRec *writer_meta_base =
+            (MetaArrayRec *)(((char *)MetadataBaseAddrs[WriterRank]) +
+                             VarRec->PerWriterMetaFieldOffset[WriterRank]);
+
+        for (size_t i = 0; i < VarRec->PerWriterBlockCount[WriterRank]; i++)
+        {
+            size_t *Offsets = NULL;
+            size_t *Count = NULL;
+            if (writer_meta_base->Offsets)
+                Offsets = writer_meta_base->Offsets + (i * meta_base->Dims);
+            if (writer_meta_base->Count)
+                Count = writer_meta_base->Count + (i * meta_base->Dims);
+            Engine::MinBlockInfo Blk;
+            Blk.WriterID = WriterRank;
+            Blk.BlockID = Id++;
+            Blk.Start = Offsets;
+            Blk.Count = Count;
+            // Blk.MinUnion
+            // Blk.MaxUnion
+            // Blk.BufferP
+            MV->BlocksInfo.push_back(Blk);
+        }
+    }
+    return MV;
+}
+
 }
 }

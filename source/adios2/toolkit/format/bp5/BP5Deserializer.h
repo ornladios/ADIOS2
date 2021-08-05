@@ -27,6 +27,8 @@ namespace adios2
 namespace format
 {
 
+using namespace core;
+
 class BP5Deserializer : virtual public BP5Base
 {
 
@@ -56,13 +58,12 @@ public:
     std::vector<ReadRequest> GenerateReadRequests();
     void FinalizeGets(std::vector<ReadRequest>);
 
+    Engine::MinVarInfo *MinBlocksInfo(const VariableBase &Var,
+                                      const size_t Step);
+
     bool m_WriterIsRowMajor = 1;
     bool m_ReaderIsRowMajor = 1;
     core::Engine *m_Engine = NULL;
-
-    template <class T>
-    std::vector<typename core::Variable<T>::BPInfo>
-    BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
 
 private:
     struct BP5VarRec
@@ -194,14 +195,6 @@ private:
     size_t CurTimestep = 0;
     std::vector<struct ControlInfo *> ActiveControl;
 };
-
-#define declare_template_instantiation(T)                                      \
-    extern template std::vector<typename core::Variable<T>::BPInfo>            \
-    BP5Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
-        const;
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
 
 } // end namespace format
 } // end namespace adios2

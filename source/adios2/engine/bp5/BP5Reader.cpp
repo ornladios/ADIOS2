@@ -388,6 +388,12 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
      */
 }
 
+Engine::MinVarInfo *BP5Reader::MinBlocksInfo(const VariableBase &Var,
+                                             const size_t Step) const
+{
+    return m_BP5Deserializer->MinBlocksInfo(Var, Step);
+}
+
 void BP5Reader::InitTransports()
 {
     if (m_IO.m_TransportsParameters.empty())
@@ -682,12 +688,12 @@ void BP5Reader::DoClose(const int transportIndex)
     m_MDFileManager.CloseFiles();
 }
 
+// DoBlocksInfo will not be called because MinBlocksInfo is operative
 #define declare_type(T)                                                        \
     std::vector<typename Variable<T>::BPInfo> BP5Reader::DoBlocksInfo(         \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP5Reader::BlocksInfo");                       \
-        return m_BP5Deserializer->BlocksInfo(variable, step);                  \
+        return std::vector<typename Variable<T>::BPInfo>();                    \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

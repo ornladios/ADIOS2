@@ -59,6 +59,56 @@ ToBlocksInfo(const std::vector<typename core::Variable<
 
     return blocksInfo;
 }
+template <class T>
+static std::vector<typename Variable<T>::Info>
+ToBlocksInfo(const core::Engine::MinVarInfo *coreVarInfo)
+{
+    auto coreBlocksInfo = coreVarInfo->BlocksInfo;
+
+    std::vector<typename Variable<T>::Info> blocksInfo;
+    blocksInfo.reserve(coreBlocksInfo.size());
+
+    for (auto &coreBlockInfo : coreBlocksInfo)
+    {
+        typename Variable<T>::Info blockInfo;
+
+        if (coreVarInfo->Shape)
+        {
+            blockInfo.Start.reserve(coreVarInfo->Dims);
+            blockInfo.Count.reserve(coreVarInfo->Dims);
+            for (int i = 0; i < coreVarInfo->Dims; i++)
+            {
+                blockInfo.Start.push_back(coreBlockInfo.Start[i]);
+                blockInfo.Count.push_back(coreBlockInfo.Count[i]);
+            }
+        }
+        else
+        {
+            blockInfo.Count.reserve(coreVarInfo->Dims);
+            for (int i = 0; i < coreVarInfo->Dims; i++)
+            {
+                blockInfo.Count.push_back(coreBlockInfo.Count[i]);
+            }
+        }
+        blockInfo.WriterID = coreBlockInfo.WriterID;
+
+        blockInfo.IsValue = coreVarInfo->IsValue;
+        blockInfo.IsReverseDims = coreVarInfo->IsReverseDims;
+        if (blockInfo.IsValue)
+        {
+            blockInfo.Value = *((T *)coreBlockInfo.BufferP);
+        }
+        else
+        {
+            blockInfo.Min = *((T *)&coreBlockInfo.MinUnion);
+            blockInfo.Max = *((T *)&coreBlockInfo.MaxUnion);
+        }
+        blockInfo.BlockID = coreBlockInfo.BlockID;
+        blocksInfo.push_back(blockInfo);
+    }
+
+    return blocksInfo;
+}
 } // end empty namespace
 
 template <class T>
@@ -346,6 +396,17 @@ Engine::BlocksInfo(const Variable<T> variable, const size_t step) const
 
     adios2::helper::CheckForNullptr(
         variable.m_Variable, "for variable in call to Engine::BlocksInfo");
+
+    const auto minBlocksInfo =
+        m_Engine->MinBlocksInfo(*variable.m_Variable, step);
+
+    if (minBlocksInfo)
+    {
+        std::vector<typename Variable<T>::Info> Ret =
+            ToBlocksInfo<T>(minBlocksInfo);
+        delete minBlocksInfo;
+        return Ret;
+    }
 
     const auto blocksInfo =
         m_Engine->BlocksInfo<IOType>(*variable.m_Variable, step);
