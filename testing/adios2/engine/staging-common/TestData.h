@@ -240,17 +240,19 @@ int validateCommonTestData(int start, int length, size_t step,
         }
         else
         {
+            std::cout << "Blocks size is " << in_R32_blocks.size() << std::endl;
             for (size_t j = 0; j < in_R32_blocks.size(); j++)
             {
-                if (in_R32_blocks[j][i] !=
-                    (float)((i + start) * 10 + step + 1000.0 * j))
+                std::cout << " Verifying block " << j << " at data "
+                          << (void *)in_R32_blocks[j].data() << std::endl;
+                float expected = (float)((i + start) * 10 + step + 1000.0 * j +
+                                         (((int)(j / LocalCount)) * 100.0));
+                if (in_R32_blocks[j][i] != expected)
                 {
-                    std::cout << "Expected "
-                              << (float)((i + start) * 10 + step + 1000.0 * j)
-                              << ", got " << in_R32_blocks[j][i]
-                              << " for in_R32[" << i << "][" << j << "(global["
-                              << i + start << "]), timestep " << step
-                              << std::endl;
+                    std::cout << "Expected " << expected << ", got "
+                              << in_R32_blocks[j][i] << " for in_R32[" << i
+                              << "][" << j << "(global[" << i + start
+                              << "]), timestep " << step << std::endl;
                     failures++;
                 }
             }

@@ -486,6 +486,11 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             DataOffset = m_PriorDataBufferSizeTotal +
                          CurDataBuffer->AddToVec(ElemCount * ElemSize, Data,
                                                  ElemSize, Sync);
+            if (AlreadyWritten)
+            {
+                printf("Marshalling %g at offset %ld\n", *(float *)Data,
+                       DataOffset);
+            }
         }
         else
         {

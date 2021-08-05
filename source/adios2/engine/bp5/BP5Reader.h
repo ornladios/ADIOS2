@@ -52,6 +52,8 @@ public:
 
     void PerformGets() final;
 
+    MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
+
 private:
     typedef std::chrono::duration<double> Seconds;
     typedef std::chrono::time_point<

@@ -179,6 +179,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             class SstReader::SstReader *Reader =
                 reinterpret_cast<class SstReader::SstReader *>(reader);
             size_t currentStep = SstCurrentStep(Reader->m_Input);
+            struct MinBlockInfo BI;
             /*
              * setup shape of array variable as global (I.E. Count == Shape,
              * Start == 0)
@@ -226,8 +227,45 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             return;
         };
 
-    SstReaderInitFFSCallback(m_Input, this, varFFSCallback, arrayFFSCallback,
-                             attrFFSCallback, arrayBlocksInfoCallback);
+    auto MinArraySetupUpcall = [](void *reader, int DimCount, size_t *Shape) {
+        MinVarInfo *MV = new MinVarInfo(DimCount, Shape);
+        return (void *)MV;
+    };
+    auto arrayMinBlocksInfoCallback =
+        [](void *reader, void *MV, const int type, int WriterRank, int DimCount,
+           size_t *Shape, size_t *Start, size_t *Count) {
+            struct MinBlockInfo MBI;
+            struct MinVarInfo *MinVar = (struct MinVarInfo *)MV;
+
+            MBI.WriterID = WriterRank;
+            MBI.BlockID = 0;
+            MBI.Start = Start;
+            MBI.Count = Count;
+
+            MinVar->BlocksInfo.push_back(MBI);
+            return;
+        };
+
+    static int UseMin = 1;
+    if (UseMin == -1)
+    {
+        if (getenv("OldBlocksInfo") == NULL)
+        {
+            UseMin = 0;
+        }
+        else
+        {
+            UseMin = 1;
+        }
+    }
+    if (UseMin)
+        SstReaderInitFFSCallback(m_Input, this, varFFSCallback,
+                                 arrayFFSCallback, MinArraySetupUpcall,
+                                 attrFFSCallback, arrayMinBlocksInfoCallback);
+    else
+        SstReaderInitFFSCallback(m_Input, this, varFFSCallback,
+                                 arrayFFSCallback, NULL, attrFFSCallback,
+                                 arrayBlocksInfoCallback);
 
     delete[] cstr;
 }
@@ -458,6 +496,7 @@ void SstReader::EndStep()
         // unknown marshaling method, shouldn't happen
     }
     SstReleaseStep(m_Input);
+    m_InfoMap.clear();
 }
 
 void SstReader::Flush(const int transportIndex) {}
@@ -701,6 +740,26 @@ void SstReader::PerformGets()
 
 void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
 
+Engine::MinVarInfo *SstReader::MinBlocksInfo(const VariableBase &Var,
+                                             const size_t Step) const
+{
+    if (m_WriterMarshalMethod == SstMarshalBP)
+    {
+        return nullptr;
+    }
+    else if (m_WriterMarshalMethod == SstMarshalFFS)
+    {
+        return (Engine::MinVarInfo *)SstFFSGetBlocksInfo(m_Input, (void *)&Var);
+    }
+    else if (m_WriterMarshalMethod == SstMarshalBP5)
+    {
+        return (Engine::MinVarInfo *)m_BP5Deserializer->MinBlocksInfo(Var,
+                                                                      Step);
+    }
+    throw std::invalid_argument(
+        "ERROR: Unknown marshal mechanism in MinBlocksInfo\n");
+}
+
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     SstReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
@@ -731,7 +790,8 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
         }                                                                      \
         else if (m_WriterMarshalMethod == SstMarshalBP5)                       \
         {                                                                      \
-            return m_BP5Deserializer->BlocksInfo(variable, 0);                 \
+            std::vector<typename Variable<T>::BPInfo> tmp;                     \
+            return tmp;                                                        \
         }                                                                      \
         throw std::invalid_argument(                                           \
             "ERROR: Unknown marshal mechanism in DoBlocksInfo\n");             \
