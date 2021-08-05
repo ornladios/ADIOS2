@@ -9,13 +9,13 @@ module helloInsituArgs
     integer(kind=8) :: offx, offy  ! Offsets of local array in this process
     integer :: steps       ! number of steps to write
     integer :: sleeptime   ! wait time between steps in seconds
-    
+
 contains
 
 !!***************************
 subroutine usage(isWriter)
-    logical, intent(in) :: isWriter 
-    if (isWriter) then 
+    logical, intent(in) :: isWriter
+    if (isWriter) then
         print *, "Usage: helloInsituMPIWriter  config  N  M   nx  ny   steps  sleeptime"
     else
         print *, "Usage: helloInsituMPIReader  config  N  M"
@@ -24,16 +24,16 @@ subroutine usage(isWriter)
     print *, "config:    path of XML config file"
     print *, "N:         number of processes in X dimension"
     print *, "M:         number of processes in Y dimension"
-    if (isWriter) then 
+    if (isWriter) then
         print *, "nx:        local array size in X dimension per processor"
         print *, "ny:        local array size in Y dimension per processor"
-        print *, "steps:     the total number of steps to output" 
+        print *, "steps:     the total number of steps to output"
         print *, "sleeptime: wait time between steps in seconds"
     endif
-end subroutine usage 
-    
+end subroutine usage
+
 !!***************************
-subroutine processArgs(rank, nproc, isWriter)
+subroutine processArgs(nproc, isWriter)
 
 #if defined(ADIOS2_HAVE_FORTRAN_F03_ARGS)
 # define ADIOS2_ARGC() command_argument_count()
@@ -46,17 +46,16 @@ subroutine processArgs(rank, nproc, isWriter)
 # define ADIOS2_ARGV(i, v)
 #endif
 
-    integer, intent(in) :: rank
     integer, intent(in) :: nproc
-    logical, intent(in) :: isWriter 
+    logical, intent(in) :: isWriter
     character(len=256) :: npx_str, npy_str, ndx_str, ndy_str
     character(len=256) :: steps_str,time_str
     integer :: numargs, expargs
 
     !! expected number of arguments
-    if (isWriter) then 
+    if (isWriter) then
         expargs = 7
-    else 
+    else
         expargs = 3
     endif
 
@@ -70,7 +69,7 @@ subroutine processArgs(rank, nproc, isWriter)
     ADIOS2_ARGV(1, xmlfile)
     ADIOS2_ARGV(2, npx_str)
     ADIOS2_ARGV(3, npy_str)
-    if (isWriter) then 
+    if (isWriter) then
         ADIOS2_ARGV(4, ndx_str)
         ADIOS2_ARGV(5, ndy_str)
         ADIOS2_ARGV(6, steps_str)
@@ -78,7 +77,7 @@ subroutine processArgs(rank, nproc, isWriter)
     endif
     read (npx_str,'(i5)') npx
     read (npy_str,'(i5)') npy
-    if (isWriter) then 
+    if (isWriter) then
         read (ndx_str,'(i6)') ndx
         read (ndy_str,'(i6)') ndy
         read (steps_str,'(i6)') steps
@@ -94,11 +93,10 @@ subroutine processArgs(rank, nproc, isWriter)
 end subroutine processArgs
 
 !!******************************************************
-subroutine DecomposeArray(gndx, gndy, rank, nproc)
+subroutine DecomposeArray(gndx, gndy, rank)
     integer(kind=8), intent(in) :: gndx
     integer(kind=8), intent(in) :: gndy
     integer, intent(in) :: rank
-    integer, intent(in) :: nproc
 
     posx = mod(rank, npx);
     posy = rank / npx;
@@ -119,6 +117,5 @@ subroutine DecomposeArray(gndx, gndy, rank, nproc)
     endif
 end subroutine DecomposeArray
 
-    
-end module helloInsituArgs 
 
+end module helloInsituArgs

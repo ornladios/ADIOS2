@@ -25,10 +25,10 @@ program TestSstRead
 
   integer :: numargs
 
-  integer(kind = 8), dimension(1)::shape_dims, start_dims, count_dims
-  integer(kind = 8), dimension(2)::shape_dims2, start_dims2, count_dims2
-  integer(kind = 8), dimension(2)::shape_dims3, start_dims3, count_dims3
-  integer:: irank, isize, ierr, i, insteps, step_status
+  integer(kind = 8), dimension(1)::start_dims, count_dims
+  integer(kind = 8), dimension(2)::start_dims2, count_dims2
+  integer(kind = 8), dimension(2)::start_dims3, count_dims3
+  integer:: irank, isize, ierr, insteps, step_status
 
   character(len=256) :: filename, engine, params
 
@@ -40,11 +40,14 @@ program TestSstRead
   type(adios2_engine)::sstReader;
 
   !read handlers
-  character(len =:), allocatable::variable_name 
-  integer::variable_type, ndims, testComm
+  integer::ndims
   integer(kind = 8), dimension(:), allocatable::shape_in
-  integer::key, color
-  
+
+#if ADIOS2_USE_MPI
+
+  integer::key, color, testComm
+#endif
+
   numargs = ADIOS2_ARGC()
 
   if ( numargs < 2 ) then
@@ -106,7 +109,7 @@ program TestSstRead
     call adios2_variable_shape(shape_in, ndims, variables(1),  ierr)
     if (ndims /= 1) stop 'i8 ndims is not 1'
     if (modulo(shape_in(1), int(nx, 8)) /= 0) stop 'i8 shape_in read failed'
-    writerSize = shape_in(1) / nx
+    writerSize = INT(shape_in(1)) / nx
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(2), ioRead, "i16", ierr)

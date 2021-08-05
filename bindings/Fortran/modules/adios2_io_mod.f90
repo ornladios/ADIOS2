@@ -230,8 +230,8 @@ contains
         character*(*), intent(in) :: name
         logical, intent(out) :: result
         integer, intent(out) :: ierr
+
         ! Local
-        type(adios2_attribute):: attribute
         integer :: resultInt
 
         call adios2_remove_attribute_f2c(resultInt, io%f2c, &
