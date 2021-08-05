@@ -16,7 +16,7 @@ program helloInsituMPIReader
     integer(kind=8), dimension(:), allocatable :: shape_dims
     integer(kind=8), dimension(:), allocatable :: sel_start, sel_count
     integer :: ierr
-    integer :: i, j, step
+    integer :: step
     integer :: comm, color
 
 

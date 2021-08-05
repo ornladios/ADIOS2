@@ -15,8 +15,8 @@ program helloBPReaderHeatMap3D
     integer(kind=8), dimension(3) :: ishape, istart, icount
     integer(kind=8), dimension(3) :: sel_start, sel_count
     integer(kind=8) :: iglobal, value
+    integer(kind=8) :: i, j, k
     integer(kind=4) :: ierr, irank, isize, inx, iny, inz
-    integer(kind=4) :: i, j, k
 
 #if ADIOS2_USE_MPI
     call MPI_INIT(ierr)

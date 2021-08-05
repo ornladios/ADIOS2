@@ -8,7 +8,8 @@ program helloInsituMPIWriter
     integer(kind=8), dimension(2) :: shape_dims, start_dims, count_dims
     real, dimension(:,:), allocatable :: myArray
     integer :: wrank, wsize, rank, nproc
-    integer :: ierr, i, j, step
+    integer :: ierr, step = 1
+    integer(kind=8) :: i, j
     type(adios2_adios):: adios
     type(adios2_io):: io
     type(adios2_variable):: varArray
@@ -37,10 +38,10 @@ program helloInsituMPIWriter
 
     ! Application variables
     allocate( myArray(ndx,ndy) )
-    myArray = step*npx*ndx*npy*ndy + rank*ndx*ndy
+    myArray = REAL(step*npx*ndx*npy*ndy + rank*ndx*ndy)
     do j=1,ndy
         do i=1,ndx
-            myArray(i,j) = myArray(i,j) + (j-1)*ndx + i-1
+            myArray(i,j) = myArray(i,j) + REAL((j-1)*ndx + i-1)
         end do
     end do
 

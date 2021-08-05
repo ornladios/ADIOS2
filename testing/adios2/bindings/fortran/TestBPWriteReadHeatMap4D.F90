@@ -178,10 +178,10 @@ program TestBPWriteReadHeatMap4D
     sum_i1 = 0
     sum_i2 = 0
 
-    do i4 = 1, sel_count(4)
-      do i3 = 1, sel_count(3)
-        do i2 = 1, sel_count(2)
-          do i1 = 1, sel_count(1)
+    do i4 = 1, INT(sel_count(4), 4)
+      do i3 = 1, INT(sel_count(3), 4)
+        do i2 = 1, INT(sel_count(2), 4)
+          do i1 = 1, INT(sel_count(1), 4)
             sum_i1 = sum_i1 + sel_temperatures_i1(i1, i2, i3, i4)
             sum_i2 = sum_i2 + sel_temperatures_i2(i1, i2, i3, i4)
           end do
