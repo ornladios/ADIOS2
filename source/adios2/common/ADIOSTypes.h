@@ -196,6 +196,10 @@ constexpr size_t DefaultMinDeferredSize = 4 * 1024 * 1024;
  *  2Gb - 100Kb (tolerance)*/
 constexpr size_t DefaultMaxFileBatchSize = 2147381248;
 
+/** default maximum shared memory segment size
+ *  128Mb */
+constexpr uint64_t DefaultMaxShmSize = 128 * 1024 * 1024;
+
 constexpr char PathSeparator =
 #ifdef _WIN32
     '\\';

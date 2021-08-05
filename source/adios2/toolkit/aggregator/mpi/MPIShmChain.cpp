@@ -9,6 +9,8 @@
  */
 #include "MPIShmChain.h"
 
+#include "adios2/helper/adiosMemory.h" // PaddingToAlignOffset
+
 #include <iostream>
 
 namespace adios2
@@ -161,7 +163,7 @@ void MPIShmChain::Init(const size_t numAggregators, const size_t subStreams,
         HandshakeLinks_Start(m_Comm, hs);
 
         /* Create the shared memory segment */
-        CreateShm();
+        // CreateShm();
 
         HandshakeLinks_Complete(hs);
     }
@@ -212,30 +214,56 @@ void MPIShmChain::HandshakeLinks_Complete(HandshakeStruct &hs)
                         "aggregator, at Open");
 }
 
-void MPIShmChain::CreateShm()
+void MPIShmChain::CreateShm(size_t blocksize, const size_t maxsegmentsize)
 {
-    void *ptr;
+    if (!m_Comm.IsMPI())
+    {
+        throw std::runtime_error("Coding Error: MPIShmChain::CreateShm was "
+                                 "called with a non-MPI communicator");
+    }
+    char *ptr;
+    size_t structsize = sizeof(ShmSegment);
+    structsize += helper::PaddingToAlignOffset(structsize, sizeof(max_align_t));
     if (!m_Rank)
     {
-        m_Win = m_Comm.Win_allocate_shared(sizeof(ShmSegment), 1, &ptr);
+        blocksize +=
+            helper::PaddingToAlignOffset(blocksize, sizeof(max_align_t));
+        size_t totalsize = structsize + 2 * blocksize;
+        if (totalsize > maxsegmentsize)
+        {
+            // roll back and calculate sizes from maxsegmentsize
+            totalsize = maxsegmentsize - sizeof(max_align_t) + 1;
+            totalsize +=
+                helper::PaddingToAlignOffset(totalsize, sizeof(max_align_t));
+            blocksize = (totalsize - structsize) / 2 - sizeof(max_align_t) + 1;
+            blocksize +=
+                helper::PaddingToAlignOffset(blocksize, sizeof(max_align_t));
+            totalsize = structsize + 2 * blocksize;
+        }
+        m_Win = m_Comm.Win_allocate_shared(totalsize, 1, &ptr);
     }
-
-    if (m_Rank)
+    else
     {
         m_Win = m_Comm.Win_allocate_shared(0, 1, &ptr);
         size_t shmsize;
         int disp_unit;
         m_Comm.Win_shared_query(m_Win, 0, &shmsize, &disp_unit, &ptr);
+        blocksize = (shmsize - structsize) / 2;
     }
     m_Shm = reinterpret_cast<ShmSegment *>(ptr);
-    m_Shm->producerBuffer = LastBufferUsed::None;
-    m_Shm->consumerBuffer = LastBufferUsed::None;
-    m_Shm->NumBuffersFull = 0;
-    m_Shm->sdbA.buf = nullptr;
-    m_Shm->sdbA.max_size = SHM_BUF_SIZE;
-    m_Shm->sdbB.buf = nullptr;
-    m_Shm->sdbB.max_size = SHM_BUF_SIZE;
+    m_ShmBufA = ptr + structsize;
+    m_ShmBufB = m_ShmBufA + blocksize;
 
+    if (!m_Rank)
+    {
+        m_Shm->producerBuffer = LastBufferUsed::None;
+        m_Shm->consumerBuffer = LastBufferUsed::None;
+        m_Shm->NumBuffersFull = 0;
+        m_Shm->sdbA.buf = nullptr;
+        m_Shm->sdbA.max_size = blocksize;
+        m_Shm->sdbB.buf = nullptr;
+        m_Shm->sdbB.max_size = blocksize;
+    }
     /*std::cout << "Rank " << m_Rank << " shm = " << ptr
               << " bufA = " << static_cast<void *>(m_Shm->bufA)
               << " bufB = " << static_cast<void *>(m_Shm->bufB) << std::endl;*/
@@ -293,14 +321,14 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockProducerBuffer()
         m_Shm->producerBuffer = LastBufferUsed::B;
         sdb = &m_Shm->sdbB;
         // point to shm data buffer (in local process memory)
-        sdb->buf = m_Shm->bufB;
+        sdb->buf = m_ShmBufB;
     }
     else // None or B
     {
         m_Shm->producerBuffer = LastBufferUsed::A;
         sdb = &m_Shm->sdbA;
         // point to shm data buffer (in local process memory)
-        sdb->buf = m_Shm->bufA;
+        sdb->buf = m_ShmBufA;
     }
     m_Shm->lockSegment.unlock();
 
@@ -353,14 +381,14 @@ MPIShmChain::ShmDataBuffer *MPIShmChain::LockConsumerBuffer()
         m_Shm->consumerBuffer = LastBufferUsed::B;
         sdb = &m_Shm->sdbB;
         // point to shm data buffer (in local process memory)
-        sdb->buf = m_Shm->bufB;
+        sdb->buf = m_ShmBufB;
     }
     else // None or B
     {
         m_Shm->consumerBuffer = LastBufferUsed::A;
         sdb = &m_Shm->sdbA;
         // point to shm data buffer (in local process memory)
-        sdb->buf = m_Shm->bufA;
+        sdb->buf = m_ShmBufA;
     }
     m_Shm->lockSegment.unlock();
 

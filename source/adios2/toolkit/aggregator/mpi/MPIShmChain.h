@@ -45,7 +45,7 @@ private:
     std::atomic_flag flag_; //{ATOMIC_FLAG_INIT};
 };
 
-constexpr size_t SHM_BUF_SIZE = 4194304; // 4MB
+// constexpr size_t SHM_BUF_SIZE = 4194304; // 4MB
 // we allocate 2x this size + a bit for shared memory segment
 
 /** A one- or two-layer aggregator chain for using Shared memory within a
@@ -129,6 +129,10 @@ public:
     void UnlockConsumerBuffer();
     void ResetBuffers() noexcept;
 
+    // 2*blocksize+some is allocated but only up to maxsegmentsize
+    void CreateShm(size_t blocksize, const size_t maxsegmentsize);
+    void DestroyShm();
+
 private:
     struct HandshakeStruct
     {
@@ -142,8 +146,6 @@ private:
     void HandshakeLinks_Complete(HandshakeStruct &hs);
 
     helper::Comm::Win m_Win;
-    void CreateShm();
-    void DestroyShm();
 
     enum class LastBufferUsed
     {
@@ -165,10 +167,12 @@ private:
         aggregator::Spinlock lockA;
         aggregator::Spinlock lockB;
         // the actual data buffers
-        char bufA[SHM_BUF_SIZE];
-        char bufB[SHM_BUF_SIZE];
+        // char bufA[SHM_BUF_SIZE];
+        // char bufB[SHM_BUF_SIZE];
     };
     ShmSegment *m_Shm;
+    char *m_ShmBufA;
+    char *m_ShmBufB;
 };
 
 } // end namespace aggregator
