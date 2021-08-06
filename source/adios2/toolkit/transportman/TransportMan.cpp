@@ -55,20 +55,7 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
             {
                 continue;
             }
-            const Params &parameters = parametersVector[i];
-	    std::string library;
-	    helper::SetParameterValue("Library", parameters, library);
-	    helper::SetParameterValue("library", parameters, library);
-	    if (library == "Daos" || library == "daos")
-	    {
-                const std::string path(
-                    fileNames[i].substr(0, lastPathSeparator));	      
-         	auto transport = std::make_shared<transport::FileDaos>(m_Comm);
-		std::cout << "start transport->MkDir(" << path << ")..." << std::endl;		
-		transport->MkDir(path);
-		std::cout << "transport->MkDir(" << path << ") succeeded!" << std::endl;
-	        continue;
-	    }
+	    const Params &parameters = parametersVector[i];
             const std::string type = parameters.at("transport");
             if (type == "File" || type == "file")
             {
@@ -79,19 +66,38 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
         }
     };
     
-    if (nodeLocal)
+    const Params &parameters = parametersVector[0];
+    std::string library;
+    helper::SetParameterValue("Library", parameters, library);
+    helper::SetParameterValue("library", parameters, library);
+    if (library == "Daos" || library == "daos")
     {
-        lf_CreateDirectories(fileNames);
+        int rank = m_Comm.Rank();
+	std::cout << "rank " << rank << ": " << fileNames[0] << std::endl;
+
+	auto transport = std::make_shared<transport::FileDaos>(m_Comm);
+	std::cout << "rank " << rank << ": start transport->MkDir(" << fileNames[0] << ")..." << std::endl;		
+	transport->MkDir(fileNames[0]);
+	std::cout << "rank " << rank << ": transport->MkDir(" << fileNames[0] << ") succeeded!" << std::endl;	  
+        
+	m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
     }
     else
     {
-        int rank = m_Comm.Rank();
-        if (rank == 0)
+        if (nodeLocal)
         {
-            lf_CreateDirectories(fileNames);
+	    lf_CreateDirectories(fileNames);
         }
+        else
+        {
+	    int rank = m_Comm.Rank();
+	    if (rank == 0)
+	    {
+	        lf_CreateDirectories(fileNames);
+	    }
 
-        m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
+	    m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
+        }
     }
 }
 

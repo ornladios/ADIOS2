@@ -15,6 +15,7 @@
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
 #include <unistd.h>    // write, close
+#include <cstdlib>     // malloc
 
 #include <ios>
 #include <algorithm>
@@ -115,7 +116,13 @@ public:
                 "ERROR: FileDaos: Mount handle already exists");
         }
 
-	daos_init();
+	
+	
+	std::cout << "rank " << comm.Rank() << ": start daos_init..." << std::endl;
+	rc = daos_init();
+	CheckDAOSReturnCode(rc);
+	std::cout << "rank " << comm.Rank() << ": daos_init succeeded!" << std::endl;
+	
 	
 	char uuid_c[100];
 	char cuuid_c[100];
@@ -146,6 +153,11 @@ public:
         daos_handle_t poh;
         daos_handle_t coh;
         d_iov_t gHandles[3];
+	std::vector<size_t> bufLen(3);
+	std::vector<std::vector<char>> bufs(3);
+	  
+	memset(gHandles, 0, sizeof(d_iov_t) * 3);
+	
         if (comm.Rank() == 0)
         {
    	    std::cout << "start daos_pool_connect..." << std::endl;
@@ -163,60 +175,134 @@ public:
 	    
             rc = daos_pool_local2global(poh, &gHandles[0]);
             CheckDAOSReturnCode(rc);
-	    std::cout << "daos_pool_local2global succeeded!" << std::endl;	    	    
+	    std::cout << "first daos_pool_local2global succeeded!" << std::endl;	    	    
 
             rc = daos_cont_local2global(coh, &gHandles[1]);
             CheckDAOSReturnCode(rc);
-	    std::cout << "daos_cont_local2global succeeded!" << std::endl;	    	    	    
+	    std::cout << "first daos_cont_local2global succeeded!" << std::endl;	    	    	    
 
             rc = dfs_local2global(Mount, &gHandles[2]);
             CheckDAOSReturnCode(rc);
-	    std::cout << "dfs_local2global succeeded!" << std::endl;	    
+	    std::cout << "first dfs_local2global succeeded!" << std::endl;	    
 
-            size_t bufLen = 6 * sizeof(size_t);
+	    if (gHandles[0].iov_buf == NULL)
+	    {
+		gHandles[0].iov_buf = malloc(gHandles[0].iov_buf_len);
+	    }
+	    if (gHandles[1].iov_buf == NULL)
+	    {
+		gHandles[1].iov_buf = malloc(gHandles[1].iov_buf_len);		
+	    }
+	    if (gHandles[2].iov_buf == NULL)
+	    {
+		gHandles[2].iov_buf = malloc(gHandles[2].iov_buf_len);		
+	    }
+            rc = daos_pool_local2global(poh, &gHandles[0]);
+            CheckDAOSReturnCode(rc);
+	    std::cout << "second daos_pool_local2global succeeded!" << std::endl;	    	    
+
+            rc = daos_cont_local2global(coh, &gHandles[1]);
+            CheckDAOSReturnCode(rc);
+	    std::cout << "second daos_cont_local2global succeeded!" << std::endl;	    	    	    
+
+            rc = dfs_local2global(Mount, &gHandles[2]);
+            CheckDAOSReturnCode(rc);
+	    std::cout << "second dfs_local2global succeeded!" << std::endl;
+	    
+	    size_t totalLen = 0;
             for (size_t i = 0; i < 3; ++i)
             {
-                bufLen += gHandles[i].iov_buf_len;
+                bufLen[i] = gHandles[i].iov_buf_len;
+		std::cout << "bufLen[" << i << "]: " << bufLen[i] << std::endl; 
+ 		totalLen += gHandles[i].iov_buf_len;
             }
+	    std::cout << "totalLen: " << totalLen << std::endl;
+	    std::cout << "bufLen ready to broadcast!" << std::endl;
+	    
+	    comm.BroadcastVector(bufLen);
+	    std::cout << "bufLen sent!" << std::endl;
+	    
+	    std::vector<char> mergedBuf;
+	    mergedBuf.reserve(totalLen);
+	    char *bufPtr = mergedBuf.data();
+	    for (size_t i = 0; i < 3; ++i)
+	    {
+		std::cout << "memcpy " << i << std::endl;
+		if (gHandles[i].iov_buf == NULL)
+		{
+		    std::cout << "problem!" << std::endl;
+		}
+		std::memcpy(bufPtr, gHandles[i].iov_buf, gHandles[i].iov_buf_len);
+		bufPtr += gHandles[i].iov_buf_len;
+	    }
 
-            std::vector<unsigned char> buf(bufLen);
-            unsigned char *bufPtr = buf.data();
-            for (size_t i = 0; i < 3; ++i)
-            {
-                std::memcpy(bufPtr, &gHandles[i].iov_len, sizeof(size_t));
-                bufPtr += sizeof(size_t);
-                std::memcpy(bufPtr, &gHandles[i].iov_buf_len, sizeof(size_t));
-                bufPtr += sizeof(gHandles[i].iov_buf_len);
-                std::memcpy(bufPtr, gHandles[i].iov_buf,
-                            gHandles[i].iov_buf_len);
-                bufPtr += gHandles[i].iov_buf_len;
-            }
+	    std::cout << "mergedBuf ready to broadcast!" << std::endl;
+	    comm.BroadcastVector(mergedBuf);
+	    std::cout << "mergedBuf sent!" << std::endl;
+//            std::vector<unsigned char> buf(bufLen);
+//            unsigned char *bufPtr = buf.data();
+//            for (size_t i = 0; i < 3; ++i)
+//            {
+//                std::memcpy(bufPtr, &gHandles[i].iov_len, sizeof(size_t));
+//                bufPtr += sizeof(size_t);
+//                std::memcpy(bufPtr, &gHandles[i].iov_buf_len, sizeof(size_t));
+//                bufPtr += sizeof(gHandles[i].iov_buf_len);
+//                std::memcpy(bufPtr, gHandles[i].iov_buf,
+//                            gHandles[i].iov_buf_len);
+//                bufPtr += gHandles[i].iov_buf_len;
+//            }
 
-            comm.BroadcastVector(buf);
+            
         }
         else
         {
-            std::vector<unsigned char> buf;
-            comm.BroadcastVector(buf);
-            unsigned char *bufPtr = buf.data();
-            for (size_t i = 0; i < 3; ++i)
-            {
-                std::memcpy(&gHandles[i].iov_len, bufPtr, sizeof(size_t));
-                bufPtr += sizeof(size_t);
-                std::memcpy(&gHandles[i].iov_buf_len, bufPtr, sizeof(size_t));
-                bufPtr += sizeof(gHandles[i].iov_buf_len);
-                gHandles[i].iov_buf = bufPtr;
-                bufPtr += gHandles[i].iov_buf_len;
-            }
+
+	    std::cout << "rank " << comm.Rank() << ": waiting for bufLen..." << std::endl; 
+            comm.BroadcastVector(bufLen);
+	    std::cout << "rank " << comm.Rank() << ": bufLen received!" << std::endl; 
+	    size_t totalLen = 0;
+	    for (size_t i = 0; i < 3; ++i)
+	    {
+		bufs[i].reserve(bufLen[i]);
+		gHandles[i].iov_buf = bufs[i].data();
+		gHandles[i].iov_buf_len = gHandles[i].iov_len = bufLen[i];
+		totalLen += bufLen[i];
+	    }
+	    //std::cout << "rank " << comm.Rank() << ": bufs are reserved!" << std::endl;
+	    
+	    std::vector<char> mergedBuf(totalLen);
+	    comm.BroadcastVector(mergedBuf);
+	    std::cout << "rank " << comm.Rank() << ": bufs are received!" << std::endl;
+	    
+	    char *bufPtr = mergedBuf.data();
+	    for (size_t i = 0; i < 3; ++i)
+	    {
+		std::memcpy(bufs[i].data(), bufPtr, bufLen[i]);
+		bufPtr += bufLen[i];
+	    }
+	    std::cout << "rank " << comm.Rank() << ": memcpy succeeded!" << std::endl;	    
+//            unsigned char *bufPtr = buf.data();
+//            for (size_t i = 0; i < 3; ++i)
+//            {
+//                std::memcpy(&gHandles[i].iov_len, bufPtr, sizeof(size_t));
+//                bufPtr += sizeof(size_t);
+//                std::memcpy(&gHandles[i].iov_buf_len, bufPtr, sizeof(size_t));
+//                bufPtr += sizeof(gHandles[i].iov_buf_len);
+//                gHandles[i].iov_buf = bufPtr;
+//                bufPtr += gHandles[i].iov_buf_len;
+//            }
 
             rc = daos_pool_global2local(gHandles[0], &poh);
             CheckDAOSReturnCode(rc);
-
+	    std::cout << "rank " << comm.Rank() << ": daos_pool_global2local succeeded!" << std::endl; 
+	    
             rc = daos_cont_global2local(poh, gHandles[1], &coh);
             CheckDAOSReturnCode(rc);
-
+	    std::cout << "rank " << comm.Rank() << ": daos_cont_global2local succeeded!" << std::endl;
+	    
             rc = dfs_global2local(poh, coh, mountFlags, gHandles[2], &Mount);
             CheckDAOSReturnCode(rc);
+	    std::cout << "rank " << comm.Rank() << ": dfs_global2local succeeded!" << std::endl;	    
         }
     }
 
