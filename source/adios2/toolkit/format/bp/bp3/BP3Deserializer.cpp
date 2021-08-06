@@ -38,7 +38,10 @@ void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
 
 {
     ParseMinifooter(bufferSTL);
-    ParsePGIndex(bufferSTL, engine.m_IO.m_HostLanguage);
+    ParsePGIndex(bufferSTL,
+                 (engine.m_IO.m_ArrayOrder == ArrayOrdering::RowMajor)
+                     ? "C++"
+                     : "Fortran");
     ParseVariablesIndex(bufferSTL, engine);
     ParseAttributesIndex(bufferSTL, engine);
 }

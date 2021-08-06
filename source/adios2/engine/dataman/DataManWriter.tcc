@@ -32,7 +32,7 @@ template <class T>
 void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
     variable.SetData(values);
-    if (helper::IsRowMajor(m_IO.m_HostLanguage))
+    if (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor)
     {
         m_Serializer.PutData(variable, m_Name, CurrentStep(), m_MpiRank, "");
     }

@@ -40,7 +40,8 @@ void BP4Writer::PutCommon(Variable<T> &variable,
     if (!m_BP4Serializer.m_MetadataSet.DataPGIsOpen)
     {
         m_BP4Serializer.PutProcessGroupIndex(
-            m_IO.m_Name, m_IO.m_HostLanguage,
+            m_IO.m_Name,
+            (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
             m_FileDataManager.GetTransportsTypes());
     }
 
@@ -53,7 +54,7 @@ void BP4Writer::PutCommon(Variable<T> &variable,
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
-    const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+    const bool sourceRowMajor = m_IO.m_ArrayOrder == ArrayOrdering::RowMajor;
     m_BP4Serializer.PutVariableMetadata(variable, blockInfo, sourceRowMajor,
                                         &span);
     span.m_Value = value;
@@ -82,7 +83,8 @@ void BP4Writer::PutSyncCommon(Variable<T> &variable,
     if (!m_BP4Serializer.m_MetadataSet.DataPGIsOpen)
     {
         m_BP4Serializer.PutProcessGroupIndex(
-            m_IO.m_Name, m_IO.m_HostLanguage,
+            m_IO.m_Name,
+            (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
             m_FileDataManager.GetTransportsTypes());
     }
 
@@ -93,12 +95,13 @@ void BP4Writer::PutSyncCommon(Variable<T> &variable,
 
         // new group index for incoming variable
         m_BP4Serializer.PutProcessGroupIndex(
-            m_IO.m_Name, m_IO.m_HostLanguage,
+            m_IO.m_Name,
+            (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
             m_FileDataManager.GetTransportsTypes());
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
-    const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+    const bool sourceRowMajor = m_IO.m_ArrayOrder == ArrayOrdering::RowMajor;
     m_BP4Serializer.PutVariableMetadata(variable, blockInfo, sourceRowMajor);
     m_BP4Serializer.PutVariablePayload(variable, blockInfo, sourceRowMajor);
 }

@@ -117,7 +117,7 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
     // not really a parameter, but a convenient way to pass this around
     auto lf_SetIsRowMajorParameter = [&](const std::string key,
                                          int &parameter) {
-        parameter = adios2::helper::IsRowMajor(io.m_HostLanguage);
+        parameter = (io.m_ArrayOrder == adios2::ArrayOrdering::RowMajor);
         return true;
     };
 

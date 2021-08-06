@@ -73,6 +73,16 @@ adios2_adios *adios2_init_config_serial(const char *config_file);
 adios2_io *adios2_declare_io(adios2_adios *adios, const char *name);
 
 /**
+ * Declares a new io handler with specific array ordering
+ * @param adios owner the io handler
+ * @param name unique io identifier within current adios handler
+ * @param order array ordering
+ * @return success: handler, failure: NULL
+ */
+adios2_io *adios2_declare_io_order(adios2_adios *adios, const char *name,
+                                   adios2_arrayordering order);
+
+/**
  * Retrieves a previously declared io handler by name
  * @param adios owner the io handler
  * @param name unique name for the previously declared io handler

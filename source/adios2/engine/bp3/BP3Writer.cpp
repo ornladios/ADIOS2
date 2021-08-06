@@ -222,7 +222,8 @@ void BP3Writer::InitBPBuffer()
     else
     {
         m_BP3Serializer.PutProcessGroupIndex(
-            m_IO.m_Name, m_IO.m_HostLanguage,
+            m_IO.m_Name,
+            (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
             m_FileDataManager.GetTransportsTypes());
     }
 }

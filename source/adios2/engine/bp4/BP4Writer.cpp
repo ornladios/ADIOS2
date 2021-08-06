@@ -393,7 +393,8 @@ void BP4Writer::InitBPBuffer()
     }
 
     m_BP4Serializer.PutProcessGroupIndex(
-        m_IO.m_Name, m_IO.m_HostLanguage,
+        m_IO.m_Name,
+        (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
         m_FileDataManager.GetTransportsTypes());
 }
 

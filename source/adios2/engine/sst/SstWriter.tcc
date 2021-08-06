@@ -77,8 +77,11 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 
         if (!m_BP3Serializer->m_MetadataSet.DataPGIsOpen)
         {
-            m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name,
-                                                  m_IO.m_HostLanguage, {"SST"});
+            m_BP3Serializer->PutProcessGroupIndex(
+                m_IO.m_Name,
+                (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++"
+                                                               : "Fortran",
+                {"SST"});
         }
         const size_t dataSize =
             helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
@@ -93,7 +96,8 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             throw std::runtime_error("Failed to resize BP3 serializer buffer");
         }
 
-        const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+        const bool sourceRowMajor =
+            (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
         m_BP3Serializer->PutVariableMetadata(variable, blockInfo,
                                              sourceRowMajor);
         m_BP3Serializer->PutVariablePayload(variable, blockInfo,

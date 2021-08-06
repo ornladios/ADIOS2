@@ -179,7 +179,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
         shape.resize(var_dim_size);
         if (var_dim_size > 0)
         {
-            bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
+            bool isOrderC = io.m_ArrayOrder == RowMajor;
             for (int i = 0; i < var_dim_size; i++)
             {
                 if (isOrderC)

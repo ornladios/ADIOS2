@@ -141,6 +141,14 @@ enum class DataType
     Compound
 };
 
+/** Type of ArrayOrdering */
+enum class ArrayOrdering
+{
+    RowMajor,    /// Contiguous elements of a row lie together in memory
+    ColumnMajor, /// Contiguous elements of a column lie together in memory
+    Auto         /// Default based on language type
+};
+
 // Types
 using std::size_t;
 
