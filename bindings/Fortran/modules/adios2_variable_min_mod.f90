@@ -25,6 +25,7 @@ module adios2_variable_min_mod
         module procedure adios2_variable_min_integer8
 
     end interface
+    external adios2_variable_min_f2c
 
 contains
 

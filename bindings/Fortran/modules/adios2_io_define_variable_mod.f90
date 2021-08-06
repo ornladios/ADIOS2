@@ -21,6 +21,9 @@ module adios2_io_define_variable_mod
 
     end interface
 
+    external adios2_define_global_variable_f2c
+    external adios2_define_variable_f2c
+
 contains
 
     subroutine adios2_define_variable_value(variable, io, name, adios2_type, &

@@ -28,7 +28,7 @@ ADIOS2_USE_SZ:BOOL=OFF
 ADIOS2_USE_ZeroMQ:STRING=ON
 ADIOS2_USE_ZFP:BOOL=OFF
 
-CMAKE_Fortran_FLAGS:STRING=-Werror -Wno-error=builtin-declaration-mismatch
+CMAKE_Fortran_FLAGS:STRING=-Wall
 ")
 
 set(NCPUS 4)

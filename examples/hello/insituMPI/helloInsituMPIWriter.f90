@@ -8,7 +8,8 @@ program helloInsituMPIWriter
     integer(kind=8), dimension(2) :: shape_dims, start_dims, count_dims
     real, dimension(:,:), allocatable :: myArray
     integer :: wrank, wsize, rank, nproc
-    integer :: ierr, i, j, step
+    integer :: ierr, step = 1
+    integer(kind=8) :: i, j
     type(adios2_adios):: adios
     type(adios2_io):: io
     type(adios2_variable):: varArray
@@ -22,12 +23,12 @@ program helloInsituMPIWriter
     call MPI_Comm_size(MPI_COMM_WORLD, wsize, ierr)
 
     ! Split MPI world into writers and readers. This code is the writers.
-    color = 1 
+    color = 1
     call MPI_Comm_split(MPI_COMM_WORLD, color, wrank, comm, ierr)
     call MPI_Comm_rank(comm, rank, ierr)
     call MPI_Comm_size(comm, nproc, ierr)
 
-    call ProcessArgs(rank, nproc, .true.)
+    call ProcessArgs(nproc, .true.)
 
     ! determine offsets
     posx = mod(rank, npx)     ! 1st dim easy: 0, npx, 2npx... are in the same X position
@@ -37,10 +38,10 @@ program helloInsituMPIWriter
 
     ! Application variables
     allocate( myArray(ndx,ndy) )
-    myArray = step*npx*ndx*npy*ndy + rank*ndx*ndy 
+    myArray = REAL(step*npx*ndx*npy*ndy + rank*ndx*ndy)
     do j=1,ndy
         do i=1,ndx
-            myArray(i,j) = myArray(i,j) + (j-1)*ndx + i-1
+            myArray(i,j) = myArray(i,j) + REAL((j-1)*ndx + i-1)
         end do
     end do
 
@@ -53,7 +54,7 @@ program helloInsituMPIWriter
     ! Create adios handler passing the communicator, config file, debug mode and error flag
     call adios2_init(adios, xmlfile, comm, adios2_debug_mode_on, ierr)
 
-    ! Declare an IO process configuration inside adios, 
+    ! Declare an IO process configuration inside adios,
     ! Engine choice and parameters for 'writer' come from the config file
     call adios2_declare_io(io, adios, "writer", ierr)
 

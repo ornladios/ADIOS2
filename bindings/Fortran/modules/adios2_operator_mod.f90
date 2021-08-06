@@ -18,6 +18,8 @@ contains
         character(len=:), allocatable, intent(out) :: type
         type(adios2_operator), intent(in) :: op
         integer, intent(out) :: ierr
+        external adios2_operator_type_f2c
+        external adios2_operator_type_length_f2c
 
         !local
         integer :: length

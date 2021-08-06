@@ -16,7 +16,7 @@ program helloInsituMPIReader
     integer(kind=8), dimension(:), allocatable :: shape_dims
     integer(kind=8), dimension(:), allocatable :: sel_start, sel_count
     integer :: ierr
-    integer :: i, j, step
+    integer :: step
     integer :: comm, color
 
 
@@ -31,7 +31,7 @@ program helloInsituMPIReader
     call MPI_Comm_rank(comm, rank, ierr)
     call MPI_Comm_size(comm, nproc, ierr)
 
-    call ProcessArgs(rank, nproc, .false.)
+    call ProcessArgs(nproc, .false.)
 
     ! Start adios2
     call adios2_init( adios, xmlfile, comm, adios2_debug_mode_on, ierr )
@@ -55,7 +55,7 @@ program helloInsituMPIReader
             if (step == 0) then
                 call adios2_variable_shape( shape_dims, ndims, varArray, ierr)
                 ! ndims is assumed to be 2 here
-                call DecomposeArray( shape_dims(1), shape_dims(2), rank, nproc)
+                call DecomposeArray( shape_dims(1), shape_dims(2), rank)
                 allocate (sel_start(2), sel_count(2))
                 sel_start = (/ offx, offy /)
                 sel_count = (/ ndx, ndy /)

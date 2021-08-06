@@ -13,10 +13,7 @@
      type(adios2_engine) :: bpWriter, bpReader
 
      ! read handlers
-     character(len=:), allocatable :: variable_name, engine_type
-     integer :: variable_type, ndims, length
-     integer(kind=8), dimension(:), allocatable :: count_in
-     integer(kind=8) steps_start, steps_count, current_step, block_id
+     integer(kind=8) steps_count, current_step, block_id
 
      ! data
      integer(kind=1), dimension(10) :: I8, inI8
@@ -136,12 +133,12 @@
          end if
 
          do i = 1, inx
-             I8(i) = data_I8(i) + current_step
-             I16(i) = data_I16(i) + irank + current_step
-             I32(i) = data_I32(i) + irank + current_step
-             I64(i) = data_I64(i) + irank + current_step
-             R32(i) = data_R32(i) + irank + current_step
-             R64(i) = data_R64(i) + irank + current_step
+             I8(i) = data_I8(i) + INT(current_step, 1)
+             I16(i) = data_I16(i) + INT(irank + current_step, 2)
+             I32(i) = data_I32(i) + INT(irank + current_step, 4)
+             I64(i) = data_I64(i) + INT(irank + current_step, 8)
+             R32(i) = data_R32(i) + INT(irank + current_step, 4)
+             R64(i) = data_R64(i) + INT(irank + current_step, 8)
          end do
 
          ! changing count
@@ -279,12 +276,12 @@
              call adios2_perform_gets(bpReader, ierr)
 
              do i = 1, inx
-                 I8(i) = data_I8(i) + current_step
-                 I16(i) = data_I16(i) + block_id + current_step
-                 I32(i) = data_I32(i) + block_id + current_step
-                 I64(i) = data_I64(i) + block_id + current_step
-                 R32(i) = data_R32(i) + block_id + current_step
-                 R64(i) = data_R64(i) + block_id + current_step
+                 I8(i) = data_I8(i) + INT(current_step, 1)
+                 I16(i) = data_I16(i) + INT(block_id + current_step, 2)
+                 I32(i) = data_I32(i) + INT(block_id + current_step, 4)
+                 I64(i) = data_I64(i) + INT(block_id + current_step, 8)
+                 R32(i) = data_R32(i) + INT(block_id + current_step, 4)
+                 R64(i) = data_R64(i) + INT(block_id + current_step, 8)
              end do
 
              do i = 1, inx

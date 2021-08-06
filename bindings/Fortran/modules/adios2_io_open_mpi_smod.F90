@@ -26,6 +26,8 @@ module adios2_io_open_mpi_mod
         module procedure adios2_open_new_comm
     end interface
 #endif
+    external adios2_open_new_comm_f2c
+    external adios2_engine_get_type_f2c
 
 contains
 

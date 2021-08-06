@@ -35,7 +35,7 @@ ADIOS2_USE_ZFP:BOOL=OFF
 
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
-CMAKE_Fortran_FLAGS:STRING=-Werror -Wno-error=builtin-declaration-mismatch
+CMAKE_Fortran_FLAGS:STRING=-Wall
 
 MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
 MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}

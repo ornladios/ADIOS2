@@ -30,6 +30,7 @@ module adios2_adios_init_serial_mod
         module procedure adios2_init_config_debug_serial
     end interface
 #endif
+    external adios2_init_config_serial_f2c
 
 contains
 
