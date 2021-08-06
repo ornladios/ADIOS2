@@ -322,6 +322,19 @@ bool IO::InConfigFile() const noexcept { return m_InConfigFile; }
 
 void IO::SetDeclared() noexcept { m_IsDeclared = true; }
 
+void IO::SetArrayOrder(const ArrayOrdering ArrayOrder) noexcept
+{
+    if (ArrayOrder == ArrayOrdering::Auto)
+    {
+        if (helper::IsRowMajor(m_HostLanguage))
+            m_ArrayOrder = ArrayOrdering::RowMajor;
+        else
+            m_ArrayOrder = ArrayOrdering::ColumnMajor;
+    }
+    else
+        m_ArrayOrder = ArrayOrder;
+}
+
 bool IO::IsDeclared() const noexcept { return m_IsDeclared; }
 
 bool IO::RemoveVariable(const std::string &name) noexcept

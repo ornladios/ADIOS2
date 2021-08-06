@@ -159,7 +159,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
     else
     {
         std::vector<hsize_t> start(ndims), count(ndims), stride(ndims);
-        bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
+        bool isOrderC = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
 
         for (size_t i = 0u; i < ndims; i++)
         {

@@ -375,7 +375,7 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
         {                                                                      \
             Dims vStart = b.start;                                             \
             Dims vShape = b.shape;                                             \
-            if (!helper::IsRowMajor(io.m_HostLanguage))                        \
+            if (io.m_ArrayOrder != ArrayOrdering::RowMajor)                    \
             {                                                                  \
                 std::reverse(vStart.begin(), vStart.end());                    \
                 std::reverse(vShape.begin(), vShape.end());                    \

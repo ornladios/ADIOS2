@@ -59,6 +59,8 @@ public:
     /** from ADIOS class passed to Engine created with Open */
     const std::string m_HostLanguage = "C++";
 
+    ArrayOrdering m_ArrayOrder;
+
     /** From SetParameter, parameters for a particular engine from m_Type */
     Params m_Parameters;
 
@@ -350,6 +352,8 @@ public:
      * Sets declared to true if IO exists in code created with ADIOS DeclareIO
      */
     void SetDeclared() noexcept;
+
+    void SetArrayOrder(const ArrayOrdering ArrayOrder) noexcept;
 
     /**
      * Check if declared in code

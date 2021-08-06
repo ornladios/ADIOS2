@@ -105,7 +105,7 @@ void BP3Reader::ReadVariableBlocks(Variable<T> &variable)
 
                 m_BP3Deserializer.PostDataRead(
                     variable, blockInfo, subStreamBoxInfo,
-                    helper::IsRowMajor(m_IO.m_HostLanguage), 0);
+                    m_IO.m_ArrayOrder == ArrayOrdering::RowMajor, 0);
             } // substreams loop
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);

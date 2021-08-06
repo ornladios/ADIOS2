@@ -794,7 +794,7 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     // byte 48 columnMajor
     // write if data is column major in metadata and data
     const uint8_t columnMajor =
-        (helper::IsRowMajor(m_IO.m_HostLanguage) == false) ? 'y' : 'n';
+        (m_IO.m_ArrayOrder == ArrayOrdering::ColumnMajor) ? 'y' : 'n';
     helper::CopyToBuffer(buffer, position, &columnMajor);
 
     // byte 49-63: unused

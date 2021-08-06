@@ -31,10 +31,10 @@ ADIOS::ADIOS(const std::string &configFile, const std::string &hostLanguage,
 
 ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 
-IO ADIOS::DeclareIO(const std::string name)
+IO ADIOS::DeclareIO(const std::string name, const ArrayOrdering ArrayOrder)
 {
     CheckPointer("for io name " + name + ", in call to ADIOS::DeclareIO");
-    return IO(&m_ADIOS->DeclareIO(name));
+    return IO(&m_ADIOS->DeclareIO(name, ArrayOrder));
 }
 
 IO ADIOS::AtIO(const std::string name)

@@ -67,8 +67,12 @@ size_t BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
             std::find(selectedSteps.begin(), selectedSteps.end(), i) !=
                 selectedSteps.end())
         {
-            ParsePGIndexPerStep(bufferSTL, engine.m_IO.m_HostLanguage, 0,
-                                i + 1);
+            ParsePGIndexPerStep(
+                bufferSTL,
+                (engine.m_IO.m_ArrayOrder == ArrayOrdering::RowMajor)
+                    ? "C++"
+                    : "Fortran",
+                0, i + 1);
             ParseVariablesIndexPerStep(bufferSTL, engine, 0, i + 1);
             ParseAttributesIndexPerStep(bufferSTL, engine, 0, i + 1);
             lastposition = m_MetadataIndexTable[0][i + 1][3];

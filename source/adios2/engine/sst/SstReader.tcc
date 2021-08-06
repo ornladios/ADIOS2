@@ -172,7 +172,8 @@ void SstReader::ReadVariableBlocksFill(Variable<T> &variable,
 
                     m_BP3Deserializer->PostDataRead(
                         variable, blockInfo, subStreamInfo,
-                        helper::IsRowMajor(m_IO.m_HostLanguage), threadID);
+                        (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor),
+                        threadID);
                     ++iter;
                 }
                 // if remote data buffer is not compressed

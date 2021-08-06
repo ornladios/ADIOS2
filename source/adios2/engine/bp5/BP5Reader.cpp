@@ -211,7 +211,7 @@ void BP5Reader::Init()
     m_IO.m_ReadStreaming = false;
 
     ParseParams(m_IO, m_Parameters);
-    m_ReaderIsRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+    m_ReaderIsRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
     InitTransports();
 
     /* Do a collective wait for the file(s) to appear within timeout.
