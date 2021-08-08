@@ -133,10 +133,13 @@ else()
     ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c)
   ADD_FLEX_BISON_DEPENDENCY(CODScanner CODParser)
 endif()
+
+find_package(Perl REQUIRED)
+
 add_custom_command(
   OUTPUT "cod_node.c" 
   COMMAND
-    perl
+    ${PERL_EXECUTABLE} 
       ${CMAKE_CURRENT_SOURCE_DIR}/cod/struct.pl
       ${CMAKE_CURRENT_SOURCE_DIR}/cod/cod.structs
   DEPENDS

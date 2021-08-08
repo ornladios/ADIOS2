@@ -57,7 +57,7 @@ static char *stringify_field_type(const char *type,
 static int is_self_server(FMContext fmc);
 static void expand_FMContext(FMContext fmc);
 static int IOget_array_size_dimen(const char *str, FMFieldList fields,
-				  int dimen, int *control_field);
+				  int dimen, int *control_field, int cur_field);
 static int field_type_eq(const char *str1, const char *str2);
 
 /* 
@@ -700,31 +700,25 @@ FMContext fmc;
 }
 
 static int
+is_all_static_array_dimens(const char *str)
+{
+    char *left_paren, *end;
+
+    if ((left_paren = strchr(str, '[')) == NULL) {
+	return 1;
+    }	
+    (void) strtol(left_paren + 1, &end, 0);
+    if (*end != ']') {
+	return 0;
+    } else {
+	return is_all_static_array_dimens(end+1);
+    }
+}
+
+static int
 is_var_array_field(FMFieldList field_list, int field)
 {
-    int done = 0;
-    int ret = 0;
-    int dimen_count = 0;
-    int control_val;
-    while (!done) {
-	int static_size = IOget_array_size_dimen(field_list[field].field_type,
-						 field_list, dimen_count, 
-						 &control_val);
-	dimen_count++;
-	if (static_size == 0) {
-	    done++;
-	    continue;
-	}
-	if ((static_size == -1) && (control_val == -1)) {
-	    /* failed validation, errors already delivered */
-	    return -1;
-	}
-	if (control_val != -1) {
-	    /* dynamic array */
-	    ret = 1;
-	}
-    }
-    return ret;
+    return !is_all_static_array_dimens(field_list[field].field_type);
 }
 
 static FMTypeDesc *
@@ -831,7 +825,7 @@ gen_FMTypeDesc(FMFieldList fl, int field, const char *typ)
 	    int control_val;
 	    FMTypeDesc *tmp;
 	    int static_size = IOget_array_size_dimen(typ, fl, dimen_count, 
-						     &control_val);
+						     &control_val, field);
 	    tmp = new_FMTypeDesc();
 	    tmp->type = FMType_array;
 	    tmp->field_index = field;
@@ -1164,7 +1158,7 @@ gen_var_dimens(FMFormat fmformat, int field)
 	int control_val;
 	int static_size = IOget_array_size_dimen(field_list[field].field_type,
 						 field_list, dimen_count, 
-						 &control_val);
+						 &control_val, field);
 	if (static_size == 0) {
 	    done++;
 	    continue;
@@ -2764,12 +2758,35 @@ const char *str;
     return unknown_type;
 }
 
+long
+find_field(char *field_name, FMFieldList fields, int cur_field, void *search_help)
+{
+    int i;
+    if (cur_field > 10) {
+      /* search close first */
+      for (i = cur_field -1; i > cur_field - 10; i--) {
+	if (strcmp(field_name, fields[i].field_name) == 0) {
+	    return i;
+	}
+      }
+      for (i = cur_field + 1; i < cur_field + 10; i++) {
+	if (strcmp(field_name, fields[i].field_name) == 0) {
+	    return i;
+	}
+      }
+    }
+    i = 0;
+    while (fields[i].field_name != NULL) {
+	if (strcmp(field_name, fields[i].field_name) == 0) {
+	    return i;
+	}
+	i++;
+    }
+    return -1;
+}
+
 extern int
-IOget_array_size_dimen(str, fields, dimen, control_field)
-const char *str;
-FMFieldList fields;
-int dimen;
-int *control_field;
+IOget_array_size_dimen(const char *str, FMFieldList fields, int dimen, int *control_field, int cur_field)
 {
     char *left_paren, *end;
     long static_size;
@@ -2788,27 +2805,25 @@ int *control_field;
 	/* dynamic element */
 	char field_name[1024];
 	int count = 0;
-	int i = 0;
 	while (((left_paren+1)[count] != ']') &&
 	       ((left_paren+1)[count] != 0)) {
 	    field_name[count] = (left_paren+1)[count];
 	    count++;
 	}
 	field_name[count] = 0;
-	while (fields[i].field_name != NULL) {
-	    if (strcmp(field_name, fields[i].field_name) == 0) {
-		if ((FMstr_to_data_type(fields[i].field_type) ==
-		    integer_type) || 
-		    (FMstr_to_data_type(fields[i].field_type) ==
-		     unsigned_type)) {
-		    *control_field = i;
-		    return -1;
-		} else {
-		    fprintf(stderr, "Variable length control field \"%s\" not of integer type.\n", field_name);
-		    return 0;
-		}
+	void * search_help = NULL;
+	long search_field = find_field(field_name, fields, cur_field, search_help);
+	if (search_field != -1) {
+	    if ((FMstr_to_data_type(fields[search_field].field_type) ==
+		 integer_type) || 
+		(FMstr_to_data_type(fields[search_field].field_type) ==
+		 unsigned_type)) {
+		*control_field = search_field;
+		return -1;
+	    } else {
+		fprintf(stderr, "Variable length control field \"%s\" not of integer type.\n", field_name);
+		return 0;
 	    }
-	    i++;
 	}
 	fprintf(stderr, "Array dimension \"%s\" in type spec\"%s\" not recognized.\n",
 		field_name, str);

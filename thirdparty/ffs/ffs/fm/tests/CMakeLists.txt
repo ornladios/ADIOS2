@@ -1,5 +1,5 @@
 set (TESTS align_test compat_test)
-set (PROGS format_test self_format_test)
+set (PROGS format_test self_format_test scale_test)
 
 foreach (TEST ${TESTS} )
     ADD_EXECUTABLE(${TEST} ${TEST}.c test_funcs.c)
