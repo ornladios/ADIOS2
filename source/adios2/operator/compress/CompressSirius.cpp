@@ -26,7 +26,6 @@ CompressSirius::CompressSirius(const Params &parameters)
 : Operator("sirius", parameters)
 {
     helper::GetParameter(parameters, "tiers", m_Tiers);
-    std::cout << " ================== CompressSirius::CompressSirius tiers = " << m_Tiers << std::endl;
     m_TierBuffers.resize(m_Tiers);
 }
 
@@ -35,9 +34,12 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
                                 void *bufferOut, const Params &params,
                                 Params &info)
 {
-    size_t totalInputBytes = std::accumulate(dimensions.begin(), dimensions.end(), elementSize, std::multiplies<size_t>());
+    size_t totalInputBytes =
+        std::accumulate(dimensions.begin(), dimensions.end(), elementSize,
+                        std::multiplies<size_t>());
 
-    // if called from Tier 0 sub-engine, then compute tier buffers and put into m_TierBuffers
+    // if called from Tier 0 sub-engine, then compute tier buffers and put into
+    // m_TierBuffers
     size_t currentTierBytes = totalInputBytes / m_Tiers;
     size_t currentTierStart = m_CurrentTier * currentTierBytes;
     if (m_CurrentTier == 0)
@@ -45,12 +47,16 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
         for (int i = 0; i < m_TierBuffers.size(); i++)
         {
             m_TierBuffers[i].resize(currentTierBytes);
-            std::memcpy(m_TierBuffers[i].data(), reinterpret_cast<const char*>(dataIn) + currentTierStart, currentTierBytes);
+            std::memcpy(m_TierBuffers[i].data(),
+                        reinterpret_cast<const char *>(dataIn) +
+                            currentTierStart,
+                        currentTierBytes);
         }
     }
 
     // for all tiers' sub-engines, copy data from m_TierBuffers to output buffer
-    std::memcpy(bufferOut, m_TierBuffers[m_CurrentTier].data(), m_TierBuffers[m_CurrentTier].size());
+    std::memcpy(bufferOut, m_TierBuffers[m_CurrentTier].data(),
+                m_TierBuffers[m_CurrentTier].size());
 
     m_CurrentTier++;
     m_CurrentTier %= m_Tiers;
@@ -59,34 +65,39 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
-        void *dataOut, const Dims &dimensions,
-        DataType type, const Params &parameters)
+                                  void *dataOut, const Dims &dimensions,
+                                  DataType type, const Params &parameters)
 {
     std::cout << " ============= 1" << std::endl;
-    size_t outputBytes = std::accumulate(dimensions.begin(), dimensions.end(), helper::GetDataTypeSize(type), std::multiplies<size_t>());
+    size_t outputBytes = std::accumulate(dimensions.begin(), dimensions.end(),
+                                         helper::GetDataTypeSize(type),
+                                         std::multiplies<size_t>());
 
     // decompress data and copy back to m_TierBuffers
     size_t currentTierBytes = outputBytes / m_Tiers;
     m_TierBuffers[m_CurrentTier].resize(currentTierBytes);
-    std::memcpy(m_TierBuffers[m_CurrentTier].data(), bufferIn, currentTierBytes);
+    std::memcpy(m_TierBuffers[m_CurrentTier].data(), bufferIn,
+                currentTierBytes);
 
     std::cout << " ============= 2" << std::endl;
-    // if called from the final tier, then merge all tier buffers and copy back to dataOut
+    // if called from the final tier, then merge all tier buffers and copy back
+    // to dataOut
     size_t accumulatedBytes = 0;
-    if(m_CurrentTier == m_Tiers-1)
+    if (m_CurrentTier == m_Tiers - 1)
     {
-        for(const auto& b: m_TierBuffers)
+        for (const auto &b : m_TierBuffers)
         {
-            std::memcpy(reinterpret_cast<char*>(dataOut)+accumulatedBytes, b.data(), b.size());
-            accumulatedBytes+=b.size();
+            std::memcpy(reinterpret_cast<char *>(dataOut) + accumulatedBytes,
+                        b.data(), b.size());
+            accumulatedBytes += b.size();
         }
     }
 
     std::cout << " ============= 3" << std::endl;
     m_CurrentTier++;
-    if(m_CurrentTier%m_Tiers == 0)
+    if (m_CurrentTier % m_Tiers == 0)
     {
-        m_CurrentTier=0;
+        m_CurrentTier = 0;
     }
 
     std::cout << " ============= 4" << std::endl;

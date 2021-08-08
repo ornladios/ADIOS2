@@ -28,21 +28,21 @@ namespace engine
 class MhsReader : public Engine
 {
 public:
-    MhsReader(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
+    MhsReader(IO &adios, const std::string &name, const Mode mode,
+              helper::Comm comm);
     virtual ~MhsReader();
 
-    StepStatus BeginStep(StepMode mode = StepMode::Read, const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode = StepMode::Read,
+                         const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformGets() final;
     void EndStep() final;
 
 private:
-    ADIOS m_SubAdios;
-    IO &m_SubIO;
+    std::vector<IO *> m_SubIOs;
     std::vector<Engine *> m_SubEngines;
     Operator *m_Compressor;
     int m_Tiers;
-
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \

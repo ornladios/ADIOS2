@@ -95,8 +95,7 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
                               "SSC library, can't use SSC engine\n")},
     {"mhs",
 #ifdef ADIOS2_HAVE_MHS
-     {IO::MakeEngine<engine::MhsReader>,
-      IO::MakeEngine<engine::MhsWriter>}
+     {IO::MakeEngine<engine::MhsReader>, IO::MakeEngine<engine::MhsWriter>}
 #else
      IO::NoEngineEntry("ERROR: this version didn't compile with "
                        "MHS library, can't use MHS engine\n")

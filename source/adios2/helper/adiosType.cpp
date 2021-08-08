@@ -93,7 +93,10 @@ DataType GetDataTypeFromString(std::string const &type) noexcept
 size_t GetDataTypeSize(DataType type)
 {
 #define declare_type(T)                                                        \
-    if (type == helper::GetDataType<T>()) { return sizeof(T); }
+    if (type == helper::GetDataType<T>())                                      \
+    {                                                                          \
+        return sizeof(T);                                                      \
+    }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     throw(std::runtime_error("unknown data type"));

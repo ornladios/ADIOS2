@@ -109,7 +109,6 @@ DataType GetDataType() noexcept;
  */
 DataType GetDataTypeFromString(std::string const &) noexcept;
 
-
 size_t GetDataTypeSize(DataType type);
 
 /**

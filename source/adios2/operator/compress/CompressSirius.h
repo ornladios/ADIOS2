@@ -32,9 +32,9 @@ public:
                     const size_t elementSize, DataType type, void *bufferOut,
                     const Params &params, Params &info) final;
 
-    size_t Decompress(const void *bufferIn, const size_t sizeIn,
-                              void *dataOut, const Dims &dimensions,
-                              DataType type, const Params &parameters) final;
+    size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
+                      const Dims &dimensions, DataType type,
+                      const Params &parameters) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 

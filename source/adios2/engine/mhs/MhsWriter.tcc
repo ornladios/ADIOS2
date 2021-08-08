@@ -44,7 +44,8 @@ void MhsWriter::PutDeferredCommon<std::string>(Variable<std::string> &variable,
     auto var = m_SubIOs[0]->InquireVariable<std::string>(variable.m_Name);
     if (!var)
     {
-        var = &m_SubIOs[0]->DefineVariable<std::string>(variable.m_Name, {LocalValueDim});
+        var = &m_SubIOs[0]->DefineVariable<std::string>(variable.m_Name,
+                                                        {LocalValueDim});
     }
     m_SubEngines[0]->Put(variable, data, Mode::Sync);
 }
@@ -60,37 +61,40 @@ template <class T>
 void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     bool putToAll = false;
-    auto it = m_OperatorMap.find(variable.m_Name);
-    if (it != m_OperatorMap.end())
+    auto itVar = m_OperatorMap.find(variable.m_Name);
+    if (itVar != m_OperatorMap.end())
     {
-        if (it->second->m_Type == "sirius")
+        if (itVar->second->m_Type == "sirius")
         {
-            putToAll= true;
+            putToAll = true;
         }
     }
 
     auto var0 = m_SubIOs[0]->InquireVariable<T>(variable.m_Name);
     if (!var0)
     {
-        var0 = &m_SubIOs[0]->DefineVariable<T>(variable.m_Name, variable.m_Shape);
-        auto it = m_OperatorMap.find(variable.m_Name);
-        if (it != m_OperatorMap.end())
+        var0 =
+            &m_SubIOs[0]->DefineVariable<T>(variable.m_Name, variable.m_Shape);
+        itVar = m_OperatorMap.find(variable.m_Name);
+        if (itVar != m_OperatorMap.end())
         {
-            var0->AddOperation(*it->second, {});
+            var0->AddOperation(*itVar->second, {});
         }
     }
 
     var0->SetSelection({variable.m_Start, variable.m_Count});
     m_SubEngines[0]->Put(*var0, data, Mode::Sync);
 
-    if(putToAll)
+    if (putToAll)
     {
-        for (int i=1;i<m_SubEngines.size(); ++i)
+        for (int i = 1; i < m_SubEngines.size(); ++i)
         {
             auto var = m_SubIOs[i]->InquireVariable<T>(variable.m_Name);
-            if(!var)
+            if (!var)
             {
-                var = &m_SubIOs[i]->DefineVariable<T>(variable.m_Name, variable.m_Shape);
+                var = &m_SubIOs[i]->DefineVariable<T>(variable.m_Name,
+                                                      variable.m_Shape);
+                var->AddOperation(*itVar->second, {});
             }
             var->SetSelection({variable.m_Start, variable.m_Count});
             m_SubEngines[i]->Put(*var, data, Mode::Sync);

@@ -13,7 +13,6 @@
 
 #include "MhsReader.h"
 
-
 namespace adios2
 {
 namespace core
@@ -24,23 +23,20 @@ namespace engine
 template <class T>
 inline void MhsReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    std::cout << " ================================= MhsReader::GetSyncCommon" << std::endl;
     GetDeferredCommon(variable, data);
     PerformGets();
 }
 
 template <>
 inline void MhsReader::GetDeferredCommon(Variable<std::string> &variable,
-                                          std::string *data)
+                                         std::string *data)
 {
-    std::cout << " ================================= MhsReader::GetDeferredCommon" << std::endl;
     m_SubEngines[0]->Get(variable, data, Mode::Sync);
 }
 
 template <class T>
 void MhsReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    std::cout << " ================================= MhsReader::GetDeferredCommon" << std::endl;
     for (auto &e : m_SubEngines)
     {
         e->Get(variable, data, Mode::Sync);
