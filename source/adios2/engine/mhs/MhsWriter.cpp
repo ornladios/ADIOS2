@@ -10,6 +10,19 @@
 
 #include "MhsWriter.tcc"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/operator/compress/CompressSirius.h"
+#ifdef ADIOS2_HAVE_BLOSC
+#include "adios2/operator/compress/CompressBlosc.h"
+#endif
+#ifdef ADIOS2_HAVE_BZIP2
+#include "adios2/operator/compress/CompressBZIP2.h"
+#endif
+#ifdef ADIOS2_HAVE_ZFP
+#include "adios2/operator/compress/CompressZFP.h"
+#endif
+#ifdef ADIOS2_HAVE_SZ
+#include "adios2/operator/compress/CompressSZ.h"
+#endif
 
 namespace adios2
 {
@@ -20,43 +33,86 @@ namespace engine
 
 MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
-: Engine("MhsWriter", io, name, mode, std::move(comm)),
-  m_SubAdios(m_Comm.Duplicate(), io.m_HostLanguage),
-  m_SubIO(m_SubAdios.DeclareIO("SubIO"))
+: Engine("MhsWriter", io, name, mode, std::move(comm))
 {
     helper::GetParameter(io.m_Parameters, "tiers", m_Tiers);
     for (const auto &params : io.m_TransportsParameters)
     {
-        auto it = params.find("variable");
-        if (it == params.end())
+
+        auto itVar = params.find("variable");
+        if (itVar == params.end())
         {
             continue;
         }
-        for (const auto &param : params)
+        auto itCompressor = params.find("transport");
+        if (itCompressor == params.end())
         {
-            m_OperatorMap[it->second][param.first] = param.second;
+            continue;
+        }
+
+        if(itCompressor->second == "blosc")
+        {
+#ifdef ADIOS2_HAVE_BLOSC
+            m_OperatorMap.emplace(itVar->second, new compress::CompressBlosc({params}));
+#else
+            std::cerr << "ADIOS2 is not compiled with c-blosc (https://github.com/Blosc/c-blosc), compressor not added" << std::endl;
+#endif
+        }
+        else if (itCompressor->second == "bzip2")
+        {
+#ifdef ADIOS2_HAVE_BZIP2
+            m_OperatorMap.emplace(itVar->second, new compress::CompressBZIP2({params}));
+#else
+            std::cerr << "ADIOS2 is not compiled with Bzip2 "
+                "(https://gitlab.com/federicomenaquintero/bzip2), "
+                "compressor not added"
+                << std::endl;
+#endif
+        }
+        else if (itCompressor->second == "zfp")
+        {
+#ifdef ADIOS2_HAVE_ZFP
+            m_OperatorMap.emplace(itVar->second , new compress::CompressZFP({params}));
+#else
+            std::cerr << "ADIOS2 is not compiled with ZFP "
+                "(https://github.com/LLNL/zfp), "
+                "compressor not added"
+                << std::endl;
+#endif
+        }
+        else if (itCompressor->second == "sz")
+        {
+#ifdef ADIOS2_HAVE_SZ
+            m_OperatorMap.emplace(itVar->second, new compress::CompressSZ({params}));
+#else
+            std::cerr << "ADIOS2 is not compiled with SZ "
+                "(https://github.com/szcompressor/SZ), "
+                "compressor not added"
+                << std::endl;
+#endif
+        }
+        else if (itCompressor->second == "sirius")
+        {
+            m_OperatorMap.emplace(itVar->second, new compress::CompressSirius({params}));
+        }
+        else
+        {
+            throw("invalid operator");
         }
     }
     for (int i = 0; i < m_Tiers; ++i)
     {
-        m_SubEngines.push_back(&m_SubIO.Open(
-            m_Name + ".tier" + std::to_string(i), adios2::Mode::Write));
+        m_SubIOs.emplace_back(&io.m_ADIOS.DeclareIO("SubIO" + std::to_string(i)));
+        m_SubEngines.emplace_back(&m_SubIOs.back()->Open( m_Name + ".tier" + std::to_string(i), adios2::Mode::Write));
     }
 }
 
 MhsWriter::~MhsWriter()
 {
-    for (auto &c : m_Compressors)
-        if (c)
-        {
-            delete c;
-            c = nullptr;
-        }
 }
 
 StepStatus MhsWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-
     for (auto &e : m_SubEngines)
     {
         e->BeginStep(mode, timeoutSeconds);

@@ -213,6 +213,8 @@ if(ADIOS2_HAVE_MHS)
     target_sources(adios2_core PRIVATE
         engine/mhs/MhsWriter.cpp
         engine/mhs/MhsWriter.tcc
+        engine/mhs/MhsReader.cpp
+        engine/mhs/MhsReader.tcc
     )
 endif()
 

@@ -27,26 +27,19 @@ class MhsWriter : public Engine
 {
 
 public:
-    MhsWriter(IO &adios, const std::string &name, const Mode mode,
-              helper::Comm comm);
-
+    MhsWriter(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
     virtual ~MhsWriter();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
 private:
-    ADIOS m_SubAdios;
-    IO &m_SubIO;
+    std::vector<IO *> m_SubIOs;
     std::vector<Engine *> m_SubEngines;
-    std::vector<Operator *> m_Compressors;
-    std::unordered_map<std::string,
-                       std::unordered_map<std::string, std::string>>
-        m_OperatorMap;
+    std::unordered_map<std::string, std::shared_ptr<Operator>> m_OperatorMap;
     int m_Tiers = 1;
 
     void PutSubEngine(bool finalPut = false);

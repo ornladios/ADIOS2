@@ -1,0 +1,66 @@
+/*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
+ * MhsReader.h
+ * An empty skeleton engine from which any engine can be built
+ *
+ *  Created on: Aug 04, 2021
+ *      Author: Jason Wang jason.ruonan.wang@gmail.com
+ */
+
+#ifndef ADIOS2_ENGINE_MHSREADER_H_
+#define ADIOS2_ENGINE_MHSREADER_H_
+
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/core/ADIOS.h"
+#include "adios2/core/Engine.h"
+#include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosFunctions.h"
+
+namespace adios2
+{
+namespace core
+{
+namespace engine
+{
+
+class MhsReader : public Engine
+{
+public:
+    MhsReader(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
+    virtual ~MhsReader();
+
+    StepStatus BeginStep(StepMode mode = StepMode::Read, const float timeoutSeconds = -1.0) final;
+    size_t CurrentStep() const final;
+    void PerformGets() final;
+    void EndStep() final;
+
+private:
+    ADIOS m_SubAdios;
+    IO &m_SubIO;
+    std::vector<Engine *> m_SubEngines;
+    Operator *m_Compressor;
+    int m_Tiers;
+
+
+#define declare_type(T)                                                        \
+    void DoGetSync(Variable<T> &, T *) final;                                  \
+    void DoGetDeferred(Variable<T> &, T *) final;
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+    void DoClose(const int transportIndex = -1);
+
+    template <class T>
+    void GetSyncCommon(Variable<T> &variable, T *data);
+
+    template <class T>
+    void GetDeferredCommon(Variable<T> &variable, T *data);
+};
+
+} // end namespace engine
+} // end namespace core
+} // end namespace adios2
+
+#endif /* ADIOS2_ENGINE_MHSREADER_H_ */

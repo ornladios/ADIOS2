@@ -32,11 +32,16 @@ public:
                     const size_t elementSize, DataType type, void *bufferOut,
                     const Params &params, Params &info) final;
 
+    size_t Decompress(const void *bufferIn, const size_t sizeIn,
+                              void *dataOut, const Dims &dimensions,
+                              DataType type, const Params &parameters) final;
+
     bool IsDataTypeValid(const DataType type) const final;
 
 private:
-    std::vector<std::vector<char>> m_TierBuffers;
+    static std::vector<std::vector<char>> m_TierBuffers;
     static int m_CurrentTier;
+    static int m_Tiers;
 };
 
 } // end namespace compress

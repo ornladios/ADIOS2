@@ -28,6 +28,7 @@
 #endif
 #include "adios2/engine/inline/InlineReader.h"
 #include "adios2/engine/inline/InlineWriter.h"
+#include "adios2/engine/mhs/MhsReader.h"
 #include "adios2/engine/mhs/MhsWriter.h"
 #include "adios2/engine/null/NullEngine.h"
 #include "adios2/engine/nullcore/NullCoreWriter.h"
@@ -94,9 +95,7 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
                               "SSC library, can't use SSC engine\n")},
     {"mhs",
 #ifdef ADIOS2_HAVE_MHS
-     {IO::NoEngine("ERROR: MHS engine only supports Write. It uses other "
-                   "engines as backend. Please use corresponding engines for "
-                   "Read\n"),
+     {IO::MakeEngine<engine::MhsReader>,
       IO::MakeEngine<engine::MhsWriter>}
 #else
      IO::NoEngineEntry("ERROR: this version didn't compile with "
