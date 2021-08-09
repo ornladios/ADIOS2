@@ -55,7 +55,8 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         {
 #ifdef ADIOS2_HAVE_BLOSC
             m_OperatorMap.emplace(itVar->second,
-                                  new compress::CompressBlosc({params}));
+                                  reinterpret_cast<Operator *>(
+                                      new compress::CompressBlosc({params})));
 #else
             std::cerr
                 << "ADIOS2 is not compiled with c-blosc "
@@ -67,7 +68,8 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         {
 #ifdef ADIOS2_HAVE_BZIP2
             m_OperatorMap.emplace(itVar->second,
-                                  new compress::CompressBZIP2({params}));
+                                  reinterpret_cast<Operator *>(
+                                      new compress::CompressBZIP2({params})));
 #else
             std::cerr << "ADIOS2 is not compiled with Bzip2 "
                          "(https://gitlab.com/federicomenaquintero/bzip2), "
@@ -79,7 +81,8 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         {
 #ifdef ADIOS2_HAVE_ZFP
             m_OperatorMap.emplace(itVar->second,
-                                  new compress::CompressZFP({params}));
+                                  reinterpret_cast<Operator *>(
+                                      new compress::CompressZFP({params})));
 #else
             std::cerr << "ADIOS2 is not compiled with ZFP "
                          "(https://github.com/LLNL/zfp), "
@@ -91,7 +94,8 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         {
 #ifdef ADIOS2_HAVE_SZ
             m_OperatorMap.emplace(itVar->second,
-                                  new compress::CompressSZ({params}));
+                                  reinterpret_cast<Operator *>(
+                                      new compress::CompressSZ({params})));
 #else
             std::cerr << "ADIOS2 is not compiled with SZ "
                          "(https://github.com/szcompressor/SZ), "
@@ -103,7 +107,8 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         {
             params.emplace("tiers", std::to_string(m_Tiers));
             m_OperatorMap.emplace(itVar->second,
-                                  new compress::CompressSirius({params}));
+                                  reinterpret_cast<Operator *>(
+                                      new compress::CompressSirius({params})));
         }
         else
         {
