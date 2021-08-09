@@ -88,11 +88,11 @@ public:
     virtual size_t Compress(const void *dataIn, const Dims &dimensions,
                             const size_t elementSize, DataType type,
                             void *bufferOut, const Params &parameters,
-                            Params &info) const;
+                            Params &info);
 
     virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
                               void *dataOut, const size_t sizeOut,
-                              Params &info) const;
+                              Params &info);
 
     /**
      * Zfp signature
@@ -105,7 +105,7 @@ public:
      */
     virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
                               void *dataOut, const Dims &dimensions,
-                              DataType type, const Params &parameters) const;
+                              DataType type, const Params &parameters);
 
     virtual bool IsDataTypeValid(const DataType type) const = 0;
 

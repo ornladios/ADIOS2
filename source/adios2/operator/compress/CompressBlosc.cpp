@@ -64,7 +64,7 @@ size_t CompressBlosc::BufferMaxSize(const size_t sizeIn) const
 size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
                                const size_t elementSize, DataType type,
                                void *bufferOut, const Params &parameters,
-                               Params &info) const
+                               Params &info)
 {
     const size_t sizeIn =
         static_cast<size_t>(helper::GetTotalSize(dimensions) * elementSize);
@@ -237,7 +237,7 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
                                  void *dataOut, const size_t sizeOut,
-                                 Params &info) const
+                                 Params &info)
 {
     assert(sizeIn >= sizeof(DataHeader));
     const bool isChunked =

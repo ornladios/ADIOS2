@@ -57,7 +57,7 @@ public:
      */
     size_t Compress(const void *dataIn, const Dims &dimensions,
                     const size_t elementSize, DataType type, void *bufferOut,
-                    const Params &parameters, Params &info) const final;
+                    const Params &parameters, Params &info) final;
 
     /**
      * Decompression signature for legacy libraries that use void*
@@ -69,7 +69,7 @@ public:
      * @return size of decompressed buffer in bytes
      */
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const size_t sizeOut, Params &info) const final;
+                      const size_t sizeOut, Params &info) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 

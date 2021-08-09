@@ -217,11 +217,11 @@ if(ADIOS2_HAVE_MPI)
     endif()
 endif()
 
-# Table
-if(ADIOS2_USE_Table STREQUAL AUTO)
-    set(ADIOS2_HAVE_Table TRUE)
-elseif(ADIOS2_USE_Table)
-    set(ADIOS2_HAVE_Table TRUE)
+# MHS
+if(ADIOS2_USE_MHS STREQUAL AUTO)
+    set(ADIOS2_HAVE_MHS TRUE)
+elseif(ADIOS2_USE_MHS)
+    set(ADIOS2_HAVE_MHS TRUE)
 endif()
 
 # DataSpaces

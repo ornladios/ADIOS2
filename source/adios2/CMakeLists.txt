@@ -75,6 +75,7 @@ add_library(adios2_core
   toolkit/format/bp/bpOperation/compress/BPZFP.cpp 
   toolkit/format/bp/bpOperation/compress/BPZFP.tcc
   toolkit/format/bp/bpOperation/compress/BPSZ.cpp
+  toolkit/format/bp/bpOperation/compress/BPSirius.cpp
   toolkit/format/bp/bpOperation/compress/BPMGARD.cpp
   toolkit/format/bp/bpOperation/compress/BPPNG.cpp
   toolkit/format/bp/bpOperation/compress/BPBZIP2.cpp 
@@ -208,10 +209,12 @@ if(ADIOS2_HAVE_SSC)
     target_link_libraries(adios2_core_mpi)
 endif()
 
-if(ADIOS2_HAVE_Table)
+if(ADIOS2_HAVE_MHS)
     target_sources(adios2_core PRIVATE
-        engine/table/TableWriter.cpp
-        engine/table/TableWriter.tcc
+        engine/mhs/MhsWriter.cpp
+        engine/mhs/MhsWriter.tcc
+        engine/mhs/MhsReader.cpp
+        engine/mhs/MhsReader.tcc
     )
 endif()
 
@@ -269,6 +272,8 @@ if(ADIOS2_HAVE_PNG)
   target_sources(adios2_core PRIVATE operator/compress/CompressPNG.cpp)
   target_link_libraries(adios2_core PRIVATE PNG::PNG)
 endif()
+
+target_sources(adios2_core PRIVATE operator/compress/CompressSirius.cpp)
 
 if(ADIOS2_HAVE_HDF5)
   add_library(adios2_hdf5 OBJECT

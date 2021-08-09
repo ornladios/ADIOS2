@@ -47,7 +47,7 @@ public:
      */
     size_t Compress(const void *dataIn, const Dims &dimensions,
                     const size_t elementSize, DataType type, void *bufferOut,
-                    const Params &parameters, Params &info) const final;
+                    const Params &parameters, Params &info) final;
 
     using Operator::Decompress;
 
@@ -62,7 +62,7 @@ public:
      */
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
                       const Dims &dimensions, DataType type,
-                      const Params &parameters) const final;
+                      const Params &parameters) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 

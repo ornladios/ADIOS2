@@ -135,6 +135,8 @@
     MACRO(std::complex<float>)                                                 \
     MACRO(std::complex<double>)
 
+#define ADIOS2_FOREACH_SIRIUS_TYPE_1ARG(MACRO) MACRO(float)
+
 #define ADIOS2_FOREACH_LIBPRESSIO_TYPE_1ARG(MACRO)                             \
     MACRO(uint8_t)                                                             \
     MACRO(uint16_t)                                                            \

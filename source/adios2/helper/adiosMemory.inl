@@ -623,10 +623,11 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint,
 // functions) and copies to the output buffer in blocks. the memory address
 // calculation complexity for copying each block is minimized to O(1), which is
 // independent of the number of dimensions.
-static inline void NdCopyRecurDFSeqPadding(size_t curDim, const char *&inOvlpBase,
-                                    char *&outOvlpBase, Dims &inOvlpGapSize,
-                                    Dims &outOvlpGapSize, Dims &ovlpCount,
-                                    size_t &minContDim, size_t &blockSize)
+static inline void
+NdCopyRecurDFSeqPadding(size_t curDim, const char *&inOvlpBase,
+                        char *&outOvlpBase, Dims &inOvlpGapSize,
+                        Dims &outOvlpGapSize, Dims &ovlpCount,
+                        size_t &minContDim, size_t &blockSize)
 {
     // note: all elements in and below this node are contiguous on input and
     // output
@@ -708,10 +709,11 @@ NdCopyRecurDFSeqPaddingRevEndian(size_t curDim, const char *&inOvlpBase,
 // the memory address calculation complexity for copying each element is
 // minimized to average O(1), which is independent of the number of dimensions.
 static inline void NdCopyRecurDFNonSeqDynamic(size_t curDim, const char *inBase,
-                                       char *outBase, Dims &inRltvOvlpSPos,
-                                       Dims &outRltvOvlpSPos, Dims &inStride,
-                                       Dims &outStride, Dims &ovlpCount,
-                                       size_t elmSize)
+                                              char *outBase,
+                                              Dims &inRltvOvlpSPos,
+                                              Dims &outRltvOvlpSPos,
+                                              Dims &inStride, Dims &outStride,
+                                              Dims &ovlpCount, size_t elmSize)
 {
     if (curDim == inStride.size())
     {
@@ -763,10 +765,11 @@ static inline void NdCopyRecurDFNonSeqDynamicRevEndian(
     }
 }
 
-static inline void NdCopyIterDFSeqPadding(const char *&inOvlpBase, char *&outOvlpBase,
-                                   Dims &inOvlpGapSize, Dims &outOvlpGapSize,
-                                   Dims &ovlpCount, size_t minContDim,
-                                   size_t blockSize)
+static inline void NdCopyIterDFSeqPadding(const char *&inOvlpBase,
+                                          char *&outOvlpBase,
+                                          Dims &inOvlpGapSize,
+                                          Dims &outOvlpGapSize, Dims &ovlpCount,
+                                          size_t minContDim, size_t blockSize)
 {
     Dims pos(ovlpCount.size(), 0);
     size_t curDim = 0;
@@ -831,9 +834,10 @@ static inline void NdCopyIterDFSeqPaddingRevEndian(
     }
 }
 static inline void NdCopyIterDFDynamic(const char *inBase, char *outBase,
-                                Dims &inRltvOvlpSPos, Dims &outRltvOvlpSPos,
-                                Dims &inStride, Dims &outStride,
-                                Dims &ovlpCount, size_t elmSize)
+                                       Dims &inRltvOvlpSPos,
+                                       Dims &outRltvOvlpSPos, Dims &inStride,
+                                       Dims &outStride, Dims &ovlpCount,
+                                       size_t elmSize)
 {
     size_t curDim = 0;
     Dims pos(ovlpCount.size() + 1, 0);
@@ -867,11 +871,12 @@ static inline void NdCopyIterDFDynamic(const char *inBase, char *outBase,
     }
 }
 
-static inline void NdCopyIterDFDynamicRevEndian(const char *inBase, char *outBase,
-                                         Dims &inRltvOvlpSPos,
-                                         Dims &outRltvOvlpSPos, Dims &inStride,
-                                         Dims &outStride, Dims &ovlpCount,
-                                         size_t elmSize)
+static inline void NdCopyIterDFDynamicRevEndian(const char *inBase,
+                                                char *outBase,
+                                                Dims &inRltvOvlpSPos,
+                                                Dims &outRltvOvlpSPos,
+                                                Dims &inStride, Dims &outStride,
+                                                Dims &ovlpCount, size_t elmSize)
 {
     size_t curDim = 0;
     Dims pos(ovlpCount.size() + 1, 0);

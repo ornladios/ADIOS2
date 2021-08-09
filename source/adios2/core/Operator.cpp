@@ -72,7 +72,7 @@ ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
 size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
                           const size_t /*elementSize*/, DataType /*type*/,
                           void * /*bufferOut*/, const Params & /*params*/,
-                          Params & /*info*/) const
+                          Params & /*info*/)
 {
     throw std::invalid_argument("ERROR: signature (const void*, const "
                                 "Dims, const size_t, const std::string, "
@@ -82,8 +82,7 @@ size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
 }
 
 size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
-                            void *dataOut, const size_t sizeOut,
-                            Params &info) const
+                            void *dataOut, const size_t sizeOut, Params &info)
 {
     throw std::invalid_argument(
         "ERROR: signature (const void*, const size_t, void) not supported "
@@ -93,8 +92,7 @@ size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
 
 size_t Operator::Decompress(const void * /*bufferIn*/, const size_t /*sizeIn*/,
                             void * /*dataOut*/, const Dims & /*dimensions*/,
-                            DataType /*type*/,
-                            const Params & /*parameters*/) const
+                            DataType /*type*/, const Params & /*parameters*/)
 {
     throw std::invalid_argument("ERROR: signature (const void*, const "
                                 "size_t, void*, const Dims&, const "

@@ -26,7 +26,7 @@ void BPOperation::SetDataDefault(
     const typename core::Variable<T>::Operation &operation,
     BufferSTL &bufferSTL) const noexcept
 {
-    const core::Operator &op = *operation.Op;
+    core::Operator &op = *operation.Op;
     const Params &parameters = operation.Parameters;
     // being naughty here
     Params &info = const_cast<Params &>(operation.Info);

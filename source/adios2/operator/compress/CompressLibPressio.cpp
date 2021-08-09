@@ -293,8 +293,7 @@ size_t CompressLibPressio::BufferMaxSize(const size_t sizeIn) const
 size_t CompressLibPressio::Compress(const void *dataIn, const Dims &dimensions,
                                     const size_t /*elementSize*/,
                                     DataType varType, void *bufferOut,
-                                    const Params &parameters,
-                                    Params &info) const
+                                    const Params &parameters, Params &info)
 {
     auto inputs_dims = adios_to_libpressio_dims(dimensions);
     pressio_data *input_buf = pressio_data_new_nonowning(
@@ -334,8 +333,7 @@ size_t CompressLibPressio::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressLibPressio::Decompress(const void *bufferIn, const size_t sizeIn,
                                       void *dataOut, const Dims &dimensions,
-                                      DataType varType,
-                                      const Params &params) const
+                                      DataType varType, const Params &params)
 {
     std::vector<size_t> dims = adios_to_libpressio_dims(dimensions);
     pressio_data *output_buf = pressio_data_new_owning(

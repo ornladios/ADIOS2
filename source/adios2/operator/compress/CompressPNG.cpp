@@ -50,7 +50,7 @@ CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
 size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
                              const size_t elementSize, DataType /*type*/,
                              void *bufferOut, const Params &parameters,
-                             Params &info) const
+                             Params &info)
 {
     auto lf_Write = [](png_structp png_ptr, png_bytep data, png_size_t length) {
         DestInfo *pDestInfo =
@@ -172,7 +172,7 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressPNG::Decompress(const void *bufferIn, const size_t sizeIn,
                                void *dataOut, const size_t sizeOut,
-                               Params &info) const
+                               Params &info)
 {
     png_image image;
     std::memset(&image, 0, sizeof(image));

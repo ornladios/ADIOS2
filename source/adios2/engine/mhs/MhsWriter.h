@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TableWriter.h
+ * MhsWriter.h
  *
  *  Created on: Apr 6, 2019
  *      Author: Jason Wang w4g@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_TABLEWRITER_H_
-#define ADIOS2_ENGINE_TABLEWRITER_H_
+#ifndef ADIOS2_ENGINE_MHSWRITER_H_
+#define ADIOS2_ENGINE_MHSWRITER_H_
 
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
@@ -23,14 +23,13 @@ namespace core
 namespace engine
 {
 
-class TableWriter : public Engine
+class MhsWriter : public Engine
 {
 
 public:
-    TableWriter(IO &adios, const std::string &name, const Mode mode,
-                helper::Comm comm);
-
-    virtual ~TableWriter();
+    MhsWriter(IO &adios, const std::string &name, const Mode mode,
+              helper::Comm comm);
+    virtual ~MhsWriter();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;
@@ -40,15 +39,10 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    int m_MpiRank;
-    int m_MpiSize;
-    ADIOS m_SubAdios;
-    IO &m_SubIO;
-    Engine *m_SubEngine = nullptr;
-    Operator *m_Compressor = nullptr;
-    std::unordered_map<std::string, bool> m_IndexerMap;
-    std::string m_UseCompressor;
-    std::string m_UseAccuracy;
+    std::vector<IO *> m_SubIOs;
+    std::vector<Engine *> m_SubEngines;
+    std::unordered_map<std::string, std::shared_ptr<Operator>> m_OperatorMap;
+    int m_Tiers = 1;
 
     void PutSubEngine(bool finalPut = false);
 
@@ -71,4 +65,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif // ADIOS2_ENGINE_TABLEWRITER_H_
+#endif // ADIOS2_ENGINE_MHSWRITER_H_
