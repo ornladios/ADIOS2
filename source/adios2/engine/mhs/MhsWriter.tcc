@@ -87,7 +87,7 @@ void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 
     if (putToAll)
     {
-        for (int i = 1; i < m_SubEngines.size(); ++i)
+        for (size_t i = 1; i < m_SubEngines.size(); ++i)
         {
             auto var = m_SubIOs[i]->InquireVariable<T>(variable.m_Name);
             if (!var)

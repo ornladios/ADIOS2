@@ -43,7 +43,7 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
     size_t bytesPerTier = totalInputBytes / m_Tiers;
     if (m_CurrentTier == 0)
     {
-        for (int i = 0; i < m_TierBuffers.size(); i++)
+        for (size_t i = 0; i < m_TierBuffers.size(); i++)
         {
             m_TierBuffers[i].resize(bytesPerTier);
             std::memcpy(m_TierBuffers[i].data(),
