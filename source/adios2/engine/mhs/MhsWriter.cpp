@@ -54,8 +54,9 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         if (itCompressor->second == "blosc")
         {
 #ifdef ADIOS2_HAVE_BLOSC
-            m_OperatorMap.emplace(itVar->second,
-                                  new compress::CompressBlosc(params));
+            m_OperatorMap.emplace(
+                itVar->second,
+                std::make_shared<compress::CompressBlosc>(params));
 #else
             std::cerr
                 << "ADIOS2 is not compiled with c-blosc "
@@ -66,8 +67,9 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         else if (itCompressor->second == "bzip2")
         {
 #ifdef ADIOS2_HAVE_BZIP2
-            m_OperatorMap.emplace(itVar->second,
-                                  new compress::CompressBZIP2(params));
+            m_OperatorMap.emplace(
+                itVar->second,
+                std::make_shared<compress::CompressBZIP2>(params));
 #else
             std::cerr << "ADIOS2 is not compiled with Bzip2 "
                          "(https://gitlab.com/federicomenaquintero/bzip2), "
@@ -78,8 +80,8 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         else if (itCompressor->second == "zfp")
         {
 #ifdef ADIOS2_HAVE_ZFP
-            m_OperatorMap.emplace(itVar->second,
-                                  new compress::CompressZFP(params));
+            m_OperatorMap.emplace(
+                itVar->second, std::make_shared<compress::CompressZFP>(params));
 #else
             std::cerr << "ADIOS2 is not compiled with ZFP "
                          "(https://github.com/LLNL/zfp), "
@@ -90,8 +92,8 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         else if (itCompressor->second == "sz")
         {
 #ifdef ADIOS2_HAVE_SZ
-            m_OperatorMap.emplace(itVar->second,
-                                  new compress::CompressSZ(params));
+            m_OperatorMap.emplace(
+                itVar->second, std::make_shared<compress::CompressSZ>(params));
 #else
             std::cerr << "ADIOS2 is not compiled with SZ "
                          "(https://github.com/szcompressor/SZ), "
@@ -102,8 +104,9 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         else if (itCompressor->second == "sirius")
         {
             params.emplace("tiers", std::to_string(m_Tiers));
-            m_OperatorMap.emplace(itVar->second,
-                                  new compress::CompressSirius(params));
+            m_OperatorMap.emplace(
+                itVar->second,
+                std::make_shared<compress::CompressSirius>(params));
         }
         else
         {
