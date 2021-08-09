@@ -3,7 +3,6 @@
  * accompanying file Copyright.txt for details.
  *
  * MhsReader.h
- * An empty skeleton engine from which any engine can be built
  *
  *  Created on: Aug 04, 2021
  *      Author: Jason Wang jason.ruonan.wang@gmail.com
@@ -17,6 +16,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/operator/compress/CompressSirius.h"
 
 namespace adios2
 {
@@ -41,7 +41,7 @@ public:
 private:
     std::vector<IO *> m_SubIOs;
     std::vector<Engine *> m_SubEngines;
-    Operator *m_Compressor;
+    std::shared_ptr<compress::CompressSirius> m_Compressor;
     int m_Tiers;
 
 #define declare_type(T)                                                        \

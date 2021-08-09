@@ -131,7 +131,13 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
     }
 }
 
-MhsWriter::~MhsWriter() {}
+MhsWriter::~MhsWriter()
+{
+    for (int i = 0; i < m_Tiers; ++i)
+    {
+        m_IO.m_ADIOS.RemoveIO("SubIO" + std::to_string(i));
+    }
+}
 
 StepStatus MhsWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
@@ -187,7 +193,6 @@ void MhsWriter::DoClose(const int transportIndex)
     for (auto &e : m_SubEngines)
     {
         e->Close();
-        e = nullptr;
     }
 }
 

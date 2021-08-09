@@ -9,8 +9,6 @@
  */
 
 #include "MhsReader.tcc"
-#include "adios2/helper/adiosFunctions.h"
-#include "adios2/operator/compress/CompressSirius.h"
 
 namespace adios2
 {
@@ -24,8 +22,8 @@ MhsReader::MhsReader(IO &io, const std::string &name, const Mode mode,
 : Engine("MhsReader", io, name, mode, std::move(comm))
 {
     helper::GetParameter(io.m_Parameters, "tiers", m_Tiers);
-    m_Compressor =
-        new compress::CompressSirius({{"tiers", std::to_string(m_Tiers)}});
+    Params params = {{"tiers", std::to_string(m_Tiers)}};
+    m_Compressor = std::make_shared<compress::CompressSirius>(params);
     io.SetEngine("");
     m_SubIOs.emplace_back(&io);
     m_SubEngines.emplace_back(&io.Open(m_Name + ".tier0", adios2::Mode::Read));
@@ -40,9 +38,9 @@ MhsReader::MhsReader(IO &io, const std::string &name, const Mode mode,
 
 MhsReader::~MhsReader()
 {
-    if (m_Compressor)
+    for (int i = 1; i < m_Tiers; ++i)
     {
-        delete m_Compressor;
+        m_IO.m_ADIOS.RemoveIO("SubIO" + std::to_string(i));
     }
 }
 
@@ -102,7 +100,6 @@ void MhsReader::DoClose(const int transportIndex)
     for (auto &e : m_SubEngines)
     {
         e->Close();
-        e = nullptr;
     }
 }
 
