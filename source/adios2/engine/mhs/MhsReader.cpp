@@ -27,7 +27,8 @@ MhsReader::MhsReader(IO &io, const std::string &name, const Mode mode,
     m_Compressor =
         new compress::CompressSirius({{"tiers", std::to_string(m_Tiers)}});
     io.SetEngine("");
-    m_SubEngines.push_back(&io.Open(m_Name + ".tier0", adios2::Mode::Read));
+    m_SubIOs.emplace_back(&io);
+    m_SubEngines.emplace_back(&io.Open(m_Name + ".tier0", adios2::Mode::Read));
     for (int i = 1; i < m_Tiers; ++i)
     {
         m_SubIOs.emplace_back(

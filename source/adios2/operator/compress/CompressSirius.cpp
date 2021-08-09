@@ -40,17 +40,16 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
 
     // if called from Tier 0 sub-engine, then compute tier buffers and put into
     // m_TierBuffers
-    size_t currentTierBytes = totalInputBytes / m_Tiers;
-    size_t currentTierStart = m_CurrentTier * currentTierBytes;
+    size_t bytesPerTier = totalInputBytes / m_Tiers;
     if (m_CurrentTier == 0)
     {
         for (int i = 0; i < m_TierBuffers.size(); i++)
         {
-            m_TierBuffers[i].resize(currentTierBytes);
+            m_TierBuffers[i].resize(bytesPerTier);
             std::memcpy(m_TierBuffers[i].data(),
                         reinterpret_cast<const char *>(dataIn) +
-                            currentTierStart,
-                        currentTierBytes);
+                            i * bytesPerTier,
+                        bytesPerTier);
         }
     }
 
@@ -61,25 +60,22 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
     m_CurrentTier++;
     m_CurrentTier %= m_Tiers;
 
-    return currentTierBytes;
+    return bytesPerTier;
 }
 
 size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
                                   void *dataOut, const Dims &dimensions,
                                   DataType type, const Params &parameters)
 {
-    std::cout << " ============= 1" << std::endl;
     size_t outputBytes = std::accumulate(dimensions.begin(), dimensions.end(),
                                          helper::GetDataTypeSize(type),
                                          std::multiplies<size_t>());
 
     // decompress data and copy back to m_TierBuffers
-    size_t currentTierBytes = outputBytes / m_Tiers;
-    m_TierBuffers[m_CurrentTier].resize(currentTierBytes);
-    std::memcpy(m_TierBuffers[m_CurrentTier].data(), bufferIn,
-                currentTierBytes);
+    size_t bytesPerTier = outputBytes / m_Tiers;
+    m_TierBuffers[m_CurrentTier].resize(bytesPerTier);
+    std::memcpy(m_TierBuffers[m_CurrentTier].data(), bufferIn, bytesPerTier);
 
-    std::cout << " ============= 2" << std::endl;
     // if called from the final tier, then merge all tier buffers and copy back
     // to dataOut
     size_t accumulatedBytes = 0;
@@ -93,14 +89,12 @@ size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
         }
     }
 
-    std::cout << " ============= 3" << std::endl;
     m_CurrentTier++;
     if (m_CurrentTier % m_Tiers == 0)
     {
         m_CurrentTier = 0;
     }
 
-    std::cout << " ============= 4" << std::endl;
     return outputBytes;
 }
 
