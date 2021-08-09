@@ -65,4 +65,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif // ADIOS2_ENGINE_TABLEWRITER_H_
+#endif // ADIOS2_ENGINE_MHSWRITER_H_
