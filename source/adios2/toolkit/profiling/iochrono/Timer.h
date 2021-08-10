@@ -49,9 +49,6 @@ public:
         double micros = std::chrono::duration_cast<std::chrono::microseconds>(
                             m_End - m_Start)
                             .count();
-        double millis = std::chrono::duration_cast<std::chrono::milliseconds>(
-                            m_End - m_Start)
-                            .count();
 
         std::cout << "Timer [" << m_Tag << " on rank =" << m_Rank
                   << "] start:" << relative / 1000.0
