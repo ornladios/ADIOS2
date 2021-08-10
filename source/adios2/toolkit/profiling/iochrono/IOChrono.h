@@ -18,6 +18,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/profiling/iochrono/Timer.h"
+#include "adios2/helper/adiosComm.h"
 
 namespace adios2
 {
@@ -58,6 +59,31 @@ public:
     void Stop(const std::string process);
 };
 
+
+class JSONProfiler
+{
+public:
+  JSONProfiler(helper::Comm const& comm);
+  void Gather();
+  void AddTimerWatch(const std::string&);
+
+  void Start(const std::string process) { m_Profiler.Start(process); };
+  void Stop(const std::string process)  { m_Profiler.Stop(process); };
+
+  std::string GetRankProfilingJSON(
+    const std::vector<std::string> &transportsTypes,
+    const std::vector<adios2::profiling::IOChrono *> &transportsProfilers) noexcept;
+  
+  std::vector<char>
+  AggregateProfilingJSON(const std::string &rankLog) const;
+  
+    
+private:
+  IOChrono m_Profiler;
+  int m_RankMPI = 0;
+  helper::Comm const& m_Comm;
+};
+  
 } // end namespace profiling
 } // end namespace adios
 
