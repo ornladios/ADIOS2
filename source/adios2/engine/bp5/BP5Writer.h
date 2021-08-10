@@ -176,6 +176,8 @@ private:
     template <class T>
     void PerformPutCommon(Variable<T> &variable);
 
+    void FlushProfiler();
+
     /** manages all communication tasks in aggregation */
     aggregator::MPIAggregator *m_Aggregator; // points to one of these below
     aggregator::MPIShmChain m_AggregatorTwoLevelShm;
@@ -184,6 +186,8 @@ private:
     bool m_IAmWritingData = false;
     helper::Comm *DataWritingComm; // processes that write the same data file
     bool m_IAmWritingDataHeader = false;
+
+    adios2::profiling::JSONProfiler m_Profiler;
 
 private:
     // updated during WriteMetaData

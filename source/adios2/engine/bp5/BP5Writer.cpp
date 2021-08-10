@@ -33,7 +33,8 @@ BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(),
   m_FileDataManager(m_Comm), m_FileMetadataManager(m_Comm),
-  m_FileMetadataIndexManager(m_Comm), m_FileMetaMetadataManager(m_Comm)
+  m_FileMetadataIndexManager(m_Comm), m_FileMetaMetadataManager(m_Comm),
+  m_Profiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
     m_IO.m_ReadStreaming = false;
@@ -67,7 +68,9 @@ size_t BP5Writer::CurrentStep() const { return m_WriterStep; }
 void BP5Writer::PerformPuts()
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::PerformPuts");
+    m_Profiler.Start("PP");
     m_BP5Serializer.PerformPuts();
+    m_Profiler.Stop("PP");
     return;
 }
 
@@ -351,7 +354,7 @@ void BP5Writer::MarshalAttributes()
 void BP5Writer::EndStep()
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::EndStep");
-
+    m_Profiler.Start("endstep");
     MarshalAttributes();
 
     // true: advances step
@@ -361,7 +364,9 @@ void BP5Writer::EndStep()
      * AttributeEncodeBuffer and the data encode Vector */
     /* the first */
 
+    m_Profiler.Start("AWD");
     WriteData(TSInfo.DataBuffer);
+    m_Profiler.Stop("AWD");
 
     m_ThisTimestepDataSize += TSInfo.DataBuffer->Size();
 
@@ -380,8 +385,11 @@ void BP5Writer::EndStep()
             TotalSize += n;
         RecvBuffer->resize(TotalSize);
     }
+
+    m_Profiler.Start("meta_gather");
     m_Comm.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
                          RecvCounts.size(), RecvBuffer->data(), 0);
+    m_Profiler.Stop("meta_gather");
 
     if (m_Comm.Rank() == 0)
     {
@@ -413,6 +421,7 @@ void BP5Writer::EndStep()
         WriteMetadataFileIndex(ThisMetaDataPos, ThisMetaDataSize);
     }
     delete RecvBuffer;
+    m_Profiler.Stop("endstep");
 }
 
 // PRIVATE
@@ -616,10 +625,12 @@ void BP5Writer::InitTransports()
         }
     }
 
+    bool useProfiler = true;
+
     if (m_IAmWritingData)
     {
         m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
-                                    m_IO.m_TransportsParameters, false,
+                                    m_IO.m_TransportsParameters, useProfiler,
                                     *DataWritingComm);
     }
 
@@ -637,14 +648,16 @@ void BP5Writer::InitTransports()
     if (m_Comm.Rank() == 0)
     {
         m_FileMetaMetadataManager.OpenFiles(m_MetaMetadataFileNames, m_OpenMode,
-                                            m_IO.m_TransportsParameters, false);
+                                            m_IO.m_TransportsParameters,
+                                            useProfiler);
 
         m_FileMetadataManager.OpenFiles(m_MetadataFileNames, m_OpenMode,
-                                        m_IO.m_TransportsParameters, false);
+                                        m_IO.m_TransportsParameters,
+                                        useProfiler);
 
         m_FileMetadataIndexManager.OpenFiles(
             m_MetadataIndexFileNames, m_OpenMode, m_IO.m_TransportsParameters,
-            false);
+            useProfiler);
 
         if (m_DrainBB)
         {
@@ -675,7 +688,7 @@ void BP5Writer::InitTransports()
         auto emptyComm = helper::Comm();
         transportman::TransportMan tm(emptyComm);
         tm.OpenFiles(versionNames, Mode::Write, m_IO.m_TransportsParameters,
-                     false);
+                     useProfiler);
         char b[1] = {'5'};
         tm.WriteFiles(b, 1);
     }
@@ -899,6 +912,85 @@ void BP5Writer::DoClose(const int transportIndex)
 
         // close metadata index file
         m_FileMetadataIndexManager.CloseFiles();
+    }
+
+    FlushProfiler();
+}
+
+void BP5Writer::FlushProfiler()
+{
+    auto transportTypes = m_FileDataManager.GetTransportsTypes();
+
+    // find first File type output, where we can write the profile
+    int fileTransportIdx = -1;
+    for (size_t i = 0; i < transportTypes.size(); ++i)
+    {
+        if (transportTypes[i].compare(0, 4, "File") == 0)
+        {
+            fileTransportIdx = static_cast<int>(i);
+        }
+    }
+
+    auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
+
+    auto transportTypesMD = m_FileMetadataManager.GetTransportsTypes();
+    auto transportProfilersMD = m_FileMetadataManager.GetTransportsProfilers();
+
+    transportTypes.insert(transportTypes.end(), transportTypesMD.begin(),
+                          transportTypesMD.end());
+
+    transportProfilers.insert(transportProfilers.end(),
+                              transportProfilersMD.begin(),
+                              transportProfilersMD.end());
+
+    // m_Profiler.WriteOut(transportTypes, transportProfilers);
+
+    const std::string lineJSON(
+        m_Profiler.GetRankProfilingJSON(transportTypes, transportProfilers) +
+        ",\n");
+
+    const std::vector<char> profilingJSON(
+        m_Profiler.AggregateProfilingJSON(lineJSON));
+
+    if (m_RankMPI == 0)
+    {
+        // std::cout << "write profiling file!" << std::endl;
+        std::string profileFileName;
+        if (m_DrainBB)
+        {
+            // auto bpTargetNames = m_BP4Serializer.GetBPBaseNames({m_Name});
+            std::vector<std::string> bpTargetNames = {m_Name};
+            if (fileTransportIdx > -1)
+            {
+                profileFileName =
+                    bpTargetNames[fileTransportIdx] + "/profiling.json";
+            }
+            else
+            {
+                profileFileName = bpTargetNames[0] + "_profiling.json";
+            }
+            m_FileDrainer.AddOperationWrite(
+                profileFileName, profilingJSON.size(), profilingJSON.data());
+        }
+        else
+        {
+            transport::FileFStream profilingJSONStream(m_Comm);
+            // auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
+            std::vector<std::string> bpBaseNames = {m_Name};
+            if (fileTransportIdx > -1)
+            {
+                profileFileName =
+                    bpBaseNames[fileTransportIdx] + "/profiling.json";
+            }
+            else
+            {
+                profileFileName = bpBaseNames[0] + "_profiling.json";
+            }
+            profilingJSONStream.Open(profileFileName, Mode::Write);
+            profilingJSONStream.Write(profilingJSON.data(),
+                                      profilingJSON.size());
+            profilingJSONStream.Close();
+        }
     }
 }
 
