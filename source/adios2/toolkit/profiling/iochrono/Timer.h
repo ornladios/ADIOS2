@@ -70,12 +70,12 @@ public:
     void AddDetail()
     {
         m_nCalls++;
-        double relative = std::chrono::duration_cast<std::chrono::microseconds>(
-                              m_InitialTime - m_ADIOS2ProgStart)
-                              .count();
-        double micros = std::chrono::duration_cast<std::chrono::microseconds>(
-                            m_ElapsedTime - m_InitialTime)
+        auto relative = std::chrono::duration_cast<std::chrono::microseconds>(
+                            m_InitialTime - m_ADIOS2ProgStart)
                             .count();
+        auto micros = std::chrono::duration_cast<std::chrono::microseconds>(
+                          m_ElapsedTime - m_InitialTime)
+                          .count();
 
         if ((micros > 10000) || m_Always)
         {
