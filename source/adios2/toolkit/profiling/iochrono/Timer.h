@@ -19,10 +19,16 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
 
+#include <iostream> // myTimer
+
 namespace adios2
 {
 namespace profiling
 {
+
+static std::chrono::time_point<std::chrono::high_resolution_clock>
+    m_ADIOS2ProgStart = std::chrono::high_resolution_clock::now();
+
 
 class Timer
 {
@@ -31,6 +37,7 @@ public:
     /** process name */
     const std::string m_Process;
 
+    bool m_Always = false;
     /** process elapsed time */
     int64_t m_ProcessTime = 0;
 
@@ -60,6 +67,51 @@ public:
 
     /** Returns TimeUnit as a short std::string  */
     std::string GetShortUnits() const noexcept;
+
+    void AddDetail()
+    {
+        m_nCalls++;
+        double relative = std::chrono::duration_cast<std::chrono::microseconds>(
+                              m_InitialTime - m_ADIOS2ProgStart)
+                              .count();
+        double micros = std::chrono::duration_cast<std::chrono::microseconds>(
+                            m_ElapsedTime - m_InitialTime)
+                            .count();
+
+        if ((micros > 10000) || m_Always)
+        {
+            if (m_Details.size() > 0)
+                m_Details += ",";
+
+            std::ostringstream ss;
+
+            ss << "\"" << relative / 1000.0 << "+" << micros / 1000.0 << "\"";
+
+            m_Details += ss.str();
+        }
+    }
+
+    void AddToJsonStr(std::string &rankLog) const
+    {
+        if (0 == m_nCalls)
+            return;
+
+        rankLog +=
+            "\"" + m_Process + "\":{ \"mus\":" + std::to_string(m_ProcessTime);
+        rankLog += ", \"nCalls\":" + std::to_string(m_nCalls);
+
+        if (500 > m_nCalls)
+        {
+            if (m_Details.size() > 2)
+            {
+                rankLog += ", \"trace\":[" + m_Details + "]";
+            }
+        }
+        rankLog += "}, ";
+    }
+
+    std::string m_Details;
+    uint64_t m_nCalls = 0;
 
 private:
     /** Set at Resume */
