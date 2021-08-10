@@ -2758,7 +2758,7 @@ const char *str;
     return unknown_type;
 }
 
-long
+static long
 find_field(char *field_name, FMFieldList fields, int cur_field, void *search_help)
 {
     int i;
@@ -2770,6 +2770,7 @@ find_field(char *field_name, FMFieldList fields, int cur_field, void *search_hel
 	}
       }
       for (i = cur_field + 1; i < cur_field + 10; i++) {
+	if (fields[i].field_name == NULL) break;
 	if (strcmp(field_name, fields[i].field_name) == 0) {
 	    return i;
 	}

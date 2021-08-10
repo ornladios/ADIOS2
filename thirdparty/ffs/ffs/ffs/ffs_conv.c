@@ -249,6 +249,37 @@ create_default_conversion(FMField iofield, void *default_value,
     conv_ptr->conversions[conv_index].rc_swap = no_row_column_swap;
 }
 
+/*
+ * differs from find_field in fm in that it includes cur_field in search shortcut
+ */
+static long
+find_field_for_conv(char *field_name, FMFieldList fields, int cur_field, void *search_help)
+{
+    int i;
+    if (cur_field > 10) {
+      /* search close first */
+      for (i = cur_field; i > cur_field - 10; i--) {
+	if (strcmp(field_name, fields[i].field_name) == 0) {
+	    return i;
+	}
+      }
+      for (i = cur_field + 1; i < cur_field + 10; i++) {
+	if (fields[i].field_name == NULL) break;
+	if (strcmp(field_name, fields[i].field_name) == 0) {
+	    return i;
+	}
+      }
+    }
+    i = 0;
+    while (fields[i].field_name != NULL) {
+	if (strcmp(field_name, fields[i].field_name) == 0) {
+	    return i;
+	}
+	i++;
+    }
+    return -1;
+}
+
 static
 IOConversionPtr
 create_conversion(src_ioformat, target_field_list, target_struct_size,
@@ -363,33 +394,30 @@ FMStructDescList target_list;
 	    field_name_strip_get_default(&nfl_sort[i], tmp_field_name, &default_val);
 	    search_name = tmp_field_name;
 	}
-	while (strcmp(search_name,
-		      input_field_list[input_index].field_name) != 0) {
-	    input_index++;
-	    if (input_index >= src_ioformat->body->field_count) {
-		if(default_val){
-		    if ((conv == buffer_and_convert) || 
-			(conv == copy_dynamic_portion)) {
-			input_index = -1; /* Basically invalidating input_index
-					   Indication for using default_val */
-			break;
-		    } else {
-			if (default_val) {
-			    free(default_val);
-			    default_val = NULL;
-			}
-			conv = buffer_and_convert;
-			if (tmp_field_name) free(tmp_field_name);
-			goto restart;
+	input_index = find_field_for_conv(search_name, input_field_list, i, NULL);
+	if (input_index == -1) {
+	    if(default_val){
+	        if ((conv == buffer_and_convert) || 
+		    (conv == copy_dynamic_portion)) {
+		    input_index = -1; /* Basically invalidating input_index
+				   Indication for using default_val */
+		    break;
+		} else {
+		    if (default_val) {
+		        free(default_val);
+			default_val = NULL;
 		    }
+		    conv = buffer_and_convert;
+		    if (tmp_field_name) free(tmp_field_name);
+		    goto restart;
 		}
-		fprintf(stderr,
-			"Requested field %s missing from input format\n",
-			nfl_sort[i].field_name);
-		FFSfree_conversion(conv_ptr);
-		if (tmp_field_name) free(tmp_field_name);
-		return NULL;
 	    }
+	    fprintf(stderr,
+		    "Requested field %s missing from input format\n",
+		    nfl_sort[i].field_name);
+	    FFSfree_conversion(conv_ptr);
+	    if (tmp_field_name) free(tmp_field_name);
+	    return NULL;
 	}
 	if (tmp_field_name) free(tmp_field_name);
 	if(input_index == -1){

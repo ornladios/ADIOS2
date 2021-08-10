@@ -5,8 +5,10 @@
 #include "config.h"
 #include <string.h>
 #include <time.h>
+#include <stdio.h>
 #include "fm.h"
-#include "fm_internal.h"
+#include "ffs.h"
+
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #define sleep(x) Sleep(1000*x)
@@ -23,6 +25,13 @@ char *gen_name(int i)
     return strdup(tmp_name);
 }
 
+struct base_elem {
+  int64_t elem_count1;
+  int64_t elem_count2;
+  int64_t *array1;
+  int64_t *array2;
+};
+
 int
 main(argc, argv)
 int argc;
@@ -31,12 +40,9 @@ char **argv;
 
     FMStructDescRec str_list[5];
     struct timespec start, stop;
-
-    if (argc > 1) {
-    }
     
-    FMContext context = create_FMcontext(NULL);
-    int field_count = 2000000;
+    FMContext context;
+    int field_count = 20000;
     field_count = ((field_count >> 2 ) << 2); // ensure field count is divisible by 4;
     FMFieldList list = malloc(sizeof(struct _FMField) * (field_count + 1));
     int cur_count = 0;
@@ -76,9 +82,40 @@ char **argv;
     str_list[0].struct_size = sizeof(first_rec);
     str_list[0].opt_info = NULL;
     str_list[1].format_name = NULL;
+    FFSContext fc = create_FFSContext();
+    context = FMContext_from_FFS(fc);
+
     FMFormat format = register_data_format(context, str_list);
 
     clock_gettime(CLOCK_MONOTONIC, &stop);
     double duration = (stop.tv_sec + 1.0e-9*stop.tv_nsec) - (start.tv_sec + 1.0e-9*start.tv_nsec);
     printf("Registration took %g seconds\n", duration);
+    
+    char * buf= malloc(sizeof(struct base_elem) * (field_count / 4));
+    int i;
+    for (i = 0; i < field_count ; i+= 4) {
+      struct base_elem *tmp = (struct base_elem *) (buf + i * sizeof(int64_t));
+      tmp->elem_count1 = 3;
+      tmp->elem_count2 = 3;
+      tmp->array1 = malloc(3*sizeof(tmp->array1[0]));
+      tmp->array2 = malloc(3*sizeof(tmp->array2[0]));
+    }
+    
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    FFSBuffer b = create_FFSBuffer();
+    
+    int buf_size;
+    char *encode = FFSencode(b, format, buf, &buf_size);
+    FFSTypeHandle th = FFSTypeHandle_from_encode(fc, encode);
+    clock_gettime(CLOCK_MONOTONIC, &stop);
+    duration = (stop.tv_sec + 1.0e-9*stop.tv_nsec) - (start.tv_sec + 1.0e-9*start.tv_nsec);
+    printf("encode took %g seconds\n", duration);
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    establish_conversion(fc, th, str_list);
+    clock_gettime(CLOCK_MONOTONIC, &stop);
+    duration = (stop.tv_sec + 1.0e-9*stop.tv_nsec) - (start.tv_sec + 1.0e-9*start.tv_nsec);
+    printf("establish took %g seconds\n", duration);
+
 }
+
+
