@@ -29,7 +29,6 @@ namespace profiling
 static std::chrono::time_point<std::chrono::high_resolution_clock>
     m_ADIOS2ProgStart = std::chrono::high_resolution_clock::now();
 
-
 class Timer
 {
 
