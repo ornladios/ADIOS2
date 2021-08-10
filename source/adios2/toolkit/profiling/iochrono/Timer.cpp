@@ -21,9 +21,9 @@ Timer::Timer(const std::string process, const TimeUnit timeUnit)
 : m_Process(process), m_TimeUnit(timeUnit),
   m_LocalTimeDate(helper::LocalTimeDate())
 {
-  std::size_t found = m_Process.find("gather");
-  if (found !=std::string::npos)
-    m_Always = true;  
+    std::size_t found = m_Process.find("gather");
+    if (found != std::string::npos)
+        m_Always = true;
 }
 
 void Timer::Resume() noexcept

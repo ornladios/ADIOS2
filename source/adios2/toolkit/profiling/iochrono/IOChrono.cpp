@@ -32,39 +32,35 @@ void IOChrono::Stop(const std::string process)
     }
 }
 
-
 //
 // class JSON Profiler
 //
-JSONProfiler::JSONProfiler(helper::Comm const& comm)
-  :m_Comm(comm)
+JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
 {
-  m_Profiler.m_IsActive = true; // default is true
+    m_Profiler.m_IsActive = true; // default is true
 
-  AddTimerWatch("buffering");
-  //xAddTimerWatch("memcpy");
-  AddTimerWatch("endstep");
-  AddTimerWatch("PP");
-  //AddTimerWatch("meta_merge");
-  AddTimerWatch("meta_gather");
-  //AddTimerWatch("meta_ds");
-  //AddTimerWatch("meta_s");
-  //AddTimerWatch("meta_sort_merge");
+    AddTimerWatch("buffering");
+    // xAddTimerWatch("memcpy");
+    AddTimerWatch("endstep");
+    AddTimerWatch("PP");
+    // AddTimerWatch("meta_merge");
+    AddTimerWatch("meta_gather");
+    // AddTimerWatch("meta_ds");
+    // AddTimerWatch("meta_s");
+    // AddTimerWatch("meta_sort_merge");
 
-  AddTimerWatch("AWD");
-  
-  m_Profiler.m_Bytes.emplace("buffering", 0);
+    AddTimerWatch("AWD");
 
-  m_RankMPI =  m_Comm.Rank();
+    m_Profiler.m_Bytes.emplace("buffering", 0);
+
+    m_RankMPI = m_Comm.Rank();
 }
 
-void JSONProfiler::AddTimerWatch(const std::string& name)
+void JSONProfiler::AddTimerWatch(const std::string &name)
 {
-  const TimeUnit timerUnit = DefaultTimeUnitEnum;
-  m_Profiler.m_Timers.emplace(name,
-			      profiling::Timer(name, timerUnit));
+    const TimeUnit timerUnit = DefaultTimeUnitEnum;
+    m_Profiler.m_Timers.emplace(name, profiling::Timer(name, timerUnit));
 }
-
 
 std::string JSONProfiler::GetRankProfilingJSON(
     const std::vector<std::string> &transportsTypes,
@@ -72,9 +68,9 @@ std::string JSONProfiler::GetRankProfilingJSON(
 {
     auto lf_WriterTimer = [](std::string &rankLog,
                              const profiling::Timer &timer) {
-      //rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
-      //           "\": " + std::to_string(timer.m_ProcessTime) + ", ";
-	timer.AddToJsonStr(rankLog);
+        // rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
+        //           "\": " + std::to_string(timer.m_ProcessTime) + ", ";
+        timer.AddToJsonStr(rankLog);
     };
 
     // prepare string dictionary per rank
@@ -88,16 +84,16 @@ std::string JSONProfiler::GetRankProfilingJSON(
     std::replace(timeDate.begin(), timeDate.end(), ' ', '_');
 
     rankLog += "\"start\": \"" + timeDate + "\", ";
-    //rankLog += "\"threads\": " + std::to_string(m_Parameters.Threads) + ", ";
+    // rankLog += "\"threads\": " + std::to_string(m_Parameters.Threads) + ", ";
     rankLog +=
         "\"bytes\": " + std::to_string(profiler.m_Bytes.at("buffering")) + ", ";
 
     for (const auto &timerPair : profiler.m_Timers)
     {
         const profiling::Timer &timer = timerPair.second;
-        //rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
-	//          "\": " + std::to_string(timer.m_ProcessTime) + ", ";
-	timer.AddToJsonStr(rankLog);
+        // rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
+        //          "\": " + std::to_string(timer.m_ProcessTime) + ", ";
+        timer.AddToJsonStr(rankLog);
     }
 
     const size_t transportsSize = transportsTypes.size();
@@ -150,12 +146,12 @@ JSONProfiler::AggregateProfilingJSON(const std::string &rankLog) const
                                        rankLogsSizes.end(), size_t(0));
 
         profilingJSON.resize(gatheredSize + header.size() + footer.size() - 2);
-	adios2::helper::CopyToBuffer(profilingJSON, position, header.c_str(),
-                             header.size());
+        adios2::helper::CopyToBuffer(profilingJSON, position, header.c_str(),
+                                     header.size());
     }
 
     m_Comm.GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
-		       rankLogsSizes.size(), &profilingJSON[position]);
+                         rankLogsSizes.size(), &profilingJSON[position]);
 
     if (m_RankMPI == 0) // add footer to close JSON
     {
@@ -166,7 +162,6 @@ JSONProfiler::AggregateProfilingJSON(const std::string &rankLog) const
 
     return profilingJSON;
 }
-
 
 } // end namespace profiling
 } // end namespace adios2

@@ -32,8 +32,7 @@ using namespace adios2::format;
 BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(),
-  m_FileDataManager(m_Comm), m_FileMetadataManager(m_Comm),
-  m_Profiler(m_Comm),
+  m_FileDataManager(m_Comm), m_FileMetadataManager(m_Comm), m_Profiler(m_Comm),
   m_FileMetadataIndexManager(m_Comm), m_FileMetaMetadataManager(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
@@ -367,7 +366,7 @@ void BP5Writer::EndStep()
     m_Profiler.Start("AWD");
     WriteData(TSInfo.DataBuffer);
     m_Profiler.Stop("AWD");
-    
+
     m_ThisTimestepDataSize += TSInfo.DataBuffer->Size();
 
     std::vector<char> MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
@@ -390,7 +389,7 @@ void BP5Writer::EndStep()
     m_Comm.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
                          RecvCounts.size(), RecvBuffer->data(), 0);
     m_Profiler.Stop("meta_gather");
-    
+
     if (m_Comm.Rank() == 0)
     {
         std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
@@ -625,8 +624,8 @@ void BP5Writer::InitTransports()
         }
     }
 
-    bool useProfiler=true;
-    
+    bool useProfiler = true;
+
     if (m_IAmWritingData)
     {
         m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
@@ -648,10 +647,12 @@ void BP5Writer::InitTransports()
     if (m_Comm.Rank() == 0)
     {
         m_FileMetaMetadataManager.OpenFiles(m_MetaMetadataFileNames, m_OpenMode,
-                                            m_IO.m_TransportsParameters, useProfiler);
+                                            m_IO.m_TransportsParameters,
+                                            useProfiler);
 
         m_FileMetadataManager.OpenFiles(m_MetadataFileNames, m_OpenMode,
-                                        m_IO.m_TransportsParameters, useProfiler);
+                                        m_IO.m_TransportsParameters,
+                                        useProfiler);
 
         m_FileMetadataIndexManager.OpenFiles(
             m_MetadataIndexFileNames, m_OpenMode, m_IO.m_TransportsParameters,
@@ -912,7 +913,7 @@ void BP5Writer::DoClose(const int transportIndex)
         m_FileMetadataIndexManager.CloseFiles();
     }
 
-    FlushProfiler();    
+    FlushProfiler();
 }
 
 void BP5Writer::FlushProfiler()
@@ -941,12 +942,14 @@ void BP5Writer::FlushProfiler()
                               transportProfilersMD.begin(),
                               transportProfilersMD.end());
 
-    //m_Profiler.WriteOut(transportTypes, transportProfilers);
+    // m_Profiler.WriteOut(transportTypes, transportProfilers);
 
-    const std::string lineJSON(m_Profiler.GetRankProfilingJSON(transportTypes, transportProfilers) + ",\n");
+    const std::string lineJSON(
+        m_Profiler.GetRankProfilingJSON(transportTypes, transportProfilers) +
+        ",\n");
 
-    const std::vector<char> profilingJSON(m_Profiler.AggregateProfilingJSON(lineJSON));
-					  
+    const std::vector<char> profilingJSON(
+        m_Profiler.AggregateProfilingJSON(lineJSON));
 
     if (m_RankMPI == 0)
     {
@@ -954,8 +957,8 @@ void BP5Writer::FlushProfiler()
         std::string profileFileName;
         if (m_DrainBB)
         {
-	  //auto bpTargetNames = m_BP4Serializer.GetBPBaseNames({m_Name});
-	  std::vector<std::string> bpTargetNames = {m_Name};
+            // auto bpTargetNames = m_BP4Serializer.GetBPBaseNames({m_Name});
+            std::vector<std::string> bpTargetNames = {m_Name};
             if (fileTransportIdx > -1)
             {
                 profileFileName =
@@ -971,8 +974,8 @@ void BP5Writer::FlushProfiler()
         else
         {
             transport::FileFStream profilingJSONStream(m_Comm);
-            //auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
-	    std::vector<std::string> bpBaseNames = {m_Name};
+            // auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
+            std::vector<std::string> bpBaseNames = {m_Name};
             if (fileTransportIdx > -1)
             {
                 profileFileName =
@@ -987,9 +990,6 @@ void BP5Writer::FlushProfiler()
                                       profilingJSON.size());
             profilingJSONStream.Close();
         }
-
-    
-
     }
 }
 
