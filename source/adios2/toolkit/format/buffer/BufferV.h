@@ -9,6 +9,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/core/CoreTypes.h"
 #include <iostream>
 
 namespace adios2
@@ -21,19 +22,12 @@ class BufferV
 public:
     const std::string m_Type;
 
-    typedef struct iovec
-    {
-        const void
-            *iov_base;  //  Base address of a memory region for input or output.
-        size_t iov_len; //  The size of the memory pointed to by iov_base.
-    } * BufferV_iovec;
-
     uint64_t Size() noexcept;
 
     BufferV(const std::string type, const bool AlwaysCopy = false);
     virtual ~BufferV();
 
-    virtual BufferV_iovec DataVec() noexcept = 0;
+    virtual std::vector<core::iovec> DataVec() noexcept = 0;
 
     /*
      *  This is used in PerformPuts() to copy externally referenced data so that

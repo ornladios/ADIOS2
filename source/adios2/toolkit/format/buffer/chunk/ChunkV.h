@@ -9,6 +9,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/core/CoreTypes.h"
 
 #include "adios2/toolkit/format/buffer/BufferV.h"
 
@@ -28,7 +29,7 @@ public:
            const size_t ChunkSize = DefaultBufferChunkSize);
     virtual ~ChunkV();
 
-    virtual BufferV_iovec DataVec() noexcept;
+    virtual std::vector<core::iovec> DataVec() noexcept;
 
     virtual size_t AddToVec(const size_t size, const void *buf, size_t align,
                             bool CopyReqd);

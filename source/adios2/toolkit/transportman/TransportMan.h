@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "adios2/core/CoreTypes.h"
 #include "adios2/toolkit/transport/Transport.h"
 
 namespace adios2
@@ -137,9 +138,29 @@ public:
      * @param transportIndex
      * @param buffer
      * @param size
+     * @param start offset in file
      */
     void WriteFileAt(const char *buffer, const size_t size, const size_t start,
                      const int transportIndex = -1);
+
+    /**
+     * Write to file transports, writev version
+     * @param transportIndex
+     * @param iovec array pointer
+     * @param iovcnt number of entries
+     */
+    void WriteFiles(const core::iovec *iov, const size_t iovcnt,
+                    const int transportIndex = -1);
+
+    /**
+     * Write data to a specific location in files, writev version
+     * @param transportIndex
+     * @param iovec array pointer
+     * @param iovcnt number of entries
+     * @param start offset in file
+     */
+    void WriteFileAt(const core::iovec *iov, const size_t iovcnt,
+                     const size_t start, const int transportIndex = -1);
 
     size_t GetFileSize(const size_t transportIndex = 0) const;
 

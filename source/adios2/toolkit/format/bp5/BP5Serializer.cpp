@@ -871,15 +871,14 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
     return Ret;
 }
 
-std::vector<BufferV::iovec> BP5Serializer::BreakoutContiguousMetadata(
+std::vector<core::iovec> BP5Serializer::BreakoutContiguousMetadata(
     std::vector<char> *Aggregate, const std::vector<size_t> Counts,
     std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
-    std::vector<BufferV::iovec> &AttributeBlocks,
-    std::vector<uint64_t> &DataSizes,
+    std::vector<core::iovec> &AttributeBlocks, std::vector<uint64_t> &DataSizes,
     std::vector<uint64_t> &WriterDataPositions) const
 {
     size_t Position = 0;
-    std::vector<BufferV::iovec> MetadataBlocks;
+    std::vector<core::iovec> MetadataBlocks;
     MetadataBlocks.reserve(Counts.size());
     DataSizes.resize(Counts.size());
     for (size_t Rank = 0; Rank < Counts.size(); Rank++)

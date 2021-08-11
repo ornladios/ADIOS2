@@ -42,6 +42,8 @@ public:
                    const bool async = false) final;
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
+    void WriteV(const core::iovec *iov, const int iovcnt,
+                size_t start = MaxSizeT) final;
 
     void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
 

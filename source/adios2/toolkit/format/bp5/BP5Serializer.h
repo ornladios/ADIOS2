@@ -10,6 +10,7 @@
 
 #include "BP5Base.h"
 #include "adios2/core/Attribute.h"
+#include "adios2/core/CoreTypes.h"
 #include "adios2/core/IO.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
@@ -93,10 +94,10 @@ public:
         const format::Buffer *AttributeEncodeBuffer, uint64_t DataSize,
         uint64_t WriterDataPos) const;
 
-    std::vector<BufferV::iovec> BreakoutContiguousMetadata(
+    std::vector<core::iovec> BreakoutContiguousMetadata(
         std::vector<char> *Aggregate, const std::vector<size_t> Counts,
         std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
-        std::vector<BufferV::iovec> &AttributeBlocks,
+        std::vector<core::iovec> &AttributeBlocks,
         std::vector<uint64_t> &DataSizes,
         std::vector<uint64_t> &WriterDataPositions) const;
 

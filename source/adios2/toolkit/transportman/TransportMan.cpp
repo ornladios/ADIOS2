@@ -243,6 +243,53 @@ void TransportMan::WriteFileAt(const char *buffer, const size_t size,
     }
 }
 
+void TransportMan::WriteFiles(const core::iovec *iov, const size_t iovcnt,
+                              const int transportIndex)
+{
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+            if (transport->m_Type == "File")
+            {
+                // make this truly asynch?
+                transport->WriteV(iov, static_cast<int>(iovcnt));
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to WriteFiles with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->WriteV(iov, static_cast<int>(iovcnt));
+    }
+}
+
+void TransportMan::WriteFileAt(const core::iovec *iov, const size_t iovcnt,
+                               const size_t start, const int transportIndex)
+{
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+            if (transport->m_Type == "File")
+            {
+                transport->WriteV(iov, static_cast<int>(iovcnt), start);
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to WriteFileAt with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->WriteV(iov, static_cast<int>(iovcnt), start);
+    }
+}
+
 void TransportMan::SeekToFileEnd(const int transportIndex)
 {
     if (transportIndex == -1)

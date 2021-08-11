@@ -16,6 +16,7 @@
 #include <stddef.h>    // write output
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
+#include <sys/uio.h>   // writev
 #include <unistd.h>    // write, close
 
 #include <iostream>
@@ -283,6 +284,98 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
     else
     {
         lf_Write(buffer, size);
+    }
+}
+
+void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
+{
+    auto lf_Write = [&](const core::iovec *iov, const int iovcnt) {
+        ProfilerStart("write");
+        errno = 0;
+        size_t nBytesExpected = 0;
+        for (int i = 0; i < iovcnt; ++i)
+        {
+            nBytesExpected += iov[i].iov_len;
+        }
+        const iovec *v = reinterpret_cast<const iovec *>(iov);
+        const auto ret = writev(m_FileDescriptor, v, iovcnt);
+        m_Errno = errno;
+        ProfilerStop("write");
+
+        size_t written;
+        if (ret == -1)
+        {
+            if (errno != EINTR)
+            {
+                throw std::ios_base::failure(
+                    "ERROR: couldn't write to file " + m_Name +
+                    ", in call to POSIX Write(iovec)" + SysErrMsg());
+            }
+            written = 0;
+        }
+        else
+        {
+            written = static_cast<size_t>(ret);
+        }
+
+        if (written < nBytesExpected)
+        {
+            /* Fall back to write calls with individual buffers */
+            // find where the writing has ended
+            int c = 0;
+            size_t n = 0;
+            size_t pos = 0;
+            while (n < written)
+            {
+                if (n + iov[c].iov_len <= written)
+                {
+                    n += iov[c].iov_len;
+                    ++c;
+                }
+                else
+                {
+                    pos = written - n;
+                    n = written;
+                }
+            }
+
+            // write the rest one by one
+            Write(static_cast<const char *>(iov[c].iov_base) + pos,
+                  iov[c].iov_len - pos);
+            for (; c < iovcnt; ++c)
+            {
+                Write(static_cast<const char *>(iov[c].iov_base),
+                      iov[c].iov_len);
+            }
+        }
+    };
+
+    WaitForOpen();
+    if (start != MaxSizeT)
+    {
+        errno = 0;
+        const auto newPosition = lseek(m_FileDescriptor, start, SEEK_SET);
+        m_Errno = errno;
+
+        if (static_cast<size_t>(newPosition) != start)
+        {
+            throw std::ios_base::failure(
+                "ERROR: couldn't move to start position " +
+                std::to_string(start) + " in file " + m_Name +
+                ", in call to POSIX lseek" + SysErrMsg());
+        }
+    }
+
+    int cntTotal = 0;
+    while (cntTotal < iovcnt)
+    {
+        int cnt = iovcnt - cntTotal;
+        if (cnt > 8)
+        {
+            cnt = 8;
+        }
+        lf_Write(iov + cntTotal, cnt);
+        cntTotal += cnt;
     }
 }
 

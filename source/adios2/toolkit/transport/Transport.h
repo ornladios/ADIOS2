@@ -18,6 +18,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/core/CoreTypes.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
@@ -104,6 +105,17 @@ public:
                        size_t start = MaxSizeT) = 0;
 
     virtual void IWrite(const char *buffer, size_t size, Status &status,
+                        size_t start = MaxSizeT);
+
+    /**
+     * Writes to transport, writev version. Note that size is non-const due to
+     * the nature of underlying transport libraries
+     * @param iovec array pointer
+     * @param iovcnt number of entries
+     * @param start starting position for writing (to allow rewind), if not
+     * passed then start at current stream position
+     */
+    virtual void WriteV(const core::iovec *iov, const int iovcnt,
                         size_t start = MaxSizeT);
 
     /**

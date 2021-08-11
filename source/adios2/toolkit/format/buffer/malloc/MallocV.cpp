@@ -195,23 +195,22 @@ void *MallocV::GetPtr(int bufferIdx, size_t posInBuffer)
     }
 }
 
-MallocV::BufferV_iovec MallocV::DataVec() noexcept
+std::vector<core::iovec> MallocV::DataVec() noexcept
 {
-    BufferV_iovec ret = new iovec[DataV.size() + 1];
+    std::vector<core::iovec> iov(DataV.size());
     for (std::size_t i = 0; i < DataV.size(); ++i)
     {
         if (DataV[i].External)
         {
-            ret[i].iov_base = DataV[i].Base;
+            iov[i].iov_base = DataV[i].Base;
         }
         else
         {
-            ret[i].iov_base = m_InternalBlock + DataV[i].Offset;
+            iov[i].iov_base = m_InternalBlock + DataV[i].Offset;
         }
-        ret[i].iov_len = DataV[i].Size;
+        iov[i].iov_len = DataV[i].Size;
     }
-    ret[DataV.size()] = {NULL, 0};
-    return ret;
+    return iov;
 }
 
 } // end namespace format
