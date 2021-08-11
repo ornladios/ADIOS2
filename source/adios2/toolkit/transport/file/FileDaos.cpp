@@ -105,11 +105,38 @@ public:
         }
     }
 
+    void Release()
+    {
+        if (Obj)
+        {
+            int rc = dfs_release(Obj);
+            CheckDAOSReturnCode(rc);
+            Obj = nullptr;
+        }
+        if (Mount)
+        {
+            int rc = dfs_umount(Mount);
+            CheckDAOSReturnCode(rc);
+            Mount = nullptr;
+        }
+
+	int rc;
+	
+	rc = daos_cont_close(coh, NULL);
+	CheckDAOSReturnCode(rc);
+
+	rc = daos_pool_disconnect(poh, NULL);
+	CheckDAOSReturnCode(rc);
+	
+    }
+    
     void InitMount(helper::Comm const &comm, const Mode openMode)
     {
         int rc;
         int poolFlags, contFlags, mountFlags;
 
+	std::cout << "rank " << comm.Rank() << ": before daos_init..." << std::endl;
+	
         if (Mount)
         {
             throw std::ios_base::failure(
@@ -130,7 +157,16 @@ public:
 	uuid_unparse(CUUID, cuuid_c);	
 	std::string uuid_s{uuid_c};
 	std::string cuuid_s{cuuid_c};	
-	std::cout << uuid_s << ", " << cuuid_s << std::endl;  
+	std::cout << uuid_s << ", " << cuuid_s << std::endl;
+
+//	if (openMode == Mode::Write)
+//	{
+//	    std::cout << "rank " << comm.Rank() << ": write!" << std::endl;
+//	}
+//	else if (openMode == Mode::Read)
+//	{
+//	    std::cout << "rank " << comm.Rank() << ": read!" << std::endl;
+//	}
 
         switch (openMode)
         {
@@ -150,11 +186,10 @@ public:
         }
 	std::cout << "poolFlags: " << poolFlags << std::endl;
 
-        daos_handle_t poh;
-        daos_handle_t coh;
+
         d_iov_t gHandles[3];
 	std::vector<size_t> bufLen(3);
-	std::vector<std::vector<char>> bufs(3);
+	//std::vector<std::vector<char>> bufs(3);
 	  
 	memset(gHandles, 0, sizeof(d_iov_t) * 3);
 	
@@ -209,22 +244,35 @@ public:
             CheckDAOSReturnCode(rc);
 	    std::cout << "second dfs_local2global succeeded!" << std::endl;
 	    
-	    size_t totalLen = 0;
+	    //size_t totalLen = 0;
             for (size_t i = 0; i < 3; ++i)
             {
                 bufLen[i] = gHandles[i].iov_buf_len;
 		std::cout << "bufLen[" << i << "]: " << bufLen[i] << std::endl; 
- 		totalLen += gHandles[i].iov_buf_len;
+ 		//totalLen += gHandles[i].iov_buf_len;
             }
-	    std::cout << "totalLen: " << totalLen << std::endl;
+	    //std::cout << "totalLen: " << totalLen << std::endl;
 	    std::cout << "bufLen ready to broadcast!" << std::endl;
+	}
+	comm.BroadcastVector(bufLen);
+	//std::cout << "bufLen sent!" << std::endl;
+	size_t totalLen = 0;
+	for (size_t i = 0; i < 3; ++i)
+	{
+	    totalLen += bufLen[i];
+	    //std::cout << "rank " << comm.Rank() << ": bufLen[" << i << "] = " << bufLen[i] << std::endl;
+	    if (comm.Rank() != 0)
+	    {
+		gHandles[i].iov_buf_len = gHandles[i].iov_len = bufLen[i];
+	    }
 	    
-	    comm.BroadcastVector(bufLen);
-	    std::cout << "bufLen sent!" << std::endl;
-	    
-	    std::vector<char> mergedBuf;
-	    mergedBuf.reserve(totalLen);
-	    char *bufPtr = mergedBuf.data();
+	}
+	
+        std::vector<char> mergedBuf(totalLen);
+	char *bufPtr = mergedBuf.data();
+	
+	if (comm.Rank() == 0)
+	{
 	    for (size_t i = 0; i < 3; ++i)
 	    {
 		std::cout << "memcpy " << i << std::endl;
@@ -235,63 +283,37 @@ public:
 		std::memcpy(bufPtr, gHandles[i].iov_buf, gHandles[i].iov_buf_len);
 		bufPtr += gHandles[i].iov_buf_len;
 	    }
+	    std::cout << "rank " << comm.Rank() << " merged buf: ";
+	    for (size_t i = 0; i < 10; ++i)
+	    {
+		std::cout << std::hex << (int) mergedBuf[i];
+	    }
+	    std::cout << std::endl;
+	    
+	    std::cout << "rank " << comm.Rank() << " mergedBuf ready to broadcast!" << std::endl;	    
+	}
 
-	    std::cout << "mergedBuf ready to broadcast!" << std::endl;
-	    comm.BroadcastVector(mergedBuf);
-	    std::cout << "mergedBuf sent!" << std::endl;
-//            std::vector<unsigned char> buf(bufLen);
-//            unsigned char *bufPtr = buf.data();
-//            for (size_t i = 0; i < 3; ++i)
-//            {
-//                std::memcpy(bufPtr, &gHandles[i].iov_len, sizeof(size_t));
-//                bufPtr += sizeof(size_t);
-//                std::memcpy(bufPtr, &gHandles[i].iov_buf_len, sizeof(size_t));
-//                bufPtr += sizeof(gHandles[i].iov_buf_len);
-//                std::memcpy(bufPtr, gHandles[i].iov_buf,
-//                            gHandles[i].iov_buf_len);
-//                bufPtr += gHandles[i].iov_buf_len;
-//            }
+	comm.BroadcastVector(mergedBuf);
 
-            
-        }
-        else
-        {
+	if (comm.Rank() == 1)
+	{
+	    std::cout << "rank " << comm.Rank() << " merged buf: ";
+	    for (size_t i = 0; i < 10; ++i)
+	    {
+		std::cout << std::hex << (int) mergedBuf[i];
+	    }
+	    std::cout << std::endl;
+	    
+	}
 
-	    std::cout << "rank " << comm.Rank() << ": waiting for bufLen..." << std::endl; 
-            comm.BroadcastVector(bufLen);
-	    std::cout << "rank " << comm.Rank() << ": bufLen received!" << std::endl; 
-	    size_t totalLen = 0;
+	if (comm.Rank() != 0)
+	{
 	    for (size_t i = 0; i < 3; ++i)
 	    {
-		bufs[i].reserve(bufLen[i]);
-		gHandles[i].iov_buf = bufs[i].data();
-		gHandles[i].iov_buf_len = gHandles[i].iov_len = bufLen[i];
-		totalLen += bufLen[i];
+		gHandles[i].iov_buf = malloc(bufLen[i]);
+		std::memcpy(gHandles[i].iov_buf, bufPtr, bufLen[i]);
+		bufPtr += bufLen[i];		
 	    }
-	    //std::cout << "rank " << comm.Rank() << ": bufs are reserved!" << std::endl;
-	    
-	    std::vector<char> mergedBuf(totalLen);
-	    comm.BroadcastVector(mergedBuf);
-	    std::cout << "rank " << comm.Rank() << ": bufs are received!" << std::endl;
-	    
-	    char *bufPtr = mergedBuf.data();
-	    for (size_t i = 0; i < 3; ++i)
-	    {
-		std::memcpy(bufs[i].data(), bufPtr, bufLen[i]);
-		bufPtr += bufLen[i];
-	    }
-	    std::cout << "rank " << comm.Rank() << ": memcpy succeeded!" << std::endl;	    
-//            unsigned char *bufPtr = buf.data();
-//            for (size_t i = 0; i < 3; ++i)
-//            {
-//                std::memcpy(&gHandles[i].iov_len, bufPtr, sizeof(size_t));
-//                bufPtr += sizeof(size_t);
-//                std::memcpy(&gHandles[i].iov_buf_len, bufPtr, sizeof(size_t));
-//                bufPtr += sizeof(gHandles[i].iov_buf_len);
-//                gHandles[i].iov_buf = bufPtr;
-//                bufPtr += gHandles[i].iov_buf_len;
-//            }
-
             rc = daos_pool_global2local(gHandles[0], &poh);
             CheckDAOSReturnCode(rc);
 	    std::cout << "rank " << comm.Rank() << ": daos_pool_global2local succeeded!" << std::endl; 
@@ -303,12 +325,22 @@ public:
             rc = dfs_global2local(poh, coh, mountFlags, gHandles[2], &Mount);
             CheckDAOSReturnCode(rc);
 	    std::cout << "rank " << comm.Rank() << ": dfs_global2local succeeded!" << std::endl;	    
-        }
+	}
+
+	for (size_t i = 0; i < 3; ++i)
+	{
+	    free(gHandles[i].iov_buf);
+	    gHandles[i].iov_buf = NULL;
+	    gHandles[i].iov_buf_len = 0;
+	    gHandles[i].iov_len = 0;
+	}
     }
 
     uuid_t UUID;
     uuid_t CUUID;
     std::string Group;
+    daos_handle_t poh;
+    daos_handle_t coh;    
     dfs_t *Mount = nullptr;
     dfs_obj_t *Obj = nullptr;
 };
@@ -390,17 +422,26 @@ void FileDaos::MkDir(const std::string &fileName)
     }  
     if (m_Comm.Rank() == 0)
     {
-        const auto lastPathSeparator(m_Name.find_last_of(PathSeparator));
+        const auto lastPathSeparator(fileName.find_last_of(PathSeparator));
         if (lastPathSeparator != std::string::npos)
         {
-            const std::string path(m_Name.substr(0, lastPathSeparator));
+            const std::string path(fileName.substr(0, lastPathSeparator));
 	    struct stat stbuf;
+
 	    if (dfs_stat(m_Impl->Mount, NULL, path.c_str(), &stbuf) != 0)
 	    {
-	        int rc = dfs_mkdir(m_Impl->Mount, NULL, path.c_str(), S_IFDIR, 0);
+		std::cout << "rank " << m_Comm.Rank() << ": start creating dir " << path << std::endl;
+		if (!m_Impl->Mount)
+		{
+		    std::cout << "m_Impl->Mount is NULL, problem!" << std::endl;
+		}
+	        int rc = dfs_mkdir(m_Impl->Mount, NULL, path.c_str(), S_IWUSR | S_IRUSR, 0);
+		CheckDAOSReturnCode(rc);
+		std::cout << "rank " << m_Comm.Rank() << ": dir " << path << " is created!" << std::endl;
 	    }
         }
     }
+    m_Impl->Release();
 }
 
 void FileDaos::WaitForOpen()
@@ -423,10 +464,13 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> bool {
         ProfilerStart("open");
         // errno = 0;
+	std::cout << "rank " << m_Comm.Rank() << ": dfs_open start..." << std::endl;
         int rc =
             dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ NULL, m_Name.c_str(),
                      S_IFREG | S_IWUSR, O_WRONLY | O_CREAT | O_TRUNC, /*CID*/ 0,
                      /*chunksize*/ 0, NULL, &m_Impl->Obj);
+	CheckDAOSReturnCode(rc);
+	std::cout << "rank " << m_Comm.Rank() << ": dfs_open succeeded!" << std::endl;
         m_Errno = rc;
         ProfilerStop("open");
         bool DAOSOpenReturn;
@@ -440,16 +484,21 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
         }
         return DAOSOpenReturn;
     };
-
+    
     int rc;
     m_Name = name;
+    std::cout << "rank " << m_Comm.Rank() << ": start open..." << std::endl;
     //std::replace(m_Name.begin(), m_Name.end(), '/', '+');
     CheckName();
+    std::cout << "rank " << m_Comm.Rank() << ": check file name succeeded!" << std::endl;
+    
     if (!m_Impl->Mount)
     {
-        ProfilerStart("mount");
-        m_Impl->InitMount(m_Comm, m_OpenMode);
-        ProfilerStop("mount");
+	std::cout << "rank " << m_Comm.Rank() << ": start InitMount..." << std::endl;   
+        //ProfilerStart("mount");
+        m_Impl->InitMount(m_Comm, openMode);
+        //ProfilerStop("mount");
+	std::cout << "rank " << m_Comm.Rank() << ": InitMount succeeded!" << std::endl;   
     }
 //    if (m_Comm.Rank() == 0)
 //    {
@@ -470,25 +519,30 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
     {
 
     case (Mode::Write):
-        if (async)
-        {
-            m_IsOpening = true;
-            m_OpenFuture =
-                std::async(std::launch::async, lf_AsyncOpenWrite, name);
-        }
-        else
-        {
-            ProfilerStart("open");
+//        if (async)
+//        {
+//	    std::cout << "rank " << m_Comm.Rank() << ": async open!" << std::endl;
+//            m_IsOpening = true;
+//            m_OpenFuture =
+//                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+//        }
+//        else
+//        {
+	ProfilerStart("open");
             // errno = 0;
             // m_FileDescriptor =
             //    open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
-            rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ NULL,
-                          m_Name.c_str(), S_IFREG | S_IWUSR,
-                          O_WRONLY | O_CREAT | O_TRUNC, /*CID*/ 0,
-                          /*chunksize*/ 0, NULL, &m_Impl->Obj);
-            m_Errno = rc;
-            ProfilerStop("open");
-        }
+	std::cout << "rank " << m_Comm.Rank() << ": dfs_open start..." << std::endl;
+	std::cout << "rank " << m_Comm.Rank() << ": dfs_open open " << m_Name.c_str() << std::endl;
+	rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ NULL,
+		      m_Name.c_str(), S_IFREG | S_IWUSR,
+		      O_RDWR | O_CREAT, /*CID*/ 0,
+		      /*chunksize*/ 0, NULL, &m_Impl->Obj);
+	CheckDAOSReturnCode(rc);
+	std::cout << "rank " << m_Comm.Rank() << ": dfs_open succeeded!" << std::endl;
+	m_Errno = rc;
+	ProfilerStop("open");
+	    //}
         break;
 
     case (Mode::Append):
@@ -500,6 +554,7 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
         rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ NULL, m_Name.c_str(),
                       S_IFREG | S_IWUSR | S_IRUSR, O_RDWR | O_CREAT, /*CID*/ 0,
                       /*chunksize*/ 0, NULL, &m_Impl->Obj);
+	CheckDAOSReturnCode(rc);
         m_Errno = rc;
         ProfilerStop("open");
         break;
@@ -511,6 +566,7 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
         rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ NULL, m_Name.c_str(),
                       S_IFREG | S_IRUSR, O_RDONLY, /*CID*/ 0, /*chunksize*/ 0,
                       NULL, &m_Impl->Obj);
+	CheckDAOSReturnCode(rc);
         m_Errno = rc;
         ProfilerStop("open");
         break;
@@ -556,16 +612,17 @@ void FileDaos::Write(const char *buffer, size_t size, size_t start)
             // errno = 0;
 
             // const auto writtenSize = write(m_FileDescriptor, buffer, size);
-
+	    std::cout << "rank " << m_Comm.Rank() << ": start dfs_write..." << std::endl;
             rc = dfs_write(m_Impl->Mount, m_Impl->Obj, &wsgl, m_GlobalOffset,
                            NULL);
-
+	    CheckDAOSReturnCode(rc);
             if (rc)
             {
                 throw std::ios_base::failure(
                     "ERROR: couldn't write to file " + m_Name +
                     ", in call to Daos Write" + SysErrMsg());
             }
+	    std::cout << "rank " << m_Comm.Rank() << ": dfs_write succeeded!" << std::endl;
             m_Errno = rc;
             ProfilerStop("write");
             /*if (writtenSize == -1)
@@ -585,6 +642,7 @@ void FileDaos::Write(const char *buffer, size_t size, size_t start)
         }
     };
 
+    std::cout << "rank " << m_Comm.Rank() << ": start Write..." << std::endl;
     WaitForOpen();
     if (start != MaxSizeT)
     {

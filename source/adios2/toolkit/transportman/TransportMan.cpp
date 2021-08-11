@@ -81,6 +81,7 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
 	std::cout << "rank " << rank << ": transport->MkDir(" << fileNames[0] << ") succeeded!" << std::endl;	  
         
 	m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
+
     }
     else
     {
@@ -118,6 +119,7 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
             m_Transports.insert({i, file});
         }
     }
+    std::cout << "rank " << m_Comm.Rank() << ": OpenFiles succeeded!" << std::endl;
 }
 
 void TransportMan::OpenFileID(const std::string &name, const size_t id,
@@ -533,7 +535,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
     }
 
     transport->SetParameters(parameters);
-
+    
     // open
     transport->Open(fileName, openMode, lf_GetAsync("false", parameters));
     return transport;
