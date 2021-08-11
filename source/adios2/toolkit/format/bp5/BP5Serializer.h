@@ -131,9 +131,17 @@ private:
         FMFormat AttributeFormat = NULL;
         void *AttributeData = NULL;
         int AttributeSize = 0;
-        int CompressZFP = 0;
-        attr_list ZFPParams = NULL;
     };
+
+    struct DeferredExtern
+    {
+        size_t MetaOffset;
+        size_t BlockID;
+        const void *Data;
+        size_t DataSize;
+        size_t AlignReq;
+    };
+    std::vector<DeferredExtern> DeferredExterns;
 
     FFSWriterMarshalBase Info;
     void *MetadataBuf = NULL;
@@ -175,6 +183,8 @@ private:
     size_t *CopyDims(const size_t Count, const size_t *Vals);
     size_t *AppendDims(size_t *OldDims, const size_t OldCount,
                        const size_t Count, const size_t *Vals);
+
+    void DumpDeferredBlocks();
 
     typedef struct _ArrayRec
     {
