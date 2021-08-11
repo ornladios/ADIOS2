@@ -140,8 +140,6 @@ uint64_t BP5Writer::WriteMetadata(
 
 void BP5Writer::WriteData(format::BufferV *Data)
 {
-    format::BufferV::BufferV_iovec DataVec = Data->DataVec();
-    (void)DataVec;
     switch (m_Parameters.AggregationType)
     {
     case (int)AggregationType::EveryoneWrites:
