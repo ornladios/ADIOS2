@@ -35,7 +35,7 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("MhsWriter", io, name, mode, std::move(comm))
 {
-    helper::GetParameter(io.m_Parameters, "tiers", m_Tiers);
+    helper::GetParameter(io.m_Parameters, "Tiers", m_Tiers);
     for (const auto &transportParams : io.m_TransportsParameters)
     {
         auto itVar = transportParams.find("variable");
@@ -113,21 +113,12 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
             throw("invalid operator");
         }
     }
-    if (m_Tiers > 1)
+    for (int i = 0; i < m_Tiers; ++i)
     {
-        for (int i = 0; i < m_Tiers; ++i)
-        {
-            m_SubIOs.emplace_back(
-                &io.m_ADIOS.DeclareIO("SubIO" + std::to_string(i)));
-            m_SubEngines.emplace_back(&m_SubIOs.back()->Open(
-                m_Name + ".tier" + std::to_string(i), adios2::Mode::Write));
-        }
-    }
-    else
-    {
-        m_SubIOs.emplace_back(&io.m_ADIOS.DeclareIO("SubIO"));
-        m_SubEngines.emplace_back(
-            &m_SubIOs.back()->Open(m_Name, adios2::Mode::Write));
+        m_SubIOs.emplace_back(
+            &io.m_ADIOS.DeclareIO("SubIO" + std::to_string(i)));
+        m_SubEngines.emplace_back(&m_SubIOs.back()->Open(
+            m_Name + ".tier" + std::to_string(i), adios2::Mode::Write));
     }
 }
 

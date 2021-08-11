@@ -85,6 +85,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 {
     adios2::ADIOS adios(MPI_COMM_WORLD);
     adios2::IO io = adios.DeclareIO("ms");
+    io.SetEngine("mhs");
     io.SetParameters(engineParams);
     adios2::Engine readerEngine = io.Open(name, adios2::Mode::Read);
     size_t datasize = 1;
@@ -180,6 +181,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     adios2::IO io = adios.DeclareIO("ms");
     io.SetEngine("mhs");
     io.SetParameters(engineParams);
+    io.AddTransport("sirius", {{"variable", "bpFloats"}});
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -250,9 +252,9 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
 TEST_F(MhsEngineTest, TestMhsMultiRank)
 {
     std::string filename = "TestMhsMultiRank";
-    adios2::Params engineParams = {{"Verbose", "0"}};
+    adios2::Params engineParams = {{"Verbose", "0"}, {"Tiers", "1"}};
 
-    size_t rows = 800;
+    size_t rows = 80;
     Dims shape = {rows, 8, 64};
     Dims start = {0, 0, 0};
     Dims count = {1, 8, 64};
