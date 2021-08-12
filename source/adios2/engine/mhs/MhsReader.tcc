@@ -41,6 +41,10 @@ void MhsReader::GetDeferredCommon(Variable<T> &variable, T *data)
     for (int i = 1; i < m_Tiers; ++i)
     {
         auto var = m_SubIOs[i]->InquireVariable<T>(variable.m_Name);
+        if (!var)
+        {
+            break;
+        }
         m_SubEngines[i]->Get(*var, data, Mode::Sync);
     }
 }
