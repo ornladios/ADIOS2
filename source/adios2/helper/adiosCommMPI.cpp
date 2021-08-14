@@ -78,11 +78,16 @@ void CheckMPIReturn(const int value, const std::string &hint)
     }
 
     std::string error;
-    if (value == MPI_ERR_COMM) {
+    if (value == MPI_ERR_COMM)
+    {
         error = "MPI_ERR_COMM";
-    } else if (value == MPI_ERR_INTERN) {
+    }
+    else if (value == MPI_ERR_INTERN)
+    {
         error = "MPI_ERR_INTERN";
-    } else {
+    }
+    else
+    {
         error = "MPI_ERR number: " + std::to_string(value);
     }
 
