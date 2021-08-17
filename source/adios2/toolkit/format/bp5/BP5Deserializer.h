@@ -131,11 +131,8 @@ private:
     size_t m_WriterCohortSize;
     std::unordered_map<std::string, BP5VarRec *> VarByName;
     std::unordered_map<void *, BP5VarRec *> VarByKey;
-    //    Ffsarrayrequest PendingVarRequests;
 
-    std::vector<void *> MetadataBaseAddrs;
-    std::vector<FMFieldList> MetadataFieldLists;
-    std::vector<void *> DataBaseAddrs;
+    std::vector<void *> MetadataBaseAddrs; // per step
     std::vector<FFSReaderPerWriterRec> WriterInfo;
     //  struct ControlInfo *ControlBlocks;
 
@@ -193,7 +190,6 @@ private:
     std::vector<BP5ArrayRequest> PendingRequests;
     bool NeedWriter(BP5ArrayRequest Req, size_t i);
     size_t CurTimestep = 0;
-    std::vector<struct ControlInfo *> ActiveControl;
 };
 
 } // end namespace format

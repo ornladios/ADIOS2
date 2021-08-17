@@ -337,6 +337,7 @@ void BP5Deserializer::SetupForTimestep(size_t Timestep)
         RecPair.second->Variable = NULL;
     }
 }
+
 void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                                       size_t WriterRank)
 {
@@ -385,7 +386,6 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         Control = BuildControl(FMFormat_of_original(FFSformat));
     }
     ControlArray = &Control->Controls[0];
-    ActiveControl[WriterRank] = Control;
 
     MetadataBaseAddrs[WriterRank] = BaseData;
     for (int i = 0; i < Control->ControlCount; i++)
@@ -978,9 +978,6 @@ BP5Deserializer::BP5Deserializer(int WriterCount, bool WriterIsRowMajor,
     free_FMcontext(Tmp);
     WriterInfo.resize(m_WriterCohortSize);
     MetadataBaseAddrs.resize(m_WriterCohortSize);
-    MetadataFieldLists.resize(m_WriterCohortSize);
-    DataBaseAddrs.resize(m_WriterCohortSize);
-    ActiveControl.resize(m_WriterCohortSize);
 }
 
 BP5Deserializer::~BP5Deserializer()
@@ -991,18 +988,6 @@ BP5Deserializer::~BP5Deserializer()
         if (WriterInfo[i].RawBuffer)
             free(WriterInfo[i].RawBuffer);
     }
-    // for (int i = 0; i < Info.VarCount; i++)
-    // 	{
-    // 	    free(Info.VarList[i]->VarName);
-    // 	    free(Info.VarList[i]->PerWriterMetaFieldOffset);
-    // 	    free(Info.VarList[i]->PerWriterBlockCount);
-    // 	    free(Info.VarList[i]->PerWriterBlockStart);
-    // 	    free(Info.VarList[i]->PerWriterStart);
-    // 	    free(Info.VarList[i]->PerWriterCounts);
-    // 	    free(Info.VarList[i]->PerWriterIncomingData);
-    // 	    free(Info.VarList[i]->PerWriterIncomingSize);
-    // 	    free(Info.VarList[i]);
-    // 	}
     struct ControlInfo *tmp = ControlBlocks;
     ControlBlocks = NULL;
     while (tmp)
