@@ -63,6 +63,7 @@ Attribute<T>::Attribute(const Attribute<T> &other)
     if (other.m_IsSingleValue)
     {
         m_DataArray.clear();
+        Pad<T>::Zero(m_DataSingleValue);
         m_DataSingleValue = other.m_DataSingleValue;
     }
     else
@@ -87,6 +88,7 @@ Attribute<T>::Attribute(const std::string &name, const T &value,
 : AttributeBase(name, helper::GetDataType<T>(), allowModification)
 {
     m_DataArray.clear();
+    Pad<T>::Zero(m_DataSingleValue);
     m_DataSingleValue = value;
 }
 
@@ -127,6 +129,7 @@ void Attribute<T>::Modify(const T &data)
         if (this->m_Type == helper::GetDataType<T>())
         {
             m_DataArray.clear();
+            Pad<T>::Zero(m_DataSingleValue);
             m_DataSingleValue = data;
             this->m_IsSingleValue = true;
             this->m_Elements = 1;
