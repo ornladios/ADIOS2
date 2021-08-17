@@ -6,17 +6,17 @@
 using namespace adios2;
 
 int printed_lines = 0;
-int to_print_lines = 100000;
 
 template <class T>
 void PrintData(const T *data, const size_t step, const Dims &start,
-               const Dims &count, const std::string &var)
+               const Dims &count, const std::string &var,
+               const int to_print_lines)
 {
     size_t size =
         std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
                         std::multiplies<size_t>());
     std::cout << " Step: " << step << " Size:" << size << "\n";
-    size_t printsize = 128;
+    size_t printsize = 1024;
 
     if (size < printsize)
     {
@@ -120,7 +120,8 @@ void GenData(std::vector<T> &vec, const size_t step,
 
 template <class T>
 void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape, const std::string &var)
+                const Dims &count, const Dims &shape, const std::string &var,
+                const int to_print_lines = 0, const int rank = 0)
 {
     size_t size =
         std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
@@ -132,34 +133,31 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
         ASSERT_EQ(data[i], tmpdata[i]) << "Step " << step << " Variable " << var
                                        << " at " << i << std::endl;
     }
-    if (printed_lines < to_print_lines)
+    if (rank == 0 && printed_lines < to_print_lines)
     {
-        PrintData(data, step, start, count, var);
+        PrintData(data, step, start, count, var, to_print_lines);
         ++printed_lines;
     }
 }
 
 template <class T>
 void VerifyData(const T *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape, const std::string &var)
+                const Dims &count, const Dims &shape, const std::string &var,
+                const int to_print_lines = 0, const int rank = 0)
 {
     size_t size =
         std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
                         std::multiplies<size_t>());
-    bool compressed = false;
     std::vector<T> tmpdata(size);
-    if (printed_lines < to_print_lines)
+    if (rank == 0 && printed_lines < to_print_lines)
     {
-        PrintData(data, step, start, count, var);
+        PrintData(data, step, start, count, var, to_print_lines);
         ++printed_lines;
     }
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        if (!compressed)
-        {
-            ASSERT_EQ(data[i], tmpdata[i]) << "Step " << step << " Variable "
-                                           << var << " at " << i << std::endl;
-        }
+        ASSERT_EQ(data[i], tmpdata[i]) << "Step " << step << " Variable " << var
+                                       << " at " << i << std::endl;
     }
 }

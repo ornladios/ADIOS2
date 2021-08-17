@@ -65,10 +65,9 @@ void BPSirius::GetData(const char *input,
 {
     core::compress::CompressSirius op((Params()));
     op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
-                  blockOperationInfo.PreCount,
+                  blockOperationInfo.PreStart, blockOperationInfo.PreCount,
                   helper::GetDataTypeFromString(
-                      blockOperationInfo.Info.at("PreDataType")),
-                  blockOperationInfo.Info);
+                      blockOperationInfo.Info.at("PreDataType")));
 }
 
 } // end namespace format

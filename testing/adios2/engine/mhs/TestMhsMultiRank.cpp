@@ -26,7 +26,13 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const size_t rows, const adios2::Params &engineParams,
             const std::string &name)
 {
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+
+    if (mpiRank != 0)
+    {
+        return;
+    }
+
+    adios2::ADIOS adios(MPI_COMM_SELF);
     adios2::IO io = adios.DeclareIO("ms");
     io.SetEngine("mhs");
     io.SetParameters(engineParams);
@@ -220,7 +226,7 @@ TEST_F(MhsEngineTest, TestMhsMultiRank)
     std::string filename = "TestMhsMultiRank";
     adios2::Params engineParams = {{"Verbose", "0"}, {"Tiers", "4"}};
 
-    size_t rows = 80;
+    size_t rows = 100;
     Dims shape = {rows, 8, 64};
     Dims start = {0, 0, 0};
     Dims count = {1, 8, 64};
