@@ -166,6 +166,8 @@ private:
 
     template <class T>
     void PerformPutCommon(Variable<T> &variable);
+
+    void NotifyEngineAttribute(std::string name, DataType type) noexcept;
 };
 
 } // end namespace engine
