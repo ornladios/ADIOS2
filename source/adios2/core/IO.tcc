@@ -100,7 +100,8 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
 template <class T>
 Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                                   const std::string &variableName,
-                                  const std::string separator)
+                                  const std::string separator,
+                                  const bool allowModification)
 {
     PERFSTUBS_SCOPED_TIMER("IO::DefineAttribute");
     if (!variableName.empty() &&
@@ -121,8 +122,9 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
         if (helper::ValueToString(value) !=
             itExistingAttribute->second->GetInfo()["Value"])
         {
-            itExistingAttribute->second = std::unique_ptr<AttributeBase>(
-                new Attribute<T>(globalName, value));
+            Attribute<T> &a =
+                static_cast<Attribute<T> &>(*itExistingAttribute->second);
+            a.Modify(value);
             for (auto &e : m_Engines)
             {
                 e.second->NotifyEngineAttribute(
@@ -134,8 +136,8 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     else
     {
         auto itAttributePair = m_Attributes.emplace(
-            globalName, std::unique_ptr<AttributeBase>(
-                            new Attribute<T>(globalName, value)));
+            globalName, std::unique_ptr<AttributeBase>(new Attribute<T>(
+                            globalName, value, allowModification)));
         for (auto &e : m_Engines)
         {
             e.second->NotifyEngineAttribute(
@@ -146,10 +148,10 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
 }
 
 template <class T>
-Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
-                                  const size_t elements,
-                                  const std::string &variableName,
-                                  const std::string separator)
+Attribute<T> &
+IO::DefineAttribute(const std::string &name, const T *array,
+                    const size_t elements, const std::string &variableName,
+                    const std::string separator, const bool allowModification)
 {
     PERFSTUBS_SCOPED_TIMER("IO::DefineAttribute");
     if (!variableName.empty() &&
@@ -174,8 +176,9 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
 
         if (itExistingAttribute->second->GetInfo()["Value"] != arrayValues)
         {
-            itExistingAttribute->second = std::unique_ptr<AttributeBase>(
-                new Attribute<T>(globalName, array, elements));
+            Attribute<T> &a =
+                static_cast<Attribute<T> &>(*itExistingAttribute->second);
+            a.Modify(array, elements);
             for (auto &e : m_Engines)
             {
                 e.second->NotifyEngineAttribute(
@@ -187,8 +190,8 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
     else
     {
         auto itAttributePair = m_Attributes.emplace(
-            globalName, std::unique_ptr<AttributeBase>(
-                            new Attribute<T>(globalName, array, elements)));
+            globalName, std::unique_ptr<AttributeBase>(new Attribute<T>(
+                            globalName, array, elements, allowModification)));
         for (auto &e : m_Engines)
         {
             e.second->NotifyEngineAttribute(

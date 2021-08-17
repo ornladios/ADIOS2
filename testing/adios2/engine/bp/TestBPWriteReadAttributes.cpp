@@ -1061,10 +1061,10 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
     }
 }
 
-TEST_F(BPWriteReadAttributes, WriteReadStreamMutable)
+TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
 {
     const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
-                              "AttributesWriteReadMutable.bp";
+                              "AttributesWriteReadModifiable.bp";
 
     const std::string separator = "\\";
 
@@ -1108,11 +1108,15 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamMutable)
         auto var1 = io.DefineVariable<int32_t>("var1");
         auto var2 = io.DefineVariable<int32_t>("var2", shape, start, count);
 
-        io.DefineAttribute<double>("dArray", d3, 3, var1.Name(), separator);
-        io.DefineAttribute<double>("dArray", d3, 3, var2.Name(), separator);
+        io.DefineAttribute<double>("dArray", d3, 3, var1.Name(), separator,
+                                   true);
+        io.DefineAttribute<double>("dArray", d3, 3, var2.Name(), separator,
+                                   true);
 
-        io.DefineAttribute<int32_t>("i32Value", -1, var1.Name(), separator);
-        io.DefineAttribute<int32_t>("i32Value", -1, var2.Name(), separator);
+        io.DefineAttribute<int32_t>("i32Value", -1, var1.Name(), separator,
+                                    true);
+        io.DefineAttribute<int32_t>("i32Value", -1, var2.Name(), separator,
+                                    true);
 
         adios2::Engine bpWriter = io.Open(fName, adios2::Mode::Write);
 
@@ -1128,18 +1132,19 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamMutable)
 
             bpWriter.BeginStep();
 
-            io.DefineAttribute<double>("dArray", d, 3, var1.Name(), separator);
-            io.DefineAttribute<uint32_t>("i32Value", step32, var1.Name(),
-                                         separator);
+            io.DefineAttribute<double>("dArray", d, 3, var1.Name(), separator,
+                                       true);
+            io.DefineAttribute<int32_t>("i32Value", step32, var1.Name(),
+                                        separator, true);
             bpWriter.Put(var1, step32);
 
             if (step % 2 == 0)
             {
                 bpWriter.Put(var2, currentTestData.I32.data());
                 io.DefineAttribute<double>("dArray", d, 3, var2.Name(),
-                                           separator);
-                io.DefineAttribute<uint32_t>("i32Value", step32, var2.Name(),
-                                             separator);
+                                           separator, true);
+                io.DefineAttribute<int32_t>("i32Value", step32, var2.Name(),
+                                            separator, true);
             }
 
             bpWriter.EndStep();
@@ -1173,11 +1178,11 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamMutable)
             }
 
             const std::string stepS = std::to_string(step);
-            auto itU32Value = attributesInfo.find("i32Value");
-            EXPECT_NE(itU32Value, attributesInfo.end());
-            EXPECT_EQ(itU32Value->second.at("Type"), "uint32_t");
-            EXPECT_EQ(itU32Value->second.at("Elements"), "1");
-            EXPECT_EQ(itU32Value->second.at("Value"), stepS);
+            auto iti32Value = attributesInfo.find("i32Value");
+            EXPECT_NE(iti32Value, attributesInfo.end());
+            EXPECT_EQ(iti32Value->second.at("Type"), "int32_t");
+            EXPECT_EQ(iti32Value->second.at("Elements"), "1");
+            EXPECT_EQ(iti32Value->second.at("Value"), stepS);
         };
 
         adios2::IO io = adios.DeclareIO("ReaderIO");

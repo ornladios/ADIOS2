@@ -1039,14 +1039,14 @@ void BP4Deserializer::DefineAttributeInEngineIO(
 
     if (characteristics.Statistics.IsValue)
     {
-        engine.m_IO.DefineAttribute<T>(attributeName,
-                                       characteristics.Statistics.Value);
+        engine.m_IO.DefineAttribute<T>(
+            attributeName, characteristics.Statistics.Value, "", "", true);
     }
     else
     {
         engine.m_IO.DefineAttribute<T>(
             attributeName, characteristics.Statistics.Values.data(),
-            characteristics.Statistics.Values.size());
+            characteristics.Statistics.Values.size(), "", "", true);
     }
 }
 
