@@ -226,10 +226,10 @@ TEST_F(MhsEngineTest, TestMhsMultiRank)
     std::string filename = "TestMhsMultiRank";
     adios2::Params engineParams = {{"Verbose", "0"}, {"Tiers", "4"}};
 
-    size_t rows = 100;
-    Dims shape = {rows, 8, 64};
+    size_t rows = 32;
+    Dims shape = {rows, 8, 16};
     Dims start = {0, 0, 0};
-    Dims count = {1, 8, 64};
+    Dims count = {1, 8, 16};
 
     Writer(shape, start, count, rows, engineParams, filename);
     MPI_Barrier(MPI_COMM_WORLD);

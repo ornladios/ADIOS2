@@ -260,7 +260,7 @@ TEST_F(MhsEngineTest, TestMhsSingleRank)
     std::string filename = "TestMhsSingleRank";
     adios2::Params engineParams = {{"Verbose", "0"}, {"Tiers", "1"}};
 
-    size_t rows = 1000;
+    size_t rows = 100;
     Dims shape = {rows, 1, 128};
     Dims start = {0, 0, 0};
     Dims count = {1, 1, 128};
