@@ -97,21 +97,10 @@ void Attribute<T>::Modify(const T *data, const size_t elements)
 {
     if (m_AllowModification)
     {
-        if (this->m_Type == helper::GetDataType<T>())
-        {
-            m_DataArray = std::vector<T>(data, data + elements);
-            Pad<T>::Zero(m_DataSingleValue);
-            this->m_IsSingleValue = false;
-            this->m_Elements = elements;
-        }
-        else
-        {
-            throw std::invalid_argument(
-                "ERROR: modifiable attribute " + this->m_Name +
-                " has been defined with type " + ToString(this->m_Type) +
-                ". Type cannot be changed to " +
-                ToString(helper::GetDataType<T>()) + "\n");
-        }
+        m_DataArray = std::vector<T>(data, data + elements);
+        Pad<T>::Zero(m_DataSingleValue);
+        this->m_IsSingleValue = false;
+        this->m_Elements = elements;
     }
     else
     {
@@ -126,22 +115,11 @@ void Attribute<T>::Modify(const T &data)
 {
     if (m_AllowModification)
     {
-        if (this->m_Type == helper::GetDataType<T>())
-        {
-            m_DataArray.clear();
-            Pad<T>::Zero(m_DataSingleValue);
-            m_DataSingleValue = data;
-            this->m_IsSingleValue = true;
-            this->m_Elements = 1;
-        }
-        else
-        {
-            throw std::invalid_argument(
-                "ERROR: modifiable attribute " + this->m_Name +
-                " has been defined with type " + ToString(this->m_Type) +
-                ". Type cannot be changed to " +
-                ToString(helper::GetDataType<T>()) + "\n");
-        }
+        m_DataArray.clear();
+        Pad<T>::Zero(m_DataSingleValue);
+        m_DataSingleValue = data;
+        this->m_IsSingleValue = true;
+        this->m_Elements = 1;
     }
     else
     {

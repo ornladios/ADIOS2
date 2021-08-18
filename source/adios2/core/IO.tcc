@@ -122,13 +122,25 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
         if (helper::ValueToString(value) !=
             itExistingAttribute->second->GetInfo()["Value"])
         {
-            Attribute<T> &a =
-                static_cast<Attribute<T> &>(*itExistingAttribute->second);
-            a.Modify(value);
-            for (auto &e : m_Engines)
+            if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
             {
-                e.second->NotifyEngineAttribute(
-                    globalName, itExistingAttribute->second->m_Type);
+                Attribute<T> &a =
+                    static_cast<Attribute<T> &>(*itExistingAttribute->second);
+                a.Modify(value);
+                for (auto &e : m_Engines)
+                {
+                    e.second->NotifyEngineAttribute(
+                        globalName, itExistingAttribute->second->m_Type);
+                }
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: modifiable attribute " + globalName +
+                    " has been defined with type " +
+                    ToString(itExistingAttribute->second->m_Type) +
+                    ". Type cannot be changed to " +
+                    ToString(helper::GetDataType<T>()) + "\n");
             }
         }
         return static_cast<Attribute<T> &>(*itExistingAttribute->second);
@@ -176,13 +188,25 @@ IO::DefineAttribute(const std::string &name, const T *array,
 
         if (itExistingAttribute->second->GetInfo()["Value"] != arrayValues)
         {
-            Attribute<T> &a =
-                static_cast<Attribute<T> &>(*itExistingAttribute->second);
-            a.Modify(array, elements);
-            for (auto &e : m_Engines)
+            if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
             {
-                e.second->NotifyEngineAttribute(
-                    globalName, itExistingAttribute->second->m_Type);
+                Attribute<T> &a =
+                    static_cast<Attribute<T> &>(*itExistingAttribute->second);
+                a.Modify(array, elements);
+                for (auto &e : m_Engines)
+                {
+                    e.second->NotifyEngineAttribute(
+                        globalName, itExistingAttribute->second->m_Type);
+                }
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: modifiable attribute " + globalName +
+                    " has been defined with type " +
+                    ToString(itExistingAttribute->second->m_Type) +
+                    ". Type cannot be changed to " +
+                    ToString(helper::GetDataType<T>()) + "\n");
             }
         }
         return static_cast<Attribute<T> &>(*itExistingAttribute->second);
