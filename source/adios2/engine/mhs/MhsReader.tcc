@@ -37,10 +37,14 @@ inline void MhsReader::GetDeferredCommon(Variable<std::string> &variable,
 template <class T>
 void MhsReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    m_SubEngines[0]->Get(variable, data, Mode::Sync);
-    for (int i = 1; i < m_Tiers; ++i)
+    for (int i = 0; i < m_Tiers; ++i)
     {
         auto var = m_SubIOs[i]->InquireVariable<T>(variable.m_Name);
+        if (!var)
+        {
+            break;
+        }
+        var->SetSelection({variable.m_Start, variable.m_Count});
         m_SubEngines[i]->Get(*var, data, Mode::Sync);
     }
 }

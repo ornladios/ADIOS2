@@ -18,14 +18,18 @@ namespace core
 namespace compress
 {
 
-int CompressSirius::m_CurrentTier = 0;
-int CompressSirius::m_Tiers = 0;
+std::unordered_map<std::string, int> CompressSirius::m_CurrentTierMap;
+std::vector<std::unordered_map<std::string, std::vector<char>>>
+    CompressSirius::m_TierBuffersMap;
+int CompressSirius::m_CurrentTier;
 std::vector<std::vector<char>> CompressSirius::m_TierBuffers;
+int CompressSirius::m_Tiers = 0;
 
 CompressSirius::CompressSirius(const Params &parameters)
 : Operator("sirius", parameters)
 {
-    helper::GetParameter(parameters, "tiers", m_Tiers);
+    helper::GetParameter(parameters, "Tiers", m_Tiers);
+    m_TierBuffersMap.resize(m_Tiers);
     m_TierBuffers.resize(m_Tiers);
 }
 
@@ -64,38 +68,51 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
-                                  void *dataOut, const Dims &dimensions,
-                                  DataType type, const Params &parameters)
+                                  void *dataOut, const Dims &start,
+                                  const Dims &count, DataType type)
 {
-    size_t outputBytes = std::accumulate(dimensions.begin(), dimensions.end(),
+    size_t outputBytes = std::accumulate(count.begin(), count.end(),
                                          helper::GetDataTypeSize(type),
                                          std::multiplies<size_t>());
 
+    std::string blockId =
+        helper::DimsToString(start) + helper::DimsToString(count);
+
     // decompress data and copy back to m_TierBuffers
     size_t bytesPerTier = outputBytes / m_Tiers;
-    m_TierBuffers[m_CurrentTier].resize(bytesPerTier);
-    std::memcpy(m_TierBuffers[m_CurrentTier].data(), bufferIn, bytesPerTier);
+    auto &currentBuffer = m_TierBuffersMap[m_CurrentTierMap[blockId]][blockId];
+    auto &currentTier = m_CurrentTierMap[blockId];
+    currentBuffer.resize(bytesPerTier);
+    std::memcpy(currentBuffer.data(), bufferIn, bytesPerTier);
 
     // if called from the final tier, then merge all tier buffers and copy back
     // to dataOut
     size_t accumulatedBytes = 0;
-    if (m_CurrentTier == m_Tiers - 1)
+    if (currentTier == m_Tiers - 1)
     {
-        for (const auto &b : m_TierBuffers)
+        for (auto &bmap : m_TierBuffersMap)
         {
+            auto &b = bmap[blockId];
             std::memcpy(reinterpret_cast<char *>(dataOut) + accumulatedBytes,
                         b.data(), b.size());
             accumulatedBytes += b.size();
         }
     }
 
-    m_CurrentTier++;
-    if (m_CurrentTier % m_Tiers == 0)
+    currentTier++;
+    if (currentTier % m_Tiers == 0)
     {
-        m_CurrentTier = 0;
+        currentTier = 0;
     }
 
-    return outputBytes;
+    if (currentTier == 0)
+    {
+        return outputBytes;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 bool CompressSirius::IsDataTypeValid(const DataType type) const

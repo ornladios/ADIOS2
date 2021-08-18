@@ -12,6 +12,7 @@
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSSIRIUS_H_
 
 #include "adios2/core/Operator.h"
+#include <unordered_map>
 
 namespace adios2
 {
@@ -35,15 +36,22 @@ public:
     using Operator::Decompress;
 
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const Dims &dimensions, DataType type,
-                      const Params &parameters) final;
+                      const Dims &start, const Dims &count,
+                      DataType type) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 
 private:
+    static int m_Tiers;
+
+    // for compress
     static std::vector<std::vector<char>> m_TierBuffers;
     static int m_CurrentTier;
-    static int m_Tiers;
+
+    // for decompress
+    static std::vector<std::unordered_map<std::string, std::vector<char>>>
+        m_TierBuffersMap;
+    static std::unordered_map<std::string, int> m_CurrentTierMap;
 };
 
 } // end namespace compress

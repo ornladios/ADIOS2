@@ -3,6 +3,7 @@
  * accompanying file Copyright.txt for details.
  */
 
+#include "TestMhsCommon.h"
 #include <adios2.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
@@ -21,69 +22,17 @@ public:
     MhsEngineTest() = default;
 };
 
-template <class T>
-void GenData(std::complex<T> *data, const size_t row, const Dims &count)
-{
-    for (size_t i = 0; i < count[1]; ++i)
-    {
-        for (size_t j = 0; j < count[2]; ++j)
-        {
-            data[i * count[2] + j] = {static_cast<T>(i * count[2] + j + row),
-                                      static_cast<T>(i * count[2])};
-        }
-    }
-}
-
-template <class T>
-void GenData(T *data, const size_t row, const Dims &count)
-{
-    for (size_t i = 0; i < count[1]; ++i)
-    {
-        for (size_t j = 0; j < count[2]; ++j)
-        {
-            data[i * count[2] + j] = static_cast<T>(i * count[2] + j + row);
-        }
-    }
-}
-
-template <class T>
-void GenData(std::vector<T> &data, const size_t row, const Dims &count)
-{
-    GenData(data.data(), row, count);
-}
-
-template <class T>
-void VerifyData(const T *data, const size_t rows, const Dims &shape)
-{
-    size_t columnSize = 1;
-    for (const auto &i : shape)
-    {
-        columnSize *= i;
-    }
-    size_t rowSize = 1;
-    for (size_t i = 1; i < shape.size(); ++i)
-    {
-        rowSize *= shape[i];
-    }
-
-    std::vector<T> tmpdata(columnSize);
-    size_t position = 0;
-    for (size_t i = 0; i < rows; ++i)
-    {
-        GenData(tmpdata.data() + position, i, shape);
-        position += rowSize;
-    }
-    for (size_t i = 0; i < columnSize; ++i)
-    {
-        ASSERT_EQ(data[i], tmpdata[i]);
-    }
-}
-
 void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const size_t rows, const adios2::Params &engineParams,
             const std::string &name)
 {
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+
+    if (mpiRank != 0)
+    {
+        return;
+    }
+
+    adios2::ADIOS adios(MPI_COMM_SELF);
     adios2::IO io = adios.DeclareIO("ms");
     io.SetEngine("mhs");
     io.SetParameters(engineParams);
@@ -104,7 +53,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
 
-    readerEngine.BeginStep();
     const auto &vars = io.AvailableVariables();
     std::cout << "All available variables : ";
     for (const auto &var : vars)
@@ -112,6 +60,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         std::cout << var.first << ", ";
     }
     std::cout << std::endl;
+
     ASSERT_EQ(vars.size(), 10);
 
     adios2::Variable<char> bpChars = io.InquireVariable<char>("bpChars");
@@ -131,40 +80,57 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     adios2::Variable<std::complex<double>> bpDComplexes =
         io.InquireVariable<std::complex<double>>("bpDComplexes");
 
-    bpChars.SetSelection({start, shape});
-    bpUChars.SetSelection({start, shape});
-    bpShorts.SetSelection({start, shape});
-    bpUShorts.SetSelection({start, shape});
-    bpInts.SetSelection({start, shape});
-    bpUInts.SetSelection({start, shape});
-    bpFloats.SetSelection({start, shape});
-    bpDoubles.SetSelection({start, shape});
-    bpComplexes.SetSelection({start, shape});
-    bpDComplexes.SetSelection({start, shape});
+    for (size_t step = 0; step < 10; step++)
+    {
+        readerEngine.BeginStep();
 
-    readerEngine.Get(bpChars, myChars.data(), adios2::Mode::Sync);
-    readerEngine.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
-    readerEngine.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
-    readerEngine.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-    readerEngine.Get(bpInts, myInts.data(), adios2::Mode::Sync);
-    readerEngine.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
-    readerEngine.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
-    readerEngine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-    readerEngine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-    readerEngine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+        bpChars.SetSelection({start, shape});
+        bpUChars.SetSelection({start, shape});
+        bpShorts.SetSelection({start, shape});
+        bpUShorts.SetSelection({start, shape});
+        bpInts.SetSelection({start, shape});
+        bpUInts.SetSelection({start, shape});
+        bpFloats.SetSelection({start, shape});
+        bpDoubles.SetSelection({start, shape});
+        bpComplexes.SetSelection({start, shape});
+        bpDComplexes.SetSelection({start, shape});
 
-    VerifyData(myChars.data(), rows, shape);
-    VerifyData(myUChars.data(), rows, shape);
-    VerifyData(myShorts.data(), rows, shape);
-    VerifyData(myUShorts.data(), rows, shape);
-    VerifyData(myInts.data(), rows, shape);
-    VerifyData(myUInts.data(), rows, shape);
-    VerifyData(myFloats.data(), rows, shape);
-    VerifyData(myDoubles.data(), rows, shape);
-    VerifyData(myComplexes.data(), rows, shape);
-    VerifyData(myDComplexes.data(), rows, shape);
+        readerEngine.Get(bpChars, myChars.data(), adios2::Mode::Sync);
+        VerifyData(myChars.data(), step, {0, 0, 0}, shape, shape, "bpChars");
 
-    readerEngine.EndStep();
+        readerEngine.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
+        VerifyData(myUChars.data(), step, {0, 0, 0}, shape, shape, "bpUChars");
+
+        readerEngine.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
+        VerifyData(myShorts.data(), step, {0, 0, 0}, shape, shape, "bpShorts");
+
+        readerEngine.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
+        VerifyData(myUShorts.data(), step, {0, 0, 0}, shape, shape,
+                   "bpUShorts");
+
+        readerEngine.Get(bpInts, myInts.data(), adios2::Mode::Sync);
+        VerifyData(myInts.data(), step, {0, 0, 0}, shape, shape, "bpInts");
+
+        readerEngine.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
+        VerifyData(myUInts.data(), step, {0, 0, 0}, shape, shape, "bpUInts");
+
+        readerEngine.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
+        VerifyData(myFloats.data(), step, {0, 0, 0}, shape, shape, "bpFloats");
+
+        readerEngine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
+        VerifyData(myDoubles.data(), step, {0, 0, 0}, shape, shape,
+                   "bpDoubles");
+
+        readerEngine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
+        VerifyData(myComplexes.data(), step, {0, 0, 0}, shape, shape,
+                   "bpComplexes");
+
+        readerEngine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+        VerifyData(myDComplexes.data(), step, {0, 0, 0}, shape, shape,
+                   "bpDComplexes");
+
+        readerEngine.EndStep();
+    }
     readerEngine.Close();
 }
 
@@ -209,55 +175,61 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     auto bpDComplexes = io.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
     adios2::Engine writerEngine = io.Open(name, adios2::Mode::Write);
-    writerEngine.BeginStep();
-    for (int i = mpiRank; i < static_cast<int>(rows); i += mpiSize)
+
+    for (size_t step = 0; step < 10; step++)
     {
-        Dims startRow = start;
-        startRow[0] = i;
-        bpChars.SetSelection({startRow, count});
-        bpUChars.SetSelection({startRow, count});
-        bpShorts.SetSelection({startRow, count});
-        bpUShorts.SetSelection({startRow, count});
-        bpInts.SetSelection({startRow, count});
-        bpUInts.SetSelection({startRow, count});
-        bpFloats.SetSelection({startRow, count});
-        bpDoubles.SetSelection({startRow, count});
-        bpComplexes.SetSelection({startRow, count});
-        bpDComplexes.SetSelection({startRow, count});
-        GenData(myChars, i, count);
-        GenData(myUChars, i, count);
-        GenData(myShorts, i, count);
-        GenData(myUShorts, i, count);
-        GenData(myInts, i, count);
-        GenData(myUInts, i, count);
-        GenData(myFloats, i, count);
-        GenData(myDoubles, i, count);
-        GenData(myComplexes, i, count);
-        GenData(myDComplexes, i, count);
-        writerEngine.Put(bpChars, myChars.data(), adios2::Mode::Sync);
-        writerEngine.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
-        writerEngine.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
-        writerEngine.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-        writerEngine.Put(bpInts, myInts.data(), adios2::Mode::Sync);
-        writerEngine.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
-        writerEngine.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
-        writerEngine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-        writerEngine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-        writerEngine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+        writerEngine.BeginStep();
+        for (int i = mpiRank; i < static_cast<int>(rows); i += mpiSize)
+        {
+            Dims startRow = start;
+            startRow[0] = i;
+            bpChars.SetSelection({startRow, count});
+            bpUChars.SetSelection({startRow, count});
+            bpShorts.SetSelection({startRow, count});
+            bpUShorts.SetSelection({startRow, count});
+            bpInts.SetSelection({startRow, count});
+            bpUInts.SetSelection({startRow, count});
+            bpFloats.SetSelection({startRow, count});
+            bpDoubles.SetSelection({startRow, count});
+            bpComplexes.SetSelection({startRow, count});
+            bpDComplexes.SetSelection({startRow, count});
+            GenData(myChars, step, startRow, count, shape);
+            GenData(myUChars, step, startRow, count, shape);
+            GenData(myShorts, step, startRow, count, shape);
+            GenData(myUShorts, step, startRow, count, shape);
+            GenData(myInts, step, startRow, count, shape);
+            GenData(myUInts, step, startRow, count, shape);
+            GenData(myFloats, step, startRow, count, shape);
+            GenData(myDoubles, step, startRow, count, shape);
+            GenData(myComplexes, step, startRow, count, shape);
+            GenData(myDComplexes, step, startRow, count, shape);
+            writerEngine.Put(bpChars, myChars.data(), adios2::Mode::Sync);
+            writerEngine.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
+            writerEngine.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
+            writerEngine.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
+            writerEngine.Put(bpInts, myInts.data(), adios2::Mode::Sync);
+            writerEngine.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
+            writerEngine.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
+            writerEngine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
+            writerEngine.Put(bpComplexes, myComplexes.data(),
+                             adios2::Mode::Sync);
+            writerEngine.Put(bpDComplexes, myDComplexes.data(),
+                             adios2::Mode::Sync);
+        }
+        writerEngine.EndStep();
     }
-    writerEngine.EndStep();
     writerEngine.Close();
 }
 
 TEST_F(MhsEngineTest, TestMhsMultiRank)
 {
     std::string filename = "TestMhsMultiRank";
-    adios2::Params engineParams = {{"Verbose", "0"}, {"Tiers", "1"}};
+    adios2::Params engineParams = {{"Verbose", "0"}, {"Tiers", "4"}};
 
-    size_t rows = 80;
-    Dims shape = {rows, 8, 64};
+    size_t rows = 32;
+    Dims shape = {rows, 8, 16};
     Dims start = {0, 0, 0};
-    Dims count = {1, 8, 64};
+    Dims count = {1, 8, 16};
 
     Writer(shape, start, count, rows, engineParams, filename);
     MPI_Barrier(MPI_COMM_WORLD);

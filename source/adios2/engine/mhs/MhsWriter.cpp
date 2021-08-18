@@ -103,7 +103,7 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         }
         else if (itCompressor->second == "sirius")
         {
-            params.emplace("tiers", std::to_string(m_Tiers));
+            params.emplace("Tiers", std::to_string(m_Tiers));
             m_OperatorMap.emplace(
                 itVar->second,
                 std::make_shared<compress::CompressSirius>(params));

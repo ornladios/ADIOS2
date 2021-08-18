@@ -105,7 +105,21 @@ public:
      */
     virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
                               void *dataOut, const Dims &dimensions,
-                              DataType type, const Params &parameters);
+                              const DataType type, const Params &parameters);
+
+    /**
+     * Sirius signature
+     * @param bufferIn
+     * @param sizeIn
+     * @param dataOut
+     * @param start
+     * @param count
+     * @param type
+     * @return
+     */
+    virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
+                              void *dataOut, const Dims &start,
+                              const Dims &count, const DataType type);
 
     virtual bool IsDataTypeValid(const DataType type) const = 0;
 
