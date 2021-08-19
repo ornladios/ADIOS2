@@ -1865,6 +1865,7 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
 // ADIOS2 BP write and read 1D arrays
 TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteReadEmptyProcess)
 {
+#if ADIOS2_USE_MPI
     // Each process, except rank 0 would write a 1x8 array and all
     // processes would form a (mpiSize-1) * Nx 1D array
     const std::string fname("ADIOS2BPWriteReadEmptyProces.bp");
@@ -1876,14 +1877,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteReadEmptyProcess)
     // Number of steps
     const size_t NSteps = 3;
 
-#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
 
-    // Write test data using BP
-
-#if ADIOS2_USE_MPI
     /* This is a parallel test, do not run in serial */
     adios2::ADIOS adios(MPI_COMM_WORLD);
     {
