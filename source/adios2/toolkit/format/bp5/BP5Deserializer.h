@@ -47,10 +47,12 @@ public:
         char *DestinationAddr;
         void *Internal;
     };
+    void SetupForRandomAccess();
     void InstallMetaMetaData(MetaMetaInfoBlock &MMList);
     void InstallMetaData(void *MetadataBlock, size_t BlockLen,
-                         size_t WriterRank);
-    void InstallAttributeData(void *AttributeBlock, size_t BlockLen);
+                         size_t WriterRank, size_t Step = SIZE_MAX);
+    void InstallAttributeData(void *AttributeBlock, size_t BlockLen,
+                              size_t Step = SIZE_MAX);
     void SetupForTimestep(size_t t);
     // return from QueueGet is true if a sync is needed to fill the data
     bool QueueGet(core::VariableBase &variable, void *DestData);
@@ -64,6 +66,7 @@ public:
     bool m_WriterIsRowMajor = 1;
     bool m_ReaderIsRowMajor = 1;
     core::Engine *m_Engine = NULL;
+    bool m_RandomAccessMode = 0;
 
 private:
     struct BP5VarRec
@@ -74,23 +77,14 @@ private:
         DataType Type;
         int ElementSize = 0;
         size_t *GlobalDims = NULL;
+        size_t LastTSAdded = SIZE_MAX;
         std::vector<size_t> PerWriterMetaFieldOffset;
         std::vector<size_t> PerWriterBlockStart;
-        std::vector<size_t> PerWriterBlockCount;
-        std::vector<size_t *> PerWriterStart;
-        std::vector<size_t *> PerWriterCounts;
-        std::vector<void *> PerWriterIncomingData;
-        std::vector<size_t> PerWriterIncomingSize; // important for compression
         std::vector<size_t *> PerWriterDataLocation;
         BP5VarRec(int WriterSize)
         {
             PerWriterMetaFieldOffset.resize(WriterSize);
             PerWriterBlockStart.resize(WriterSize);
-            PerWriterBlockCount.resize(WriterSize);
-            PerWriterStart.resize(WriterSize);
-            PerWriterCounts.resize(WriterSize);
-            PerWriterIncomingData.resize(WriterSize);
-            PerWriterIncomingSize.resize(WriterSize);
             PerWriterDataLocation.resize(WriterSize);
         }
     };

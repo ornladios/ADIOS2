@@ -339,7 +339,7 @@ void BP5Deserializer::SetupForTimestep(size_t Timestep)
 }
 
 void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
-                                      size_t WriterRank)
+                                      size_t WriterRank, size_t Step)
 {
     FFSTypeHandle FFSformat;
     void *BaseData;
@@ -387,7 +387,12 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
     }
     ControlArray = &Control->Controls[0];
 
+    //    if (m_RandomAccessMode) {
+    //	PrepareForTimestep(Step);
+    //    }
     MetadataBaseAddrs[WriterRank] = BaseData;
+    //    } else {
+    //	Loaded
     for (int i = 0; i < Control->ControlCount; i++)
     {
         int FieldOffset = ControlArray[i].FieldOffset;
@@ -412,6 +417,12 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             }
             if (WriterRank == 0)
             {
+                // use the shape from rank 0
+                VarRec->GlobalDims = meta_base->Shape;
+            }
+            else if (VarRec->GlobalDims == NULL)
+            {
+                // unless there wasn't one before
                 VarRec->GlobalDims = meta_base->Shape;
             }
             if (!VarRec->Variable)
@@ -422,23 +433,19 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 VarByKey[VarRec->Variable] = VarRec;
             }
             VarRec->DimCount = meta_base->Dims;
-            VarRec->PerWriterBlockCount[WriterRank] =
+            size_t BlockCount =
                 meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
-            VarRec->PerWriterStart[WriterRank] = meta_base->Offsets;
-            VarRec->PerWriterCounts[WriterRank] = meta_base->Count;
             VarRec->PerWriterDataLocation[WriterRank] = meta_base->DataLocation;
             if (WriterRank == 0)
             {
                 VarRec->PerWriterBlockStart[WriterRank] = 0;
                 if (m_WriterCohortSize > 1)
-                    VarRec->PerWriterBlockStart[WriterRank + 1] =
-                        VarRec->PerWriterBlockCount[WriterRank];
+                    VarRec->PerWriterBlockStart[WriterRank + 1] = BlockCount;
             }
             if (WriterRank < static_cast<size_t>(m_WriterCohortSize - 1))
             {
                 VarRec->PerWriterBlockStart[WriterRank + 1] =
-                    VarRec->PerWriterBlockStart[WriterRank] +
-                    VarRec->PerWriterBlockCount[WriterRank];
+                    VarRec->PerWriterBlockStart[WriterRank] + BlockCount;
             }
         }
         else
@@ -454,7 +461,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
 }
 
 void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
-                                           size_t BlockLen)
+                                           size_t BlockLen, size_t Step)
 {
     static int DumpMetadata = -1;
     FMFieldList FieldList;
@@ -582,29 +589,38 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
     return true;
 }
 
-bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t i)
+bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t WriterRank)
 {
+    MetaArrayRec *writer_meta_base =
+        (MetaArrayRec *)(((char *)MetadataBaseAddrs[WriterRank]) +
+                         Req.VarRec->PerWriterMetaFieldOffset[WriterRank]);
+
     if (Req.RequestType == Local)
     {
-        size_t NodeFirst = Req.VarRec->PerWriterBlockStart[i];
-        size_t NodeLast = Req.VarRec->PerWriterBlockCount[i] + NodeFirst - 1;
+        size_t WriterBlockCount =
+            writer_meta_base->Dims
+                ? writer_meta_base->DBCount / writer_meta_base->Dims
+                : 1;
+        size_t NodeFirst = Req.VarRec->PerWriterBlockStart[WriterRank];
+        size_t NodeLast = WriterBlockCount + NodeFirst - 1;
         bool res = (NodeFirst <= Req.BlockID) && (NodeLast >= Req.BlockID);
         return res;
     }
     // else Global case
-    for (size_t j = 0; j < Req.VarRec->DimCount; j++)
+    for (size_t j = 0; j < writer_meta_base->Dims; j++)
     {
         size_t SelOffset = Req.Start[j];
         size_t SelSize = Req.Count[j];
         size_t RankOffset;
         size_t RankSize;
-        if (Req.VarRec->PerWriterStart[i] == NULL)
+
+        if (writer_meta_base->Offsets == NULL)
         /* this writer didn't write */
         {
             return false;
         }
-        RankOffset = Req.VarRec->PerWriterStart[i][j];
-        RankSize = Req.VarRec->PerWriterCounts[i][j];
+        RankOffset = writer_meta_base->Offsets[j];
+        RankSize = writer_meta_base->Count[j];
         if ((SelSize == 0) || (RankSize == 0))
         {
             return false;
@@ -663,28 +679,38 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
     for (const auto &Req : PendingRequests)
     {
         //        ImplementGapWarning(Reqs);
-        for (size_t i = 0; i < m_WriterCohortSize; i++)
+        for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize;
+             WriterRank++)
         {
-            if (NeedWriter(Req, i))
+            if (NeedWriter(Req, WriterRank))
             {
                 /* if needed this writer fill destination with acquired data */
                 int ElementSize = Req.VarRec->ElementSize;
-                int DimCount = Req.VarRec->DimCount;
                 size_t *GlobalDimensions = Req.VarRec->GlobalDims;
-                size_t *RankOffset = Req.VarRec->PerWriterStart[i];
-                const size_t *RankSize = Req.VarRec->PerWriterCounts[i];
+                MetaArrayRec *writer_meta_base =
+                    (MetaArrayRec
+                         *)(((char *)MetadataBaseAddrs[WriterRank]) +
+                            Req.VarRec->PerWriterMetaFieldOffset[WriterRank]);
+                int DimCount = writer_meta_base->Dims;
+                size_t *RankOffset = writer_meta_base->Offsets;
+                const size_t *RankSize = writer_meta_base->Count;
                 std::vector<size_t> ZeroSel(DimCount);
                 std::vector<size_t> ZeroRankOffset(DimCount);
                 std::vector<size_t> ZeroGlobalDimensions(DimCount);
                 const size_t *SelOffset = NULL;
                 const size_t *SelSize = Req.Count.data();
                 int ReqIndex = 0;
-                while (Requests[ReqIndex].WriterRank != static_cast<size_t>(i))
+                while (Requests[ReqIndex].WriterRank !=
+                       static_cast<size_t>(WriterRank))
                     ReqIndex++;
+                if (Req.VarRec->PerWriterDataLocation[WriterRank] == NULL)
+                {
+                    // No Data from this writer
+                    continue;
+                }
                 char *IncomingData =
                     (char *)Requests[ReqIndex].DestinationAddr +
-                    Req.VarRec->PerWriterDataLocation[i][0];
-
+                    Req.VarRec->PerWriterDataLocation[WriterRank][0];
                 if (Req.Start.size())
                 {
                     SelOffset = Req.Start.data();
@@ -692,10 +718,12 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                 if (Req.RequestType == Local)
                 {
                     int LocalBlockID =
-                        Req.BlockID - Req.VarRec->PerWriterBlockStart[i];
+                        Req.BlockID -
+                        Req.VarRec->PerWriterBlockStart[WriterRank];
                     IncomingData =
                         (char *)Requests[ReqIndex].DestinationAddr +
-                        Req.VarRec->PerWriterDataLocation[i][LocalBlockID];
+                        Req.VarRec
+                            ->PerWriterDataLocation[WriterRank][LocalBlockID];
 
                     RankOffset = ZeroRankOffset.data();
                     GlobalDimensions = ZeroGlobalDimensions.data();
@@ -1021,7 +1049,12 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
     int Id = 0;
     for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
     {
-        Id += VarRec->PerWriterBlockCount[WriterRank];
+        MetaArrayRec *writer_meta_base =
+            (MetaArrayRec *)(((char *)MetadataBaseAddrs[WriterRank]) +
+                             VarRec->PerWriterMetaFieldOffset[WriterRank]);
+        size_t WriterBlockCount =
+            meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
+        Id += WriterBlockCount;
     }
     MV->BlocksInfo.reserve(Id);
 
@@ -1032,7 +1065,9 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
             (MetaArrayRec *)(((char *)MetadataBaseAddrs[WriterRank]) +
                              VarRec->PerWriterMetaFieldOffset[WriterRank]);
 
-        for (size_t i = 0; i < VarRec->PerWriterBlockCount[WriterRank]; i++)
+        size_t WriterBlockCount =
+            meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
+        for (size_t i = 0; i < WriterBlockCount; i++)
         {
             size_t *Offsets = NULL;
             size_t *Count = NULL;

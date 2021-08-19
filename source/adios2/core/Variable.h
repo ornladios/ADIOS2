@@ -120,7 +120,7 @@ public:
     using Span = core::Span<T>;
 
     /** Needs a map to preserve iterator as it resizes and the key to match the
-     * m_BlocksInfo index */
+     * m_BlocksInfo index (BP4 ONLY) */
     std::map<size_t, Span> m_BlocksSpan;
 
     Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
