@@ -29,15 +29,17 @@ class AttributeBase
 public:
     const std::string m_Name;
     const DataType m_Type;
-    const size_t m_Elements;
-    const bool m_IsSingleValue;
+    size_t m_Elements;
+    bool m_IsSingleValue;
+    const bool m_AllowModification;
 
     /**
      * Single value constructor used by Attribute<T> derived class
      * @param name
      * @param type
      */
-    AttributeBase(const std::string &name, const DataType type);
+    AttributeBase(const std::string &name, const DataType type,
+                  const bool allowModification);
 
     /**
      * Array constructor used by Attribute<T> derived class
@@ -46,7 +48,7 @@ public:
      * @param elements
      */
     AttributeBase(const std::string &name, const DataType type,
-                  const size_t elements);
+                  const size_t elements, const bool allowModification);
 
     virtual ~AttributeBase() = default;
 

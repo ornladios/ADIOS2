@@ -823,6 +823,11 @@ size_t BP4Writer::DebugGetDataBufferSize() const
     return m_BP4Serializer.DebugGetDataBufferSize();
 }
 
+void BP4Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
+{
+    m_BP4Serializer.m_SerializedAttributes.erase(name);
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

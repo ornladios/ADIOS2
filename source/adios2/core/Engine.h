@@ -495,6 +495,11 @@ public:
         return nullptr;
     }
 
+    /** Notify the engine when a new attribute is defined. Called from IO.tcc
+     */
+    virtual void NotifyEngineAttribute(std::string name,
+                                       DataType type) noexcept;
+
 protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no communicator is passed */

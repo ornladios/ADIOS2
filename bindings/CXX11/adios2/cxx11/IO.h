@@ -172,6 +172,7 @@ public:
      * @param separator default is "/", hierarchy between variable name and
      * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
      * used if variableName is empty.
+     * @param allowModification true allows redefining existing attribute
      * @return object reference to internal Attribute in IO
      * @exception std::invalid_argument if Attribute with unique name (in IO or
      * Variable) is already defined
@@ -180,7 +181,8 @@ public:
     Attribute<T> DefineAttribute(const std::string &name, const T *data,
                                  const size_t size,
                                  const std::string &variableName = "",
-                                 const std::string separator = "/");
+                                 const std::string separator = "/",
+                                 const bool allowModification = false);
 
     /**
      * @brief Define single value attribute
@@ -192,6 +194,7 @@ public:
      * @param separator default is "/", hierarchy between variable name and
      * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
      * used if variableName is empty.
+     * @param allowModification true allows redefining existing attribute
      * @return object reference to internal Attribute in IO
      * @exception std::invalid_argument if Attribute with unique name (in IO or
      * Variable) is already defined
@@ -199,7 +202,8 @@ public:
     template <class T>
     Attribute<T> DefineAttribute(const std::string &name, const T &value,
                                  const std::string &variableName = "",
-                                 const std::string separator = "/");
+                                 const std::string separator = "/",
+                                 const bool allowModification = false);
 
     /**
      * @brief Retrieve an existing attribute
@@ -386,11 +390,11 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #define declare_template_instantiation(T)                                      \
     extern template Attribute<T> IO::DefineAttribute(                          \
         const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
                                                                                \
     extern template Attribute<T> IO::DefineAttribute(                          \
         const std::string &, const T &, const std::string &,                   \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
                                                                                \
     extern template Attribute<T> IO::InquireAttribute<T>(                      \
         const std::string &, const std::string &, const std::string);

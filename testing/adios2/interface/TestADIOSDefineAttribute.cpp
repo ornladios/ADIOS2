@@ -45,6 +45,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
     auto availableAttributes = io.AvailableAttributes();
     EXPECT_EQ(availableAttributes.size(), 1);
 
+    // Redefinition is not allowed (non-modifiable attribute)
     EXPECT_THROW(io.DefineAttribute<std::string>(name, "0"),
                  std::invalid_argument);
 
@@ -54,6 +55,20 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
 
     auto attributeString2 = io.InquireAttribute<std::string>(name);
     EXPECT_TRUE(attributeString2);
+
+    /* Modifiable attribute can change its value(s) ... */
+    io.DefineAttribute<std::string>("modifiable", "initial", "", "", true);
+    io.DefineAttribute<std::string>("modifiable", "modified", "", "", true);
+
+    auto attributeString3 = io.InquireAttribute<std::string>("modifiable");
+    EXPECT_TRUE(attributeString3);
+    auto attributeString3Value = attributeString3.Data();
+    ASSERT_EQ(attributeString3Value.size() == 1, true);
+    EXPECT_EQ(attributeString3Value[0], "modified");
+
+    /* ... but not its type */
+    EXPECT_THROW(io.DefineAttribute<double>("modifiable", 1.0, "", "", true),
+                 std::invalid_argument);
 }
 
 TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)

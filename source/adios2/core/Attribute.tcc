@@ -60,25 +60,73 @@ template <typename T>
 Attribute<T>::Attribute(const Attribute<T> &other)
 : AttributeBase(other), m_DataArray(other.m_DataArray)
 {
-    Pad<T>::Zero(m_DataSingleValue);
-    m_DataSingleValue = other.m_DataSingleValue;
+    if (other.m_IsSingleValue)
+    {
+        m_DataArray.clear();
+        Pad<T>::Zero(m_DataSingleValue);
+        m_DataSingleValue = other.m_DataSingleValue;
+    }
+    else
+    {
+        m_DataArray = other.m_DataArray;
+        Pad<T>::Zero(m_DataSingleValue);
+    }
 }
 
 template <typename T>
 Attribute<T>::Attribute(const std::string &name, const T *array,
-                        const size_t elements)
-: AttributeBase(name, helper::GetDataType<T>(), elements)
+                        const size_t elements, const bool allowModification)
+: AttributeBase(name, helper::GetDataType<T>(), elements, allowModification)
 {
-    Pad<T>::Zero(m_DataSingleValue);
     m_DataArray = std::vector<T>(array, array + elements);
+    Pad<T>::Zero(m_DataSingleValue);
 }
 
 template <typename T>
-Attribute<T>::Attribute(const std::string &name, const T &value)
-: AttributeBase(name, helper::GetDataType<T>())
+Attribute<T>::Attribute(const std::string &name, const T &value,
+                        const bool allowModification)
+: AttributeBase(name, helper::GetDataType<T>(), allowModification)
 {
+    m_DataArray.clear();
     Pad<T>::Zero(m_DataSingleValue);
     m_DataSingleValue = value;
+}
+
+template <typename T>
+void Attribute<T>::Modify(const T *data, const size_t elements)
+{
+    if (m_AllowModification)
+    {
+        m_DataArray = std::vector<T>(data, data + elements);
+        Pad<T>::Zero(m_DataSingleValue);
+        this->m_IsSingleValue = false;
+        this->m_Elements = elements;
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: Trying to modify attribute " + this->m_Name +
+            " which has been defined as non-modifiable\n");
+    }
+}
+
+template <typename T>
+void Attribute<T>::Modify(const T &data)
+{
+    if (m_AllowModification)
+    {
+        m_DataArray.clear();
+        Pad<T>::Zero(m_DataSingleValue);
+        m_DataSingleValue = data;
+        this->m_IsSingleValue = true;
+        this->m_Elements = 1;
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: Trying to modify attribute " + this->m_Name +
+            " which has been defined as non-modifiable\n");
+    }
 }
 
 template <typename T>

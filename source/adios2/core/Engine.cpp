@@ -100,6 +100,8 @@ void Engine::Init() {}
 void Engine::InitParameters() {}
 void Engine::InitTransports() {}
 
+void Engine::NotifyEngineAttribute(std::string name, DataType type) noexcept {}
+
 // DoPut*
 #define declare_type(T)                                                        \
     void Engine::DoPut(Variable<T> &, typename Variable<T>::Span &,            \

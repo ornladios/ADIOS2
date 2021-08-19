@@ -23,6 +23,7 @@
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosType.h"
 #include <adios2-perfstubs-interface.h>
+#include <adios2/core/Engine.h>
 
 namespace adios2
 {
@@ -99,7 +100,8 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
 template <class T>
 Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                                   const std::string &variableName,
-                                  const std::string separator)
+                                  const std::string separator,
+                                  const bool allowModification)
 {
     PERFSTUBS_SCOPED_TIMER("IO::DefineAttribute");
     if (!variableName.empty() &&
@@ -117,32 +119,51 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (itExistingAttribute != m_Attributes.end())
     {
-        if (helper::ValueToString(value) ==
+        if (helper::ValueToString(value) !=
             itExistingAttribute->second->GetInfo()["Value"])
         {
-            return static_cast<Attribute<T> &>(*itExistingAttribute->second);
+            if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
+            {
+                Attribute<T> &a =
+                    static_cast<Attribute<T> &>(*itExistingAttribute->second);
+                a.Modify(value);
+                for (auto &e : m_Engines)
+                {
+                    e.second->NotifyEngineAttribute(
+                        globalName, itExistingAttribute->second->m_Type);
+                }
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: modifiable attribute " + globalName +
+                    " has been defined with type " +
+                    ToString(itExistingAttribute->second->m_Type) +
+                    ". Type cannot be changed to " +
+                    ToString(helper::GetDataType<T>()) + "\n");
+            }
         }
-        else
-        {
-            throw std::invalid_argument(
-                "ERROR: attribute " + globalName +
-                " has been defined and its value cannot be changed, in call to "
-                "DefineAttribute\n");
-        }
+        return static_cast<Attribute<T> &>(*itExistingAttribute->second);
     }
-
-    auto itAttributePair = m_Attributes.emplace(
-        globalName,
-        std::unique_ptr<AttributeBase>(new Attribute<T>(globalName, value)));
-
-    return static_cast<Attribute<T> &>(*itAttributePair.first->second);
+    else
+    {
+        auto itAttributePair = m_Attributes.emplace(
+            globalName, std::unique_ptr<AttributeBase>(new Attribute<T>(
+                            globalName, value, allowModification)));
+        for (auto &e : m_Engines)
+        {
+            e.second->NotifyEngineAttribute(
+                globalName, itAttributePair.first->second->m_Type);
+        }
+        return static_cast<Attribute<T> &>(*itAttributePair.first->second);
+    }
 }
 
 template <class T>
-Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
-                                  const size_t elements,
-                                  const std::string &variableName,
-                                  const std::string separator)
+Attribute<T> &
+IO::DefineAttribute(const std::string &name, const T *array,
+                    const size_t elements, const std::string &variableName,
+                    const std::string separator, const bool allowModification)
 {
     PERFSTUBS_SCOPED_TIMER("IO::DefineAttribute");
     if (!variableName.empty() &&
@@ -165,23 +186,43 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
             helper::VectorToCSV(std::vector<T>(array, array + elements)) +
             " }");
 
-        if (itExistingAttribute->second->GetInfo()["Value"] == arrayValues)
+        if (itExistingAttribute->second->GetInfo()["Value"] != arrayValues)
         {
-            return static_cast<Attribute<T> &>(*itExistingAttribute->second);
+            if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
+            {
+                Attribute<T> &a =
+                    static_cast<Attribute<T> &>(*itExistingAttribute->second);
+                a.Modify(array, elements);
+                for (auto &e : m_Engines)
+                {
+                    e.second->NotifyEngineAttribute(
+                        globalName, itExistingAttribute->second->m_Type);
+                }
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: modifiable attribute " + globalName +
+                    " has been defined with type " +
+                    ToString(itExistingAttribute->second->m_Type) +
+                    ". Type cannot be changed to " +
+                    ToString(helper::GetDataType<T>()) + "\n");
+            }
         }
-        else
-        {
-            throw std::invalid_argument(
-                "ERROR: attribute " + globalName +
-                " has been defined and its value cannot be changed, in call to "
-                "DefineAttribute\n");
-        }
+        return static_cast<Attribute<T> &>(*itExistingAttribute->second);
     }
-
-    auto itAttributePair = m_Attributes.emplace(
-        globalName, std::unique_ptr<AttributeBase>(
-                        new Attribute<T>(globalName, array, elements)));
-    return static_cast<Attribute<T> &>(*itAttributePair.first->second);
+    else
+    {
+        auto itAttributePair = m_Attributes.emplace(
+            globalName, std::unique_ptr<AttributeBase>(new Attribute<T>(
+                            globalName, array, elements, allowModification)));
+        for (auto &e : m_Engines)
+        {
+            e.second->NotifyEngineAttribute(
+                globalName, itAttributePair.first->second->m_Type);
+        }
+        return static_cast<Attribute<T> &>(*itAttributePair.first->second);
+    }
 }
 
 template <class T>

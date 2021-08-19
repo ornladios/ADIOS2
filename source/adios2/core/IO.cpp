@@ -842,10 +842,10 @@ ADIOS2_FOREACH_STDTYPE_1ARG(define_template_instantiation)
 #define declare_template_instantiation(T)                                      \
     template Attribute<T> &IO::DefineAttribute<T>(                             \
         const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
     template Attribute<T> &IO::DefineAttribute<T>(                             \
         const std::string &, const T &, const std::string &,                   \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
     template Attribute<T> *IO::InquireAttribute<T>(                            \
         const std::string &, const std::string &, const std::string) noexcept;
 

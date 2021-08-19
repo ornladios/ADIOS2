@@ -38,18 +38,32 @@ public:
      * @param name
      * @param data
      * @param elements
+     * @param allowModifications
      */
-    Attribute<T>(const std::string &name, const T *data, const size_t elements);
+    Attribute<T>(const std::string &name, const T *data, const size_t elements,
+                 const bool allowModification);
 
     /**
      * Single value constructor
      * @param name
      * @param data
      * @param elements
+     * @param allowModifications
      */
-    Attribute<T>(const std::string &name, const T &data);
+    Attribute<T>(const std::string &name, const T &data,
+                 const bool allowModification);
 
     ~Attribute<T>() = default;
+
+    /**
+     * Modification of an existing attribute (array)
+     */
+    void Modify(const T *data, const size_t elements);
+
+    /**
+     * Modification of an existing attribute (single value)
+     */
+    void Modify(const T &data);
 
 private:
     std::string DoGetInfoValue() const noexcept override;
