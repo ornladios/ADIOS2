@@ -1053,7 +1053,9 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
             (MetaArrayRec *)(((char *)MetadataBaseAddrs[WriterRank]) +
                              VarRec->PerWriterMetaFieldOffset[WriterRank]);
         size_t WriterBlockCount =
-            meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
+            writer_meta_base->Dims
+                ? writer_meta_base->DBCount / writer_meta_base->Dims
+                : 1;
         Id += WriterBlockCount;
     }
     MV->BlocksInfo.reserve(Id);
