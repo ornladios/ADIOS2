@@ -30,7 +30,7 @@ class IO; // friend
 class Engine
 {
     friend class IO;
-
+  friend class Query;
 public:
     struct Info
     {

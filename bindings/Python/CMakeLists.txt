@@ -6,6 +6,7 @@ Python_add_library(adios2_py MODULE
   py11Attribute.cpp
   py11Engine.cpp
   py11Operator.cpp
+  py11Query.cpp
   py11File.cpp py11File.tcc
   py11glue.cpp
 )
