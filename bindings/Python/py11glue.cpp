@@ -542,8 +542,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              [](const adios2::py11::File &stream) { return stream; })
         .def("__exit__",
              [](adios2::py11::File &stream, pybind11::args) { stream.Close(); })
-
-        .def("__iter__", [](adios2::py11::File &stream) { return stream; },            
+        .def("__iter__", [](adios2::py11::File &stream) { return stream; },
              pybind11::keep_alive<0, 1>())
         .def("__next__",
              [](adios2::py11::File &stream) {
