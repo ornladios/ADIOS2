@@ -41,6 +41,8 @@ public:
 
     bool IsDataTypeValid(const DataType type) const final;
 
+    static bool m_CurrentReadFinished;
+
 private:
     static int m_Tiers;
 

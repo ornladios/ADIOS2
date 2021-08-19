@@ -46,6 +46,10 @@ void MhsReader::GetDeferredCommon(Variable<T> &variable, T *data)
         }
         var->SetSelection({variable.m_Start, variable.m_Count});
         m_SubEngines[i]->Get(*var, data, Mode::Sync);
+        if (m_SiriusCompressor->m_CurrentReadFinished)
+        {
+            break;
+        }
     }
 }
 

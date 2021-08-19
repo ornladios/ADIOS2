@@ -24,6 +24,7 @@ std::vector<std::unordered_map<std::string, std::vector<char>>>
 int CompressSirius::m_CurrentTier;
 std::vector<std::vector<char>> CompressSirius::m_TierBuffers;
 int CompressSirius::m_Tiers = 0;
+bool CompressSirius::m_CurrentReadFinished = false;
 
 CompressSirius::CompressSirius(const Params &parameters)
 : Operator("sirius", parameters)
@@ -88,6 +89,12 @@ size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
     // if called from the final tier, then merge all tier buffers and copy back
     // to dataOut
     size_t accumulatedBytes = 0;
+    // TODO: it currently only copies output data back when the final tier is
+    // read. However, the real Sirius algorithm should instead decide when to
+    // copy back decompressed data based on required acuracy level. Once it's
+    // done, it should set m_CurrentReadFinished to true to inform the MHS
+    // engine that the current read is finished so that it won't read the next
+    // tier.
     if (currentTier == m_Tiers - 1)
     {
         for (auto &bmap : m_TierBuffersMap)
@@ -97,7 +104,15 @@ size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
                         b.data(), b.size());
             accumulatedBytes += b.size();
         }
+        // set m_CurrentReadFinished to true if after the current call, the
+        // required acuracy is already satisfied, so that the MHS engine knows
+        // it shouldn't continue reading the next tier.
+        m_CurrentReadFinished = true;
     }
+
+    // set m_CurrentReadFinished to false if the current tier does not satisfy
+    // the required acuracy, so the MHS engine will read the next tier.
+    m_CurrentReadFinished = false;
 
     currentTier++;
     if (currentTier % m_Tiers == 0)

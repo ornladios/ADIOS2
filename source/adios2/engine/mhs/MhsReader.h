@@ -41,7 +41,7 @@ public:
 private:
     std::vector<IO *> m_SubIOs;
     std::vector<Engine *> m_SubEngines;
-    std::shared_ptr<compress::CompressSirius> m_Compressor;
+    std::shared_ptr<compress::CompressSirius> m_SiriusCompressor;
     int m_Tiers;
 
 #define declare_type(T)                                                        \
