@@ -321,6 +321,13 @@ reader_command_line.extend([reader_executable, canonical_engine, args.filename])
 if args.rarg is not None:
     reader_command_line.extend(args.rarg)
 
+if args.num_writers == 0:
+    writer_command_line = None
+    mpmd_possible = False
+    print("TestDriver: No writers, setting MPMD false\n")
+else:
+    print("TestDriver: Writer command line : " + " ".join(writer_command_line))
+
 if args.num_readers == 0:
     reader_command_line = None
     mpmd_possible = False
@@ -328,13 +335,6 @@ if args.num_readers == 0:
 
 else:
     print("TestDriver: Reader command line : " + " ".join(reader_command_line))
-
-if args.num_writers == 0:
-    writer_command_line = None
-    mpmd_possible = False
-    print("TestDriver: No writers, setting MPMD false\n")
-else:
-    print("TestDriver: Writer command line : " + " ".join(writer_command_line))
 
 if is_file_engine[args.engine.lower()]:
     print("TestDriver: Is file engine, setting MPMD false\n")
