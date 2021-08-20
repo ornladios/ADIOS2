@@ -733,7 +733,7 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
                 varinfo->nblocks * sizeof(adios2_blockinfo));
             auto *b = varinfo->BlocksInfo;
 
-            varinfo->Dims = blocksInfo[0].Shape.size();
+            varinfo->Dims = static_cast<int>(blocksInfo[0].Shape.size());
             varinfo->Shape = lf_CopyDims(blocksInfo[0].Shape);
             varinfo->IsValue = (int)blocksInfo[0].IsValue;
             varinfo->IsReverseDims = (int)blocksInfo[0].IsReverseDims;
@@ -762,7 +762,7 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
             varinfo->nblocks * sizeof(adios2_blockinfo));                      \
         auto *b = varinfo->BlocksInfo;                                         \
                                                                                \
-        varinfo->Dims = blocksInfo[0].Shape.size();                            \
+        varinfo->Dims = static_cast<int>(blocksInfo[0].Shape.size());          \
         varinfo->Shape = lf_CopyDims(blocksInfo[0].Shape);                     \
         varinfo->IsValue = (int)blocksInfo[0].IsValue;                         \
         varinfo->IsReverseDims = (int)blocksInfo[0].IsReverseDims;             \
