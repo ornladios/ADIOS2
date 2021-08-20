@@ -96,7 +96,7 @@ else:
     createConfigFile()
 
     # queryFile Generated
-    createQueryFile()    
+    createQueryFile()
 
     print(".. Running query against: ", dataPath)
     runQuery()
