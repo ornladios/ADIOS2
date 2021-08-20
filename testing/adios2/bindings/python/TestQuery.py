@@ -20,7 +20,7 @@ def doAnalysis(reader, touched_blocks, varList):
           "  num touched blocks: ", len(touched_blocks))
     values = [];
     data = {};
-    
+
     for var in varList:
         data[var] = [];
     
@@ -44,7 +44,7 @@ def runQuery():
     var = [queryIO.InquireVariable("T")]
 
     print("Num steps: ", reader.Steps())
-          
+    
     while (reader.BeginStep() == adios2.StepStatus.OK):        
         #say only rank 0 wants to process result
         if (rank == 0):
@@ -58,15 +58,16 @@ def createConfigFile():
     print(".. Writing config file to: ", configFile)
     file1 = open(configFile, 'w')
 
-    xmlContent = [
-                "<?xml version=\"1.0\"?>\n", "<adios-config>\n",
-                "<io name=\"query\">\n", "  <engine type=\"BPFile\">\n",
-                "  </engine>\n", "  <transport type=\"File\">\n",
-                "    <parameter key=\"Library\" value=\"POSIX\"/>\n",
-                "    <parameter key=\"ProfileUnits\" "
-                "value=\"Microseconds\"/>\n",
-                "  </transport>\n", "</io>\n", "</adios-config>\n"
-            ]
+    xmlContent = ["<?xml version=\"1.0\"?>\n",
+                  "<adios-config>\n",
+                  "<io name=\"query\">\n",
+                  "  <engine type=\"BPFile\">\n",
+                  "  </engine>\n",
+                  "  <transport type=\"File\">\n",
+                  "    <parameter key=\"Library\" value=\"POSIX\"/>\n",
+                  "    <parameter key=\"ProfileUnits\" value=\"Microseconds\"/>\n",
+                  "  </transport>\n",
+                  "</io>\n", "</adios-config>\n"]
 
     file1.writelines(xmlContent)
     file1.close()
@@ -88,16 +89,16 @@ def createQueryFile():
     file1.close()
 
 
-if (os.path.exists(dataPath) == False):
+if (os.path.exists(dataPath) is False):
     print("Please generate data file:", dataPath,
           " from heat transfer example first.")
-else :
+else:
     #configFile created
     createConfigFile()
-    
+
     #queryFile Generated
-    createQueryFile()
-    
+    createQueryFile()    
+
     print(".. Running query against: ", dataPath)
     runQuery()
 
