@@ -6,7 +6,7 @@ import os
 import math
 import matplotlib.pyplot as plt
 
-#MPI
+# MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
@@ -18,12 +18,12 @@ dataPath = './heat.bp'
 def doAnalysis(reader, touched_blocks, varList):
     print(" Step: ", reader.CurrentStep(),
           "  num touched blocks: ", len(touched_blocks))
-    values = [];
-    data = {};
+    values = []
+    data = {}
 
     for var in varList:
-        data[var] = [];
-    
+        data[var] = []
+
     if (len(touched_blocks) > 0):
         for n in touched_blocks:
             for var in varList:
@@ -31,7 +31,7 @@ def doAnalysis(reader, touched_blocks, varList):
                 var.SetSelection(n)
                 reader.Get(var, values, adios2.Mode.Sync)
                 data[var].extend(values)
-                #do analysis with data here
+                # do analysis with data here
 
 def runQuery():
     adios = adios2.ADIOS(configFile, comm, True)
@@ -44,9 +44,9 @@ def runQuery():
     var = [queryIO.InquireVariable("T")]
 
     print("Num steps: ", reader.Steps())
-    
-    while (reader.BeginStep() == adios2.StepStatus.OK):        
-        #say only rank 0 wants to process result
+
+    while (reader.BeginStep() == adios2.StepStatus.OK):
+        # say only rank 0 wants to process result
         if (rank == 0):
             touched_blocks = w.GetResult()
             doAnalysis(reader, touched_blocks, var)
@@ -65,13 +65,12 @@ def createConfigFile():
                   "  </engine>\n",
                   "  <transport type=\"File\">\n",
                   "    <parameter key=\"Library\" value=\"POSIX\"/>\n",
-                  "    <parameter key=\"ProfileUnits\" value=\"Microseconds\"/>\n",
                   "  </transport>\n",
                   "</io>\n", "</adios-config>\n"]
 
     file1.writelines(xmlContent)
     file1.close()
-    
+
 def createQueryFile():
     print(".. Writing query file to: ", queryFile)
 
@@ -93,10 +92,10 @@ if (os.path.exists(dataPath) is False):
     print("Please generate data file:", dataPath,
           " from heat transfer example first.")
 else:
-    #configFile created
+    # configFile created
     createConfigFile()
 
-    #queryFile Generated
+    # queryFile Generated
     createQueryFile()    
 
     print(".. Running query against: ", dataPath)
