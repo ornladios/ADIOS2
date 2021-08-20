@@ -287,6 +287,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
     }
 }
 
+#ifdef REALLY_WANT_WRITEV
 void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
 {
     auto lf_Write = [&](const core::iovec *iov, const int iovcnt) {
@@ -378,6 +379,7 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
         cntTotal += cnt;
     }
 }
+#endif
 
 void FilePOSIX::Read(char *buffer, size_t size, size_t start)
 {
