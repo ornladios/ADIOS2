@@ -90,9 +90,9 @@ void BP5Writer::WriteMetaMetadata(
     }
 }
 
-uint64_t BP5Writer::WriteMetadata(
-    const std::vector<format::BufferV::iovec> MetaDataBlocks,
-    const std::vector<format::BufferV::iovec> AttributeBlocks)
+uint64_t
+BP5Writer::WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks,
+                         const std::vector<core::iovec> &AttributeBlocks)
 {
     uint64_t MDataTotalSize = 0;
     uint64_t MetaDataSize = 0;
@@ -165,7 +165,7 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
     const aggregator::MPIChain *a =
         dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
 
-    format::BufferV::BufferV_iovec DataVec = Data->DataVec();
+    std::vector<core::iovec> DataVec = Data->DataVec();
 
     // new step writing starts at offset m_DataPos on aggregator
     // others will wait for the position to arrive from the rank below
@@ -184,34 +184,14 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
     if (!SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
         /* Send the token before writing so everyone can start writing asap */
-        int i = 0;
-        uint64_t nextWriterPos = m_DataPos;
-        while (DataVec[i].iov_base != NULL)
-        {
-            nextWriterPos += DataVec[i].iov_len;
-            i++;
-        }
+        uint64_t nextWriterPos = m_DataPos + Data->Size();
         a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
                         "Chain token in BP5Writer::WriteData");
     }
 
-    int i = 0;
-    while (DataVec[i].iov_base != NULL)
-    {
-        if (i == 0)
-        {
-
-            m_FileDataManager.WriteFileAt((char *)DataVec[i].iov_base,
-                                          DataVec[i].iov_len, m_StartDataPos);
-        }
-        else
-        {
-            m_FileDataManager.WriteFiles((char *)DataVec[i].iov_base,
-                                         DataVec[i].iov_len);
-        }
-        m_DataPos += DataVec[i].iov_len;
-        i++;
-    }
+    m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(),
+                                  m_StartDataPos);
+    m_DataPos += Data->Size();
 
     if (SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
@@ -236,8 +216,6 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
                            "Chain token in BP5Writer::WriteData");
         }
     }
-
-    delete[] DataVec;
 }
 
 void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
@@ -393,7 +371,7 @@ void BP5Writer::EndStep()
     {
         std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
         std::vector<uint64_t> DataSizes;
-        std::vector<BufferV::iovec> AttributeBlocks;
+        std::vector<core::iovec> AttributeBlocks;
         auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
             RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks,
             DataSizes, m_WriterDataPos);

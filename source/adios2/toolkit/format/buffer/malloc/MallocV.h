@@ -9,6 +9,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/core/CoreTypes.h"
 
 #include "adios2/toolkit/format/buffer/BufferV.h"
 
@@ -27,7 +28,7 @@ public:
             double GrowthFactor = DefaultBufferGrowthFactor);
     virtual ~MallocV();
 
-    virtual BufferV_iovec DataVec() noexcept;
+    virtual std::vector<core::iovec> DataVec() noexcept;
 
     /**
      * Reset the buffer to initial state (without freeing internal buffers)

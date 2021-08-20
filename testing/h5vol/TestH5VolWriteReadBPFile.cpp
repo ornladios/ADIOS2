@@ -209,12 +209,14 @@ void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName,
                            H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
         ret = H5Dwrite(dsetID, type, H5S_ALL, H5S_ALL, plistID, values);
+        EXPECT_GE(ret, 0);
 
 #ifdef DOUBLECHECK
         size_t typesize = H5Tget_size(type);
         char *val = (char *)(calloc(typesize, sizeof(char)));
 
         hid_t ret2 = H5Dread(dsetID, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
+        EXPECT_GE(ret2, 0);
         std::cerr << "        ....  typesize=" << typesize << "  val=" << val
                   << std::endl;
         free val;

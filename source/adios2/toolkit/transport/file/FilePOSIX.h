@@ -43,6 +43,12 @@ public:
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 
+#ifdef REALLY_WANT_WRITEV
+    /* Actual writev() function, inactive for now */
+    void WriteV(const core::iovec *iov, const int iovcnt,
+                size_t start = MaxSizeT) final;
+#endif
+
     void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
 
     size_t GetSize() final;

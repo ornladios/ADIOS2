@@ -293,11 +293,18 @@ void SstWriter::EndStep()
         newblock->MetaMetaBlocks = MetaMetaBlocks;
         newblock->metadata.DataSize = TSInfo->MetaEncodeBuffer->m_FixedSize;
         newblock->metadata.block = TSInfo->MetaEncodeBuffer->Data();
-        format::BufferV::BufferV_iovec iovec = TSInfo->DataBuffer->DataVec();
-        newblock->data.DataSize = iovec[0].iov_len;
-        newblock->data.block = (char *)iovec[0].iov_base;
+        std::vector<core::iovec> iovec = TSInfo->DataBuffer->DataVec();
+        if (!iovec.empty())
+        {
+            newblock->data.DataSize = iovec[0].iov_len;
+            newblock->data.block = (char *)iovec[0].iov_base;
+        }
+        else
+        {
+            newblock->data.DataSize = 0;
+            newblock->data.block = nullptr;
+        }
         newblock->TSInfo = TSInfo;
-        delete[] iovec;
         if (TSInfo->AttributeEncodeBuffer)
         {
             newblock->attribute_data.DataSize =

@@ -218,17 +218,16 @@ void *ChunkV::GetPtr(int bufferIdx, size_t posInBuffer)
     }
 }
 
-ChunkV::BufferV_iovec ChunkV::DataVec() noexcept
+std::vector<core::iovec> ChunkV::DataVec() noexcept
 {
-    BufferV_iovec ret = new iovec[DataV.size() + 1];
+    std::vector<core::iovec> iov(DataV.size());
     for (std::size_t i = 0; i < DataV.size(); ++i)
     {
         // For ChunkV, all entries in DataV are actual iov entries.
-        ret[i].iov_base = DataV[i].Base;
-        ret[i].iov_len = DataV[i].Size;
+        iov[i].iov_base = DataV[i].Base;
+        iov[i].iov_len = DataV[i].Size;
     }
-    ret[DataV.size()] = {NULL, 0};
-    return ret;
+    return iov;
 }
 
 } // end namespace format
