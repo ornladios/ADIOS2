@@ -640,6 +640,154 @@ adios2_error adios2_lock_reader_selections(adios2_engine *engine)
     }
 }
 
+adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
+                                         adios2_variable *variable,
+                                         const size_t step)
+{
+    auto lf_CopyDims = [](const std::vector<size_t> &dims) -> size_t * {
+        size_t *a = nullptr;
+        size_t ndims = dims.size();
+        if (ndims > 0)
+        {
+            a = (size_t *)malloc(dims.size() * sizeof(size_t));
+            std::memcpy(a, dims.data(), dims.size() * sizeof(size_t));
+        }
+        return a;
+    };
+
+    adios2_varinfo *varinfo = NULL;
+
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine, "for adios2_engine, in call to adios2_inquire_blockinfo");
+
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return NULL;
+        }
+        adios2::helper::CheckForNullptr(variable,
+                                        "for adios2_variable, in call "
+                                        "to adios2_get");
+
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+
+        const adios2::DataType type(variableBase->m_Type);
+
+        const auto minBlocksInfo =
+            engineCpp->MinBlocksInfo(*variableBase, step);
+
+        if (minBlocksInfo)
+        {
+            varinfo = (adios2_varinfo *)malloc(sizeof(adios2_varinfo));
+            varinfo->nblocks = minBlocksInfo->BlocksInfo.size();
+            varinfo->BlocksInfo = (adios2_blockinfo *)malloc(
+                varinfo->nblocks * sizeof(adios2_blockinfo));
+            auto *b = varinfo->BlocksInfo;
+
+            varinfo->Dims = minBlocksInfo->Dims;
+            varinfo->Shape = minBlocksInfo->Shape;
+            varinfo->IsValue = (int)minBlocksInfo->IsValue;
+            varinfo->IsReverseDims = (int)minBlocksInfo->IsReverseDims;
+            for (size_t i = 0; i < varinfo->nblocks; ++i)
+            {
+                b[i].WriterID = minBlocksInfo->BlocksInfo[i].WriterID;
+                b[i].BlockID = minBlocksInfo->BlocksInfo[i].BlockID;
+                b[i].Start = minBlocksInfo->BlocksInfo[i].Start;
+                b[i].Count = minBlocksInfo->BlocksInfo[i].Count;
+                if (minBlocksInfo->IsValue)
+                {
+                    b[i].Value.uint64 = 0;
+                    //  = *((T *)minBlocksInfo->BlocksInfo[i].BufferP);
+                }
+                else
+                {
+                    b[i].MinUnion.uint64 = 0;
+                    //  = minBlocksInfo->BlocksInfo[i].MinUnion;
+                    b[i].MaxUnion.uint64 = 0;
+                    //  = minBlocksInfo->BlocksInfo[i].MaxUnion;
+                }
+            }
+            delete minBlocksInfo;
+            return varinfo;
+        }
+
+        /* Call the big gun Engine::BlocksInfo<T> */
+        if (type == adios2::DataType::Compound)
+        {
+            return varinfo;
+        }
+        else if (type == adios2::helper::GetDataType<std::string>())
+        {
+            const auto blocksInfo = engineCpp->BlocksInfo<std::string>(
+                *dynamic_cast<adios2::core::Variable<std::string> *>(
+                    variableBase),
+                step);
+            varinfo = (adios2_varinfo *)malloc(sizeof(adios2_varinfo));
+            varinfo->nblocks = blocksInfo.size();
+            varinfo->BlocksInfo = (adios2_blockinfo *)malloc(
+                varinfo->nblocks * sizeof(adios2_blockinfo));
+            auto *b = varinfo->BlocksInfo;
+
+            varinfo->Dims = static_cast<int>(blocksInfo[0].Shape.size());
+            varinfo->Shape = lf_CopyDims(blocksInfo[0].Shape);
+            varinfo->IsValue = (int)blocksInfo[0].IsValue;
+            varinfo->IsReverseDims = (int)blocksInfo[0].IsReverseDims;
+            for (size_t i = 0; i < varinfo->nblocks; ++i)
+            {
+                b[i].WriterID = blocksInfo[i].WriterID;
+                b[i].BlockID = blocksInfo[i].BlockID;
+                b[i].Start = lf_CopyDims(blocksInfo[i].Start);
+                b[i].Count = lf_CopyDims(blocksInfo[i].Count);
+                // minBlocksInfo->BlocksInfo[i].MinUnion;
+                b[i].MinUnion.uint64 = 0;
+                // minBlocksInfo->BlocksInfo[i].MaxUnion;
+                b[i].MaxUnion.uint64 = 0;
+                b[i].Value.str = (char *)malloc(blocksInfo[i].Value.size() + 1);
+                std::strcpy(b[i].Value.str, blocksInfo[i].Value.data());
+            };
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::helper::GetDataType<T>())                         \
+    {                                                                          \
+        const auto blocksInfo = engineCpp->BlocksInfo<T>(                      \
+            *dynamic_cast<adios2::core::Variable<T> *>(variableBase), step);   \
+        varinfo = (adios2_varinfo *)malloc(sizeof(adios2_varinfo));            \
+        varinfo->nblocks = blocksInfo.size();                                  \
+        varinfo->BlocksInfo = (adios2_blockinfo *)malloc(                      \
+            varinfo->nblocks * sizeof(adios2_blockinfo));                      \
+        auto *b = varinfo->BlocksInfo;                                         \
+                                                                               \
+        varinfo->Dims = static_cast<int>(blocksInfo[0].Shape.size());          \
+        varinfo->Shape = lf_CopyDims(blocksInfo[0].Shape);                     \
+        varinfo->IsValue = (int)blocksInfo[0].IsValue;                         \
+        varinfo->IsReverseDims = (int)blocksInfo[0].IsReverseDims;             \
+        for (size_t i = 0; i < varinfo->nblocks; ++i)                          \
+        {                                                                      \
+            b[i].WriterID = blocksInfo[i].WriterID;                            \
+            b[i].BlockID = blocksInfo[i].BlockID;                              \
+            b[i].Start = lf_CopyDims(blocksInfo[i].Start);                     \
+            b[i].Count = lf_CopyDims(blocksInfo[i].Count);                     \
+            b[i].MinUnion.uint64 = 0;                                          \
+            b[i].MaxUnion.uint64 = 0;                                          \
+            b[i].Value.uint64 = 0;                                             \
+        };                                                                     \
+    }
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_inquire_blockinfo");
+        return NULL;
+    }
+    return varinfo;
+}
+
 adios2_error adios2_close_by_index(adios2_engine *engine,
                                    const int transport_index)
 {

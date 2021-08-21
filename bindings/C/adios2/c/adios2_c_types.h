@@ -149,6 +149,43 @@ static const size_t adios2_string_array_element_max_size = 4096;
 
 static const size_t adios2_local_value_dim = SIZE_MAX - 2;
 
+union adios2_PrimitiveStdtypeUnion
+{
+    int8_t int8;
+    int16_t int16;
+    int32_t int32;
+    int64_t int64;
+    uint8_t uint8;
+    uint16_t uint16;
+    uint32_t uint32;
+    uint64_t uint64;
+    float f;
+    double d;
+    long double ld;
+    char *str;
+};
+
+typedef struct
+{
+    int WriterID;
+    size_t BlockID;
+    size_t *Start;
+    size_t *Count;
+    union adios2_PrimitiveStdtypeUnion MinUnion;
+    union adios2_PrimitiveStdtypeUnion MaxUnion;
+    union adios2_PrimitiveStdtypeUnion Value;
+} adios2_blockinfo;
+
+typedef struct
+{
+    int Dims;
+    size_t *Shape;
+    int IsValue;
+    int IsReverseDims;
+    size_t nblocks;
+    adios2_blockinfo *BlocksInfo;
+} adios2_varinfo;
+
 #ifdef __cplusplus
 } // end extern C
 #endif
