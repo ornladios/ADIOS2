@@ -12,6 +12,7 @@
 #define ADIOS2_ENGINE_BP5_BP5READER_H_
 
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/core/CoreTypes.h"
 #include "adios2/core/Engine.h"
 #include "adios2/engine/bp5/BP5Engine.h"
 #include "adios2/helper/adiosComm.h"
@@ -55,12 +56,6 @@ public:
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
 
 private:
-    typedef std::chrono::duration<double> Seconds;
-    typedef std::chrono::time_point<
-        std::chrono::steady_clock,
-        std::chrono::duration<double, std::chrono::steady_clock::period>>
-        TimePoint;
-
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
     /* transport manager for metadata file */
     transportman::TransportMan m_MDFileManager;

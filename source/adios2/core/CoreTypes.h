@@ -13,6 +13,7 @@
 #define ADIOS2_CORETYPES_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 /// \endcond
@@ -31,6 +32,14 @@ struct iovec
     //  The size of the memory pointed to by iov_base.
     size_t iov_len;
 };
+
+typedef std::chrono::duration<double> Seconds;
+typedef std::chrono::time_point<
+    std::chrono::steady_clock,
+    std::chrono::duration<double, std::chrono::steady_clock::period>>
+    TimePoint;
+
+inline TimePoint Now() { return std::chrono::steady_clock::now(); }
 
 } // end namespace core
 } // end namespace adios2

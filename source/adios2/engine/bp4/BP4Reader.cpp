@@ -156,18 +156,17 @@ void BP4Reader::Init()
 
     /* Do a collective wait for the file(s) to appear within timeout.
        Make sure every process comes to the same conclusion */
-    const Seconds timeoutSeconds =
-        Seconds(m_BP4Deserializer.m_Parameters.OpenTimeoutSecs);
+    const Seconds timeoutSeconds(
+        m_BP4Deserializer.m_Parameters.OpenTimeoutSecs);
 
-    Seconds pollSeconds =
-        Seconds(m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
+    Seconds pollSeconds(
+        m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
     if (pollSeconds > timeoutSeconds)
     {
         pollSeconds = timeoutSeconds;
     }
 
-    TimePoint timeoutInstant =
-        std::chrono::steady_clock::now() + timeoutSeconds;
+    TimePoint timeoutInstant = Now() + timeoutSeconds;
 
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
     if (!m_BP4Deserializer.m_Parameters.StreamReader)
@@ -180,7 +179,7 @@ void BP4Reader::Init()
 bool BP4Reader::SleepOrQuit(const TimePoint &timeoutInstant,
                             const Seconds &pollSeconds)
 {
-    auto now = std::chrono::steady_clock::now();
+    auto now = Now();
     if (now + pollSeconds >= timeoutInstant)
     {
         return false;
@@ -684,8 +683,7 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
     {
         timeoutSeconds = Seconds(999999999); // max 1 billion seconds wait
     }
-    const TimePoint timeoutInstant =
-        std::chrono::steady_clock::now() + timeoutSeconds;
+    const TimePoint timeoutInstant = Now() + timeoutSeconds;
 
     auto pollSeconds =
         Seconds(m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
