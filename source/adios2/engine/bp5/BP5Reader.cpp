@@ -11,7 +11,6 @@
 
 #include <adios2-perfstubs-interface.h>
 
-#include <chrono>
 #include <errno.h>
 
 namespace adios2
@@ -224,8 +223,7 @@ void BP5Reader::Init()
         pollSeconds = timeoutSeconds;
     }
 
-    TimePoint timeoutInstant =
-        std::chrono::steady_clock::now() + timeoutSeconds;
+    TimePoint timeoutInstant = Now() + timeoutSeconds;
 
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
 
@@ -236,7 +234,7 @@ void BP5Reader::Init()
 bool BP5Reader::SleepOrQuit(const TimePoint &timeoutInstant,
                             const Seconds &pollSeconds)
 {
-    auto now = std::chrono::steady_clock::now();
+    auto now = Now();
     if (now + pollSeconds >= timeoutInstant)
     {
         return false;

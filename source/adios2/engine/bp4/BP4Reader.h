@@ -12,12 +12,11 @@
 #define ADIOS2_ENGINE_BP4_BP4READER_H_
 
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/core/CoreTypes.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/format/bp/bp4/BP4Deserializer.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
-
-#include <chrono>
 
 namespace adios2
 {
@@ -52,12 +51,6 @@ public:
     void PerformGets() final;
 
 private:
-    typedef std::chrono::duration<double> Seconds;
-    typedef std::chrono::time_point<
-        std::chrono::steady_clock,
-        std::chrono::duration<double, std::chrono::steady_clock::period>>
-        TimePoint;
-
     format::BP4Deserializer m_BP4Deserializer;
     /* transport manager for metadata file */
     transportman::TransportMan m_MDFileManager;
