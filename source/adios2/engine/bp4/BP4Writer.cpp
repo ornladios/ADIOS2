@@ -254,6 +254,11 @@ void BP4Writer::InitTransports()
         m_MetadataFileNames =
             m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
 
+
+	for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
+	{
+	    m_IO.m_TransportsParameters[i].insert({"SingleProcess", "true"});
+	}
         m_FileMetadataManager.OpenFiles(m_MetadataFileNames, m_OpenMode,
                                         m_IO.m_TransportsParameters,
                                         m_BP4Serializer.m_Profiler.m_IsActive);

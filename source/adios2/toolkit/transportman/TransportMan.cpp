@@ -61,45 +61,63 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
             {
                 const std::string path(
                     fileNames[i].substr(0, lastPathSeparator));
-                helper::CreateDirectory(path);
+
+		std::string library;
+		helper::SetParameterValue("Library", parameters, library);
+		helper::SetParameterValue("library", parameters, library);
+		if (library == "Daos" || library == "daos")
+		{
+		    auto transport = std::make_shared<transport::FileDaos>(m_Comm);
+		    transport->SetParameters({{"SingleProcess", "true"}});
+		    int rank = m_Comm.Rank();
+		    std::cout << "rank " << rank << ": start transport->MkDir(" << path << ")..." << std::endl;		
+		    transport->MkDir(path);
+		    std::cout << "rank " << rank << ": transport->MkDir(" << path << ") succeeded!" << std::endl;    
+		    
+		}
+		else
+		{
+		    helper::CreateDirectory(path);
+		}
+                
             }
         }
     };
     
-    const Params &parameters = parametersVector[0];
-    std::string library;
-    helper::SetParameterValue("Library", parameters, library);
-    helper::SetParameterValue("library", parameters, library);
-    if (library == "Daos" || library == "daos")
+//    const Params &parameters = parametersVector[0];
+//    std::string library;
+//    helper::SetParameterValue("Library", parameters, library);
+//    helper::SetParameterValue("library", parameters, library);
+//    if (library == "Daos" || library == "daos")
+//    {
+//        int rank = m_Comm.Rank();
+//	std::cout << "rank " << rank << ": " << fileNames[0] << std::endl;
+//
+//	auto transport = std::make_shared<transport::FileDaos>(m_Comm);
+//	std::cout << "rank " << rank << ": start transport->MkDir(" << fileNames[0] << ")..." << std::endl;		
+//	transport->MkDir(fileNames[0]);
+//	std::cout << "rank " << rank << ": transport->MkDir(" << fileNames[0] << ") succeeded!" << std::endl;	  
+//        
+//	m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
+//
+//    }
+//    else
+//    {
+    if (nodeLocal)
     {
-        int rank = m_Comm.Rank();
-	std::cout << "rank " << rank << ": " << fileNames[0] << std::endl;
-
-	auto transport = std::make_shared<transport::FileDaos>(m_Comm);
-	std::cout << "rank " << rank << ": start transport->MkDir(" << fileNames[0] << ")..." << std::endl;		
-	transport->MkDir(fileNames[0]);
-	std::cout << "rank " << rank << ": transport->MkDir(" << fileNames[0] << ") succeeded!" << std::endl;	  
-        
-	m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
-
+	lf_CreateDirectories(fileNames);
     }
     else
     {
-        if (nodeLocal)
-        {
+	int rank = m_Comm.Rank();
+	if (rank == 0)
+	{
 	    lf_CreateDirectories(fileNames);
-        }
-        else
-        {
-	    int rank = m_Comm.Rank();
-	    if (rank == 0)
-	    {
-	        lf_CreateDirectories(fileNames);
-	    }
+	}
 
-	    m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
-        }
+	m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
     }
+//    }
 }
 
 void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
@@ -467,6 +485,16 @@ TransportMan::OpenFileTransport(const std::string &fileName,
         else if (library == "Daos" || library == "daos")
         {
             transport = std::make_shared<transport::FileDaos>(m_Comm);
+//	    std::string singleProc = "false";
+//	    helper::SetParameterValue("SingleProcess", parameters, singleProc);
+//	    helper::SetParameterValue("singleprocess", parameters, singleProc);
+//	    bool singleProcess = helper::StringTo<bool>(singleProc, "");
+//	    if (singleProcess)
+//	    {
+//		
+//		transport->SetParameters({{"SingleProcess", "true"}});
+//	    }
+		
             if (lf_GetBuffered("false"))
             {
                 throw std::invalid_argument(
@@ -535,6 +563,9 @@ TransportMan::OpenFileTransport(const std::string &fileName,
     }
 
     transport->SetParameters(parameters);
+
+    int rank = m_Comm.Rank();
+    std::cout << "rank " << rank << " open file transport: " << fileName << std::endl;
     
     // open
     transport->Open(fileName, openMode, lf_GetAsync("false", parameters));

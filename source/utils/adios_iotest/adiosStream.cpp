@@ -19,8 +19,8 @@ adiosStream::adiosStream(const std::string &streamName, adios2::IO &io,
                          const adios2::Mode mode, MPI_Comm comm)
 : Stream(streamName, mode), io(io), comm(comm)
 {
-    // int myRank;
-    // MPI_Comm_rank(comm, &myRank);
+    int myRank;
+    MPI_Comm_rank(comm, &myRank);
     // double timeStart, timeEnd;
     // double openTime;
     // double maxOpenTime, minOpenTime;
@@ -34,7 +34,9 @@ adiosStream::adiosStream(const std::string &streamName, adios2::IO &io,
     else
     {
         // timeStart = MPI_Wtime();
+	std::cout << "rank " << myRank << ": start open adios2 engine, " << streamName << std::endl;
         engine = io.Open(streamName, adios2::Mode::Read, comm);
+	std::cout << "rank " << myRank << ": adios2 engine openned!" << streamName << std::endl;	
         // timeEnd = MPI_Wtime();
     }
     // openTime = timeEnd - timeStart;
