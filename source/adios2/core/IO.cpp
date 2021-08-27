@@ -574,6 +574,10 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
                 engineTypeLC = "bp";
                 engineTypeLC.push_back(v);
             }
+            else if (adios2sys::SystemTools::FileIsDirectory(name + ".tier0"))
+            {
+                engineTypeLC = "mhs";
+            }
             else
             {
                 if (helper::EndsWith(name, ".bp", false))

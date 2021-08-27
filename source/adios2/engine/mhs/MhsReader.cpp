@@ -22,7 +22,7 @@ MhsReader::MhsReader(IO &io, const std::string &name, const Mode mode,
 : Engine("MhsReader", io, name, mode, std::move(comm))
 {
     helper::GetParameter(io.m_Parameters, "Tiers", m_Tiers);
-    Params params = {{"tiers", std::to_string(m_Tiers)}};
+    Params params = {{"Tiers", std::to_string(m_Tiers)}};
     m_SiriusCompressor = std::make_shared<compress::CompressSirius>(params);
     io.SetEngine("");
     m_SubIOs.emplace_back(&io);
