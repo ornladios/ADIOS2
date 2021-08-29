@@ -107,6 +107,10 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
+    dataManIO.AddOperation("bpFloats", "zfp", {{"accuracy", "0.01"}});
+    dataManIO.AddOperation("bpDoubles", "zfp", {{"accuracy", "0.1"}});
+    dataManIO.AddOperation("bpComplexes", "zfp", {{"accuracy", "0.1"}});
+    dataManIO.AddOperation("bpDComplexes", "zfp", {{"accuracy", "0.1"}});
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -130,19 +134,12 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
         dataManIO.DefineVariable<unsigned int>("bpUInts", shape, start, count);
     auto bpFloats =
         dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
-    adios2::Operator zfpOp =
-        adios.DefineOperator("zfpCompressor", adios2::ops::LossyZFP);
-    bpFloats.AddOperation(zfpOp, {{adios2::ops::zfp::key::accuracy, "0.1"}});
     auto bpDoubles =
         dataManIO.DefineVariable<double>("bpDoubles", shape, start, count);
-    bpDoubles.AddOperation(zfpOp, {{adios2::ops::zfp::key::accuracy, "0.1"}});
     auto bpComplexes = dataManIO.DefineVariable<std::complex<float>>(
         "bpComplexes", shape, start, count);
-    bpComplexes.AddOperation(zfpOp, {{adios2::ops::zfp::key::accuracy, "0.1"}});
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
-    bpDComplexes.AddOperation(zfpOp,
-                              {{adios2::ops::zfp::key::accuracy, "0.1"}});
     dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter =
         dataManIO.Open("stream", adios2::Mode::Write);

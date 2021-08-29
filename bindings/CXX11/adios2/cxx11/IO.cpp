@@ -152,10 +152,11 @@ std::string IO::AttributeType(const std::string &name) const
     return ToString(m_IO->InquireAttributeType(name));
 }
 
-size_t IO::AddOperation(const Operator op, const Params &parameters)
+void IO::AddOperation(const std::string &variable,
+                      const std::string &operatorType, const Params &parameters)
 {
     helper::CheckForNullptr(m_IO, "in call to IO::AddOperation");
-    return m_IO->AddOperation(*op.m_Operator, parameters);
+    return m_IO->AddOperation(variable, operatorType, parameters);
 }
 
 std::string IO::EngineType() const
