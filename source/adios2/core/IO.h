@@ -75,9 +75,6 @@ public:
         Params Info;
     };
 
-    /** From AddOperation, contains operators added to this IO */
-    std::vector<Operation> m_Operations;
-
     /** BP3 engine default if unknown */
     std::string m_EngineType = "File";
 
@@ -370,12 +367,13 @@ public:
     /**
      * Adds an operator defined by the ADIOS class. Could be a variable set
      * transform, callback function, etc.
-     * @param op operator created by the ADIOS class
-     * @param parameters specific parameters for current IO
-     * @return operation handler
+     * @param variable
+     * @param operatorType
+     * @param parameters
      */
-    size_t AddOperation(Operator &op,
-                        const Params &parameters = Params()) noexcept;
+    void AddOperation(const std::string &variable,
+                      const std::string &operatorType,
+                      const Params &parameters = Params()) noexcept;
 
     /**
      * @brief Creates a polymorphic object that derives the Engine class,

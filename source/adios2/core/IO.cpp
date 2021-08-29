@@ -500,12 +500,15 @@ DataType IO::InquireAttributeType(const std::string &name,
     return itAttribute->second->m_Type;
 }
 
-size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
+void IO::AddOperation(const std::string &variable,
+                      const std::string &operatorType,
+                      const Params &parameters) noexcept
 {
     PERFSTUBS_SCOPED_TIMER("IO::other");
-    m_Operations.push_back(
-        Operation{&op, helper::LowerCaseParams(parameters), Params()});
-    return m_Operations.size() - 1;
+    auto params = helper::LowerCaseParams(parameters);
+    Operator *op = &m_ADIOS.DefineOperator(
+        m_Name + "_" + variable + "_" + operatorType, operatorType, params);
+    m_VarOpsPlaceholder[variable].emplace_back(Operation{op, params, Params()});
 }
 
 Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)

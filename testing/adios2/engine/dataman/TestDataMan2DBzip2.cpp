@@ -106,6 +106,7 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
+    dataManIO.AddOperation("bpFloats", "bzip2");
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -129,9 +130,6 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
         dataManIO.DefineVariable<unsigned int>("bpUInts", shape, start, count);
     auto bpFloats =
         dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
-    adios2::Operator bzip2Op =
-        adios.DefineOperator("Compressor", adios2::ops::LosslessBZIP2);
-    bpFloats.AddOperation(bzip2Op, {});
     auto bpDoubles =
         dataManIO.DefineVariable<double>("bpDoubles", shape, start, count);
     auto bpComplexes = dataManIO.DefineVariable<std::complex<float>>(
