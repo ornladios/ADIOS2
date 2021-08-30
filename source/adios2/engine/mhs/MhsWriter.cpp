@@ -11,18 +11,6 @@
 #include "MhsWriter.tcc"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/operator/compress/CompressSirius.h"
-#ifdef ADIOS2_HAVE_BLOSC
-#include "adios2/operator/compress/CompressBlosc.h"
-#endif
-#ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/operator/compress/CompressBZIP2.h"
-#endif
-#ifdef ADIOS2_HAVE_ZFP
-#include "adios2/operator/compress/CompressZFP.h"
-#endif
-#ifdef ADIOS2_HAVE_SZ
-#include "adios2/operator/compress/CompressSZ.h"
-#endif
 
 namespace adios2
 {

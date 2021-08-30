@@ -11,10 +11,7 @@
 #ifndef ADIOS2_ENGINE_MHSWRITER_H_
 #define ADIOS2_ENGINE_MHSWRITER_H_
 
-#include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
-#include "adios2/core/IO.h"
-#include "adios2/core/Variable.h"
 
 namespace adios2
 {
