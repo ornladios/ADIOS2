@@ -12,23 +12,6 @@
 #define ADIOS2_ENGINE_MHSWRITER_TCC_
 
 #include "MhsWriter.h"
-#include "adios2/operator/compress/CompressSirius.h"
-
-#ifdef ADIOS2_HAVE_BLOSC
-#include "adios2/operator/compress/CompressBlosc.h"
-#endif
-
-#ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/operator/compress/CompressBZIP2.h"
-#endif
-
-#ifdef ADIOS2_HAVE_ZFP
-#include "adios2/operator/compress/CompressZFP.h"
-#endif
-
-#ifdef ADIOS2_HAVE_SZ
-#include "adios2/operator/compress/CompressSZ.h"
-#endif
 
 namespace adios2
 {
@@ -61,8 +44,8 @@ template <class T>
 void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     bool putToAll = false;
-    auto itVar = m_OperatorMap.find(variable.m_Name);
-    if (itVar != m_OperatorMap.end())
+    auto itVar = m_TransportMap.find(variable.m_Name);
+    if (itVar != m_TransportMap.end())
     {
         if (itVar->second->m_Type == "sirius")
         {
@@ -75,8 +58,8 @@ void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     {
         var0 =
             &m_SubIOs[0]->DefineVariable<T>(variable.m_Name, variable.m_Shape);
-        itVar = m_OperatorMap.find(variable.m_Name);
-        if (itVar != m_OperatorMap.end())
+        itVar = m_TransportMap.find(variable.m_Name);
+        if (itVar != m_TransportMap.end())
         {
             var0->AddOperation(*itVar->second, {});
         }

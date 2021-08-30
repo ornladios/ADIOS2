@@ -11,10 +11,7 @@
 #ifndef ADIOS2_ENGINE_MHSWRITER_H_
 #define ADIOS2_ENGINE_MHSWRITER_H_
 
-#include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
-#include "adios2/core/IO.h"
-#include "adios2/core/Variable.h"
 
 namespace adios2
 {
@@ -41,7 +38,7 @@ public:
 private:
     std::vector<IO *> m_SubIOs;
     std::vector<Engine *> m_SubEngines;
-    std::unordered_map<std::string, std::shared_ptr<Operator>> m_OperatorMap;
+    std::unordered_map<std::string, std::shared_ptr<Operator>> m_TransportMap;
     int m_Tiers = 1;
 
     void PutSubEngine(bool finalPut = false);

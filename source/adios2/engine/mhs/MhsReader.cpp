@@ -9,6 +9,7 @@
  */
 
 #include "MhsReader.tcc"
+#include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
 {

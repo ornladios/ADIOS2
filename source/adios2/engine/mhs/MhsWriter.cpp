@@ -11,18 +11,6 @@
 #include "MhsWriter.tcc"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/operator/compress/CompressSirius.h"
-#ifdef ADIOS2_HAVE_BLOSC
-#include "adios2/operator/compress/CompressBlosc.h"
-#endif
-#ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/operator/compress/CompressBZIP2.h"
-#endif
-#ifdef ADIOS2_HAVE_ZFP
-#include "adios2/operator/compress/CompressZFP.h"
-#endif
-#ifdef ADIOS2_HAVE_SZ
-#include "adios2/operator/compress/CompressSZ.h"
-#endif
 
 namespace adios2
 {
@@ -43,70 +31,17 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         {
             continue;
         }
-        auto itCompressor = transportParams.find("transport");
-        if (itCompressor == transportParams.end())
+        auto itTransport = transportParams.find("transport");
+        if (itTransport == transportParams.end())
         {
             continue;
         }
 
-        Params params;
-
-        if (itCompressor->second == "blosc")
+        if (itTransport->second == "sirius")
         {
-#ifdef ADIOS2_HAVE_BLOSC
-            m_OperatorMap.emplace(
+            m_TransportMap.emplace(
                 itVar->second,
-                std::make_shared<compress::CompressBlosc>(params));
-#else
-            std::cerr
-                << "ADIOS2 is not compiled with c-blosc "
-                   "(https://github.com/Blosc/c-blosc), compressor not added"
-                << std::endl;
-#endif
-        }
-        else if (itCompressor->second == "bzip2")
-        {
-#ifdef ADIOS2_HAVE_BZIP2
-            m_OperatorMap.emplace(
-                itVar->second,
-                std::make_shared<compress::CompressBZIP2>(params));
-#else
-            std::cerr << "ADIOS2 is not compiled with Bzip2 "
-                         "(https://gitlab.com/federicomenaquintero/bzip2), "
-                         "compressor not added"
-                      << std::endl;
-#endif
-        }
-        else if (itCompressor->second == "zfp")
-        {
-#ifdef ADIOS2_HAVE_ZFP
-            m_OperatorMap.emplace(
-                itVar->second, std::make_shared<compress::CompressZFP>(params));
-#else
-            std::cerr << "ADIOS2 is not compiled with ZFP "
-                         "(https://github.com/LLNL/zfp), "
-                         "compressor not added"
-                      << std::endl;
-#endif
-        }
-        else if (itCompressor->second == "sz")
-        {
-#ifdef ADIOS2_HAVE_SZ
-            m_OperatorMap.emplace(
-                itVar->second, std::make_shared<compress::CompressSZ>(params));
-#else
-            std::cerr << "ADIOS2 is not compiled with SZ "
-                         "(https://github.com/szcompressor/SZ), "
-                         "compressor not added"
-                      << std::endl;
-#endif
-        }
-        else if (itCompressor->second == "sirius")
-        {
-            params.emplace("Tiers", std::to_string(m_Tiers));
-            m_OperatorMap.emplace(
-                itVar->second,
-                std::make_shared<compress::CompressSirius>(params));
+                std::make_shared<compress::CompressSirius>(io.m_Parameters));
         }
         else
         {
