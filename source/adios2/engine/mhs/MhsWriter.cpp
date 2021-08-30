@@ -43,15 +43,15 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         {
             continue;
         }
-        auto itCompressor = transportParams.find("transport");
-        if (itCompressor == transportParams.end())
+        auto itTransport = transportParams.find("transport");
+        if (itTransport == transportParams.end())
         {
             continue;
         }
 
-        if (itCompressor->second == "sirius")
+        if (itTransport->second == "sirius")
         {
-            m_OperatorMap.emplace(
+            m_TransportMap.emplace(
                 itVar->second,
                 std::make_shared<compress::CompressSirius>(io.m_Parameters));
         }

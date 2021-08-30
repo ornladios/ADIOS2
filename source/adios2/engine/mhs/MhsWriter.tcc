@@ -61,8 +61,8 @@ template <class T>
 void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     bool putToAll = false;
-    auto itVar = m_OperatorMap.find(variable.m_Name);
-    if (itVar != m_OperatorMap.end())
+    auto itVar = m_TransportMap.find(variable.m_Name);
+    if (itVar != m_TransportMap.end())
     {
         if (itVar->second->m_Type == "sirius")
         {
@@ -75,8 +75,8 @@ void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     {
         var0 =
             &m_SubIOs[0]->DefineVariable<T>(variable.m_Name, variable.m_Shape);
-        itVar = m_OperatorMap.find(variable.m_Name);
-        if (itVar != m_OperatorMap.end())
+        itVar = m_TransportMap.find(variable.m_Name);
+        if (itVar != m_TransportMap.end())
         {
             var0->AddOperation(*itVar->second, {});
         }

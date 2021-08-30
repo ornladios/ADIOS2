@@ -41,7 +41,7 @@ public:
 private:
     std::vector<IO *> m_SubIOs;
     std::vector<Engine *> m_SubEngines;
-    std::unordered_map<std::string, std::shared_ptr<Operator>> m_OperatorMap;
+    std::unordered_map<std::string, std::shared_ptr<Operator>> m_TransportMap;
     int m_Tiers = 1;
 
     void PutSubEngine(bool finalPut = false);
