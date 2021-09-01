@@ -64,6 +64,8 @@ public:
 
     void SeekToBegin() final;
 
+    void Seek(const size_t start = MaxSizeT) final;
+
 private:
     /** POSIX file handle returned by Open */
     int m_FileDescriptor = -1;

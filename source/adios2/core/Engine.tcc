@@ -86,7 +86,8 @@ void Engine::Put(const std::string &variableName, const T &datum,
 template <class T>
 void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
 {
-    CommonChecks(variable, data, {{Mode::Read}}, "in call to Get");
+    CommonChecks(variable, data, {{Mode::Read}, {Mode::ReadRandomAccess}},
+                 "in call to Get");
 
     switch (launch)
     {

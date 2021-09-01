@@ -131,6 +131,16 @@ void NullTransport::SeekToBegin()
     Impl->CurPos = 0;
 }
 
+void NullTransport::Seek(const size_t start)
+{
+    if (!Impl->IsOpen)
+    {
+        throw std::runtime_error(
+            "ERROR: NullTransport::SeekToEnd: The transport is not open.");
+    }
+    Impl->CurPos = start;
+}
+
 void NullTransport::MkDir(const std::string &fileName) { return; }
 
 void NullTransport::CheckName() const { return; }

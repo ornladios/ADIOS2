@@ -21,6 +21,10 @@ namespace engine
 template <class T>
 void BP5Writer::PutCommon(Variable<T> &variable, const T *values, bool sync)
 {
+    if (!m_BetweenStepPairs)
+    {
+        BeginStep(StepMode::Update);
+    }
     variable.SetData(values);
 
     size_t *Shape = NULL;
@@ -99,6 +103,10 @@ void BP5Writer::PutCommonSpan(Variable<T> &variable,
     size_t *Count = NULL;
     size_t DimCount = 0;
 
+    if (!m_BetweenStepPairs)
+    {
+        BeginStep(StepMode::Update);
+    }
     if (variable.m_ShapeID == ShapeID::GlobalArray)
     {
         DimCount = variable.m_Shape.size();

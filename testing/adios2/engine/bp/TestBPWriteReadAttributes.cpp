@@ -114,7 +114,8 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead =
+            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Single);
         auto attr_s1a = ioRead.InquireAttribute<std::string>(s1_Array);
@@ -334,7 +335,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead =
+            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Array);
 
@@ -544,7 +546,8 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead =
+            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto var = ioRead.InquireVariable<int>("myVar");
 
@@ -767,7 +770,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead =
+            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto var = ioRead.InquireVariable<int>("myVar");
 

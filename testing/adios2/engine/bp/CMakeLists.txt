@@ -19,9 +19,6 @@ macro(bp3_bp4_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP4
     WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
   )
-#  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
-#    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-#  )
 endmacro()
 
 macro(bp_gtest_add_tests_helper testname mpi)
@@ -40,19 +37,19 @@ endmacro()
 
 add_subdirectory(operations)
 
-bp3_bp4_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(WriteReadADIOS2fstream MPI_ALLOW)
+bp_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
+bp_gtest_add_tests_helper(WriteReadADIOS2fstream MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadADIOS2stdio MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(WriteReadAsStreamADIOS2 MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(WriteReadAsStreamADIOS2_Threads MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(WriteReadAttributes MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(FStreamWriteReadHighLevelAPI MPI_ALLOW)
+bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2 MPI_ALLOW)
+bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2_Threads MPI_ALLOW)
+bp_gtest_add_tests_helper(WriteReadAttributes MPI_ALLOW)
+bp_gtest_add_tests_helper(FStreamWriteReadHighLevelAPI MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteFlushRead MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteMultiblockRead MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadMultiblock MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadVector MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
+bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteMemorySelectionRead MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadLocalVariables MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadLocalVariablesSel MPI_ALLOW)

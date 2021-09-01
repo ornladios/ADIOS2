@@ -224,10 +224,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
-        EXPECT_EQ(bpReader.OpenMode(), adios2::Mode::Read);
 
         // auto var_bool = io.InquireVariable<bool>("bool");
         // EXPECT_TRUE(var_bool);
@@ -566,7 +566,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
         auto var_iString = io.InquireVariable<std::string>("iString");
@@ -883,7 +884,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
 
@@ -1148,7 +1150,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead10D2x2)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
 
@@ -1366,7 +1369,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
 
@@ -1485,6 +1489,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         var_r32.SetStepSelection({tInitial, NSteps - tInitial});
         var_r64.SetStepSelection({tInitial, NSteps - tInitial});
 
+        std::cout << "Step selection is " << tInitial << " to "
+                  << NSteps - tInitial << std::endl;
         bpReader.Get(var_i8, I8.data());
         bpReader.Get(var_i16, I16.data());
         bpReader.Get(var_i32, I32.data());
@@ -1513,6 +1519,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
+                std::cout << "Testing i8 at i = " << i << " index = " << index
+                          << " data eq " << (void *)&I8[index] << std::endl;
                 EXPECT_EQ(I8[index], currentTestData.I8[i]) << msg;
                 EXPECT_EQ(I16[index], currentTestData.I16[i]) << msg;
                 EXPECT_EQ(I32[index], currentTestData.I32[i]) << msg;
@@ -1673,7 +1681,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         auto var_i16 = io.InquireVariable<int16_t>("i16");
@@ -1779,7 +1788,8 @@ TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
         bpWriter.Close();
 
         EXPECT_NO_THROW(io.Open(fname, adios2::Mode::Write));
-        EXPECT_THROW(io.Open(fname, adios2::Mode::Read), std::invalid_argument);
+        EXPECT_THROW(io.Open(fname, adios2::Mode::ReadRandomAccess),
+                     std::invalid_argument);
     }
 }
 
@@ -1830,7 +1840,8 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
         adios2::Variable<int64_t> varRange =
             io.InquireVariable<int64_t>("range");
 

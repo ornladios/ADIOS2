@@ -45,7 +45,13 @@ BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
 
 StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    m_WriterStep++;
+    if (m_BetweenStepPairs)
+    {
+        throw std::logic_error("ERROR: BeginStep() is called a second time "
+                               "without an intervening EndStep()");
+    }
+
+    m_BetweenStepPairs = true;
     if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
     {
         m_BP5Serializer.InitStep(new MallocV("BP5Writer", false,
@@ -287,7 +293,14 @@ void BP5Writer::MarshalAttributes()
     for (const auto &attributePair : attributes)
     {
         const std::string name(attributePair.first);
-        const DataType type(attributePair.second->m_Type);
+        auto baseAttr = &attributePair.second;
+        const DataType type((*baseAttr)->m_Type);
+        int element_count = -1;
+
+        if (!attributePair.second->m_IsSingleValue)
+        {
+            element_count = (*baseAttr)->m_Elements;
+        }
 
         if (type == DataType::None)
         {
@@ -296,11 +309,23 @@ void BP5Writer::MarshalAttributes()
         {
             core::Attribute<std::string> &attribute =
                 *m_IO.InquireAttribute<std::string>(name);
-            int element_count = -1;
-            const char *data_addr = attribute.m_DataSingleValue.c_str();
-            if (!attribute.m_IsSingleValue)
+            void *data_addr;
+            if (attribute.m_IsSingleValue)
             {
-                //
+                data_addr = (void *)attribute.m_DataSingleValue.c_str();
+            }
+            else
+            {
+                const char **tmp =
+                    (const char **)malloc(sizeof(char *) * element_count);
+                for (int i = 0; i < element_count; i++)
+                {
+                    auto str = &attribute.m_DataArray[i];
+                    printf("Marshalling attr array string %s\n", str->c_str());
+                    tmp[i] = str->c_str();
+                }
+                // tmp will be free'd after final attribute marshalling
+                data_addr = (void *)tmp;
             }
 
             m_BP5Serializer.MarshalAttribute(name.c_str(), type, sizeof(char *),
@@ -321,7 +346,7 @@ void BP5Writer::MarshalAttributes()
                                          sizeof(T), element_count, data_addr); \
     }
 
-        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
     m_MarshaledAttributesCount = attributesCount;
@@ -329,6 +354,7 @@ void BP5Writer::MarshalAttributes()
 
 void BP5Writer::EndStep()
 {
+    m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Writer::EndStep");
     m_Profiler.Start("endstep");
     MarshalAttributes();
@@ -398,6 +424,7 @@ void BP5Writer::EndStep()
     }
     delete RecvBuffer;
     m_Profiler.Stop("endstep");
+    m_WriterStep++;
 }
 
 // PRIVATE
@@ -828,6 +855,11 @@ void BP5Writer::InitBPBuffer()
     }
 }
 
+void BP5Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
+{
+    m_MarshaledAttributesCount = 0;
+}
+
 void BP5Writer::FlushData(const bool isFinal)
 {
     BufferV *DataBuf;
@@ -875,6 +907,15 @@ void BP5Writer::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Close");
 
+    if ((m_WriterStep == 0) && !m_BetweenStepPairs)
+    {
+        /* never did begin step, do one now */
+        BeginStep(StepMode::Update);
+    }
+    if (m_BetweenStepPairs)
+    {
+        EndStep();
+    }
     m_FileDataManager.CloseFiles(transportIndex);
     // Delete files from temporary storage if draining was on
 

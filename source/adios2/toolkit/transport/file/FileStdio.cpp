@@ -41,11 +41,15 @@ FileStdio::~FileStdio()
 
 void FileStdio::WaitForOpen()
 {
+    std::cout << "Wait for open file: " << m_Name << ", is opening "
+              << m_IsOpening << " valid " << m_OpenFuture.valid() << std::endl;
     if (m_IsOpening)
     {
         if (m_OpenFuture.valid())
         {
             m_File = m_OpenFuture.get();
+            std::cout << "After OpenFuture.get on file " << m_Name
+                      << " m_File is " << (void *)m_File << std::endl;
         }
         m_IsOpening = false;
         CheckFile(
@@ -70,6 +74,7 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
     CheckName();
     m_OpenMode = openMode;
 
+    std::cout << "Doing open on " << name << std::endl;
     switch (m_OpenMode)
     {
     case (Mode::Write):
@@ -100,6 +105,7 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
                                      m_Name + ", in call to stdio fopen");
     }
 
+    std::cout << "mfile is " << (void *)m_File << std::endl;
     if (!m_IsOpening)
     {
         CheckFile(
@@ -350,6 +356,25 @@ void FileStdio::SeekToBegin()
         throw std::ios_base::failure(
             "ERROR: couldn't seek to the begin of file " + m_Name +
             ", in call to stdio fseek\n");
+    }
+}
+
+void FileStdio::Seek(const size_t start)
+{
+    if (start != MaxSizeT)
+    {
+        WaitForOpen();
+        const auto status = std::fseek(m_File, 0, SEEK_SET);
+        if (status == -1)
+        {
+            throw std::ios_base::failure("ERROR: couldn't seek to offset " +
+                                         std::to_string(start) + " of file " +
+                                         m_Name + ", in call to stdio fseek\n");
+        }
+    }
+    else
+    {
+        SeekToEnd();
     }
 }
 

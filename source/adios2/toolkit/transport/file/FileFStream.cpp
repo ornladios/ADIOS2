@@ -339,5 +339,20 @@ void FileFStream::SeekToBegin()
               ", in call to fstream seekp");
 }
 
+void FileFStream::Seek(const size_t start)
+{
+    if (start != MaxSizeT)
+    {
+        WaitForOpen();
+        m_FileStream.seekp(start, std::ios_base::beg);
+        CheckFile("couldn't move to offset " + std::to_string(start) +
+                  " of file " + m_Name + ", in call to fstream seekp");
+    }
+    else
+    {
+        SeekToEnd();
+    }
+}
+
 } // end namespace transport
 } // end namespace adios2

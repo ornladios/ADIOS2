@@ -56,6 +56,8 @@ public:
 
     void SeekToBegin() override;
 
+    void Seek(const size_t start = MaxSizeT) override;
+
 protected:
     struct NullTransportImpl;
     std::unique_ptr<NullTransportImpl> Impl;
