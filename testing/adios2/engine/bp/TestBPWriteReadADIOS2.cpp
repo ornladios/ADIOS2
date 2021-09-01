@@ -1489,8 +1489,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         var_r32.SetStepSelection({tInitial, NSteps - tInitial});
         var_r64.SetStepSelection({tInitial, NSteps - tInitial});
 
-        std::cout << "Step selection is " << tInitial << " to "
-                  << NSteps - tInitial << std::endl;
         bpReader.Get(var_i8, I8.data());
         bpReader.Get(var_i16, I16.data());
         bpReader.Get(var_i32, I32.data());
@@ -1519,8 +1517,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                std::cout << "Testing i8 at i = " << i << " index = " << index
-                          << " data eq " << (void *)&I8[index] << std::endl;
                 EXPECT_EQ(I8[index], currentTestData.I8[i]) << msg;
                 EXPECT_EQ(I16[index], currentTestData.I16[i]) << msg;
                 EXPECT_EQ(I32[index], currentTestData.I32[i]) << msg;

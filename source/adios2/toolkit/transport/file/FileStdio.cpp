@@ -41,15 +41,11 @@ FileStdio::~FileStdio()
 
 void FileStdio::WaitForOpen()
 {
-    std::cout << "Wait for open file: " << m_Name << ", is opening "
-              << m_IsOpening << " valid " << m_OpenFuture.valid() << std::endl;
     if (m_IsOpening)
     {
         if (m_OpenFuture.valid())
         {
             m_File = m_OpenFuture.get();
-            std::cout << "After OpenFuture.get on file " << m_Name
-                      << " m_File is " << (void *)m_File << std::endl;
         }
         m_IsOpening = false;
         CheckFile(
@@ -74,7 +70,6 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
     CheckName();
     m_OpenMode = openMode;
 
-    std::cout << "Doing open on " << name << std::endl;
     switch (m_OpenMode)
     {
     case (Mode::Write):
@@ -105,7 +100,6 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
                                      m_Name + ", in call to stdio fopen");
     }
 
-    std::cout << "mfile is " << (void *)m_File << std::endl;
     if (!m_IsOpening)
     {
         CheckFile(
