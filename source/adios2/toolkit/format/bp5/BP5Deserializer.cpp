@@ -615,7 +615,6 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
         else
         {
             DataType Type;
-            int ElemSize;
             size_t ElemCount = *(size_t *)field_data;
             field_data = (void *)((char *)field_data + sizeof(size_t));
             i++;
@@ -633,7 +632,7 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
                 std::vector<std::string> array;
                 array.resize(ElemCount);
                 char **str_array = *(char ***)field_data;
-                for (int i = 0; i < ElemCount; i++)
+                for (size_t i = 0; i < ElemCount; i++)
                 {
                     array[i].assign(str_array[i]);
                 }
