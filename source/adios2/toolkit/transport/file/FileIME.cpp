@@ -336,5 +336,24 @@ void FileIME::SeekToBegin()
     }
 }
 
+void FileIME::Seek(const size_t start)
+{
+    if (start != MaxSizeT)
+    {
+        const int status =
+            ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
+        if (status == -1)
+        {
+            throw std::ios_base::failure(
+                "ERROR: couldn't seek to offset " + std::to_string(start) +
+                " of file " + m_Name + ", in call to IME IO lseek\n");
+        }
+    }
+    else
+    {
+        SeekToEnd();
+    }
+}
+
 } // end namespace transport
 } // end namespace adios2

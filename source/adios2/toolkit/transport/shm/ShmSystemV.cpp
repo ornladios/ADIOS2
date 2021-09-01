@@ -145,6 +145,11 @@ void ShmSystemV::SeekToBegin()
     // empty function. seek operation is meaningless for shared memory
 }
 
+void ShmSystemV::Seek(const size_t start)
+{
+    // empty function. seek operation is meaningless for shared memory
+}
+
 // PRIVATE
 void ShmSystemV::CheckShmID(const std::string hint) const
 {

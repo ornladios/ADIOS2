@@ -152,6 +152,8 @@ public:
 
     virtual void SeekToBegin() = 0;
 
+    virtual void Seek(const size_t start = MaxSizeT) = 0;
+
 protected:
     virtual void MkDir(const std::string &fileName);
 

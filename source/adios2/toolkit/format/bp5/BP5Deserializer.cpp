@@ -9,6 +9,7 @@
 #include "adios2/core/Attribute.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
+#include "adios2/core/VariableBase.h"
 
 #include "BP5Deserializer.h"
 #include "BP5Deserializer.tcc"
@@ -54,6 +55,12 @@ bool BP5Deserializer::NameIndicatesArray(const char *Name)
 {
     int Len = strlen(Name);
     return (strcmp("Dims", Name + Len - 4) == 0);
+}
+
+bool BP5Deserializer::NameIndicatesAttrArray(const char *Name)
+{
+    int Len = strlen(Name);
+    return (strcmp("ElemCount", Name + Len - 9) == 0);
 }
 
 DataType BP5Deserializer::TranslateFFSType2ADIOS(const char *Type, int size)
@@ -105,7 +112,7 @@ DataType BP5Deserializer::TranslateFFSType2ADIOS(const char *Type, int size)
         else if ((sizeof(long double) != sizeof(double)) &&
                  (size == sizeof(long double)))
         {
-            return DataType::Double;
+            return DataType::LongDouble;
         }
         else
         {
@@ -120,6 +127,11 @@ DataType BP5Deserializer::TranslateFFSType2ADIOS(const char *Type, int size)
     {
         return DataType::DoubleComplex;
     }
+    else if (strcmp(Type, "string") == 0)
+    {
+        return DataType::String;
+    }
+
     return DataType::None;
 }
 
@@ -162,10 +174,16 @@ BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByName(const char *Name)
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::CreateVarRec(const char *ArrayName)
 {
-    BP5VarRec *Ret = new BP5VarRec(m_WriterCohortSize);
+    BP5VarRec *Ret = new BP5VarRec();
     Ret->VarName = strdup(ArrayName);
     Ret->Variable = nullptr;
+    Ret->VarNum = m_VarCount++;
     VarByName[Ret->VarName] = Ret;
+    if (!m_RandomAccessMode)
+    {
+        Ret->PerWriterMetaFieldOffset.resize(m_WriterCohortSize);
+        Ret->PerWriterBlockStart.resize(m_WriterCohortSize);
+    }
     return Ret;
 }
 
@@ -182,6 +200,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
     int ControlCount = 0;
     ControlInfo *ret = (BP5Deserializer::ControlInfo *)malloc(sizeof(*ret));
     ret->Format = Format;
+    ret->MetaFieldOffset = new std::vector<size_t>();
     while (FieldList[i].field_name)
     {
         ret = (ControlInfo *)realloc(
@@ -189,22 +208,18 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
         struct ControlStruct *C = &(ret->Controls[ControlCount]);
         ControlCount++;
 
-        C->FieldIndex = i;
         C->FieldOffset = FieldList[i].field_offset;
 
+        BP5VarRec *VarRec = nullptr;
         if (NameIndicatesArray(FieldList[i].field_name))
         {
             char *ArrayName;
             DataType Type;
-            BP5VarRec *VarRec = nullptr;
             int ElementSize;
             C->IsArray = 1;
             BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
                                &ElementSize);
-            //            if (WriterRank != 0)
-            //            {
             VarRec = LookupVarByName(ArrayName);
-            //            }
             if (!VarRec)
             {
                 VarRec = CreateVarRec(ArrayName);
@@ -220,7 +235,6 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
         {
             /* simple field */
             char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
-            BP5VarRec *VarRec = NULL;
             C->IsArray = 0;
             VarRec = LookupVarByName(FieldName);
             if (!VarRec)
@@ -238,6 +252,9 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             free(FieldName);
             i++;
         }
+        if (ret->MetaFieldOffset->size() <= VarRec->VarNum)
+            ret->MetaFieldOffset->resize(VarRec->VarNum + 1);
+        (*ret->MetaFieldOffset)[VarRec->VarNum] = C->FieldOffset;
     }
     ret->ControlCount = ControlCount;
     ret->Next = ControlBlocks;
@@ -332,8 +349,10 @@ void BP5Deserializer::SetupForTimestep(size_t Timestep)
 {
     CurTimestep = Timestep;
     PendingRequests.clear();
+
     for (auto RecPair : VarByKey)
     {
+        m_Engine->m_IO.RemoveVariable(RecPair.second->VarName);
         RecPair.second->Variable = NULL;
     }
 }
@@ -346,13 +365,18 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
     static int DumpMetadata = -1;
     FFSformat =
         FFSTypeHandle_from_encode(ReaderFFSContext, (char *)MetadataBlock);
+    if (!FFSformat)
+    {
+        throw std::logic_error("Internal error or file corruption, no know "
+                               "format for Metadata Block");
+    }
     if (!FFShas_conversion(FFSformat))
     {
         FMContext FMC = FMContext_from_FFS(ReaderFFSContext);
         FMFormat Format = FMformat_from_ID(FMC, (char *)MetadataBlock);
         FMStructDescList List =
             FMcopy_struct_list(format_list_of_FMFormat(Format));
-        FMlocalize_structs(List);
+        // GSE - restrict to homogenous FTM       FMlocalize_structs(List);
         establish_conversion(ReaderFFSContext, FFSformat, List);
         FMfree_struct_list(List);
     }
@@ -379,31 +403,58 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         printf("\n\n");
     }
     struct ControlInfo *Control;
-    struct ControlStruct *ControlArray;
+    struct ControlStruct *ControlFields;
     Control = GetPriorControl(FMFormat_of_original(FFSformat));
     if (!Control)
     {
         Control = BuildControl(FMFormat_of_original(FFSformat));
     }
-    ControlArray = &Control->Controls[0];
+    ControlFields = &Control->Controls[0];
 
-    //    if (m_RandomAccessMode) {
-    //	PrepareForTimestep(Step);
-    //    }
-    MetadataBaseAddrs[WriterRank] = BaseData;
-    //    } else {
-    //	Loaded
+    if (m_RandomAccessMode)
+    {
+        if (m_ControlArray.size() < Step + 1)
+        {
+            m_ControlArray.resize(Step + 1);
+        }
+        if (m_ControlArray[Step].size() == 0)
+        {
+            m_ControlArray[Step].resize(m_WriterCohortSize);
+        }
+        m_ControlArray[Step][WriterRank] = Control;
+
+        MetadataBaseArray.resize(Step + 1);
+        if (MetadataBaseArray[Step] == nullptr)
+        {
+            m_MetadataBaseAddrs = new std::vector<void *>();
+            m_MetadataBaseAddrs->resize(m_WriterCohortSize);
+            MetadataBaseArray[Step] = m_MetadataBaseAddrs;
+            m_FreeableMBA = nullptr;
+        }
+    }
+    else
+    {
+        if (!m_MetadataBaseAddrs)
+        {
+            m_MetadataBaseAddrs = new std::vector<void *>();
+            m_FreeableMBA = m_MetadataBaseAddrs;
+            m_MetadataBaseAddrs->resize(m_WriterCohortSize);
+        }
+    }
+    (*m_MetadataBaseAddrs)[WriterRank] = BaseData;
+
     for (int i = 0; i < Control->ControlCount; i++)
     {
-        int FieldOffset = ControlArray[i].FieldOffset;
-        BP5VarRec *VarRec = ControlArray[i].VarRec;
+        size_t FieldOffset = ControlFields[i].FieldOffset;
+        BP5VarRec *VarRec = ControlFields[i].VarRec;
         void *field_data = (char *)BaseData + FieldOffset;
         if (!FFSBitfieldTest((FFSMetadataInfoStruct *)BaseData, i))
         {
             continue;
         }
-        VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
-        if (ControlArray[i].IsArray)
+        if (!m_RandomAccessMode)
+            VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
+        if (ControlFields[i].IsArray)
         {
             MetaArrayRec *meta_base = (MetaArrayRec *)field_data;
             if ((meta_base->Dims > 1) &&
@@ -415,14 +466,9 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 ReverseDimensions(meta_base->Count, meta_base->Dims);
                 ReverseDimensions(meta_base->Offsets, meta_base->Dims);
             }
-            if (WriterRank == 0)
+            if ((WriterRank == 0) || (VarRec->GlobalDims == NULL))
             {
-                // use the shape from rank 0
-                VarRec->GlobalDims = meta_base->Shape;
-            }
-            else if (VarRec->GlobalDims == NULL)
-            {
-                // unless there wasn't one before
+                // use the shape from rank 0 (or first non-NULL)
                 VarRec->GlobalDims = meta_base->Shape;
             }
             if (!VarRec->Variable)
@@ -431,21 +477,26 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                     m_Engine, VarRec->VarName, VarRec->Type, meta_base->Dims,
                     meta_base->Shape, meta_base->Offsets, meta_base->Count);
                 VarByKey[VarRec->Variable] = VarRec;
+                VarRec->LastTSAdded = Step; // starts at 1
             }
+
             VarRec->DimCount = meta_base->Dims;
             size_t BlockCount =
                 meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
-            VarRec->PerWriterDataLocation[WriterRank] = meta_base->DataLocation;
-            if (WriterRank == 0)
+            if (!m_RandomAccessMode)
             {
-                VarRec->PerWriterBlockStart[WriterRank] = 0;
-                if (m_WriterCohortSize > 1)
-                    VarRec->PerWriterBlockStart[WriterRank + 1] = BlockCount;
-            }
-            if (WriterRank < static_cast<size_t>(m_WriterCohortSize - 1))
-            {
-                VarRec->PerWriterBlockStart[WriterRank + 1] =
-                    VarRec->PerWriterBlockStart[WriterRank] + BlockCount;
+                if (WriterRank == 0)
+                {
+                    VarRec->PerWriterBlockStart[WriterRank] = 0;
+                    if (m_WriterCohortSize > 1)
+                        VarRec->PerWriterBlockStart[WriterRank + 1] =
+                            BlockCount;
+                }
+                if (WriterRank < static_cast<size_t>(m_WriterCohortSize - 1))
+                {
+                    VarRec->PerWriterBlockStart[WriterRank + 1] =
+                        VarRec->PerWriterBlockStart[WriterRank] + BlockCount;
+                }
             }
         }
         else
@@ -455,7 +506,14 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 VarRec->Variable = VarSetup(m_Engine, VarRec->VarName,
                                             VarRec->Type, field_data);
                 VarByKey[VarRec->Variable] = VarRec;
+                VarRec->LastTSAdded = Step; // starts at 1
             }
+        }
+        if (m_RandomAccessMode && (VarRec->LastTSAdded != Step))
+        {
+            static_cast<VariableBase *>(VarRec->Variable)
+                ->m_AvailableStepsCount++;
+            VarRec->LastTSAdded = Step;
         }
     }
 }
@@ -475,13 +533,18 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
     m_Engine->m_IO.RemoveAllAttributes();
     FFSformat =
         FFSTypeHandle_from_encode(ReaderFFSContext, (char *)AttributeBlock);
+    if (!FFSformat)
+    {
+        throw std::logic_error("Internal error or file corruption, no know "
+                               "format for Attribute Block");
+    }
     if (!FFShas_conversion(FFSformat))
     {
         FMContext FMC = FMContext_from_FFS(ReaderFFSContext);
         FMFormat Format = FMformat_from_ID(FMC, (char *)AttributeBlock);
         FMStructDescList List =
             FMcopy_struct_list(format_list_of_FMFormat(Format));
-        FMlocalize_structs(List);
+        // GSE - restrict to homogenous FTM       FMlocalize_structs(List);
         establish_conversion(ReaderFFSContext, FFSformat, List);
         FMfree_struct_list(List);
     }
@@ -518,48 +581,153 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
         char *FieldName;
         void *field_data = (char *)BaseData + FieldList[i].field_offset;
 
-        DataType Type;
-        int ElemSize;
-        BreakdownVarName(FieldList[i].field_name, &FieldName, &Type, &ElemSize);
-        if (Type == adios2::DataType::Compound)
+        if (!NameIndicatesAttrArray(FieldList[i].field_name))
         {
-            return;
-        }
-        else if (Type == helper::GetDataType<std::string>())
-        {
-            m_Engine->m_IO.DefineAttribute<std::string>(FieldName,
-                                                        *(char **)field_data);
-        }
+            DataType Type;
+            int ElemSize;
+            BreakdownVarName(FieldList[i].field_name, &FieldName, &Type,
+                             &ElemSize);
+            if (Type == adios2::DataType::Compound)
+            {
+                return;
+            }
+            else if (Type == helper::GetDataType<std::string>())
+            {
+                m_Engine->m_IO.DefineAttribute<std::string>(
+                    FieldName, *(char **)field_data);
+            }
 #define declare_type(T)                                                        \
     else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         m_Engine->m_IO.DefineAttribute<T>(FieldName, *(T *)field_data);        \
     }
 
-        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
+            else
+            {
+                std::cout << "Loading attribute matched no type "
+                          << ToString(Type) << std::endl;
+            }
+            free(FieldName);
+            i++;
+        }
         else
         {
-            std::cout << "Loading attribute matched no type " << ToString(Type)
-                      << std::endl;
+            DataType Type;
+            size_t ElemCount = *(size_t *)field_data;
+            field_data = (void *)((char *)field_data + sizeof(size_t));
+            i++;
+            char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
+            char *FieldType = strdup(FieldList[i].field_type);
+            *index(FieldType, '[') = 0;
+            Type = (DataType)TranslateFFSType2ADIOS(FieldType,
+                                                    FieldList[i].field_size);
+            if (Type == adios2::DataType::Compound)
+            {
+                return;
+            }
+            else if (Type == helper::GetDataType<std::string>())
+            {
+                std::vector<std::string> array;
+                array.resize(ElemCount);
+                char **str_array = *(char ***)field_data;
+                for (size_t i = 0; i < ElemCount; i++)
+                {
+                    array[i].assign(str_array[i]);
+                }
+                m_Engine->m_IO.DefineAttribute<std::string>(
+                    FieldName, array.data(), array.size());
+            }
+#define declare_type(T)                                                        \
+    else if (Type == helper::GetDataType<T>())                                 \
+    {                                                                          \
+        T **array = *(T ***)field_data;                                        \
+        m_Engine->m_IO.DefineAttribute<T>(FieldName, (T *)array, ElemCount);   \
+    }
+
+            ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            else
+            {
+                std::cout << "Loading attribute matched no type "
+                          << ToString(Type) << std::endl;
+            }
+            free(FieldName);
+            i++;
         }
-        free(FieldName);
-        i++;
     }
 }
 
 bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
 {
+    if (!m_RandomAccessMode)
+    {
+        return QueueGetSingle(variable, DestData, CurTimestep);
+    }
+    else
+    {
+        bool ret = false;
+        if (variable.m_StepsStart + variable.m_StepsCount >
+            variable.m_AvailableStepsCount)
+        {
+            throw std::invalid_argument(
+                "ERROR: offset " + std::to_string(variable.m_StepsCount) +
+                " from steps start " + std::to_string(variable.m_StepsStart) +
+                " in variable " + variable.m_Name +
+                " is beyond the largest available step = " +
+                std::to_string(variable.m_AvailableStepsCount +
+                               variable.m_AvailableStepsStart) +
+                ", check Variable SetStepSelection argument stepsCount "
+                "(random access), or "
+                "number of BeginStep calls (streaming), in call to Get");
+        }
+        for (size_t i = 0; i < variable.m_StepsCount; i++)
+        {
+            ret = QueueGetSingle(variable, DestData, variable.m_StepsStart + i);
+            size_t increment = variable.TotalSize() * variable.m_ElementSize;
+            DestData = (void *)((char *)DestData + increment);
+        }
+        return ret;
+    }
+}
+
+bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
+                                     void *DestData, size_t Step)
+{
     if (variable.m_SingleValue)
     {
+        char *src;
+        BP5VarRec *VarRec = VarByKey[&variable];
         int WriterRank = 0;
+        if (m_RandomAccessMode)
+        {
+            ControlInfo *CI =
+                m_ControlArray[Step][WriterRank]; // writer 0 control array
+            size_t MetadataFieldOffset = (*CI->MetaFieldOffset)[VarRec->VarNum];
+            char *MetadataBase =
+                (char *)((*MetadataBaseArray[Step])[WriterRank]);
+            src = MetadataBase + MetadataFieldOffset;
+        }
+        else
+        {
+            src = ((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
+                  VarRec->PerWriterMetaFieldOffset[WriterRank];
+        }
         if (variable.m_SelectionType == adios2::SelectionType::WriteBlock)
             WriterRank = variable.m_BlockID;
 
-        BP5VarRec *VarRec = VarByKey[&variable];
-        char *src = ((char *)MetadataBaseAddrs[WriterRank]) +
-                    VarRec->PerWriterMetaFieldOffset[WriterRank];
-        memcpy(DestData, src, variable.m_ElementSize);
+        if (variable.m_Type != DataType::String)
+        {
+            std::cout << "Performing get for var " << variable.m_Name << " TS "
+                      << Step << "   Mdatabase " << (void *)src << std::endl;
+            memcpy(DestData, src, variable.m_ElementSize);
+        }
+        else
+        {
+            std::string *TmpStr = static_cast<std::string *>(DestData);
+            TmpStr->assign(*(const char **)src);
+        }
         return false;
     }
     if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
@@ -570,6 +738,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
         Req.BlockID = variable.m_BlockID;
         Req.Count = variable.m_Count;
         Req.Start = variable.m_Start;
+        Req.Step = Step;
         Req.Data = DestData;
         PendingRequests.push_back(Req);
     }
@@ -581,6 +750,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
         Req.BlockID = variable.m_BlockID;
         Req.Count = variable.m_Count;
         Req.Data = DestData;
+        Req.Step = Step;
         PendingRequests.push_back(Req);
     }
     else
@@ -591,9 +761,23 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
 
 bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t WriterRank)
 {
-    MetaArrayRec *writer_meta_base =
-        (MetaArrayRec *)(((char *)MetadataBaseAddrs[WriterRank]) +
-                         Req.VarRec->PerWriterMetaFieldOffset[WriterRank]);
+    MetaArrayRec *writer_meta_base;
+    if (m_RandomAccessMode)
+    {
+        ControlInfo *CI =
+            m_ControlArray[Req.Step][WriterRank]; // writer 0 control array
+        size_t MetadataFieldOffset = (*CI->MetaFieldOffset)[Req.VarRec->VarNum];
+        writer_meta_base =
+            (MetaArrayRec
+                 *)(((char *)(*MetadataBaseArray[Req.Step])[WriterRank]) +
+                    MetadataFieldOffset);
+    }
+    else
+    {
+        writer_meta_base =
+            (MetaArrayRec *)(((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
+                             Req.VarRec->PerWriterMetaFieldOffset[WriterRank]);
+    }
 
     if (Req.RequestType == Local)
     {
@@ -638,38 +822,43 @@ std::vector<BP5Deserializer::ReadRequest>
 BP5Deserializer::GenerateReadRequests()
 {
     std::vector<BP5Deserializer::ReadRequest> Ret;
-    for (auto &W : WriterInfo)
-    {
-        W.Status = Empty;
-        W.RawBuffer = NULL;
-    }
+    std::vector<FFSReaderPerWriterRec> WriterInfo(m_WriterCohortSize);
+    typedef std::pair<size_t, size_t> pair;
+    std::map<pair, bool> WriterTSNeeded;
 
     for (const auto &Req : PendingRequests)
     {
         for (size_t i = 0; i < m_WriterCohortSize; i++)
         {
-            if ((WriterInfo[i].Status != Needed) && (NeedWriter(Req, i)))
+            if (WriterTSNeeded.count(std::make_pair(Req.Step, i)) == 0)
             {
-                WriterInfo[i].Status = Needed;
+                WriterTSNeeded[std::make_pair(Req.Step, i)] = true;
             }
         }
     }
 
-    for (size_t i = 0; i < m_WriterCohortSize; i++)
+    for (std::pair<pair, bool> element : WriterTSNeeded)
     {
-        if (WriterInfo[i].Status == Needed)
+        ReadRequest RR;
+        RR.Timestep = element.first.first;
+        RR.WriterRank = element.first.second;
+        RR.StartOffset = 0;
+        if (m_RandomAccessMode)
         {
-            ReadRequest RR;
-            RR.Timestep = CurTimestep;
-            RR.WriterRank = i;
-            RR.StartOffset = 0;
             RR.ReadLength =
-                ((struct FFSMetadataInfoStruct *)MetadataBaseAddrs[i])
+                ((struct FFSMetadataInfoStruct *)((
+                     *MetadataBaseArray[RR.Timestep])[RR.WriterRank]))
                     ->DataBlockSize;
-            RR.DestinationAddr = (char *)malloc(RR.ReadLength);
-            RR.Internal = NULL;
-            Ret.push_back(RR);
         }
+        else
+        {
+            RR.ReadLength = ((struct FFSMetadataInfoStruct
+                                  *)(*m_MetadataBaseAddrs)[RR.WriterRank])
+                                ->DataBlockSize;
+        }
+        RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+        RR.Internal = NULL;
+        Ret.push_back(RR);
     }
     return Ret;
 }
@@ -687,10 +876,27 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                 /* if needed this writer fill destination with acquired data */
                 int ElementSize = Req.VarRec->ElementSize;
                 size_t *GlobalDimensions = Req.VarRec->GlobalDims;
-                MetaArrayRec *writer_meta_base =
-                    (MetaArrayRec
-                         *)(((char *)MetadataBaseAddrs[WriterRank]) +
-                            Req.VarRec->PerWriterMetaFieldOffset[WriterRank]);
+                MetaArrayRec *writer_meta_base;
+                if (m_RandomAccessMode)
+                {
+                    ControlInfo *CI =
+                        m_ControlArray[Req.Step]
+                                      [WriterRank]; // writer 0 control array
+                    size_t MetadataFieldOffset =
+                        (*CI->MetaFieldOffset)[Req.VarRec->VarNum];
+                    writer_meta_base =
+                        (MetaArrayRec *)(((char *)(*MetadataBaseArray[Req.Step])
+                                              [WriterRank]) +
+                                         MetadataFieldOffset);
+                }
+                else
+                {
+                    writer_meta_base =
+                        (MetaArrayRec
+                             *)(((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
+                                Req.VarRec
+                                    ->PerWriterMetaFieldOffset[WriterRank]);
+                }
                 int DimCount = writer_meta_base->Dims;
                 size_t *RankOffset = writer_meta_base->Offsets;
                 const size_t *RankSize = writer_meta_base->Count;
@@ -701,16 +907,17 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                 const size_t *SelSize = Req.Count.data();
                 int ReqIndex = 0;
                 while (Requests[ReqIndex].WriterRank !=
-                       static_cast<size_t>(WriterRank))
+                           static_cast<size_t>(WriterRank) ||
+                       (Requests[ReqIndex].Timestep != Req.Step))
                     ReqIndex++;
-                if (Req.VarRec->PerWriterDataLocation[WriterRank] == NULL)
+                if (writer_meta_base->DataLocation == NULL)
                 {
                     // No Data from this writer
                     continue;
                 }
                 char *IncomingData =
                     (char *)Requests[ReqIndex].DestinationAddr +
-                    Req.VarRec->PerWriterDataLocation[WriterRank][0];
+                    writer_meta_base->DataLocation[0];
                 if (Req.Start.size())
                 {
                     SelOffset = Req.Start.data();
@@ -720,10 +927,8 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                     int LocalBlockID =
                         Req.BlockID -
                         Req.VarRec->PerWriterBlockStart[WriterRank];
-                    IncomingData =
-                        (char *)Requests[ReqIndex].DestinationAddr +
-                        Req.VarRec
-                            ->PerWriterDataLocation[WriterRank][LocalBlockID];
+                    IncomingData = (char *)Requests[ReqIndex].DestinationAddr +
+                                   writer_meta_base->DataLocation[LocalBlockID];
 
                     RankOffset = ZeroRankOffset.data();
                     GlobalDimensions = ZeroGlobalDimensions.data();
@@ -997,30 +1202,25 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
 }
 
 BP5Deserializer::BP5Deserializer(int WriterCount, bool WriterIsRowMajor,
-                                 bool ReaderIsRowMajor)
+                                 bool ReaderIsRowMajor, bool RandomAccessMode)
 : m_WriterIsRowMajor{WriterIsRowMajor}, m_ReaderIsRowMajor{ReaderIsRowMajor},
-  m_WriterCohortSize{static_cast<size_t>(WriterCount)}
+  m_WriterCohortSize{static_cast<size_t>(WriterCount)}, m_RandomAccessMode{
+                                                            RandomAccessMode}
 {
     FMContext Tmp = create_local_FMcontext();
     ReaderFFSContext = create_FFSContext_FM(Tmp);
     free_FMcontext(Tmp);
-    WriterInfo.resize(m_WriterCohortSize);
-    MetadataBaseAddrs.resize(m_WriterCohortSize);
 }
 
 BP5Deserializer::~BP5Deserializer()
 {
-    free_FFSContext(ReaderFFSContext);
-    for (size_t i = 0; i < m_WriterCohortSize; i++)
-    {
-        if (WriterInfo[i].RawBuffer)
-            free(WriterInfo[i].RawBuffer);
-    }
     struct ControlInfo *tmp = ControlBlocks;
+    free_FFSContext(ReaderFFSContext);
     ControlBlocks = NULL;
     while (tmp)
     {
         struct ControlInfo *next = tmp->Next;
+        delete tmp->MetaFieldOffset;
         free(tmp);
         tmp = next;
     }
@@ -1029,6 +1229,12 @@ BP5Deserializer::~BP5Deserializer()
         free(VarRec.second->VarName);
         delete VarRec.second;
     }
+    if (m_FreeableMBA)
+        delete m_FreeableMBA;
+    for (auto &step : MetadataBaseArray)
+    {
+        delete step;
+    }
 }
 
 Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
@@ -1036,7 +1242,7 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
     MetaArrayRec *meta_base =
-        (MetaArrayRec *)(((char *)MetadataBaseAddrs[0]) +
+        (MetaArrayRec *)(((char *)(*m_MetadataBaseAddrs)[0]) +
                          VarRec->PerWriterMetaFieldOffset[0]);
     Engine::MinVarInfo *MV =
         new Engine::MinVarInfo(meta_base->Dims, meta_base->Shape);
@@ -1050,7 +1256,7 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
     for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
     {
         MetaArrayRec *writer_meta_base =
-            (MetaArrayRec *)(((char *)MetadataBaseAddrs[WriterRank]) +
+            (MetaArrayRec *)(((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
                              VarRec->PerWriterMetaFieldOffset[WriterRank]);
         size_t WriterBlockCount =
             writer_meta_base->Dims
@@ -1064,7 +1270,7 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
     for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
     {
         MetaArrayRec *writer_meta_base =
-            (MetaArrayRec *)(((char *)MetadataBaseAddrs[WriterRank]) +
+            (MetaArrayRec *)(((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
                              VarRec->PerWriterMetaFieldOffset[WriterRank]);
 
         size_t WriterBlockCount =

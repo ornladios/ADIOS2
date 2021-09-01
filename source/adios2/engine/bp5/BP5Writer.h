@@ -66,7 +66,7 @@ private:
 
     transportman::TransportMan m_FileMetaMetadataManager;
 
-    int64_t m_WriterStep = -1;
+    int64_t m_WriterStep = 0;
     /*
      *  Burst buffer variables
      */
@@ -94,6 +94,8 @@ private:
     std::vector<std::string> m_DrainMetadataIndexFileNames;
     std::vector<std::string> m_ActiveFlagFileNames;
 
+    bool m_BetweenStepPairs = false;
+
     void Init() final;
 
     /** Parses parameters from IO SetParameters */
@@ -104,6 +106,7 @@ private:
     void InitTransports() final;
     /** Allocates memory and starts a PG group */
     void InitBPBuffer();
+    void NotifyEngineAttribute(std::string name, DataType type) noexcept;
 
 #define declare_type(T)                                                        \
     void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \

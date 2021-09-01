@@ -59,6 +59,7 @@ enum class Mode
     Write,
     Read,
     Append,
+    ReadRandomAccess, // reader random access mode
     // launch execution modes
     Sync,
     Deferred
@@ -88,7 +89,7 @@ enum class StepMode
 {
     Append,
     Update, // writer advance mode
-    Read    // reader advance mode
+    Read,   // reader advance mode
 };
 
 enum class StepStatus

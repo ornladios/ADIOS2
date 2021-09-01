@@ -255,7 +255,8 @@ public:
     /**
      * Open an Engine to start heavy-weight input/output operations.
      * @param name unique engine identifier
-     * @param mode adios2::Mode::Write, adios2::Mode::Read, or
+     * @param mode adios2::Mode::Write, adios2::Mode::Read,
+     * 		   adios2::Mode::ReadStreaming, or
      *             adios2::Mode::Append (BP4 only)
      * @return engine object
      */

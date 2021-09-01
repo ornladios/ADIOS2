@@ -194,6 +194,7 @@ private:
     uint64_t MetadataExpectedMinFileSize(const std::string &IdxFileName,
                                          bool hasHeader);
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
+    void InstallMetadataForTimestep(size_t Step);
     void ReadData(const size_t WriterRank, const size_t Timestep,
                   const size_t StartOffset, const size_t Length,
                   char *Destination);

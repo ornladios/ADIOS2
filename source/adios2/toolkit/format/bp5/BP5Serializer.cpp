@@ -605,50 +605,27 @@ void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type,
     }
     else
     {
-        /* // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
-         */
-        /* // and Offsets matching _MetaArrayRec */
-        /* char *ArrayName = BuildStaticArrayName(Name, Type, ElemCount); */
-        /* AddField(&Info->AttributeFields, &Info->AttributeFieldCount,
-         * ArrayName, Type, */
-        /*          sizeof(size_t)); */
-        /* free(ArrayName); */
-        /* Rec->MetaOffset = */
-        /*     Info->MetaFields[Info->MetaFieldCount - 1].field_offset; */
-        /* char *ShapeName = ConcatName(Name, "Shape"); */
-        /* char *CountName = ConcatName(Name, "Count"); */
-        /* char *OffsetsName = ConcatName(Name, "Offsets"); */
-        /* AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
-         * ShapeName, */
-        /*                    "integer", sizeof(size_t), DimCount); */
-        /* AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
-         * CountName, */
-        /*                    "integer", sizeof(size_t), DimCount); */
-        /* AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount, */
-        /*                    OffsetsName, "integer", sizeof(size_t), DimCount);
-         */
-        /* free(ShapeName); */
-        /* free(CountName); */
-        /* free(OffsetsName); */
-        /* RecalcMarshalStorageSize(Stream); */
+        // Array field.  To attribute data add dimension field and dynamic array
+        // field
+        char *ElemCountName = ConcatName(Name, "ElemCount");
+        char *ArrayName = ConcatName(Name, "");
+        AddField(&Info.AttributeFields, &Info.AttributeFieldCount,
+                 ElemCountName, DataType::Int64, sizeof(int64_t));
+        int CountOffset =
+            Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
+        AddVarArrayField(&Info.AttributeFields, &Info.AttributeFieldCount,
+                         ArrayName, Type, ElemSize, ElemCountName);
+        int DataOffset =
+            Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
+        free(ElemCountName);
+        free(ArrayName);
 
-        /* // To Data, add FMFields for ElemCount and Array matching _ArrayRec
-         */
-        /* char *ElemCountName = ConcatName(Name, "ElemCount"); */
-        /* AddField(&Info->DataFields, &Info->DataFieldCount, ElemCountName, */
-        /*          "integer", sizeof(size_t)); */
-        /* Rec->DataOffset = */
-        /*     Info->DataFields[Info->DataFieldCount - 1].field_offset; */
-        /* char *SstName = ConcatName(Name, ""); */
-        /* AddVarArrayField(&Info->DataFields, &Info->DataFieldCount, SstName,
-         */
-        /*                  Type, ElemSize, ElemCountName); */
-        /* free(SstName); */
-        /* free(ElemCountName); */
-        /* RecalcMarshalStorageSize(Stream); */
-        /* // Changing the formats renders these invalid */
-        /* Info->MetaFormat = NULL; */
-        /* Info->DataFormat = NULL; */
+        RecalcAttributeStorageSize();
+
+        memcpy((char *)(Info.AttributeData) + CountOffset, &ElemCount,
+               sizeof(size_t));
+        memcpy((char *)(Info.AttributeData) + DataOffset, &Data,
+               sizeof(void *));
     }
 }
 
@@ -708,11 +685,18 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
     if (NewAttribute && Info.AttributeFields)
     {
         MetaMetaInfoBlock Block;
-        char *tmpName = strdup("Attributes");
-        FMFormat Format = FMregister_simple_format(
-            Info.LocalFMContext, tmpName, Info.AttributeFields,
-            FMstruct_size_field_list(Info.AttributeFields, sizeof(char *)));
-        free(tmpName);
+        FMStructDescRec struct_list[4] = {
+            {NULL, NULL, 0, NULL},
+            {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
+            {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
+            {NULL, NULL, 0, NULL}};
+        struct_list[0].format_name = "Attributes";
+        struct_list[0].field_list = Info.AttributeFields;
+        struct_list[0].struct_size =
+            FMstruct_size_field_list(Info.AttributeFields, sizeof(char *));
+
+        FMFormat Format =
+            register_data_format(Info.LocalFMContext, &struct_list[0]);
         Info.AttributeFormat = Format;
         int size;
         Block.MetaMetaInfo = get_server_rep_FMformat(Format, &size);
@@ -757,8 +741,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
                       Info.AttributeData, &AttributeSize);
         AttrData =
             new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
-        // FMdump_encoded_data(Info.AttributeFormat, AttributeBlock,
-        //  1024000);
+        FMdump_encoded_data(Info.AttributeFormat, AttributeBlock, 1024000);
     }
 
     //    FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);

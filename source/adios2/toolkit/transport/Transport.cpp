@@ -38,6 +38,10 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
             Write(static_cast<const char *>(iov[c].iov_base), iov[c].iov_len);
         }
     }
+    else if (start != MaxSizeT)
+    {
+        Seek(start);
+    }
 }
 
 void Transport::IRead(char *buffer, size_t size, Status &status, size_t start)
