@@ -27,6 +27,8 @@ program TestBPWriteAttributes
     real, dimension(3) :: r32_array
     real(kind=8), dimension(3):: r64_array
 
+    character(len=:), dimension(:), allocatable :: attrnamelist
+    integer :: nattrs
 
     ! Launch MPI
     call MPI_Init(ierr)
@@ -106,6 +108,16 @@ program TestBPWriteAttributes
     call adios2_declare_io(ioRead, adios, "ioRead", ierr)
 
     call adios2_open(bpReader, ioRead, 'fattr_types.bp', adios2_mode_read, ierr)
+
+    call adios2_available_attributes(ioRead, nattrs, attrnamelist, ierr)
+    if (ierr /= 0) stop 'adios2_available_variables returned with error'
+    write(*,*) 'Number of attributes = ', nattrs
+    if (nattrs /= 14) stop 'adios2_available_attributes returned not the expected 14'
+    do i=1,nattrs
+         write(*,'("Var[",i2,"] = ",a20)') i, attrnamelist(i)
+    end do
+    deallocate(attrnamelist)
+
 
     call adios2_inquire_attribute(attributes_in(1), ioRead, 'att_String', ierr)
     call adios2_inquire_attribute(attributes_in(2), ioRead, 'att_i8', ierr)

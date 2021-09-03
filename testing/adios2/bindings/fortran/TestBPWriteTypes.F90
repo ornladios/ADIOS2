@@ -26,6 +26,8 @@ program TestBPWriteTypes
      integer(kind=4) :: ndims
      integer(kind=8), dimension(:), allocatable :: shape_in
 
+     character(len=:), dimension(:), allocatable :: varnamelist
+     integer :: nvars
 
 #if ADIOS2_USE_MPI
      ! Launch MPI
@@ -232,6 +234,16 @@ program TestBPWriteTypes
 
      call adios2_steps(nsteps, bpReader, ierr)
      if(nsteps /= 3) stop 'ftypes.bp must have 3 steps'
+
+     call adios2_available_variables(ioRead, nvars, varnamelist, ierr)
+     if (ierr /= 0) stop 'adios2_available_variables returned with error'
+     write(*,*) 'Number of variables = ', nvars
+     if (nvars /= 14) stop 'adios2_available_variables returned not the expected 14'
+     do i=1,nvars
+          write(*,'("Var[",i2,"] = ",a12)') i, varnamelist(i)
+     end do
+     deallocate(varnamelist)
+
 
      call adios2_inquire_variable(variables(1), ioRead, "var_I8", ierr)
      if (variables(1)%name /= 'var_I8') stop 'var_I8 not recognized'
