@@ -135,6 +135,28 @@ contains
                                                 ierr)
     end subroutine
 
+
+    subroutine adios2_available_variables(io, nvars, varnamelist, ierr)
+        type(adios2_io), intent(in) :: io
+        integer, intent(out) :: nvars
+        character(len=:), dimension(:), allocatable, intent(out) :: varnamelist
+        integer, intent(out) :: ierr
+
+        integer(kind=8):: namestruct
+        integer :: count, max_name_len
+
+        call adios2_available_variables_f2c(io%f2c, namestruct, count, &
+                        max_name_len, ierr)
+        if (ierr == 0) then
+            allocate(character(len=max_name_len) :: varnamelist(count))
+        endif
+
+        call adios2_retrieve_variable_names_f2c(namestruct, count, &
+                        max_name_len, varnamelist, ierr)
+        nvars = count
+    end subroutine
+
+
     subroutine adios2_inquire_variable(variable, io, name, ierr)
         type(adios2_variable), intent(out) :: variable
         type(adios2_io), intent(in) :: io
@@ -189,6 +211,25 @@ contains
 
     end subroutine
 
+    subroutine adios2_available_attributes(io, nattrs, attrnamelist, ierr)
+        type(adios2_io), intent(in) :: io
+        integer, intent(out) :: nattrs
+        character(len=:), dimension(:), allocatable, intent(out) :: attrnamelist
+        integer, intent(out) :: ierr
+
+        integer(kind=8):: namestruct
+        integer :: count, max_name_len
+
+        call adios2_available_attributes_f2c(io%f2c, namestruct, count, &
+                        max_name_len, ierr)
+        if (ierr == 0) then
+            allocate(character(len=max_name_len) :: attrnamelist(count))
+        endif
+
+        call adios2_retrieve_attribute_names_f2c(namestruct, count, &
+                        max_name_len, attrnamelist, ierr)
+        nattrs = count
+    end subroutine
 
     subroutine adios2_inquire_attribute(attribute, io, name, ierr)
         type(adios2_attribute), intent(out) :: attribute

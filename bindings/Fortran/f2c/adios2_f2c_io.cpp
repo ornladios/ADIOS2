@@ -10,6 +10,7 @@
 
 #include "adios2_f2c_common.h"
 
+#include <cstdint>
 #include <stdexcept> //std::invalid_argument
 
 #include <string.h> //strcpy
@@ -217,6 +218,135 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     {
         *ierr = static_cast<int>(
             adios2::helper::ExceptionToError("adios2_define_variable"));
+    }
+}
+
+struct cnamelist
+{
+    char **names;
+    size_t count;
+};
+
+void FC_GLOBAL(adios2_available_variables_f2c,
+               ADIOS2_AVAILABLE_VARIABLES_F2C)(adios2_io **io,
+                                               int64_t *namestruct,
+                                               int *vars_count,
+                                               int *max_var_name_len, int *ierr)
+{
+    cnamelist *info = new (cnamelist);
+    info->names = adios2_available_variables(*io, &info->count);
+    *vars_count = static_cast<int>(info->count);
+
+    size_t maxlen = 0;
+    for (size_t i = 0; i < info->count; ++i)
+    {
+        auto l = strlen(info->names[i]);
+        if (l > maxlen)
+        {
+            maxlen = l;
+        }
+    }
+    *max_var_name_len = static_cast<int>(maxlen);
+
+    *namestruct = static_cast<int64_t>(reinterpret_cast<std::uintptr_t>(info));
+    *ierr = 0;
+}
+
+void FC_GLOBAL(adios2_retrieve_variable_names_f2c,
+               ADIOS2_RETRIEVE_VARIABLE_NAMES_F2C)(int64_t *namestruct,
+                                                   int *count,
+                                                   int *max_name_len,
+                                                   void *vnamelist, int *ierr,
+                                                   int vnamelist_len)
+{
+    cnamelist *info = reinterpret_cast<cnamelist *>(*namestruct);
+    int cnt = info->count;
+    if (cnt > *count)
+    {
+        cnt = *count;
+    }
+    if (info != NULL && static_cast<size_t>(*count) == info->count)
+    {
+        for (int i = 0; i < *count; i++)
+        {
+            char *fs = (char *)vnamelist + i * vnamelist_len;
+            size_t len = strlen(info->names[i]);
+            if (len > static_cast<size_t>(vnamelist_len))
+            {
+                len = static_cast<size_t>(vnamelist_len);
+            }
+            // copy C string without '\0'
+            strncpy(fs, info->names[i], len);
+            // pad with spaces
+            memset(fs + len, ' ', vnamelist_len - len);
+        }
+        *ierr = 0;
+    }
+    else
+    {
+        *ierr = 1;
+    }
+}
+
+void FC_GLOBAL(adios2_available_attributes_f2c,
+               ADIOS2_AVAILABLE_ATTRIBUTES_F2C)(adios2_io **io,
+                                                int64_t *namestruct,
+                                                int *attrs_count,
+                                                int *max_attr_name_len,
+                                                int *ierr)
+{
+    cnamelist *info = new (cnamelist);
+    info->names = adios2_available_attributes(*io, &info->count);
+    *attrs_count = static_cast<int>(info->count);
+
+    size_t maxlen = 0;
+    for (size_t i = 0; i < info->count; ++i)
+    {
+        auto l = strlen(info->names[i]);
+        if (l > maxlen)
+        {
+            maxlen = l;
+        }
+    }
+    *max_attr_name_len = static_cast<int>(maxlen);
+
+    *namestruct = static_cast<int64_t>(reinterpret_cast<std::uintptr_t>(info));
+    *ierr = 0;
+}
+
+void FC_GLOBAL(adios2_retrieve_attribute_names_f2c,
+               ADIOS2_RETRIEVE_ATTRIBUTE_NAMES_F2C)(int64_t *namestruct,
+                                                    int *count,
+                                                    int *max_name_len,
+                                                    void *anamelist, int *ierr,
+                                                    int anamelist_len)
+{
+    cnamelist *info = reinterpret_cast<cnamelist *>(*namestruct);
+    int cnt = info->count;
+    if (cnt > *count)
+    {
+        cnt = *count;
+    }
+    if (info != NULL && static_cast<size_t>(*count) == info->count)
+    {
+        for (int i = 0; i < *count; i++)
+        {
+            char *fs = (char *)anamelist + i * anamelist_len;
+            size_t len = strlen(info->names[i]);
+            if (len > static_cast<size_t>(anamelist_len))
+            {
+                len = static_cast<size_t>(anamelist_len);
+            }
+            // copy C string without '\0'
+            strncpy(fs, info->names[i], len);
+            // pad with spaces
+            memset(fs + len, ' ', anamelist_len - len);
+        }
+        *ierr = 0;
+    }
+    else
+    {
+        *ierr = 1;
     }
 }
 
