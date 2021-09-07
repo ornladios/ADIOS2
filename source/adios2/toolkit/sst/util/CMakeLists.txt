@@ -25,3 +25,19 @@ target_include_directories(sst_conn_tool PRIVATE .. ../cp )
 install(TARGETS sst_conn_tool EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
 )
+
+# libfabric_mpi_compatibility
+if(ADIOS2_HAVE_MPI AND ADIOS2_SST_HAVE_LIBFABRIC)
+  add_executable(libfabric_mpi_compatibility libfabric_mpi_compatibility.cpp)
+  target_link_libraries(libfabric_mpi_compatibility adios2_core_mpi adios2_core sst adios2::thirdparty::EVPath)
+  target_include_directories(libfabric_mpi_compatibility PRIVATE .. ../cp ../dp )
+  set_property(TARGET libfabric_mpi_compatibility PROPERTY OUTPUT_NAME libfabric_mpi_compatibility${ADIOS2_EXECUTABLE_SUFFIX})
+
+  if(WIN32)
+    target_link_libraries(libfabric_mpi_compatibility getopt)
+  endif()
+
+  install(TARGETS libfabric_mpi_compatibility EXPORT adios2
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
+  )
+endif()
