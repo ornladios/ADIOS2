@@ -5,7 +5,7 @@
      implicit none
 
      integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
-     integer :: inx, irank, isize, ierr, i, length, step_status
+     integer :: inx, irank, isize, ierr, i, step_status
 
      type(adios2_adios) :: adios
      type(adios2_io) :: ioWrite, ioRead
@@ -13,8 +13,7 @@
      type(adios2_engine) :: bpWriter, bpReader
 
      ! read handlers
-     character(len=:), allocatable :: variable_name
-     integer :: variable_type, ndims
+     integer :: ndims
      integer(kind=8), dimension(:), allocatable :: shape_in
 
      ! Launch MPI

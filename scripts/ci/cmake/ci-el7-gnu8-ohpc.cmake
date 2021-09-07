@@ -25,7 +25,7 @@ ADIOS2_USE_ZFP:BOOL=ON
 
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
-CMAKE_Fortran_FLAGS:STRING=-Werror -Wno-error=builtin-declaration-mismatch
+CMAKE_Fortran_FLAGS:STRING=-Wall
 ")
 
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")

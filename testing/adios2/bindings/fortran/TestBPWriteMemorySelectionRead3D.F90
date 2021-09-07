@@ -102,12 +102,12 @@ program TestBPWriteMemorySelectionRead3D
   call adios2_open(bpWriter, ioPut, 'MemSel3D_f.bp', adios2_mode_write, ierr)
 
   do s=0,nsteps-1
-    data_i1(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = s
-    data_i2(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = s
-    data_i4(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = s
-    data_i8(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = s
-    data_r4(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = s
-    data_r8(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = s
+    data_i1(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = INT(s, 1)
+    data_i2(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = INT(s, 2)
+    data_i4(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = INT(s, 4)
+    data_i8(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = INT(s, 8)
+    data_r4(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = INT(s, 4)
+    data_r8(ghost_x+1:nx+ghost_x+1,ghost_y+1:ny+ghost_y+1,ghost_z+1:nz+ghost_z+1) = INT(s, 8)
 
     call adios2_begin_step(bpWriter, ierr)
     call adios2_put(bpWriter, vars(1), data_i1, ierr)
@@ -226,7 +226,7 @@ program TestBPWriteMemorySelectionRead3D
           if(in_data_i2(i,j,k) /= current_step) stop 'i2 read error'
           if(in_data_i4(i,j,k) /= current_step) stop 'i4 read error'
           if(in_data_i8(i,j,k) /= current_step) stop 'i8 read error'
-          if(in_data_r4(i,j,k) /= current_step) stop 'r4 read error'
+          if(in_data_r4(i,j,k) /= REAL(current_step, 4)) stop 'r4 read error'
           if(in_data_r8(i,j,k) /= current_step) stop 'r8 read error'
         end do
       end do

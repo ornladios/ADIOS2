@@ -34,6 +34,8 @@ module adios2_attribute_data_mod
 
     end interface
 
+    external adios2_attribute_data_f2c
+    external adios2_attribute_value_f2c
 contains
 
     ! Single value

@@ -3,7 +3,7 @@ program TestBPReadGlobalsByName
     use adios2
     implicit none
 
-    integer :: i, j, inx, iny, irank, isize, ierr
+    integer :: irank, isize, ierr
     integer(kind=4) :: diag_1d_nsp
     real(kind=8) :: sml_outpsi
 

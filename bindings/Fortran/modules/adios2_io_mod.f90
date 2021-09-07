@@ -15,6 +15,28 @@ module adios2_io_mod
     use adios2_variable_mod
     implicit none
 
+    external adios2_add_transport_f2c
+    external adios2_attribute_is_value_f2c
+    external adios2_attribute_length_f2c
+    external adios2_attribute_type_f2c
+    external adios2_clear_parameters_f2c
+    external adios2_flush_all_engines_f2c
+    external adios2_get_parameter_f2c
+    external adios2_get_parameter_length_f2c
+    external adios2_in_config_file_f2c
+    external adios2_inquire_attribute_f2c
+    external adios2_inquire_variable_f2c
+    external adios2_io_engine_type_f2c
+    external adios2_io_engine_type_length_f2c
+    external adios2_remove_all_attributes_f2c
+    external adios2_remove_all_variables_f2c
+    external adios2_remove_attribute_f2c
+    external adios2_remove_variable_f2c
+    external adios2_set_engine_f2c
+    external adios2_set_parameter_f2c
+    external adios2_set_parameters_f2c
+    external adios2_set_transport_parameter_f2c
+
 contains
 
     subroutine adios2_in_config_file(result, io, ierr)
@@ -271,8 +293,8 @@ contains
         character*(*), intent(in) :: name
         logical, intent(out) :: result
         integer, intent(out) :: ierr
+
         ! Local
-        type(adios2_attribute):: attribute
         integer :: resultInt
 
         call adios2_remove_attribute_f2c(resultInt, io%f2c, &

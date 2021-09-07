@@ -20,6 +20,7 @@ module adios2_engine_begin_step_mod
         module procedure adios2_begin_step_default
 
     end interface
+    external adios2_begin_step_f2c
 
 contains
 

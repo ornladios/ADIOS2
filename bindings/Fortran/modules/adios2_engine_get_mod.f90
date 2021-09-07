@@ -303,6 +303,8 @@ module adios2_engine_get_mod
 
 
     end interface
+    external adios2_get_f2c
+    external adios2_get_by_name_f2c
 
 contains
 

@@ -71,6 +71,8 @@ module adios2_io_define_attribute_mod
         module procedure adios2_def_var_att_sep_integer8_1d
 
     end interface
+    external adios2_define_vattr_f2c
+    external adios2_define_vattr_array_f2c
 
 contains
 

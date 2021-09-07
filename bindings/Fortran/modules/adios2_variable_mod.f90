@@ -11,7 +11,19 @@
 module adios2_variable_mod
     use adios2_functions_mod
     implicit none
-
+    external adios2_add_operation_f2c
+    external adios2_set_block_selection_f2c
+    external adios2_set_memory_selection_f2c
+    external adios2_set_operation_parameter_f2c
+    external adios2_set_selection_f2c
+    external adios2_set_shape_f2c
+    external adios2_set_step_selection_f2c
+    external adios2_variable_name_f2c
+    external adios2_variable_name_length_f2c
+    external adios2_variable_ndims_f2c
+    external adios2_variable_shape_f2c
+    external adios2_variable_steps_f2c
+    external adios2_variable_type_f2c
 contains
 
     subroutine adios2_variable_name(name, variable, ierr)

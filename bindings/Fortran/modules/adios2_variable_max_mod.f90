@@ -26,6 +26,7 @@ module adios2_variable_max_mod
 
     end interface
 
+    external adios2_variable_max_f2c
 contains
 
     subroutine adios2_variable_max_real(maximum, variable, ierr)

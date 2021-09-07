@@ -36,6 +36,8 @@ contains
         character*(*), intent(in) :: name
         integer, intent(in) :: adios2_mode
         integer, intent(out) :: ierr
+        external adios2_open_f2c
+        external adios2_engine_get_type_f2c
 
         call adios2_open_f2c(engine%f2c, io%f2c, TRIM(ADJUSTL(name))//char(0), &
                              adios2_mode, ierr)

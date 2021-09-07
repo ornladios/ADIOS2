@@ -29,6 +29,8 @@ CMAKE_INSTALL_PREFIX:STRING=/usr
 CMAKE_INSTALL_LIBDIR:STRING=lib/${arch}
 CMAKE_INSTALL_CMAKEDIR:STRING=lib/${arch}/cmake/adios/openmpi
 
+CMAKE_Fortran_FLAGS:STRING=-Wall
+
 MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
 MPI_C_COMPILER:FILEPATH=/usr/bin/mpicc.openmpi
 MPI_CXX_COMPILER:FILEPATH=/usr/bin/mpic++.openmpi

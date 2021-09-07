@@ -14,10 +14,10 @@ module small_test_data
                                                   (/'Attribute oneXX', 'Attribute twoXX', 'Attribute three'/)
 
     integer(kind=1), parameter, dimension(10) :: data_I8 = &
-                                                 (/0, 1, -2, 3, -4, 5, -6, 7, -8, 9/)
+                                                 INT((/0, 1, -2, 3, -4, 5, -6, 7, -8, 9/), 1)
 
     integer(kind=2), parameter, dimension(10) :: data_I16 = &
-                                                 (/512, 513, -510, 515, -508, 517, -506, 519, -504, 521/)
+                                                 INT((/512, 513, -510, 515, -508, 517, -506, 519, -504, 521/), 2)
 
     integer(kind=4), parameter, dimension(10) :: data_I32 = &
                                                  (/131072, 131073, -131070, 131075, -131068, 131077, -131066, 131079, &
