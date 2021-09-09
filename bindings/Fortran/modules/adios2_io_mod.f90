@@ -246,10 +246,10 @@ contains
                         max_name_len, ierr)
         if (ierr == 0) then
             allocate(character(len=max_name_len) :: attrnamelist(count))
+            call adios2_retrieve_attribute_names_f2c(namestruct, count, &
+                max_name_len, attrnamelist, ierr)
         endif
 
-        call adios2_retrieve_attribute_names_f2c(namestruct, count, &
-                        max_name_len, attrnamelist, ierr)
         nattrs = count
     end subroutine
 
