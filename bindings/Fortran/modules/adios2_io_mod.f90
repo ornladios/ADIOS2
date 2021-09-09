@@ -19,6 +19,8 @@ module adios2_io_mod
     external adios2_attribute_is_value_f2c
     external adios2_attribute_length_f2c
     external adios2_attribute_type_f2c
+    external adios2_available_attributes_f2c
+    external adios2_available_variables_f2c
     external adios2_clear_parameters_f2c
     external adios2_flush_all_engines_f2c
     external adios2_get_parameter_f2c
@@ -32,6 +34,8 @@ module adios2_io_mod
     external adios2_remove_all_variables_f2c
     external adios2_remove_attribute_f2c
     external adios2_remove_variable_f2c
+    external adios2_retrieve_attribute_names_f2c
+    external adios2_retrieve_variable_names_f2c
     external adios2_set_engine_f2c
     external adios2_set_parameter_f2c
     external adios2_set_parameters_f2c
