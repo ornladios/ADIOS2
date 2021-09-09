@@ -273,7 +273,9 @@ if(ADIOS2_HAVE_PNG)
   target_link_libraries(adios2_core PRIVATE PNG::PNG)
 endif()
 
+if(ADIOS2_HAVE_MHS)
 target_sources(adios2_core PRIVATE operator/compress/CompressSirius.cpp)
+endif()
 
 if(ADIOS2_HAVE_HDF5)
   add_library(adios2_hdf5 OBJECT
