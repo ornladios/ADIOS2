@@ -69,10 +69,10 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
 		{
 		    auto transport = std::make_shared<transport::FileDaos>(m_Comm);
 		    transport->SetParameters({{"SingleProcess", "true"}});
-		    int rank = m_Comm.Rank();
-		    std::cout << "rank " << rank << ": start transport->MkDir(" << path << ")..." << std::endl;		
+		    //int rank = m_Comm.Rank();
+		    //std::cout << "rank " << rank << ": start transport->MkDir(" << path << ")..." << std::endl;		
 		    transport->MkDir(path);
-		    std::cout << "rank " << rank << ": transport->MkDir(" << path << ") succeeded!" << std::endl;    
+		    //std::cout << "rank " << rank << ": transport->MkDir(" << path << ") succeeded!" << std::endl;    
 		    
 		}
 		else
@@ -137,7 +137,7 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
             m_Transports.insert({i, file});
         }
     }
-    std::cout << "rank " << m_Comm.Rank() << ": OpenFiles succeeded!" << std::endl;
+    //std::cout << "rank " << m_Comm.Rank() << ": OpenFiles succeeded!" << std::endl;
 }
 
 void TransportMan::OpenFileID(const std::string &name, const size_t id,
@@ -564,8 +564,8 @@ TransportMan::OpenFileTransport(const std::string &fileName,
 
     transport->SetParameters(parameters);
 
-    int rank = m_Comm.Rank();
-    std::cout << "rank " << rank << " open file transport: " << fileName << std::endl;
+    //int rank = m_Comm.Rank();
+    //std::cout << "rank " << rank << " open file transport: " << fileName << std::endl;
     
     // open
     transport->Open(fileName, openMode, lf_GetAsync("false", parameters));

@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 		    }
                     std::shared_ptr<Stream> writer =
                         openStream(streamName, io, adios2::Mode::Write,
-                                   settings.iolib, settings.appComm);
+                                   settings.iolib, settings.appComm, settings.ioTimer, settings.appId);
                     writeStreamMap[st.first] = writer;
                 }
             }
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 		    }		    
                     std::shared_ptr<Stream> reader =
                         openStream(streamName, io, adios2::Mode::Read,
-                                   settings.iolib, settings.appComm);
+                                   settings.iolib, settings.appComm, settings.ioTimer, settings.appId);
                     readStreamMap[st.first] = reader;
                 }
             }
