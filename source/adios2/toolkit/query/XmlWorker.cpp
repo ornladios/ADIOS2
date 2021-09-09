@@ -196,8 +196,6 @@ void XmlWorker::ConstructQuery(QueryVar &simpleQ, const pugi::xml_node &node)
 
     if (bbNode)
     {
-        adios2::Box<adios2::Dims> box =
-            adios2::Box<adios2::Dims>({100, 100}, {200, 200});
         std::string startStr =
             adios2::helper::XMLAttribute("start", bbNode, "in query")->value();
         std::string countStr =
