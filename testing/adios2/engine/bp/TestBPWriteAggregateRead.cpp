@@ -174,7 +174,8 @@ void WriteAggRead1D8(const std::string substreams)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -491,7 +492,8 @@ void WriteAggRead2D4x2(const std::string substreams)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -808,7 +810,8 @@ void WriteAggRead2D2x4(const std::string substreams)
         {
             io.SetEngine(engineName);
         }
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);

@@ -236,7 +236,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         {
             io.SetEngine("BPFile");
         }
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_local = io.InquireVariable<int32_t>("local");
         auto var_localStr = io.InquireVariable<std::string>("localStr");
@@ -556,7 +557,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         auto var_i8 = io.InquireVariable<int8_t>("i8");

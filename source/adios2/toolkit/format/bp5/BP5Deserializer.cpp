@@ -476,6 +476,8 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 VarRec->Variable = ArrayVarSetup(
                     m_Engine, VarRec->VarName, VarRec->Type, meta_base->Dims,
                     meta_base->Shape, meta_base->Offsets, meta_base->Count);
+                static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
+                    m_Engine;
                 VarByKey[VarRec->Variable] = VarRec;
                 VarRec->LastTSAdded = Step; // starts at 1
             }
