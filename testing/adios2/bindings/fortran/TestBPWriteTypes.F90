@@ -26,7 +26,8 @@ program TestBPWriteTypes
      integer(kind=4) :: ndims
      integer(kind=8), dimension(:), allocatable :: shape_in
 
-     character(len=:), dimension(:), allocatable :: varnamelist
+     character(len=4096), dimension(:), allocatable :: varnamelist
+     type(adios2_namestruct) :: namestruct
      integer :: nvars
 
 #if ADIOS2_USE_MPI
@@ -235,14 +236,24 @@ program TestBPWriteTypes
      call adios2_steps(nsteps, bpReader, ierr)
      if(nsteps /= 3) stop 'ftypes.bp must have 3 steps'
 
-     call adios2_available_variables(ioRead, nvars, varnamelist, ierr)
+     call adios2_available_variables(ioRead, namestruct, ierr)
      if (ierr /= 0) stop 'adios2_available_variables returned with error'
-     write(*,*) 'Number of variables = ', nvars
-     if (nvars /= 14) stop 'adios2_available_variables returned not the expected 14'
-     do i=1,nvars
+     if (.not.namestruct%valid) stop 'adios2_available_variables returned invalid struct'
+     write(*,*) 'Number of variables = ', namestruct%count
+     write(*,*) 'Max name length = ', namestruct%max_name_len
+     if (namestruct%count /= 14) stop 'adios2_available_variables returned not the expected 14'
+
+     allocate(varnamelist(namestruct%count))
+
+     call adios2_retrieve_names(namestruct, varnamelist, ierr)
+     if (ierr /= 0) stop 'adios2_retrieve_names returned with error'
+     do i=1,namestruct%count
           write(*,'("Var[",i2,"] = ",a12)') i, varnamelist(i)
      end do
      deallocate(varnamelist)
+
+     if (namestruct%f2c /= 0_8) stop 'namestruct f2c pointer is not null after adios2_retrieve_names()'
+     if (namestruct%valid) stop 'namestruct is not invalidated after adios2_retrieve_names()'
 
 
      call adios2_inquire_variable(variables(1), ioRead, "var_I8", ierr)
