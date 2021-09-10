@@ -7,9 +7,13 @@ program TestBPWriteVariableAttributes
 
     type(adios2_adios) :: adios
     type(adios2_io) :: ioWrite
+    type(adios2_io) :: ioRead
     type(adios2_engine) :: bpWriter
+    type(adios2_engine) :: bpReader
     type(adios2_variable) :: var
     type(adios2_attribute), dimension(14) :: attributes
+    type(adios2_attribute) :: variable_attribute
+    character(len=15), dimension(3):: iString_array
 !    type(adios2_attribute) :: failed_att
 
     integer :: ierr, i
@@ -95,6 +99,18 @@ program TestBPWriteVariableAttributes
     call adios2_put(bpWriter, var, 10, ierr)
     call adios2_close(bpWriter, ierr)
 
+    ! Reader
+    call adios2_declare_io(ioRead, adios, "ioRead", ierr)
+    call adios2_open(bpReader, ioRead, "fvarattr_types.bp", adios2_mode_read, &
+        ierr)
+    call adios2_inquire_variable_attribute(variable_attribute, ioRead, 'att_Strings_array', var%name, '/', ierr)
+    call adios2_attribute_data( iString_array, variable_attribute, ierr)
+    do i=1,3
+       write(*,'("IString_array [",i2,"] = ",a20)') i, iString_array(i)
+    end do
+    call adios2_close(bpReader, ierr)
+
+        
     call adios2_finalize(adios, ierr)
 
     call MPI_Finalize(ierr)
