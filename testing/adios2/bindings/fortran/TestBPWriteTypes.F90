@@ -28,7 +28,6 @@ program TestBPWriteTypes
 
      character(len=4096), dimension(:), allocatable :: varnamelist
      type(adios2_namestruct) :: namestruct
-     integer :: nvars
 
 #if ADIOS2_USE_MPI
      ! Launch MPI
