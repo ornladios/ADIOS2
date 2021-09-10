@@ -1456,16 +1456,24 @@ extern char *INT_EVmaster_get_contact_list(EVmaster master)
     atom_t CM_TRANSPORT = attr_atom_from_string("CM_TRANSPORT");
     atom_t CM_ENET_CONN_TIMEOUT = attr_atom_from_string("CM_ENET_CONN_TIMEOUT");
     CManager cm = master->cm;
-    char *tmp;
+    char *tmp = NULL;
 
     /* use enet transport if available */
+#if defined(ENET_FOUND) || defined(ZPL_ENET_AVAILABLE)
     listen_list = create_attr_list();
+#if defined(ENET_FOUND)
     add_string_attr(listen_list, CM_TRANSPORT, strdup("enet"));
+#elif defined(ZPL_ENET_AVAILABLE)
+    add_string_attr(listen_list, CM_TRANSPORT, strdup("zplenet"));
+#endif
     /* and kick up the connection timeout value.  We can wait 60 secs */
     contact_list = INT_CMget_specific_contact_list(cm, listen_list);
-    add_int_attr(contact_list, CM_ENET_CONN_TIMEOUT, 60000);
-
+    if(contact_list) {
+        add_int_attr(contact_list, CM_ENET_CONN_TIMEOUT, 60000);
+    }
     free_attr_list(listen_list);
+#endif
+
     if (contact_list == NULL) {
 	contact_list = INT_CMget_contact_list(cm);
 	if (contact_list == NULL) {
@@ -1473,7 +1481,9 @@ extern char *INT_EVmaster_get_contact_list(EVmaster master)
 	    contact_list = INT_CMget_contact_list(cm);
 	}
     }
-    tmp = attr_list_to_string(contact_list);
+    if(contact_list) {
+        tmp = attr_list_to_string(contact_list);
+    }
     free_attr_list(contact_list);
     return tmp;
 }
