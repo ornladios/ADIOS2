@@ -131,6 +131,9 @@ set(_pkg_config_libs)
 set(_pkg_config_private_libs)
 
 include(CheckCSourceCompiles)
+
+# Avoid recent compilers to optimizing out libm function calls
+set(CMAKE_REQUIRED_FLAGS "-O0")
 set(LIBM_TEST_SOURCE "#include<math.h>\nfloat f; int main(){sqrt(f);return 0;}")
 check_c_source_compiles("${LIBM_TEST_SOURCE}" HAVE_MATH)
 if(NOT HAVE_MATH)
