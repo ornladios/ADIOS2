@@ -37,6 +37,8 @@ module adios2_io_mod
     external adios2_set_parameter_f2c
     external adios2_set_parameters_f2c
     external adios2_set_transport_parameter_f2c
+    external adios2_available_variables_f2c
+    external adios2_retrieve_variable_names_f2c
 
 contains
 
