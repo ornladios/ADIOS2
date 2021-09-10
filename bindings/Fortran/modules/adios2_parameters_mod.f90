@@ -127,4 +127,11 @@ module adios2_parameters_mod
         character(len=64):: type = ''
     end type
 
+    type adios2_namestruct
+        integer(kind=8):: f2c = 0_8
+        logical :: valid = .false.
+        integer :: count
+        integer :: max_name_len
+    end type
+
 end module
