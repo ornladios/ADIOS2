@@ -24,6 +24,9 @@ module adios2_io_mod
     external adios2_get_parameter_f2c
     external adios2_get_parameter_length_f2c
     external adios2_in_config_file_f2c
+    external adios2_available_variables_f2c
+    external adios2_available_attributes_f2c
+    external adios2_retrieve_namelist_f2c
     external adios2_inquire_attribute_f2c
     external adios2_inquire_variable_f2c
     external adios2_io_engine_type_f2c
