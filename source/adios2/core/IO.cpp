@@ -456,8 +456,8 @@ DataType IO::InquireVariableType(const std::string &name) const noexcept
     return InquireVariableType(itVariable);
 }
 
-DataType
-IO::InquireVariableType(const VarMap::const_iterator itVariable) const noexcept
+DataType IO::InquireVariableType(const VarMap::const_iterator itVariable) const
+    noexcept
 {
     if (itVariable == m_Variables.end())
     {
