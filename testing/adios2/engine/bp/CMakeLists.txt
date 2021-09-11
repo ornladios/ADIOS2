@@ -58,7 +58,7 @@ bp3_bp4_gtest_add_tests_helper(ChangingShape MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadBlockInfo MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadVariableSpan MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(TimeAggregation MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(NoXMLRecovery MPI_ALLOW)
+bp_gtest_add_tests_helper(NoXMLRecovery MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(StepsFileGlobalArray MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(StepsFileLocalArray MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(SelectSteps MPI_ALLOW)
@@ -71,7 +71,7 @@ if(NOT MSVC)
 endif()
 
 if(ADIOS2_HAVE_MPI)
-  bp3_bp4_gtest_add_tests_helper(WriteAggregateRead MPI_ONLY)
+  bp_gtest_add_tests_helper(WriteAggregateRead MPI_ONLY)
 endif()
 
 # BP3 only for now

@@ -8,6 +8,7 @@
 
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
+#include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosMemory.h"
 #include "adios2/toolkit/format/buffer/ffs/BufferFFS.h"
 #include <stddef.h> // max_align_t
@@ -453,12 +454,18 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                             BufferV::BufferPos *Span)
 {
 
+    core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
+
     FFSMetadataInfoStruct *MBase;
 
     BP5WriterRec Rec = LookupWriterRec(Variable);
 
     bool DeferAddToVec;
 
+    if (VB->m_SingleValue)
+    {
+        DimCount = 0;
+    }
     if (!Rec)
     {
         Rec = CreateWriterRec(Variable, Name, Type, ElemSize, DimCount);
@@ -482,7 +489,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
     int AlreadyWritten = FFSBitfieldTest(MBase, Rec->FieldID);
     FFSBitfieldSet(MBase, Rec->FieldID);
 
-    if (Rec->DimCount == 0)
+    if (VB->m_SingleValue)
     {
         if (Type != DataType::String)
             memcpy((char *)(MetadataBuf) + Rec->MetaOffset, Data, ElemSize);
