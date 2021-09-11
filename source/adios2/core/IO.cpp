@@ -456,8 +456,8 @@ DataType IO::InquireVariableType(const std::string &name) const noexcept
     return InquireVariableType(itVariable);
 }
 
-DataType IO::InquireVariableType(const VarMap::const_iterator itVariable) const
-    noexcept
+DataType
+IO::InquireVariableType(const VarMap::const_iterator itVariable) const noexcept
 {
     if (itVariable == m_Variables.end())
     {
@@ -565,7 +565,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         {
             engineTypeLC = "hdf5";
         }
-        else if (mode_to_use == Mode::Read)
+        else if ((mode_to_use == Mode::Read) ||
+                 (mode_to_use == Mode::ReadRandomAccess))
         {
             if (adios2sys::SystemTools::FileIsDirectory(name))
             {
