@@ -1697,7 +1697,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DBlockInfo)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_StepsGlobalValue =
             io.InquireVariable<int32_t>("stepsGlobalValue");
@@ -1828,9 +1829,10 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
 // each subfile independently
 #if ADIOS2_USE_MPI
         adios2::Engine bpReader =
-            io.Open(subFileName, adios2::Mode::Read, MPI_COMM_SELF);
+            io.Open(subFileName, adios2::Mode::ReadRandomAccess, MPI_COMM_SELF);
 #else
-        adios2::Engine bpReader = io.Open(subFileName, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(subFileName, adios2::Mode::ReadRandomAccess);
 #endif
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
@@ -1920,9 +1922,10 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
         adios2::IO io = adios.DeclareIO("ReaderIO");
 #if ADIOS2_USE_MPI
         adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::Read, MPI_COMM_SELF);
+            io.Open(fname, adios2::Mode::ReadRandomAccess, MPI_COMM_SELF);
 #else
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 #endif
 
         auto var_r32 = io.InquireVariable<float>("r32");

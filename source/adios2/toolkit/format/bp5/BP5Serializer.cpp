@@ -561,6 +561,11 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             //  dimensions can change )
             // Also assume Dims is always right and consistent, otherwise,
             // bad things
+            if (Shape && MetaEntry->Shape)
+            {
+                // Shape can change with later writes, so must overwrite
+                memcpy(MetaEntry->Shape, Shape, DimCount * sizeof(Shape[0]));
+            }
             MetaEntry->DBCount += DimCount;
             MetaEntry->BlockCount++;
             MetaEntry->Count =

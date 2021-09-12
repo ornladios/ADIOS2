@@ -183,7 +183,8 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead1D8)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -497,7 +498,8 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead2D2x4)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -814,7 +816,8 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead2D4x2)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
@@ -1118,7 +1121,8 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteReadVector2D4x2_MultiSteps)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);

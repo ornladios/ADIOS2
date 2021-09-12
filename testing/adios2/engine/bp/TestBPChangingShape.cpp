@@ -151,7 +151,8 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
         {
             inIO.SetEngine(engineName);
         }
-        adios2::Engine reader = inIO.Open(fname, adios2::Mode::Read);
+        adios2::Engine reader =
+            inIO.Open(fname, adios2::Mode::ReadRandomAccess);
 
         if (!rank)
         {
@@ -327,7 +328,8 @@ TEST_F(BPChangingShape, MultiBlock)
         {
             inIO.SetEngine(engineName);
         }
-        adios2::Engine reader = inIO.Open(fname, adios2::Mode::Read);
+        adios2::Engine reader =
+            inIO.Open(fname, adios2::Mode::ReadRandomAccess);
 
         if (!rank)
         {
