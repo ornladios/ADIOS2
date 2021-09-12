@@ -506,7 +506,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 if ((VarRec->LastShapeAdded != Step) && meta_base->Shape)
                 {
                     std::vector<size_t> shape;
-                    for (int i = 0; i < meta_base->Dims; i++)
+                    for (size_t i = 0; i < meta_base->Dims; i++)
                     {
                         shape.push_back(meta_base->Shape[i]);
                     }
