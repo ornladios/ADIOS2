@@ -79,6 +79,12 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         throw std::logic_error(
             "ERROR: BeginStep called in random access mode\n");
     }
+    if (m_BetweenStepPairs)
+    {
+        throw std::logic_error("ERROR: BeginStep() is called a second time "
+                               "without an intervening EndStep()");
+    }
+
     if (mode != StepMode::Read)
     {
         throw std::invalid_argument("ERROR: mode is not supported yet, "
@@ -105,6 +111,7 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     }
     if (status == StepStatus::OK)
     {
+        m_BetweenStepPairs = true;
         if (m_FirstStep)
         {
             m_FirstStep = false;
@@ -146,6 +153,16 @@ size_t BP5Reader::CurrentStep() const { return m_CurrentStep; }
 
 void BP5Reader::EndStep()
 {
+    if (m_OpenMode == Mode::ReadRandomAccess)
+    {
+        throw std::logic_error("ERROR: EndStep called in random access mode\n");
+    }
+    if (!m_BetweenStepPairs)
+    {
+        throw std::logic_error(
+            "ERROR: EndStep() is called without a successful BeginStep()");
+    }
+    m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Reader::EndStep");
     PerformGets();
 }

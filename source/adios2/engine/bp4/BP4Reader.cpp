@@ -44,6 +44,12 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
                                     "BeginStep\n");
     }
 
+    if (m_BetweenStepPairs)
+    {
+        throw std::logic_error("ERROR: BeginStep() is called a second time "
+                               "without an intervening EndStep()");
+    }
+
     if (!m_BP4Deserializer.m_DeferredVariables.empty())
     {
         throw std::invalid_argument(
@@ -75,6 +81,7 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (status == StepStatus::OK)
     {
+        m_BetweenStepPairs = true;
         if (m_FirstStep)
         {
             m_FirstStep = false;
@@ -101,6 +108,12 @@ size_t BP4Reader::CurrentStep() const { return m_CurrentStep; }
 
 void BP4Reader::EndStep()
 {
+    if (!m_BetweenStepPairs)
+    {
+        throw std::logic_error(
+            "ERROR: EndStep() is called without a successful BeginStep()");
+    }
+    m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP4Reader::EndStep");
     PerformGets();
 }

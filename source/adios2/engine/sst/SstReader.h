@@ -71,7 +71,6 @@ private:
     SstMarshalMethod m_WriterMarshalMethod;
     int m_WriterIsRowMajor;
     bool m_DefinitionsNotified = false;
-    bool m_BetweenStepPairs = false;
 
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;
