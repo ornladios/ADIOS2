@@ -35,9 +35,9 @@ public:
     int m_Rank;
 
 private:
-    void GetVarInfo(const VariableBase &var, std::vector<hsize_t> &dimsf,
-                    int nDim, std::vector<hsize_t> &start,
-                    std::vector<hsize_t> &count, std::vector<hsize_t> &one);
+    void GetVarInfo(const VariableBase &var, std::vector<size_t> &dimsf,
+                    int nDim, std::vector<size_t> &start,
+                    std::vector<size_t> &count, std::vector<size_t> &one);
 
     int m_NumSubFiles;
     std::string m_FileName;

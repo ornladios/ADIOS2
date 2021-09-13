@@ -47,12 +47,12 @@ void HDFVDSWriter::Init(const std::string &name)
 }
 
 void HDFVDSWriter::GetVarInfo(const VariableBase &var,
-                              std::vector<hsize_t> &dimsf, int nDims,
-                              std::vector<hsize_t> &start,
-                              std::vector<hsize_t> &count,
-                              std::vector<hsize_t> &one)
+                              std::vector<size_t> &dimsf, int nDims,
+                              std::vector<size_t> &start,
+                              std::vector<size_t> &count,
+                              std::vector<size_t> &one)
 { // interop::HDF5Common summaryFile(true);
-    // std::vector<hsize_t> dimsf, start, one, count;
+    // std::vector<size_t> dimsf, start, one, count;
     // int nDims = std::max(var.m_Shape.size(), var.m_Count.size());
 
     for (int i = 0; i < nDims; i++)
@@ -124,7 +124,7 @@ void HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
     size_t all_counts[m_NumSubFiles][nDims];
 
     //
-    std::vector<hsize_t> dimsf, start, one, count;
+    std::vector<size_t> dimsf, start, one, count;
     GetVarInfo(var, dimsf, nDims, start, count, one);
     //
 
@@ -142,7 +142,7 @@ void HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
         space = H5Screate_simple(nDims, dimsf.data(), NULL);
         // summaryFile.Init(fileName.c_str(), MPI_COMM_SELF, true);
 
-        hsize_t currCount[nDims], currStart[nDims];
+        size_t currCount[nDims], currStart[nDims];
         // std::string subfileVarName="TimeStep0/"+var.m_Name; // need full
         // path?  NEED TO GET the RIGHT SUBFILE VAR NAME RELATED to TIMESTEP!!
         std::string subfileVarName;
