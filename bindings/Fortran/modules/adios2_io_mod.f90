@@ -28,6 +28,7 @@ module adios2_io_mod
     external adios2_available_attributes_f2c
     external adios2_retrieve_namelist_f2c
     external adios2_inquire_attribute_f2c
+    external adios2_inquire_variable_attribute_f2c
     external adios2_inquire_variable_f2c
     external adios2_io_engine_type_f2c
     external adios2_io_engine_type_length_f2c
@@ -309,6 +310,45 @@ contains
         if(attribute%f2c > 0_8) then
             attribute%valid = .true.
             attribute%name = name
+            call adios2_attribute_type_f2c(attribute%type, attribute%f2c, ierr)
+            call adios2_attribute_length_f2c(attribute%length, attribute%f2c, &
+                                             ierr)
+            call adios2_attribute_is_value_f2c(is_valueInt, attribute%f2c, ierr)
+
+            if(is_valueInt == 0) then
+                attribute%is_value = .false.
+            else
+                attribute%is_value = .true.
+            end if
+
+        else
+            attribute%valid = .false.
+            attribute%name = ''
+            attribute%type = adios2_type_unknown
+            attribute%length = 0
+        end if
+
+    end subroutine
+
+    subroutine adios2_inquire_variable_attribute(attribute, io, attribute_name, variable_name, separator, ierr)
+        type(adios2_attribute), intent(out) :: attribute
+        type(adios2_io), intent(in)         :: io
+        character*(*), intent(in)           :: attribute_name
+        character*(*), intent(in)           :: variable_name
+        character*(*), intent(in)           :: separator
+        integer, intent(out)                :: ierr
+        !local
+        integer:: is_valueInt
+
+        call adios2_inquire_variable_attribute_f2c(attribute%f2c, io%f2c, &
+                                                   TRIM(ADJUSTL(attribute_name))//char(0), &
+                                                   TRIM(ADJUSTL(variable_name))//char(0), &
+                                                   TRIM(ADJUSTL(separator))//char(0), &
+                                                   ierr)
+
+        if(attribute%f2c > 0_8) then
+            attribute%valid = .true.
+            attribute%name = TRIM(variable_name)//TRIM(separator)//TRIM(attribute_name)
             call adios2_attribute_type_f2c(attribute%type, attribute%f2c, ierr)
             call adios2_attribute_length_f2c(attribute%length, attribute%f2c, &
                                              ierr)
