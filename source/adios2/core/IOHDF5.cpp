@@ -34,7 +34,6 @@ std::shared_ptr<Engine> MakeEngineHDF5(IO &io, const std::string &name,
 
 } // end anonymous namespace
 
-
 IO::EngineFactoryEntry IO_MakeEngine_HDF5()
 {
     return IO::EngineFactoryEntry{MakeEngineHDF5<engine::HDF5ReaderP>,
