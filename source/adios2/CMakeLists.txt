@@ -284,13 +284,6 @@ if(ADIOS2_HAVE_HDF5)
     engine/hdf5/HDF5WriterP.cpp
     toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
     )
-  if(NOT HDF5_VERSION VERSION_LESS 1.11)
-    target_sources(adios2_hdf5 PRIVATE
-      engine/mixer/HDFMixer.cpp
-      engine/mixer/HDFMixer.tcc
-      engine/mixer/HDFMixerWriter.cpp
-      )
-  endif()
   target_link_libraries(adios2_core PRIVATE adios2_hdf5)
   set_property(TARGET adios2_hdf5 PROPERTY EXPORT_NAME hdf5)
   set_property(TARGET adios2_hdf5 PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_hdf5)
