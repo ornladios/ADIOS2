@@ -3,4 +3,4 @@
 #accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-gtest_add_tests_helper(HierarchicalReading MPI_NONE "" "" . "")
+bp_gtest_add_tests_helper(HierarchicalReading MPI_NONE)

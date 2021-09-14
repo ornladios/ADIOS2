@@ -61,6 +61,8 @@ public:
     std::vector<ReadRequest> GenerateReadRequests();
     void FinalizeGets(std::vector<ReadRequest>);
 
+    Engine::MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);
+    Engine::MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
     Engine::MinVarInfo *MinBlocksInfo(const VariableBase &Var,
                                       const size_t Step);
 
@@ -80,6 +82,7 @@ private:
         int ElementSize = 0;
         size_t *GlobalDims = NULL;
         size_t LastTSAdded = SIZE_MAX;
+        size_t LastShapeAdded = SIZE_MAX;
         std::vector<size_t> PerWriterMetaFieldOffset;
         std::vector<size_t> PerWriterBlockStart;
     };

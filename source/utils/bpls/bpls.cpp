@@ -1522,7 +1522,14 @@ int doList(const char *path)
         io.SetEngine(engineName);
         try
         {
-            fp = &io.Open(path, Mode::Read);
+            if (timestep)
+            {
+                fp = &io.Open(path, Mode::Read);
+            }
+            else
+            {
+                fp = &io.Open(path, Mode::ReadRandomAccess);
+            }
             if (engineName == "FileStream")
             {
                 filestream = true;
@@ -1550,8 +1557,11 @@ int doList(const char *path)
         if (verbose)
         {
             printf("File info:\n");
-            printf("  of variables:  %zu\n", io.GetVariables().size());
-            printf("  of attributes: %zu\n", io.GetAttributes().size());
+            if (!timestep)
+            {
+                printf("  of variables:  %zu\n", io.GetVariables().size());
+                printf("  of attributes: %zu\n", io.GetAttributes().size());
+            }
             // printf("  of meshes:     %d\n", fp->nmeshes);
             // print_file_size(fp->file_size);
             // printf("  bp version:    %d\n", fp->version);

@@ -104,21 +104,8 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
             EXPECT_EQ(res.size(), 5);
             res = g.AvailableAttributes();
             EXPECT_EQ(res.size(), 0);
-            engine.EndStep();
-        }
-        for (size_t step = 0; step < NSteps; step++)
-        {
-            engine.BeginStep();
-            auto g = io.InquireGroup('/');
-            auto res = g.AvailableGroups();
-            EXPECT_EQ(res[0], "group1");
-            res = g.AvailableVariables();
-            EXPECT_EQ(res[0], "variable6");
-            engine.EndStep();
-        }
-        for (size_t step = 0; step < NSteps; step++)
-        {
-            auto g = io.InquireGroup('/');
+
+            g = io.InquireGroup('/');
             auto var = g.InquireVariable<int32_t>("variable6");
             EXPECT_TRUE(var);
             if (var)
@@ -128,12 +115,8 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
                 engine.Get<int32_t>(var, myInts, adios2::Mode::Sync);
                 EXPECT_EQ(Ints, myInts);
             }
-        }
-        for (size_t step = 0; step < NSteps; step++)
-        {
-            auto g = io.InquireGroup('/');
             g.setPath("group1/group2/group3/group4");
-            auto var = g.InquireVariable<int32_t>("variable1");
+            var = g.InquireVariable<int32_t>("variable1");
             EXPECT_TRUE(var);
             if (var)
             {
@@ -143,6 +126,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 
                 EXPECT_EQ(Ints, myInts);
             }
+            engine.EndStep();
         }
         engine.Close();
     }

@@ -476,6 +476,8 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 VarRec->Variable = ArrayVarSetup(
                     m_Engine, VarRec->VarName, VarRec->Type, meta_base->Dims,
                     meta_base->Shape, meta_base->Offsets, meta_base->Count);
+                static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
+                    m_Engine;
                 VarByKey[VarRec->Variable] = VarRec;
                 VarRec->LastTSAdded = Step; // starts at 1
             }
@@ -496,6 +498,21 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 {
                     VarRec->PerWriterBlockStart[WriterRank + 1] =
                         VarRec->PerWriterBlockStart[WriterRank] + BlockCount;
+                }
+            }
+            else
+            {
+                //   Random access, add to m_AvailableShapes
+                if ((VarRec->LastShapeAdded != Step) && meta_base->Shape)
+                {
+                    std::vector<size_t> shape;
+                    for (size_t i = 0; i < meta_base->Dims; i++)
+                    {
+                        shape.push_back(meta_base->Shape[i]);
+                    }
+                    static_cast<VariableBase *>(VarRec->Variable)
+                        ->m_AvailableShapes[Step + 1] = shape;
+                    VarRec->LastShapeAdded = Step;
                 }
             }
         }
@@ -791,28 +808,28 @@ bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t WriterRank)
         return res;
     }
     // else Global case
-    for (size_t j = 0; j < writer_meta_base->Dims; j++)
+    for (size_t i = 0; i < writer_meta_base->BlockCount; i++)
     {
-        size_t SelOffset = Req.Start[j];
-        size_t SelSize = Req.Count[j];
-        size_t RankOffset;
-        size_t RankSize;
+        for (size_t j = 0; j < writer_meta_base->Dims; j++)
+        {
+            size_t SelOffset = Req.Start[j];
+            size_t SelSize = Req.Count[j];
+            size_t RankOffset;
+            size_t RankSize;
 
-        if (writer_meta_base->Offsets == NULL)
-        /* this writer didn't write */
-        {
-            return false;
-        }
-        RankOffset = writer_meta_base->Offsets[j];
-        RankSize = writer_meta_base->Count[j];
-        if ((SelSize == 0) || (RankSize == 0))
-        {
-            return false;
-        }
-        if ((RankOffset < SelOffset && (RankOffset + RankSize) <= SelOffset) ||
-            (RankOffset >= SelOffset + SelSize))
-        {
-            return false;
+            RankOffset =
+                writer_meta_base->Offsets[i * writer_meta_base->Dims + j];
+            RankSize = writer_meta_base->Count[i * writer_meta_base->Dims + j];
+            if ((SelSize == 0) || (RankSize == 0))
+            {
+                return false;
+            }
+            if ((RankOffset < SelOffset &&
+                 (RankOffset + RankSize) <= SelOffset) ||
+                (RankOffset >= SelOffset + SelSize))
+            {
+                return false;
+            }
         }
     }
     return true;
@@ -898,62 +915,68 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                                     ->PerWriterMetaFieldOffset[WriterRank]);
                 }
                 int DimCount = writer_meta_base->Dims;
-                size_t *RankOffset = writer_meta_base->Offsets;
-                const size_t *RankSize = writer_meta_base->Count;
-                std::vector<size_t> ZeroSel(DimCount);
-                std::vector<size_t> ZeroRankOffset(DimCount);
-                std::vector<size_t> ZeroGlobalDimensions(DimCount);
-                const size_t *SelOffset = NULL;
-                const size_t *SelSize = Req.Count.data();
-                int ReqIndex = 0;
-                while (Requests[ReqIndex].WriterRank !=
-                           static_cast<size_t>(WriterRank) ||
-                       (Requests[ReqIndex].Timestep != Req.Step))
-                    ReqIndex++;
-                if (writer_meta_base->DataLocation == NULL)
+                for (size_t i = 0; i < writer_meta_base->BlockCount; i++)
                 {
-                    // No Data from this writer
-                    continue;
-                }
-                char *IncomingData =
-                    (char *)Requests[ReqIndex].DestinationAddr +
-                    writer_meta_base->DataLocation[0];
-                if (Req.Start.size())
-                {
-                    SelOffset = Req.Start.data();
-                }
-                if (Req.RequestType == Local)
-                {
-                    int LocalBlockID =
-                        Req.BlockID -
-                        Req.VarRec->PerWriterBlockStart[WriterRank];
-                    IncomingData = (char *)Requests[ReqIndex].DestinationAddr +
-                                   writer_meta_base->DataLocation[LocalBlockID];
+                    size_t *RankOffset =
+                        &writer_meta_base->Offsets[i * writer_meta_base->Dims];
+                    const size_t *RankSize =
+                        &writer_meta_base->Count[i * writer_meta_base->Dims];
+                    std::vector<size_t> ZeroSel(DimCount);
+                    std::vector<size_t> ZeroRankOffset(DimCount);
+                    std::vector<size_t> ZeroGlobalDimensions(DimCount);
+                    const size_t *SelOffset = NULL;
+                    const size_t *SelSize = Req.Count.data();
+                    int ReqIndex = 0;
+                    while (Requests[ReqIndex].WriterRank !=
+                               static_cast<size_t>(WriterRank) ||
+                           (Requests[ReqIndex].Timestep != Req.Step))
+                        ReqIndex++;
+                    if (writer_meta_base->DataLocation == NULL)
+                    {
+                        // No Data from this writer
+                        continue;
+                    }
+                    char *IncomingData =
+                        (char *)Requests[ReqIndex].DestinationAddr +
+                        writer_meta_base->DataLocation[i];
+                    if (Req.Start.size())
+                    {
+                        SelOffset = Req.Start.data();
+                    }
+                    if (Req.RequestType == Local)
+                    {
+                        int LocalBlockID =
+                            Req.BlockID -
+                            Req.VarRec->PerWriterBlockStart[WriterRank];
+                        IncomingData =
+                            (char *)Requests[ReqIndex].DestinationAddr +
+                            writer_meta_base->DataLocation[LocalBlockID];
 
-                    RankOffset = ZeroRankOffset.data();
-                    GlobalDimensions = ZeroGlobalDimensions.data();
-                    if (SelOffset == NULL)
-                    {
-                        SelOffset = ZeroSel.data();
+                        RankOffset = ZeroRankOffset.data();
+                        GlobalDimensions = ZeroGlobalDimensions.data();
+                        if (SelOffset == NULL)
+                        {
+                            SelOffset = ZeroSel.data();
+                        }
+                        for (int i = 0; i < DimCount; i++)
+                        {
+                            GlobalDimensions[i] = RankSize[i];
+                        }
                     }
-                    for (int i = 0; i < DimCount; i++)
+                    if (m_ReaderIsRowMajor)
                     {
-                        GlobalDimensions[i] = RankSize[i];
+                        ExtractSelectionFromPartialRM(
+                            ElementSize, DimCount, GlobalDimensions, RankOffset,
+                            RankSize, SelOffset, SelSize, IncomingData,
+                            (char *)Req.Data);
                     }
-                }
-                if (m_ReaderIsRowMajor)
-                {
-                    ExtractSelectionFromPartialRM(
-                        ElementSize, DimCount, GlobalDimensions, RankOffset,
-                        RankSize, SelOffset, SelSize, IncomingData,
-                        (char *)Req.Data);
-                }
-                else
-                {
-                    ExtractSelectionFromPartialCM(
-                        ElementSize, DimCount, GlobalDimensions, RankOffset,
-                        RankSize, SelOffset, SelSize, IncomingData,
-                        (char *)Req.Data);
+                    else
+                    {
+                        ExtractSelectionFromPartialCM(
+                            ElementSize, DimCount, GlobalDimensions, RankOffset,
+                            RankSize, SelOffset, SelSize, IncomingData,
+                            (char *)Req.Data);
+                    }
                 }
             }
         }

@@ -44,6 +44,8 @@ public:
                     const size_t elementSize, DataType type, void *bufferOut,
                     const Params &parameters, Params &info) final;
 
+    using Operator::Decompress;
+
     /**
      *
      * @param bufferIn
