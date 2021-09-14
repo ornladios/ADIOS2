@@ -65,6 +65,7 @@ TEST_F(BPReadFBlocks, FHeatMap2D)
                     EXPECT_TRUE(r32Blocks[i].IsReverseDims);
                 }
             }
+            bpReader.EndStep();
         }
     }
 }
@@ -117,6 +118,7 @@ TEST_F(BPReadFBlocks, FHeatMap3D)
                     EXPECT_EQ(r32Blocks[i].IsReverseDims, true);
                 }
             }
+            bpReader.EndStep();
         }
     }
 }

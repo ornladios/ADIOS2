@@ -353,28 +353,11 @@ TEST_F(BPChangingShape, MultiBlock)
             var.SetSelection(
                 {{0, 0}, {static_cast<size_t>(nproc), expected_shape}});
 
-            // Check data on rank 0
-            if (!rank)
-            {
-                std::vector<double> data(nproc * expected_shape);
-                reader.Get(var, data.data());
+            std::vector<double> data(nproc * expected_shape);
+            reader.Get(var, data.data());
 
-                reader.EndStep();
-
-                for (int i = 0; i < nproc; i++)
-                {
-                    double value = static_cast<double>(i) +
-                                   static_cast<double>(step + 1) / 10.0;
-
-                    for (int j = 0; j < nblocks[step]; j++)
-                    {
-                        EXPECT_EQ(data[i * nblocks[step] + j], value);
-                        value += 0.01;
-                    }
-                }
-            }
+            EXPECT_THROW(reader.EndStep(), std::logic_error);
         }
-        reader.Close();
     }
 }
 

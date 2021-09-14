@@ -701,7 +701,6 @@ void NO_SANITIZE_THREAD SstReaderInitFFSCallback(
 {
     Stream->VarSetupUpcall = VarCallback;
     Stream->ArraySetupUpcall = ArrayCallback;
-    printf("Minarraycallback is %p\n", MinArrayCallback);
     Stream->MinArraySetupUpcall = MinArrayCallback;
     Stream->AttrSetupUpcall = AttrCallback;
     Stream->ArrayBlocksInfoUpcall = BlocksInfoCallback;

@@ -594,6 +594,10 @@ protected:
      */
     bool m_ReaderSelectionsLocked = false;
 
+    /** true: Currently executing after BeginStep and before EndStep
+     */
+    bool m_BetweenStepPairs = false;
+
 private:
     /** Throw exception by Engine virtual functions not implemented/supported by
      *  a derived  class */
