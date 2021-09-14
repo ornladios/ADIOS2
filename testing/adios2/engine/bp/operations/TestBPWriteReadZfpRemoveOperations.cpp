@@ -79,11 +79,11 @@ void ZFPRate1D(const std::string rate)
             if (step % 2 == 0)
             {
                 // remove current operations to avoid compression in even steps
-                // var_r32.RemoveOperations();
-                // var_r64.RemoveOperations();
+                var_r32.RemoveOperations();
+                var_r64.RemoveOperations();
 
-                // EXPECT_TRUE(var_r32.Operations().empty());
-                // EXPECT_TRUE(var_r64.Operations().empty());
+                EXPECT_TRUE(var_r32.Operations().empty());
+                EXPECT_TRUE(var_r64.Operations().empty());
             }
             else
             {
@@ -234,11 +234,11 @@ void ZFPRate2D(const std::string rate)
             if (step % 2 == 0)
             {
                 // remove current operations to avoid compression in even steps
-                // var_r32.RemoveOperations();
-                // var_r64.RemoveOperations();
+                var_r32.RemoveOperations();
+                var_r64.RemoveOperations();
 
-                // EXPECT_TRUE(var_r32.Operations().empty());
-                // EXPECT_TRUE(var_r64.Operations().empty());
+                EXPECT_TRUE(var_r32.Operations().empty());
+                EXPECT_TRUE(var_r64.Operations().empty());
             }
             else
             {
@@ -386,11 +386,11 @@ void ZFPRate3D(const std::string rate)
             if (step % 2 == 0)
             {
                 // remove current operations to avoid compression in even steps
-                // var_r32.RemoveOperations();
-                // var_r64.RemoveOperations();
+                var_r32.RemoveOperations();
+                var_r64.RemoveOperations();
 
-                // EXPECT_TRUE(var_r32.Operations().empty());
-                // EXPECT_TRUE(var_r64.Operations().empty());
+                EXPECT_TRUE(var_r32.Operations().empty());
+                EXPECT_TRUE(var_r64.Operations().empty());
             }
             else
             {
