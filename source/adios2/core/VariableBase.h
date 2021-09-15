@@ -169,6 +169,12 @@ public:
                         const Params &parameters = Params()) noexcept;
 
     /**
+     * Removes all current Operations associated with AddOperation.
+     * Provides the posibility to apply or not operators on a step basis.
+     */
+    void RemoveOperations() noexcept;
+
+    /**
      * Sets a parameter by key/value in an existing operation from AddOperation
      * @param operationID returned handler form AddOperation
      * @param key input parameter key

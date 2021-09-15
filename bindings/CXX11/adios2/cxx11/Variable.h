@@ -299,6 +299,12 @@ public:
     std::vector<Operation> Operations() const;
 
     /**
+     * Removes all current Operations associated with AddOperation.
+     * Provides the posibility to apply or not operators on a step basis.
+     */
+    void RemoveOperations();
+
+    /**
      * Read mode only: return minimum and maximum values for current variable at
      * a step. For streaming mode (BeginStep/EndStep): use default (leave empty)
      * for current Engine Step

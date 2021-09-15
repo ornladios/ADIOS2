@@ -231,6 +231,8 @@ size_t VariableBase::AddOperation(Operator &op,
     return m_Operations.size() - 1;
 }
 
+void VariableBase::RemoveOperations() noexcept { m_Operations.clear(); }
+
 void VariableBase::SetOperationParameter(const size_t operationID,
                                          const std::string key,
                                          const std::string value)

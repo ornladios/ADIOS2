@@ -183,6 +183,14 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    void Variable<T>::RemoveOperations()                                       \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::RemoveOperations");   \
+        m_Variable->RemoveOperations();                                        \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     std::pair<T, T> Variable<T>::MinMax(const size_t step) const               \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::MinMax"); \
