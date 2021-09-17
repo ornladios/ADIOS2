@@ -67,18 +67,14 @@ void BPPNG::GetData(const char *input,
                     char *dataOutput) const
 {
 #ifdef ADIOS2_HAVE_PNG
-    core::compress::CompressPNG op((Params()));
-    const size_t sizeOut = (sizeof(size_t) == 8)
-                               ? static_cast<size_t>(helper::StringTo<uint64_t>(
-                                     blockOperationInfo.Info.at("InputSize"),
-                                     "when reading PNG input size"))
-                               : static_cast<size_t>(helper::StringTo<uint32_t>(
-                                     blockOperationInfo.Info.at("InputSize"),
-                                     "when reading PNG input size"));
-
+    Params params;
+    core::compress::CompressPNG op(params);
     Params &info = const_cast<Params &>(blockOperationInfo.Info);
-    op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput, sizeOut,
-                  info);
+    op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
+                  helper::GetDataTypeFromString(
+                      blockOperationInfo.Info.at("PreDataType")),
+                  blockOperationInfo.PreStart, blockOperationInfo.PreCount,
+                  blockOperationInfo.Info, params);
 
 #else
     throw std::runtime_error(
