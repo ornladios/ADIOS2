@@ -91,7 +91,7 @@ void BPBZIP2::GetData(const char *input,
                   helper::GetDataTypeFromString(
                       blockOperationInfo.Info.at("PreDataType")),
                   blockOperationInfo.PreStart, blockOperationInfo.PreCount,
-                  blockOperationInfo.Info, params);
+                  params, const_cast<Params &>(blockOperationInfo.Info));
 
 #else
     throw std::runtime_error(
