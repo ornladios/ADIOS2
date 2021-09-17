@@ -36,9 +36,8 @@ size_t CompressZFP::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
-                             const size_t elementSize, DataType type,
-                             void *bufferOut, const Params &parameters,
-                             Params &info)
+                             DataType type, void *bufferOut,
+                             const Params &parameters, Params &info)
 {
 
     Dims convertedDims = ConvertDims(dimensions, type, 3);
@@ -216,26 +215,16 @@ zfp_field *CompressZFP::GetZFPField(const void *data, const Dims &dimensions,
 zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
                                       const Params &parameters) const
 {
-    auto lf_HasKey = [](Params::const_iterator itKey,
-                        const Params &parameters) -> bool {
-        bool hasKey = false;
-        if (itKey != parameters.end())
-        {
-            hasKey = true;
-        }
-        return hasKey;
-    };
-
     zfp_stream *stream = zfp_stream_open(NULL);
 
     auto itAccuracy = parameters.find("accuracy");
-    const bool hasAccuracy = lf_HasKey(itAccuracy, parameters);
+    const bool hasAccuracy = itAccuracy != parameters.end();
 
     auto itRate = parameters.find("rate");
-    const bool hasRate = lf_HasKey(itRate, parameters);
+    const bool hasRate = itRate != parameters.end();
 
     auto itPrecision = parameters.find("precision");
-    const bool hasPrecision = lf_HasKey(itPrecision, parameters);
+    const bool hasPrecision = itPrecision != parameters.end();
 
     if ((hasAccuracy && hasRate) || (hasAccuracy && hasPrecision) ||
         (hasRate && hasPrecision) || !(hasAccuracy || hasRate || hasPrecision))

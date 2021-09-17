@@ -45,9 +45,9 @@ public:
      * @param parameters
      * @return size of compressed buffer in bytes
      */
-    size_t Compress(const void *dataIn, const Dims &dimensions,
-                    const size_t elementSize, DataType type, void *bufferOut,
-                    const Params &parameters, Params &info) final;
+    size_t Compress(const void *dataIn, const Dims &dimensions, DataType type,
+                    void *bufferOut, const Params &parameters,
+                    Params &info) final;
 
     /**
      * Wrapper around zfp decompression

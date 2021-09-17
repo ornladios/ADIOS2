@@ -487,9 +487,9 @@ void DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
     try
     {
         Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), params, info);
+        datasize =
+            compressor.Compress(inputData, varCount, helper::GetDataType<T>(),
+                                m_CompressBuffer.data(), params, info);
     }
     catch (std::exception &e)
     {
@@ -515,9 +515,9 @@ void DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
     try
     {
         Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), params, info);
+        datasize =
+            compressor.Compress(inputData, varCount, helper::GetDataType<T>(),
+                                m_CompressBuffer.data(), params, info);
     }
     catch (std::exception &e)
     {
@@ -543,9 +543,9 @@ void DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
     try
     {
         Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), params, info);
+        datasize =
+            compressor.Compress(inputData, varCount, helper::GetDataType<T>(),
+                                m_CompressBuffer.data(), params, info);
     }
     catch (std::exception &e)
     {
@@ -571,9 +571,9 @@ void DataManSerializer::PutMgard(nlohmann::json &metaj, size_t &datasize,
     try
     {
         Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), params, info);
+        datasize =
+            compressor.Compress(inputData, varCount, helper::GetDataType<T>(),
+                                m_CompressBuffer.data(), params, info);
     }
     catch (std::exception &e)
     {

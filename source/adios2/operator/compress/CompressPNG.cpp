@@ -48,9 +48,8 @@ CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
 }
 
 size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
-                             const size_t elementSize, DataType /*type*/,
-                             void *bufferOut, const Params &parameters,
-                             Params &info)
+                             DataType type, void *bufferOut,
+                             const Params &parameters, Params &info)
 {
     auto lf_Write = [](png_structp png_ptr, png_bytep data, png_size_t length) {
         DestInfo *pDestInfo =
@@ -130,8 +129,9 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
                                                    nullptr, nullptr, nullptr);
     png_infop pngInfo = png_create_info_struct(pngWrite);
 
-    const uint32_t bytesPerPixel =
-        ndims == 3 ? static_cast<uint32_t>(dimensions[2]) : elementSize;
+    const uint32_t bytesPerPixel = ndims == 3
+                                       ? static_cast<uint32_t>(dimensions[2])
+                                       : helper::GetDataTypeSize(type);
 
     const uint32_t width = static_cast<uint32_t>(dimensions[1]);
     const uint32_t height = static_cast<uint32_t>(dimensions[0]);

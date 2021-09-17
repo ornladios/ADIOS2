@@ -32,9 +32,8 @@ void BPOperation::SetDataDefault(
     Params &info = const_cast<Params &>(operation.Info);
 
     const size_t outputSize = op.Compress(
-        blockInfo.Data, blockInfo.Count, variable.m_ElementSize,
-        variable.m_Type, bufferSTL.m_Buffer.data() + bufferSTL.m_Position,
-        parameters, info);
+        blockInfo.Data, blockInfo.Count, variable.m_Type,
+        bufferSTL.m_Buffer.data() + bufferSTL.m_Position, parameters, info);
 
     info["OutputSize"] = std::to_string(outputSize);
 

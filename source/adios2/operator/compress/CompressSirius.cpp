@@ -35,13 +35,12 @@ CompressSirius::CompressSirius(const Params &parameters)
 }
 
 size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
-                                const size_t elementSize, DataType varType,
-                                void *bufferOut, const Params &params,
-                                Params &info)
+                                DataType varType, void *bufferOut,
+                                const Params &params, Params &info)
 {
-    size_t totalInputBytes =
-        std::accumulate(dimensions.begin(), dimensions.end(), elementSize,
-                        std::multiplies<size_t>());
+    size_t totalInputBytes = std::accumulate(
+        dimensions.begin(), dimensions.end(), helper::GetDataTypeSize(varType),
+        std::multiplies<size_t>());
 
     // if called from Tier 0 sub-engine, then compute tier buffers and put into
     // m_TierBuffers

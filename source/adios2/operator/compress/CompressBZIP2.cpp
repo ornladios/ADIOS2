@@ -38,9 +38,8 @@ size_t CompressBZIP2::BufferMaxSize(const size_t sizeIn) const
 }
 
 size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
-                               const size_t elementSize, DataType type,
-                               void *bufferOut, const Params &parameters,
-                               Params &info)
+                               DataType type, void *bufferOut,
+                               const Params &parameters, Params &info)
 {
     // defaults
     int blockSize100k = 1;
@@ -68,8 +67,9 @@ size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
         }
     }
 
-    const size_t sizeIn =
-        static_cast<size_t>(helper::GetTotalSize(dimensions) * elementSize);
+    const size_t sizeIn = std::accumulate(dimensions.begin(), dimensions.end(),
+                                          helper::GetDataTypeSize(type),
+                                          std::multiplies<size_t>());
 
     const size_t batches = sizeIn / DefaultMaxFileBatchSize + 1;
     info["batches"] = std::to_string(batches);
