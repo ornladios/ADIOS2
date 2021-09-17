@@ -106,8 +106,9 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
-                                 void *dataOut, const Dims &dimensions,
-                                 DataType type, const Params & /*parameters*/)
+                                 void *dataOut, const DataType type,
+                                 const Dims &blockStart, const Dims &blockCount,
+                                 const Params &parameters, Params &info)
 {
     int mgardType = -1;
     size_t elementSize = 0;
@@ -125,7 +126,7 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
             "MGARD only supports double precision, in call to Get\n");
     }
 
-    const size_t ndims = dimensions.size();
+    const size_t ndims = blockCount.size();
     int r[3];
     r[0] = 1;
     r[1] = 1;
@@ -133,14 +134,16 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
 
     for (size_t i = 0; i < ndims; i++)
     {
-        r[ndims - i - 1] = static_cast<int>(dimensions[i]);
+        r[ndims - i - 1] = static_cast<int>(blockCount[i]);
     }
 
     void *dataPtr = mgard_decompress(
         reinterpret_cast<unsigned char *>(const_cast<void *>(bufferIn)),
         static_cast<int>(sizeIn), r[0], r[1], r[2], 0.0);
 
-    const size_t dataSizeBytes = helper::GetTotalSize(dimensions) * elementSize;
+    const size_t dataSizeBytes = std::accumulate(
+        blockCount.begin(), blockCount.end(), helper::GetDataTypeSize(type),
+        std::multiplies<size_t>());
     std::memcpy(dataOut, dataPtr, dataSizeBytes);
 
     free(dataPtr);

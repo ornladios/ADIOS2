@@ -66,8 +66,9 @@ size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
-                               void *dataOut, const Dims &dimensions,
-                               DataType type, const Params &parameters)
+                               void *dataOut, const DataType type,
+                               const Dims &blockStart, const Dims &blockCount,
+                               const Params &parameters, Params &info)
 {
     auto lf_GetTypeSize = [](const zfp_type zfpType) -> size_t {
         size_t size = 0;
@@ -82,7 +83,7 @@ size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
         return size;
     };
 
-    Dims convertedDims = ConvertDims(dimensions, type, 3);
+    Dims convertedDims = ConvertDims(blockCount, type, 3);
 
     zfp_field *field = GetZFPField(dataOut, convertedDims, type);
     zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);

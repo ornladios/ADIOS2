@@ -337,7 +337,8 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 {
                     decompressor.Decompress(j.buffer->data() + j.position,
                                             j.size, decompressBuffer.data(),
-                                            j.count, j.type, j.params);
+                                            j.type, j.start, j.count, j.params,
+                                            const_cast<Params &>(j.params));
                     decompressed = true;
                 }
                 catch (std::exception &e)
@@ -364,7 +365,8 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 {
                     decompressor.Decompress(j.buffer->data() + j.position,
                                             j.size, decompressBuffer.data(),
-                                            j.count, j.type, j.params);
+                                            j.type, j.start, j.count, j.params,
+                                            const_cast<Params &>(j.params));
                     decompressed = true;
                 }
                 catch (std::exception &e)
@@ -391,7 +393,8 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                     Params info;
                     decompressor.Decompress(j.buffer->data() + j.position,
                                             j.size, decompressBuffer.data(),
-                                            datasize, info);
+                                            j.type, j.start, j.count, j.params,
+                                            const_cast<Params &>(j.params));
                     decompressed = true;
                 }
                 catch (std::exception &e)
@@ -417,7 +420,8 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 {
                     decompressor.Decompress(j.buffer->data() + j.position,
                                             j.size, decompressBuffer.data(),
-                                            j.count, j.type, j.params);
+                                            j.type, j.start, j.count, j.params,
+                                            const_cast<Params &>(j.params));
                     decompressed = true;
                 }
                 catch (std::exception &e)

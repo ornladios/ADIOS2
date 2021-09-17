@@ -76,7 +76,6 @@ public:
                          const Params &params) const;
 
     /**
-     * BZip2 and Zfp common call
      * @param dataIn
      * @param dimensions
      * @param elementSize
@@ -91,35 +90,9 @@ public:
                             Params &info);
 
     virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
-                              void *dataOut, const size_t sizeOut,
-                              Params &info);
-
-    /**
-     * Zfp signature
-     * @param bufferIn
-     * @param sizeIn
-     * @param dataOut
-     * @param dimensions
-     * @param type
-     * @return
-     */
-    virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
-                              void *dataOut, const Dims &dimensions,
-                              const DataType type, const Params &parameters);
-
-    /**
-     * Sirius signature
-     * @param bufferIn
-     * @param sizeIn
-     * @param dataOut
-     * @param start
-     * @param count
-     * @param type
-     * @return
-     */
-    virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
-                              void *dataOut, const Dims &start,
-                              const Dims &count, const DataType type);
+                              void *dataOut, const DataType type,
+                              const Dims &blockStart, const Dims &blockCount,
+                              const Params &parameters, Params &info);
 
     virtual bool IsDataTypeValid(const DataType type) const = 0;
 

@@ -69,15 +69,17 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
-                                  void *dataOut, const Dims &start,
-                                  const Dims &count, DataType type)
+                                  void *dataOut, const DataType type,
+                                  const Dims &blockStart,
+                                  const Dims &blockCount,
+                                  const Params &parameters, Params &info)
 {
-    size_t outputBytes = std::accumulate(count.begin(), count.end(),
-                                         helper::GetDataTypeSize(type),
-                                         std::multiplies<size_t>());
+    const size_t outputBytes = std::accumulate(
+        blockCount.begin(), blockCount.end(), helper::GetDataTypeSize(type),
+        std::multiplies<size_t>());
 
     std::string blockId =
-        helper::DimsToString(start) + helper::DimsToString(count);
+        helper::DimsToString(blockStart) + helper::DimsToString(blockCount);
 
     // decompress data and copy back to m_TierBuffers
     size_t bytesPerTier = outputBytes / m_Tiers;

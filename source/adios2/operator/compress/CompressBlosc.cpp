@@ -236,9 +236,14 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
-                                 void *dataOut, const size_t sizeOut,
-                                 Params &info)
+                                 void *dataOut, const DataType type,
+                                 const Dims &blockStart, const Dims &blockCount,
+                                 const Params &parameters, Params &info)
 {
+    size_t sizeOut = std::accumulate(blockCount.begin(), blockCount.end(),
+                                     helper::GetDataTypeSize(type),
+                                     std::multiplies<size_t>());
+
     assert(sizeIn >= sizeof(DataHeader));
     const bool isChunked =
         reinterpret_cast<const DataHeader *>(bufferIn)->IsChunked();

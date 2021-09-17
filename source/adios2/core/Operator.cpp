@@ -82,35 +82,14 @@ size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
 }
 
 size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
-                            void *dataOut, const size_t sizeOut, Params &info)
+                            void *dataOut, const DataType type,
+                            const Dims &blockStart, const Dims &blockCount,
+                            const Params &parameters, Params &info)
 {
     throw std::invalid_argument(
         "ERROR: signature (const void*, const size_t, void) not supported "
         "by derived class implemented with " +
         m_Type + ", in call to Decompress\n");
-}
-
-size_t Operator::Decompress(const void * /*bufferIn*/, const size_t /*sizeIn*/,
-                            void * /*dataOut*/, const Dims & /*dimensions*/,
-                            const DataType /*type*/,
-                            const Params & /*parameters*/)
-{
-    throw std::invalid_argument("ERROR: signature (const void*, const "
-                                "size_t, void*, const Dims&, const DataType, "
-                                "const Params) not supported "
-                                "by derived class implemented with " +
-                                m_Type + ", in call to Decompress\n");
-}
-
-size_t Operator::Decompress(const void * /*bufferIn*/, const size_t /*sizeIn*/,
-                            void * /*dataOut*/, const Dims & /*start*/,
-                            const Dims & /*count*/, const DataType /*type*/)
-{
-    throw std::invalid_argument("ERROR: signature (const void*, const "
-                                "size_t, void*, const Dims&, const Dims&, "
-                                "const DataType) not supported "
-                                "by derived class implemented with " +
-                                m_Type + ", in call to Decompress\n");
 }
 
 // PROTECTED
