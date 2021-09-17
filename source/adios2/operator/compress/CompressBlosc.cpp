@@ -62,12 +62,12 @@ size_t CompressBlosc::BufferMaxSize(const size_t sizeIn) const
 }
 
 size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
-                               const size_t elementSize, DataType type,
-                               void *bufferOut, const Params &parameters,
-                               Params &info)
+                               DataType type, void *bufferOut,
+                               const Params &parameters, Params &info)
 {
-    const size_t sizeIn =
-        static_cast<size_t>(helper::GetTotalSize(dimensions) * elementSize);
+    const size_t sizeIn = std::accumulate(dimensions.begin(), dimensions.end(),
+                                          helper::GetDataTypeSize(type),
+                                          std::multiplies<size_t>());
 
     bool useMemcpy = false;
     /* input size under this bound would not compressed */
@@ -157,7 +157,7 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
 
     const uint8_t *inputDataBuff = reinterpret_cast<const uint8_t *>(dataIn);
 
-    int32_t typesize = elementSize;
+    int32_t typesize = helper::GetDataTypeSize(type);
     if (typesize > BLOSC_MAX_TYPESIZE)
         typesize = 1;
 

@@ -78,16 +78,14 @@ public:
     /**
      * @param dataIn
      * @param dimensions
-     * @param elementSize
      * @param type
      * @param bufferOut
      * @param parameters
      * @return size of compressed buffer
      */
     virtual size_t Compress(const void *dataIn, const Dims &dimensions,
-                            const size_t elementSize, DataType type,
-                            void *bufferOut, const Params &parameters,
-                            Params &info);
+                            DataType type, void *bufferOut,
+                            const Params &parameters, Params &info);
 
     virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
                               void *dataOut, const DataType type,

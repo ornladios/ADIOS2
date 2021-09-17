@@ -36,9 +36,8 @@ size_t CompressZFP::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
-                             const size_t elementSize, DataType type,
-                             void *bufferOut, const Params &parameters,
-                             Params &info)
+                             DataType type, void *bufferOut,
+                             const Params &parameters, Params &info)
 {
 
     Dims convertedDims = ConvertDims(dimensions, type, 3);

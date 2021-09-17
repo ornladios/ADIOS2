@@ -291,7 +291,6 @@ size_t CompressLibPressio::BufferMaxSize(const size_t sizeIn) const
 }
 
 size_t CompressLibPressio::Compress(const void *dataIn, const Dims &dimensions,
-                                    const size_t /*elementSize*/,
                                     DataType varType, void *bufferOut,
                                     const Params &parameters, Params &info)
 {

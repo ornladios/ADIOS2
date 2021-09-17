@@ -70,9 +70,8 @@ ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
 #undef declare_type
 
 size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
-                          const size_t /*elementSize*/, DataType /*type*/,
-                          void * /*bufferOut*/, const Params & /*params*/,
-                          Params & /*info*/)
+                          DataType /*type*/, void * /*bufferOut*/,
+                          const Params & /*params*/, Params & /*info*/)
 {
     throw std::invalid_argument("ERROR: signature (const void*, const "
                                 "Dims, const size_t, const std::string, "
