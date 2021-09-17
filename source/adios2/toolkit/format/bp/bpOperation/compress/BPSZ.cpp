@@ -67,12 +67,13 @@ void BPSZ::GetData(const char *input,
                    char *dataOutput) const
 {
 #ifdef ADIOS2_HAVE_SZ
-    core::compress::CompressSZ op((Params()));
+    Params params;
+    core::compress::CompressSZ op(params);
     op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
-                  blockOperationInfo.PreCount,
                   helper::GetDataTypeFromString(
                       blockOperationInfo.Info.at("PreDataType")),
-                  blockOperationInfo.Info);
+                  blockOperationInfo.PreStart, blockOperationInfo.PreCount,
+                  blockOperationInfo.Info, params);
 
 #else
     throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "

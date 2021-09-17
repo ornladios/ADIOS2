@@ -85,7 +85,8 @@ void BPBZIP2::GetData(const char *input,
                       char *dataOutput) const
 {
 #ifdef ADIOS2_HAVE_BZIP2
-    core::compress::CompressBZIP2 op((Params()));
+    Params params;
+    core::compress::CompressBZIP2 op(params);
     const size_t sizeOut = (sizeof(size_t) == 8)
                                ? static_cast<size_t>(helper::StringTo<uint64_t>(
                                      blockOperationInfo.Info.at("InputSize"),
@@ -94,9 +95,11 @@ void BPBZIP2::GetData(const char *input,
                                      blockOperationInfo.Info.at("InputSize"),
                                      "when reading BZIP2 input size"));
 
-    Params &info = const_cast<Params &>(blockOperationInfo.Info);
-    op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput, sizeOut,
-                  info);
+    op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
+                  helper::GetDataTypeFromString(
+                      blockOperationInfo.Info.at("PreDataType")),
+                  blockOperationInfo.PreStart, blockOperationInfo.PreCount,
+                  blockOperationInfo.Info, params);
 
 #else
     throw std::runtime_error(

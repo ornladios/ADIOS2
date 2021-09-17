@@ -33,11 +33,10 @@ public:
                     const size_t elementSize, DataType type, void *bufferOut,
                     const Params &params, Params &info) final;
 
-    using Operator::Decompress;
-
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const Dims &start, const Dims &count,
-                      DataType type) final;
+                      const DataType type, const Dims &blockStart,
+                      const Dims &blockCount, const Params &parameters,
+                      Params &info) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 

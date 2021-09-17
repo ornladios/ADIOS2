@@ -68,12 +68,13 @@ void BPLIBPRESSIO::GetData(const char *input,
                            char *dataOutput) const
 {
 #ifdef ADIOS2_HAVE_LIBPRESSIO
-    core::compress::CompressLibPressio op((Params()));
+    Params params;
+    core::compress::CompressLibPressio op(params);
     op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
-                  blockOperationInfo.PreCount,
                   helper::GetDataTypeFromString(
                       blockOperationInfo.Info.at("PreDataType")),
-                  blockOperationInfo.Info);
+                  blockOperationInfo.PreStart, blockOperationInfo.PreCount,
+                  blockOperationInfo.Info, params);
 
 #else
     throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "

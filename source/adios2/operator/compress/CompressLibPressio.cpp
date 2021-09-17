@@ -332,12 +332,14 @@ size_t CompressLibPressio::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressLibPressio::Decompress(const void *bufferIn, const size_t sizeIn,
-                                      void *dataOut, const Dims &dimensions,
-                                      DataType varType, const Params &params)
+                                      void *dataOut, const DataType type,
+                                      const Dims &blockStart,
+                                      const Dims &blockCount,
+                                      const Params &parameters, Params &info)
 {
-    std::vector<size_t> dims = adios_to_libpressio_dims(dimensions);
+    std::vector<size_t> dims = adios_to_libpressio_dims(blockCount);
     pressio_data *output_buf = pressio_data_new_owning(
-        adios_to_libpressio_dtype(varType), dims.size(), dims.data());
+        adios_to_libpressio_dtype(type), dims.size(), dims.data());
 
     pressio_data *input_buf = pressio_data_new_nonowning(
         pressio_byte_dtype, const_cast<void *>(bufferIn), 1, &sizeIn);
@@ -345,7 +347,7 @@ size_t CompressLibPressio::Decompress(const void *bufferIn, const size_t sizeIn,
     pressio_compressor *compressor = nullptr;
     try
     {
-        compressor = adios_to_libpressio_compressor(params);
+        compressor = adios_to_libpressio_compressor(parameters);
     }
     catch (std::exception &)
     {

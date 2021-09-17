@@ -270,22 +270,23 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
-                              void *dataOut, const Dims &dimensions,
-                              DataType varType, const Params & /*parameters*/)
+                              void *dataOut, const DataType type,
+                              const Dims &blockStart, const Dims &blockCount,
+                              const Params &parameters, Params &info)
 {
-    Dims convertedDims = ConvertDims(dimensions, varType, 4, true, 1);
+    Dims convertedDims = ConvertDims(blockCount, type, 4, true, 1);
 
     // Get type info
     int dtype = 0;
     size_t typeSizeBytes = 0;
-    if (varType == helper::GetDataType<double>() ||
-        varType == helper::GetDataType<std::complex<double>>())
+    if (type == helper::GetDataType<double>() ||
+        type == helper::GetDataType<std::complex<double>>())
     {
         dtype = SZ_DOUBLE;
         typeSizeBytes = 8;
     }
-    else if (varType == helper::GetDataType<float>() ||
-             varType == helper::GetDataType<std::complex<float>>())
+    else if (type == helper::GetDataType<float>() ||
+             type == helper::GetDataType<std::complex<float>>())
     {
         dtype = SZ_FLOAT;
         typeSizeBytes = 4;

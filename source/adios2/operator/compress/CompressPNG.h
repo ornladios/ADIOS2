@@ -46,8 +46,6 @@ public:
                     const size_t elementSize, DataType type, void *bufferOut,
                     const Params &parameters, Params &info) final;
 
-    using Operator::Decompress;
-
     /**
      * Decompression signature for legacy libraries that use void*
      * @param bufferIn
@@ -58,7 +56,9 @@ public:
      * @return size of decompressed buffer in bytes
      */
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const size_t sizeOut, Params &info) final;
+                      const DataType type, const Dims &blockStart,
+                      const Dims &blockCount, const Params &parameters,
+                      Params &info) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 

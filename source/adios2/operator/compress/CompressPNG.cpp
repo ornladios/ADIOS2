@@ -171,8 +171,9 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressPNG::Decompress(const void *bufferIn, const size_t sizeIn,
-                               void *dataOut, const size_t sizeOut,
-                               Params &info)
+                               void *dataOut, const DataType type,
+                               const Dims &blockStart, const Dims &blockCount,
+                               const Params &parameters, Params &info)
 {
     png_image image;
     std::memset(&image, 0, sizeof(image));

@@ -69,8 +69,10 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
-                                  void *dataOut, const Dims &start,
-                                  const Dims &count, DataType type)
+                                  void *dataOut, const DataType type,
+                                  const Dims &blockStart,
+                                  const Dims &blockCount,
+                                  const Params &parameters, Params &info)
 {
     size_t outputBytes = std::accumulate(count.begin(), count.end(),
                                          helper::GetDataTypeSize(type),
