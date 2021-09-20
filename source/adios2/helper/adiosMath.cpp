@@ -24,10 +24,10 @@ namespace adios2
 namespace helper
 {
 
-size_t GetTotalSize(const Dims &dimensions) noexcept
+size_t GetTotalSize(const Dims &dimensions, const size_t elementSize) noexcept
 {
-    return std::accumulate(dimensions.begin(), dimensions.end(),
-                           static_cast<size_t>(1), std::multiplies<size_t>());
+    return std::accumulate(dimensions.begin(), dimensions.end(), elementSize,
+                           std::multiplies<size_t>());
 }
 
 bool CheckIndexRange(const int index, const int upperLimit,

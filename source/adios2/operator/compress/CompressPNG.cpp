@@ -175,9 +175,6 @@ size_t CompressPNG::Decompress(const void *bufferIn, const size_t sizeIn,
                                const Dims &blockStart, const Dims &blockCount,
                                const Params &parameters, Params &info)
 {
-    const size_t sizeOut = std::accumulate(blockCount.begin(), blockCount.end(),
-                                           helper::GetDataTypeSize(type),
-                                           std::multiplies<size_t>());
     png_image image;
     std::memset(&image, 0, sizeof(image));
     image.version = PNG_IMAGE_VERSION;
@@ -200,7 +197,7 @@ size_t CompressPNG::Decompress(const void *bufferIn, const size_t sizeIn,
             "to ADIOS2 PNG Decompress\n");
     }
 
-    return sizeOut;
+    return helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
 }
 
 bool CompressPNG::IsDataTypeValid(const DataType type) const { return true; }

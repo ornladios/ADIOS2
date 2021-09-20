@@ -140,15 +140,14 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
         reinterpret_cast<unsigned char *>(const_cast<void *>(bufferIn)),
         static_cast<int>(sizeIn), r[0], r[1], r[2], 0.0);
 
-    const size_t dataSizeBytes = std::accumulate(
-        blockCount.begin(), blockCount.end(), helper::GetDataTypeSize(type),
-        std::multiplies<size_t>());
-    std::memcpy(dataOut, dataPtr, dataSizeBytes);
+    const size_t sizeOut =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    std::memcpy(dataOut, dataPtr, sizeOut);
 
     free(dataPtr);
     dataPtr = nullptr;
 
-    return static_cast<size_t>(dataSizeBytes);
+    return sizeOut;
 }
 
 bool CompressMGARD::IsDataTypeValid(const DataType type) const
