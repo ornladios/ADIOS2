@@ -69,19 +69,6 @@ size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
                                const Dims &blockStart, const Dims &blockCount,
                                const Params &parameters, Params &info)
 {
-    auto lf_GetTypeSize = [](const zfp_type zfpType) -> size_t {
-        size_t size = 0;
-        if (zfpType == zfp_type_int32 || zfpType == zfp_type_float)
-        {
-            size = 4;
-        }
-        else if (zfpType == zfp_type_int64 || zfpType == zfp_type_double)
-        {
-            size = 8;
-        }
-        return size;
-    };
-
     Dims convertedDims = ConvertDims(blockCount, type, 3);
 
     zfp_field *field = GetZFPField(dataOut, convertedDims, type);
@@ -105,7 +92,7 @@ size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
     zfp_stream_close(stream);
     stream_close(bitstream);
 
-    const size_t typeSizeBytes = lf_GetTypeSize(GetZfpType(type));
+    const size_t typeSizeBytes = helper::GetDataTypeSize(type);
     const size_t dataSizeBytes =
         helper::GetTotalSize(convertedDims) * typeSizeBytes;
 
@@ -169,44 +156,37 @@ zfp_type CompressZFP::GetZfpType(DataType type) const
 zfp_field *CompressZFP::GetZFPField(const void *data, const Dims &dimensions,
                                     DataType type) const
 {
-    auto lf_CheckField = [](const zfp_field *field,
-                            const std::string zfpFieldFunction, DataType type) {
-        if (field == nullptr || field == NULL)
-        {
-            throw std::invalid_argument(
-                "ERROR: " + zfpFieldFunction + " failed for data of type " +
-                ToString(type) +
-                ", data pointer might be corrupted, from "
-                "class CompressZfp Transform\n");
-        }
-    };
-
     zfp_type zfpType = GetZfpType(type);
     zfp_field *field = nullptr;
 
     if (dimensions.size() == 1)
     {
         field = zfp_field_1d(const_cast<void *>(data), zfpType, dimensions[0]);
-        lf_CheckField(field, "zfp_field_1d", type);
     }
     else if (dimensions.size() == 2)
     {
         field = zfp_field_2d(const_cast<void *>(data), zfpType, dimensions[0],
                              dimensions[1]);
-        lf_CheckField(field, "zfp_field_2d", type);
     }
     else if (dimensions.size() == 3)
     {
         field = zfp_field_3d(const_cast<void *>(data), zfpType, dimensions[0],
                              dimensions[1], dimensions[2]);
-        lf_CheckField(field, "zfp_field_3d", type);
     }
     else
     {
         throw std::invalid_argument(
             "ERROR: zfp_field* failed for data of type " + ToString(type) +
             ", only 1D, 2D and 3D dimensions are supported, from "
-            "class CompressZfp Transform\n");
+            "class CompressZfp\n");
+    }
+
+    if (field == nullptr)
+    {
+        throw std::invalid_argument(
+            "ERROR: zfp_field_" + std::to_string(dimensions.size()) +
+            "d failed for data of type " + ToString(type) +
+            ", data might be corrupted, from class CompressZfp\n");
     }
 
     return field;
