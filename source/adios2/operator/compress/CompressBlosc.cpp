@@ -46,11 +46,13 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
                                DataType type, void *bufferOut,
                                const Params &parameters, Params &info)
 {
+    size_t currentOutputSize = 0u;
+
     const size_t sizeIn =
         helper::GetTotalSize(dimensions, helper::GetDataTypeSize(type));
 
     bool useMemcpy = false;
-    /* input size under this bound would not compressed */
+    /* input size under this bound will not compress */
     size_t thresholdSize = 128;
 
     blosc_init();
@@ -134,17 +136,12 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
 
     // set default header
     *headerPtr = DataHeader{};
-
-    const uint8_t *inputDataBuff = reinterpret_cast<const uint8_t *>(dataIn);
+    currentOutputSize += sizeof(DataHeader);
 
     int32_t typesize = helper::GetDataTypeSize(type);
     if (typesize > BLOSC_MAX_TYPESIZE)
         typesize = 1;
 
-    uint8_t *outputBuff = reinterpret_cast<uint8_t *>(bufferOut);
-    outputBuff += sizeof(DataHeader);
-
-    size_t currentOutputSize = 0u;
     size_t inputOffset = 0u;
 
     if (sizeIn < thresholdSize)
@@ -177,12 +174,11 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
 
             bloscSize_t maxChunkSize = maxIntputSize + BLOSC_MAX_OVERHEAD;
 
-            const uint8_t *in_ptr = inputDataBuff + inputOffset;
-            uint8_t *out_ptr = outputBuff + currentOutputSize;
-
-            bloscSize_t compressedChunkSize =
-                blosc_compress(compressionLevel, doShuffle, typesize,
-                               maxIntputSize, in_ptr, out_ptr, maxChunkSize);
+            bloscSize_t compressedChunkSize = blosc_compress(
+                compressionLevel, doShuffle, typesize, maxIntputSize,
+                reinterpret_cast<const uint8_t *>(dataIn) + inputOffset,
+                reinterpret_cast<uint8_t *>(bufferOut) + currentOutputSize,
+                maxChunkSize);
 
             if (compressedChunkSize > 0)
                 currentOutputSize += static_cast<size_t>(compressedChunkSize);
@@ -206,13 +202,15 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
 
     if (useMemcpy)
     {
-        std::memcpy(outputBuff, inputDataBuff, sizeIn);
-        currentOutputSize = sizeIn;
+        std::memcpy(reinterpret_cast<uint8_t *>(bufferOut) + currentOutputSize,
+                    reinterpret_cast<const uint8_t *>(dataIn) + inputOffset,
+                    sizeIn);
+        currentOutputSize += sizeIn;
         headerPtr->SetNumChunks(0u);
     }
 
     blosc_destroy();
-    return currentOutputSize + sizeof(DataHeader);
+    return currentOutputSize;
 }
 
 size_t CompressBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
