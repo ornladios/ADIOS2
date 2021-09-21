@@ -61,8 +61,6 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &dimensions,
 
     convertedDims = ConvertDims(dimensions, varType, 4, true, 1);
 
-    size_t outsize;
-
     /* SZ parameters */
     int use_configfile = 0;
     std::string sz_configfile = "sz.config";
@@ -227,7 +225,7 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &dimensions,
 
     if (use_configfile)
     {
-        SZ_Init((char *)sz_configfile.c_str());
+        SZ_Init(sz_configfile.c_str());
     }
     else
     {
@@ -253,14 +251,15 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &dimensions,
                                     ToString(varType) + " is unsupported\n");
     }
 
-    unsigned char *bytes =
-        SZ_compress(dtype, (char *)dataIn, &outsize, 0, convertedDims[0],
-                    convertedDims[1], convertedDims[2], convertedDims[3]);
-    std::memcpy(bufferOut, bytes, outsize);
-    free(bytes);
-    bytes = nullptr;
+    size_t outsize;
+    auto *szAllocatedBuffer = SZ_compress(
+        dtype, const_cast<char *>(dataIn), &outsize, 0, convertedDims[0],
+        convertedDims[1], convertedDims[2], convertedDims[3]);
+    std::memcpy(bufferOut, szAllocatedBuffer, outsize);
+    free(szAllocatedBuffer);
+    szAllocatedBuffer = nullptr;
     SZ_Finalize();
-    return static_cast<size_t>(outsize);
+    return outsize;
 }
 
 size_t CompressSZ::Decompress(const char *bufferIn, const size_t sizeIn,
@@ -306,7 +305,7 @@ size_t CompressSZ::Decompress(const char *bufferIn, const size_t sizeIn,
     std::memcpy(dataOut, result, dataSizeBytes);
     free(result);
     result = nullptr;
-    return static_cast<size_t>(dataSizeBytes);
+    return dataSizeBytes;
 }
 
 bool CompressSZ::IsDataTypeValid(const DataType type) const

@@ -149,10 +149,11 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &dimensions,
     png_set_compression_level(pngWrite, compressionLevel);
 
     // set the rows
-    std::vector<char *> rows(height);
+    std::vector<uint8_t *> rows(height);
     for (size_t r = 0; r < height; ++r)
     {
-        rows[r] = const_cast<char *>(dataIn) + r * width * bytesPerPixel;
+        rows[r] = reinterpret_cast<uint8_t *>(const_cast<char *>(dataIn)) +
+                  r * width * bytesPerPixel;
     }
     png_set_rows(pngWrite, pngInfo, rows.data());
 
