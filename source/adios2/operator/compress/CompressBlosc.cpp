@@ -230,10 +230,10 @@ size_t CompressBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
     size_t decompressedSize = 0u;
     if (isChunked)
         decompressedSize =
-            DecompressChunkedFormat(bufferIn, sizeIn, dataOut, sizeOut, info);
+            DecompressChunkedFormat(bufferIn, sizeIn, dataOut, sizeOut);
     else
         decompressedSize =
-            DecompressOldFormat(bufferIn, sizeIn, dataOut, sizeOut, info);
+            DecompressOldFormat(bufferIn, sizeIn, dataOut, sizeOut);
 
     return decompressedSize;
 }
@@ -243,8 +243,7 @@ bool CompressBlosc::IsDataTypeValid(const DataType type) const { return true; }
 size_t CompressBlosc::DecompressChunkedFormat(const void *bufferIn,
                                               const size_t sizeIn,
                                               void *dataOut,
-                                              const size_t sizeOut,
-                                              Params &info) const
+                                              const size_t sizeOut) const
 {
     const DataHeader *dataPtr = reinterpret_cast<const DataHeader *>(bufferIn);
     uint32_t num_chunks = dataPtr->GetNumChunks();
@@ -326,8 +325,7 @@ size_t CompressBlosc::DecompressChunkedFormat(const void *bufferIn,
 
 size_t CompressBlosc::DecompressOldFormat(const void *bufferIn,
                                           const size_t sizeIn, void *dataOut,
-                                          const size_t sizeOut,
-                                          Params &info) const
+                                          const size_t sizeOut) const
 {
     blosc_init();
     const int decompressedSize = blosc_decompress(bufferIn, dataOut, sizeOut);

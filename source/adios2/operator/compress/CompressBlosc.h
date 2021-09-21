@@ -78,14 +78,12 @@ private:
 
     /** Decompress chunked data */
     size_t DecompressChunkedFormat(const void *bufferIn, const size_t sizeIn,
-                                   void *dataOut, const size_t sizeOut,
-                                   Params &info) const;
+                                   void *dataOut, const size_t sizeOut) const;
 
     /** Decompress data written before ADIOS2 supported large variables larger
      * 2GiB. */
     size_t DecompressOldFormat(const void *bufferIn, const size_t sizeIn,
-                               void *dataOut, const size_t sizeOut,
-                               Params &info) const;
+                               void *dataOut, const size_t sizeOut) const;
 
     ADIOS2_CLASS_PACKED(DataHeader)
     {
