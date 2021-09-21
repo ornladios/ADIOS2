@@ -53,12 +53,12 @@ public:
      * @param parameters
      * @return size of compressed buffer in bytes
      */
-    size_t Compress(const void *dataIn, const Dims &dimensions, DataType type,
-                    void *bufferOut, const Params &parameters,
+    size_t Compress(const char *dataIn, const Dims &dimensions, DataType type,
+                    char *bufferOut, const Params &parameters,
                     Params &info) final;
 
     /**
-     * Decompression signature for legacy libraries that use void*
+     * Decompression signature for legacy libraries that use char*
      * @param bufferIn
      * @param sizeIn
      * @param dataOut
@@ -66,7 +66,7 @@ public:
      * @param type
      * @return size of decompressed buffer in bytes
      */
-    size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
+    size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut,
                       const DataType type, const Dims &blockStart,
                       const Dims &blockCount, const Params &parameters,
                       Params &info) final;
@@ -77,15 +77,13 @@ private:
     using bloscSize_t = int32_t;
 
     /** Decompress chunked data */
-    size_t DecompressChunkedFormat(const void *bufferIn, const size_t sizeIn,
-                                   void *dataOut, const size_t sizeOut,
-                                   Params &info) const;
+    size_t DecompressChunkedFormat(const char *bufferIn, const size_t sizeIn,
+                                   char *dataOut, const size_t sizeOut) const;
 
     /** Decompress data written before ADIOS2 supported large variables larger
      * 2GiB. */
-    size_t DecompressOldFormat(const void *bufferIn, const size_t sizeIn,
-                               void *dataOut, const size_t sizeOut,
-                               Params &info) const;
+    size_t DecompressOldFormat(const char *bufferIn, const size_t sizeIn,
+                               char *dataOut, const size_t sizeOut) const;
 
     ADIOS2_CLASS_PACKED(DataHeader)
     {

@@ -47,8 +47,8 @@ CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
 {
 }
 
-size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
-                             DataType type, void *bufferOut,
+size_t CompressPNG::Compress(const char *dataIn, const Dims &dimensions,
+                             DataType type, char *bufferOut,
                              const Params &parameters, Params &info)
 {
     auto lf_Write = [](png_structp png_ptr, png_bytep data, png_size_t length) {
@@ -152,13 +152,13 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
     std::vector<uint8_t *> rows(height);
     for (size_t r = 0; r < height; ++r)
     {
-        rows[r] = reinterpret_cast<uint8_t *>(const_cast<void *>(dataIn)) +
+        rows[r] = reinterpret_cast<uint8_t *>(const_cast<char *>(dataIn)) +
                   r * width * bytesPerPixel;
     }
     png_set_rows(pngWrite, pngInfo, rows.data());
 
     DestInfo destInfo;
-    destInfo.BufferOut = reinterpret_cast<char *>(bufferOut);
+    destInfo.BufferOut = bufferOut;
     destInfo.Offset = 0;
 
     png_set_write_fn(pngWrite, &destInfo, lf_Write, nullptr);
@@ -170,8 +170,8 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
     return destInfo.Offset;
 }
 
-size_t CompressPNG::Decompress(const void *bufferIn, const size_t sizeIn,
-                               void *dataOut, const DataType type,
+size_t CompressPNG::Decompress(const char *bufferIn, const size_t sizeIn,
+                               char *dataOut, const DataType type,
                                const Dims &blockStart, const Dims &blockCount,
                                const Params &parameters, Params &info)
 {

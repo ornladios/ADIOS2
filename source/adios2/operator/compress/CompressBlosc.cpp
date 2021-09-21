@@ -42,15 +42,17 @@ CompressBlosc::CompressBlosc(const Params &parameters)
 {
 }
 
-size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
-                               DataType type, void *bufferOut,
+size_t CompressBlosc::Compress(const char *dataIn, const Dims &dimensions,
+                               DataType type, char *bufferOut,
                                const Params &parameters, Params &info)
 {
+    size_t currentOutputSize = 0u;
+
     const size_t sizeIn =
         helper::GetTotalSize(dimensions, helper::GetDataTypeSize(type));
 
     bool useMemcpy = false;
-    /* input size under this bound would not compressed */
+    /* input size under this bound will not compress */
     size_t thresholdSize = 128;
 
     blosc_init();
@@ -134,17 +136,12 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
 
     // set default header
     *headerPtr = DataHeader{};
-
-    const uint8_t *inputDataBuff = reinterpret_cast<const uint8_t *>(dataIn);
+    currentOutputSize += sizeof(DataHeader);
 
     int32_t typesize = helper::GetDataTypeSize(type);
     if (typesize > BLOSC_MAX_TYPESIZE)
         typesize = 1;
 
-    uint8_t *outputBuff = reinterpret_cast<uint8_t *>(bufferOut);
-    outputBuff += sizeof(DataHeader);
-
-    size_t currentOutputSize = 0u;
     size_t inputOffset = 0u;
 
     if (sizeIn < thresholdSize)
@@ -177,12 +174,10 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
 
             bloscSize_t maxChunkSize = maxIntputSize + BLOSC_MAX_OVERHEAD;
 
-            const uint8_t *in_ptr = inputDataBuff + inputOffset;
-            uint8_t *out_ptr = outputBuff + currentOutputSize;
-
             bloscSize_t compressedChunkSize =
                 blosc_compress(compressionLevel, doShuffle, typesize,
-                               maxIntputSize, in_ptr, out_ptr, maxChunkSize);
+                               maxIntputSize, dataIn + inputOffset,
+                               bufferOut + currentOutputSize, maxChunkSize);
 
             if (compressedChunkSize > 0)
                 currentOutputSize += static_cast<size_t>(compressedChunkSize);
@@ -206,17 +201,18 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
 
     if (useMemcpy)
     {
-        std::memcpy(outputBuff, inputDataBuff, sizeIn);
-        currentOutputSize = sizeIn;
+        std::memcpy(bufferOut + currentOutputSize, dataIn + inputOffset,
+                    sizeIn);
+        currentOutputSize += sizeIn;
         headerPtr->SetNumChunks(0u);
     }
 
     blosc_destroy();
-    return currentOutputSize + sizeof(DataHeader);
+    return currentOutputSize;
 }
 
-size_t CompressBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
-                                 void *dataOut, const DataType type,
+size_t CompressBlosc::Decompress(const char *bufferIn, const size_t sizeIn,
+                                 char *dataOut, const DataType type,
                                  const Dims &blockStart, const Dims &blockCount,
                                  const Params &parameters, Params &info)
 {
@@ -230,21 +226,20 @@ size_t CompressBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
     size_t decompressedSize = 0u;
     if (isChunked)
         decompressedSize =
-            DecompressChunkedFormat(bufferIn, sizeIn, dataOut, sizeOut, info);
+            DecompressChunkedFormat(bufferIn, sizeIn, dataOut, sizeOut);
     else
         decompressedSize =
-            DecompressOldFormat(bufferIn, sizeIn, dataOut, sizeOut, info);
+            DecompressOldFormat(bufferIn, sizeIn, dataOut, sizeOut);
 
     return decompressedSize;
 }
 
 bool CompressBlosc::IsDataTypeValid(const DataType type) const { return true; }
 
-size_t CompressBlosc::DecompressChunkedFormat(const void *bufferIn,
+size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
                                               const size_t sizeIn,
-                                              void *dataOut,
-                                              const size_t sizeOut,
-                                              Params &info) const
+                                              char *dataOut,
+                                              const size_t sizeOut) const
 {
     const DataHeader *dataPtr = reinterpret_cast<const DataHeader *>(bufferIn);
     uint32_t num_chunks = dataPtr->GetNumChunks();
@@ -257,20 +252,18 @@ size_t CompressBlosc::DecompressChunkedFormat(const void *bufferIn,
     size_t inputOffset = 0u;
     size_t currentOutputSize = 0u;
 
-    const uint8_t *inputDataBuff =
-        reinterpret_cast<const uint8_t *>(bufferIn) + sizeof(DataHeader);
+    const char *inputDataBuff = bufferIn + sizeof(DataHeader);
 
     size_t uncompressedSize = sizeOut;
 
     if (isCompressed)
     {
         blosc_init();
-        uint8_t *outputBuff = reinterpret_cast<uint8_t *>(dataOut);
 
         while (inputOffset < inputDataSize)
         {
             /* move over the size of the compressed data */
-            const uint8_t *in_ptr = inputDataBuff + inputOffset;
+            const char *in_ptr = inputDataBuff + inputOffset;
 
             /** read the size of the compress block from the blosc meta data
              *
@@ -288,7 +281,7 @@ size_t CompressBlosc::DecompressChunkedFormat(const void *bufferIn,
             bloscSize_t max_inputDataSize =
                 *reinterpret_cast<const bloscSize_t *>(in_ptr + 12u);
 
-            uint8_t *out_ptr = outputBuff + currentOutputSize;
+            char *out_ptr = dataOut + currentOutputSize;
 
             size_t outputChunkSize =
                 std::min(uncompressedSize - currentOutputSize,
@@ -324,10 +317,9 @@ size_t CompressBlosc::DecompressChunkedFormat(const void *bufferIn,
     return currentOutputSize;
 }
 
-size_t CompressBlosc::DecompressOldFormat(const void *bufferIn,
-                                          const size_t sizeIn, void *dataOut,
-                                          const size_t sizeOut,
-                                          Params &info) const
+size_t CompressBlosc::DecompressOldFormat(const char *bufferIn,
+                                          const size_t sizeIn, char *dataOut,
+                                          const size_t sizeOut) const
 {
     blosc_init();
     const int decompressedSize = blosc_decompress(bufferIn, dataOut, sizeOut);

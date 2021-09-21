@@ -285,13 +285,13 @@ CompressLibPressio::CompressLibPressio(const Params &parameters)
 {
 }
 
-size_t CompressLibPressio::Compress(const void *dataIn, const Dims &dimensions,
-                                    DataType varType, void *bufferOut,
+size_t CompressLibPressio::Compress(const char *dataIn, const Dims &dimensions,
+                                    DataType varType, char *bufferOut,
                                     const Params &parameters, Params &info)
 {
     auto inputs_dims = adios_to_libpressio_dims(dimensions);
     pressio_data *input_buf = pressio_data_new_nonowning(
-        adios_to_libpressio_dtype(varType), const_cast<void *>(dataIn),
+        adios_to_libpressio_dtype(varType), const_cast<char *>(dataIn),
         inputs_dims.size(), inputs_dims.data());
     pressio_data *output_buf =
         pressio_data_new_empty(pressio_byte_dtype, 0, nullptr);
@@ -325,8 +325,8 @@ size_t CompressLibPressio::Compress(const void *dataIn, const Dims &dimensions,
     return static_cast<size_t>(size_in_bytes);
 }
 
-size_t CompressLibPressio::Decompress(const void *bufferIn, const size_t sizeIn,
-                                      void *dataOut, const DataType type,
+size_t CompressLibPressio::Decompress(const char *bufferIn, const size_t sizeIn,
+                                      char *dataOut, const DataType type,
                                       const Dims &blockStart,
                                       const Dims &blockCount,
                                       const Params &parameters, Params &info)
@@ -336,7 +336,7 @@ size_t CompressLibPressio::Decompress(const void *bufferIn, const size_t sizeIn,
         adios_to_libpressio_dtype(type), dims.size(), dims.data());
 
     pressio_data *input_buf = pressio_data_new_nonowning(
-        pressio_byte_dtype, const_cast<void *>(bufferIn), 1, &sizeIn);
+        pressio_byte_dtype, const_cast<char *>(bufferIn), 1, &sizeIn);
 
     pressio_compressor *compressor = nullptr;
     try
