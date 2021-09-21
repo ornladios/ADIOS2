@@ -22,19 +22,6 @@ CompressZFP::CompressZFP(const Params &parameters) : Operator("zfp", parameters)
 {
 }
 
-size_t CompressZFP::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                                    DataType type,
-                                    const Params &parameters) const
-{
-    Dims convertedDims = ConvertDims(dimensions, type, 3);
-    zfp_field *field = GetZFPField(dataIn, convertedDims, type);
-    zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
-    const size_t maxSize = zfp_stream_maximum_size(stream, field);
-    zfp_field_free(field);
-    zfp_stream_close(stream);
-    return maxSize;
-}
-
 size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
                              DataType type, void *bufferOut,
                              const Params &parameters, Params &info)

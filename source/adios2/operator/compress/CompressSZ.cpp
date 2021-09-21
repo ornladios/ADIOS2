@@ -29,11 +29,6 @@ namespace compress
 
 CompressSZ::CompressSZ(const Params &parameters) : Operator("sz", parameters) {}
 
-size_t CompressSZ::BufferMaxSize(const size_t sizeIn) const
-{
-    return static_cast<size_t>(std::ceil(1.1 * sizeIn) + 600);
-}
-
 size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                             DataType varType, void *bufferOut,
                             const Params &parameters, Params &info)

@@ -285,11 +285,6 @@ CompressLibPressio::CompressLibPressio(const Params &parameters)
 {
 }
 
-size_t CompressLibPressio::BufferMaxSize(const size_t sizeIn) const
-{
-    return static_cast<size_t>(std::ceil(1.1 * sizeIn) + 600);
-}
-
 size_t CompressLibPressio::Compress(const void *dataIn, const Dims &dimensions,
                                     DataType varType, void *bufferOut,
                                     const Params &parameters, Params &info)

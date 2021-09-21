@@ -57,23 +57,6 @@ public:
     virtual void RunCallback2(void *, const std::string &, const std::string &,
                               const std::string &, const size_t, const Dims &,
                               const Dims &, const Dims &) const;
-    /**
-     * Returns a conservative buffer size to hold input data for classes
-     * @param sizeIn size of input data to be compressed in bytes
-     * @return recommended allocation for output buffer
-     */
-    virtual size_t BufferMaxSize(const size_t sizeIn) const;
-
-    /**
-     * Used by Zfp
-     * Returns a conservative buffer size to hold input data for classes
-     * @param dataIn
-     * @param dimensions
-     * @return recommended allocation for output buffer in bytes
-     */
-    template <class T>
-    size_t BufferMaxSize(const T *dataIn, const Dims &dimensions,
-                         const Params &params) const;
 
     /**
      * @param dataIn
@@ -97,18 +80,6 @@ public:
 protected:
     /** Parameters associated with a particular Operator */
     Params m_Parameters;
-
-    /**
-     * Used by CompressZfp
-     * Returns a conservative buffer size to hold input data for classes
-     * @param dataIn
-     * @param dimensions
-     * @param type
-     * @return conservative buffer size for allocation
-     */
-    virtual size_t DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                                   DataType type,
-                                   const Params &parameters) const;
 
     /**
      * Used by lossy compressors with a limitation on complex data types or
