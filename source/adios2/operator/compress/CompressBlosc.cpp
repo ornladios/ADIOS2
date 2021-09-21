@@ -42,25 +42,6 @@ CompressBlosc::CompressBlosc(const Params &parameters)
 {
 }
 
-size_t CompressBlosc::BufferMaxSize(const size_t sizeIn) const
-{
-    const size_t maxInputPerChunk = BLOSC_MAX_BUFFERSIZE;
-    const size_t numFullChunks = sizeIn / maxInputPerChunk;
-    const size_t sizeLastChunk = sizeIn % maxInputPerChunk;
-
-    const size_t maxOutputPerChunk = maxInputPerChunk + BLOSC_MAX_OVERHEAD;
-    const size_t maxOutputLastChunk = sizeLastChunk + BLOSC_MAX_OVERHEAD;
-
-    /* DataHeader is used to detect of old format which can only handle
-     * BLOSC_MAX_BUFFERSIZE (<2GiB) or the new adios2 chunked blosc format is
-     * used.
-     */
-    const size_t maxRquiredDataMem = maxOutputPerChunk * numFullChunks +
-                                     maxOutputLastChunk + sizeof(DataHeader);
-
-    return maxRquiredDataMem;
-}
-
 size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
                                DataType type, void *bufferOut,
                                const Params &parameters, Params &info)

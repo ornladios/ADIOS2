@@ -31,8 +31,6 @@ public:
 
     ~CompressBZIP2() = default;
 
-    size_t BufferMaxSize(const size_t sizeIn) const final;
-
     /**
      * Compression signature for legacy libraries that use void*
      * @param dataIn

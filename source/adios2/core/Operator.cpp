@@ -51,24 +51,6 @@ void Operator::RunCallback2(void *arg0, const std::string &arg1,
     CheckCallbackType("Callback2");
 }
 
-size_t Operator::BufferMaxSize(const size_t sizeIn) const
-{
-    throw std::invalid_argument("ERROR: signature (const size_t) not supported "
-                                "by derived class implemented with " +
-                                m_Type + ", in call to BufferMaxSize\n");
-}
-
-#define declare_type(T)                                                        \
-    template <>                                                                \
-    size_t Operator::BufferMaxSize<T>(const T *dataIn, const Dims &dimensions, \
-                                      const Params &parameters) const          \
-    {                                                                          \
-        return DoBufferMaxSize(dataIn, dimensions, helper::GetDataType<T>(),   \
-                               parameters);                                    \
-    }
-ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
-#undef declare_type
-
 size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
                           DataType /*type*/, void * /*bufferOut*/,
                           const Params & /*params*/, Params & /*info*/)
@@ -92,14 +74,6 @@ size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
 }
 
 // PROTECTED
-size_t Operator::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                                 DataType type, const Params &parameters) const
-{
-    throw std::invalid_argument("ERROR: signature (const void*, const Dims& "
-                                "std::string ) not supported "
-                                "by derived class implemented with " +
-                                m_Type + ", in call to BufferMaxSize\n");
-}
 
 Dims Operator::ConvertDims(const Dims &dimensions, const DataType type,
                            const size_t targetDims, const bool enforceDims,

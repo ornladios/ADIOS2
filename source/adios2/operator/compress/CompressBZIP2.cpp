@@ -32,11 +32,6 @@ CompressBZIP2::CompressBZIP2(const Params &parameters)
 {
 }
 
-size_t CompressBZIP2::BufferMaxSize(const size_t sizeIn) const
-{
-    return static_cast<size_t>(std::ceil(1.1 * sizeIn) + 600);
-}
-
 size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
                                DataType type, void *bufferOut,
                                const Params &parameters, Params &info)

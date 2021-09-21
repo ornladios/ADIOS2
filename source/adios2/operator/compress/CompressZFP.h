@@ -88,9 +88,6 @@ private:
     zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
                              const Params &parameters) const;
 
-    size_t DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                           DataType type, const Params &parameters) const final;
-
     /**
      * check status from BZip compression and decompression functions
      * @param status returned by BZip2 library
