@@ -45,8 +45,8 @@ public:
      * @param parameters
      * @return size of compressed buffer in bytes
      */
-    size_t Compress(const void *dataIn, const Dims &dimensions, DataType type,
-                    void *bufferOut, const Params &parameters,
+    size_t Compress(const char *dataIn, const Dims &dimensions, DataType type,
+                    char *bufferOut, const Params &parameters,
                     Params &info) final;
 
     /**
@@ -58,7 +58,7 @@ public:
      * @param type
      * @return size of decompressed data in dataOut
      */
-    size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
+    size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut,
                       const DataType type, const Dims &blockStart,
                       const Dims &blockCount, const Params &parameters,
                       Params &info) final;
@@ -82,7 +82,7 @@ private:
      * @param type
      * @return zfp_field*
      */
-    zfp_field *GetZFPField(const void *data, const Dims &shape,
+    zfp_field *GetZFPField(const char *data, const Dims &shape,
                            DataType type) const;
 
     zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,

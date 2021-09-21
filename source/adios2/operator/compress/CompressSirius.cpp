@@ -34,8 +34,8 @@ CompressSirius::CompressSirius(const Params &parameters)
     m_TierBuffers.resize(m_Tiers);
 }
 
-size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
-                                DataType varType, void *bufferOut,
+size_t CompressSirius::Compress(const char *dataIn, const Dims &dimensions,
+                                DataType varType, char *bufferOut,
                                 const Params &params, Params &info)
 {
     size_t totalInputBytes = std::accumulate(
@@ -50,9 +50,7 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
         for (size_t i = 0; i < m_TierBuffers.size(); i++)
         {
             m_TierBuffers[i].resize(bytesPerTier);
-            std::memcpy(m_TierBuffers[i].data(),
-                        reinterpret_cast<const char *>(dataIn) +
-                            i * bytesPerTier,
+            std::memcpy(m_TierBuffers[i].data(), dataIn + i * bytesPerTier,
                         bytesPerTier);
         }
     }
@@ -67,8 +65,8 @@ size_t CompressSirius::Compress(const void *dataIn, const Dims &dimensions,
     return bytesPerTier;
 }
 
-size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
-                                  void *dataOut, const DataType type,
+size_t CompressSirius::Decompress(const char *bufferIn, const size_t sizeIn,
+                                  char *dataOut, const DataType type,
                                   const Dims &blockStart,
                                   const Dims &blockCount,
                                   const Params &parameters, Params &info)
@@ -101,8 +99,7 @@ size_t CompressSirius::Decompress(const void *bufferIn, const size_t sizeIn,
         for (auto &bmap : m_TierBuffersMap)
         {
             auto &b = bmap[blockId];
-            std::memcpy(reinterpret_cast<char *>(dataOut) + accumulatedBytes,
-                        b.data(), b.size());
+            std::memcpy(dataOut + accumulatedBytes, b.data(), b.size());
             accumulatedBytes += b.size();
         }
         // set m_CurrentReadFinished to true if after the current call, the

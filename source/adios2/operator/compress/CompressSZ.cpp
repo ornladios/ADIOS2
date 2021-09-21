@@ -29,8 +29,8 @@ namespace compress
 
 CompressSZ::CompressSZ(const Params &parameters) : Operator("sz", parameters) {}
 
-size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
-                            DataType varType, void *bufferOut,
+size_t CompressSZ::Compress(const char *dataIn, const Dims &dimensions,
+                            DataType varType, char *bufferOut,
                             const Params &parameters, Params &info)
 {
     Dims convertedDims = ConvertDims(dimensions, varType, 4);
@@ -254,7 +254,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     }
 
     unsigned char *bytes =
-        SZ_compress(dtype, (void *)dataIn, &outsize, 0, convertedDims[0],
+        SZ_compress(dtype, (char *)dataIn, &outsize, 0, convertedDims[0],
                     convertedDims[1], convertedDims[2], convertedDims[3]);
     std::memcpy(bufferOut, bytes, outsize);
     free(bytes);
@@ -263,8 +263,8 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     return static_cast<size_t>(outsize);
 }
 
-size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
-                              void *dataOut, const DataType type,
+size_t CompressSZ::Decompress(const char *bufferIn, const size_t sizeIn,
+                              char *dataOut, const DataType type,
                               const Dims &blockStart, const Dims &blockCount,
                               const Params &parameters, Params &info)
 {
@@ -295,7 +295,7 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
         helper::GetTotalSize(convertedDims) * typeSizeBytes;
 
     void *result = SZ_decompress(
-        dtype, reinterpret_cast<unsigned char *>(const_cast<void *>(bufferIn)),
+        dtype, reinterpret_cast<unsigned char *>(const_cast<char *>(bufferIn)),
         sizeIn, 0, convertedDims[0], convertedDims[1], convertedDims[2],
         convertedDims[3]);
 

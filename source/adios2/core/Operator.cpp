@@ -51,8 +51,8 @@ void Operator::RunCallback2(void *arg0, const std::string &arg1,
     CheckCallbackType("Callback2");
 }
 
-size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
-                          DataType /*type*/, void * /*bufferOut*/,
+size_t Operator::Compress(const char * /*dataIn*/, const Dims & /*dimensions*/,
+                          DataType /*type*/, char * /*bufferOut*/,
                           const Params & /*params*/, Params & /*info*/)
 {
     throw std::invalid_argument("ERROR: signature (const void*, const "
@@ -62,8 +62,8 @@ size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
                                 m_Type + ", in call to Compress\n");
 }
 
-size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
-                            void *dataOut, const DataType type,
+size_t Operator::Decompress(const char *bufferIn, const size_t sizeIn,
+                            char *dataOut, const DataType type,
                             const Dims &blockStart, const Dims &blockCount,
                             const Params &parameters, Params &info)
 {

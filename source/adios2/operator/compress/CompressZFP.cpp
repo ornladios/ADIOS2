@@ -22,8 +22,8 @@ CompressZFP::CompressZFP(const Params &parameters) : Operator("zfp", parameters)
 {
 }
 
-size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
-                             DataType type, void *bufferOut,
+size_t CompressZFP::Compress(const char *dataIn, const Dims &dimensions,
+                             DataType type, char *bufferOut,
                              const Params &parameters, Params &info)
 {
 
@@ -51,8 +51,8 @@ size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
     return sizeOut;
 }
 
-size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
-                               void *dataOut, const DataType type,
+size_t CompressZFP::Decompress(const char *bufferIn, const size_t sizeIn,
+                               char *dataOut, const DataType type,
                                const Dims &blockStart, const Dims &blockCount,
                                const Params &parameters, Params &info)
 {
@@ -62,7 +62,7 @@ size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
     zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
 
     // associate bitstream
-    bitstream *bitstream = stream_open(const_cast<void *>(bufferIn), sizeIn);
+    bitstream *bitstream = stream_open(const_cast<char *>(bufferIn), sizeIn);
     zfp_stream_set_bit_stream(stream, bitstream);
     zfp_stream_rewind(stream);
 
@@ -140,7 +140,7 @@ zfp_type CompressZFP::GetZfpType(DataType type) const
     return zfpType;
 }
 
-zfp_field *CompressZFP::GetZFPField(const void *data, const Dims &dimensions,
+zfp_field *CompressZFP::GetZFPField(const char *data, const Dims &dimensions,
                                     DataType type) const
 {
     zfp_type zfpType = GetZfpType(type);
@@ -148,16 +148,16 @@ zfp_field *CompressZFP::GetZFPField(const void *data, const Dims &dimensions,
 
     if (dimensions.size() == 1)
     {
-        field = zfp_field_1d(const_cast<void *>(data), zfpType, dimensions[0]);
+        field = zfp_field_1d(const_cast<char *>(data), zfpType, dimensions[0]);
     }
     else if (dimensions.size() == 2)
     {
-        field = zfp_field_2d(const_cast<void *>(data), zfpType, dimensions[0],
+        field = zfp_field_2d(const_cast<char *>(data), zfpType, dimensions[0],
                              dimensions[1]);
     }
     else if (dimensions.size() == 3)
     {
-        field = zfp_field_3d(const_cast<void *>(data), zfpType, dimensions[0],
+        field = zfp_field_3d(const_cast<char *>(data), zfpType, dimensions[0],
                              dimensions[1], dimensions[2]);
     }
     else
