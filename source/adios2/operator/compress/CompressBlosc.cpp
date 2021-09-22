@@ -51,8 +51,8 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &dimensions,
     const size_t sizeIn =
         helper::GetTotalSize(dimensions, helper::GetDataTypeSize(type));
 
-    std::memcpy(bufferOut + currentOutputSize, &sizeIn, sizeof(size_t));
-    currentOutputSize += sizeof(size_t);
+    PutParameter(bufferOut, currentOutputSize, OperatorType::BLOSC);
+    PutParameter(bufferOut, currentOutputSize, sizeIn);
 
     bool useMemcpy = false;
     /* input size under this bound will not compress */
@@ -222,10 +222,8 @@ size_t CompressBlosc::Decompress(const char *bufferIn, const size_t sizeIn,
                                  const Params & /*parameters*/,
                                  Params & /*info*/)
 {
-    size_t bufferInOffset = 0;
-    size_t sizeOut;
-    std::memcpy(&sizeOut, bufferIn + bufferInOffset, sizeof(size_t));
-    bufferInOffset += sizeof(size_t);
+    size_t bufferInOffset = 1u;
+    size_t sizeOut = GetParameter<size_t>(bufferIn, bufferInOffset);
 
     assert(sizeIn - bufferInOffset >= sizeof(DataHeader));
     const bool isChunked =
@@ -242,7 +240,6 @@ size_t CompressBlosc::Decompress(const char *bufferIn, const size_t sizeIn,
             DecompressOldFormat(bufferIn + bufferInOffset,
                                 sizeIn - bufferInOffset, dataOut, sizeOut);
 
-    std::cout << sizeOut << " : " << decompressedSize << std::endl;
     return decompressedSize;
 }
 

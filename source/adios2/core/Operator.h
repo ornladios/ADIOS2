@@ -95,6 +95,34 @@ protected:
                      const bool enforceDims = false,
                      const size_t defaultDimSize = 1) const;
 
+    enum OperatorType : char
+    {
+        BLOSC = 0,
+        BZIP2 = 1,
+        LIBPRESSIO = 2,
+        MGARD = 3,
+        PNG = 4,
+        SIRIUS = 5,
+        SZ = 6,
+        ZFP = 7
+    };
+
+    template <typename T>
+    void PutParameter(char *buffer, size_t &pos, const T &parameter)
+    {
+        std::memcpy(buffer + pos, &parameter, sizeof(T));
+        pos += sizeof(T);
+    }
+
+    template <typename T>
+    T GetParameter(const char *buffer, size_t &pos)
+    {
+        T ret;
+        std::memcpy(&ret, buffer + pos, sizeof(T));
+        pos += sizeof(T);
+        return ret;
+    }
+
 private:
     void CheckCallbackType(const std::string type) const;
 };
