@@ -14,6 +14,7 @@
 #define ADIOS2_CORE_OPERATOR_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <cstring>
 #include <functional>
 #include <string>
 #include <vector>
@@ -94,6 +95,34 @@ protected:
                      const size_t targetDims = 0,
                      const bool enforceDims = false,
                      const size_t defaultDimSize = 1) const;
+
+    enum OperatorType
+    {
+        BLOSC = 0,
+        BZIP2 = 1,
+        LIBPRESSIO = 2,
+        MGARD = 3,
+        PNG = 4,
+        SIRIUS = 5,
+        SZ = 6,
+        ZFP = 7
+    };
+
+    template <typename T, typename U>
+    void PutParameter(char *buffer, U &pos, const T &parameter)
+    {
+        std::memcpy(buffer + pos, &parameter, sizeof(T));
+        pos += sizeof(T);
+    }
+
+    template <typename T, typename U>
+    T GetParameter(const char *buffer, U &pos)
+    {
+        T ret;
+        std::memcpy(&ret, buffer + pos, sizeof(T));
+        pos += sizeof(T);
+        return ret;
+    }
 
 private:
     void CheckCallbackType(const std::string type) const;
