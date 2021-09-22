@@ -108,15 +108,15 @@ protected:
         ZFP = 7
     };
 
-    template <typename T>
-    void PutParameter(char *buffer, size_t &pos, const T &parameter)
+    template <typename T, typename U>
+    void PutParameter(char *buffer, U &pos, const T &parameter)
     {
         std::memcpy(buffer + pos, &parameter, sizeof(T));
         pos += sizeof(T);
     }
 
-    template <typename T>
-    T GetParameter(const char *buffer, size_t &pos)
+    template <typename T, typename U>
+    T GetParameter(const char *buffer, U &pos)
     {
         T ret;
         std::memcpy(&ret, buffer + pos, sizeof(T));

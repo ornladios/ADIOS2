@@ -222,7 +222,7 @@ size_t CompressBlosc::Decompress(const char *bufferIn, const size_t sizeIn,
                                  const Params & /*parameters*/,
                                  Params & /*info*/)
 {
-    size_t bufferInOffset = 1u;
+    size_t bufferInOffset = 4u;
     size_t sizeOut = GetParameter<size_t>(bufferIn, bufferInOffset);
 
     assert(sizeIn - bufferInOffset >= sizeof(DataHeader));
