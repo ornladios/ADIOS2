@@ -14,6 +14,7 @@
 #define ADIOS2_CORE_OPERATOR_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <cstring>
 #include <functional>
 #include <string>
 #include <vector>
