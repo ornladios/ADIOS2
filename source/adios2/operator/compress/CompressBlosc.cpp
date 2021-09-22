@@ -51,6 +51,9 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &dimensions,
     const size_t sizeIn =
         helper::GetTotalSize(dimensions, helper::GetDataTypeSize(type));
 
+    std::memcpy(bufferOut + currentOutputSize, &sizeIn, sizeof(size_t));
+    currentOutputSize += sizeof(size_t);
+
     bool useMemcpy = false;
     /* input size under this bound will not compress */
     size_t thresholdSize = 128;
@@ -132,7 +135,8 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &dimensions,
     }
 
     // write header to detect new compression format (set first 8 byte to zero)
-    DataHeader *headerPtr = reinterpret_cast<DataHeader *>(bufferOut);
+    DataHeader *headerPtr =
+        reinterpret_cast<DataHeader *>(bufferOut + currentOutputSize);
 
     // set default header
     *headerPtr = DataHeader{};
@@ -212,25 +216,33 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &dimensions,
 }
 
 size_t CompressBlosc::Decompress(const char *bufferIn, const size_t sizeIn,
-                                 char *dataOut, const DataType type,
-                                 const Dims &blockStart, const Dims &blockCount,
-                                 const Params &parameters, Params &info)
+                                 char *dataOut, const DataType /*type*/,
+                                 const Dims & /*blockStart*/,
+                                 const Dims & /*blockCount*/,
+                                 const Params & /*parameters*/,
+                                 Params & /*info*/)
 {
-    size_t sizeOut =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    size_t bufferInOffset = 0;
+    size_t sizeOut;
+    std::memcpy(&sizeOut, bufferIn + bufferInOffset, sizeof(size_t));
+    bufferInOffset += sizeof(size_t);
 
-    assert(sizeIn >= sizeof(DataHeader));
+    assert(sizeIn - bufferInOffset >= sizeof(DataHeader));
     const bool isChunked =
-        reinterpret_cast<const DataHeader *>(bufferIn)->IsChunked();
+        reinterpret_cast<const DataHeader *>(bufferIn + bufferInOffset)
+            ->IsChunked();
 
     size_t decompressedSize = 0u;
     if (isChunked)
         decompressedSize =
-            DecompressChunkedFormat(bufferIn, sizeIn, dataOut, sizeOut);
+            DecompressChunkedFormat(bufferIn + bufferInOffset,
+                                    sizeIn - bufferInOffset, dataOut, sizeOut);
     else
         decompressedSize =
-            DecompressOldFormat(bufferIn, sizeIn, dataOut, sizeOut);
+            DecompressOldFormat(bufferIn + bufferInOffset,
+                                sizeIn - bufferInOffset, dataOut, sizeOut);
 
+    std::cout << sizeOut << " : " << decompressedSize << std::endl;
     return decompressedSize;
 }
 
