@@ -306,15 +306,13 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
 TEST_F(DataManEngineTest, 2D_Bzip2)
 {
     // set parameters
-    Dims shape = {10, 10};
-    Dims start = {2, 2};
-    Dims count = {5, 5};
+    Dims shape = {100, 100};
+    Dims start = {20, 20};
+    Dims count = {50, 50};
     Dims memstart = start;
     Dims memcount = count;
-    memstart = {1, 1};
-    memcount = {7, 9};
 
-    size_t steps = 5000;
+    size_t steps = 500;
     adios2::Params engineParams = {
         {"IPAddress", "127.0.0.1"}, {"Port", "12310"}, {"Verbose", "0"}};
 
