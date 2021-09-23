@@ -55,21 +55,6 @@ public:
     void GetData(const char *input,
                  const helper::BlockOperationInfo &blockOperationInfo,
                  char *dataOutput) const final;
-
-private:
-    template <class T>
-    void
-    SetMetadataCommon(const core::Variable<T> &variable,
-                      const typename core::Variable<T>::BPInfo &blockInfo,
-                      const typename core::Variable<T>::Operation &operation,
-                      std::vector<char> &buffer) const noexcept;
-
-    template <class T>
-    void
-    UpdateMetadataCommon(const core::Variable<T> &variable,
-                         const typename core::Variable<T>::BPInfo &blockInfo,
-                         const typename core::Variable<T>::Operation &operation,
-                         std::vector<char> &buffer) const noexcept;
 };
 
 } // end namespace format
