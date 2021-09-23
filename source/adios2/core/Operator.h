@@ -96,7 +96,7 @@ protected:
                      const bool enforceDims = false,
                      const size_t defaultDimSize = 1) const;
 
-    enum OperatorType
+    enum OperatorType : char
     {
         BLOSC = 0,
         BZIP2 = 1,
