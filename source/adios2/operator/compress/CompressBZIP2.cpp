@@ -91,9 +91,8 @@ size_t CompressBZIP2::Compress(const char *dataIn, const Dims &dimensions,
             BZ2_bzBuffToBuffCompress(dest, &destLen, source, sourceLen,
                                      blockSize100k, verbosity, workFactor);
 
-        const std::string bStr = std::to_string(b);
-
-        CheckStatus(status, "in call to ADIOS2 BZIP2 Compress batch " + bStr);
+        CheckStatus(status, "in call to ADIOS2 BZIP2 Compress batch " +
+                                std::to_string(b) + "\n");
 
         PutParameter(bufferOut, batchInfoOffset, sourceOffset);
         PutParameter(bufferOut, batchInfoOffset, sourceLen);
@@ -107,6 +106,16 @@ size_t CompressBZIP2::Compress(const char *dataIn, const Dims &dimensions,
     return destOffset;
 }
 
+size_t CompressBZIP2::DecompressV1(const char *bufferIn, const size_t sizeIn,
+                                   char *dataOut)
+{
+    // Do NOT remove even if the buffer version is updated. Data might be still
+    // in lagacy formats. This function must be kept for backward compatibility.
+    // If a newer buffer format is implemented, create another function, e.g.
+    // DecompressV2 and keep this function for decompressing lagacy data.
+
+    return 0;
+}
 size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
                                  char *dataOut, const DataType /*type*/,
                                  const Dims & /*blockStart*/,
@@ -114,21 +123,17 @@ size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
                                  const Params & /*parameters*/,
                                  Params & /*info*/)
 {
-    size_t sourceOffset = 1; // skip operator type
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
 
-    const uint8_t bufferVersion = GetParameter<uint8_t>(bufferIn, sourceOffset);
-
-    sourceOffset += 2; // skip two reserved bytes
-
-    size_t sizeOut;
+    size_t ret;
 
     if (bufferVersion == 1)
     {
-        sizeOut = GetParameter<size_t>(bufferIn, sourceOffset);
-        size_t batches = GetParameter<size_t>(bufferIn, sourceOffset);
-
-        size_t batchInfoOffset = sourceOffset;
-        sourceOffset += batches * 4 * sizeof(unsigned int);
+        size_t sizeOut = GetParameter<size_t>(bufferIn, bufferInOffset);
+        size_t batches = GetParameter<size_t>(bufferIn, bufferInOffset);
 
         int small = 0;
         int verbosity = 0;
@@ -137,12 +142,10 @@ size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
 
         for (size_t b = 0; b < batches; ++b)
         {
-            const std::string bStr = std::to_string(b);
-
             unsigned int destOffset =
-                GetParameter<unsigned int>(bufferIn, batchInfoOffset);
+                GetParameter<unsigned int>(bufferIn, bufferInOffset);
 
-            GetParameter<unsigned int>(bufferIn, batchInfoOffset);
+            bufferInOffset += sizeof(unsigned int);
 
             char *dest = dataOut + destOffset;
 
@@ -153,17 +156,18 @@ size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
             unsigned int destLen = static_cast<unsigned int>(batchSize);
 
             unsigned int sourceOffset =
-                GetParameter<unsigned int>(bufferIn, batchInfoOffset);
+                GetParameter<unsigned int>(bufferIn, bufferInOffset);
 
             char *source = const_cast<char *>(bufferIn) + sourceOffset;
 
             unsigned int sourceLen =
-                GetParameter<unsigned int>(bufferIn, batchInfoOffset);
+                GetParameter<unsigned int>(bufferIn, bufferInOffset);
 
             int status = BZ2_bzBuffToBuffDecompress(
                 dest, &destLen, source, sourceLen, small, verbosity);
 
-            CheckStatus(status, "in call to ADIOS2 BZIP2 Decompress\n");
+            CheckStatus(status, "in call to ADIOS2 BZIP2 Decompress batch " +
+                                    std::to_string(b) + "\n");
 
             expectedSizeOut += static_cast<size_t>(destLen);
         }
@@ -172,13 +176,14 @@ size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
         {
             throw("corrupted bzip2 buffer");
         }
+        ret = sizeOut;
     }
     else
     {
         throw("unknown bzip2 buffer version");
     }
 
-    return sizeOut;
+    return ret;
 }
 
 bool CompressBZIP2::IsDataTypeValid(const DataType type) const { return true; }
