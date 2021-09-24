@@ -175,17 +175,15 @@ size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
         GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
 
-    size_t ret;
-
     if (bufferVersion == 1)
     {
         // pass in the whole buffer as there is absolute positions saved in the
         // buffer to determine the offsets and lengths for batches
-        DecompressV1(bufferIn, sizeIn, dataOut);
+        return DecompressV1(bufferIn, sizeIn, dataOut);
     }
     else if (bufferVersion == 2)
     {
-        // TODO: if a Version 2 blosc buffer is being implemented, put it here
+        // TODO: if a Version 2 bzip2 buffer is being implemented, put it here
         // and keep the DecompressV1 routine for backward compatibility
     }
     else
@@ -193,7 +191,7 @@ size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
         throw("unknown bzip2 buffer version");
     }
 
-    return ret;
+    return 0;
 }
 
 bool CompressBZIP2::IsDataTypeValid(const DataType type) const { return true; }
