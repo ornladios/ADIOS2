@@ -114,7 +114,54 @@ size_t CompressBZIP2::DecompressV1(const char *bufferIn, const size_t sizeIn,
     // If a newer buffer format is implemented, create another function, e.g.
     // DecompressV2 and keep this function for decompressing lagacy data.
 
-    return 0;
+    size_t bufferInOffset = 4; // skip the first four bytes
+
+    size_t sizeOut = GetParameter<size_t>(bufferIn, bufferInOffset);
+    size_t batches = GetParameter<size_t>(bufferIn, bufferInOffset);
+
+    int small = 0;
+    int verbosity = 0;
+
+    size_t expectedSizeOut = 0;
+
+    for (size_t b = 0; b < batches; ++b)
+    {
+        unsigned int destOffset =
+            GetParameter<unsigned int>(bufferIn, bufferInOffset);
+
+        bufferInOffset += sizeof(unsigned int);
+
+        char *dest = dataOut + destOffset;
+
+        const size_t batchSize = (b == batches - 1)
+                                     ? sizeOut % DefaultMaxFileBatchSize
+                                     : DefaultMaxFileBatchSize;
+
+        unsigned int destLen = static_cast<unsigned int>(batchSize);
+
+        unsigned int sourceOffset =
+            GetParameter<unsigned int>(bufferIn, bufferInOffset);
+
+        char *source = const_cast<char *>(bufferIn) + sourceOffset;
+
+        unsigned int sourceLen =
+            GetParameter<unsigned int>(bufferIn, bufferInOffset);
+
+        int status = BZ2_bzBuffToBuffDecompress(dest, &destLen, source,
+                                                sourceLen, small, verbosity);
+
+        CheckStatus(status, "in call to ADIOS2 BZIP2 Decompress batch " +
+                                std::to_string(b) + "\n");
+
+        expectedSizeOut += static_cast<size_t>(destLen);
+    }
+
+    if (expectedSizeOut != sizeOut)
+    {
+        throw("corrupted bzip2 buffer");
+    }
+
+    return sizeOut;
 }
 size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
                                  char *dataOut, const DataType /*type*/,
@@ -132,51 +179,14 @@ size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
 
     if (bufferVersion == 1)
     {
-        size_t sizeOut = GetParameter<size_t>(bufferIn, bufferInOffset);
-        size_t batches = GetParameter<size_t>(bufferIn, bufferInOffset);
-
-        int small = 0;
-        int verbosity = 0;
-
-        size_t expectedSizeOut = 0;
-
-        for (size_t b = 0; b < batches; ++b)
-        {
-            unsigned int destOffset =
-                GetParameter<unsigned int>(bufferIn, bufferInOffset);
-
-            bufferInOffset += sizeof(unsigned int);
-
-            char *dest = dataOut + destOffset;
-
-            const size_t batchSize = (b == batches - 1)
-                                         ? sizeOut % DefaultMaxFileBatchSize
-                                         : DefaultMaxFileBatchSize;
-
-            unsigned int destLen = static_cast<unsigned int>(batchSize);
-
-            unsigned int sourceOffset =
-                GetParameter<unsigned int>(bufferIn, bufferInOffset);
-
-            char *source = const_cast<char *>(bufferIn) + sourceOffset;
-
-            unsigned int sourceLen =
-                GetParameter<unsigned int>(bufferIn, bufferInOffset);
-
-            int status = BZ2_bzBuffToBuffDecompress(
-                dest, &destLen, source, sourceLen, small, verbosity);
-
-            CheckStatus(status, "in call to ADIOS2 BZIP2 Decompress batch " +
-                                    std::to_string(b) + "\n");
-
-            expectedSizeOut += static_cast<size_t>(destLen);
-        }
-
-        if (expectedSizeOut != sizeOut)
-        {
-            throw("corrupted bzip2 buffer");
-        }
-        ret = sizeOut;
+        // pass in the whole buffer as there is absolute positions saved in the
+        // buffer to determine the offsets and lengths for batches
+        DecompressV1(bufferIn, sizeIn, dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 blosc buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
     }
     else
     {
