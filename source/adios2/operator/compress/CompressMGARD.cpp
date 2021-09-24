@@ -189,6 +189,11 @@ size_t CompressMGARD::Decompress(const char *bufferIn, const size_t sizeIn,
         return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
                             dataOut);
     }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 mgard buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
     else
     {
         throw("unknown mgard buffer version");

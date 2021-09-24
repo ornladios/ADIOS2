@@ -85,6 +85,18 @@ private:
     size_t DecompressOldFormat(const char *bufferIn, const size_t sizeIn,
                                char *dataOut, const size_t sizeOut) const;
 
+    /**
+     * Decompress function for V1 buffer. Do NOT remove even if the buffer
+     * version is updated. Data might be still in lagacy formats. This function
+     * must be kept for backward compatibility
+     * @param bufferIn : compressed data buffer (V1 only)
+     * @param sizeIn : number of bytes in bufferIn
+     * @param dataOut : decompressed data buffer
+     * @return : number of bytes in dataOut
+     */
+    size_t DecompressV1(const char *bufferIn, const size_t sizeIn,
+                        char *dataOut);
+
     ADIOS2_CLASS_PACKED(DataHeader)
     {
         /** compatible to the first 4 byte of blosc header

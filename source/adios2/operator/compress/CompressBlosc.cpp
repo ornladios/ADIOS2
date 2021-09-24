@@ -220,6 +220,44 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &dimensions,
     return currentOutputSize;
 }
 
+size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
+                                   char *dataOut)
+{
+    // Do NOT remove even if the buffer version is updated. Data might be still
+    // in lagacy formats. This function must be kept for backward compatibility.
+    // If a newer buffer format is implemented, create another function, e.g.
+    // DecompressV2 and keep this function for decompressing lagacy data.
+
+    size_t bufferInOffset = 0;
+    size_t sizeOut = GetParameter<size_t>(bufferIn, bufferInOffset);
+    if (sizeIn - bufferInOffset < sizeof(DataHeader))
+    {
+        throw("corrupted blosc buffer header");
+    }
+    const bool isChunked =
+        reinterpret_cast<const DataHeader *>(bufferIn + bufferInOffset)
+            ->IsChunked();
+
+    size_t decompressedSize = 0;
+    if (isChunked)
+    {
+        decompressedSize =
+            DecompressChunkedFormat(bufferIn + bufferInOffset,
+                                    sizeIn - bufferInOffset, dataOut, sizeOut);
+    }
+    else
+    {
+        decompressedSize =
+            DecompressOldFormat(bufferIn + bufferInOffset,
+                                sizeIn - bufferInOffset, dataOut, sizeOut);
+    }
+    if (decompressedSize != sizeOut)
+    {
+        throw("corrupted blosc buffer");
+    }
+    return sizeOut;
+}
+
 size_t CompressBlosc::Decompress(const char *bufferIn, const size_t sizeIn,
                                  char *dataOut, const DataType /*type*/,
                                  const Dims & /*blockStart*/,
@@ -228,49 +266,26 @@ size_t CompressBlosc::Decompress(const char *bufferIn, const size_t sizeIn,
                                  Params & /*info*/)
 {
     size_t bufferInOffset = 1; // skip operator type
-
     const uint8_t bufferVersion =
         GetParameter<uint8_t>(bufferIn, bufferInOffset);
-
     bufferInOffset += 2; // skip two reserved bytes
-
-    size_t sizeOut;
 
     if (bufferVersion == 1)
     {
-        sizeOut = GetParameter<size_t>(bufferIn, bufferInOffset);
-        if (sizeIn - bufferInOffset < sizeof(DataHeader))
-        {
-            throw("corrupted blosc buffer header");
-        }
-        const bool isChunked =
-            reinterpret_cast<const DataHeader *>(bufferIn + bufferInOffset)
-                ->IsChunked();
-
-        size_t decompressedSize = 0;
-        if (isChunked)
-        {
-            decompressedSize = DecompressChunkedFormat(
-                bufferIn + bufferInOffset, sizeIn - bufferInOffset, dataOut,
-                sizeOut);
-        }
-        else
-        {
-            decompressedSize =
-                DecompressOldFormat(bufferIn + bufferInOffset,
-                                    sizeIn - bufferInOffset, dataOut, sizeOut);
-        }
-        if (decompressedSize != sizeOut)
-        {
-            throw("corrupted blosc buffer");
-        }
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 blosc buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
     }
     else
     {
         throw("unknown blosc buffer version");
     }
 
-    return sizeOut;
+    return 0;
 }
 
 bool CompressBlosc::IsDataTypeValid(const DataType type) const { return true; }
