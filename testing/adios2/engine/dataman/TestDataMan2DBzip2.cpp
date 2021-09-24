@@ -308,7 +308,7 @@ TEST_F(DataManEngineTest, 2D_Bzip2)
     // set parameters
     Dims shape = {100, 100};
     Dims start = {20, 20};
-    Dims count = {50, 50};
+    Dims count = {30, 30};
     Dims memstart = start;
     Dims memcount = count;
 
