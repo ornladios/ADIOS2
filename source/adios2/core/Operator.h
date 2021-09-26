@@ -104,7 +104,7 @@ protected:
         MGARD = 3,
         PNG = 4,
         SIRIUS = 5,
-        SZ = 6,
+        Sz = 6,
         ZFP = 7
     };
 
