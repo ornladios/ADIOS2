@@ -324,15 +324,18 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     // Get type info
     int dtype = 0;
+    size_t dataTypeSize;
     if (type == helper::GetDataType<double>() ||
         type == helper::GetDataType<std::complex<double>>())
     {
         dtype = SZ_DOUBLE;
+        dataTypeSize = 8;
     }
     else if (type == helper::GetDataType<float>() ||
              type == helper::GetDataType<std::complex<float>>())
     {
         dtype = SZ_FLOAT;
+        dataTypeSize = 4;
     }
     else
     {
@@ -341,7 +344,7 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
 
     const size_t dataSizeBytes =
-        helper::GetTotalSize(convertedDims, helper::GetDataTypeSize(type));
+        helper::GetTotalSize(convertedDims, dataTypeSize);
 
     void *result =
         SZ_decompress(dtype,
