@@ -34,17 +34,24 @@ size_t CompressMGARD::Compress(const char *dataIn, const Dims &blockStart,
                                Params &info)
 {
     const uint8_t bufferVersion = 1;
-    const size_t ndims = blockCount.size();
     size_t bufferOutOffset = 0;
+
+    // Universal operator metadata
     PutParameter(bufferOut, bufferOutOffset, OperatorType::MGARD);
     PutParameter(bufferOut, bufferOutOffset, bufferVersion);
     bufferOutOffset += 2;
+    // Universal operator metadata end
+
+    const size_t ndims = blockCount.size();
+
+    // mgard V1 metadata
     PutParameter(bufferOut, bufferOutOffset, ndims);
     for (const auto &d : blockCount)
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, type);
+    // mgard V1 metadata end
 
     if (ndims > 3)
     {

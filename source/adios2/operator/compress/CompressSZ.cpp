@@ -36,17 +36,23 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
-    const size_t ndims = blockCount.size();
 
+    // Universal operator metadata
     PutParameter(bufferOut, bufferOutOffset, OperatorType::Sz);
     PutParameter(bufferOut, bufferOutOffset, bufferVersion);
     bufferOutOffset += 2;
+    // Universal operator metadata end
+
+    const size_t ndims = blockCount.size();
+
+    // sz V1 metadata
     PutParameter(bufferOut, bufferOutOffset, ndims);
     for (const auto &d : blockCount)
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, varType);
+    // sz V1 metadata end
 
     Dims convertedDims = ConvertDims(blockCount, varType, 4);
 
