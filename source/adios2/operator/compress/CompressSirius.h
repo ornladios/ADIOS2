@@ -29,8 +29,9 @@ public:
 
     ~CompressSirius() = default;
 
-    size_t Compress(const char *dataIn, const Dims &dimensions, DataType type,
-                    char *bufferOut, const Params &params, Params &info) final;
+    size_t Compress(const char *dataIn, const Dims &blockStart,
+                    const Dims &blockCount, DataType type, char *bufferOut,
+                    const Params &params, Params &info) final;
 
     size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut,
                       const DataType type, const Dims &blockStart,
@@ -52,6 +53,18 @@ private:
     static std::vector<std::unordered_map<std::string, std::vector<char>>>
         m_TierBuffersMap;
     static std::unordered_map<std::string, int> m_CurrentTierMap;
+
+    /**
+     * Decompress function for V1 buffer. Do NOT remove even if the buffer
+     * version is updated. Data might be still in lagacy formats. This function
+     * must be kept for backward compatibility
+     * @param bufferIn : compressed data buffer (V1 only)
+     * @param sizeIn : number of bytes in bufferIn
+     * @param dataOut : decompressed data buffer
+     * @return : number of bytes in dataOut
+     */
+    size_t DecompressV1(const char *bufferIn, const size_t sizeIn,
+                        char *dataOut);
 };
 
 } // end namespace compress

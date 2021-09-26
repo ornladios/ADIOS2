@@ -28,18 +28,19 @@ CompressMGARD::CompressMGARD(const Params &parameters)
 {
 }
 
-size_t CompressMGARD::Compress(const char *dataIn, const Dims &dimensions,
-                               DataType type, char *bufferOut,
-                               const Params &parameters, Params &info)
+size_t CompressMGARD::Compress(const char *dataIn, const Dims &blockStart,
+                               const Dims &blockCount, DataType type,
+                               char *bufferOut, const Params &parameters,
+                               Params &info)
 {
     const uint8_t bufferVersion = 1;
-    const size_t ndims = dimensions.size();
+    const size_t ndims = blockCount.size();
     size_t bufferOutOffset = 0;
     PutParameter(bufferOut, bufferOutOffset, OperatorType::MGARD);
     PutParameter(bufferOut, bufferOutOffset, bufferVersion);
     bufferOutOffset += 2;
     PutParameter(bufferOut, bufferOutOffset, ndims);
-    for (const auto &d : dimensions)
+    for (const auto &d : blockCount)
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
@@ -71,7 +72,7 @@ size_t CompressMGARD::Compress(const char *dataIn, const Dims &dimensions,
 
     for (size_t i = 0; i < ndims; i++)
     {
-        r[ndims - i - 1] = static_cast<int>(dimensions[i]);
+        r[ndims - i - 1] = static_cast<int>(blockCount[i]);
     }
 
     // Parameters

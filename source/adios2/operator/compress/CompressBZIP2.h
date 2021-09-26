@@ -40,9 +40,9 @@ public:
      * @param parameters
      * @return size of compressed buffer in bytes
      */
-    size_t Compress(const char *dataIn, const Dims &dimensions, DataType type,
-                    char *bufferOut, const Params &parameters,
-                    Params &info) final;
+    size_t Compress(const char *dataIn, const Dims &blockStart,
+                    const Dims &blockCount, DataType type, char *bufferOut,
+                    const Params &parameters, Params &info) final;
 
     /**
      * Decompression signature for legacy libraries that use char*

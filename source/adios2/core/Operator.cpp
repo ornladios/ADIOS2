@@ -51,9 +51,10 @@ void Operator::RunCallback2(void *arg0, const std::string &arg1,
     CheckCallbackType("Callback2");
 }
 
-size_t Operator::Compress(const char * /*dataIn*/, const Dims & /*dimensions*/,
-                          DataType /*type*/, char * /*bufferOut*/,
-                          const Params & /*params*/, Params & /*info*/)
+size_t Operator::Compress(const char * /*dataIn*/, const Dims & /*blockStart*/,
+                          const Dims & /*blockCount*/, DataType /*type*/,
+                          char * /*bufferOut*/, const Params & /*params*/,
+                          Params & /*info*/)
 {
     throw std::invalid_argument("ERROR: signature (const void*, const "
                                 "Dims, const size_t, const std::string, "

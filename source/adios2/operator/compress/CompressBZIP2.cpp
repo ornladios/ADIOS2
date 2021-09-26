@@ -32,9 +32,10 @@ CompressBZIP2::CompressBZIP2(const Params &parameters)
 {
 }
 
-size_t CompressBZIP2::Compress(const char *dataIn, const Dims &dimensions,
-                               DataType type, char *bufferOut,
-                               const Params &parameters, Params & /*info*/)
+size_t CompressBZIP2::Compress(const char *dataIn, const Dims &blockStart,
+                               const Dims &blockCount, DataType type,
+                               char *bufferOut, const Params &parameters,
+                               Params & /*info*/)
 {
     int blockSize100k = 1;
     int verbosity = 0;
@@ -60,7 +61,7 @@ size_t CompressBZIP2::Compress(const char *dataIn, const Dims &dimensions,
     }
 
     const size_t sizeIn =
-        helper::GetTotalSize(dimensions, helper::GetDataTypeSize(type));
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
     const size_t batches = sizeIn / DefaultMaxFileBatchSize + 1;
     unsigned int destOffset = 0;
     unsigned int sourceOffset = 0;
