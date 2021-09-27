@@ -29,25 +29,32 @@ namespace compress
 
 CompressSZ::CompressSZ(const Params &parameters) : Operator("sz", parameters) {}
 
-size_t CompressSZ::Compress(const char *dataIn, const Dims &dimensions,
-                            DataType varType, char *bufferOut,
-                            const Params &parameters, Params &info)
+size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
+                            const Dims &blockCount, DataType varType,
+                            char *bufferOut, const Params &parameters,
+                            Params &info)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
-    const size_t ndims = dimensions.size();
 
+    // Universal operator metadata
     PutParameter(bufferOut, bufferOutOffset, OperatorType::Sz);
     PutParameter(bufferOut, bufferOutOffset, bufferVersion);
     bufferOutOffset += 2;
+    // Universal operator metadata end
+
+    const size_t ndims = blockCount.size();
+
+    // sz V1 metadata
     PutParameter(bufferOut, bufferOutOffset, ndims);
-    for (const auto &d : dimensions)
+    for (const auto &d : blockCount)
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, varType);
+    // sz V1 metadata end
 
-    Dims convertedDims = ConvertDims(dimensions, varType, 4);
+    Dims convertedDims = ConvertDims(blockCount, varType, 4);
 
     sz_params sz;
     memset(&sz, 0, sizeof(sz_params));
@@ -71,7 +78,7 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &dimensions,
         static_cast<int>(std::pow(5., static_cast<double>(ndims)));
     sz.pwr_type = SZ_PWR_MIN_TYPE;
 
-    convertedDims = ConvertDims(dimensions, varType, 4, true, 1);
+    convertedDims = ConvertDims(blockCount, varType, 4, true, 1);
 
     /* SZ parameters */
     int use_configfile = 0;

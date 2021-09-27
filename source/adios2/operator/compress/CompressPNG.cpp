@@ -47,9 +47,10 @@ CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
 {
 }
 
-size_t CompressPNG::Compress(const char *dataIn, const Dims &dimensions,
-                             DataType type, char *bufferOut,
-                             const Params &parameters, Params &info)
+size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
+                             const Dims &blockCount, DataType type,
+                             char *bufferOut, const Params &parameters,
+                             Params &info)
 {
     auto lf_Write = [](png_structp png_ptr, png_bytep data, png_size_t length) {
         DestInfo *pDestInfo =
@@ -58,7 +59,7 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &dimensions,
         pDestInfo->Offset += length;
     };
 
-    const std::size_t ndims = dimensions.size();
+    const std::size_t ndims = blockCount.size();
 
     if (ndims != 3 && ndims != 2)
     {
@@ -130,11 +131,11 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &dimensions,
     png_infop pngInfo = png_create_info_struct(pngWrite);
 
     const uint32_t bytesPerPixel = ndims == 3
-                                       ? static_cast<uint32_t>(dimensions[2])
+                                       ? static_cast<uint32_t>(blockCount[2])
                                        : helper::GetDataTypeSize(type);
 
-    const uint32_t width = static_cast<uint32_t>(dimensions[1]);
-    const uint32_t height = static_cast<uint32_t>(dimensions[0]);
+    const uint32_t width = static_cast<uint32_t>(blockCount[1]);
+    const uint32_t height = static_cast<uint32_t>(blockCount[0]);
 
     png_set_IHDR(pngWrite, pngInfo, width, height, bitDepth, colorType,
                  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,

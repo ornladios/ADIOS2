@@ -42,25 +42,30 @@ CompressBlosc::CompressBlosc(const Params &parameters)
 {
 }
 
-size_t CompressBlosc::Compress(const char *dataIn, const Dims &dimensions,
-                               DataType type, char *bufferOut,
-                               const Params &parameters, Params &info)
+size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
+                               const Dims &blockCount, DataType type,
+                               char *bufferOut, const Params &parameters,
+                               Params &info)
 {
-    size_t currentOutputSize = 0u;
-
-    const size_t sizeIn =
-        helper::GetTotalSize(dimensions, helper::GetDataTypeSize(type));
-
+    size_t currentOutputSize = 0;
     const uint8_t bufferVersion = 1;
 
+    // Universal operator metadata
     PutParameter(bufferOut, currentOutputSize, OperatorType::BLOSC);
     PutParameter(bufferOut, currentOutputSize, bufferVersion);
     currentOutputSize += 2;
+    // Universal operator metadata end
 
+    const size_t sizeIn =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+
+    // blosc V1 metadata
     PutParameter(bufferOut, currentOutputSize, sizeIn);
+    // blosc V1 metadata end
 
     bool useMemcpy = false;
-    /* input size under this bound will not compress */
+
+    // input size under this bound will not compress
     size_t thresholdSize = 128;
 
     blosc_init();

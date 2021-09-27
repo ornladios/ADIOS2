@@ -285,11 +285,12 @@ CompressLibPressio::CompressLibPressio(const Params &parameters)
 {
 }
 
-size_t CompressLibPressio::Compress(const char *dataIn, const Dims &dimensions,
-                                    DataType varType, char *bufferOut,
-                                    const Params &parameters, Params &info)
+size_t CompressLibPressio::Compress(const char *dataIn, const Dims &blockStart,
+                                    const Dims &blockCount, DataType varType,
+                                    char *bufferOut, const Params &parameters,
+                                    Params &info)
 {
-    auto inputs_dims = adios_to_libpressio_dims(dimensions);
+    auto inputs_dims = adios_to_libpressio_dims(blockCount);
     pressio_data *input_buf = pressio_data_new_nonowning(
         adios_to_libpressio_dtype(varType), const_cast<char *>(dataIn),
         inputs_dims.size(), inputs_dims.data());

@@ -22,12 +22,13 @@ CompressZFP::CompressZFP(const Params &parameters) : Operator("zfp", parameters)
 {
 }
 
-size_t CompressZFP::Compress(const char *dataIn, const Dims &dimensions,
-                             DataType type, char *bufferOut,
-                             const Params &parameters, Params &info)
+size_t CompressZFP::Compress(const char *dataIn, const Dims &blockStart,
+                             const Dims &blockCount, DataType type,
+                             char *bufferOut, const Params &parameters,
+                             Params &info)
 {
 
-    Dims convertedDims = ConvertDims(dimensions, type, 3);
+    Dims convertedDims = ConvertDims(blockCount, type, 3);
 
     zfp_field *field = GetZFPField(dataIn, convertedDims, type);
     zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
