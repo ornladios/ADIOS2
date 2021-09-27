@@ -319,11 +319,11 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     size_t bufferInOffset = 0;
 
-    const size_t ndims = GetParameter<size_t>(bufferIn, bufferInOffset);
+    const size_t ndims = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     Dims blockCount(ndims);
     for (size_t i = 0; i < ndims; ++i)
     {
-        blockCount[i] = GetParameter<size_t>(bufferIn, bufferInOffset);
+        blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
 

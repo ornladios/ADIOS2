@@ -28,13 +28,33 @@ size_t CompressZFP::Compress(const char *dataIn, const Dims &blockStart,
                              Params &info)
 {
 
-    Dims convertedDims = ConvertDims(blockCount, type, 3);
+    const uint8_t bufferVersion = 1;
+    size_t bufferOutOffset = 0;
 
+    // Universal operator metadata
+    PutParameter(bufferOut, bufferOutOffset, OperatorType::Sz);
+    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
+    bufferOutOffset += 2;
+    // Universal operator metadata end
+
+    const size_t ndims = blockCount.size();
+
+    // zfp V1 metadata
+    PutParameter(bufferOut, bufferOutOffset, ndims);
+    for (const auto &d : blockCount)
+    {
+        PutParameter(bufferOut, bufferOutOffset, d);
+    }
+    PutParameter(bufferOut, bufferOutOffset, type);
+    PutParameters(bufferOut, bufferOutOffset, parameters);
+    // zfp V1 metadata end
+
+    Dims convertedDims = ConvertDims(blockCount, type, 3);
     zfp_field *field = GetZFPField(dataIn, convertedDims, type);
     zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
     size_t maxSize = zfp_stream_maximum_size(stream, field);
     // associate bitstream
-    bitstream *bitstream = stream_open(bufferOut, maxSize);
+    bitstream *bitstream = stream_open(bufferOut + bufferOutOffset, maxSize);
     zfp_stream_set_bit_stream(stream, bitstream);
     zfp_stream_rewind(stream);
 
@@ -46,24 +66,41 @@ size_t CompressZFP::Compress(const char *dataIn, const Dims &blockStart,
                                     "size is 0, in call to Compress");
     }
 
+    bufferOutOffset += sizeOut;
+
     zfp_field_free(field);
     zfp_stream_close(stream);
     stream_close(bitstream);
-    return sizeOut;
+    return bufferOutOffset;
 }
 
-size_t CompressZFP::Decompress(const char *bufferIn, const size_t sizeIn,
-                               char *dataOut, const DataType type,
-                               const Dims &blockStart, const Dims &blockCount,
-                               const Params &parameters, Params &info)
+size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
+                                 char *dataOut)
 {
+    // Do NOT remove even if the buffer version is updated. Data might be still
+    // in lagacy formats. This function must be kept for backward compatibility.
+    // If a newer buffer format is implemented, create another function, e.g.
+    // DecompressV2 and keep this function for decompressing lagacy data.
+
+    size_t bufferInOffset = 0;
+
+    const size_t ndims = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+    Dims blockCount(ndims);
+    for (size_t i = 0; i < ndims; ++i)
+    {
+        blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+    }
+    const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
+    const Params parameters = GetParameters(bufferIn, bufferInOffset);
+
     Dims convertedDims = ConvertDims(blockCount, type, 3);
 
     zfp_field *field = GetZFPField(dataOut, convertedDims, type);
     zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
 
     // associate bitstream
-    bitstream *bitstream = stream_open(const_cast<char *>(bufferIn), sizeIn);
+    bitstream *bitstream = stream_open(
+        const_cast<char *>(bufferIn + bufferInOffset), sizeIn - bufferInOffset);
     zfp_stream_set_bit_stream(stream, bitstream);
     zfp_stream_rewind(stream);
 
@@ -80,11 +117,39 @@ size_t CompressZFP::Decompress(const char *bufferIn, const size_t sizeIn,
     zfp_stream_close(stream);
     stream_close(bitstream);
 
-    const size_t typeSizeBytes = helper::GetDataTypeSize(type);
     const size_t dataSizeBytes =
-        helper::GetTotalSize(convertedDims) * typeSizeBytes;
+        helper::GetTotalSize(convertedDims, helper::GetDataTypeSize(type));
 
     return dataSizeBytes;
+}
+
+size_t CompressZFP::Decompress(const char *bufferIn, const size_t sizeIn,
+                               char *dataOut, const DataType /*type*/,
+                               const Dims & /*blockStart*/,
+                               const Dims & /*blockCount*/,
+                               const Params & /*parameters*/, Params &info)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 zfp buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown zfp buffer version");
+    }
+
+    return 0;
 }
 
 bool CompressZFP::IsDataTypeValid(const DataType type) const

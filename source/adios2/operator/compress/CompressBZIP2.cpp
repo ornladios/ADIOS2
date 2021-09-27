@@ -126,8 +126,8 @@ size_t CompressBZIP2::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     size_t bufferInOffset = 4; // skip the first four bytes
 
-    size_t sizeOut = GetParameter<size_t>(bufferIn, bufferInOffset);
-    size_t batches = GetParameter<size_t>(bufferIn, bufferInOffset);
+    size_t sizeOut = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+    size_t batches = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
 
     int small = 0;
     int verbosity = 0;
