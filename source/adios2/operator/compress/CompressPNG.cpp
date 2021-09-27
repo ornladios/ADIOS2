@@ -52,6 +52,18 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
                              char *bufferOut, const Params &parameters,
                              Params &info)
 {
+    size_t bufferOutOffset = 0;
+    const uint8_t bufferVersion = 1;
+
+    // Universal operator metadata
+    PutParameter(bufferOut, bufferOutOffset, OperatorType::BLOSC);
+    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
+    bufferOutOffset += 2;
+    // Universal operator metadata end
+
+    size_t paramOffset = bufferOutOffset;
+    bufferOutOffset += sizeof(size_t);
+
     auto lf_Write = [](png_structp png_ptr, png_bytep data, png_size_t length) {
         DestInfo *pDestInfo =
             reinterpret_cast<DestInfo *>(png_get_io_ptr(png_ptr));
@@ -160,7 +172,7 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
 
     DestInfo destInfo;
     destInfo.BufferOut = bufferOut;
-    destInfo.Offset = 0;
+    destInfo.Offset = bufferOutOffset;
 
     png_set_write_fn(pngWrite, &destInfo, lf_Write, nullptr);
     png_write_png(pngWrite, pngInfo, PNG_TRANSFORM_IDENTITY, nullptr);
@@ -168,19 +180,29 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
 
     // const size_t compressedSize = png_get_compression_buffer_size(pngWrite);
     png_destroy_write_struct(&pngWrite, &pngInfo);
+
+    PutParameter(bufferOut, paramOffset, destInfo.Offset);
+
     return destInfo.Offset;
 }
 
-size_t CompressPNG::Decompress(const char *bufferIn, const size_t sizeIn,
-                               char *dataOut, const DataType type,
-                               const Dims &blockStart, const Dims &blockCount,
-                               const Params &parameters, Params &info)
+size_t CompressPNG::DecompressV1(const char *bufferIn, const size_t sizeIn,
+                                 char *dataOut)
 {
+    // Do NOT remove even if the buffer version is updated. Data might be still
+    // in lagacy formats. This function must be kept for backward compatibility.
+    // If a newer buffer format is implemented, create another function, e.g.
+    // DecompressV2 and keep this function for decompressing lagacy data.
+
+    size_t bufferInOffset = 0;
+    const size_t outSize = GetParameter<size_t>(bufferIn, bufferInOffset);
+
     png_image image;
     std::memset(&image, 0, sizeof(image));
     image.version = PNG_IMAGE_VERSION;
 
-    int result = png_image_begin_read_from_memory(&image, bufferIn, sizeIn);
+    int result = png_image_begin_read_from_memory(
+        &image, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
 
     if (result == 0)
     {
@@ -197,8 +219,38 @@ size_t CompressPNG::Decompress(const char *bufferIn, const size_t sizeIn,
             "ERROR: png_image_finish_read_from_memory failed in call "
             "to ADIOS2 PNG Decompress\n");
     }
+    return outSize;
+}
 
-    return helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+size_t CompressPNG::Decompress(const char *bufferIn, const size_t sizeIn,
+                               char *dataOut, const DataType /*type*/,
+                               const Dims & /*blockStart*/,
+                               const Dims & /*blockCount*/,
+                               const Params & /*parameters*/, Params & /*info*/)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        // pass in the whole buffer as there is absolute positions saved in the
+        // buffer to determine the offsets and lengths for batches
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 png buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown png buffer version");
+    }
+
+    return 0;
 }
 
 bool CompressPNG::IsDataTypeValid(const DataType type) const { return true; }
