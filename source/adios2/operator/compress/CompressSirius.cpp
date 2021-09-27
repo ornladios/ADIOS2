@@ -101,16 +101,16 @@ size_t CompressSirius::DecompressV1(const char *bufferIn, const size_t sizeIn,
     // DecompressV2 and keep this function for decompressing lagacy data.
 
     size_t bufferInOffset = 0;
-    const size_t ndims = GetParameter<size_t>(bufferIn, bufferInOffset);
+    const size_t ndims = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     Dims blockStart(ndims);
     Dims blockCount(ndims);
     for (size_t i = 0; i < ndims; ++i)
     {
-        blockStart[i] = GetParameter<size_t>(bufferIn, bufferInOffset);
+        blockStart[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     for (size_t i = 0; i < ndims; ++i)
     {
-        blockCount[i] = GetParameter<size_t>(bufferIn, bufferInOffset);
+        blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
 

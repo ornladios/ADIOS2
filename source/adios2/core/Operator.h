@@ -16,6 +16,7 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <cstring>
 #include <functional>
+#include <iostream>
 #include <string>
 #include <vector>
 /// \endcond
@@ -122,6 +123,47 @@ protected:
         T ret;
         std::memcpy(&ret, buffer + pos, sizeof(T));
         pos += sizeof(T);
+        return ret;
+    }
+
+    template <typename U>
+    void PutParameters(char *buffer, U &pos, const Params &parameters)
+    {
+        uint8_t size = static_cast<uint8_t>(parameters.size());
+        PutParameter(buffer, pos, size);
+        for (const auto &p : parameters)
+        {
+            size = static_cast<uint8_t>(p.first.size());
+            PutParameter(buffer, pos, size);
+
+            std::memcpy(buffer + pos, p.first.data(), size);
+            pos += size;
+
+            size = static_cast<uint8_t>(p.second.size());
+            PutParameter(buffer, pos, size);
+
+            std::memcpy(buffer + pos, p.second.data(), size);
+            pos += size;
+        }
+    }
+
+    template <typename U>
+    Params GetParameters(const char *buffer, U &pos)
+    {
+        Params ret;
+        uint8_t params = GetParameter<uint8_t>(buffer, pos);
+        for (uint8_t i = 0; i < params; ++i)
+        {
+            uint8_t size = GetParameter<uint8_t>(buffer, pos);
+            std::string key =
+                std::string(reinterpret_cast<const char *>(buffer + pos), size);
+            pos += size;
+            size = GetParameter<uint8_t>(buffer, pos);
+            std::string value =
+                std::string(reinterpret_cast<const char *>(buffer + pos), size);
+            pos += size;
+            ret[key] = value;
+        }
         return ret;
     }
 

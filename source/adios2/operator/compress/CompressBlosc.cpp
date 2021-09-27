@@ -234,7 +234,7 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
     // DecompressV2 and keep this function for decompressing lagacy data.
 
     size_t bufferInOffset = 0;
-    size_t sizeOut = GetParameter<size_t>(bufferIn, bufferInOffset);
+    size_t sizeOut = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     if (sizeIn - bufferInOffset < sizeof(DataHeader))
     {
         throw("corrupted blosc buffer header");
