@@ -13,14 +13,6 @@
 #ifndef ADIOS2_CORE_OPERATOR_H_
 #define ADIOS2_CORE_OPERATOR_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <cstring>
-#include <functional>
-#include <iostream>
-#include <string>
-#include <vector>
-/// \endcond
-
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 
