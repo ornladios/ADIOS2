@@ -39,9 +39,32 @@ size_t CompressSirius::Compress(const char *dataIn, const Dims &blockStart,
                                 char *bufferOut, const Params &params,
                                 Params &info)
 {
-    size_t totalInputBytes = std::accumulate(
-        blockCount.begin(), blockCount.end(), helper::GetDataTypeSize(varType),
-        std::multiplies<size_t>());
+    const uint8_t bufferVersion = 1;
+    size_t bufferOutOffset = 0;
+
+    // Universal operator metadata
+    PutParameter(bufferOut, bufferOutOffset, OperatorType::SIRIUS);
+    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
+    bufferOutOffset += 2;
+    // Universal operator metadata end
+
+    const size_t ndims = blockCount.size();
+
+    // sirius V1 metadata
+    PutParameter(bufferOut, bufferOutOffset, ndims);
+    for (const auto &d : blockStart)
+    {
+        PutParameter(bufferOut, bufferOutOffset, d);
+    }
+    for (const auto &d : blockCount)
+    {
+        PutParameter(bufferOut, bufferOutOffset, d);
+    }
+    PutParameter(bufferOut, bufferOutOffset, varType);
+    // sirius V1 metadata end
+
+    size_t totalInputBytes =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType));
 
     // if called from Tier 0 sub-engine, then compute tier buffers and put into
     // m_TierBuffers
@@ -57,24 +80,42 @@ size_t CompressSirius::Compress(const char *dataIn, const Dims &blockStart,
     }
 
     // for all tiers' sub-engines, copy data from m_TierBuffers to output buffer
-    std::memcpy(bufferOut, m_TierBuffers[m_CurrentTier].data(),
+    std::memcpy(bufferOut + bufferOutOffset,
+                m_TierBuffers[m_CurrentTier].data(),
                 m_TierBuffers[m_CurrentTier].size());
+
+    bufferOutOffset += bytesPerTier;
 
     m_CurrentTier++;
     m_CurrentTier %= m_Tiers;
 
-    return bytesPerTier;
+    return bufferOutOffset;
 }
 
-size_t CompressSirius::Decompress(const char *bufferIn, const size_t sizeIn,
-                                  char *dataOut, const DataType type,
-                                  const Dims &blockStart,
-                                  const Dims &blockCount,
-                                  const Params &parameters, Params &info)
+size_t CompressSirius::DecompressV1(const char *bufferIn, const size_t sizeIn,
+                                    char *dataOut)
 {
-    const size_t outputBytes = std::accumulate(
-        blockCount.begin(), blockCount.end(), helper::GetDataTypeSize(type),
-        std::multiplies<size_t>());
+    // Do NOT remove even if the buffer version is updated. Data might be still
+    // in lagacy formats. This function must be kept for backward compatibility.
+    // If a newer buffer format is implemented, create another function, e.g.
+    // DecompressV2 and keep this function for decompressing lagacy data.
+
+    size_t bufferInOffset = 0;
+    const size_t ndims = GetParameter<size_t>(bufferIn, bufferInOffset);
+    Dims blockStart(ndims);
+    Dims blockCount(ndims);
+    for (size_t i = 0; i < ndims; ++i)
+    {
+        blockStart[i] = GetParameter<size_t>(bufferIn, bufferInOffset);
+    }
+    for (size_t i = 0; i < ndims; ++i)
+    {
+        blockCount[i] = GetParameter<size_t>(bufferIn, bufferInOffset);
+    }
+    const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
+
+    const size_t outputBytes =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
 
     std::string blockId =
         helper::DimsToString(blockStart) + helper::DimsToString(blockCount);
@@ -84,11 +125,12 @@ size_t CompressSirius::Decompress(const char *bufferIn, const size_t sizeIn,
     auto &currentBuffer = m_TierBuffersMap[m_CurrentTierMap[blockId]][blockId];
     auto &currentTier = m_CurrentTierMap[blockId];
     currentBuffer.resize(bytesPerTier);
-    std::memcpy(currentBuffer.data(), bufferIn, bytesPerTier);
+    std::memcpy(currentBuffer.data(), bufferIn + bufferInOffset, bytesPerTier);
 
     // if called from the final tier, then merge all tier buffers and copy back
     // to dataOut
     size_t accumulatedBytes = 0;
+
     // TODO: it currently only copies output data back when the final tier is
     // read. However, the real Sirius algorithm should instead decide when to
     // copy back decompressed data based on required acuracy level. Once it's
@@ -127,6 +169,35 @@ size_t CompressSirius::Decompress(const char *bufferIn, const size_t sizeIn,
     {
         return 0;
     }
+}
+
+size_t CompressSirius::Decompress(const char *bufferIn, const size_t sizeIn,
+                                  char *dataOut, const DataType type1,
+                                  const Dims &blockStart1,
+                                  const Dims &blockCount1,
+                                  const Params &parameters, Params &info)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 sirius buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown sirius buffer version");
+    }
+
+    return 0;
 }
 
 bool CompressSirius::IsDataTypeValid(const DataType type) const
