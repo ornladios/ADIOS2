@@ -15,6 +15,7 @@
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
+#include <cstring>
 #include <functional>
 
 namespace adios2
