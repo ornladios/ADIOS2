@@ -50,9 +50,8 @@ void Operator::RunCallback2(void *arg0, const std::string &arg1,
 }
 
 size_t Operator::Compress(const char * /*dataIn*/, const Dims & /*blockStart*/,
-                          const Dims & /*blockCount*/, DataType /*type*/,
-                          char * /*bufferOut*/, const Params & /*params*/,
-                          Params & /*info*/)
+                          const Dims & /*blockCount*/, const DataType /*type*/,
+                          char * /*bufferOut*/, const Params & /*params*/)
 {
     throw std::invalid_argument("ERROR: signature (const void*, const "
                                 "Dims, const size_t, const std::string, "
@@ -62,9 +61,7 @@ size_t Operator::Compress(const char * /*dataIn*/, const Dims & /*blockStart*/,
 }
 
 size_t Operator::Decompress(const char *bufferIn, const size_t sizeIn,
-                            char *dataOut, const DataType type,
-                            const Dims &blockStart, const Dims &blockCount,
-                            const Params &parameters, Params &info)
+                            char *dataOut)
 {
     throw std::invalid_argument(
         "ERROR: signature (const void*, const size_t, void) not supported "

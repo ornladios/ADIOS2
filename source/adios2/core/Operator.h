@@ -56,21 +56,25 @@ public:
 
     /**
      * @param dataIn
-     * @param dimensions
+     * @param blockStart
+     * @param blockCount
      * @param type
      * @param bufferOut
      * @param parameters
      * @return size of compressed buffer
      */
     virtual size_t Compress(const char *dataIn, const Dims &blockStart,
-                            const Dims &blockCount, DataType type,
-                            char *bufferOut, const Params &parameters,
-                            Params &info);
+                            const Dims &blockCount, const DataType type,
+                            char *bufferOut, const Params &parameters);
 
+    /**
+     * @param bufferIn
+     * @param sizeIn
+     * @param dataOut
+     * @return size of decompressed buffer
+     */
     virtual size_t Decompress(const char *bufferIn, const size_t sizeIn,
-                              char *dataOut, const DataType type,
-                              const Dims &blockStart, const Dims &blockCount,
-                              const Params &parameters, Params &info);
+                              char *dataOut);
 
     virtual bool IsDataTypeValid(const DataType type) const = 0;
 

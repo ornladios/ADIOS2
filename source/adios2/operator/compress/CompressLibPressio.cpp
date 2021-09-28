@@ -286,13 +286,33 @@ CompressLibPressio::CompressLibPressio(const Params &parameters)
 }
 
 size_t CompressLibPressio::Compress(const char *dataIn, const Dims &blockStart,
-                                    const Dims &blockCount, DataType varType,
-                                    char *bufferOut, const Params &parameters,
-                                    Params &info)
+                                    const Dims &blockCount, const DataType type,
+                                    char *bufferOut, const Params &parameters)
 {
+    const uint8_t bufferVersion = 1;
+    size_t bufferOutOffset = 0;
+
+    // Universal operator metadata
+    PutParameter(bufferOut, bufferOutOffset, OperatorType::Sz);
+    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
+    bufferOutOffset += 2;
+    // Universal operator metadata end
+
+    const size_t ndims = blockCount.size();
+
+    // zfp V1 metadata
+    PutParameter(bufferOut, bufferOutOffset, ndims);
+    for (const auto &d : blockCount)
+    {
+        PutParameter(bufferOut, bufferOutOffset, d);
+    }
+    PutParameter(bufferOut, bufferOutOffset, type);
+    PutParameters(bufferOut, bufferOutOffset, parameters);
+    // zfp V1 metadata end
+
     auto inputs_dims = adios_to_libpressio_dims(blockCount);
     pressio_data *input_buf = pressio_data_new_nonowning(
-        adios_to_libpressio_dtype(varType), const_cast<char *>(dataIn),
+        adios_to_libpressio_dtype(type), const_cast<char *>(dataIn),
         inputs_dims.size(), inputs_dims.data());
     pressio_data *output_buf =
         pressio_data_new_empty(pressio_byte_dtype, 0, nullptr);
@@ -318,26 +338,42 @@ size_t CompressLibPressio::Compress(const char *dataIn, const Dims &blockStart,
 
     size_t size_in_bytes = 0;
     void *bytes = pressio_data_ptr(output_buf, &size_in_bytes);
-    memcpy(bufferOut, bytes, size_in_bytes);
+    memcpy(bufferOut + bufferOutOffset, bytes, size_in_bytes);
+    bufferOutOffset += size_in_bytes;
 
     pressio_data_free(input_buf);
     pressio_data_free(output_buf);
 
-    return static_cast<size_t>(size_in_bytes);
+    return bufferOutOffset;
 }
 
-size_t CompressLibPressio::Decompress(const char *bufferIn, const size_t sizeIn,
-                                      char *dataOut, const DataType type,
-                                      const Dims &blockStart,
-                                      const Dims &blockCount,
-                                      const Params &parameters, Params &info)
+size_t CompressLibPressio::DecompressV1(const char *bufferIn,
+                                        const size_t sizeIn, char *dataOut)
 {
+    // Do NOT remove even if the buffer version is updated. Data might be still
+    // in lagacy formats. This function must be kept for backward compatibility.
+    // If a newer buffer format is implemented, create another function, e.g.
+    // DecompressV2 and keep this function for decompressing lagacy data.
+
+    size_t bufferInOffset = 0;
+
+    const size_t ndims = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+    Dims blockCount(ndims);
+    for (size_t i = 0; i < ndims; ++i)
+    {
+        blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+    }
+    const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
+    const Params parameters = GetParameters(bufferIn, bufferInOffset);
+
     std::vector<size_t> dims = adios_to_libpressio_dims(blockCount);
     pressio_data *output_buf = pressio_data_new_owning(
         adios_to_libpressio_dtype(type), dims.size(), dims.data());
 
+    size_t newSizeIn = sizeIn - bufferInOffset;
     pressio_data *input_buf = pressio_data_new_nonowning(
-        pressio_byte_dtype, const_cast<char *>(bufferIn), 1, &sizeIn);
+        pressio_byte_dtype, const_cast<char *>(bufferIn + bufferInOffset), 1,
+        &newSizeIn);
 
     pressio_compressor *compressor = nullptr;
     try
@@ -367,6 +403,32 @@ size_t CompressLibPressio::Decompress(const char *bufferIn, const size_t sizeIn,
     pressio_data_free(input_buf);
     pressio_data_free(output_buf);
     return size_in_bytes;
+}
+
+size_t CompressLibPressio::Decompress(const char *bufferIn, const size_t sizeIn,
+                                      char *dataOut)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 zfp buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown zfp buffer version");
+    }
+
+    return 0;
 }
 
 bool CompressLibPressio::IsDataTypeValid(const DataType type) const

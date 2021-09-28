@@ -30,9 +30,8 @@ namespace compress
 CompressSZ::CompressSZ(const Params &parameters) : Operator("sz", parameters) {}
 
 size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
-                            const Dims &blockCount, DataType varType,
-                            char *bufferOut, const Params &parameters,
-                            Params &info)
+                            const Dims &blockCount, const DataType varType,
+                            char *bufferOut, const Params &parameters)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -283,9 +282,7 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
 }
 
 size_t CompressSZ::Decompress(const char *bufferIn, const size_t sizeIn,
-                              char *dataOut, const DataType type,
-                              const Dims &blockStart, const Dims &blockCount,
-                              const Params &parameters, Params &info)
+                              char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
     const uint8_t bufferVersion =

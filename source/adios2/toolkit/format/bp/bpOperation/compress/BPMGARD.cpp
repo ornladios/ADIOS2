@@ -68,14 +68,8 @@ void BPMGARD::GetData(const char *input,
                       char *dataOutput) const
 {
 #ifdef ADIOS2_HAVE_MGARD
-    Params params;
-    core::compress::CompressMGARD op(params);
-    op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
-                  helper::GetDataTypeFromString(
-                      blockOperationInfo.Info.at("PreDataType")),
-                  blockOperationInfo.PreStart, blockOperationInfo.PreCount,
-                  blockOperationInfo.Info, params);
-
+    core::compress::CompressMGARD op({});
+    op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput);
 #else
     throw std::runtime_error(
         "ERROR: current ADIOS2 library didn't compile "

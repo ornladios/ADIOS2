@@ -44,9 +44,9 @@ public:
     ~CompressBlosc() = default;
 
     /**
-     * Compression signature for legacy libraries that use void*
      * @param dataIn
-     * @param dimensions
+     * @param blockStart
+     * @param blockCount
      * @param type
      * @param bufferOut format will be: 'DataHeader ; (BloscCompressedChunk |
      * UncompressedData), [ BloscCompressedChunk, ...]'
@@ -54,22 +54,17 @@ public:
      * @return size of compressed buffer in bytes
      */
     size_t Compress(const char *dataIn, const Dims &blockStart,
-                    const Dims &blockCount, DataType type, char *bufferOut,
-                    const Params &parameters, Params &info) final;
+                    const Dims &blockCount, const DataType type,
+                    char *bufferOut, const Params &parameters) final;
 
     /**
-     * Decompression signature for legacy libraries that use char*
      * @param bufferIn
      * @param sizeIn
      * @param dataOut
-     * @param dimensions
-     * @param type
-     * @return size of decompressed buffer in bytes
+     * @return size of decompressed buffer
      */
-    size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut,
-                      const DataType type, const Dims &blockStart,
-                      const Dims &blockCount, const Params &parameters,
-                      Params &info) final;
+    size_t Decompress(const char *bufferIn, const size_t sizeIn,
+                      char *dataOut) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 

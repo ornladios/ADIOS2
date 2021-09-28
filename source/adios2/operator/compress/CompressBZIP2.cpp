@@ -34,8 +34,7 @@ CompressBZIP2::CompressBZIP2(const Params &parameters)
 
 size_t CompressBZIP2::Compress(const char *dataIn, const Dims &blockStart,
                                const Dims &blockCount, DataType type,
-                               char *bufferOut, const Params &parameters,
-                               Params & /*info*/)
+                               char *bufferOut, const Params &parameters)
 {
 
     const uint8_t bufferVersion = 1;
@@ -174,11 +173,7 @@ size_t CompressBZIP2::DecompressV1(const char *bufferIn, const size_t sizeIn,
     return sizeOut;
 }
 size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
-                                 char *dataOut, const DataType /*type*/,
-                                 const Dims & /*blockStart*/,
-                                 const Dims & /*blockCount*/,
-                                 const Params & /*parameters*/,
-                                 Params & /*info*/)
+                                 char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
     const uint8_t bufferVersion =
