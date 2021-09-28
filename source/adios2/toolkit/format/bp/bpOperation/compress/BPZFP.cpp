@@ -9,7 +9,6 @@
  */
 
 #include "BPZFP.h"
-#include "BPZFP.tcc"
 
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosType.h"
@@ -39,7 +38,7 @@ namespace format
         const typename core::Variable<T>::Operation &operation,                \
         std::vector<char> &buffer) const noexcept                              \
     {                                                                          \
-        SetMetadataCommon(variable, blockInfo, operation, buffer);             \
+        SetMetadataDefault(variable, blockInfo, operation, buffer);            \
     }                                                                          \
                                                                                \
     void BPZFP::UpdateMetadata(                                                \
