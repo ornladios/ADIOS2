@@ -51,6 +51,11 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, varType);
+    for (uint8_t i = 0; i < 4; ++i)
+    {
+        PutParameter(bufferOut, bufferOutOffset,
+                     static_cast<uint8_t>(versionNumber[i]));
+    }
     // sz V1 metadata end
 
     Dims convertedDims = ConvertDims(blockCount, varType, 4);
@@ -324,6 +329,14 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
 
+    m_VersionInfo =
+        " Data is compressed using SZ Version " +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+        ". Please make sure a compatible version is used for decompression.";
+
     Dims convertedDims = ConvertDims(blockCount, type, 4, true, 1);
 
     // Get type info
@@ -359,7 +372,8 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     if (result == nullptr)
     {
-        throw std::runtime_error("ERROR: SZ_decompress failed\n");
+        throw std::runtime_error("ERROR: SZ_decompress failed." +
+                                 m_VersionInfo + "\n");
     }
     std::memcpy(dataOut, result, dataSizeBytes);
     free(result);
