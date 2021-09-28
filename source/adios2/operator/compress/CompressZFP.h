@@ -84,13 +84,6 @@ private:
                              const Params &parameters) const;
 
     /**
-     * check status from BZip compression and decompression functions
-     * @param status returned by BZip2 library
-     * @param hint extra exception information
-     */
-    void CheckStatus(const int status, const std::string hint) const;
-
-    /**
      * Decompress function for V1 buffer. Do NOT remove even if the buffer
      * version is updated. Data might be still in lagacy formats. This function
      * must be kept for backward compatibility
@@ -101,6 +94,8 @@ private:
      */
     size_t DecompressV1(const char *bufferIn, const size_t sizeIn,
                         char *dataOut);
+
+    std::string m_VersionInfo;
 };
 
 } // end namespace compress

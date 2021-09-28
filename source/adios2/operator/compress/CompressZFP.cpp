@@ -45,6 +45,12 @@ size_t CompressZFP::Compress(const char *dataIn, const Dims &blockStart,
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, type);
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(ZFP_VERSION_MAJOR));
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(ZFP_VERSION_MINOR));
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(ZFP_VERSION_PATCH));
     PutParameters(bufferOut, bufferOutOffset, parameters);
     // zfp V1 metadata end
 
@@ -90,6 +96,12 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
         blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
+    m_VersionInfo =
+        " Data is compressed using ZFP Version " +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+        ". Please make sure a compatible version is used for decompression.";
     const Params parameters = GetParameters(bufferIn, bufferInOffset);
 
     Dims convertedDims = ConvertDims(blockCount, type, 3);
@@ -107,19 +119,16 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     if (!status)
     {
-        throw std::invalid_argument("ERROR: zfp failed with status " +
-                                    std::to_string(status) +
-                                    ", in call to CompressZfp Decompress\n");
+        throw std::runtime_error(
+            "ERROR: zfp failed with status " + std::to_string(status) +
+            ", in call to CompressZfp Decompress." + m_VersionInfo + "\n");
     }
 
     zfp_field_free(field);
     zfp_stream_close(stream);
     stream_close(bitstream);
 
-    const size_t dataSizeBytes =
-        helper::GetTotalSize(convertedDims, helper::GetDataTypeSize(type));
-
-    return dataSizeBytes;
+    return helper::GetTotalSize(convertedDims, helper::GetDataTypeSize(type));
 }
 
 size_t CompressZFP::Decompress(const char *bufferIn, const size_t sizeIn,
@@ -142,7 +151,7 @@ size_t CompressZFP::Decompress(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        throw("unknown zfp buffer version");
+        throw std::runtime_error("unknown zfp buffer version");
     }
 
     return 0;
@@ -227,7 +236,8 @@ zfp_field *CompressZFP::GetZFPField(const char *data, const Dims &dimensions,
         throw std::invalid_argument(
             "ERROR: zfp_field* failed for data of type " + ToString(type) +
             ", only 1D, 2D and 3D dimensions are supported, from "
-            "class CompressZfp\n");
+            "class CompressZfp." +
+            m_VersionInfo + "\n");
     }
 
     if (field == nullptr)
@@ -235,7 +245,8 @@ zfp_field *CompressZFP::GetZFPField(const char *data, const Dims &dimensions,
         throw std::invalid_argument(
             "ERROR: zfp_field_" + std::to_string(dimensions.size()) +
             "d failed for data of type " + ToString(type) +
-            ", data might be corrupted, from class CompressZfp\n");
+            ", data might be corrupted, from class CompressZfp." +
+            m_VersionInfo + "\n");
     }
 
     return field;
