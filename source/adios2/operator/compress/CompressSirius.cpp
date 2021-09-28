@@ -35,9 +35,8 @@ CompressSirius::CompressSirius(const Params &parameters)
 }
 
 size_t CompressSirius::Compress(const char *dataIn, const Dims &blockStart,
-                                const Dims &blockCount, DataType varType,
-                                char *bufferOut, const Params &params,
-                                Params &info)
+                                const Dims &blockCount, const DataType varType,
+                                char *bufferOut, const Params &params)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -172,10 +171,7 @@ size_t CompressSirius::DecompressV1(const char *bufferIn, const size_t sizeIn,
 }
 
 size_t CompressSirius::Decompress(const char *bufferIn, const size_t sizeIn,
-                                  char *dataOut, const DataType type1,
-                                  const Dims &blockStart1,
-                                  const Dims &blockCount1,
-                                  const Params &parameters, Params &info)
+                                  char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
     const uint8_t bufferVersion =

@@ -43,9 +43,8 @@ CompressBlosc::CompressBlosc(const Params &parameters)
 }
 
 size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
-                               const Dims &blockCount, DataType type,
-                               char *bufferOut, const Params &parameters,
-                               Params &info)
+                               const Dims &blockCount, const DataType type,
+                               char *bufferOut, const Params &parameters)
 {
     size_t currentOutputSize = 0;
     const uint8_t bufferVersion = 1;
@@ -264,11 +263,7 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
 }
 
 size_t CompressBlosc::Decompress(const char *bufferIn, const size_t sizeIn,
-                                 char *dataOut, const DataType /*type*/,
-                                 const Dims & /*blockStart*/,
-                                 const Dims & /*blockCount*/,
-                                 const Params & /*parameters*/,
-                                 Params & /*info*/)
+                                 char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
     const uint8_t bufferVersion =
