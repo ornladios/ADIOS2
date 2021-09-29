@@ -55,13 +55,13 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
     const uint8_t bufferVersion = 1;
 
     // Universal operator metadata
-    PutParameter(bufferOut, bufferOutOffset, OperatorType::BLOSC);
+    PutParameter(bufferOut, bufferOutOffset, OperatorType::PNG);
     PutParameter(bufferOut, bufferOutOffset, bufferVersion);
-    bufferOutOffset += 2;
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
     // Universal operator metadata end
 
     size_t paramOffset = bufferOutOffset;
-    bufferOutOffset += sizeof(size_t);
+    bufferOutOffset += sizeof(size_t) + 3;
 
     auto lf_Write = [](png_structp png_ptr, png_bytep data, png_size_t length) {
         DestInfo *pDestInfo =
@@ -181,6 +181,12 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
     png_destroy_write_struct(&pngWrite, &pngInfo);
 
     PutParameter(bufferOut, paramOffset, destInfo.Offset);
+    PutParameter(bufferOut, paramOffset,
+                 static_cast<uint8_t>(PNG_LIBPNG_VER_MAJOR));
+    PutParameter(bufferOut, paramOffset,
+                 static_cast<uint8_t>(PNG_LIBPNG_VER_MINOR));
+    PutParameter(bufferOut, paramOffset,
+                 static_cast<uint8_t>(PNG_LIBPNG_VER_RELEASE));
 
     return destInfo.Offset;
 }
@@ -196,6 +202,13 @@ size_t CompressPNG::DecompressV1(const char *bufferIn, const size_t sizeIn,
     size_t bufferInOffset = 0;
     const size_t outSize = GetParameter<size_t>(bufferIn, bufferInOffset);
 
+    m_VersionInfo =
+        " Data is compressed using PNG Version " +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+        ". Please make sure a compatible version is used for decompression.";
+
     png_image image;
     std::memset(&image, 0, sizeof(image));
     image.version = PNG_IMAGE_VERSION;
@@ -207,7 +220,8 @@ size_t CompressPNG::DecompressV1(const char *bufferIn, const size_t sizeIn,
     {
         throw std::runtime_error(
             "ERROR: png_image_begin_read_from_memory failed in call "
-            "to ADIOS2 PNG Decompress\n");
+            "to ADIOS2 PNG Decompress." +
+            m_VersionInfo + "\n");
     }
 
     // TODO might be needed from parameters?
@@ -216,7 +230,8 @@ size_t CompressPNG::DecompressV1(const char *bufferIn, const size_t sizeIn,
     {
         throw std::runtime_error(
             "ERROR: png_image_finish_read_from_memory failed in call "
-            "to ADIOS2 PNG Decompress\n");
+            "to ADIOS2 PNG Decompress." +
+            m_VersionInfo + "\n");
     }
     return outSize;
 }

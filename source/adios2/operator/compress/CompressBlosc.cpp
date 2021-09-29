@@ -46,20 +46,26 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
                                const Dims &blockCount, const DataType type,
                                char *bufferOut, const Params &parameters)
 {
-    size_t currentOutputSize = 0;
+    size_t bufferOutOffset = 0;
     const uint8_t bufferVersion = 1;
 
     // Universal operator metadata
-    PutParameter(bufferOut, currentOutputSize, OperatorType::BLOSC);
-    PutParameter(bufferOut, currentOutputSize, bufferVersion);
-    currentOutputSize += 2;
+    PutParameter(bufferOut, bufferOutOffset, OperatorType::BLOSC);
+    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
     // Universal operator metadata end
 
     const size_t sizeIn =
         helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
 
     // blosc V1 metadata
-    PutParameter(bufferOut, currentOutputSize, sizeIn);
+    PutParameter(bufferOut, bufferOutOffset, sizeIn);
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(BLOSC_VERSION_MAJOR));
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(BLOSC_VERSION_MINOR));
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(BLOSC_VERSION_RELEASE));
     // blosc V1 metadata end
 
     bool useMemcpy = false;
@@ -145,11 +151,11 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
 
     // write header to detect new compression format (set first 8 byte to zero)
     DataHeader *headerPtr =
-        reinterpret_cast<DataHeader *>(bufferOut + currentOutputSize);
+        reinterpret_cast<DataHeader *>(bufferOut + bufferOutOffset);
 
     // set default header
     *headerPtr = DataHeader{};
-    currentOutputSize += sizeof(DataHeader);
+    bufferOutOffset += sizeof(DataHeader);
 
     int32_t typesize = helper::GetDataTypeSize(type);
     if (typesize > BLOSC_MAX_TYPESIZE)
@@ -190,10 +196,10 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
             bloscSize_t compressedChunkSize =
                 blosc_compress(compressionLevel, doShuffle, typesize,
                                maxIntputSize, dataIn + inputOffset,
-                               bufferOut + currentOutputSize, maxChunkSize);
+                               bufferOut + bufferOutOffset, maxChunkSize);
 
             if (compressedChunkSize > 0)
-                currentOutputSize += static_cast<size_t>(compressedChunkSize);
+                bufferOutOffset += static_cast<size_t>(compressedChunkSize);
             else
             {
                 // something went wrong with the compression switch to memcopy
@@ -214,14 +220,13 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
 
     if (useMemcpy)
     {
-        std::memcpy(bufferOut + currentOutputSize, dataIn + inputOffset,
-                    sizeIn);
-        currentOutputSize += sizeIn;
+        std::memcpy(bufferOut + bufferOutOffset, dataIn + inputOffset, sizeIn);
+        bufferOutOffset += sizeIn;
         headerPtr->SetNumChunks(0u);
     }
 
     blosc_destroy();
-    return currentOutputSize;
+    return bufferOutOffset;
 }
 
 size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
@@ -234,9 +239,17 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     size_t bufferInOffset = 0;
     size_t sizeOut = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+
+    m_VersionInfo =
+        " Data is compressed using BLOSC Version " +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+        ". Please make sure a compatible version is used for decompression.";
+
     if (sizeIn - bufferInOffset < sizeof(DataHeader))
     {
-        throw("corrupted blosc buffer header");
+        throw("corrupted blosc buffer header." + m_VersionInfo + "\n");
     }
     const bool isChunked =
         reinterpret_cast<const DataHeader *>(bufferIn + bufferInOffset)
@@ -257,7 +270,7 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     if (decompressedSize != sizeOut)
     {
-        throw("corrupted blosc buffer");
+        throw("corrupted blosc buffer." + m_VersionInfo + "\n");
     }
     return sizeOut;
 }
@@ -332,8 +345,8 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
              *
              * we need only the compressed size ( source address + 12 byte)
              */
-            bloscSize_t max_inputDataSize =
-                *reinterpret_cast<const bloscSize_t *>(in_ptr + 12u);
+            bloscSize_t max_inputDataSize;
+            std::memcpy(&max_inputDataSize, in_ptr + 12, sizeof(bloscSize_t));
 
             char *out_ptr = dataOut + currentOutputSize;
 
@@ -352,7 +365,8 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
             {
                 throw std::runtime_error(
                     "ERROR: ADIOS2 Blosc Decompress failed. Decompressed chunk "
-                    "results in zero decompressed bytes.\n");
+                    "results in zero decompressed bytes." +
+                    m_VersionInfo + "\n");
             }
             inputOffset += static_cast<size_t>(max_inputDataSize);
         }

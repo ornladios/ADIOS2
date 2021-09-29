@@ -86,6 +86,8 @@ private:
         char *BufferOut = nullptr;
         size_t Offset = 0;
     };
+
+    std::string m_VersionInfo;
 };
 
 } // end namespace compress
