@@ -61,7 +61,7 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
     // Universal operator metadata end
 
     size_t paramOffset = bufferOutOffset;
-    bufferOutOffset += sizeof(size_t);
+    bufferOutOffset += sizeof(size_t) + 3;
 
     auto lf_Write = [](png_structp png_ptr, png_bytep data, png_size_t length) {
         DestInfo *pDestInfo =
