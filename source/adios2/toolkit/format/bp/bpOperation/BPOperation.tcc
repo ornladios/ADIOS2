@@ -17,8 +17,7 @@ namespace adios2
 {
 namespace format
 {
-// DEFAULTS only saves input and output payload sizes in metadata
-// PROTECTED
+
 template <class T>
 void BPOperation::SetData(
     const core::Variable<T> &variable,

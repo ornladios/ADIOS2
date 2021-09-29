@@ -22,15 +22,7 @@ class BPLIBPRESSIO : public BPOperation
 {
 public:
     BPLIBPRESSIO() = default;
-
     ~BPLIBPRESSIO() = default;
-
-    using BPOperation::SetData;
-    using BPOperation::SetMetadata;
-    using BPOperation::UpdateMetadata;
-
-    void GetMetadata(const std::vector<char> &buffer, Params &info) const
-        noexcept final;
 
     void GetData(const char *input,
                  const helper::BlockOperationInfo &blockOperationInfo,

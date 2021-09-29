@@ -16,6 +16,16 @@ namespace adios2
 namespace format
 {
 
+void BPOperation::GetMetadata(const std::vector<char> &buffer,
+                              Params &info) const noexcept
+{
+    size_t position = 0;
+    info["InputSize"] =
+        std::to_string(helper::ReadValue<uint64_t>(buffer, position));
+    info["OutputSize"] =
+        std::to_string(helper::ReadValue<uint64_t>(buffer, position));
+}
+
 #define declare_type(T)                                                        \
                                                                                \
     template void BPOperation::SetData(                                        \

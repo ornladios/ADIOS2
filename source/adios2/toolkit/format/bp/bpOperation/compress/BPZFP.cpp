@@ -22,16 +22,6 @@ namespace adios2
 namespace format
 {
 
-void BPZFP::GetMetadata(const std::vector<char> &buffer, Params &info) const
-    noexcept
-{
-    size_t position = 0;
-    info["InputSize"] =
-        std::to_string(helper::ReadValue<uint64_t>(buffer, position));
-    info["OutputSize"] =
-        std::to_string(helper::ReadValue<uint64_t>(buffer, position));
-}
-
 void BPZFP::GetData(const char *input,
                     const helper::BlockOperationInfo &blockOperationInfo,
                     char *dataOutput) const
