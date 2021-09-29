@@ -126,6 +126,7 @@ private:
 
     static const std::map<std::string, uint32_t> m_Shuffles;
     static const std::set<std::string> m_Compressors;
+    std::string m_VersionInfo;
 };
 
 } // end namespace compress
