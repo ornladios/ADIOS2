@@ -345,8 +345,8 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
              *
              * we need only the compressed size ( source address + 12 byte)
              */
-            bloscSize_t max_inputDataSize =
-                *reinterpret_cast<const bloscSize_t *>(in_ptr + 12u);
+            bloscSize_t max_inputDataSize;
+            std::memcpy(&max_inputDataSize, in_ptr + 12, sizeof(bloscSize_t));
 
             char *out_ptr = dataOut + currentOutputSize;
 
