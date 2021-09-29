@@ -55,7 +55,7 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
     const uint8_t bufferVersion = 1;
 
     // Universal operator metadata
-    PutParameter(bufferOut, bufferOutOffset, OperatorType::BLOSC);
+    PutParameter(bufferOut, bufferOutOffset, OperatorType::PNG);
     PutParameter(bufferOut, bufferOutOffset, bufferVersion);
     PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
     // Universal operator metadata end
@@ -181,11 +181,11 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
     png_destroy_write_struct(&pngWrite, &pngInfo);
 
     PutParameter(bufferOut, paramOffset, destInfo.Offset);
-    PutParameter(bufferOut, bufferOutOffset,
+    PutParameter(bufferOut, paramOffset,
                  static_cast<uint8_t>(PNG_LIBPNG_VER_MAJOR));
-    PutParameter(bufferOut, bufferOutOffset,
+    PutParameter(bufferOut, paramOffset,
                  static_cast<uint8_t>(PNG_LIBPNG_VER_MINOR));
-    PutParameter(bufferOut, bufferOutOffset,
+    PutParameter(bufferOut, paramOffset,
                  static_cast<uint8_t>(PNG_LIBPNG_VER_RELEASE));
 
     return destInfo.Offset;
