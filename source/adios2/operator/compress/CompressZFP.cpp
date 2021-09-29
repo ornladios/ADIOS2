@@ -33,7 +33,7 @@ size_t CompressZFP::Compress(const char *dataIn, const Dims &blockStart,
     // Universal operator metadata
     PutParameter(bufferOut, bufferOutOffset, OperatorType::Sz);
     PutParameter(bufferOut, bufferOutOffset, bufferVersion);
-    bufferOutOffset += 2;
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
     // Universal operator metadata end
 
     const size_t ndims = blockCount.size();

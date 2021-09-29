@@ -43,7 +43,7 @@ size_t CompressBZIP2::Compress(const char *dataIn, const Dims &blockStart,
     // Universal operator metadata
     PutParameter(bufferOut, destOffset, OperatorType::BZIP2);
     PutParameter(bufferOut, destOffset, bufferVersion);
-    destOffset += 2;
+    PutParameter(bufferOut, destOffset, static_cast<uint16_t>(0));
     // Universal operator metadata end
 
     const size_t sizeIn =
