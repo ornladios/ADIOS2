@@ -9,12 +9,10 @@
  */
 
 #include "CompressMGARD.h"
-
-#include <cstring> //std::memcpy
-
-#include <mgard_api.h>
-
 #include "adios2/helper/adiosFunctions.h"
+#include <MGARDConfig.h>
+#include <cstring>
+#include <mgard_api.h>
 
 namespace adios2
 {
@@ -50,6 +48,12 @@ size_t CompressMGARD::Compress(const char *dataIn, const Dims &blockStart,
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, type);
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(MGARD_VERSION_MAJOR));
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(MGARD_VERSION_MINOR));
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(MGARD_VERSION_PATCH));
     // mgard V1 metadata end
 
     if (ndims > 3)
@@ -139,6 +143,12 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
         blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
+    m_VersionInfo =
+        " Data is compressed using MGARD Version " +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+        ". Please make sure a compatible version is used for decompression.";
 
     int mgardType = -1;
 

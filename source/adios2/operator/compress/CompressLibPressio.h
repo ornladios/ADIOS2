@@ -67,6 +67,8 @@ private:
      */
     size_t DecompressV1(const char *bufferIn, const size_t sizeIn,
                         char *dataOut);
+
+    std::string m_VersionInfo;
 };
 
 } // end namespace compress

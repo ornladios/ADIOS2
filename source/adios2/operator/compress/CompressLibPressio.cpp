@@ -307,6 +307,12 @@ size_t CompressLibPressio::Compress(const char *dataIn, const Dims &blockStart,
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, type);
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(pressio_major_version()));
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(pressio_minor_version()));
+    PutParameter(bufferOut, bufferOutOffset,
+                 static_cast<uint8_t>(pressio_patch_version()));
     PutParameters(bufferOut, bufferOutOffset, parameters);
     // zfp V1 metadata end
 
@@ -364,6 +370,12 @@ size_t CompressLibPressio::DecompressV1(const char *bufferIn,
         blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
+    m_VersionInfo =
+        " Data is compressed using LibPressio Version " +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+        ". Please make sure a compatible version is used for decompression.";
     const Params parameters = GetParameters(bufferIn, bufferInOffset);
 
     std::vector<size_t> dims = adios_to_libpressio_dims(blockCount);
@@ -384,7 +396,7 @@ size_t CompressLibPressio::DecompressV1(const char *bufferIn,
     {
         pressio_data_free(input_buf);
         pressio_data_free(output_buf);
-        throw;
+        throw std::runtime_error(m_VersionInfo + "\n");
     }
 
     if (pressio_compressor_decompress(compressor, input_buf, output_buf) != 0)
@@ -393,7 +405,7 @@ size_t CompressLibPressio::DecompressV1(const char *bufferIn,
         pressio_data_free(output_buf);
         throw std::runtime_error(
             std::string("pressio_compressor_decompress: ") +
-            pressio_compressor_error_msg(compressor));
+            pressio_compressor_error_msg(compressor) + m_VersionInfo + "\n");
     }
 
     size_t size_in_bytes = 0;
@@ -420,12 +432,12 @@ size_t CompressLibPressio::Decompress(const char *bufferIn, const size_t sizeIn,
     }
     else if (bufferVersion == 2)
     {
-        // TODO: if a Version 2 zfp buffer is being implemented, put it here
-        // and keep the DecompressV1 routine for backward compatibility
+        // TODO: if a Version 2 LibPressio buffer is being implemented, put it
+        // here and keep the DecompressV1 routine for backward compatibility
     }
     else
     {
-        throw("unknown zfp buffer version");
+        throw("unknown LibPressio buffer version");
     }
 
     return 0;
