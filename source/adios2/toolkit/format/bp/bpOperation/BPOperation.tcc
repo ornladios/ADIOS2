@@ -20,7 +20,7 @@ namespace format
 // DEFAULTS only saves input and output payload sizes in metadata
 // PROTECTED
 template <class T>
-void BPOperation::SetDataDefault(
+void BPOperation::SetData(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo,
     const typename core::Variable<T>::Operation &operation,
@@ -43,7 +43,7 @@ void BPOperation::SetDataDefault(
 }
 
 template <class T>
-void BPOperation::SetMetadataDefault(
+void BPOperation::SetMetadata(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo,
     const typename core::Variable<T>::Operation &operation,
@@ -65,7 +65,7 @@ void BPOperation::SetMetadataDefault(
 }
 
 template <class T>
-void BPOperation::UpdateMetadataDefault(
+void BPOperation::UpdateMetadata(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo,
     const typename core::Variable<T>::Operation &operation,

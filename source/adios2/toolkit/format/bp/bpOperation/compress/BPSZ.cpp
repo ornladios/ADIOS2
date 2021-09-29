@@ -22,36 +22,6 @@ namespace adios2
 namespace format
 {
 
-#define declare_type(T)                                                        \
-    void BPSZ::SetData(const core::Variable<T> &variable,                      \
-                       const typename core::Variable<T>::BPInfo &blockInfo,    \
-                       const typename core::Variable<T>::Operation &operation, \
-                       BufferSTL &bufferSTL) const noexcept                    \
-    {                                                                          \
-        SetDataDefault(variable, blockInfo, operation, bufferSTL);             \
-    }                                                                          \
-                                                                               \
-    void BPSZ::SetMetadata(                                                    \
-        const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::BPInfo &blockInfo,                   \
-        const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept                              \
-    {                                                                          \
-        SetMetadataDefault(variable, blockInfo, operation, buffer);            \
-    }                                                                          \
-                                                                               \
-    void BPSZ::UpdateMetadata(                                                 \
-        const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::BPInfo &blockInfo,                   \
-        const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept                              \
-    {                                                                          \
-        UpdateMetadataDefault(variable, blockInfo, operation, buffer);         \
-    }
-
-ADIOS2_FOREACH_SZ_TYPE_1ARG(declare_type)
-#undef declare_type
-
 void BPSZ::GetMetadata(const std::vector<char> &buffer, Params &info) const
     noexcept
 {

@@ -28,25 +28,6 @@ public:
     using BPOperation::SetData;
     using BPOperation::SetMetadata;
     using BPOperation::UpdateMetadata;
-#define declare_type(T)                                                        \
-    void SetData(const core::Variable<T> &variable,                            \
-                 const typename core::Variable<T>::BPInfo &blockInfo,          \
-                 const typename core::Variable<T>::Operation &operation,       \
-                 BufferSTL &bufferSTL) const noexcept override;                \
-                                                                               \
-    void SetMetadata(const core::Variable<T> &variable,                        \
-                     const typename core::Variable<T>::BPInfo &blockInfo,      \
-                     const typename core::Variable<T>::Operation &operation,   \
-                     std::vector<char> &buffer) const noexcept override;       \
-                                                                               \
-    void UpdateMetadata(                                                       \
-        const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::BPInfo &blockInfo,                   \
-        const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept override;
-
-    ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
-#undef declare_type
 
     void GetMetadata(const std::vector<char> &buffer, Params &info) const
         noexcept final;
@@ -54,21 +35,6 @@ public:
     void GetData(const char *input,
                  const helper::BlockOperationInfo &blockOperationInfo,
                  char *dataOutput) const final;
-
-private:
-    enum Mode
-    {
-        zfp_mode_accuracy = 0,
-        zfp_mode_precision = 1,
-        zfp_mode_rate = 2
-    };
-
-    template <class T>
-    void
-    SetMetadataCommon(const core::Variable<T> &variable,
-                      const typename core::Variable<T>::BPInfo &blockInfo,
-                      const typename core::Variable<T>::Operation &operation,
-                      std::vector<char> &buffer) const noexcept;
 };
 
 } // end namespace format

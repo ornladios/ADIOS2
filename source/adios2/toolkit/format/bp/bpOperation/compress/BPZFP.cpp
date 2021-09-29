@@ -22,37 +22,6 @@ namespace adios2
 namespace format
 {
 
-#define declare_type(T)                                                        \
-    void BPZFP::SetData(                                                       \
-        const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::BPInfo &blockInfo,                   \
-        const typename core::Variable<T>::Operation &operation,                \
-        BufferSTL &bufferSTL) const noexcept                                   \
-    {                                                                          \
-        SetDataDefault(variable, blockInfo, operation, bufferSTL);             \
-    }                                                                          \
-                                                                               \
-    void BPZFP::SetMetadata(                                                   \
-        const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::BPInfo &blockInfo,                   \
-        const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept                              \
-    {                                                                          \
-        SetMetadataDefault(variable, blockInfo, operation, buffer);            \
-    }                                                                          \
-                                                                               \
-    void BPZFP::UpdateMetadata(                                                \
-        const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::BPInfo &blockInfo,                   \
-        const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept                              \
-    {                                                                          \
-        UpdateMetadataDefault(variable, blockInfo, operation, buffer);         \
-    }
-
-ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
-#undef declare_type
-
 void BPZFP::GetMetadata(const std::vector<char> &buffer, Params &info) const
     noexcept
 {
@@ -61,25 +30,6 @@ void BPZFP::GetMetadata(const std::vector<char> &buffer, Params &info) const
         std::to_string(helper::ReadValue<uint64_t>(buffer, position));
     info["OutputSize"] =
         std::to_string(helper::ReadValue<uint64_t>(buffer, position));
-    const int mode =
-        static_cast<int>(helper::ReadValue<uint32_t>(buffer, position));
-
-    const std::string modeStr(buffer.data() + position);
-
-    switch (mode)
-    {
-    case zfp_mode_precision:
-        info["precision"] = modeStr;
-        break;
-
-    case zfp_mode_accuracy:
-        info["accuracy"] = modeStr;
-        break;
-
-    case zfp_mode_rate:
-        info["rate"] = modeStr;
-        break;
-    }
 }
 
 void BPZFP::GetData(const char *input,
