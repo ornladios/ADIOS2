@@ -22,37 +22,6 @@ namespace adios2
 namespace format
 {
 
-#define declare_type(T)                                                        \
-    void BPMGARD::SetData(                                                     \
-        const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::BPInfo &blockInfo,                   \
-        const typename core::Variable<T>::Operation &operation,                \
-        BufferSTL &bufferSTL) const noexcept                                   \
-    {                                                                          \
-        SetDataDefault(variable, blockInfo, operation, bufferSTL);             \
-    }                                                                          \
-                                                                               \
-    void BPMGARD::SetMetadata(                                                 \
-        const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::BPInfo &blockInfo,                   \
-        const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept                              \
-    {                                                                          \
-        SetMetadataDefault(variable, blockInfo, operation, buffer);            \
-    }                                                                          \
-                                                                               \
-    void BPMGARD::UpdateMetadata(                                              \
-        const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::BPInfo &blockInfo,                   \
-        const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept                              \
-    {                                                                          \
-        UpdateMetadataDefault(variable, blockInfo, operation, buffer);         \
-    }
-
-ADIOS2_FOREACH_MGARD_TYPE_1ARG(declare_type)
-#undef declare_type
-
 void BPMGARD::GetMetadata(const std::vector<char> &buffer, Params &info) const
     noexcept
 {

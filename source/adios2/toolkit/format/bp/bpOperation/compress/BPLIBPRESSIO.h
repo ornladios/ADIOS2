@@ -28,25 +28,6 @@ public:
     using BPOperation::SetData;
     using BPOperation::SetMetadata;
     using BPOperation::UpdateMetadata;
-#define declare_type(T)                                                        \
-    void SetData(const core::Variable<T> &variable,                            \
-                 const typename core::Variable<T>::BPInfo &blockInfo,          \
-                 const typename core::Variable<T>::Operation &operation,       \
-                 BufferSTL &bufferSTL) const noexcept override;                \
-                                                                               \
-    void SetMetadata(const core::Variable<T> &variable,                        \
-                     const typename core::Variable<T>::BPInfo &blockInfo,      \
-                     const typename core::Variable<T>::Operation &operation,   \
-                     std::vector<char> &buffer) const noexcept override;       \
-                                                                               \
-    void UpdateMetadata(                                                       \
-        const core::Variable<T> &variable,                                     \
-        const typename core::Variable<T>::BPInfo &blockInfo,                   \
-        const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept override;
-
-    ADIOS2_FOREACH_LIBPRESSIO_TYPE_1ARG(declare_type)
-#undef declare_type
 
     void GetMetadata(const std::vector<char> &buffer, Params &info) const
         noexcept final;
