@@ -78,6 +78,18 @@ public:
 
     virtual bool IsDataTypeValid(const DataType type) const = 0;
 
+    enum OperatorType : char
+    {
+        BLOSC = 0,
+        BZIP2 = 1,
+        LIBPRESSIO = 2,
+        MGARD = 3,
+        PNG = 4,
+        SIRIUS = 5,
+        Sz = 6,
+        ZFP = 7
+    };
+
 protected:
     /** Parameters associated with a particular Operator */
     Params m_Parameters;
@@ -95,18 +107,6 @@ protected:
                      const size_t targetDims = 0,
                      const bool enforceDims = false,
                      const size_t defaultDimSize = 1) const;
-
-    enum OperatorType : char
-    {
-        BLOSC = 0,
-        BZIP2 = 1,
-        LIBPRESSIO = 2,
-        MGARD = 3,
-        PNG = 4,
-        SIRIUS = 5,
-        Sz = 6,
-        ZFP = 7
-    };
 
     template <typename T, typename U>
     void PutParameter(char *buffer, U &pos, const T &parameter)

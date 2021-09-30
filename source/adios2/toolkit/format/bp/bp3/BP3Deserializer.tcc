@@ -517,13 +517,13 @@ void BP3Deserializer::PostDataRead(
             blockOperationInfo.PreSizeOf;
         m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
 
-        // get the right bp3Op
-        std::shared_ptr<BPOperation> bp3Op =
-            SetBPOperation(blockOperationInfo.Info.at("Type"));
-
         // get original block back
         char *preOpData = m_ThreadBuffers[threadID][0].data();
         const char *postOpData = m_ThreadBuffers[threadID][1].data();
+
+        // get the right bp3Op
+        std::shared_ptr<BPOperation> bp3Op =
+            SetBPOperation(blockOperationInfo.Info.at("Type"));
         bp3Op->GetData(postOpData, blockOperationInfo, preOpData);
 
         // clip block to match selection
