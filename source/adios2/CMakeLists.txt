@@ -72,14 +72,6 @@ add_library(adios2_core
 
   toolkit/format/bp/bpOperation/BPOperation.cpp
   toolkit/format/bp/bpOperation/BPOperation.tcc
-  toolkit/format/bp/bpOperation/compress/BPZFP.cpp
-  toolkit/format/bp/bpOperation/compress/BPSZ.cpp
-  toolkit/format/bp/bpOperation/compress/BPSirius.cpp
-  toolkit/format/bp/bpOperation/compress/BPMGARD.cpp
-  toolkit/format/bp/bpOperation/compress/BPPNG.cpp
-  toolkit/format/bp/bpOperation/compress/BPBZIP2.cpp
-  toolkit/format/bp/bpOperation/compress/BPBlosc.cpp
-  toolkit/format/bp/bpOperation/compress/BPLIBPRESSIO.cpp
 
   toolkit/profiling/iochrono/Timer.cpp
   toolkit/profiling/iochrono/IOChrono.cpp

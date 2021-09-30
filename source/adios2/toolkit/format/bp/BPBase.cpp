@@ -13,15 +13,6 @@
 
 #include "adios2/helper/adiosFunctions.h"
 
-#include "adios2/toolkit/format/bp/bpOperation/compress/BPBZIP2.h"
-#include "adios2/toolkit/format/bp/bpOperation/compress/BPBlosc.h"
-#include "adios2/toolkit/format/bp/bpOperation/compress/BPLIBPRESSIO.h"
-#include "adios2/toolkit/format/bp/bpOperation/compress/BPMGARD.h"
-#include "adios2/toolkit/format/bp/bpOperation/compress/BPPNG.h"
-#include "adios2/toolkit/format/bp/bpOperation/compress/BPSZ.h"
-#include "adios2/toolkit/format/bp/bpOperation/compress/BPSirius.h"
-#include "adios2/toolkit/format/bp/bpOperation/compress/BPZFP.h"
-
 namespace adios2
 {
 namespace format
@@ -471,64 +462,6 @@ BPBase::TransformTypeEnum(const std::string transformType) const noexcept
         }
     }
     return transformEnum;
-}
-
-std::shared_ptr<BPOperation>
-BPBase::SetBPOperation(const std::string type) const noexcept
-{
-    std::shared_ptr<BPOperation> bpOp;
-    if (type == "sz")
-    {
-        bpOp = std::make_shared<BPSZ>();
-    }
-    else if (type == "zfp")
-    {
-        bpOp = std::make_shared<BPZFP>();
-    }
-    else if (type == "mgard")
-    {
-        bpOp = std::make_shared<BPMGARD>();
-    }
-    else if (type == "bzip2")
-    {
-        bpOp = std::make_shared<BPBZIP2>();
-    }
-    else if (type == "png")
-    {
-        bpOp = std::make_shared<BPPNG>();
-    }
-    else if (type == "blosc")
-    {
-        bpOp = std::make_shared<BPBlosc>();
-    }
-    else if (type == "libpressio")
-    {
-        bpOp = std::make_shared<BPLIBPRESSIO>();
-    }
-    else if (type == "sirius")
-    {
-        bpOp = std::make_shared<BPSirius>();
-    }
-
-    return bpOp;
-}
-
-std::map<size_t, std::shared_ptr<BPOperation>> BPBase::SetBPOperations(
-    const std::vector<core::VariableBase::Operation> &operations) const
-{
-    std::map<size_t, std::shared_ptr<BPOperation>> bpOperations;
-
-    for (size_t i = 0; i < operations.size(); ++i)
-    {
-        const std::string type = operations[i].Op->m_Type;
-        std::shared_ptr<BPOperation> bpOperation = SetBPOperation(type);
-
-        if (bpOperation) // if the result is a supported type
-        {
-            bpOperations.emplace(i, bpOperation);
-        }
-    }
-    return bpOperations;
 }
 
 #define declare_template_instantiation(T)                                      \

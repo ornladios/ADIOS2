@@ -38,10 +38,6 @@ public:
     void GetMetadata(const std::vector<char> &buffer, Params &info) const
         noexcept;
 
-    virtual void GetData(const char *input,
-                         const helper::BlockOperationInfo &blockOperationInfo,
-                         char *dataOutput) const = 0;
-
     template <class T>
     void SetData(const core::Variable<T> &variable,
                  const typename core::Variable<T>::BPInfo &blockInfo,
