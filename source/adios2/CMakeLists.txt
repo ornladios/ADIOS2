@@ -5,8 +5,8 @@
 
 add_library(adios2_core
   common/ADIOSTypes.cpp
-  
-  core/Attribute.cpp 
+
+  core/Attribute.cpp
   core/AttributeBase.cpp
   core/ADIOS.cpp
   core/Engine.cpp
@@ -36,7 +36,7 @@ add_library(adios2_core
   helper/adiosXMLUtil.cpp
   helper/adiosYAML.cpp
 
-#engine derived classes  
+#engine derived classes
   engine/bp3/BP3Reader.cpp engine/bp3/BP3Reader.tcc
   engine/bp3/BP3Writer.cpp engine/bp3/BP3Writer.tcc
 
@@ -48,7 +48,7 @@ add_library(adios2_core
 
   engine/inline/InlineReader.cpp engine/inline/InlineReader.tcc
   engine/inline/InlineWriter.cpp engine/inline/InlineWriter.tcc
-  
+
   engine/null/NullEngine.cpp
 
   engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
@@ -69,18 +69,10 @@ add_library(adios2_core
   toolkit/format/bp/bp4/BP4Base.cpp
   toolkit/format/bp/bp4/BP4Serializer.cpp toolkit/format/bp/bp4/BP4Serializer.tcc
   toolkit/format/bp/bp4/BP4Deserializer.cpp toolkit/format/bp/bp4/BP4Deserializer.tcc
-  
+
   toolkit/format/bp/bpOperation/BPOperation.cpp
   toolkit/format/bp/bpOperation/BPOperation.tcc
-  toolkit/format/bp/bpOperation/compress/BPZFP.cpp
-  toolkit/format/bp/bpOperation/compress/BPSZ.cpp
-  toolkit/format/bp/bpOperation/compress/BPSirius.cpp
-  toolkit/format/bp/bpOperation/compress/BPMGARD.cpp
-  toolkit/format/bp/bpOperation/compress/BPPNG.cpp
-  toolkit/format/bp/bpOperation/compress/BPBZIP2.cpp
-  toolkit/format/bp/bpOperation/compress/BPBlosc.cpp
-  toolkit/format/bp/bpOperation/compress/BPLIBPRESSIO.cpp
-  
+
   toolkit/profiling/iochrono/Timer.cpp
   toolkit/profiling/iochrono/IOChrono.cpp
 
@@ -102,6 +94,8 @@ add_library(adios2_core
 
   toolkit/burstbuffer/FileDrainer.cpp
   toolkit/burstbuffer/FileDrainerSingleThread.cpp
+
+  operator/compress/CompressorFactory.cpp
 )
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)
@@ -121,7 +115,7 @@ if(UNIX)
 endif()
 
 if (ADIOS2_HAVE_BP5)
-  target_sources(adios2_core PRIVATE 
+  target_sources(adios2_core PRIVATE
     engine/bp5/BP5Engine.cpp
     engine/bp5/BP5Reader.cpp engine/bp5/BP5Reader.tcc
     engine/bp5/BP5Writer.cpp engine/bp5/BP5Writer.tcc engine/bp5/BP5Writer_TwoLevelShm.cpp
@@ -129,7 +123,7 @@ if (ADIOS2_HAVE_BP5)
 endif()
 
 if (ADIOS2_HAVE_BP5 OR ADIOS2_HAVE_SST)
-  target_sources(adios2_core PRIVATE 
+  target_sources(adios2_core PRIVATE
     toolkit/format/buffer/ffs/BufferFFS.cpp
     toolkit/format/bp5/BP5Base.cpp
     toolkit/format/bp5/BP5Serializer.cpp

@@ -35,12 +35,8 @@ public:
      * @param buffer contains serialized metadata buffer
      * @param info parameters info from metadata buffer
      */
-    virtual void GetMetadata(const std::vector<char> &buffer,
-                             Params &info) const noexcept = 0;
-
-    virtual void GetData(const char *input,
-                         const helper::BlockOperationInfo &blockOperationInfo,
-                         char *dataOutput) const = 0;
+    void GetMetadata(const std::vector<char> &buffer, Params &info) const
+        noexcept;
 
     template <class T>
     void SetData(const core::Variable<T> &variable,

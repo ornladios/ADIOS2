@@ -354,14 +354,7 @@ void BPSerializer::PutCharacteristicOperation(
     const typename core::Variable<T>::BPInfo &blockInfo,
     std::vector<char> &buffer) noexcept
 {
-    // TODO: we only take the first operation for now
-    const std::map<size_t, std::shared_ptr<BPOperation>> bpOperations =
-        SetBPOperations(blockInfo.Operations);
-
-    const size_t operationIndex = bpOperations.begin()->first;
-    std::shared_ptr<BPOperation> bpOperation = bpOperations.begin()->second;
-
-    auto &operation = blockInfo.Operations[operationIndex];
+    auto &operation = blockInfo.Operations[0];
 
     const std::string type = operation.Op->m_Type;
     const uint8_t typeLength = static_cast<uint8_t>(type.size());
@@ -379,7 +372,8 @@ void BPSerializer::PutCharacteristicOperation(
     PutDimensionsRecord(blockInfo.Count, blockInfo.Shape, blockInfo.Start,
                         buffer);
     // here put the metadata info depending on operation
-    bpOperation->SetMetadata(variable, blockInfo, operation, buffer);
+    BPOperation bpOperation;
+    bpOperation.SetMetadata(variable, blockInfo, operation, buffer);
 }
 
 template <class T>
@@ -387,24 +381,16 @@ void BPSerializer::PutOperationPayloadInBuffer(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo)
 {
-    // TODO: we only take the first operation for now
-    const std::map<size_t, std::shared_ptr<BPOperation>> bpOperations =
-        SetBPOperations(blockInfo.Operations);
 
-    const size_t operationIndex = bpOperations.begin()->first;
-    const std::shared_ptr<BPOperation> bpOperation =
-        bpOperations.begin()->second;
-
-    bpOperation->SetData(variable, blockInfo,
-                         blockInfo.Operations[operationIndex], m_Data);
+    BPOperation bpOperation;
+    bpOperation.SetData(variable, blockInfo, blockInfo.Operations[0], m_Data);
 
     // update metadata
     bool isFound = false;
     SerialElementIndex &variableIndex = GetSerialElementIndex(
         variable.m_Name, m_MetadataSet.VarsIndices, isFound);
-    bpOperation->UpdateMetadata(variable, blockInfo,
-                                blockInfo.Operations[operationIndex],
-                                variableIndex.Buffer);
+    bpOperation.UpdateMetadata(variable, blockInfo, blockInfo.Operations[0],
+                               variableIndex.Buffer);
 }
 
 } // end namespace format
