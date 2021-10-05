@@ -22,7 +22,6 @@ program TestBPWriteReadHeatMapZfp2DRemove
   integer(kind=8), dimension(2) :: sel_start, sel_count
   integer :: ierr, irank, isize
   integer :: in1, in2
-  integer :: i1, i2
 
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
