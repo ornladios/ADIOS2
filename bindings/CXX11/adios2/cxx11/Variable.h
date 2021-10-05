@@ -300,7 +300,7 @@ public:
 
     /**
      * Removes all current Operations associated with AddOperation.
-     * Provides the posibility to apply or not operators on a step basis.
+     * Provides the posibility to apply or not operators on a block basis.
      */
     void RemoveOperations();
 
