@@ -10,7 +10,7 @@ program TestBPWriteReadHeatMapZfp2DRemove
   type(adios2_variable), dimension(2) :: var_temperatures, var_temperaturesIn
   type(adios2_operator) :: zfp_operator
   integer:: operation_id
-  integer(kind=4) :: step_status, i, x,y
+  integer(kind=4) :: step_status, i
 
   real(kind=4), dimension(:, :), allocatable :: temperatures_r4, &
                                                 sel_temperatures_r4
