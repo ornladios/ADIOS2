@@ -322,6 +322,13 @@ void FC_GLOBAL(adios2_set_operation_parameter_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_remove_operations_f2c,
+               ADIOS2_REMOVE_OPERATIONS_F2C)(adios2_variable **variable,
+                                             int *ierr)
+{
+    *ierr = static_cast<int>(adios2_remove_operations(*variable));
+}
+
 void FC_GLOBAL(adios2_variable_min_f2c,
                ADIOS2_VARIABLE_MIN_F2C)(void *min,
                                         const adios2_variable **variable,
