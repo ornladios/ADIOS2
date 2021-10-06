@@ -229,6 +229,14 @@ adios2_error adios2_set_operation_parameter(adios2_variable *variable,
                                             const char *key, const char *value);
 
 /**
+ * Removes all current Operations associated with AddOperation.
+ * Provides the posibility to apply or not operators on a block basis.
+ * @param variable handler on which operation is applied to
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_remove_operations(adios2_variable *variable);
+
+/**
  * Read mode only: return the absolute minimum for current variable
  * @param min output: variable minimum, must be of the same type as the variable
  * handler

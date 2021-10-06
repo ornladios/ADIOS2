@@ -5,4 +5,5 @@ endif()
 
 if(ADIOS2_HAVE_ZFP)
   fortran_add_test_helper(BPWriteReadZfp2D MPI_ONLY)
+  fortran_add_test_helper(BPWriteReadZfp2DRemove MPI_ONLY)
 endif()
