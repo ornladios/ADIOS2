@@ -12,6 +12,7 @@
 #ifndef ADIOS2_HELPER_ADIOSFUNCTIONS_H_
 #define ADIOS2_HELPER_ADIOSFUNCTIONS_H_
 
+#include "adios2/helper/adiosCUDA.h"    //CUDA functions
 #include "adios2/helper/adiosMath.h"    //math functions (cmath, algorithm)
 #include "adios2/helper/adiosMemory.h"  //memcpy, std::copy, insert, resize
 #include "adios2/helper/adiosNetwork.h" //network and staging functions

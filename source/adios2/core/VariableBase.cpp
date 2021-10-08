@@ -38,9 +38,30 @@ VariableBase::VariableBase(const std::string &name, const DataType type,
     InitShapeType();
 }
 
+bool VariableBase::IsCUDAPointer(void *ptr)
+{
+    if (m_MemorySpace == MemorySpace::CUDA)
+        return true;
+    if (m_MemorySpace == MemorySpace::Host)
+        return false;
+
+#ifdef ADIOS2_HAVE_CUDA
+    cudaPointerAttributes attr;
+    cudaPointerGetAttributes(&attr, ptr);
+    return attr.type == cudaMemoryTypeDevice;
+#endif
+
+    return false;
+}
+
 size_t VariableBase::TotalSize() const noexcept
 {
     return helper::GetTotalSize(m_Count);
+}
+
+void VariableBase::SetMemorySpace(const MemorySpace mem)
+{
+    m_MemorySpace = mem;
 }
 
 void VariableBase::SetShape(const adios2::Dims &shape)

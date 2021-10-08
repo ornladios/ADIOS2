@@ -49,6 +49,7 @@ namespace core
         info.StepsCount = stepsCount;                                          \
         info.Data = const_cast<T *>(data);                                     \
         info.Operations = m_Operations;                                        \
+        info.IsGPU = IsCUDAPointer((void *)data);                              \
         m_BlocksInfo.push_back(info);                                          \
         return m_BlocksInfo.back();                                            \
     }                                                                          \

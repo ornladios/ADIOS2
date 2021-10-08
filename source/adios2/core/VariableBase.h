@@ -46,6 +46,7 @@ public:
     /** Variable -> sizeof(T),
      *  VariableCompound -> from constructor sizeof(struct) */
     const size_t m_ElementSize;
+    MemorySpace m_MemorySpace = MemorySpace::Host;
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
     size_t m_BlockID = 0; ///< current block ID for local variables, global = 0
@@ -123,6 +124,18 @@ public:
      * @return number of elements
      */
     size_t TotalSize() const noexcept;
+
+    /**
+     * Check if buffer is allocated on CUDA space
+     * @param pointer to the user data
+     */
+    bool IsCUDAPointer(void *ptr);
+
+    /**
+     * Set the memory space
+     * @param the memory space where the expected buffers were allocated
+     */
+    void SetMemorySpace(const MemorySpace mem);
 
     /**
      * Set new shape

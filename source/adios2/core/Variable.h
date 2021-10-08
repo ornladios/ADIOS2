@@ -112,6 +112,7 @@ public:
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
         bool IsReverseDims = false;
+        bool IsGPU = false;
     };
 
     /** use for multiblock info */

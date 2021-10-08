@@ -32,6 +32,12 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    void Variable<T>::SetMemorySpace(const MemorySpace mem)                    \
+    {                                                                          \
+        m_Variable->SetMemorySpace(mem);                                       \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     void Variable<T>::SetShape(const Dims &shape)                              \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \
