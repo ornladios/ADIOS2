@@ -229,6 +229,10 @@ private:
     // variables to delay writing to index file
     uint64_t m_LatestMetaDataPos;
     uint64_t m_LatestMetaDataSize;
+    Seconds m_TimeBetweenSteps = Seconds(0.0);
+    TimePoint m_EndStepEnd;
+    TimePoint m_EngineStart;
+    TimePoint m_BeginStepStart;
 
     void MakeHeader(format::BufferSTL &b, const std::string fileType,
                     const bool isActive);

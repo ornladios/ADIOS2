@@ -160,7 +160,8 @@ public:
      * @param start offset in file
      */
     void WriteFileAt(const core::iovec *iov, const size_t iovcnt,
-                     const size_t start, const int transportIndex = -1);
+                     const size_t totalsize, const size_t start,
+                     const double deadline, const int transportIndex = -1);
 
     size_t GetFileSize(const size_t transportIndex = 0) const;
 

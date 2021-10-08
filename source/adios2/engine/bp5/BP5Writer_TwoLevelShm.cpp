@@ -172,8 +172,8 @@ void BP5Writer::WriteMyOwnData(format::BufferV *Data)
 {
     std::vector<core::iovec> DataVec = Data->DataVec();
     m_StartDataPos = m_DataPos;
-    m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(),
-                                  m_StartDataPos);
+    m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), Data->Size(),
+                                  m_StartDataPos, 0.0);
     m_DataPos += Data->Size();
 }
 

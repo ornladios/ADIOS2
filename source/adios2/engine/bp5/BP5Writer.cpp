@@ -36,6 +36,7 @@ BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
   m_FileMetadataIndexManager(m_Comm), m_FileMetaMetadataManager(m_Comm),
   m_Profiler(m_Comm)
 {
+    m_EngineStart = Now();
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
     m_IO.m_ReadStreaming = false;
 
@@ -50,18 +51,35 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
                                "without an intervening EndStep()");
     }
 
+    Seconds ts = Now() - m_EngineStart;
+    std::cout << "BEGIN STEP starts at: " << ts.count() << std::endl;
     m_BetweenStepPairs = true;
+
+    if (m_WriterStep > 0)
+    {
+        m_TimeBetweenSteps = Now() - m_EndStepEnd;
+    }
 
     if (m_Parameters.AsyncWrite)
     {
+        TimePoint wait_start = Now();
         if (m_WriteFuture.valid())
         {
             m_WriteFuture.get();
             m_Comm.Barrier();
+            Seconds wait = Now() - wait_start;
+            std::cout << "  BeginStep, wait on async write was = "
+                      << wait.count() << " time since EndStep was = "
+                      << m_TimeBetweenSteps.count() << std::endl;
             if (m_Comm.Rank() == 0)
             {
                 WriteMetadataFileIndex(m_LatestMetaDataPos,
                                        m_LatestMetaDataSize);
+            }
+            m_TimeBetweenSteps -= wait;
+            if (m_TimeBetweenSteps.count() < 0.0)
+            {
+                m_TimeBetweenSteps = Seconds(0.0);
             }
         }
     }
@@ -80,6 +98,8 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
     }
     m_ThisTimestepDataSize = 0;
 
+    ts = Now() - m_EngineStart;
+    std::cout << "BEGIN STEP ended at: " << ts.count() << std::endl;
     return StepStatus::OK;
 }
 
@@ -191,11 +211,16 @@ void BP5Writer::WriteData(format::BufferV *Data)
 void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
                                          bool SerializedWriters)
 {
-    auto lf_AsyncWrite = [&](adios2::format::BufferV *Data,
-                             uint64_t startPos) -> int {
+    auto lf_AsyncWrite = [&](adios2::format::BufferV *Data, uint64_t startPos,
+                             double deadline) -> int {
+        Seconds ts = Now() - m_EngineStart;
+        std::cout << "ASYNC starts at: " << ts.count() << std::endl;
         std::vector<core::iovec> DataVec = Data->DataVec();
-        m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), startPos);
+        m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(),
+                                      Data->Size(), startPos, deadline);
         delete Data;
+        ts = Now() - m_EngineStart;
+        std::cout << "ASYNC ended at: " << ts.count() << std::endl;
         return 1;
     };
 
@@ -227,15 +252,15 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
     m_DataPos += Data->Size();
     if (m_Parameters.AsyncWrite)
     {
-        m_WriteFuture =
-            std::async(std::launch::async, lf_AsyncWrite, Data, m_StartDataPos);
+        m_WriteFuture = std::async(std::launch::async, lf_AsyncWrite, Data,
+                                   m_StartDataPos, m_TimeBetweenSteps.count());
         // At this point modifying Data in main thread is prohibited !!!
     }
     else
     {
         std::vector<core::iovec> DataVec = Data->DataVec();
         m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(),
-                                      m_StartDataPos);
+                                      Data->Size(), m_StartDataPos, 0.0);
     }
 
     if (SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
@@ -392,6 +417,8 @@ void BP5Writer::MarshalAttributes()
 
 void BP5Writer::EndStep()
 {
+    Seconds ts = Now() - m_EngineStart;
+    std::cout << "END STEP starts at: " << ts.count() << std::endl;
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Writer::EndStep");
     m_Profiler.Start("endstep");
@@ -470,6 +497,9 @@ void BP5Writer::EndStep()
     delete RecvBuffer;
     m_Profiler.Stop("endstep");
     m_WriterStep++;
+    m_EndStepEnd = Now();
+    Seconds ts2 = Now() - m_EngineStart;
+    std::cout << "END STEP ended at: " << ts2.count() << std::endl;
 }
 
 // PRIVATE

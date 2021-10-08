@@ -118,6 +118,10 @@ public:
     virtual void WriteV(const core::iovec *iov, const int iovcnt,
                         size_t start = MaxSizeT);
 
+    virtual void WriteV(const core::iovec *iov, const int iovcnt,
+                        const size_t totalsize, const double deadline_sec,
+                        size_t start = MaxSizeT);
+
     /**
      * Reads from transport "size" bytes from a certain position. Note that size
      * and position and non-const due to the nature of underlying transport

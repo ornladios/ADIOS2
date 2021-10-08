@@ -288,7 +288,8 @@ void TransportMan::WriteFiles(const core::iovec *iov, const size_t iovcnt,
 }
 
 void TransportMan::WriteFileAt(const core::iovec *iov, const size_t iovcnt,
-                               const size_t start, const int transportIndex)
+                               const size_t totalsize, const size_t start,
+                               const double deadline, const int transportIndex)
 {
     if (transportIndex == -1)
     {
@@ -297,7 +298,8 @@ void TransportMan::WriteFileAt(const core::iovec *iov, const size_t iovcnt,
             auto &transport = transportPair.second;
             if (transport->m_Type == "File")
             {
-                transport->WriteV(iov, static_cast<int>(iovcnt), start);
+                transport->WriteV(iov, static_cast<int>(iovcnt), totalsize,
+                                  deadline, start);
             }
         }
     }
@@ -306,7 +308,8 @@ void TransportMan::WriteFileAt(const core::iovec *iov, const size_t iovcnt,
         auto itTransport = m_Transports.find(transportIndex);
         CheckFile(itTransport, ", in call to WriteFileAt with index " +
                                    std::to_string(transportIndex));
-        itTransport->second->WriteV(iov, static_cast<int>(iovcnt), start);
+        itTransport->second->WriteV(iov, static_cast<int>(iovcnt), totalsize,
+                                    deadline, start);
     }
 }
 
