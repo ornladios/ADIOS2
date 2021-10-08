@@ -133,8 +133,8 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
         {
             if (false)
                 ;
-#define declare_assign(T, N)                                                   \
-    else if (#T == ToString(helper::GetDataType<T>()))                         \
+#define declare_assign(F, N)                                                   \
+    else if (#F == ToString(helper::GetDataType<F>()))                         \
     {                                                                          \
         minMax.first = MM.MinUnion.field_##N;                                  \
         minMax.second = MM.MaxUnion.field_##N;                                 \
