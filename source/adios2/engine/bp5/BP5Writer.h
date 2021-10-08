@@ -224,6 +224,12 @@ private:
 
     std::vector<std::vector<size_t>> FlushPosSizeInfo;
 
+    /* Async write's future */
+    std::future<int> m_WriteFuture;
+    // variables to delay writing to index file
+    uint64_t m_LatestMetaDataPos;
+    uint64_t m_LatestMetaDataSize;
+
     void MakeHeader(format::BufferSTL &b, const std::string fileType,
                     const bool isActive);
 };

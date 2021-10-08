@@ -51,6 +51,21 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     m_BetweenStepPairs = true;
+
+    if (m_Parameters.AsyncWrite)
+    {
+        if (m_WriteFuture.valid())
+        {
+            m_WriteFuture.get();
+            m_Comm.Barrier();
+            if (m_Comm.Rank() == 0)
+            {
+                WriteMetadataFileIndex(m_LatestMetaDataPos,
+                                       m_LatestMetaDataSize);
+            }
+        }
+    }
+
     if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
     {
         m_BP5Serializer.InitStep(new MallocV("BP5Writer", false,
@@ -145,32 +160,47 @@ BP5Writer::WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks,
 
 void BP5Writer::WriteData(format::BufferV *Data)
 {
-    switch (m_Parameters.AggregationType)
+    if (m_Parameters.AsyncWrite)
     {
-    case (int)AggregationType::EveryoneWrites:
+        // Async IO requires everyone writing
         WriteData_EveryoneWrites(Data, false);
-        break;
-    case (int)AggregationType::EveryoneWritesSerial:
-        WriteData_EveryoneWrites(Data, true);
-        break;
-    case (int)AggregationType::TwoLevelShm:
-        WriteData_TwoLevelShm(Data);
-        break;
-    default:
-        throw std::invalid_argument(
-            "Aggregation method " +
-            std::to_string(m_Parameters.AggregationType) +
-            "is not supported in BP5");
+    }
+    else
+    {
+        switch (m_Parameters.AggregationType)
+        {
+        case (int)AggregationType::EveryoneWrites:
+            WriteData_EveryoneWrites(Data, false);
+            break;
+        case (int)AggregationType::EveryoneWritesSerial:
+            WriteData_EveryoneWrites(Data, true);
+            break;
+        case (int)AggregationType::TwoLevelShm:
+            WriteData_TwoLevelShm(Data);
+            break;
+        default:
+            throw std::invalid_argument(
+                "Aggregation method " +
+                std::to_string(m_Parameters.AggregationType) +
+                "is not supported in BP5");
+        }
+        delete Data;
     }
 }
 
 void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
                                          bool SerializedWriters)
 {
+    auto lf_AsyncWrite = [&](adios2::format::BufferV *Data,
+                             uint64_t startPos) -> int {
+        std::vector<core::iovec> DataVec = Data->DataVec();
+        m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), startPos);
+        delete Data;
+        return 1;
+    };
+
     const aggregator::MPIChain *a =
         dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
-
-    std::vector<core::iovec> DataVec = Data->DataVec();
 
     // new step writing starts at offset m_DataPos on aggregator
     // others will wait for the position to arrive from the rank below
@@ -194,9 +224,19 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
                         "Chain token in BP5Writer::WriteData");
     }
 
-    m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(),
-                                  m_StartDataPos);
     m_DataPos += Data->Size();
+    if (m_Parameters.AsyncWrite)
+    {
+        m_WriteFuture =
+            std::async(std::launch::async, lf_AsyncWrite, Data, m_StartDataPos);
+        // At this point modifying Data in main thread is prohibited !!!
+    }
+    else
+    {
+        std::vector<core::iovec> DataVec = Data->DataVec();
+        m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(),
+                                      m_StartDataPos);
+    }
 
     if (SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
@@ -364,11 +404,15 @@ void BP5Writer::EndStep()
      * AttributeEncodeBuffer and the data encode Vector */
     /* the first */
 
-    m_Profiler.Start("AWD");
-    WriteData(TSInfo.DataBuffer);
-    m_Profiler.Stop("AWD");
-
     m_ThisTimestepDataSize += TSInfo.DataBuffer->Size();
+
+    m_Profiler.Start("AWD");
+    // TSInfo destructor would delete the DataBuffer so we need to save it
+    // for async IO and let the writer free it up when not needed anymore
+    adios2::format::BufferV *databuf = TSInfo.DataBuffer;
+    TSInfo.DataBuffer = NULL;
+    WriteData(databuf);
+    m_Profiler.Stop("AWD");
 
     std::vector<char> MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
         TSInfo.NewMetaMetaBlocks, TSInfo.MetaEncodeBuffer,
@@ -416,9 +460,12 @@ void BP5Writer::EndStep()
                                                       m_Assignment.size());
         }
         WriteMetaMetadata(UniqueMetaMetaBlocks);
-        uint64_t ThisMetaDataPos = m_MetaDataPos;
-        uint64_t ThisMetaDataSize = WriteMetadata(Metadata, AttributeBlocks);
-        WriteMetadataFileIndex(ThisMetaDataPos, ThisMetaDataSize);
+        m_LatestMetaDataPos = m_MetaDataPos;
+        m_LatestMetaDataSize = WriteMetadata(Metadata, AttributeBlocks);
+        if (!m_Parameters.AsyncWrite)
+        {
+            WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+        }
     }
     delete RecvBuffer;
     m_Profiler.Stop("endstep");
@@ -506,6 +553,12 @@ void BP5Writer::InitAggregator()
     // m_Aggregator.m_IsActive is always true
     // m_Aggregator.m_Comm.Rank() will always succeed (not abort)
     // m_Aggregator.m_SubFileIndex is always set
+
+    if (m_Parameters.AsyncWrite)
+    {
+        m_Parameters.AggregationType = (int)AggregationType::EveryoneWrites;
+    }
+
     if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites ||
         m_Parameters.AggregationType ==
             (int)AggregationType::EveryoneWritesSerial)
@@ -914,6 +967,12 @@ void BP5Writer::DoClose(const int transportIndex)
     {
         EndStep();
     }
+
+    if (m_WriteFuture.valid())
+    {
+        m_WriteFuture.get();
+    }
+
     m_FileDataManager.CloseFiles(transportIndex);
     // Delete files from temporary storage if draining was on
 
@@ -924,7 +983,20 @@ void BP5Writer::DoClose(const int transportIndex)
 
         // close metametadata file
         m_FileMetaMetadataManager.CloseFiles();
+    }
 
+    if (m_Parameters.AsyncWrite)
+    {
+        // wait until all process' writing thread completes
+        m_Comm.Barrier();
+    }
+
+    if (m_Comm.Rank() == 0)
+    {
+        if (m_Parameters.AsyncWrite)
+        {
+            WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+        }
         // close metadata index file
         m_FileMetadataIndexManager.CloseFiles();
     }

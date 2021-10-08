@@ -122,6 +122,7 @@ public:
     MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)          \
     MACRO(MaxShmSize, SizeBytes, size_t, DefaultMaxShmSize)                    \
     MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)         \
+    MACRO(AsyncWrite, Bool, bool, false)                                       \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)
 
     struct BP5Params
