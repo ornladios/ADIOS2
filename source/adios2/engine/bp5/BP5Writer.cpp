@@ -671,11 +671,11 @@ void BP5Writer::InitTransports()
 
     /* Everyone opens its data file. Each aggregation chain opens
        one data file and does so in chain, not everyone at once */
-    if (m_Parameters.AsyncTasks)
+    if (m_Parameters.AsyncOpen)
     {
         for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
         {
-            m_IO.m_TransportsParameters[i]["asynctasks"] = "true";
+            m_IO.m_TransportsParameters[i]["asyncopen"] = "true";
         }
     }
 

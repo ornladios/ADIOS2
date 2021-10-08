@@ -228,7 +228,6 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
             auto &transport = transportPair.second;
             if (transport->m_Type == "File")
             {
-                // make this truly asynch?
                 transport->Write(buffer, size);
             }
         }
@@ -275,7 +274,6 @@ void TransportMan::WriteFiles(const core::iovec *iov, const size_t iovcnt,
             auto &transport = transportPair.second;
             if (transport->m_Type == "File")
             {
-                // make this truly asynch?
                 transport->WriteV(iov, static_cast<int>(iovcnt));
             }
         }
@@ -579,12 +577,12 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
         return helper::StringToTimeUnit(profileUnits);
     };
 
-    auto lf_GetAsync = [&](const std::string defaultAsync,
-                           const Params &parameters) -> bool {
-        std::string Async = defaultAsync;
-        helper::SetParameterValue("AsyncTasks", parameters, Async);
-        helper::SetParameterValue("asynctasks", parameters, Async);
-        return helper::StringTo<bool>(Async, "");
+    auto lf_GetAsyncOpen = [&](const std::string defaultAsync,
+                               const Params &parameters) -> bool {
+        std::string AsyncOpen = defaultAsync;
+        helper::SetParameterValue("AsyncOpen", parameters, AsyncOpen);
+        helper::SetParameterValue("asyncopen", parameters, AsyncOpen);
+        return helper::StringTo<bool>(AsyncOpen, "");
     };
 
     // BODY OF FUNCTION starts here
@@ -605,11 +603,12 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     if (useComm)
     {
         transport->OpenChain(fileName, openMode, chainComm,
-                             lf_GetAsync("true", parameters));
+                             lf_GetAsyncOpen("true", parameters));
     }
     else
     {
-        transport->Open(fileName, openMode, lf_GetAsync("false", parameters));
+        transport->Open(fileName, openMode,
+                        lf_GetAsyncOpen("false", parameters));
     }
     return transport;
 }

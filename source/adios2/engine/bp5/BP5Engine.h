@@ -115,14 +115,14 @@ public:
     MACRO(FileSystemPageSize, UInt, unsigned int, 4096)                        \
     MACRO(AggregationType, AggregationType, int,                               \
           (int)AggregationType::TwoLevelShm)                                   \
-    MACRO(AsyncTasks, Bool, bool, true)                                        \
+    MACRO(AsyncOpen, Bool, bool, true)                                         \
+    MACRO(AsyncWrite, Bool, bool, false)                                       \
     MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)               \
     MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \
     MACRO(MinDeferredSize, SizeBytes, size_t, DefaultMinDeferredSize)          \
     MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)          \
     MACRO(MaxShmSize, SizeBytes, size_t, DefaultMaxShmSize)                    \
     MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)         \
-    MACRO(AsyncWrite, Bool, bool, false)                                       \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)
 
     struct BP5Params

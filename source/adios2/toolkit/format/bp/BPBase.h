@@ -189,9 +189,9 @@ public:
         /** default time unit in m_Profiler */
         TimeUnit ProfileUnit = DefaultTimeUnitEnum;
 
-        /** true: run as much local tasks in the background,
+        /** true: open files for write asynchronously,
          * false: all serial operations */
-        bool AsyncTasks = true;
+        bool AsyncOpen = true;
 
         /** true: write collective metadata, false: skip */
         bool CollectiveMetadata = true;
