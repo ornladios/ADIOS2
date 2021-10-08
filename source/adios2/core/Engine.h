@@ -455,6 +455,13 @@ public:
 #define declare_field(T, N) T field_##N;
         ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(declare_field)
 #undef declare_field
+#define declare_get(T, N)                                                      \
+    T Get(T def) { return field_##N; }
+        ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(declare_get)
+#undef declare_get
+        std::string Get(std::string def) { return def; }
+        std::complex<float> Get(std::complex<float> def) { return def; }
+        std::complex<double> Get(std::complex<double> def) { return def; }
     };
 
     struct MinBlockInfo

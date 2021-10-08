@@ -131,16 +131,8 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
         Engine::MinMaxStruct MM;
         if (m_Engine->VariableMinMax(*this, step, MM))
         {
-            if (false)
-                ;
-#define declare_assign(F, N)                                                   \
-    else if (#F == ToString(helper::GetDataType<F>()))                         \
-    {                                                                          \
-        minMax.first = MM.MinUnion.field_##N;                                  \
-        minMax.second = MM.MaxUnion.field_##N;                                 \
-    }
-            ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(declare_assign)
-
+            minMax.first = MM.MinUnion.Get(minMax.first);
+            minMax.second = MM.MaxUnion.Get(minMax.second);
             return minMax;
         }
     }
