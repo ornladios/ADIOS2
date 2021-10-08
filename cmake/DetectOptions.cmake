@@ -141,6 +141,16 @@ endif()
 
 set(mpi_find_components C)
 
+# Cuda
+if(ADIOS2_USE_CUDA STREQUAL AUTO)
+  find_package(CUDAToolkit)
+elseif(ADIOS2_USE_CUDA)
+  find_package(CUDAToolkit REQUIRED)
+endif()
+if(CUDAToolkit_FOUND)
+  set(ADIOS2_HAVE_CUDA TRUE)
+endif()
+
 # Fortran
 if(ADIOS2_USE_Fortran STREQUAL AUTO)
   include(CheckLanguage)
