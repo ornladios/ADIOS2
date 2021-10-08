@@ -54,6 +54,8 @@ public:
     void PerformGets() final;
 
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
+    bool VariableMinMax(const VariableBase &, const size_t Step,
+                        MinMaxStruct &MinMax);
 
 private:
     format::BP5Deserializer *m_BP5Deserializer = nullptr;

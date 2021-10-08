@@ -182,11 +182,41 @@ FMField dcomplex_field_list[] = {
     {"imag", "float", sizeof(double), FMOffset(dcomplex_struct *, imag_part)},
     {NULL, NULL, 0, 0}};
 
-char *BP5Serializer::ConcatName(const char *base_name, const char *postfix)
+const char *BP5Serializer::NamePrefix(ShapeID Shape)
 {
-    char *Ret = (char *)malloc(strlen("SST_") + strlen(base_name) +
-                               strlen(postfix) + 1);
-    strcpy(Ret, "SST_");
+    const char *Prefix = "BP5";
+    switch (Shape)
+    {
+    case ShapeID::Unknown:
+        Prefix = "BPU";
+        break;
+    case ShapeID::GlobalValue:
+        Prefix = "BPg";
+        break;
+    case ShapeID::GlobalArray:
+        Prefix = "BPG";
+        break;
+    case ShapeID::JoinedArray:
+        Prefix = "BPJ";
+        break;
+    case ShapeID::LocalValue:
+        Prefix = "BPl";
+        break;
+    case ShapeID::LocalArray:
+        Prefix = "BPL";
+        break;
+    }
+    return Prefix;
+}
+
+char *BP5Serializer::ConcatName(const char *base_name, const char *postfix,
+                                ShapeID Shape)
+{
+    const char *Prefix = NamePrefix(Shape);
+    char *Ret = (char *)malloc(strlen(Prefix) + strlen(base_name) +
+                               strlen(postfix) + 2);
+    strcpy(Ret, Prefix);
+    strcat(Ret, "_");
     strcat(Ret, base_name);
     strcat(Ret, postfix);
     return Ret;
@@ -195,9 +225,10 @@ char *BP5Serializer::ConcatName(const char *base_name, const char *postfix)
 char *BP5Serializer::BuildVarName(const char *base_name, const int type,
                                   const int element_size)
 {
-    int Len = strlen(base_name) + 2 + strlen("SST_") + 16;
+    const char *Prefix = NamePrefix(ShapeID::GlobalValue);
+    int Len = strlen(base_name) + 2 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
-    sprintf(Ret, "SST%d_%d_", element_size, type);
+    sprintf(Ret, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
     return Ret;
 }
@@ -208,7 +239,7 @@ void BP5Serializer::BreakdownVarName(const char *Name, char **base_name_p,
     int Type;
     int ElementSize;
     const char *NameStart = strchr(strchr(Name, '_') + 1, '_') + 1;
-    sscanf(Name, "SST%d_%d_", &ElementSize, &Type);
+    sscanf(Name + 3, "%d_%d_", &ElementSize, &Type);
     *element_size_p = ElementSize;
     *type_p = Type;
     *base_name_p = strdup(NameStart);
@@ -217,9 +248,10 @@ void BP5Serializer::BreakdownVarName(const char *Name, char **base_name_p,
 char *BP5Serializer::BuildArrayDimsName(const char *base_name, const int type,
                                         const int element_size)
 {
-    int Len = strlen(base_name) + 3 + strlen("SST_") + 16;
+    const char *Prefix = NamePrefix(ShapeID::GlobalArray);
+    int Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
-    sprintf(Ret, "SST%d_%d_", element_size, type);
+    sprintf(Ret, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
     strcat(Ret, "Dims");
     return Ret;
@@ -229,9 +261,10 @@ char *BP5Serializer::BuildArrayDBCountName(const char *base_name,
                                            const int type,
                                            const int element_size)
 {
-    int Len = strlen(base_name) + 3 + strlen("SST_") + 16;
+    const char *Prefix = NamePrefix(ShapeID::GlobalArray);
+    int Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
-    sprintf(Ret, "SST%d_%d_", element_size, type);
+    sprintf(Ret, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
     strcat(Ret, "DBCount");
     return Ret;
@@ -241,9 +274,10 @@ char *BP5Serializer::BuildArrayBlockCountName(const char *base_name,
                                               const int type,
                                               const int element_size)
 {
-    int Len = strlen(base_name) + 3 + strlen("SST_") + 24;
+    const char *Prefix = NamePrefix(ShapeID::GlobalArray);
+    int Len = strlen(base_name) + 3 + strlen(Prefix) + 24;
     char *Ret = (char *)malloc(Len);
-    sprintf(Ret, "SST%d_%d_", element_size, type);
+    sprintf(Ret, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
     strcat(Ret, "BlockCount");
     return Ret;
@@ -320,6 +354,7 @@ BP5Serializer::BP5WriterRec
 BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
                                size_t ElemSize, size_t DimCount)
 {
+    core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
     Info.RecList = (BP5WriterRec)realloc(
         Info.RecList, (Info.RecCount + 1) * sizeof(Info.RecList[0]));
     BP5WriterRec Rec = &Info.RecList[Info.RecCount];
@@ -332,7 +367,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
     if (DimCount == 0)
     {
         // simple field, only add base value FMField to metadata
-        char *SstName = ConcatName(Name, "");
+        char *SstName = ConcatName(Name, "", VB->m_ShapeID);
         AddField(&Info.MetaFields, &Info.MetaFieldCount, SstName, Type,
                  ElemSize);
         free(SstName);

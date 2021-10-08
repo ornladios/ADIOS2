@@ -427,6 +427,12 @@ Engine::MinVarInfo *BP5Reader::MinBlocksInfo(const VariableBase &Var,
     return m_BP5Deserializer->MinBlocksInfo(Var, Step);
 }
 
+bool BP5Reader::VariableMinMax(const VariableBase &Var, const size_t Step,
+                               Engine::MinMaxStruct &MinMax)
+{
+    return m_BP5Deserializer->VariableMinMax(Var, Step, MinMax);
+}
+
 void BP5Reader::InitTransports()
 {
     if (m_IO.m_TransportsParameters.empty())

@@ -110,6 +110,7 @@ private:
     {
         void *Key;
         int FieldID;
+        ShapeID Shape;
         size_t DataOffset;
         size_t MetaOffset;
         int DimCount;
@@ -169,7 +170,9 @@ private:
     void AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
                           const DataType Type, int ElementSize,
                           char *SizeField);
-    char *ConcatName(const char *base_name, const char *postfix);
+    char *ConcatName(const char *base_name, const char *postfix,
+                     ShapeID Shape = ShapeID::Unknown);
+    const char *NamePrefix(ShapeID Shape);
     char *BuildVarName(const char *base_name, const int type,
                        const int element_size);
     void BreakdownVarName(const char *Name, char **base_name_p, int *type_p,

@@ -245,6 +245,20 @@
     MACRO(std::complex<float>, cfloat)                                         \
     MACRO(std::complex<double>, cdouble)
 
+#define ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(MACRO)                             \
+    MACRO(int8_t, int8)                                                        \
+    MACRO(char, char)                                                          \
+    MACRO(uint8_t, uint8)                                                      \
+    MACRO(int16_t, int16)                                                      \
+    MACRO(uint16_t, uint16)                                                    \
+    MACRO(int32_t, int32)                                                      \
+    MACRO(uint32_t, uint32)                                                    \
+    MACRO(int64_t, int64)                                                      \
+    MACRO(uint64_t, uint64)                                                    \
+    MACRO(float, float)                                                        \
+    MACRO(double, double)                                                      \
+    MACRO(long double, ldouble)
+
 #define ADIOS2_FOREACH_STDTYPE_2ARGS(MACRO)                                    \
     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)
 

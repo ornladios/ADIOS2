@@ -41,7 +41,7 @@ enum class ShapeID
     GlobalArray, ///< global (across MPI_Comm) array, common case
     JoinedArray, ///< global array with a common (joinable) dimension
     LocalValue,  ///< special case, local independent value
-    LocalArray   ///< special case, local independent array
+    LocalArray,  ///< special case, local independent array
 };
 
 /** Used to set IO class */
