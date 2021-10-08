@@ -1380,7 +1380,7 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
     MV->IsReverseDims =
         ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
 
-    int Id = 0;
+    size_t Id = 0;
     for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
     {
         MetaArrayRec *writer_meta_base;
@@ -1614,7 +1614,7 @@ size_t BP5Deserializer::RelativeToAbsoluteStep(const BP5VarRec *VarRec,
     size_t AbsStep = VarRec->FirstTSSeen;
     while (RelStep != 0)
     {
-        int WriterRank = 0;
+        size_t WriterRank = 0;
         while (WriterRank < m_WriterCohortSize)
         {
             FFSMetadataInfoStruct *BaseData;
