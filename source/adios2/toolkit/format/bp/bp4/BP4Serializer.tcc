@@ -334,6 +334,15 @@ BP4Serializer::GetBPStats(const bool singleValue,
     stats.Step = m_MetadataSet.TimeStep;
     stats.FileIndex = GetFileIndex();
 
+#ifdef ADIOS2_HAVE_CUDA
+    if (blockInfo.IsGPU)
+    {
+        const size_t size = helper::GetTotalSize(blockInfo.Count);
+        helper::CUDAMinMax(blockInfo.Data, size, stats.Min, stats.Max);
+        return stats;
+    }
+#endif
+
     // support span
     if (blockInfo.Data == nullptr && m_Parameters.StatsLevel > 0)
     {

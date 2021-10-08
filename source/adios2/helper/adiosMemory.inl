@@ -20,6 +20,10 @@
 #include <iostream>
 #include <thread>
 /// \endcond
+#ifdef ADIOS2_HAVE_CUDA
+  #include <cuda.h>
+  #include <cuda_runtime.h>
+#endif
 
 #include "adios2/helper/adiosMath.h"
 #include "adios2/helper/adiosSystem.h"
@@ -73,6 +77,18 @@ void InsertToBuffer(std::vector<char> &buffer, const T *source,
     const char *src = reinterpret_cast<const char *>(source);
     buffer.insert(buffer.end(), src, src + elements * sizeof(T));
 }
+
+#ifdef ADIOS2_HAVE_CUDA
+template <class T>
+void CopyFromGPUToBuffer(std::vector<char> &buffer, size_t &position,
+                         const T *source, const size_t elements) noexcept
+{
+    const char *src = reinterpret_cast<const char *>(source);
+    cudaMemcpy(buffer.data() + position, src, elements * sizeof(T),
+               cudaMemcpyDeviceToHost);
+    position += elements * sizeof(T);
+}
+#endif
 
 template <class T>
 void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,

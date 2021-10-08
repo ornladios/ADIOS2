@@ -72,6 +72,18 @@ inline void BPSerializer::PutPayloadInBuffer(
 {
     const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
     m_Profiler.Start("memcpy");
+
+#ifdef ADIOS2_HAVE_CUDA
+    if (blockInfo.IsGPU)
+    {
+        helper::CopyFromGPUToBuffer(m_Data.m_Buffer, m_Data.m_Position,
+                                    blockInfo.Data, blockSize);
+        m_Profiler.Stop("memcpy");
+        m_Data.m_AbsolutePosition += blockSize * sizeof(T);
+        return;
+    }
+#endif
+
     if (!blockInfo.MemoryStart.empty())
     {
         helper::CopyMemoryBlock(
