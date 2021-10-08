@@ -148,6 +148,11 @@ public:
     explicit operator bool() const noexcept;
 
     /**
+     * Sets the memory step for all following Puts
+     */
+    void SetMemorySpace(const MemorySpace mem);
+
+    /**
      * Set new shape, care must be taken when reading back the variable for
      * different steps. Only applies to Global arrays.
      * @param shape new shape dimensions array
