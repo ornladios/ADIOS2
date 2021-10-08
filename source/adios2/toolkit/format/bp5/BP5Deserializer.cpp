@@ -14,6 +14,7 @@
 #include "BP5Deserializer.h"
 #include "BP5Deserializer.tcc"
 
+#include <float.h>
 #include <limits.h>
 #include <math.h>
 #include <string.h>
@@ -141,7 +142,8 @@ void BP5Deserializer::BreakdownVarName(const char *Name, char **base_name_p,
     int Type;
     int ElementSize;
     const char *NameStart = strchr(strchr(Name, '_') + 1, '_') + 1;
-    sscanf(Name, "SST%d_%d_", &ElementSize, &Type);
+    // + 3 to skip BP5 or bp5 prefix
+    sscanf(Name + 3, "%d_%d_", &ElementSize, &Type);
     *element_size_p = ElementSize;
     *type_p = (DataType)Type;
     *base_name_p = strdup(NameStart);
@@ -153,7 +155,8 @@ void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
     int Type;
     int ElementSize;
     const char *NameStart = strchr(strchr(Name, '_') + 1, '_') + 1;
-    sscanf(Name, "SST%d_%d_", &ElementSize, &Type);
+    // + 3 to skip BP5 or bp5 prefix
+    sscanf(Name + 3, "%d_%d_", &ElementSize, &Type);
     *element_size_p = ElementSize;
     *type_p = (DataType)Type;
     *base_name_p = strdup(NameStart);
@@ -209,6 +212,25 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
         ControlCount++;
 
         C->FieldOffset = FieldList[i].field_offset;
+        C->OrigShapeID = ShapeID::Unknown;
+        switch (FieldList[i].field_name[2])
+        {
+        case 'g':
+            C->OrigShapeID = ShapeID::GlobalValue;
+            break;
+        case 'G':
+            C->OrigShapeID = ShapeID::GlobalArray;
+            break;
+        case 'J':
+            C->OrigShapeID = ShapeID::JoinedArray;
+            break;
+        case 'l':
+            C->OrigShapeID = ShapeID::LocalValue;
+            break;
+        case 'L':
+            C->OrigShapeID = ShapeID::LocalArray;
+            break;
+        }
 
         BP5VarRec *VarRec = nullptr;
         if (NameIndicatesArray(FieldList[i].field_name))
@@ -216,7 +238,6 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             char *ArrayName;
             DataType Type;
             int ElementSize;
-            C->IsArray = 1;
             BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
                                &ElementSize);
             VarRec = LookupVarByName(ArrayName);
@@ -225,6 +246,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                 VarRec = CreateVarRec(ArrayName);
                 VarRec->Type = Type;
                 VarRec->ElementSize = ElementSize;
+                VarRec->OrigShapeID = C->OrigShapeID;
                 C->ElementSize = ElementSize;
             }
             i += 7; // number of fields in MetaArrayRec
@@ -234,8 +256,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
         else
         {
             /* simple field */
-            char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
-            C->IsArray = 0;
+            char *FieldName = strdup(FieldList[i].field_name + 4); // skip BP5_
             VarRec = LookupVarByName(FieldName);
             if (!VarRec)
             {
@@ -244,6 +265,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                 VarRec = CreateVarRec(FieldName);
                 VarRec->DimCount = 0;
                 C->Type = Type;
+                VarRec->OrigShapeID = C->OrigShapeID;
                 VarRec->Type = Type;
             }
             VarRec->ElementSize = FieldList[i].field_size;
@@ -335,9 +357,14 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine,
 #define declare_type(T)                                                        \
     else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
-        core::Variable<T> *variable = &(engine->m_IO.DefineVariable<T>(        \
-            variableName, VecShape, VecStart, VecCount));                      \
+        core::Variable<T> *variable =                                          \
+            &(engine->m_IO.DefineVariable<T>(variableName));                   \
+        variable->m_Shape = VecShape;                                          \
+        variable->m_Start = VecStart;                                          \
+        variable->m_Count = VecCount;                                          \
         variable->m_AvailableStepsCount = 1;                                   \
+        variable->m_ShapeID = ShapeID::GlobalArray;                            \
+        variable->m_SingleValue = false;                                       \
         return (void *)variable;                                               \
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -454,7 +481,8 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         }
         if (!m_RandomAccessMode)
             VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
-        if (ControlFields[i].IsArray)
+        if ((ControlFields[i].OrigShapeID == ShapeID::GlobalArray) ||
+            (ControlFields[i].OrigShapeID == ShapeID::LocalArray))
         {
             MetaArrayRec *meta_base = (MetaArrayRec *)field_data;
             if ((meta_base->Dims > 1) &&
@@ -480,6 +508,11 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                     m_Engine;
                 VarByKey[VarRec->Variable] = VarRec;
                 VarRec->LastTSAdded = Step; // starts at 1
+                if (!meta_base->Shape)
+                {
+                    static_cast<VariableBase *>(VarRec->Variable)->m_ShapeID =
+                        ShapeID::LocalArray;
+                }
             }
 
             VarRec->DimCount = meta_base->Dims;
@@ -520,8 +553,28 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         {
             if (!VarRec->Variable)
             {
-                VarRec->Variable = VarSetup(m_Engine, VarRec->VarName,
-                                            VarRec->Type, field_data);
+                if (ControlFields[i].OrigShapeID == ShapeID::LocalValue)
+                {
+                    // Local single values show up as global arrays on the
+                    // reader
+                    size_t zero = 0;
+                    size_t writerSize = m_WriterCohortSize;
+                    VarRec->Variable =
+                        ArrayVarSetup(m_Engine, VarRec->VarName, VarRec->Type,
+                                      1, &writerSize, &zero, &writerSize);
+                    auto VB = static_cast<VariableBase *>(VarRec->Variable);
+                    static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
+                        m_Engine;
+                    VB->m_ShapeID = ShapeID::GlobalArray;
+                }
+                else
+                {
+                    // Global single value
+                    VarRec->Variable = VarSetup(m_Engine, VarRec->VarName,
+                                                VarRec->Type, field_data);
+                    static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
+                        m_Engine;
+                }
                 VarByKey[VarRec->Variable] = VarRec;
                 VarRec->LastTSAdded = Step; // starts at 1
             }
@@ -531,6 +584,10 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             static_cast<VariableBase *>(VarRec->Variable)
                 ->m_AvailableStepsCount++;
             VarRec->LastTSAdded = Step;
+        }
+        if (VarRec->FirstTSSeen == SIZE_MAX)
+        {
+            VarRec->FirstTSSeen = Step;
         }
     }
 }
@@ -635,7 +692,7 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
             size_t ElemCount = *(size_t *)field_data;
             field_data = (void *)((char *)field_data + sizeof(size_t));
             i++;
-            char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
+            char *FieldName = strdup(FieldList[i].field_name + 4); // skip BP5_
             char *FieldType = strdup(FieldList[i].field_type);
             *index(FieldType, '[') = 0;
             Type = (DataType)TranslateFFSType2ADIOS(FieldType,
@@ -709,48 +766,72 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
     }
 }
 
+void BP5Deserializer::GetSingleValueFromMetadata(core::VariableBase &variable,
+                                                 BP5VarRec *VarRec,
+                                                 void *DestData, size_t Step,
+                                                 size_t WriterRank)
+{
+    char *src;
+    if (m_RandomAccessMode)
+    {
+        ControlInfo *CI =
+            m_ControlArray[Step][WriterRank]; // writer 0 control array
+        size_t MetadataFieldOffset = (*CI->MetaFieldOffset)[VarRec->VarNum];
+        char *MetadataBase = (char *)((*MetadataBaseArray[Step])[WriterRank]);
+        src = MetadataBase + MetadataFieldOffset;
+    }
+    else
+    {
+        src = ((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
+              VarRec->PerWriterMetaFieldOffset[WriterRank];
+    }
+    if (variable.m_SelectionType == adios2::SelectionType::WriteBlock)
+        WriterRank = variable.m_BlockID;
+
+    if (variable.m_Type != DataType::String)
+    {
+        memcpy(DestData, src, variable.m_ElementSize);
+    }
+    else
+    {
+        std::string *TmpStr = static_cast<std::string *>(DestData);
+        TmpStr->assign(*(const char **)src);
+    }
+}
+
 bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
                                      void *DestData, size_t Step)
 {
-    if (variable.m_SingleValue)
+    BP5VarRec *VarRec = VarByKey[&variable];
+    if (VarRec->OrigShapeID == ShapeID::GlobalValue)
     {
-        char *src;
-        BP5VarRec *VarRec = VarByKey[&variable];
         int WriterRank = 0;
-        if (m_RandomAccessMode)
+        GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
+                                   WriterRank);
+        return false;
+    }
+    if (VarRec->OrigShapeID == ShapeID::LocalValue)
+    {
+        // Shows up as global array with one element per writer rank
+        DestData = (char *)DestData + variable.m_Start[0] * VarRec->ElementSize;
+        for (size_t WriterRank = variable.m_Start[0];
+             WriterRank < variable.m_Count[0] + variable.m_Start[0];
+             WriterRank++)
         {
-            ControlInfo *CI =
-                m_ControlArray[Step][WriterRank]; // writer 0 control array
-            size_t MetadataFieldOffset = (*CI->MetaFieldOffset)[VarRec->VarNum];
-            char *MetadataBase =
-                (char *)((*MetadataBaseArray[Step])[WriterRank]);
-            src = MetadataBase + MetadataFieldOffset;
-        }
-        else
-        {
-            src = ((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
-                  VarRec->PerWriterMetaFieldOffset[WriterRank];
-        }
-        if (variable.m_SelectionType == adios2::SelectionType::WriteBlock)
-            WriterRank = variable.m_BlockID;
-
-        if (variable.m_Type != DataType::String)
-        {
-            std::cout << "Performing get for var " << variable.m_Name << " TS "
-                      << Step << "   Mdatabase " << (void *)src << std::endl;
-            memcpy(DestData, src, variable.m_ElementSize);
-        }
-        else
-        {
-            std::string *TmpStr = static_cast<std::string *>(DestData);
-            TmpStr->assign(*(const char **)src);
+            GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
+                                       WriterRank);
+            DestData = (char *)DestData +
+                       variable.m_ElementSize; // use variable.m_ElementSize
+                                               // because it's the size in local
+                                               // memory, VarRec->ElementSize is
+                                               // the size in metadata
         }
         return false;
     }
     if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
     {
         BP5ArrayRequest Req;
-        Req.VarRec = VarByKey[&variable];
+        Req.VarRec = VarRec;
         Req.RequestType = Global;
         Req.BlockID = variable.m_BlockID;
         Req.Count = variable.m_Count;
@@ -776,7 +857,8 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
     return true;
 }
 
-bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t WriterRank)
+bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t WriterRank,
+                                 size_t &NodeFirst)
 {
     MetaArrayRec *writer_meta_base;
     if (m_RandomAccessMode)
@@ -802,7 +884,33 @@ bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t WriterRank)
             writer_meta_base->Dims
                 ? writer_meta_base->DBCount / writer_meta_base->Dims
                 : 1;
-        size_t NodeFirst = Req.VarRec->PerWriterBlockStart[WriterRank];
+        if (m_RandomAccessMode)
+        {
+            //  Not ideal, but we don't keep this around for every var in random
+            //  access mode, so calc from scratch
+            NodeFirst = 0;
+            for (size_t TmpRank = 0; TmpRank < WriterRank; TmpRank++)
+            {
+                ControlInfo *TmpCI =
+                    m_ControlArray[Req.Step][TmpRank]; // writer control array
+
+                size_t MetadataFieldOffset =
+                    (*TmpCI->MetaFieldOffset)[Req.VarRec->VarNum];
+                MetaArrayRec *tmp_meta_base =
+                    (MetaArrayRec
+                         *)(((char *)(*MetadataBaseArray[Req.Step])[TmpRank]) +
+                            MetadataFieldOffset);
+                size_t TmpBlockCount =
+                    tmp_meta_base->Dims
+                        ? tmp_meta_base->DBCount / tmp_meta_base->Dims
+                        : 1;
+                NodeFirst += TmpBlockCount;
+            }
+        }
+        else
+        {
+            NodeFirst = Req.VarRec->PerWriterBlockStart[WriterRank];
+        }
         size_t NodeLast = WriterBlockCount + NodeFirst - 1;
         bool res = (NodeFirst <= Req.BlockID) && (NodeLast >= Req.BlockID);
         return res;
@@ -888,7 +996,8 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
         for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize;
              WriterRank++)
         {
-            if (NeedWriter(Req, WriterRank))
+            size_t NodeFirst = 0;
+            if (NeedWriter(Req, WriterRank, NodeFirst))
             {
                 /* if needed this writer fill destination with acquired data */
                 int ElementSize = Req.VarRec->ElementSize;
@@ -945,9 +1054,7 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                     }
                     if (Req.RequestType == Local)
                     {
-                        int LocalBlockID =
-                            Req.BlockID -
-                            Req.VarRec->PerWriterBlockStart[WriterRank];
+                        int LocalBlockID = Req.BlockID - NodeFirst;
                         IncomingData =
                             (char *)Requests[ReqIndex].DestinationAddr +
                             writer_meta_base->DataLocation[LocalBlockID];
@@ -1261,26 +1368,38 @@ BP5Deserializer::~BP5Deserializer()
 }
 
 Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
-                                                   const size_t Step)
+                                                   size_t Step)
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
-    MetaArrayRec *meta_base =
-        (MetaArrayRec *)(((char *)(*m_MetadataBaseAddrs)[0]) +
-                         VarRec->PerWriterMetaFieldOffset[0]);
+
     Engine::MinVarInfo *MV =
-        new Engine::MinVarInfo(meta_base->Dims, meta_base->Shape);
+        new Engine::MinVarInfo(VarRec->DimCount, VarRec->GlobalDims);
 
-    MV->Dims = meta_base->Dims;
-    MV->Shape = meta_base->Shape;
+    MV->Dims = VarRec->DimCount;
+    MV->Shape = VarRec->GlobalDims;
     MV->IsReverseDims =
-        ((meta_base->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
+        ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
 
-    int Id = 0;
+    size_t Id = 0;
     for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
     {
-        MetaArrayRec *writer_meta_base =
-            (MetaArrayRec *)(((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
-                             VarRec->PerWriterMetaFieldOffset[WriterRank]);
+        MetaArrayRec *writer_meta_base;
+        if (m_RandomAccessMode)
+        {
+            ControlInfo *CI =
+                m_ControlArray[Step][WriterRank]; // writer 0 control array
+            size_t MetadataFieldOffset = (*CI->MetaFieldOffset)[VarRec->VarNum];
+            writer_meta_base =
+                (MetaArrayRec
+                     *)(((char *)(*MetadataBaseArray[Step])[WriterRank]) +
+                        MetadataFieldOffset);
+        }
+        else
+        {
+            writer_meta_base =
+                (MetaArrayRec *)(((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
+                                 VarRec->PerWriterMetaFieldOffset[WriterRank]);
+        }
         size_t WriterBlockCount =
             writer_meta_base->Dims
                 ? writer_meta_base->DBCount / writer_meta_base->Dims
@@ -1292,20 +1411,33 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
     Id = 0;
     for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
     {
-        MetaArrayRec *writer_meta_base =
-            (MetaArrayRec *)(((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
-                             VarRec->PerWriterMetaFieldOffset[WriterRank]);
-
+        MetaArrayRec *writer_meta_base;
+        if (m_RandomAccessMode)
+        {
+            ControlInfo *CI =
+                m_ControlArray[Step][WriterRank]; // writer 0 control array
+            size_t MetadataFieldOffset = (*CI->MetaFieldOffset)[VarRec->VarNum];
+            writer_meta_base =
+                (MetaArrayRec
+                     *)(((char *)(*MetadataBaseArray[Step])[WriterRank]) +
+                        MetadataFieldOffset);
+        }
+        else
+        {
+            writer_meta_base =
+                (MetaArrayRec *)(((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
+                                 VarRec->PerWriterMetaFieldOffset[WriterRank]);
+        }
         size_t WriterBlockCount =
-            meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
+            MV->Dims ? writer_meta_base->DBCount / MV->Dims : 1;
         for (size_t i = 0; i < WriterBlockCount; i++)
         {
             size_t *Offsets = NULL;
             size_t *Count = NULL;
             if (writer_meta_base->Offsets)
-                Offsets = writer_meta_base->Offsets + (i * meta_base->Dims);
+                Offsets = writer_meta_base->Offsets + (i * MV->Dims);
             if (writer_meta_base->Count)
-                Count = writer_meta_base->Count + (i * meta_base->Dims);
+                Count = writer_meta_base->Count + (i * MV->Dims);
             Engine::MinBlockInfo Blk;
             Blk.WriterID = WriterRank;
             Blk.BlockID = Id++;
@@ -1318,6 +1450,248 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
         }
     }
     return MV;
+}
+
+void InitMinMax(Engine::MinMaxStruct &MinMax, DataType Type)
+{
+    switch (Type)
+    {
+    case DataType::None:
+        break;
+    case DataType::Char:
+        MinMax.MinUnion.field_char = SCHAR_MAX;
+        MinMax.MaxUnion.field_char = SCHAR_MIN;
+        break;
+    case DataType::Int8:
+        MinMax.MinUnion.field_int8 = INT8_MAX;
+        MinMax.MaxUnion.field_int8 = INT8_MIN;
+        break;
+    case DataType::Int16:
+        MinMax.MinUnion.field_int16 = INT16_MAX;
+        MinMax.MaxUnion.field_int16 = INT16_MIN;
+        break;
+    case DataType::Int32:
+        MinMax.MinUnion.field_int32 = INT32_MAX;
+        MinMax.MaxUnion.field_int32 = INT32_MIN;
+        break;
+    case DataType::Int64:
+        MinMax.MinUnion.field_int64 = INT64_MAX;
+        MinMax.MaxUnion.field_int64 = INT64_MIN;
+        break;
+    case DataType::UInt8:
+        MinMax.MinUnion.field_uint8 = UINT8_MAX;
+        MinMax.MaxUnion.field_uint8 = 0;
+        break;
+    case DataType::UInt16:
+        MinMax.MinUnion.field_uint16 = UINT16_MAX;
+        MinMax.MaxUnion.field_uint16 = 0;
+        break;
+    case DataType::UInt32:
+        MinMax.MinUnion.field_uint32 = UINT32_MAX;
+        MinMax.MaxUnion.field_uint32 = 0;
+        break;
+    case DataType::UInt64:
+        MinMax.MinUnion.field_uint64 = UINT64_MAX;
+        MinMax.MaxUnion.field_uint64 = 0;
+        break;
+    case DataType::Float:
+        MinMax.MinUnion.field_float = FLT_MAX;
+        MinMax.MaxUnion.field_float = -FLT_MAX;
+        break;
+    case DataType::Double:
+        MinMax.MinUnion.field_double = DBL_MAX;
+        MinMax.MaxUnion.field_double = -DBL_MAX;
+    case DataType::LongDouble:
+        MinMax.MinUnion.field_ldouble = LDBL_MAX;
+        MinMax.MaxUnion.field_ldouble = -LDBL_MAX;
+        break;
+    case DataType::FloatComplex:
+    case DataType::DoubleComplex:
+    case DataType::String:
+    case DataType::Compound:
+        break;
+    }
+}
+
+void ApplyElementMinMax(Engine::MinMaxStruct &MinMax, DataType Type,
+                        void *Element)
+{
+    switch (Type)
+    {
+    case DataType::None:
+        break;
+    case DataType::Char:
+        if (*(char *)Element < MinMax.MinUnion.field_char)
+            MinMax.MinUnion.field_char = *(char *)Element;
+        if (*(char *)Element > MinMax.MaxUnion.field_char)
+            MinMax.MaxUnion.field_char = *(char *)Element;
+        break;
+    case DataType::Int8:
+        if (*(int8_t *)Element < MinMax.MinUnion.field_int8)
+            MinMax.MinUnion.field_int8 = *(int8_t *)Element;
+        if (*(int8_t *)Element > MinMax.MaxUnion.field_int8)
+            MinMax.MaxUnion.field_int8 = *(int8_t *)Element;
+        break;
+    case DataType::Int16:
+        if (*(int16_t *)Element < MinMax.MinUnion.field_int16)
+            MinMax.MinUnion.field_int16 = *(int16_t *)Element;
+        if (*(int16_t *)Element > MinMax.MaxUnion.field_int16)
+            MinMax.MaxUnion.field_int16 = *(int16_t *)Element;
+        break;
+    case DataType::Int32:
+        if (*(int32_t *)Element < MinMax.MinUnion.field_int32)
+            MinMax.MinUnion.field_int32 = *(int32_t *)Element;
+        if (*(int32_t *)Element > MinMax.MaxUnion.field_int32)
+            MinMax.MaxUnion.field_int32 = *(int32_t *)Element;
+        break;
+    case DataType::Int64:
+        if (*(int64_t *)Element < MinMax.MinUnion.field_int64)
+            MinMax.MinUnion.field_int64 = *(int64_t *)Element;
+        if (*(int64_t *)Element > MinMax.MaxUnion.field_int64)
+            MinMax.MaxUnion.field_int64 = *(int64_t *)Element;
+        break;
+    case DataType::UInt8:
+        if (*(uint8_t *)Element < MinMax.MinUnion.field_uint8)
+            MinMax.MinUnion.field_uint8 = *(uint8_t *)Element;
+        if (*(uint8_t *)Element > MinMax.MaxUnion.field_uint8)
+            MinMax.MaxUnion.field_uint8 = *(uint8_t *)Element;
+        break;
+    case DataType::UInt16:
+        if (*(uint16_t *)Element < MinMax.MinUnion.field_uint16)
+            MinMax.MinUnion.field_uint16 = *(uint16_t *)Element;
+        if (*(uint16_t *)Element > MinMax.MaxUnion.field_uint16)
+            MinMax.MaxUnion.field_uint16 = *(uint16_t *)Element;
+        break;
+    case DataType::UInt32:
+        if (*(uint32_t *)Element < MinMax.MinUnion.field_uint32)
+            MinMax.MinUnion.field_uint32 = *(uint32_t *)Element;
+        if (*(uint32_t *)Element > MinMax.MaxUnion.field_uint32)
+            MinMax.MaxUnion.field_uint32 = *(uint32_t *)Element;
+        break;
+    case DataType::UInt64:
+        if (*(uint64_t *)Element < MinMax.MinUnion.field_uint64)
+            MinMax.MinUnion.field_uint64 = *(uint64_t *)Element;
+        if (*(uint64_t *)Element > MinMax.MaxUnion.field_uint64)
+            MinMax.MaxUnion.field_uint64 = *(uint64_t *)Element;
+        break;
+    case DataType::Float:
+        if (*(float *)Element < MinMax.MinUnion.field_float)
+            MinMax.MinUnion.field_float = *(float *)Element;
+        if (*(float *)Element > MinMax.MaxUnion.field_float)
+            MinMax.MaxUnion.field_float = *(float *)Element;
+        break;
+    case DataType::Double:
+        if (*(double *)Element < MinMax.MinUnion.field_double)
+            MinMax.MinUnion.field_double = *(double *)Element;
+        if (*(double *)Element > MinMax.MaxUnion.field_double)
+            MinMax.MaxUnion.field_double = *(double *)Element;
+        break;
+    case DataType::LongDouble:
+        if (*(long double *)Element < MinMax.MinUnion.field_ldouble)
+            MinMax.MinUnion.field_ldouble = *(long double *)Element;
+        if (*(long double *)Element > MinMax.MaxUnion.field_ldouble)
+            MinMax.MaxUnion.field_ldouble = *(long double *)Element;
+        break;
+    case DataType::FloatComplex:
+    case DataType::DoubleComplex:
+    case DataType::String:
+    case DataType::Compound:
+        break;
+    }
+}
+
+size_t BP5Deserializer::RelativeToAbsoluteStep(const BP5VarRec *VarRec,
+                                               size_t RelStep)
+{
+    //  Consider an optimization here.  Track the number of timesteps
+    //  available to the engine and the number of steps upon which a
+    //  variable appears.  If the first step it appears on plus the
+    //  number of steps it appears adds up to the number of steps
+    //  available to the engine, then there are no gaps and we can
+    //  easily calculate the RelativeToAbsoluteStep transformation
+    //  without checking.  That's probably the most common case.
+    //  But for now, the simple stupid solution
+    size_t AbsStep = VarRec->FirstTSSeen;
+    while (RelStep != 0)
+    {
+        size_t WriterRank = 0;
+        while (WriterRank < m_WriterCohortSize)
+        {
+            FFSMetadataInfoStruct *BaseData;
+            BaseData = (FFSMetadataInfoStruct
+                            *)(*MetadataBaseArray[AbsStep])[WriterRank];
+            if (FFSBitfieldTest((FFSMetadataInfoStruct *)BaseData,
+                                VarRec->VarNum))
+            {
+                // variable appeared on this step
+                RelStep--;
+                break; // exit while (WriterRank < m_WriterCohortSize)
+            }
+            WriterRank++;
+        }
+        AbsStep++;
+    }
+    return AbsStep;
+}
+
+bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
+                                     Engine::MinMaxStruct &MinMax)
+{
+    BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
+    InitMinMax(MinMax, VarRec->Type);
+
+    size_t StartStep = Step, StopStep = Step + 1;
+    if (Step == DefaultSizeT)
+    {
+        StartStep = 0;
+        StopStep = m_ControlArray.size();
+        if (!m_RandomAccessMode)
+            StopStep = 1;
+    }
+    for (size_t RelStep = StartStep; RelStep < StopStep; RelStep++)
+    {
+        if ((VarRec->OrigShapeID == ShapeID::LocalValue) ||
+            (VarRec->OrigShapeID == ShapeID::GlobalValue))
+        {
+            for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize;
+                 WriterRank++)
+            {
+                void *writer_meta_base;
+                FFSMetadataInfoStruct *BaseData;
+                if (m_RandomAccessMode)
+                {
+                    size_t AbsStep = RelativeToAbsoluteStep(VarRec, RelStep);
+                    if (AbsStep >= m_ControlArray.size())
+                        return true; // done
+                    ControlInfo *CI =
+                        m_ControlArray[AbsStep]
+                                      [WriterRank]; // writer 0 control array
+                    size_t MetadataFieldOffset =
+                        (*CI->MetaFieldOffset)[VarRec->VarNum];
+                    BaseData = (FFSMetadataInfoStruct
+                                    *)(*MetadataBaseArray[AbsStep])[WriterRank];
+                    writer_meta_base =
+                        (MetaArrayRec *)(((char *)(*MetadataBaseArray[AbsStep])
+                                              [WriterRank]) +
+                                         MetadataFieldOffset);
+                }
+                else
+                {
+                    BaseData = (FFSMetadataInfoStruct
+                                    *)(*m_MetadataBaseAddrs)[WriterRank];
+                    writer_meta_base =
+                        (MetaArrayRec
+                             *)(((char *)(*m_MetadataBaseAddrs)[WriterRank]) +
+                                VarRec->PerWriterMetaFieldOffset[WriterRank]);
+                }
+                if (FFSBitfieldTest(BaseData, VarRec->VarNum))
+                {
+                    ApplyElementMinMax(MinMax, VarRec->Type, writer_meta_base);
+                }
+            }
+        }
+    }
+    return true;
 }
 
 }

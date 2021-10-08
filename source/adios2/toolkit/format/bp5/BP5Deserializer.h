@@ -65,6 +65,8 @@ public:
     Engine::MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
     Engine::MinVarInfo *MinBlocksInfo(const VariableBase &Var,
                                       const size_t Step);
+    bool VariableMinMax(const VariableBase &var, const size_t Step,
+                        Engine::MinMaxStruct &MinMax);
 
     bool m_WriterIsRowMajor = 1;
     bool m_ReaderIsRowMajor = 1;
@@ -78,10 +80,12 @@ private:
         void *Variable = NULL;
         char *VarName = NULL;
         size_t DimCount = 0;
+        ShapeID OrigShapeID;
         DataType Type;
         int ElementSize = 0;
         size_t *GlobalDims = NULL;
         size_t LastTSAdded = SIZE_MAX;
+        size_t FirstTSSeen = SIZE_MAX;
         size_t LastShapeAdded = SIZE_MAX;
         std::vector<size_t> PerWriterMetaFieldOffset;
         std::vector<size_t> PerWriterBlockStart;
@@ -91,7 +95,7 @@ private:
     {
         int FieldOffset;
         BP5VarRec *VarRec;
-        int IsArray;
+        ShapeID OrigShapeID;
         DataType Type;
         int ElementSize;
     };
@@ -157,7 +161,11 @@ private:
                         size_t *Start, size_t *Count);
     void MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex,
                                const size_t *LocalOffsets, size_t *LocalIndex);
+    size_t RelativeToAbsoluteStep(const BP5VarRec *VarRec, size_t RelStep);
     int FindOffset(size_t Dims, const size_t *Size, const size_t *Index);
+    void GetSingleValueFromMetadata(core::VariableBase &variable,
+                                    BP5VarRec *VarRec, void *DestData,
+                                    size_t Step, size_t WriterRank);
     void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
                                        const size_t *GlobalDims,
                                        const size_t *PartialOffsets,
@@ -190,7 +198,7 @@ private:
         void *Data;
     };
     std::vector<BP5ArrayRequest> PendingRequests;
-    bool NeedWriter(BP5ArrayRequest Req, size_t i);
+    bool NeedWriter(BP5ArrayRequest Req, size_t i, size_t &NodeFirst);
     size_t CurTimestep = 0;
 };
 

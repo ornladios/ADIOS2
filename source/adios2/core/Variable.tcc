@@ -64,6 +64,30 @@ Dims Variable<T>::DoCount() const
 
     if (m_Engine != nullptr && m_SelectionType == SelectionType::WriteBlock)
     {
+        auto MVI = m_Engine->MinBlocksInfo(*this, m_StepsStart);
+        if (MVI)
+        {
+            if (m_BlockID >= MVI->BlocksInfo.size())
+            {
+                throw std::invalid_argument(
+                    "ERROR: blockID " + std::to_string(m_BlockID) +
+                    " from SetBlockSelection is out of bounds for available "
+                    "blocks size " +
+                    std::to_string(MVI->BlocksInfo.size()) + " for variable " +
+                    m_Name + " for step " + std::to_string(m_StepsStart) +
+                    ", in call to Variable<T>::Count()");
+            }
+
+            size_t *DimsPtr = (MVI->BlocksInfo)[m_BlockID].Count;
+            Dims D;
+            D.resize(MVI->Dims);
+            for (int i = 0; i < MVI->Dims; i++)
+            {
+                D[i] = DimsPtr[i];
+            }
+            return D;
+        }
+
         const size_t step =
             !m_FirstStreamingStep ? m_Engine->CurrentStep() : lf_Step();
 
@@ -101,6 +125,17 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
     minMax.first = {};
     minMax.second = {};
 
+    if (m_Engine != nullptr)
+    {
+
+        Engine::MinMaxStruct MM;
+        if (m_Engine->VariableMinMax(*this, step, MM))
+        {
+            minMax.first = MM.MinUnion.Get(minMax.first);
+            minMax.second = MM.MaxUnion.Get(minMax.second);
+            return minMax;
+        }
+    }
     if (m_Engine != nullptr && !m_FirstStreamingStep)
     {
         const size_t stepInput =

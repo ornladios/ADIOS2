@@ -452,17 +452,16 @@ public:
 
     union PrimitiveStdtypeUnion
     {
-        int8_t int8;
-        int16_t int16;
-        int32_t int32;
-        int64_t int64;
-        uint8_t uint8;
-        uint16_t uint16;
-        uint32_t uint32;
-        uint64_t uint64;
-        float f;
-        double d;
-        long double ld;
+#define declare_field(T, N) T field_##N;
+        ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(declare_field)
+#undef declare_field
+#define declare_get(T, N)                                                      \
+    T Get(T def) { return field_##N; }
+        ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(declare_get)
+#undef declare_get
+        std::string Get(std::string def) { return def; }
+        std::complex<float> Get(std::complex<float> def) { return def; }
+        std::complex<double> Get(std::complex<double> def) { return def; }
     };
 
     struct MinBlockInfo
@@ -474,6 +473,11 @@ public:
         union PrimitiveStdtypeUnion MinUnion;
         union PrimitiveStdtypeUnion MaxUnion;
         void *BufferP = NULL;
+    };
+    struct MinMaxStruct
+    {
+        union PrimitiveStdtypeUnion MinUnion;
+        union PrimitiveStdtypeUnion MaxUnion;
     };
     struct MinVarInfo
     {
@@ -489,10 +493,17 @@ public:
         }
     };
 
+    //  in this call, Step is RELATIVE, not absolute
     virtual MinVarInfo *MinBlocksInfo(const VariableBase &,
                                       const size_t Step) const
     {
         return nullptr;
+    }
+
+    virtual bool VariableMinMax(const VariableBase &, const size_t Step,
+                                MinMaxStruct &MinMax)
+    {
+        return false;
     }
 
     /** Notify the engine when a new attribute is defined. Called from IO.tcc
