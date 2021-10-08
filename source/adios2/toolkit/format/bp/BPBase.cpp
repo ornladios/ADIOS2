@@ -113,10 +113,10 @@ void BPBase::Init(const Params &parameters, const std::string hint,
                 static_cast<unsigned int>(helper::StringTo<uint32_t>(
                     value, " in Parameter key=Threads " + hint));
         }
-        else if (key == "asynctasks")
+        else if (key == "asyncopen")
         {
-            parsedParameters.AsyncTasks = helper::StringTo<bool>(
-                value, " in Parameter key=AsyncTasks " + hint);
+            parsedParameters.AsyncOpen = helper::StringTo<bool>(
+                value, " in Parameter key=AsyncOpen " + hint);
         }
         else if (key == "statslevel")
         {
@@ -231,7 +231,7 @@ void BPBase::Init(const Params &parameters, const std::string hint,
                 parsedParameters.StatsLevel; // shouldn't hurt
             m_Parameters.Threads = parsedParameters.Threads;
             m_Parameters.ProfileUnit = parsedParameters.ProfileUnit;
-            // AsyncTasks has no impact on SST
+            // AsyncOpen has no impact on SST
             // CollectiveMetadata might break SST
             // NodeLocal has an unknown effect on SST
             // SubStreams break SST

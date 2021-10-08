@@ -121,10 +121,13 @@ public:
     int Win_shared_query(Comm::Win &win, int rank, size_t *size, int *disp_unit,
                          void *baseptr, const std::string &hint) const override;
     int Win_free(Comm::Win &win, const std::string &hint) const override;
-    int Win_Lock(Comm::LockType lock_type, int rank, int assert, Comm::Win &win,
+    int Win_lock(Comm::LockType lock_type, int rank, int assert, Comm::Win &win,
                  const std::string &hint) const override;
-    int Win_Unlock(int rank, Comm::Win &win,
+    int Win_unlock(int rank, Comm::Win &win,
                    const std::string &hint) const override;
+    int Win_lock_all(int assert, Comm::Win &win,
+                     const std::string &hint) const override;
+    int Win_unlock_all(Comm::Win &win, const std::string &hint) const override;
 };
 
 CommImplDummy::~CommImplDummy() = default;
@@ -331,13 +334,23 @@ int CommImplDummy::Win_free(Comm::Win &win, const std::string &) const
     return 0;
 }
 
-int CommImplDummy::Win_Lock(Comm::LockType lock_type, int rank, int assert,
+int CommImplDummy::Win_lock(Comm::LockType lock_type, int rank, int assert,
                             Comm::Win &win, const std::string &) const
 {
     return 0;
 }
-int CommImplDummy::Win_Unlock(int rank, Comm::Win &win,
+int CommImplDummy::Win_unlock(int rank, Comm::Win &win,
                               const std::string &) const
+{
+    return 0;
+}
+
+int CommImplDummy::Win_lock_all(int assert, Comm::Win &win,
+                                const std::string &) const
+{
+    return 0;
+}
+int CommImplDummy::Win_unlock_all(Comm::Win &win, const std::string &) const
 {
     return 0;
 }

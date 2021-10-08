@@ -248,11 +248,11 @@ void BP4Writer::InitTransports()
 
     if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
     {
-        if (m_BP4Serializer.m_Parameters.AsyncTasks)
+        if (m_BP4Serializer.m_Parameters.AsyncOpen)
         {
             for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
             {
-                m_IO.m_TransportsParameters[i]["asynctasks"] = "true";
+                m_IO.m_TransportsParameters[i]["asyncopen"] = "true";
             }
         }
         for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)

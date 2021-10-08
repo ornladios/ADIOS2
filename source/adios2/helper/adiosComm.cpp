@@ -129,14 +129,23 @@ int Comm::Win_free(Win &win, const std::string &hint)
 {
     return m_Impl->Win_free(win, hint);
 }
-int Comm::Win_Lock(LockType lock_type, int rank, int assert, Win &win,
+int Comm::Win_lock(LockType lock_type, int rank, int assert, Win &win,
                    const std::string &hint)
 {
-    return m_Impl->Win_Lock(lock_type, rank, assert, win, hint);
+    return m_Impl->Win_lock(lock_type, rank, assert, win, hint);
 }
-int Comm::Win_Unlock(int rank, Win &win, const std::string &hint)
+int Comm::Win_unlock(int rank, Win &win, const std::string &hint)
 {
-    return m_Impl->Win_Unlock(rank, win, hint);
+    return m_Impl->Win_unlock(rank, win, hint);
+}
+
+int Comm::Win_lock_all(int assert, Win &win, const std::string &hint)
+{
+    return m_Impl->Win_lock_all(assert, win, hint);
+}
+int Comm::Win_unlock_all(Win &win, const std::string &hint)
+{
+    return m_Impl->Win_unlock_all(win, hint);
 }
 
 Comm::Req::Req() = default;

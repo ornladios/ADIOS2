@@ -147,6 +147,14 @@ adios2_error adios2_remove_io(adios2_bool *result, adios2_adios *adios,
  */
 adios2_error adios2_remove_all_ios(adios2_adios *adios);
 
+/** Inform ADIOS about entering communication-free computation block
+ * in main thread. Useful when using Async IO */
+adios2_error adios2_enter_computation_block(adios2_adios *adios);
+
+/** Inform ADIOS about exiting communication-free computation block
+ * in main thread. Useful when using Async IO */
+adios2_error adios2_exit_computation_block(adios2_adios *adios);
+
 #ifdef __cplusplus
 } // end extern C
 #endif

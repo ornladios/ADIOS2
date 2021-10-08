@@ -292,6 +292,38 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
         }
     };
 
+    auto lf_SetAsyncWriteParameter = [&](const std::string key, int &parameter,
+                                         int def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string value = itKey->second;
+            std::transform(value.begin(), value.end(), value.begin(),
+                           ::tolower);
+            if (value == "guided" || value == "auto" || value == "on" ||
+                value == "true")
+            {
+                parameter = (int)AsyncWrite::Guided;
+            }
+            else if (value == "sync" || value == "off" || value == "false")
+            {
+                parameter = (int)AsyncWrite::Sync;
+            }
+            else if (value == "naive")
+            {
+                parameter = (int)AsyncWrite::Naive;
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown BP5 AsyncWriteMode parameter \"" + value +
+                    "\" (must be \"auto\", \"sync\", \"naive\", \"throttled\" "
+                    "or \"guided\"");
+            }
+        }
+    };
+
 #define get_params(Param, Type, Typedecl, Default)                             \
     lf_Set##Type##Parameter(#Param, Params.Param, Default);
     BP5_FOREACH_PARAMETER_TYPE_4ARGS(get_params);

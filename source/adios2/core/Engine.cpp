@@ -95,6 +95,9 @@ size_t Engine::DebugGetDataBufferSize() const
     return 0;
 }
 
+void Engine::EnterComputationBlock() noexcept {}
+void Engine::ExitComputationBlock() noexcept {}
+
 // PROTECTED
 void Engine::Init() {}
 void Engine::InitParameters() {}

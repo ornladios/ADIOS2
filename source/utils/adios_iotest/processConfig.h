@@ -60,8 +60,9 @@ public:
 class CommandBusy : public Command
 {
 public:
-    const size_t busyTime_us = 0; // in microseconds
-    CommandBusy(size_t time);
+    const size_t cycles = 1;
+    const size_t busyTime_us = 0; // in microseconds per cycle
+    CommandBusy(size_t cycles, size_t time);
     ~CommandBusy();
 };
 

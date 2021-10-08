@@ -271,9 +271,12 @@ public:
                          void *baseptr,
                          const std::string &hint = std::string());
     int Win_free(Win &win, const std::string &hint = std::string());
-    int Win_Lock(LockType lock_type, int rank, int assert, Win &win,
+    int Win_lock(LockType lock_type, int rank, int assert, Win &win,
                  const std::string &hint = std::string());
-    int Win_Unlock(int rank, Win &win, const std::string &hint = std::string());
+    int Win_unlock(int rank, Win &win, const std::string &hint = std::string());
+    int Win_lock_all(int assert, Win &win,
+                     const std::string &hint = std::string());
+    int Win_unlock_all(Win &win, const std::string &hint = std::string());
 
 private:
     friend class CommImpl;
@@ -518,11 +521,14 @@ public:
                                  int *disp_unit, void *baseptr,
                                  const std::string &hint) const = 0;
     virtual int Win_free(Comm::Win &win, const std::string &hint) const = 0;
-    virtual int Win_Lock(Comm::LockType lock_type, int rank, int assert,
+    virtual int Win_lock(Comm::LockType lock_type, int rank, int assert,
                          Comm::Win &win, const std::string &hint) const = 0;
-    virtual int Win_Unlock(int rank, Comm::Win &win,
+    virtual int Win_unlock(int rank, Comm::Win &win,
                            const std::string &hint) const = 0;
-
+    virtual int Win_lock_all(int assert, Comm::Win &win,
+                             const std::string &hint) const = 0;
+    virtual int Win_unlock_all(Comm::Win &win,
+                               const std::string &hint) const = 0;
     static size_t SizeOf(Datatype datatype);
 
     static Comm MakeComm(std::unique_ptr<CommImpl> impl);

@@ -12,6 +12,12 @@ file(MAKE_DIRECTORY ${BP4_DIR})
 file(MAKE_DIRECTORY ${BP5_DIR})
 file(MAKE_DIRECTORY ${FS_DIR})
 
+set(BP5_ASYNC_DIR ${BP5_DIR}/async)
+file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/tls-guided)
+file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/tls-naive)
+file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-guided)
+file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive)
+
 macro(bp3_bp4_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP3
     WORKING_DIRECTORY ${BP3_DIR} EXTRA_ARGS "BP3"
@@ -35,12 +41,31 @@ macro(bp_gtest_add_tests_helper testname mpi)
   endif()
 endmacro()
 
+macro(async_gtest_add_tests_helper testname mpi)
+  if(ADIOS2_HAVE_BP5)
+    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.TLS.Guided
+      WORKING_DIRECTORY ${BP5_ASYNC_DIR}/tls-guided EXTRA_ARGS "BP5" "AggregationType=TwoLevelShm,AsyncWrite=Guided"
+    )
+    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.TLS.Naive
+      WORKING_DIRECTORY ${BP5_ASYNC_DIR}/tls-naive EXTRA_ARGS "BP5" "AggregationType=TwoLevelShm,AsyncWrite=Naive"
+    )
+    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.EWS.Guided
+      WORKING_DIRECTORY ${BP5_ASYNC_DIR}/ews-guided EXTRA_ARGS "BP5" "AggregationType=EveryoneWritesSerial,AsyncWrite=Guided"
+    )
+    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.EWS.Naive
+      WORKING_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive EXTRA_ARGS "BP5" "AggregationType=EveryoneWritesSerial,AsyncWrite=Naive"
+    )
+  endif()
+endmacro()
+
 add_subdirectory(operations)
 
 # These tests should be *very* fast
 set(CTEST_TEST_TIMEOUT 10)
 
 bp_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
+async_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
+
 bp_gtest_add_tests_helper(WriteReadADIOS2fstream MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadADIOS2stdio MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2 MPI_ALLOW)

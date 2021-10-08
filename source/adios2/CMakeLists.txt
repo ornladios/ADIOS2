@@ -89,6 +89,10 @@ add_library(adios2_core
 
   toolkit/transportman/TransportMan.cpp
 
+  toolkit/shm/Spinlock.cpp
+  toolkit/shm/SerializeProcesses.cpp
+  toolkit/shm/TokenChain.h
+
   toolkit/aggregator/mpi/MPIAggregator.cpp
   toolkit/aggregator/mpi/MPIChain.cpp
   toolkit/aggregator/mpi/MPIShmChain.cpp
@@ -123,7 +127,7 @@ if (ADIOS2_HAVE_BP5)
   target_sources(adios2_core PRIVATE
     engine/bp5/BP5Engine.cpp
     engine/bp5/BP5Reader.cpp engine/bp5/BP5Reader.tcc
-    engine/bp5/BP5Writer.cpp engine/bp5/BP5Writer.tcc engine/bp5/BP5Writer_TwoLevelShm.cpp
+    engine/bp5/BP5Writer.cpp engine/bp5/BP5Writer.tcc engine/bp5/BP5Writer_TwoLevelShm.cpp engine/bp5/BP5Writer_TwoLevelShm_Async.cpp engine/bp5/BP5Writer_EveryoneWrites_Async.cpp
   )
 endif()
 

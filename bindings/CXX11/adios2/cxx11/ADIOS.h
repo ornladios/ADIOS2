@@ -235,6 +235,14 @@ public:
      */
     void RemoveAllIOs() noexcept;
 
+    /** Inform ADIOS about entering communication-free computation block
+     * in main thread. Useful when using Async IO */
+    void EnterComputationBlock() noexcept;
+
+    /** Inform ADIOS about exiting communication-free computation block
+     * in main thread. Useful when using Async IO */
+    void ExitComputationBlock() noexcept;
+
 protected:
     std::shared_ptr<core::ADIOS> m_ADIOS;
 

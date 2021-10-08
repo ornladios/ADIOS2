@@ -519,15 +519,16 @@ void BP5Serializer::PerformPuts()
     CurDataBuffer->CopyExternalToInternal();
 }
 
-void BP5Serializer::DumpDeferredBlocks()
+void BP5Serializer::DumpDeferredBlocks(bool forceCopyDeferred)
 {
     for (auto &Def : DeferredExterns)
     {
         MetaArrayRec *MetaEntry =
             (MetaArrayRec *)((char *)(MetadataBuf) + Def.MetaOffset);
-        size_t DataOffset = m_PriorDataBufferSizeTotal +
-                            CurDataBuffer->AddToVec(Def.DataSize, Def.Data,
-                                                    Def.AlignReq, false);
+        size_t DataOffset =
+            m_PriorDataBufferSizeTotal +
+            CurDataBuffer->AddToVec(Def.DataSize, Def.Data, Def.AlignReq,
+                                    forceCopyDeferred);
         MetaEntry->DataLocation[Def.BlockID] = DataOffset;
     }
     DeferredExterns.clear();
@@ -798,7 +799,8 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer)
     return tmp;
 }
 
-BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
+BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
+                                                         bool forceCopyDeferred)
 {
     std::vector<MetaMetaInfoBlock> Formats;
     if (!Info.MetaFormat && Info.MetaFieldCount)
@@ -862,7 +864,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
     }
 
     //  Dump data for externs into iovec
-    DumpDeferredBlocks();
+    DumpDeferredBlocks(forceCopyDeferred);
 
     MBase->DataBlockSize = CurDataBuffer->AddToVec(
         0, NULL, sizeof(max_align_t), true); //  output block size aligned
