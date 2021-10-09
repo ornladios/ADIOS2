@@ -3061,24 +3061,49 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
 
     if (timestep)
     {
+        const auto minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
+
+        if (minBlocks)
+        {
+            bool firstBlock = true;
+            nblocks = minBlocks->BlocksInfo.size();
+            for (size_t j = 0; j < nblocks; j++)
+            {
+                for (size_t k = 0; k < ndim; k++)
+                {
+                    if (firstBlock)
+                    {
+                        dims[k] = minBlocks->BlocksInfo[j].Count[k];
+                    }
+                    else if (dims[k] != minBlocks->BlocksInfo[j].Count[k])
+                    {
+                        dims[k] = 0;
+                    }
+                }
+                firstBlock = false;
+            }
+        }
         std::vector<typename core::Variable<T>::BPInfo> blocks =
             fp->BlocksInfo(*variable, fp->CurrentStep());
-        nblocks = blocks.size();
-        bool firstBlock = true;
-        for (size_t j = 0; j < nblocks; j++)
+        if (!blocks.empty())
         {
-            for (size_t k = 0; k < ndim; k++)
+            nblocks = blocks.size();
+            bool firstBlock = true;
+            for (size_t j = 0; j < nblocks; j++)
             {
-                if (firstBlock)
+                for (size_t k = 0; k < ndim; k++)
                 {
-                    dims[k] = blocks[j].Count[k];
+                    if (firstBlock)
+                    {
+                        dims[k] = blocks[j].Count[k];
+                    }
+                    else if (dims[k] != blocks[j].Count[k])
+                    {
+                        dims[k] = 0;
+                    }
                 }
-                else if (dims[k] != blocks[j].Count[k])
-                {
-                    dims[k] = 0;
-                }
+                firstBlock = false;
             }
-            firstBlock = false;
         }
     }
     else
@@ -3286,15 +3311,25 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
 {
     /* Print block info */
     DataType adiosvartype = variable->m_Type;
-    std::vector<typename core::Variable<T>::BPInfo> blocks =
+    const auto minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
+
+    std::vector<typename core::Variable<T>::BPInfo> coreBlocks =
         fp->BlocksInfo(*variable, fp->CurrentStep());
 
-    if (blocks.empty())
+    if (!minBlocks && coreBlocks.empty())
     {
         return;
     }
 
-    const size_t blocksSize = blocks.size();
+    size_t blocksSize;
+    if (minBlocks)
+    {
+        blocksSize = minBlocks->BlocksInfo.size();
+    }
+    else
+    {
+        blocksSize = coreBlocks.size();
+    }
     const int ndigits_nblocks = ndigits(blocksSize - 1);
 
     if (variable->m_ShapeID == ShapeID::GlobalValue ||
@@ -3315,9 +3350,13 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
                 {
                     fprintf(outf, "    (%*zu)    ", ndigits_nblocks, j);
                 }
-                print_data(&blocks[j].Value, 0, adiosvartype, true);
+                if (!minBlocks)
+                    print_data(&coreBlocks[j].Value, 0, adiosvartype, true);
+                else
+                    print_data(&minBlocks->BlocksInfo[j].BufferP, 0,
+                               adiosvartype, true);
                 ++col;
-                if (j < blocks.size() - 1)
+                if (j < blocksSize - 1)
                 {
                     if (col < maxcols)
                     {
@@ -3367,24 +3406,52 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
 
             for (size_t k = 0; k < ndim; k++)
             {
-                if (blocks[j].Count[k])
+                if (!minBlocks)
                 {
-                    if (variable->m_ShapeID == ShapeID::GlobalArray)
+                    if (coreBlocks[j].Count[k])
                     {
-                        fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
-                                blocks[j].Start[k], ndigits_dims[k],
-                                blocks[j].Start[k] + blocks[j].Count[k] - 1);
+                        if (variable->m_ShapeID == ShapeID::GlobalArray)
+                        {
+                            fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
+                                    coreBlocks[j].Start[k], ndigits_dims[k],
+                                    coreBlocks[j].Start[k] +
+                                        coreBlocks[j].Count[k] - 1);
+                        }
+                        else
+                        {
+                            // blockStart is empty vector for LocalArrays
+                            fprintf(outf, "0:%*zu", ndigits_dims[k],
+                                    coreBlocks[j].Count[k] - 1);
+                        }
                     }
                     else
                     {
-                        // blockStart is empty vector for LocalArrays
-                        fprintf(outf, "0:%*zu", ndigits_dims[k],
-                                blocks[j].Count[k] - 1);
+                        fprintf(outf, "%-*s", 2 * ndigits_dims[k] + 1, "null");
                     }
                 }
                 else
                 {
-                    fprintf(outf, "%-*s", 2 * ndigits_dims[k] + 1, "null");
+                    if (minBlocks->BlocksInfo[j].Count[k])
+                    {
+                        if (variable->m_ShapeID == ShapeID::GlobalArray)
+                        {
+                            fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
+                                    minBlocks->BlocksInfo[j].Start[k],
+                                    ndigits_dims[k],
+                                    minBlocks->BlocksInfo[j].Start[k] +
+                                        minBlocks->BlocksInfo[j].Count[k] - 1);
+                        }
+                        else
+                        {
+                            // blockStart is empty vector for LocalArrays
+                            fprintf(outf, "0:%*zu", ndigits_dims[k],
+                                    minBlocks->BlocksInfo[j].Count[k] - 1);
+                        }
+                    }
+                    else
+                    {
+                        fprintf(outf, "%-*s", 2 * ndigits_dims[k] + 1, "null");
+                    }
                 }
                 if (k < ndim - 1)
                     fprintf(outf, ", ");
@@ -3396,11 +3463,27 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
             {
                 if (true /* TODO: variable->has_minmax */)
                 {
-                    fprintf(outf, " = ");
-                    print_data(&blocks[j].Min, 0, adiosvartype, false);
+                    if (!minBlocks)
+                    {
+                        fprintf(outf, " = ");
+                        print_data(&coreBlocks[j].Min, 0, adiosvartype, false);
 
-                    fprintf(outf, " / ");
-                    print_data(&blocks[j].Max, 0, adiosvartype, false);
+                        fprintf(outf, " / ");
+                        print_data(&coreBlocks[j].Max, 0, adiosvartype, false);
+                    }
+                    else
+                    {
+                        // fprintf(outf, " = ");
+                        // print_data(&minBlocks->BlocksInfo[j].MinUnion, 0,
+                        // adiosvartype, false);
+
+                        // fprintf(outf, " / ");
+                        // print_data(&minBlocks->BlocksInfo[j].MaxUnion, 0,
+                        // adiosvartype, false);
+                        //  No min max for minBlocks at the moment
+                        fprintf(outf, " = ");
+                        fprintf(outf, "N/A / N/A");
+                    }
                 }
                 else
                 {
@@ -3410,7 +3493,15 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
             fprintf(outf, "\n");
             if (dump)
             {
-                readVarBlock(fp, io, variable, stepRelative, j, blocks[j]);
+                if (!minBlocks)
+                {
+                    readVarBlock(fp, io, variable, stepRelative, j,
+                                 coreBlocks[j]);
+                }
+                else
+                {
+                    // GSE todo
+                }
             }
         }
         ++stepRelative;
