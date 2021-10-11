@@ -46,15 +46,15 @@ public:
         size_t *DataLocation; // Per-block Offsets [BlockCount]
     } MetaArrayRec;
 
-    struct FFSMetadataInfoStruct
+    struct BP5MetadataInfoStruct
     {
         size_t BitFieldCount;
         size_t *BitField;
         size_t DataBlockSize;
     };
 
-    void FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit);
-    int FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit);
+    void BP5BitfieldSet(struct BP5MetadataInfoStruct *MBase, int Bit);
+    int BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit);
 };
 } // end namespace format
 } // end namespace adios2

@@ -106,6 +106,7 @@ private:
         int ControlCount;
         struct ControlInfo *Next;
         std::vector<size_t> *MetaFieldOffset;
+        std::vector<size_t> *CIVarIndex;
         struct ControlStruct Controls[1];
     };
 
@@ -199,6 +200,7 @@ private:
     };
     std::vector<BP5ArrayRequest> PendingRequests;
     bool NeedWriter(BP5ArrayRequest Req, size_t i, size_t &NodeFirst);
+    void *GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank);
     size_t CurTimestep = 0;
 };
 

@@ -43,8 +43,8 @@ BP5Serializer::~BP5Serializer()
         free(Info.AttributeData);
     if (MetadataBuf)
     {
-        if (((FFSMetadataInfoStruct *)MetadataBuf)->BitField)
-            free(((FFSMetadataInfoStruct *)MetadataBuf)->BitField);
+        if (((BP5MetadataInfoStruct *)MetadataBuf)->BitField)
+            free(((BP5MetadataInfoStruct *)MetadataBuf)->BitField);
         free(MetadataBuf);
     }
 }
@@ -68,10 +68,10 @@ void BP5Serializer::Init()
                    "integer", sizeof(size_t));
     RecalcMarshalStorageSize();
 
-    ((FFSMetadataInfoStruct *)MetadataBuf)->BitFieldCount = 0;
-    ((FFSMetadataInfoStruct *)MetadataBuf)->BitField =
+    ((BP5MetadataInfoStruct *)MetadataBuf)->BitFieldCount = 0;
+    ((BP5MetadataInfoStruct *)MetadataBuf)->BitField =
         (std::size_t *)malloc(sizeof(size_t));
-    ((FFSMetadataInfoStruct *)MetadataBuf)->DataBlockSize = 0;
+    ((BP5MetadataInfoStruct *)MetadataBuf)->DataBlockSize = 0;
 }
 BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key)
 {
@@ -491,7 +491,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
 
     core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
 
-    FFSMetadataInfoStruct *MBase;
+    BP5MetadataInfoStruct *MBase;
 
     BP5WriterRec Rec = LookupWriterRec(Variable);
 
@@ -520,9 +520,9 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         DeferAddToVec = false;
     }
 
-    MBase = (struct FFSMetadataInfoStruct *)MetadataBuf;
-    int AlreadyWritten = FFSBitfieldTest(MBase, Rec->FieldID);
-    FFSBitfieldSet(MBase, Rec->FieldID);
+    MBase = (struct BP5MetadataInfoStruct *)MetadataBuf;
+    int AlreadyWritten = BP5BitfieldTest(MBase, Rec->FieldID);
+    BP5BitfieldSet(MBase, Rec->FieldID);
 
     if (VB->m_SingleValue)
     {
@@ -757,8 +757,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
     FFSBuffer AttributeEncodeBuffer = NULL;
     int MetaDataSize = 0;
     int AttributeSize = 0;
-    struct FFSMetadataInfoStruct *MBase =
-        (struct FFSMetadataInfoStruct *)MetadataBuf;
+    struct BP5MetadataInfoStruct *MBase =
+        (struct BP5MetadataInfoStruct *)MetadataBuf;
 
     if (CurDataBuffer == NULL)
     {
@@ -793,7 +793,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
 
     //    FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);
     /* free all those copied dimensions, etc */
-    MBase = (struct FFSMetadataInfoStruct *)Metadata;
+    MBase = (struct BP5MetadataInfoStruct *)Metadata;
     size_t *tmp = MBase->BitField;
     /*
      * BitField value is saved away from FMfree_var_rec_elements() so that it
