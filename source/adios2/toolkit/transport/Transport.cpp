@@ -47,11 +47,11 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
 
 void Transport::WriteV(const core::iovec *iov, const int iovcnt,
                        const size_t totalsize, const double deadline_sec,
-                       size_t start)
+                       bool *flagRush, size_t start)
 {
     core::TimePoint starttime = core::Now();
-    std::cout << "WriteV totalsize = " << totalsize
-              << " deadline_sec = " << deadline_sec << std::endl;
+    /*std::cout << "WriteV totalsize = " << totalsize
+              << " deadline_sec = " << deadline_sec << std::endl;*/
 
     // Set deadline 95% of allotted time but also discount 0.01s real time
     // for the extra hassle
@@ -61,7 +61,7 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
         internalDeadlineSec = 0.0;
     }
 
-    if (iovcnt == 0 || internalDeadlineSec == 0.0)
+    if (iovcnt == 0 || internalDeadlineSec == 0.0 || *flagRush)
     {
         WriteV(iov, iovcnt, start);
         core::Seconds totalWriteTime = core::Now() - starttime;
@@ -86,7 +86,7 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
             core::Seconds timesofar = core::Now() - starttime;
             /*std::cout << "  Wrote = " << wrote
                       << " time so far = " << timesofar.count() << std::endl;*/
-            if (timesofar > deadlineSeconds)
+            if (timesofar > deadlineSeconds || *flagRush)
             {
                 // Passed the deadline, write the rest without any waiting
                 std::cout << "  Passed deadline, time so far = "
@@ -104,6 +104,15 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
                 {
                     // not enough time with this rate, increase max_size
                     max_size *= 2;
+                    double t = needtime / 4.0;
+                    while (availabletime < t)
+                    {
+                        // Note that doubling the block size DOES NOT guarantee
+                        // higher bandwidth let alone double bw. This is just
+                        // a desperate attempt to speed up the output
+                        max_size *= 2;
+                        t /= 2.0;
+                    }
                     std::cout
                         << "    We are behind, time left =  " << availabletime
                         << " need time = " << needtime
@@ -153,6 +162,7 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
                       << " temp_offset = " << temp_offset << std::endl;*/
             Write(static_cast<const char *>(iov[block].iov_base) + temp_offset,
                   n);
+            Flush();
         }
 
         /* Have we processed the entire block or staying with it? */

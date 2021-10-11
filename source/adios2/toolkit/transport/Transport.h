@@ -120,7 +120,7 @@ public:
 
     virtual void WriteV(const core::iovec *iov, const int iovcnt,
                         const size_t totalsize, const double deadline_sec,
-                        size_t start = MaxSizeT);
+                        bool *flagRush, size_t start = MaxSizeT);
 
     /**
      * Reads from transport "size" bytes from a certain position. Note that size

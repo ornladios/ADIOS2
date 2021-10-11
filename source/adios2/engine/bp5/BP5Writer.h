@@ -233,6 +233,7 @@ private:
     TimePoint m_EndStepEnd;
     TimePoint m_EngineStart;
     TimePoint m_BeginStepStart;
+    bool m_flagRush; // main thread flips this in Close, async thread watches it
 
     void MakeHeader(format::BufferSTL &b, const std::string fileType,
                     const bool isActive);

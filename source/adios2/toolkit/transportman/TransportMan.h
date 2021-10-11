@@ -158,10 +158,14 @@ public:
      * @param iovec array pointer
      * @param iovcnt number of entries
      * @param start offset in file
+     * @param deadline stretch IO for deadline seconds
+     * @param flagRush if this is running in a thread, a main thread can flip
+     * this flag to true to cancel the deadline and make write asap
      */
     void WriteFileAt(const core::iovec *iov, const size_t iovcnt,
                      const size_t totalsize, const size_t start,
-                     const double deadline, const int transportIndex = -1);
+                     const double deadline, bool *flagRush,
+                     const int transportIndex = -1);
 
     size_t GetFileSize(const size_t transportIndex = 0) const;
 

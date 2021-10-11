@@ -460,7 +460,14 @@ size_t FilePOSIX::GetSize()
     return static_cast<size_t>(fileStat.st_size);
 }
 
-void FilePOSIX::Flush() {}
+void FilePOSIX::Flush()
+{
+#if (_POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500)
+    fdatasync(m_FileDescriptor);
+#else
+    fsync(m_FileDescriptor)
+#endif
+}
 
 void FilePOSIX::Close()
 {
