@@ -44,7 +44,7 @@ int BP5Base::BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit)
     int ElementBit = Bit % (sizeof(size_t) * 8);
     if (static_cast<size_t>(Element) >= MBase->BitFieldCount)
     {
-	return 0;
+        return 0;
     }
     return ((MBase->BitField[Element] & ((size_t)1 << ElementBit)) ==
             ((size_t)1 << ElementBit));
