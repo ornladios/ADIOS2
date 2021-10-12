@@ -312,19 +312,22 @@ void printConfig(const Config &cfg)
         }
         switch (cmd->op)
         {
-        case Operation::Sleep: {
+        case Operation::Sleep: 
+        {
             auto cmdS = dynamic_cast<const CommandSleep *>(cmd.get());
             std::cout << "        Sleep for " << cmdS->sleepTime_us
                       << " microseconds " << std::endl;
             break;
         }
-        case Operation::Busy: {
+        case Operation::Busy: 
+        {
             auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
             std::cout << "          Be busy for " << cmdS->busyTime_us
                       << " microseconds " << std::endl;
             break;
         }
-        case Operation::Write: {
+        case Operation::Write: 
+        {
             auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
             std::cout << "        Write to output " << cmdW->streamName
                       << " the group " << cmdW->groupName;
@@ -340,7 +343,8 @@ void printConfig(const Config &cfg)
             std::cout << std::endl;
             break;
         }
-        case Operation::Read: {
+        case Operation::Read: 
+        {
             auto cmdR = dynamic_cast<CommandRead *>(cmd.get());
             std::cout << "        Read ";
             if (cmdR->stepMode == adios2::StepMode::Read)
