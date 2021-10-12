@@ -198,7 +198,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             EXPECT_TRUE(var_StepsGlobalValue);
             EXPECT_EQ(var_StepsGlobalValue.ShapeID(),
                       adios2::ShapeID::GlobalValue);
-            EXPECT_EQ(var_StepsGlobalValue.Steps(), NSteps);
             EXPECT_EQ(var_StepsGlobalValue.Shape().size(), 0);
             EXPECT_EQ(var_StepsGlobalValue.Min(),
                       static_cast<int32_t>(currentStep));
@@ -212,7 +211,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             EXPECT_TRUE(var_StepsGlobalValueString);
             EXPECT_EQ(var_StepsGlobalValueString.ShapeID(),
                       adios2::ShapeID::GlobalValue);
-            EXPECT_EQ(var_StepsGlobalValueString.Steps(), NSteps);
             EXPECT_EQ(var_StepsGlobalValueString.Shape().size(), 0);
             std::string stepsGlobalValueStringDataString;
             bpReader.Get(var_StepsGlobalValueString,
@@ -224,7 +222,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             EXPECT_TRUE(var_RanksLocalValue);
             EXPECT_EQ(var_RanksLocalValue.ShapeID(),
                       adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_RanksLocalValue.Steps(), NSteps);
             EXPECT_EQ(var_RanksLocalValue.Shape().size(), 1);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0],
                       static_cast<size_t>(mpiSize));
@@ -241,7 +238,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             EXPECT_TRUE(var_RanksLocalValueString);
             EXPECT_EQ(var_RanksLocalValueString.ShapeID(),
                       adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_RanksLocalValue.Steps(), NSteps);
             EXPECT_EQ(var_RanksLocalValue.Shape().size(), 1);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             std::vector<std::string> rankLocalValueDataString;
@@ -265,35 +261,27 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             EXPECT_TRUE(var_cr64);
 
             EXPECT_EQ(var_i8.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i8.Steps(), NSteps);
             EXPECT_EQ(var_i8.Shape().size(), 0);
 
             EXPECT_EQ(var_i16.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i16.Steps(), NSteps);
             EXPECT_EQ(var_i16.Shape().size(), 0);
 
             EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i32.Steps(), NSteps);
             EXPECT_EQ(var_i32.Shape().size(), 0);
 
             EXPECT_EQ(var_i64.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i64.Steps(), NSteps);
             EXPECT_EQ(var_i64.Shape().size(), 0);
 
             EXPECT_EQ(var_r32.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_r32.Steps(), NSteps);
             EXPECT_EQ(var_r32.Shape().size(), 0);
 
             EXPECT_EQ(var_r64.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_r64.Steps(), NSteps);
             EXPECT_EQ(var_r64.Shape().size(), 0);
 
             EXPECT_EQ(var_cr32.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_cr32.Steps(), NSteps);
             EXPECT_EQ(var_cr32.Shape().size(), 0);
 
             EXPECT_EQ(var_cr64.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_cr64.Steps(), NSteps);
             EXPECT_EQ(var_cr64.Shape().size(), 0);
 
             // loop blocks
@@ -661,7 +649,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             EXPECT_TRUE(var_StepsGlobalValue);
             EXPECT_EQ(var_StepsGlobalValue.ShapeID(),
                       adios2::ShapeID::GlobalValue);
-            EXPECT_EQ(var_StepsGlobalValue.Steps(), NSteps);
             EXPECT_EQ(var_StepsGlobalValue.Shape().size(), 0);
             EXPECT_EQ(var_StepsGlobalValue.Min(),
                       static_cast<int32_t>(currentStep));
@@ -675,7 +662,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             EXPECT_TRUE(var_StepsGlobalValueString);
             EXPECT_EQ(var_StepsGlobalValueString.ShapeID(),
                       adios2::ShapeID::GlobalValue);
-            EXPECT_EQ(var_StepsGlobalValueString.Steps(), NSteps);
             EXPECT_EQ(var_StepsGlobalValueString.Shape().size(), 0);
             std::string stepsGlobalValueStringDataString;
             bpReader.Get(var_StepsGlobalValueString,
@@ -687,7 +673,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             EXPECT_TRUE(var_RanksLocalValue);
             EXPECT_EQ(var_RanksLocalValue.ShapeID(),
                       adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_RanksLocalValue.Steps(), NSteps);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             EXPECT_EQ(var_RanksLocalValue.Min(), 0);
             EXPECT_EQ(var_RanksLocalValue.Max(), mpiSize - 1);
@@ -702,7 +687,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             EXPECT_TRUE(var_RanksLocalValueString);
             EXPECT_EQ(var_RanksLocalValueString.ShapeID(),
                       adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_RanksLocalValue.Steps(), NSteps);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             std::vector<std::string> rankLocalValueDataString;
             bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString,
@@ -725,35 +709,27 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             EXPECT_TRUE(var_cr64);
 
             EXPECT_EQ(var_i8.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i8.Steps(), NSteps);
             EXPECT_EQ(var_i8.Shape().size(), 0);
 
             EXPECT_EQ(var_i16.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i16.Steps(), NSteps);
             EXPECT_EQ(var_i16.Shape().size(), 0);
 
             EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i32.Steps(), NSteps);
             EXPECT_EQ(var_i32.Shape().size(), 0);
 
             EXPECT_EQ(var_i64.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i64.Steps(), NSteps);
             EXPECT_EQ(var_i64.Shape().size(), 0);
 
             EXPECT_EQ(var_r32.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_r32.Steps(), NSteps);
             EXPECT_EQ(var_r32.Shape().size(), 0);
 
             EXPECT_EQ(var_r64.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_r64.Steps(), NSteps);
             EXPECT_EQ(var_r64.Shape().size(), 0);
 
             EXPECT_EQ(var_cr32.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_cr32.Steps(), NSteps);
             EXPECT_EQ(var_cr32.Shape().size(), 0);
 
             EXPECT_EQ(var_cr64.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_cr64.Steps(), NSteps);
             EXPECT_EQ(var_cr64.Shape().size(), 0);
 
             for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
@@ -1175,7 +1151,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             EXPECT_TRUE(var_StepsGlobalValue);
             EXPECT_EQ(var_StepsGlobalValue.ShapeID(),
                       adios2::ShapeID::GlobalValue);
-            EXPECT_EQ(var_StepsGlobalValue.Steps(), NSteps);
             EXPECT_EQ(var_StepsGlobalValue.Shape().size(), 0);
             EXPECT_EQ(var_StepsGlobalValue.Min(),
                       static_cast<int32_t>(currentStep));
@@ -1189,7 +1164,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             EXPECT_TRUE(var_StepsGlobalValueString);
             EXPECT_EQ(var_StepsGlobalValueString.ShapeID(),
                       adios2::ShapeID::GlobalValue);
-            EXPECT_EQ(var_StepsGlobalValueString.Steps(), NSteps);
             EXPECT_EQ(var_StepsGlobalValueString.Shape().size(), 0);
             std::string stepsGlobalValueStringDataString;
             bpReader.Get(var_StepsGlobalValueString,
@@ -1201,7 +1175,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             EXPECT_TRUE(var_RanksLocalValue);
             EXPECT_EQ(var_RanksLocalValue.ShapeID(),
                       adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_RanksLocalValue.Steps(), NSteps);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             EXPECT_EQ(var_RanksLocalValue.Min(), 0);
             EXPECT_EQ(var_RanksLocalValue.Max(), mpiSize - 1);
@@ -1216,7 +1189,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             EXPECT_TRUE(var_RanksLocalValueString);
             EXPECT_EQ(var_RanksLocalValueString.ShapeID(),
                       adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_RanksLocalValue.Steps(), NSteps);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             std::vector<std::string> rankLocalValueDataString;
             bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString,
@@ -1239,35 +1211,27 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             EXPECT_TRUE(var_cr64);
 
             EXPECT_EQ(var_i8.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i8.Steps(), NSteps);
             EXPECT_EQ(var_i8.Shape().size(), 0);
 
             EXPECT_EQ(var_i16.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i16.Steps(), NSteps);
             EXPECT_EQ(var_i16.Shape().size(), 0);
 
             EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i32.Steps(), NSteps);
             EXPECT_EQ(var_i32.Shape().size(), 0);
 
             EXPECT_EQ(var_i64.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_i64.Steps(), NSteps);
             EXPECT_EQ(var_i64.Shape().size(), 0);
 
             EXPECT_EQ(var_r32.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_r32.Steps(), NSteps);
             EXPECT_EQ(var_r32.Shape().size(), 0);
 
             EXPECT_EQ(var_r64.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_r64.Steps(), NSteps);
             EXPECT_EQ(var_r64.Shape().size(), 0);
 
             EXPECT_EQ(var_cr32.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_cr32.Steps(), NSteps);
             EXPECT_EQ(var_cr32.Shape().size(), 0);
 
             EXPECT_EQ(var_cr64.ShapeID(), adios2::ShapeID::LocalArray);
-            EXPECT_EQ(var_cr64.Steps(), NSteps);
             EXPECT_EQ(var_cr64.Shape().size(), 0);
 
             for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
@@ -1641,7 +1605,8 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         std::vector<int8_t> I8;
         std::vector<int16_t> I16;

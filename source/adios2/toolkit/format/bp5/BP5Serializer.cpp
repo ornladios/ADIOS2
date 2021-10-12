@@ -35,16 +35,14 @@ BP5Serializer::~BP5Serializer()
         free_FMfield_list(Info.MetaFields);
     if (Info.LocalFMContext)
         free_FMcontext(Info.LocalFMContext);
-    if (Info.DataFields)
-        free_FMfield_list(Info.DataFields);
     if (Info.AttributeFields)
         free_FMfield_list(Info.AttributeFields);
     if (Info.AttributeData)
         free(Info.AttributeData);
     if (MetadataBuf)
     {
-        if (((FFSMetadataInfoStruct *)MetadataBuf)->BitField)
-            free(((FFSMetadataInfoStruct *)MetadataBuf)->BitField);
+        if (((BP5MetadataInfoStruct *)MetadataBuf)->BitField)
+            free(((BP5MetadataInfoStruct *)MetadataBuf)->BitField);
         free(MetadataBuf);
     }
 }
@@ -57,8 +55,6 @@ void BP5Serializer::Init()
     Info.RecList = (BP5Serializer::BP5WriterRec)malloc(sizeof(Info.RecList[0]));
     Info.MetaFieldCount = 0;
     Info.MetaFields = NULL;
-    Info.DataFieldCount = 0;
-    Info.DataFields = NULL;
     Info.LocalFMContext = create_local_FMcontext();
     AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, "BitFieldCount",
                    "integer", sizeof(size_t));
@@ -68,10 +64,10 @@ void BP5Serializer::Init()
                    "integer", sizeof(size_t));
     RecalcMarshalStorageSize();
 
-    ((FFSMetadataInfoStruct *)MetadataBuf)->BitFieldCount = 0;
-    ((FFSMetadataInfoStruct *)MetadataBuf)->BitField =
+    ((BP5MetadataInfoStruct *)MetadataBuf)->BitFieldCount = 0;
+    ((BP5MetadataInfoStruct *)MetadataBuf)->BitField =
         (std::size_t *)malloc(sizeof(size_t));
-    ((FFSMetadataInfoStruct *)MetadataBuf)->DataBlockSize = 0;
+    ((BP5MetadataInfoStruct *)MetadataBuf)->DataBlockSize = 0;
 }
 BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key)
 {
@@ -389,10 +385,10 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
                  DataType::Int64, sizeof(size_t));
         free(ArrayName);
         Rec->MetaOffset = Info.MetaFields[Info.MetaFieldCount - 1].field_offset;
-        char *ShapeName = ConcatName(Name, "Shape");
-        char *CountName = ConcatName(Name, "Count");
-        char *OffsetsName = ConcatName(Name, "Offsets");
-        char *LocationsName = ConcatName(Name, "DataLocations");
+        char *ShapeName = ConcatName(Name, "Shape", VB->m_ShapeID);
+        char *CountName = ConcatName(Name, "Count", VB->m_ShapeID);
+        char *OffsetsName = ConcatName(Name, "Offsets", VB->m_ShapeID);
+        char *LocationsName = ConcatName(Name, "DataLocations", VB->m_ShapeID);
         AddField(&Info.MetaFields, &Info.MetaFieldCount, ArrayBlockCount,
                  DataType::Int64, sizeof(size_t));
         AddField(&Info.MetaFields, &Info.MetaFieldCount, ArrayDBCount,
@@ -413,20 +409,8 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         free(LocationsName);
         RecalcMarshalStorageSize();
 
-        // To Data, add FMFields for ElemCount and Array matching _ArrayRec
-        char *ElemCountName = ConcatName(Name, "ElemCount");
-        AddField(&Info.DataFields, &Info.DataFieldCount, ElemCountName,
-                 DataType::Int64, sizeof(size_t));
-        Rec->DataOffset = Info.DataFields[Info.DataFieldCount - 1].field_offset;
-        char *SstName = ConcatName(Name, "");
-        AddVarArrayField(&Info.DataFields, &Info.DataFieldCount, SstName, Type,
-                         ElemSize, ElemCountName);
-        free(SstName);
-        free(ElemCountName);
-        RecalcMarshalStorageSize();
         // Changing the formats renders these invalid
         Info.MetaFormat = NULL;
-        Info.DataFormat = NULL;
     }
     Info.RecCount++;
     return Rec;
@@ -491,7 +475,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
 
     core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
 
-    FFSMetadataInfoStruct *MBase;
+    BP5MetadataInfoStruct *MBase;
 
     BP5WriterRec Rec = LookupWriterRec(Variable);
 
@@ -520,9 +504,9 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         DeferAddToVec = false;
     }
 
-    MBase = (struct FFSMetadataInfoStruct *)MetadataBuf;
-    int AlreadyWritten = FFSBitfieldTest(MBase, Rec->FieldID);
-    FFSBitfieldSet(MBase, Rec->FieldID);
+    MBase = (struct BP5MetadataInfoStruct *)MetadataBuf;
+    int AlreadyWritten = BP5BitfieldTest(MBase, Rec->FieldID);
+    BP5BitfieldSet(MBase, Rec->FieldID);
 
     if (VB->m_SingleValue)
     {
@@ -757,8 +741,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
     FFSBuffer AttributeEncodeBuffer = NULL;
     int MetaDataSize = 0;
     int AttributeSize = 0;
-    struct FFSMetadataInfoStruct *MBase =
-        (struct FFSMetadataInfoStruct *)MetadataBuf;
+    struct BP5MetadataInfoStruct *MBase =
+        (struct BP5MetadataInfoStruct *)MetadataBuf;
 
     if (CurDataBuffer == NULL)
     {
@@ -793,7 +777,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep)
 
     //    FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);
     /* free all those copied dimensions, etc */
-    MBase = (struct FFSMetadataInfoStruct *)Metadata;
+    MBase = (struct BP5MetadataInfoStruct *)Metadata;
     size_t *tmp = MBase->BitField;
     /*
      * BitField value is saved away from FMfree_var_rec_elements() so that it

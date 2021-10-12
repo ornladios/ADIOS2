@@ -125,9 +125,6 @@ private:
         int MetaFieldCount = 0;
         FMFieldList MetaFields = NULL;
         FMFormat MetaFormat;
-        int DataFieldCount = 0;
-        FMFieldList DataFields = NULL;
-        FMFormat DataFormat = NULL;
         int AttributeFieldCount = 0;
         FMFieldList AttributeFields = NULL;
         FMFormat AttributeFormat = NULL;
