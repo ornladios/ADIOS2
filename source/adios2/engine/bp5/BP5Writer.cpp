@@ -177,8 +177,23 @@ void BP5Writer::WriteData(format::BufferV *Data)
 {
     if (m_Parameters.AsyncWrite)
     {
-        // Async IO requires everyone writing
-        WriteData_EveryoneWrites(Data, false);
+        switch (m_Parameters.AggregationType)
+        {
+        case (int)AggregationType::EveryoneWrites:
+            WriteData_EveryoneWrites(Data, false);
+            break;
+        case (int)AggregationType::EveryoneWritesSerial:
+            WriteData_EveryoneWrites(Data, true); // not supported yet
+            break;
+        case (int)AggregationType::TwoLevelShm:
+            WriteData_TwoLevelShm_Async(Data);
+            break;
+        default:
+            throw std::invalid_argument(
+                "Aggregation method " +
+                std::to_string(m_Parameters.AggregationType) +
+                "is not supported in BP5");
+        }
     }
     else
     {
@@ -581,11 +596,6 @@ void BP5Writer::InitAggregator()
     // m_Aggregator.m_IsActive is always true
     // m_Aggregator.m_Comm.Rank() will always succeed (not abort)
     // m_Aggregator.m_SubFileIndex is always set
-
-    if (m_Parameters.AsyncWrite)
-    {
-        m_Parameters.AggregationType = (int)AggregationType::EveryoneWrites;
-    }
 
     if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites ||
         m_Parameters.AggregationType ==

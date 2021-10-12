@@ -55,7 +55,7 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
 
     // Set deadline 95% of allotted time but also discount 0.01s real time
     // for the extra hassle
-    float internalDeadlineSec = deadline_sec * 0.95 - 0.01;
+    double internalDeadlineSec = deadline_sec * 0.95 - 0.01;
     if (internalDeadlineSec < 0.0)
     {
         internalDeadlineSec = 0.0;

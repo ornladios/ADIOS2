@@ -157,6 +157,7 @@ private:
     void WriteData_EveryoneWrites(format::BufferV *Data,
                                   bool SerializedWriters);
     void WriteData_TwoLevelShm(format::BufferV *Data);
+    void WriteData_TwoLevelShm_Async(format::BufferV *Data);
 
     void PopulateMetadataIndexFileContent(
         format::BufferSTL &buffer, const uint64_t currentStep,
