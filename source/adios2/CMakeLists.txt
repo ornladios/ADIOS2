@@ -89,6 +89,10 @@ add_library(adios2_core
 
   toolkit/transportman/TransportMan.cpp
 
+  toolkit/shm/Spinlock.cpp
+  toolkit/shm/SerializeProcesses.cpp
+  toolkit/shm/TokenChain.h
+
   toolkit/aggregator/mpi/MPIAggregator.cpp
   toolkit/aggregator/mpi/MPIChain.cpp
   toolkit/aggregator/mpi/MPIShmChain.cpp
