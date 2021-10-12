@@ -20,9 +20,10 @@ public:
     adios2::IO io;
     bool hasIOTimer;
     size_t appID;
-    
+
     adiosStream(const std::string &streamName, adios2::IO &io,
-                const adios2::Mode mode, MPI_Comm comm, bool iotimer, size_t appid);
+                const adios2::Mode mode, MPI_Comm comm, bool iotimer,
+                size_t appid);
     ~adiosStream();
     void Write(CommandWrite *cmdW, Config &cfg, const Settings &settings,
                size_t step);
@@ -32,7 +33,7 @@ public:
 
 private:
     MPI_Comm comm;
-    FILE * perfLogFP;
+    FILE *perfLogFP;
     double openTime;
     void defineADIOSArray(const std::shared_ptr<VariableInfo> ov);
     void putADIOSArray(const std::shared_ptr<VariableInfo> ov);

@@ -66,7 +66,7 @@ public:
 
     void Seek(const size_t start = MaxSizeT) final;
 
-    void MkDir(const std::string &fileName) final;    
+    void MkDir(const std::string &fileName) final;
 
 private:
     /** POSIX file handle returned by Open */

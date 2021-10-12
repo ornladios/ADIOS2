@@ -53,7 +53,7 @@ public:
 
     void Seek(const size_t start = MaxSizeT) final;
 
-    void MkDir(const std::string &fileName) final; 
+    void MkDir(const std::string &fileName) final;
 
 private:
     /** 1st argument of ftok to create shared memory segment key, from Open */

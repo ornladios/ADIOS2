@@ -372,8 +372,6 @@ void FileStdio::Seek(const size_t start)
     }
 }
 
-void FileStdio::MkDir(const std::string &fileName)
-{
-}
+void FileStdio::MkDir(const std::string &fileName) {}
 } // end namespace transport
 } // end namespace adios2

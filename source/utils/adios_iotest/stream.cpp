@@ -59,15 +59,14 @@ std::shared_ptr<Stream> openStream(const std::string &streamName,
     std::shared_ptr<Stream> sp;
     switch (iolib)
     {
-    case IOLib::ADIOS:
-    {
-        auto s = adiosStream(streamName, iogroup->adiosio, mode, comm, iotimer, appid);
+    case IOLib::ADIOS: {
+        auto s = adiosStream(streamName, iogroup->adiosio, mode, comm, iotimer,
+                             appid);
         sp = std::make_shared<adiosStream>(s);
         break;
     }
 #ifdef ADIOS2_HAVE_HDF5_PARALLEL
-    case IOLib::HDF5:
-    {
+    case IOLib::HDF5: {
         auto s = hdf5Stream(streamName, mode, comm);
         sp = std::make_shared<hdf5Stream>(s);
         break;

@@ -182,7 +182,8 @@ void BP4Reader::Init()
     TimePoint timeoutInstant = Now() + timeoutSeconds;
 
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
-    //std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": in BP4Reader::Init(), after OpenFiles" << std::endl;    
+    // std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": in
+    // BP4Reader::Init(), after OpenFiles" << std::endl;
     if (!m_BP4Deserializer.m_Parameters.StreamReader)
     {
         /* non-stream reader gets as much steps as available now */
@@ -221,12 +222,14 @@ size_t BP4Reader::OpenWithTimeout(transportman::TransportMan &tm,
         {
             errno = 0;
             const bool profile = m_BP4Deserializer.m_Profiler.m_IsActive;
-	    //std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": BP4Reader OpenWithTimeout " << fileNames[0] << std::endl;
+            // std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ":
+            // BP4Reader OpenWithTimeout " << fileNames[0] << std::endl;
 
-	    for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
-	    {
-		m_IO.m_TransportsParameters[i].insert({"SingleProcess", "true"});
-	    }	    
+            for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
+            {
+                m_IO.m_TransportsParameters[i].insert(
+                    {"SingleProcess", "true"});
+            }
             tm.OpenFiles(fileNames, adios2::Mode::Read,
                          m_IO.m_TransportsParameters, profile);
             flag = 0; // found file
@@ -261,10 +264,12 @@ void BP4Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
         /* Open the metadata index table */
         const std::string metadataIndexFile(
             m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
-	//std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": BP4Reader OpenFiles " << metadataIndexFile << std::endl;
+        // std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": BP4Reader
+        // OpenFiles " << metadataIndexFile << std::endl;
         flag = OpenWithTimeout(m_MDIndexFileManager, {metadataIndexFile},
                                timeoutInstant, pollSeconds, lasterrmsg);
-	//std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": after OpenWithTimeout, flag=" << flag << std::endl;    
+        // std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": after
+        // OpenWithTimeout, flag=" << flag << std::endl;
         if (flag == 0)
         {
             /* Open the metadata file */
@@ -290,10 +295,12 @@ void BP4Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
             }
         }
     }
-    //std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": before BroadcastValue" << std::endl;
+    // std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": before
+    // BroadcastValue" << std::endl;
     m_Comm.Barrier("wait for rank 0 to open...");
     flag = m_Comm.BroadcastValue(flag, 0);
-    //std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": after BroadcastValue, flag=" << flag << std::endl;    
+    // std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": after
+    // BroadcastValue, flag=" << flag << std::endl;
     if (flag == 2)
     {
         if (m_BP4Deserializer.m_RankMPI == 0 && !lasterrmsg.empty())

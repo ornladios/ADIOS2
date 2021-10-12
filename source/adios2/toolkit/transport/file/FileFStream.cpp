@@ -354,9 +354,7 @@ void FileFStream::Seek(const size_t start)
     }
 }
 
-void FileFStream::MkDir(const std::string &fileName)
-{
-}
+void FileFStream::MkDir(const std::string &fileName) {}
 
 } // end namespace transport
 } // end namespace adios2

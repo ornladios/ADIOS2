@@ -553,12 +553,9 @@ void FilePOSIX::Seek(const size_t start)
     {
         SeekToEnd();
     }
-
 }
 
-void FilePOSIX::MkDir(const std::string &fileName)
-{
-}
+void FilePOSIX::MkDir(const std::string &fileName) {}
 
 } // end namespace transport
 } // end namespace adios2

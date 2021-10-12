@@ -24,7 +24,7 @@ struct option options[] = {{"help", no_argument, NULL, 'h'},
                            {"decomp", required_argument, NULL, 'd'},
                            {"decomp-ratio", required_argument, NULL, 'D'},
                            {"xml", required_argument, NULL, 'x'},
-			   {"path", required_argument, NULL, 'p'},
+                           {"path", required_argument, NULL, 'p'},
                            {"strong-scaling", no_argument, NULL, 's'},
                            {"weak-scaling", no_argument, NULL, 'w'},
                            {"timer", no_argument, NULL, 't'},
@@ -72,7 +72,7 @@ void Settings::displayHelp()
         << "  -v         increase verbosity\n"
         << "  -h         display this help\n"
         << "  -F         turn on fixed I/O pattern explicitly\n"
-	<< "  -p         specify the path of the output explicitly\n"
+        << "  -p         specify the path of the output explicitly\n"
         << "  -t         print and dump the timing measured by the I/O "
            "timer\n\n";
 }
@@ -239,7 +239,7 @@ int Settings::processArgs(int argc, char *argv[])
             break;
         case 'p':
             outputPath = optarg;
-            break;	    
+            break;
         case 1:
             /* This means a field is unknown, or could be multiple arg or bad
              * arg*/
