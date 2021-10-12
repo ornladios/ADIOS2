@@ -63,7 +63,7 @@ protected:
     std::unique_ptr<NullTransportImpl> Impl;
 
     void MkDir(const std::string &fileName) override;
-
+    
     void CheckName() const override;
 };
 

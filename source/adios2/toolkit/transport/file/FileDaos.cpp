@@ -888,17 +888,7 @@ void FileDaos::Seek(const size_t start)
 {
     if (start != MaxSizeT)
     {
-        WaitForOpen();
-        errno = 0;
-        const int status = lseek(m_FileDescriptor, start, SEEK_SET);
-        m_Errno = errno;
-        if (status == -1)
-        {
-            throw std::ios_base::failure("ERROR: couldn't seek to offset " +
-                                         std::to_string(start) + " of file " +
-                                         m_Name + ", in call to DAOS IO lseek" +
-                                         SysErrMsg());
-        }
+	m_GlobalOffset = start;
     }
     else
     {

@@ -57,6 +57,8 @@ public:
 
     void Seek(const size_t start) final;
 
+    void MkDir(const std::string &fileName) final;    
+
 private:
     /** C File pointer */
     FILE *m_File = nullptr;
