@@ -837,7 +837,8 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
         }
         return false;
     }
-    if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
+    if ((variable.m_SelectionType == adios2::SelectionType::BoundingBox) &&
+        (variable.m_ShapeID == ShapeID::GlobalArray))
     {
         BP5ArrayRequest Req;
         Req.VarRec = VarRec;
@@ -849,13 +850,18 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
         Req.Data = DestData;
         PendingRequests.push_back(Req);
     }
-    else if (variable.m_SelectionType == adios2::SelectionType::WriteBlock)
+    else if ((variable.m_SelectionType == adios2::SelectionType::WriteBlock) ||
+             (variable.m_ShapeID == ShapeID::LocalArray))
     {
         BP5ArrayRequest Req;
         Req.VarRec = VarByKey[&variable];
         Req.RequestType = Local;
         Req.BlockID = variable.m_BlockID;
         Req.Count = variable.m_Count;
+        if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
+        {
+            Req.Start = variable.m_Start;
+        }
         Req.Data = DestData;
         Req.Step = Step;
         PendingRequests.push_back(Req);

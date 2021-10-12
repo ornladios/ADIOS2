@@ -35,8 +35,6 @@ BP5Serializer::~BP5Serializer()
         free_FMfield_list(Info.MetaFields);
     if (Info.LocalFMContext)
         free_FMcontext(Info.LocalFMContext);
-    if (Info.DataFields)
-        free_FMfield_list(Info.DataFields);
     if (Info.AttributeFields)
         free_FMfield_list(Info.AttributeFields);
     if (Info.AttributeData)
@@ -57,8 +55,6 @@ void BP5Serializer::Init()
     Info.RecList = (BP5Serializer::BP5WriterRec)malloc(sizeof(Info.RecList[0]));
     Info.MetaFieldCount = 0;
     Info.MetaFields = NULL;
-    Info.DataFieldCount = 0;
-    Info.DataFields = NULL;
     Info.LocalFMContext = create_local_FMcontext();
     AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, "BitFieldCount",
                    "integer", sizeof(size_t));
@@ -389,10 +385,10 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
                  DataType::Int64, sizeof(size_t));
         free(ArrayName);
         Rec->MetaOffset = Info.MetaFields[Info.MetaFieldCount - 1].field_offset;
-        char *ShapeName = ConcatName(Name, "Shape");
-        char *CountName = ConcatName(Name, "Count");
-        char *OffsetsName = ConcatName(Name, "Offsets");
-        char *LocationsName = ConcatName(Name, "DataLocations");
+        char *ShapeName = ConcatName(Name, "Shape", VB->m_ShapeID);
+        char *CountName = ConcatName(Name, "Count", VB->m_ShapeID);
+        char *OffsetsName = ConcatName(Name, "Offsets", VB->m_ShapeID);
+        char *LocationsName = ConcatName(Name, "DataLocations", VB->m_ShapeID);
         AddField(&Info.MetaFields, &Info.MetaFieldCount, ArrayBlockCount,
                  DataType::Int64, sizeof(size_t));
         AddField(&Info.MetaFields, &Info.MetaFieldCount, ArrayDBCount,
@@ -413,20 +409,8 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         free(LocationsName);
         RecalcMarshalStorageSize();
 
-        // To Data, add FMFields for ElemCount and Array matching _ArrayRec
-        char *ElemCountName = ConcatName(Name, "ElemCount");
-        AddField(&Info.DataFields, &Info.DataFieldCount, ElemCountName,
-                 DataType::Int64, sizeof(size_t));
-        Rec->DataOffset = Info.DataFields[Info.DataFieldCount - 1].field_offset;
-        char *SstName = ConcatName(Name, "");
-        AddVarArrayField(&Info.DataFields, &Info.DataFieldCount, SstName, Type,
-                         ElemSize, ElemCountName);
-        free(SstName);
-        free(ElemCountName);
-        RecalcMarshalStorageSize();
         // Changing the formats renders these invalid
         Info.MetaFormat = NULL;
-        Info.DataFormat = NULL;
     }
     Info.RecCount++;
     return Rec;
