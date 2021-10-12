@@ -34,7 +34,7 @@ program TestBPWriteReadHeatMapSZ2D
   integer(kind=8), dimension(2) :: sel_start, sel_count
   integer :: ierr, irank, isize
   integer :: in1, in2
-  integer :: i1, i2, i
+  integer :: i1, i2
 
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
@@ -193,8 +193,8 @@ program TestBPWriteReadHeatMapSZ2D
     sum_i1 = 0
     sum_i2 = 0
 
-    do i2 = 1, sel_count(2)
-      do i1 = 1, sel_count(1)
+    do i2 = 1, INT(sel_count(2), 4)
+      do i1 = 1, INT(sel_count(1), 4)
         sum_i1 = sum_i1 + sel_temperatures_i1(i1, i2)
         sum_i2 = sum_i2 + sel_temperatures_i2(i1, i2)
       end do

@@ -13,6 +13,15 @@ module adios2_engine_mod
     use adios2_engine_put_mod
     use adios2_engine_get_mod
     implicit none
+    external adios2_close_f2c
+    external adios2_current_step_f2c
+    external adios2_end_step_f2c
+    external adios2_flush_f2c
+    external adios2_lock_reader_selections_f2c
+    external adios2_lock_writer_definitions_f2c
+    external adios2_perform_gets_f2c
+    external adios2_perform_puts_f2c
+    external adios2_steps_f2c
 
 contains
 

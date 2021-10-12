@@ -670,5 +670,127 @@ void DataManSerializer::Log(const int level, const std::string &message,
     }
 }
 
+template <>
+void DataManSerializer::PutData(
+    const std::string *inputData, const std::string &varName,
+    const Dims &varShape, const Dims &varStart, const Dims &varCount,
+    const Dims &varMemStart, const Dims &varMemCount, const std::string &doid,
+    const size_t step, const int rank, const std::string &address,
+    const std::vector<core::VariableBase::Operation> &ops, VecPtr localBuffer,
+    JsonPtr metadataJson)
+{
+    PERFSTUBS_SCOPED_TIMER_FUNC();
+    Log(1,
+        "DataManSerializer::PutData begin with Step " + std::to_string(step) +
+            " Var " + varName,
+        true, true);
+
+    if (localBuffer == nullptr)
+    {
+        localBuffer = m_LocalBuffer;
+    }
+
+    nlohmann::json metaj;
+
+    metaj["N"] = varName;
+    metaj["O"] = varStart;
+    metaj["C"] = varCount;
+    metaj["S"] = varShape;
+    metaj["Y"] = "string";
+    metaj["P"] = localBuffer->size();
+
+    if (not address.empty())
+    {
+        metaj["A"] = address;
+    }
+
+    if (not m_IsRowMajor)
+    {
+        metaj["M"] = m_IsRowMajor;
+    }
+    if (not m_IsLittleEndian)
+    {
+        metaj["E"] = m_IsLittleEndian;
+    }
+
+    metaj["I"] = inputData->size();
+
+    if (localBuffer->capacity() < localBuffer->size() + inputData->size())
+    {
+        localBuffer->reserve((localBuffer->size() + inputData->size()) * 2);
+    }
+
+    localBuffer->resize(localBuffer->size() + inputData->size());
+
+    std::memcpy(localBuffer->data() + localBuffer->size() - inputData->size(),
+                inputData->data(), inputData->size());
+
+    if (metadataJson == nullptr)
+    {
+        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
+            std::move(metaj));
+    }
+    else
+    {
+        (*metadataJson)[std::to_string(step)][std::to_string(rank)]
+            .emplace_back(std::move(metaj));
+    }
+
+    Log(1,
+        "DataManSerializer::PutData end with Step " + std::to_string(step) +
+            " Var " + varName,
+        true, true);
+}
+
+template <>
+int DataManSerializer::GetData(std::string *outputData,
+                               const std::string &varName, const Dims &varStart,
+                               const Dims &varCount, const size_t step,
+                               const Dims &varMemStart, const Dims &varMemCount)
+{
+    PERFSTUBS_SCOPED_TIMER_FUNC();
+
+    DmvVecPtr vec = nullptr;
+
+    {
+        std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
+        const auto &i = m_DataManVarMap.find(step);
+        if (i == m_DataManVarMap.end())
+        {
+            return -1; // step not found
+        }
+        else
+        {
+            vec = i->second;
+        }
+    }
+
+    if (vec == nullptr)
+    {
+        return -2; // step found but variable not found
+    }
+
+    char *input_data = nullptr;
+
+    for (const auto &j : *vec)
+    {
+        if (j.name == varName)
+        {
+            if (j.buffer == nullptr)
+            {
+                continue;
+            }
+            else
+            {
+                input_data = reinterpret_cast<char *>(j.buffer->data());
+            }
+
+            input_data += j.position;
+
+            *outputData = std::string(input_data, j.size);
+        }
+    }
+    return 0;
+}
 } // namespace format
 } // namespace adios2

@@ -91,7 +91,7 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
     }
     m_Stream->m_Engine->Get(variable, pyArray.mutable_data(), Mode::Sync);
 
-    return pyArray;
+    return std::move(pyArray);
 }
 
 } // end namespace py11

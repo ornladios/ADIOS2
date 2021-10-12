@@ -14,6 +14,7 @@
 #include "SstParamParser.h"
 #include "SstWriter.h"
 #include "SstWriter.tcc"
+#include "adios2/toolkit/format/buffer/malloc/MallocV.h"
 #include <adios2-perfstubs-interface.h>
 
 namespace adios2
@@ -144,13 +145,20 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
             new format::BP3Serializer(m_Comm));
         m_BP3Serializer->Init(m_IO.m_Parameters,
                               "in call to BP3::Open for writing", "sst");
+        m_BP3Serializer->ResizeBuffer(
+            m_BP3Serializer->m_Parameters.InitialBufferSize,
+            "in call to BP3::Open for writing by SST engine");
         m_BP3Serializer->m_MetadataSet.TimeStep = 1;
         m_BP3Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
     }
     else if (Params.MarshalMethod == SstMarshalBP5)
     {
-        m_BP5Serializer =
-            std::unique_ptr<format::BP5Serializer>(new format::BP5Serializer());
+        if (!m_BP5Serializer)
+        {
+            m_BP5Serializer = std::unique_ptr<format::BP5Serializer>(
+                new format::BP5Serializer());
+        }
+        m_BP5Serializer->InitStep(new format::MallocV("SstWriter", true));
         m_BP5Serializer->m_Engine = this;
         //        m_BP5Serializer->Init(m_IO.m_Parameters,
         //                              "in call to BP5::Open for writing",
@@ -285,11 +293,18 @@ void SstWriter::EndStep()
         newblock->MetaMetaBlocks = MetaMetaBlocks;
         newblock->metadata.DataSize = TSInfo->MetaEncodeBuffer->m_FixedSize;
         newblock->metadata.block = TSInfo->MetaEncodeBuffer->Data();
-        format::BufferV::BufferV_iovec iovec = TSInfo->DataBuffer->DataVec();
-        newblock->data.DataSize = iovec[0].iov_len;
-        newblock->data.block = (char *)iovec[0].iov_base;
+        std::vector<core::iovec> iovec = TSInfo->DataBuffer->DataVec();
+        if (!iovec.empty())
+        {
+            newblock->data.DataSize = iovec[0].iov_len;
+            newblock->data.block = (char *)iovec[0].iov_base;
+        }
+        else
+        {
+            newblock->data.DataSize = 0;
+            newblock->data.block = nullptr;
+        }
         newblock->TSInfo = TSInfo;
-        delete[] iovec;
         if (TSInfo->AttributeEncodeBuffer)
         {
             newblock->attribute_data.DataSize =

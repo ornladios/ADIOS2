@@ -17,6 +17,7 @@
 #include <unordered_set>
 
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/operator/compress/CompressorFactory.h"
 
 namespace adios2
 {
@@ -148,8 +149,8 @@ void BP3Deserializer::SetVariableBlockInfo(
         blockOperation.PreSizeOf = sizeof(T);
 
         // read metadata from supported type and populate Info
-        std::shared_ptr<BPOperation> bpOp = SetBPOperation(bpOpInfo.Type);
-        bpOp->GetMetadata(bpOpInfo.Metadata, blockOperation.Info);
+        BPOperation bpOp;
+        bpOp.GetMetadata(bpOpInfo.Metadata, blockOperation.Info);
         blockOperation.PayloadSize = static_cast<size_t>(
             std::stoull(blockOperation.Info.at("OutputSize")));
 
@@ -517,14 +518,12 @@ void BP3Deserializer::PostDataRead(
             blockOperationInfo.PreSizeOf;
         m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
 
-        // get the right bp3Op
-        std::shared_ptr<BPOperation> bp3Op =
-            SetBPOperation(blockOperationInfo.Info.at("Type"));
-
         // get original block back
         char *preOpData = m_ThreadBuffers[threadID][0].data();
         const char *postOpData = m_ThreadBuffers[threadID][1].data();
-        bp3Op->GetData(postOpData, blockOperationInfo, preOpData);
+
+        core::compress::CompressorFactory of;
+        of.Decompress(postOpData, blockOperationInfo.PayloadSize, preOpData);
 
         // clip block to match selection
         helper::ClipVector(m_ThreadBuffers[threadID][0],

@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
 
     adios2::Variable<unsigned int> vgndx =
         bpReaderIO.InquireVariable<unsigned int>("gndx");
+    (void)vgndx;
 
     // gndx = vgndx.GetData()[0];
 

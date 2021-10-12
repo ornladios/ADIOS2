@@ -162,6 +162,7 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
                 char *dataT = reinterpret_cast<char *>(data);
                 attributeCpp->m_DataSingleValue.copy(
                     dataT, attributeCpp->m_DataSingleValue.size());
+                dataT[attributeCpp->m_DataSingleValue.size()] = '\0';
                 *size = 1;
             }
             else

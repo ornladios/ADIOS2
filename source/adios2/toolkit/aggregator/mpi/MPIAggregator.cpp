@@ -19,27 +19,14 @@ namespace aggregator
 
 MPIAggregator::MPIAggregator() {}
 
-MPIAggregator::~MPIAggregator()
-{
-    if (m_IsActive)
-    {
-        m_Comm.Free("freeing aggregators comm in MPIAggregator "
-                    "destructor, not recommended");
-    }
-}
+MPIAggregator::~MPIAggregator() { Close(); }
 
-void MPIAggregator::Init(const size_t subStreams,
+void MPIAggregator::Init(const size_t numAggregators, const size_t subStreams,
                          helper::Comm const &parentComm)
+
 {
-}
-
-void MPIAggregator::SwapBuffers(const int step) noexcept {}
-
-void MPIAggregator::ResetBuffers() noexcept {}
-
-format::Buffer &MPIAggregator::GetConsumerBuffer(format::Buffer &buffer)
-{
-    return buffer;
+    m_NumAggregators = numAggregators;
+    m_SubStreams = subStreams;
 }
 
 void MPIAggregator::Close()
@@ -72,16 +59,16 @@ void MPIAggregator::InitComm(const size_t subStreams,
     if (process >= firstInSmallGroups)
     {
         m_SubStreamIndex = r + (process - firstInSmallGroups) / q;
-        m_ConsumerRank =
+        m_AggregatorRank =
             static_cast<int>(firstInSmallGroups + (m_SubStreamIndex - r) * q);
     }
     else
     {
         m_SubStreamIndex = process / (q + 1);
-        m_ConsumerRank = static_cast<int>(m_SubStreamIndex * (q + 1));
+        m_AggregatorRank = static_cast<int>(m_SubStreamIndex * (q + 1));
     }
 
-    m_Comm = parentComm.Split(m_ConsumerRank, parentRank,
+    m_Comm = parentComm.Split(m_AggregatorRank, parentRank,
                               "creating aggregators comm with split at Open");
 
     m_Rank = m_Comm.Rank();
@@ -89,7 +76,7 @@ void MPIAggregator::InitComm(const size_t subStreams,
 
     if (m_Rank != 0)
     {
-        m_IsConsumer = false;
+        m_IsAggregator = false;
     }
 
     m_IsActive = true;
@@ -104,7 +91,7 @@ void MPIAggregator::InitCommOnePerNode(helper::Comm const &parentComm)
 
     if (m_Rank != 0)
     {
-        m_IsConsumer = false;
+        m_IsAggregator = false;
     }
 
     m_IsActive = true;
@@ -130,9 +117,9 @@ void MPIAggregator::InitCommOnePerNode(helper::Comm const &parentComm)
     /* Identify parent rank of aggregator process within each group */
     if (!m_Rank)
     {
-        m_ConsumerRank = parentComm.Rank();
+        m_AggregatorRank = parentComm.Rank();
     }
-    m_ConsumerRank = m_Comm.BroadcastValue<int>(m_ConsumerRank, 0);
+    m_AggregatorRank = m_Comm.BroadcastValue<int>(m_AggregatorRank, 0);
 }
 
 void MPIAggregator::HandshakeRank(const int rank)

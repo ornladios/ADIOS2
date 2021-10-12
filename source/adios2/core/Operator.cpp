@@ -9,8 +9,6 @@
  */
 
 #include "Operator.h"
-
-#include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -51,28 +49,9 @@ void Operator::RunCallback2(void *arg0, const std::string &arg1,
     CheckCallbackType("Callback2");
 }
 
-size_t Operator::BufferMaxSize(const size_t sizeIn) const
-{
-    throw std::invalid_argument("ERROR: signature (const size_t) not supported "
-                                "by derived class implemented with " +
-                                m_Type + ", in call to BufferMaxSize\n");
-}
-
-#define declare_type(T)                                                        \
-    template <>                                                                \
-    size_t Operator::BufferMaxSize<T>(const T *dataIn, const Dims &dimensions, \
-                                      const Params &parameters) const          \
-    {                                                                          \
-        return DoBufferMaxSize(dataIn, dimensions, helper::GetDataType<T>(),   \
-                               parameters);                                    \
-    }
-ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
-#undef declare_type
-
-size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
-                          const size_t /*elementSize*/, DataType /*type*/,
-                          void * /*bufferOut*/, const Params & /*params*/,
-                          Params & /*info*/) const
+size_t Operator::Compress(const char * /*dataIn*/, const Dims & /*blockStart*/,
+                          const Dims & /*blockCount*/, const DataType /*type*/,
+                          char * /*bufferOut*/, const Params & /*params*/)
 {
     throw std::invalid_argument("ERROR: signature (const void*, const "
                                 "Dims, const size_t, const std::string, "
@@ -81,9 +60,8 @@ size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
                                 m_Type + ", in call to Compress\n");
 }
 
-size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
-                            void *dataOut, const size_t sizeOut,
-                            Params &info) const
+size_t Operator::Decompress(const char *bufferIn, const size_t sizeIn,
+                            char *dataOut)
 {
     throw std::invalid_argument(
         "ERROR: signature (const void*, const size_t, void) not supported "
@@ -91,27 +69,7 @@ size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
         m_Type + ", in call to Decompress\n");
 }
 
-size_t Operator::Decompress(const void * /*bufferIn*/, const size_t /*sizeIn*/,
-                            void * /*dataOut*/, const Dims & /*dimensions*/,
-                            DataType /*type*/,
-                            const Params & /*parameters*/) const
-{
-    throw std::invalid_argument("ERROR: signature (const void*, const "
-                                "size_t, void*, const Dims&, const "
-                                "std::string ) not supported "
-                                "by derived class implemented with " +
-                                m_Type + ", in call to Decompress\n");
-}
-
 // PROTECTED
-size_t Operator::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                                 DataType type, const Params &parameters) const
-{
-    throw std::invalid_argument("ERROR: signature (const void*, const Dims& "
-                                "std::string ) not supported "
-                                "by derived class implemented with " +
-                                m_Type + ", in call to BufferMaxSize\n");
-}
 
 Dims Operator::ConvertDims(const Dims &dimensions, const DataType type,
                            const size_t targetDims, const bool enforceDims,

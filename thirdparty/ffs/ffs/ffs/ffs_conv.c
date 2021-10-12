@@ -214,7 +214,7 @@ void **default_val;
     char *s, *s1;
     char *base_type = base_data_type(io_field->field_type);
     FMdata_type data_type = FMstr_to_data_type(base_type);
-    strncpy(out_field_name, io_field->field_name, 64);
+    strncpy(out_field_name, io_field->field_name, 128);
     s = strchr(out_field_name, '(');
     *default_val = NULL;
     free(base_type);
@@ -247,6 +247,37 @@ create_default_conversion(FMField iofield, void *default_value,
     conv_ptr->conversions[conv_index].dest_offset = iofield.field_offset;
     conv_ptr->conversions[conv_index].default_value = default_value;
     conv_ptr->conversions[conv_index].rc_swap = no_row_column_swap;
+}
+
+/*
+ * differs from find_field in fm in that it includes cur_field in search shortcut
+ */
+static long
+find_field_for_conv(char *field_name, FMFieldList fields, int cur_field, void *search_help)
+{
+    int i;
+    if (cur_field > 10) {
+      /* search close first */
+      for (i = cur_field; i > cur_field - 10; i--) {
+	if (strcmp(field_name, fields[i].field_name) == 0) {
+	    return i;
+	}
+      }
+      for (i = cur_field + 1; i < cur_field + 10; i++) {
+	if (fields[i].field_name == NULL) break;
+	if (strcmp(field_name, fields[i].field_name) == 0) {
+	    return i;
+	}
+      }
+    }
+    i = 0;
+    while (fields[i].field_name != NULL) {
+	if (strcmp(field_name, fields[i].field_name) == 0) {
+	    return i;
+	}
+	i++;
+    }
+    return -1;
 }
 
 static
@@ -345,7 +376,8 @@ FMStructDescList target_list;
 	FMdata_type in_data_type, target_data_type;
 	long in_elements, target_elements;
 	void *default_val = NULL;
-	char tmp_field_name[64];
+	char *tmp_field_name = NULL;
+	char *search_name;
 	int multi_dimen_array = 0;
 
 	/* 
@@ -354,33 +386,40 @@ FMStructDescList target_list;
 	 */
 	input_index = 0;
 	
-	field_name_strip_get_default(&nfl_sort[i], tmp_field_name, &default_val);
-	while (strcmp(tmp_field_name,
-		      input_field_list[input_index].field_name) != 0) {
-	    input_index++;
-	    if (input_index >= src_ioformat->body->field_count) {
-		if(default_val){
-		    if ((conv == buffer_and_convert) || 
-			(conv == copy_dynamic_portion)) {
-			input_index = -1; /* Basically invalidating input_index
-					   Indication for using default_val */
-			break;
-		    } else {
-			if (default_val) {
-			    free(default_val);
-			    default_val = NULL;
-			}
-			conv = buffer_and_convert;
-			goto restart;
-		    }
-		}
-		fprintf(stderr,
-			"Requested field %s missing from input format\n",
-			nfl_sort[i].field_name);
-		FFSfree_conversion(conv_ptr);
-		return NULL;
-	    }
+	if (strchr(nfl_sort[i].field_name, '(') == NULL) {
+	    /* no default value */
+	    search_name = (char *) nfl_sort[i].field_name;
+	} else {
+	    tmp_field_name = malloc(strlen(nfl_sort[i].field_name)); /* certainly big enough */
+	    field_name_strip_get_default(&nfl_sort[i], tmp_field_name, &default_val);
+	    search_name = tmp_field_name;
 	}
+	input_index = find_field_for_conv(search_name, input_field_list, i, NULL);
+	if (input_index == -1) {
+	    if(default_val){
+	        if ((conv == buffer_and_convert) || 
+		    (conv == copy_dynamic_portion)) {
+		    input_index = -1; /* Basically invalidating input_index
+				   Indication for using default_val */
+		    break;
+		} else {
+		    if (default_val) {
+		        free(default_val);
+			default_val = NULL;
+		    }
+		    conv = buffer_and_convert;
+		    if (tmp_field_name) free(tmp_field_name);
+		    goto restart;
+		}
+	    }
+	    fprintf(stderr,
+		    "Requested field %s missing from input format\n",
+		    nfl_sort[i].field_name);
+	    FFSfree_conversion(conv_ptr);
+	    if (tmp_field_name) free(tmp_field_name);
+	    return NULL;
+	}
+	if (tmp_field_name) free(tmp_field_name);
 	if(input_index == -1){
 	    create_default_conversion(nfl_sort[i], default_val, &conv_ptr, 
 				      conv_index);
@@ -2735,7 +2774,7 @@ int data_already_copied;
 	}
 	    
 	if (conv_status->register_args) {
-	    dill_reg new_src, new_dest, ret;
+	    dill_reg new_src, new_dest;
 	    if (!ffs_getreg(c, &new_src, DILL_P, DILL_TEMP) ||
 		!ffs_getreg(c, &new_dest, DILL_P, DILL_TEMP))
 		gen_fatal("temp vals in subcall\n");
@@ -2743,7 +2782,7 @@ int data_already_copied;
 		       new_src, new_dest));
 	    dill_addpi(c, new_src, src_addr, src_offset);
 	    dill_addpi(c, new_dest, dest_addr, dest_offset);
-	    ret = dill_scallp(c, (void*)conv->subconversion->conv_func, name, "%p%p%p", new_src,
+	    (void) dill_scallp(c, (void*)conv->subconversion->conv_func, name, "%p%p%p", new_src,
 			      new_dest, rt_conv_status);
 	    REG_DEBUG(("Putting %d and %d for new src & dest\n", 
 		       new_src, new_dest));
@@ -2923,6 +2962,7 @@ int data_already_copied;
 				   rt_conv_status, conv, next, 
 				   data_already_copied);
 	    
+	    (void)loop_var_type;  /* avoid warning */
 #if defined(NOT) & defined(RAW)
 	    /* generate end of loop */
 	    if (!register_args) {

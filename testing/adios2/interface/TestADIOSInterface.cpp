@@ -19,6 +19,7 @@ TEST(ADIOSInterface, MPICommRemoved)
     MPI_Comm_free(&myComm);
 
     adios2::Engine engine = io.Open("test.bp", adios2::Mode::Write);
+    (void)engine;
 }
 
 #endif
@@ -28,9 +29,7 @@ TEST(ADIOSInterface, BADConfigFile)
     EXPECT_THROW(adios2::ADIOS adios("notthere.xml");
                  adios2::IO io = adios.DeclareIO("TestIO");
 
-                 adios2::Engine engine =
-                     io.Open("test.bp", adios2::Mode::Write);
-                 , std::logic_error);
+                 io.Open("test.bp", adios2::Mode::Write);, std::logic_error);
 }
 
 /** ADIOS2_CXX11_API

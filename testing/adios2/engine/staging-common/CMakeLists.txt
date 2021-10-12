@@ -21,6 +21,7 @@ foreach(helper
     TestCommonWriteAttrs
     TestCommonWriteLocal
     TestCommonWriteShared
+    TestDefSyncWrite
     TestCommonRead
     TestCommonReadR64
     TestCommonReadLocal
@@ -103,7 +104,7 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;NoReaderNoWait;TimeoutOnOpen;1x1.NoData;1x1.Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;1x1EarlyExit;CumulativeAttr.1x1")
+set (SIMPLE_TESTS "1x1;1x1DefSync;1x1Flush")
 
 set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
@@ -146,12 +147,13 @@ endif()
 SET (BASIC_SST_TESTS "")
 if(ADIOS2_HAVE_SST)
   list (APPEND BASIC_SST_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS} ${SST_SPECIFIC_TESTS})
+  list (REMOVE_ITEM BASIC_SST_TESTS 1x1DefSync 1x1Flush)
 endif()
 
 
-#  For the moment, only test the default comm pattern (Peer)
+#  For the moment, only test the default comm pattern (Min)
 MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern=Min" "${BASIC_SST_TESTS}" )
-MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" writer "CPCommPattern=Peer" "${BASIC_SST_TESTS}" )
+#MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" writer "CPCommPattern=Peer" "${BASIC_SST_TESTS}" )
 
 # temporarily remove PreciousTimestep CommPeer tests
 list (REMOVE_ITEM COMM_PEER_SST_TESTS "PreciousTimestep")
@@ -223,6 +225,8 @@ if(NOT WIN32)    # not on windows
     list (FILTER BP_TESTS EXCLUDE REGEX ".*SharedVar$")
     # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
     list (FILTER BP_TESTS EXCLUDE REGEX ".*NoData$")
+    # BP3 and BP4 semantics on flush differ from BP5
+    list (FILTER BP_TESTS EXCLUDE REGEX ".*Flush.*")
     foreach(test ${BP_TESTS})
         add_common_test(${test} BP4)
     endforeach()
@@ -238,8 +242,6 @@ if(ADIOS2_HAVE_BP5)
     set (BP5_TESTS ${ALL_SIMPLE_TESTS})
     # Delayed reader not worth testing on file engines
     list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
-    # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
-#    list (FILTER BP5_TESTS EXCLUDE REGEX ".*NoData$")
     foreach(test ${BP5_TESTS})
         add_common_test(${test} BP5)
     endforeach()
@@ -279,6 +281,8 @@ if(NOT MSVC)    # not on windows
 #list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*LocalVarying.BPS$")
     # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*NoData.BPS$")
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*1x1DefSync.*")
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Flush.*")
     
     foreach(test ${BP4_STREAM_TESTS})
         add_common_test(${test} BP4_stream)
@@ -311,6 +315,8 @@ if(NOT MSVC)    # not on windows
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*NoReaderNoWait.FS$")
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*TimeoutOnOpen.FS$")
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*NoReaderNoWait.FS$")
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*1x1DefSync.*")
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*Flush.*")
 
     foreach(test ${FILESTREAM_TESTS})
         add_common_test(${test} FileStream)

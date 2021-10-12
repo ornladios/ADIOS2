@@ -50,6 +50,7 @@ public:
     void EndStep();
     void PerformGets();
     void Flush(const int transportIndex = -1) final;
+    MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
 
 private:
     template <class T>
@@ -70,7 +71,6 @@ private:
     SstMarshalMethod m_WriterMarshalMethod;
     int m_WriterIsRowMajor;
     bool m_DefinitionsNotified = false;
-    bool m_BetweenStepPairs = false;
 
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;
@@ -80,6 +80,8 @@ private:
 
     struct _SstParams Params;
 
+    std::unordered_map<const VariableBase *, std::unique_ptr<MinVarInfo>>
+        m_InfoMap;
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;                              \

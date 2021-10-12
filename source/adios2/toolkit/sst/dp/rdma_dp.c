@@ -1139,7 +1139,7 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
                                   size_t Length, void *Buffer,
                                   void *DP_TimestepInfo)
 {
-    RdmaCompletionHandle ret;
+    RdmaCompletionHandle ret = {0};
     Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)Stream_v;
     RdmaBufferHandle Info = (RdmaBufferHandle)DP_TimestepInfo;
     RdmaStepLogEntry StepLog;
@@ -1539,9 +1539,10 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 static void RdmaDestroyWriterPerReader(CP_Services Svcs,
                                        DP_WSR_Stream WSR_Stream_v)
 {
-    Rdma_WSR_Stream WSR_Stream = (Rdma_WSR_Stream)WSR_Stream_v;
+    Rdma_WSR_Stream WSR_Stream = {0};
+    memcpy(&WSR_Stream, &WSR_Stream_v, sizeof(Rdma_WSR_Stream));
     Rdma_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
-    RdmaWriterContactInfo WriterContactInfo;
+    RdmaWriterContactInfo WriterContactInfo = {0};
 
     pthread_mutex_lock(&wsr_mutex);
     for (int i = 0; i < WS_Stream->ReaderCount; i++)
@@ -2067,7 +2068,7 @@ static void PullSelection(CP_Services Svcs, Rdma_WSR_Stream Stream)
     Rdma_WS_Stream WS_Stream = Stream->WS_Stream;
     FabricState Fabric = WS_Stream->Fabric;
     RdmaBuffer ReaderRoll = (RdmaBuffer)Stream->ReaderRoll->Handle.Block;
-    struct _RdmaBuffer ReqBuffer = {0};
+    struct _RdmaBuffer ReqBuffer = {{0}};
     struct fi_cq_data_entry CQEntry = {0};
     struct fid_mr *rrmr = NULL;
     void *rrdesc = NULL;

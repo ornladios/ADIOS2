@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 #include <adios2.h>
+#include <adios2_c.h>
 
 #include <gtest/gtest.h>
 
@@ -47,6 +48,59 @@ void CheckAllStepsBlockInfo1D(
             EXPECT_EQ(allStepsBlocksInfo[s][b].WriterID, b);
             EXPECT_FALSE(allStepsBlocksInfo[s][b].IsReverseDims);
         }
+    }
+}
+
+void CheckStepsBlockInfo1D_C(adios2_variable *var, adios2_varinfo *vi,
+                             const size_t NSteps, const size_t nproc,
+                             const size_t Nx)
+{
+    EXPECT_EQ(vi->nblocks, nproc);
+    adios2_shapeid shapeid;
+    adios2_variable_shapeid(&shapeid, var);
+    size_t namelen;
+    char name[128];
+    adios2_variable_name(name, &namelen, var);
+    name[namelen] = '\0';
+    // std::cout << "Check info on variable " << name << " shape = " << shapeid
+    //          << std::endl;
+    if (shapeid == adios2_shapeid_global_value)
+    {
+        // std::cout << "Global Value " << std::endl;
+        EXPECT_EQ(vi->IsValue, 1);
+        EXPECT_EQ(vi->Dims, 0);
+    }
+    else if (shapeid == adios2_shapeid_global_array)
+    {
+        // std::cout << "Global Array " << std::endl;
+        EXPECT_EQ(vi->Dims, 1);
+    }
+    else
+    {
+        // std::cout << "Unexpected shape ID " << std::endl;
+        throw std::invalid_argument(
+            "Variable " + std::string(name) +
+            " is expected to be a global value or array ");
+    }
+
+    EXPECT_FALSE(vi->IsReverseDims);
+
+    if (vi->Dims > 0)
+    {
+        size_t shape;
+        adios2_variable_shape(&shape, var);
+        EXPECT_EQ(vi->Shape[0], shape);
+    }
+
+    for (size_t b = 0; b < vi->nblocks; ++b)
+    {
+        EXPECT_EQ(vi->BlocksInfo[b].BlockID, b);
+        if (vi->Dims > 0)
+        {
+            EXPECT_EQ(vi->BlocksInfo[b].Start[0], b * Nx);
+            EXPECT_EQ(vi->BlocksInfo[b].Count[0], Nx);
+        }
+        EXPECT_EQ(vi->BlocksInfo[b].WriterID, b);
     }
 }
 
@@ -182,7 +236,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         {
             io.SetEngine("BPFile");
         }
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_local = io.InquireVariable<int32_t>("local");
         auto var_localStr = io.InquireVariable<std::string>("localStr");
@@ -502,7 +557,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -672,6 +728,186 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
             }
         }
         bpReader.Close();
+    }
+}
+
+TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
+{
+    // Each process would write a 1x8 array and all processes would
+    // form a mpiSize * Nx 1D array
+    const std::string fname("BPWriteReadblockInfo1D8.bp");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    const size_t Nx = 8;
+
+    // Number of steps
+    const size_t NSteps = 3;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+    // Write test data using BP
+    {
+#if ADIOS2_USE_MPI
+        adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+        adios2::ADIOS adios;
+#endif
+        adios2::IO io = adios.DeclareIO("TestIO");
+
+        const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
+        const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
+        const adios2::Dims count{Nx};
+
+        auto var_local =
+            io.DefineVariable<int32_t>("local", {adios2::LocalValueDim});
+        auto var_localStr =
+            io.DefineVariable<std::string>("localStr", {adios2::LocalValueDim});
+
+        auto var_iString = io.DefineVariable<std::string>("iString");
+        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
+        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
+        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+        auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
+        auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
+        auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
+        auto var_cr32 =
+            io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
+                                                                start, count);
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+        io.SetParameter("AggregatorRatio", "1");
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
+            bpWriter.BeginStep();
+
+            const int32_t localNumber = static_cast<int32_t>(mpiRank + step);
+            bpWriter.Put(var_local, localNumber);
+            bpWriter.Put(var_localStr, std::to_string(localNumber));
+
+            bpWriter.Put(var_iString, currentTestData.S1);
+            bpWriter.Put(var_i8, currentTestData.I8.data());
+            bpWriter.Put(var_i16, currentTestData.I16.data());
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.Put(var_i64, currentTestData.I64.data());
+            bpWriter.Put(var_u8, currentTestData.U8.data());
+            bpWriter.Put(var_u16, currentTestData.U16.data());
+            bpWriter.Put(var_u32, currentTestData.U32.data());
+            bpWriter.Put(var_u64, currentTestData.U64.data());
+            bpWriter.Put(var_r32, currentTestData.R32.data());
+            bpWriter.Put(var_r64, currentTestData.R64.data());
+            bpWriter.Put(var_cr32, currentTestData.CR32.data());
+            bpWriter.Put(var_cr64, currentTestData.CR64.data());
+            bpWriter.EndStep();
+        }
+
+        bpWriter.Close();
+    }
+
+    {
+#if ADIOS2_USE_MPI
+        adios2_adios *adiosH =
+            adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+#else
+        adios2_adios *adiosH = adios2_init(adios2_debug_mode_on);
+#endif
+        adios2_io *ioR = adios2_declare_io(adiosH, "ReadIO");
+        if (!engineName.empty())
+        {
+            adios2_set_engine(ioR, engineName.data());
+        }
+        else
+        {
+            adios2_set_engine(ioR, "BPFile");
+        }
+
+        adios2_engine *engineR =
+            adios2_open(ioR, fname.data(), adios2_mode_read);
+
+        for (size_t t = 0; t < NSteps; ++t)
+        {
+            adios2_step_status status;
+            adios2_begin_step(engineR, adios2_step_mode_read, -1., &status);
+
+            EXPECT_EQ(status, adios2_step_status_ok);
+
+            {
+                auto *var_local = adios2_inquire_variable(ioR, "local");
+                EXPECT_NE(var_local, nullptr);
+                adios2_varinfo *vi_local =
+                    adios2_inquire_blockinfo(engineR, var_local, 0);
+                CheckStepsBlockInfo1D_C(var_local, vi_local, t, mpiSize, 1);
+            }
+            {
+                auto *var_localStr = adios2_inquire_variable(ioR, "localStr");
+
+                EXPECT_NE(var_localStr, nullptr);
+                adios2_varinfo *vi_localStr =
+                    adios2_inquire_blockinfo(engineR, var_localStr, 0);
+                CheckStepsBlockInfo1D_C(var_localStr, vi_localStr, t, mpiSize,
+                                        1);
+            }
+            {
+                auto *var_iString = adios2_inquire_variable(ioR, "iString");
+                EXPECT_NE(var_iString, nullptr);
+                adios2_varinfo *vi_iString =
+                    adios2_inquire_blockinfo(engineR, var_iString, 0);
+                CheckStepsBlockInfo1D_C(var_iString, vi_iString, t, mpiSize, 1);
+            }
+            {
+                auto *var_i8 = adios2_inquire_variable(ioR, "i8");
+                EXPECT_NE(var_i8, nullptr);
+                adios2_varinfo *vi_i8 =
+                    adios2_inquire_blockinfo(engineR, var_i8, 0);
+                CheckStepsBlockInfo1D_C(var_i8, vi_i8, t, mpiSize, Nx);
+            }
+            {
+                auto *var_r64 = adios2_inquire_variable(ioR, "r64");
+                EXPECT_NE(var_r64, nullptr);
+                adios2_varinfo *vi_r64 =
+                    adios2_inquire_blockinfo(engineR, var_r64, 0);
+                CheckStepsBlockInfo1D_C(var_r64, vi_r64, t, mpiSize, Nx);
+            }
+            /*
+            auto *var_i16 = adios2_inquire_variable(ioR, "i16");
+            auto *var_i32 = adios2_inquire_variable(ioR, "i32");
+            auto *var_i64 = adios2_inquire_variable(ioR, "i64");
+            auto *var_u8 = adios2_inquire_variable(ioR, "u8");
+            auto *var_u16 = adios2_inquire_variable(ioR, "u16");
+            auto *var_u32 = adios2_inquire_variable(ioR, "u32");
+            auto *var_u64 = adios2_inquire_variable(ioR, "u64");
+            auto *var_r32 = adios2_inquire_variable(ioR, "r32");
+
+            auto *var_cr32 = adios2_inquire_variable(ioR, "cr32");
+            auto *var_cr64 = adios2_inquire_variable(ioR, "cr64");
+            */
+
+            adios2_end_step(engineR);
+        }
+        adios2_close(engineR);
     }
 }
 

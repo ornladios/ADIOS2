@@ -7,16 +7,15 @@ module testing_adios
   implicit none
 
   type(adios2_adios) :: adios
-
 contains
   ! ------------------------------------------------------------
   subroutine testing_adios_init()
   ! ------------------------------------------------------------
 
     integer :: ierr
-    
+
     call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
-    
+
   end subroutine testing_adios_init
 
   ! ------------------------------------------------------------
@@ -24,7 +23,7 @@ contains
   ! ------------------------------------------------------------
 
     integer :: ierr
-    
+
     call adios2_finalize(adios, ierr)
 
   end subroutine testing_adios_finalize
@@ -149,6 +148,8 @@ program main
   implicit none
 
   integer :: ierr
+  external testing_adios_io_engine
+  external testing_adios_io_engine_default
 
   call MPI_Init(ierr)
 

@@ -92,6 +92,28 @@ std::string BP5Engine::GetBPMetadataIndexFileName(const std::string &name) const
     return bpMetaDataIndexRankName;
 }
 
+std::vector<std::string>
+BP5Engine::GetBPVersionFileNames(const std::vector<std::string> &names) const
+    noexcept
+{
+    std::vector<std::string> versionFileNames;
+    versionFileNames.reserve(names.size());
+    for (const auto &name : names)
+    {
+        versionFileNames.push_back(GetBPVersionFileName(name));
+    }
+    return versionFileNames;
+}
+
+std::string BP5Engine::GetBPVersionFileName(const std::string &name) const
+    noexcept
+{
+    const std::string bpName = helper::RemoveTrailingSlash(name);
+    /* the name of the version file is ".bpversion" */
+    const std::string bpVersionFileName(bpName + PathSeparator + ".bpversion");
+    return bpVersionFileName;
+}
+
 std::string BP5Engine::GetBPSubStreamName(const std::string &name,
                                           const size_t id,
                                           const bool hasSubFiles,
@@ -103,28 +125,21 @@ std::string BP5Engine::GetBPSubStreamName(const std::string &name,
     }
 
     const std::string bpName = helper::RemoveTrailingSlash(name);
-
-    const size_t index = id;
-    //    isReader ? id
-    //	: m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex : id;
-
     /* the name of a data file starts with "data." */
     const std::string bpRankName(bpName + PathSeparator + "data." +
-                                 std::to_string(index));
+                                 std::to_string(id));
     return bpRankName;
 }
 
 std::vector<std::string>
-BP5Engine::GetBPSubStreamNames(const std::vector<std::string> &names) const
-    noexcept
+BP5Engine::GetBPSubStreamNames(const std::vector<std::string> &names,
+                               size_t subFileIndex) const noexcept
 {
     std::vector<std::string> bpNames;
     bpNames.reserve(names.size());
-
     for (const auto &name : names)
     {
-        bpNames.push_back(
-            GetBPSubStreamName(name, static_cast<unsigned int>(m_RankMPI)));
+        bpNames.push_back(GetBPSubStreamName(name, subFileIndex));
     }
     return bpNames;
 }
@@ -155,6 +170,31 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             }
         }
     };
+
+    auto lf_SetFloatParameter = [&](const std::string key, float &parameter,
+                                    float def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string value = itKey->second;
+            parameter =
+                helper::StringTo<float>(value, " in Parameter key=" + key);
+        }
+    };
+
+    auto lf_SetSizeBytesParameter = [&](const std::string key,
+                                        size_t &parameter, size_t def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string value = itKey->second;
+            parameter = helper::StringToByteUnits(
+                value, "for Parameter key=" + key + "in call to Open");
+        }
+    };
+
     auto lf_SetIntParameter = [&](const std::string key, int &parameter,
                                   int def) {
         auto itKey = io.m_Parameters.find(key);
@@ -162,6 +202,23 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
         if (itKey != io.m_Parameters.end())
         {
             parameter = std::stoi(itKey->second);
+            return true;
+        }
+        return false;
+    };
+
+    auto lf_SetUIntParameter = [&](const std::string key,
+                                   unsigned int &parameter, unsigned int def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            unsigned long result = std::stoul(itKey->second);
+            if (result > std::numeric_limits<unsigned>::max())
+            {
+                result = std::numeric_limits<unsigned>::max();
+            }
+            parameter = static_cast<unsigned int>(result);
             return true;
         }
         return false;
@@ -176,6 +233,63 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             return true;
         }
         return false;
+    };
+
+    auto lf_SetBufferVTypeParameter = [&](const std::string key, int &parameter,
+                                          int def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string value = itKey->second;
+            std::transform(value.begin(), value.end(), value.begin(),
+                           ::tolower);
+            if (value == "malloc")
+            {
+                parameter = (int)BufferVType::MallocVType;
+            }
+            else if (value == "chunk")
+            {
+                parameter = (int)BufferVType::ChunkVType;
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown BP5 BufferVType parameter \"" + value +
+                    "\" (must be \"malloc\" or \"chunk\"");
+            }
+        }
+    };
+
+    auto lf_SetAggregationTypeParameter = [&](const std::string key,
+                                              int &parameter, int def) {
+        auto itKey = io.m_Parameters.find(key);
+        parameter = def;
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string value = itKey->second;
+            std::transform(value.begin(), value.end(), value.begin(),
+                           ::tolower);
+            if (value == "everyonewrites" || value == "auto")
+            {
+                parameter = (int)AggregationType::EveryoneWrites;
+            }
+            else if (value == "everyonewritesserial")
+            {
+                parameter = (int)AggregationType::EveryoneWritesSerial;
+            }
+            else if (value == "twolevelshm")
+            {
+                parameter = (int)AggregationType::TwoLevelShm;
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown BP5 AggregationType parameter \"" + value +
+                    "\" (must be \"auto\", \"everyonewrites\" or "
+                    "\"twolevelshm\"");
+            }
+        }
     };
 
 #define get_params(Param, Type, Typedecl, Default)                             \

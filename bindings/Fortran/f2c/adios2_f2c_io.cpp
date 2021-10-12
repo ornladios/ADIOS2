@@ -10,6 +10,7 @@
 
 #include "adios2_f2c_common.h"
 
+#include <cstdint>
 #include <stdexcept> //std::invalid_argument
 
 #include <string.h> //strcpy
@@ -217,6 +218,92 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     {
         *ierr = static_cast<int>(
             adios2::helper::ExceptionToError("adios2_define_variable"));
+    }
+}
+
+struct cnamelist
+{
+    char **names;
+    size_t count;
+};
+
+void FC_GLOBAL(adios2_available_variables_f2c,
+               ADIOS2_AVAILABLE_VARIABLES_F2C)(adios2_io **io,
+                                               int64_t *namestruct,
+                                               int *vars_count,
+                                               int *max_var_name_len, int *ierr)
+{
+    cnamelist *info = new (cnamelist);
+    info->names = adios2_available_variables(*io, &info->count);
+    *vars_count = static_cast<int>(info->count);
+    size_t maxlen = 0;
+    for (size_t i = 0; i < info->count; ++i)
+    {
+        auto l = strlen(info->names[i]);
+        if (l > maxlen)
+        {
+            maxlen = l;
+        }
+    }
+    *max_var_name_len = static_cast<int>(maxlen);
+    *namestruct = static_cast<int64_t>(reinterpret_cast<std::uintptr_t>(info));
+    *ierr = 0;
+}
+
+void FC_GLOBAL(adios2_available_attributes_f2c,
+               ADIOS2_AVAILABLE_ATTRIBUTES_F2C)(adios2_io **io,
+                                                int64_t *namestruct,
+                                                int *attrs_count,
+                                                int *max_attr_name_len,
+                                                int *ierr)
+{
+    cnamelist *info = new (cnamelist);
+    info->names = adios2_available_attributes(*io, &info->count);
+    *attrs_count = static_cast<int>(info->count);
+
+    size_t maxlen = 0;
+    for (size_t i = 0; i < info->count; ++i)
+    {
+        auto l = strlen(info->names[i]);
+        if (l > maxlen)
+        {
+            maxlen = l;
+        }
+    }
+    *max_attr_name_len = static_cast<int>(maxlen);
+
+    *namestruct = static_cast<int64_t>(reinterpret_cast<std::uintptr_t>(info));
+    *ierr = 0;
+}
+
+void FC_GLOBAL(adios2_retrieve_namelist_f2c,
+               ADIOS2_RETRIEVE_NAMELIST_F2C)(int64_t *namestruct,
+                                             void *namelist, int *ierr,
+                                             int namelist_len)
+{
+    cnamelist *info = reinterpret_cast<cnamelist *>(*namestruct);
+    if (info != NULL)
+    {
+        for (size_t i = 0; i < info->count; i++)
+        {
+            char *fs = (char *)namelist + i * namelist_len;
+            size_t len = strlen(info->names[i]);
+            if (len > static_cast<size_t>(namelist_len))
+            {
+                len = static_cast<size_t>(namelist_len);
+            }
+            // copy C string without '\0'
+            strncpy(fs, info->names[i], len);
+            // pad with spaces
+            memset(fs + len, ' ', namelist_len - len);
+        }
+        *ierr = 0;
+        delete (info);
+        *namestruct = 0;
+    }
+    else
+    {
+        *ierr = 1;
     }
 }
 

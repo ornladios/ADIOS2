@@ -172,6 +172,7 @@ public:
      * @param separator default is "/", hierarchy between variable name and
      * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
      * used if variableName is empty.
+     * @param allowModification true allows redefining existing attribute
      * @return object reference to internal Attribute in IO
      * @exception std::invalid_argument if Attribute with unique name (in IO or
      * Variable) is already defined
@@ -180,7 +181,8 @@ public:
     Attribute<T> DefineAttribute(const std::string &name, const T *data,
                                  const size_t size,
                                  const std::string &variableName = "",
-                                 const std::string separator = "/");
+                                 const std::string separator = "/",
+                                 const bool allowModification = false);
 
     /**
      * @brief Define single value attribute
@@ -192,6 +194,7 @@ public:
      * @param separator default is "/", hierarchy between variable name and
      * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
      * used if variableName is empty.
+     * @param allowModification true allows redefining existing attribute
      * @return object reference to internal Attribute in IO
      * @exception std::invalid_argument if Attribute with unique name (in IO or
      * Variable) is already defined
@@ -199,7 +202,8 @@ public:
     template <class T>
     Attribute<T> DefineAttribute(const std::string &name, const T &value,
                                  const std::string &variableName = "",
-                                 const std::string separator = "/");
+                                 const std::string separator = "/",
+                                 const bool allowModification = false);
 
     /**
      * @brief Retrieve an existing attribute
@@ -251,7 +255,8 @@ public:
     /**
      * Open an Engine to start heavy-weight input/output operations.
      * @param name unique engine identifier
-     * @param mode adios2::Mode::Write, adios2::Mode::Read, or
+     * @param mode adios2::Mode::Write, adios2::Mode::Read,
+     * 		   adios2::Mode::ReadStreaming, or
      *             adios2::Mode::Append (BP4 only)
      * @return engine object
      */
@@ -338,27 +343,15 @@ public:
     std::string AttributeType(const std::string &name) const;
 
     /**
-     * EXPERIMENTAL: carries information about an Operation added with
-     * AddOperation
-     */
-    struct Operation
-    {
-        /** Operator associated with this operation */
-        const Operator Op;
-        /** Parameters settings for this operation */
-        const adios2::Params Parameters;
-        /** Information associated with this operation */
-        const adios2::Params Info;
-    };
-
-    /**
-     * EXPERIMENTAL: Adds operation and parameters to current IO object
-     * @param op operator to be added
+     * Adds operation and parameters to current IO object
+     * @param variable variable to add operator to
+     * @param operatorType operator type to define
      * @param parameters key/value settings particular to the IO, not to
      * be confused by op own parameters
-     * @return operation index handler in Operations()
      */
-    size_t AddOperation(const Operator op, const Params &parameters = Params());
+    void AddOperation(const std::string &variable,
+                      const std::string &operatorType,
+                      const Params &parameters = Params());
 
     /**
      * Inspect current engine type from SetEngine
@@ -386,11 +379,11 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #define declare_template_instantiation(T)                                      \
     extern template Attribute<T> IO::DefineAttribute(                          \
         const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
                                                                                \
     extern template Attribute<T> IO::DefineAttribute(                          \
         const std::string &, const T &, const std::string &,                   \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
                                                                                \
     extern template Attribute<T> IO::InquireAttribute<T>(                      \
         const std::string &, const std::string &, const std::string);

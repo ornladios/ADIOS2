@@ -110,6 +110,18 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+
+            (void)var_iString;
+            (void)var_i8;
+            (void)var_i16;
+            (void)var_i32;
+            (void)var_i64;
+            (void)var_u8;
+            (void)var_u16;
+            (void)var_u32;
+            (void)var_u64;
+            (void)var_r32;
+            (void)var_r64;
         }
 
         {
@@ -262,6 +274,18 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+
+            (void)var_iString;
+            (void)var_i8;
+            (void)var_i16;
+            (void)var_i32;
+            (void)var_i64;
+            (void)var_u8;
+            (void)var_u16;
+            (void)var_u32;
+            (void)var_u64;
+            (void)var_r32;
+            (void)var_r64;
         }
 
         {

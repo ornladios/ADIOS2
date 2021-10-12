@@ -247,12 +247,14 @@ bool QueryVar::IsSelectionValid(adios2::Dims &shape) const
         return false; // different dimension
     }
 
+    /*
     for (size_t i = 0; i < shape.size(); i++)
     {
         if ((m_Selection.first[i] > shape[i]) ||
             (m_Selection.second[i] > shape[i]))
             return false;
     }
+    */
     return true;
 }
 

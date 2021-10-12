@@ -350,7 +350,7 @@ void BPSerializer::UpdateOffsetsInMetadata()
     };
 
     // BODY OF FUNCTION STARTS HERE
-    if (m_Aggregator.m_IsConsumer)
+    if (m_Aggregator.m_IsAggregator)
     {
         return;
     }

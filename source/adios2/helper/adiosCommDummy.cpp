@@ -38,6 +38,17 @@ public:
 
 CommReqImplDummy::~CommReqImplDummy() = default;
 
+class CommWinImplDummy : public CommWinImpl
+{
+public:
+    CommWinImplDummy() {}
+    ~CommWinImplDummy() override;
+
+    int Free(const std::string &hint) override;
+};
+
+CommWinImplDummy::~CommWinImplDummy() = default;
+
 class CommImplDummy : public CommImpl
 {
 public:
@@ -104,6 +115,16 @@ public:
 
     Comm::Req Irecv(void *buffer, size_t count, Datatype datatype, int source,
                     int tag, const std::string &hint) const override;
+
+    Comm::Win Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
+                                  const std::string &hint) const override;
+    int Win_shared_query(Comm::Win &win, int rank, size_t *size, int *disp_unit,
+                         void *baseptr, const std::string &hint) const override;
+    int Win_free(Comm::Win &win, const std::string &hint) const override;
+    int Win_Lock(Comm::LockType lock_type, int rank, int assert, Comm::Win &win,
+                 const std::string &hint) const override;
+    int Win_Unlock(int rank, Comm::Win &win,
+                   const std::string &hint) const override;
 };
 
 CommImplDummy::~CommImplDummy() = default;
@@ -285,11 +306,49 @@ Comm::Req CommImplDummy::Irecv(void *, size_t, Datatype, int, int,
     return MakeReq(std::move(req));
 }
 
+Comm::Win CommImplDummy::Win_allocate_shared(size_t size, int disp_unit,
+                                             void *baseptr,
+                                             const std::string &) const
+{
+    auto win = std::unique_ptr<CommWinImplDummy>(new CommWinImplDummy());
+    // TODO: How do you set the out pointer to NULL? baseptr = nullptr;
+    return MakeWin(std::move(win));
+}
+
+int CommImplDummy::Win_shared_query(Comm::Win &win, int rank, size_t *size,
+                                    int *disp_unit, void *baseptr,
+                                    const std::string &) const
+{
+    *size = 0;
+    *disp_unit = 1;
+    // TODO: How do you set the out pointer to NULL? baseptr = nullptr;
+    return 0;
+}
+
+int CommImplDummy::Win_free(Comm::Win &win, const std::string &) const
+{
+    win.Free();
+    return 0;
+}
+
+int CommImplDummy::Win_Lock(Comm::LockType lock_type, int rank, int assert,
+                            Comm::Win &win, const std::string &) const
+{
+    return 0;
+}
+int CommImplDummy::Win_Unlock(int rank, Comm::Win &win,
+                              const std::string &) const
+{
+    return 0;
+}
+
 Comm::Status CommReqImplDummy::Wait(const std::string &hint)
 {
     Comm::Status status;
     return status;
 }
+
+int CommWinImplDummy::Free(const std::string &hint) { return 0; }
 
 Comm CommDummy()
 {

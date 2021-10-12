@@ -31,33 +31,27 @@ public:
 
     ~CompressBZIP2() = default;
 
-    size_t BufferMaxSize(const size_t sizeIn) const final;
-
     /**
-     * Compression signature for legacy libraries that use void*
      * @param dataIn
-     * @param dimensions
+     * @param blockStart
+     * @param blockCount
      * @param type
      * @param bufferOut
      * @param parameters
-     * @return size of compressed buffer in bytes
+     * @return size of compressed buffer
      */
-    size_t Compress(const void *dataIn, const Dims &dimensions,
-                    const size_t elementSize, DataType type, void *bufferOut,
-                    const Params &parameters, Params &info) const final;
+    size_t Compress(const char *dataIn, const Dims &blockStart,
+                    const Dims &blockCount, const DataType type,
+                    char *bufferOut, const Params &parameters) final;
 
-    using Operator::Decompress;
     /**
-     * Decompression signature for legacy libraries that use void*
      * @param bufferIn
      * @param sizeIn
      * @param dataOut
-     * @param dimensions
-     * @param type
-     * @return size of decompressed buffer in bytes
+     * @return size of decompressed buffer
      */
-    size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const size_t sizeOut, Params &info) const final;
+    size_t Decompress(const char *bufferIn, const size_t sizeIn,
+                      char *dataOut) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 
@@ -68,6 +62,18 @@ private:
      * @param hint extra exception information
      */
     void CheckStatus(const int status, const std::string hint) const;
+
+    /**
+     * Decompress function for V1 buffer. Do NOT remove even if the buffer
+     * version is updated. Data might be still in lagacy formats. This function
+     * must be kept for backward compatibility
+     * @param bufferIn : compressed data buffer (V1 only)
+     * @param sizeIn : number of bytes in bufferIn
+     * @param dataOut : decompressed data buffer
+     * @return : number of bytes in dataOut
+     */
+    size_t DecompressV1(const char *bufferIn, const size_t sizeIn,
+                        char *dataOut);
 };
 
 } // end namespace compress

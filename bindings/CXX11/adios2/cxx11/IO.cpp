@@ -152,10 +152,11 @@ std::string IO::AttributeType(const std::string &name) const
     return ToString(m_IO->InquireAttributeType(name));
 }
 
-size_t IO::AddOperation(const Operator op, const Params &parameters)
+void IO::AddOperation(const std::string &variable,
+                      const std::string &operatorType, const Params &parameters)
 {
     helper::CheckForNullptr(m_IO, "in call to IO::AddOperation");
-    return m_IO->AddOperation(*op.m_Operator, parameters);
+    return m_IO->AddOperation(variable, operatorType, parameters);
 }
 
 std::string IO::EngineType() const
@@ -182,11 +183,11 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #define declare_template_instantiation(T)                                      \
     template Attribute<T> IO::DefineAttribute(                                 \
         const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
                                                                                \
     template Attribute<T> IO::DefineAttribute(const std::string &, const T &,  \
                                               const std::string &,             \
-                                              const std::string);              \
+                                              const std::string, const bool);  \
                                                                                \
     template Attribute<T> IO::InquireAttribute<T>(                             \
         const std::string &, const std::string &, const std::string);

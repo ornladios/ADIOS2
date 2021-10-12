@@ -37,32 +37,26 @@ public:
     ~CompressZFP() = default;
 
     /**
-     * Wrapper around zfp compression
      * @param dataIn
-     * @param dimensions
+     * @param blockStart
+     * @param blockCount
      * @param type
      * @param bufferOut
      * @param parameters
-     * @return size of compressed buffer in bytes
+     * @return size of compressed buffer
      */
-    size_t Compress(const void *dataIn, const Dims &dimensions,
-                    const size_t elementSize, DataType type, void *bufferOut,
-                    const Params &parameters, Params &info) const final;
-
-    using Operator::Decompress;
+    size_t Compress(const char *dataIn, const Dims &blockStart,
+                    const Dims &blockCount, const DataType type,
+                    char *bufferOut, const Params &parameters) final;
 
     /**
-     * Wrapper around zfp decompression
      * @param bufferIn
      * @param sizeIn
      * @param dataOut
-     * @param dimensions
-     * @param type
-     * @return size of decompressed data in dataOut
+     * @return size of decompressed buffer
      */
-    size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const Dims &dimensions, DataType type,
-                      const Params &parameters) const final;
+    size_t Decompress(const char *bufferIn, const size_t sizeIn,
+                      char *dataOut) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 
@@ -83,21 +77,25 @@ private:
      * @param type
      * @return zfp_field*
      */
-    zfp_field *GetZFPField(const void *data, const Dims &shape,
+    zfp_field *GetZFPField(const char *data, const Dims &shape,
                            DataType type) const;
 
     zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
                              const Params &parameters) const;
 
-    size_t DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                           DataType type, const Params &parameters) const final;
-
     /**
-     * check status from BZip compression and decompression functions
-     * @param status returned by BZip2 library
-     * @param hint extra exception information
+     * Decompress function for V1 buffer. Do NOT remove even if the buffer
+     * version is updated. Data might be still in lagacy formats. This function
+     * must be kept for backward compatibility
+     * @param bufferIn : compressed data buffer (V1 only)
+     * @param sizeIn : number of bytes in bufferIn
+     * @param dataOut : decompressed data buffer
+     * @return : number of bytes in dataOut
      */
-    void CheckStatus(const int status, const std::string hint) const;
+    size_t DecompressV1(const char *bufferIn, const size_t sizeIn,
+                        char *dataOut);
+
+    std::string m_VersionInfo;
 };
 
 } // end namespace compress

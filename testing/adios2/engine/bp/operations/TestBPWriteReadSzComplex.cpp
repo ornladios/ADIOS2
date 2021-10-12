@@ -179,7 +179,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     bpDComplexes.AddOperation(compressor, {{"accuracy", accuracy}});
     io.DefineAttribute<int>("AttInt", 110);
     adios2::Engine writerEngine = io.Open(fileName, adios2::Mode::Write);
-    for (int i = 0; i < steps; ++i)
+    for (int i = 0; i < static_cast<int>(steps); ++i)
     {
         writerEngine.BeginStep();
         GenData(myChars, i, start, count, shape);

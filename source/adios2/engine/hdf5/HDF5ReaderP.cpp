@@ -159,7 +159,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
     else
     {
         std::vector<hsize_t> start(ndims), count(ndims), stride(ndims);
-        bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
+        bool isOrderC = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
 
         for (size_t i = 0u; i < ndims; i++)
         {
@@ -202,8 +202,8 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
             size_t typesize = H5Tget_size(h5Type);
 
             char *val = (char *)(calloc(typesize, sizeof(char)));
-            hid_t ret2 = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace,
-                                 H5P_DEFAULT, val);
+            H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT,
+                    val);
 
             ((std::string *)values)->assign(val, typesize);
             free(val);

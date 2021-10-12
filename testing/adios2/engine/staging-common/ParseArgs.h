@@ -36,11 +36,15 @@ bool VaryingDataSize = false;
 bool AdvancingAttrs = false;
 int NoData = 0;
 int NoDataNode = -1;
+int Flush = 0;
 int EarlyExit = 0;
 int LocalCount = 1;
+int DataSize = 5 * 1024 * 1024 / 8; /* DefaultMinDeferredSize is 4*1024*1024
+                                       This should be more than that. */
 
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
+adios2::Mode GlobalReadMode = adios2::Mode::Deferred;
 
 static std::string Trim(std::string &str)
 {
@@ -76,7 +80,7 @@ static adios2::Params ParseEngineParams(std::string Input)
     return Ret;
 }
 
-static void ParseArgs(int argc, char **argv)
+void ParseArgs(int argc, char **argv)
 {
     int bare_arg = 0;
     while (argc > 1)
@@ -181,6 +185,24 @@ static void ParseArgs(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--read_mode")
+        {
+            if (strcasecmp(argv[2], "sync") == 0)
+            {
+                GlobalReadMode = adios2::Mode::Sync;
+            }
+            else if (strcasecmp(argv[2], "deferred") == 0)
+            {
+                GlobalReadMode = adios2::Mode::Deferred;
+            }
+            else
+            {
+                std::cerr << "Invalid mode for --write_mode " << argv[2]
+                          << std::endl;
+            }
+            argv++;
+            argc--;
+        }
         else if (std::string(argv[1]) == "--engine_params")
         {
             engineParams = ParseEngineParams(argv[2]);
@@ -266,9 +288,27 @@ static void ParseArgs(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--data_size")
+        {
+            std::istringstream ss(argv[2]);
+            if (!(ss >> DataSize))
+                std::cerr << "Invalid number for --data_size argument"
+                          << argv[1] << '\n';
+            argv++;
+            argc--;
+        }
         else if (std::string(argv[1]) == "--early_exit")
         {
             EarlyExit++;
+        }
+        else if (std::string(argv[1]) == "--flush")
+        {
+            Flush++;
+        }
+        else if (std::string(argv[1]) == "--disable_mpmd")
+        {
+            // someone else should have eaten this arg, but if it gets here,
+            // ignore it
         }
         else
         {

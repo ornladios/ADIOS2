@@ -123,6 +123,7 @@ void BP3Writer::Init()
         static_cast<unsigned int>(m_BP3Serializer.m_SizeMPI))
     {
         m_BP3Serializer.m_Aggregator.Init(
+            m_BP3Serializer.m_Parameters.NumAggregators,
             m_BP3Serializer.m_Parameters.NumAggregators, m_Comm);
     }
     InitTransports();
@@ -132,10 +133,10 @@ void BP3Writer::Init()
 #define declare_type(T)                                                        \
     void BP3Writer::DoPut(Variable<T> &variable,                               \
                           typename Variable<T>::Span &span,                    \
-                          const size_t bufferID, const T &value)               \
+                          const bool initialize, const T &value)               \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER("BP3Writer::Put");                              \
-        PutCommon(variable, span, bufferID, value);                            \
+        PutCommon(variable, span, 0, value);                                   \
     }
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -160,6 +161,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void BP3Writer::InitParameters()
 {
     m_BP3Serializer.Init(m_IO.m_Parameters, "in call to BP3::Open for writing");
+    m_BP3Serializer.ResizeBuffer(m_BP3Serializer.m_Parameters.InitialBufferSize,
+                                 "in call to BP3::Open to write");
 }
 
 void BP3Writer::InitTransports()
@@ -175,7 +178,7 @@ void BP3Writer::InitTransports()
     // only consumers will interact with transport managers
     std::vector<std::string> bpSubStreamNames;
 
-    if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP3Serializer.m_Aggregator.m_IsAggregator)
     {
         // Names passed to IO AddTransport option with key "Name"
         const std::vector<std::string> transportsNames =
@@ -192,7 +195,7 @@ void BP3Writer::InitTransports()
                                     m_BP3Serializer.m_Parameters.NodeLocal);
     m_BP3Serializer.m_Profiler.Stop("mkdir");
 
-    if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP3Serializer.m_Aggregator.m_IsAggregator)
     {
         if (m_BP3Serializer.m_Parameters.AsyncTasks)
         {
@@ -219,7 +222,8 @@ void BP3Writer::InitBPBuffer()
     else
     {
         m_BP3Serializer.PutProcessGroupIndex(
-            m_IO.m_Name, m_IO.m_HostLanguage,
+            m_IO.m_Name,
+            (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
             m_FileDataManager.GetTransportsTypes());
     }
 }
@@ -246,7 +250,7 @@ void BP3Writer::DoClose(const int transportIndex)
 
     DoFlush(true, transportIndex);
 
-    if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP3Serializer.m_Aggregator.m_IsAggregator)
     {
         m_FileDataManager.CloseFiles(transportIndex);
     }
@@ -388,15 +392,15 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
     // async?
     for (int r = 0; r < m_BP3Serializer.m_Aggregator.m_Size; ++r)
     {
-        aggregator::MPIAggregator::ExchangeRequests dataRequests =
+        aggregator::MPIChain::ExchangeRequests dataRequests =
             m_BP3Serializer.m_Aggregator.IExchange(m_BP3Serializer.m_Data, r);
 
-        aggregator::MPIAggregator::ExchangeAbsolutePositionRequests
+        aggregator::MPIChain::ExchangeAbsolutePositionRequests
             absolutePositionRequests =
                 m_BP3Serializer.m_Aggregator.IExchangeAbsolutePosition(
                     m_BP3Serializer.m_Data, r);
 
-        if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+        if (m_BP3Serializer.m_Aggregator.m_IsAggregator)
         {
             const format::Buffer &bufferSTL =
                 m_BP3Serializer.m_Aggregator.GetConsumerBuffer(
@@ -425,7 +429,7 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
         m_BP3Serializer.AggregateCollectiveMetadata(
             m_BP3Serializer.m_Aggregator.m_Comm, bufferSTL, false);
 
-        if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+        if (m_BP3Serializer.m_Aggregator.m_IsAggregator)
         {
             m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
                                          bufferSTL.m_Position, transportIndex);
@@ -440,10 +444,11 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 }
 
 #define declare_type(T, L)                                                     \
-    T *BP3Writer::DoBufferData_##L(const size_t payloadPosition,               \
+    T *BP3Writer::DoBufferData_##L(const int bufferIdx,                        \
+                                   const size_t payloadPosition,               \
                                    const size_t bufferID) noexcept             \
     {                                                                          \
-        return BufferDataCommon<T>(payloadPosition, bufferID);                 \
+        return BufferDataCommon<T>(bufferIdx, payloadPosition, bufferID);      \
     }
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)

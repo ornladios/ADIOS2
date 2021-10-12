@@ -10,9 +10,6 @@ env_module(load hdf5)
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
-set(ENV{CFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
-set(ENV{CXXFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
-set(ENV{FFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON
@@ -25,6 +22,10 @@ ADIOS2_USE_Python:BOOL=ON
 ADIOS2_USE_SZ:BOOL=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
 ADIOS2_USE_ZFP:BOOL=ON
+
+CMAKE_C_FLAGS:STRING=-Wall
+CMAKE_CXX_FLAGS:STRING=-Wall
+CMAKE_Fortran_FLAGS:STRING=-Wall
 ")
 
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")

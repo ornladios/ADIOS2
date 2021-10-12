@@ -271,9 +271,9 @@ public:
 TEST_F(DataManEngineTest, 1DSuperLarge)
 {
     // set parameters
-    Dims shape = {100000};
+    Dims shape = {50000};
     Dims start = {0};
-    Dims count = {100000};
+    Dims count = {50000};
     size_t steps = 10;
 
     // run workflow

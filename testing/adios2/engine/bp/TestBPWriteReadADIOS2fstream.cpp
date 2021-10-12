@@ -184,7 +184,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead1D8)
         }
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -531,7 +532,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D2x4)
         }
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -878,7 +880,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2)
         }
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
@@ -1214,7 +1217,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         }
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
@@ -1539,7 +1543,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
         }
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         auto var_i16 = io.InquireVariable<int16_t>("i16");
@@ -1640,7 +1645,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, OpenEngineTwice)
         bpWriter.Close();
 
         EXPECT_NO_THROW(io.Open(fname, adios2::Mode::Write));
-        EXPECT_THROW(io.Open(fname, adios2::Mode::Read), std::invalid_argument);
+        EXPECT_THROW(io.Open(fname, adios2::Mode::ReadRandomAccess),
+                     std::invalid_argument);
     }
 }
 

@@ -16,9 +16,6 @@ env_module(load py3-mpi4py)
 set(ENV{CC}  icc)
 set(ENV{CXX} icpc)
 set(ENV{FC}  ifort)
-set(ENV{CFLAGS} -Werror)
-set(ENV{CXXFLAGS} -Werror)
-set(ENV{FFLAGS} "-warn errors")
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON
@@ -31,6 +28,10 @@ ADIOS2_USE_Python:BOOL=ON
 ADIOS2_USE_SZ:BOOL=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
 ADIOS2_USE_ZFP:STRING=ON
+
+CMAKE_C_FLAGS:STRING=-Wall
+CMAKE_CXX_FLAGS:STRING=-Wall
+CMAKE_Fortran_FLAGS:STRING=-warn all -stand none
 
 MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
 MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}

@@ -78,7 +78,6 @@ private:
 
     SstStream m_Output;
     long m_WriterStep = -1;
-    bool m_BetweenStepPairs = false;
     bool m_DefinitionsNotified = false;
     size_t m_MarshaledAttributesCount = 0;
     struct _SstParams Params;

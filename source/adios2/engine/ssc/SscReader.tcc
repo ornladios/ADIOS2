@@ -33,7 +33,7 @@ void SscReader::GetDeferredDeltaCommon(Variable<T> &variable, T *data)
     Dims vCount = variable.m_Count;
     Dims vShape = variable.m_Shape;
 
-    if (!helper::IsRowMajor(m_IO.m_HostLanguage))
+    if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
     {
         std::reverse(vStart.begin(), vStart.end());
         std::reverse(vCount.begin(), vCount.end());
@@ -101,7 +101,7 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
     Dims vCount = variable.m_Count;
     Dims vShape = variable.m_Shape;
 
-    if (!helper::IsRowMajor(m_IO.m_HostLanguage))
+    if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
     {
         std::reverse(vStart.begin(), vStart.end());
         std::reverse(vCount.begin(), vCount.end());
@@ -183,7 +183,7 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
                 b.Step = m_CurrentStep;
                 b.StepsStart = m_CurrentStep;
                 b.StepsCount = 1;
-                if (!helper::IsRowMajor(m_IO.m_HostLanguage))
+                if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
                 {
                     std::reverse(b.Start.begin(), b.Start.end());
                     std::reverse(b.Count.begin(), b.Count.end());
@@ -197,11 +197,13 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
                         m_WriterDefinitionsLocked == false ||
                         m_ReaderSelectionsLocked == false)
                     {
-                        std::memcpy(&b.Value, v.value.data(), v.value.size());
+                        std::memcpy(reinterpret_cast<char *>(&b.Value),
+                                    v.value.data(), v.value.size());
                     }
                     else
                     {
-                        std::memcpy(&b.Value, m_Buffer.data() + v.bufferStart,
+                        std::memcpy(reinterpret_cast<char *>(&b.Value),
+                                    m_Buffer.data() + v.bufferStart,
                                     v.bufferCount);
                     }
                 }

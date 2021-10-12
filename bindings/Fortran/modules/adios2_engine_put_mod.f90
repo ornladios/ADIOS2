@@ -302,6 +302,8 @@ module adios2_engine_put_mod
         module procedure adios2_put_deferred_by_name_integer8_6d
 
     end interface
+    external adios2_put_f2c
+    external adios2_put_by_name_f2c
 
 contains
 

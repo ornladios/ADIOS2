@@ -7,14 +7,13 @@ program TestRemove
     implicit none
 
     integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
-    integer :: inx, irank, isize, ierr, i
+    integer :: inx, irank, isize, ierr
     logical :: res
 
     ! low-level
     type(adios2_adios) :: adios
-    type(adios2_io) :: ioWrite, ioRead
+    type(adios2_io) :: ioWrite
     type(adios2_variable), dimension(12) :: variables
-    type(adios2_engine) :: bpWriter, bpReader
 
 #if ADIOS2_USE_MPI
     ! Launch MPI

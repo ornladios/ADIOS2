@@ -149,7 +149,7 @@ void HDF5Common::ParseParameters(core::IO &io)
         }
     }
 
-    m_OrderByC = helper::IsRowMajor(io.m_HostLanguage);
+    m_OrderByC = (io.m_ArrayOrder == ArrayOrdering::RowMajor);
 }
 
 void HDF5Common::Append(const std::string &name, helper::Comm const &comm)
@@ -619,7 +619,7 @@ void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId,
         shape.resize(ndims);
         if (ndims > 0)
         {
-            bool isOrderC = helper::IsRowMajor(io.m_HostLanguage);
+            bool isOrderC = (io.m_ArrayOrder == ArrayOrdering::RowMajor);
             for (int i = 0; i < ndims; i++)
             {
                 if (isOrderC)

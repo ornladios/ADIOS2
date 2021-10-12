@@ -132,8 +132,27 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
 
         if (type == "File" || type == "file")
         {
-            std::shared_ptr<Transport> file =
-                OpenFileTransport(fileNames[i], openMode, parameters, profile);
+            std::shared_ptr<Transport> file = OpenFileTransport(
+                fileNames[i], openMode, parameters, profile, false, m_Comm);
+            m_Transports.insert({i, file});
+        }
+    }
+}
+
+void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
+                             const Mode openMode,
+                             const std::vector<Params> &parametersVector,
+                             const bool profile, const helper::Comm &chainComm)
+{
+    for (size_t i = 0; i < fileNames.size(); ++i)
+    {
+        const Params &parameters = parametersVector[i];
+        const std::string type = parameters.at("transport");
+
+        if (type == "File" || type == "file")
+        {
+            std::shared_ptr<Transport> file = OpenFileTransport(
+                fileNames[i], openMode, parameters, profile, true, chainComm);
             m_Transports.insert({i, file});
         }
     }
@@ -145,7 +164,7 @@ void TransportMan::OpenFileID(const std::string &name, const size_t id,
                               const bool profile)
 {
     std::shared_ptr<Transport> file =
-        OpenFileTransport(name, mode, parameters, profile);
+        OpenFileTransport(name, mode, parameters, profile, false, m_Comm);
     m_Transports.insert({id, file});
 }
 
@@ -261,6 +280,53 @@ void TransportMan::WriteFileAt(const char *buffer, const size_t size,
         CheckFile(itTransport, ", in call to WriteFileAt with index " +
                                    std::to_string(transportIndex));
         itTransport->second->Write(buffer, size, start);
+    }
+}
+
+void TransportMan::WriteFiles(const core::iovec *iov, const size_t iovcnt,
+                              const int transportIndex)
+{
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+            if (transport->m_Type == "File")
+            {
+                // make this truly asynch?
+                transport->WriteV(iov, static_cast<int>(iovcnt));
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to WriteFiles with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->WriteV(iov, static_cast<int>(iovcnt));
+    }
+}
+
+void TransportMan::WriteFileAt(const core::iovec *iov, const size_t iovcnt,
+                               const size_t start, const int transportIndex)
+{
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+            if (transport->m_Type == "File")
+            {
+                transport->WriteV(iov, static_cast<int>(iovcnt), start);
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to WriteFileAt with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->WriteV(iov, static_cast<int>(iovcnt), start);
     }
 }
 
@@ -416,8 +482,8 @@ bool TransportMan::FileExists(const std::string &name, const Params &parameters,
     bool exists = false;
     try
     {
-        std::shared_ptr<Transport> file =
-            OpenFileTransport(name, Mode::Read, parameters, profile);
+        std::shared_ptr<Transport> file = OpenFileTransport(
+            name, Mode::Read, parameters, profile, false, m_Comm);
         exists = true;
         file->Close();
     }
@@ -428,10 +494,9 @@ bool TransportMan::FileExists(const std::string &name, const Params &parameters,
 }
 
 // PRIVATE
-std::shared_ptr<Transport>
-TransportMan::OpenFileTransport(const std::string &fileName,
-                                const Mode openMode, const Params &parameters,
-                                const bool profile)
+std::shared_ptr<Transport> TransportMan::OpenFileTransport(
+    const std::string &fileName, const Mode openMode, const Params &parameters,
+    const bool profile, const bool useComm, const helper::Comm &chainComm)
 {
     auto lf_GetBuffered = [&](const std::string bufferedDefault) -> bool {
         bool bufferedValue;
@@ -568,7 +633,15 @@ TransportMan::OpenFileTransport(const std::string &fileName,
     //std::cout << "rank " << rank << " open file transport: " << fileName << std::endl;
     
     // open
-    transport->Open(fileName, openMode, lf_GetAsync("false", parameters));
+    if (useComm)
+    {
+        transport->OpenChain(fileName, openMode, chainComm,
+                             lf_GetAsync("true", parameters));
+    }
+    else
+    {
+        transport->Open(fileName, openMode, lf_GetAsync("false", parameters));
+    }
     return transport;
 }
 

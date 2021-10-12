@@ -35,7 +35,13 @@ class Span
 public:
     std::pair<size_t, size_t> m_MinMaxDataPositions;
     std::pair<size_t, size_t> m_MinMaxMetadataPositions;
+
+    // internal position variables from which the engine
+    // can return a valid pointer any time
+    // BP5 needs two levels of reference, BP3/4 uses only one
     size_t m_PayloadPosition = 0;
+    int m_BufferIdx = -1;
+
     T m_Value = T{};
 
     Span(Engine &engine, const size_t size);
@@ -106,6 +112,7 @@ public:
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
         bool IsReverseDims = false;
+        bool IsGPU = false;
     };
 
     /** use for multiblock info */
@@ -114,7 +121,7 @@ public:
     using Span = core::Span<T>;
 
     /** Needs a map to preserve iterator as it resizes and the key to match the
-     * m_BlocksInfo index */
+     * m_BlocksInfo index (BP4 ONLY) */
     std::map<size_t, Span> m_BlocksSpan;
 
     Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
@@ -159,6 +166,8 @@ private:
     DoAllStepsBlocksInfo() const;
 
     void CheckRandomAccess(const size_t step, const std::string hint) const;
+
+    size_t WriterIndex;
 };
 
 } // end namespace core

@@ -30,6 +30,7 @@ module adios2_adios_init_mpi_mod
         module procedure adios2_init_config_debug_mpi
     end interface
 #endif
+    external adios2_init_config_mpi_f2c
 
 contains
 

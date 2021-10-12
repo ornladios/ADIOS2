@@ -6,11 +6,11 @@ program TestBPWriteVariableAttributes
 
 
     type(adios2_adios) :: adios
-    type(adios2_io) :: ioWrite, ioRead
-    type(adios2_engine) :: bpWriter, bpReader
+    type(adios2_io) :: ioWrite
+    type(adios2_engine) :: bpWriter
     type(adios2_variable) :: var
     type(adios2_attribute), dimension(14) :: attributes
-    type(adios2_attribute) :: failed_att
+!    type(adios2_attribute) :: failed_att
 
     integer :: ierr, i
 

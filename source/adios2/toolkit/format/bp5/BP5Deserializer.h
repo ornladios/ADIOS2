@@ -27,12 +27,14 @@ namespace adios2
 namespace format
 {
 
+using namespace core;
+
 class BP5Deserializer : virtual public BP5Base
 {
 
 public:
     BP5Deserializer(int WriterCount, bool WriterIsRowMajor,
-                    bool ReaderIsRowMajor);
+                    bool ReaderIsRowMajor, bool RandomAccessMode = false);
 
     ~BP5Deserializer();
 
@@ -47,59 +49,53 @@ public:
     };
     void InstallMetaMetaData(MetaMetaInfoBlock &MMList);
     void InstallMetaData(void *MetadataBlock, size_t BlockLen,
-                         size_t WriterRank);
-    void InstallAttributeData(void *AttributeBlock, size_t BlockLen);
+                         size_t WriterRank, size_t Step = SIZE_MAX);
+    void InstallAttributeData(void *AttributeBlock, size_t BlockLen,
+                              size_t Step = SIZE_MAX);
     void SetupForTimestep(size_t t);
     // return from QueueGet is true if a sync is needed to fill the data
     bool QueueGet(core::VariableBase &variable, void *DestData);
+    bool QueueGetSingle(core::VariableBase &variable, void *DestData,
+                        size_t Step);
 
     std::vector<ReadRequest> GenerateReadRequests();
     void FinalizeGets(std::vector<ReadRequest>);
+
+    Engine::MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);
+    Engine::MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
+    Engine::MinVarInfo *MinBlocksInfo(const VariableBase &Var,
+                                      const size_t Step);
+    bool VariableMinMax(const VariableBase &var, const size_t Step,
+                        Engine::MinMaxStruct &MinMax);
 
     bool m_WriterIsRowMajor = 1;
     bool m_ReaderIsRowMajor = 1;
     core::Engine *m_Engine = NULL;
 
-    template <class T>
-    std::vector<typename core::Variable<T>::BPInfo>
-    BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
-
 private:
+    size_t m_VarCount = 0;
     struct BP5VarRec
     {
+        size_t VarNum;
         void *Variable = NULL;
         char *VarName = NULL;
         size_t DimCount = 0;
+        ShapeID OrigShapeID;
         DataType Type;
         int ElementSize = 0;
         size_t *GlobalDims = NULL;
+        size_t LastTSAdded = SIZE_MAX;
+        size_t FirstTSSeen = SIZE_MAX;
+        size_t LastShapeAdded = SIZE_MAX;
         std::vector<size_t> PerWriterMetaFieldOffset;
         std::vector<size_t> PerWriterBlockStart;
-        std::vector<size_t> PerWriterBlockCount;
-        std::vector<size_t *> PerWriterStart;
-        std::vector<size_t *> PerWriterCounts;
-        std::vector<void *> PerWriterIncomingData;
-        std::vector<size_t> PerWriterIncomingSize; // important for compression
-        std::vector<size_t *> PerWriterDataLocation;
-        BP5VarRec(int WriterSize)
-        {
-            PerWriterMetaFieldOffset.resize(WriterSize);
-            PerWriterBlockStart.resize(WriterSize);
-            PerWriterBlockCount.resize(WriterSize);
-            PerWriterStart.resize(WriterSize);
-            PerWriterCounts.resize(WriterSize);
-            PerWriterIncomingData.resize(WriterSize);
-            PerWriterIncomingSize.resize(WriterSize);
-            PerWriterDataLocation.resize(WriterSize);
-        }
     };
 
     struct ControlStruct
     {
-        int FieldIndex;
         int FieldOffset;
         BP5VarRec *VarRec;
-        int IsArray;
+        ShapeID OrigShapeID;
         DataType Type;
         int ElementSize;
     };
@@ -109,6 +105,8 @@ private:
         FMFormat Format;
         int ControlCount;
         struct ControlInfo *Next;
+        std::vector<size_t> *MetaFieldOffset;
+        std::vector<size_t> *CIVarIndex;
         struct ControlStruct Controls[1];
     };
 
@@ -123,26 +121,31 @@ private:
     struct FFSReaderPerWriterRec
     {
         enum WriterDataStatusEnum Status = Empty;
-        char *RawBuffer = NULL;
     };
 
     FFSContext ReaderFFSContext;
-    int m_WriterCohortSize;
+    size_t m_WriterCohortSize;
+    bool m_RandomAccessMode;
+
     std::unordered_map<std::string, BP5VarRec *> VarByName;
     std::unordered_map<void *, BP5VarRec *> VarByKey;
-    FMContext LocalFMContext;
-    //    Ffsarrayrequest PendingVarRequests;
 
-    std::vector<void *> MetadataBaseAddrs;
-    std::vector<FMFieldList> MetadataFieldLists;
-    std::vector<void *> DataBaseAddrs;
-    std::vector<FFSReaderPerWriterRec> WriterInfo;
-    //  struct ControlInfo *ControlBlocks;
+    std::vector<void *> *m_MetadataBaseAddrs =
+        nullptr; // may be a pointer into MetadataBaseArray or m_FreeableMBA
+    std::vector<void *> *m_FreeableMBA = nullptr;
+
+    // for random access mode, for each timestep, for each writerrank, what
+    // metameta info applies to the metadata
+    std::vector<std::vector<ControlInfo *>> m_ControlArray;
+    // for random access mode, for each timestep, for each writerrank, base
+    // address of the metadata
+    std::vector<std::vector<void *> *> MetadataBaseArray;
 
     ControlInfo *ControlBlocks = nullptr;
     ControlInfo *GetPriorControl(FMFormat Format);
     ControlInfo *BuildControl(FMFormat Format);
     bool NameIndicatesArray(const char *Name);
+    bool NameIndicatesAttrArray(const char *Name);
     DataType TranslateFFSType2ADIOS(const char *Type, int size);
     BP5VarRec *LookupVarByKey(void *Key);
     BP5VarRec *LookupVarByName(const char *Name);
@@ -159,7 +162,11 @@ private:
                         size_t *Start, size_t *Count);
     void MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex,
                                const size_t *LocalOffsets, size_t *LocalIndex);
+    size_t RelativeToAbsoluteStep(const BP5VarRec *VarRec, size_t RelStep);
     int FindOffset(size_t Dims, const size_t *Size, const size_t *Index);
+    void GetSingleValueFromMetadata(core::VariableBase &variable,
+                                    BP5VarRec *VarRec, void *DestData,
+                                    size_t Step, size_t WriterRank);
     void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
                                        const size_t *GlobalDims,
                                        const size_t *PartialOffsets,
@@ -185,24 +192,17 @@ private:
     {
         BP5VarRec *VarRec = NULL;
         enum RequestTypeEnum RequestType;
+        size_t Step;
         size_t BlockID;
         Dims Start;
         Dims Count;
         void *Data;
     };
     std::vector<BP5ArrayRequest> PendingRequests;
-    bool NeedWriter(BP5ArrayRequest Req, int i);
+    bool NeedWriter(BP5ArrayRequest Req, size_t i, size_t &NodeFirst);
+    void *GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank);
     size_t CurTimestep = 0;
-    std::vector<struct ControlInfo *> ActiveControl;
 };
-
-#define declare_template_instantiation(T)                                      \
-    extern template std::vector<typename core::Variable<T>::BPInfo>            \
-    BP5Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
-        const;
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
 
 } // end namespace format
 } // end namespace adios2

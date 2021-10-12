@@ -32,6 +32,14 @@
 namespace adios2
 {
 
+/** Memory space for the buffers received with Put */
+enum class MemorySpace
+{
+    Detect, ///< Detect the memory space automatically
+    Host,   ///< Host memory space (default)
+    CUDA    ///< GPU memory spaces
+};
+
 /** Variable shape type identifier, assigned automatically from the signature of
  *  DefineVariable */
 enum class ShapeID
@@ -41,7 +49,7 @@ enum class ShapeID
     GlobalArray, ///< global (across MPI_Comm) array, common case
     JoinedArray, ///< global array with a common (joinable) dimension
     LocalValue,  ///< special case, local independent value
-    LocalArray   ///< special case, local independent array
+    LocalArray,  ///< special case, local independent array
 };
 
 /** Used to set IO class */
@@ -59,6 +67,7 @@ enum class Mode
     Write,
     Read,
     Append,
+    ReadRandomAccess, // reader random access mode
     // launch execution modes
     Sync,
     Deferred
@@ -88,7 +97,7 @@ enum class StepMode
 {
     Append,
     Update, // writer advance mode
-    Read    // reader advance mode
+    Read,   // reader advance mode
 };
 
 enum class StepStatus
@@ -141,6 +150,14 @@ enum class DataType
     Compound
 };
 
+/** Type of ArrayOrdering */
+enum class ArrayOrdering
+{
+    RowMajor,    /// Contiguous elements of a row lie together in memory
+    ColumnMajor, /// Contiguous elements of a column lie together in memory
+    Auto         /// Default based on language type
+};
+
 // Types
 using std::size_t;
 
@@ -184,9 +201,21 @@ constexpr uint64_t DefaultMaxBufferSize = MaxSizeT - 1;
  * for optimizing applications*/
 constexpr float DefaultBufferGrowthFactor = 1.05f;
 
+/** default Buffer Chunk Size
+ *  16Mb */
+constexpr uint64_t DefaultBufferChunkSize = 16 * 1024 * 1024;
+
+/** default minimum size not copying deferred writes
+ *  4Mb */
+constexpr size_t DefaultMinDeferredSize = 4 * 1024 * 1024;
+
 /** default size for writing/reading files using POSIX/fstream/stdio write
  *  2Gb - 100Kb (tolerance)*/
 constexpr size_t DefaultMaxFileBatchSize = 2147381248;
+
+/** default maximum shared memory segment size
+ *  128Mb */
+constexpr uint64_t DefaultMaxShmSize = 128 * 1024 * 1024;
 
 constexpr char PathSeparator =
 #ifdef _WIN32

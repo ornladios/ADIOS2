@@ -20,6 +20,7 @@
 #include <unordered_set>
 
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/operator/compress/CompressorFactory.h"
 
 namespace adios2
 {
@@ -151,8 +152,8 @@ void BP4Deserializer::SetVariableBlockInfo(
         blockOperation.PreSizeOf = sizeof(T);
 
         // read metadata from supported type and populate Info
-        std::shared_ptr<BPOperation> bpOp = SetBPOperation(bpOpInfo.Type);
-        bpOp->GetMetadata(bpOpInfo.Metadata, blockOperation.Info);
+        BPOperation bpOp;
+        bpOp.GetMetadata(bpOpInfo.Metadata, blockOperation.Info);
         blockOperation.PayloadSize = static_cast<size_t>(
             std::stoull(blockOperation.Info.at("OutputSize")));
 
@@ -521,14 +522,12 @@ void BP4Deserializer::PostDataRead(
             blockOperationInfo.PreSizeOf;
         m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
 
-        // get the right bp4Op
-        std::shared_ptr<BPOperation> bp4Op =
-            SetBPOperation(blockOperationInfo.Info.at("Type"));
-
         // get original block back
         char *preOpData = m_ThreadBuffers[threadID][0].data();
         const char *postOpData = m_ThreadBuffers[threadID][1].data();
-        bp4Op->GetData(postOpData, blockOperationInfo, preOpData);
+
+        core::compress::CompressorFactory of;
+        of.Decompress(postOpData, blockOperationInfo.PayloadSize, preOpData);
 
         // clip block to match selection
         helper::ClipVector(m_ThreadBuffers[threadID][0],
@@ -1039,14 +1038,14 @@ void BP4Deserializer::DefineAttributeInEngineIO(
 
     if (characteristics.Statistics.IsValue)
     {
-        engine.m_IO.DefineAttribute<T>(attributeName,
-                                       characteristics.Statistics.Value);
+        engine.m_IO.DefineAttribute<T>(
+            attributeName, characteristics.Statistics.Value, "", "", true);
     }
     else
     {
         engine.m_IO.DefineAttribute<T>(
             attributeName, characteristics.Statistics.Values.data(),
-            characteristics.Statistics.Values.size());
+            characteristics.Statistics.Values.size(), "", "", true);
     }
 }
 

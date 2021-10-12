@@ -27,6 +27,9 @@ program TestBPWriteAttributes
     real, dimension(3) :: r32_array
     real(kind=8), dimension(3):: r64_array
 
+    type(adios2_namestruct) :: namestruct
+    character(len=4096), dimension(:), allocatable :: attrnamelist
+    
 
     ! Launch MPI
     call MPI_Init(ierr)
@@ -106,6 +109,28 @@ program TestBPWriteAttributes
     call adios2_declare_io(ioRead, adios, "ioRead", ierr)
 
     call adios2_open(bpReader, ioRead, 'fattr_types.bp', adios2_mode_read, ierr)
+
+
+   ! Test getting list of attribute names
+    call adios2_available_attributes(ioRead, namestruct, ierr)
+    if (ierr /= 0) stop 'adios2_available_attributes returned with error'
+    if (.not.namestruct%valid) stop 'adios2_available_attributes returned invalid struct'
+    write(*,*) 'Number of attributes = ', namestruct%count
+    write(*,*) 'Max name length = ', namestruct%max_name_len
+    if (namestruct%count /= 14) stop 'adios2_available_attributes returned not the expected 14'
+
+    allocate(attrnamelist(namestruct%count))
+
+    call adios2_retrieve_names(namestruct, attrnamelist, ierr)
+    if (ierr /= 0) stop 'adios2_retrieve_names returned with error'
+    do i=1,namestruct%count
+         write(*,'("Attr[",i2,"] = ",a20)') i, attrnamelist(i)
+    end do
+    deallocate(attrnamelist)
+
+    if (namestruct%f2c /= 0_8) stop 'namestruct f2c pointer is not null after adios2_retrieve_names()'
+    if (namestruct%valid) stop 'namestruct is not invalidated after adios2_retrieve_names()'
+
 
     call adios2_inquire_attribute(attributes_in(1), ioRead, 'att_String', ierr)
     call adios2_inquire_attribute(attributes_in(2), ioRead, 'att_i8', ierr)

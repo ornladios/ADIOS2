@@ -39,6 +39,15 @@ template <class T>
 void InsertToBuffer(std::vector<char> &buffer, const T *source,
                     const size_t elements = 1) noexcept;
 
+/*
+ * Copies data from a GPU buffer to a specific location in the adios buffer
+ */
+#ifdef ADIOS2_HAVE_CUDA
+template <class T>
+void CopyFromGPUToBuffer(std::vector<char> &buffer, size_t &position,
+                         const T *source, const size_t elements = 1) noexcept;
+#endif
+
 /**
  * Copies data to a specific location in the buffer updating position
  * Does not update vec.size().
@@ -242,6 +251,10 @@ size_t PayloadSize(const T *data, const Dims &count) noexcept;
  * @return padding value in [0..sizeof(max_align_t)-1]
  */
 size_t PaddingToAlignPointer(const void *ptr);
+
+/** Calculate padding to an arbitrary offset to be aligned to
+ * the size alignment_size */
+uint64_t PaddingToAlignOffset(uint64_t offset, uint64_t alignment_size);
 
 } // end namespace helper
 } // end namespace adios2

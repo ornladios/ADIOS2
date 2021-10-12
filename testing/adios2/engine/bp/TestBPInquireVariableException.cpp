@@ -47,9 +47,9 @@ TEST_F(ADIOSInquireVariableException, Read)
         auto var1 =
             io_w.DefineVariable<int32_t>("variable1", shape, start, count);
 
-        for (int32_t step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
-            std::vector<int32_t> Ints(10, step);
+            std::vector<int32_t> Ints(10, static_cast<int32_t>(step));
             writer.BeginStep();
             writer.Put(var1, Ints.data());
             writer.EndStep();
@@ -61,7 +61,7 @@ TEST_F(ADIOSInquireVariableException, Read)
         auto reader = io_r.Open(filename, adios2::Mode::Read);
         auto var = io_r.InquireVariable<int32_t>("variable1");
 
-        for (int32_t step = 0; step < NSteps; step++)
+        for (size_t step = 0; step < NSteps; step++)
         {
             reader.BeginStep();
             std::vector<int32_t> myInts;

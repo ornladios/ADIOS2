@@ -8,7 +8,7 @@ program helloBPWriter
 
     integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
     real, dimension(:), allocatable :: myArray
-    integer :: inx, irank, isize, ierr, i, var1_type
+    integer :: inx, irank, isize, ierr, i
     type(adios2_adios) :: adios
     type(adios2_io) :: io
     type(adios2_variable) :: var1

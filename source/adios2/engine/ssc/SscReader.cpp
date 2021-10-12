@@ -140,9 +140,12 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
         auto variable = m_IO.InquireVariable<T>(v.name);                       \
         if (variable)                                                          \
         {                                                                      \
-            std::memcpy(&variable->m_Min, value.data(), value.size());         \
-            std::memcpy(&variable->m_Max, value.data(), value.size());         \
-            std::memcpy(&variable->m_Value, value.data(), value.size());       \
+            std::memcpy(reinterpret_cast<char *>(&variable->m_Min),            \
+                        value.data(), value.size());                           \
+            std::memcpy(reinterpret_cast<char *>(&variable->m_Max),            \
+                        value.data(), value.size());                           \
+            std::memcpy(reinterpret_cast<char *>(&variable->m_Value),          \
+                        value.data(), value.size());                           \
         }                                                                      \
     }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

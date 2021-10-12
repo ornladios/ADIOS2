@@ -193,8 +193,9 @@ int validateCommonTestData(int start, int length, size_t step,
             {
                 std::cout << "Expected 0x" << std::hex
                           << (int16_t)((i + start) * 10 + step) << ", got 0x"
-                          << std::hex << (int16_t)in_I8[i] << " for in_I8[" << i
-                          << "](global[" << i + start << "])" << std::endl;
+                          << std::hex << (int16_t)in_I8[i] << std::dec
+                          << " for in_I8[" << i << "](global[" << i + start
+                          << "]), timestep " << step << std::endl;
                 failures++;
             }
         }
@@ -203,7 +204,8 @@ int validateCommonTestData(int start, int length, size_t step,
             std::cout << "Expected 0x" << std::hex
                       << (int16_t)((i + start) * 10 + step) << ", got 0x"
                       << std::hex << in_I16[i] << " for in_I16[" << i
-                      << "](global[" << i + start << "])" << std::endl;
+                      << "](global[" << i + start << "]), timestep " << step
+                      << std::endl;
             failures++;
         }
         if (in_I32[i] != (int32_t)((i + start) * 10 + step))
@@ -211,7 +213,8 @@ int validateCommonTestData(int start, int length, size_t step,
             std::cout << "Expected 0x" << std::hex
                       << (int32_t)((i + start) * 10 + step) << ", got 0x"
                       << std::hex << in_I32[i] << " for in_I32[" << i
-                      << "](global[" << i + start << "])" << std::endl;
+                      << "](global[" << i + start << "]), timestep " << step
+                      << std::endl;
             failures++;
         }
         if (in_I64[i] != (int64_t)((i + start) * 10 + step))
@@ -219,7 +222,8 @@ int validateCommonTestData(int start, int length, size_t step,
             std::cout << "Expected 0x" << std::hex
                       << (int64_t)((i + start) * 10 + step) << ", got 0x"
                       << std::hex << in_I64[i] << " for in_I64[" << i
-                      << "](global[" << i + start << "])" << std::endl;
+                      << "](global[" << i + start << "]), timestep " << step
+                      << std::endl;
             failures++;
         }
 
@@ -229,22 +233,26 @@ int validateCommonTestData(int start, int length, size_t step,
             {
                 std::cout << "Expected " << (float)((i + start) * 10 + step)
                           << ", got " << in_R32[i] << " for in_R32[" << i
-                          << "](global[" << i + start << "])" << std::endl;
+                          << "](global[" << i + start << "]), timestep " << step
+                          << std::endl;
                 failures++;
             }
         }
         else
         {
+            std::cout << "Blocks size is " << in_R32_blocks.size() << std::endl;
             for (size_t j = 0; j < in_R32_blocks.size(); j++)
             {
-                if (in_R32_blocks[j][i] !=
-                    (float)((i + start) * 10 + step + 1000.0 * j))
+                std::cout << " Verifying block " << j << " at data "
+                          << (void *)in_R32_blocks[j].data() << std::endl;
+                float expected = (float)((i + start) * 10 + step + 1000.0 * j +
+                                         (((int)(j / LocalCount)) * 100.0));
+                if (in_R32_blocks[j][i] != expected)
                 {
-                    std::cout << "Expected "
-                              << (float)((i + start) * 10 + step + 1000.0 * j)
-                              << ", got " << in_R32_blocks[j][i]
-                              << " for in_R32[" << i << "][" << j << "(global["
-                              << i + start << "])" << std::endl;
+                    std::cout << "Expected " << expected << ", got "
+                              << in_R32_blocks[j][i] << " for in_R32[" << i
+                              << "][" << j << "(global[" << i + start
+                              << "]), timestep " << step << std::endl;
                     failures++;
                 }
             }
@@ -254,7 +262,8 @@ int validateCommonTestData(int start, int length, size_t step,
         {
             std::cout << "Expected " << (double)((i + start) * 10 + step)
                       << ", got " << in_R64[i] << " for in_R64[" << i
-                      << "](global[" << i + start << "])" << std::endl;
+                      << "](global[" << i + start << "]), timestep " << step
+                      << std::endl;
             failures++;
         }
         if (!missing_end_data)
@@ -265,7 +274,8 @@ int validateCommonTestData(int start, int length, size_t step,
                 std::cout << "Expected [" << (float)((i + start) * 10 + step)
                           << ", " << -(float)((i + start) * 10 + step)
                           << "], got " << in_C32[i] << " for in_C32[" << i
-                          << "](global[" << i + start << "])" << std::endl;
+                          << "](global[" << i + start << "]), timestep " << step
+                          << std::endl;
                 failures++;
             }
             if ((in_C64[i].imag() != (double)((i + start) * 10 + step)) ||
@@ -274,15 +284,16 @@ int validateCommonTestData(int start, int length, size_t step,
                 std::cout << "Expected [" << (double)((i + start) * 10 + step)
                           << ", " << -(double)((i + start) * 10 + step)
                           << "], got " << in_C64[i] << " for in_C64[" << i
-                          << "](global[" << i + start << "])" << std::endl;
+                          << "](global[" << i + start << "]), timestep " << step
+                          << std::endl;
                 failures++;
             }
             if (in_R64_2d[2 * i] != (double)((i + start) * 10 + step))
             {
                 std::cout << "Expected " << (double)((i + start) * 10 + step)
                           << ", got " << in_R64_2d[i] << " for in_R64_2d[" << i
-                          << "][0](global[" << i + start << "][0])"
-                          << std::endl;
+                          << "][0](global[" << i + start << "][0]), timestep "
+                          << step << std::endl;
                 failures++;
             }
             if (in_R64_2d[2 * i + 1] !=
@@ -291,8 +302,8 @@ int validateCommonTestData(int start, int length, size_t step,
                 std::cout << "Expected "
                           << (double)(10000 + (i + start) * 10 + step)
                           << ", got " << in_R64_2d[i] << " for in_R64_2d[" << i
-                          << "][1](global[" << i + start << "][1])"
-                          << std::endl;
+                          << "][1](global[" << i + start << "][1]), timestep "
+                          << step << std::endl;
                 failures++;
             }
             if (in_R64_2d_rev[i] != (double)((i + start) * 10 + step))
@@ -300,7 +311,7 @@ int validateCommonTestData(int start, int length, size_t step,
                 std::cout << "Expected " << (double)((i + start) * 10 + step)
                           << ", got " << in_R64_2d_rev[i]
                           << " for in_R64_2d_rev[0][" << i << "](global[0]["
-                          << i + start << "])" << std::endl;
+                          << i + start << "]), timestep " << step << std::endl;
                 failures++;
             }
             if (in_R64_2d_rev[i + length] !=
@@ -310,7 +321,7 @@ int validateCommonTestData(int start, int length, size_t step,
                           << (double)(10000 + (i + start) * 10 + step)
                           << ", got " << in_R64_2d_rev[i + length]
                           << " for in_R64_2d_rev[1][" << i << "](global[1]["
-                          << i + start << "])" << std::endl;
+                          << i + start << "]), timestep " << step << std::endl;
                 failures++;
             }
         }
@@ -329,7 +340,8 @@ int validateCommonTestDataR64(int start, int length, size_t step,
         {
             std::cout << "Expected " << (double)((i + start) * 10 + step)
                       << ", got " << in_R64[i] << " for in_R64[" << i
-                      << "](global[" << i + start << "])" << std::endl;
+                      << "](global[" << i + start << "]), timestep " << step
+                      << std::endl;
             failures++;
         }
     }

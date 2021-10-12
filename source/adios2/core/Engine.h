@@ -113,7 +113,7 @@ public:
      */
     template <class T>
     typename Variable<T>::Span &
-    Put(Variable<T> &variable, const size_t bufferID = 0, const T &value = T{});
+    Put(Variable<T> &variable, const bool initialize, const T &value = T{});
 
     /**
      * @brief Put associates variable and data into adios2 in Engine Write mode.
@@ -425,7 +425,7 @@ public:
     std::vector<size_t> GetAbsoluteSteps(const Variable<T> &variable) const;
 
     template <class T>
-    T *BufferData(const size_t payloadOffset,
+    T *BufferData(const int bufferIdx, const size_t payloadOffset,
                   const size_t bufferID = 0) noexcept;
 
     size_t Steps() const;
@@ -449,6 +449,67 @@ public:
 
     /* for adios2 internal testing */
     virtual size_t DebugGetDataBufferSize() const;
+
+    union PrimitiveStdtypeUnion
+    {
+#define declare_field(T, N) T field_##N;
+        ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(declare_field)
+#undef declare_field
+#define declare_get(T, N)                                                      \
+    T Get(T def) { return field_##N; }
+        ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(declare_get)
+#undef declare_get
+        std::string Get(std::string def) { return def; }
+        std::complex<float> Get(std::complex<float> def) { return def; }
+        std::complex<double> Get(std::complex<double> def) { return def; }
+    };
+
+    struct MinBlockInfo
+    {
+        int WriterID = 0;
+        size_t BlockID = 0;
+        size_t *Start;
+        size_t *Count;
+        union PrimitiveStdtypeUnion MinUnion;
+        union PrimitiveStdtypeUnion MaxUnion;
+        void *BufferP = NULL;
+    };
+    struct MinMaxStruct
+    {
+        union PrimitiveStdtypeUnion MinUnion;
+        union PrimitiveStdtypeUnion MaxUnion;
+    };
+    struct MinVarInfo
+    {
+        int Dims;
+        size_t *Shape;
+        bool IsValue = false;
+        bool IsReverseDims = false;
+        std::vector<struct MinBlockInfo> BlocksInfo;
+        MinVarInfo(int D, size_t *S)
+        : Dims(D), Shape(S), IsValue(false), IsReverseDims(false),
+          BlocksInfo({})
+        {
+        }
+    };
+
+    //  in this call, Step is RELATIVE, not absolute
+    virtual MinVarInfo *MinBlocksInfo(const VariableBase &,
+                                      const size_t Step) const
+    {
+        return nullptr;
+    }
+
+    virtual bool VariableMinMax(const VariableBase &, const size_t Step,
+                                MinMaxStruct &MinMax)
+    {
+        return false;
+    }
+
+    /** Notify the engine when a new attribute is defined. Called from IO.tcc
+     */
+    virtual void NotifyEngineAttribute(std::string name,
+                                       DataType type) noexcept;
 
 protected:
     /** from ADIOS class passed to Engine created with Open
@@ -479,8 +540,8 @@ protected:
 // Put
 #define declare_type(T)                                                        \
     virtual void DoPut(Variable<T> &variable,                                  \
-                       typename Variable<T>::Span &span, const size_t blockID, \
-                       const T &value);
+                       typename Variable<T>::Span &span,                       \
+                       const bool initialize, const T &value);
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -527,7 +588,8 @@ protected:
 #undef declare_type
 
 #define declare_type(T, L)                                                     \
-    virtual T *DoBufferData_##L(const size_t payloadPosition,                  \
+    virtual T *DoBufferData_##L(const int bufferIdx,                           \
+                                const size_t payloadPosition,                  \
                                 const size_t bufferID) noexcept;
 
     ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
@@ -542,6 +604,10 @@ protected:
     /** true: The read pattern is fixed and will not change.
      */
     bool m_ReaderSelectionsLocked = false;
+
+    /** true: Currently executing after BeginStep and before EndStep
+     */
+    bool m_BetweenStepPairs = false;
 
 private:
     /** Throw exception by Engine virtual functions not implemented/supported by
@@ -618,7 +684,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 
 #define declare_template_instantiation(T)                                      \
     extern template typename Variable<T>::Span &Engine::Put(                   \
-        Variable<T> &, const size_t, const T &);                               \
+        Variable<T> &, const bool, const T &);                                 \
     extern template void Engine::Get(Variable<T> &, T **) const;
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

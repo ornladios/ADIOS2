@@ -451,7 +451,8 @@ protected:
         transform_lz4 = 10,
         transform_blosc = 11,
         transform_mgard = 12,
-        transform_png = 13
+        transform_png = 13,
+        transform_sirius = 14
     };
 
     /** Supported transform types */
@@ -468,22 +469,6 @@ protected:
      */
     TransformTypes TransformTypeEnum(const std::string transformType) const
         noexcept;
-
-    /**
-     * Returns the proper derived class for BPOperation based on type
-     * @param type input, must be a supported type under BPOperation
-     * @return derived class if supported, false pointer if type not supported
-     */
-    std::shared_ptr<BPOperation> SetBPOperation(const std::string type) const
-        noexcept;
-
-    /**
-     * Holds requested BPOperations
-     * @param operations input operations form user
-     * @return map holding only valid operations
-     */
-    std::map<size_t, std::shared_ptr<BPOperation>> SetBPOperations(
-        const std::vector<core::VariableBase::Operation> &operations) const;
 
     struct ProcessGroupIndex
     {

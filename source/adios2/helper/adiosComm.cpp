@@ -114,6 +114,31 @@ std::vector<size_t> Comm::GetGathervDisplacements(const size_t *counts,
     return displacements;
 }
 
+Comm::Win Comm::Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
+                                    const std::string &hint)
+{
+    return m_Impl->Win_allocate_shared(size, disp_unit, baseptr, hint);
+}
+int Comm::Win_shared_query(Comm::Win &win, int rank, size_t *size,
+                           int *disp_unit, void *baseptr,
+                           const std::string &hint)
+{
+    return m_Impl->Win_shared_query(win, rank, size, disp_unit, baseptr, hint);
+}
+int Comm::Win_free(Win &win, const std::string &hint)
+{
+    return m_Impl->Win_free(win, hint);
+}
+int Comm::Win_Lock(LockType lock_type, int rank, int assert, Win &win,
+                   const std::string &hint)
+{
+    return m_Impl->Win_Lock(lock_type, rank, assert, win, hint);
+}
+int Comm::Win_Unlock(int rank, Win &win, const std::string &hint)
+{
+    return m_Impl->Win_Unlock(rank, win, hint);
+}
+
 Comm::Req::Req() = default;
 
 Comm::Req::Req(std::unique_ptr<CommReqImpl> impl) : m_Impl(std::move(impl)) {}
@@ -135,6 +160,27 @@ Comm::Status Comm::Req::Wait(const std::string &hint)
     return status;
 }
 
+Comm::Win::Win() = default;
+
+Comm::Win::Win(std::unique_ptr<CommWinImpl> impl) : m_Impl(std::move(impl)) {}
+
+Comm::Win::~Win() = default;
+
+Comm::Win::Win(Win &&win) = default;
+
+Comm::Win &Comm::Win::operator=(Win &&win) = default;
+
+int Comm::Win::Free(const std::string &hint)
+{
+    int status = 0;
+    if (m_Impl)
+    {
+        status = m_Impl->Free(hint);
+        m_Impl.reset();
+    }
+    return status;
+}
+
 CommImpl::~CommImpl() = default;
 
 size_t CommImpl::SizeOf(Datatype datatype) { return ToSize(datatype); }
@@ -149,9 +195,18 @@ Comm::Req CommImpl::MakeReq(std::unique_ptr<CommReqImpl> impl)
     return Comm::Req(std::move(impl));
 }
 
+Comm::Win CommImpl::MakeWin(std::unique_ptr<CommWinImpl> impl)
+{
+    return Comm::Win(std::move(impl));
+}
+
 CommImpl *CommImpl::Get(Comm const &comm) { return comm.m_Impl.get(); }
 
+CommWinImpl *CommWinImpl::Get(Comm::Win const &win) { return win.m_Impl.get(); }
+
 CommReqImpl::~CommReqImpl() = default;
+
+CommWinImpl::~CommWinImpl() = default;
 
 } // end namespace helper
 } // end namespace adios2

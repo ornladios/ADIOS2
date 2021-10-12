@@ -18,8 +18,11 @@ namespace aggregator
 
 MPIChain::MPIChain() : MPIAggregator() {}
 
-void MPIChain::Init(const size_t subStreams, helper::Comm const &parentComm)
+void MPIChain::Init(const size_t numAggregators, const size_t subStreams,
+                    helper::Comm const &parentComm)
 {
+    /* numAggregators ignored here as BP3/BP4 uses substreams = aggregators */
+    m_NumAggregators = subStreams;
     if (subStreams > 0)
     {
         InitComm(subStreams, parentComm);
@@ -38,6 +41,8 @@ void MPIChain::Init(const size_t subStreams, helper::Comm const &parentComm)
         m_Buffers.emplace_back(new format::BufferSTL()); // just one for now
     }
 }
+
+void MPIChain::Close() { MPIAggregator::Close(); }
 
 MPIChain::ExchangeRequests MPIChain::IExchange(format::Buffer &buffer,
                                                const int step)

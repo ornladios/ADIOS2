@@ -224,10 +224,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
-        EXPECT_EQ(bpReader.OpenMode(), adios2::Mode::Read);
 
         // auto var_bool = io.InquireVariable<bool>("bool");
         // EXPECT_TRUE(var_bool);
@@ -566,7 +566,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
         auto var_iString = io.InquireVariable<std::string>("iString");
@@ -883,7 +884,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
 
@@ -1148,7 +1150,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead10D2x2)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
 
@@ -1366,7 +1369,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), NSteps);
 
@@ -1673,7 +1677,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         auto var_i16 = io.InquireVariable<int16_t>("i16");
@@ -1779,7 +1784,8 @@ TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
         bpWriter.Close();
 
         EXPECT_NO_THROW(io.Open(fname, adios2::Mode::Write));
-        EXPECT_THROW(io.Open(fname, adios2::Mode::Read), std::invalid_argument);
+        EXPECT_THROW(io.Open(fname, adios2::Mode::ReadRandomAccess),
+                     std::invalid_argument);
     }
 }
 
@@ -1830,7 +1836,8 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
         adios2::Variable<int64_t> varRange =
             io.InquireVariable<int64_t>("range");
 
@@ -1856,6 +1863,155 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
         }
         bpReader.Close();
     }
+}
+
+//***************************************************
+// 1D test where some process does not write anything
+//***************************************************
+
+// ADIOS2 BP write and read 1D arrays
+TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteReadEmptyProcess)
+{
+#if ADIOS2_USE_MPI
+    // Each process, except rank 0 would write a 1x8 array and all
+    // processes would form a (mpiSize-1) * Nx 1D array
+    const std::string fname("ADIOS2BPWriteReadEmptyProces.bp");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    const size_t Nx = 8;
+
+    // Number of steps
+    const size_t NSteps = 3;
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+
+    /* This is a parallel test, do not run in serial */
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+        // Declare 1D variables (NumOfProcesses * Nx)
+        // The local process' part (start, count) can be defined now or later
+        // before Write().
+
+        adios2::Dims shape{static_cast<size_t>(Nx * (mpiSize - 1))};
+        adios2::Dims start{static_cast<size_t>(Nx * (mpiRank - 1))};
+        adios2::Dims count{Nx};
+        if (!mpiRank)
+        {
+            count[0] = 0;
+            start[0] = 0;
+        }
+
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+        EXPECT_TRUE(var_r32);
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
+            bpWriter.BeginStep();
+            if (!mpiRank)
+            {
+                // in first step, rank 0 does not call Put
+                // in second step, it calls with a zero sized array
+                // in third step, it calls with nullptr
+                if (step == 1)
+                {
+                    std::vector<float> zero;
+                    bpWriter.Put(var_r32, zero.data());
+                }
+                else if (step == 2)
+                {
+                    bpWriter.Put(var_r32, (float *)0);
+                }
+            }
+            else
+            {
+                bpWriter.Put(var_r32, currentTestData.R32.data());
+            }
+
+            bpWriter.EndStep();
+        }
+
+        // Close the file
+        bpWriter.Close();
+    }
+
+    {
+        adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank + 1, mpiSize);
+
+            bpReader.BeginStep();
+
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Shape()[0], (mpiSize - 1) * Nx);
+
+            SmallTestData testData;
+            std::array<float, Nx> R32;
+
+            // last process does not read
+            // readers 0..N-2, while data was produced by 1..N-1
+            adios2::Dims start{mpiRank * Nx};
+            adios2::Dims count{Nx};
+
+            if (mpiRank == mpiSize - 1)
+            {
+                count[0] = 0;
+                start[0] = 0;
+            }
+
+            const adios2::Box<adios2::Dims> sel(start, count);
+            var_r32.SetSelection(sel);
+
+            if (mpiRank < mpiSize - 1)
+            {
+                bpReader.Get(var_r32, R32.data(), adios2::Mode::Sync);
+                for (size_t i = 0; i < Nx; ++i)
+                {
+                    std::stringstream ss;
+                    ss << "t=" << step << " i=" << i << " rank=" << mpiRank;
+                    std::string msg = ss.str();
+                    EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
+                }
+            }
+
+            bpReader.EndStep();
+        }
+        bpReader.Close();
+    }
+#else
+    return;
+#endif
 }
 
 //******************************************************************************

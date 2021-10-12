@@ -47,11 +47,22 @@ CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
 {
 }
 
-size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
-                             const size_t elementSize, DataType /*type*/,
-                             void *bufferOut, const Params &parameters,
-                             Params &info) const
+size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
+                             const Dims &blockCount, const DataType type,
+                             char *bufferOut, const Params &parameters)
 {
+    size_t bufferOutOffset = 0;
+    const uint8_t bufferVersion = 1;
+
+    // Universal operator metadata
+    PutParameter(bufferOut, bufferOutOffset, OperatorType::PNG);
+    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
+    // Universal operator metadata end
+
+    size_t paramOffset = bufferOutOffset;
+    bufferOutOffset += sizeof(size_t) + 3;
+
     auto lf_Write = [](png_structp png_ptr, png_bytep data, png_size_t length) {
         DestInfo *pDestInfo =
             reinterpret_cast<DestInfo *>(png_get_io_ptr(png_ptr));
@@ -59,7 +70,7 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
         pDestInfo->Offset += length;
     };
 
-    const std::size_t ndims = dimensions.size();
+    const std::size_t ndims = blockCount.size();
 
     if (ndims != 3 && ndims != 2)
     {
@@ -130,11 +141,12 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
                                                    nullptr, nullptr, nullptr);
     png_infop pngInfo = png_create_info_struct(pngWrite);
 
-    const uint32_t bytesPerPixel =
-        ndims == 3 ? static_cast<uint32_t>(dimensions[2]) : elementSize;
+    const uint32_t bytesPerPixel = ndims == 3
+                                       ? static_cast<uint32_t>(blockCount[2])
+                                       : helper::GetDataTypeSize(type);
 
-    const uint32_t width = static_cast<uint32_t>(dimensions[1]);
-    const uint32_t height = static_cast<uint32_t>(dimensions[0]);
+    const uint32_t width = static_cast<uint32_t>(blockCount[1]);
+    const uint32_t height = static_cast<uint32_t>(blockCount[0]);
 
     png_set_IHDR(pngWrite, pngInfo, width, height, bitDepth, colorType,
                  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
@@ -152,14 +164,14 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
     std::vector<uint8_t *> rows(height);
     for (size_t r = 0; r < height; ++r)
     {
-        rows[r] = reinterpret_cast<uint8_t *>(const_cast<void *>(dataIn)) +
+        rows[r] = reinterpret_cast<uint8_t *>(const_cast<char *>(dataIn)) +
                   r * width * bytesPerPixel;
     }
     png_set_rows(pngWrite, pngInfo, rows.data());
 
     DestInfo destInfo;
-    destInfo.BufferOut = reinterpret_cast<char *>(bufferOut);
-    destInfo.Offset = 0;
+    destInfo.BufferOut = bufferOut;
+    destInfo.Offset = bufferOutOffset;
 
     png_set_write_fn(pngWrite, &destInfo, lf_Write, nullptr);
     png_write_png(pngWrite, pngInfo, PNG_TRANSFORM_IDENTITY, nullptr);
@@ -167,24 +179,49 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
 
     // const size_t compressedSize = png_get_compression_buffer_size(pngWrite);
     png_destroy_write_struct(&pngWrite, &pngInfo);
+
+    PutParameter(bufferOut, paramOffset, destInfo.Offset);
+    PutParameter(bufferOut, paramOffset,
+                 static_cast<uint8_t>(PNG_LIBPNG_VER_MAJOR));
+    PutParameter(bufferOut, paramOffset,
+                 static_cast<uint8_t>(PNG_LIBPNG_VER_MINOR));
+    PutParameter(bufferOut, paramOffset,
+                 static_cast<uint8_t>(PNG_LIBPNG_VER_RELEASE));
+
     return destInfo.Offset;
 }
 
-size_t CompressPNG::Decompress(const void *bufferIn, const size_t sizeIn,
-                               void *dataOut, const size_t sizeOut,
-                               Params &info) const
+size_t CompressPNG::DecompressV1(const char *bufferIn, const size_t sizeIn,
+                                 char *dataOut)
 {
+    // Do NOT remove even if the buffer version is updated. Data might be still
+    // in lagacy formats. This function must be kept for backward compatibility.
+    // If a newer buffer format is implemented, create another function, e.g.
+    // DecompressV2 and keep this function for decompressing lagacy data.
+
+    size_t bufferInOffset = 0;
+    const size_t outSize = GetParameter<size_t>(bufferIn, bufferInOffset);
+
+    m_VersionInfo =
+        " Data is compressed using PNG Version " +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+        ". Please make sure a compatible version is used for decompression.";
+
     png_image image;
     std::memset(&image, 0, sizeof(image));
     image.version = PNG_IMAGE_VERSION;
 
-    int result = png_image_begin_read_from_memory(&image, bufferIn, sizeIn);
+    int result = png_image_begin_read_from_memory(
+        &image, bufferIn + bufferInOffset, sizeIn - bufferInOffset);
 
     if (result == 0)
     {
         throw std::runtime_error(
             "ERROR: png_image_begin_read_from_memory failed in call "
-            "to ADIOS2 PNG Decompress\n");
+            "to ADIOS2 PNG Decompress." +
+            m_VersionInfo + "\n");
     }
 
     // TODO might be needed from parameters?
@@ -193,10 +230,38 @@ size_t CompressPNG::Decompress(const void *bufferIn, const size_t sizeIn,
     {
         throw std::runtime_error(
             "ERROR: png_image_finish_read_from_memory failed in call "
-            "to ADIOS2 PNG Decompress\n");
+            "to ADIOS2 PNG Decompress." +
+            m_VersionInfo + "\n");
+    }
+    return outSize;
+}
+
+size_t CompressPNG::Decompress(const char *bufferIn, const size_t sizeIn,
+                               char *dataOut)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        // pass in the whole buffer as there is absolute positions saved in the
+        // buffer to determine the offsets and lengths for batches
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 png buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown png buffer version");
     }
 
-    return sizeOut;
+    return 0;
 }
 
 bool CompressPNG::IsDataTypeValid(const DataType type) const { return true; }

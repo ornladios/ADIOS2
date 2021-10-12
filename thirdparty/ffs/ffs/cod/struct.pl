@@ -8,8 +8,10 @@ sub read_structs {
 	    $name = $1;
 	    $obj_ref = {};
 	    $obj_ref->{types} = {};
+            push @display_order, $name;
 	} elsif (/\s*(\S+.*\W)(\w*);/) {
 	    $obj_ref->{types}->{$2} = $1;
+	    push @{$obj_ref->{order}}, $2;
 	    $obj_ref->{types}->{$2} =~ s/ //g;
 	    $structs{$name} = $obj_ref;
 	}
@@ -17,9 +19,9 @@ sub read_structs {
 }
 
 sub dump_structs {
-    foreach $name (reverse keys %structs) {
+    foreach my $name (@display_order) {
 	print "structure $name ->\n";
-	foreach $field (reverse keys %{$structs{$name}->{types}}) {
+	foreach my $field ( @{$structs{$name}->{order}} ) {
 	    print "	$structs{$name}->{types}->{$field} $field;\n";
 	}
 	print "\n";
@@ -33,20 +35,20 @@ sub gen_typedef {
     print $outfile "    struct list_struct *next;\n";
     print $outfile "};\n\n";
     print $outfile "typedef enum {\n";
-    foreach $name (reverse keys %structs) {
+    foreach my $name (@display_order) {
 	print $outfile "    cod_$name,\n";
     }	
     print $outfile "    cod_last_node_type\n";
     print $outfile "} cod_node_type;\n\n";
-    foreach $name (reverse keys %structs) {
+    foreach my $name (@display_order) {
 	print $outfile "typedef struct {\n";
-	foreach $field (reverse keys %{$structs{$name}->{types}}) {
+	foreach my $field ( @{$structs{$name}->{order}} ) {
 	    print $outfile "    $structs{$name}->{types}->{$field} $field;\n";
 	}
 	print $outfile "} $name;\n\n";
     }
     print $outfile "typedef union {\n";
-    foreach $name (reverse keys %structs) {
+    foreach my $name (@display_order) {
 	print $outfile "   $name $name;\n";
     }
     print $outfile "} sm_union;\n\n";
@@ -59,7 +61,7 @@ sub gen_typedef {
 
 sub gen_create {
     my($houtfile, $coutfile) = @_;
-    foreach $name (reverse keys %structs) {
+    foreach my $name (@display_order) {
 	print $houtfile "extern sm_ref cod_new_$name();\n";
 	print $coutfile "extern sm_ref\ncod_new_$name()\n{\n";
 	print $coutfile "    sm_ref tmp = malloc(sizeof(*tmp));\n";
@@ -91,9 +93,9 @@ sub gen_apply {
     print $coutfile "    node->visited++;\n";
     print $coutfile "    if(pre_func) (pre_func)(node, data);\n";
     print $coutfile "    switch(node->node_type) {\n";
-    foreach $name (reverse keys %structs) {
+    foreach my $name (@display_order) {
 	print $coutfile "      case cod_$name: {\n";
-	foreach $field (reverse keys %{$structs{$name}->{types}}) {
+	foreach my $field ( @{$structs{$name}->{order}} ) {
 	    if (($structs{$name}->{types}->{$field}  eq "sm_ref") &&
 		(substr($field,0,2)  ne "sm")) {
 		print $coutfile "          cod_apply(node->node.$name.$field, pre_func, post_func, list_func, data);\n";
@@ -122,10 +124,10 @@ sub gen_dump {
     print $coutfile "}\n\n";
     print $coutfile "extern void cod_print(sm_ref node)\n{\n";
     print $coutfile "    switch(node->node_type) {\n";
-    foreach $name (reverse keys %structs) {
+    foreach my $name (@display_order) {
 	print $coutfile "      case cod_$name: {\n";
 	print $coutfile "          printf(\"0x%p  --  $name ->\\n\", node);\n";
-	foreach $field (reverse keys %{$structs{$name}->{types}}) {
+	foreach my $field ( @{$structs{$name}->{order}} ) {
 	    print $coutfile "          printf(\"\t$field : ";
 	    if ($structs{$name}->{types}->{$field}  eq "sm_ref") {
 		print $coutfile "%p\\n\", node->node.$name.$field);\n";
@@ -163,9 +165,9 @@ sub gen_free {
     print $coutfile "}\n\n";
     print $coutfile "extern void cod_free(sm_ref node)\n{\n";
     print $coutfile "    switch(node->node_type) {\n";
-    foreach $name (reverse keys %structs) {
+    foreach my $name (@display_order) {
 	print $coutfile "      case cod_$name: {\n";
-	foreach $field (reverse keys %{$structs{$name}->{types}}) {
+	foreach my $field ( @{$structs{$name}->{order}} ) {
 	    if ($structs{$name}->{types}->{$field}  eq "char*") {
 		print $coutfile "	    free(node->node.$name.$field);\n";
 	    }
@@ -190,9 +192,9 @@ sub gen_free {
     print $coutfile "    new_free->node = node;\n";
     print $coutfile "    free_list = new_free;\n";
     print $coutfile "    switch(node->node_type) {\n";
-    foreach $name (reverse keys %structs) {
+    foreach my $name (@display_order) {
 	print $coutfile "      case cod_$name: {\n";
-	foreach $field (reverse keys %{$structs{$name}->{types}}) {
+	foreach my $field ( @{$structs{$name}->{order}} ) {
 	    if ($structs{$name}->{types}->{$field}  eq "sm_list") {
 		print $coutfile "          node->node.$name.$field = NULL;\n";
 	    }
@@ -256,11 +258,11 @@ sub gen_copy {
     print $coutfile "    sm_ref new_node = NULL;\n";
     print $coutfile "    if (node == NULL) return NULL;\n\n";
     print $coutfile "    switch(node->node_type) {\n";
-    foreach $name (reverse keys %structs) {
+    foreach my $name (@display_order) {
 	print $coutfile "      case cod_$name: {\n";
 	print $coutfile "	    new_node = cod_new_$name();\n";
 	print $coutfile "	    new_node->node.$name = node->node.$name;\n";
-	foreach $field (reverse keys %{$structs{$name}->{types}}) {
+	foreach my $field ( @{$structs{$name}->{order}} ) {
 	    if ($structs{$name}->{types}->{$field}  eq "char*") {
 		print $coutfile "	    new_node->node.$name.$field = node->node.$name.$field? strdup(node->node.$name.$field):NULL;\n";
 	    } elsif ($structs{$name}->{types}->{$field}  eq "sm_list") {
@@ -284,8 +286,8 @@ sub gen_srcpos {
     print $houtfile "extern srcpos cod_get_srcpos(sm_ref expr);\n";
     print $coutfile "extern srcpos cod_get_srcpos(expr)\nsm_ref expr;\n{\n";
     print $coutfile "    switch(expr->node_type) {\n";
-    foreach $name (reverse keys %structs) {
-	foreach $field (reverse keys %{$structs{$name}->{types}}) {
+    foreach my $name (@display_order) {
+	foreach my $field ( @{$structs{$name}->{order}} ) {
 	    if ($structs{$name}->{types}->{$field}  eq "srcpos") {
 		print $coutfile "      case cod_$name: return expr->node.$name.$field;\n";
 	    }

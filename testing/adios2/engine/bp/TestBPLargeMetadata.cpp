@@ -139,7 +139,7 @@ TEST_F(BPLargeMetadata, ManyLongStrings)
     // reader
     {
         io.RemoveAllVariables();
-        adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+        adios2::Engine reader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         std::string inString;
 

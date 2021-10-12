@@ -24,10 +24,10 @@ namespace adios2
 namespace helper
 {
 
-size_t GetTotalSize(const Dims &dimensions) noexcept
+size_t GetTotalSize(const Dims &dimensions, const size_t elementSize) noexcept
 {
-    return std::accumulate(dimensions.begin(), dimensions.end(),
-                           static_cast<size_t>(1), std::multiplies<size_t>());
+    return std::accumulate(dimensions.begin(), dimensions.end(), elementSize,
+                           std::multiplies<size_t>());
 }
 
 bool CheckIndexRange(const int index, const int upperLimit,
@@ -44,6 +44,10 @@ bool CheckIndexRange(const int index, const int upperLimit,
 size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
                            const float growthFactor) noexcept
 {
+    if (currentSize == 0)
+    {
+        return requiredSize;
+    }
     if (currentSize >= requiredSize)
     {
         return currentSize;

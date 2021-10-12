@@ -353,8 +353,23 @@ void FileStdio::SeekToBegin()
     }
 }
 
-void FileStdio::MkDir(const std::string &fileName)
+void FileStdio::Seek(const size_t start)
 {
+    if (start != MaxSizeT)
+    {
+        WaitForOpen();
+        const auto status = std::fseek(m_File, 0, SEEK_SET);
+        if (status == -1)
+        {
+            throw std::ios_base::failure("ERROR: couldn't seek to offset " +
+                                         std::to_string(start) + " of file " +
+                                         m_Name + ", in call to stdio fseek\n");
+        }
+    }
+    else
+    {
+        SeekToEnd();
+    }
 }
 
 } // end namespace transport

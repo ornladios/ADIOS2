@@ -83,20 +83,21 @@ std::string format;       // format string for one data element (e.g. %6.2f)
 // Flags from arguments or defaults
 bool dump; // dump data not just list info(flag == 1)
 bool output_xml;
-bool use_regexp;       // use varmasks as regular expressions
-bool sortnames;        // sort names before listing
-bool listattrs;        // do list attributes too
-bool listmeshes;       // do list meshes too
-bool attrsonly;        // do list attributes only
-bool longopt;          // -l is turned on
-bool timestep;         // read step by step
-bool noindex;          // do no print array indices with data
-bool printByteAsChar;  // print 8 bit integer arrays as string
-bool plot;             // dump histogram related information
-bool hidden_attrs;     // show hidden attrs in BP file
-int hidden_attrs_flag; // to be passed on in option struct
-bool show_decomp;      // show decomposition of arrays
-bool show_version;     // print binary version info of file before work
+bool use_regexp;         // use varmasks as regular expressions
+bool sortnames;          // sort names before listing
+bool listattrs;          // do list attributes too
+bool listmeshes;         // do list meshes too
+bool attrsonly;          // do list attributes only
+bool longopt;            // -l is turned on
+bool timestep;           // read step by step
+bool filestream = false; // are we using an engine through FileStream?
+bool noindex;            // do no print array indices with data
+bool printByteAsChar;    // print 8 bit integer arrays as string
+bool plot;               // dump histogram related information
+bool hidden_attrs;       // show hidden attrs in BP file
+int hidden_attrs_flag;   // to be passed on in option struct
+bool show_decomp;        // show decomposition of arrays
+bool show_version;       // print binary version info of file before work
 
 // other global variables
 char *prgname; /* argv[0] */
@@ -915,7 +916,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
         {
             Entry e(vpair.second->m_Type, vpair.second.get());
             bool valid = true;
-            if (timestep)
+            if (timestep && !filestream)
             {
                 valid = e.var->IsValidStep(fp->CurrentStep() + 1);
                 // fprintf(stdout, "Entry: ptr = %p valid = %d\n", e.var,
@@ -1445,15 +1446,39 @@ std::vector<std::string> getEnginesList(const std::string path)
     if (slen >= 3 && path.compare(slen - 3, 3, ".h5") == 0)
     {
         list.push_back("HDF5");
-        list.push_back("BPFile");
+        if (timestep)
+        {
+            list.push_back("FileStream");
+            list.push_back("BP3");
+        }
+        else
+        {
+            list.push_back("BPFile");
+        }
+    }
+    else
+    {
+        if (timestep)
+        {
+            list.push_back("FileStream");
+            list.push_back("BP3");
+        }
+        else
+        {
+            list.push_back("BPFile");
+        }
+        list.push_back("HDF5");
+    }
+#else
+    if (timestep)
+    {
+        list.push_back("FileStream");
+        list.push_back("BP3");
     }
     else
     {
         list.push_back("BPFile");
-        list.push_back("HDF5");
     }
-#else
-    list.push_back("BPFile");
 #endif
     return list;
 }
@@ -1497,7 +1522,18 @@ int doList(const char *path)
         io.SetEngine(engineName);
         try
         {
-            fp = &io.Open(path, Mode::Read);
+            if (timestep)
+            {
+                fp = &io.Open(path, Mode::Read);
+            }
+            else
+            {
+                fp = &io.Open(path, Mode::ReadRandomAccess);
+            }
+            if (engineName == "FileStream")
+            {
+                filestream = true;
+            }
         }
         catch (std::exception &e)
         {
@@ -1521,8 +1557,11 @@ int doList(const char *path)
         if (verbose)
         {
             printf("File info:\n");
-            printf("  of variables:  %zu\n", io.GetVariables().size());
-            printf("  of attributes: %zu\n", io.GetAttributes().size());
+            if (!timestep)
+            {
+                printf("  of variables:  %zu\n", io.GetVariables().size());
+                printf("  of attributes: %zu\n", io.GetAttributes().size());
+            }
             // printf("  of meshes:     %d\n", fp->nmeshes);
             // print_file_size(fp->file_size);
             // printf("  bp version:    %d\n", fp->version);
@@ -2045,12 +2084,9 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             printf("\n");
         }
 
-        if (!variable->m_SingleValue)
+        if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
-            if (variable->m_ShapeID == ShapeID::GlobalArray)
-            {
-                variable->SetSelection({startv, countv});
-            }
+            variable->SetSelection({startv, countv});
         }
 
         if (tidx)
@@ -2387,7 +2423,8 @@ bool matchesAMask(const char *name)
             if (excode == 0 && // matches
                 (pmatch[0].rm_so == 0 ||
                  pmatch[0].rm_so == startpos) && // from the beginning
-                pmatch[0].rm_eo == strlen(name)  // to the very end of the name
+                static_cast<size_t>(pmatch[0].rm_eo) ==
+                    strlen(name) // to the very end of the name
             )
 #else
             bool matches = std::regex_match(name, varregex[i]);
@@ -3024,24 +3061,49 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
 
     if (timestep)
     {
+        const auto minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
+
+        if (minBlocks)
+        {
+            bool firstBlock = true;
+            nblocks = minBlocks->BlocksInfo.size();
+            for (size_t j = 0; j < nblocks; j++)
+            {
+                for (size_t k = 0; k < ndim; k++)
+                {
+                    if (firstBlock)
+                    {
+                        dims[k] = minBlocks->BlocksInfo[j].Count[k];
+                    }
+                    else if (dims[k] != minBlocks->BlocksInfo[j].Count[k])
+                    {
+                        dims[k] = 0;
+                    }
+                }
+                firstBlock = false;
+            }
+        }
         std::vector<typename core::Variable<T>::BPInfo> blocks =
             fp->BlocksInfo(*variable, fp->CurrentStep());
-        nblocks = blocks.size();
-        bool firstBlock = true;
-        for (size_t j = 0; j < nblocks; j++)
+        if (!blocks.empty())
         {
-            for (size_t k = 0; k < ndim; k++)
+            nblocks = blocks.size();
+            bool firstBlock = true;
+            for (size_t j = 0; j < nblocks; j++)
             {
-                if (firstBlock)
+                for (size_t k = 0; k < ndim; k++)
                 {
-                    dims[k] = blocks[j].Count[k];
+                    if (firstBlock)
+                    {
+                        dims[k] = blocks[j].Count[k];
+                    }
+                    else if (dims[k] != blocks[j].Count[k])
+                    {
+                        dims[k] = 0;
+                    }
                 }
-                else if (dims[k] != blocks[j].Count[k])
-                {
-                    dims[k] = 0;
-                }
+                firstBlock = false;
             }
-            firstBlock = false;
         }
     }
     else
@@ -3249,15 +3311,25 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
 {
     /* Print block info */
     DataType adiosvartype = variable->m_Type;
-    std::vector<typename core::Variable<T>::BPInfo> blocks =
+    const auto minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
+
+    std::vector<typename core::Variable<T>::BPInfo> coreBlocks =
         fp->BlocksInfo(*variable, fp->CurrentStep());
 
-    if (blocks.empty())
+    if (!minBlocks && coreBlocks.empty())
     {
         return;
     }
 
-    const size_t blocksSize = blocks.size();
+    size_t blocksSize;
+    if (minBlocks)
+    {
+        blocksSize = minBlocks->BlocksInfo.size();
+    }
+    else
+    {
+        blocksSize = coreBlocks.size();
+    }
     const int ndigits_nblocks = ndigits(blocksSize - 1);
 
     if (variable->m_ShapeID == ShapeID::GlobalValue ||
@@ -3278,9 +3350,13 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
                 {
                     fprintf(outf, "    (%*zu)    ", ndigits_nblocks, j);
                 }
-                print_data(&blocks[j].Value, 0, adiosvartype, true);
+                if (!minBlocks)
+                    print_data(&coreBlocks[j].Value, 0, adiosvartype, true);
+                else
+                    print_data(&minBlocks->BlocksInfo[j].BufferP, 0,
+                               adiosvartype, true);
                 ++col;
-                if (j < blocks.size() - 1)
+                if (j < blocksSize - 1)
                 {
                     if (col < maxcols)
                     {
@@ -3330,24 +3406,52 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
 
             for (size_t k = 0; k < ndim; k++)
             {
-                if (blocks[j].Count[k])
+                if (!minBlocks)
                 {
-                    if (variable->m_ShapeID == ShapeID::GlobalArray)
+                    if (coreBlocks[j].Count[k])
                     {
-                        fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
-                                blocks[j].Start[k], ndigits_dims[k],
-                                blocks[j].Start[k] + blocks[j].Count[k] - 1);
+                        if (variable->m_ShapeID == ShapeID::GlobalArray)
+                        {
+                            fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
+                                    coreBlocks[j].Start[k], ndigits_dims[k],
+                                    coreBlocks[j].Start[k] +
+                                        coreBlocks[j].Count[k] - 1);
+                        }
+                        else
+                        {
+                            // blockStart is empty vector for LocalArrays
+                            fprintf(outf, "0:%*zu", ndigits_dims[k],
+                                    coreBlocks[j].Count[k] - 1);
+                        }
                     }
                     else
                     {
-                        // blockStart is empty vector for LocalArrays
-                        fprintf(outf, "0:%*zu", ndigits_dims[k],
-                                blocks[j].Count[k] - 1);
+                        fprintf(outf, "%-*s", 2 * ndigits_dims[k] + 1, "null");
                     }
                 }
                 else
                 {
-                    fprintf(outf, "%-*s", 2 * ndigits_dims[k] + 1, "null");
+                    if (minBlocks->BlocksInfo[j].Count[k])
+                    {
+                        if (variable->m_ShapeID == ShapeID::GlobalArray)
+                        {
+                            fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
+                                    minBlocks->BlocksInfo[j].Start[k],
+                                    ndigits_dims[k],
+                                    minBlocks->BlocksInfo[j].Start[k] +
+                                        minBlocks->BlocksInfo[j].Count[k] - 1);
+                        }
+                        else
+                        {
+                            // blockStart is empty vector for LocalArrays
+                            fprintf(outf, "0:%*zu", ndigits_dims[k],
+                                    minBlocks->BlocksInfo[j].Count[k] - 1);
+                        }
+                    }
+                    else
+                    {
+                        fprintf(outf, "%-*s", 2 * ndigits_dims[k] + 1, "null");
+                    }
                 }
                 if (k < ndim - 1)
                     fprintf(outf, ", ");
@@ -3359,11 +3463,27 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
             {
                 if (true /* TODO: variable->has_minmax */)
                 {
-                    fprintf(outf, " = ");
-                    print_data(&blocks[j].Min, 0, adiosvartype, false);
+                    if (!minBlocks)
+                    {
+                        fprintf(outf, " = ");
+                        print_data(&coreBlocks[j].Min, 0, adiosvartype, false);
 
-                    fprintf(outf, " / ");
-                    print_data(&blocks[j].Max, 0, adiosvartype, false);
+                        fprintf(outf, " / ");
+                        print_data(&coreBlocks[j].Max, 0, adiosvartype, false);
+                    }
+                    else
+                    {
+                        // fprintf(outf, " = ");
+                        // print_data(&minBlocks->BlocksInfo[j].MinUnion, 0,
+                        // adiosvartype, false);
+
+                        // fprintf(outf, " / ");
+                        // print_data(&minBlocks->BlocksInfo[j].MaxUnion, 0,
+                        // adiosvartype, false);
+                        //  No min max for minBlocks at the moment
+                        fprintf(outf, " = ");
+                        fprintf(outf, "N/A / N/A");
+                    }
                 }
                 else
                 {
@@ -3373,7 +3493,15 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
             fprintf(outf, "\n");
             if (dump)
             {
-                readVarBlock(fp, io, variable, stepRelative, j, blocks[j]);
+                if (!minBlocks)
+                {
+                    readVarBlock(fp, io, variable, stepRelative, j,
+                                 coreBlocks[j]);
+                }
+                else
+                {
+                    // GSE todo
+                }
             }
         }
         ++stepRelative;

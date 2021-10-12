@@ -16,9 +16,6 @@ env_module(load py3-mpi4py)
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
-set(ENV{CFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
-set(ENV{CXXFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
-set(ENV{FFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 
 set(dashboard_cache "
 BUILD_SHARED_LIBS:BOOL=OFF
@@ -35,6 +32,10 @@ ADIOS2_USE_Python:BOOL=OFF
 ADIOS2_USE_SZ:BOOL=OFF
 ADIOS2_USE_ZeroMQ:STRING=OFF
 ADIOS2_USE_ZFP:BOOL=OFF
+
+CMAKE_C_FLAGS:STRING=-Wall
+CMAKE_CXX_FLAGS:STRING=-Wall
+CMAKE_Fortran_FLAGS:STRING=-Wall
 
 MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
 MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}

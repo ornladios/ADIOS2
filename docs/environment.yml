@@ -9,6 +9,7 @@ dependencies:
   - adios2-openmpi
   - sphinx
   - breathe=4.18.1
+  - funcparserlib>=0.3.6
   - pip
   - pip:
     - blockdiag>=1.5.4

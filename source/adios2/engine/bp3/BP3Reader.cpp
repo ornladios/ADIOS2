@@ -50,6 +50,13 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
             "PerformGets() or EndStep()?, in call to BeginStep\n");
     }
 
+    if (m_BetweenStepPairs)
+    {
+        throw std::logic_error("ERROR: BeginStep() is called a second time "
+                               "without an intervening EndStep()");
+    }
+
+    m_BetweenStepPairs = true;
     if (m_FirstStep)
     {
         m_FirstStep = false;
@@ -78,6 +85,12 @@ size_t BP3Reader::CurrentStep() const { return m_CurrentStep; }
 
 void BP3Reader::EndStep()
 {
+    if (!m_BetweenStepPairs)
+    {
+        throw std::logic_error(
+            "ERROR: EndStep() is called without a successful BeginStep()");
+    }
+    m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP3Reader::EndStep");
     PerformGets();
 }
@@ -125,6 +138,9 @@ void BP3Reader::Init()
             "ERROR: BPFileReader only supports OpenMode::Read from" + m_Name +
             " " + m_EndMessage);
     }
+
+    // if IO was involved in reading before this flag may be true now
+    m_IO.m_ReadStreaming = false;
 
     InitTransports();
     InitBuffer();

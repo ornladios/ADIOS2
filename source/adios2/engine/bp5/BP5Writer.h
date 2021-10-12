@@ -10,10 +10,13 @@
 #define ADIOS2_ENGINE_BP5_BP5WRITER_H_
 
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/core/CoreTypes.h"
 #include "adios2/core/Engine.h"
 #include "adios2/engine/bp5/BP5Engine.h"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosMemory.h" // PaddingToAlignOffset
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
+#include "adios2/toolkit/aggregator/mpi/MPIShmChain.h"
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
@@ -46,6 +49,7 @@ public:
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
+    void Flush(const int transportIndex = -1) final;
 
 private:
     /** Single object controlling BP buffering */
@@ -62,7 +66,7 @@ private:
 
     transportman::TransportMan m_FileMetaMetadataManager;
 
-    int64_t m_WriterStep = -1;
+    int64_t m_WriterStep = 0;
     /*
      *  Burst buffer variables
      */
@@ -90,14 +94,30 @@ private:
     std::vector<std::string> m_DrainMetadataIndexFileNames;
     std::vector<std::string> m_ActiveFlagFileNames;
 
+    bool m_BetweenStepPairs = false;
+
     void Init() final;
 
     /** Parses parameters from IO SetParameters */
     void InitParameters() final;
+    /** Set up the aggregator */
+    void InitAggregator();
     /** Parses transports and parameters from IO AddTransport */
     void InitTransports() final;
     /** Allocates memory and starts a PG group */
     void InitBPBuffer();
+    void NotifyEngineAttribute(std::string name, DataType type) noexcept;
+
+#define declare_type(T)                                                        \
+    void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \
+               const bool initialize, const T &value) final;
+
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+    template <class T>
+    void PutCommonSpan(Variable<T> &variable, typename Variable<T>::Span &span,
+                       const bool initialize, const T &value);
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
@@ -109,7 +129,14 @@ private:
     template <class T>
     void PutCommon(Variable<T> &variable, const T *data, bool sync);
 
-    void DoFlush(const bool isFinal = false, const int transportIndex = -1);
+#define declare_type(T, L)                                                     \
+    T *DoBufferData_##L(const int bufferIdx, const size_t payloadPosition,     \
+                        const size_t bufferID = 0) noexcept final;
+
+    ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
+
+    void FlushData(const bool isFinal = false);
 
     void DoClose(const int transportIndex = -1) final;
 
@@ -120,14 +147,16 @@ private:
     void WriteMetaMetadata(
         const std::vector<format::BP5Base::MetaMetaInfoBlock> MetaMetaBlocks);
 
-    void WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize,
-                                std::vector<uint64_t> DataSizes);
+    void WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize);
 
-    uint64_t
-    WriteMetadata(const std::vector<format::BufferV::iovec> MetaDataBlocks,
-                  const std::vector<format::BufferV::iovec> AttributeBlocks);
+    uint64_t WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks,
+                           const std::vector<core::iovec> &AttributeBlocks);
 
+    /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);
+    void WriteData_EveryoneWrites(format::BufferV *Data,
+                                  bool SerializedWriters);
+    void WriteData_TwoLevelShm(format::BufferV *Data);
 
     void PopulateMetadataIndexFileContent(
         format::BufferSTL &buffer, const uint64_t currentStep,
@@ -141,35 +170,60 @@ private:
 
     void MarshalAttributes();
 
-    /**
-     * N-to-N data buffers writes, including metadata file
-     * @param transportIndex
-     */
-    //    void WriteData(const bool isFinal, const int transportIndex = -1);
-
-    /**
-     * N-to-M (aggregation) data buffers writes, including metadata file
-     * @param transportIndex
-     */
-    void AggregateWriteData(const bool isFinal, const int transportIndex = -1);
-
-    template <class T>
-    T *BufferDataCommon(const size_t payloadOffset,
-                        const size_t bufferID) noexcept;
+    /* Two-level-shm aggregator functions */
+    void WriteMyOwnData(format::BufferV *Data);
+    void SendDataToAggregator(format::BufferV *Data);
+    void WriteOthersData(const size_t TotalSize);
 
     template <class T>
     void PerformPutCommon(Variable<T> &variable);
 
+    void FlushProfiler();
+
     /** manages all communication tasks in aggregation */
-    aggregator::MPIChain m_Aggregator;
+    aggregator::MPIAggregator *m_Aggregator; // points to one of these below
+    aggregator::MPIShmChain m_AggregatorTwoLevelShm;
+    aggregator::MPIChain m_AggregatorEveroneWrites;
+    bool m_IAmDraining = false;
+    bool m_IAmWritingData = false;
+    helper::Comm *DataWritingComm; // processes that write the same data file
+    bool m_IAmWritingDataHeader = false;
+
+    adios2::profiling::JSONProfiler m_Profiler;
 
 private:
-    uint64_t m_MetaDataPos = 0; // updated during WriteMetaData
-    uint64_t m_DataPos = 0;     // updated during WriteData
+    // updated during WriteMetaData
+    uint64_t m_MetaDataPos = 0;
+
+    /** On every process, at the end of writing, this holds the offset
+     *  where they started writing (needed for global metadata)
+     */
+    uint64_t m_StartDataPos = 0;
+    /** On aggregators, at the end of writing, this holds the starting offset
+     *  to the next step's writing; otherwise used as temporary offset variable
+     *  during writing on every process and points to the end of the process'
+     *  data block in the file (not used for anything)
+     */
+    uint64_t m_DataPos = 0;
+
+    /*
+     *  Total data written this timestep
+     */
+    uint64_t m_ThisTimestepDataSize = 0;
+
+    /** rank 0 collects m_StartDataPos in this vector for writing it
+     *  to the index file
+     */
+    std::vector<uint64_t> m_WriterDataPos;
+
     uint32_t m_MarshaledAttributesCount =
         0; // updated during EndStep/MarshalAttributes
 
-    std::vector<uint64_t> m_WriterDataPos;
+    // where each writer rank writes its data, init in InitBPBuffer;
+    std::vector<uint64_t> m_Assignment;
+
+    std::vector<std::vector<size_t>> FlushPosSizeInfo;
+
     void MakeHeader(format::BufferSTL &b, const std::string fileType,
                     const bool isActive);
 };

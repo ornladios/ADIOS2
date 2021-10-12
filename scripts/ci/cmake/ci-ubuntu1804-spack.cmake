@@ -7,9 +7,6 @@ math(EXPR N2CPUS "${NCPUS}*2")
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
-set(ENV{CFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
-set(ENV{CXXFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
-set(ENV{FFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=ON
@@ -28,6 +25,10 @@ ADIOS2_USE_DataSpaces:BOOL=OFF
 ADIOS2_USE_EXTERNAL_DEPENDENCIES:BOOL=ON
 ADIOS2_USE_EXTERNAL_GTEST:BOOL=OFF
 ADIOS2_USE_EXTERNAL_PUGIXML:BOOL=OFF
+
+CMAKE_C_FLAGS:STRING=-Wall
+CMAKE_CXX_FLAGS:STRING=-Wall
+CMAKE_Fortran_FLAGS:STRING=-Wall
 
 MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
 MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}

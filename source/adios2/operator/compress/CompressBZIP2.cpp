@@ -32,21 +32,32 @@ CompressBZIP2::CompressBZIP2(const Params &parameters)
 {
 }
 
-size_t CompressBZIP2::BufferMaxSize(const size_t sizeIn) const
+size_t CompressBZIP2::Compress(const char *dataIn, const Dims &blockStart,
+                               const Dims &blockCount, DataType type,
+                               char *bufferOut, const Params &parameters)
 {
-    return static_cast<size_t>(std::ceil(1.1 * sizeIn) + 600);
-}
 
-size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
-                               const size_t elementSize, DataType type,
-                               void *bufferOut, const Params &parameters,
-                               Params &info) const
-{
-    // defaults
+    const uint8_t bufferVersion = 1;
+    unsigned int destOffset = 0;
+
+    // Universal operator metadata
+    PutParameter(bufferOut, destOffset, OperatorType::BZIP2);
+    PutParameter(bufferOut, destOffset, bufferVersion);
+    PutParameter(bufferOut, destOffset, static_cast<uint16_t>(0));
+    // Universal operator metadata end
+
+    const size_t sizeIn =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    const size_t batches = sizeIn / DefaultMaxFileBatchSize + 1;
+
+    // bzip2 V1 metadata
+    PutParameter(bufferOut, destOffset, sizeIn);
+    PutParameter(bufferOut, destOffset, batches);
+    // bzip2 V1 metadata end
+
     int blockSize100k = 1;
     int verbosity = 0;
     int workFactor = 0;
-
     if (!parameters.empty())
     {
         const std::string hint(" in call to CompressBZIP2 Compress " +
@@ -56,7 +67,6 @@ size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
         helper::SetParameterValueInt("verbosity", parameters, verbosity, hint);
         helper::SetParameterValueInt("workFactor", parameters, workFactor,
                                      hint);
-
         if (blockSize100k < 1 || blockSize100k > 9)
         {
             throw std::invalid_argument(
@@ -68,42 +78,35 @@ size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
         }
     }
 
-    const size_t sizeIn =
-        static_cast<size_t>(helper::GetTotalSize(dimensions) * elementSize);
-
-    const size_t batches = sizeIn / DefaultMaxFileBatchSize + 1;
-    info["batches"] = std::to_string(batches);
-
-    unsigned int destOffset = 0;
     unsigned int sourceOffset = 0;
+    unsigned int batchInfoOffset = destOffset;
+    destOffset += batches * 4 * sizeof(unsigned int);
 
     for (size_t b = 0; b < batches; ++b)
     {
-        char *source =
-            const_cast<char *>(reinterpret_cast<const char *>(dataIn)) +
-            sourceOffset;
+        char *source = const_cast<char *>(dataIn) + sourceOffset;
 
         const size_t batchSize = (b == batches - 1)
                                      ? sizeIn % DefaultMaxFileBatchSize
                                      : DefaultMaxFileBatchSize;
         unsigned int sourceLen = static_cast<unsigned int>(batchSize);
 
-        char *dest = reinterpret_cast<char *>(bufferOut) + destOffset;
+        char *dest = bufferOut + destOffset;
         unsigned int destLen = sourceLen;
 
         int status =
             BZ2_bzBuffToBuffCompress(dest, &destLen, source, sourceLen,
                                      blockSize100k, verbosity, workFactor);
 
-        const std::string bStr = std::to_string(b);
+        CheckStatus(status, "in call to ADIOS2 BZIP2 Compress batch " +
+                                std::to_string(b) + "\n");
 
-        CheckStatus(status, "in call to ADIOS2 BZIP2 Compress batch " + bStr);
-
-        // record metadata info
-        info["OriginalOffset_" + bStr] = std::to_string(sourceOffset);
-        info["OriginalSize_" + bStr] = std::to_string(sourceLen);
-        info["CompressedOffset_" + bStr] = std::to_string(destOffset);
-        info["CompressedSize_" + bStr] = std::to_string(destLen);
+        // bzip2 V1 metadata
+        PutParameter(bufferOut, batchInfoOffset, sourceOffset);
+        PutParameter(bufferOut, batchInfoOffset, sourceLen);
+        PutParameter(bufferOut, batchInfoOffset, destOffset);
+        PutParameter(bufferOut, batchInfoOffset, destLen);
+        // bzip2 V1 metadata end
 
         sourceOffset += sourceLen;
         destOffset += destLen;
@@ -112,63 +115,88 @@ size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
     return destOffset;
 }
 
-size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
-                                 void *dataOut, const size_t sizeOut,
-                                 Params &info) const
+size_t CompressBZIP2::DecompressV1(const char *bufferIn, const size_t sizeIn,
+                                   char *dataOut)
 {
-    // TODO: leave defaults at zero?
+    // Do NOT remove even if the buffer version is updated. Data might be still
+    // in lagacy formats. This function must be kept for backward compatibility.
+    // If a newer buffer format is implemented, create another function, e.g.
+    // DecompressV2 and keep this function for decompressing lagacy data.
+
+    size_t bufferInOffset = 4; // skip the first four bytes
+
+    size_t sizeOut = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+    size_t batches = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+
     int small = 0;
     int verbosity = 0;
-
-    auto itBatches = info.find("batches");
-    const size_t batches =
-        (itBatches == info.end())
-            ? 1
-            : static_cast<size_t>(helper::StringTo<uint32_t>(
-                  itBatches->second,
-                  "when extracting batches in ADIOS2 BZIP2 Decompress"));
 
     size_t expectedSizeOut = 0;
 
     for (size_t b = 0; b < batches; ++b)
     {
-        const std::string bStr = std::to_string(b);
+        unsigned int destOffset =
+            GetParameter<unsigned int>(bufferIn, bufferInOffset);
 
-        const size_t destOffset =
-            static_cast<size_t>(helper::StringTo<uint32_t>(
-                info.at("OriginalOffset_" + bStr),
-                "when extracting batches in ADIOS2 BZIP2 Decompress"));
+        bufferInOffset += sizeof(unsigned int);
 
-        char *dest = reinterpret_cast<char *>(dataOut) + destOffset;
+        char *dest = dataOut + destOffset;
 
         const size_t batchSize = (b == batches - 1)
                                      ? sizeOut % DefaultMaxFileBatchSize
                                      : DefaultMaxFileBatchSize;
+
         unsigned int destLen = static_cast<unsigned int>(batchSize);
 
-        const size_t sourceOffset =
-            static_cast<size_t>(helper::StringTo<uint32_t>(
-                info.at("CompressedOffset_" + bStr),
-                "when extracting batches in ADIOS2 BZIP2 Decompress"));
-        char *source =
-            const_cast<char *>(reinterpret_cast<const char *>(bufferIn)) +
-            sourceOffset;
+        unsigned int sourceOffset =
+            GetParameter<unsigned int>(bufferIn, bufferInOffset);
+
+        char *source = const_cast<char *>(bufferIn) + sourceOffset;
 
         unsigned int sourceLen =
-            static_cast<unsigned int>(helper::StringTo<uint32_t>(
-                info.at("CompressedSize_" + bStr),
-                "when extracting batches in ADIOS2 BZIP2 Decompress"));
+            GetParameter<unsigned int>(bufferIn, bufferInOffset);
 
         int status = BZ2_bzBuffToBuffDecompress(dest, &destLen, source,
                                                 sourceLen, small, verbosity);
 
-        CheckStatus(status, "in call to ADIOS2 BZIP2 Decompress\n");
-        // TODO verify size of decompressed buffer
+        CheckStatus(status, "in call to ADIOS2 BZIP2 Decompress batch " +
+                                std::to_string(b) + "\n");
 
         expectedSizeOut += static_cast<size_t>(destLen);
     }
 
-    return expectedSizeOut;
+    if (expectedSizeOut != sizeOut)
+    {
+        throw("corrupted bzip2 buffer");
+    }
+
+    return sizeOut;
+}
+size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
+                                 char *dataOut)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        // pass in the whole buffer as there is absolute positions saved in the
+        // buffer to determine the offsets and lengths for batches
+        return DecompressV1(bufferIn, sizeIn, dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 bzip2 buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown bzip2 buffer version");
+    }
+
+    return 0;
 }
 
 bool CompressBZIP2::IsDataTypeValid(const DataType type) const { return true; }

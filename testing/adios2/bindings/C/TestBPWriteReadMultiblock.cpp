@@ -214,7 +214,6 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
             {
                 break;
             }
-
             adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
             adios2_set_selection(varI8, 1, startValid.data(),
                                  countValid.data());

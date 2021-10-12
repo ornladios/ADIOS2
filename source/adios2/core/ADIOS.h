@@ -86,7 +86,8 @@ public:
      * @exception std::invalid_argument if IO with unique name is already
      * declared
      */
-    IO &DeclareIO(const std::string name);
+    IO &DeclareIO(const std::string name,
+                  const ArrayOrdering ArrayOrder = ArrayOrdering::Auto);
 
     /**
      * Retrieve a reference to an existing IO object created with DeclareIO.

@@ -12,6 +12,18 @@ module adios2_adios_mod
     use adios2_adios_init_mod
     implicit none
 
+    external adios2_declare_io_f2c
+    external adios2_io_engine_type_length_f2c
+    external adios2_io_engine_type_f2c
+    external adios2_at_io_f2c
+    external adios2_define_operator_f2c
+    external adios2_inquire_operator_f2c
+    external adios2_operator_type_length_f2c
+    external adios2_operator_type_f2c
+    external adios2_flush_all_f2c
+    external adios2_remove_io_f2c
+    external adios2_remove_all_ios_f2c
+    external adios2_finalize_f2c
 contains
 
     subroutine adios2_declare_io(io, adios, io_name, ierr)

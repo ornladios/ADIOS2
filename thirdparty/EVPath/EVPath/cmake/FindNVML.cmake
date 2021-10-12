@@ -11,7 +11,7 @@ find_path(NVML_INCLUDE_DIR nvml.h ${_NVML_EXTRA_INC_ARGS})
 mark_as_advanced(NVML_LIBRARY NVML_INCLUDE_DIR)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(nvml DEFAULT_MSG
+find_package_handle_standard_args(NVML DEFAULT_MSG
   NVML_LIBRARY NVML_INCLUDE_DIR)
 
 if(NVML_FOUND)

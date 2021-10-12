@@ -25,7 +25,7 @@ namespace core
 
 template <class T>
 typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
-                                        const size_t bufferID, const T &value)
+                                        const bool initialize, const T &value)
 {
     CheckOpenModes({{Mode::Write}}, " for variable " + variable.m_Name +
                                         ", in call to Variable<T>::Span Put");
@@ -33,7 +33,7 @@ typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
     auto itSpan = variable.m_BlocksSpan.emplace(
         variable.m_BlocksInfo.size(),
         typename Variable<T>::Span(*this, variable.TotalSize()));
-    DoPut(variable, itSpan.first->second, bufferID, value);
+    DoPut(variable, itSpan.first->second, initialize, value);
     return itSpan.first->second;
 }
 
@@ -86,7 +86,8 @@ void Engine::Put(const std::string &variableName, const T &datum,
 template <class T>
 void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
 {
-    CommonChecks(variable, data, {{Mode::Read}}, "in call to Get");
+    CommonChecks(variable, data, {{Mode::Read}, {Mode::ReadRandomAccess}},
+                 "in call to Get");
 
     switch (launch)
     {
@@ -224,10 +225,10 @@ std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> &variable) const
 
 #define declare_type(T, L)                                                     \
     template <>                                                                \
-    T *Engine::BufferData(const size_t payloadPosition,                        \
+    T *Engine::BufferData(const int bufferIdx, const size_t payloadPosition,   \
                           const size_t bufferID) noexcept                      \
     {                                                                          \
-        return DoBufferData_##L(payloadPosition, bufferID);                    \
+        return DoBufferData_##L(bufferIdx, payloadPosition, bufferID);         \
     }
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type

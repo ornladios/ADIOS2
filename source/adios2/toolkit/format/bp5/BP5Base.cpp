@@ -23,11 +23,11 @@ namespace adios2
 namespace format
 {
 
-void BP5Base::FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
+void BP5Base::BP5BitfieldSet(struct BP5MetadataInfoStruct *MBase, int Bit)
 {
-    int Element = Bit / (sizeof(size_t) * 8);
+    size_t Element = Bit / (sizeof(size_t) * 8);
     int ElementBit = Bit % (sizeof(size_t) * 8);
-    if (Element >= MBase->BitFieldCount)
+    if (static_cast<size_t>(Element) >= MBase->BitFieldCount)
     {
         MBase->BitField =
             (size_t *)realloc(MBase->BitField, sizeof(size_t) * (Element + 1));
@@ -38,21 +38,16 @@ void BP5Base::FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
     MBase->BitField[Element] |= ((size_t)1 << ElementBit);
 }
 
-int BP5Base::FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit)
+int BP5Base::BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit)
 {
-    int Element = Bit / (sizeof(size_t) * 8);
+    size_t Element = Bit / (sizeof(size_t) * 8);
     int ElementBit = Bit % (sizeof(size_t) * 8);
-    if (Element >= MBase->BitFieldCount)
+    if (static_cast<size_t>(Element) >= MBase->BitFieldCount)
     {
-        MBase->BitField =
-            (size_t *)realloc(MBase->BitField, sizeof(size_t) * (Element + 1));
-        memset(MBase->BitField + MBase->BitFieldCount, 0,
-               (Element - MBase->BitFieldCount + 1) * sizeof(size_t));
-        MBase->BitFieldCount = Element + 1;
+        return 0;
     }
     return ((MBase->BitField[Element] & ((size_t)1 << ElementBit)) ==
             ((size_t)1 << ElementBit));
 }
-
 }
 }

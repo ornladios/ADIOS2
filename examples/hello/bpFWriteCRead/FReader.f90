@@ -5,7 +5,8 @@ program FReader
 
     integer(kind=8), dimension(2) :: sel_start, sel_count
     real, dimension(:,:), allocatable :: data
-    integer :: i, j, inx, iny, irank, isize, ierr
+    integer(kind=8) :: i, j
+    integer :: irank, isize, ierr
 
     ! adios2 handlers
     type(adios2_adios):: adios

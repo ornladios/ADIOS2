@@ -22,7 +22,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
                              const Mode openMode, helper::Comm comm)
 : Engine("DataManReader", io, name, openMode, std::move(comm)),
   m_FinalStep(std::numeric_limits<signed long int>::max()),
-  m_Serializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)),
+  m_Serializer(m_Comm, (io.m_ArrayOrder == ArrayOrdering::RowMajor)),
   m_RequesterThreadActive(true), m_SubscriberThreadActive(true)
 {
     m_MpiRank = m_Comm.Rank();
@@ -168,6 +168,8 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
 
     m_Serializer.GetAttributes(m_IO);
+
+    m_IO.RemoveAllVariables();
 
     for (const auto &i : *m_CurrentStepMetadata)
     {

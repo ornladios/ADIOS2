@@ -32,6 +32,12 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    void Variable<T>::SetMemorySpace(const MemorySpace mem)                    \
+    {                                                                          \
+        m_Variable->SetMemorySpace(mem);                                       \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     void Variable<T>::SetShape(const Dims &shape)                              \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \
@@ -180,6 +186,14 @@ namespace adios2
                 Operation{Operator(op.Op), op.Parameters, op.Info});           \
         }                                                                      \
         return operations;                                                     \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    void Variable<T>::RemoveOperations()                                       \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::RemoveOperations");   \
+        m_Variable->RemoveOperations();                                        \
     }                                                                          \
                                                                                \
     template <>                                                                \

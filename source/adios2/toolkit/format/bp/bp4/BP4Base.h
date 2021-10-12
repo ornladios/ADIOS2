@@ -105,6 +105,11 @@ public:
         noexcept;
 
     std::vector<std::string>
+    GetBPVersionFileNames(const std::vector<std::string> &names) const noexcept;
+
+    std::string GetBPVersionFileName(const std::string &name) const noexcept;
+
+    std::vector<std::string>
     GetBPActiveFlagFileNames(const std::vector<std::string> &names) const
         noexcept;
 

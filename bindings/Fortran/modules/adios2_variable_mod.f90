@@ -11,7 +11,20 @@
 module adios2_variable_mod
     use adios2_functions_mod
     implicit none
-
+    external adios2_add_operation_f2c
+    external adios2_remove_operations_f2c
+    external adios2_set_block_selection_f2c
+    external adios2_set_memory_selection_f2c
+    external adios2_set_operation_parameter_f2c
+    external adios2_set_selection_f2c
+    external adios2_set_shape_f2c
+    external adios2_set_step_selection_f2c
+    external adios2_variable_name_f2c
+    external adios2_variable_name_length_f2c
+    external adios2_variable_ndims_f2c
+    external adios2_variable_shape_f2c
+    external adios2_variable_steps_f2c
+    external adios2_variable_type_f2c
 contains
 
     subroutine adios2_variable_name(name, variable, ierr)
@@ -174,6 +187,13 @@ contains
                                                 TRIM(ADJUSTL(key))//char(0), &
                                                 TRIM(ADJUSTL(value))//char(0), &
                                                 ierr)
+    end subroutine
+
+    subroutine adios2_remove_operations(variable, ierr)
+        type(adios2_variable), intent(in):: variable
+        integer, intent(out):: ierr
+
+        call adios2_remove_operations_f2c(variable%f2c, ierr)
     end subroutine
 
 end module

@@ -55,9 +55,8 @@ public:
 
     void SeekToBegin() final;
 
-    void MkDir(const std::string &fileName) final;
+    void Seek(const size_t start = MaxSizeT) final;
 
-    
 private:
     
     class Impl;

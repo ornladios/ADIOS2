@@ -26,6 +26,7 @@
 #include "py11File.h"
 #include "py11IO.h"
 #include "py11Operator.h"
+#include "py11Query.h"
 #include "py11Variable.h"
 
 #if ADIOS2_USE_MPI
@@ -364,6 +365,25 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .def("RemoveAttribute", &adios2::py11::IO::RemoveAttribute)
         .def("RemoveAllAttributes", &adios2::py11::IO::RemoveAllAttributes);
 
+    pybind11::class_<adios2::py11::Query>(m, "Query")
+        .def("__nonzero__",
+             [](const adios2::py11::Query &query) {
+                 const bool opBool = query ? true : false;
+                 return opBool;
+             })
+        // Python 3
+        .def("__bool__",
+             [](const adios2::py11::Query &query) {
+                 const bool opBool = query ? true : false;
+                 return opBool;
+             })
+        .def(
+            pybind11::init<const std::string &, const adios2::py11::Engine &>(),
+            "adios2 query construction, a xml query File and a read engine",
+            pybind11::arg("queryFile"), pybind11::arg("reader") = true)
+
+        .def("GetResult", &adios2::py11::Query::GetResult);
+
     pybind11::class_<adios2::py11::Variable>(m, "Variable")
         // Python 2
         .def("__nonzero__",
@@ -522,7 +542,6 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              [](const adios2::py11::File &stream) { return stream; })
         .def("__exit__",
              [](adios2::py11::File &stream, pybind11::args) { stream.Close(); })
-
         .def("__iter__", [](adios2::py11::File &stream) { return stream; },
              pybind11::keep_alive<0, 1>())
         .def("__next__",

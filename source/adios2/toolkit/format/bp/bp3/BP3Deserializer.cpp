@@ -29,7 +29,7 @@ namespace format
 std::mutex BP3Deserializer::m_Mutex;
 
 BP3Deserializer::BP3Deserializer(helper::Comm const &comm)
-: BP3Base(comm), BPBase(comm), m_Minifooter(3)
+: BPBase(comm), BP3Base(comm), m_Minifooter(3)
 {
 }
 
@@ -38,7 +38,10 @@ void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
 
 {
     ParseMinifooter(bufferSTL);
-    ParsePGIndex(bufferSTL, engine.m_IO.m_HostLanguage);
+    ParsePGIndex(bufferSTL,
+                 (engine.m_IO.m_ArrayOrder == ArrayOrdering::RowMajor)
+                     ? "C++"
+                     : "Fortran");
     ParseVariablesIndex(bufferSTL, engine);
     ParseAttributesIndex(bufferSTL, engine);
 }
@@ -139,8 +142,7 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
 
     m_MetadataSet.DataPGCount = helper::ReadValue<uint64_t>(
         buffer, position, m_Minifooter.IsLittleEndian);
-    const size_t length = helper::ReadValue<uint64_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
+    helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
 
     size_t localPosition = 0;
 
@@ -210,10 +212,8 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
         m_Minifooter.VarsIndexStart, m_Minifooter.PGIndexStart,
         " BP3 variable index start < pg index start, in call to Open");
 
-    const uint32_t count = helper::ReadValue<uint32_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
-    const uint64_t length = helper::ReadValue<uint64_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
+    helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
+    helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -319,10 +319,8 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
         m_Minifooter.AttributesIndexStart, m_Minifooter.PGIndexStart,
         " BP3 attributes index start < pg index start, in call to Open");
 
-    const uint32_t count = helper::ReadValue<uint32_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
-    const uint64_t length = helper::ReadValue<uint64_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
+    helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
+    helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
 
     const size_t startPosition = position;
     size_t localPosition = 0;

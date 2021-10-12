@@ -18,6 +18,8 @@ module adios2_attribute_mod
         character(len=:), allocatable, intent(out) :: name
         type(adios2_attribute), intent(in) :: attribute
         integer, intent(out) :: ierr
+        external adios2_attribute_name_length_f2c
+        external adios2_attribute_name_f2c
 
         !local
         integer :: length

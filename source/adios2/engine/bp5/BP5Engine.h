@@ -56,7 +56,8 @@ public:
     static constexpr size_t m_VersionTagLength = 32;
 
     std::vector<std::string>
-    GetBPSubStreamNames(const std::vector<std::string> &names) const noexcept;
+    GetBPSubStreamNames(const std::vector<std::string> &names,
+                        size_t subFileIndex) const noexcept;
 
     std::vector<std::string>
     GetBPMetadataFileNames(const std::vector<std::string> &names) const
@@ -78,6 +79,28 @@ public:
                                    const bool hasSubFiles = true,
                                    const bool isReader = false) const noexcept;
 
+    std::vector<std::string>
+    GetBPVersionFileNames(const std::vector<std::string> &names) const noexcept;
+
+    std::string GetBPVersionFileName(const std::string &name) const noexcept;
+
+    enum class BufferVType
+    {
+        MallocVType,
+        ChunkVType,
+        Auto
+    };
+
+    BufferVType UseBufferV = BufferVType::ChunkVType;
+
+    enum class AggregationType
+    {
+        EveryoneWrites,
+        EveryoneWritesSerial,
+        TwoLevelShm,
+        Auto
+    };
+
 #define BP5_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(OpenTimeoutSecs, Int, int, 3600)                                     \
     MACRO(BeginStepPollingFrequencySecs, Int, int, 0)                          \
@@ -87,6 +110,18 @@ public:
     MACRO(NodeLocal, Bool, bool, false)                                        \
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
+    MACRO(NumAggregators, UInt, unsigned int, 0)                               \
+    MACRO(NumSubFiles, UInt, unsigned int, 999999)                             \
+    MACRO(FileSystemPageSize, UInt, unsigned int, 4096)                        \
+    MACRO(AggregationType, AggregationType, int,                               \
+          (int)AggregationType::TwoLevelShm)                                   \
+    MACRO(AsyncTasks, Bool, bool, true)                                        \
+    MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)               \
+    MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \
+    MACRO(MinDeferredSize, SizeBytes, size_t, DefaultMinDeferredSize)          \
+    MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)          \
+    MACRO(MaxShmSize, SizeBytes, size_t, DefaultMaxShmSize)                    \
+    MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)         \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)
 
     struct BP5Params
@@ -113,11 +148,18 @@ private:
  *	BP5 header for "Index Table" (64 bytes)
  *      for each Writer, what aggregator writes its data
  *             uint16_t [ WriterCount]
- *	for each timestep:
- *		uint64_t 0 :  CombinedMetaDataPos
- *		uint64_t 1 :  CombinedMetaDataSize
- *		for each Writer
- *		 uint64_t  DataPos (in the file above)
+ *      for each timestep:   (size (WriterCount + 2 ) 64-bit ints
+ *             uint64_t 0 :  CombinedMetaDataPos
+ *             uint64_t 1 :  CombinedMetaDataSize
+ *	       uint64_t 2 :  FlushCount
+ *             for each Writer
+ *		   for each flush before the last:
+ *                   uint64_t  DataPos (in the file above)
+ *                   uint64_t  DataSize
+ *		    for the final flush:
+ *                    uint64_t  DataPos (in the file above)
+ *	     So, each timestep takes sizeof(uint64_t)* (3 + ((FlushCount-1)*2 +
+ *1) * WriterCount) bytes
  *
  *   MetaMetadata file (mmd.0) contains FFS format information
  *	for each meta metadata item:

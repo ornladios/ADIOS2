@@ -10,6 +10,7 @@ program TestSstWrite
 #endif
   use adios2
   implicit none
+  external usage
 
 #if defined(ADIOS2_HAVE_FORTRAN_F03_ARGS)
 # define ADIOS2_ARGC() command_argument_count()
@@ -28,21 +29,23 @@ program TestSstWrite
   integer(kind = 8), dimension(2)::shape_dims2, start_dims2, count_dims2
   integer(kind = 8), dimension(2)::shape_dims3, start_dims3, count_dims3
   integer(kind = 8), dimension(1)::shape_time, start_time, count_time
-  integer::inx, irank, isize, ierr, i, insteps, status
+  integer::irank, isize, ierr, i, insteps, status
 
   character(len=256) :: filename, engine, params
 
   type(adios2_adios)::adios
   type(adios2_io)::ioWrite
-  type(adios2_variable), dimension(20)::variables
+  type(adios2_variable), dimension(:), allocatable :: variables
   type(adios2_engine)::sstWriter;
 
   !read handlers
-  character(len =:), allocatable::variable_name 
-  integer::variable_type, ndims
-  integer(kind = 8), dimension(:), allocatable::shape_in
   integer(kind = 8)::localtime
-  integer::color, key, testComm
+
+#if ADIOS2_USE_MPI
+  integer::testComm, color, key
+#endif
+
+  allocate(variables(20))
 
   numargs = ADIOS2_ARGC()
   if ( numargs < 2 ) then
@@ -59,14 +62,14 @@ program TestSstWrite
 
 #if ADIOS2_USE_MPI
   !Launch MPI
-  call MPI_Init(ierr) 
+  call MPI_Init(ierr)
 
   call MPI_Comm_rank(MPI_COMM_WORLD, key, ierr);
 
   color = 1
   call MPI_Comm_split(MPI_COMM_WORLD, color, key, testComm, ierr);
 
-  call MPI_Comm_rank(testComm, irank, ierr) 
+  call MPI_Comm_rank(testComm, irank, ierr)
   call MPI_Comm_size(testComm, isize, ierr)
 #else
   ! No MPI
@@ -74,10 +77,10 @@ program TestSstWrite
   isize = 1;
 #endif
 
-  !Application variables 
+  !Application variables
   insteps = 10;
 
-  !Variable dimensions 
+  !Variable dimensions
   shape_dims(1) = isize * nx
   start_dims(1) = irank * nx
   count_dims(1) = nx
@@ -102,24 +105,24 @@ program TestSstWrite
 #endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!WRITER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!Declare an IO process configuration inside adios 
+!!!!!!!!!!!Declare an IO process configuration inside adios
   call adios2_declare_io(ioWrite, adios, "ioWrite", ierr)
 
   if (numargs > 2) then
      call adios2_set_parameters(ioWrite, params, ierr)
-  endif 
+  endif
 
   call adios2_set_engine(ioWrite, engine, ierr)
 
-  !Defines a variable to be written 
+  !Defines a variable to be written
   call adios2_define_variable(variables(12), ioWrite, "scalar_r64", &
        adios2_type_dp, ierr)
-  
+
   call adios2_define_variable(variables(1), ioWrite, "i8", &
        adios2_type_integer1, 1, &
        shape_dims, start_dims, count_dims, &
        adios2_constant_dims, ierr)
-  
+
   call adios2_define_variable(variables(2), ioWrite, "i16", &
        adios2_type_integer2, 1, &
        shape_dims, start_dims, count_dims, &
@@ -174,7 +177,7 @@ program TestSstWrite
 
   !Put array contents to bp buffer, based on var1 metadata
   do i = 1, insteps
-     call GenerateTestData(i - 1, irank, isize)
+     call GenerateTestData(i - 1, irank)
      call adios2_begin_step(sstWriter, adios2_step_mode_append, -1.0, &
                             status, ierr)
      call adios2_put(sstWriter, variables(12), data_scalar_r64, ierr)
@@ -198,8 +201,8 @@ program TestSstWrite
   !Closes engine1 and deallocates it, becomes unreachable
   call adios2_close(sstWriter, ierr)
 
-   !Deallocates adios and calls its destructor 
-   call adios2_finalize(adios, ierr)
+  !Deallocates adios and calls its destructor
+  call adios2_finalize(adios, ierr)
 
 #if ADIOS2_USE_MPI
   call MPI_Finalize(ierr)

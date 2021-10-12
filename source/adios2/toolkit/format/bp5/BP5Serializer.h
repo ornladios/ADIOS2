@@ -10,6 +10,7 @@
 
 #include "BP5Base.h"
 #include "adios2/core/Attribute.h"
+#include "adios2/core/CoreTypes.h"
 #include "adios2/core/IO.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
@@ -62,23 +63,46 @@ public:
     void Marshal(void *Variable, const char *Name, const DataType Type,
                  size_t ElemSize, size_t DimCount, const size_t *Shape,
                  const size_t *Count, const size_t *Offsets, const void *Data,
-                 bool Sync);
+                 bool Sync, BufferV::BufferPos *span);
     void MarshalAttribute(const char *Name, const DataType Type,
                           size_t ElemSize, size_t ElemCount, const void *Data);
+
+    /*
+     *  InitStep must be called with an appropriate BufferV subtype before a
+     * step can begin
+     */
+    void InitStep(BufferV *DataBuffer);
+
+    /*
+     * ReinitStepData can be called to "flush" out already written
+     * data it returns a BufferV representing already-written data and
+     * provides the serializer with a new, empty BufferV This call
+     * does *not* reset the data offsets generated with Marshal, so
+     * those offsets are relative to the entire sequence of data
+     * produced by a writer rank.
+     */
+    BufferV *ReinitStepData(BufferV *DataBuffer);
+
     TimestepInfo CloseTimestep(int timestep);
+    void PerformPuts();
 
     core::Engine *m_Engine = NULL;
 
     std::vector<char> CopyMetadataToContiguous(
         const std::vector<MetaMetaInfoBlock> NewmetaMetaBlocks,
         const format::Buffer *MetaEncodeBuffer,
-        const format::Buffer *AttributeEncodeBuffer, uint64_t DataSize) const;
+        const format::Buffer *AttributeEncodeBuffer, uint64_t DataSize,
+        uint64_t WriterDataPos) const;
 
-    std::vector<BufferV::iovec> BreakoutContiguousMetadata(
+    std::vector<core::iovec> BreakoutContiguousMetadata(
         std::vector<char> *Aggregate, const std::vector<size_t> Counts,
         std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
-        std::vector<BufferV::iovec> &AttributeBlocks,
-        std::vector<uint64_t> &DataSizes) const;
+        std::vector<core::iovec> &AttributeBlocks,
+        std::vector<uint64_t> &DataSizes,
+        std::vector<uint64_t> &WriterDataPositions) const;
+
+    void *GetPtr(int bufferIdx, size_t posInBuffer);
+    size_t CalcSize(const size_t Count, const size_t *Vals);
 
 private:
     void Init();
@@ -86,6 +110,7 @@ private:
     {
         void *Key;
         int FieldID;
+        ShapeID Shape;
         size_t DataOffset;
         size_t MetaOffset;
         int DimCount;
@@ -96,21 +121,26 @@ private:
     {
         int RecCount = 0;
         BP5WriterRec RecList = NULL;
-        FMContext LocalFMContext;
+        FMContext LocalFMContext = {0};
         int MetaFieldCount = 0;
         FMFieldList MetaFields = NULL;
         FMFormat MetaFormat;
-        int DataFieldCount = 0;
-        FMFieldList DataFields = NULL;
-        FMFormat DataFormat = NULL;
         int AttributeFieldCount = 0;
         FMFieldList AttributeFields = NULL;
         FMFormat AttributeFormat = NULL;
         void *AttributeData = NULL;
         int AttributeSize = 0;
-        int CompressZFP = 0;
-        attr_list ZFPParams = NULL;
     };
+
+    struct DeferredExtern
+    {
+        size_t MetaOffset;
+        size_t BlockID;
+        const void *Data;
+        size_t DataSize;
+        size_t AlignReq;
+    };
+    std::vector<DeferredExtern> DeferredExterns;
 
     FFSWriterMarshalBase Info;
     void *MetadataBuf = NULL;
@@ -119,6 +149,8 @@ private:
     size_t MetadataSize = 0;
     BufferV *CurDataBuffer = NULL;
     std::vector<MetaMetaInfoBlock> PreviousMetaMetaInfoBlocks;
+
+    size_t m_PriorDataBufferSizeTotal = 0;
 
     BP5WriterRec LookupWriterRec(void *Key);
     BP5WriterRec CreateWriterRec(void *Variable, const char *Name,
@@ -135,7 +167,9 @@ private:
     void AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
                           const DataType Type, int ElementSize,
                           char *SizeField);
-    char *ConcatName(const char *base_name, const char *postfix);
+    char *ConcatName(const char *base_name, const char *postfix,
+                     ShapeID Shape = ShapeID::Unknown);
+    const char *NamePrefix(ShapeID Shape);
     char *BuildVarName(const char *base_name, const int type,
                        const int element_size);
     void BreakdownVarName(const char *Name, char **base_name_p, int *type_p,
@@ -150,7 +184,8 @@ private:
     size_t *CopyDims(const size_t Count, const size_t *Vals);
     size_t *AppendDims(size_t *OldDims, const size_t OldCount,
                        const size_t Count, const size_t *Vals);
-    size_t CalcSize(const size_t Count, const size_t *Vals);
+
+    void DumpDeferredBlocks();
 
     typedef struct _ArrayRec
     {

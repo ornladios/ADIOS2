@@ -127,6 +127,7 @@ void BP4Writer::Init()
         static_cast<unsigned int>(m_BP4Serializer.m_SizeMPI))
     {
         m_BP4Serializer.m_Aggregator.Init(
+            m_BP4Serializer.m_Parameters.NumAggregators,
             m_BP4Serializer.m_Parameters.NumAggregators, m_Comm);
     }
     InitTransports();
@@ -136,10 +137,10 @@ void BP4Writer::Init()
 #define declare_type(T)                                                        \
     void BP4Writer::DoPut(Variable<T> &variable,                               \
                           typename Variable<T>::Span &span,                    \
-                          const size_t bufferID, const T &value)               \
+                          const bool initialize, const T &value)               \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER("BP4Writer::Put");                              \
-        PutCommon(variable, span, bufferID, value);                            \
+        PutCommon(variable, span, 0, value);                                   \
     }
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -162,6 +163,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void BP4Writer::InitParameters()
 {
     m_BP4Serializer.Init(m_IO.m_Parameters, "in call to BP4::Open to write");
+    m_BP4Serializer.ResizeBuffer(m_BP4Serializer.m_Parameters.InitialBufferSize,
+                                 "in call to BP4::Open to write");
     m_WriteToBB = !(m_BP4Serializer.m_Parameters.BurstBufferPath.empty());
     m_DrainBB = m_WriteToBB && m_BP4Serializer.m_Parameters.BurstBufferDrain;
 }
@@ -184,13 +187,13 @@ void BP4Writer::InitTransports()
                    PathSeparator + m_Name;
     }
 
-    if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
-    {
-        // Names passed to IO AddTransport option with key "Name"
-        const std::vector<std::string> transportsNames =
-            m_FileDataManager.GetFilesBaseNames(m_BBName,
-                                                m_IO.m_TransportsParameters);
+    // Names passed to IO AddTransport option with key "Name"
+    const std::vector<std::string> transportsNames =
+        m_FileDataManager.GetFilesBaseNames(m_BBName,
+                                            m_IO.m_TransportsParameters);
 
+    if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
+    {
         // /path/name.bp.dir/name.bp.rank
         m_SubStreamNames = m_BP4Serializer.GetBPSubStreamNames(transportsNames);
         if (m_DrainBB)
@@ -223,7 +226,7 @@ void BP4Writer::InitTransports()
     m_BP4Serializer.m_Profiler.Stop("mkdir");
 
 
-    if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
     {
         if (m_BP4Serializer.m_Parameters.AsyncTasks)
         {
@@ -299,6 +302,19 @@ void BP4Writer::InitTransports()
 	}
 	    //}
     }
+
+    // last process create .bpversion file with content "4"
+    if (m_Comm.Rank() == m_Comm.Size() - 1)
+    {
+        std::vector<std::string> versionNames =
+            m_BP4Serializer.GetBPVersionFileNames(transportsNames);
+        auto emptyComm = helper::Comm();
+        transportman::TransportMan tm(emptyComm);
+        tm.OpenFiles(versionNames, Mode::Write, m_IO.m_TransportsParameters,
+                     false);
+        char b[1] = {'4'};
+        tm.WriteFiles(b, 1);
+    }
 }
 
 void BP4Writer::InitBPBuffer()
@@ -346,7 +362,7 @@ void BP4Writer::InitBPBuffer()
                 static_cast<uint32_t>(lastStep);
             m_BP4Serializer.m_MetadataSet.CurrentStep += lastStep;
 
-            if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+            if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
             {
                 m_BP4Serializer.m_PreDataFileLength =
                     m_FileDataManager.GetFileSize(0);
@@ -374,7 +390,7 @@ void BP4Writer::InitBPBuffer()
             m_BP4Serializer.MakeHeader(m_BP4Serializer.m_MetadataIndex,
                                        "Index Table", true);
         }
-        if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+        if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
         {
             m_BP4Serializer.MakeHeader(m_BP4Serializer.m_Data, "Data", false);
         }
@@ -390,7 +406,8 @@ void BP4Writer::InitBPBuffer()
     }
 
     m_BP4Serializer.PutProcessGroupIndex(
-        m_IO.m_Name, m_IO.m_HostLanguage,
+        m_IO.m_Name,
+        (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
         m_FileDataManager.GetTransportsTypes());
 }
 
@@ -416,7 +433,7 @@ void BP4Writer::DoClose(const int transportIndex)
 
     DoFlush(true, transportIndex);
 
-    if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+    if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
     {
         m_FileDataManager.CloseFiles(transportIndex);
         // Delete files from temporary storage if draining was on
@@ -478,7 +495,7 @@ void BP4Writer::DoClose(const int transportIndex)
         }
     }
 
-    if (m_BP4Serializer.m_Aggregator.m_IsConsumer && m_DrainBB)
+    if (m_BP4Serializer.m_Aggregator.m_IsAggregator && m_DrainBB)
     {
         /* Signal the BB thread that no more work is coming */
         m_FileDrainer.Finish();
@@ -745,15 +762,15 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
     // async?
     for (int r = 0; r < m_BP4Serializer.m_Aggregator.m_Size; ++r)
     {
-        aggregator::MPIAggregator::ExchangeRequests dataRequests =
+        aggregator::MPIChain::ExchangeRequests dataRequests =
             m_BP4Serializer.m_Aggregator.IExchange(m_BP4Serializer.m_Data, r);
 
-        aggregator::MPIAggregator::ExchangeAbsolutePositionRequests
+        aggregator::MPIChain::ExchangeAbsolutePositionRequests
             absolutePositionRequests =
                 m_BP4Serializer.m_Aggregator.IExchangeAbsolutePosition(
                     m_BP4Serializer.m_Data, r);
 
-        if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+        if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
         {
             const format::Buffer &bufferSTL =
                 m_BP4Serializer.m_Aggregator.GetConsumerBuffer(
@@ -804,10 +821,11 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 }
 
 #define declare_type(T, L)                                                     \
-    T *BP4Writer::DoBufferData_##L(const size_t payloadPosition,               \
+    T *BP4Writer::DoBufferData_##L(const int bufferIdx,                        \
+                                   const size_t payloadPosition,               \
                                    const size_t bufferID) noexcept             \
     {                                                                          \
-        return BufferDataCommon<T>(payloadPosition, bufferID);                 \
+        return BufferDataCommon<T>(bufferIdx, payloadPosition, bufferID);      \
     }
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
@@ -816,6 +834,11 @@ ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 size_t BP4Writer::DebugGetDataBufferSize() const
 {
     return m_BP4Serializer.DebugGetDataBufferSize();
+}
+
+void BP4Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
+{
+    m_BP4Serializer.m_SerializedAttributes.erase(name);
 }
 
 } // end namespace engine

@@ -5,8 +5,8 @@
 
 add_library(adios2_core
   common/ADIOSTypes.cpp
-  
-  core/Attribute.cpp 
+
+  core/Attribute.cpp
   core/AttributeBase.cpp
   core/ADIOS.cpp
   core/Engine.cpp
@@ -35,8 +35,9 @@ add_library(adios2_core
   helper/adiosXML.cpp
   helper/adiosXMLUtil.cpp
   helper/adiosYAML.cpp
+  helper/adiosCUDA.cu
 
-#engine derived classes  
+#engine derived classes
   engine/bp3/BP3Reader.cpp engine/bp3/BP3Reader.tcc
   engine/bp3/BP3Writer.cpp engine/bp3/BP3Writer.tcc
 
@@ -48,13 +49,15 @@ add_library(adios2_core
 
   engine/inline/InlineReader.cpp engine/inline/InlineReader.tcc
   engine/inline/InlineWriter.cpp engine/inline/InlineWriter.tcc
-  
+
   engine/null/NullEngine.cpp
 
   engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
 #toolkit
   toolkit/format/buffer/Buffer.cpp
   toolkit/format/buffer/BufferV.cpp
+  toolkit/format/buffer/malloc/MallocV.cpp
+  toolkit/format/buffer/chunk/ChunkV.cpp
   toolkit/format/buffer/heap/BufferSTL.cpp
 
   toolkit/format/bp/BPBase.cpp toolkit/format/bp/BPBase.tcc
@@ -67,19 +70,10 @@ add_library(adios2_core
   toolkit/format/bp/bp4/BP4Base.cpp
   toolkit/format/bp/bp4/BP4Serializer.cpp toolkit/format/bp/bp4/BP4Serializer.tcc
   toolkit/format/bp/bp4/BP4Deserializer.cpp toolkit/format/bp/bp4/BP4Deserializer.tcc
-  
-  toolkit/format/bp/bpOperation/BPOperation.cpp 
+
+  toolkit/format/bp/bpOperation/BPOperation.cpp
   toolkit/format/bp/bpOperation/BPOperation.tcc
-  toolkit/format/bp/bpOperation/compress/BPZFP.cpp 
-  toolkit/format/bp/bpOperation/compress/BPZFP.tcc
-  toolkit/format/bp/bpOperation/compress/BPSZ.cpp
-  toolkit/format/bp/bpOperation/compress/BPMGARD.cpp
-  toolkit/format/bp/bpOperation/compress/BPPNG.cpp
-  toolkit/format/bp/bpOperation/compress/BPBZIP2.cpp 
-  toolkit/format/bp/bpOperation/compress/BPBZIP2.tcc
-  toolkit/format/bp/bpOperation/compress/BPBlosc.cpp
-  toolkit/format/bp/bpOperation/compress/BPLIBPRESSIO.cpp
-  
+
   toolkit/profiling/iochrono/Timer.cpp
   toolkit/profiling/iochrono/IOChrono.cpp
 
@@ -97,12 +91,21 @@ add_library(adios2_core
 
   toolkit/aggregator/mpi/MPIAggregator.cpp
   toolkit/aggregator/mpi/MPIChain.cpp
+  toolkit/aggregator/mpi/MPIShmChain.cpp
 
   toolkit/burstbuffer/FileDrainer.cpp
   toolkit/burstbuffer/FileDrainerSingleThread.cpp
+
+  operator/compress/CompressorFactory.cpp
 )
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)
+
+if(ADIOS2_HAVE_CUDA)
+  enable_language(CUDA)
+  target_link_libraries(adios2_core PUBLIC CUDA::cudart CUDA::cuda_driver)
+  set_target_properties(adios2_core PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+endif()
 
 target_include_directories(adios2_core
   PUBLIC
@@ -119,15 +122,15 @@ if(UNIX)
 endif()
 
 if (ADIOS2_HAVE_BP5)
-  target_sources(adios2_core PRIVATE 
+  target_sources(adios2_core PRIVATE
     engine/bp5/BP5Engine.cpp
     engine/bp5/BP5Reader.cpp engine/bp5/BP5Reader.tcc
-    engine/bp5/BP5Writer.cpp engine/bp5/BP5Writer.tcc
+    engine/bp5/BP5Writer.cpp engine/bp5/BP5Writer.tcc engine/bp5/BP5Writer_TwoLevelShm.cpp
   )
 endif()
 
 if (ADIOS2_HAVE_BP5 OR ADIOS2_HAVE_SST)
-  target_sources(adios2_core PRIVATE 
+  target_sources(adios2_core PRIVATE
     toolkit/format/buffer/ffs/BufferFFS.cpp
     toolkit/format/bp5/BP5Base.cpp
     toolkit/format/bp5/BP5Serializer.cpp
@@ -205,10 +208,12 @@ if(ADIOS2_HAVE_SSC)
     target_link_libraries(adios2_core_mpi)
 endif()
 
-if(ADIOS2_HAVE_Table)
+if(ADIOS2_HAVE_MHS)
     target_sources(adios2_core PRIVATE
-        engine/table/TableWriter.cpp
-        engine/table/TableWriter.tcc
+        engine/mhs/MhsWriter.cpp
+        engine/mhs/MhsWriter.tcc
+        engine/mhs/MhsReader.cpp
+        engine/mhs/MhsReader.tcc
     )
 endif()
 
@@ -267,6 +272,10 @@ if(ADIOS2_HAVE_PNG)
   target_link_libraries(adios2_core PRIVATE PNG::PNG)
 endif()
 
+if(ADIOS2_HAVE_MHS)
+target_sources(adios2_core PRIVATE operator/compress/CompressSirius.cpp)
+endif()
+
 if(ADIOS2_HAVE_HDF5)
   add_library(adios2_hdf5 OBJECT
     core/IOHDF5.cpp
@@ -274,13 +283,6 @@ if(ADIOS2_HAVE_HDF5)
     engine/hdf5/HDF5WriterP.cpp
     toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
     )
-  if(NOT HDF5_VERSION VERSION_LESS 1.11)
-    target_sources(adios2_hdf5 PRIVATE
-      engine/mixer/HDFMixer.cpp
-      engine/mixer/HDFMixer.tcc
-      engine/mixer/HDFMixerWriter.cpp
-      )
-  endif()
   target_link_libraries(adios2_core PRIVATE adios2_hdf5)
   set_property(TARGET adios2_hdf5 PROPERTY EXPORT_NAME hdf5)
   set_property(TARGET adios2_hdf5 PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_hdf5)

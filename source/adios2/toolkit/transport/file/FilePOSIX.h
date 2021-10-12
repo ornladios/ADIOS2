@@ -37,7 +37,17 @@ public:
     void Open(const std::string &name, const Mode openMode,
               const bool async = false) final;
 
+    void OpenChain(const std::string &name, Mode openMode,
+                   const helper::Comm &chainComm,
+                   const bool async = false) final;
+
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
+
+#ifdef REALLY_WANT_WRITEV
+    /* Actual writev() function, inactive for now */
+    void WriteV(const core::iovec *iov, const int iovcnt,
+                size_t start = MaxSizeT) final;
+#endif
 
     void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
 
@@ -54,8 +64,8 @@ public:
 
     void SeekToBegin() final;
 
-    void MkDir(const std::string &fileName) final;
-    
+    void Seek(const size_t start = MaxSizeT) final;
+
 private:
     /** POSIX file handle returned by Open */
     int m_FileDescriptor = -1;

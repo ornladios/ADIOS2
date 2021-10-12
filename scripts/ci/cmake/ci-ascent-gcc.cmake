@@ -14,9 +14,6 @@ env_module(load zeromq)
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
-set(ENV{CFLAGS}   "-Werror -Wno-error=builtin-declaration-mismatch")
-set(ENV{CXXFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
-set(ENV{FFLAGS}   "-Werror -Wno-error=builtin-declaration-mismatch")
 
 set(dashboard_cache "
 ADIOS2_USE_BZip2:BOOL=OFF
@@ -30,6 +27,8 @@ ADIOS2_USE_SST:BOOL=ON
 ADIOS2_USE_SZ:BOOL=OFF
 ADIOS2_USE_ZeroMQ:STRING=ON
 ADIOS2_USE_ZFP:BOOL=OFF
+
+CMAKE_Fortran_FLAGS:STRING=-Wall
 ")
 
 set(NCPUS 4)

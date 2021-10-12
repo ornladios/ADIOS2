@@ -77,6 +77,7 @@ private:
 
     void PushBufferQueue(std::shared_ptr<std::vector<char>> buffer);
     std::shared_ptr<std::vector<char>> PopBufferQueue();
+    bool IsBufferQueueEmpty();
 
     void Handshake();
     void ReplyThread();

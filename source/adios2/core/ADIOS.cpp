@@ -121,7 +121,7 @@ ADIOS::ADIOS(const std::string hostLanguage)
 
 ADIOS::~ADIOS() = default;
 
-IO &ADIOS::DeclareIO(const std::string name)
+IO &ADIOS::DeclareIO(const std::string name, const ArrayOrdering ArrayOrder)
 {
     auto itIO = m_IOs.find(name);
 
@@ -132,6 +132,7 @@ IO &ADIOS::DeclareIO(const std::string name)
         if (!io.IsDeclared()) // exists from config xml
         {
             io.SetDeclared();
+            io.SetArrayOrder(ArrayOrder);
             return io;
         }
         else
@@ -149,6 +150,7 @@ IO &ADIOS::DeclareIO(const std::string name)
         std::forward_as_tuple(*this, name, false, m_HostLanguage));
     IO &io = ioPair.first->second;
     io.SetDeclared();
+    io.SetArrayOrder(ArrayOrder);
     return io;
 }
 

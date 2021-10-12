@@ -76,7 +76,6 @@ private:
     bool m_WriterThreading = false;
 
     bool m_Verbose = true;
-    bool m_JsonOutput = true;
 };
 
 } // end namespace engine

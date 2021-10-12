@@ -94,7 +94,7 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     Dims vCount = variable.m_Count;
     Dims vShape = variable.m_Shape;
 
-    if (!helper::IsRowMajor(m_IO.m_HostLanguage))
+    if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
     {
         std::reverse(vStart.begin(), vStart.end());
         std::reverse(vCount.begin(), vCount.end());

@@ -17,6 +17,30 @@
 extern "C" {
 #endif
 
+adios2::ArrayOrdering adios2_ToArrayOrdering(const adios2_arrayordering Corder)
+{
+    adios2::ArrayOrdering order = adios2::ArrayOrdering::Auto;
+    switch (Corder)
+    {
+
+    case adios2_arrayordering_rowmajor:
+        order = adios2::ArrayOrdering::RowMajor;
+        break;
+
+    case adios2_arrayordering_columnmajor:
+        order = adios2::ArrayOrdering::ColumnMajor;
+        break;
+
+    case adios2_arrayordering_auto:
+        order = adios2::ArrayOrdering::Auto;
+        break;
+
+    default:
+        break;
+    }
+    return order;
+}
+
 adios2_adios *adios2_init_config_glue_serial(const char *config_file,
                                              const adios2_debug_mode debug_mode,
                                              const char *host_language)
@@ -48,7 +72,8 @@ adios2_adios *adios2_init_serial()
 
 adios2_adios *adios2_init_config_serial(const char *config_file)
 {
-    return adios2_init_config_glue_serial("", adios2_debug_mode_off, "C");
+    return adios2_init_config_glue_serial(config_file, adios2_debug_mode_off,
+                                          "C");
 }
 
 adios2_io *adios2_declare_io(adios2_adios *adios, const char *name)
@@ -60,6 +85,25 @@ adios2_io *adios2_declare_io(adios2_adios *adios, const char *name)
             adios, "for adios2_adios, in call to adios2_declare_io");
         io = reinterpret_cast<adios2_io *>(
             &reinterpret_cast<adios2::core::ADIOS *>(adios)->DeclareIO(name));
+    }
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_declare_io");
+    }
+    return io;
+}
+
+adios2_io *adios2_declare_io_order(adios2_adios *adios, const char *name,
+                                   adios2_arrayordering order)
+{
+    adios2_io *io = nullptr;
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            adios, "for adios2_adios, in call to adios2_declare_io");
+        io = reinterpret_cast<adios2_io *>(
+            &reinterpret_cast<adios2::core::ADIOS *>(adios)->DeclareIO(
+                name, adios2_ToArrayOrdering(order)));
     }
     catch (...)
     {

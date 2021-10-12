@@ -114,7 +114,8 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead =
+            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Single);
         auto attr_s1a = ioRead.InquireAttribute<std::string>(s1_Array);
@@ -334,7 +335,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead =
+            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Array);
 
@@ -544,7 +546,8 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead =
+            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto var = ioRead.InquireVariable<int>("myVar");
 
@@ -767,7 +770,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead =
+            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto var = ioRead.InquireVariable<int>("myVar");
 
@@ -930,6 +934,15 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
 
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("FileStream");
+        }
+
         auto var1 = io.DefineVariable<int32_t>("var1");
         auto var2 = io.DefineVariable<int32_t>("var2", shape, start, count);
 
@@ -1021,6 +1034,14 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
         };
 
         adios2::IO io = adios.DeclareIO("ReaderIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("FileStream");
+        }
         adios2::Engine bpReader = io.Open(fName, adios2::Mode::Read);
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
@@ -1035,7 +1056,7 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
             auto var2 = io.InquireVariable<int32_t>("var2");
             if (var2)
             {
-                lf_VerifyAttributes("var1", separator, io, false);
+                lf_VerifyAttributes("var2", separator, io, false);
                 lf_VerifyAttributes("var2", separator, io, true);
             }
 
@@ -1043,6 +1064,168 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
         }
     }
 }
+
+TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
+{
+    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
+                              "AttributesWriteReadModifiable.bp";
+
+    const std::string separator = "\\";
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    const size_t Nx = 8;
+
+    // Number of steps
+    const size_t NSteps = 3;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+    const double d3[3] = {-1.1, -1.2, -1.3};
+    SmallTestData currentTestData =
+        generateNewSmallTestData(m_TestData, 0, 0, 0);
+
+// Write test data using BP
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    {
+        const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
+        const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
+        const adios2::Dims count{Nx};
+
+        adios2::IO io = adios.DeclareIO("TestIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("FileStream");
+        }
+
+        auto var1 = io.DefineVariable<int32_t>("var1");
+        auto var2 = io.DefineVariable<int32_t>("var2", shape, start, count);
+
+        io.DefineAttribute<double>("dArray", d3, 3, var1.Name(), separator,
+                                   true);
+        io.DefineAttribute<double>("dArray", d3, 3, var2.Name(), separator,
+                                   true);
+
+        io.DefineAttribute<int32_t>("i32Value", -1, var1.Name(), separator,
+                                    true);
+        io.DefineAttribute<int32_t>("i32Value", -1, var2.Name(), separator,
+                                    true);
+
+        adios2::Engine bpWriter = io.Open(fName, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
+            const int32_t step32 = static_cast<int32_t>(step);
+            const double stepD = static_cast<double>(step);
+            double d[3] = {stepD + 0.1, stepD + 0.2, stepD + 0.3};
+
+            bpWriter.BeginStep();
+
+            io.DefineAttribute<double>("dArray", d, 3, var1.Name(), separator,
+                                       true);
+            io.DefineAttribute<int32_t>("i32Value", step32, var1.Name(),
+                                        separator, true);
+            bpWriter.Put(var1, step32);
+
+            if (step % 2 == 0)
+            {
+                bpWriter.Put(var2, currentTestData.I32.data());
+                io.DefineAttribute<double>("dArray", d, 3, var2.Name(),
+                                           separator, true);
+                io.DefineAttribute<int32_t>("i32Value", step32, var2.Name(),
+                                            separator, true);
+            }
+
+            bpWriter.EndStep();
+        }
+        bpWriter.Close();
+    }
+
+    // reader
+    {
+        auto lf_VerifyAttributes = [](const int32_t step,
+                                      const std::string &variableName,
+                                      const std::string separator,
+                                      adios2::IO &io) {
+            const std::map<std::string, adios2::Params> attributesInfo =
+                io.AvailableAttributes(variableName, separator, false);
+
+            const double stepD = static_cast<double>(step);
+            const double d[3] = {stepD + 0.1, stepD + 0.2, stepD + 0.3};
+
+            auto itDArray = attributesInfo.find("dArray");
+            EXPECT_NE(itDArray, attributesInfo.end());
+            EXPECT_EQ(itDArray->second.at("Type"), "double");
+            EXPECT_EQ(itDArray->second.at("Elements"), "3");
+
+            auto a =
+                io.InquireAttribute<double>("dArray", variableName, separator);
+            auto adata = a.Data();
+            for (int i = 0; i < 3; ++i)
+            {
+                EXPECT_EQ(adata[i], d[i]);
+            }
+
+            const std::string stepS = std::to_string(step);
+            auto iti32Value = attributesInfo.find("i32Value");
+            EXPECT_NE(iti32Value, attributesInfo.end());
+            EXPECT_EQ(iti32Value->second.at("Type"), "int32_t");
+            EXPECT_EQ(iti32Value->second.at("Elements"), "1");
+            EXPECT_EQ(iti32Value->second.at("Value"), stepS);
+        };
+
+        adios2::IO io = adios.DeclareIO("ReaderIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+            io.SetParameter("StreamReader", "ON");
+        }
+        else
+        {
+            io.SetEngine("FileStream");
+        }
+        adios2::Engine bpReader = io.Open(fName, adios2::Mode::Read);
+
+        while (bpReader.BeginStep() == adios2::StepStatus::OK)
+        {
+            int32_t step = static_cast<int32_t>(bpReader.CurrentStep());
+            if (engineName == "BP3")
+            {
+                // BP3 does not support changing attributes
+                step = 0;
+            }
+            auto var1 = io.InquireVariable<int32_t>("var1");
+            if (var1)
+            {
+                lf_VerifyAttributes(step, "var1", separator, io);
+            }
+
+            auto var2 = io.InquireVariable<int32_t>("var2");
+            if (var2)
+            {
+                lf_VerifyAttributes(step, "var2", separator, io);
+            }
+
+            bpReader.EndStep();
+        }
+    }
+}
+
 //******************************************************************************
 // main
 //******************************************************************************

@@ -89,6 +89,9 @@ int main(int argc, char *argv[])
         adios2::Attribute<double> attribute =
             bpIO.DefineAttribute<double>("SZ_accuracy", accuracy);
 
+        // To avoid compiling warnings
+        (void)attribute;
+
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpFileWriter =
             bpIO.Open("SZexample.bp", adios2::Mode::Write);

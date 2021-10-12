@@ -148,6 +148,11 @@ public:
     explicit operator bool() const noexcept;
 
     /**
+     * Sets the memory step for all following Puts
+     */
+    void SetMemorySpace(const MemorySpace mem);
+
+    /**
      * Set new shape, care must be taken when reading back the variable for
      * different steps. Only applies to Global arrays.
      * @param shape new shape dimensions array
@@ -297,6 +302,12 @@ public:
      * @return vector of Variable<T>::OperatorInfo
      */
     std::vector<Operation> Operations() const;
+
+    /**
+     * Removes all current Operations associated with AddOperation.
+     * Provides the posibility to apply or not operators on a block basis.
+     */
+    void RemoveOperations();
 
     /**
      * Read mode only: return minimum and maximum values for current variable at

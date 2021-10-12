@@ -27,6 +27,23 @@ void Transport::IWrite(const char *buffer, size_t size, Status &status,
     throw std::invalid_argument("ERROR: this class doesn't implement IWrite\n");
 }
 
+void Transport::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
+{
+    if (iovcnt > 0)
+    {
+        Write(static_cast<const char *>(iov[0].iov_base), iov[0].iov_len,
+              start);
+        for (int c = 1; c < iovcnt; ++c)
+        {
+            Write(static_cast<const char *>(iov[c].iov_base), iov[c].iov_len);
+        }
+    }
+    else if (start != MaxSizeT)
+    {
+        Seek(start);
+    }
+}
+
 void Transport::IRead(char *buffer, size_t size, Status &status, size_t start)
 {
     throw std::invalid_argument("ERROR: this class doesn't implement IRead\n");
@@ -70,6 +87,14 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
 
     m_Profiler.m_Timers.emplace(
         "close", profiling::Timer("close", TimeUnit::Microseconds));
+}
+
+void Transport::OpenChain(const std::string &name, const Mode openMode,
+                          const helper::Comm &chainComm, const bool async)
+{
+    std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type +
+                          " using library " + m_Library +
+                          " doesn't implement the OpenChain function\n");
 }
 
 void Transport::SetParameters(const Params &parameters) {}

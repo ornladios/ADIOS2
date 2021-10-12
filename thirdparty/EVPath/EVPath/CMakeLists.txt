@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.2)
+
+# The directory label is used for CDash to treat EVPath as a subproject of
+# GTKorvo
+set(CMAKE_DIRECTORY_LABELS EVPath)
+
 project(EVPath VERSION 4.5.0 LANGUAGES C CXX)
 
 # Enable <PackageName>_ROOT variables for dependency searching
@@ -57,6 +62,11 @@ endif()
 # Default to a RelWithDebInfo build if not specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebInfo)
+endif()
+
+if(NOT MSVC)
+  set(CMAKE_C_STANDARD 99)
+  set(CMAKE_C_STANDARD_REQUIRED True)
 endif()
 
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dill, atl, ffs")
@@ -131,6 +141,9 @@ set(_pkg_config_libs)
 set(_pkg_config_private_libs)
 
 include(CheckCSourceCompiles)
+
+# Avoid recent compilers to optimizing out libm function calls
+set(CMAKE_REQUIRED_FLAGS "-O0")
 set(LIBM_TEST_SOURCE "#include<math.h>\nfloat f; int main(){sqrt(f);return 0;}")
 check_c_source_compiles("${LIBM_TEST_SOURCE}" HAVE_MATH)
 if(NOT HAVE_MATH)
@@ -300,7 +313,7 @@ if(DEFINED EVPATH_USE_ENET)
     find_package(enet 1.3.13 REQUIRED)
   endif()
 else()
-  find_package(enet 1.3.13)
+  find_package(enet 1.3.13 QUIET)
   option(EVPATH_USE_ENET "Build the enet transport" ${ENET_FOUND})
 endif()
 if(ENET_FOUND)

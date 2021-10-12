@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "../../common/ADIOSTypes.h"
+#include "../../core/CoreTypes.h"
 
 /// \endcond
 #if defined(__has_feature)
@@ -54,23 +55,17 @@ void FileDrainerSingleThread::Finish()
     finishMutex.unlock();
 }
 
-typedef std::chrono::duration<double> Seconds;
-typedef std::chrono::time_point<
-    std::chrono::steady_clock,
-    std::chrono::duration<double, std::chrono::steady_clock::period>>
-    TimePoint;
-
 void FileDrainerSingleThread::Join()
 {
     if (th.joinable())
     {
-        const auto tTotalStart = std::chrono::steady_clock::now();
-        Seconds timeTotal = Seconds(0.0);
+        const auto tTotalStart = core::Now();
+        core::Seconds timeTotal(0.0);
 
         Finish();
         th.join();
 
-        const auto tTotalEnd = std::chrono::steady_clock::now();
+        const auto tTotalEnd = core::Now();
         timeTotal = tTotalEnd - tTotalStart;
         if (m_Verbose)
         {
@@ -89,13 +84,13 @@ void FileDrainerSingleThread::Join()
  */
 void FileDrainerSingleThread::DrainThread()
 {
-    const auto tTotalStart = std::chrono::steady_clock::now();
-    Seconds timeTotal = Seconds(0.0);
-    Seconds timeSleep = Seconds(0.0);
-    Seconds timeRead = Seconds(0.0);
-    Seconds timeWrite = Seconds(0.0);
-    Seconds timeClose = Seconds(0.0);
-    TimePoint ts, te;
+    const auto tTotalStart = core::Now();
+    core::Seconds timeTotal(0.0);
+    core::Seconds timeSleep(0.0);
+    core::Seconds timeRead(0.0);
+    core::Seconds timeWrite(0.0);
+    core::Seconds timeClose(0.0);
+    core::TimePoint ts, te;
     size_t maxQueueSize = 0;
     std::vector<char> buffer; // fixed, preallocated buffer to read/write data
     buffer.resize(bufferSize);
@@ -110,18 +105,18 @@ void FileDrainerSingleThread::DrainThread()
     auto lf_Copy = [&](FileDrainOperation &fdo, InputFile fdr, OutputFile fdw,
                        size_t count) {
         nReadBytesTasked += count;
-        ts = std::chrono::steady_clock::now();
+        ts = core::Now();
         std::pair<size_t, double> ret =
             Read(fdr, count, buffer.data(), fdo.fromFileName);
-        te = std::chrono::steady_clock::now();
+        te = core::Now();
         timeRead += te - ts;
         nReadBytesSucc += ret.first;
         sleptForWaitingOnRead += ret.second;
 
         nWriteBytesTasked += count;
-        ts = std::chrono::steady_clock::now();
+        ts = core::Now();
         size_t n = Write(fdw, count, buffer.data(), fdo.toFileName);
-        te = std::chrono::steady_clock::now();
+        te = core::Now();
         timeWrite += te - ts;
         nWriteBytesSucc += n;
     };
@@ -141,9 +136,9 @@ void FileDrainerSingleThread::DrainThread()
             {
                 break;
             }
-            ts = std::chrono::steady_clock::now();
+            ts = core::Now();
             std::this_thread::sleep_for(d);
-            te = std::chrono::steady_clock::now();
+            te = core::Now();
             timeSleep += te - ts;
             continue;
         }
@@ -162,15 +157,15 @@ void FileDrainerSingleThread::DrainThread()
         case DrainOperation::CopyAt:
         case DrainOperation::Copy:
         {
-            ts = std::chrono::steady_clock::now();
+            ts = core::Now();
             auto fdr = GetFileForRead(fdo.fromFileName);
-            te = std::chrono::steady_clock::now();
+            te = core::Now();
             timeRead += te - ts;
 
-            ts = std::chrono::steady_clock::now();
+            ts = core::Now();
             bool append = (fdo.op == DrainOperation::Copy);
             auto fdw = GetFileForWrite(fdo.toFileName, append);
-            te = std::chrono::steady_clock::now();
+            te = core::Now();
             timeWrite += te - ts;
 
             if (m_Verbose >= 2)
@@ -198,14 +193,14 @@ void FileDrainerSingleThread::DrainThread()
                 {
                     if (fdo.op == DrainOperation::CopyAt)
                     {
-                        ts = std::chrono::steady_clock::now();
+                        ts = core::Now();
                         Seek(fdr, fdo.fromOffset, fdo.fromFileName);
-                        te = std::chrono::steady_clock::now();
+                        te = core::Now();
                         timeRead += te - ts;
 
-                        ts = std::chrono::steady_clock::now();
+                        ts = core::Now();
                         Seek(fdw, fdo.toOffset, fdo.toFileName);
-                        te = std::chrono::steady_clock::now();
+                        te = core::Now();
                         timeWrite += te - ts;
                     }
                     const size_t batches = fdo.countBytes / bufferSize;
@@ -236,10 +231,10 @@ void FileDrainerSingleThread::DrainThread()
                           << fdo.toFileName << std::endl;
 #endif
             }
-            ts = std::chrono::steady_clock::now();
+            ts = core::Now();
             auto fdw = GetFileForWrite(fdo.toFileName);
             SeekEnd(fdw);
-            te = std::chrono::steady_clock::now();
+            te = core::Now();
             timeWrite += te - ts;
             break;
         }
@@ -255,12 +250,12 @@ void FileDrainerSingleThread::DrainThread()
 #endif
             }
             nWriteBytesTasked += fdo.countBytes;
-            ts = std::chrono::steady_clock::now();
+            ts = core::Now();
             auto fdw = GetFileForWrite(fdo.toFileName);
             Seek(fdw, fdo.toOffset, fdo.toFileName);
             size_t n = Write(fdw, fdo.countBytes, fdo.dataToWrite.data(),
                              fdo.toFileName);
-            te = std::chrono::steady_clock::now();
+            te = core::Now();
             timeWrite += te - ts;
             nWriteBytesSucc += n;
             break;
@@ -277,11 +272,11 @@ void FileDrainerSingleThread::DrainThread()
 #endif
             }
             nWriteBytesTasked += fdo.countBytes;
-            ts = std::chrono::steady_clock::now();
+            ts = core::Now();
             auto fdw = GetFileForWrite(fdo.toFileName);
             size_t n = Write(fdw, fdo.countBytes, fdo.dataToWrite.data(),
                              fdo.toFileName);
-            te = std::chrono::steady_clock::now();
+            te = core::Now();
             timeWrite += te - ts;
             nWriteBytesSucc += n;
             break;
@@ -295,9 +290,9 @@ void FileDrainerSingleThread::DrainThread()
                           << fdo.toFileName << std::endl;
 #endif
             }
-            ts = std::chrono::steady_clock::now();
+            ts = core::Now();
             GetFileForWrite(fdo.toFileName, false);
-            te = std::chrono::steady_clock::now();
+            te = core::Now();
             timeWrite += te - ts;
             break;
         }
@@ -310,9 +305,9 @@ void FileDrainerSingleThread::DrainThread()
                           << fdo.toFileName << " for append " << std::endl;
 #endif
             }
-            ts = std::chrono::steady_clock::now();
+            ts = core::Now();
             GetFileForWrite(fdo.toFileName, true);
-            te = std::chrono::steady_clock::now();
+            te = core::Now();
             timeWrite += te - ts;
             break;
         }
@@ -325,10 +320,10 @@ void FileDrainerSingleThread::DrainThread()
                           << fdo.toFileName << std::endl;
 #endif
             }
-            ts = std::chrono::steady_clock::now();
+            ts = core::Now();
             auto fdw = GetFileForWrite(fdo.toFileName, true);
             Delete(fdw, fdo.toFileName);
-            te = std::chrono::steady_clock::now();
+            te = core::Now();
             timeWrite += te - ts;
             break;
         }
@@ -349,12 +344,12 @@ void FileDrainerSingleThread::DrainThread()
 #endif
     }
 
-    ts = std::chrono::steady_clock::now();
+    ts = core::Now();
     CloseAll();
-    te = std::chrono::steady_clock::now();
+    te = core::Now();
     timeClose += te - ts;
 
-    const auto tTotalEnd = std::chrono::steady_clock::now();
+    const auto tTotalEnd = core::Now();
     timeTotal = tTotalEnd - tTotalStart;
     const bool shouldReport =
         (m_Verbose || (nReadBytesTasked != nReadBytesSucc) ||

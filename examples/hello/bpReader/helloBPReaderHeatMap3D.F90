@@ -14,8 +14,9 @@ program helloBPReaderHeatMap3D
     integer, dimension(:,:,:), allocatable :: temperatures, sel_temperatures
     integer(kind=8), dimension(3) :: ishape, istart, icount
     integer(kind=8), dimension(3) :: sel_start, sel_count
-    integer :: ierr, irank, isize, inx, iny, inz
-    integer :: i, j, k, iglobal, value, ilinear, icounter
+    integer(kind=8) :: iglobal, value
+    integer(kind=8) :: i, j, k
+    integer(kind=4) :: ierr, irank, isize, inx, iny, inz
 
 #if ADIOS2_USE_MPI
     call MPI_INIT(ierr)
@@ -42,7 +43,7 @@ program helloBPReaderHeatMap3D
             iglobal = istart(1) + i
             value = (k-1) * ishape(1) * ishape(2) + (j-1) * ishape(1) + &
                     &  (iglobal-1)
-            temperatures(i,j,k) = value
+            temperatures(i,j,k) = INT(value)
         end do
       end do
     end do

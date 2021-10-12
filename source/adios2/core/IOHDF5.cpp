@@ -9,9 +9,6 @@
 
 #include "adios2/engine/hdf5/HDF5ReaderP.h"
 #include "adios2/engine/hdf5/HDF5WriterP.h"
-#if H5_VERSION_GE(1, 11, 0)
-#include "adios2/engine/mixer/HDFMixer.h"
-#endif
 
 namespace adios2
 {
@@ -36,16 +33,6 @@ std::shared_ptr<Engine> MakeEngineHDF5(IO &io, const std::string &name,
 }
 
 } // end anonymous namespace
-
-IO::EngineFactoryEntry IO_MakeEngine_HDFMixer()
-{
-#if H5_VERSION_GE(1, 11, 0)
-    return IO::EngineFactoryEntry{MakeEngineHDF5<engine::HDF5ReaderP>,
-                                  MakeEngineHDF5<engine::HDFMixer>};
-#else
-    return IO::NoEngineEntry("ERROR: update HDF5 >= 1.11 to support VDS.");
-#endif
-}
 
 IO::EngineFactoryEntry IO_MakeEngine_HDF5()
 {

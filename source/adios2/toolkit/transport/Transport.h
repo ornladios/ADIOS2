@@ -18,6 +18,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/core/CoreTypes.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
@@ -67,6 +68,19 @@ public:
                       const bool async = false) = 0;
 
     /**
+     * Opens transport, possibly asynchronously, in a chain to avoid
+     * DOS attack to the file system.
+     * Required before SetBuffer, Write, Read, Flush, Close
+     * @param name
+     * @param openMode
+     * @param chainComm
+     * @param async
+     */
+    virtual void OpenChain(const std::string &name, Mode openMode,
+                           const helper::Comm &chainComm,
+                           const bool async = false);
+
+    /**
      * If OS buffered (FILE* or fstream), sets the buffer size
      * @param buffer address for OS buffering
      * @param size of OS buffer
@@ -91,6 +105,17 @@ public:
                        size_t start = MaxSizeT) = 0;
 
     virtual void IWrite(const char *buffer, size_t size, Status &status,
+                        size_t start = MaxSizeT);
+
+    /**
+     * Writes to transport, writev version. Note that size is non-const due to
+     * the nature of underlying transport libraries
+     * @param iovec array pointer
+     * @param iovcnt number of entries
+     * @param start starting position for writing (to allow rewind), if not
+     * passed then start at current stream position
+     */
+    virtual void WriteV(const core::iovec *iov, const int iovcnt,
                         size_t start = MaxSizeT);
 
     /**
@@ -127,10 +152,11 @@ public:
 
     virtual void SeekToBegin() = 0;
 
-    virtual void MkDir(const std::string &fileName) = 0;
-    
-protected:
+    virtual void Seek(const size_t start = MaxSizeT) = 0;
 
+protected:
+    virtual void MkDir(const std::string &fileName);
+  
     void ProfilerStart(const std::string process) noexcept;
 
     void ProfilerStop(const std::string process) noexcept;

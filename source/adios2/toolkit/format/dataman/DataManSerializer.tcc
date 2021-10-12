@@ -235,6 +235,7 @@ void DataManSerializer::PutData(
         datasize = std::accumulate(varCount.begin(), varCount.end(), sizeof(T),
                                    std::multiplies<size_t>());
     }
+
     metaj["I"] = datasize;
 
     if (localBuffer->capacity() < localBuffer->size() + datasize)
@@ -335,8 +336,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 try
                 {
                     decompressor.Decompress(j.buffer->data() + j.position,
-                                            j.size, decompressBuffer.data(),
-                                            j.count, j.type, j.params);
+                                            j.size, decompressBuffer.data());
                     decompressed = true;
                 }
                 catch (std::exception &e)
@@ -362,8 +362,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 try
                 {
                     decompressor.Decompress(j.buffer->data() + j.position,
-                                            j.size, decompressBuffer.data(),
-                                            j.count, j.type, j.params);
+                                            j.size, decompressBuffer.data());
                     decompressed = true;
                 }
                 catch (std::exception &e)
@@ -387,10 +386,8 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 decompressBuffer.reserve(datasize);
                 try
                 {
-                    Params info;
                     decompressor.Decompress(j.buffer->data() + j.position,
-                                            j.size, decompressBuffer.data(),
-                                            datasize, info);
+                                            j.size, decompressBuffer.data());
                     decompressed = true;
                 }
                 catch (std::exception &e)
@@ -415,8 +412,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 try
                 {
                     decompressor.Decompress(j.buffer->data() + j.position,
-                                            j.size, decompressBuffer.data(),
-                                            j.count, j.type, j.params);
+                                            j.size, decompressBuffer.data());
                     decompressed = true;
                 }
                 catch (std::exception &e)
@@ -460,7 +456,8 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             }
             if (j.shape.empty() or (j.shape.size() == 1 and j.shape[0] == 1))
             {
-                std::memcpy(outputData, input_data, sizeof(T));
+                std::memcpy(reinterpret_cast<char *>(outputData), input_data,
+                            sizeof(T));
             }
         }
     }
@@ -480,10 +477,9 @@ void DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
                                              std::multiplies<size_t>()));
     try
     {
-        Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), params, info);
+        datasize = compressor.Compress(
+            reinterpret_cast<const char *>(inputData), {}, varCount,
+            helper::GetDataType<T>(), m_CompressBuffer.data(), params);
     }
     catch (std::exception &e)
     {
@@ -508,10 +504,9 @@ void DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressSZ compressor(params);
     try
     {
-        Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), params, info);
+        datasize = compressor.Compress(
+            reinterpret_cast<const char *>(inputData), {}, varCount,
+            helper::GetDataType<T>(), m_CompressBuffer.data(), params);
     }
     catch (std::exception &e)
     {
@@ -536,10 +531,9 @@ void DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressBZIP2 compressor(params);
     try
     {
-        Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), params, info);
+        datasize = compressor.Compress(
+            reinterpret_cast<const char *>(inputData), {}, varCount,
+            helper::GetDataType<T>(), m_CompressBuffer.data(), params);
     }
     catch (std::exception &e)
     {
@@ -564,10 +558,9 @@ void DataManSerializer::PutMgard(nlohmann::json &metaj, size_t &datasize,
                                              std::multiplies<size_t>()));
     try
     {
-        Params info;
-        datasize = compressor.Compress(inputData, varCount, sizeof(T),
-                                       helper::GetDataType<T>(),
-                                       m_CompressBuffer.data(), params, info);
+        datasize = compressor.Compress(
+            reinterpret_cast<const char *>(inputData), {}, varCount,
+            helper::GetDataType<T>(), m_CompressBuffer.data(), params);
     }
     catch (std::exception &e)
     {

@@ -109,6 +109,8 @@ DataType GetDataType() noexcept;
  */
 DataType GetDataTypeFromString(std::string const &) noexcept;
 
+size_t GetDataTypeSize(DataType type);
+
 /**
  * Converts a vector of dimensions to a CSV string
  * @param dims vector of dimensions

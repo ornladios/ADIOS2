@@ -179,7 +179,7 @@ inline std::string VectorToCSV(const std::vector<std::string> &input) noexcept
     }
 
     std::ostringstream valueSS;
-    for (const auto value : input)
+    for (const auto &value : input)
     {
         valueSS << "\"" << value << "\", ";
     }
@@ -200,7 +200,7 @@ inline std::string VectorToCSV(const std::vector<std::string> &input) noexcept
         }                                                                      \
                                                                                \
         std::ostringstream valueSS;                                            \
-        for (const auto value : input)                                         \
+        for (const auto &value : input)                                        \
         {                                                                      \
             const int valueInt = static_cast<int>(value);                      \
             valueSS << valueInt << ", ";                                       \
@@ -223,7 +223,7 @@ inline std::string VectorToCSV(const std::vector<T> &input) noexcept
     }
 
     std::ostringstream valueSS;
-    for (const auto value : input)
+    for (const auto &value : input)
     {
         valueSS << value << ", ";
     }

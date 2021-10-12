@@ -16,7 +16,10 @@
 #include <stddef.h>    // write output
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
+#include <sys/uio.h>   // writev
 #include <unistd.h>    // write, close
+
+#include <iostream>
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> //std::ios_base::failure
@@ -120,6 +123,102 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
     }
 }
 
+void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
+                          const helper::Comm &chainComm, const bool async)
+{
+    auto lf_AsyncOpenWrite = [&](const std::string &name) -> int {
+        ProfilerStart("open");
+        errno = 0;
+        int FD = open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        m_Errno = errno;
+        ProfilerStop("open");
+        return FD;
+    };
+
+    int token = 1;
+    m_Name = name;
+    CheckName();
+
+    if (chainComm.Rank() > 0)
+    {
+        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
+                       "Chain token in FilePOSIX::OpenChain");
+    }
+
+    m_OpenMode = openMode;
+    switch (m_OpenMode)
+    {
+
+    case (Mode::Write):
+        if (async && chainComm.Size() == 1)
+        {
+            // only when process is a single writer, can create the file
+            // asynchronously, otherwise other processes are waiting on it
+            m_IsOpening = true;
+            m_OpenFuture =
+                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+        }
+        else
+        {
+            ProfilerStart("open");
+            errno = 0;
+            if (chainComm.Rank() == 0)
+            {
+                m_FileDescriptor =
+                    open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            }
+            else
+            {
+                m_FileDescriptor = open(m_Name.c_str(), O_WRONLY, 0666);
+                lseek(m_FileDescriptor, 0, SEEK_SET);
+            }
+            m_Errno = errno;
+            ProfilerStop("open");
+        }
+        break;
+
+    case (Mode::Append):
+        ProfilerStart("open");
+        errno = 0;
+        if (chainComm.Rank() == 0)
+        {
+            m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0666);
+        }
+        else
+        {
+            m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
+        }
+        lseek(m_FileDescriptor, 0, SEEK_END);
+        m_Errno = errno;
+        ProfilerStop("open");
+        break;
+
+    case (Mode::Read):
+        ProfilerStart("open");
+        errno = 0;
+        m_FileDescriptor = open(m_Name.c_str(), O_RDONLY);
+        m_Errno = errno;
+        ProfilerStop("open");
+        break;
+
+    default:
+        CheckFile("unknown open mode for file " + m_Name +
+                  ", in call to POSIX open");
+    }
+
+    if (!m_IsOpening)
+    {
+        CheckFile("couldn't open file " + m_Name + ", in call to POSIX open");
+        m_IsOpen = true;
+    }
+
+    if (chainComm.Rank() < chainComm.Size() - 1)
+    {
+        chainComm.Isend(&token, 1, chainComm.Rank() + 1, 0,
+                        "Sending Chain token in FilePOSIX::OpenChain");
+    }
+}
+
 void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
 {
     auto lf_Write = [&](const char *buffer, size_t size) {
@@ -163,6 +262,11 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
                 ", in call to POSIX lseek" + SysErrMsg());
         }
     }
+    else
+    {
+        const auto pos = lseek(m_FileDescriptor, 0, SEEK_CUR);
+        start = static_cast<size_t>(pos);
+    }
 
     if (size > DefaultMaxFileBatchSize)
     {
@@ -182,6 +286,100 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         lf_Write(buffer, size);
     }
 }
+
+#ifdef REALLY_WANT_WRITEV
+void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
+{
+    auto lf_Write = [&](const core::iovec *iov, const int iovcnt) {
+        ProfilerStart("write");
+        errno = 0;
+        size_t nBytesExpected = 0;
+        for (int i = 0; i < iovcnt; ++i)
+        {
+            nBytesExpected += iov[i].iov_len;
+        }
+        const iovec *v = reinterpret_cast<const iovec *>(iov);
+        const auto ret = writev(m_FileDescriptor, v, iovcnt);
+        m_Errno = errno;
+        ProfilerStop("write");
+
+        size_t written;
+        if (ret == -1)
+        {
+            if (errno != EINTR)
+            {
+                throw std::ios_base::failure(
+                    "ERROR: couldn't write to file " + m_Name +
+                    ", in call to POSIX Write(iovec)" + SysErrMsg());
+            }
+            written = 0;
+        }
+        else
+        {
+            written = static_cast<size_t>(ret);
+        }
+
+        if (written < nBytesExpected)
+        {
+            /* Fall back to write calls with individual buffers */
+            // find where the writing has ended
+            int c = 0;
+            size_t n = 0;
+            size_t pos = 0;
+            while (n < written)
+            {
+                if (n + iov[c].iov_len <= written)
+                {
+                    n += iov[c].iov_len;
+                    ++c;
+                }
+                else
+                {
+                    pos = written - n;
+                    n = written;
+                }
+            }
+
+            // write the rest one by one
+            Write(static_cast<const char *>(iov[c].iov_base) + pos,
+                  iov[c].iov_len - pos);
+            for (; c < iovcnt; ++c)
+            {
+                Write(static_cast<const char *>(iov[c].iov_base),
+                      iov[c].iov_len);
+            }
+        }
+    };
+
+    WaitForOpen();
+    if (start != MaxSizeT)
+    {
+        errno = 0;
+        const auto newPosition = lseek(m_FileDescriptor, start, SEEK_SET);
+        m_Errno = errno;
+
+        if (static_cast<size_t>(newPosition) != start)
+        {
+            throw std::ios_base::failure(
+                "ERROR: couldn't move to start position " +
+                std::to_string(start) + " in file " + m_Name +
+                ", in call to POSIX lseek" + SysErrMsg());
+        }
+    }
+
+    int cntTotal = 0;
+    while (cntTotal < iovcnt)
+    {
+        int cnt = iovcnt - cntTotal;
+        if (cnt > 8)
+        {
+            cnt = 8;
+        }
+        lf_Write(iov + cntTotal, cnt);
+        cntTotal += cnt;
+    }
+}
+#endif
 
 void FilePOSIX::Read(char *buffer, size_t size, size_t start)
 {
@@ -335,8 +533,27 @@ void FilePOSIX::SeekToBegin()
     }
 }
 
-void FilePOSIX::MkDir(const std::string &fileName)
+void FilePOSIX::Seek(const size_t start)
 {
+    if (start != MaxSizeT)
+    {
+        WaitForOpen();
+        errno = 0;
+        const int status = lseek(m_FileDescriptor, start, SEEK_SET);
+        m_Errno = errno;
+        if (status == -1)
+        {
+            throw std::ios_base::failure(
+                "ERROR: couldn't seek to offset " + std::to_string(start) +
+                " of file " + m_Name + ", in call to POSIX IO lseek" +
+                SysErrMsg());
+        }
+    }
+    else
+    {
+        SeekToEnd();
+    }
+
 }
 
 } // end namespace transport

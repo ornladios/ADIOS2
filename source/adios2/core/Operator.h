@@ -13,14 +13,10 @@
 #ifndef ADIOS2_CORE_OPERATOR_H_
 #define ADIOS2_CORE_OPERATOR_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <functional>
-#include <string>
-#include <vector>
-/// \endcond
-
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
+#include <cstring>
+#include <functional>
 
 namespace adios2
 {
@@ -57,73 +53,46 @@ public:
     virtual void RunCallback2(void *, const std::string &, const std::string &,
                               const std::string &, const size_t, const Dims &,
                               const Dims &, const Dims &) const;
-    /**
-     * Returns a conservative buffer size to hold input data for classes
-     * @param sizeIn size of input data to be compressed in bytes
-     * @return recommended allocation for output buffer
-     */
-    virtual size_t BufferMaxSize(const size_t sizeIn) const;
 
     /**
-     * Used by Zfp
-     * Returns a conservative buffer size to hold input data for classes
      * @param dataIn
-     * @param dimensions
-     * @return recommended allocation for output buffer in bytes
-     */
-    template <class T>
-    size_t BufferMaxSize(const T *dataIn, const Dims &dimensions,
-                         const Params &params) const;
-
-    /**
-     * BZip2 and Zfp common call
-     * @param dataIn
-     * @param dimensions
-     * @param elementSize
+     * @param blockStart
+     * @param blockCount
      * @param type
      * @param bufferOut
      * @param parameters
      * @return size of compressed buffer
      */
-    virtual size_t Compress(const void *dataIn, const Dims &dimensions,
-                            const size_t elementSize, DataType type,
-                            void *bufferOut, const Params &parameters,
-                            Params &info) const;
-
-    virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
-                              void *dataOut, const size_t sizeOut,
-                              Params &info) const;
+    virtual size_t Compress(const char *dataIn, const Dims &blockStart,
+                            const Dims &blockCount, const DataType type,
+                            char *bufferOut, const Params &parameters);
 
     /**
-     * Zfp signature
      * @param bufferIn
      * @param sizeIn
      * @param dataOut
-     * @param dimensions
-     * @param type
-     * @return
+     * @return size of decompressed buffer
      */
-    virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
-                              void *dataOut, const Dims &dimensions,
-                              DataType type, const Params &parameters) const;
+    virtual size_t Decompress(const char *bufferIn, const size_t sizeIn,
+                              char *dataOut);
 
     virtual bool IsDataTypeValid(const DataType type) const = 0;
+
+    enum OperatorType : char
+    {
+        BLOSC = 0,
+        BZIP2 = 1,
+        LIBPRESSIO = 2,
+        MGARD = 3,
+        PNG = 4,
+        SIRIUS = 5,
+        Sz = 6,
+        ZFP = 7
+    };
 
 protected:
     /** Parameters associated with a particular Operator */
     Params m_Parameters;
-
-    /**
-     * Used by CompressZfp
-     * Returns a conservative buffer size to hold input data for classes
-     * @param dataIn
-     * @param dimensions
-     * @param type
-     * @return conservative buffer size for allocation
-     */
-    virtual size_t DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                                   DataType type,
-                                   const Params &parameters) const;
 
     /**
      * Used by lossy compressors with a limitation on complex data types or
@@ -138,6 +107,63 @@ protected:
                      const size_t targetDims = 0,
                      const bool enforceDims = false,
                      const size_t defaultDimSize = 1) const;
+
+    template <typename T, typename U>
+    void PutParameter(char *buffer, U &pos, const T &parameter)
+    {
+        std::memcpy(buffer + pos, &parameter, sizeof(T));
+        pos += sizeof(T);
+    }
+
+    template <typename T, typename U>
+    T GetParameter(const char *buffer, U &pos)
+    {
+        T ret;
+        std::memcpy(&ret, buffer + pos, sizeof(T));
+        pos += sizeof(T);
+        return ret;
+    }
+
+    template <typename U>
+    void PutParameters(char *buffer, U &pos, const Params &parameters)
+    {
+        uint8_t size = static_cast<uint8_t>(parameters.size());
+        PutParameter(buffer, pos, size);
+        for (const auto &p : parameters)
+        {
+            size = static_cast<uint8_t>(p.first.size());
+            PutParameter(buffer, pos, size);
+
+            std::memcpy(buffer + pos, p.first.data(), size);
+            pos += size;
+
+            size = static_cast<uint8_t>(p.second.size());
+            PutParameter(buffer, pos, size);
+
+            std::memcpy(buffer + pos, p.second.data(), size);
+            pos += size;
+        }
+    }
+
+    template <typename U>
+    Params GetParameters(const char *buffer, U &pos)
+    {
+        Params ret;
+        uint8_t params = GetParameter<uint8_t>(buffer, pos);
+        for (uint8_t i = 0; i < params; ++i)
+        {
+            uint8_t size = GetParameter<uint8_t>(buffer, pos);
+            std::string key =
+                std::string(reinterpret_cast<const char *>(buffer + pos), size);
+            pos += size;
+            size = GetParameter<uint8_t>(buffer, pos);
+            std::string value =
+                std::string(reinterpret_cast<const char *>(buffer + pos), size);
+            pos += size;
+            ret[key] = value;
+        }
+        return ret;
+    }
 
 private:
     void CheckCallbackType(const std::string type) const;

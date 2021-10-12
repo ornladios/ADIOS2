@@ -88,17 +88,20 @@ void adiosStream::defineADIOSArray(const std::shared_ptr<VariableInfo> ov)
     {
         adios2::Variable<double> v = io.DefineVariable<double>(
             ov->name, ov->shape, ov->start, ov->count, true);
+        (void)v;
         // v = io->InquireVariable<double>(ov->name);
     }
     else if (ov->type == "float")
     {
         adios2::Variable<float> v = io.DefineVariable<float>(
             ov->name, ov->shape, ov->start, ov->count, true);
+        (void)v;
     }
     else if (ov->type == "int")
     {
         adios2::Variable<int> v = io.DefineVariable<int>(
             ov->name, ov->shape, ov->start, ov->count, true);
+        (void)v;
     }
 }
 

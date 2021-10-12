@@ -101,6 +101,88 @@ void FileFStream::Open(const std::string &name, const Mode openMode,
     }
 }
 
+void FileFStream::OpenChain(const std::string &name, Mode openMode,
+                            const helper::Comm &chainComm, const bool async)
+{
+    auto lf_AsyncOpenWrite = [&](const std::string &name) -> void {
+        ProfilerStart("open");
+        m_FileStream.open(name, std::fstream::out | std::fstream::binary |
+                                    std::fstream::trunc);
+        ProfilerStop("open");
+    };
+
+    int token = 1;
+    m_Name = name;
+    CheckName();
+
+    if (chainComm.Rank() > 0)
+    {
+        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
+                       "Chain token in FileFStream::OpenChain");
+    }
+
+    m_OpenMode = openMode;
+    switch (m_OpenMode)
+    {
+    case (Mode::Write):
+        if (async && chainComm.Size() == 1)
+        {
+            m_IsOpening = true;
+            m_OpenFuture =
+                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+        }
+        else
+        {
+            ProfilerStart("open");
+            if (chainComm.Rank() == 0)
+            {
+                m_FileStream.open(name, std::fstream::out |
+                                            std::fstream::binary |
+                                            std::fstream::trunc);
+            }
+            else
+            {
+                m_FileStream.open(name,
+                                  std::fstream::out | std::fstream::binary);
+            }
+            ProfilerStop("open");
+        }
+        break;
+
+    case (Mode::Append):
+        ProfilerStart("open");
+        m_FileStream.open(name, std::fstream::in | std::fstream::out |
+                                    std::fstream::binary);
+        m_FileStream.seekp(0, std::ios_base::end);
+        ProfilerStop("open");
+        break;
+
+    case (Mode::Read):
+        ProfilerStart("open");
+        m_FileStream.open(name, std::fstream::in | std::fstream::binary);
+        ProfilerStop("open");
+        break;
+
+    default:
+        CheckFile("unknown open mode for file " + m_Name +
+                  ", in call to stream open");
+    }
+
+    if (!m_IsOpening)
+    {
+        CheckFile(
+            "couldn't open file " + m_Name +
+            ", check permissions or path existence, in call to fstream open");
+        m_IsOpen = true;
+    }
+
+    if (chainComm.Rank() < chainComm.Size() - 1)
+    {
+        chainComm.Isend(&token, 1, chainComm.Rank() + 1, 0,
+                        "Sending Chain token in FileFStream::OpenChain");
+    }
+}
+
 void FileFStream::SetBuffer(char *buffer, size_t size)
 {
     if (!buffer && size != 0)
@@ -257,8 +339,19 @@ void FileFStream::SeekToBegin()
               ", in call to fstream seekp");
 }
 
-void FileFStream::MkDir(const std::string &fileName)
+void FileFStream::Seek(const size_t start)
 {
+    if (start != MaxSizeT)
+    {
+        WaitForOpen();
+        m_FileStream.seekp(start, std::ios_base::beg);
+        CheckFile("couldn't move to offset " + std::to_string(start) +
+                  " of file " + m_Name + ", in call to fstream seekp");
+    }
+    else
+    {
+        SeekToEnd();
+    }
 }
 
 } // end namespace transport

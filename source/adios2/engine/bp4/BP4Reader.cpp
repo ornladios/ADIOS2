@@ -44,6 +44,12 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
                                     "BeginStep\n");
     }
 
+    if (m_BetweenStepPairs)
+    {
+        throw std::logic_error("ERROR: BeginStep() is called a second time "
+                               "without an intervening EndStep()");
+    }
+
     if (!m_BP4Deserializer.m_DeferredVariables.empty())
     {
         throw std::invalid_argument(
@@ -75,6 +81,7 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (status == StepStatus::OK)
     {
+        m_BetweenStepPairs = true;
         if (m_FirstStep)
         {
             m_FirstStep = false;
@@ -101,6 +108,12 @@ size_t BP4Reader::CurrentStep() const { return m_CurrentStep; }
 
 void BP4Reader::EndStep()
 {
+    if (!m_BetweenStepPairs)
+    {
+        throw std::logic_error(
+            "ERROR: EndStep() is called without a successful BeginStep()");
+    }
+    m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP4Reader::EndStep");
     PerformGets();
 }
@@ -148,24 +161,25 @@ void BP4Reader::Init()
                                     "supports OpenMode::Read from" +
                                     m_Name + " " + m_EndMessage);
     }
+    // if IO was involved in reading before this flag may be true now
+    m_IO.m_ReadStreaming = false;
 
     m_BP4Deserializer.Init(m_IO.m_Parameters, "in call to BP4::Open to write");
     InitTransports();
 
     /* Do a collective wait for the file(s) to appear within timeout.
        Make sure every process comes to the same conclusion */
-    const Seconds timeoutSeconds =
-        Seconds(m_BP4Deserializer.m_Parameters.OpenTimeoutSecs);
+    const Seconds timeoutSeconds(
+        m_BP4Deserializer.m_Parameters.OpenTimeoutSecs);
 
-    Seconds pollSeconds =
-        Seconds(m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
+    Seconds pollSeconds(
+        m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
     if (pollSeconds > timeoutSeconds)
     {
         pollSeconds = timeoutSeconds;
     }
 
-    TimePoint timeoutInstant =
-        std::chrono::steady_clock::now() + timeoutSeconds;
+    TimePoint timeoutInstant = Now() + timeoutSeconds;
 
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
     //std::cout << "rank " << m_BP4Deserializer.m_RankMPI << ": in BP4Reader::Init(), after OpenFiles" << std::endl;    
@@ -179,7 +193,7 @@ void BP4Reader::Init()
 bool BP4Reader::SleepOrQuit(const TimePoint &timeoutInstant,
                             const Seconds &pollSeconds)
 {
-    auto now = std::chrono::steady_clock::now();
+    auto now = Now();
     if (now + pollSeconds >= timeoutInstant)
     {
         return false;
@@ -692,8 +706,7 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
     {
         timeoutSeconds = Seconds(999999999); // max 1 billion seconds wait
     }
-    const TimePoint timeoutInstant =
-        std::chrono::steady_clock::now() + timeoutSeconds;
+    const TimePoint timeoutInstant = Now() + timeoutSeconds;
 
     auto pollSeconds =
         Seconds(m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);

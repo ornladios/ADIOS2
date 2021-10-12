@@ -17,8 +17,8 @@ if(ADIOS2_HAVE_DataMan)
   add_subdirectory(dataman)
 endif()
 
-if(ADIOS2_HAVE_Table)
-  add_subdirectory(table)
+if(ADIOS2_HAVE_MHS)
+  add_subdirectory(mhs)
 endif()
 
 if(ADIOS2_HAVE_SSC)
