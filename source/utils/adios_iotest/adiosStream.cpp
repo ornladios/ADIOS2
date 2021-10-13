@@ -471,30 +471,13 @@ adios2::StepStatus adiosStream::Read(CommandRead *cmdR, Config &cfg,
 
 void adiosStream::Close()
 {
-
     int myRank, totalRanks;
     MPI_Comm_rank(comm, &myRank);
     MPI_Comm_size(comm, &totalRanks);
     if (hasIOTimer)
     {
-        //	std::vector<double> opentime_all_ranks;
-        //	if (myRank == 0)
-        //	{
-        //	    opentime_all_ranks.reserve(totalRanks);
-        //
-        //	}
-        //	MPI_Gather(&openTime, 1, MPI_DOUBLE, opentime_all_ranks.data(),
-        //1, MPI_DOUBLE, 0, comm);
         if (myRank == 0)
         {
-            //	    for (size_t i = 0; i < totalRanks; i++)
-            //	    {
-            //		std::string content =
-            //"0,"+std::to_string(i)+",open,"+std::to_string(opentime_all_ranks[i])+"\n";
-            //		fputs(content.c_str(), perfLogFP);
-            //	    }
-            // std::cout << "rank " << myRank << " calls free()!" << std::endl;
-            // free(opentime_all_ranks);
             fclose(perfLogFP);
         }
     }
