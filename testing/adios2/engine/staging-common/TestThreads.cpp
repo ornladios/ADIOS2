@@ -160,7 +160,7 @@ TEST_F(TestThreads, Basic)
 //  This test tries to push up to the limits to see if we're leaking FDs, but it
 //  runs slowly, commenting it out until needed.
 //
-// TEST_F(TestThreads, Repeated)
+// TE S T _F(TestThreads, Repeated)
 // {
 //     auto high_write_fut = std::async(std::launch::async, Write, 0);
 //     for (int i = 0; i < 1024; i++)

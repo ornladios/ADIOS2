@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+std::string engineName; // comes from command line
+
 class ADIOSHierarchicalReadVariableTest : public ::testing::Test
 {
 public:
@@ -21,7 +23,8 @@ public:
 
 TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 {
-    std::string filename = "ADIOSHierarchicalReadVariable.bp";
+    std::string filename =
+        "ADIOSHierarchicalReadVariable." + engineName + ".bp";
 
     // Number of steps
     const std::size_t NSteps = 2;
@@ -134,5 +137,9 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     return RUN_ALL_TESTS();
 }
