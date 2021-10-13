@@ -96,7 +96,7 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
     //
     //	auto transport = std::make_shared<transport::FileDaos>(m_Comm);
     //	std::cout << "rank " << rank << ": start transport->MkDir(" <<
-    //fileNames[0] << ")..." << std::endl; 	transport->MkDir(fileNames[0]);
+    // fileNames[0] << ")..." << std::endl; 	transport->MkDir(fileNames[0]);
     //	std::cout << "rank " << rank << ": transport->MkDir(" << fileNames[0] <<
     //") succeeded!" << std::endl;
     //
@@ -555,9 +555,9 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
             transport = std::make_shared<transport::FileDaos>(m_Comm);
             //	    std::string singleProc = "false";
             //	    helper::SetParameterValue("SingleProcess", parameters,
-            //singleProc); 	    helper::SetParameterValue("singleprocess",
-            //parameters, singleProc); 	    bool singleProcess =
-            //helper::StringTo<bool>(singleProc, ""); 	    if (singleProcess)
+            // singleProc); 	    helper::SetParameterValue("singleprocess",
+            // parameters, singleProc); 	    bool singleProcess =
+            // helper::StringTo<bool>(singleProc, ""); 	    if (singleProcess)
             //	    {
             //
             //		transport->SetParameters({{"SingleProcess", "true"}});
