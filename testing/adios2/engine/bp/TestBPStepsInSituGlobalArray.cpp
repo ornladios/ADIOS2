@@ -134,7 +134,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
     std::string BaseName = engineName;
     const std::string fname_prefix = "BPStepsInSituGlobalArray.EveryStep." +
                                      std::to_string(GetScheduleID()) + "." +
-                                     ReadModeToString(readMode);
+                                     ReadModeToString(readMode) + "." +
+                                     engineName;
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -291,7 +292,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
     std::string BaseName = engineName;
     const std::string fname_prefix = "BPStepsInSituGlobalArray.NewVarPerStep." +
                                      std::to_string(GetScheduleID()) + "." +
-                                     ReadModeToString(readMode);
+                                     ReadModeToString(readMode) + "." +
+                                     engineName;
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -484,7 +486,7 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
     const std::string fname_prefix =
         "BPStepsInSituGlobalArray.EveryOtherStep.Schedule" +
         std::to_string(GetScheduleID()) + ".Oddity" + std::to_string(Oddity) +
-        "." + ReadModeToString(readMode);
+        "." + ReadModeToString(readMode) + "." + engineName;
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
