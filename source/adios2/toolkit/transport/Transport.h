@@ -157,7 +157,6 @@ public:
     virtual void MkDir(const std::string &fileName) = 0;
 
 protected:
-  
     void ProfilerStart(const std::string process) noexcept;
 
     void ProfilerStop(const std::string process) noexcept;
