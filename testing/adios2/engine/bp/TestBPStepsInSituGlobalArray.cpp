@@ -130,6 +130,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
 {
     const std::vector<Act> &schedule = GetSchedule();
     const ReadMode readMode = GetReadMode();
+    using namespace std;
+    std::string BaseName = std::to_string(getpid());
     const std::string fname_prefix = "BPStepsInSituGlobalArray.EveryStep." +
                                      std::to_string(GetScheduleID()) + "." +
                                      ReadModeToString(readMode);
@@ -148,10 +150,10 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
     std::string fname;
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
-    fname = fname_prefix + ".MPI.bp";
+    fname = fname_prefix + BaseName + ".MPI.bp";
 #else
     adios2::ADIOS adios;
-    fname = fname_prefix + ".Serial.bp";
+    fname = fname_prefix + BaseName + ".Serial.bp";
 #endif
 
     if (!mpiRank)
@@ -285,6 +287,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
 {
     const std::vector<Act> &schedule = GetSchedule();
     const ReadMode readMode = GetReadMode();
+    using namespace std;
+    std::string BaseName = std::to_string(getpid());
     const std::string fname_prefix = "BPStepsInSituGlobalArray.NewVarPerStep." +
                                      std::to_string(GetScheduleID()) + "." +
                                      ReadModeToString(readMode);
@@ -303,10 +307,10 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
     std::string fname;
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
-    fname = fname_prefix + ".MPI.bp";
+    fname = fname_prefix + BaseName + ".MPI.bp";
 #else
     adios2::ADIOS adios;
-    fname = fname_prefix + ".Serial.bp";
+    fname = fname_prefix + BaseName + ".Serial.bp";
 #endif
 
     auto lf_VarName = [](int step) -> std::string {
@@ -475,6 +479,8 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
     const std::vector<Act> &schedule = GetSchedule();
     const std::size_t Oddity = GetOddity();
     const ReadMode readMode = GetReadMode();
+    using namespace std;
+    std::string BaseName = std::to_string(getpid());
     const std::string fname_prefix =
         "BPStepsInSituGlobalArray.EveryOtherStep.Schedule" +
         std::to_string(GetScheduleID()) + ".Oddity" + std::to_string(Oddity) +
@@ -494,10 +500,10 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
     std::string fname;
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
-    fname = fname_prefix + ".MPI.bp";
+    fname = fname_prefix + BaseName + ".MPI.bp";
 #else
     adios2::ADIOS adios;
-    fname = fname_prefix + ".Serial.bp";
+    fname = fname_prefix + BaseName + ".Serial.bp";
 
 #endif
 
