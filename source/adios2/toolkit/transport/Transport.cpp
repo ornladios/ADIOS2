@@ -140,7 +140,7 @@ void Transport::CheckName() const
     }
 }
 
-//void Transport::MkDir(const std::string &fileName)
+// void Transport::MkDir(const std::string &fileName)
 //{
 //    const auto lastPathSeparator(fileName.find_last_of(PathSeparator));
 //    if (lastPathSeparator == std::string::npos)
