@@ -310,14 +310,14 @@ public:
                     bufPtr += gHandles[i].iov_buf_len;
                 }
                 //		std::cout << "rank " << comm.Rank() << " merged
-                //buf: "; 		for (size_t i = 0; i < 10; ++i)
+                // buf: "; 		for (size_t i = 0; i < 10; ++i)
                 //		{
                 //		    std::cout << std::hex << (int) mergedBuf[i];
                 //		}
                 //		std::cout << std::endl;
                 //
-                //		std::cout << "rank " << comm.Rank() << " mergedBuf
-                //ready to broadcast!" << std::endl;
+                //		std::cout << "rank " << comm.Rank() << "
+                //mergedBuf ready to broadcast!" << std::endl;
             }
 
             comm.BroadcastVector(mergedBuf);
@@ -571,7 +571,7 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
         //        if (async)
         //        {
         //	    std::cout << "rank " << m_Comm.Rank() << ": async open!" <<
-        //std::endl;
+        // std::endl;
         //            m_IsOpening = true;
         //            m_OpenFuture =
         //                std::async(std::launch::async, lf_AsyncOpenWrite,
@@ -705,7 +705,7 @@ void FileDaos::Write(const char *buffer, size_t size, size_t start)
         //            // const auto writtenSize = write(m_FileDescriptor,
         //            buffer, size);
         //	    //std::cout << "rank " << m_Comm.Rank() << ": start
-        //dfs_write..." << std::endl;
+        // dfs_write..." << std::endl;
         //            rc = dfs_write(m_Impl->Mount, m_Impl->Obj, &wsgl,
         //            m_GlobalOffset,
         //                           NULL);
@@ -717,7 +717,7 @@ void FileDaos::Write(const char *buffer, size_t size, size_t start)
         //                    ", in call to Daos Write" + SysErrMsg());
         //            }
         //	    //std::cout << "rank " << m_Comm.Rank() << ": dfs_write
-        //succeeded!" << std::endl;
+        // succeeded!" << std::endl;
         //            m_Errno = rc;
         //            ProfilerStop("write");
         //            /*if (writtenSize == -1)
@@ -809,7 +809,7 @@ void FileDaos::Read(char *buffer, size_t size, size_t start)
         //            ProfilerStart("read");
         //
         //	    //std::cout << "rank " << m_Comm.Rank() << ": start
-        //dfs_read..." << std::endl;
+        // dfs_read..." << std::endl;
         //            rc = dfs_read(m_Impl->Mount, m_Impl->Obj, &rsgl,
         //            m_GlobalOffset,
         //                          &got_size, NULL);
@@ -825,7 +825,7 @@ void FileDaos::Read(char *buffer, size_t size, size_t start)
         //                                             SysErrMsg());
         //            }
         //	    //std::cout << "rank " << m_Comm.Rank() << ": dfs_read
-        //succeeded!" << std::endl;
+        // succeeded!" << std::endl;
         //            m_Errno = rc;
         //            ProfilerStop("read");
         //

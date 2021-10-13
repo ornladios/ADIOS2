@@ -256,12 +256,12 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
             //	if (!writetime_all_ranks)
             //	{
             //	    std::cout << "rank " << myRank << ": malloc failed!" <<
-            //std::endl;
+            // std::endl;
             //	}
             //	else
             //	{
             //	    std::cout << "rank " << myRank << ": malloc succeeded!" <<
-            //std::endl;
+            // std::endl;
             //	}
             readtime_all_ranks.reserve(totalRanks);
         }
@@ -400,12 +400,12 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
             //	if (!writetime_all_ranks)
             //	{
             //	    std::cout << "rank " << myRank << ": malloc failed!" <<
-            //std::endl;
+            // std::endl;
             //	}
             //	else
             //	{
             //	    std::cout << "rank " << myRank << ": malloc succeeded!" <<
-            //std::endl;
+            // std::endl;
             //	}
             writetime_all_ranks.reserve(totalRanks);
         }
