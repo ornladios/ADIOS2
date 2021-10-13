@@ -146,7 +146,7 @@ public:
 TEST_F(TestThreads, Basic)
 {
     using namespace std;
-    std::string BaseName = std::to_string(getpid());
+    std::string BaseName = engine;
     auto read_fut = std::async(std::launch::async, Read, BaseName, 0);
     auto write_fut = std::async(std::launch::async, Write, BaseName, 0);
     bool reader_success = read_fut.get();
@@ -166,7 +166,7 @@ TEST_F(TestThreads, Basic)
 //     for (int i = 0; i < 1024; i++)
 //     {
 //         using namespace std;
-//         std::string BaseName = std::to_string(getpid());
+//         std::string BaseName = std::to_string(_getpid());
 //         auto read_fut = std::async(std::launch::async, Read, BaseName, i +
 //         1); auto write_fut = std::async(std::launch::async, Write, BaseName,
 //         i + 1); bool reader_success = read_fut.get(); bool writer_success =

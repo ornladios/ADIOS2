@@ -131,7 +131,7 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
     const std::vector<Act> &schedule = GetSchedule();
     const ReadMode readMode = GetReadMode();
     using namespace std;
-    std::string BaseName = std::to_string(getpid());
+    std::string BaseName = engineName;
     const std::string fname_prefix = "BPStepsInSituGlobalArray.EveryStep." +
                                      std::to_string(GetScheduleID()) + "." +
                                      ReadModeToString(readMode);
@@ -288,7 +288,7 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
     const std::vector<Act> &schedule = GetSchedule();
     const ReadMode readMode = GetReadMode();
     using namespace std;
-    std::string BaseName = std::to_string(getpid());
+    std::string BaseName = engineName;
     const std::string fname_prefix = "BPStepsInSituGlobalArray.NewVarPerStep." +
                                      std::to_string(GetScheduleID()) + "." +
                                      ReadModeToString(readMode);
@@ -480,7 +480,7 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
     const std::size_t Oddity = GetOddity();
     const ReadMode readMode = GetReadMode();
     using namespace std;
-    std::string BaseName = std::to_string(getpid());
+    std::string BaseName = engineName;
     const std::string fname_prefix =
         "BPStepsInSituGlobalArray.EveryOtherStep.Schedule" +
         std::to_string(GetScheduleID()) + ".Oddity" + std::to_string(Oddity) +

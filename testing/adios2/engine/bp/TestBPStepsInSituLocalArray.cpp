@@ -108,7 +108,7 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
 {
     const std::vector<Act> &schedule = GetSchedule();
     using namespace std;
-    std::string BaseName = std::to_string(getpid());
+    std::string BaseName = engineName;
     const std::string fname_prefix =
         "BPStepsInSituLocalArray.EveryStep." + std::to_string(GetScheduleID());
     int mpiRank = 0, mpiSize = 1;
@@ -233,7 +233,7 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
 {
     const std::vector<Act> &schedule = GetSchedule();
     using namespace std;
-    std::string BaseName = std::to_string(getpid());
+    std::string BaseName = engineName;
     const std::string fname_prefix = "BPStepsInSituLocalArray.NewVarPerStep." +
                                      std::to_string(GetScheduleID());
     int mpiRank = 0, mpiSize = 1;
@@ -385,7 +385,7 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
     const std::vector<Act> &schedule = GetSchedule();
     const std::size_t Oddity = GetOddity();
     using namespace std;
-    std::string BaseName = std::to_string(getpid());
+    std::string BaseName = engineName;
     const std::string fname_prefix =
         "BPStepsInSituLocalArray.EveryOtherStep.Schedule" +
         std::to_string(GetScheduleID()) + ".Oddity" + std::to_string(Oddity);
