@@ -343,7 +343,7 @@ void printConfig(const Config &cfg)
             std::cout << std::endl;
             break;
         }
-        case Operation::Read: 
+        case Operation::Read:
         {
             auto cmdR = dynamic_cast<CommandRead *>(cmd.get());
             std::cout << "        Read ";
