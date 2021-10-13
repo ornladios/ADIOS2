@@ -317,7 +317,7 @@ public:
                 //		std::cout << std::endl;
                 //
                 //		std::cout << "rank " << comm.Rank() << "
-                //mergedBuf ready to broadcast!" << std::endl;
+                // mergedBuf ready to broadcast!" << std::endl;
             }
 
             comm.BroadcastVector(mergedBuf);
