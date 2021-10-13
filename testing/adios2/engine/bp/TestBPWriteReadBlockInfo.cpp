@@ -735,7 +735,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadblockInfo1D8.bp");
+    const std::string fname("BPWriteReadblockInfo1D8_C.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
