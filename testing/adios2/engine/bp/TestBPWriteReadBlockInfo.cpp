@@ -133,7 +133,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadblockInfo1D8.bp");
+    const std::string fname_prefix("BPWriteReadblockInfo1D8." + engineName);
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -143,8 +143,11 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
     const size_t NSteps = 3;
 
 #if ADIOS2_USE_MPI
+    const std::string fname(fname_prefix + ".MPI.bp");
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#else
+    const std::string fname(fname_prefix + ".Serial.bp");
 #endif
 
     // Write test data using BP
@@ -459,7 +462,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
 
 TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
 {
-    const std::string fname("BPWriteReadBlockInfo2D2x4.bp");
+    const std::string fname_prefix("BPWriteReadblockInfo2D2x4." + engineName);
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -472,8 +475,11 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
     const std::size_t NSteps = 3;
 
 #if ADIOS2_USE_MPI
+    const std::string fname(fname_prefix + ".MPI.bp");
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#else
+    const std::string fname(fname_prefix + ".Serial.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -735,7 +741,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadblockInfo1D8_C.bp");
+    const std::string fname_prefix("BPWriteReadblockInfo1D8_C." + engineName);
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -745,8 +751,11 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
     const size_t NSteps = 3;
 
 #if ADIOS2_USE_MPI
+    const std::string fname(fname_prefix + ".MPI.bp");
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#else
+    const std::string fname(fname_prefix + ".Serial.bp");
 #endif
 
     // Write test data using BP
