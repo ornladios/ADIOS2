@@ -107,6 +107,8 @@ protected:
 TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
 {
     const std::vector<Act> &schedule = GetSchedule();
+    using namespace std;
+    std::string BaseName = engineName;
     const std::string fname_prefix =
         "BPStepsInSituLocalArray.EveryStep." + std::to_string(GetScheduleID());
     int mpiRank = 0, mpiSize = 1;
@@ -124,10 +126,10 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
     std::string fname;
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
-    fname = fname_prefix + ".MPI.bp";
+    fname = fname_prefix + BaseName + ".MPI.bp";
 #else
     adios2::ADIOS adios;
-    fname = fname_prefix + ".Serial.bp";
+    fname = fname_prefix + BaseName + ".Serial.bp";
 #endif
     if (!mpiRank)
     {
@@ -230,6 +232,8 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
 TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
 {
     const std::vector<Act> &schedule = GetSchedule();
+    using namespace std;
+    std::string BaseName = engineName;
     const std::string fname_prefix = "BPStepsInSituLocalArray.NewVarPerStep." +
                                      std::to_string(GetScheduleID());
     int mpiRank = 0, mpiSize = 1;
@@ -247,10 +251,10 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
     std::string fname;
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
-    fname = fname_prefix + ".MPI.bp";
+    fname = fname_prefix + BaseName + ".MPI.bp";
 #else
     adios2::ADIOS adios;
-    fname = fname_prefix + ".Serial.bp";
+    fname = fname_prefix + BaseName + ".Serial.bp";
 #endif
 
     auto lf_VarName = [](int step) -> std::string {
@@ -380,6 +384,8 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
 {
     const std::vector<Act> &schedule = GetSchedule();
     const std::size_t Oddity = GetOddity();
+    using namespace std;
+    std::string BaseName = engineName;
     const std::string fname_prefix =
         "BPStepsInSituLocalArray.EveryOtherStep.Schedule" +
         std::to_string(GetScheduleID()) + ".Oddity" + std::to_string(Oddity);
@@ -398,10 +404,10 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
     std::string fname;
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
-    fname = fname_prefix + ".MPI.bp";
+    fname = fname_prefix + BaseName + ".MPI.bp";
 #else
     adios2::ADIOS adios;
-    fname = fname_prefix + ".Serial.bp";
+    fname = fname_prefix + BaseName + ".Serial.bp";
 
 #endif
 
