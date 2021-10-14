@@ -197,6 +197,7 @@ int AsyncWriteThread(adios2::aggregator::MPIAggregator *aggregator, int rank,
         uint64_t nextWriterPos = startPos + Data->Size();
         tokenChain->SendToken(nextWriterPos);
         WriteData(a, nproc, tm, Data, totalSize, startPos, deadline, flagRush);
+        tokenChain->RecvToken();
     }
     else
     {
@@ -319,6 +320,7 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
         // Informs next process its starting offset (for correct metadata)
         uint64_t nextWriterPos = m_StartDataPos + Data->Size();
         tokenChain->SendToken(nextWriterPos);
+        tokenChain->RecvToken();
     }
     else
     {

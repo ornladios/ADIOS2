@@ -48,8 +48,10 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/helper/adiosComm.h"
 
+#include <assert.h>
 #include <atomic>
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 namespace adios2
@@ -61,7 +63,7 @@ template <class T>
 class TokenChain
 {
 
-    struct _segment
+    struct segment_
     {
         int currentRank;
         T token;
@@ -77,7 +79,7 @@ public:
             if (!m_Rank)
             {
                 m_Win =
-                    m_NodeComm->Win_allocate_shared(sizeof(_segment), 1, &ptr);
+                    m_NodeComm->Win_allocate_shared(sizeof(segment_), 1, &ptr);
             }
             else
             {
@@ -87,16 +89,19 @@ public:
                 m_NodeComm->Win_shared_query(m_Win, 0, &shmsize, &disp_unit,
                                              &ptr);
             }
-            m_Shm = reinterpret_cast<_segment *>(ptr);
+            m_Shm = reinterpret_cast<segment_ *>(ptr);
 
             if (!m_Rank)
             {
                 m_Shm->currentRank = 0;
+                m_Shm->token = T();
             }
         }
         else
         {
-            m_Shm = new _segment;
+            m_Shm = new segment_;
+            m_Shm->currentRank = 0;
+            m_Shm->token = T();
         }
     }
 
@@ -117,18 +122,35 @@ public:
     {
         while (m_Shm->currentRank != m_Rank)
         {
+            assert(0 <= m_Shm->currentRank && m_Shm->currentRank < m_nProc);
             std::this_thread::sleep_for(std::chrono::duration<double>(0.00001));
         }
         return m_Shm->token;
     }
 
     /** non-blocking check if it's my turn */
-    bool CheckToken() { return (m_Shm->currentRank == m_Rank); }
+    bool CheckToken()
+    {
+        assert(0 <= m_Shm->currentRank && m_Shm->currentRank < m_nProc);
+        return (m_Shm->currentRank == m_Rank);
+    }
 
     /** this process is done, pass token to next */
     void SendToken(T &token)
     {
+        if (m_Rank != m_Shm->currentRank)
+        {
+            throw std::runtime_error(
+                "ADIOS2 Programming error: TokenChain::SendToken can only be "
+                "called by the Rank who last called "
+                "RecvToken, rank = " +
+                std::to_string(m_Rank));
+        }
+        assert(0 <= m_Shm->currentRank && m_Shm->currentRank < m_nProc);
         m_Shm->token = token;
+        /* Warning: flipping the currentRank may activate other process'
+         * RecvToken which in turn may call SendToken and change m_Shm
+         * immediately. So this action must be the very last action here */
         if (m_Rank < m_nProc - 1)
         {
             ++(m_Shm->currentRank);
@@ -145,7 +167,7 @@ private:
     const int m_nProc;
 
     helper::Comm::Win m_Win;
-    _segment *m_Shm;
+    segment_ *m_Shm;
 };
 
 } // end namespace shm
