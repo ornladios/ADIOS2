@@ -14,7 +14,6 @@
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange, PaddingToAlignOffset
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
-#include "adios2/toolkit/shm/TokenChain.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
 
@@ -32,10 +31,13 @@ namespace engine
 
 using namespace adios2::format;
 
-void WriteData(aggregator::MPIShmChain *a, int nproc,
-               transportman::TransportMan *tm, format::BufferV *myData,
-               uint64_t totalSize, uint64_t startPos, double deadline,
-               bool *flagRush)
+/* Aggregator part of the async two level aggregation.
+   This process is the one writing to disk
+*/
+void AsyncWriteData(aggregator::MPIShmChain *a, int nproc,
+                    transportman::TransportMan *tm, format::BufferV *myData,
+                    uint64_t totalSize, uint64_t startPos, double deadline,
+                    bool *flagRush)
 {
     /* Write own data first */
     {
@@ -87,7 +89,7 @@ void WriteData(aggregator::MPIShmChain *a, int nproc,
         writeTotalTime += core::Now() - writeStart;
 
         /* sleep if have time */
-        if (wrote < totalSize)
+        if (wrote < totalSize && !*flagRush)
         {
             Seconds timesofar = Now() - tstart;
             double bw = wrote / writeTotalTime.count(); // bytes per second
@@ -109,12 +111,15 @@ void WriteData(aggregator::MPIShmChain *a, int nproc,
     }
 }
 
-void SendDataToAggregator(aggregator::MPIShmChain *a, format::BufferV *Data)
+/* Non-aggregator part of the async two level aggregation.
+   This process passes data to Aggregator through SHM segment.
+   tokenChain in caller ensures only one process (per aggregator chain)
+   is running this function at a time
+*/
+void AsyncSendDataToAggregator(aggregator::MPIShmChain *a,
+                               format::BufferV *Data)
 {
-    /* Only one process is running this function at once
-       See shmFillerToken in the caller function
-
-       In a loop, copy the local data into the shared memory, alternating
+    /* In a loop, copy the local data into the shared memory, alternating
        between the two segments.
     */
 
@@ -171,56 +176,56 @@ void SendDataToAggregator(aggregator::MPIShmChain *a, format::BufferV *Data)
     }
 }
 
-int AsyncWriteThread(adios2::aggregator::MPIAggregator *aggregator, int rank,
-                     int nproc, TimePoint tstart,
-                     std::unique_ptr<shm::TokenChain<uint64_t>> tokenChain,
-                     transportman::TransportMan *tm,
-                     adios2::format::BufferV *Data, uint64_t startPos,
-                     uint64_t totalSize, double deadline, bool *flagRush)
+int BP5Writer::AsyncWriteThread_TwoLevelShm(AsyncWriteInfo_TwoLevelShm *info)
 {
-    /* DO NOT use MPI in this separate thread */
-    Seconds ts = Now() - tstart;
-    std::cout << "ASYNC rank " << rank << " starts at: " << ts.count()
-              << std::endl;
+    /* DO NOT use MPI in this separate thread, including destroying
+       shm segments explicitely (a->DestroyShm) or implicitely (tokenChain) */
+    Seconds ts = Now() - info->tstart;
+    std::cout << "ASYNC rank " << info->rank_global
+              << " starts at: " << ts.count() << std::endl;
     aggregator::MPIShmChain *a =
-        dynamic_cast<aggregator::MPIShmChain *>(aggregator);
+        dynamic_cast<aggregator::MPIShmChain *>(info->aggregator);
     if (a->m_IsAggregator)
     {
-        std::cout << "Rank " << rank << " aggregator start data async "
+        std::cout << "Rank " << info->rank_global
+                  << " aggregator start data async "
                   << " to subfile " << a->m_SubStreamIndex << " at pos "
-                  << startPos << " totalsize " << totalSize << " deadline "
-                  << deadline << std::endl;
+                  << info->startPos << " totalsize " << info->totalSize
+                  << " deadline " << info->deadline << std::endl;
 
         // Send token to first non-aggregator to start filling shm
         // Also informs next process its starting offset (for correct
         // metadata)
-        uint64_t nextWriterPos = startPos + Data->Size();
-        tokenChain->SendToken(nextWriterPos);
-        WriteData(a, nproc, tm, Data, totalSize, startPos, deadline, flagRush);
-        tokenChain->RecvToken();
+        uint64_t nextWriterPos = info->startPos + info->Data->Size();
+        info->tokenChain->SendToken(nextWriterPos);
+        AsyncWriteData(a, info->nproc_chain, info->tm, info->Data,
+                       info->totalSize, info->startPos, info->deadline,
+                       info->flagRush);
+        uint64_t finishPos = info->tokenChain->RecvToken();
+        std::cout << "Rank " << info->rank_global
+                  << " aggregator recv token from last process = " << finishPos
+                  << std::endl;
     }
     else
     {
         // non-aggregators fill shared buffer in marching order
         // they also receive their starting offset this way
-        uint64_t startPos = tokenChain->RecvToken();
+        uint64_t startPos = info->tokenChain->RecvToken();
 
-        std::cout << "Rank " << rank
+        std::cout << "Rank " << info->rank_global
                   << " non-aggregator recv token to fill shm = " << startPos
                   << std::endl;
 
-        SendDataToAggregator(a, Data);
+        AsyncSendDataToAggregator(a, info->Data);
 
-        uint64_t nextWriterPos = startPos + Data->Size();
-        tokenChain->SendToken(nextWriterPos);
+        uint64_t nextWriterPos = startPos + info->Data->Size();
+        info->tokenChain->SendToken(nextWriterPos);
     }
-    delete Data;
-    if (nproc > 1)
-    {
-        a->DestroyShm();
-    }
-    ts = Now() - tstart;
-    std::cout << "ASYNC " << rank << " ended at: " << ts.count() << std::endl;
+    delete info->Data;
+
+    ts = Now() - info->tstart;
+    std::cout << "ASYNC " << info->rank_global << " ended at: " << ts.count()
+              << std::endl;
     return 1;
 };
 
@@ -228,6 +233,17 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
 {
     aggregator::MPIShmChain *a =
         dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
+
+    m_AsyncWriteInfoTwoLevelShm = new AsyncWriteInfo_TwoLevelShm();
+    m_AsyncWriteInfoTwoLevelShm->aggregator = a;
+    m_AsyncWriteInfoTwoLevelShm->rank_global = m_Comm.Rank();
+    m_AsyncWriteInfoTwoLevelShm->rank_chain = a->m_Comm.Rank();
+    m_AsyncWriteInfoTwoLevelShm->nproc_chain = a->m_Comm.Size();
+    m_AsyncWriteInfoTwoLevelShm->tstart = m_EngineStart;
+    m_AsyncWriteInfoTwoLevelShm->tokenChain =
+        new shm::TokenChain<uint64_t>(&a->m_Comm);
+    m_AsyncWriteInfoTwoLevelShm->tm = &m_FileDataManager;
+    m_AsyncWriteInfoTwoLevelShm->Data = Data;
 
     // new step writing starts at offset m_DataPos on master aggregator
     // other aggregators to the same file will need to wait for the position
@@ -255,10 +271,6 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
     {
         a->CreateShm(static_cast<size_t>(maxSize), m_Parameters.MaxShmSize);
     }
-
-    std::unique_ptr<shm::TokenChain<uint64_t>> tokenChain =
-        std::unique_ptr<shm::TokenChain<uint64_t>>(
-            new shm::TokenChain<uint64_t>(&a->m_Comm));
 
     if (a->m_IsAggregator)
     {
@@ -319,31 +331,45 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
     {
         // Informs next process its starting offset (for correct metadata)
         uint64_t nextWriterPos = m_StartDataPos + Data->Size();
-        tokenChain->SendToken(nextWriterPos);
-        tokenChain->RecvToken();
+        m_AsyncWriteInfoTwoLevelShm->tokenChain->SendToken(nextWriterPos);
+        m_AsyncWriteInfoTwoLevelShm->tokenChain->RecvToken();
     }
     else
     {
         // non-aggregators fill shared buffer in marching order
         // they also receive their starting offset this way
-        m_StartDataPos = tokenChain->RecvToken();
+        m_StartDataPos = m_AsyncWriteInfoTwoLevelShm->tokenChain->RecvToken();
         uint64_t nextWriterPos = m_StartDataPos + Data->Size();
-        tokenChain->SendToken(nextWriterPos);
+        m_AsyncWriteInfoTwoLevelShm->tokenChain->SendToken(nextWriterPos);
     }
 
     // Launch data writing thread, m_StartDataPos is valid
     // m_DataPos is already pointing to the end of the write, do not use here.
-    m_WriteFuture = std::async(
-        std::launch::async, AsyncWriteThread, m_Aggregator, a->m_Comm.Rank(),
-        a->m_Comm.Size(), m_EngineStart, std::move(tokenChain),
-        &m_FileDataManager, Data, m_StartDataPos, myTotalSize,
-        m_TimeBetweenSteps.count(), &m_flagRush);
+    m_AsyncWriteInfoTwoLevelShm->startPos = m_StartDataPos;
+    m_AsyncWriteInfoTwoLevelShm->totalSize = myTotalSize;
+    m_AsyncWriteInfoTwoLevelShm->deadline = m_TimeBetweenSteps.count();
+    m_AsyncWriteInfoTwoLevelShm->flagRush = &m_flagRush;
+
+    m_WriteFuture = std::async(std::launch::async, AsyncWriteThread_TwoLevelShm,
+                               m_AsyncWriteInfoTwoLevelShm);
 
     /* At this point it is prohibited in the main thread
        - to modify Data, which will be deleted in the async thread any tiume
        - to use m_FileDataManager until next BeginStep, which is being used
          in the async thread to write data
     */
+}
+
+void BP5Writer::AsyncWriteDataCleanupTwoLevelShm()
+{
+    aggregator::MPIShmChain *a = dynamic_cast<aggregator::MPIShmChain *>(
+        m_AsyncWriteInfoTwoLevelShm->aggregator);
+    if (a->m_Comm.Size() > 1)
+    {
+        a->DestroyShm();
+    }
+    delete m_AsyncWriteInfoTwoLevelShm->tokenChain;
+    delete m_AsyncWriteInfoTwoLevelShm;
 }
 
 } // end namespace engine

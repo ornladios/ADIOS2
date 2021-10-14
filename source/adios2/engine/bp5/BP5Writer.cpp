@@ -67,6 +67,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
         {
             m_WriteFuture.get();
             m_Comm.Barrier();
+            AsyncWriteDataCleanup();
             Seconds wait = Now() - wait_start;
             if (m_Comm.Rank() == 0)
             {
@@ -171,6 +172,21 @@ BP5Writer::WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks,
 
     m_MetaDataPos += MetaDataSize;
     return MetaDataSize;
+}
+
+void BP5Writer::AsyncWriteDataCleanup()
+{
+    if (m_Parameters.AsyncWrite)
+    {
+        switch (m_Parameters.AggregationType)
+        {
+        case (int)AggregationType::TwoLevelShm:
+            AsyncWriteDataCleanupTwoLevelShm();
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 void BP5Writer::WriteData(format::BufferV *Data)
@@ -1032,6 +1048,7 @@ void BP5Writer::DoClose(const int transportIndex)
         // wait until all process' writing thread completes
         wait_start = Now();
         m_Comm.Barrier();
+        AsyncWriteDataCleanup();
         wait += Now() - wait_start;
         if (m_Comm.Rank() == 0)
         {

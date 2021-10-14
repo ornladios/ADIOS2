@@ -20,6 +20,7 @@
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
+#include "adios2/toolkit/shm/TokenChain.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 namespace adios2
@@ -225,6 +226,9 @@ private:
 
     std::vector<std::vector<size_t>> FlushPosSizeInfo;
 
+    void MakeHeader(format::BufferSTL &b, const std::string fileType,
+                    const bool isActive);
+
     /* Async write's future */
     std::future<int> m_WriteFuture;
     // variables to delay writing to index file
@@ -236,8 +240,28 @@ private:
     TimePoint m_BeginStepStart;
     bool m_flagRush; // main thread flips this in Close, async thread watches it
 
-    void MakeHeader(format::BufferSTL &b, const std::string fileType,
-                    const bool isActive);
+    /* struct of data passed from main thread to async write thread at launch */
+    struct AsyncWriteInfo_TwoLevelShm
+    {
+        adios2::aggregator::MPIAggregator *aggregator;
+        int rank_global;
+        int rank_chain;
+        int nproc_chain;
+        TimePoint tstart;
+        adios2::shm::TokenChain<uint64_t> *tokenChain;
+        transportman::TransportMan *tm;
+        adios2::format::BufferV *Data;
+        uint64_t startPos;
+        uint64_t totalSize;
+        double deadline;
+        bool *flagRush;
+    };
+
+    AsyncWriteInfo_TwoLevelShm *m_AsyncWriteInfoTwoLevelShm;
+
+    static int AsyncWriteThread_TwoLevelShm(AsyncWriteInfo_TwoLevelShm *info);
+    void AsyncWriteDataCleanup();
+    void AsyncWriteDataCleanupTwoLevelShm();
 };
 
 } // end namespace engine
