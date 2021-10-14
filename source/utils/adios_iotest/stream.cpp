@@ -61,7 +61,8 @@ std::shared_ptr<Stream> openStream(const std::string &streamName,
     {
     case IOLib::ADIOS:
     {
-        auto s = adiosStream(streamName, iogroup->adiosio, mode, comm);
+        auto s = adiosStream(streamName, iogroup->adiosio, mode, comm, iotimer,
+                             appid);
         sp = std::make_shared<adiosStream>(s);
         break;
     }
