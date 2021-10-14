@@ -21,8 +21,8 @@
 #include <thread>
 /// \endcond
 #ifdef ADIOS2_HAVE_CUDA
-  #include <cuda.h>
-  #include <cuda_runtime.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
 #endif
 
 #include "adios2/helper/adiosMath.h"

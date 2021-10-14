@@ -60,7 +60,7 @@ void DataSpacesReader::ReadDsData(Variable<T> &variable, T *data, int version)
 {
     uint64_t lb_in[MAX_DS_NDIM], ub_in[MAX_DS_NDIM], gdims_in[MAX_DS_NDIM];
     int ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
-    bool isOrderC = io.m_ArrayOrder == RowMajor;
+    bool isOrderC = m_IO.m_ArrayOrder == adios2::ArrayOrdering::RowMajor;
     /* Order of dimensions: in DataSpaces: fast --> slow --> slowest
            For example:
            Fortran: i,j,k --> i, j, k  = lb[0], lb[1], lb[2]
