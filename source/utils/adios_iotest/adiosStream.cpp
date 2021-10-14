@@ -59,7 +59,7 @@ adiosStream::adiosStream(const std::string &streamName, adios2::IO &io,
                    MPI_DOUBLE, 0, comm);
         if (myRank == 0)
         {
-            for (size_t i = 0; i < totalRanks; i++)
+            for (int i = 0; i < totalRanks; i++)
             {
                 std::string content = std::to_string(engine.CurrentStep()) +
                                       "," + std::to_string(i) + ",open," +
@@ -270,7 +270,7 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
                    MPI_DOUBLE, 0, comm);
         if (myRank == 0)
         {
-            for (size_t i = 0; i < totalRanks; i++)
+            for (int i = 0; i < totalRanks; i++)
             {
                 std::string content = std::to_string(engine.CurrentStep()) +
                                       "," + std::to_string(i) + ",read," +
@@ -414,7 +414,7 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
                    MPI_DOUBLE, 0, comm);
         if (myRank == 0)
         {
-            for (size_t i = 0; i < totalRanks; i++)
+            for (int i = 0; i < totalRanks; i++)
             {
                 std::string content = std::to_string(engine.CurrentStep()) +
                                       "," + std::to_string(i) + ",write," +
