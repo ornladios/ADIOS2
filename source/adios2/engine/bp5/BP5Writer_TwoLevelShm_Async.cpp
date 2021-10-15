@@ -181,17 +181,17 @@ int BP5Writer::AsyncWriteThread_TwoLevelShm(AsyncWriteInfo_TwoLevelShm *info)
     /* DO NOT use MPI in this separate thread, including destroying
        shm segments explicitely (a->DestroyShm) or implicitely (tokenChain) */
     Seconds ts = Now() - info->tstart;
-    std::cout << "ASYNC rank " << info->rank_global
-              << " starts at: " << ts.count() << std::endl;
+    //std::cout << "ASYNC rank " << info->rank_global
+    //          << " starts at: " << ts.count() << std::endl;
     aggregator::MPIShmChain *a =
         dynamic_cast<aggregator::MPIShmChain *>(info->aggregator);
     if (a->m_IsAggregator)
     {
-        std::cout << "Rank " << info->rank_global
+        /*std::cout << "Rank " << info->rank_global
                   << " aggregator start data async "
                   << " to subfile " << a->m_SubStreamIndex << " at pos "
                   << info->startPos << " totalsize " << info->totalSize
-                  << " deadline " << info->deadline << std::endl;
+                  << " deadline " << info->deadline << std::endl;*/
 
         // Send token to first non-aggregator to start filling shm
         // Also informs next process its starting offset (for correct
@@ -202,9 +202,9 @@ int BP5Writer::AsyncWriteThread_TwoLevelShm(AsyncWriteInfo_TwoLevelShm *info)
                        info->totalSize, info->startPos, info->deadline,
                        info->flagRush);
         uint64_t finishPos = info->tokenChain->RecvToken();
-        std::cout << "Rank " << info->rank_global
+        /*std::cout << "Rank " << info->rank_global
                   << " aggregator recv token from last process = " << finishPos
-                  << std::endl;
+                  << std::endl;*/
     }
     else
     {
@@ -212,9 +212,9 @@ int BP5Writer::AsyncWriteThread_TwoLevelShm(AsyncWriteInfo_TwoLevelShm *info)
         // they also receive their starting offset this way
         uint64_t startPos = info->tokenChain->RecvToken();
 
-        std::cout << "Rank " << info->rank_global
+        /*std::cout << "Rank " << info->rank_global
                   << " non-aggregator recv token to fill shm = " << startPos
-                  << std::endl;
+                  << std::endl;*/
 
         AsyncSendDataToAggregator(a, info->Data);
 
@@ -224,8 +224,8 @@ int BP5Writer::AsyncWriteThread_TwoLevelShm(AsyncWriteInfo_TwoLevelShm *info)
     delete info->Data;
 
     ts = Now() - info->tstart;
-    std::cout << "ASYNC " << info->rank_global << " ended at: " << ts.count()
-              << std::endl;
+    /*std::cout << "ASYNC " << info->rank_global << " ended at: " << ts.count()
+              << std::endl;*/
     return 1;
 };
 
@@ -321,9 +321,9 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
         }
     }
 
-    std::cout << "Rank " << m_Comm.Rank() << "  start data async "
+    /*std::cout << "Rank " << m_Comm.Rank() << "  start data async "
               << " to subfile " << a->m_SubStreamIndex << " at pos "
-              << m_StartDataPos << std::endl;
+              << m_StartDataPos << std::endl;*/
 
     // Metadata collection needs m_StartDataPos correctly set on
     // every process before we call the async writing thread

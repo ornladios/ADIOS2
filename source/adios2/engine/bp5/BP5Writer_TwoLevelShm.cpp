@@ -111,10 +111,10 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
                 &nextWriterPos, 1, 0, 0, "Chain token in BP5Writer::WriteData");
         }
 
-        std::cout << "Rank " << m_Comm.Rank()
+        /*std::cout << "Rank " << m_Comm.Rank()
                   << " aggregator start writing step " << m_WriterStep
                   << " to subfile " << a->m_SubStreamIndex << " at pos "
-                  << m_DataPos << " totalsize " << myTotalSize << std::endl;
+                  << m_DataPos << " totalsize " << myTotalSize << std::endl;*/
 
         // Send token to first non-aggregator to start filling shm
         // Also informs next process its starting offset (for correct metadata)
@@ -146,9 +146,9 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
         // they also receive their starting offset this way
         m_StartDataPos = tokenChain.RecvToken();
 
-        std::cout << "Rank " << m_Comm.Rank()
+        /*std::cout << "Rank " << m_Comm.Rank()
                   << " non-aggregator recv token to fill shm = "
-                  << m_StartDataPos << std::endl;
+                  << m_StartDataPos << std::endl;*/
 
         SendDataToAggregator(Data);
 
