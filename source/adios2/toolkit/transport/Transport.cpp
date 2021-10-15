@@ -65,8 +65,8 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
     {
         WriteV(iov, iovcnt, start);
         core::Seconds totalWriteTime = core::Now() - starttime;
-        std::cout << "WriteV sync spent total time = " << totalWriteTime.count()
-                  << std::endl;
+        /*std::cout << "WriteV sync spent total time = " << totalWriteTime.count()
+                  << std::endl;*/
         return;
     }
 
@@ -89,8 +89,8 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
             if (timesofar > deadlineSeconds || *flagRush)
             {
                 // Passed the deadline, write the rest without any waiting
-                std::cout << "  Passed deadline, time so far = "
-                          << timesofar.count() << std::endl;
+                /*std::cout << "  Passed deadline, time so far = "
+                          << timesofar.count() << std::endl;*/
                 max_size = MaxSizeT;
             }
             else
@@ -113,10 +113,10 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
                         max_size *= 2;
                         t /= 2.0;
                     }
-                    std::cout
+                    /*std::cout
                         << "    We are behind, time left =  " << availabletime
                         << " need time = " << needtime
-                        << " increase block size = " << max_size << std::endl;
+                        << " increase block size = " << max_size << std::endl;*/
                 }
                 else
                 {
@@ -162,7 +162,7 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
                       << " temp_offset = " << temp_offset << std::endl;*/
             Write(static_cast<const char *>(iov[block].iov_base) + temp_offset,
                   n);
-            Flush();
+            /*Flush();*/
         }
 
         /* Have we processed the entire block or staying with it? */
@@ -180,8 +180,8 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
     }
 
     core::Seconds totalWriteTime = core::Now() - starttime;
-    std::cout << "WriteV spent total time = " << totalWriteTime.count()
-              << " deadline was = " << deadlineSeconds.count() << std::endl;
+    /*std::cout << "WriteV spent total time = " << totalWriteTime.count()
+              << " deadline was = " << deadlineSeconds.count() << std::endl;*/
 }
 
 void Transport::IRead(char *buffer, size_t size, Status &status, size_t start)
