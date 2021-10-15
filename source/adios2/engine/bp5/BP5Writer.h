@@ -236,7 +236,10 @@ private:
     // variables to delay writing to index file
     uint64_t m_LatestMetaDataPos;
     uint64_t m_LatestMetaDataSize;
-    Seconds m_TimeBetweenSteps = Seconds(0.0);
+    Seconds m_LastTimeBetweenSteps = Seconds(0.0);
+    Seconds m_TotalTimeBetweenSteps = Seconds(0.0);
+    Seconds m_AvgTimeBetweenSteps = Seconds(0.0);
+    Seconds m_ExpectedTimeBetweenSteps = Seconds(0.0);
     TimePoint m_EndStepEnd;
     TimePoint m_EngineStart;
     TimePoint m_BeginStepStart;

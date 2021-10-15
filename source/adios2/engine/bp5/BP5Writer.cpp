@@ -57,7 +57,14 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (m_WriterStep > 0)
     {
-        m_TimeBetweenSteps = Now() - m_EndStepEnd;
+        m_LastTimeBetweenSteps = Now() - m_EndStepEnd;
+        m_TotalTimeBetweenSteps += m_LastTimeBetweenSteps;
+        m_AvgTimeBetweenSteps = m_TotalTimeBetweenSteps / (m_WriterStep + 1);
+        m_ExpectedTimeBetweenSteps = m_LastTimeBetweenSteps;
+        if (m_ExpectedTimeBetweenSteps > m_AvgTimeBetweenSteps)
+        {
+            m_ExpectedTimeBetweenSteps = m_AvgTimeBetweenSteps;
+        }
     }
 
     if (m_Parameters.AsyncWrite)
@@ -75,7 +82,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
                                        m_LatestMetaDataSize);
                 std::cout << "BeginStep, wait on async write was = "
                           << wait.count() << " time since EndStep was = "
-                          << m_TimeBetweenSteps.count() << std::endl;
+                          << m_LastTimeBetweenSteps.count() << std::endl;
             }
         }
     }
@@ -283,8 +290,9 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
     m_DataPos += Data->Size();
     if (m_Parameters.AsyncWrite)
     {
-        m_WriteFuture = std::async(std::launch::async, lf_AsyncWrite, Data,
-                                   m_StartDataPos, m_TimeBetweenSteps.count());
+        m_WriteFuture =
+            std::async(std::launch::async, lf_AsyncWrite, Data, m_StartDataPos,
+                       m_LastTimeBetweenSteps.count());
         // At this point modifying Data in main thread is prohibited !!!
     }
     else

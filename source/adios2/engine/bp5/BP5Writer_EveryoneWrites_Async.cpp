@@ -124,7 +124,7 @@ void BP5Writer::WriteData_EveryoneWrites_Async(format::BufferV *Data,
     m_AsyncWriteInfo->Data = Data;
     m_AsyncWriteInfo->startPos = m_StartDataPos;
     m_AsyncWriteInfo->totalSize = Data->Size();
-    m_AsyncWriteInfo->deadline = m_TimeBetweenSteps.count();
+    m_AsyncWriteInfo->deadline = m_ExpectedTimeBetweenSteps.count();
     m_AsyncWriteInfo->flagRush = &m_flagRush;
 
     m_WriteFuture = std::async(

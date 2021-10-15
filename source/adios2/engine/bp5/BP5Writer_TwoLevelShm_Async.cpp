@@ -319,7 +319,7 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
     // m_DataPos is already pointing to the end of the write, do not use here.
     m_AsyncWriteInfo->startPos = m_StartDataPos;
     m_AsyncWriteInfo->totalSize = myTotalSize;
-    m_AsyncWriteInfo->deadline = m_TimeBetweenSteps.count();
+    m_AsyncWriteInfo->deadline = m_ExpectedTimeBetweenSteps.count();
     m_AsyncWriteInfo->flagRush = &m_flagRush;
 
     m_WriteFuture = std::async(std::launch::async, AsyncWriteThread_TwoLevelShm,
