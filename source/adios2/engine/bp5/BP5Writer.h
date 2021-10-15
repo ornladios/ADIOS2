@@ -157,6 +157,8 @@ private:
     void WriteData(format::BufferV *Data);
     void WriteData_EveryoneWrites(format::BufferV *Data,
                                   bool SerializedWriters);
+    void WriteData_EveryoneWrites_Async(format::BufferV *Data,
+                                        bool SerializedWriters);
     void WriteData_TwoLevelShm(format::BufferV *Data);
     void WriteData_TwoLevelShm_Async(format::BufferV *Data);
 
@@ -241,10 +243,11 @@ private:
     bool m_flagRush; // main thread flips this in Close, async thread watches it
 
     /* struct of data passed from main thread to async write thread at launch */
-    struct AsyncWriteInfo_TwoLevelShm
+    struct AsyncWriteInfo
     {
         adios2::aggregator::MPIAggregator *aggregator;
         int rank_global;
+        helper::Comm comm_chain;
         int rank_chain;
         int nproc_chain;
         TimePoint tstart;
@@ -257,11 +260,15 @@ private:
         bool *flagRush;
     };
 
-    AsyncWriteInfo_TwoLevelShm *m_AsyncWriteInfoTwoLevelShm;
+    AsyncWriteInfo *m_AsyncWriteInfo;
 
-    static int AsyncWriteThread_TwoLevelShm(AsyncWriteInfo_TwoLevelShm *info);
+    /* Static functions that will run in another thread */
+    static int AsyncWriteThread_EveryoneWrites(AsyncWriteInfo *info);
+    static int AsyncWriteThread_TwoLevelShm(AsyncWriteInfo *info);
+
     void AsyncWriteDataCleanup();
-    void AsyncWriteDataCleanupTwoLevelShm();
+    void AsyncWriteDataCleanup_EveryoneWrites();
+    void AsyncWriteDataCleanup_TwoLevelShm();
 };
 
 } // end namespace engine

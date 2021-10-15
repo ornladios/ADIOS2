@@ -43,22 +43,6 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
     m_DataPos += helper::PaddingToAlignOffset(m_DataPos,
                                               m_Parameters.FileSystemPageSize);
 
-    /*
-    // Each aggregator needs to know the total size they write
-    // including alignment to page size
-    // This calculation is valid on aggregators only
-    std::vector<uint64_t> mySizes = a->m_Comm.GatherValues(Data->Size());
-    uint64_t myTotalSize = 0;
-    uint64_t pos = m_DataPos;
-    for (auto s : mySizes)
-    {
-        uint64_t alignment =
-            helper::PaddingToAlignOffset(pos, m_Parameters.FileSystemPageSize);
-        myTotalSize += alignment + s;
-        pos += alignment + s;
-    }
-    */
-
     // Each aggregator needs to know the total size they write
     // This calculation is valid on aggregators only
     std::vector<uint64_t> mySizes = a->m_Comm.GatherValues(Data->Size());

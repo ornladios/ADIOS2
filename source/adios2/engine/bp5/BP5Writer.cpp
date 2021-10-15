@@ -180,8 +180,12 @@ void BP5Writer::AsyncWriteDataCleanup()
     {
         switch (m_Parameters.AggregationType)
         {
+        case (int)AggregationType::EveryoneWrites:
+        case (int)AggregationType::EveryoneWritesSerial:
+            AsyncWriteDataCleanup_EveryoneWrites();
+            break;
         case (int)AggregationType::TwoLevelShm:
-            AsyncWriteDataCleanupTwoLevelShm();
+            AsyncWriteDataCleanup_TwoLevelShm();
             break;
         default:
             break;
@@ -196,10 +200,10 @@ void BP5Writer::WriteData(format::BufferV *Data)
         switch (m_Parameters.AggregationType)
         {
         case (int)AggregationType::EveryoneWrites:
-            WriteData_EveryoneWrites(Data, false);
+            WriteData_EveryoneWrites_Async(Data, false);
             break;
         case (int)AggregationType::EveryoneWritesSerial:
-            WriteData_EveryoneWrites(Data, true); // not supported yet
+            WriteData_EveryoneWrites_Async(Data, true);
             break;
         case (int)AggregationType::TwoLevelShm:
             WriteData_TwoLevelShm_Async(Data);
