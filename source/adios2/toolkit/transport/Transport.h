@@ -154,9 +154,9 @@ public:
 
     virtual void Seek(const size_t start = MaxSizeT) = 0;
 
-protected:
-    virtual void MkDir(const std::string &fileName);
+    virtual void MkDir(const std::string &fileName) = 0;
 
+protected:
     void ProfilerStart(const std::string process) noexcept;
 
     void ProfilerStop(const std::string process) noexcept;

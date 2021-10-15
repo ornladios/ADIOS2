@@ -9,10 +9,11 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_DAOS_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_FILE_DAOS_H_
 
-#include <future> //std::async, std::future
-
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
+
+#include <future>
+#include <memory>
 
 namespace adios2
 {
@@ -31,6 +32,8 @@ public:
     FileDaos(helper::Comm const &comm);
 
     ~FileDaos();
+
+    void SetParameters(const Params &parameters);
 
     void Open(const std::string &name, const Mode openMode,
               const bool async = false) final;
@@ -54,12 +57,17 @@ public:
 
     void Seek(const size_t start = MaxSizeT) final;
 
+    void MkDir(const std::string &fileName) final;
+
 private:
-    /** DAOS file handle returned by Open */
-    int m_FileDescriptor = -1;
+    class Impl;
+    std::unique_ptr<Impl> m_Impl;
+    /** DAOS file handle reterned by Open */
+    bool m_DAOSOpenSucceed = false;
+    size_t m_GlobalOffset = 0;
     int m_Errno = 0;
     bool m_IsOpening = false;
-    std::future<int> m_OpenFuture;
+    std::future<bool> m_OpenFuture;
 
     /**
      * Check if m_FileDescriptor is -1 after an operation

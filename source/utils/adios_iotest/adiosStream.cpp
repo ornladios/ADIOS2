@@ -14,28 +14,61 @@
 #include <numeric>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 adiosStream::adiosStream(const std::string &streamName, adios2::IO &io,
-                         const adios2::Mode mode, MPI_Comm comm)
+                         const adios2::Mode mode, MPI_Comm comm, bool iotimer,
+                         size_t appid)
 : Stream(streamName, mode), io(io), comm(comm)
 {
-    // int myRank;
-    // MPI_Comm_rank(comm, &myRank);
-    // double timeStart, timeEnd;
-    // double openTime;
+    int myRank, totalRanks;
+    MPI_Comm_rank(comm, &myRank);
+    MPI_Comm_size(comm, &totalRanks);
+    double timeStart, timeEnd;
+
     // double maxOpenTime, minOpenTime;
+    hasIOTimer = iotimer;
+    appID = appid;
 
     if (mode == adios2::Mode::Write)
     {
-        // timeStart = MPI_Wtime();
+        timeStart = MPI_Wtime();
         engine = io.Open(streamName, adios2::Mode::Write, comm);
-        // timeEnd = MPI_Wtime();
+        timeEnd = MPI_Wtime();
     }
     else
     {
-        // timeStart = MPI_Wtime();
+        timeStart = MPI_Wtime();
         engine = io.Open(streamName, adios2::Mode::Read, comm);
-        // timeEnd = MPI_Wtime();
+        timeEnd = MPI_Wtime();
+    }
+    if (hasIOTimer)
+    {
+        openTime = timeEnd - timeStart;
+        std::vector<double> opentime_all_ranks;
+        if (myRank == 0)
+        {
+            std::string logfilename =
+                "app" + std::to_string(appID) + "_perf.csv";
+            perfLogFP = fopen(logfilename.c_str(), "w");
+            fputs("step,rank,operation,time\n", perfLogFP);
+            std::cout << "performance log file open succeeded!" << std::endl;
+            opentime_all_ranks.reserve(totalRanks);
+        }
+        MPI_Gather(&openTime, 1, MPI_DOUBLE, opentime_all_ranks.data(), 1,
+                   MPI_DOUBLE, 0, comm);
+        if (myRank == 0)
+        {
+            for (int i = 0; i < totalRanks; i++)
+            {
+                std::string content = std::to_string(engine.CurrentStep()) +
+                                      "," + std::to_string(i) + ",open," +
+                                      std::to_string(opentime_all_ranks[i]) +
+                                      "\n";
+                // std::cout << content;
+                fputs(content.c_str(), perfLogFP);
+            }
+        }
     }
     // openTime = timeEnd - timeStart;
     // MPI_Allreduce(&openTime, &maxOpenTime, 1, MPI_DOUBLE, MPI_MAX, comm);
@@ -165,7 +198,7 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
     }
     double timeStart, timeEnd;
     double readTime;
-    double maxReadTime, minReadTime;
+    // double maxReadTime, minReadTime;
     MPI_Barrier(comm);
     timeStart = MPI_Wtime();
     adios2::StepStatus status =
@@ -209,24 +242,43 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
 
     engine.EndStep();
     timeEnd = MPI_Wtime();
-    if (settings.ioTimer)
+    int myRank, totalRanks;
+    MPI_Comm_rank(comm, &myRank);
+    MPI_Comm_size(comm, &totalRanks);
+    if (hasIOTimer)
     {
         readTime = timeEnd - timeStart;
-        MPI_Allreduce(&readTime, &maxReadTime, 1, MPI_DOUBLE, MPI_MAX, comm);
-        MPI_Allreduce(&readTime, &minReadTime, 1, MPI_DOUBLE, MPI_MIN, comm);
-        if (settings.myRank == 0)
+        // double *writetime_all_ranks = NULL;
+        std::vector<double> readtime_all_ranks;
+        if (myRank == 0)
         {
-            std::cout << "    App " << settings.appId
-                      << ": Max read time = " << maxReadTime << std::endl;
-            std::cout << "    App " << settings.appId
-                      << ": Min read time = " << minReadTime << std::endl;
-            std::ofstream rd_perf_log;
-            rd_perf_log.open("read_perf_" + std::to_string(settings.appId) +
-                                 ".txt",
-                             std::ios::app);
-            rd_perf_log << std::to_string(maxReadTime) + ", " +
-                               std::to_string(minReadTime) + "\n";
-            rd_perf_log.close();
+            // writetime_all_ranks = (double *)malloc(totalRanks);
+            //	if (!writetime_all_ranks)
+            //	{
+            //	    std::cout << "rank " << myRank << ": malloc failed!" <<
+            // std::endl;
+            //	}
+            //	else
+            //	{
+            //	    std::cout << "rank " << myRank << ": malloc succeeded!" <<
+            // std::endl;
+            //	}
+            readtime_all_ranks.reserve(totalRanks);
+        }
+
+        MPI_Gather(&readTime, 1, MPI_DOUBLE, readtime_all_ranks.data(), 1,
+                   MPI_DOUBLE, 0, comm);
+        if (myRank == 0)
+        {
+            for (int i = 0; i < totalRanks; i++)
+            {
+                std::string content = std::to_string(engine.CurrentStep()) +
+                                      "," + std::to_string(i) + ",read," +
+                                      std::to_string(readtime_all_ranks[i]) +
+                                      "\n";
+                // std::cout << content;
+                fputs(content.c_str(), perfLogFP);
+            }
         }
     }
 
@@ -311,7 +363,7 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
     }
     double timeStart, timeEnd;
     double writeTime;
-    double maxWriteTime, minWriteTime;
+    // double maxWriteTime, minWriteTime;
     MPI_Barrier(comm);
     timeStart = MPI_Wtime();
     engine.BeginStep();
@@ -334,26 +386,74 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
 
     engine.EndStep();
     timeEnd = MPI_Wtime();
-    if (settings.ioTimer)
+    int myRank, totalRanks;
+    MPI_Comm_rank(comm, &myRank);
+    MPI_Comm_size(comm, &totalRanks);
+    if (hasIOTimer)
     {
         writeTime = timeEnd - timeStart;
-        MPI_Allreduce(&writeTime, &maxWriteTime, 1, MPI_DOUBLE, MPI_MAX, comm);
-        MPI_Allreduce(&writeTime, &minWriteTime, 1, MPI_DOUBLE, MPI_MIN, comm);
-        if (settings.myRank == 0)
+        // double *writetime_all_ranks = NULL;
+        std::vector<double> writetime_all_ranks;
+        if (myRank == 0)
         {
-            std::cout << "    App " << settings.appId
-                      << ": Max write time = " << maxWriteTime << std::endl;
-            std::cout << "    App " << settings.appId
-                      << ": Min write time = " << minWriteTime << std::endl;
-            std::ofstream wr_perf_log;
-            wr_perf_log.open("write_perf_" + std::to_string(settings.appId) +
-                                 ".txt",
-                             std::ios::app);
-            wr_perf_log << std::to_string(maxWriteTime) + ", " +
-                               std::to_string(minWriteTime) + "\n";
-            wr_perf_log.close();
+            // writetime_all_ranks = (double *)malloc(totalRanks);
+            //	if (!writetime_all_ranks)
+            //	{
+            //	    std::cout << "rank " << myRank << ": malloc failed!" <<
+            // std::endl;
+            //	}
+            //	else
+            //	{
+            //	    std::cout << "rank " << myRank << ": malloc succeeded!" <<
+            // std::endl;
+            //	}
+            writetime_all_ranks.reserve(totalRanks);
         }
+
+        MPI_Gather(&writeTime, 1, MPI_DOUBLE, writetime_all_ranks.data(), 1,
+                   MPI_DOUBLE, 0, comm);
+        if (myRank == 0)
+        {
+            for (int i = 0; i < totalRanks; i++)
+            {
+                std::string content = std::to_string(engine.CurrentStep()) +
+                                      "," + std::to_string(i) + ",write," +
+                                      std::to_string(writetime_all_ranks[i]) +
+                                      "\n";
+                // std::cout << content;
+                fputs(content.c_str(), perfLogFP);
+            }
+        }
+        // std::cout << "rank " << myRank << ": before
+        // free(writetime_all_ranks)..." << std::endl;
+        // free(writetime_all_ranks);
+        // std::cout << "rank " << myRank << ": after
+        // free(writetime_all_ranks)..." << std::endl; writetime_all_ranks =
+        // NULL;
     }
+    //    if (settings.ioTimer)
+    //    {
+    //        writeTime = timeEnd - timeStart;
+    //        MPI_Allreduce(&writeTime, &maxWriteTime, 1, MPI_DOUBLE, MPI_MAX,
+    //        comm); MPI_Allreduce(&writeTime, &minWriteTime, 1, MPI_DOUBLE,
+    //        MPI_MIN, comm); if (settings.myRank == 0)
+    //        {
+    //            std::cout << "    App " << settings.appId
+    //                      << ": Max write time = " << maxWriteTime <<
+    //                      std::endl;
+    //            std::cout << "    App " << settings.appId
+    //                      << ": Min write time = " << minWriteTime <<
+    //                      std::endl;
+    //            std::ofstream wr_perf_log;
+    //            wr_perf_log.open("write_perf_" +
+    //            std::to_string(settings.appId) +
+    //                                 ".txt",
+    //                             std::ios::app);
+    //            wr_perf_log << std::to_string(maxWriteTime) + ", " +
+    //                               std::to_string(minWriteTime) + "\n";
+    //            wr_perf_log.close();
+    //        }
+    //    }
 }
 
 void adiosStream::Write(CommandWrite *cmdW, Config &cfg,
@@ -369,4 +469,17 @@ adios2::StepStatus adiosStream::Read(CommandRead *cmdR, Config &cfg,
     return readADIOS(cmdR, cfg, settings, step);
 }
 
-void adiosStream::Close() { engine.Close(); }
+void adiosStream::Close()
+{
+    int myRank, totalRanks;
+    MPI_Comm_rank(comm, &myRank);
+    MPI_Comm_size(comm, &totalRanks);
+    if (hasIOTimer)
+    {
+        if (myRank == 0)
+        {
+            fclose(perfLogFP);
+        }
+    }
+    engine.Close();
+}

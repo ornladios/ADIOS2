@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 
         for (const auto &st : streamsInOrder)
         {
-            const std::string &streamName = st.first;
+            std::string streamName = st.first;
             std::shared_ptr<ioGroup> io;
             auto &groupName = groupMap[streamName];
             auto it = ioMap.find(groupName);
@@ -147,10 +147,20 @@ int main(int argc, char *argv[])
                         std::cout << "    Create Output Stream " << streamName
                                   << "... " << std::endl;
                     }
-                    std::shared_ptr<Stream> writer =
-                        openStream(streamName, io, adios2::Mode::Write,
-                                   settings.iolib, settings.appComm);
-                    writeStreamMap[streamName] = writer;
+                    if (!settings.outputPath.empty())
+                    {
+                        std::string outputPath = settings.outputPath;
+                        if (settings.outputPath.back() != '/')
+                        {
+                            outputPath += '/';
+                        }
+
+                        streamName = outputPath + streamName;
+                    }
+                    std::shared_ptr<Stream> writer = openStream(
+                        streamName, io, adios2::Mode::Write, settings.iolib,
+                        settings.appComm, settings.ioTimer, settings.appId);
+                    writeStreamMap[st.first] = writer;
                 }
             }
             else /* Read */
@@ -160,10 +170,20 @@ int main(int argc, char *argv[])
                 {
                     std::cout << "    Open Input Stream " << streamName
                               << "... " << std::endl;
-                    std::shared_ptr<Stream> reader =
-                        openStream(streamName, io, adios2::Mode::Read,
-                                   settings.iolib, settings.appComm);
-                    readStreamMap[streamName] = reader;
+                    if (!settings.outputPath.empty())
+                    {
+                        std::string outputPath = settings.outputPath;
+                        if (settings.outputPath.back() != '/')
+                        {
+                            outputPath += '/';
+                        }
+
+                        streamName = outputPath + streamName;
+                    }
+                    std::shared_ptr<Stream> reader = openStream(
+                        streamName, io, adios2::Mode::Read, settings.iolib,
+                        settings.appComm, settings.ioTimer, settings.appId);
+                    readStreamMap[st.first] = reader;
                 }
             }
         }

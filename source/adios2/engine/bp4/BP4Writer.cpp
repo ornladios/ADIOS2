@@ -234,6 +234,10 @@ void BP4Writer::InitTransports()
                 m_IO.m_TransportsParameters[i]["asynctasks"] = "true";
             }
         }
+        for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
+        {
+            m_IO.m_TransportsParameters[i].insert({"SingleProcess", "true"});
+        }
 
         m_FileDataManager.OpenFiles(m_SubStreamNames, m_OpenMode,
                                     m_IO.m_TransportsParameters,
@@ -250,6 +254,8 @@ void BP4Writer::InitTransports()
 
     if (m_BP4Serializer.m_RankMPI == 0)
     {
+        // if (m_BP4Serializer.m_Parameters.CollectiveMetadata)
+        //{
         const std::vector<std::string> transportsNames =
             m_FileMetadataManager.GetFilesBaseNames(
                 m_BBName, m_IO.m_TransportsParameters);
@@ -257,6 +263,10 @@ void BP4Writer::InitTransports()
         m_MetadataFileNames =
             m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
 
+        for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
+        {
+            m_IO.m_TransportsParameters[i].insert({"SingleProcess", "true"});
+        }
         m_FileMetadataManager.OpenFiles(m_MetadataFileNames, m_OpenMode,
                                         m_IO.m_TransportsParameters,
                                         m_BP4Serializer.m_Profiler.m_IsActive);
@@ -288,6 +298,7 @@ void BP4Writer::InitTransports()
                 m_FileDrainer.AddOperationOpen(name, m_OpenMode);
             }
         }
+        //}
     }
 
     // last process create .bpversion file with content "4"

@@ -88,9 +88,26 @@ void BP4Reader::ReadVariableBlocks(Variable<T> &variable)
                             m_Name, subStreamBoxInfo.SubStreamID,
                             m_BP4Deserializer.m_Minifooter.HasSubFiles, true);
 
-                    m_DataFileManager.OpenFileID(
-                        subFileName, subStreamBoxInfo.SubStreamID, Mode::Read,
-                        {{"transport", "File"}}, profile);
+                    std::string library;
+                    helper::SetParameterValue(
+                        "Library", m_IO.m_TransportsParameters[0], library);
+                    helper::SetParameterValue(
+                        "library", m_IO.m_TransportsParameters[0], library);
+                    if (library == "Daos" || library == "daos")
+                    {
+
+                        m_DataFileManager.OpenFileID(
+                            subFileName, subStreamBoxInfo.SubStreamID,
+                            Mode::Read,
+                            {{"transport", "File"}, {"library", "daos"}},
+                            profile);
+                    }
+                    else
+                    {
+                        m_DataFileManager.OpenFileID(
+                            subFileName, subStreamBoxInfo.SubStreamID,
+                            Mode::Read, {{"transport", "File"}}, profile);
+                    }
                 }
 
                 char *buffer = nullptr;

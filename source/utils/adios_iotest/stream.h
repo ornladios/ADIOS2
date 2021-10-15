@@ -35,6 +35,6 @@ protected:
 std::shared_ptr<Stream> openStream(const std::string &streamName,
                                    std::shared_ptr<ioGroup> iogroup,
                                    const adios2::Mode mode, IOLib iolib,
-                                   MPI_Comm comm);
+                                   MPI_Comm comm, bool iotimer, size_t appid);
 
 #endif /* STREAM_H */

@@ -11,6 +11,7 @@
 #include "TransportMan.h"
 
 #include <ios>
+#include <iostream>
 #include <set>
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
@@ -60,11 +61,52 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
             {
                 const std::string path(
                     fileNames[i].substr(0, lastPathSeparator));
-                helper::CreateDirectory(path);
+
+                std::string library;
+                helper::SetParameterValue("Library", parameters, library);
+                helper::SetParameterValue("library", parameters, library);
+                if (library == "Daos" || library == "daos")
+                {
+#ifdef ADIOS2_HAVE_DAOS
+                    auto transport =
+                        std::make_shared<transport::FileDaos>(m_Comm);
+                    transport->SetParameters({{"SingleProcess", "true"}});
+                    // int rank = m_Comm.Rank();
+                    // std::cout << "rank " << rank << ": start
+                    // transport->MkDir(" << path << ")..." << std::endl;
+                    transport->MkDir(path);
+                    // std::cout << "rank " << rank << ": transport->MkDir(" <<
+                    // path << ") succeeded!" << std::endl;
+#endif
+                }
+                else
+                {
+                    helper::CreateDirectory(path);
+                }
             }
         }
     };
 
+    //    const Params &parameters = parametersVector[0];
+    //    std::string library;
+    //    helper::SetParameterValue("Library", parameters, library);
+    //    helper::SetParameterValue("library", parameters, library);
+    //    if (library == "Daos" || library == "daos")
+    //    {
+    //        int rank = m_Comm.Rank();
+    //	std::cout << "rank " << rank << ": " << fileNames[0] << std::endl;
+    //
+    //	auto transport = std::make_shared<transport::FileDaos>(m_Comm);
+    //	std::cout << "rank " << rank << ": start transport->MkDir(" <<
+    // fileNames[0] << ")..." << std::endl; 	transport->MkDir(fileNames[0]);
+    //	std::cout << "rank " << rank << ": transport->MkDir(" << fileNames[0] <<
+    //") succeeded!" << std::endl;
+    //
+    //	m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
+    //
+    //    }
+    //    else
+    //    {
     if (nodeLocal)
     {
         lf_CreateDirectories(fileNames);
@@ -79,6 +121,7 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
 
         m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
     }
+    //    }
 }
 
 void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
@@ -117,6 +160,8 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
             m_Transports.insert({i, file});
         }
     }
+    // std::cout << "rank " << m_Comm.Rank() << ": OpenFiles succeeded!" <<
+    // std::endl;
 }
 
 void TransportMan::OpenFileID(const std::string &name, const size_t id,
@@ -510,6 +555,16 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
         else if (library == "Daos" || library == "daos")
         {
             transport = std::make_shared<transport::FileDaos>(m_Comm);
+            //	    std::string singleProc = "false";
+            //	    helper::SetParameterValue("SingleProcess", parameters,
+            // singleProc); 	    helper::SetParameterValue("singleprocess",
+            // parameters, singleProc); 	    bool singleProcess =
+            // helper::StringTo<bool>(singleProc, ""); 	    if (singleProcess)
+            //	    {
+            //
+            //		transport->SetParameters({{"SingleProcess", "true"}});
+            //	    }
+
             if (lf_GetBuffered("false"))
             {
                 throw std::invalid_argument(
@@ -578,6 +633,10 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     }
 
     transport->SetParameters(parameters);
+
+    // int rank = m_Comm.Rank();
+    // std::cout << "rank " << rank << " open file transport: " << fileName <<
+    // std::endl;
 
     // open
     if (useComm)

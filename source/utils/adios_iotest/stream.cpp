@@ -54,14 +54,15 @@ void Stream::fillArray(std::shared_ptr<VariableInfo> ov, double value)
 std::shared_ptr<Stream> openStream(const std::string &streamName,
                                    std::shared_ptr<ioGroup> iogroup,
                                    const adios2::Mode mode, IOLib iolib,
-                                   MPI_Comm comm)
+                                   MPI_Comm comm, bool iotimer, size_t appid)
 {
     std::shared_ptr<Stream> sp;
     switch (iolib)
     {
     case IOLib::ADIOS:
     {
-        auto s = adiosStream(streamName, iogroup->adiosio, mode, comm);
+        auto s = adiosStream(streamName, iogroup->adiosio, mode, comm, iotimer,
+                             appid);
         sp = std::make_shared<adiosStream>(s);
         break;
     }
