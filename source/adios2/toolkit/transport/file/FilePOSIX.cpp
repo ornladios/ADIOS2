@@ -462,10 +462,14 @@ size_t FilePOSIX::GetSize()
 
 void FilePOSIX::Flush()
 {
+    /* Turn this off now because BP3/BP4 calls manager Flush and this syncing
+     * slows down IO performance */
+#if 0
 #if (_POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500)
     fdatasync(m_FileDescriptor);
 #else
     fsync(m_FileDescriptor)
+#endif
 #endif
 }
 
