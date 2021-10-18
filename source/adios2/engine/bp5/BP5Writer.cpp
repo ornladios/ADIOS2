@@ -59,7 +59,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
     {
         m_LastTimeBetweenSteps = Now() - m_EndStepEnd;
         m_TotalTimeBetweenSteps += m_LastTimeBetweenSteps;
-        m_AvgTimeBetweenSteps = m_TotalTimeBetweenSteps / (m_WriterStep + 1);
+        m_AvgTimeBetweenSteps = m_TotalTimeBetweenSteps / m_WriterStep;
         m_ExpectedTimeBetweenSteps = m_LastTimeBetweenSteps;
         if (m_ExpectedTimeBetweenSteps > m_AvgTimeBetweenSteps)
         {
@@ -69,6 +69,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (m_Parameters.AsyncWrite)
     {
+        m_flagRush = true;
         TimePoint wait_start = Now();
         if (m_WriteFuture.valid())
         {
@@ -82,7 +83,10 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
                                        m_LatestMetaDataSize);
                 std::cout << "BeginStep, wait on async write was = "
                           << wait.count() << " time since EndStep was = "
-                          << m_LastTimeBetweenSteps.count() << std::endl;
+                          << m_LastTimeBetweenSteps.count()
+                          << " expect next one to be = "
+                          << m_ExpectedTimeBetweenSteps.count()
+                          << std::endl;
             }
         }
     }
