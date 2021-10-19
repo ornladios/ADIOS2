@@ -20,7 +20,7 @@ resources:
 
 jobs:
 - job: windows
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   strategy:
     matrix:
       win2016_vs2017:
@@ -48,7 +48,7 @@ jobs:
       name: Test
 
 - job: macos
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   strategy:
     matrix:
       macos1014_xcode103_ninja:
@@ -71,13 +71,15 @@ jobs:
       name: Test
 
 - job: linux
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   strategy:
     matrix:
       el7_intel_ohpc:
         containerResource: el7-intel-ohpc
       el7_intel_openmpi_ohpc:
         containerResource: el7-intel-openmpi-ohpc
+  pool:
+    vmImage: 'ubuntu-latest'
   container: $[ variables['containerResource'] ]
   steps:
     - bash: scripts/ci/azure/linux-setup.sh
