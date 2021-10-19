@@ -188,6 +188,8 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
     PutParameter(bufferOut, paramOffset,
                  static_cast<uint8_t>(PNG_LIBPNG_VER_RELEASE));
 
+    const size_t sizeIn =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType));
     if (sizeIn < destInfo.Offset)
     {
         std::cerr
