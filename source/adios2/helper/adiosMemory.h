@@ -39,13 +39,18 @@ template <class T>
 void InsertToBuffer(std::vector<char> &buffer, const T *source,
                     const size_t elements = 1) noexcept;
 
+#ifdef ADIOS2_HAVE_CUDA
 /*
  * Copies data from a GPU buffer to a specific location in the adios buffer
  */
-#ifdef ADIOS2_HAVE_CUDA
 template <class T>
 void CopyFromGPUToBuffer(std::vector<char> &buffer, size_t &position,
                          const T *source, const size_t elements = 1) noexcept;
+
+/**
+ * Wrapper around cudaMemcpy needed for isolating CUDA interface dependency
+ */
+void MemcpyGPUToBuffer(void *dst, const char *src, size_t byteCount);
 #endif
 
 /**
