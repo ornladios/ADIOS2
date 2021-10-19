@@ -35,7 +35,7 @@ CompressSirius::CompressSirius(const Params &parameters)
 }
 
 size_t CompressSirius::Compress(const char *dataIn, const Dims &blockStart,
-                                const Dims &blockCount, const DataType varType,
+                                const Dims &blockCount, const DataType dataType,
                                 char *bufferOut, const Params &params)
 {
     const uint8_t bufferVersion = 1;
@@ -59,11 +59,11 @@ size_t CompressSirius::Compress(const char *dataIn, const Dims &blockStart,
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
-    PutParameter(bufferOut, bufferOutOffset, varType);
+    PutParameter(bufferOut, bufferOutOffset, dataType);
     // sirius V1 metadata end
 
     size_t totalInputBytes =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType));
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(dataType));
 
     // if called from Tier 0 sub-engine, then compute tier buffers and put into
     // m_TierBuffers

@@ -33,7 +33,7 @@ CompressBZIP2::CompressBZIP2(const Params &parameters)
 }
 
 size_t CompressBZIP2::Compress(const char *dataIn, const Dims &blockStart,
-                               const Dims &blockCount, DataType type,
+                               const Dims &blockCount, DataType dataType,
                                char *bufferOut, const Params &parameters)
 {
 
@@ -47,7 +47,7 @@ size_t CompressBZIP2::Compress(const char *dataIn, const Dims &blockStart,
     // Universal operator metadata end
 
     const size_t sizeIn =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(dataType));
     const size_t batches = sizeIn / DefaultMaxFileBatchSize + 1;
 
     // bzip2 V1 metadata
@@ -61,7 +61,7 @@ size_t CompressBZIP2::Compress(const char *dataIn, const Dims &blockStart,
     if (!parameters.empty())
     {
         const std::string hint(" in call to CompressBZIP2 Compress " +
-                               ToString(type) + "\n");
+                               ToString(dataType) + "\n");
         helper::SetParameterValueInt("blockSize100k", parameters, blockSize100k,
                                      hint);
         helper::SetParameterValueInt("verbosity", parameters, verbosity, hint);
@@ -207,7 +207,10 @@ size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
     return 0;
 }
 
-bool CompressBZIP2::IsDataTypeValid(const DataType type) const { return true; }
+bool CompressBZIP2::IsDataTypeValid(const DataType dataType) const
+{
+    return true;
+}
 
 void CompressBZIP2::CheckStatus(const int status, const std::string hint) const
 {

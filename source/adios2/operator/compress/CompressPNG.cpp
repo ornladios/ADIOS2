@@ -48,7 +48,7 @@ CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
 }
 
 size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
-                             const Dims &blockCount, const DataType type,
+                             const Dims &blockCount, const DataType dataType,
                              char *bufferOut, const Params &parameters)
 {
     size_t bufferOutOffset = 0;
@@ -143,7 +143,7 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
 
     const uint32_t bytesPerPixel = ndims == 3
                                        ? static_cast<uint32_t>(blockCount[2])
-                                       : helper::GetDataTypeSize(type);
+                                       : helper::GetDataTypeSize(dataType);
 
     const uint32_t width = static_cast<uint32_t>(blockCount[1]);
     const uint32_t height = static_cast<uint32_t>(blockCount[0]);
@@ -189,7 +189,7 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
                  static_cast<uint8_t>(PNG_LIBPNG_VER_RELEASE));
 
     const size_t sizeIn =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType));
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(dataType));
     if (sizeIn < destInfo.Offset)
     {
         std::cerr
@@ -274,7 +274,10 @@ size_t CompressPNG::Decompress(const char *bufferIn, const size_t sizeIn,
     return 0;
 }
 
-bool CompressPNG::IsDataTypeValid(const DataType type) const { return true; }
+bool CompressPNG::IsDataTypeValid(const DataType dataType) const
+{
+    return true;
+}
 
 void CompressPNG::CheckStatus(const int status, const std::string hint) const {}
 

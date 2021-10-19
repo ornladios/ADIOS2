@@ -286,8 +286,9 @@ CompressLibPressio::CompressLibPressio(const Params &parameters)
 }
 
 size_t CompressLibPressio::Compress(const char *dataIn, const Dims &blockStart,
-                                    const Dims &blockCount, const DataType type,
-                                    char *bufferOut, const Params &parameters)
+                                    const Dims &blockCount,
+                                    const DataType dataType, char *bufferOut,
+                                    const Params &parameters)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -306,7 +307,7 @@ size_t CompressLibPressio::Compress(const char *dataIn, const Dims &blockStart,
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
-    PutParameter(bufferOut, bufferOutOffset, type);
+    PutParameter(bufferOut, bufferOutOffset, dataType);
     PutParameter(bufferOut, bufferOutOffset,
                  static_cast<uint8_t>(pressio_major_version()));
     PutParameter(bufferOut, bufferOutOffset,
@@ -318,7 +319,7 @@ size_t CompressLibPressio::Compress(const char *dataIn, const Dims &blockStart,
 
     auto inputs_dims = adios_to_libpressio_dims(blockCount);
     pressio_data *input_buf = pressio_data_new_nonowning(
-        adios_to_libpressio_dtype(type), const_cast<char *>(dataIn),
+        adios_to_libpressio_dtype(dataType), const_cast<char *>(dataIn),
         inputs_dims.size(), inputs_dims.data());
     pressio_data *output_buf =
         pressio_data_new_empty(pressio_byte_dtype, 0, nullptr);
@@ -351,7 +352,7 @@ size_t CompressLibPressio::Compress(const char *dataIn, const Dims &blockStart,
     pressio_data_free(output_buf);
 
     const size_t sizeIn =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(dataType));
     if (sizeIn < bufferOutOffset)
     {
         std::cerr
@@ -379,7 +380,7 @@ size_t CompressLibPressio::DecompressV1(const char *bufferIn,
     {
         blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
-    const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
+    const DataType dataType = GetParameter<DataType>(bufferIn, bufferInOffset);
     m_VersionInfo =
         " Data is compressed using LibPressio Version " +
         std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
@@ -390,7 +391,7 @@ size_t CompressLibPressio::DecompressV1(const char *bufferIn,
 
     std::vector<size_t> dims = adios_to_libpressio_dims(blockCount);
     pressio_data *output_buf = pressio_data_new_owning(
-        adios_to_libpressio_dtype(type), dims.size(), dims.data());
+        adios_to_libpressio_dtype(dataType), dims.size(), dims.data());
 
     size_t newSizeIn = sizeIn - bufferInOffset;
     pressio_data *input_buf = pressio_data_new_nonowning(
@@ -453,10 +454,10 @@ size_t CompressLibPressio::Decompress(const char *bufferIn, const size_t sizeIn,
     return 0;
 }
 
-bool CompressLibPressio::IsDataTypeValid(const DataType type) const
+bool CompressLibPressio::IsDataTypeValid(const DataType dataType) const
 {
 #define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
+    if (helper::GetDataType<T>() == dataType)                                  \
     {                                                                          \
         return true;                                                           \
     }

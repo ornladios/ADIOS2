@@ -43,7 +43,7 @@ CompressBlosc::CompressBlosc(const Params &parameters)
 }
 
 size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
-                               const Dims &blockCount, const DataType type,
+                               const Dims &blockCount, const DataType dataType,
                                char *bufferOut, const Params &parameters)
 {
     size_t bufferOutOffset = 0;
@@ -56,7 +56,7 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
     // Universal operator metadata end
 
     const size_t sizeIn =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(dataType));
 
     // blosc V1 metadata
     PutParameter(bufferOut, bufferOutOffset, sizeIn);
@@ -157,7 +157,7 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
     *headerPtr = DataHeader{};
     bufferOutOffset += sizeof(DataHeader);
 
-    int32_t typesize = helper::GetDataTypeSize(type);
+    int32_t typesize = helper::GetDataTypeSize(dataType);
     if (typesize > BLOSC_MAX_TYPESIZE)
         typesize = 1;
 
@@ -310,7 +310,10 @@ size_t CompressBlosc::Decompress(const char *bufferIn, const size_t sizeIn,
     return 0;
 }
 
-bool CompressBlosc::IsDataTypeValid(const DataType type) const { return true; }
+bool CompressBlosc::IsDataTypeValid(const DataType dataType) const
+{
+    return true;
+}
 
 size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
                                               const size_t sizeIn,

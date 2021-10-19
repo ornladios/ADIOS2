@@ -30,7 +30,7 @@ namespace compress
 CompressSZ::CompressSZ(const Params &parameters) : Operator("sz", parameters) {}
 
 size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
-                            const Dims &blockCount, const DataType varType,
+                            const Dims &blockCount, const DataType dataType,
                             char *bufferOut, const Params &parameters)
 {
     const uint8_t bufferVersion = 1;
@@ -50,7 +50,7 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
-    PutParameter(bufferOut, bufferOutOffset, varType);
+    PutParameter(bufferOut, bufferOutOffset, dataType);
     for (uint8_t i = 0; i < 4; ++i)
     {
         PutParameter(bufferOut, bufferOutOffset,
@@ -58,7 +58,7 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
     }
     // sz V1 metadata end
 
-    Dims convertedDims = ConvertDims(blockCount, varType, 4);
+    Dims convertedDims = ConvertDims(blockCount, dataType, 4);
 
     sz_params sz;
     memset(&sz, 0, sizeof(sz_params));
@@ -82,7 +82,7 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
         static_cast<int>(std::pow(5., static_cast<double>(ndims)));
     sz.pwr_type = SZ_PWR_MIN_TYPE;
 
-    convertedDims = ConvertDims(blockCount, varType, 4, true, 1);
+    convertedDims = ConvertDims(blockCount, dataType, 4, true, 1);
 
     /* SZ parameters */
     int use_configfile = 0;
@@ -257,13 +257,13 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
 
     // Get type info
     int dtype = -1;
-    if (varType == helper::GetDataType<double>() ||
-        varType == helper::GetDataType<std::complex<double>>())
+    if (dataType == helper::GetDataType<double>() ||
+        dataType == helper::GetDataType<std::complex<double>>())
     {
         dtype = SZ_DOUBLE;
     }
-    else if (varType == helper::GetDataType<float>() ||
-             varType == helper::GetDataType<std::complex<float>>())
+    else if (dataType == helper::GetDataType<float>() ||
+             dataType == helper::GetDataType<std::complex<float>>())
     {
         dtype = SZ_FLOAT;
     }
@@ -271,7 +271,7 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
     {
         throw std::invalid_argument("ERROR: ADIOS2 SZ Compression only support "
                                     "double or float, type: " +
-                                    ToString(varType) + " is unsupported\n");
+                                    ToString(dataType) + " is unsupported\n");
     }
 
     size_t szBufferSize;
@@ -285,7 +285,7 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
     SZ_Finalize();
 
     const size_t sizeIn =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType));
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(dataType));
     if (sizeIn < bufferOutOffset)
     {
         std::cerr

@@ -27,7 +27,7 @@ CompressMGARD::CompressMGARD(const Params &parameters)
 }
 
 size_t CompressMGARD::Compress(const char *dataIn, const Dims &blockStart,
-                               const Dims &blockCount, const DataType type,
+                               const Dims &blockCount, const DataType dataType,
                                char *bufferOut, const Params &parameters)
 {
     const uint8_t bufferVersion = 1;
@@ -47,7 +47,7 @@ size_t CompressMGARD::Compress(const char *dataIn, const Dims &blockStart,
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
-    PutParameter(bufferOut, bufferOutOffset, type);
+    PutParameter(bufferOut, bufferOutOffset, dataType);
     PutParameter(bufferOut, bufferOutOffset,
                  static_cast<uint8_t>(MGARD_VERSION_MAJOR));
     PutParameter(bufferOut, bufferOutOffset,
@@ -64,7 +64,7 @@ size_t CompressMGARD::Compress(const char *dataIn, const Dims &blockStart,
 
     // set type
     int mgardType = -1;
-    if (type == helper::GetDataType<double>())
+    if (dataType == helper::GetDataType<double>())
     {
         mgardType = 1;
     }
@@ -124,7 +124,7 @@ size_t CompressMGARD::Compress(const char *dataIn, const Dims &blockStart,
     bufferOutOffset += sizeOut;
 
     const size_t sizeIn =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(dataType));
     if (sizeIn < bufferOutOffset)
     {
         std::cerr
@@ -152,7 +152,7 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
     {
         blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
-    const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
+    const DataType dataType = GetParameter<DataType>(bufferIn, bufferInOffset);
     m_VersionInfo =
         " Data is compressed using MGARD Version " +
         std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
@@ -162,7 +162,7 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     int mgardType = -1;
 
-    if (type == helper::GetDataType<double>())
+    if (dataType == helper::GetDataType<double>())
     {
         mgardType = 1;
     }
@@ -189,7 +189,7 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
         static_cast<int>(sizeIn - bufferInOffset), r[0], r[1], r[2], 0.0);
 
     const size_t sizeOut =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(dataType));
 
     std::memcpy(dataOut, dataPtr, sizeOut);
 
@@ -225,10 +225,10 @@ size_t CompressMGARD::Decompress(const char *bufferIn, const size_t sizeIn,
     return 0;
 }
 
-bool CompressMGARD::IsDataTypeValid(const DataType type) const
+bool CompressMGARD::IsDataTypeValid(const DataType dataType) const
 {
 #define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
+    if (helper::GetDataType<T>() == dataType)                                  \
     {                                                                          \
         return true;                                                           \
     }
