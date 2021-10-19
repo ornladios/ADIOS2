@@ -188,6 +188,14 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
     PutParameter(bufferOut, paramOffset,
                  static_cast<uint8_t>(PNG_LIBPNG_VER_RELEASE));
 
+    if (sizeIn < destInfo.Offset)
+    {
+        std::cerr
+            << "ADIOS2 png operator warning: compression buffer size larger "
+               "than original data size. Consider disabling compression."
+            << std::endl;
+    }
+
     return destInfo.Offset;
 }
 

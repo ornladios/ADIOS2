@@ -123,6 +123,16 @@ size_t CompressMGARD::Compress(const char *dataIn, const Dims &blockStart,
 
     bufferOutOffset += sizeOut;
 
+    const size_t sizeIn =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    if (sizeIn < bufferOutOffset)
+    {
+        std::cerr
+            << "ADIOS2 mgard operator warning: compression buffer size larger "
+               "than original data size. Consider disabling compression."
+            << std::endl;
+    }
+
     return bufferOutOffset;
 }
 

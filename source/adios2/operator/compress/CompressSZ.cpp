@@ -283,6 +283,17 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
     free(szBuffer);
     szBuffer = nullptr;
     SZ_Finalize();
+
+    const size_t sizeIn =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType));
+    if (sizeIn < bufferOutOffset)
+    {
+        std::cerr
+            << "ADIOS2 sz operator warning: compression buffer size larger "
+               "than original data size. Consider disabling compression."
+            << std::endl;
+    }
+
     return bufferOutOffset;
 }
 

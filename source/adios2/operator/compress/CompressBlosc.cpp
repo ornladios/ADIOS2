@@ -226,6 +226,15 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
     }
 
     blosc_destroy();
+
+    if (sizeIn < bufferOutOffset)
+    {
+        std::cerr
+            << "ADIOS2 blosc operator warning: compression buffer size larger "
+               "than original data size. Consider disabling compression."
+            << std::endl;
+    }
+
     return bufferOutOffset;
 }
 

@@ -350,6 +350,16 @@ size_t CompressLibPressio::Compress(const char *dataIn, const Dims &blockStart,
     pressio_data_free(input_buf);
     pressio_data_free(output_buf);
 
+    const size_t sizeIn =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    if (sizeIn < bufferOutOffset)
+    {
+        std::cerr
+            << "ADIOS2 LibPressio operator warning: compression buffer size "
+               "larger than original data size. Consider disabling compression."
+            << std::endl;
+    }
+
     return bufferOutOffset;
 }
 

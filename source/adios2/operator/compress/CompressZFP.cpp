@@ -76,6 +76,17 @@ size_t CompressZFP::Compress(const char *dataIn, const Dims &blockStart,
     zfp_field_free(field);
     zfp_stream_close(stream);
     stream_close(bitstream);
+
+    const size_t sizeIn =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    if (sizeIn < bufferOutOffset)
+    {
+        std::cerr
+            << "ADIOS2 zfp operator warning: compression buffer size larger "
+               "than original data size. Consider disabling compression."
+            << std::endl;
+    }
+
     return bufferOutOffset;
 }
 

@@ -112,6 +112,14 @@ size_t CompressBZIP2::Compress(const char *dataIn, const Dims &blockStart,
         destOffset += destLen;
     }
 
+    if (sizeIn < destOffset)
+    {
+        std::cerr
+            << "ADIOS2 bzip2 operator warning: compression buffer size larger "
+               "than original data size. Consider disabling compression."
+            << std::endl;
+    }
+
     return destOffset;
 }
 
