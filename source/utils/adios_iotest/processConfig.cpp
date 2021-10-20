@@ -26,8 +26,8 @@ CommandSleep::CommandSleep(size_t time)
 }
 CommandSleep::~CommandSleep() {}
 
-CommandBusy::CommandBusy(size_t time)
-: Command(Operation::Busy), busyTime_us(time)
+CommandBusy::CommandBusy(size_t time, size_t datasize)
+: Command(Operation::Busy), busyTime_us(time), localdata(datasize)
 {
 }
 CommandBusy::~CommandBusy() {}
@@ -569,7 +569,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                             << d << " seconds" << std::endl;
                     }
                     size_t t_us = static_cast<size_t>(d * 1000000);
-                    auto cmd = std::make_shared<CommandBusy>(t_us);
+                    auto cmd = std::make_shared<CommandBusy>(t_us, 131072);
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                 }

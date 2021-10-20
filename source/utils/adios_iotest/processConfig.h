@@ -61,7 +61,8 @@ class CommandBusy : public Command
 {
 public:
     const size_t busyTime_us = 0; // in microseconds
-    CommandBusy(size_t time);
+    std::vector<double> localdata;
+    CommandBusy(size_t time, size_t datasize);
     ~CommandBusy();
 };
 

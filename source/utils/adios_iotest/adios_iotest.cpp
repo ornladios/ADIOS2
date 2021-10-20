@@ -233,10 +233,13 @@ int main(int argc, char *argv[])
                 }
                 case Operation::Busy:
                 {
-                    adios.EnterComputationBlock();
                     auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
                     std::chrono::high_resolution_clock::time_point start =
                         std::chrono::high_resolution_clock::now();
+                    auto end =
+                        start + std::chrono::microseconds(cmdS->busyTime_us);
+                    auto sleeptime = std::chrono::microseconds(
+                        cmdS->busyTime_us / (size_t)100);
                     if (!settings.myRank && settings.verbose)
                     {
                         double t =
@@ -244,11 +247,23 @@ int main(int argc, char *argv[])
                         std::cout << "    Be busy for " << t << "  seconds "
                                   << std::endl;
                     }
-                    while (std::chrono::high_resolution_clock::now() <
-                           start + std::chrono::microseconds(cmdS->busyTime_us))
-                        ;
+                    size_t n = cmdS->localdata.size();
+                    std::vector<double> r(n);
+                    int keepBusy = 1;
+                    while (keepBusy)
+                    {
+                        MPI_Reduce(cmdS->localdata.data(), r.data(), n,
+                                   MPI_DOUBLE, MPI_SUM, 0, settings.appComm);
+                        std::this_thread::sleep_for(sleeptime);
+                        if (!settings.myRank)
+                        {
+                            keepBusy =
+                                (std::chrono::high_resolution_clock::now() <
+                                 end);
+                        }
+                        MPI_Bcast(&keepBusy, 1, MPI_INT, 0, settings.appComm);
+                    }
                     break;
-                    adios.ExitComputationBlock();
                 }
                 case Operation::Write:
                 {
