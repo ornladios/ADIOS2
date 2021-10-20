@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_library(adios2_h5vol SHARED
+add_library(adios2_h5vol
   H5VolReadWrite.c
   H5Vol.c
   H5VolUtil.c
