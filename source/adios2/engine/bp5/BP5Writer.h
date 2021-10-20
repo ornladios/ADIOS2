@@ -20,6 +20,7 @@
 #include "adios2/toolkit/burstbuffer/FileDrainerSingleThread.h"
 #include "adios2/toolkit/format/bp5/BP5Serializer.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
+#include "adios2/toolkit/shm/Spinlock.h"
 #include "adios2/toolkit/shm/TokenChain.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
@@ -108,6 +109,10 @@ private:
     /** Allocates memory and starts a PG group */
     void InitBPBuffer();
     void NotifyEngineAttribute(std::string name, DataType type) noexcept;
+
+    void EnterComputationBlock() noexcept;
+    /** Inform about computation block through User->ADIOS->IO */
+    void ExitComputationBlock() noexcept;
 
 #define declare_type(T)                                                        \
     void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \
@@ -244,6 +249,22 @@ private:
     TimePoint m_EngineStart;
     TimePoint m_BeginStepStart;
     bool m_flagRush; // main thread flips this in Close, async thread watches it
+    bool m_InComputationBlock = false; // main thread flips this in Clos
+    TimePoint m_ComputationBlockStart;
+    /* block counter and length in seconds */
+    size_t m_ComputationBlockID = 0;
+
+    struct ComputationBlockInfo
+    {
+        size_t blockID;
+        double length; // seconds
+        ComputationBlockInfo(const size_t id, const double len)
+        : blockID(id), length(len){};
+    };
+
+    std::vector<ComputationBlockInfo> m_ComputationBlockTimes;
+    /* sum of computationBlockTimes at start of async IO; */
+    double m_ComputationBlocksLength = 0.0;
 
     /* struct of data passed from main thread to async write thread at launch */
     struct AsyncWriteInfo
@@ -259,14 +280,25 @@ private:
         adios2::format::BufferV *Data;
         uint64_t startPos;
         uint64_t totalSize;
-        double deadline;
-        bool *flagRush;
+        double deadline;          // wall-clock time available in seconds
+        bool *flagRush;           // flipped from false to true by main thread
+        bool *inComputationBlock; // flipped back and forth by main thread
+        // comm-free time within deadline in seconds
+        double computationBlocksLength;
+        std::vector<ComputationBlockInfo> expectedComputationBlocks; // a copy
+        std::vector<ComputationBlockInfo>
+            *currentComputationBlocks;     // extended by main thread
+        size_t *currentComputationBlockID; // increased by main thread
+        shm::Spinlock *lock; // race condition over currentComp* variables
     };
 
     AsyncWriteInfo *m_AsyncWriteInfo;
+    // lock to handle race condition over currentComp* variables
+    shm::Spinlock m_AsyncWriteLock;
 
     /* Static functions that will run in another thread */
     static int AsyncWriteThread_EveryoneWrites(AsyncWriteInfo *info);
+    static int AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info);
     static int AsyncWriteThread_TwoLevelShm(AsyncWriteInfo *info);
 
     void AsyncWriteDataCleanup();

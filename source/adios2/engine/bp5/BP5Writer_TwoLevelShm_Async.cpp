@@ -342,6 +342,7 @@ void BP5Writer::AsyncWriteDataCleanup_TwoLevelShm()
     }
     delete m_AsyncWriteInfo->tokenChain;
     delete m_AsyncWriteInfo;
+    m_AsyncWriteInfo = nullptr;
 }
 
 } // end namespace engine

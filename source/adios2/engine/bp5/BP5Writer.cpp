@@ -85,8 +85,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
                           << wait.count() << " time since EndStep was = "
                           << m_LastTimeBetweenSteps.count()
                           << " expect next one to be = "
-                          << m_ExpectedTimeBetweenSteps.count()
-                          << std::endl;
+                          << m_ExpectedTimeBetweenSteps.count() << std::endl;
             }
         }
     }
@@ -540,6 +539,20 @@ void BP5Writer::EndStep()
         }
     }
     delete RecvBuffer;
+
+    if (m_Parameters.AsyncWrite)
+    {
+        /* Start counting computation blocks between EndStep and next BeginStep
+         * each time */
+        {
+            m_AsyncWriteLock.lock();
+            m_ComputationBlockTimes.clear();
+            m_ComputationBlocksLength = 0.0;
+            m_ComputationBlockID = 0;
+            m_AsyncWriteLock.unlock();
+        }
+    }
+
     m_Profiler.Stop("endstep");
     m_WriterStep++;
     m_EndStepEnd = Now();
@@ -979,6 +992,38 @@ void BP5Writer::InitBPBuffer()
 void BP5Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
 {
     m_MarshaledAttributesCount = 0;
+}
+
+void BP5Writer::EnterComputationBlock() noexcept
+{
+    if (m_Parameters.AsyncWrite && !m_BetweenStepPairs)
+    {
+        m_ComputationBlockStart = Now();
+        {
+            m_AsyncWriteLock.lock();
+            m_InComputationBlock = true;
+            m_AsyncWriteLock.unlock();
+        }
+    }
+}
+
+void BP5Writer::ExitComputationBlock() noexcept
+{
+    if (m_Parameters.AsyncWrite && m_InComputationBlock)
+    {
+        double t = Seconds(Now() - m_ComputationBlockStart).count();
+        {
+            m_AsyncWriteLock.lock();
+            if (t > 0.1) // only register long enough intervals
+            {
+                m_ComputationBlockTimes.emplace_back(m_ComputationBlockID, t);
+                m_ComputationBlocksLength += t;
+            }
+            m_InComputationBlock = false;
+            ++m_ComputationBlockID;
+            m_AsyncWriteLock.unlock();
+        }
+    }
 }
 
 void BP5Writer::FlushData(const bool isFinal)

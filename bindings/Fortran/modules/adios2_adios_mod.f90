@@ -154,4 +154,18 @@ contains
 
     end subroutine
 
+
+    subroutine adios2_enter_computation_block(adios, ierr)
+        type(adios2_adios), intent(in) :: adios
+        integer, intent(out) :: ierr
+        call adios2_enter_computation_block_f2c(adios, ierr)
+    end subroutine
+
+    subroutine adios2_exit_computation_block(adios, ierr)
+        type(adios2_adios), intent(in) :: adios
+        integer, intent(out) :: ierr
+        call adios2_exit_computation_block_f2c(adios, ierr)
+    end subroutine
+
+
 end module

@@ -151,6 +151,27 @@ void ADIOS::FlushAll()
     }
 }
 
+void ADIOS::EnterComputationBlock() noexcept
+{
+    enteredComputationBlock = true;
+    for (auto &ioPair : m_IOs)
+    {
+        ioPair.second.EnterComputationBlock();
+    }
+}
+
+void ADIOS::ExitComputationBlock() noexcept
+{
+    if (enteredComputationBlock)
+    {
+        enteredComputationBlock = false;
+        for (auto &ioPair : m_IOs)
+        {
+            ioPair.second.ExitComputationBlock();
+        }
+    }
+}
+
 Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
                                 const Params &parameters)
 {

@@ -217,6 +217,7 @@ int main(int argc, char *argv[])
                 {
                 case Operation::Sleep:
                 {
+                    adios.EnterComputationBlock();
                     auto cmdS = dynamic_cast<const CommandSleep *>(cmd.get());
                     if (!settings.myRank && settings.verbose)
                     {
@@ -227,10 +228,12 @@ int main(int argc, char *argv[])
                     }
                     std::this_thread::sleep_for(
                         std::chrono::microseconds(cmdS->sleepTime_us));
+                    adios.ExitComputationBlock();
                     break;
                 }
                 case Operation::Busy:
                 {
+                    adios.EnterComputationBlock();
                     auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
                     std::chrono::high_resolution_clock::time_point start =
                         std::chrono::high_resolution_clock::now();
@@ -245,6 +248,7 @@ int main(int argc, char *argv[])
                            start + std::chrono::microseconds(cmdS->busyTime_us))
                         ;
                     break;
+                    adios.ExitComputationBlock();
                 }
                 case Operation::Write:
                 {

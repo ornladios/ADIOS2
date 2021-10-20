@@ -20,6 +20,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/core/CoreTypes.h"
 #include "adios2/core/Operator.h"
 #include "adios2/helper/adiosComm.h"
 
@@ -166,6 +167,14 @@ public:
      */
     void RemoveAllIOs() noexcept;
 
+    /** Inform ADIOS about entering communication-free computation block
+     * in main thread. Useful when using Async IO */
+    void EnterComputationBlock() noexcept;
+
+    /** Inform ADIOS about exiting communication-free computation block
+     * in main thread. Useful when using Async IO */
+    void ExitComputationBlock() noexcept;
+
 private:
     /** Communicator given to parallel constructor. */
     helper::Comm m_Comm;
@@ -186,6 +195,9 @@ private:
 
     /** operators created with DefineOperator */
     std::map<std::string, std::shared_ptr<Operator>> m_Operators;
+
+    /** Flag for Enter/ExitComputationBlock */
+    bool enteredComputationBlock = false;
 
     void CheckOperator(const std::string name) const;
 

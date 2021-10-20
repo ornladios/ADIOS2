@@ -233,6 +233,44 @@ adios2_error adios2_finalize(adios2_adios *adios)
     }
 }
 
+/** Inform ADIOS about entering communication-free computation block
+ * in main thread. Useful when using Async IO */
+adios2_error adios2_enter_computation_block(adios2_adios *adios)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            adios,
+            "for adios2_adios, in call to adios2_enter_computation_block");
+        reinterpret_cast<adios2::core::ADIOS *>(adios)->EnterComputationBlock();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_enter_computation_block"));
+    }
+}
+
+/** Inform ADIOS about exiting communication-free computation block
+ * in main thread. Useful when using Async IO */
+adios2_error adios2_exit_computation_block(adios2_adios *adios)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            adios,
+            "for adios2_adios, in call to adios2_exit_computation_block");
+        reinterpret_cast<adios2::core::ADIOS *>(adios)->ExitComputationBlock();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_exit_computation_block"));
+    }
+}
+
 #ifdef __cplusplus
 }
 // end extern C

@@ -511,6 +511,11 @@ public:
     virtual void NotifyEngineAttribute(std::string name,
                                        DataType type) noexcept;
 
+    /** Inform about computation block through User->ADIOS->IO */
+    virtual void EnterComputationBlock() noexcept;
+    /** Inform about computation block through User->ADIOS->IO */
+    virtual void ExitComputationBlock() noexcept;
+
 protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no communicator is passed */

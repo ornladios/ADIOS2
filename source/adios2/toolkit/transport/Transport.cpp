@@ -10,6 +10,7 @@
 
 #include "Transport.h"
 #include "adios2/core/CoreTypes.h"
+#include <algorithm> // max
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
 
@@ -65,7 +66,8 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
     {
         WriteV(iov, iovcnt, start);
         core::Seconds totalWriteTime = core::Now() - starttime;
-        /*std::cout << "WriteV sync spent total time = " << totalWriteTime.count()
+        /*std::cout << "WriteV sync spent total time = " <<
+           totalWriteTime.count()
                   << std::endl;*/
         return;
     }
@@ -75,10 +77,9 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
     size_t wrote = 0;
     int block = 0;
     size_t temp_offset = 0;
-    size_t max_size = 1024 * 1024;
+    size_t max_size = std::max(1024 * 1024UL, totalsize / 100UL);
     bool firstwrite = true;
     core::Seconds writeTotalTime(0.0);
-    core::Seconds sleepTotalTime(0.0);
     while (block < iovcnt)
     {
         if (!firstwrite && max_size < MaxSizeT)
