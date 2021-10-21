@@ -321,7 +321,6 @@ void BP5Writer::MarshalAttributes()
                 for (int i = 0; i < element_count; i++)
                 {
                     auto str = &attribute.m_DataArray[i];
-                    printf("Marshalling attr array string %s\n", str->c_str());
                     tmp[i] = str->c_str();
                 }
                 // tmp will be free'd after final attribute marshalling
