@@ -149,9 +149,9 @@ void ZfpRate2D(const double rate)
         for (size_t step = 0; step < NSteps; ++step)
         {
             fw.write("r32", r32s.data(), shape, start, count,
-                     {{"zfp", {{"accuracy", std::to_string(rate)}}}});
+                     {{"zfp", {{"rate", std::to_string(rate)}}}});
             fw.write("r64", r64s.data(), shape, start, count,
-                     {{"zfp", {{"accuracy", std::to_string(rate)}}}},
+                     {{"zfp", {{"rate", std::to_string(rate)}}}},
                      adios2::end_step);
         }
         fw.close();
