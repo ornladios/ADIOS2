@@ -866,6 +866,7 @@ void ZFPRate2DSmallSel(const std::string rate)
         // add operations
         adios2::Operator szOp =
             adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        szOp.SetParameter("backend", "serial");
 
         var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
         var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});

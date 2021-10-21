@@ -11,6 +11,11 @@
 #include "adios2/helper/adiosFunctions.h"
 #include <sstream>
 
+/* ZFP will default to SERIAL if CUDA is not available */
+#ifndef ZFP_DEFAULT_EXECUTION_POLICY
+#define ZFP_DEFAULT_EXECUTION_POLICY zfp_exec_cuda
+#endif
+
 namespace adios2
 {
 namespace core
@@ -256,6 +261,7 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
                                       const Params &parameters) const
 {
     zfp_stream *stream = zfp_stream_open(NULL);
+    zfp_stream_set_execution(stream, ZFP_DEFAULT_EXECUTION_POLICY);
 
     auto itAccuracy = parameters.find("accuracy");
     const bool hasAccuracy = itAccuracy != parameters.end();
@@ -265,6 +271,30 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
 
     auto itPrecision = parameters.find("precision");
     const bool hasPrecision = itPrecision != parameters.end();
+
+    auto itBackend = parameters.find("backend");
+    const bool hasBackend = itBackend != parameters.end();
+
+    if (hasBackend)
+    {
+        auto policy = ZFP_DEFAULT_EXECUTION_POLICY;
+        const auto backend = itBackend->second;
+
+        if (backend == "cuda")
+        {
+            policy = zfp_exec_cuda;
+        }
+        else if (backend == "omp")
+        {
+            policy = zfp_exec_omp;
+        }
+        else if (backend == "serial")
+        {
+            policy = zfp_exec_serial;
+        }
+
+        zfp_stream_set_execution(stream, policy);
+    }
 
     if ((hasAccuracy && hasPrecision) || (hasAccuracy && hasRate) ||
         (hasPrecision && hasRate))
