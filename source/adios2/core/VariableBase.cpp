@@ -23,6 +23,11 @@
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 #include "adios2/helper/adiosString.h"
 
+#ifdef ADIOS2_HAVE_CUDA
+#include <cuda.h>
+#include <cuda_runtime.h>
+#endif
+
 namespace adios2
 {
 namespace core
