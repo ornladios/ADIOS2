@@ -30,7 +30,7 @@ namespace engine
 
 using namespace adios2::format;
 
-int BP5Writer::AsyncWriteThread_EveryoneWrites(AsyncWriteInfo *info)
+int BP5Writer::AsyncWriteThread_EveryoneWrites_Throttled(AsyncWriteInfo *info)
 {
     Seconds ts = Now() - info->tstart;
     // std::cout << "ASYNC starts at: " << ts.count() << std::endl;
@@ -47,6 +47,11 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites(AsyncWriteInfo *info)
         deadline -= elapsed.count();
         int remprocs = info->nproc_chain - info->rank_chain;
         deadline = deadline / remprocs;
+    }
+
+    if (deadline < 0.0)
+    {
+        deadline = 0.0;
     }
 
     info->tm->WriteFileAt(DataVec.data(), DataVec.size(), info->Data->Size(),
@@ -334,7 +339,8 @@ void BP5Writer::WriteData_EveryoneWrites_Async(format::BufferV *Data,
     m_AsyncWriteInfo->flagRush = &m_flagRush;
     m_AsyncWriteInfo->lock = &m_AsyncWriteLock;
 
-    if (m_ComputationBlocksLength > 0.0)
+    if (m_ComputationBlocksLength > 0.0 &&
+        m_Parameters.AsyncWrite == (int)AsyncWrite::Guided)
     {
         m_AsyncWriteInfo->inComputationBlock = &m_InComputationBlock;
         m_AsyncWriteInfo->computationBlocksLength = m_ComputationBlocksLength;
@@ -359,12 +365,16 @@ void BP5Writer::WriteData_EveryoneWrites_Async(format::BufferV *Data,
     }
     else
     {
+        if (m_Parameters.AsyncWrite == (int)AsyncWrite::Naive)
+        {
+            m_AsyncWriteInfo->deadline = 0;
+        }
         m_AsyncWriteInfo->inComputationBlock = nullptr;
         m_AsyncWriteInfo->computationBlocksLength = 0.0;
         m_AsyncWriteInfo->currentComputationBlockID = nullptr;
-        m_WriteFuture =
-            std::async(std::launch::async, AsyncWriteThread_EveryoneWrites,
-                       m_AsyncWriteInfo);
+        m_WriteFuture = std::async(std::launch::async,
+                                   AsyncWriteThread_EveryoneWrites_Throttled,
+                                   m_AsyncWriteInfo);
     }
     // At this point modifying Data in main thread is prohibited !!!
 

@@ -297,7 +297,7 @@ private:
     shm::Spinlock m_AsyncWriteLock;
 
     /* Static functions that will run in another thread */
-    static int AsyncWriteThread_EveryoneWrites(AsyncWriteInfo *info);
+    static int AsyncWriteThread_EveryoneWrites_Throttled(AsyncWriteInfo *info);
     static int AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info);
     static int AsyncWriteThread_TwoLevelShm(AsyncWriteInfo *info);
 

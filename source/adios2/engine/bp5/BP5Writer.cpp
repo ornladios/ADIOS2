@@ -251,20 +251,6 @@ void BP5Writer::WriteData(format::BufferV *Data)
 void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
                                          bool SerializedWriters)
 {
-    auto lf_AsyncWrite = [&](adios2::format::BufferV *Data, uint64_t startPos,
-                             double deadline) -> int {
-        Seconds ts = Now() - m_EngineStart;
-        // std::cout << "ASYNC starts at: " << ts.count() << std::endl;
-        std::vector<core::iovec> DataVec = Data->DataVec();
-        m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(),
-                                      Data->Size(), startPos, deadline,
-                                      &m_flagRush);
-        delete Data;
-        ts = Now() - m_EngineStart;
-        // std::cout << "ASYNC ended at: " << ts.count() << std::endl;
-        return 1;
-    };
-
     const aggregator::MPIChain *a =
         dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
 
@@ -291,20 +277,9 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
     }
 
     m_DataPos += Data->Size();
-    if (m_Parameters.AsyncWrite)
-    {
-        m_WriteFuture =
-            std::async(std::launch::async, lf_AsyncWrite, Data, m_StartDataPos,
-                       m_LastTimeBetweenSteps.count());
-        // At this point modifying Data in main thread is prohibited !!!
-    }
-    else
-    {
-        std::vector<core::iovec> DataVec = Data->DataVec();
-        m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(),
-                                      Data->Size(), m_StartDataPos, 0.0,
-                                      &m_flagRush);
-    }
+    std::vector<core::iovec> DataVec = Data->DataVec();
+    m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), Data->Size(),
+                                  m_StartDataPos, 0.0, &m_flagRush);
 
     if (SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
