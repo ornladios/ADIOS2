@@ -201,8 +201,8 @@ void ZFPRate2D(const std::string rate)
         adios2::Operator szOp =
             adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(szOp, {{"Accuracy", rate}});
-        var_r64.AddOperation(szOp, {{"accuracy", rate}});
+        var_r32.AddOperation(szOp, {{"rate", rate}});
+        var_r64.AddOperation(szOp, {{"rate", rate}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -600,8 +600,8 @@ void ZFPRate2DSel(const std::string rate)
         adios2::Operator szOp =
             adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(szOp, {{"accuracy", rate}});
-        var_r64.AddOperation(szOp, {{"accuracy", rate}});
+        var_r32.AddOperation(szOp, {{"rate", rate}});
+        var_r64.AddOperation(szOp, {{"rate", rate}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -866,6 +866,7 @@ void ZFPRate2DSmallSel(const std::string rate)
         // add operations
         adios2::Operator szOp =
             adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        szOp.SetParameter("backend", "serial");
 
         var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
         var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});

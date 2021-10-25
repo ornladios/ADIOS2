@@ -11,6 +11,11 @@
 #include "adios2/helper/adiosFunctions.h"
 #include <sstream>
 
+/* ZFP will default to SERIAL if CUDA is not available */
+#ifndef ZFP_DEFAULT_EXECUTION_POLICY
+#define ZFP_DEFAULT_EXECUTION_POLICY zfp_exec_cuda
+#endif
+
 namespace adios2
 {
 namespace core
@@ -256,6 +261,7 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
                                       const Params &parameters) const
 {
     zfp_stream *stream = zfp_stream_open(NULL);
+    zfp_stream_set_execution(stream, ZFP_DEFAULT_EXECUTION_POLICY);
 
     auto itAccuracy = parameters.find("accuracy");
     const bool hasAccuracy = itAccuracy != parameters.end();
@@ -266,14 +272,38 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
     auto itPrecision = parameters.find("precision");
     const bool hasPrecision = itPrecision != parameters.end();
 
-    if ((hasAccuracy && hasRate) || (hasAccuracy && hasPrecision) ||
-        (hasRate && hasPrecision) || !(hasAccuracy || hasRate || hasPrecision))
+    auto itBackend = parameters.find("backend");
+    const bool hasBackend = itBackend != parameters.end();
+
+    if (hasBackend)
+    {
+        auto policy = ZFP_DEFAULT_EXECUTION_POLICY;
+        const auto backend = itBackend->second;
+
+        if (backend == "cuda")
+        {
+            policy = zfp_exec_cuda;
+        }
+        else if (backend == "omp")
+        {
+            policy = zfp_exec_omp;
+        }
+        else if (backend == "serial")
+        {
+            policy = zfp_exec_serial;
+        }
+
+        zfp_stream_set_execution(stream, policy);
+    }
+
+    if ((hasAccuracy && hasPrecision) || (hasAccuracy && hasRate) ||
+        (hasPrecision && hasRate))
     {
         std::ostringstream oss;
-        oss << "\nError: Requisite parameters to zfp not found.";
-        oss << " The key must be one and only one of 'accuracy', 'rate', "
-               "or 'precision'.";
-        oss << " The key and value provided are ";
+        oss << std::endl
+            << "ERROR: ZFP:"
+               " 'accuracy'|'rate'|'precision' params are mutualy exclusive: ";
+
         for (auto &p : parameters)
         {
             oss << "(" << p.first << ", " << p.second << ").";
@@ -284,14 +314,14 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
     if (hasAccuracy)
     {
         const double accuracy = helper::StringTo<double>(
-            itAccuracy->second, "setting accuracy in call to CompressZfp\n");
+            itAccuracy->second, "setting 'accuracy' in call to CompressZfp\n");
 
         zfp_stream_set_accuracy(stream, accuracy);
     }
     else if (hasRate)
     {
         const double rate = helper::StringTo<double>(
-            itRate->second, "setting Rate in call to CompressZfp\n");
+            itRate->second, "setting 'rate' in call to CompressZfp\n");
         // TODO support last argument write random access?
         zfp_stream_set_rate(stream, rate, GetZfpType(type),
                             static_cast<unsigned int>(dimensions.size()), 0);
@@ -301,7 +331,7 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
         const unsigned int precision =
             static_cast<unsigned int>(helper::StringTo<uint32_t>(
                 itPrecision->second,
-                "setting Precision in call to CompressZfp\n"));
+                "setting 'precision' in call to CompressZfp\n"));
         zfp_stream_set_precision(stream, precision);
     }
 

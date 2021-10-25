@@ -305,8 +305,16 @@ namespace zfp
 namespace key
 {
 constexpr char accuracy[] = "accuracy";
+constexpr char backend[] = "backend";
 constexpr char rate[] = "rate";
 constexpr char precision[] = "precision";
+}
+
+namespace value
+{
+constexpr char backend_cuda[] = "cuda";
+constexpr char backend_omp[] = "omp";
+constexpr char backend_serial[] = "serial";
 }
 }
 #endif
