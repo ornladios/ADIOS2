@@ -81,4 +81,13 @@ private:
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2
+
+extern "C" {
+
+adios2::core::engine::ExampleWritePlugin *
+EngineCreate(adios2::core::IO &io, const std::string &name,
+             const adios2::Mode mode, adios2::helper::Comm comm);
+void EngineDestroy(adios2::core::engine::ExampleWritePlugin *obj);
+}
+
 #endif /* EXAMPLEWRITEPLUGIN_H_ */

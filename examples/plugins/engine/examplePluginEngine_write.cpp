@@ -15,9 +15,6 @@
 #include <vector>
 
 #include "adios2.h"
-#include "adios2/engine/plugin/PluginEngine.h"
-
-#include "ExampleWritePlugin.h"
 
 void testStreaming(adios2::Engine &writer, std::vector<float> &myFloats,
                    adios2::Variable<float> &var)
@@ -49,10 +46,6 @@ int main(int argc, char *argv[])
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     const std::size_t Nx = myFloats.size();
 
-    /** Register Plugin with the PluginEngine **/
-    adios2::core::engine::PluginEngine::RegisterPlugin<
-        adios2::core::engine::ExampleWritePlugin>("MyPlugin");
-
     try
     {
         /** ADIOS class factory of IO class objects */
@@ -69,7 +62,8 @@ int main(int argc, char *argv[])
 
         /** Engine derived class, spawned to start IO operations */
         io.SetEngine("Plugin");
-        io.SetParameters({{"PluginName", "MyPlugin"}});
+        io.SetParameters({{"PluginName", "WritePlugin"}});
+        io.SetParameters({{"PluginLibrary", "PluginEngineWrite"}});
         adios2::Engine writer = io.Open("TestPlugin", adios2::Mode::Write);
 
         if (streaming)

@@ -133,3 +133,17 @@ void ExampleReadPlugin::DoClose(const int transportIndex) {}
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2
+
+extern "C" {
+
+adios2::core::engine::ExampleReadPlugin *EngineCreate(adios2::core::IO &io,
+                                                      const std::string &name,
+                                                      const adios2::Mode mode,
+                                                      adios2::helper::Comm comm)
+{
+    return new adios2::core::engine::ExampleReadPlugin(io, name, mode,
+                                                       comm.Duplicate());
+}
+
+void EngineDestroy(adios2::core::engine::ExampleReadPlugin *obj) { delete obj; }
+}

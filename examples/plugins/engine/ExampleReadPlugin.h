@@ -80,4 +80,13 @@ private:
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2
+
+extern "C" {
+
+adios2::core::engine::ExampleReadPlugin *
+EngineCreate(adios2::core::IO &io, const std::string &name,
+             const adios2::Mode mode, adios2::helper::Comm comm);
+void EngineDestroy(adios2::core::engine::ExampleReadPlugin *obj);
+}
+
 #endif /* EXAMPLEREADPLUGIN_H_ */

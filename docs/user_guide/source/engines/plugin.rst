@@ -68,7 +68,7 @@ To build your plugin, your CMake should look something like:
     target_link_libraries(PluginEngineWrite adios2::cxx11 adios2::core)
 
 When using the Plugin Engine, ADIOS will check for your plugin at the path specified in the ``ADIOS2_PLUGIN_PATH`` environment variable.
-If ``ADIOS2_PLUGIN_PATH`` is not set, ADIOS will warn you about it, and then look for your plugin in the current working directory.
+If ``ADIOS2_PLUGIN_PATH`` is not set, and a path is not specified in the settings for the Plugin Engine (see below steps for using a plugin in your application), then the usual ``dlopen`` search is performed (see `dlopen man page <https://man7.org/linux/man-pages/man3/dlopen.3.html>`_).
 
 The following steps show how to use your engine plugin in your application.
 ``examplePluginEngine_write.cpp`` and ``examplePluginEngine_read.cpp`` are an example of how to use the engine plugins described above.
@@ -88,10 +88,14 @@ The key steps to use your plugin are:
 
    io.SetParameters({{"PluginName", "WritePlugin"}});
    io.SetParameters({{"PluginLibrary", "PluginEngineWrite"}});
+   // also possible to use the path here instead of setting ADIOS2_PLUGIN_PATH
+   // io.SetParameters({{"PluginLibrary", "/path/to/libPluginEngineWrite.so"}})
 
 .. note::
     You don't need to add the ``lib`` prefix or the shared library ending (e.g., ``.so``, ``.dll``, etc.).
     ADIOS will add these when searching for your plugin library.
+    If you do at the prefix/suffix, ADIOS should still be able to find your plugin.
+
 
 At this point you can open the engine and use it as you would any other ADIOS engine.
 You also shouldn't need to make any changes to your CMake files for your application.
