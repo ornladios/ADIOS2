@@ -71,37 +71,60 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites_Throttled(AsyncWriteInfo *info)
     return 1;
 };
 
-int BP5Writer::AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info)
+BP5Writer::ComputationStatus
+BP5Writer::IsInComputationBlock(AsyncWriteInfo *info, size_t &compBlockIdx)
+{
+    ComputationStatus compStatus = ComputationStatus::NotInComp_ExpectMore;
+    size_t nExpectedBlocks = info->expectedComputationBlocks.size();
+    if (*info->flagRush || compBlockIdx >= nExpectedBlocks)
+    {
+        compStatus = ComputationStatus::NoMoreComp;
+    }
+    else
+    {
+        bool inComp = false;
+        size_t compBlockID = 0;
+        info->lock->lock();
+        // access variables modified by main thread
+        // (the ones that cause race conditions)
+        compBlockID = *info->currentComputationBlockID;
+        inComp = *info->inComputationBlock;
+        info->lock->unlock();
+
+        /* Track which computation block we are in */
+        if (inComp)
+        {
+            while (compBlockIdx < nExpectedBlocks &&
+                   info->expectedComputationBlocks[compBlockIdx].blockID <
+                       compBlockID)
+            {
+                ++compBlockIdx;
+            }
+            if (info->expectedComputationBlocks[compBlockIdx].blockID >
+                compBlockID)
+            {
+                // the current computation block is a short one that was not
+                // recorded
+                compStatus = ComputationStatus::NotInComp_ExpectMore;
+            }
+            else
+            {
+                compStatus = ComputationStatus::InComp;
+            }
+        }
+    }
+    return compStatus;
+}
+
+void BP5Writer::WriteOwnDataGuided(AsyncWriteInfo *info, double mydeadline)
 {
     core::TimePoint starttime = core::Now();
     std::vector<core::iovec> DataVec = info->Data->DataVec();
     size_t totalsize = info->Data->Size();
-    double deadline = info->deadline;
-
-    if (info->tokenChain)
-    {
-        if (info->rank_chain > 0)
-        {
-            info->tokenChain->RecvToken();
-        }
-        Seconds elapsed = Now() - starttime;
-        deadline -= elapsed.count();
-        if (deadline < 0.0)
-        {
-            deadline = 0.0;
-        }
-        int remprocs = info->nproc_chain - info->rank_chain;
-        deadline = deadline / remprocs;
-        starttime = core::Now(); // this process starts now
-    }
-
-    core::Seconds deadlineSeconds = core::Seconds(deadline);
+    core::Seconds deadlineSeconds = core::Seconds(mydeadline);
 
     /* local variables to track variables modified by main thread */
-    size_t compBlockID = 0;  /* which computation block we are in */
     size_t compBlockIdx = 0; /* position in vector to get length */
-    size_t nExpectedBlocks = info->expectedComputationBlocks.size();
-    bool inComp = false;
 
     /* In a loop, write the data in smaller blocks */
     size_t nBlocks = DataVec.size();
@@ -120,8 +143,6 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info)
         else
         {
             core::Seconds timesofar = core::Now() - starttime;
-            /*std::cout << "  Wrote = " << wrote
-                      << " time so far = " << timesofar.count() << std::endl;*/
             if (timesofar > deadlineSeconds)
             {
                 // Passed the deadline, write the rest without any waiting
@@ -137,37 +158,7 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info)
             n = max_size;
         }
 
-        if (!*info->flagRush && compBlockIdx < nExpectedBlocks)
-        {
-            info->lock->lock();
-            // access variables modified by main thread
-            // (the ones that cause race conditions)
-            compBlockID = *info->currentComputationBlockID;
-            inComp = *info->inComputationBlock;
-            info->lock->unlock();
-        }
-        else
-        {
-            inComp = false;
-        }
-
-        /* Track which computation block we are in */
-        if (inComp)
-        {
-            while (compBlockIdx < nExpectedBlocks &&
-                   info->expectedComputationBlocks[compBlockIdx].blockID <
-                       compBlockID)
-            {
-                ++compBlockIdx;
-            }
-            if (info->expectedComputationBlocks[compBlockIdx].blockID >
-                compBlockID)
-            {
-                // the current computation block is a short one that was not
-                // recorded
-                inComp = false;
-            }
-        }
+        ComputationStatus compStatus = IsInComputationBlock(info, compBlockIdx);
 
         /* Scheduling decisions:
            Cases:
@@ -184,23 +175,28 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info)
 
         bool doSleep = false;
         bool doThrottle = false;
-        // cases 2, 4 and 6 need no more settings
-        if (!*info->flagRush)
+        bool doRush = false;
+        // case 3 not handled yet properly
+        if (*info->flagRush)
         {
-            if (!inComp && compBlockIdx < nExpectedBlocks)
+            // case 6
+            doRush = true;
+        }
+        else
+        {
+            switch (compStatus)
             {
+            case ComputationStatus::NotInComp_ExpectMore:
                 // case 1
                 doSleep = true;
-            }
-            if (inComp && false)
-            {
-                // case 3 not handled yet
-                doSleep = true;
-            }
-            if (!inComp && compBlockIdx >= nExpectedBlocks)
-            {
+                break;
+            case ComputationStatus::NoMoreComp:
                 // case 5
                 doThrottle = true;
+                break;
+            default:
+                // cases 2, 3, 4
+                break;
             }
         }
 
@@ -210,15 +206,19 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info)
             continue;
         }
 
-        if (doThrottle)
+        if (doThrottle || doRush)
         {
-            // Write the rest of data in throttled manner within the available
-            // deadline
-            core::Seconds timesofar = core::Now() - starttime;
-            double finaldeadline = deadline - timesofar.count();
-            if (finaldeadline < 0.0)
+            double finaldeadline = 0.0;
+            if (!doRush)
             {
-                finaldeadline = 0.0;
+                // Write the rest of data in throttled manner within the
+                // available deadline
+                core::Seconds timesofar = core::Now() - starttime;
+                finaldeadline = (deadlineSeconds - timesofar).count();
+                if (finaldeadline < 0.0)
+                {
+                    finaldeadline = 0.0;
+                }
             }
 
             auto vec = std::vector<adios2::core::iovec>(DataVec.begin() + block,
@@ -227,10 +227,10 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info)
                 (const char *)DataVec[block].iov_base + temp_offset;
             vec[0].iov_len = n;
 
-            std::cout << "Async write on Rank " << info->rank_global
-                      << " throttle-write the last " << totalsize - wrote
+            /* std::cout << "Async write on Rank " << info->rank_global
+                      << " write the rest of  " << totalsize - wrote
                       << " bytes with deadline " << finaldeadline << " sec"
-                      << std::endl;
+                      << std::endl;*/
 
             info->tm->WriteFileAt(vec.data(), vec.size(), totalsize - wrote,
                                   info->startPos + wrote, finaldeadline,
@@ -238,7 +238,7 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info)
             break;
         }
 
-        /* Write now */
+        /* Write next batch of data now */
         if (firstWrite)
         {
             info->tm->WriteFileAt((const char *)DataVec[block].iov_base +
@@ -264,6 +264,30 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info)
         }
         wrote += n;
     }
+};
+
+int BP5Writer::AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info)
+{
+    core::TimePoint starttime = core::Now();
+    double deadline = info->deadline;
+
+    if (info->tokenChain)
+    {
+        if (info->rank_chain > 0)
+        {
+            info->tokenChain->RecvToken();
+        }
+        Seconds elapsed = Now() - starttime;
+        deadline -= elapsed.count();
+        if (deadline < 0.0)
+        {
+            deadline = 0.0;
+        }
+        int remprocs = info->nproc_chain - info->rank_chain;
+        deadline = deadline / remprocs;
+    }
+
+    WriteOwnDataGuided(info, deadline);
 
     if (info->tokenChain)
     {

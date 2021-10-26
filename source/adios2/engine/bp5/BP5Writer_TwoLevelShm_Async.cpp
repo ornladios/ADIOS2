@@ -34,10 +34,10 @@ using namespace adios2::format;
 /* Aggregator part of the async two level aggregation.
    This process is the one writing to disk
 */
-void AsyncWriteData(aggregator::MPIShmChain *a, int nproc,
-                    transportman::TransportMan *tm, format::BufferV *myData,
-                    uint64_t totalSize, uint64_t startPos, double deadline,
-                    bool *flagRush)
+void AsyncWriteDataThrottled(aggregator::MPIShmChain *a, int nproc,
+                             transportman::TransportMan *tm,
+                             format::BufferV *myData, uint64_t totalSize,
+                             uint64_t startPos, double deadline, bool *flagRush)
 {
     /* Write own data first */
     {
@@ -92,6 +92,90 @@ void AsyncWriteData(aggregator::MPIShmChain *a, int nproc,
                     << "    We have time to throttle, time left =  "
                     << availabletime << " need time = " << needtime
                     << " sleep now = " << sleepTime << std::endl;*/
+                std::this_thread::sleep_for(core::Seconds(sleepTime));
+            }
+        }
+    }
+}
+
+/* Aggregator part of the async two level aggregation Guided version
+   This process is the one writing to disk
+*/
+void BP5Writer::AsyncWriteThread_TwoLevelShm_Guided(AsyncWriteInfo *info)
+{
+    aggregator::MPIShmChain *a =
+        dynamic_cast<aggregator::MPIShmChain *>(info->aggregator);
+    uint64_t totalSize = info->totalSize;
+    double deadline = info->deadline;
+    size_t compBlockIdx = 0;
+
+    /* Write own data first */
+    {
+        TimePoint startTime = Now();
+        std::vector<core::iovec> DataVec = info->Data->DataVec();
+        const uint64_t mysize = info->Data->Size();
+        WriteOwnDataGuided(info, deadline);
+        totalSize -= mysize;
+        Seconds t = Now() - startTime;
+        deadline -= t.count();
+    }
+
+    /* Write from shm until every non-aggr sent all data */
+    TimePoint tstart = Now();
+    core::Seconds writeTotalTime(0.0);
+    // Set deadline 90% of allotted time but also discount 0.01s real time
+    // for the extra hassle
+    double internalDeadlineSec = deadline * 0.90 - 0.01;
+    if (internalDeadlineSec < 0.0)
+    {
+        internalDeadlineSec = 0.0;
+    }
+    core::Seconds deadlineSeconds = core::Seconds(internalDeadlineSec);
+    size_t wrote = 0;
+    while (wrote < totalSize)
+    {
+        ComputationStatus compStatus = IsInComputationBlock(info, compBlockIdx);
+        /* Decision points:
+            Rushed         ==> Write
+            In computation ==> Write
+            Not in computation but expect more computation blocks ==> Sleep
+            No more computations => Throttle Write
+        */
+        if (compStatus == ComputationStatus::NotInComp_ExpectMore)
+        {
+            std::this_thread::sleep_for(core::Seconds(0.01));
+            continue;
+        }
+
+        /* Write the next shm block now */
+        // potentially blocking call waiting on some non-aggr process
+        aggregator::MPIShmChain::ShmDataBuffer *b = a->LockConsumerBuffer();
+        // b->actual_size: how much we need to write
+        core::TimePoint writeStart = core::Now();
+        info->tm->WriteFiles(b->buf, b->actual_size);
+        wrote += b->actual_size;
+        a->UnlockConsumerBuffer();
+        writeTotalTime += core::Now() - writeStart;
+
+        /* Throttle: sleep a bit */
+        if (wrote < totalSize && !*info->flagRush &&
+            compStatus == ComputationStatus::NoMoreComp)
+        {
+            Seconds timesofar = Now() - tstart;
+            double bw = wrote / writeTotalTime.count(); // bytes per second
+            double needtime = (totalSize - wrote) / bw;
+            double availabletime = (deadlineSeconds - timesofar).count();
+            if (availabletime > needtime)
+            {
+                // sleep for 1/Kth of estimated free time, where still K
+                // block writes are to be done
+                double futureTotalSleepTime = (availabletime - needtime);
+                double sleepTime = futureTotalSleepTime / totalSize * wrote;
+                /*std::cout << "Async write on Aggregator Rank "
+                          << info->rank_global
+                          << ": We have time to throttle, time left =  "
+                          << availabletime << " need time = " << needtime
+                          << " sleep now = " << sleepTime << std::endl;*/
                 std::this_thread::sleep_for(core::Seconds(sleepTime));
             }
         }
@@ -179,9 +263,16 @@ int BP5Writer::AsyncWriteThread_TwoLevelShm(AsyncWriteInfo *info)
         // metadata)
         uint64_t nextWriterPos = info->startPos + info->Data->Size();
         info->tokenChain->SendToken(nextWriterPos);
-        AsyncWriteData(a, info->nproc_chain, info->tm, info->Data,
-                       info->totalSize, info->startPos, info->deadline,
-                       info->flagRush);
+        if (info->computationBlocksLength > 0.0)
+        {
+            AsyncWriteThread_TwoLevelShm_Guided(info);
+        }
+        else
+        {
+            AsyncWriteDataThrottled(a, info->nproc_chain, info->tm, info->Data,
+                                    info->totalSize, info->startPos,
+                                    info->deadline, info->flagRush);
+        }
         info->tokenChain->RecvToken();
     }
     else
@@ -296,6 +387,8 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
     m_AsyncWriteInfo->tokenChain = new shm::TokenChain<uint64_t>(&a->m_Comm);
     m_AsyncWriteInfo->tm = &m_FileDataManager;
     m_AsyncWriteInfo->Data = Data;
+    m_AsyncWriteInfo->flagRush = &m_flagRush;
+    m_AsyncWriteInfo->lock = &m_AsyncWriteLock;
 
     // Metadata collection needs m_StartDataPos correctly set on
     // every process before we call the async writing thread
@@ -319,15 +412,42 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
     // m_DataPos is already pointing to the end of the write, do not use here.
     m_AsyncWriteInfo->startPos = m_StartDataPos;
     m_AsyncWriteInfo->totalSize = myTotalSize;
-    if (m_Parameters.AsyncWrite == (int)AsyncWrite::Naive)
+
+    if (m_ComputationBlocksLength > 0.0 &&
+        m_Parameters.AsyncWrite == (int)AsyncWrite::Guided)
     {
-        m_AsyncWriteInfo->deadline = 0.0;
+        m_AsyncWriteInfo->inComputationBlock = &m_InComputationBlock;
+        m_AsyncWriteInfo->computationBlocksLength = m_ComputationBlocksLength;
+        if (m_AsyncWriteInfo->deadline < m_ComputationBlocksLength)
+        {
+            m_AsyncWriteInfo->deadline = m_ComputationBlocksLength;
+        }
+        m_AsyncWriteInfo->expectedComputationBlocks =
+            m_ComputationBlockTimes; // copy!
+        m_AsyncWriteInfo->currentComputationBlocks =
+            &m_ComputationBlockTimes; // ptr!
+        m_AsyncWriteInfo->currentComputationBlockID = &m_ComputationBlockID;
+
+        /* Clear current block tracker now so that async thread does not get
+        confused with the past info */
+        m_ComputationBlockTimes.clear();
+        m_ComputationBlocksLength = 0.0;
+        m_ComputationBlockID = 0;
     }
     else
     {
-        m_AsyncWriteInfo->deadline = m_ExpectedTimeBetweenSteps.count();
+        if (m_Parameters.AsyncWrite == (int)AsyncWrite::Naive)
+        {
+            m_AsyncWriteInfo->deadline = 0;
+        }
+        else
+        {
+            m_AsyncWriteInfo->deadline = m_ExpectedTimeBetweenSteps.count();
+        }
+        m_AsyncWriteInfo->inComputationBlock = nullptr;
+        m_AsyncWriteInfo->computationBlocksLength = 0.0;
+        m_AsyncWriteInfo->currentComputationBlockID = nullptr;
     }
-    m_AsyncWriteInfo->flagRush = &m_flagRush;
 
     m_WriteFuture = std::async(std::launch::async, AsyncWriteThread_TwoLevelShm,
                                m_AsyncWriteInfo);

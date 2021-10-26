@@ -300,6 +300,19 @@ private:
     static int AsyncWriteThread_EveryoneWrites_Throttled(AsyncWriteInfo *info);
     static int AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info);
     static int AsyncWriteThread_TwoLevelShm(AsyncWriteInfo *info);
+    static void AsyncWriteThread_TwoLevelShm_Guided(AsyncWriteInfo *info);
+
+    /* write own data within deadline, guided version, used by
+       both EveryoneWrites and TwoLevelShm guided async threads */
+    static void WriteOwnDataGuided(AsyncWriteInfo *info, double mydeadline);
+    enum class ComputationStatus
+    {
+        InComp,
+        NotInComp_ExpectMore,
+        NoMoreComp
+    };
+    static ComputationStatus IsInComputationBlock(AsyncWriteInfo *info,
+                                                  size_t &compBlockIdx);
 
     void AsyncWriteDataCleanup();
     void AsyncWriteDataCleanup_EveryoneWrites();
