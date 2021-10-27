@@ -29,6 +29,18 @@ if(ADIOS2_HAVE_ZFP)
       "XML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
       )
   endforeach()
+
+  if(ADIOS2_HAVE_CUDA)
+    enable_language(CUDA)
+
+    gtest_add_tests_helper(WriteReadZfpCuda MPI_ALLOW BP Engine.BP. .BP4
+      WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
+      )
+    set_source_files_properties(CudaRoutines.cu PROPERTIES LANGUAGE CUDA)
+    foreach(tgt ${Test.Engine.BP.WriteReadZfpCuda-TARGETS})
+      target_sources(${tgt} PRIVATE CudaRoutines.cu)
+    endforeach()
+  endif()
 endif()
 
 if(ADIOS2_HAVE_MGARD)

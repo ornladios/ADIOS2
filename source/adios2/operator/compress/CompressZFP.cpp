@@ -262,6 +262,7 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
 {
     zfp_stream *stream = zfp_stream_open(NULL);
     zfp_stream_set_execution(stream, ZFP_DEFAULT_EXECUTION_POLICY);
+    bool isSerial = ZFP_DEFAULT_EXECUTION_POLICY == zfp_exec_serial;
 
     auto itAccuracy = parameters.find("accuracy");
     const bool hasAccuracy = itAccuracy != parameters.end();
@@ -291,13 +292,15 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
         else if (backend == "serial")
         {
             policy = zfp_exec_serial;
+            isSerial = true;
         }
 
         zfp_stream_set_execution(stream, policy);
     }
 
     if ((hasAccuracy && hasPrecision) || (hasAccuracy && hasRate) ||
-        (hasPrecision && hasRate))
+        (hasPrecision && hasRate) ||
+        (!hasAccuracy && !hasRate && !hasPrecision && !isSerial))
     {
         std::ostringstream oss;
         oss << std::endl
