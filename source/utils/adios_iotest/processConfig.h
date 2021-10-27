@@ -61,8 +61,7 @@ class CommandBusy : public Command
 {
 public:
     const size_t busyTime_us = 0; // in microseconds
-    std::vector<double> localdata;
-    CommandBusy(size_t time, size_t datasize);
+    CommandBusy(size_t time);
     ~CommandBusy();
 };
 
@@ -105,6 +104,11 @@ struct Config
     std::vector<std::shared_ptr<Command>> commands;
     // Read streams status flag for supporting conditionals
     std::map<std::string, adios2::StepStatus> condMap; // stream name
+
+    /* other constants */
+    size_t BusyCmd_DataSize = 131072;
+    int64_t BusyCmd_sleep_microsec = 1000;
+    uint64_t BusyCmd_CyclesPerSecond;
 };
 
 const std::vector<std::pair<std::string, size_t>> supportedTypes = {

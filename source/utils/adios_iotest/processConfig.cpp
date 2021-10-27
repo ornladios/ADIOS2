@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include <chrono>
 #include <errno.h>
 #include <float.h> // FLT_MAX
 #include <iomanip>
@@ -13,6 +14,7 @@
 #include <iterator>
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 
 #include "decomp.h"
 #include "processConfig.h"
@@ -26,8 +28,8 @@ CommandSleep::CommandSleep(size_t time)
 }
 CommandSleep::~CommandSleep() {}
 
-CommandBusy::CommandBusy(size_t time, size_t datasize)
-: Command(Operation::Busy), busyTime_us(time), localdata(datasize)
+CommandBusy::CommandBusy(size_t time)
+: Command(Operation::Busy), busyTime_us(time)
 {
 }
 CommandBusy::~CommandBusy() {}
@@ -414,6 +416,36 @@ void globalChecks(const Config &cfg, const Settings &settings)
     }
 }
 
+uint64_t BusyNumStepsPerSecond(Config &cfg, const Settings &settings)
+{
+    size_t numCycles = 0;
+    constexpr int64_t oneSec = 1000000;
+    std::chrono::high_resolution_clock::time_point start =
+        std::chrono::high_resolution_clock::now();
+    auto end = start + std::chrono::microseconds(oneSec);
+    auto sleeptime = std::chrono::microseconds(cfg.BusyCmd_sleep_microsec);
+    if (!settings.myRank && settings.verbose)
+    {
+        std::cout << "    Measure 'Busy' for 1 second " << std::endl;
+    }
+    const size_t n = cfg.BusyCmd_DataSize;
+    std::vector<double> r(n), localdata(n);
+    int keepBusy = 1;
+    while (keepBusy)
+    {
+        MPI_Reduce(localdata.data(), r.data(), n, MPI_DOUBLE, MPI_SUM, 0,
+                   settings.appComm);
+        std::this_thread::sleep_for(sleeptime);
+        if (!settings.myRank)
+        {
+            keepBusy = (std::chrono::high_resolution_clock::now() < end);
+        }
+        MPI_Bcast(&keepBusy, 1, MPI_INT, 0, settings.appComm);
+        ++numCycles;
+    }
+    return numCycles;
+}
+
 Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
 {
     unsigned int verbose0 =
@@ -569,7 +601,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                             << d << " seconds" << std::endl;
                     }
                     size_t t_us = static_cast<size_t>(d * 1000000);
-                    auto cmd = std::make_shared<CommandBusy>(t_us, 131072);
+                    auto cmd = std::make_shared<CommandBusy>(t_us);
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                 }
@@ -903,6 +935,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
     configFile.close();
     *currentConfigLineNumber = 0;
     globalChecks(cfg, settings);
+    cfg.BusyCmd_CyclesPerSecond = BusyNumStepsPerSecond(cfg, settings);
     if (verbose0 > 2)
     {
         printConfig(cfg);

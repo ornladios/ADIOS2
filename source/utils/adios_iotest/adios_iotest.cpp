@@ -217,18 +217,28 @@ int main(int argc, char *argv[])
                 {
                 case Operation::Sleep:
                 {
+                    std::chrono::high_resolution_clock::time_point start =
+                        std::chrono::high_resolution_clock::now();
                     adios.EnterComputationBlock();
                     auto cmdS = dynamic_cast<const CommandSleep *>(cmd.get());
                     if (!settings.myRank && settings.verbose)
                     {
                         double t =
                             static_cast<double>(cmdS->sleepTime_us) / 1000000.0;
-                        std::cout << "    Sleep for " << t << "  seconds "
-                                  << std::endl;
+                        std::cout << "    Sleep for " << t << "  seconds ";
                     }
                     std::this_thread::sleep_for(
                         std::chrono::microseconds(cmdS->sleepTime_us));
                     adios.ExitComputationBlock();
+                    if (!settings.myRank && settings.verbose)
+                    {
+                        std::chrono::high_resolution_clock::time_point end =
+                            std::chrono::high_resolution_clock::now();
+                        double t = static_cast<double>((end - start).count()) /
+                                   1000000000.0;
+                        std::cout << " -> Slept for " << t << "  seconds "
+                                  << std::endl;
+                    }
                     break;
                 }
                 case Operation::Busy:
@@ -236,32 +246,38 @@ int main(int argc, char *argv[])
                     auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
                     std::chrono::high_resolution_clock::time_point start =
                         std::chrono::high_resolution_clock::now();
-                    auto end =
-                        start + std::chrono::microseconds(cmdS->busyTime_us);
-                    auto sleeptime = std::chrono::microseconds(
-                        cmdS->busyTime_us / (size_t)100);
+                    double t =
+                        static_cast<double>(cmdS->busyTime_us) / 1000000.0;
+                    uint64_t cycles = t * cfg.BusyCmd_CyclesPerSecond;
+                    auto sleeptime =
+                        std::chrono::microseconds(cfg.BusyCmd_sleep_microsec);
                     if (!settings.myRank && settings.verbose)
                     {
                         double t =
                             static_cast<double>(cmdS->busyTime_us) / 1000000.0;
-                        std::cout << "    Be busy for " << t << "  seconds "
-                                  << std::endl;
+                        std::cout << "    Busy for " << t << "  seconds ("
+                                  << cycles << " cycles)";
                     }
-                    size_t n = cmdS->localdata.size();
-                    std::vector<double> r(n);
-                    int keepBusy = 1;
-                    while (keepBusy)
+                    size_t n = cfg.BusyCmd_DataSize;
+                    std::vector<double> r(n), localdata(n);
+                    uint64_t c = 0;
+                    int dummy = 1;
+                    while (c < cycles)
                     {
-                        MPI_Reduce(cmdS->localdata.data(), r.data(), n,
-                                   MPI_DOUBLE, MPI_SUM, 0, settings.appComm);
+                        MPI_Reduce(localdata.data(), r.data(), n, MPI_DOUBLE,
+                                   MPI_SUM, 0, settings.appComm);
                         std::this_thread::sleep_for(sleeptime);
-                        if (!settings.myRank)
-                        {
-                            keepBusy =
-                                (std::chrono::high_resolution_clock::now() <
-                                 end);
-                        }
-                        MPI_Bcast(&keepBusy, 1, MPI_INT, 0, settings.appComm);
+                        MPI_Bcast(&dummy, 1, MPI_INT, 0, settings.appComm);
+                        ++c;
+                    }
+                    if (!settings.myRank && settings.verbose)
+                    {
+                        std::chrono::high_resolution_clock::time_point end =
+                            std::chrono::high_resolution_clock::now();
+                        double t = static_cast<double>((end - start).count()) /
+                                   1000000000.0;
+                        std::cout << " -> Was busy for " << t << "  seconds "
+                                  << std::endl;
                     }
                     break;
                 }
