@@ -301,13 +301,19 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
     return ret;
 }
 
-void BP5Deserializer::ReverseDimensions(size_t *Dimensions, int count)
+void BP5Deserializer::ReverseDimensions(size_t *Dimensions, int count,
+                                        int times)
 {
-    for (int i = 0; i < count / 2; i++)
+    int Offset = 0;
+    for (int j = 0; j < times; j++)
     {
-        size_t tmp = Dimensions[i];
-        Dimensions[i] = Dimensions[count - i - 1];
-        Dimensions[count - i - 1] = tmp;
+        for (int i = 0; i < count / 2; i++)
+        {
+            size_t tmp = Dimensions[Offset + i];
+            Dimensions[Offset + i] = Dimensions[Offset + count - i - 1];
+            Dimensions[Offset + count - i - 1] = tmp;
+        }
+        Offset += count;
     }
 }
 
@@ -502,14 +508,18 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             (ControlFields[i].OrigShapeID == ShapeID::LocalArray))
         {
             MetaArrayRec *meta_base = (MetaArrayRec *)field_data;
+            size_t BlockCount =
+                meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
             if ((meta_base->Dims > 1) &&
                 (m_WriterIsRowMajor != m_ReaderIsRowMajor))
             {
                 /* if we're getting data from someone of the other array gender,
                  * switcheroo */
-                ReverseDimensions(meta_base->Shape, meta_base->Dims);
-                ReverseDimensions(meta_base->Count, meta_base->Dims);
-                ReverseDimensions(meta_base->Offsets, meta_base->Dims);
+                ReverseDimensions(meta_base->Shape, meta_base->Dims, 1);
+                ReverseDimensions(meta_base->Count, meta_base->Dims,
+                                  BlockCount);
+                ReverseDimensions(meta_base->Offsets, meta_base->Dims,
+                                  BlockCount);
             }
             if ((WriterRank == 0) || (VarRec->GlobalDims == NULL))
             {
@@ -533,8 +543,6 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             }
 
             VarRec->DimCount = meta_base->Dims;
-            size_t BlockCount =
-                meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
             if (!m_RandomAccessMode)
             {
                 if (WriterRank == 0)
@@ -921,6 +929,7 @@ bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t WriterRank,
     // else Global case
     for (size_t i = 0; i < writer_meta_base->BlockCount; i++)
     {
+        bool NeedThisBlock = true;
         for (size_t j = 0; j < writer_meta_base->Dims; j++)
         {
             size_t SelOffset = Req.Start[j];
@@ -933,17 +942,19 @@ bool BP5Deserializer::NeedWriter(BP5ArrayRequest Req, size_t WriterRank,
             RankSize = writer_meta_base->Count[i * writer_meta_base->Dims + j];
             if ((SelSize == 0) || (RankSize == 0))
             {
-                return false;
+                NeedThisBlock = false;
             }
             if ((RankOffset < SelOffset &&
                  (RankOffset + RankSize) <= SelOffset) ||
                 (RankOffset >= SelOffset + SelSize))
             {
-                return false;
+                NeedThisBlock = false;
             }
         }
+        if (NeedThisBlock)
+            return true;
     }
-    return true;
+    return false;
 }
 
 std::vector<BP5Deserializer::ReadRequest>
@@ -1098,21 +1109,45 @@ int BP5Deserializer::FindOffset(size_t Dims, const size_t *Size,
                                 const size_t *Index)
 {
     int Offset = 0;
+    std::cout << " FindOffset,  Size is ";
+    for (size_t i = 0; i < Dims; i++)
+    {
+        std::cout << Size[i] << ", ";
+    }
+    std::cout << " FindOffset,  Index is ";
+    for (size_t i = 0; i < Dims; i++)
+    {
+        std::cout << Index[i] << ", ";
+    }
     for (size_t i = 0; i < Dims; i++)
     {
         Offset = Index[i] + (Size[i] * Offset);
+        std::cout << "Offset the first is " << Offset << std::endl;
     }
+    std::cout << "    Resulting offset is " << Offset << std::endl;
     return Offset;
 }
 
 static int FindOffsetCM(size_t Dims, const size_t *Size, const size_t *Index)
 {
     size_t Offset = 0;
+    std::cout << " FindOffset,  Size is ";
+    for (size_t i = 0; i < Dims; i++)
+    {
+        std::cout << Size[i] << ", ";
+    }
+    std::cout << " FindOffset,  Index is ";
+    for (size_t i = 0; i < Dims; i++)
+    {
+        std::cout << Index[i] << ", ";
+    }
     for (int i = static_cast<int>(Dims - 1); i >= 0; i--)
     {
         Offset = Index[i] + (Size[i] * Offset);
+        std::cout << "Offset the first is " << Offset << std::endl;
     }
 
+    std::cout << "    Resulting offset is " << Offset << std::endl;
     return std::min(static_cast<size_t>(INT_MAX), Offset);
 }
 
@@ -1183,9 +1218,27 @@ void BP5Deserializer::ExtractSelectionFromPartialRM(
             size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
             size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
                                SelectionOffsets[Dim] + SelectionCounts[Dim]);
+            std::cout << "PartialOffsets[" << Dim
+                      << "] = " << PartialOffsets[Dim]
+                      << "  PartialCounts[]=" << PartialCounts[Dim]
+                      << std::endl;
+            std::cout << "SelectionOffsets[" << Dim
+                      << "] = " << SelectionOffsets[Dim]
+                      << "  SelectionCounts[]=" << SelectionCounts[Dim]
+                      << std::endl;
+            std::cout << " Left is " << Left << "   Right is " << Right
+                      << std::endl;
+            if (Right <= Left)
+                BlockSize = 0;
             BlockSize *= (Right - Left);
             break;
         }
+    }
+    if (BlockSize == 0)
+    {
+        std::cout << "Short circuiting extract because block size is zero"
+                  << std::endl;
+        return;
     }
     if (OperantDims > 0)
     {
@@ -1203,10 +1256,19 @@ void BP5Deserializer::ExtractSelectionFromPartialRM(
                            SelectionOffsets[Dim] + SelectionCounts[Dim]);
         if ((OperantDims != 0) && (Dim < OperantDims - 1))
         {
+            if (Right <= Left)
+                BlockCount = 0;
             BlockCount *= (Right - Left);
         }
         FirstIndex[Dim] = Left;
     }
+    if (BlockCount == 0)
+    {
+        std::cout << "Short circuiting extract because block count is zero"
+                  << std::endl;
+        return;
+    }
+    std::cout << "performing extraction" << std::endl;
     size_t *SelectionIndex = (size_t *)malloc(Dims * sizeof(SelectionIndex[0]));
     MapGlobalToLocalIndex(Dims, FirstIndex, SelectionOffsets, SelectionIndex);
     DestBlockStartOffset = FindOffset(Dims, SelectionCounts, SelectionIndex);
@@ -1219,11 +1281,29 @@ void BP5Deserializer::ExtractSelectionFromPartialRM(
     free(PartialIndex);
     SourceBlockStartOffset *= ElementSize;
 
+    std::cout << "Source BlockStartOffset = " << SourceBlockStartOffset
+              << "   DestBlockStartOffset = " << DestBlockStartOffset
+              << std::endl;
     InData += SourceBlockStartOffset;
     OutData += DestBlockStartOffset;
     size_t i;
+    std::cout << "BLock Count is " << BlockCount << "  BLockSize is "
+              << BlockSize * ElementSize
+              << "   Source BLockStride = " << SourceBlockStride
+              << "   DestStride " << DestBlockStride << std::endl;
+    std::cout << "OutData is " << std::hex << (void *)OutData << "   InData is "
+              << (void *)InData << std::dec << std::endl;
     for (i = 0; i < BlockCount; i++)
     {
+        std::cout << "copying ";
+        for (size_t tmp = 0; tmp < BlockSize * ElementSize;
+             tmp += sizeof(double))
+        {
+            std::cout << *(double *)(InData + tmp) << " ";
+        }
+        std::cout << "   Start=" << std::hex << (void *)OutData
+                  << " End=" << (void *)(OutData + BlockSize * ElementSize)
+                  << std::dec << std::endl;
         memcpy(OutData, InData, BlockSize * ElementSize);
         InData += SourceBlockStride;
         OutData += DestBlockStride;
@@ -1271,7 +1351,20 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
             int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
             int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
                             SelectionOffsets[Dim] + SelectionCounts[Dim]);
+            std::cout << "PartialOffsets[" << Dim
+                      << "] = " << PartialOffsets[Dim]
+                      << "  PartialCounts[]=" << PartialCounts[Dim]
+                      << std::endl;
+            std::cout << "SelectionOffsets[" << Dim
+                      << "] = " << SelectionOffsets[Dim]
+                      << "  SelectionCounts[]=" << SelectionCounts[Dim]
+                      << std::endl;
+            std::cout << " Left is " << Left << "   Right is " << Right
+                      << std::endl;
+            if (Right <= Left)
+                BlockSize = 0;
             BlockSize *= (Right - Left);
+
             break;
         }
     }
@@ -1281,6 +1374,12 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
         DestBlockStride = SelectionCounts[0] * OperantElementSize;
     }
 
+    if (BlockSize == 0)
+    {
+        std::cout << "Short circuiting extract because block size is zero"
+                  << std::endl;
+        return;
+    }
     /* calculate first selected element and count */
     BlockCount = 1;
     size_t *FirstIndex = (size_t *)malloc(Dims * sizeof(FirstIndex[0]));
@@ -1291,10 +1390,20 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
                         SelectionOffsets[Dim] + SelectionCounts[Dim]);
         if (Dim > 0)
         {
+            if (Right <= Left)
+                BlockCount = 0;
             BlockCount *= (Right - Left);
         }
         FirstIndex[Dim] = Left;
     }
+    if (BlockCount == 0)
+    {
+        free(FirstIndex);
+        std::cout << "Short circuiting extract because block size is zero"
+                  << std::endl;
+        return;
+    }
+    std::cout << "Doing extraction CM" << std::endl;
     size_t *SelectionIndex = (size_t *)malloc(Dims * sizeof(SelectionIndex[0]));
     MapGlobalToLocalIndex(Dims, FirstIndex, SelectionOffsets, SelectionIndex);
     DestBlockStartOffset = FindOffsetCM(Dims, SelectionCounts, SelectionIndex);
@@ -1304,14 +1413,31 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
     size_t *PartialIndex = (size_t *)malloc(Dims * sizeof(PartialIndex[0]));
     MapGlobalToLocalIndex(Dims, FirstIndex, PartialOffsets, PartialIndex);
     SourceBlockStartOffset = FindOffsetCM(Dims, PartialCounts, PartialIndex);
-
     free(PartialIndex);
     SourceBlockStartOffset *= OperantElementSize;
 
+    std::cout << "Source BlockStartOffset = " << SourceBlockStartOffset
+              << "   DestBlockStartOffset = " << DestBlockStartOffset
+              << std::endl;
     InData += SourceBlockStartOffset;
     OutData += DestBlockStartOffset;
+    std::cout << "BLock Count is " << BlockCount << "  BLockSize is "
+              << BlockSize * ElementSize
+              << "   Source BLockStride = " << SourceBlockStride
+              << "   DestStride " << DestBlockStride << std::endl;
+    std::cout << "OutData is " << std::hex << (void *)OutData << "   InData is "
+              << (void *)InData << std::dec << std::endl;
     for (int i = 0; i < BlockCount; i++)
     {
+        std::cout << "copying ";
+        for (size_t tmp = 0; tmp < BlockSize * ElementSize;
+             tmp += sizeof(double))
+        {
+            std::cout << *(double *)(InData + tmp) << " ";
+        }
+        std::cout << "   Start=" << std::hex << (void *)OutData
+                  << " End=" << (void *)(OutData + BlockSize * ElementSize)
+                  << std::dec << std::endl;
         memcpy(OutData, InData, BlockSize * ElementSize);
         InData += SourceBlockStride;
         OutData += DestBlockStride;
@@ -1410,6 +1536,28 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
     MV->IsReverseDims =
         ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
 
+    if ((VarRec->OrigShapeID == ShapeID::LocalValue) ||
+        (VarRec->OrigShapeID == ShapeID::GlobalValue))
+    {
+        MV->IsValue = true;
+        for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize;
+             WriterRank++)
+        {
+            MetaArrayRec *writer_meta_base =
+                (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+            if (writer_meta_base)
+            {
+                MV->BlocksInfo.reserve(1);
+                Engine::MinBlockInfo Blk;
+                Blk.WriterID = WriterRank;
+                Blk.BlockID = 0;
+                Blk.BufferP = writer_meta_base;
+                MV->BlocksInfo.push_back(Blk);
+                return MV;
+            }
+        }
+        return MV;
+    }
     size_t Id = 0;
     for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
     {
