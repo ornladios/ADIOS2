@@ -1386,7 +1386,8 @@ extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
                 i++;
             }
         }
-        for (int i = 0; i < sizeof(CP_DP_WriterArrayStructs) /
+	int i;
+        for (i = 0; i < sizeof(CP_DP_WriterArrayStructs) /
                                 sizeof(CP_DP_WriterArrayStructs[0]);
              i++)
         {
@@ -1398,7 +1399,7 @@ extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
             }
         }
 
-        for (int i = 0; i < sizeof(CP_WriterResponseStructs) /
+        for (i = 0; i < sizeof(CP_WriterResponseStructs) /
                                 sizeof(CP_WriterResponseStructs[0]);
              i++)
         {

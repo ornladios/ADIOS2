@@ -1449,7 +1449,8 @@ extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
     int RetCount = 0;
     STREAM_MUTEX_LOCK(Stream);
     int64_t LastRetTimestep = -1;
-    for (int i = 0; i < Stream->InternalMetaMetaCount; i++)
+    int i;
+    for (i = 0; i < Stream->InternalMetaMetaCount; i++)
     {
         if ((LastRetTimestep == -1) ||
             (Stream->InternalMetaMetaInfo[i].TimestepAdded >= LastRetTimestep))
@@ -1462,7 +1463,7 @@ extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, long Timestep)
     }
     SstMetaMetaList ret = malloc(sizeof(ret[0]) * (RetCount + 1));
     int j = 0;
-    for (int i = 0; i < Stream->InternalMetaMetaCount; i++)
+    for (i = 0; i < Stream->InternalMetaMetaCount; i++)
     {
         if ((LastRetTimestep == -1) ||
             (Stream->InternalMetaMetaInfo[i].TimestepAdded >= LastRetTimestep))
