@@ -391,7 +391,7 @@ extern void FFSFreeMarshalData(SstStream Stream)
         struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
         if (Info)
         {
-	    int i;
+            int i;
             for (i = 0; i < Stream->WriterCohortSize; i++)
             {
                 if (Info->WriterInfo[i].RawBuffer)
@@ -861,7 +861,7 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
 
     while (Reqs)
     {
-	int i;
+        int i;
         for (i = 0; i < Stream->WriterCohortSize; i++)
         {
             if ((Info->WriterInfo[i].Status != Needed) && (NeedWriter(Reqs, i)))
@@ -872,15 +872,17 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
         Reqs = Reqs->Next;
     }
 
-    for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize; WriterRank++)
+    for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize;
+         WriterRank++)
     {
         if (Info->WriterInfo[WriterRank].Status == Needed)
         {
-            size_t DataSize =
-                ((struct FFSMetadataInfoStruct *)Info->MetadataBaseAddrs[WriterRank])
-                    ->DataBlockSize;
-            void *DP_TimestepInfo =
-                Mdata->DP_TimestepInfo ? Mdata->DP_TimestepInfo[WriterRank] : NULL;
+            size_t DataSize = ((struct FFSMetadataInfoStruct *)
+                                   Info->MetadataBaseAddrs[WriterRank])
+                                  ->DataBlockSize;
+            void *DP_TimestepInfo = Mdata->DP_TimestepInfo
+                                        ? Mdata->DP_TimestepInfo[WriterRank]
+                                        : NULL;
             Info->WriterInfo[WriterRank].RawBuffer =
                 realloc(Info->WriterInfo[WriterRank].RawBuffer, DataSize);
 
@@ -1365,7 +1367,8 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
     while (Reqs)
     {
         ImplementGapWarning(Stream, Reqs);
-        for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize; WriterRank++)
+        for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize;
+             WriterRank++)
         {
             if (NeedWriter(Reqs, WriterRank))
             {
@@ -1381,15 +1384,17 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 size_t *SelOffsetFree = NULL;
                 size_t *SelSize = Reqs->Count;
                 int Type = Reqs->VarRec->Type;
-                void *IncomingData = Reqs->VarRec->PerWriterIncomingData[WriterRank];
+                void *IncomingData =
+                    Reqs->VarRec->PerWriterIncomingData[WriterRank];
                 int FreeIncoming = 0;
 
                 if (Reqs->RequestType == Local)
                 {
                     int LocalBlockID =
-                        Reqs->BlockID - Reqs->VarRec->PerWriterBlockStart[WriterRank];
+                        Reqs->BlockID -
+                        Reqs->VarRec->PerWriterBlockStart[WriterRank];
                     size_t DataOffset = 0;
-		    int i;
+                    int i;
                     for (i = 0; i < LocalBlockID; i++)
                     {
                         int BlockElemCount = 1;
