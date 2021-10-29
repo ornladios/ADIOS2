@@ -63,9 +63,9 @@ public:
      * @param parameters
      * @return size of compressed buffer
      */
-    virtual size_t Compress(const char *dataIn, const Dims &blockStart,
-                            const Dims &blockCount, const DataType type,
-                            char *bufferOut, const Params &parameters);
+    virtual size_t Operate(const char *dataIn, const Dims &blockStart,
+                           const Dims &blockCount, const DataType type,
+                           char *bufferOut, const Params &parameters);
 
     /**
      * @param bufferIn
@@ -73,8 +73,8 @@ public:
      * @param dataOut
      * @return size of decompressed buffer
      */
-    virtual size_t Decompress(const char *bufferIn, const size_t sizeIn,
-                              char *dataOut);
+    virtual size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                  char *dataOut);
 
     virtual bool IsDataTypeValid(const DataType type) const = 0;
 

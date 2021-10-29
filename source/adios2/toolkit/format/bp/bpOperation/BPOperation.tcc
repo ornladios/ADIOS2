@@ -30,7 +30,7 @@ void BPOperation::SetData(
     // being naughty here
     Params &info = const_cast<Params &>(operation.Info);
 
-    const size_t outputSize = op.Compress(
+    const size_t outputSize = op.Operate(
         reinterpret_cast<char *>(blockInfo.Data), blockInfo.Start,
         blockInfo.Count, variable.m_Type,
         bufferSTL.m_Buffer.data() + bufferSTL.m_Position, parameters);

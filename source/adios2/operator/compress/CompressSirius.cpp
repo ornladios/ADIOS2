@@ -34,9 +34,9 @@ CompressSirius::CompressSirius(const Params &parameters)
     m_TierBuffers.resize(m_Tiers);
 }
 
-size_t CompressSirius::Compress(const char *dataIn, const Dims &blockStart,
-                                const Dims &blockCount, const DataType varType,
-                                char *bufferOut, const Params &params)
+size_t CompressSirius::Operate(const char *dataIn, const Dims &blockStart,
+                               const Dims &blockCount, const DataType varType,
+                               char *bufferOut, const Params &params)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -89,6 +89,44 @@ size_t CompressSirius::Compress(const char *dataIn, const Dims &blockStart,
     m_CurrentTier %= m_Tiers;
 
     return bufferOutOffset;
+}
+
+size_t CompressSirius::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                      char *dataOut)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 sirius buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown sirius buffer version");
+    }
+
+    return 0;
+}
+
+bool CompressSirius::IsDataTypeValid(const DataType type) const
+{
+#define declare_type(T)                                                        \
+    if (helper::GetDataType<T>() == type)                                      \
+    {                                                                          \
+        return true;                                                           \
+    }
+    ADIOS2_FOREACH_SIRIUS_TYPE_1ARG(declare_type)
+#undef declare_type
+    return false;
 }
 
 size_t CompressSirius::DecompressV1(const char *bufferIn, const size_t sizeIn,
@@ -168,44 +206,6 @@ size_t CompressSirius::DecompressV1(const char *bufferIn, const size_t sizeIn,
     {
         return 0;
     }
-}
-
-size_t CompressSirius::Decompress(const char *bufferIn, const size_t sizeIn,
-                                  char *dataOut)
-{
-    size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
-    bufferInOffset += 2; // skip two reserved bytes
-
-    if (bufferVersion == 1)
-    {
-        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOut);
-    }
-    else if (bufferVersion == 2)
-    {
-        // TODO: if a Version 2 sirius buffer is being implemented, put it here
-        // and keep the DecompressV1 routine for backward compatibility
-    }
-    else
-    {
-        throw("unknown sirius buffer version");
-    }
-
-    return 0;
-}
-
-bool CompressSirius::IsDataTypeValid(const DataType type) const
-{
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
-    }
-    ADIOS2_FOREACH_SIRIUS_TYPE_1ARG(declare_type)
-#undef declare_type
-    return false;
 }
 
 } // end namespace compress

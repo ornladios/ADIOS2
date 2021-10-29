@@ -32,9 +32,9 @@ CompressBZIP2::CompressBZIP2(const Params &parameters)
 {
 }
 
-size_t CompressBZIP2::Compress(const char *dataIn, const Dims &blockStart,
-                               const Dims &blockCount, DataType type,
-                               char *bufferOut, const Params &parameters)
+size_t CompressBZIP2::Operate(const char *dataIn, const Dims &blockStart,
+                              const Dims &blockCount, DataType type,
+                              char *bufferOut, const Params &parameters)
 {
 
     const uint8_t bufferVersion = 1;
@@ -115,6 +115,35 @@ size_t CompressBZIP2::Compress(const char *dataIn, const Dims &blockStart,
     return destOffset;
 }
 
+size_t CompressBZIP2::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                     char *dataOut)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        // pass in the whole buffer as there is absolute positions saved in the
+        // buffer to determine the offsets and lengths for batches
+        return DecompressV1(bufferIn, sizeIn, dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 bzip2 buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown bzip2 buffer version");
+    }
+
+    return 0;
+}
+
+bool CompressBZIP2::IsDataTypeValid(const DataType type) const { return true; }
+
 size_t CompressBZIP2::DecompressV1(const char *bufferIn, const size_t sizeIn,
                                    char *dataOut)
 {
@@ -172,34 +201,6 @@ size_t CompressBZIP2::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     return sizeOut;
 }
-size_t CompressBZIP2::Decompress(const char *bufferIn, const size_t sizeIn,
-                                 char *dataOut)
-{
-    size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
-    bufferInOffset += 2; // skip two reserved bytes
-
-    if (bufferVersion == 1)
-    {
-        // pass in the whole buffer as there is absolute positions saved in the
-        // buffer to determine the offsets and lengths for batches
-        return DecompressV1(bufferIn, sizeIn, dataOut);
-    }
-    else if (bufferVersion == 2)
-    {
-        // TODO: if a Version 2 bzip2 buffer is being implemented, put it here
-        // and keep the DecompressV1 routine for backward compatibility
-    }
-    else
-    {
-        throw("unknown bzip2 buffer version");
-    }
-
-    return 0;
-}
-
-bool CompressBZIP2::IsDataTypeValid(const DataType type) const { return true; }
 
 void CompressBZIP2::CheckStatus(const int status, const std::string hint) const
 {

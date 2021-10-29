@@ -29,9 +29,9 @@ namespace compress
 
 CompressSZ::CompressSZ(const Params &parameters) : Operator("sz", parameters) {}
 
-size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
-                            const Dims &blockCount, const DataType varType,
-                            char *bufferOut, const Params &parameters)
+size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
+                           const Dims &blockCount, const DataType varType,
+                           char *bufferOut, const Params &parameters)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -286,8 +286,8 @@ size_t CompressSZ::Compress(const char *dataIn, const Dims &blockStart,
     return bufferOutOffset;
 }
 
-size_t CompressSZ::Decompress(const char *bufferIn, const size_t sizeIn,
-                              char *dataOut)
+size_t CompressSZ::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                  char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
     const uint8_t bufferVersion =
@@ -311,6 +311,19 @@ size_t CompressSZ::Decompress(const char *bufferIn, const size_t sizeIn,
 
     return 0;
 }
+
+bool CompressSZ::IsDataTypeValid(const DataType type) const
+{
+#define declare_type(T)                                                        \
+    if (helper::GetDataType<T>() == type)                                      \
+    {                                                                          \
+        return true;                                                           \
+    }
+    ADIOS2_FOREACH_SZ_TYPE_1ARG(declare_type)
+#undef declare_type
+    return false;
+}
+
 size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
                                 char *dataOut)
 {
@@ -379,17 +392,6 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
     free(result);
     result = nullptr;
     return dataSizeBytes;
-}
-bool CompressSZ::IsDataTypeValid(const DataType type) const
-{
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
-    }
-    ADIOS2_FOREACH_SZ_TYPE_1ARG(declare_type)
-#undef declare_type
-    return false;
 }
 
 } // end namespace compress
