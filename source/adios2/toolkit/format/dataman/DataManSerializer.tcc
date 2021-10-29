@@ -145,85 +145,34 @@ void DataManSerializer::PutData(
     }
 
     size_t datasize = 0;
-    bool compressed = false;
     std::string compressionMethod;
+    bool compressed = false;
     if (not ops.empty())
     {
         compressionMethod = ops[0].Op->m_Type;
         std::transform(compressionMethod.begin(), compressionMethod.end(),
                        compressionMethod.begin(), ::tolower);
-        if (compressionMethod == "zfp")
+
+        m_CompressBuffer.reserve(std::accumulate(varCount.begin(),
+                                                 varCount.end(), sizeof(T),
+                                                 std::multiplies<size_t>()));
+
+        if (IsCompressionAvailable(compressionMethod, helper::GetDataType<T>(),
+                                   varCount))
         {
-            if (IsCompressionAvailable(compressionMethod,
-                                       helper::GetDataType<T>(), varCount))
+            try
             {
-                try
-                {
-                    PutZfp<T>(metaj, datasize, inputData, varCount,
-                              ops[0].Parameters);
-                    compressed = true;
-                }
-                catch (std::exception &e)
-                {
-                    std::cout << e.what() << std::endl;
-                }
+                core::compress::CompressorFactory c;
+                datasize = c.Compress(
+                    reinterpret_cast<const char *>(inputData), varStart,
+                    varCount, helper::GetDataType<T>(), m_CompressBuffer.data(),
+                    ops[0].Parameters, compressionMethod);
+                compressed = true;
             }
-        }
-        else if (compressionMethod == "sz")
-        {
-            if (IsCompressionAvailable(compressionMethod,
-                                       helper::GetDataType<T>(), varCount))
+            catch (std::exception &e)
             {
-                try
-                {
-                    PutSz<T>(metaj, datasize, inputData, varCount,
-                             ops[0].Parameters);
-                    compressed = true;
-                }
-                catch (std::exception &e)
-                {
-                    std::cout << e.what() << std::endl;
-                }
+                std::cout << e.what() << std::endl;
             }
-        }
-        else if (compressionMethod == "bzip2")
-        {
-            if (IsCompressionAvailable(compressionMethod,
-                                       helper::GetDataType<T>(), varCount))
-            {
-                try
-                {
-                    PutBZip2<T>(metaj, datasize, inputData, varCount,
-                                ops[0].Parameters);
-                    compressed = true;
-                }
-                catch (std::exception &e)
-                {
-                    std::cout << e.what() << std::endl;
-                }
-            }
-        }
-        else if (compressionMethod == "mgard")
-        {
-            if (IsCompressionAvailable(compressionMethod,
-                                       helper::GetDataType<T>(), varCount))
-            {
-                try
-                {
-                    PutMgard<T>(metaj, datasize, inputData, varCount,
-                                ops[0].Parameters);
-                    compressed = true;
-                }
-                catch (std::exception &e)
-                {
-                    std::cout << e.what() << std::endl;
-                }
-            }
-        }
-        else
-        {
-            throw(std::invalid_argument("Compression method " +
-                                        compressionMethod + " not supported."));
         }
     }
 
@@ -369,114 +318,6 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
         }
     }
     return 0;
-}
-
-template <class T>
-void DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
-                               const T *inputData, const Dims &varCount,
-                               const Params &params)
-{
-    PERFSTUBS_SCOPED_TIMER_FUNC();
-#ifdef ADIOS2_HAVE_ZFP
-    core::compress::CompressZFP compressor(params);
-    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
-                                             sizeof(T),
-                                             std::multiplies<size_t>()));
-    try
-    {
-        datasize = compressor.Operate(reinterpret_cast<const char *>(inputData),
-                                      {}, varCount, helper::GetDataType<T>(),
-                                      m_CompressBuffer.data(), params);
-    }
-    catch (std::exception &e)
-    {
-        throw(e);
-    }
-#else
-    throw(std::invalid_argument(
-        "ZFP compression used but ZFP library is not linked to ADIOS2"));
-#endif
-}
-
-template <class T>
-void DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
-                              const T *inputData, const Dims &varCount,
-                              const Params &params)
-{
-    PERFSTUBS_SCOPED_TIMER_FUNC();
-#ifdef ADIOS2_HAVE_SZ
-    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
-                                             sizeof(T),
-                                             std::multiplies<size_t>()));
-    core::compress::CompressSZ compressor(params);
-    try
-    {
-        datasize = compressor.Operate(reinterpret_cast<const char *>(inputData),
-                                      {}, varCount, helper::GetDataType<T>(),
-                                      m_CompressBuffer.data(), params);
-    }
-    catch (std::exception &e)
-    {
-        throw(e);
-    }
-#else
-    throw(std::invalid_argument(
-        "SZ compression used but SZ library is not linked to ADIOS2"));
-#endif
-}
-
-template <class T>
-void DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
-                                 const T *inputData, const Dims &varCount,
-                                 const Params &params)
-{
-    PERFSTUBS_SCOPED_TIMER_FUNC();
-#ifdef ADIOS2_HAVE_BZIP2
-    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
-                                             sizeof(T),
-                                             std::multiplies<size_t>()));
-    core::compress::CompressBZIP2 compressor(params);
-    try
-    {
-        datasize = compressor.Operate(reinterpret_cast<const char *>(inputData),
-                                      {}, varCount, helper::GetDataType<T>(),
-                                      m_CompressBuffer.data(), params);
-    }
-    catch (std::exception &e)
-    {
-        throw(e);
-    }
-#else
-    throw(std::invalid_argument(
-        "BZip2 compression used but BZip2 library is not linked to ADIOS2"));
-#endif
-}
-
-template <class T>
-void DataManSerializer::PutMgard(nlohmann::json &metaj, size_t &datasize,
-                                 const T *inputData, const Dims &varCount,
-                                 const Params &params)
-{
-    PERFSTUBS_SCOPED_TIMER_FUNC();
-#ifdef ADIOS2_HAVE_MGARD
-    core::compress::CompressMGARD compressor(params);
-    m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
-                                             sizeof(T),
-                                             std::multiplies<size_t>()));
-    try
-    {
-        datasize = compressor.Operate(reinterpret_cast<const char *>(inputData),
-                                      {}, varCount, helper::GetDataType<T>(),
-                                      m_CompressBuffer.data(), params);
-    }
-    catch (std::exception &e)
-    {
-        throw(e);
-    }
-#else
-    throw(std::invalid_argument(
-        "MGARD compression used but MGARD library is not linked to ADIOS2"));
-#endif
 }
 
 template <class T>
