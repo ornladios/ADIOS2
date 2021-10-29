@@ -1450,6 +1450,7 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
         (VarRec->OrigShapeID == ShapeID::GlobalValue))
     {
         MV->IsValue = true;
+        MV->BlocksInfo.reserve(m_WriterCohortSize);
         for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize;
              WriterRank++)
         {
@@ -1457,13 +1458,11 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
                 (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
             if (writer_meta_base)
             {
-                MV->BlocksInfo.reserve(1);
                 Engine::MinBlockInfo Blk;
                 Blk.WriterID = WriterRank;
                 Blk.BlockID = 0;
                 Blk.BufferP = writer_meta_base;
                 MV->BlocksInfo.push_back(Blk);
-                return MV;
             }
         }
         return MV;
