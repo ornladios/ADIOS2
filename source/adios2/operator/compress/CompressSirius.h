@@ -27,6 +27,8 @@ class CompressSirius : public Operator
 public:
     CompressSirius(const Params &parameters);
 
+    CompressSirius();
+
     ~CompressSirius() = default;
 
     size_t Operate(const char *dataIn, const Dims &blockStart,

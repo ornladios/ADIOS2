@@ -34,6 +34,13 @@ CompressSirius::CompressSirius(const Params &parameters)
     m_TierBuffers.resize(m_Tiers);
 }
 
+CompressSirius::CompressSirius() : Operator("sirius")
+{
+    m_Tiers = 4;
+    m_TierBuffersMap.resize(m_Tiers);
+    m_TierBuffers.resize(m_Tiers);
+}
+
 size_t CompressSirius::Operate(const char *dataIn, const Dims &blockStart,
                                const Dims &blockCount, const DataType varType,
                                char *bufferOut, const Params &params)

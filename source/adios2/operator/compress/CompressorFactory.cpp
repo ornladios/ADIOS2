@@ -160,6 +160,16 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
                                  "with PNG, can't use compressor\n");
 #endif
     }
+    else if (compressorType == Operator::OperatorType::SIRIUS)
+    {
+#ifdef ADIOS2_HAVE_MHS
+        compress::CompressSirius op;
+        return op.InverseOperate(bufferIn, sizeIn, dataOut);
+#else
+        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
+                                 "with MHS, can't use Sirius compressor\n");
+#endif
+    }
     else if (compressorType == Operator::OperatorType::Sz)
     {
 #ifdef ADIOS2_HAVE_SZ
