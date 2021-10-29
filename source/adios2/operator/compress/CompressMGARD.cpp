@@ -26,9 +26,9 @@ CompressMGARD::CompressMGARD(const Params &parameters)
 {
 }
 
-size_t CompressMGARD::Compress(const char *dataIn, const Dims &blockStart,
-                               const Dims &blockCount, const DataType type,
-                               char *bufferOut, const Params &parameters)
+size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
+                              const Dims &blockCount, const DataType type,
+                              char *bufferOut, const Params &parameters)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -126,6 +126,44 @@ size_t CompressMGARD::Compress(const char *dataIn, const Dims &blockStart,
     return bufferOutOffset;
 }
 
+size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                     char *dataOut)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 mgard buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown mgard buffer version");
+    }
+
+    return 0;
+}
+
+bool CompressMGARD::IsDataTypeValid(const DataType type) const
+{
+#define declare_type(T)                                                        \
+    if (helper::GetDataType<T>() == type)                                      \
+    {                                                                          \
+        return true;                                                           \
+    }
+    ADIOS2_FOREACH_MGARD_TYPE_1ARG(declare_type)
+#undef declare_type
+    return false;
+}
+
 size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
                                    char *dataOut)
 {
@@ -187,44 +225,6 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
     dataPtr = nullptr;
 
     return sizeOut;
-}
-
-size_t CompressMGARD::Decompress(const char *bufferIn, const size_t sizeIn,
-                                 char *dataOut)
-{
-    size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
-    bufferInOffset += 2; // skip two reserved bytes
-
-    if (bufferVersion == 1)
-    {
-        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOut);
-    }
-    else if (bufferVersion == 2)
-    {
-        // TODO: if a Version 2 mgard buffer is being implemented, put it here
-        // and keep the DecompressV1 routine for backward compatibility
-    }
-    else
-    {
-        throw("unknown mgard buffer version");
-    }
-
-    return 0;
-}
-
-bool CompressMGARD::IsDataTypeValid(const DataType type) const
-{
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
-    }
-    ADIOS2_FOREACH_MGARD_TYPE_1ARG(declare_type)
-#undef declare_type
-    return false;
 }
 
 } // end namespace compress

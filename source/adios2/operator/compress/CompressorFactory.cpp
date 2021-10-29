@@ -28,8 +28,8 @@ size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
     {
 #ifdef ADIOS2_HAVE_BLOSC
         CompressBlosc c({});
-        return c.Compress(dataIn, blockStart, blockCount, dataType, bufferOut,
-                          parameters);
+        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                         parameters);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with BLOSC, can't use compressor\n");
@@ -39,8 +39,8 @@ size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
     {
 #ifdef ADIOS2_HAVE_BZIP2
         CompressBZIP2 c({});
-        return c.Compress(dataIn, blockStart, blockCount, dataType, bufferOut,
-                          parameters);
+        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                         parameters);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with BZIP2, can't use compressor\n");
@@ -50,8 +50,8 @@ size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
     {
 #ifdef ADIOS2_HAVE_LIBPRESSIO
         CompressLibPressio c({});
-        return c.Compress(dataIn, blockStart, blockCount, dataType, bufferOut,
-                          parameters);
+        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                         parameters);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with LibPressio, can't use compressor\n");
@@ -61,8 +61,8 @@ size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
     {
 #ifdef ADIOS2_HAVE_MGARD
         CompressMGARD c({});
-        return c.Compress(dataIn, blockStart, blockCount, dataType, bufferOut,
-                          parameters);
+        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                         parameters);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with MGARD, can't use compressor\n");
@@ -72,8 +72,8 @@ size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
     {
 #ifdef ADIOS2_HAVE_PNG
         CompressPNG c({});
-        return c.Compress(dataIn, blockStart, blockCount, dataType, bufferOut,
-                          parameters);
+        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                         parameters);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with PNG, can't use compressor\n");
@@ -83,8 +83,8 @@ size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
     {
 #ifdef ADIOS2_HAVE_MHS
         CompressSirius c({});
-        return c.Compress(dataIn, blockStart, blockCount, dataType, bufferOut,
-                          parameters);
+        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                         parameters);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with MHS, can't use Sirius compressor\n");
@@ -94,8 +94,8 @@ size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
     {
 #ifdef ADIOS2_HAVE_SZ
         CompressSZ c({});
-        return c.Compress(dataIn, blockStart, blockCount, dataType, bufferOut,
-                          parameters);
+        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                         parameters);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with SZ, can't use compressor\n");
@@ -105,8 +105,8 @@ size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
     {
 #ifdef ADIOS2_HAVE_ZFP
         CompressZFP c({});
-        return c.Compress(dataIn, blockStart, blockCount, dataType, bufferOut,
-                          parameters);
+        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                         parameters);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with ZFP, can't use compressor\n");
@@ -125,7 +125,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
     {
 #ifdef ADIOS2_HAVE_BLOSC
         compress::CompressBlosc op({});
-        return op.Decompress(bufferIn, sizeIn, dataOut);
+        return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with BLOSC, can't use compressor\n");
@@ -135,7 +135,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
     {
 #ifdef ADIOS2_HAVE_BZIP2
         compress::CompressBZIP2 op({});
-        return op.Decompress(bufferIn, sizeIn, dataOut);
+        return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with BZIP2, can't use compressor\n");
@@ -145,7 +145,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
     {
 #ifdef ADIOS2_HAVE_LIBPRESSIO
         compress::CompressLibPressio op({});
-        return op.Decompress(bufferIn, sizeIn, dataOut);
+        return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with LibPressio, can't use compressor\n");
@@ -155,7 +155,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
     {
 #ifdef ADIOS2_HAVE_MGARD
         compress::CompressMGARD op({});
-        return op.Decompress(bufferIn, sizeIn, dataOut);
+        return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with MGARD, can't use compressor\n");
@@ -165,7 +165,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
     {
 #ifdef ADIOS2_HAVE_PNG
         compress::CompressPNG op({});
-        return op.Decompress(bufferIn, sizeIn, dataOut);
+        return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with PNG, can't use compressor\n");
@@ -175,7 +175,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
     {
 #ifdef ADIOS2_HAVE_MHS
         compress::CompressSirius op({});
-        return op.Decompress(bufferIn, sizeIn, dataOut);
+        return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with MHS, can't use Sirius compressor\n");
@@ -185,7 +185,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
     {
 #ifdef ADIOS2_HAVE_SZ
         compress::CompressSZ op({});
-        return op.Decompress(bufferIn, sizeIn, dataOut);
+        return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with SZ, can't use compressor\n");
@@ -195,7 +195,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
     {
 #ifdef ADIOS2_HAVE_ZFP
         compress::CompressZFP op({});
-        return op.Decompress(bufferIn, sizeIn, dataOut);
+        return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
         throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
                                  "with ZFP, can't use compressor\n");

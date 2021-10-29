@@ -29,12 +29,12 @@ public:
 
     ~CompressSirius() = default;
 
-    size_t Compress(const char *dataIn, const Dims &blockStart,
-                    const Dims &blockCount, const DataType type,
-                    char *bufferOut, const Params &params) final;
+    size_t Operate(const char *dataIn, const Dims &blockStart,
+                   const Dims &blockCount, const DataType type, char *bufferOut,
+                   const Params &params) final;
 
-    size_t Decompress(const char *bufferIn, const size_t sizeIn,
-                      char *dataOut) final;
+    size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
+                          char *dataOut) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 

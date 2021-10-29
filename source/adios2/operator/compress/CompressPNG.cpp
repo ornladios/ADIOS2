@@ -47,9 +47,9 @@ CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
 {
 }
 
-size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
-                             const Dims &blockCount, const DataType type,
-                             char *bufferOut, const Params &parameters)
+size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
+                            const Dims &blockCount, const DataType type,
+                            char *bufferOut, const Params &parameters)
 {
     size_t bufferOutOffset = 0;
     const uint8_t bufferVersion = 1;
@@ -191,6 +191,36 @@ size_t CompressPNG::Compress(const char *dataIn, const Dims &blockStart,
     return destInfo.Offset;
 }
 
+size_t CompressPNG::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                   char *dataOut)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        // pass in the whole buffer as there is absolute positions saved in the
+        // buffer to determine the offsets and lengths for batches
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 png buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown png buffer version");
+    }
+
+    return 0;
+}
+
+bool CompressPNG::IsDataTypeValid(const DataType type) const { return true; }
+
 size_t CompressPNG::DecompressV1(const char *bufferIn, const size_t sizeIn,
                                  char *dataOut)
 {
@@ -235,36 +265,6 @@ size_t CompressPNG::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     return outSize;
 }
-
-size_t CompressPNG::Decompress(const char *bufferIn, const size_t sizeIn,
-                               char *dataOut)
-{
-    size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
-    bufferInOffset += 2; // skip two reserved bytes
-
-    if (bufferVersion == 1)
-    {
-        // pass in the whole buffer as there is absolute positions saved in the
-        // buffer to determine the offsets and lengths for batches
-        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOut);
-    }
-    else if (bufferVersion == 2)
-    {
-        // TODO: if a Version 2 png buffer is being implemented, put it here
-        // and keep the DecompressV1 routine for backward compatibility
-    }
-    else
-    {
-        throw("unknown png buffer version");
-    }
-
-    return 0;
-}
-
-bool CompressPNG::IsDataTypeValid(const DataType type) const { return true; }
 
 void CompressPNG::CheckStatus(const int status, const std::string hint) const {}
 

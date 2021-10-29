@@ -27,9 +27,9 @@ CompressZFP::CompressZFP(const Params &parameters) : Operator("zfp", parameters)
 {
 }
 
-size_t CompressZFP::Compress(const char *dataIn, const Dims &blockStart,
-                             const Dims &blockCount, const DataType type,
-                             char *bufferOut, const Params &parameters)
+size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
+                            const Dims &blockCount, const DataType type,
+                            char *bufferOut, const Params &parameters)
 {
 
     const uint8_t bufferVersion = 1;
@@ -84,6 +84,46 @@ size_t CompressZFP::Compress(const char *dataIn, const Dims &blockStart,
     return bufferOutOffset;
 }
 
+size_t CompressZFP::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                   char *dataOut)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 zfp buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw std::runtime_error("unknown zfp buffer version");
+    }
+
+    return 0;
+}
+
+bool CompressZFP::IsDataTypeValid(const DataType type) const
+{
+#define declare_type(T)                                                        \
+    if (helper::GetDataType<T>() == type)                                      \
+    {                                                                          \
+        return true;                                                           \
+    }
+    ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
+#undef declare_type
+    return false;
+}
+
+// PRIVATE
+
 size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
                                  char *dataOut)
 {
@@ -136,45 +176,6 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
     return helper::GetTotalSize(convertedDims, helper::GetDataTypeSize(type));
 }
 
-size_t CompressZFP::Decompress(const char *bufferIn, const size_t sizeIn,
-                               char *dataOut)
-{
-    size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
-    bufferInOffset += 2; // skip two reserved bytes
-
-    if (bufferVersion == 1)
-    {
-        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOut);
-    }
-    else if (bufferVersion == 2)
-    {
-        // TODO: if a Version 2 zfp buffer is being implemented, put it here
-        // and keep the DecompressV1 routine for backward compatibility
-    }
-    else
-    {
-        throw std::runtime_error("unknown zfp buffer version");
-    }
-
-    return 0;
-}
-
-bool CompressZFP::IsDataTypeValid(const DataType type) const
-{
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
-    }
-    ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
-#undef declare_type
-    return false;
-}
-
-// PRIVATE
 zfp_type CompressZFP::GetZfpType(DataType type) const
 {
     zfp_type zfpType = zfp_type_none;

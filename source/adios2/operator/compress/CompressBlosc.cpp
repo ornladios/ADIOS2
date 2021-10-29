@@ -42,9 +42,9 @@ CompressBlosc::CompressBlosc(const Params &parameters)
 {
 }
 
-size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
-                               const Dims &blockCount, const DataType type,
-                               char *bufferOut, const Params &parameters)
+size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
+                              const Dims &blockCount, const DataType type,
+                              char *bufferOut, const Params &parameters)
 {
     size_t bufferOutOffset = 0;
     const uint8_t bufferVersion = 1;
@@ -229,6 +229,34 @@ size_t CompressBlosc::Compress(const char *dataIn, const Dims &blockStart,
     return bufferOutOffset;
 }
 
+size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                     char *dataOut)
+{
+    size_t bufferInOffset = 1; // skip operator type
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    bufferInOffset += 2; // skip two reserved bytes
+
+    if (bufferVersion == 1)
+    {
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 2)
+    {
+        // TODO: if a Version 2 blosc buffer is being implemented, put it here
+        // and keep the DecompressV1 routine for backward compatibility
+    }
+    else
+    {
+        throw("unknown blosc buffer version");
+    }
+
+    return 0;
+}
+
+bool CompressBlosc::IsDataTypeValid(const DataType type) const { return true; }
+
 size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
                                    char *dataOut)
 {
@@ -274,34 +302,6 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     return sizeOut;
 }
-
-size_t CompressBlosc::Decompress(const char *bufferIn, const size_t sizeIn,
-                                 char *dataOut)
-{
-    size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
-    bufferInOffset += 2; // skip two reserved bytes
-
-    if (bufferVersion == 1)
-    {
-        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOut);
-    }
-    else if (bufferVersion == 2)
-    {
-        // TODO: if a Version 2 blosc buffer is being implemented, put it here
-        // and keep the DecompressV1 routine for backward compatibility
-    }
-    else
-    {
-        throw("unknown blosc buffer version");
-    }
-
-    return 0;
-}
-
-bool CompressBlosc::IsDataTypeValid(const DataType type) const { return true; }
 
 size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
                                               const size_t sizeIn,
