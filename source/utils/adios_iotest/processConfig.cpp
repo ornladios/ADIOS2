@@ -28,8 +28,8 @@ CommandSleep::CommandSleep(size_t time)
 }
 CommandSleep::~CommandSleep() {}
 
-CommandBusy::CommandBusy(size_t time)
-: Command(Operation::Busy), busyTime_us(time)
+CommandBusy::CommandBusy(size_t cycles, size_t time)
+: Command(Operation::Busy), cycles(cycles), busyTime_us(time)
 {
 }
 CommandBusy::~CommandBusy() {}
@@ -324,8 +324,9 @@ void printConfig(const Config &cfg)
         case Operation::Busy:
         {
             auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
-            std::cout << "          Be busy for " << cmdS->busyTime_us
-                      << " microseconds " << std::endl;
+            std::cout << "          Be busy for " << cmdS->cycles
+                      << " compute cycles with " << cmdS->busyTime_us
+                      << " microseconds of computation each " << std::endl;
             break;
         }
         case Operation::Write:
@@ -414,36 +415,6 @@ void globalChecks(const Config &cfg, const Settings &settings)
                 it.first + "' ");
         }
     }
-}
-
-uint64_t BusyNumStepsPerSecond(Config &cfg, const Settings &settings)
-{
-    size_t numCycles = 0;
-    constexpr int64_t oneSec = 1000000;
-    std::chrono::high_resolution_clock::time_point start =
-        std::chrono::high_resolution_clock::now();
-    auto end = start + std::chrono::microseconds(oneSec);
-    auto sleeptime = std::chrono::microseconds(cfg.BusyCmd_sleep_microsec);
-    if (!settings.myRank && settings.verbose)
-    {
-        std::cout << "    Measure 'Busy' for 1 second " << std::endl;
-    }
-    const size_t n = cfg.BusyCmd_DataSize;
-    std::vector<double> r(n), localdata(n);
-    int keepBusy = 1;
-    while (keepBusy)
-    {
-        MPI_Reduce(localdata.data(), r.data(), n, MPI_DOUBLE, MPI_SUM, 0,
-                   settings.appComm);
-        std::this_thread::sleep_for(sleeptime);
-        if (!settings.myRank)
-        {
-            keepBusy = (std::chrono::high_resolution_clock::now() < end);
-        }
-        MPI_Bcast(&keepBusy, 1, MPI_INT, 0, settings.appComm);
-        ++numCycles;
-    }
-    return numCycles;
 }
 
 Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
@@ -593,15 +564,18 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             {
                 if (currentAppId == static_cast<int>(settings.appId))
                 {
-                    double d = stringToDouble(words, 1, "busy");
+                    size_t cycles =
+                        static_cast<int>(stringToSizet(words, 1, "busy"));
+                    double d = stringToDouble(words, 2, "busy");
                     if (verbose0)
                     {
-                        std::cout
-                            << "--> Command Busy for: " << std::setprecision(7)
-                            << d << " seconds" << std::endl;
+                        std::cout << "--> Command Busy for: " << cycles
+                                  << " cycles with " << std::setprecision(7)
+                                  << d << " seconds computation each"
+                                  << std::endl;
                     }
                     size_t t_us = static_cast<size_t>(d * 1000000);
-                    auto cmd = std::make_shared<CommandBusy>(t_us);
+                    auto cmd = std::make_shared<CommandBusy>(cycles, t_us);
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                 }
@@ -935,7 +909,6 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
     configFile.close();
     *currentConfigLineNumber = 0;
     globalChecks(cfg, settings);
-    cfg.BusyCmd_CyclesPerSecond = BusyNumStepsPerSecond(cfg, settings);
     if (verbose0 > 2)
     {
         printConfig(cfg);

@@ -80,6 +80,8 @@ int main(int argc, char *argv[])
     MPI_Barrier(settings.appComm);
     timeStart = MPI_Wtime();
 
+    uint64_t actualBusyTime_usec = 0;
+
     try
     {
         /* writing to one stream using two groups is not supported.
@@ -246,34 +248,44 @@ int main(int argc, char *argv[])
                     auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
                     std::chrono::high_resolution_clock::time_point start =
                         std::chrono::high_resolution_clock::now();
-                    double t =
-                        static_cast<double>(cmdS->busyTime_us) / 1000000.0;
-                    uint64_t cycles = t * cfg.BusyCmd_CyclesPerSecond;
                     auto sleeptime =
-                        std::chrono::microseconds(cfg.BusyCmd_sleep_microsec);
+                        std::chrono::microseconds(cmdS->busyTime_us);
                     if (!settings.myRank && settings.verbose)
                     {
                         double t =
                             static_cast<double>(cmdS->busyTime_us) / 1000000.0;
-                        std::cout << "    Busy for " << t << "  seconds ("
-                                  << cycles << " cycles)";
+                        std::cout << "    Busy for " << cmdS->cycles
+                                  << " cycles with " << t
+                                  << " seconds work in each cycle";
                     }
-                    size_t n = cfg.BusyCmd_DataSize;
-                    std::vector<double> r(n), localdata(n);
-                    uint64_t c = 0;
                     int dummy = 1;
-                    while (c < cycles)
+                    for (size_t c = 0; c < cmdS->cycles; ++c)
                     {
-                        MPI_Reduce(localdata.data(), r.data(), n, MPI_DOUBLE,
-                                   MPI_SUM, 0, settings.appComm);
-                        std::this_thread::sleep_for(sleeptime);
+                        if (cmdS->busyTime_us > 0)
+                        {
+                            auto end =
+                                std::chrono::high_resolution_clock::now() +
+                                std::chrono::microseconds(cmdS->busyTime_us);
+                            adios.EnterComputationBlock();
+                            double f = 1.0;
+                            double g;
+                            while (std::chrono::high_resolution_clock::now() <
+                                   end)
+                            {
+                                g = f * 2.0;
+                                f = f * 1234.23873;
+                                f = f / 312.21376;
+                                f = g / 2.0;
+                            }
+                            adios.ExitComputationBlock();
+                        }
                         MPI_Bcast(&dummy, 1, MPI_INT, 0, settings.appComm);
-                        ++c;
                     }
                     if (!settings.myRank && settings.verbose)
                     {
                         std::chrono::high_resolution_clock::time_point end =
                             std::chrono::high_resolution_clock::now();
+                        actualBusyTime_usec += (end - start).count() / 1000;
                         double t = static_cast<double>((end - start).count()) /
                                    1000000000.0;
                         std::cout << " -> Was busy for " << t << "  seconds "
@@ -382,6 +394,12 @@ int main(int argc, char *argv[])
     timeEnd = MPI_Wtime();
     if (!settings.myRank)
     {
+        if (actualBusyTime_usec > 0)
+        {
+            std::cout << "  Total Busy time on Rank 0 was "
+                      << (double)actualBusyTime_usec / 1000000.0 << " seconds "
+                      << std::endl;
+        }
         std::cout << "ADIOS IOTEST App " << settings.appId << " total time "
                   << timeEnd - timeStart << " seconds " << std::endl;
     }
