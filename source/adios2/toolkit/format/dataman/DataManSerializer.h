@@ -156,22 +156,6 @@ public:
 
 private:
     template <class T>
-    void PutZfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
-                const Dims &varCount, const Params &params);
-
-    template <class T>
-    void PutSz(nlohmann::json &metaj, size_t &datasize, const T *inputData,
-               const Dims &varCount, const Params &params);
-
-    template <class T>
-    void PutBZip2(nlohmann::json &metaj, size_t &datasize, const T *inputData,
-                  const Dims &varCount, const Params &params);
-
-    template <class T>
-    void PutMgard(nlohmann::json &metaj, size_t &datasize, const T *inputData,
-                  const Dims &varCount, const Params &params);
-
-    template <class T>
     void PutAttribute(const core::Attribute<T> &attribute);
 
     bool IsCompressionAvailable(const std::string &method, DataType type,
