@@ -1386,8 +1386,9 @@ extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
                 i++;
             }
         }
-        for (int i = 0; i < sizeof(CP_DP_WriterArrayStructs) /
-                                sizeof(CP_DP_WriterArrayStructs[0]);
+        int i;
+        for (i = 0; i < sizeof(CP_DP_WriterArrayStructs) /
+                            sizeof(CP_DP_WriterArrayStructs[0]);
              i++)
         {
             if (CP_DP_WriterArrayStructs[i].format_name &&
@@ -1398,8 +1399,8 @@ extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
             }
         }
 
-        for (int i = 0; i < sizeof(CP_WriterResponseStructs) /
-                                sizeof(CP_WriterResponseStructs[0]);
+        for (i = 0; i < sizeof(CP_WriterResponseStructs) /
+                            sizeof(CP_WriterResponseStructs[0]);
              i++)
         {
             if (CP_WriterResponseStructs[i].format_name &&

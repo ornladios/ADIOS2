@@ -391,7 +391,8 @@ extern void FFSFreeMarshalData(SstStream Stream)
         struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
         if (Info)
         {
-            for (int i = 0; i < Stream->WriterCohortSize; i++)
+            int i;
+            for (i = 0; i < Stream->WriterCohortSize; i++)
             {
                 if (Info->WriterInfo[i].RawBuffer)
                     free(Info->WriterInfo[i].RawBuffer);
@@ -406,7 +407,7 @@ extern void FFSFreeMarshalData(SstStream Stream)
                 free(Info->DataBaseAddrs);
             if (Info->DataFieldLists)
                 free(Info->DataFieldLists);
-            for (int i = 0; i < Info->VarCount; i++)
+            for (i = 0; i < Info->VarCount; i++)
             {
                 free(Info->VarList[i]->VarName);
                 free(Info->VarList[i]->PerWriterMetaFieldOffset);
@@ -860,7 +861,8 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
 
     while (Reqs)
     {
-        for (int i = 0; i < Stream->WriterCohortSize; i++)
+        int i;
+        for (i = 0; i < Stream->WriterCohortSize; i++)
         {
             if ((Info->WriterInfo[i].Status != Needed) && (NeedWriter(Reqs, i)))
             {
@@ -870,25 +872,27 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
         Reqs = Reqs->Next;
     }
 
-    for (int i = 0; i < Stream->WriterCohortSize; i++)
+    for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize;
+         WriterRank++)
     {
-        if (Info->WriterInfo[i].Status == Needed)
+        if (Info->WriterInfo[WriterRank].Status == Needed)
         {
-            size_t DataSize =
-                ((struct FFSMetadataInfoStruct *)Info->MetadataBaseAddrs[i])
-                    ->DataBlockSize;
-            void *DP_TimestepInfo =
-                Mdata->DP_TimestepInfo ? Mdata->DP_TimestepInfo[i] : NULL;
-            Info->WriterInfo[i].RawBuffer =
-                realloc(Info->WriterInfo[i].RawBuffer, DataSize);
+            size_t DataSize = ((struct FFSMetadataInfoStruct *)
+                                   Info->MetadataBaseAddrs[WriterRank])
+                                  ->DataBlockSize;
+            void *DP_TimestepInfo = Mdata->DP_TimestepInfo
+                                        ? Mdata->DP_TimestepInfo[WriterRank]
+                                        : NULL;
+            Info->WriterInfo[WriterRank].RawBuffer =
+                realloc(Info->WriterInfo[WriterRank].RawBuffer, DataSize);
 
             char tmpstr[256] = {0};
-            sprintf(tmpstr, "Request to rank %d, bytes", i);
+            sprintf(tmpstr, "Request to rank %d, bytes", WriterRank);
             PERFSTUBS_SAMPLE_COUNTER(tmpstr, (double)DataSize);
-            Info->WriterInfo[i].ReadHandle = SstReadRemoteMemory(
-                Stream, i, Stream->ReaderTimestep, 0, DataSize,
-                Info->WriterInfo[i].RawBuffer, DP_TimestepInfo);
-            Info->WriterInfo[i].Status = Requested;
+            Info->WriterInfo[WriterRank].ReadHandle = SstReadRemoteMemory(
+                Stream, WriterRank, Stream->ReaderTimestep, 0, DataSize,
+                Info->WriterInfo[WriterRank].RawBuffer, DP_TimestepInfo);
+            Info->WriterInfo[WriterRank].Status = Requested;
         }
     }
 }
@@ -1093,7 +1097,8 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
     BlockSize = 1;
     OperantDims = Dims;
     OperantElementSize = ElementSize;
-    for (int Dim = Dims - 1; Dim >= 0; Dim--)
+    int Dim;
+    for (Dim = Dims - 1; Dim >= 0; Dim--)
     {
         if ((GlobalDims[Dim] == PartialCounts[Dim]) &&
             (SelectionCounts[Dim] == PartialCounts[Dim]))
@@ -1121,7 +1126,7 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
     /* calculate first selected element and count */
     BlockCount = 1;
     size_t *FirstIndex = malloc(Dims * sizeof(FirstIndex[0]));
-    for (int Dim = 0; Dim < Dims; Dim++)
+    for (Dim = 0; Dim < Dims; Dim++)
     {
         size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
         size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
@@ -1185,7 +1190,8 @@ void ExtractSelectionFromPartialCM(int ElementSize, size_t Dims,
 
     BlockSize = 1;
     OperantElementSize = ElementSize;
-    for (int Dim = 0; Dim < Dims; Dim++)
+    int Dim;
+    for (Dim = 0; Dim < Dims; Dim++)
     {
         if ((GlobalDims[Dim] == PartialCounts[Dim]) &&
             (SelectionCounts[Dim] == PartialCounts[Dim]))
@@ -1221,7 +1227,7 @@ void ExtractSelectionFromPartialCM(int ElementSize, size_t Dims,
     /* calculate first selected element and count */
     BlockCount = 1;
     size_t *FirstIndex = malloc(Dims * sizeof(FirstIndex[0]));
-    for (int Dim = 0; Dim < Dims; Dim++)
+    for (Dim = 0; Dim < Dims; Dim++)
     {
         int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
         int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
@@ -1361,31 +1367,35 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
     while (Reqs)
     {
         ImplementGapWarning(Stream, Reqs);
-        for (int i = 0; i < Stream->WriterCohortSize; i++)
+        for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize;
+             WriterRank++)
         {
-            if (NeedWriter(Reqs, i))
+            if (NeedWriter(Reqs, WriterRank))
             {
                 /* if needed this writer fill destination with acquired data */
                 int ElementSize = Reqs->VarRec->ElementSize;
                 int DimCount = Reqs->VarRec->DimCount;
                 size_t *GlobalDimensions = Reqs->VarRec->GlobalDims;
                 size_t *GlobalDimensionsFree = NULL;
-                size_t *RankOffset = Reqs->VarRec->PerWriterStart[i];
+                size_t *RankOffset = Reqs->VarRec->PerWriterStart[WriterRank];
                 size_t *RankOffsetFree = NULL;
-                size_t *RankSize = Reqs->VarRec->PerWriterCounts[i];
+                size_t *RankSize = Reqs->VarRec->PerWriterCounts[WriterRank];
                 size_t *SelOffset = Reqs->Start;
                 size_t *SelOffsetFree = NULL;
                 size_t *SelSize = Reqs->Count;
                 int Type = Reqs->VarRec->Type;
-                void *IncomingData = Reqs->VarRec->PerWriterIncomingData[i];
+                void *IncomingData =
+                    Reqs->VarRec->PerWriterIncomingData[WriterRank];
                 int FreeIncoming = 0;
 
                 if (Reqs->RequestType == Local)
                 {
                     int LocalBlockID =
-                        Reqs->BlockID - Reqs->VarRec->PerWriterBlockStart[i];
+                        Reqs->BlockID -
+                        Reqs->VarRec->PerWriterBlockStart[WriterRank];
                     size_t DataOffset = 0;
-                    for (int i = 0; i < LocalBlockID; i++)
+                    int i;
+                    for (i = 0; i < LocalBlockID; i++)
                     {
                         int BlockElemCount = 1;
                         for (int j = 0; j < DimCount; j++)
@@ -1405,9 +1415,9 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                         SelOffset = calloc(DimCount, sizeof(RankOffset[0]));
                         SelOffsetFree = SelOffset;
                     }
-                    for (int i = 0; i < DimCount; i++)
+                    for (i = 0; i < DimCount; i++)
                     {
-                        GlobalDimensions[i] = RankSize[i];
+                        GlobalDimensions[WriterRank] = RankSize[WriterRank];
                     }
                     IncomingData = (char *)IncomingData + DataOffset;
                 }
@@ -1421,7 +1431,7 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                      * afterwards
                      */
                     size_t IncomingSize =
-                        Reqs->VarRec->PerWriterIncomingSize[i];
+                        Reqs->VarRec->PerWriterIncomingSize[WriterRank];
                     FreeIncoming = 1;
                     IncomingData =
                         FFS_ZFPDecompress(Stream, DimCount, Type, IncomingData,
@@ -1781,7 +1791,8 @@ extern void FFSClearTimestepData(SstStream Stream)
 {
 
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
-    for (int i = 0; i < Stream->WriterCohortSize; i++)
+    int i;
+    for (i = 0; i < Stream->WriterCohortSize; i++)
     {
         if (Info->WriterInfo[i].RawBuffer)
             free(Info->WriterInfo[i].RawBuffer);
@@ -1796,7 +1807,7 @@ extern void FFSClearTimestepData(SstStream Stream)
            sizeof(Info->DataBaseAddrs[0]) * Stream->WriterCohortSize);
     memset(Info->DataFieldLists, 0,
            sizeof(Info->DataFieldLists[0]) * Stream->WriterCohortSize);
-    for (int i = 0; i < Info->VarCount; i++)
+    for (i = 0; i < Info->VarCount; i++)
     {
         Info->VarList[i]->Variable = NULL;
     }
