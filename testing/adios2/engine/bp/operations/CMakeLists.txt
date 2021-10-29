@@ -30,7 +30,7 @@ if(ADIOS2_HAVE_ZFP)
       )
   endforeach()
 
-  if(ADIOS2_HAVE_CUDA)
+  if(ADIOS2_HAVE_CUDA AND ADIOS2_HAVE_ZFP_CUDA)
     enable_language(CUDA)
 
     gtest_add_tests_helper(WriteReadZfpCuda MPI_ALLOW BP Engine.BP. .BP4

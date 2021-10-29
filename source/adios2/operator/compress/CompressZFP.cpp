@@ -12,9 +12,16 @@
 #include <sstream>
 #include <zfp.h>
 
+/* CMake will make sure zfp >= 5.0.1 */
+#if ZFP_VERSION_RELEASE > 1 && !defined(ZFP_DEFAULT_EXECUTION_POLICY)
+
 /* ZFP will default to SERIAL if CUDA is not available */
-#ifndef ZFP_DEFAULT_EXECUTION_POLICY
+#ifdef ADIOS2_HAVE_ZFP_CUDA
 #define ZFP_DEFAULT_EXECUTION_POLICY zfp_exec_cuda
+#else
+#define ZFP_DEFAULT_EXECUTION_POLICY zfp_exec_serial
+#endif
+
 #endif
 
 namespace adios2
@@ -77,7 +84,7 @@ size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
     PutParameter(bufferOut, bufferOutOffset,
                  static_cast<uint8_t>(ZFP_VERSION_MINOR));
     PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(ZFP_VERSION_PATCH));
+                 static_cast<uint8_t>(ZFP_VERSION_RELEASE));
     PutParameters(bufferOut, bufferOutOffset, parameters);
     // zfp V1 metadata end
 
@@ -304,8 +311,7 @@ zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
                          const Params &parameters)
 {
     zfp_stream *stream = zfp_stream_open(NULL);
-    zfp_stream_set_execution(stream, ZFP_DEFAULT_EXECUTION_POLICY);
-    bool isSerial = ZFP_DEFAULT_EXECUTION_POLICY == zfp_exec_serial;
+    bool isSerial = true;
 
     auto itAccuracy = parameters.find("accuracy");
     const bool hasAccuracy = itAccuracy != parameters.end();
@@ -316,30 +322,37 @@ zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
     auto itPrecision = parameters.find("precision");
     const bool hasPrecision = itPrecision != parameters.end();
 
+#if ZFP_VERSION_RELEASE > 1
     auto itBackend = parameters.find("backend");
     const bool hasBackend = itBackend != parameters.end();
+
+    zfp_stream_set_execution(stream, ZFP_DEFAULT_EXECUTION_POLICY);
+    isSerial = ZFP_DEFAULT_EXECUTION_POLICY == zfp_exec_serial;
 
     if (hasBackend)
     {
         auto policy = ZFP_DEFAULT_EXECUTION_POLICY;
         const auto backend = itBackend->second;
 
-        if (backend == "cuda")
+        if (backend == "serial")
         {
-            policy = zfp_exec_cuda;
+            policy = zfp_exec_serial;
+            isSerial = true;
         }
         else if (backend == "omp")
         {
             policy = zfp_exec_omp;
         }
-        else if (backend == "serial")
+#ifdef ADIOS2_HAVE_ZFP_CUDA
+        else if (backend == "cuda")
         {
-            policy = zfp_exec_serial;
-            isSerial = true;
+            policy = zfp_exec_cuda;
         }
+#endif
 
         zfp_stream_set_execution(stream, policy);
     }
+#endif
 
     if ((hasAccuracy && hasPrecision) || (hasAccuracy && hasRate) ||
         (hasPrecision && hasRate) ||
