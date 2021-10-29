@@ -43,9 +43,12 @@ const std::map<std::string, std::set<uint32_t>> CompressPNG::m_BitDepths = {
     {"PNG_COLOR_TYPE_GA", {8, 16}}};
 
 // PUBLIC
+
 CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
 {
 }
+
+CompressPNG::CompressPNG() : Operator("png") {}
 
 size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
                             const Dims &blockCount, const DataType type,

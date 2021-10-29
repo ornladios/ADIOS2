@@ -26,6 +26,8 @@ CompressMGARD::CompressMGARD(const Params &parameters)
 {
 }
 
+CompressMGARD::CompressMGARD() : Operator("mgard") {}
+
 size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
                               const Dims &blockCount, const DataType type,
                               char *bufferOut, const Params &parameters)

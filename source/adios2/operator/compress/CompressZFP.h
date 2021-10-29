@@ -29,10 +29,9 @@ class CompressZFP : public Operator
 {
 
 public:
-    /**
-     * Unique constructor
-     */
     CompressZFP(const Params &parameters);
+
+    CompressZFP();
 
     ~CompressZFP() = default;
 

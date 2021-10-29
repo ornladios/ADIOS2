@@ -26,10 +26,9 @@ class CompressPNG : public Operator
 {
 
 public:
-    /**
-     * Unique constructor
-     */
     CompressPNG(const Params &parameters);
+
+    CompressPNG();
 
     ~CompressPNG() = default;
 

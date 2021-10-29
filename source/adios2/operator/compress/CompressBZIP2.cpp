@@ -32,6 +32,8 @@ CompressBZIP2::CompressBZIP2(const Params &parameters)
 {
 }
 
+CompressBZIP2::CompressBZIP2() : Operator("bzip2") {}
+
 size_t CompressBZIP2::Operate(const char *dataIn, const Dims &blockStart,
                               const Dims &blockCount, DataType type,
                               char *bufferOut, const Params &parameters)

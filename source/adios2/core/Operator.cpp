@@ -21,6 +21,8 @@ Operator::Operator(const std::string type, const Params &parameters)
 {
 }
 
+Operator::Operator(const std::string type) : m_Type(type) {}
+
 void Operator::SetParameter(const std::string key,
                             const std::string value) noexcept
 {

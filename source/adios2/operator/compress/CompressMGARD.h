@@ -24,10 +24,9 @@ class CompressMGARD : public Operator
 {
 
 public:
-    /**
-     * Unique constructor
-     */
     CompressMGARD(const Params &parameters);
+
+    CompressMGARD();
 
     ~CompressMGARD() = default;
 

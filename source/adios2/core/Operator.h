@@ -30,11 +30,9 @@ public:
     /** From derived class */
     const std::string m_Type;
 
-    /**
-     * Base class constructor
-     * @param type from derived class object: e.g. bzip2, zfp, callback
-     */
     Operator(const std::string type, const Params &parameters);
+
+    Operator(const std::string type);
 
     virtual ~Operator() = default;
 

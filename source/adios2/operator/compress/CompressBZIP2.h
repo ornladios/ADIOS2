@@ -24,10 +24,9 @@ class CompressBZIP2 : public Operator
 {
 
 public:
-    /**
-     * Unique constructor
-     */
     CompressBZIP2(const Params &parameters);
+
+    CompressBZIP2();
 
     ~CompressBZIP2() = default;
 

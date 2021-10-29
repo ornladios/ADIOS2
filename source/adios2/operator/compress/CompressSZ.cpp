@@ -29,6 +29,8 @@ namespace compress
 
 CompressSZ::CompressSZ(const Params &parameters) : Operator("sz", parameters) {}
 
+CompressSZ::CompressSZ() : Operator("sz") {}
+
 size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
                            const Dims &blockCount, const DataType varType,
                            char *bufferOut, const Params &parameters)

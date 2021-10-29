@@ -36,10 +36,9 @@ class CompressBlosc : public Operator
 {
 
 public:
-    /**
-     * Unique constructor
-     */
     CompressBlosc(const Params &parameters);
+
+    CompressBlosc();
 
     ~CompressBlosc() = default;
 

@@ -24,10 +24,9 @@ class CompressSZ : public Operator
 {
 
 public:
-    /**
-     * Unique constructor
-     */
     CompressSZ(const Params &parameters);
+
+    CompressSZ();
 
     ~CompressSZ() = default;
 

@@ -42,6 +42,8 @@ CompressBlosc::CompressBlosc(const Params &parameters)
 {
 }
 
+CompressBlosc::CompressBlosc() : Operator("blosc") {}
+
 size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
                               const Dims &blockCount, const DataType type,
                               char *bufferOut, const Params &parameters)

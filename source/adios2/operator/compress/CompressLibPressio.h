@@ -24,10 +24,9 @@ class CompressLibPressio : public Operator
 {
 
 public:
-    /**
-     * Unique constructor
-     */
     CompressLibPressio(const Params &parameters);
+
+    CompressLibPressio();
 
     ~CompressLibPressio() = default;
 

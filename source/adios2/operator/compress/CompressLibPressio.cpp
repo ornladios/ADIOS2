@@ -27,6 +27,13 @@ namespace core
 namespace compress
 {
 
+CompressLibPressio::CompressLibPressio(const Params &parameters)
+: Operator("libpressio", parameters)
+{
+}
+
+CompressLibPressio::CompressLibPressio() : Operator("libpressio") {}
+
 static pressio_dtype adios_to_libpressio_dtype(DataType var_type)
 {
     if (var_type == helper::GetDataType<float>())
@@ -280,10 +287,6 @@ static pressio_compressor *adios_to_libpressio_compressor(Params const &params)
     throw std::runtime_error("missing required \"compressor_id\" setting");
 }
 
-CompressLibPressio::CompressLibPressio(const Params &parameters)
-: Operator("libpressio", parameters)
-{
-}
 size_t CompressLibPressio::Operate(const char *dataIn, const Dims &blockStart,
                                    const Dims &blockCount, const DataType type,
                                    char *bufferOut, const Params &parameters)

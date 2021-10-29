@@ -27,6 +27,8 @@ CompressZFP::CompressZFP(const Params &parameters) : Operator("zfp", parameters)
 {
 }
 
+CompressZFP::CompressZFP() : Operator("zfp") {}
+
 size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
                             const Dims &blockCount, const DataType type,
                             char *bufferOut, const Params &parameters)
