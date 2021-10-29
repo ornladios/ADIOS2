@@ -384,9 +384,9 @@ void DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
                                              std::multiplies<size_t>()));
     try
     {
-        datasize = compressor.Compress(
-            reinterpret_cast<const char *>(inputData), {}, varCount,
-            helper::GetDataType<T>(), m_CompressBuffer.data(), params);
+        datasize = compressor.Operate(reinterpret_cast<const char *>(inputData),
+                                      {}, varCount, helper::GetDataType<T>(),
+                                      m_CompressBuffer.data(), params);
     }
     catch (std::exception &e)
     {
