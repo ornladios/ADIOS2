@@ -50,8 +50,8 @@ bp3_bp4_gtest_add_tests_helper(WriteReadMultiblock MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadVector MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
 bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
-set_tests_properties("Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial;Engine.BP.BPLargeEngine.BP.BPLargeMetadata.ManyLongStrings.BP5.Serial;Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.MPI;Engine.BP.BPLargeMetadata.ManyLongStrings.BP5.MPI"
-        PROPERTIES RUN_SERIAL TRUE)
+set (BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial" "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.MPI" "Engine.BP.BPLargeMetadata.ManyLongStrings.BP5.MPI")
+set_tests_properties(${BP5LargeMeta} PROPERTIES RUN_SERIAL TRUE)
 bp_gtest_add_tests_helper(WriteMemorySelectionRead MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadLocalVariables MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadLocalVariablesSel MPI_ALLOW)
@@ -106,4 +106,5 @@ gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .FileStrea
 gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .FileStream
   WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
 )
+
 
