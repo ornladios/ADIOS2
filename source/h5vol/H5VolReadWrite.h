@@ -33,10 +33,8 @@ extern herr_t H5VL_adios2_beginstep(const char *engine_name,
 
 extern herr_t H5VL_adios2_endstep(const char *engine_nane);
 
-static herr_t H5VL_adios2_introspect_opt_query(void *obj, H5VL_subclass_t cls,
-                                               int opt_type, hbool_t *supported)
+static herr_t H5VL_adios2_introspect_opt_query(const void *obj, unsigned int *opt_type)
 {
-    *supported = 0;
     return 0;
 }
 
@@ -53,7 +51,8 @@ static const H5VL_class_t H5VL_adios2_def = {
     H5VL_ADIOS2_VERSION,
     (H5VL_class_value_t)H5VL_ADIOS2_VALUE,
     H5VL_ADIOS2_NAME, /* name */
-    0,
+    0,                /* Version # of connector */
+    0,                /* Capability flags for connector */
     H5VL_adios2_init, /* initialize */
     H5VL_adios2_term, /* terminate */
     {
