@@ -55,22 +55,21 @@ void *H5VL_adios2_group_open(void *obj, const H5VL_loc_params_t *loc_params,
     return NULL;
 }
 
-herr_t H5VL_adios2_group_get(void *obj, H5VL_group_get_t get_type,
+herr_t H5VL_adios2_group_get(void *obj, H5VL_group_get_args_t *args,
                              hid_t H5_ATTR_UNUSED dxpl_id,
-                             void H5_ATTR_UNUSED **req, va_list arguments)
+                             void H5_ATTR_UNUSED **req)
 {
     REQUIRE_NOT_NULL_ERR(obj, -1);
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)obj;
 
-    switch (get_type)
+    switch (args->op_type)
     {
     case H5VL_GROUP_GET_INFO:
     {
-        const H5VL_loc_params_t *loc_params =
-            va_arg(arguments, const H5VL_loc_params_t *);
-        H5G_info_t *group_info = va_arg(arguments, H5G_info_t *);
+        const H5VL_loc_params_t loc_params = args->args.get_info.loc_params;
+        H5G_info_t *group_info = args->args.get_info.ginfo;
 
-        if (loc_params->type == H5VL_OBJECT_BY_SELF)
+        if (loc_params.type == H5VL_OBJECT_BY_SELF)
         {
             gLoadContent(vol);
             gLoadSubGroups(vol);

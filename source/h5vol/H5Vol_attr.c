@@ -154,31 +154,50 @@ void GetFromAttribute(void *attrObj, hid_t *ret_id, H5VL_attr_get_t get_type)
     }
 }
 
-herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_t get_type, hid_t dxpl_id,
-                            void **req, va_list arguments)
+herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id,
+                            void **req)
 {
     REQUIRE_NOT_NULL_ERR(obj, -1);
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)obj;
-
-    if ((get_type == H5VL_ATTR_GET_SPACE) || (get_type == H5VL_ATTR_GET_TYPE))
+ 
+    switch (args->op_type)
     {
-        hid_t *ret_id = va_arg(arguments, hid_t *);
-        GetFromAttribute((vol->m_ObjPtr), ret_id, get_type);
+    case H5VL_ATTR_GET_SPACE:
+      {
+        hid_t *ret_id = (hid_t *)args->args.get_space.space_id;
+        GetFromAttribute((vol->m_ObjPtr), ret_id, args->op_type);
         return 0;
+      }
+    case H5VL_ATTR_GET_TYPE:
+      {
+        hid_t *ret_id = (hid_t *)args->args.get_type.type_id;
+        GetFromAttribute((vol->m_ObjPtr), ret_id, args->op_type);
+        return 0;
+      }
+    default:
+      break;
     }
 
-    const H5VL_loc_params_t *loc_params =
-        va_arg(arguments, const H5VL_loc_params_t *);
-    REQUIRE_NOT_NULL_ERR(loc_params, -1);
+#if 0
+    if ((args->op_type == H5VL_ATTR_GET_SPACE) || (args->op_type == H5VL_ATTR_GET_TYPE))
+    {
+        hid_t *ret_id = args->args.get_info.ginfo va_arg(arguments, hid_t *);
+        GetFromAttribute((vol->m_ObjPtr), ret_id, args->op_type);
+        return 0;
+    }
+#endif
 
-    switch (get_type)
+    const H5VL_loc_params_t loc_params = args->args.get_info.loc_params;
+    //   REQUIRE_NOT_NULL_ERR(loc_params, -1);
+
+    switch (args->op_type)
     {
     case H5VL_ATTR_GET_NAME:
     {
-        char *buf = va_arg(arguments, char *);
-        ssize_t *ret_val = va_arg(arguments, ssize_t *);
+        char *buf = args->args.get_name.buf;
+        ssize_t *ret_val = (ssize_t*)args->args.get_name.attr_name_len;
 
-        if (H5VL_OBJECT_BY_SELF == loc_params->type)
+        if (H5VL_OBJECT_BY_SELF == loc_params.type)
         {
             H5VL_AttrDef_t *attrDef = (H5VL_AttrDef_t *)(vol->m_ObjPtr);
             *ret_val = strlen(attrDef->m_Name);
@@ -187,12 +206,12 @@ herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_t get_type, hid_t dxpl_id,
                 strncpy(buf, attrDef->m_Name, *ret_val);
             }
         }
-        else if (H5VL_OBJECT_BY_IDX == loc_params->type)
+        else if (H5VL_OBJECT_BY_IDX == loc_params.type)
         {
             // The  number of attrs is from H5Oget_info(), then iterate each by
             // calling H5Aget_name_by_idx, to reach here
             *ret_val =
-                gGetNameOfNthAttr(vol, loc_params->loc_data.loc_by_idx.n, buf);
+                gGetNameOfNthAttr(vol, loc_params.loc_data.loc_by_idx.n, buf);
         }
         return 0;
     }
@@ -222,16 +241,16 @@ herr_t H5VL_adios2_attr_close(void *attr, hid_t dxpl_id, void **req)
 }
 
 herr_t H5VL_adios2_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
-                                 H5VL_attr_specific_t specific_type,
-                                 hid_t dxpl_id, void **req, va_list arguments)
+                                 H5VL_attr_specific_args_t *args,
+                                 hid_t dxpl_id, void **req)
 {
     REQUIRE_NOT_NULL_ERR(obj, -1);
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)obj;
-    const char *attr_name = va_arg(arguments, const char *);
+    const char *attr_name =  args->args.del.name; //MSB
 
     adios2_attribute *attr = gLocateAttrFrom(vol, attr_name);
 
-    switch (specific_type)
+    switch (args->op_type)
     {
     case H5VL_ATTR_DELETE:
     {
@@ -250,7 +269,7 @@ herr_t H5VL_adios2_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
     }
     case H5VL_ATTR_EXISTS:
     {
-        htri_t *ret = va_arg(arguments, htri_t *);
+        hbool_t *ret = args->args.exists.exists;
         if (NULL == attr)
         {
             *ret = 0;

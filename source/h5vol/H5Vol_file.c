@@ -39,8 +39,8 @@ void *H5VL_adios2_file_open(const char *name, unsigned flags, hid_t fapl_id,
     return gFileToVolObj(handle);
 }
 
-herr_t H5VL_adios2_file_specific(void *file, H5VL_file_specific_t specific_type,
-                                 hid_t dxpl_id, void **req, va_list arguments)
+herr_t H5VL_adios2_file_specific(void *file, H5VL_file_specific_args_t *args,
+                                 hid_t dxpl_id, void **req)
 {
     //
     // This function is called after H5Fopen/create. Do not remove

@@ -57,21 +57,20 @@ void *H5VL_adios2_object_open(void *obj, const H5VL_loc_params_t *loc_params,
 }
 
 herr_t H5VL_adios2_object_get(void *obj, const H5VL_loc_params_t *loc_params,
-                              H5VL_object_get_t get_type,
+                              H5VL_object_get_args_t *args,
                               hid_t H5_ATTR_UNUSED dxpl_id,
-                              void H5_ATTR_UNUSED **req, va_list arguments)
+                              void H5_ATTR_UNUSED **req)
 {
     REQUIRE_NOT_NULL_ERR(loc_params, -1);
     REQUIRE_NOT_NULL_ERR(obj, -1);
 
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)obj;
 
-    switch (get_type)
+    switch (args->op_type)
     {
     case H5VL_OBJECT_GET_INFO:
     {
-        H5O_info2_t *oinfo = va_arg(arguments, H5O_info2_t *);
-        // unsigned fields     = va_arg(arguments, unsigned);
+        H5O_info2_t *oinfo = args->args.get_info.oinfo;
         if (loc_params->type == H5VL_OBJECT_BY_SELF)
         {
             oinfo->fileno = 1;
