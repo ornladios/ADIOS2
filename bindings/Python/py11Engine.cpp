@@ -327,6 +327,11 @@ Engine::BlocksInfo(std::string &var_name, const size_t step) const
             info_map["WriterID"] = std::to_string(info.WriterID);              \
             info_map["BlockID"] = std::to_string(info.BlockID);                \
             info_map["IsValue"] = info.IsValue ? "True" : "False";             \
+            std::ostringstream osMax, osMin;                                   \
+            osMax << info.Max;                                                 \
+            osMin << info.Min;                                                 \
+            info_map["Max"] = osMax.str();                                     \
+            info_map["Min"] = osMin.str();                                     \
             info_map["IsReverseDims"] = info.IsReverseDims ? "True" : "False"; \
             rv.push_back(info_map);                                            \
         }                                                                      \
