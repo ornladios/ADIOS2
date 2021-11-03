@@ -111,7 +111,7 @@ herr_t H5VL_adios2_dataset_get(void *dset,  H5VL_dataset_get_args_t *args,
     {
     case H5VL_DATASET_GET_SPACE:
     {
-      hid_t *ret_id = (hid_t *)args->args.get_space.space_id;
+        hid_t *ret_id = (hid_t *)args->args.get_space.space_id;
         *ret_id = H5Scopy(varDef->m_ShapeID);
         REQUIRE_SUCC_MSG((*ret_id >= 0), -1,
                          "H5VOL-ADIOS2: Unable to get space id.");
