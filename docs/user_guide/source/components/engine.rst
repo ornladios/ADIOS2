@@ -290,6 +290,19 @@ Only use it if absolutely necessary (*e.g.* memory bound application or out of s
          // var4 = { 2, 2, 2};
 
 
+The ``data`` fed to the ``Put`` function is assumed to be allocated on the Host (default mode). In order to use data allocated on the device, the memory space of the variable needs to be set to Cuda.
+
+     .. code-block:: c++
+
+         variable.SetMemorySpace(adios2::MemorySpace::CUDA);
+         engine.Put(variable, gpuData, mode);
+
+.. note::
+
+   Only CUDA allocated buffers are supported for device data.
+   Only the BP4 engine is capable of receiving device allocated buffers.
+
+
 PerformsPuts
 ------------
 
