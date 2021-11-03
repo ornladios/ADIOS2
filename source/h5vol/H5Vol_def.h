@@ -236,8 +236,8 @@ extern void gLoadAttrDef(H5VL_AttrDef_t *attrDef);
 extern void gLoadContent(H5VL_ObjDef_t *obj);
 extern void gLoadSubGroups(H5VL_ObjDef_t *obj);
 
-extern ssize_t gGetNameOfNthAttr(H5VL_ObjDef_t *obj, uint32_t idx, char *name);
-extern ssize_t gGetNameOfNthItem(H5VL_ObjDef_t *obj, uint32_t idx, char *name);
+extern size_t gGetNameOfNthAttr(H5VL_ObjDef_t *obj, uint32_t idx, char *name);
+extern size_t gGetNameOfNthItem(H5VL_ObjDef_t *obj, uint32_t idx, char *name);
 
 extern H5VL_ObjDef_t *gGetVarObjDef(const char *fullPath, H5VL_ObjDef_t *vol);
 extern H5VL_VarDef_t *gCreateVarDef(const char *name, adios2_engine *engine,

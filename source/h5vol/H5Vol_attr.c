@@ -178,15 +178,15 @@ herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id
       break;
     }
 
-    const H5VL_loc_params_t *loc_params = &args->args.get_info.loc_params;
-    REQUIRE_NOT_NULL_ERR(loc_params, -1);
-
     switch (args->op_type)
     {
     case H5VL_ATTR_GET_NAME:
     {
         char *buf = args->args.get_name.buf;
-        ssize_t *ret_val = (ssize_t*)args->args.get_name.attr_name_len;
+        size_t *ret_val = (size_t*)args->args.get_name.attr_name_len;
+    
+        const H5VL_loc_params_t *loc_params = &args->args.get_info.loc_params;
+        REQUIRE_NOT_NULL_ERR(loc_params, -1);
 
         if (H5VL_OBJECT_BY_SELF == loc_params->type)
         {
@@ -237,14 +237,17 @@ herr_t H5VL_adios2_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
 {
     REQUIRE_NOT_NULL_ERR(obj, -1);
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)obj;
-    const char *attr_name =  (const char *)args->args.del.name;
 
-    adios2_attribute *attr = gLocateAttrFrom(vol, attr_name);
+    const char *attr_name;
+    adios2_attribute *attr;
 
     switch (args->op_type)
     {
     case H5VL_ATTR_DELETE:
     {
+        attr_name =  (const char *)args->args.del.name;
+        attr = gLocateAttrFrom(vol, attr_name);
+
         if (NULL != attr)
         {
             if (NULL == vol->m_Path)
@@ -261,6 +264,10 @@ herr_t H5VL_adios2_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
     case H5VL_ATTR_EXISTS:
     {
         hbool_t *ret = args->args.exists.exists;
+
+        attr_name =  (const char *)args->args.exists.name;
+        attr = gLocateAttrFrom(vol, attr_name);
+
         if (NULL == attr)
         {
             *ret = 0;

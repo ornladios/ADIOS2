@@ -626,7 +626,7 @@ H5VL_GroupDef_t *gCreateGroupDef(const char *name)
     return grp;
 }
 
-ssize_t gGetBranchNameLength(H5VL_ObjDef_t *vol, size_t namelen)
+size_t gGetBranchNameLength(H5VL_ObjDef_t *vol, size_t namelen)
 {
     if (vol->m_Path != NULL)
         if ('/' == (vol->m_Path)[strlen(vol->m_Path) - 1])
@@ -654,7 +654,7 @@ void gGetBranchName(H5VL_ObjDef_t *vol, const char *fullPath, char *name)
 //
 //  returns length of name
 //
-ssize_t gGetNameOfNthAttr(H5VL_ObjDef_t *vol, uint32_t idx, char *name)
+size_t gGetNameOfNthAttr(H5VL_ObjDef_t *vol, uint32_t idx, char *name)
 {
     gLoadContent(vol);
     if (0 == vol->m_NumAttrs)
@@ -689,7 +689,7 @@ ssize_t gGetNameOfNthAttr(H5VL_ObjDef_t *vol, uint32_t idx, char *name)
 //  called from: H5Gget_info, then H5Gget_objname_by_idx
 //  (which calls H5Lget_name.. )
 //
-ssize_t gGetNameOfNthItem(H5VL_ObjDef_t *vol, uint32_t idx, char *name)
+size_t gGetNameOfNthItem(H5VL_ObjDef_t *vol, uint32_t idx, char *name)
 {
     gLoadContent(vol);
 
