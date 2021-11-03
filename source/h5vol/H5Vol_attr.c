@@ -185,7 +185,7 @@ herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id
         char *buf = args->args.get_name.buf;
         size_t *ret_val = (size_t*)args->args.get_name.attr_name_len;
     
-        const H5VL_loc_params_t *loc_params = &args->args.get_info.loc_params;
+        const H5VL_loc_params_t *loc_params = &args->args.get_name.loc_params;
         REQUIRE_NOT_NULL_ERR(loc_params, -1);
 
         if (H5VL_OBJECT_BY_SELF == loc_params->type)
