@@ -95,6 +95,30 @@ elseif(ADIOS2_USE_ZFP)
 endif()
 if(ZFP_FOUND)
   set(ADIOS2_HAVE_ZFP TRUE)
+  set(ADIOS2_HAVE_ZFP_CUDA ${ZFP_CUDA})
+
+  # Older versions of ZFP
+  if(NOT ADIOS2_HAVE_ZFP_CUDA)
+    get_target_property(ZFP_INCLUDE_DIRECTORIES zfp::zfp INTERFACE_INCLUDE_DIRECTORIES)
+    set(CMAKE_REQUIRED_INCLUDES ${ZFP_INCLUDE_DIRECTORIES})
+    set(CMAKE_REQUIRED_LIBRARIES zfp::zfp)
+    include(CheckCSourceRuns)
+    check_c_source_runs("
+    #include <zfp.h>
+
+    int main()
+    {
+      zfp_stream* stream = zfp_stream_open(NULL);
+      return !zfp_stream_set_execution(stream, zfp_exec_cuda);
+    }"
+    ADIOS2_HAVE_ZFP_CUDA)
+    unset(CMAKE_REQUIRED_INCLUDES)
+    unset(CMAKE_REQUIRED_LIBRARIES)
+  endif()
+
+  if(ADIOS2_HAVE_ZFP_CUDA)
+    add_compile_definitions(ADIOS2_HAVE_ZFP_CUDA)
+  endif()
 endif()
 
 # SZ

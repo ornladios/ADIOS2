@@ -312,7 +312,9 @@ constexpr char precision[] = "precision";
 
 namespace value
 {
+#ifdef ADIOS2_HAVE_ZFP_CUDA
 constexpr char backend_cuda[] = "cuda";
+#endif
 constexpr char backend_omp[] = "omp";
 constexpr char backend_serial[] = "serial";
 }

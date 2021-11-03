@@ -10,10 +10,18 @@
 #include "CompressZFP.h"
 #include "adios2/helper/adiosFunctions.h"
 #include <sstream>
+#include <zfp.h>
+
+/* CMake will make sure zfp >= 5.0.1 */
+#if ZFP_VERSION_RELEASE > 1 && !defined(ZFP_DEFAULT_EXECUTION_POLICY)
 
 /* ZFP will default to SERIAL if CUDA is not available */
-#ifndef ZFP_DEFAULT_EXECUTION_POLICY
+#ifdef ADIOS2_HAVE_ZFP_CUDA
 #define ZFP_DEFAULT_EXECUTION_POLICY zfp_exec_cuda
+#else
+#define ZFP_DEFAULT_EXECUTION_POLICY zfp_exec_serial
+#endif
+
 #endif
 
 namespace adios2
@@ -22,6 +30,27 @@ namespace core
 {
 namespace compress
 {
+
+/**
+ * Constructor Zfp zfp_field based on input information around the data
+ * pointer
+ * @param data
+ * @param shape
+ * @param type
+ * @return zfp_field*
+ */
+zfp_field *GetZFPField(const char *data, const Dims &shape, DataType type);
+
+/**
+ * Returns Zfp supported zfp_type based on adios string type
+ * @param type adios type as string, see GetDataType<T> in
+ * helper/adiosType.inl
+ * @return zfp_type
+ */
+zfp_type GetZfpType(DataType type);
+
+zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
+                         const Params &parameters);
 
 CompressZFP::CompressZFP(const Params &parameters) : Operator("zfp", parameters)
 {
@@ -55,32 +84,43 @@ size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
     PutParameter(bufferOut, bufferOutOffset,
                  static_cast<uint8_t>(ZFP_VERSION_MINOR));
     PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(ZFP_VERSION_PATCH));
+                 static_cast<uint8_t>(ZFP_VERSION_RELEASE));
     PutParameters(bufferOut, bufferOutOffset, parameters);
     // zfp V1 metadata end
 
     Dims convertedDims = ConvertDims(blockCount, type, 3);
-    zfp_field *field = GetZFPField(dataIn, convertedDims, type);
-    zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
-    size_t maxSize = zfp_stream_maximum_size(stream, field);
-    // associate bitstream
-    bitstream *bitstream = stream_open(bufferOut + bufferOutOffset, maxSize);
-    zfp_stream_set_bit_stream(stream, bitstream);
-    zfp_stream_rewind(stream);
 
-    size_t sizeOut = zfp_compress(stream, field);
-
-    if (sizeOut == 0)
+    try
     {
-        throw std::invalid_argument("ERROR: zfp failed, compressed buffer "
-                                    "size is 0, in call to Compress");
+        zfp_field *field = GetZFPField(dataIn, convertedDims, type);
+        zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
+
+        size_t maxSize = zfp_stream_maximum_size(stream, field);
+        // associate bitstream
+        bitstream *bitstream =
+            stream_open(bufferOut + bufferOutOffset, maxSize);
+        zfp_stream_set_bit_stream(stream, bitstream);
+        zfp_stream_rewind(stream);
+
+        size_t sizeOut = zfp_compress(stream, field);
+
+        if (sizeOut == 0)
+        {
+            throw std::invalid_argument("ERROR: zfp failed, compressed buffer "
+                                        "size is 0, in call to Compress");
+        }
+
+        bufferOutOffset += sizeOut;
+
+        zfp_field_free(field);
+        zfp_stream_close(stream);
+        stream_close(bitstream);
+    }
+    catch (std::invalid_argument &e)
+    {
+        throw std::invalid_argument(e.what() + m_VersionInfo + "\n");
     }
 
-    bufferOutOffset += sizeOut;
-
-    zfp_field_free(field);
-    zfp_stream_close(stream);
-    stream_close(bitstream);
     return bufferOutOffset;
 }
 
@@ -141,7 +181,7 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
         blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
-    m_VersionInfo =
+    this->m_VersionInfo =
         " Data is compressed using ZFP Version " +
         std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
         std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
@@ -151,8 +191,18 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     Dims convertedDims = ConvertDims(blockCount, type, 3);
 
-    zfp_field *field = GetZFPField(dataOut, convertedDims, type);
-    zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
+    zfp_field *field = nullptr;
+    zfp_stream *stream = nullptr;
+
+    try
+    {
+        field = GetZFPField(dataOut, convertedDims, type);
+        stream = GetZFPStream(convertedDims, type, parameters);
+    }
+    catch (std::invalid_argument &e)
+    {
+        throw std::invalid_argument(e.what() + m_VersionInfo + "\n");
+    }
 
     // associate bitstream
     bitstream *bitstream = stream_open(
@@ -176,7 +226,7 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
     return helper::GetTotalSize(convertedDims, helper::GetDataTypeSize(type));
 }
 
-zfp_type CompressZFP::GetZfpType(DataType type) const
+zfp_type GetZfpType(DataType type)
 {
     zfp_type zfpType = zfp_type_none;
 
@@ -217,8 +267,9 @@ zfp_type CompressZFP::GetZfpType(DataType type) const
     return zfpType;
 }
 
-zfp_field *CompressZFP::GetZFPField(const char *data, const Dims &dimensions,
-                                    DataType type) const
+// Free static functions
+
+zfp_field *GetZFPField(const char *data, const Dims &dimensions, DataType type)
 {
     zfp_type zfpType = GetZfpType(type);
     zfp_field *field = nullptr;
@@ -242,8 +293,7 @@ zfp_field *CompressZFP::GetZFPField(const char *data, const Dims &dimensions,
         throw std::invalid_argument(
             "ERROR: zfp_field* failed for data of type " + ToString(type) +
             ", only 1D, 2D and 3D dimensions are supported, from "
-            "class CompressZfp." +
-            m_VersionInfo + "\n");
+            "class CompressZfp.");
     }
 
     if (field == nullptr)
@@ -251,19 +301,17 @@ zfp_field *CompressZFP::GetZFPField(const char *data, const Dims &dimensions,
         throw std::invalid_argument(
             "ERROR: zfp_field_" + std::to_string(dimensions.size()) +
             "d failed for data of type " + ToString(type) +
-            ", data might be corrupted, from class CompressZfp." +
-            m_VersionInfo + "\n");
+            ", data might be corrupted, from class CompressZfp.");
     }
 
     return field;
 }
 
-zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
-                                      const Params &parameters) const
+zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
+                         const Params &parameters)
 {
     zfp_stream *stream = zfp_stream_open(NULL);
-    zfp_stream_set_execution(stream, ZFP_DEFAULT_EXECUTION_POLICY);
-    bool isSerial = ZFP_DEFAULT_EXECUTION_POLICY == zfp_exec_serial;
+    bool isSerial = true;
 
     auto itAccuracy = parameters.find("accuracy");
     const bool hasAccuracy = itAccuracy != parameters.end();
@@ -274,30 +322,37 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions, DataType type,
     auto itPrecision = parameters.find("precision");
     const bool hasPrecision = itPrecision != parameters.end();
 
+#if ZFP_VERSION_RELEASE > 1
     auto itBackend = parameters.find("backend");
     const bool hasBackend = itBackend != parameters.end();
+
+    zfp_stream_set_execution(stream, ZFP_DEFAULT_EXECUTION_POLICY);
+    isSerial = ZFP_DEFAULT_EXECUTION_POLICY == zfp_exec_serial;
 
     if (hasBackend)
     {
         auto policy = ZFP_DEFAULT_EXECUTION_POLICY;
         const auto backend = itBackend->second;
 
-        if (backend == "cuda")
+        if (backend == "serial")
         {
-            policy = zfp_exec_cuda;
+            policy = zfp_exec_serial;
+            isSerial = true;
         }
         else if (backend == "omp")
         {
             policy = zfp_exec_omp;
         }
-        else if (backend == "serial")
+#ifdef ADIOS2_HAVE_ZFP_CUDA
+        else if (backend == "cuda")
         {
-            policy = zfp_exec_serial;
-            isSerial = true;
+            policy = zfp_exec_cuda;
         }
+#endif
 
         zfp_stream_set_execution(stream, policy);
     }
+#endif
 
     if ((hasAccuracy && hasPrecision) || (hasAccuracy && hasRate) ||
         (hasPrecision && hasRate) ||
