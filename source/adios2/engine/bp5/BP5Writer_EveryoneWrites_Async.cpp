@@ -116,11 +116,13 @@ BP5Writer::IsInComputationBlock(AsyncWriteInfo *info, size_t &compBlockIdx)
     return compStatus;
 }
 
-void BP5Writer::WriteOwnDataGuided(AsyncWriteInfo *info, double mydeadline)
+void BP5Writer::WriteOwnDataGuided(AsyncWriteInfo *info,
+                                   std::vector<core::iovec> &DataVec,
+                                   const size_t totalsize,
+                                   const double mydeadline,
+                                   const bool seekOnFirstWrite)
 {
     core::TimePoint starttime = core::Now();
-    std::vector<core::iovec> DataVec = info->Data->DataVec();
-    size_t totalsize = info->Data->Size();
     core::Seconds deadlineSeconds = core::Seconds(mydeadline);
 
     /* local variables to track variables modified by main thread */
@@ -133,22 +135,12 @@ void BP5Writer::WriteOwnDataGuided(AsyncWriteInfo *info, double mydeadline)
     size_t temp_offset = 0;
     size_t max_size = std::max(1024 * 1024UL, totalsize / 100UL);
 
-    bool firstWrite = true;
+    bool firstWrite = seekOnFirstWrite;
     while (block < nBlocks)
     {
         if (*info->flagRush)
         {
             max_size = MaxSizeT;
-        }
-        else
-        {
-            core::Seconds timesofar = core::Now() - starttime;
-            if (timesofar > deadlineSeconds)
-            {
-                // Passed the deadline, write the rest without any waiting
-                *info->flagRush = true; // this thread can rush it too
-                max_size = MaxSizeT;
-            }
         }
 
         /* Get the next n bytes from the current block, current offset */
@@ -225,9 +217,9 @@ void BP5Writer::WriteOwnDataGuided(AsyncWriteInfo *info, double mydeadline)
                                                         DataVec.end());
             vec[0].iov_base =
                 (const char *)DataVec[block].iov_base + temp_offset;
-            vec[0].iov_len = n;
+            vec[0].iov_len = DataVec[block].iov_len - temp_offset;
 
-            /* std::cout << "Async write on Rank " << info->rank_global
+            /*std::cout << "Async write on Rank " << info->rank_global
                       << " write the rest of  " << totalsize - wrote
                       << " bytes with deadline " << finaldeadline << " sec"
                       << std::endl;*/
@@ -287,7 +279,9 @@ int BP5Writer::AsyncWriteThread_EveryoneWrites_Guided(AsyncWriteInfo *info)
         deadline = deadline / remprocs;
     }
 
-    WriteOwnDataGuided(info, deadline);
+    std::vector<core::iovec> DataVec = info->Data->DataVec();
+    const uint64_t mysize = info->Data->Size();
+    WriteOwnDataGuided(info, DataVec, mysize, deadline, true);
 
     if (info->tokenChain)
     {

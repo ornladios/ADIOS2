@@ -304,7 +304,11 @@ private:
 
     /* write own data within deadline, guided version, used by
        both EveryoneWrites and TwoLevelShm guided async threads */
-    static void WriteOwnDataGuided(AsyncWriteInfo *info, double mydeadline);
+    static void WriteOwnDataGuided(AsyncWriteInfo *info,
+                                   std::vector<core::iovec> &DataVec,
+                                   const size_t totalsize,
+                                   const double mydeadline,
+                                   const bool seekOnFirstWrite);
     enum class ComputationStatus
     {
         InComp,

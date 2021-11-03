@@ -114,7 +114,7 @@ void BP5Writer::AsyncWriteThread_TwoLevelShm_Guided(AsyncWriteInfo *info)
         TimePoint startTime = Now();
         std::vector<core::iovec> DataVec = info->Data->DataVec();
         const uint64_t mysize = info->Data->Size();
-        WriteOwnDataGuided(info, deadline);
+        WriteOwnDataGuided(info, DataVec, mysize, deadline, true);
         totalSize -= mysize;
         Seconds t = Now() - startTime;
         deadline -= t.count();
@@ -131,6 +131,7 @@ void BP5Writer::AsyncWriteThread_TwoLevelShm_Guided(AsyncWriteInfo *info)
         internalDeadlineSec = 0.0;
     }
     core::Seconds deadlineSeconds = core::Seconds(internalDeadlineSec);
+    std::vector<core::iovec> DataVec(1);
     size_t wrote = 0;
     while (wrote < totalSize)
     {
@@ -152,7 +153,9 @@ void BP5Writer::AsyncWriteThread_TwoLevelShm_Guided(AsyncWriteInfo *info)
         aggregator::MPIShmChain::ShmDataBuffer *b = a->LockConsumerBuffer();
         // b->actual_size: how much we need to write
         core::TimePoint writeStart = core::Now();
-        info->tm->WriteFiles(b->buf, b->actual_size);
+        DataVec[0].iov_base = b->buf;
+        DataVec[0].iov_len = b->actual_size;
+        WriteOwnDataGuided(info, DataVec, b->actual_size, deadline, false);
         wrote += b->actual_size;
         a->UnlockConsumerBuffer();
         writeTotalTime += core::Now() - writeStart;
@@ -412,6 +415,7 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
     // m_DataPos is already pointing to the end of the write, do not use here.
     m_AsyncWriteInfo->startPos = m_StartDataPos;
     m_AsyncWriteInfo->totalSize = myTotalSize;
+    m_AsyncWriteInfo->deadline = m_ExpectedTimeBetweenSteps.count();
 
     if (m_ComputationBlocksLength > 0.0 &&
         m_Parameters.AsyncWrite == (int)AsyncWrite::Guided)
@@ -439,10 +443,6 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
         if (m_Parameters.AsyncWrite == (int)AsyncWrite::Naive)
         {
             m_AsyncWriteInfo->deadline = 0;
-        }
-        else
-        {
-            m_AsyncWriteInfo->deadline = m_ExpectedTimeBetweenSteps.count();
         }
         m_AsyncWriteInfo->inComputationBlock = nullptr;
         m_AsyncWriteInfo->computationBlocksLength = 0.0;
