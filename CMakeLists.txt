@@ -308,6 +308,7 @@ message("    ${CMAKE_CXX_COMPILER}")
 message("")
 if(ADIOS2_HAVE_CUDA)
 	message("  Cuda Compiler : ${CMAKE_CUDA_COMPILER} ")
+	message("    Cuda Architecture : ${CMAKE_CUDA_ARCHITECTURES} ")
 endif()
 if(ADIOS2_HAVE_Fortran)
   message("  Fortran Compiler : ${CMAKE_Fortran_COMPILER_ID} "
