@@ -20,15 +20,13 @@ adios2::Engine reader;
 
 extern "C" {
 
-void FC_MODULE(inlinemixedlangmod, open_reader, INLINEMIXEDLANGMOD,
-               OPEN_READER)(adios2::IO *io)
+void FC_GLOBAL(open_reader, OPEN_READER)(adios2::IO *io)
 {
     adiosIO = io;
     reader = adiosIO->Open("reader", adios2::Mode::Read);
 }
 
-void FC_MODULE(inlinemixedlangmod, analyze_data, INLINEMIXEDLANGMOD,
-               ANALYZE_DATA)()
+void FC_GLOBAL(analyze_data, ANALYZE_DATA)()
 {
     // grab the desired variable
     auto u = adiosIO->InquireVariable<float>("data2D");
@@ -59,9 +57,5 @@ void FC_MODULE(inlinemixedlangmod, analyze_data, INLINEMIXEDLANGMOD,
     reader.EndStep();
 }
 
-void FC_MODULE(inlinemixedlangmod, close_reader, INLINEMIXEDLANGMOD,
-               CLOSE_READER)()
-{
-    reader.Close();
-}
+void FC_GLOBAL(close_reader, CLOSE_READER)() { reader.Close(); }
 }

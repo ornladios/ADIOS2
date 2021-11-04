@@ -13,8 +13,20 @@
 
 program InlineMixedLang
     use adios2
-    use InlineMixedLangMod
     implicit none
+
+    interface
+        subroutine open_reader(io)
+            import adios2_io
+            type(adios2_io), intent(in) :: io
+        end subroutine
+
+        subroutine close_reader()
+        end subroutine
+
+        subroutine analyze_data()
+        end subroutine
+    end interface
 
     integer(kind=8), dimension(2) :: shape_dims, start_dims, count_dims
     real, dimension(:,:), allocatable :: data

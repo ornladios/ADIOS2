@@ -14,6 +14,6 @@ target_include_directories(InlineMixedLangCPP
     ${CMAKE_CURRENT_BINARY_DIR}
     )
 
-add_executable(InlineMixedLangF inlineMixedLangMod.f90 inlineMixedLang.f90)
+add_executable(InlineMixedLangF inlineMixedLang.f90)
 target_link_libraries(InlineMixedLangF adios2::fortran InlineMixedLangCPP)
 set_target_properties(InlineMixedLangF PROPERTIES LINKER_LANGUAGE Fortran)
