@@ -629,7 +629,11 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
     if (BlockLen == 0)
         return;
 
-    m_Engine->m_IO.RemoveAllAttributes();
+    if (Step != m_LastAttrStep)
+    {
+        m_Engine->m_IO.RemoveAllAttributes();
+        m_LastAttrStep = Step;
+    }
     FFSformat =
         FFSTypeHandle_from_encode(ReaderFFSContext, (char *)AttributeBlock);
     if (!FFSformat)
@@ -694,12 +698,13 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
             else if (Type == helper::GetDataType<std::string>())
             {
                 m_Engine->m_IO.DefineAttribute<std::string>(
-                    FieldName, *(char **)field_data);
+                    FieldName, *(char **)field_data, "", "/", true);
             }
 #define declare_type(T)                                                        \
     else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
-        m_Engine->m_IO.DefineAttribute<T>(FieldName, *(T *)field_data);        \
+        m_Engine->m_IO.DefineAttribute<T>(FieldName, *(T *)field_data, "",     \
+                                          "/", true);                          \
     }
 
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -737,13 +742,14 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
                     array[i].assign(str_array[i]);
                 }
                 m_Engine->m_IO.DefineAttribute<std::string>(
-                    FieldName, array.data(), array.size());
+                    FieldName, array.data(), array.size(), "", "/", true);
             }
 #define declare_type(T)                                                        \
     else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         T **array = *(T ***)field_data;                                        \
-        m_Engine->m_IO.DefineAttribute<T>(FieldName, (T *)array, ElemCount);   \
+        m_Engine->m_IO.DefineAttribute<T>(FieldName, (T *)array, ElemCount,    \
+                                          "", "/", true);                      \
     }
 
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)

@@ -126,6 +126,7 @@ private:
     FFSContext ReaderFFSContext;
     size_t m_WriterCohortSize;
     bool m_RandomAccessMode;
+    size_t m_LastAttrStep = MaxSizeT; // invalid timestep for start
 
     std::unordered_map<std::string, BP5VarRec *> VarByName;
     std::unordered_map<void *, BP5VarRec *> VarByKey;
