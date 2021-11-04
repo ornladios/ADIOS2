@@ -630,6 +630,11 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
         return;
 
     m_Engine->m_IO.RemoveAllAttributes();
+    if (Step != m_LastAttrStep)
+    {
+        m_Engine->m_IO.RemoveAllAttributes();
+        m_LastAttrStep = Step;
+    }
     FFSformat =
         FFSTypeHandle_from_encode(ReaderFFSContext, (char *)AttributeBlock);
     if (!FFSformat)
