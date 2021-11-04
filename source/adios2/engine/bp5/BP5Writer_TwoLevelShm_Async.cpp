@@ -371,7 +371,7 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
             }
             else
             {
-                m_DataPos += m_StartDataPos + myTotalSize;
+                m_DataPos = m_StartDataPos + myTotalSize;
             }
         }
     }
