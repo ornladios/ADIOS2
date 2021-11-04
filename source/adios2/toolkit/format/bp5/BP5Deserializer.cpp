@@ -629,7 +629,6 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
     if (BlockLen == 0)
         return;
 
-    m_Engine->m_IO.RemoveAllAttributes();
     if (Step != m_LastAttrStep)
     {
         m_Engine->m_IO.RemoveAllAttributes();
