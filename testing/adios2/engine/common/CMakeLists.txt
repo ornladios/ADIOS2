@@ -37,8 +37,8 @@ if(ADIOS2_HAVE_SST)
   )
 endif()
 
-gtest_add_tests_helper(Common MPI_ONLY "" Engine. .InSituMPI
-  EXTRA_ARGS "InSituMPI" "0"
+gtest_add_tests_helper(Common MPI_ONLY "" Engine. .SSC
+    EXTRA_ARGS "SSC" "0"
 )
 
 #if(ADIOS2_HAVE_DataMan)

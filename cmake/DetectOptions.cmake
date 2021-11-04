@@ -242,15 +242,6 @@ if(ZeroMQ_FOUND)
     endif()
 endif()
 
-# SSC
-if(ADIOS2_HAVE_MPI)
-    if(ADIOS2_USE_SSC STREQUAL AUTO)
-        set(ADIOS2_HAVE_SSC TRUE)
-    elseif(ADIOS2_USE_SSC)
-        set(ADIOS2_HAVE_SSC TRUE)
-    endif()
-endif()
-
 # MHS
 if(ADIOS2_USE_MHS STREQUAL AUTO)
     set(ADIOS2_HAVE_MHS TRUE)

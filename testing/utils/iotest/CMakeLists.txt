@@ -135,7 +135,7 @@ endif()
 if(ADIOS2_RUN_MPI_MPMD_TESTS)
   if(MPIEXEC_MAX_NUMPROCS GREATER 1) 
     #------------------------------------------
-    #  Pipe2 InsituMPI version 
+    #  Pipe2 InSituMPI version
     #------------------------------------------
     add_test(NAME Utils.IOTest.Pipe2.InSituMPI
       COMMAND ${MPIEXEC_COMMAND}

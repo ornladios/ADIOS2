@@ -9,12 +9,12 @@ add_test(NAME HeatTransfer.InsituMPI.MxM
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:heatTransfer_write_adios2>
-        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_insitumpi.xml
+        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_ssc.xml
         Write.bp 2 2 10 10 10 10
     :
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:heatTransfer_read>
-        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_insitumpi.xml
+        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_ssc.xml
         Write.bp Read.bp 2 2
 )
 set_tests_properties(HeatTransfer.InsituMPI.MxM PROPERTIES PROCESSORS 8)

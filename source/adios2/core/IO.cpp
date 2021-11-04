@@ -118,8 +118,6 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
                        "HDF5 library, can't use HDF5 engine\n")
 #endif
     },
-    {"insitumpi", IO::NoEngineEntry("ERROR: this version didn't compile with "
-                                    "MPI, can't use InSituMPI engine\n")},
     {"skeleton",
      {IO::MakeEngine<engine::SkeletonReader>,
       IO::MakeEngine<engine::SkeletonWriter>}},

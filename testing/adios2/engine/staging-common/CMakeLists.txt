@@ -5,7 +5,7 @@
 
 find_package(Threads REQUIRED)
 
-gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".InSituMPI" EXTRA_ARGS "InSituMPI")
+gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SSC" EXTRA_ARGS "SSC")
 if(ADIOS2_HAVE_SST)
   gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST" "MarshalMethod=FFS")
   gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST" "MarshalMethod=BP")
@@ -172,40 +172,7 @@ foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
 
-#
-#   Setup tests for InSituMPI engine
-#
 if(ADIOS2_HAVE_MPI AND ADIOS2_RUN_MPI_MPMD_TESTS)
-    set (SIMPLE_IMPI_TESTS "1x1;TimeoutOnOpen;1x1.Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
-    set (INSITU_TESTS ${SIMPLE_IMPI_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_TESTS} ${SIMPLE_ZFP_TESTS})
-    # Tests that don't work for InSitu
-    list (REMOVE_ITEM INSITU_TESTS "TimeoutOnOpen" "1x1.Modes" "1x1.Attrs")
-    # Local Vars don't work for InSitu
-    list (FILTER INSITU_TESTS EXCLUDE REGEX ".*Local$")
-    # Local Vars don't work for InSitu
-    list (FILTER INSITU_TESTS EXCLUDE REGEX ".*LocalVarying$")
-    # Multiple streams don't work for InSitu
-    list (FILTER INSITU_TESTS EXCLUDE REGEX "x1.Shared")
-    # Fortran Destination doesn't work for InSitu
-    list (FILTER INSITU_TESTS EXCLUDE REGEX "toF")
-    # Zero size Data doesn't work for InSitu
-    list (FILTER INSITU_TESTS EXCLUDE REGEX "ZeroData")
-    # DelayedReader doesn't make sense for InSitu
-    list (FILTER INSITU_TESTS EXCLUDE REGEX "DelayedReader.*")
-    # Fortran scalar reads don't work for InSitu
-    list (FILTER INSITU_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
-    # No locking geometry
-    list (FILTER INSITU_TESTS EXCLUDE REGEX "LockGeometry")
-    # The nobody-writes-data-in-a-timestep tests don't work for InSitu
-    list (FILTER INSITU_TESTS EXCLUDE REGEX ".*NoData$")
-    # Readers can't exit early in INSITU
-    list (FILTER INSITU_TESTS EXCLUDE REGEX ".*EarlyExit$")
-    foreach(test ${INSITU_TESTS})
-        add_common_test(${test} InSituMPI)
-    endforeach()
-endif()
-
-if(ADIOS2_HAVE_SSC AND ADIOS2_RUN_MPI_MPMD_TESTS)
     set (SSC_BASE_TESTS "1x1;1x1.Attrs;2x1;1x2;2x1ZeroDataVar;2x1ZeroDataR64;3x5;5x3;3x5LockGeometry")
     set (SSC_TESTS  ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_FORTRAN_TESTS} ${SSC_BASE_TESTS})
     foreach(test ${SSC_TESTS})
