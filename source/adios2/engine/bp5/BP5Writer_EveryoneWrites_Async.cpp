@@ -218,15 +218,19 @@ void BP5Writer::WriteOwnDataGuided(AsyncWriteInfo *info,
             vec[0].iov_base =
                 (const char *)DataVec[block].iov_base + temp_offset;
             vec[0].iov_len = DataVec[block].iov_len - temp_offset;
-
+            size_t pos = MaxSizeT; // <==> no seek inside WriteFileAt
+            if (firstWrite)
+            {
+                pos = info->startPos + wrote; // seek to pos
+            }
             /*std::cout << "Async write on Rank " << info->rank_global
                       << " write the rest of  " << totalsize - wrote
-                      << " bytes with deadline " << finaldeadline << " sec"
-                      << std::endl;*/
+                      << " bytes at pos " << pos << " with deadline "
+                      << finaldeadline << " sec" << std::endl;*/
 
             info->tm->WriteFileAt(vec.data(), vec.size(), totalsize - wrote,
-                                  info->startPos + wrote, finaldeadline,
-                                  info->flagRush);
+                                  pos, finaldeadline, info->flagRush);
+
             break;
         }
 

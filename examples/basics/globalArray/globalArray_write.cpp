@@ -28,7 +28,9 @@
  *      Author: pnorbert
  */
 
+#include <chrono>
 #include <iostream>
+#include <thread>
 #include <vector>
 
 #include <adios2.h>
@@ -64,7 +66,10 @@ int main(int argc, char *argv[])
         // create one with default settings here
         adios2::IO io = adios.DeclareIO("Output");
         io.SetEngine("BP5");
+        io.SetParameter("AggregationType", "TwoLevelShm");
         io.SetParameter("NumAggregators", "1");
+        io.SetParameter("NumSubFiles", "1");
+        io.SetParameter("AsyncWrite", "Guided");
 
         /*
          * Define global array: type, name, global dimensions
@@ -98,6 +103,9 @@ int main(int argc, char *argv[])
             // Disk I/O will be performed during this call unless
             // time aggregation postpones all of that to some later step
             writer.EndStep();
+            adios.EnterComputationBlock();
+            std::this_thread::sleep_for(std::chrono::duration<double>(1.0));
+            adios.ExitComputationBlock();
         }
 
         // Called once: indicate that we are done with this output for the run
