@@ -78,8 +78,8 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        ASSERT_EQ(abs(data[i].real() - tmpdata[i].real()) < 0.01, true);
-        ASSERT_EQ(abs(data[i].imag() - tmpdata[i].imag()) < 0.01, true);
+        ASSERT_LT(abs(data[i].real() - tmpdata[i].real()), 0.01);
+        ASSERT_LT(abs(data[i].imag() - tmpdata[i].imag()), 0.01);
     }
 }
 
@@ -93,7 +93,7 @@ void VerifyData(const T *data, size_t step, const Dims &start,
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        ASSERT_EQ(abs((double)(data[i] - tmpdata[i])) < 0.01, true);
+        ASSERT_LT(abs((double)(data[i] - tmpdata[i])), 0.01);
     }
 }
 
@@ -298,7 +298,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     {
         auto attInt = dataManIO.InquireAttribute<int>("AttInt");
         ASSERT_EQ(110, attInt.Data()[0]);
-        ASSERT_NE(111, attInt.Data()[0]);
     }
     dataManReader.Close();
     print_lines = 0;
