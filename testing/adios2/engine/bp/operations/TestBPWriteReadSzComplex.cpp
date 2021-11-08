@@ -66,9 +66,10 @@ void GenData(std::vector<std::complex<T>> &data, const size_t step,
             {
                 data[i * count[1] + j] = {
                     static_cast<T>((i + start[1]) * shape[1] + j + start[0] +
-                                   std::stof(accuracy) * 0.01 * (T)step +
-                                   3.141592654),
-                    static_cast<T>(2.71828182845904523536)};
+                                   std::stof(accuracy) * 0.01 * (T)step),
+                    static_cast<T>((i + start[1]) * shape[1] + j + start[0] +
+                                   std::stof(accuracy) * 0.01 * (T)step) +
+                        1};
             }
         }
     }
@@ -333,7 +334,10 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     auto attInt = io.InquireAttribute<int>("AttInt");
     ASSERT_EQ(110, attInt.Data()[0]);
     ASSERT_EQ(otherCompressed, false);
-    ASSERT_EQ(floatCompressed || doubleCompressed || dcomplexCompressed, true);
+    ASSERT_EQ(floatCompressed, true);
+    ASSERT_EQ(doubleCompressed, true);
+    ASSERT_EQ(complexCompressed, true);
+    ASSERT_EQ(dcomplexCompressed, true);
     readerEngine.Close();
 }
 

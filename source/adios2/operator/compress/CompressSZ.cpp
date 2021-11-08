@@ -33,7 +33,7 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
                            const Dims &blockCount, const DataType varType,
                            char *bufferOut, const Params &parameters)
 {
-    const uint8_t bufferVersion = 1;
+    const uint8_t bufferVersion = 2;
     size_t bufferOutOffset = 0;
 
     // Universal operator metadata
@@ -80,8 +80,6 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     sz.segment_size =
         static_cast<int>(std::pow(5., static_cast<double>(ndims)));
     sz.pwr_type = SZ_PWR_MIN_TYPE;
-
-    convertedDims = ConvertDims(convertedDims, varType, 5, true, 0);
 
     /* SZ parameters */
     int use_configfile = 0;
@@ -273,6 +271,8 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
                                     ToString(varType) + " is unsupported\n");
     }
 
+    convertedDims = ConvertDims(blockCount, varType, 5, true, 0);
+
     size_t szBufferSize;
     auto *szBuffer = SZ_compress(
         dtype, const_cast<char *>(dataIn), &szBufferSize, convertedDims[0],
@@ -293,14 +293,19 @@ size_t CompressSZ::InverseOperate(const char *bufferIn, const size_t sizeIn,
         GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
 
-    if (bufferVersion == 1)
+    if (bufferVersion == 2)
+    {
+        return DecompressV2(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOut);
+    }
+    else if (bufferVersion == 1)
     {
         return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
                             dataOut);
     }
-    else if (bufferVersion == 2)
+    else if (bufferVersion == 3)
     {
-        // TODO: if a Version 2 sz buffer is being implemented, put it here
+        // TODO: if a Version 3 sz buffer is being implemented, put it here
         // and keep the DecompressV1 routine for backward compatibility
     }
     else
@@ -329,7 +334,77 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
     // Do NOT remove even if the buffer version is updated. Data might be still
     // in lagacy formats. This function must be kept for backward compatibility.
     // If a newer buffer format is implemented, create another function, e.g.
-    // DecompressV2 and keep this function for decompressing lagacy data.
+    // DecompressV2 and keep this function for decompressing legacy data.
+
+    size_t bufferInOffset = 0;
+
+    const size_t ndims = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+    Dims blockCount(ndims);
+    for (size_t i = 0; i < ndims; ++i)
+    {
+        blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+    }
+    const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
+
+    m_VersionInfo =
+        " Data is compressed using SZ Version " +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+        ". Please make sure a compatible version is used for decompression.";
+
+    Dims convertedDims = ConvertDims(blockCount, type, 4, true, 1);
+
+    // Get type info
+    int dtype = 0;
+    size_t dataTypeSize;
+    if (type == helper::GetDataType<double>() ||
+        type == helper::GetDataType<std::complex<double>>())
+    {
+        dtype = SZ_DOUBLE;
+        dataTypeSize = 8;
+    }
+    else if (type == helper::GetDataType<float>() ||
+             type == helper::GetDataType<std::complex<float>>())
+    {
+        dtype = SZ_FLOAT;
+        dataTypeSize = 4;
+    }
+    else
+    {
+        throw std::runtime_error(
+            "ERROR: data type must be either double or float in SZ\n");
+    }
+
+    const size_t dataSizeBytes =
+        helper::GetTotalSize(convertedDims, dataTypeSize);
+
+    void *result =
+        SZ_decompress(dtype,
+                      reinterpret_cast<unsigned char *>(
+                          const_cast<char *>(bufferIn + bufferInOffset)),
+                      sizeIn - bufferInOffset, 0, convertedDims[0],
+                      convertedDims[1], convertedDims[2], convertedDims[3]);
+
+    if (result == nullptr)
+    {
+        throw std::runtime_error("ERROR: SZ_decompress failed." +
+                                 m_VersionInfo + "\n");
+    }
+    std::memcpy(dataOut, result, dataSizeBytes);
+    free(result);
+    result = nullptr;
+    return dataSizeBytes;
+}
+
+size_t CompressSZ::DecompressV2(const char *bufferIn, const size_t sizeIn,
+                                char *dataOut)
+{
+    // Do NOT remove even if the buffer version is updated. Data might be still
+    // in lagacy formats. This function must be kept for backward compatibility.
+    // If a newer buffer format is implemented, create another function, e.g.
+    // DecompressV3 and keep this function for decompressing legacy data.
 
     size_t bufferInOffset = 0;
 
@@ -372,7 +447,9 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     const size_t dataSizeBytes = helper::GetTotalSize(blockCount, dataTypeSize);
 
-    Dims convertedDims = ConvertDims(blockCount, type, 5, true, 0);
+    Dims convertedDims =
+        ConvertDims(blockCount, helper::GetDataType<float>(), 5, true, 0);
+
     void *result = SZ_decompress(
         dtype,
         reinterpret_cast<unsigned char *>(
