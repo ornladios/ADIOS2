@@ -42,11 +42,12 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
     // Universal operator metadata end
 
-    const size_t ndims = blockCount.size();
+    Dims convertedDims = ConvertDims(blockCount, varType, 5);
+    const size_t ndims = convertedDims.size();
 
     // sz V1 metadata
     PutParameter(bufferOut, bufferOutOffset, ndims);
-    for (const auto &d : blockCount)
+    for (const auto &d : convertedDims)
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
@@ -57,8 +58,6 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
                      static_cast<uint8_t>(versionNumber[i]));
     }
     // sz V1 metadata end
-
-    Dims convertedDims = ConvertDims(blockCount, varType, 4);
 
     sz_params sz;
     memset(&sz, 0, sizeof(sz_params));
@@ -82,7 +81,7 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
         static_cast<int>(std::pow(5., static_cast<double>(ndims)));
     sz.pwr_type = SZ_PWR_MIN_TYPE;
 
-    convertedDims = ConvertDims(blockCount, varType, 4, true, 1);
+    convertedDims = ConvertDims(convertedDims, varType, 5, true, 0);
 
     /* SZ parameters */
     int use_configfile = 0;
@@ -276,8 +275,8 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
 
     size_t szBufferSize;
     auto *szBuffer = SZ_compress(
-        dtype, const_cast<char *>(dataIn), &szBufferSize, 0, convertedDims[0],
-        convertedDims[1], convertedDims[2], convertedDims[3]);
+        dtype, const_cast<char *>(dataIn), &szBufferSize, convertedDims[0],
+        convertedDims[1], convertedDims[2], convertedDims[3], convertedDims[4]);
     std::memcpy(bufferOut + bufferOutOffset, szBuffer, szBufferSize);
     bufferOutOffset += szBufferSize;
     free(szBuffer);
@@ -350,8 +349,6 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
         std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
         ". Please make sure a compatible version is used for decompression.";
 
-    Dims convertedDims = ConvertDims(blockCount, type, 4, true, 1);
-
     // Get type info
     int dtype = 0;
     size_t dataTypeSize;
@@ -373,15 +370,15 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
             "ERROR: data type must be either double or float in SZ\n");
     }
 
-    const size_t dataSizeBytes =
-        helper::GetTotalSize(convertedDims, dataTypeSize);
+    const size_t dataSizeBytes = helper::GetTotalSize(blockCount, dataTypeSize);
 
-    void *result =
-        SZ_decompress(dtype,
-                      reinterpret_cast<unsigned char *>(
-                          const_cast<char *>(bufferIn + bufferInOffset)),
-                      sizeIn - bufferInOffset, 0, convertedDims[0],
-                      convertedDims[1], convertedDims[2], convertedDims[3]);
+    Dims convertedDims = ConvertDims(blockCount, type, 5, true, 0);
+    void *result = SZ_decompress(
+        dtype,
+        reinterpret_cast<unsigned char *>(
+            const_cast<char *>(bufferIn + bufferInOffset)),
+        sizeIn - bufferInOffset, convertedDims[0], convertedDims[1],
+        convertedDims[2], convertedDims[3], convertedDims[4]);
 
     if (result == nullptr)
     {
