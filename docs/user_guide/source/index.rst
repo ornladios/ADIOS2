@@ -8,7 +8,7 @@ ADIOS 2: The Adaptable Input/Output System version 2
 
 Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org/>`_, U.S. Department of Energy
 
-.. toctree:: 
+.. toctree::
    :caption: Introduction
 
    introduction/introduction
@@ -16,7 +16,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
 
 .. toctree::
    :caption: Setting Up
-   
+
    setting_up/setting_up
 
 
@@ -29,19 +29,19 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    api_full/api_full
    api_high/api_high
 
-   
+
 .. toctree::
    :caption: Ecosystem Tools
-   
+
    ecosystem/h5vol
    ecosystem/utilities
    ecosystem/visualization
-   
+
 .. toctree::
    :caption: Additional Information
 
    faq/faq
    advice/advice
 
- 
+
 * :ref:`search`
