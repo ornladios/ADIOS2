@@ -5,7 +5,6 @@
 
 find_package(Threads REQUIRED)
 
-gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SSC" EXTRA_ARGS "SSC")
 if(ADIOS2_HAVE_SST)
   gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST" "MarshalMethod=FFS")
   gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST" "MarshalMethod=BP")

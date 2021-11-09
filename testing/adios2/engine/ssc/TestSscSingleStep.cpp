@@ -120,11 +120,14 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
     engine.LockReaderSelections();
 
+    size_t readSteps = 0;
+
     while (true)
     {
         adios2::StepStatus status = engine.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
+            ++readSteps;
             auto scalarInt = io.InquireVariable<int>("scalarInt");
             auto blocksInfo =
                 engine.BlocksInfo(scalarInt, engine.CurrentStep());
@@ -234,6 +237,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     }
     auto attInt = io.InquireAttribute<int>("AttInt");
     ASSERT_EQ(110, attInt.Data()[0]);
+    ASSERT_EQ(1, readSteps);
     engine.Close();
 }
 
