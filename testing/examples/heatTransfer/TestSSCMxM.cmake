@@ -5,21 +5,21 @@
 
 include(ADIOSFunctions)
 
-add_test(NAME HeatTransfer.InsituMPI.Mx1
+add_test(NAME HeatTransfer.SSC.MxM
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:heatTransfer_write_adios2>
-        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_insitumpi.xml
+        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_ssc.xml
         Write.bp 2 2 10 10 10 10
     :
-    ${MPIEXEC_NUMPROC_FLAG} 1
+    ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:heatTransfer_read>
-        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_insitumpi.xml
-        Write.bp Read.bp 1 1
+        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_ssc.xml
+        Write.bp Read.bp 2 2
 )
-set_tests_properties(HeatTransfer.InsituMPI.Mx1 PROPERTIES PROCESSORS 5)
+set_tests_properties(HeatTransfer.SSC.MxM PROPERTIES PROCESSORS 8)
 
-add_test(NAME HeatTransfer.InsituMPI.Mx1.Dump
+add_test(NAME HeatTransfer.SSC.MxM.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-d 
     -DINPUT_FILE=Read.bp
@@ -27,10 +27,10 @@ add_test(NAME HeatTransfer.InsituMPI.Mx1.Dump
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
-add_test(NAME HeatTransfer.InsituMPI.Mx1.Validate
+add_test(NAME HeatTransfer.SSC.MxM.Validate
   COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     Dump.txt
 )
 
-SetupTestPipeline(HeatTransfer.InsituMPI.Mx1 ";Dump;Validate" TRUE)
+SetupTestPipeline(HeatTransfer.SSC.MxM ";Dump;Validate" TRUE)

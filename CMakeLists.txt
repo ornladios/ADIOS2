@@ -150,7 +150,6 @@ adios_option(MPI        "Enable support for MPI" AUTO)
 adios_option(DAOS       "Enable support for DAOS" AUTO)
 adios_option(DataMan    "Enable support for DataMan" AUTO)
 adios_option(DataSpaces "Enable support for DATASPACES" AUTO)
-adios_option(SSC        "Enable support for SSC" AUTO)
 adios_option(MHS        "Enable support for MHS" AUTO)
 adios_option(SST        "Enable support for SST" AUTO)
 adios_option(BP5        "Enable support for BP5" AUTO)
@@ -184,7 +183,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SSC SST CUDA Fortran MPI Python Blosc BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME SysVShMem ZeroMQ Profiling Endian_Reverse
+    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME SysVShMem ZeroMQ Profiling Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
