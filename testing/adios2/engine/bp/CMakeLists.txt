@@ -49,7 +49,14 @@ bp3_bp4_gtest_add_tests_helper(WriteMultiblockRead MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadMultiblock MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadVector MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
+bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
+if(ADIOS2_HAVE_BP5)
+   set (BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial")
+   if (ADIOS2_HAVE_MPI)
+      list (APPEND BP5LargeMeta  "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.MPI" "Engine.BP.BPLargeMetadata.ManyLongStrings.BP5.MPI")
+   endif()
+   set_tests_properties(${BP5LargeMeta} PROPERTIES RUN_SERIAL TRUE)
+endif()
 bp_gtest_add_tests_helper(WriteMemorySelectionRead MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadLocalVariables MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadLocalVariablesSel MPI_ALLOW)
@@ -104,4 +111,5 @@ gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .FileStrea
 gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .FileStream
   WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
 )
+
 
