@@ -258,34 +258,38 @@ int main(int argc, char *argv[])
                                   << " cycles with " << t
                                   << " seconds work in each cycle";
                     }
+                    const size_t N = 1048576;
+                    double *f = (double*) calloc(N, sizeof(double));
+                    double *g = (double*) malloc(N*sizeof(double));
                     int dummy = 1;
                     for (size_t c = 0; c < cmdS->cycles; ++c)
                     {
-                        if (cmdS->busyTime_us > 0)
+                        auto end =
+                            std::chrono::high_resolution_clock::now() +
+                            std::chrono::microseconds(cmdS->busyTime_us);
+                        if (cmdS->busyTime_us > 0.1)
                         {
-                            auto end =
-                                std::chrono::high_resolution_clock::now() +
-                                std::chrono::microseconds(cmdS->busyTime_us);
                             adios.EnterComputationBlock();
-                            double f = 1.0;
-                            double g;
-                            while (std::chrono::high_resolution_clock::now() <
-                                   end)
+                        }
+                        while (std::chrono::high_resolution_clock::now() <
+                                end)
+                        {
+                            for (int i = 0; i < N; ++i)
                             {
-                                g = f * 2.0;
-                                f = f * 1234.23873;
-                                f = f / 312.21376;
-                                f = g / 2.0;
+                                f[i] = f[i] * 2.0 + 0.000001;
                             }
+                        }
+                        if (cmdS->busyTime_us > 0.1)
+                        {
                             adios.ExitComputationBlock();
                         }
-                        MPI_Bcast(&dummy, 1, MPI_INT, 0, settings.appComm);
+                        MPI_Allreduce(f, g, N, MPI_DOUBLE, MPI_SUM, settings.appComm);
                     }
+                    std::chrono::high_resolution_clock::time_point end =
+                        std::chrono::high_resolution_clock::now();
+                    actualBusyTime_usec += (end - start).count() / 1000;
                     if (!settings.myRank && settings.verbose)
                     {
-                        std::chrono::high_resolution_clock::time_point end =
-                            std::chrono::high_resolution_clock::now();
-                        actualBusyTime_usec += (end - start).count() / 1000;
                         double t = static_cast<double>((end - start).count()) /
                                    1000000000.0;
                         std::cout << " -> Was busy for " << t << "  seconds "
