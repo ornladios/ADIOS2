@@ -10,8 +10,8 @@
 
 #include "CompressMGARD.h"
 #include "adios2/helper/adiosFunctions.h"
-#include <MGARDConfig.h>
 #include <cstring>
+#include <mgard/MGARDConfig.hpp>
 #include <mgard/compress_cuda.hpp>
 
 namespace adios2
