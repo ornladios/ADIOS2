@@ -516,9 +516,6 @@ protected:
      *  if no communicator is passed */
     helper::Comm m_Comm;
 
-    /** added to exceptions to improve debugging */
-    std::string m_EndMessage;
-
     /** keeps track of current advance status */
     StepStatus m_AdvanceStatus = StepStatus::OK;
 
