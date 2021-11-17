@@ -11,7 +11,6 @@
 #include "SscReader.tcc"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosCommMPI.h"
-#include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosMpiHandshake.h"
 
 namespace adios2
@@ -31,6 +30,9 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
     helper::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs",
                          m_OpenTimeoutSecs);
+
+    helper::Log("Engine", "SSCReader", "Open", m_Name, 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::OUTPUT);
 
     SyncMpiPattern();
 }
@@ -69,14 +71,11 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 
     ++m_CurrentStep;
 
-    m_StepBegun = true;
+    helper::Log("Engine", "SSCReader", "BeginStep",
+                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::OUTPUT);
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscReader::BeginStep, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_ReaderRank << ", Step "
-                  << m_CurrentStep << std::endl;
-    }
+    m_StepBegun = true;
 
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
@@ -117,11 +116,8 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
                     std::memcpy(value.data(), m_Buffer.data() + v.bufferStart,
                                 v.bufferCount);
                 }
-                if (v.type == DataType::None)
-                {
-                    throw(std::runtime_error("unknown data type"));
-                }
-                else if (v.type == DataType::String)
+
+                if (v.type == DataType::String)
                 {
                     auto variable = m_IO.InquireVariable<std::string>(v.name);
                     if (variable)
@@ -150,7 +146,12 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-                else { throw(std::runtime_error("unknown data type")); }
+                else
+                {
+                    helper::Log("Engine", "SSCReader", "BeginStep",
+                                "unknown data type", 0, m_Comm.Rank(), 0,
+                                m_Verbosity, helper::LogMode::ERROR);
+                }
             }
         }
     }
@@ -165,6 +166,9 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 
 void SscReader::PerformGets()
 {
+
+    helper::Log("Engine", "SSCReader", "PerformGets", "", 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::OUTPUT);
 
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
@@ -244,7 +248,12 @@ void SscReader::PerformGets()
     }
                         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-                        else { throw(std::runtime_error("unknown data type")); }
+                        else
+                        {
+                            helper::Log("Engine", "SSCReader", "PerformGets",
+                                        "unknown data type", 0, m_Comm.Rank(),
+                                        0, m_Verbosity, helper::LogMode::ERROR);
+                        }
                     }
                 }
             }
@@ -287,13 +296,8 @@ void SscReader::EndStepConsequentFlexible()
 void SscReader::EndStep()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
-
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscReader::EndStep, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_ReaderRank << ", Step "
-                  << m_CurrentStep << std::endl;
-    }
+    helper::Log("Engine", "SSCReader", "EndStep", std::to_string(CurrentStep()),
+                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);
 
     PerformGets();
 
@@ -366,12 +370,6 @@ void SscReader::SyncMpiPattern()
 bool SscReader::SyncWritePattern()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscReader::SyncWritePattern, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_ReaderRank << ", Step "
-                  << m_CurrentStep << std::endl;
-    }
 
     ssc::BroadcastMetadata(m_GlobalWritePatternBuffer, m_WriterMasterStreamRank,
                            m_StreamComm);
@@ -396,13 +394,6 @@ bool SscReader::SyncWritePattern()
 void SscReader::SyncReadPattern()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
-
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscReader::SyncReadPattern, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_ReaderRank << ", Step "
-                  << m_CurrentStep << std::endl;
-    }
 
     ssc::Buffer localBuffer(8);
     localBuffer.value<uint64_t>() = 8;
@@ -483,11 +474,15 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
 #define declare_type(T)                                                        \
     void SscReader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
+        helper::Log("Engine", "SSCReader", "GetSync", variable.m_Name, 0,      \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
         GetDeferredCommon(variable, data);                                     \
         PerformGets();                                                         \
     }                                                                          \
     void SscReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
+        helper::Log("Engine", "SSCReader", "GetDeferred", variable.m_Name, 0,  \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
     std::vector<typename Variable<T>::BPInfo> SscReader::DoBlocksInfo(         \
@@ -501,11 +496,9 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void SscReader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscReader::DoClose, World Rank " << m_StreamRank
-                  << ", Reader Rank " << m_ReaderRank << std::endl;
-    }
+
+    helper::Log("Engine", "SSCReader", "Close", m_Name, 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::OUTPUT);
 
     if (!m_StepBegun)
     {

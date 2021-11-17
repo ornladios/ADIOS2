@@ -30,7 +30,8 @@ BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
   m_MDIndexFileManager(m_Comm), m_ActiveFlagFileManager(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP4Reader::Open");
-    helper::Log("Engine", "BP4Reader", "BP4Reader", m_Name, 0, m_Comm.Rank(), 5,
+    helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    helper::Log("Engine", "BP4Reader", "Open", m_Name, 0, m_Comm.Rank(), 5,
                 m_Verbosity, helper::LogMode::OUTPUT);
     Init();
 }
@@ -165,7 +166,6 @@ void BP4Reader::PerformGets()
 // PRIVATE
 void BP4Reader::Init()
 {
-    helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     if (m_OpenMode != Mode::Read)
     {
         throw std::invalid_argument("ERROR: BPFileReader only "
@@ -792,6 +792,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void BP4Reader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP4Reader::Close");
+    helper::Log("Engine", "BP4Reader", "Close", m_Name, 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::OUTPUT);
     PerformGets();
     m_DataFileManager.CloseFiles();
     m_MDFileManager.CloseFiles();

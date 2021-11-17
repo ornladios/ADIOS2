@@ -12,8 +12,7 @@
 #define ADIOS2_ENGINE_SSCREADER_TCC_
 
 #include "SscReader.h"
-#include "adios2/helper/adiosMemory.h"
-#include "adios2/helper/adiosSystem.h"
+#include "adios2/helper/adiosFunctions.h"
 #include <adios2-perfstubs-interface.h>
 #include <iostream>
 
@@ -57,8 +56,10 @@ void SscReader::GetDeferredDeltaCommon(Variable<T> &variable, T *data)
     {
         if (d == 0)
         {
-            throw(std::runtime_error(
-                "SetSelection count dimensions cannot be 0"));
+            helper::Log("Engine", "SSCReader", "GetDeferredDeltaCommon",
+                        "SetSelection count dimensions cannot be 0", 0,
+                        m_Comm.Rank(), 0, m_Verbosity,
+                        helper::LogMode::EXCEPTION);
         }
     }
 }
@@ -152,7 +153,9 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
                     }
                     else
                     {
-                        throw(std::runtime_error("ShapeID not supported"));
+                        helper::Log("Engine", "SSCReader", "GetDeferredCommon",
+                                    "unknown ShapeID", 0, m_Comm.Rank(), 0,
+                                    m_Verbosity, helper::LogMode::ERROR);
                     }
                 }
             }

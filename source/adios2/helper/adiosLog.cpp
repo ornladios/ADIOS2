@@ -17,10 +17,9 @@ namespace adios2
 {
 namespace helper
 {
-std::string lastEngine;
-std::string lastActivity;
-std::string lastMessage;
-int lastRank;
+
+std::string lastEngineActivity;
+int lastRank = -1;
 
 std::string timeColor = "\033[1;36m";
 std::string outputColor = "\033[1;32m";
@@ -37,20 +36,19 @@ void Log(const std::string &component, const std::string &source,
 
     if (component == "Engine")
     {
-        lastEngine = source;
-        lastActivity = activity;
-        lastMessage = message;
         lastRank = commRank;
     }
 
-    if (logRank >= 0 && commRank >= 0 && logRank != commRank)
+    if (mode != LogMode::EXCEPTION)
     {
-        return;
-    }
-
-    if (priority > verbosity)
-    {
-        return;
+        if (logRank >= 0 && commRank >= 0 && logRank != commRank)
+        {
+            return;
+        }
+        if (priority > verbosity)
+        {
+            return;
+        }
     }
 
     std::stringstream m;
@@ -85,9 +83,18 @@ void Log(const std::string &component, const std::string &source,
     {
         m << " [Rank " << commRank << "]";
     }
+    else if (lastRank >= 0)
+    {
+        m << " [Rank " << lastRank << "]";
+    }
 
-    m << " " << component << " " << source << " " << activity << ": "
-      << message;
+    m << " <" << component << "> <" << source << "> <" << activity
+      << "> : " << message;
+
+    if (component == "Engine")
+    {
+        lastEngineActivity = m.str();
+    }
 
     if (mode == OUTPUT || mode == WARNING)
     {
