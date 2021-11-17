@@ -27,9 +27,9 @@ void CUDAMinMaxImpl(const T *values, const size_t size, T &min, T &max)
     cudaMemcpy(&max, thrust::raw_pointer_cast(res.second), sizeof(T), cudaMemcpyDeviceToHost);
 }
 // types non supported on the device
-void CUDAMinMaxImpl(const long double *values, const size_t size, long double &min, long double &max) {}
-void CUDAMinMaxImpl(const std::complex<float> *values, const size_t size, std::complex<float> &min, std::complex<float> &max) {}
-void CUDAMinMaxImpl(const std::complex<double> *values, const size_t size, std::complex<double> &min, std::complex<double> &max) {}
+void CUDAMinMaxImpl(const long double */*values*/, const size_t /*size*/, long double &/*min*/, long double &/*max*/) {}
+void CUDAMinMaxImpl(const std::complex<float> */*values*/, const size_t /*size*/, std::complex<float> &/*min*/, std::complex<float> &/*max*/) {}
+void CUDAMinMaxImpl(const std::complex<double> */*values*/, const size_t /*size*/, std::complex<double> &/*min*/, std::complex<double> &/*max*/) {}
 }
 
 template <class T>
