@@ -37,7 +37,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
                          m_ReceiverBufferSize);
 
     helper::Log("Engine", "DataManReader", "Open", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
 
     if (m_IPAddress.empty())
     {
@@ -129,7 +129,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 {
     helper::Log("Engine", "DataManReader", "BeginStep",
                 std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::OUTPUT);
+                helper::LogMode::INFO);
 
     float timeout = timeoutSeconds;
 
@@ -142,7 +142,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         helper::Log("Engine", "DataManReader", "BeginStep",
                     "EndOfStream, final step is " + std::to_string(m_FinalStep),
-                    0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);
+                    0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
 
         return StepStatus::EndOfStream;
     }
@@ -154,7 +154,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         helper::Log("Engine", "DataManReader", "BeginStep",
                     "EndOfStream due to timeout", 0, m_Comm.Rank(), 5,
-                    m_Verbosity, helper::LogMode::OUTPUT);
+                    m_Verbosity, helper::LogMode::INFO);
         return StepStatus::EndOfStream;
     }
 
@@ -320,14 +320,13 @@ void DataManReader::SubscribeThread()
     void DataManReader::DoGetSync(Variable<T> &variable, T *data)              \
     {                                                                          \
         helper::Log("Engine", "DataManReader", "GetSync", variable.m_Name, 0,  \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void DataManReader::DoGetDeferred(Variable<T> &variable, T *data)          \
     {                                                                          \
         helper::Log("Engine", "DataManReader", "GetDeferred", variable.m_Name, \
-                    0, m_Comm.Rank(), 5, m_Verbosity,                          \
-                    helper::LogMode::OUTPUT);                                  \
+                    0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);  \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \

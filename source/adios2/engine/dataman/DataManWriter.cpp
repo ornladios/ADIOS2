@@ -46,7 +46,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "FloatAccuracy", m_FloatAccuracy);
 
     helper::Log("Engine", "DataManWriter", "Open", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
 
     m_HandshakeJson["Threading"] = m_Threading;
     m_HandshakeJson["Transport"] = m_TransportMode;
@@ -134,7 +134,7 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 
     helper::Log("Engine", "DataManWriter", "BeginStep",
                 std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::OUTPUT);
+                helper::LogMode::INFO);
 
     m_Serializer.AttachTimeStamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -152,7 +152,7 @@ void DataManWriter::EndStep()
 {
     helper::Log("Engine", "DataManWriter", "EndStep",
                 std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::OUTPUT);
+                helper::LogMode::INFO);
 
     if (m_CurrentStep == 0)
     {
@@ -195,14 +195,13 @@ void DataManWriter::Flush(const int transportIndex) {}
     void DataManWriter::DoPutSync(Variable<T> &variable, const T *values)      \
     {                                                                          \
         helper::Log("Engine", "DataManWriter", "PutSync", variable.m_Name, 0,  \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         PutSyncCommon(variable, values);                                       \
     }                                                                          \
     void DataManWriter::DoPutDeferred(Variable<T> &variable, const T *values)  \
     {                                                                          \
         helper::Log("Engine", "DataManWriter", "PutDeferred", variable.m_Name, \
-                    0, m_Comm.Rank(), 5, m_Verbosity,                          \
-                    helper::LogMode::OUTPUT);                                  \
+                    0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);  \
         PutDeferredCommon(variable, values);                                   \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -211,7 +210,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void DataManWriter::DoClose(const int transportIndex)
 {
     helper::Log("Engine", "DataManWriter", "Close", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
 
     if (m_CombinedSteps < m_CombiningSteps && m_CombinedSteps > 0)
     {

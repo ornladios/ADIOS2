@@ -19,9 +19,6 @@ namespace adios2
 namespace helper
 {
 
-std::string lastEngineActivity;
-int lastRank = -1;
-
 std::string timeColor = "\033[1;36m";
 std::string outputColor = "\033[1;32m";
 std::string warningColor = "\033[1;33m";
@@ -31,14 +28,17 @@ std::string defaultColor = "\033[0m";
 
 void Log(const std::string &component, const std::string &source,
          const std::string &activity, const std::string &message,
+         const int priority, const int verbosity, const LogMode mode)
+{
+    Log(component, source, activity, message, -1, -1, priority, verbosity,
+        mode);
+}
+
+void Log(const std::string &component, const std::string &source,
+         const std::string &activity, const std::string &message,
          const int logRank, const int commRank, const int priority,
          const int verbosity, const LogMode mode)
 {
-
-    if (component == "Engine")
-    {
-        lastRank = commRank;
-    }
 
     if (mode != LogMode::EXCEPTION)
     {
@@ -63,51 +63,42 @@ void Log(const std::string &component, const std::string &source,
     }
     m << timeColor << " [" << timeStr << "]" << defaultColor;
 
-    if (mode == OUTPUT)
+    if (mode == INFO)
     {
-        m << outputColor << " [ADIOS2 Output]" << defaultColor;
+        m << outputColor << " [ADIOS2 INFO]" << defaultColor;
     }
     else if (mode == WARNING)
     {
-        m << warningColor << " [ADIOS2 Warning]" << defaultColor;
+        m << warningColor << " [ADIOS2 WARNING]" << defaultColor;
     }
     else if (mode == ERROR)
     {
-        m << errorColor << " [ADIOS2 Error]" << defaultColor;
+        m << errorColor << " [ADIOS2 ERROR]" << defaultColor;
     }
     else if (mode == EXCEPTION)
     {
-        m << exceptionColor << " [ADIOS2 Exception]" << defaultColor;
+        m << exceptionColor << " [ADIOS2 EXCEPTION]" << defaultColor;
     }
 
     if (commRank >= 0)
     {
         m << " [Rank " << commRank << "]";
     }
-    else if (lastRank >= 0)
-    {
-        m << " [Rank " << lastRank << "]";
-    }
 
     m << " <" << component << "> <" << source << "> <" << activity
-      << "> : " << message;
+      << "> : " << message << std::endl;
 
-    if (component == "Engine")
+    if (mode == INFO || mode == WARNING)
     {
-        lastEngineActivity = m.str();
-    }
-
-    if (mode == OUTPUT || mode == WARNING)
-    {
-        std::cout << m.str() << std::endl;
+        std::cout << m.str();
     }
     else if (mode == ERROR)
     {
-        std::cerr << m.str() << std::endl;
+        std::cerr << m.str();
     }
     else if (mode == EXCEPTION)
     {
-        std::cerr << m.str() << std::endl;
+        std::cerr << m.str();
         throw(m.str());
     }
 }

@@ -32,7 +32,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
                          m_OpenTimeoutSecs);
 
     helper::Log("Engine", "SSCReader", "Open", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
 
     SyncMpiPattern();
 }
@@ -73,7 +73,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 
     helper::Log("Engine", "SSCReader", "BeginStep",
                 std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::OUTPUT);
+                helper::LogMode::INFO);
 
     m_StepBegun = true;
 
@@ -168,7 +168,7 @@ void SscReader::PerformGets()
 {
 
     helper::Log("Engine", "SSCReader", "PerformGets", "", 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
 
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
@@ -297,7 +297,7 @@ void SscReader::EndStep()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     helper::Log("Engine", "SSCReader", "EndStep", std::to_string(CurrentStep()),
-                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);
+                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
 
     PerformGets();
 
@@ -475,14 +475,14 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
     void SscReader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
         helper::Log("Engine", "SSCReader", "GetSync", variable.m_Name, 0,      \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         GetDeferredCommon(variable, data);                                     \
         PerformGets();                                                         \
     }                                                                          \
     void SscReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
         helper::Log("Engine", "SSCReader", "GetDeferred", variable.m_Name, 0,  \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
     std::vector<typename Variable<T>::BPInfo> SscReader::DoBlocksInfo(         \
@@ -498,7 +498,7 @@ void SscReader::DoClose(const int transportIndex)
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
     helper::Log("Engine", "SSCReader", "Close", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
 
     if (!m_StepBegun)
     {

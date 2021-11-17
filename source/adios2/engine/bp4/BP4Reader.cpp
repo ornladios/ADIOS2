@@ -32,7 +32,7 @@ BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
     PERFSTUBS_SCOPED_TIMER("BP4Reader::Open");
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::Log("Engine", "BP4Reader", "Open", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
     Init();
 }
 
@@ -41,7 +41,7 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     PERFSTUBS_SCOPED_TIMER("BP4Reader::BeginStep");
     helper::Log("Engine", "BP4Reader", "BeginStep",
                 std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::OUTPUT);
+                helper::LogMode::INFO);
 
     if (mode != StepMode::Read)
     {
@@ -116,7 +116,7 @@ size_t BP4Reader::CurrentStep() const { return m_CurrentStep; }
 void BP4Reader::EndStep()
 {
     helper::Log("Engine", "BP4Reader", "EndStep", std::to_string(CurrentStep()),
-                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);
+                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
     if (!m_BetweenStepPairs)
     {
         throw std::logic_error(
@@ -131,7 +131,7 @@ void BP4Reader::PerformGets()
 {
     PERFSTUBS_SCOPED_TIMER("BP4Reader::PerformGets");
     helper::Log("Engine", "BP4Reader", "PerformGets", "", 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
     if (m_BP4Deserializer.m_DeferredVariables.empty())
     {
         return;
@@ -776,14 +776,14 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER("BP4Reader::Get");                              \
         helper::Log("Engine", "BP4Reader", "GetSync", variable.m_Name, 0,      \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void BP4Reader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER("BP4Reader::Get");                              \
         helper::Log("Engine", "BP4Reader", "GetDeferred", variable.m_Name, 0,  \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         GetDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -793,7 +793,7 @@ void BP4Reader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP4Reader::Close");
     helper::Log("Engine", "BP4Reader", "Close", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
     PerformGets();
     m_DataFileManager.CloseFiles();
     m_MDFileManager.CloseFiles();

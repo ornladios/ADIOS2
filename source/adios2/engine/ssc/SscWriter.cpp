@@ -30,7 +30,7 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
                          m_OpenTimeoutSecs);
 
     helper::Log("Engine", "SSCWriter", "Open", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
 
     int providedMpiMode;
     MPI_Query_thread(&providedMpiMode);
@@ -59,7 +59,7 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
     helper::Log("Engine", "SSCWriter", "BeginStep",
                 std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::OUTPUT);
+                helper::LogMode::INFO);
 
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
@@ -95,7 +95,7 @@ void SscWriter::PerformPuts()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     helper::Log("Engine", "SSCWriter", "PerformPuts", "", 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
 }
 
 void SscWriter::EndStepFirst()
@@ -133,7 +133,7 @@ void SscWriter::EndStep()
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
     helper::Log("Engine", "SSCWriter", "EndStep", std::to_string(CurrentStep()),
-                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);
+                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
 
     if (m_CurrentStep == 0)
     {
@@ -177,7 +177,7 @@ void SscWriter::SyncMpiPattern()
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
     helper::Log("Engine", "SSCWriter", "SyncMpiPattern", "", 0, m_Comm.Rank(),
-                5, m_Verbosity, helper::LogMode::OUTPUT);
+                5, m_Verbosity, helper::LogMode::INFO);
 
     MPI_Group streamGroup;
     MPI_Group writerGroup;
@@ -210,7 +210,7 @@ void SscWriter::SyncWritePattern(bool finalStep)
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
     helper::Log("Engine", "SSCWriter", "SyncWritePattern", "", 0, m_Comm.Rank(),
-                5, m_Verbosity, helper::LogMode::OUTPUT);
+                5, m_Verbosity, helper::LogMode::INFO);
 
     ssc::Buffer localBuffer(8);
     localBuffer.value<uint64_t>() = 8;
@@ -244,7 +244,7 @@ void SscWriter::SyncReadPattern()
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
     helper::Log("Engine", "SSCWriter", "SyncReadPattern", "", 0, m_Comm.Rank(),
-                5, m_Verbosity, helper::LogMode::OUTPUT);
+                5, m_Verbosity, helper::LogMode::INFO);
 
     ssc::Buffer globalBuffer;
 
@@ -317,14 +317,14 @@ void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
     void SscWriter::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
         helper::Log("Engine", "SSCWriter", "PutSync", variable.m_Name, 0,      \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         PutDeferredCommon(variable, data);                                     \
         PerformPuts();                                                         \
     }                                                                          \
     void SscWriter::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
         helper::Log("Engine", "SSCWriter", "PutDeferred", variable.m_Name, 0,  \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         PutDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -335,7 +335,7 @@ void SscWriter::DoClose(const int transportIndex)
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
     helper::Log("Engine", "SSCWriter", "Close", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::OUTPUT);
+                m_Verbosity, helper::LogMode::INFO);
 
     if (m_Threading && m_EndStepThread.joinable())
     {
