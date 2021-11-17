@@ -27,7 +27,6 @@ SkeletonWriter::SkeletonWriter(IO &io, const std::string &name, const Mode mode,
                                helper::Comm comm)
 : Engine("SkeletonWriter", io, name, mode, std::move(comm))
 {
-    m_EndMessage = " in call to SkeletonWriter " + m_Name + " Open\n";
     m_WriterRank = m_Comm.Rank();
     Init();
     if (m_Verbosity == 5)

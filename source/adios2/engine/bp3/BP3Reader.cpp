@@ -135,8 +135,7 @@ void BP3Reader::Init()
     if (m_OpenMode != Mode::Read)
     {
         throw std::invalid_argument(
-            "ERROR: BPFileReader only supports OpenMode::Read from" + m_Name +
-            " " + m_EndMessage);
+            "ERROR: BPFileReader only supports OpenMode::Read from" + m_Name);
     }
 
     // if IO was involved in reading before this flag may be true now

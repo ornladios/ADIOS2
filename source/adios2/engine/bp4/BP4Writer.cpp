@@ -34,8 +34,11 @@ BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
   m_FileMetadataIndexManager(m_Comm), m_FileDrainer()
 {
     PERFSTUBS_SCOPED_TIMER("BP4Writer::Open");
+    helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
+    helper::Log("Engine", "BP4Writer", "Open", m_Name, 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+
     m_IO.m_ReadStreaming = false;
-    m_EndMessage = " in call to IO Open BP4Writer " + m_Name + "\n";
 
     Init();
 }
@@ -43,6 +46,10 @@ BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
 StepStatus BP4Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     PERFSTUBS_SCOPED_TIMER("BP4Writer::BeginStep");
+    helper::Log("Engine", "BP4Writer", "BeginStep",
+                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::INFO);
+
     m_BP4Serializer.m_DeferredVariables.clear();
     m_BP4Serializer.m_DeferredVariablesDataSize = 0;
     m_IO.m_ReadStreaming = false;
@@ -57,6 +64,9 @@ size_t BP4Writer::CurrentStep() const
 void BP4Writer::PerformPuts()
 {
     PERFSTUBS_SCOPED_TIMER("BP4Writer::PerformPuts");
+    helper::Log("Engine", "BP4Writer", "PerformPuts", "", 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+
     if (m_BP4Serializer.m_DeferredVariables.empty())
     {
         return;
@@ -90,6 +100,9 @@ void BP4Writer::PerformPuts()
 void BP4Writer::EndStep()
 {
     PERFSTUBS_SCOPED_TIMER("BP4Writer::EndStep");
+    helper::Log("Engine", "BP4Writer", "EndStep", std::to_string(CurrentStep()),
+                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
+
     if (m_BP4Serializer.m_DeferredVariables.size() > 0)
     {
         PerformPuts();
@@ -140,6 +153,8 @@ void BP4Writer::Init()
                           const bool initialize, const T &value)               \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER("BP4Writer::Put");                              \
+        helper::Log("Engine", "BP4Writer", "Put", variable.m_Name, 0,          \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         PutCommon(variable, span, 0, value);                                   \
     }
 
@@ -149,11 +164,17 @@ ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #define declare_type(T)                                                        \
     void BP4Writer::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
+        PERFSTUBS_SCOPED_TIMER("BP4Writer::Put");                              \
+        helper::Log("Engine", "BP4Writer", "PutSync", variable.m_Name, 0,      \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
         variable.m_BlocksInfo.pop_back();                                      \
     }                                                                          \
     void BP4Writer::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
+        PERFSTUBS_SCOPED_TIMER("BP4Writer::Put");                              \
+        helper::Log("Engine", "BP4Writer", "PutDeferred", variable.m_Name, 0,  \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         PutDeferredCommon(variable, data);                                     \
     }
 
@@ -424,6 +445,9 @@ void BP4Writer::DoFlush(const bool isFinal, const int transportIndex)
 void BP4Writer::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP4Writer::Close");
+    helper::Log("Engine", "BP4Writer", "Close", m_Name, 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+
     if (m_BP4Serializer.m_DeferredVariables.size() > 0)
     {
         PerformPuts();

@@ -32,7 +32,6 @@ BP3Writer::BP3Writer(IO &io, const std::string &name, const Mode mode,
 {
     PERFSTUBS_SCOPED_TIMER("BP3Writer::Open");
     m_IO.m_ReadStreaming = false;
-    m_EndMessage = " in call to IO Open BPFileWriter " + m_Name + "\n";
     Init();
 }
 

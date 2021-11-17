@@ -36,6 +36,7 @@ add_library(adios2_core
   helper/adiosXMLUtil.cpp
   helper/adiosYAML.cpp
   helper/adiosCUDA.cu
+  helper/adiosLog.cpp
 
 #engine derived classes
   engine/bp3/BP3Reader.cpp engine/bp3/BP3Reader.tcc

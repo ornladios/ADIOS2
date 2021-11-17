@@ -45,13 +45,18 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "CombiningSteps", m_CombiningSteps);
     helper::GetParameter(m_IO.m_Parameters, "FloatAccuracy", m_FloatAccuracy);
 
+    helper::Log("Engine", "DataManWriter", "Open", m_Name, 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+
     m_HandshakeJson["Threading"] = m_Threading;
     m_HandshakeJson["Transport"] = m_TransportMode;
     m_HandshakeJson["FloatAccuracy"] = m_FloatAccuracy;
 
     if (m_IPAddress.empty())
     {
-        throw(std::invalid_argument("IP address not specified"));
+        helper::Log("Engine", "DataManWriter", "Open",
+                    "IP address not specified", 0, m_Comm.Rank(), 0,
+                    m_Verbosity, helper::LogMode::EXCEPTION);
     }
 
     if (m_MonitorActive)
@@ -127,10 +132,9 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
         m_Monitor.BeginStep(m_CurrentStep);
     }
 
-    if (m_Verbosity >= 10)
-    {
-        std::cout << "DataManWriter::BeginStep " << m_CurrentStep << std::endl;
-    }
+    helper::Log("Engine", "DataManWriter", "BeginStep",
+                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::INFO);
 
     m_Serializer.AttachTimeStamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -146,6 +150,10 @@ void DataManWriter::PerformPuts() {}
 
 void DataManWriter::EndStep()
 {
+    helper::Log("Engine", "DataManWriter", "EndStep",
+                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::INFO);
+
     if (m_CurrentStep == 0)
     {
         m_Serializer.PutAttributes(m_IO);
@@ -177,11 +185,6 @@ void DataManWriter::EndStep()
     {
         m_Monitor.EndStep(m_CurrentStep);
     }
-
-    if (m_Verbosity >= 10)
-    {
-        std::cout << "DataManWriter::EndStep " << m_CurrentStep << std::endl;
-    }
 }
 
 void DataManWriter::Flush(const int transportIndex) {}
@@ -191,10 +194,14 @@ void DataManWriter::Flush(const int transportIndex) {}
 #define declare_type(T)                                                        \
     void DataManWriter::DoPutSync(Variable<T> &variable, const T *values)      \
     {                                                                          \
+        helper::Log("Engine", "DataManWriter", "PutSync", variable.m_Name, 0,  \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         PutSyncCommon(variable, values);                                       \
     }                                                                          \
     void DataManWriter::DoPutDeferred(Variable<T> &variable, const T *values)  \
     {                                                                          \
+        helper::Log("Engine", "DataManWriter", "PutDeferred", variable.m_Name, \
+                    0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);  \
         PutDeferredCommon(variable, values);                                   \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -202,6 +209,9 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void DataManWriter::DoClose(const int transportIndex)
 {
+    helper::Log("Engine", "DataManWriter", "Close", m_Name, 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+
     if (m_CombinedSteps < m_CombiningSteps && m_CombinedSteps > 0)
     {
         m_Serializer.AttachAttributesToLocalPack();
@@ -280,11 +290,6 @@ void DataManWriter::DoClose(const int transportIndex)
     }
 
     m_IsClosed = true;
-
-    if (m_Verbosity >= 10)
-    {
-        std::cout << "DataManWriter::DoClose " << m_CurrentStep << std::endl;
-    }
 }
 
 bool DataManWriter::IsBufferQueueEmpty()
