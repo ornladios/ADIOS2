@@ -23,8 +23,20 @@ enum LogMode : char
     OUTPUT = 'o'
 };
 
+/**
+ * Print outputs, warnings, errors, and exceptions
+ * @param component: Engine, Transport, Operator, etc.
+ * @param source: class name of component
+ * @param activity: function name where this is called
+ * @param message: text message
+ * @param logRank: only print if(logRank==commRank)
+ * @param commRank: current MPI rank
+ * @param priority: only print if(priority<=verbosity)
+ * @param verbosity: engine parameter for engine wide verbosity level
+ * @param mode: OUTPUT, WARNING, ERROR, or EXCEPTION
+ */
 void Log(const std::string &component, const std::string &source,
-         const std::string &operation, const std::string &message,
+         const std::string &activity, const std::string &message,
          const int logRank, const int commRank, const int priority,
          const int verbosity, const LogMode mode);
 
