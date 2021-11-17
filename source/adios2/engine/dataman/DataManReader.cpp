@@ -36,10 +36,14 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "MaxStepBufferSize",
                          m_ReceiverBufferSize);
 
+    helper::Log("Engine", "DataManReader", "Open", m_Name, 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::OUTPUT);
+
     if (m_IPAddress.empty())
     {
-        throw(std::invalid_argument(
-            "IP address not specified in wide area staging"));
+        helper::Log("Engine", "DataManReader", "Open",
+                    "IP address not specified", 0, m_Comm.Rank(), 0,
+                    m_Verbosity, helper::LogMode::EXCEPTION);
     }
 
     std::string requesterAddress =
@@ -99,7 +103,9 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     }
     else
     {
-        throw(std::invalid_argument("unknown transport mode"));
+        helper::Log("Engine", "DataManReader", "Open", "invalid transport mode",
+                    0, m_Comm.Rank(), 0, m_Verbosity,
+                    helper::LogMode::EXCEPTION);
     }
 
     m_Requester.Request("Ready", 5);
@@ -116,22 +122,14 @@ DataManReader::~DataManReader()
     {
         DoClose();
     }
-
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "DataManReader::~DataManReader() Rank " << m_MpiRank
-                  << ", Step " << m_CurrentStep << std::endl;
-    }
 }
 
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "DataManReader::BeginStep() begin, Rank " << m_MpiRank
-                  << ", Step " << m_CurrentStep << std::endl;
-    }
+    helper::Log("Engine", "DataManReader", "BeginStep",
+                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::OUTPUT);
 
     float timeout = timeoutSeconds;
 
@@ -142,13 +140,10 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 
     if (m_CurrentStep >= m_FinalStep and m_CurrentStep >= 0)
     {
-        if (m_Verbosity >= 5)
-        {
-            std::cout << "DataManReader::BeginStep() Rank " << m_MpiRank
-                      << " returned EndOfStream, "
-                         "final step is "
-                      << m_FinalStep << std::endl;
-        }
+        helper::Log("Engine", "DataManReader", "BeginStep",
+                    "EndOfStream, final step is " + std::to_string(m_FinalStep),
+                    0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);
+
         return StepStatus::EndOfStream;
     }
 
@@ -157,13 +152,9 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 
     if (m_CurrentStepMetadata == nullptr)
     {
-        if (m_Verbosity >= 5)
-        {
-            std::cout << "DataManReader::BeginStep() Rank " << m_MpiRank
-                      << " returned EndOfStream due "
-                         "to timeout"
-                      << std::endl;
-        }
+        helper::Log("Engine", "DataManReader", "BeginStep",
+                    "EndOfStream due to timeout", 0, m_Comm.Rank(), 5,
+                    m_Verbosity, helper::LogMode::OUTPUT);
         return StepStatus::EndOfStream;
     }
 
@@ -177,7 +168,9 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         {
             if (i.type == DataType::None)
             {
-                throw("unknown data type");
+                helper::Log("Engine", "DataManReader", "BeginStep",
+                            "invalid data type", 0, m_Comm.Rank(), 0,
+                            m_Verbosity, helper::LogMode::EXCEPTION);
             }
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetDataType<T>())                               \
@@ -186,14 +179,13 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-            else { throw("unknown data type"); }
+            else
+            {
+                helper::Log("Engine", "DataManReader", "BeginStep",
+                            "invalid data type", 0, m_Comm.Rank(), 0,
+                            m_Verbosity, helper::LogMode::EXCEPTION);
+            }
         }
-    }
-
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "DataManReader::BeginStep() end, Rank " << m_MpiRank
-                  << ", Step " << m_CurrentStep << std::endl;
     }
 
     if (m_MonitorActive)
@@ -327,10 +319,15 @@ void DataManReader::SubscribeThread()
 #define declare_type(T)                                                        \
     void DataManReader::DoGetSync(Variable<T> &variable, T *data)              \
     {                                                                          \
+        helper::Log("Engine", "DataManReader", "GetSync", variable.m_Name, 0,  \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::OUTPUT);   \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void DataManReader::DoGetDeferred(Variable<T> &variable, T *data)          \
     {                                                                          \
+        helper::Log("Engine", "DataManReader", "GetDeferred", variable.m_Name, \
+                    0, m_Comm.Rank(), 5, m_Verbosity,                          \
+                    helper::LogMode::OUTPUT);                                  \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \

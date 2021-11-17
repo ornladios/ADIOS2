@@ -29,7 +29,7 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     helper::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs",
                          m_OpenTimeoutSecs);
 
-    helper::Log("Engine", "SSCWriter", "Open", m_Name, 0, m_Comm.Rank(), 0,
+    helper::Log("Engine", "SSCWriter", "Open", m_Name, 0, m_Comm.Rank(), 5,
                 m_Verbosity, helper::LogMode::OUTPUT);
 
     int providedMpiMode;
