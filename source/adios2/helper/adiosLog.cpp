@@ -10,6 +10,7 @@
 
 #include "adiosLog.h"
 #include <chrono>
+#include <ctime>
 #include <iostream>
 #include <sstream>
 
