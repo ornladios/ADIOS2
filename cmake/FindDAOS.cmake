@@ -37,7 +37,7 @@ if(DAOS_ROOT)
 endif()
 
 
-message(STATUS "DAOS_ROOT is is \"$ENV{DAOS_ROOT}\"")
+message(STATUS "DAOS_ROOT is : ${DAOS_ROOT}")
 find_path(DAOS_INCLUDE_DIR daos_api.h ${DAOS_INCLUDE_OPTS})
 find_library(DAOS_LIBRARY libdaos.so ${DAOS_LIBRARY_OPTS})
 find_library(DFS_LIBRARY libdfs.so ${DAOS_LIBRARY_OPTS})
