@@ -25,17 +25,15 @@
 #                           variable, it will override any setting specified
 #                           as an environment variable.
 
-if(CMAKE_VERSION VERSION_LESS 3.12)
-  if((NOT DAOS_ROOT) AND (NOT (ENV{DAOS_ROOT} STREQUAL "")))
-    set(DAOS_ROOT "$ENV{DAOS_ROOT}")
-  endif()
-  if(DAOS_ROOT)
-    set(DAOS_INCLUDE_OPTS HINTS ${DAOS_ROOT}/include NO_DEFAULT_PATHS)
-    set(DAOS_LIBRARY_OPTS
-      HINTS ${DAOS_ROOT}/lib ${DAOS_ROOT}/lib64
-      NO_DEFAULT_PATHS
+if((NOT DAOS_ROOT) AND (NOT (ENV{DAOS_ROOT} STREQUAL "")))
+  set(DAOS_ROOT "$ENV{DAOS_ROOT}")
+endif()
+if(DAOS_ROOT)
+  set(DAOS_INCLUDE_OPTS HINTS ${DAOS_ROOT}/include NO_DEFAULT_PATHS)
+  set(DAOS_LIBRARY_OPTS
+    HINTS ${DAOS_ROOT}/lib ${DAOS_ROOT}/lib64
+    NO_DEFAULT_PATHS
     )
-  endif()
 endif()
 
 
