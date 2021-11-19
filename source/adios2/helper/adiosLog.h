@@ -29,9 +29,21 @@ enum LogMode : char
  * @param source: class name of component
  * @param activity: function name where this is called
  * @param message: text message
+ * @param mode: INFO, WARNING, ERROR, or EXCEPTION
+ */
+void Log(const std::string &component, const std::string &source,
+         const std::string &activity, const std::string &message,
+         const LogMode mode);
+
+/**
+ * Print outputs, warnings, errors, and exceptions
+ * @param component: Engine, Transport, Operator, etc.
+ * @param source: class name of component
+ * @param activity: function name where this is called
+ * @param message: text message
  * @param priority: only print if(priority<=verbosity)
  * @param verbosity: engine parameter for engine wide verbosity level
- * @param mode: OUTPUT, WARNING, ERROR, or EXCEPTION
+ * @param mode: INFO, WARNING, ERROR, or EXCEPTION
  */
 void Log(const std::string &component, const std::string &source,
          const std::string &activity, const std::string &message,
@@ -47,7 +59,7 @@ void Log(const std::string &component, const std::string &source,
  * @param commRank: current MPI rank
  * @param priority: only print if(priority<=verbosity)
  * @param verbosity: engine parameter for engine wide verbosity level
- * @param mode: OUTPUT, WARNING, ERROR, or EXCEPTION
+ * @param mode: INFO, WARNING, ERROR, or EXCEPTION
  */
 void Log(const std::string &component, const std::string &source,
          const std::string &activity, const std::string &message,
