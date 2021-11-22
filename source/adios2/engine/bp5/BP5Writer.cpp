@@ -993,6 +993,13 @@ void BP5Writer::ExitComputationBlock() noexcept
             {
                 m_ComputationBlockTimes.emplace_back(m_ComputationBlockID, t);
                 m_ComputationBlocksLength += t;
+                if (!m_RankMPI)
+                {
+                    std::cout
+                        << "ADIOS BP5 Rank" << m_Comm.Rank()
+                        << " Computation block id = " << m_ComputationBlockID
+                        << " length = " << t << std::endl;
+                }
             }
             m_InComputationBlock = false;
             ++m_ComputationBlockID;

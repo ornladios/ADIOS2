@@ -127,6 +127,7 @@ void BP5Writer::WriteOwnDataGuided(AsyncWriteInfo *info,
 
     /* local variables to track variables modified by main thread */
     size_t compBlockIdx = 0; /* position in vector to get length */
+    size_t prevCompBlockIdx = (size_t)-1;
 
     /* In a loop, write the data in smaller blocks */
     size_t nBlocks = DataVec.size();
@@ -188,6 +189,17 @@ void BP5Writer::WriteOwnDataGuided(AsyncWriteInfo *info,
                 break;
             default:
                 // cases 2, 3, 4
+                if (compBlockIdx != prevCompBlockIdx && !info->rank_global)
+                {
+                    std::cout
+                        << "ADIOS Async IO: In computation block "
+                        << compBlockIdx << " length "
+                        << info->expectedComputationBlocks[compBlockIdx].length
+                        << " rank " << info->rank_global << " chain rank "
+                        << info->rank_chain << " chain size "
+                        << info->nproc_chain << std::endl;
+                }
+                prevCompBlockIdx = compBlockIdx;
                 break;
             }
         }
