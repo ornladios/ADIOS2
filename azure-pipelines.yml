@@ -51,10 +51,10 @@ jobs:
   timeoutInMinutes: 120
   strategy:
     matrix:
-      macos1014_xcode103_ninja:
-        hostImage: 'macOS-10.14'
-      macos1015_xcode111_make:
+      macos1015_xcode1211_make:
         hostImage: 'macOS-10.15'
+      macos11_xcode131_ninja:
+        hostImage: 'macOS-11'
 
   pool:
     vmImage: $[ variables['hostImage'] ]
