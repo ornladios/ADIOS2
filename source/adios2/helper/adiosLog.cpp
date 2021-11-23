@@ -28,6 +28,13 @@ std::string defaultColor = "\033[0m";
 
 void Log(const std::string &component, const std::string &source,
          const std::string &activity, const std::string &message,
+         const LogMode mode)
+{
+    Log(component, source, activity, message, -1, -1, 0, 0, mode);
+}
+
+void Log(const std::string &component, const std::string &source,
+         const std::string &activity, const std::string &message,
          const int priority, const int verbosity, const LogMode mode)
 {
     Log(component, source, activity, message, -1, -1, priority, verbosity,
@@ -57,11 +64,13 @@ void Log(const std::string &component, const std::string &source,
     auto timeNow =
         std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::string timeStr(std::ctime(&timeNow));
+
     if (timeStr[timeStr.size() - 1] == '\n')
     {
-        timeStr[timeStr.size() - 1] = '\0';
+        timeStr.resize(timeStr.size() - 1);
     }
-    m << timeColor << " [" << timeStr << "]" << defaultColor;
+
+    m << timeColor << "[" << timeStr << "]";
 
     if (mode == INFO)
     {
@@ -86,7 +95,7 @@ void Log(const std::string &component, const std::string &source,
     }
 
     m << " <" << component << "> <" << source << "> <" << activity
-      << "> : " << message << std::endl;
+      << "> : " << message << defaultColor << std::endl;
 
     if (mode == INFO || mode == WARNING)
     {
