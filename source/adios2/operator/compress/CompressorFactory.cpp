@@ -10,6 +10,8 @@
 
 #include "CompressorFactory.h"
 #include "adios2/core/Operator.h"
+#include "adios2/helper/adiosType.h"
+#include <numeric>
 
 namespace adios2
 {
@@ -17,6 +19,56 @@ namespace core
 {
 namespace compress
 {
+
+bool IsCompressionAvailable(const std::string &method, DataType type,
+                            const Dims &count)
+{
+    if (method == "zfp")
+    {
+        if (type == helper::GetDataType<int32_t>() ||
+            type == helper::GetDataType<int64_t>() ||
+            type == helper::GetDataType<float>() ||
+            type == helper::GetDataType<double>())
+        {
+            if (count.size() <= 3)
+            {
+                return true;
+            }
+        }
+    }
+    else if (method == "sz")
+    {
+        if (type == helper::GetDataType<float>() ||
+            type == helper::GetDataType<double>())
+        {
+            if (count.size() <= 5)
+            {
+                size_t elements = std::accumulate(count.begin(), count.end(), 1,
+                                                  std::multiplies<size_t>());
+                if (elements >= 10)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    else if (method == "bzip2")
+    {
+        if (type == helper::GetDataType<int32_t>() ||
+            type == helper::GetDataType<int64_t>() ||
+            type == helper::GetDataType<float>() ||
+            type == helper::GetDataType<double>())
+        {
+            return true;
+        }
+    }
+    else if (method == "mgard")
+    {
+        return true;
+    }
+    return false;
+}
+
 size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
                                    const Dims &blockCount,
                                    const DataType dataType, char *bufferOut,

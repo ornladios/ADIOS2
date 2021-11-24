@@ -46,6 +46,18 @@ public:
         size_t *DataLocation; // Per-block Offsets [BlockCount]
     } MetaArrayRec;
 
+    typedef struct _MetaArrayRecOperator
+    {
+        size_t Dims;          // How many dimensions does this array have
+        size_t BlockCount;    // How many blocks are written
+        size_t DBCount;       // Dimens * BlockCount
+        size_t *Shape;        // Global dimensionality  [Dims]	NULL for local
+        size_t *Count;        // Per-block Counts	  [DBCount]
+        size_t *Offsets;      // Per-block Offsets	  [DBCount]	NULL for local
+        size_t *DataLocation; // Per-block Offsets [BlockCount]
+        size_t *DataLengths;  // Per-block Lengths [BlockCount]
+    } MetaArrayRecOperator;
+
     struct BP5MetadataInfoStruct
     {
         size_t BitFieldCount;
