@@ -43,8 +43,9 @@ bool IsCompressionAvailable(const std::string &method, DataType type,
         {
             if (count.size() <= 5)
             {
-                size_t elements = std::accumulate(count.begin(), count.end(), 1,
-                                                  std::multiplies<size_t>());
+                size_t elements =
+                    std::accumulate(count.begin(), count.end(), 1ull,
+                                    std::multiplies<size_t>());
                 if (elements >= 10)
                 {
                     return true;
