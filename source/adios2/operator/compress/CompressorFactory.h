@@ -49,6 +49,9 @@ namespace core
 namespace compress
 {
 
+bool IsCompressionAvailable(const std::string &method, DataType type,
+                            const Dims &count);
+
 class CompressorFactory
 {
 public:
