@@ -158,9 +158,6 @@ private:
     template <class T>
     void PutAttribute(const core::Attribute<T> &attribute);
 
-    bool IsCompressionAvailable(const std::string &method, DataType type,
-                                const Dims &count);
-
     void JsonToVarMap(nlohmann::json &metaJ, VecPtr pack);
 
     VecPtr SerializeJson(const nlohmann::json &message);

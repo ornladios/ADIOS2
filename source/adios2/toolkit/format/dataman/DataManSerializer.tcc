@@ -157,8 +157,8 @@ void DataManSerializer::PutData(
                                                  varCount.end(), sizeof(T),
                                                  std::multiplies<size_t>()));
 
-        if (IsCompressionAvailable(compressionMethod, helper::GetDataType<T>(),
-                                   varCount))
+        if (core::compress::IsCompressionAvailable(
+                compressionMethod, helper::GetDataType<T>(), varCount))
         {
             try
             {
