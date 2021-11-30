@@ -27,7 +27,7 @@ int CompressSirius::m_Tiers = 0;
 bool CompressSirius::m_CurrentReadFinished = false;
 
 CompressSirius::CompressSirius(const Params &parameters)
-: Operator("sirius", parameters)
+: Operator("sirius", COMPRESS_SIRIUS, parameters)
 {
     helper::GetParameter(parameters, "Tiers", m_Tiers);
     m_TierBuffersMap.resize(m_Tiers);

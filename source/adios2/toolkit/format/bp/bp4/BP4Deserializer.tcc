@@ -526,8 +526,8 @@ void BP4Deserializer::PostDataRead(
         char *preOpData = m_ThreadBuffers[threadID][0].data();
         const char *postOpData = m_ThreadBuffers[threadID][1].data();
 
-        core::compress::CompressorFactory of;
-        of.Decompress(postOpData, blockOperationInfo.PayloadSize, preOpData);
+        core::compress::Decompress(postOpData, blockOperationInfo.PayloadSize,
+                                   preOpData);
 
         // clip block to match selection
         helper::ClipVector(m_ThreadBuffers[threadID][0],
@@ -1211,7 +1211,7 @@ bool BP4Deserializer::IdentityOperation(
     bool identity = false;
     for (const typename core::Variable<T>::Operation &op : operations)
     {
-        if (op.Op->m_Type == "identity")
+        if (op.Op->m_TypeString == "identity")
         {
             identity = true;
         }

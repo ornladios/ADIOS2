@@ -23,7 +23,8 @@ namespace callback
                                  const size_t, const Dims &, const Dims &,     \
                                  const Dims &)> &function,                     \
         const Params &parameters)                                              \
-    : Operator("Signature1", parameters), m_Function##L(function)              \
+    : Operator("Signature1", Operator::CALLBACK_SIGNATURE1, parameters),       \
+      m_Function##L(function)                                                  \
     {                                                                          \
     }
 ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)
@@ -48,6 +49,19 @@ ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)
     }
 ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)
 #undef declare_type
+
+size_t Signature1::Operate(const char *dataIn, const Dims &blockStart,
+                           const Dims &blockCount, const DataType type,
+                           char *bufferOut, const Params &parameters)
+{
+    return 0;
+}
+
+size_t Signature1::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                  char *dataOut)
+{
+    return 0;
+}
 
 bool Signature1::IsDataTypeValid(const DataType type) const { return true; }
 

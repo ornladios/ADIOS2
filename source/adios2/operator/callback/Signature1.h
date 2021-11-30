@@ -43,6 +43,29 @@ public:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    /**
+     * @param dataIn
+     * @param blockStart
+     * @param blockCount
+     * @param type
+     * @param bufferOut format will be: 'DataHeader ; (BloscCompressedChunk |
+     * UncompressedData), [ BloscCompressedChunk, ...]'
+     * @param parameters
+     * @return size of compressed buffer in bytes
+     */
+    size_t Operate(const char *dataIn, const Dims &blockStart,
+                   const Dims &blockCount, const DataType type, char *bufferOut,
+                   const Params &parameters) final;
+
+    /**
+     * @param bufferIn
+     * @param sizeIn
+     * @param dataOut
+     * @return size of decompressed buffer
+     */
+    size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
+                          char *dataOut) final;
+
     bool IsDataTypeValid(const DataType type) const final;
 
 private:
