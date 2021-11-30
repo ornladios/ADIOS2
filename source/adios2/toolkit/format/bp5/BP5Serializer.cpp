@@ -440,7 +440,8 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         char *OperatorType = NULL;
         if (VB->m_Operations.size())
         {
-            OperatorType = strdup((VB->m_Operations[0]).Op->m_Type.data());
+            OperatorType =
+                strdup((VB->m_Operations[0]).Op->m_TypeString.data());
         }
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec

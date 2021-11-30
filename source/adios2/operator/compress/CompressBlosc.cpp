@@ -38,7 +38,7 @@ const std::set<std::string> CompressBlosc::m_Compressors = {
     "blosclz", "lz4", "lz4hc", "snappy", "zlib", "zstd"};
 
 CompressBlosc::CompressBlosc(const Params &parameters)
-: Operator("blosc", parameters)
+: Operator("blosc", COMPRESS_BLOSC, parameters)
 {
 }
 

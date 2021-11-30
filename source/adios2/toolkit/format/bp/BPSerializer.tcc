@@ -368,7 +368,7 @@ void BPSerializer::PutCharacteristicOperation(
 {
     auto &operation = blockInfo.Operations[0];
 
-    const std::string type = operation.Op->m_Type;
+    const std::string type = operation.Op->m_TypeString;
     const uint8_t typeLength = static_cast<uint8_t>(type.size());
     helper::InsertToBuffer(buffer, &typeLength);
     helper::InsertToBuffer(buffer, type.c_str(), type.size());

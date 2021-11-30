@@ -24,7 +24,7 @@ adios2_error adios2_operator_type(char *type, size_t *size,
         const adios2::core::Operator *opCpp =
             reinterpret_cast<const adios2::core::Operator *>(op);
 
-        return String2CAPI(opCpp->m_Type, type, size);
+        return String2CAPI(opCpp->m_TypeString, type, size);
     }
     catch (...)
     {

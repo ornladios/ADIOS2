@@ -250,7 +250,7 @@ size_t VariableBase::AddOperation(Operator &op,
     }
     else
     {
-        std::cerr << "ADIOS2 ERROR: Operator " << op.m_Type
+        std::cerr << "ADIOS2 ERROR: Operator " << op.m_TypeString
                   << " does not support data type " << m_Type
                   << ", operator not added" << std::endl;
     }

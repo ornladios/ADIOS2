@@ -25,16 +25,26 @@ namespace core
 
 class Operator
 {
-
 public:
-    /** From derived class */
-    const std::string m_Type;
+    enum OperatorType : char
+    {
+        COMPRESS_BLOSC = 0,
+        COMPRESS_BZIP2 = 1,
+        COMPRESS_LIBPRESSIO = 2,
+        COMPRESS_MGARD = 3,
+        COMPRESS_PNG = 4,
+        COMPRESS_SIRIUS = 5,
+        COMPRESS_SZ = 6,
+        COMPRESS_ZFP = 7,
+        CALLBACK_SIGNATURE1 = 51,
+        CALLBACK_SIGNATURE2 = 52,
+    };
 
-    /**
-     * Base class constructor
-     * @param type from derived class object: e.g. bzip2, zfp, callback
-     */
-    Operator(const std::string type, const Params &parameters);
+    const std::string m_TypeString;
+    const OperatorType m_TypeEnum;
+
+    Operator(const std::string typeString, const OperatorType typeEnum,
+             const Params &parameters);
 
     virtual ~Operator() = default;
 
@@ -65,7 +75,7 @@ public:
      */
     virtual size_t Operate(const char *dataIn, const Dims &blockStart,
                            const Dims &blockCount, const DataType type,
-                           char *bufferOut, const Params &parameters);
+                           char *bufferOut, const Params &parameters) = 0;
 
     /**
      * @param bufferIn
@@ -74,21 +84,9 @@ public:
      * @return size of decompressed buffer
      */
     virtual size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                  char *dataOut);
+                                  char *dataOut) = 0;
 
     virtual bool IsDataTypeValid(const DataType type) const = 0;
-
-    enum OperatorType : char
-    {
-        COMPRESS_BLOSC = 0,
-        COMPRESS_BZIP2 = 1,
-        COMPRESS_LIBPRESSIO = 2,
-        COMPRESS_MGARD = 3,
-        COMPRESS_PNG = 4,
-        COMPRESS_SIRIUS = 5,
-        COMPRESS_SZ = 6,
-        COMPRESS_ZFP = 7
-    };
 
 protected:
     /** Parameters associated with a particular Operator */

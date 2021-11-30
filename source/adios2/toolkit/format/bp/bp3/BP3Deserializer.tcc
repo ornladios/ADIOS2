@@ -1125,7 +1125,7 @@ bool BP3Deserializer::IdentityOperation(
     bool identity = false;
     for (const typename core::Variable<T>::Operation &op : operations)
     {
-        if (op.Op->m_Type == "identity")
+        if (op.Op->m_TypeString == "identity")
         {
             identity = true;
         }

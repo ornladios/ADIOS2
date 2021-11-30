@@ -31,7 +31,7 @@ std::string Operator::Type() const noexcept
         return "";
     }
 
-    return m_Operator->m_Type;
+    return m_Operator->m_TypeString;
 }
 
 void Operator::SetParameter(const std::string key, const std::string value)

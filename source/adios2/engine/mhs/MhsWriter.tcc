@@ -47,7 +47,7 @@ void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     auto itVar = m_TransportMap.find(variable.m_Name);
     if (itVar != m_TransportMap.end())
     {
-        if (itVar->second->m_Type == "sirius")
+        if (itVar->second->m_TypeString == "sirius")
         {
             putToAll = true;
         }

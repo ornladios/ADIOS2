@@ -43,7 +43,8 @@ const std::map<std::string, std::set<uint32_t>> CompressPNG::m_BitDepths = {
     {"PNG_COLOR_TYPE_GA", {8, 16}}};
 
 // PUBLIC
-CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
+CompressPNG::CompressPNG(const Params &parameters)
+: Operator("png", COMPRESS_PNG, parameters)
 {
 }
 

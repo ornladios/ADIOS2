@@ -149,7 +149,7 @@ void DataManSerializer::PutData(
     bool compressed = false;
     if (not ops.empty())
     {
-        compressionMethod = ops[0].Op->m_Type;
+        compressionMethod = ops[0].Op->m_TypeString;
         std::transform(compressionMethod.begin(), compressionMethod.end(),
                        compressionMethod.begin(), ::tolower);
 
