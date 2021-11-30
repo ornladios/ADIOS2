@@ -70,11 +70,10 @@ bool IsCompressionAvailable(const std::string &method, DataType type,
     return false;
 }
 
-size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
-                                   const Dims &blockCount,
-                                   const DataType dataType, char *bufferOut,
-                                   const Params &parameters,
-                                   const std::string &compressorType)
+size_t Compress(const char *dataIn, const Dims &blockStart,
+                const Dims &blockCount, const DataType dataType,
+                char *bufferOut, const Params &parameters,
+                const std::string &compressorType)
 {
 
     if (compressorType == "blosc")
@@ -168,8 +167,7 @@ size_t CompressorFactory::Compress(const char *dataIn, const Dims &blockStart,
     return 0;
 }
 
-size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
-                                     char *dataOut)
+size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     Operator::OperatorType compressorType;
     std::memcpy(&compressorType, bufferIn, 1);

@@ -1095,8 +1095,7 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                                     ->Count[dim * writer_meta_base->Dims];
                         }
                         decompressBuffer.reserve(DestSize);
-                        core::compress::CompressorFactory decompressor;
-                        decompressor.Decompress(
+                        core::compress::Decompress(
                             IncomingData,
                             ((MetaArrayRecOperator *)writer_meta_base)
                                 ->DataLengths[i],

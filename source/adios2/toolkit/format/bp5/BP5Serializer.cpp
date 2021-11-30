@@ -639,13 +639,12 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             {
                 try
                 {
-                    core::compress::CompressorFactory c;
                     BufferV::BufferPos pos =
                         CurDataBuffer->Allocate(ElemCount * ElemSize, ElemSize);
                     char *CompressedData =
                         (char *)GetPtr(pos.bufferIdx, pos.posInBuffer);
                     DataOffset = m_PriorDataBufferSizeTotal + pos.globalPos;
-                    CompressedSize = c.Compress(
+                    CompressedSize = core::compress::Compress(
                         (const char *)Data, tmpOffsets, tmpCount,
                         (DataType)Rec->Type, CompressedData,
                         VB->m_Operations[0].Parameters, compressionMethod);

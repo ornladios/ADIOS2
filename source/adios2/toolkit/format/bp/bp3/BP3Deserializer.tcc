@@ -522,8 +522,8 @@ void BP3Deserializer::PostDataRead(
         char *preOpData = m_ThreadBuffers[threadID][0].data();
         const char *postOpData = m_ThreadBuffers[threadID][1].data();
 
-        core::compress::CompressorFactory of;
-        of.Decompress(postOpData, blockOperationInfo.PayloadSize, preOpData);
+        core::compress::Decompress(postOpData, blockOperationInfo.PayloadSize,
+                                   preOpData);
 
         // clip block to match selection
         helper::ClipVector(m_ThreadBuffers[threadID][0],

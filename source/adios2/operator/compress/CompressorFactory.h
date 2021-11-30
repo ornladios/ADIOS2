@@ -52,16 +52,11 @@ namespace compress
 bool IsCompressionAvailable(const std::string &method, DataType type,
                             const Dims &count);
 
-class CompressorFactory
-{
-public:
-    size_t Compress(const char *dataIn, const Dims &blockStart,
-                    const Dims &blockCount, const DataType type,
-                    char *bufferOut, const Params &parameters,
-                    const std::string &compressorType);
+size_t Compress(const char *dataIn, const Dims &blockStart,
+                const Dims &blockCount, const DataType type, char *bufferOut,
+                const Params &parameters, const std::string &compressorType);
 
-    size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut);
-};
+size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut);
 
 } // end namespace compress
 } // end namespace core

@@ -162,8 +162,7 @@ void DataManSerializer::PutData(
         {
             try
             {
-                core::compress::CompressorFactory c;
-                datasize = c.Compress(
+                datasize = core::compress::Compress(
                     reinterpret_cast<const char *>(inputData), varStart,
                     varCount, helper::GetDataType<T>(), m_CompressBuffer.data(),
                     ops[0].Parameters, compressionMethod);
@@ -276,9 +275,8 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 m_OperatorMapMutex.unlock();
                 decompressBuffer.reserve(
                     helper::GetTotalSize(j.count, sizeof(T)));
-                core::compress::CompressorFactory decompressor;
-                decompressor.Decompress(j.buffer->data() + j.position, j.size,
-                                        decompressBuffer.data());
+                core::compress::Decompress(j.buffer->data() + j.position,
+                                           j.size, decompressBuffer.data());
                 decompressed = true;
                 input_data = decompressBuffer.data();
             }
