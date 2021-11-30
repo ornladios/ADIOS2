@@ -174,7 +174,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
     Operator::OperatorType compressorType;
     std::memcpy(&compressorType, bufferIn, 1);
 
-    if (compressorType == Operator::OperatorType::BLOSC)
+    if (compressorType == Operator::OperatorType::COMPRESS_BLOSC)
     {
 #ifdef ADIOS2_HAVE_BLOSC
         compress::CompressBlosc op({});
@@ -184,7 +184,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
                                  "with BLOSC, can't use compressor\n");
 #endif
     }
-    else if (compressorType == Operator::OperatorType::BZIP2)
+    else if (compressorType == Operator::OperatorType::COMPRESS_BZIP2)
     {
 #ifdef ADIOS2_HAVE_BZIP2
         compress::CompressBZIP2 op({});
@@ -194,7 +194,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
                                  "with BZIP2, can't use compressor\n");
 #endif
     }
-    else if (compressorType == Operator::OperatorType::LIBPRESSIO)
+    else if (compressorType == Operator::OperatorType::COMPRESS_LIBPRESSIO)
     {
 #ifdef ADIOS2_HAVE_LIBPRESSIO
         compress::CompressLibPressio op({});
@@ -204,7 +204,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
                                  "with LibPressio, can't use compressor\n");
 #endif
     }
-    else if (compressorType == Operator::OperatorType::MGARD)
+    else if (compressorType == Operator::OperatorType::COMPRESS_MGARD)
     {
 #ifdef ADIOS2_HAVE_MGARD
         compress::CompressMGARD op({});
@@ -214,7 +214,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
                                  "with MGARD, can't use compressor\n");
 #endif
     }
-    else if (compressorType == Operator::OperatorType::PNG)
+    else if (compressorType == Operator::OperatorType::COMPRESS_PNG)
     {
 #ifdef ADIOS2_HAVE_PNG
         compress::CompressPNG op({});
@@ -224,7 +224,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
                                  "with PNG, can't use compressor\n");
 #endif
     }
-    else if (compressorType == Operator::OperatorType::SIRIUS)
+    else if (compressorType == Operator::OperatorType::COMPRESS_SIRIUS)
     {
 #ifdef ADIOS2_HAVE_MHS
         compress::CompressSirius op({});
@@ -234,7 +234,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
                                  "with MHS, can't use Sirius compressor\n");
 #endif
     }
-    else if (compressorType == Operator::OperatorType::Sz)
+    else if (compressorType == Operator::OperatorType::COMPRESS_SZ)
     {
 #ifdef ADIOS2_HAVE_SZ
         compress::CompressSZ op({});
@@ -244,7 +244,7 @@ size_t CompressorFactory::Decompress(const char *bufferIn, const size_t sizeIn,
                                  "with SZ, can't use compressor\n");
 #endif
     }
-    else if (compressorType == Operator::OperatorType::ZFP)
+    else if (compressorType == Operator::OperatorType::COMPRESS_ZFP)
     {
 #ifdef ADIOS2_HAVE_ZFP
         compress::CompressZFP op({});

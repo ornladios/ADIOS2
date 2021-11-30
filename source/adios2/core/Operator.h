@@ -80,14 +80,14 @@ public:
 
     enum OperatorType : char
     {
-        BLOSC = 0,
-        BZIP2 = 1,
-        LIBPRESSIO = 2,
-        MGARD = 3,
-        PNG = 4,
-        SIRIUS = 5,
-        Sz = 6,
-        ZFP = 7
+        COMPRESS_BLOSC = 0,
+        COMPRESS_BZIP2 = 1,
+        COMPRESS_LIBPRESSIO = 2,
+        COMPRESS_MGARD = 3,
+        COMPRESS_PNG = 4,
+        COMPRESS_SIRIUS = 5,
+        COMPRESS_SZ = 6,
+        COMPRESS_ZFP = 7
     };
 
 protected:

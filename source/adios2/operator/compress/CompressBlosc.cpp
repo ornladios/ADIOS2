@@ -50,7 +50,7 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
     const uint8_t bufferVersion = 1;
 
     // Universal operator metadata
-    PutParameter(bufferOut, bufferOutOffset, OperatorType::BLOSC);
+    PutParameter(bufferOut, bufferOutOffset, OperatorType::COMPRESS_BLOSC);
     PutParameter(bufferOut, bufferOutOffset, bufferVersion);
     PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
     // Universal operator metadata end
