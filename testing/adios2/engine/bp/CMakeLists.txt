@@ -37,6 +37,9 @@ endmacro()
 
 add_subdirectory(operations)
 
+# These tests should be *very* fast
+set(CTEST_TEST_TIMEOUT 10)
+
 bp_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadADIOS2fstream MPI_ALLOW)
 bp3_bp4_gtest_add_tests_helper(WriteReadADIOS2stdio MPI_ALLOW)
