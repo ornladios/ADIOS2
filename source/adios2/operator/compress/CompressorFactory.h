@@ -17,9 +17,6 @@ namespace core
 namespace compress
 {
 
-bool IsCompressionAvailable(const std::string &method, DataType type,
-                            const Dims &count);
-
 size_t Compress(const char *dataIn, const Dims &blockStart,
                 const Dims &blockCount, const DataType type, char *bufferOut,
                 const Params &parameters, const std::string &compressorType);

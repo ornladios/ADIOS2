@@ -36,7 +36,6 @@ public:
                           char *dataOut) final;
 
     bool IsDataTypeValid(const DataType type) const final;
-
 };
 
 } // end namespace compress

@@ -24,13 +24,14 @@ CompressNull::CompressNull(const Params &parameters)
 }
 
 size_t CompressNull::Operate(const char *dataIn, const Dims &blockStart,
-                               const Dims &blockCount, const DataType varType,
-                               char *bufferOut, const Params &params)
+                             const Dims &blockCount, const DataType varType,
+                             char *bufferOut, const Params &params)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
     MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
-    size_t totalInputBytes = helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType));
+    size_t totalInputBytes =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType));
     PutParameter(bufferOut, bufferOutOffset, totalInputBytes);
     std::memcpy(bufferOut + bufferOutOffset, dataIn, totalInputBytes);
     bufferOutOffset += totalInputBytes;
@@ -38,22 +39,19 @@ size_t CompressNull::Operate(const char *dataIn, const Dims &blockStart,
 }
 
 size_t CompressNull::InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                      char *dataOut)
+                                    char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion = GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    const uint8_t bufferVersion =
+        GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
 
     const size_t totalBytes = GetParameter<size_t>(bufferIn, bufferInOffset);
-    std::memcpy(dataOut, bufferIn+bufferInOffset, totalBytes);
+    std::memcpy(dataOut, bufferIn + bufferInOffset, totalBytes);
     return totalBytes;
 }
 
-bool CompressNull::IsDataTypeValid(const DataType type) const
-{
-    return true;
-}
-
+bool CompressNull::IsDataTypeValid(const DataType type) const { return true; }
 
 } // end namespace compress
 } // end namespace core

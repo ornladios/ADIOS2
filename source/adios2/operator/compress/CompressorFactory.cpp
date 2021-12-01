@@ -11,8 +11,8 @@
 #include "CompressorFactory.h"
 #include "adios2/core/Operator.h"
 #include "adios2/helper/adiosFunctions.h"
-#include <numeric>
 #include "adios2/operator/compress/CompressNull.h"
+#include <numeric>
 
 #ifdef ADIOS2_HAVE_BLOSC
 #include "adios2/operator/compress/CompressBlosc.h"
@@ -53,66 +53,14 @@ namespace core
 namespace compress
 {
 
-bool IsCompressionAvailable(const std::string &method, DataType type,
-                            const Dims &count)
-{
-    if (method == "zfp")
-    {
-        if (type == helper::GetDataType<int32_t>() ||
-            type == helper::GetDataType<int64_t>() ||
-            type == helper::GetDataType<float>() ||
-            type == helper::GetDataType<double>())
-        {
-            if (count.size() <= 3)
-            {
-                return true;
-            }
-        }
-    }
-    else if (method == "sz")
-    {
-        if (type == helper::GetDataType<float>() ||
-            type == helper::GetDataType<double>())
-        {
-            if (count.size() <= 5)
-            {
-                size_t elements =
-                    std::accumulate(count.begin(), count.end(), 1ull,
-                                    std::multiplies<size_t>());
-                if (elements >= 10)
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    else if (method == "bzip2")
-    {
-        if (type == helper::GetDataType<int32_t>() ||
-            type == helper::GetDataType<int64_t>() ||
-            type == helper::GetDataType<float>() ||
-            type == helper::GetDataType<double>())
-        {
-            return true;
-        }
-    }
-    else if (method == "mgard")
-    {
-        return true;
-    }
-    return false;
-}
-
 size_t Compress(const char *dataIn, const Dims &blockStart,
                 const Dims &blockCount, const DataType dataType,
                 char *bufferOut, const Params &parameters,
                 const std::string &compressorType)
 {
-
     size_t ret;
     try
     {
-
         if (compressorType == "blosc")
         {
 #ifdef ADIOS2_HAVE_BLOSC
@@ -215,24 +163,29 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
         }
         if (ret == 0)
         {
-            helper::Log("Operator", "CompressorFactory", "Compress",
-                        "compressor " + compressorType +
-                            " failed with returned buffer size 0",
-                        helper::EXCEPTION);
+            helper::Log(
+                "Operator", "CompressorFactory", "Compress",
+                "compressor " + compressorType +
+                    " failed with returned buffer size 0, compression disabled",
+                helper::EXCEPTION);
         }
         else if (ret > helper::GetTotalSize(blockCount,
                                             helper::GetDataTypeSize(dataType)))
         {
             helper::Log("Operator", "CompressorFactory", "Compress",
                         "compressor " + compressorType +
-                            " produced buffer larger than uncompressed data",
+                            " produced buffer larger than uncompressed data, "
+                            "compression disabled",
                         helper::EXCEPTION);
         }
     }
-    catch (...)
+    catch (std::exception &e)
     {
+        helper::Log("Operator", "CompressorFactory", "Compress", e.what(),
+                    helper::WARNING);
         CompressNull c({});
-        ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut, parameters);
+        ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                        parameters);
     }
     return ret;
 }
