@@ -28,6 +28,7 @@ class Operator
 public:
     enum OperatorType : char
     {
+        COMPRESS_NULL = -128,
         COMPRESS_BLOSC = 0,
         COMPRESS_BZIP2 = 1,
         COMPRESS_LIBPRESSIO = 2,
