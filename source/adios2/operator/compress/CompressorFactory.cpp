@@ -58,7 +58,7 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
                 char *bufferOut, const Params &parameters,
                 const std::string &compressorType)
 {
-    size_t ret;
+    size_t ret = 0;
     try
     {
         if (compressorType == "blosc")
