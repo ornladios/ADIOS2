@@ -13,6 +13,7 @@
 #include <ctime>
 #include <iostream>
 #include <sstream>
+#include <unordered_set>
 
 namespace adios2
 {
@@ -25,6 +26,8 @@ std::string warningColor = "\033[1;33m";
 std::string errorColor = "\033[1;31m";
 std::string exceptionColor = "\033[1;34m";
 std::string defaultColor = "\033[0m";
+
+std::unordered_set<std::string> messages;
 
 void Log(const std::string &component, const std::string &source,
          const std::string &activity, const std::string &message,
@@ -47,17 +50,24 @@ void Log(const std::string &component, const std::string &source,
          const int verbosity, const LogMode mode)
 {
 
-    if (mode != LogMode::EXCEPTION)
+    // don't print if
+    // 1. logRank does not meet commRank, or
+    // 2. priority does not meet verbosity, or
+    // 3. the same messaage has been already printed
+    if ((logRank >= 0 && commRank >= 0 && logRank != commRank) ||
+        priority > verbosity || messages.find(message) != messages.end())
     {
-        if (logRank >= 0 && commRank >= 0 && logRank != commRank)
+        if (mode == LogMode::EXCEPTION)
         {
-            return;
+            throw(message);
         }
-        if (priority > verbosity)
+        else
         {
             return;
         }
     }
+
+    messages.insert(message);
 
     std::stringstream m;
 
