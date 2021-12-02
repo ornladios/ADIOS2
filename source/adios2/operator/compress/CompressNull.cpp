@@ -41,10 +41,7 @@ size_t CompressNull::Operate(const char *dataIn, const Dims &blockStart,
 size_t CompressNull::InverseOperate(const char *bufferIn, const size_t sizeIn,
                                     char *dataOut)
 {
-    size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
-    bufferInOffset += 2; // skip two reserved bytes
+    size_t bufferInOffset = 4; // skip common header
 
     const size_t totalBytes = GetParameter<size_t>(bufferIn, bufferInOffset);
     std::memcpy(dataOut, bufferIn + bufferInOffset, totalBytes);
