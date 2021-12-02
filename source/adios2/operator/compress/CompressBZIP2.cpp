@@ -40,11 +40,7 @@ size_t CompressBZIP2::Operate(const char *dataIn, const Dims &blockStart,
     const uint8_t bufferVersion = 1;
     unsigned int destOffset = 0;
 
-    // Universal operator metadata
-    PutParameter(bufferOut, destOffset, OperatorType::COMPRESS_BZIP2);
-    PutParameter(bufferOut, destOffset, bufferVersion);
-    PutParameter(bufferOut, destOffset, static_cast<uint16_t>(0));
-    // Universal operator metadata end
+    MakeCommonHeader(bufferOut, destOffset, bufferVersion);
 
     const size_t sizeIn =
         helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));

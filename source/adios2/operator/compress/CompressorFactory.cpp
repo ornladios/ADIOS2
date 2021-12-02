@@ -10,8 +10,41 @@
 
 #include "CompressorFactory.h"
 #include "adios2/core/Operator.h"
-#include "adios2/helper/adiosType.h"
+#include "adios2/helper/adiosFunctions.h"
+#include "adios2/operator/compress/CompressNull.h"
 #include <numeric>
+
+#ifdef ADIOS2_HAVE_BLOSC
+#include "adios2/operator/compress/CompressBlosc.h"
+#endif
+
+#ifdef ADIOS2_HAVE_BZIP2
+#include "adios2/operator/compress/CompressBZIP2.h"
+#endif
+
+#ifdef ADIOS2_HAVE_LIBPRESSIO
+#include "adios2/operator/compress/CompressLibPressio.h"
+#endif
+
+#ifdef ADIOS2_HAVE_MGARD
+#include "adios2/operator/compress/CompressMGARD.h"
+#endif
+
+#ifdef ADIOS2_HAVE_PNG
+#include "adios2/operator/compress/CompressPNG.h"
+#endif
+
+#ifdef ADIOS2_HAVE_MHS
+#include "adios2/operator/compress/CompressSirius.h"
+#endif
+
+#ifdef ADIOS2_HAVE_SZ
+#include "adios2/operator/compress/CompressSZ.h"
+#endif
+
+#ifdef ADIOS2_HAVE_ZFP
+#include "adios2/operator/compress/CompressZFP.h"
+#endif
 
 namespace adios2
 {
@@ -20,151 +53,141 @@ namespace core
 namespace compress
 {
 
-bool IsCompressionAvailable(const std::string &method, DataType type,
-                            const Dims &count)
-{
-    if (method == "zfp")
-    {
-        if (type == helper::GetDataType<int32_t>() ||
-            type == helper::GetDataType<int64_t>() ||
-            type == helper::GetDataType<float>() ||
-            type == helper::GetDataType<double>())
-        {
-            if (count.size() <= 3)
-            {
-                return true;
-            }
-        }
-    }
-    else if (method == "sz")
-    {
-        if (type == helper::GetDataType<float>() ||
-            type == helper::GetDataType<double>())
-        {
-            if (count.size() <= 5)
-            {
-                size_t elements =
-                    std::accumulate(count.begin(), count.end(), 1ull,
-                                    std::multiplies<size_t>());
-                if (elements >= 10)
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    else if (method == "bzip2")
-    {
-        if (type == helper::GetDataType<int32_t>() ||
-            type == helper::GetDataType<int64_t>() ||
-            type == helper::GetDataType<float>() ||
-            type == helper::GetDataType<double>())
-        {
-            return true;
-        }
-    }
-    else if (method == "mgard")
-    {
-        return true;
-    }
-    return false;
-}
-
 size_t Compress(const char *dataIn, const Dims &blockStart,
                 const Dims &blockCount, const DataType dataType,
                 char *bufferOut, const Params &parameters,
                 const std::string &compressorType)
 {
-
-    if (compressorType == "blosc")
+    size_t ret = 0;
+    try
     {
+        if (compressorType == "blosc")
+        {
 #ifdef ADIOS2_HAVE_BLOSC
-        CompressBlosc c({});
-        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
-                         parameters);
+            CompressBlosc c({});
+            ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                            parameters);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with BLOSC, can't use compressor\n");
+            helper::Log(
+                "Operator", "CompressorFactory", "Compress",
+                "ADIOS2 didn't compile with BLOSC, compression disabled",
+                helper::EXCEPTION);
 #endif
-    }
-    else if (compressorType == "bzip2")
-    {
+        }
+        else if (compressorType == "bzip2")
+        {
 #ifdef ADIOS2_HAVE_BZIP2
-        CompressBZIP2 c({});
-        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
-                         parameters);
+            CompressBZIP2 c({});
+            ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                            parameters);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with BZIP2, can't use compressor\n");
+            helper::Log(
+                "Operator", "CompressorFactory", "Compress",
+                "ADIOS2 didn't compile with BZIP2, compression disabled",
+                helper::EXCEPTION);
 #endif
-    }
-    else if (compressorType == "libpressio")
-    {
+        }
+        else if (compressorType == "libpressio")
+        {
 #ifdef ADIOS2_HAVE_LIBPRESSIO
-        CompressLibPressio c({});
-        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
-                         parameters);
+            CompressLibPressio c({});
+            ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                            parameters);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with LibPressio, can't use compressor\n");
+            helper::Log(
+                "Operator", "CompressorFactory", "Compress",
+                "ADIOS2 didn't compile with LibPressio, compression disabled",
+                helper::EXCEPTION);
 #endif
-    }
-    else if (compressorType == "mgard")
-    {
+        }
+        else if (compressorType == "mgard")
+        {
 #ifdef ADIOS2_HAVE_MGARD
-        CompressMGARD c({});
-        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
-                         parameters);
+            CompressMGARD c({});
+            ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                            parameters);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with MGARD, can't use compressor\n");
+            helper::Log(
+                "Operator", "CompressorFactory", "Compress",
+                "ADIOS2 didn't compile with MGARD, compression disabled",
+                helper::EXCEPTION);
 #endif
-    }
-    else if (compressorType == "png")
-    {
+        }
+        else if (compressorType == "png")
+        {
 #ifdef ADIOS2_HAVE_PNG
-        CompressPNG c({});
-        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
-                         parameters);
+            CompressPNG c({});
+            ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                            parameters);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with PNG, can't use compressor\n");
+            helper::Log("Operator", "CompressorFactory", "Compress",
+                        "ADIOS2 didn't compile with PNG, compression disabled",
+                        helper::EXCEPTION);
 #endif
-    }
-    else if (compressorType == "sirius")
-    {
+        }
+        else if (compressorType == "sirius")
+        {
 #ifdef ADIOS2_HAVE_MHS
-        CompressSirius c({});
-        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
-                         parameters);
+            CompressSirius c({});
+            ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                            parameters);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with MHS, can't use Sirius compressor\n");
+            helper::Log("Operator", "CompressorFactory", "Compress",
+                        "ADIOS2 didn't enable MHS, compression disabled",
+                        helper::EXCEPTION);
 #endif
-    }
-    else if (compressorType == "sz")
-    {
+        }
+        else if (compressorType == "sz")
+        {
 #ifdef ADIOS2_HAVE_SZ
-        CompressSZ c({});
-        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
-                         parameters);
+            CompressSZ c({});
+            ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                            parameters);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with SZ, can't use compressor\n");
+            helper::Log("Operator", "CompressorFactory", "Compress",
+                        "ADIOS2 didn't compile with SZ, compression disabled",
+                        helper::EXCEPTION);
 #endif
-    }
-    else if (compressorType == "zfp")
-    {
+        }
+        else if (compressorType == "zfp")
+        {
 #ifdef ADIOS2_HAVE_ZFP
-        CompressZFP c({});
-        return c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
-                         parameters);
+            CompressZFP c({});
+            ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                            parameters);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with ZFP, can't use compressor\n");
+            helper::Log("Operator", "CompressorFactory", "Compress",
+                        "ADIOS2 didn't compile with ZFP, compression disabled",
+                        helper::EXCEPTION);
 #endif
+        }
+        if (ret == 0)
+        {
+            helper::Log(
+                "Operator", "CompressorFactory", "Compress",
+                "compressor " + compressorType +
+                    " failed with returned buffer size 0, compression disabled",
+                helper::EXCEPTION);
+        }
+        else if (ret > helper::GetTotalSize(blockCount,
+                                            helper::GetDataTypeSize(dataType)))
+        {
+            helper::Log("Operator", "CompressorFactory", "Compress",
+                        "compressor " + compressorType +
+                            " produced buffer larger than uncompressed data, "
+                            "compression disabled",
+                        helper::EXCEPTION);
+        }
     }
-    return 0;
+    catch (std::exception &e)
+    {
+        helper::Log("Operator", "CompressorFactory", "Compress", e.what(),
+                    helper::WARNING);
+        CompressNull c({});
+        ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
+                        parameters);
+    }
+    return ret;
 }
 
 size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut)
@@ -172,85 +195,90 @@ size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut)
     Operator::OperatorType compressorType;
     std::memcpy(&compressorType, bufferIn, 1);
 
-    if (compressorType == Operator::OperatorType::COMPRESS_BLOSC)
+    if (compressorType == Operator::COMPRESS_BLOSC)
     {
 #ifdef ADIOS2_HAVE_BLOSC
         compress::CompressBlosc op({});
         return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with BLOSC, can't use compressor\n");
+        helper::Log("Operator", "CompressorFactory", "Compress",
+                    "ADIOS2 didn't compile with BLOSC", helper::EXCEPTION);
 #endif
     }
-    else if (compressorType == Operator::OperatorType::COMPRESS_BZIP2)
+    else if (compressorType == Operator::COMPRESS_BZIP2)
     {
 #ifdef ADIOS2_HAVE_BZIP2
         compress::CompressBZIP2 op({});
         return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with BZIP2, can't use compressor\n");
+        helper::Log("Operator", "CompressorFactory", "Compress",
+                    "ADIOS2 didn't compile with BZIP2", helper::EXCEPTION);
 #endif
     }
-    else if (compressorType == Operator::OperatorType::COMPRESS_LIBPRESSIO)
+    else if (compressorType == Operator::COMPRESS_LIBPRESSIO)
     {
 #ifdef ADIOS2_HAVE_LIBPRESSIO
         compress::CompressLibPressio op({});
         return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with LibPressio, can't use compressor\n");
+        helper::Log("Operator", "CompressorFactory", "Compress",
+                    "ADIOS2 didn't compile with LibPressio", helper::EXCEPTION);
 #endif
     }
-    else if (compressorType == Operator::OperatorType::COMPRESS_MGARD)
+    else if (compressorType == Operator::COMPRESS_MGARD)
     {
 #ifdef ADIOS2_HAVE_MGARD
         compress::CompressMGARD op({});
         return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with MGARD, can't use compressor\n");
+        helper::Log("Operator", "CompressorFactory", "Compress",
+                    "ADIOS2 didn't compile with MGARD", helper::EXCEPTION);
 #endif
     }
-    else if (compressorType == Operator::OperatorType::COMPRESS_PNG)
+    else if (compressorType == Operator::COMPRESS_PNG)
     {
 #ifdef ADIOS2_HAVE_PNG
         compress::CompressPNG op({});
         return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with PNG, can't use compressor\n");
+        helper::Log("Operator", "CompressorFactory", "Compress",
+                    "ADIOS2 didn't compile with PNG", helper::EXCEPTION);
 #endif
     }
-    else if (compressorType == Operator::OperatorType::COMPRESS_SIRIUS)
+    else if (compressorType == Operator::COMPRESS_SIRIUS)
     {
 #ifdef ADIOS2_HAVE_MHS
         compress::CompressSirius op({});
         return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with MHS, can't use Sirius compressor\n");
+        helper::Log("Operator", "CompressorFactory", "Compress",
+                    "ADIOS2 didn't enable MHS", helper::EXCEPTION);
 #endif
     }
-    else if (compressorType == Operator::OperatorType::COMPRESS_SZ)
+    else if (compressorType == Operator::COMPRESS_SZ)
     {
 #ifdef ADIOS2_HAVE_SZ
         compress::CompressSZ op({});
         return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with SZ, can't use compressor\n");
+        helper::Log("Operator", "CompressorFactory", "Compress",
+                    "ADIOS2 didn't compile with SZ", helper::EXCEPTION);
 #endif
     }
-    else if (compressorType == Operator::OperatorType::COMPRESS_ZFP)
+    else if (compressorType == Operator::COMPRESS_ZFP)
     {
 #ifdef ADIOS2_HAVE_ZFP
         compress::CompressZFP op({});
         return op.InverseOperate(bufferIn, sizeIn, dataOut);
 #else
-        throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
-                                 "with ZFP, can't use compressor\n");
+        helper::Log("Operator", "CompressorFactory", "Compress",
+                    "ADIOS2 didn't compile with ZFP", helper::EXCEPTION);
 #endif
+    }
+    else if (compressorType == Operator::COMPRESS_NULL)
+    {
+        compress::CompressNull op({});
+        return op.InverseOperate(bufferIn, sizeIn, dataOut);
     }
 
     return 0;

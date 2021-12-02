@@ -55,11 +55,7 @@ size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
     size_t bufferOutOffset = 0;
     const uint8_t bufferVersion = 1;
 
-    // Universal operator metadata
-    PutParameter(bufferOut, bufferOutOffset, OperatorType::COMPRESS_PNG);
-    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
-    PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
-    // Universal operator metadata end
+    MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
 
     size_t paramOffset = bufferOutOffset;
     bufferOutOffset += sizeof(size_t) + 3;

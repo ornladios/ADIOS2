@@ -98,6 +98,7 @@ add_library(adios2_core
   toolkit/burstbuffer/FileDrainerSingleThread.cpp
 
   operator/compress/CompressorFactory.cpp
+  operator/compress/CompressNull.cpp
 )
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)

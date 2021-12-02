@@ -635,28 +635,16 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                 tmpCount.push_back(Count[i]);
                 tmpOffsets.push_back(Offsets[i]);
             }
-            if (core::compress::IsCompressionAvailable(
-                    compressionMethod, (DataType)Rec->Type, tmpCount))
-            {
-                try
-                {
-                    BufferV::BufferPos pos =
-                        CurDataBuffer->Allocate(ElemCount * ElemSize, ElemSize);
-                    char *CompressedData =
-                        (char *)GetPtr(pos.bufferIdx, pos.posInBuffer);
-                    DataOffset = m_PriorDataBufferSizeTotal + pos.globalPos;
-                    CompressedSize = core::compress::Compress(
-                        (const char *)Data, tmpOffsets, tmpCount,
-                        (DataType)Rec->Type, CompressedData,
-                        VB->m_Operations[0].Parameters, compressionMethod);
-                    // use data size to resize allocated buffer
-                }
-                catch (std::exception &e)
-                {
-                    std::cout << e.what() << std::endl;
-                }
-            }
-            // else error?
+            BufferV::BufferPos pos =
+                CurDataBuffer->Allocate(ElemCount * ElemSize, ElemSize);
+            char *CompressedData =
+                (char *)GetPtr(pos.bufferIdx, pos.posInBuffer);
+            DataOffset = m_PriorDataBufferSizeTotal + pos.globalPos;
+            CompressedSize = core::compress::Compress(
+                (const char *)Data, tmpOffsets, tmpCount, (DataType)Rec->Type,
+                CompressedData, VB->m_Operations[0].Parameters,
+                compressionMethod);
+            // use data size to resize allocated buffer
         }
         else if (Span == nullptr)
         {

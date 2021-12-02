@@ -38,6 +38,7 @@ public:
         COMPRESS_ZFP = 7,
         CALLBACK_SIGNATURE1 = 51,
         CALLBACK_SIGNATURE2 = 52,
+        COMPRESS_NULL = 127,
     };
 
     const std::string m_TypeString;
@@ -105,6 +106,15 @@ protected:
                      const size_t targetDims = 0,
                      const bool enforceDims = false,
                      const size_t defaultDimSize = 1) const;
+
+    template <typename T>
+    void MakeCommonHeader(char *bufferOut, T &bufferOutOffset,
+                          const uint8_t bufferVersion)
+    {
+        PutParameter(bufferOut, bufferOutOffset, m_TypeEnum);
+        PutParameter(bufferOut, bufferOutOffset, bufferVersion);
+        PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
+    }
 
     template <typename T, typename U>
     void PutParameter(char *buffer, U &pos, const T &parameter)

@@ -39,16 +39,12 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     const uint8_t bufferVersion = 2;
     size_t bufferOutOffset = 0;
 
-    // Universal operator metadata
-    PutParameter(bufferOut, bufferOutOffset, OperatorType::COMPRESS_SZ);
-    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
-    PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
-    // Universal operator metadata end
+    MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
 
     Dims convertedDims = ConvertDims(blockCount, varType, 5);
     const size_t ndims = convertedDims.size();
 
-    // sz V1 metadata
+    // sz V2 metadata
     PutParameter(bufferOut, bufferOutOffset, ndims);
     for (const auto &d : convertedDims)
     {
@@ -60,7 +56,7 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
         PutParameter(bufferOut, bufferOutOffset,
                      static_cast<uint8_t>(versionNumber[i]));
     }
-    // sz V1 metadata end
+    // sz V2 metadata end
 
     sz_params sz;
     memset(&sz, 0, sizeof(sz_params));

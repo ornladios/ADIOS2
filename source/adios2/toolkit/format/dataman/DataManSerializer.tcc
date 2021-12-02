@@ -157,22 +157,11 @@ void DataManSerializer::PutData(
                                                  varCount.end(), sizeof(T),
                                                  std::multiplies<size_t>()));
 
-        if (core::compress::IsCompressionAvailable(
-                compressionMethod, helper::GetDataType<T>(), varCount))
-        {
-            try
-            {
-                datasize = core::compress::Compress(
-                    reinterpret_cast<const char *>(inputData), varStart,
-                    varCount, helper::GetDataType<T>(), m_CompressBuffer.data(),
-                    ops[0].Parameters, compressionMethod);
-                compressed = true;
-            }
-            catch (std::exception &e)
-            {
-                std::cout << e.what() << std::endl;
-            }
-        }
+        datasize = core::compress::Compress(
+            reinterpret_cast<const char *>(inputData), varStart, varCount,
+            helper::GetDataType<T>(), m_CompressBuffer.data(),
+            ops[0].Parameters, compressionMethod);
+        compressed = true;
     }
 
     if (compressed)
