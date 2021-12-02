@@ -28,7 +28,6 @@ class Operator
 public:
     enum OperatorType : char
     {
-        COMPRESS_NULL = -128,
         COMPRESS_BLOSC = 0,
         COMPRESS_BZIP2 = 1,
         COMPRESS_LIBPRESSIO = 2,
@@ -39,6 +38,7 @@ public:
         COMPRESS_ZFP = 7,
         CALLBACK_SIGNATURE1 = 51,
         CALLBACK_SIGNATURE2 = 52,
+        COMPRESS_NULL = 127,
     };
 
     const std::string m_TypeString;
