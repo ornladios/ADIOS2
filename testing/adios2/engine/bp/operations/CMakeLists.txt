@@ -3,6 +3,9 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+# These tests are longer than others but should still be pretty fast
+set(CTEST_TEST_TIMEOUT 60)
+
 set(BP3_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp3)
 set(BP4_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp4)
 file(MAKE_DIRECTORY ${BP3_DIR})

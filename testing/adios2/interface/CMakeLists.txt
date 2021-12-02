@@ -3,6 +3,9 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+# These tests should be *very* fast
+set(CTEST_TEST_TIMEOUT 10)
+
 gtest_add_tests_helper(Interface MPI_ALLOW ADIOS Interface. "")
 gtest_add_tests_helper(Write MPI_ALLOW ADIOSInterface Interface. "")
 gtest_add_tests_helper(DefineVariable MPI_ALLOW ADIOS Interface. "")
