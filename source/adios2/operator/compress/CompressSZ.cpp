@@ -129,9 +129,10 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: ADIOS2 operator unknown SZ parameter szMode: " +
-                    it->second + "\n");
+                helper::Log("Operator", "CompressSZ", "Operate",
+                            "Parameter szMode must be SZ_BEST_SPEED, "
+                            "SZ_BEST_COMPRESSION or SZ_DEFAULT_COMPRESSION",
+                            helper::EXCEPTION);
             }
             sz.szMode = szMode;
         }
@@ -164,10 +165,10 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
             }
             else
             {
-                throw std::invalid_argument("ERROR: ADIOS2 operator "
-                                            "unknown SZ parameter "
-                                            "errorBoundMode: " +
-                                            it->second + "\n");
+                helper::Log("Operator", "CompressSZ", "Operate",
+                            "Parameter errorBoundMode must be ABS, REL, "
+                            "ABS_AND_REL, ABS_OR_REL or PW_REL",
+                            helper::EXCEPTION);
             }
             sz.errorBoundMode = errorBoundMode;
         }
@@ -190,24 +191,24 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
         else if (it->first == "pwr_type")
         {
             int pwr_type = SZ_PWR_MIN_TYPE;
-            if ((it->first == "MIN") || (it->first == "SZ_PWR_MIN_TYPE"))
+            if ((it->second == "MIN") || (it->second == "SZ_PWR_MIN_TYPE"))
             {
                 pwr_type = SZ_PWR_MIN_TYPE;
             }
-            else if ((it->first == "AVG") || (it->first == "SZ_PWR_AVG_TYPE"))
+            else if ((it->second == "AVG") || (it->second == "SZ_PWR_AVG_TYPE"))
             {
                 pwr_type = SZ_PWR_AVG_TYPE;
             }
-            else if ((it->first == "MAX") || (it->first == "SZ_PWR_MAX_TYPE"))
+            else if ((it->second == "MAX") || (it->second == "SZ_PWR_MAX_TYPE"))
             {
                 pwr_type = SZ_PWR_MAX_TYPE;
             }
             else
             {
-                throw std::invalid_argument("ERROR: ADIOS2 operator "
-                                            "unknown SZ parameter "
-                                            "pwr_type: " +
-                                            it->second + "\n");
+                helper::Log("Operator", "CompressSZ", "Operate",
+                            "Parameter pwr_type must be MIN, SZ_PWR_MIN_TYPE, "
+                            "AVG, SZ_PWR_AVG_TYPE, MAX or SZ_PWR_MAX_TYPE",
+                            helper::EXCEPTION);
             }
             sz.pwr_type = pwr_type;
         }
@@ -265,9 +266,9 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     }
     else
     {
-        throw std::invalid_argument("ERROR: ADIOS2 SZ Compression only support "
-                                    "double or float, type: " +
-                                    ToString(varType) + " is unsupported\n");
+        helper::Log("Operator", "CompressSZ", "Operate",
+                    "SZ compressor only support float or double types",
+                    helper::EXCEPTION);
     }
 
     convertedDims = ConvertDims(blockCount, varType, 5, true, 0);
@@ -309,7 +310,10 @@ size_t CompressSZ::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        throw("unknown sz buffer version");
+        helper::Log("Operator", "CompressSZ", "InverseOperate",
+                    "unknown sz buffer version, probably caused by corrupted "
+                    "compressed buffer",
+                    helper::EXCEPTION);
     }
 
     return 0;
@@ -372,8 +376,9 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        throw std::runtime_error(
-            "ERROR: data type must be either double or float in SZ\n");
+        helper::Log("Operator", "CompressSZ", "DecompressV1",
+                    "SZ compressor only support float or double types",
+                    helper::EXCEPTION);
     }
 
     const size_t dataSizeBytes =
@@ -388,8 +393,9 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     if (result == nullptr)
     {
-        throw std::runtime_error("ERROR: SZ_decompress failed." +
-                                 m_VersionInfo + "\n");
+        helper::Log("Operator", "CompressSZ", "DecompressV1",
+                    "decompression failed. " + m_VersionInfo,
+                    helper::EXCEPTION);
     }
     std::memcpy(dataOut, result, dataSizeBytes);
     free(result);
@@ -440,8 +446,9 @@ size_t CompressSZ::DecompressV2(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        throw std::runtime_error(
-            "ERROR: data type must be either double or float in SZ\n");
+        helper::Log("Operator", "CompressSZ", "DecompressV2",
+                    "SZ compressor only support float or double types",
+                    helper::EXCEPTION);
     }
 
     const size_t dataSizeBytes = helper::GetTotalSize(blockCount, dataTypeSize);
@@ -458,8 +465,9 @@ size_t CompressSZ::DecompressV2(const char *bufferIn, const size_t sizeIn,
 
     if (result == nullptr)
     {
-        throw std::runtime_error("ERROR: SZ_decompress failed." +
-                                 m_VersionInfo + "\n");
+        helper::Log("Operator", "CompressSZ", "DecompressV2",
+                    "decompression failed. " + m_VersionInfo,
+                    helper::EXCEPTION);
     }
     std::memcpy(dataOut, result, dataSizeBytes);
     free(result);
