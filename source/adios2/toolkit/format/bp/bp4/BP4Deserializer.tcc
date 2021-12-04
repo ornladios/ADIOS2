@@ -152,10 +152,8 @@ void BP4Deserializer::SetVariableBlockInfo(
         blockOperation.PreSizeOf = sizeof(T);
 
         // read metadata from supported type and populate Info
-        BPOperation bpOp;
-        bpOp.GetMetadata(bpOpInfo.Metadata, blockOperation.Info);
-        blockOperation.PayloadSize = static_cast<size_t>(
-            std::stoull(blockOperation.Info.at("OutputSize")));
+        std::memcpy(&blockOperation.PayloadSize, bpOpInfo.Metadata.data() + 8,
+                    8);
 
         subStreamInfo.OperationsInfo.push_back(std::move(blockOperation));
     };
