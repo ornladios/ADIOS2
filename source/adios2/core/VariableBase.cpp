@@ -246,7 +246,7 @@ size_t VariableBase::AddOperation(Operator &op,
     if (op.IsDataTypeValid(m_Type))
     {
         m_Operations.push_back(
-            Operation{&op, helper::LowerCaseParams(parameters), Params()});
+            Operation{&op, helper::LowerCaseParams(parameters)});
     }
     else
     {

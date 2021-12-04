@@ -182,8 +182,7 @@ namespace adios2
                                                                                \
         for (const auto &op : m_Variable->m_Operations)                        \
         {                                                                      \
-            operations.push_back(                                              \
-                Operation{Operator(op.Op), op.Parameters, op.Info});           \
+            operations.push_back(Operation{Operator(op.Op), op.Parameters});   \
         }                                                                      \
         return operations;                                                     \
     }                                                                          \

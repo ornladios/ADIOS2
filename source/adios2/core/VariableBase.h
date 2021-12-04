@@ -81,8 +81,6 @@ public:
         core::Operator *Op;
         /** Variable specific parameters */
         Params Parameters;
-        /** resulting information from executing Operation (e.g. buffer size) */
-        Params Info;
     };
 
     /** Registered transforms */

@@ -91,8 +91,7 @@ std::vector<Variable::Operation> Variable::Operations() const
 
     for (const auto &op : m_VariableBase->m_Operations)
     {
-        operations.push_back(
-            Operation{Operator(op.Op), op.Parameters, op.Info});
+        operations.push_back(Operation{Operator(op.Op), op.Parameters});
     }
     return operations;
 }
