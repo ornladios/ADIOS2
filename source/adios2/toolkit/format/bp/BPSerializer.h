@@ -155,6 +155,9 @@ protected:
     void PutOperationPayloadInBuffer(
         const core::Variable<T> &variable,
         const typename core::Variable<T>::BPInfo &blockInfo);
+
+private:
+    size_t m_OutputSizeMetadataPosition;
 };
 
 } // end namespace format
