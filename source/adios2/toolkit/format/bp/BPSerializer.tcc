@@ -366,9 +366,7 @@ void BPSerializer::PutCharacteristicOperation(
     const typename core::Variable<T>::BPInfo &blockInfo,
     std::vector<char> &buffer) noexcept
 {
-    auto &operation = blockInfo.Operations[0];
-
-    const std::string type = operation.Op->m_TypeString;
+    const std::string type = blockInfo.Operations[0].Op->m_TypeString;
     const uint8_t typeLength = static_cast<uint8_t>(type.size());
     helper::InsertToBuffer(buffer, &typeLength);
     helper::InsertToBuffer(buffer, type.c_str(), type.size());
@@ -388,7 +386,7 @@ void BPSerializer::PutCharacteristicOperation(
     const uint64_t inputSize = static_cast<uint64_t>(
         helper::GetTotalSize(blockInfo.Count) * sizeof(T));
     // being naughty here
-    Params &info = const_cast<Params &>(operation.Info);
+    Params &info = const_cast<Params &>(blockInfo.Operations[0].Info);
     info["InputSize"] = std::to_string(inputSize);
 
     // fixed size only stores inputSize 8-bytes and outputSize 8-bytes
@@ -405,15 +403,14 @@ void BPSerializer::PutOperationPayloadInBuffer(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo)
 {
-    core::Operator &op = *blockInfo.Operations[0].Op;
     const Params &parameters = blockInfo.Operations[0].Parameters;
     // being naughty here
     Params &info = const_cast<Params &>(blockInfo.Operations[0].Info);
 
-    const size_t outputSize =
-        op.Operate(reinterpret_cast<char *>(blockInfo.Data), blockInfo.Start,
-                   blockInfo.Count, variable.m_Type,
-                   m_Data.m_Buffer.data() + m_Data.m_Position, parameters);
+    const size_t outputSize = blockInfo.Operations[0].Op->Operate(
+        reinterpret_cast<char *>(blockInfo.Data), blockInfo.Start,
+        blockInfo.Count, variable.m_Type,
+        m_Data.m_Buffer.data() + m_Data.m_Position, parameters);
 
     info["OutputSize"] = std::to_string(outputSize);
 
