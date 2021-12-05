@@ -10,6 +10,7 @@
 
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Operator.h"
+#include <memory>
 
 namespace adios2
 {

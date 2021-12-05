@@ -285,6 +285,9 @@ public:
     size_t AddOperation(const Operator op,
                         const adios2::Params &parameters = adios2::Params());
 
+    size_t AddOperation(const std::string &type,
+                        const adios2::Params &parameters = adios2::Params());
+
     /**
      * Inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo

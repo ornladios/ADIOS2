@@ -22,6 +22,7 @@
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 #include "adios2/helper/adiosString.h"
+#include "adios2/operator/OperatorFactory.h"
 
 #ifdef ADIOS2_HAVE_CUDA
 #include <cuda.h>
@@ -240,9 +241,11 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
     }
 }
 
-size_t VariableBase::AddOperation(const std::string &op,
+size_t VariableBase::AddOperation(const std::string &type,
                                   const Params &parameters) noexcept
 {
+    m_PrivateOperations.emplace_back(MakeOperator(type, parameters));
+    m_Operations.push_back(m_PrivateOperations.back().get());
     return m_Operations.size() - 1;
 }
 

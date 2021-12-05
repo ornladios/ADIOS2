@@ -13,6 +13,7 @@
 #define ADIOS2_CORE_VARIABLEBASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <memory>
 #include <set>
 #include <sstream>
 #include <string>

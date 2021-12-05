@@ -172,6 +172,13 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    size_t Variable<T>::AddOperation(const std::string &type,                  \
+                                     const Params &parameters)                 \
+    {                                                                          \
+        return m_Variable->AddOperation(type, parameters);                     \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     std::vector<Operator> Variable<T>::Operations() const                      \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \
