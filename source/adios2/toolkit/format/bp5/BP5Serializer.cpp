@@ -9,26 +9,11 @@
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/VariableBase.h"
+#include "adios2/helper/adiosFunctions.h"
 #include "adios2/helper/adiosMemory.h"
 #include "adios2/toolkit/format/buffer/ffs/BufferFFS.h"
+
 #include <stddef.h> // max_align_t
-
-#ifdef ADIOS2_HAVE_ZFP
-#include "adios2/operator/compress/CompressZFP.h"
-#endif
-#ifdef ADIOS2_HAVE_SZ
-#include "adios2/operator/compress/CompressSZ.h"
-#endif
-#ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/operator/compress/CompressBZIP2.h"
-#endif
-#ifdef ADIOS2_HAVE_MGARD
-#include "adios2/operator/compress/CompressMGARD.h"
-#endif
-
-#include "adios2/operator/compress/CompressorFactory.h"
-
-#include "adios2/helper/adiosFunctions.h"
 
 #include <cstring>
 
@@ -639,10 +624,9 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             char *CompressedData =
                 (char *)GetPtr(pos.bufferIdx, pos.posInBuffer);
             DataOffset = m_PriorDataBufferSizeTotal + pos.globalPos;
-            CompressedSize = core::compress::Compress(
+            CompressedSize = VB->m_Operations[0]->Operate(
                 (const char *)Data, tmpOffsets, tmpCount, (DataType)Rec->Type,
-                CompressedData, VB->m_Operations[0]->GetParameters(),
-                compressionMethod);
+                CompressedData, VB->m_Operations[0]->GetParameters());
             // use data size to resize allocated buffer
         }
         else if (Span == nullptr)

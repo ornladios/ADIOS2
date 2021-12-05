@@ -20,7 +20,7 @@
 #include <unordered_set>
 
 #include "adios2/helper/adiosFunctions.h"
-#include "adios2/operator/compress/CompressorFactory.h"
+#include "adios2/operator/OperatorFactory.h"
 
 namespace adios2
 {
@@ -524,8 +524,7 @@ void BP4Deserializer::PostDataRead(
         char *preOpData = m_ThreadBuffers[threadID][0].data();
         const char *postOpData = m_ThreadBuffers[threadID][1].data();
 
-        core::compress::Decompress(postOpData, blockOperationInfo.PayloadSize,
-                                   preOpData);
+        core::Decompress(postOpData, blockOperationInfo.PayloadSize, preOpData);
 
         // clip block to match selection
         helper::ClipVector(m_ThreadBuffers[threadID][0],

@@ -18,7 +18,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
-#include "adios2/operator/compress/CompressorFactory.h"
+#include "adios2/operator/OperatorFactory.h"
 #include <adios2sys/SystemTools.hxx>
 
 #include <adios2-perfstubs-interface.h>
@@ -155,8 +155,7 @@ Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
                                 const Params &parameters)
 {
     CheckOperator(name);
-    auto itPair =
-        m_Operators.emplace(name, compress::MakeOperator(type, parameters));
+    auto itPair = m_Operators.emplace(name, MakeOperator(type, parameters));
     return *itPair.first->second.get();
 }
 

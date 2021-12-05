@@ -8,7 +8,7 @@
  *      Author: Jason Wang jason.ruonan.wang@gmail.com
  */
 
-#include "CompressorFactory.h"
+#include "OperatorFactory.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/operator/compress/CompressNull.h"
 #include <numeric>
@@ -48,8 +48,6 @@
 namespace adios2
 {
 namespace core
-{
-namespace compress
 {
 
 std::shared_ptr<Operator> MakeOperator(const std::string &type,
@@ -130,7 +128,7 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
         if (compressorType == "blosc")
         {
 #ifdef ADIOS2_HAVE_BLOSC
-            CompressBlosc c({});
+            compress::CompressBlosc c({});
             ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
                             parameters);
 #else
@@ -143,7 +141,7 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
         else if (compressorType == "bzip2")
         {
 #ifdef ADIOS2_HAVE_BZIP2
-            CompressBZIP2 c({});
+            compress::CompressBZIP2 c({});
             ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
                             parameters);
 #else
@@ -156,7 +154,7 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
         else if (compressorType == "libpressio")
         {
 #ifdef ADIOS2_HAVE_LIBPRESSIO
-            CompressLibPressio c({});
+            compress::CompressLibPressio c({});
             ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
                             parameters);
 #else
@@ -169,7 +167,7 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
         else if (compressorType == "mgard")
         {
 #ifdef ADIOS2_HAVE_MGARD
-            CompressMGARD c({});
+            compress::CompressMGARD c({});
             ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
                             parameters);
 #else
@@ -182,7 +180,7 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
         else if (compressorType == "png")
         {
 #ifdef ADIOS2_HAVE_PNG
-            CompressPNG c({});
+            compress::CompressPNG c({});
             ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
                             parameters);
 #else
@@ -194,7 +192,7 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
         else if (compressorType == "sirius")
         {
 #ifdef ADIOS2_HAVE_MHS
-            CompressSirius c({});
+            compress::CompressSirius c({});
             ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
                             parameters);
 #else
@@ -206,7 +204,7 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
         else if (compressorType == "sz")
         {
 #ifdef ADIOS2_HAVE_SZ
-            CompressSZ c({});
+            compress::CompressSZ c({});
             ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
                             parameters);
 #else
@@ -218,7 +216,7 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
         else if (compressorType == "zfp")
         {
 #ifdef ADIOS2_HAVE_ZFP
-            CompressZFP c({});
+            compress::CompressZFP c({});
             ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
                             parameters);
 #else
@@ -249,7 +247,7 @@ size_t Compress(const char *dataIn, const Dims &blockStart,
     {
         helper::Log("Operator", "CompressorFactory", "Compress", e.what(),
                     helper::WARNING);
-        CompressNull c({});
+        compress::CompressNull c({});
         ret = c.Operate(dataIn, blockStart, blockCount, dataType, bufferOut,
                         parameters);
     }
@@ -350,6 +348,5 @@ size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut)
     return 0;
 }
 
-} // end namespace compress
 } // end namespace core
 } // end namespace adios2

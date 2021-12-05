@@ -26,7 +26,7 @@
 #include "adios2/operator/compress/CompressMGARD.h"
 #endif
 
-#include "adios2/operator/compress/CompressorFactory.h"
+#include "adios2/operator/OperatorFactory.h"
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -158,10 +158,10 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
                                                  varCount.end(), sizeof(T),
                                                  std::multiplies<size_t>()));
 
-        datasize = core::compress::Compress(
-            reinterpret_cast<const char *>(inputData), varStart, varCount,
-            helper::GetDataType<T>(), m_CompressBuffer.data(),
-            ops[0]->GetParameters(), compressionMethod);
+        datasize = core::Compress(reinterpret_cast<const char *>(inputData),
+                                  varStart, varCount, helper::GetDataType<T>(),
+                                  m_CompressBuffer.data(),
+                                  ops[0]->GetParameters(), compressionMethod);
         compressed = true;
     }
 
@@ -265,8 +265,8 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 m_OperatorMapMutex.unlock();
                 decompressBuffer.reserve(
                     helper::GetTotalSize(j.count, sizeof(T)));
-                core::compress::Decompress(j.buffer->data() + j.position,
-                                           j.size, decompressBuffer.data());
+                core::Decompress(j.buffer->data() + j.position, j.size,
+                                 decompressBuffer.data());
                 decompressed = true;
                 input_data = decompressBuffer.data();
             }

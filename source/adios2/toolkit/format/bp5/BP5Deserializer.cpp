@@ -27,7 +27,7 @@
 #include "adios2/operator/compress/CompressMGARD.h"
 #endif
 
-#include "adios2/operator/compress/CompressorFactory.h"
+#include "adios2/operator/OperatorFactory.h"
 
 #include <float.h>
 #include <limits.h>
@@ -1095,7 +1095,7 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                                     ->Count[dim * writer_meta_base->Dims];
                         }
                         decompressBuffer.reserve(DestSize);
-                        core::compress::Decompress(
+                        core::Decompress(
                             IncomingData,
                             ((MetaArrayRecOperator *)writer_meta_base)
                                 ->DataLengths[i],
