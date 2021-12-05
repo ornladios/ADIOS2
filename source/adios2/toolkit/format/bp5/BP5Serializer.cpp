@@ -440,8 +440,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         char *OperatorType = NULL;
         if (VB->m_Operations.size())
         {
-            OperatorType =
-                strdup((VB->m_Operations[0]).Op->m_TypeString.data());
+            OperatorType = strdup((VB->m_Operations[0])->m_TypeString.data());
         }
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
@@ -642,7 +641,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             DataOffset = m_PriorDataBufferSizeTotal + pos.globalPos;
             CompressedSize = core::compress::Compress(
                 (const char *)Data, tmpOffsets, tmpCount, (DataType)Rec->Type,
-                CompressedData, VB->m_Operations[0].Parameters,
+                CompressedData, VB->m_Operations[0]->GetParameters(),
                 compressionMethod);
             // use data size to resize allocated buffer
         }

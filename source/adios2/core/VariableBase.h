@@ -73,18 +73,8 @@ public:
      * already encountered in previous step */
     bool m_FirstStreamingStep = true;
 
-    /** Operators metadata info */
-    struct Operation
-    {
-        /** reference to object derived from Operator class,
-         *  needs a pointer to enable assignment operator (C++ class) */
-        core::Operator *Op;
-        /** Variable specific parameters */
-        Params Parameters;
-    };
-
     /** Registered transforms */
-    std::vector<Operation> m_Operations;
+    std::vector<Operator *> m_Operations;
 
     size_t m_AvailableStepsStart = 0;
     size_t m_AvailableStepsCount = 0;

@@ -46,9 +46,4 @@ Params Operator::Parameters() const
 // PRIVATE
 Operator::Operator(core::Operator *op) : m_Operator(op) {}
 
-std::string ToString(const Operator &op)
-{
-    return std::string("Operator(Type: \"" + op.Type() + "\")");
-}
-
 } // end namespace adios2

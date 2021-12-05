@@ -1117,13 +1117,12 @@ BP3Deserializer::BlocksInfoCommon(
 
 template <class T>
 bool BP3Deserializer::IdentityOperation(
-    const std::vector<typename core::Variable<T>::Operation> &operations) const
-    noexcept
+    const std::vector<core::Operator *> &operations) const noexcept
 {
     bool identity = false;
-    for (const typename core::Variable<T>::Operation &op : operations)
+    for (const auto &op : operations)
     {
-        if (op.Op->m_TypeString == "identity")
+        if (op->m_TypeString == "identity")
         {
             identity = true;
         }

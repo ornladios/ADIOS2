@@ -245,8 +245,11 @@ size_t VariableBase::AddOperation(Operator &op,
 {
     if (op.IsDataTypeValid(m_Type))
     {
-        m_Operations.push_back(
-            Operation{&op, helper::LowerCaseParams(parameters)});
+        for (const auto &p : parameters)
+        {
+            op.SetParameter(helper::LowerCase(p.first), p.second);
+        }
+        m_Operations.push_back(&op);
     }
     else
     {
@@ -271,7 +274,7 @@ void VariableBase::SetOperationParameter(const size_t operationID,
             "SetOperationParameter\n");
     }
 
-    m_Operations[operationID].Parameters[key] = value;
+    m_Operations[operationID]->SetParameter(key, value);
 }
 
 void VariableBase::CheckDimensions(const std::string hint) const
