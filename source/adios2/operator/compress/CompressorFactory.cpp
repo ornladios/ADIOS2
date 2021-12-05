@@ -9,7 +9,6 @@
  */
 
 #include "CompressorFactory.h"
-#include "adios2/core/Operator.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/operator/compress/CompressNull.h"
 #include <numeric>
@@ -52,6 +51,73 @@ namespace core
 {
 namespace compress
 {
+
+std::shared_ptr<Operator> MakeOperator(const std::string &type,
+                                       const Params &parameters)
+{
+    std::shared_ptr<Operator> ret = nullptr;
+
+    const std::string typeLowerCase = helper::LowerCase(type);
+
+    if (typeLowerCase == "blosc")
+    {
+#ifdef ADIOS2_HAVE_BLOSC
+        ret = std::make_shared<compress::CompressBlosc>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "bzip2")
+    {
+#ifdef ADIOS2_HAVE_BZIP2
+        ret = std::make_shared<compress::CompressBZIP2>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "libpressio")
+    {
+#ifdef ADIOS2_HAVE_LIBPRESSIO
+        ret = std::make_shared<compress::CompressLibPressio>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "mgard")
+    {
+#ifdef ADIOS2_HAVE_MGARD
+        ret = std::make_shared<compress::CompressMGARD>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "png")
+    {
+#ifdef ADIOS2_HAVE_PNG
+        ret = std::make_shared<compress::CompressPNG>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "sz")
+    {
+#ifdef ADIOS2_HAVE_SZ
+        ret = std::make_shared<compress::CompressSZ>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "zfp")
+    {
+#ifdef ADIOS2_HAVE_ZFP
+        ret = std::make_shared<compress::CompressZFP>(parameters);
+#endif
+    }
+    else
+    {
+        helper::Log("Operator", "CompressorFactory", "MakeOperator",
+                    "ADIOS2 does not support " + typeLowerCase + " operation",
+                    helper::EXCEPTION);
+    }
+
+    if (ret == nullptr)
+    {
+        helper::Log("Operator", "CompressorFactory", "MakeOperator",
+                    "ADIOS2 didn't compile with " + typeLowerCase +
+                        "library, operator not added",
+                    helper::EXCEPTION);
+    }
+
+    return ret;
+}
 
 size_t Compress(const char *dataIn, const Dims &blockStart,
                 const Dims &blockCount, const DataType dataType,

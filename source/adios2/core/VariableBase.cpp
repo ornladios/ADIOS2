@@ -240,6 +240,12 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
     }
 }
 
+size_t VariableBase::AddOperation(const std::string &op,
+                                  const Params &parameters) noexcept
+{
+    return m_Operations.size() - 1;
+}
+
 size_t VariableBase::AddOperation(Operator &op,
                                   const Params &parameters) noexcept
 {
@@ -260,7 +266,11 @@ size_t VariableBase::AddOperation(Operator &op,
     return m_Operations.size() - 1;
 }
 
-void VariableBase::RemoveOperations() noexcept { m_Operations.clear(); }
+void VariableBase::RemoveOperations() noexcept
+{
+    m_PrivateOperations.clear();
+    m_Operations.clear();
+}
 
 void VariableBase::SetOperationParameter(const size_t operationID,
                                          const std::string key,

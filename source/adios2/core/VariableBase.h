@@ -169,6 +169,9 @@ public:
     size_t AddOperation(core::Operator &op,
                         const Params &parameters = Params()) noexcept;
 
+    size_t AddOperation(const std::string &op,
+                        const Params &parameters = Params()) noexcept;
+
     /**
      * Removes all current Operations associated with AddOperation.
      * Provides the posibility to apply or not operators on a step basis.
@@ -223,6 +226,8 @@ protected:
     bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count
 
     unsigned int m_DeferredCounter = 0;
+
+    std::vector<std::shared_ptr<Operator>> m_PrivateOperations;
 
     void InitShapeType();
 

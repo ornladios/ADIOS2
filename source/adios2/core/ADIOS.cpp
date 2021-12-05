@@ -18,44 +18,10 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
+#include "adios2/operator/compress/CompressorFactory.h"
 #include <adios2sys/SystemTools.hxx>
 
 #include <adios2-perfstubs-interface.h>
-
-// OPERATORS
-
-// compress
-#ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/operator/compress/CompressBZIP2.h"
-#endif
-
-#ifdef ADIOS2_HAVE_ZFP
-#include "adios2/operator/compress/CompressZFP.h"
-#endif
-
-#ifdef ADIOS2_HAVE_SZ
-#include "adios2/operator/compress/CompressSZ.h"
-#endif
-
-#ifdef ADIOS2_HAVE_MGARD
-#include "adios2/operator/compress/CompressMGARD.h"
-#endif
-
-#ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/operator/compress/CompressBZIP2.h"
-#endif
-
-#ifdef ADIOS2_HAVE_PNG
-#include "adios2/operator/compress/CompressPNG.h"
-#endif
-
-#ifdef ADIOS2_HAVE_BLOSC
-#include "adios2/operator/compress/CompressBlosc.h"
-#endif
-
-#ifdef ADIOS2_HAVE_LIBPRESSIO
-#include "adios2/operator/compress/CompressLibPressio.h"
-#endif
 
 // callbacks
 #include "adios2/operator/callback/Signature1.h"
@@ -188,102 +154,10 @@ void ADIOS::FlushAll()
 Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
                                 const Params &parameters)
 {
-    auto lf_ErrorMessage = [](const std::string type) -> std::string {
-        return "ERROR: this version of ADIOS2 didn't compile with the " + type +
-               " library, when parsing config file in ADIOS constructor or in "
-               "call to ADIOS::DefineOperator";
-    };
-
-    std::shared_ptr<Operator> operatorPtr;
-
     CheckOperator(name);
-    const std::string typeLowerCase = helper::LowerCase(type);
-
-    if (typeLowerCase == "bzip2")
-    {
-#ifdef ADIOS2_HAVE_BZIP2
-        auto itPair = m_Operators.emplace(
-            name, std::make_shared<compress::CompressBZIP2>(parameters));
-        operatorPtr = itPair.first->second;
-#else
-        throw std::invalid_argument(lf_ErrorMessage("BZip2"));
-#endif
-    }
-    else if (typeLowerCase == "zfp")
-    {
-#ifdef ADIOS2_HAVE_ZFP
-        auto itPair = m_Operators.emplace(
-            name, std::make_shared<compress::CompressZFP>(parameters));
-        operatorPtr = itPair.first->second;
-#else
-        throw std::invalid_argument(lf_ErrorMessage("ZFP"));
-#endif
-    }
-    else if (typeLowerCase == "sz")
-    {
-#ifdef ADIOS2_HAVE_SZ
-        auto itPair = m_Operators.emplace(
-            name, std::make_shared<compress::CompressSZ>(parameters));
-        operatorPtr = itPair.first->second;
-#else
-        throw std::invalid_argument(lf_ErrorMessage("SZ"));
-#endif
-    }
-    else if (typeLowerCase == "mgard")
-    {
-#ifdef ADIOS2_HAVE_MGARD
-        auto itPair = m_Operators.emplace(
-            name, std::make_shared<compress::CompressMGARD>(parameters));
-        operatorPtr = itPair.first->second;
-#else
-        throw std::invalid_argument(lf_ErrorMessage("MGARD"));
-#endif
-    }
-    else if (typeLowerCase == "png")
-    {
-#ifdef ADIOS2_HAVE_PNG
-        auto itPair = m_Operators.emplace(
-            name, std::make_shared<compress::CompressPNG>(parameters));
-        operatorPtr = itPair.first->second;
-#else
-        throw std::invalid_argument(lf_ErrorMessage("PNG"));
-#endif
-    }
-    else if (typeLowerCase == "blosc")
-    {
-#ifdef ADIOS2_HAVE_BLOSC
-        auto itPair = m_Operators.emplace(
-            name, std::make_shared<compress::CompressBlosc>(parameters));
-        operatorPtr = itPair.first->second;
-#else
-        throw std::invalid_argument(lf_ErrorMessage("Blosc"));
-#endif
-    }
-    else if (typeLowerCase == "libpressio")
-    {
-#ifdef ADIOS2_HAVE_LIBPRESSIO
-        auto itPair = m_Operators.emplace(
-            name, std::make_shared<compress::CompressLibPressio>(parameters));
-        operatorPtr = itPair.first->second;
-#else
-        throw std::invalid_argument(lf_ErrorMessage("LibPressio"));
-#endif
-    }
-    else
-    {
-        throw std::invalid_argument(
-            "ERROR: Operator " + name + " of type " + type +
-            " is not supported by ADIOS2, in call to DefineOperator\n");
-    }
-
-    if (!operatorPtr)
-    {
-        throw std::invalid_argument(
-            "ERROR: Operator " + name + " of type " + type +
-            " couldn't be defined, in call to DefineOperator\n");
-    }
-
-    return *operatorPtr.get();
+    auto itPair =
+        m_Operators.emplace(name, compress::MakeOperator(type, parameters));
+    return *itPair.first->second.get();
 }
 
 Operator *ADIOS::InquireOperator(const std::string &name) noexcept
