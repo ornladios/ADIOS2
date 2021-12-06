@@ -28,7 +28,7 @@ std::string Operator::Type() const noexcept
         return "";
     }
 
-    return m_Operator->m_Type;
+    return m_Operator->m_TypeString;
 }
 
 void Operator::SetParameter(const std::string key, const std::string value)
@@ -45,10 +45,5 @@ Params Operator::Parameters() const
 
 // PRIVATE
 Operator::Operator(core::Operator *op) : m_Operator(op) {}
-
-std::string ToString(const Operator &op)
-{
-    return std::string("Operator(Type: \"" + op.Type() + "\")");
-}
 
 } // end namespace adios2

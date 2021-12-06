@@ -12,10 +12,9 @@
 #define ADIOS2_ENGINE_SSCWRITER_TCC_
 
 #include "SscWriter.h"
-#include "adios2/helper/adiosSystem.h"
+#include "adios2/helper/adiosFunctions.h"
 #include <adios2-perfstubs-interface.h>
 #include <cstring>
-#include <iostream>
 
 namespace adios2
 {
@@ -38,8 +37,10 @@ void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
         {
             if (b.bufferCount < data->size())
             {
-                throw(std::runtime_error(
-                    "SSC only accepts fixed length string variables"));
+                helper::Log("Engine", "SSCWriter", "PutDeferredCommon",
+                            "SSC only accepts fixed length string variables",
+                            -1, m_Comm.Rank(), 0, m_Verbosity,
+                            helper::LogMode::EXCEPTION);
             }
             std::memcpy(m_Buffer.data() + b.bufferStart, data->data(),
                         data->size());
@@ -70,7 +71,9 @@ void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
         }
         else
         {
-            throw std::runtime_error("IO pattern changed after locking");
+            helper::Log("Engine", "SSCWriter", "PutDeferredCommon",
+                        "IO pattern changed after locking", -1, m_Comm.Rank(),
+                        0, m_Verbosity, helper::LogMode::EXCEPTION);
         }
     }
 }
@@ -139,7 +142,9 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         }
         else
         {
-            throw std::runtime_error("IO pattern changed after locking");
+            helper::Log("Engine", "SSCWriter", "PutDeferredCommon",
+                        "IO pattern changed after locking", -1, m_Comm.Rank(),
+                        0, m_Verbosity, helper::LogMode::EXCEPTION);
         }
     }
 }

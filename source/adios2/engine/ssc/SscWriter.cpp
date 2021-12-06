@@ -9,9 +9,7 @@
  */
 
 #include "SscWriter.tcc"
-#include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosCommMPI.h"
-#include "adios2/helper/adiosString.h"
 
 namespace adios2
 {
@@ -31,17 +29,18 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     helper::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs",
                          m_OpenTimeoutSecs);
 
+    helper::Log("Engine", "SSCWriter", "Open", m_Name, 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+
     int providedMpiMode;
     MPI_Query_thread(&providedMpiMode);
     if (m_Threading && providedMpiMode != MPI_THREAD_MULTIPLE)
     {
         m_Threading = false;
-        if (m_WriterRank == 0 && m_Verbosity > 0)
-        {
-            std::cout << "SSC Threading disabled as MPI is not initialized "
-                         "with multi-threads"
-                      << std::endl;
-        }
+        helper::Log("Engine", "SSCWriter", "Open",
+                    "SSC Threading disabled as MPI is not initialized with "
+                    "multi-threads",
+                    0, m_Comm.Rank(), 1, m_Verbosity, helper::LogMode::WARNING);
     }
 
     SyncMpiPattern();
@@ -58,12 +57,9 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
     ++m_CurrentStep;
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscWriter::BeginStep, World Rank " << m_StreamRank
-                  << ", Writer Rank " << m_WriterRank << ", Step "
-                  << m_CurrentStep << std::endl;
-    }
+    helper::Log("Engine", "SSCWriter", "BeginStep",
+                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::INFO);
 
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
@@ -95,7 +91,12 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
 size_t SscWriter::CurrentStep() const { return m_CurrentStep; }
 
-void SscWriter::PerformPuts() { PERFSTUBS_SCOPED_TIMER_FUNC(); }
+void SscWriter::PerformPuts()
+{
+    PERFSTUBS_SCOPED_TIMER_FUNC();
+    helper::Log("Engine", "SSCWriter", "PerformPuts", "", 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+}
 
 void SscWriter::EndStepFirst()
 {
@@ -131,12 +132,8 @@ void SscWriter::EndStep()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscWriter::EndStep, World Rank " << m_StreamRank
-                  << ", Writer Rank " << m_WriterRank << ", Step "
-                  << m_CurrentStep << std::endl;
-    }
+    helper::Log("Engine", "SSCWriter", "EndStep", std::to_string(CurrentStep()),
+                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
 
     if (m_CurrentStep == 0)
     {
@@ -179,6 +176,9 @@ void SscWriter::SyncMpiPattern()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
+    helper::Log("Engine", "SSCWriter", "SyncMpiPattern", "", 0, m_Comm.Rank(),
+                5, m_Verbosity, helper::LogMode::INFO);
+
     MPI_Group streamGroup;
     MPI_Group writerGroup;
     MPI_Comm readerComm;
@@ -208,12 +208,9 @@ void SscWriter::SyncMpiPattern()
 void SscWriter::SyncWritePattern(bool finalStep)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscWriter::SyncWritePattern, World Rank " << m_StreamRank
-                  << ", Writer Rank " << m_WriterRank << ", Step "
-                  << m_CurrentStep << std::endl;
-    }
+
+    helper::Log("Engine", "SSCWriter", "SyncWritePattern", "", 0, m_Comm.Rank(),
+                5, m_Verbosity, helper::LogMode::INFO);
 
     ssc::Buffer localBuffer(8);
     localBuffer.value<uint64_t>() = 8;
@@ -245,12 +242,9 @@ void SscWriter::SyncWritePattern(bool finalStep)
 void SscWriter::SyncReadPattern()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscWriter::SyncReadPattern, World Rank " << m_StreamRank
-                  << ", Writer Rank " << m_WriterRank << ", Step "
-                  << m_CurrentStep << std::endl;
-    }
+
+    helper::Log("Engine", "SSCWriter", "SyncReadPattern", "", 0, m_Comm.Rank(),
+                5, m_Verbosity, helper::LogMode::INFO);
 
     ssc::Buffer globalBuffer;
 
@@ -322,11 +316,15 @@ void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
 #define declare_type(T)                                                        \
     void SscWriter::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
+        helper::Log("Engine", "SSCWriter", "PutSync", variable.m_Name, 0,      \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         PutDeferredCommon(variable, data);                                     \
         PerformPuts();                                                         \
     }                                                                          \
     void SscWriter::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
+        helper::Log("Engine", "SSCWriter", "PutDeferred", variable.m_Name, 0,  \
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
         PutDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -336,11 +334,8 @@ void SscWriter::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "SscWriter::DoClose, World Rank " << m_StreamRank
-                  << ", Writer Rank " << m_WriterRank << std::endl;
-    }
+    helper::Log("Engine", "SSCWriter", "Close", m_Name, 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
 
     if (m_Threading && m_EndStepThread.joinable())
     {

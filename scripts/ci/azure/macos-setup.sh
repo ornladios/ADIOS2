@@ -4,17 +4,14 @@ set -x
 
 echo "Setting up default XCode version"
 case "$SYSTEM_JOBNAME" in
-  *xcode941*)
-    sudo xcode-select --switch /Applications/Xcode_9.4.1.app
+  *xcode1211*)
+    sudo xcode-select --switch /Applications/Xcode_12.1.1.app
     ;;
-  *xcode103*)
-    sudo xcode-select --switch /Applications/Xcode_10.3.app
-    ;;
-  *xcode111*)
-    sudo xcode-select --switch /Applications/Xcode_11.1.app
+  *xcode131*)
+    sudo xcode-select --switch /Applications/Xcode_13.1.app
     ;;
   *)
-    echo "  Unknown macOS image.  Using defaults."
+    echo "  Unknown Xcode mapping.  Using defaults."
     ;;
 esac
 

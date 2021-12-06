@@ -96,17 +96,6 @@ public:
     size_t BlockID() const;
 
     /**
-     * EXPERIMENTAL: carries information about an Operation added with
-     * AddOperation
-     */
-    struct Operation
-    {
-        const Operator Op;
-        const Params Parameters;
-        const Params Info;
-    };
-
-    /**
      * EXPERIMENTAL: Adds operation and parameters to current Variable object
      * @param op operator to be added
      * @param parameters key/value settings particular to the Variable, not to
@@ -119,7 +108,7 @@ public:
      * EXPERIMENTAL: inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo
      */
-    std::vector<Operation> Operations() const;
+    std::vector<Operator> Operations() const;
 
     /** Contains sub-block information for a particular Variable<T> */
     struct Info

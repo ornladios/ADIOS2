@@ -29,7 +29,6 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
 : Engine("InlineWriter", io, name, mode, std::move(comm))
 {
     PERFSTUBS_SCOPED_TIMER("InlineWriter::Open");
-    m_EndMessage = " in call to InlineWriter " + m_Name + " Open\n";
     m_WriterRank = m_Comm.Rank();
     Init();
     if (m_Verbosity == 5)

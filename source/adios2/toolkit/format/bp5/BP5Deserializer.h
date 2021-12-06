@@ -81,6 +81,7 @@ private:
         char *VarName = NULL;
         size_t DimCount = 0;
         ShapeID OrigShapeID;
+        char *Operator;
         DataType Type;
         int ElementSize = 0;
         size_t *GlobalDims = NULL;
@@ -126,6 +127,7 @@ private:
     FFSContext ReaderFFSContext;
     size_t m_WriterCohortSize;
     bool m_RandomAccessMode;
+    size_t m_LastAttrStep = MaxSizeT; // invalid timestep for start
 
     std::unordered_map<std::string, BP5VarRec *> VarByName;
     std::unordered_map<void *, BP5VarRec *> VarByKey;
@@ -154,7 +156,8 @@ private:
     void BreakdownVarName(const char *Name, char **base_name_p,
                           DataType *type_p, int *element_size_p);
     void BreakdownArrayName(const char *Name, char **base_name_p,
-                            DataType *type_p, int *element_size_p);
+                            DataType *type_p, int *element_size_p,
+                            char **Operator, bool *MinMax);
     void *VarSetup(core::Engine *engine, const char *variableName,
                    const DataType type, void *data);
     void *ArrayVarSetup(core::Engine *engine, const char *variableName,

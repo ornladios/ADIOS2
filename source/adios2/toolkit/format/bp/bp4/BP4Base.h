@@ -32,8 +32,6 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/format/bp/BPBase.h"
-#include "adios2/toolkit/format/bp/bpOperation/BPOperation.h"
-#include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 namespace adios2

@@ -1,14 +1,11 @@
 <?xml version="1.0"?>
 <adios-config>
 
-    <!-- example engines 
-
+    <!-- example engines
         <engine type="BPFile"/>
         <engine type="HDF5"/>
         <engine type="SST"/>
-        <engine type="InSituMPI"/>
-        <engine type="DataMan">
-
+        <engine type="SSC"/>
     -->
 
     <!--===========================================
@@ -20,11 +17,10 @@
         </engine>
     </io>
 
-
     <!--=========================================
            Configuration for io_T2_in group
         =========================================-->
-    
+
     <io name="io_T2">
         <engine type="BPFile">
         </engine>
@@ -41,7 +37,5 @@
         <engine type="BPFile">
         </engine>
     </io>
-
-
 
 </adios-config>

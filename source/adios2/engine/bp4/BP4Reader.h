@@ -84,6 +84,8 @@ private:
     bool m_FirstStep = true;
     bool m_IdxHeaderParsed = false; // true after first index parsing
 
+    int m_Verbosity = 0;
+
     void Init();
     void InitTransports();
 

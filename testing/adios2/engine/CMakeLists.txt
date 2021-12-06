@@ -21,17 +21,13 @@ if(ADIOS2_HAVE_MHS)
   add_subdirectory(mhs)
 endif()
 
-if(ADIOS2_HAVE_SSC)
-  add_subdirectory(ssc)
-endif()
-
 if(ADIOS2_HAVE_SST)
   add_subdirectory(sst)
 endif()
 
 if(ADIOS2_HAVE_MPI)
+  add_subdirectory(ssc)
   add_subdirectory(common)
-  add_subdirectory(insitumpi)
 endif()
 
 add_subdirectory(staging-common)

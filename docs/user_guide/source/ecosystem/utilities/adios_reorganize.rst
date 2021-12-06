@@ -50,7 +50,7 @@ In our example, we have an array, ``T``. It is a 2-dimensional ``double`` array,
        
 * Stage I/O through extra compute nodes
 
-    If writing data to disk is a bottleneck to the application, it may be worth to use extra nodes for receiving the data quickly from the application and then write to disk while the application continues computing. Similarly, data can be staged in from disk into extra nodes and make it available for fast read-in for an application. One can use one of the staging engines in ADIOS to perform this data staging (SST, InSituMPI, DataMan).
+    If writing data to disk is a bottleneck to the application, it may be worth to use extra nodes for receiving the data quickly from the application and then write to disk while the application continues computing. Similarly, data can be staged in from disk into extra nodes and make it available for fast read-in for an application. One can use one of the staging engines in ADIOS to perform this data staging (SST, SSC, DataMan).
     
     Assuming that the heatSimulation is using SST instead of file I/O in a run (set in its ``adios2.xml`` configuration file), staging to disk can be done this way:
     

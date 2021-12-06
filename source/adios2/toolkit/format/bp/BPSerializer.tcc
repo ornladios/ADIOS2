@@ -366,9 +366,7 @@ void BPSerializer::PutCharacteristicOperation(
     const typename core::Variable<T>::BPInfo &blockInfo,
     std::vector<char> &buffer) noexcept
 {
-    auto &operation = blockInfo.Operations[0];
-
-    const std::string type = operation.Op->m_Type;
+    const std::string type = blockInfo.Operations[0]->m_TypeString;
     const uint8_t typeLength = static_cast<uint8_t>(type.size());
     helper::InsertToBuffer(buffer, &typeLength);
     helper::InsertToBuffer(buffer, type.c_str(), type.size());
@@ -383,9 +381,20 @@ void BPSerializer::PutCharacteristicOperation(
     helper::InsertToBuffer(buffer, &dimensionsLength); // length
     PutDimensionsRecord(blockInfo.Count, blockInfo.Shape, blockInfo.Start,
                         buffer);
+
     // here put the metadata info depending on operation
-    BPOperation bpOperation;
-    bpOperation.SetMetadata(variable, blockInfo, operation, buffer);
+    const uint64_t inputSize = static_cast<uint64_t>(
+        helper::GetTotalSize(blockInfo.Count) * sizeof(T));
+
+    // fixed size only stores inputSize 8-bytes and outputSize 8-bytes
+    constexpr uint16_t metadataSize = 16;
+    helper::InsertToBuffer(buffer, &metadataSize);
+    helper::InsertToBuffer(buffer, &inputSize);
+
+    m_OutputSizeMetadataPosition = buffer.size();
+
+    constexpr uint64_t outputSize = 0;
+    helper::InsertToBuffer(buffer, &outputSize);
 }
 
 template <class T>
@@ -393,16 +402,22 @@ void BPSerializer::PutOperationPayloadInBuffer(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo)
 {
+    const size_t outputSize = blockInfo.Operations[0]->Operate(
+        reinterpret_cast<char *>(blockInfo.Data), blockInfo.Start,
+        blockInfo.Count, variable.m_Type,
+        m_Data.m_Buffer.data() + m_Data.m_Position);
 
-    BPOperation bpOperation;
-    bpOperation.SetData(variable, blockInfo, blockInfo.Operations[0], m_Data);
+    m_Data.m_Position += outputSize;
+    m_Data.m_AbsolutePosition += outputSize;
 
     // update metadata
     bool isFound = false;
     SerialElementIndex &variableIndex = GetSerialElementIndex(
         variable.m_Name, m_MetadataSet.VarsIndices, isFound);
-    bpOperation.UpdateMetadata(variable, blockInfo, blockInfo.Operations[0],
-                               variableIndex.Buffer);
+
+    size_t backPosition = m_OutputSizeMetadataPosition;
+
+    helper::CopyToBuffer(variableIndex.Buffer, backPosition, &outputSize);
 }
 
 } // end namespace format

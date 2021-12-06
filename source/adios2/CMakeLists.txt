@@ -18,9 +18,11 @@ add_library(adios2_core
   core/VariableCompound.cpp core/VariableCompound.tcc
   core/Group.cpp core/Group.tcc
 
-#operator callback
+#operator
   operator/callback/Signature1.cpp
   operator/callback/Signature2.cpp
+  operator/OperatorFactory.cpp
+  operator/compress/CompressNull.cpp
 
 #helper
   helper/adiosComm.h  helper/adiosComm.cpp
@@ -36,6 +38,7 @@ add_library(adios2_core
   helper/adiosXMLUtil.cpp
   helper/adiosYAML.cpp
   helper/adiosCUDA.cu
+  helper/adiosLog.cpp
 
 #engine derived classes
   engine/bp3/BP3Reader.cpp engine/bp3/BP3Reader.tcc
@@ -71,9 +74,6 @@ add_library(adios2_core
   toolkit/format/bp/bp4/BP4Serializer.cpp toolkit/format/bp/bp4/BP4Serializer.tcc
   toolkit/format/bp/bp4/BP4Deserializer.cpp toolkit/format/bp/bp4/BP4Deserializer.tcc
 
-  toolkit/format/bp/bpOperation/BPOperation.cpp
-  toolkit/format/bp/bpOperation/BPOperation.tcc
-
   toolkit/profiling/iochrono/Timer.cpp
   toolkit/profiling/iochrono/IOChrono.cpp
 
@@ -95,8 +95,6 @@ add_library(adios2_core
 
   toolkit/burstbuffer/FileDrainer.cpp
   toolkit/burstbuffer/FileDrainerSingleThread.cpp
-
-  operator/compress/CompressorFactory.cpp
 )
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)
@@ -145,18 +143,18 @@ if(ADIOS2_HAVE_DAOS)
 endif()
 
 if(ADIOS2_HAVE_MPI)
-  add_library(adios2_core_mpi
-    core/IOMPI.cpp
-    helper/adiosCommMPI.h  helper/adiosCommMPI.cpp
-    helper/adiosMpiHandshake.h  helper/adiosMpiHandshake.cpp
-    engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc
-    engine/insitumpi/InSituMPIReader.cpp engine/insitumpi/InSituMPIReader.tcc
-    engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
-  )
-  set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
-  set_property(TARGET adios2_core_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_mpi)
-  target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_C PRIVATE adios2::thirdparty::perfstubs-interface)
-  target_compile_definitions(adios2_core_mpi PUBLIC "$<BUILD_INTERFACE:ADIOS2_USE_MPI>")
+    add_library(adios2_core_mpi
+        core/IOMPI.cpp
+        helper/adiosCommMPI.h helper/adiosCommMPI.cpp
+        helper/adiosMpiHandshake.h helper/adiosMpiHandshake.cpp
+        engine/ssc/SscReader.cpp engine/ssc/SscReader.tcc
+        engine/ssc/SscWriter.cpp engine/ssc/SscWriter.tcc
+        engine/ssc/SscHelper.cpp
+        )
+    set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
+    set_property(TARGET adios2_core_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_mpi)
+    target_link_libraries(adios2_core_mpi PUBLIC adios2_core MPI::MPI_C PRIVATE adios2::thirdparty::perfstubs-interface)
+    target_compile_definitions(adios2_core_mpi PUBLIC "$<BUILD_INTERFACE:ADIOS2_USE_MPI>")
 endif()
 
 if(ADIOS2_HAVE_SysVShMem)
@@ -175,20 +173,9 @@ endif()
 
 if (ADIOS2_HAVE_DataMan)
     target_sources(adios2_core PRIVATE
-    toolkit/query/JsonWorker.cpp
-    )
-endif()
-
-if(ADIOS2_HAVE_DataMan)
-    target_sources(adios2_core PRIVATE
+        toolkit/query/JsonWorker.cpp
         toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
-    )
-endif()
-
-
-if(ADIOS2_HAVE_DataMan)
-    target_sources(adios2_core PRIVATE
         engine/dataman/DataManMonitor.cpp
         engine/dataman/DataManReader.cpp
         engine/dataman/DataManReader.tcc
@@ -197,16 +184,6 @@ if(ADIOS2_HAVE_DataMan)
         )
 endif()
 
-if(ADIOS2_HAVE_SSC)
-    target_sources(adios2_core_mpi PRIVATE
-        engine/ssc/SscReader.cpp
-        engine/ssc/SscReader.tcc
-        engine/ssc/SscWriter.cpp
-        engine/ssc/SscWriter.tcc
-        engine/ssc/SscHelper.cpp
-        )
-    target_link_libraries(adios2_core_mpi)
-endif()
 
 if(ADIOS2_HAVE_MHS)
     target_sources(adios2_core PRIVATE

@@ -75,56 +75,6 @@ std::vector<uint64_t> DataManSerializer::GetTimeStamps()
     return m_TimeStamps;
 }
 
-bool DataManSerializer::IsCompressionAvailable(const std::string &method,
-                                               DataType type, const Dims &count)
-{
-    PERFSTUBS_SCOPED_TIMER_FUNC();
-    if (method == "zfp")
-    {
-        if (type == helper::GetDataType<int32_t>() ||
-            type == helper::GetDataType<int64_t>() ||
-            type == helper::GetDataType<float>() ||
-            type == helper::GetDataType<double>())
-        {
-            if (count.size() <= 3)
-            {
-                return true;
-            }
-        }
-    }
-    else if (method == "sz")
-    {
-        if (type == helper::GetDataType<float>() ||
-            type == helper::GetDataType<double>())
-        {
-            if (count.size() <= 5)
-            {
-                size_t elements = std::accumulate(count.begin(), count.end(), 1,
-                                                  std::multiplies<size_t>());
-                if (elements >= 10)
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    else if (method == "bzip2")
-    {
-        if (type == helper::GetDataType<int32_t>() ||
-            type == helper::GetDataType<int64_t>() ||
-            type == helper::GetDataType<float>() ||
-            type == helper::GetDataType<double>())
-        {
-            return true;
-        }
-    }
-    else if (method == "mgard")
-    {
-        return true;
-    }
-    return false;
-}
-
 void DataManSerializer::PutAttributes(core::IO &io)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
@@ -671,13 +621,15 @@ void DataManSerializer::Log(const int level, const std::string &message,
 }
 
 template <>
-void DataManSerializer::PutData(
-    const std::string *inputData, const std::string &varName,
-    const Dims &varShape, const Dims &varStart, const Dims &varCount,
-    const Dims &varMemStart, const Dims &varMemCount, const std::string &doid,
-    const size_t step, const int rank, const std::string &address,
-    const std::vector<core::VariableBase::Operation> &ops, VecPtr localBuffer,
-    JsonPtr metadataJson)
+void DataManSerializer::PutData(const std::string *inputData,
+                                const std::string &varName,
+                                const Dims &varShape, const Dims &varStart,
+                                const Dims &varCount, const Dims &varMemStart,
+                                const Dims &varMemCount,
+                                const std::string &doid, const size_t step,
+                                const int rank, const std::string &address,
+                                const std::vector<core::Operator *> &ops,
+                                VecPtr localBuffer, JsonPtr metadataJson)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     Log(1,
