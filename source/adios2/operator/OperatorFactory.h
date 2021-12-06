@@ -20,10 +20,6 @@ namespace core
 std::shared_ptr<Operator> MakeOperator(const std::string &type,
                                        const Params &parameters);
 
-size_t Compress(const char *dataIn, const Dims &blockStart,
-                const Dims &blockCount, const DataType type, char *bufferOut,
-                const Params &parameters, const std::string &compressorType);
-
 size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut);
 
 } // end namespace core

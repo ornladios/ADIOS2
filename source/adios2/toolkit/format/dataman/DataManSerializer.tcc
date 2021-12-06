@@ -12,26 +12,9 @@
 #define ADIOS2_TOOLKIT_FORMAT_DATAMAN_DATAMANSERIALIZER_TCC_
 
 #include "DataManSerializer.h"
-
-#ifdef ADIOS2_HAVE_ZFP
-#include "adios2/operator/compress/CompressZFP.h"
-#endif
-#ifdef ADIOS2_HAVE_SZ
-#include "adios2/operator/compress/CompressSZ.h"
-#endif
-#ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/operator/compress/CompressBZIP2.h"
-#endif
-#ifdef ADIOS2_HAVE_MGARD
-#include "adios2/operator/compress/CompressMGARD.h"
-#endif
-
-#include "adios2/operator/OperatorFactory.h"
-
 #include "adios2/helper/adiosFunctions.h"
-
+#include "adios2/operator/OperatorFactory.h"
 #include <adios2-perfstubs-interface.h>
-
 #include <iostream>
 
 namespace adios2
@@ -158,10 +141,10 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
                                                  varCount.end(), sizeof(T),
                                                  std::multiplies<size_t>()));
 
-        datasize = core::Compress(reinterpret_cast<const char *>(inputData),
-                                  varStart, varCount, helper::GetDataType<T>(),
-                                  m_CompressBuffer.data(),
-                                  ops[0]->GetParameters(), compressionMethod);
+        datasize =
+            ops[0]->Operate(reinterpret_cast<const char *>(inputData), varStart,
+                            varCount, helper::GetDataType<T>(),
+                            m_CompressBuffer.data(), ops[0]->GetParameters());
         compressed = true;
     }
 
