@@ -45,7 +45,7 @@ void Signature2::RunCallback2(void *arg1, const std::string &arg2,
 
 size_t Signature2::Operate(const char *dataIn, const Dims &blockStart,
                            const Dims &blockCount, const DataType type,
-                           char *bufferOut, const Params &parameters)
+                           char *bufferOut)
 {
     return 0;
 }

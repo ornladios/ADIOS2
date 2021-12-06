@@ -52,7 +52,7 @@ ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)
 
 size_t Signature1::Operate(const char *dataIn, const Dims &blockStart,
                            const Dims &blockCount, const DataType type,
-                           char *bufferOut, const Params &parameters)
+                           char *bufferOut)
 {
     return 0;
 }

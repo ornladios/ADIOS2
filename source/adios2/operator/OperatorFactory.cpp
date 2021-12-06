@@ -64,6 +64,8 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "mgard";
     case Operator::COMPRESS_PNG:
         return "png";
+    case Operator::COMPRESS_SIRIUS:
+        return "sirius";
     case Operator::COMPRESS_SZ:
         return "sz";
     case Operator::COMPRESS_ZFP:
@@ -109,6 +111,10 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
 #ifdef ADIOS2_HAVE_PNG
         ret = std::make_shared<compress::CompressPNG>(parameters);
 #endif
+    }
+    else if (typeLowerCase == "sirius")
+    {
+        ret = std::make_shared<compress::CompressSirius>(parameters);
     }
     else if (typeLowerCase == "sz")
     {

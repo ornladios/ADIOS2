@@ -59,7 +59,7 @@ void Log(const std::string &component, const std::string &source,
     {
         if (mode == LogMode::EXCEPTION)
         {
-            throw(message);
+            throw message;
         }
         else
         {
@@ -118,7 +118,7 @@ void Log(const std::string &component, const std::string &source,
     else if (mode == EXCEPTION)
     {
         std::cerr << m.str();
-        throw(m.str());
+        throw m.str();
     }
 }
 

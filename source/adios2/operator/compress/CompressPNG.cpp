@@ -50,7 +50,7 @@ CompressPNG::CompressPNG(const Params &parameters)
 
 size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
                             const Dims &blockCount, const DataType type,
-                            char *bufferOut, const Params &parameters)
+                            char *bufferOut)
 {
     size_t bufferOutOffset = 0;
     const uint8_t bufferVersion = 1;
@@ -84,7 +84,7 @@ size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
     int bitDepth = 8;
     std::string colorTypeStr = "PNG_COLOR_TYPE_RGBA";
 
-    for (const auto &itParameter : parameters)
+    for (const auto &itParameter : m_Parameters)
     {
         const std::string key = itParameter.first;
         const std::string value = itParameter.second;

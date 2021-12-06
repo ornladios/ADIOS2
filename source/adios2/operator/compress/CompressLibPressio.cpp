@@ -286,7 +286,7 @@ CompressLibPressio::CompressLibPressio(const Params &parameters)
 }
 size_t CompressLibPressio::Operate(const char *dataIn, const Dims &blockStart,
                                    const Dims &blockCount, const DataType type,
-                                   char *bufferOut, const Params &parameters)
+                                   char *bufferOut)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -308,7 +308,7 @@ size_t CompressLibPressio::Operate(const char *dataIn, const Dims &blockStart,
                  static_cast<uint8_t>(pressio_minor_version()));
     PutParameter(bufferOut, bufferOutOffset,
                  static_cast<uint8_t>(pressio_patch_version()));
-    PutParameters(bufferOut, bufferOutOffset, parameters);
+    PutParameters(bufferOut, bufferOutOffset, m_Parameters);
     // zfp V1 metadata end
 
     auto inputs_dims = adios_to_libpressio_dims(blockCount);
@@ -320,7 +320,7 @@ size_t CompressLibPressio::Operate(const char *dataIn, const Dims &blockStart,
     pressio_compressor *compressor = nullptr;
     try
     {
-        compressor = adios_to_libpressio_compressor(parameters);
+        compressor = adios_to_libpressio_compressor(m_Parameters);
     }
     catch (std::exception &e)
     {

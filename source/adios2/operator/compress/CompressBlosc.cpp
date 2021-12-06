@@ -44,7 +44,7 @@ CompressBlosc::CompressBlosc(const Params &parameters)
 
 size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
                               const Dims &blockCount, const DataType type,
-                              char *bufferOut, const Params &parameters)
+                              char *bufferOut)
 {
     size_t bufferOutOffset = 0;
     const uint8_t bufferVersion = 1;
@@ -77,7 +77,7 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
     std::string compressor = "blosclz";
     size_t blockSize = 0;
 
-    for (const auto &itParameter : parameters)
+    for (const auto &itParameter : m_Parameters)
     {
         const std::string key = itParameter.first;
         const std::string value = itParameter.second;

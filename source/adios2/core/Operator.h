@@ -76,7 +76,7 @@ public:
      */
     virtual size_t Operate(const char *dataIn, const Dims &blockStart,
                            const Dims &blockCount, const DataType type,
-                           char *bufferOut, const Params &parameters) = 0;
+                           char *bufferOut) = 0;
 
     /**
      * @param bufferIn

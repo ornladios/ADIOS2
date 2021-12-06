@@ -141,10 +141,9 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
                                                  varCount.end(), sizeof(T),
                                                  std::multiplies<size_t>()));
 
-        datasize =
-            ops[0]->Operate(reinterpret_cast<const char *>(inputData), varStart,
-                            varCount, helper::GetDataType<T>(),
-                            m_CompressBuffer.data(), ops[0]->GetParameters());
+        datasize = ops[0]->Operate(reinterpret_cast<const char *>(inputData),
+                                   varStart, varCount, helper::GetDataType<T>(),
+                                   m_CompressBuffer.data());
         compressed = true;
     }
 

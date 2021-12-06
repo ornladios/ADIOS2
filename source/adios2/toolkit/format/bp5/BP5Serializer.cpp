@@ -626,7 +626,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             DataOffset = m_PriorDataBufferSizeTotal + pos.globalPos;
             CompressedSize = VB->m_Operations[0]->Operate(
                 (const char *)Data, tmpOffsets, tmpCount, (DataType)Rec->Type,
-                CompressedData, VB->m_Operations[0]->GetParameters());
+                CompressedData);
             // use data size to resize allocated buffer
         }
         else if (Span == nullptr)
