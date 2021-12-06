@@ -38,12 +38,11 @@ public:
      * @param blockCount
      * @param type
      * @param bufferOut
-     * @param parameters
      * @return size of compressed buffer
      */
     size_t Operate(const char *dataIn, const Dims &blockStart,
-                   const Dims &blockCount, const DataType type, char *bufferOut,
-                   const Params &parameters) final;
+                   const Dims &blockCount, const DataType type,
+                   char *bufferOut) final;
 
     /**
      * @param bufferIn

@@ -20,7 +20,7 @@
 #include <unordered_set>
 
 #include "adios2/helper/adiosFunctions.h"
-#include "adios2/operator/compress/CompressorFactory.h"
+#include "adios2/operator/OperatorFactory.h"
 
 namespace adios2
 {
@@ -524,8 +524,7 @@ void BP4Deserializer::PostDataRead(
         char *preOpData = m_ThreadBuffers[threadID][0].data();
         const char *postOpData = m_ThreadBuffers[threadID][1].data();
 
-        core::compress::Decompress(postOpData, blockOperationInfo.PayloadSize,
-                                   preOpData);
+        core::Decompress(postOpData, blockOperationInfo.PayloadSize, preOpData);
 
         // clip block to match selection
         helper::ClipVector(m_ThreadBuffers[threadID][0],
@@ -1203,13 +1202,12 @@ BP4Deserializer::BlocksInfoCommon(
 
 template <class T>
 bool BP4Deserializer::IdentityOperation(
-    const std::vector<typename core::Variable<T>::Operation> &operations) const
-    noexcept
+    const std::vector<core::Operator *> &operations) const noexcept
 {
     bool identity = false;
-    for (const typename core::Variable<T>::Operation &op : operations)
+    for (const auto &op : operations)
     {
-        if (op.Op->m_TypeString == "identity")
+        if (op->m_TypeString == "identity")
         {
             identity = true;
         }

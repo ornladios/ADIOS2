@@ -34,7 +34,7 @@ CompressBZIP2::CompressBZIP2(const Params &parameters)
 
 size_t CompressBZIP2::Operate(const char *dataIn, const Dims &blockStart,
                               const Dims &blockCount, DataType type,
-                              char *bufferOut, const Params &parameters)
+                              char *bufferOut)
 {
 
     const uint8_t bufferVersion = 1;
@@ -54,14 +54,15 @@ size_t CompressBZIP2::Operate(const char *dataIn, const Dims &blockStart,
     int blockSize100k = 1;
     int verbosity = 0;
     int workFactor = 0;
-    if (!parameters.empty())
+    if (!m_Parameters.empty())
     {
         const std::string hint(" in call to CompressBZIP2 Compress " +
                                ToString(type) + "\n");
-        helper::SetParameterValueInt("blockSize100k", parameters, blockSize100k,
+        helper::SetParameterValueInt("blockSize100k", m_Parameters,
+                                     blockSize100k, hint);
+        helper::SetParameterValueInt("verbosity", m_Parameters, verbosity,
                                      hint);
-        helper::SetParameterValueInt("verbosity", parameters, verbosity, hint);
-        helper::SetParameterValueInt("workFactor", parameters, workFactor,
+        helper::SetParameterValueInt("workFactor", m_Parameters, workFactor,
                                      hint);
         if (blockSize100k < 1 || blockSize100k > 9)
         {

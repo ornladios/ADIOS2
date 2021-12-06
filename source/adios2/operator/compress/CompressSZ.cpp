@@ -34,7 +34,7 @@ CompressSZ::CompressSZ(const Params &parameters)
 
 size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
                            const Dims &blockCount, const DataType varType,
-                           char *bufferOut, const Params &parameters)
+                           char *bufferOut)
 {
     const uint8_t bufferVersion = 2;
     size_t bufferOutOffset = 0;
@@ -85,7 +85,7 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     std::string sz_configfile = "sz.config";
 
     Params::const_iterator it;
-    for (it = parameters.begin(); it != parameters.end(); it++)
+    for (it = m_Parameters.begin(); it != m_Parameters.end(); it++)
     {
         if (it->first == "init")
         {
@@ -321,13 +321,11 @@ size_t CompressSZ::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressSZ::IsDataTypeValid(const DataType type) const
 {
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
+    if (type == DataType::Float || type == DataType::Double ||
+        type == DataType::FloatComplex || type == DataType::DoubleComplex)
+    {
+        return true;
     }
-    ADIOS2_FOREACH_SZ_TYPE_1ARG(declare_type)
-#undef declare_type
     return false;
 }
 

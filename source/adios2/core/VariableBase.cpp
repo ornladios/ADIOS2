@@ -22,6 +22,7 @@
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 #include "adios2/helper/adiosString.h"
+#include "adios2/operator/OperatorFactory.h"
 
 #ifdef ADIOS2_HAVE_CUDA
 #include <cuda.h>
@@ -240,13 +241,24 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
     }
 }
 
+size_t VariableBase::AddOperation(const std::string &type,
+                                  const Params &parameters) noexcept
+{
+    m_PrivateOperations.emplace_back(MakeOperator(type, parameters));
+    m_Operations.push_back(m_PrivateOperations.back().get());
+    return m_Operations.size() - 1;
+}
+
 size_t VariableBase::AddOperation(Operator &op,
                                   const Params &parameters) noexcept
 {
     if (op.IsDataTypeValid(m_Type))
     {
-        m_Operations.push_back(
-            Operation{&op, helper::LowerCaseParams(parameters)});
+        for (const auto &p : parameters)
+        {
+            op.SetParameter(helper::LowerCase(p.first), p.second);
+        }
+        m_Operations.push_back(&op);
     }
     else
     {
@@ -257,7 +269,11 @@ size_t VariableBase::AddOperation(Operator &op,
     return m_Operations.size() - 1;
 }
 
-void VariableBase::RemoveOperations() noexcept { m_Operations.clear(); }
+void VariableBase::RemoveOperations() noexcept
+{
+    m_PrivateOperations.clear();
+    m_Operations.clear();
+}
 
 void VariableBase::SetOperationParameter(const size_t operationID,
                                          const std::string key,
@@ -271,7 +287,7 @@ void VariableBase::SetOperationParameter(const size_t operationID,
             "SetOperationParameter\n");
     }
 
-    m_Operations[operationID].Parameters[key] = value;
+    m_Operations[operationID]->SetParameter(key, value);
 }
 
 void VariableBase::CheckDimensions(const std::string hint) const

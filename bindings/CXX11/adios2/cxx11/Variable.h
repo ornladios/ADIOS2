@@ -276,20 +276,6 @@ public:
     size_t BlockID() const;
 
     /**
-     * EXPERIMENTAL: carries information about an Operation added with
-     * AddOperation
-     */
-    struct Operation
-    {
-        /** Operator associated with this operation */
-        const adios2::Operator Op;
-        /** Parameters settings for this operation */
-        const adios2::Params Parameters;
-        /** Information associated with this operation */
-        adios2::Params Info;
-    };
-
-    /**
      *Adds operation and parameters to current Variable object
      * @param op operator to be added
      * @param parameters key/value settings particular to the Variable, not to
@@ -299,11 +285,14 @@ public:
     size_t AddOperation(const Operator op,
                         const adios2::Params &parameters = adios2::Params());
 
+    size_t AddOperation(const std::string &type,
+                        const adios2::Params &parameters = adios2::Params());
+
     /**
      * Inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo
      */
-    std::vector<Operation> Operations() const;
+    std::vector<Operator> Operations() const;
 
     /**
      * Removes all current Operations associated with AddOperation.

@@ -366,7 +366,7 @@ void BPSerializer::PutCharacteristicOperation(
     const typename core::Variable<T>::BPInfo &blockInfo,
     std::vector<char> &buffer) noexcept
 {
-    const std::string type = blockInfo.Operations[0].Op->m_TypeString;
+    const std::string type = blockInfo.Operations[0]->m_TypeString;
     const uint8_t typeLength = static_cast<uint8_t>(type.size());
     helper::InsertToBuffer(buffer, &typeLength);
     helper::InsertToBuffer(buffer, type.c_str(), type.size());
@@ -402,12 +402,10 @@ void BPSerializer::PutOperationPayloadInBuffer(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo)
 {
-    const Params &parameters = blockInfo.Operations[0].Parameters;
-
-    const size_t outputSize = blockInfo.Operations[0].Op->Operate(
+    const size_t outputSize = blockInfo.Operations[0]->Operate(
         reinterpret_cast<char *>(blockInfo.Data), blockInfo.Start,
         blockInfo.Count, variable.m_Type,
-        m_Data.m_Buffer.data() + m_Data.m_Position, parameters);
+        m_Data.m_Buffer.data() + m_Data.m_Position);
 
     m_Data.m_Position += outputSize;
     m_Data.m_AbsolutePosition += outputSize;

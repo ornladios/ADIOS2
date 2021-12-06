@@ -25,7 +25,7 @@ CompressNull::CompressNull(const Params &parameters)
 
 size_t CompressNull::Operate(const char *dataIn, const Dims &blockStart,
                              const Dims &blockCount, const DataType varType,
-                             char *bufferOut, const Params &params)
+                             char *bufferOut)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;

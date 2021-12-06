@@ -213,9 +213,9 @@ private:
                      const std::vector<size_t> &blocksIndexOffsets) const;
 
     template <class T>
-    bool IdentityOperation(
-        const std::vector<typename core::Variable<T>::Operation> &operations)
-        const noexcept;
+    bool
+    IdentityOperation(const std::vector<core::Operator *> &operations) const
+        noexcept;
 
     const helper::BlockOperationInfo &InitPostOperatorBlockData(
         const std::vector<helper::BlockOperationInfo> &blockOperationsInfo)

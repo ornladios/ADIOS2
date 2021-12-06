@@ -18,9 +18,11 @@ add_library(adios2_core
   core/VariableCompound.cpp core/VariableCompound.tcc
   core/Group.cpp core/Group.tcc
 
-#operator callback
+#operator
   operator/callback/Signature1.cpp
   operator/callback/Signature2.cpp
+  operator/OperatorFactory.cpp
+  operator/compress/CompressNull.cpp
 
 #helper
   helper/adiosComm.h  helper/adiosComm.cpp
@@ -93,9 +95,6 @@ add_library(adios2_core
 
   toolkit/burstbuffer/FileDrainer.cpp
   toolkit/burstbuffer/FileDrainerSingleThread.cpp
-
-  operator/compress/CompressorFactory.cpp
-  operator/compress/CompressNull.cpp
 )
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)

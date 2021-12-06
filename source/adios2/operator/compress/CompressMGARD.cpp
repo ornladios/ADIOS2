@@ -28,7 +28,7 @@ CompressMGARD::CompressMGARD(const Params &parameters)
 
 size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
                               const Dims &blockCount, const DataType type,
-                              char *bufferOut, const Params &parameters)
+                              char *bufferOut)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -84,14 +84,14 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     // Parameters
     bool hasTolerance = false;
     double tolerance, s = 0.0;
-    auto itAccuracy = parameters.find("accuracy");
-    if (itAccuracy != parameters.end())
+    auto itAccuracy = m_Parameters.find("accuracy");
+    if (itAccuracy != m_Parameters.end())
     {
         tolerance = std::stod(itAccuracy->second);
         hasTolerance = true;
     }
-    auto itTolerance = parameters.find("tolerance");
-    if (itTolerance != parameters.end())
+    auto itTolerance = m_Parameters.find("tolerance");
+    if (itTolerance != m_Parameters.end())
     {
         tolerance = std::stod(itTolerance->second);
         hasTolerance = true;
@@ -102,8 +102,8 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
                                     "tolerance for MGARD compression "
                                     "operator\n");
     }
-    auto itSParameter = parameters.find("s");
-    if (itSParameter != parameters.end())
+    auto itSParameter = m_Parameters.find("s");
+    if (itSParameter != m_Parameters.end())
     {
         s = std::stod(itSParameter->second);
     }
@@ -150,13 +150,10 @@ size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressMGARD::IsDataTypeValid(const DataType type) const
 {
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
+    if (type == DataType::Double)
+    {
+        return true;
     }
-    ADIOS2_FOREACH_MGARD_TYPE_1ARG(declare_type)
-#undef declare_type
     return false;
 }
 

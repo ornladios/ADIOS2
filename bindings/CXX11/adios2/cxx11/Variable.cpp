@@ -172,17 +172,23 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
-    std::vector<typename Variable<T>::Operation> Variable<T>::Operations()     \
-        const                                                                  \
+    size_t Variable<T>::AddOperation(const std::string &type,                  \
+                                     const Params &parameters)                 \
+    {                                                                          \
+        return m_Variable->AddOperation(type, parameters);                     \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    std::vector<Operator> Variable<T>::Operations() const                      \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \
                                 "in call to Variable<T>::Operations");         \
-        std::vector<Operation> operations;                                     \
+        std::vector<Operator> operations;                                      \
         operations.reserve(m_Variable->m_Operations.size());                   \
                                                                                \
         for (const auto &op : m_Variable->m_Operations)                        \
         {                                                                      \
-            operations.push_back(Operation{Operator(op.Op), op.Parameters});   \
+            operations.push_back(Operator(op));                                \
         }                                                                      \
         return operations;                                                     \
     }                                                                          \

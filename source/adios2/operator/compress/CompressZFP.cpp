@@ -59,7 +59,7 @@ CompressZFP::CompressZFP(const Params &parameters)
 
 size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
                             const Dims &blockCount, const DataType type,
-                            char *bufferOut, const Params &parameters)
+                            char *bufferOut)
 {
 
     const uint8_t bufferVersion = 1;
@@ -82,13 +82,13 @@ size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
                  static_cast<uint8_t>(ZFP_VERSION_MINOR));
     PutParameter(bufferOut, bufferOutOffset,
                  static_cast<uint8_t>(ZFP_VERSION_RELEASE));
-    PutParameters(bufferOut, bufferOutOffset, parameters);
+    PutParameters(bufferOut, bufferOutOffset, m_Parameters);
     // zfp V1 metadata end
 
     Dims convertedDims = ConvertDims(blockCount, type, 3);
 
     zfp_field *field = GetZFPField(dataIn, convertedDims, type);
-    zfp_stream *stream = GetZFPStream(convertedDims, type, parameters);
+    zfp_stream *stream = GetZFPStream(convertedDims, type, m_Parameters);
 
     size_t maxSize = zfp_stream_maximum_size(stream, field);
     // associate bitstream
@@ -145,13 +145,12 @@ size_t CompressZFP::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressZFP::IsDataTypeValid(const DataType type) const
 {
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
+    if (type == DataType::Float || type == DataType::Double ||
+        type == DataType::FloatComplex || type == DataType::DoubleComplex ||
+        type == DataType::Int32 || type == DataType::Int64)
+    {
+        return true;
     }
-    ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
-#undef declare_type
     return false;
 }
 

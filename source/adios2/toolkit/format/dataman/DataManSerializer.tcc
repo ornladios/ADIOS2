@@ -12,26 +12,9 @@
 #define ADIOS2_TOOLKIT_FORMAT_DATAMAN_DATAMANSERIALIZER_TCC_
 
 #include "DataManSerializer.h"
-
-#ifdef ADIOS2_HAVE_ZFP
-#include "adios2/operator/compress/CompressZFP.h"
-#endif
-#ifdef ADIOS2_HAVE_SZ
-#include "adios2/operator/compress/CompressSZ.h"
-#endif
-#ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/operator/compress/CompressBZIP2.h"
-#endif
-#ifdef ADIOS2_HAVE_MGARD
-#include "adios2/operator/compress/CompressMGARD.h"
-#endif
-
-#include "adios2/operator/compress/CompressorFactory.h"
-
 #include "adios2/helper/adiosFunctions.h"
-
+#include "adios2/operator/OperatorFactory.h"
 #include <adios2-perfstubs-interface.h>
-
 #include <iostream>
 
 namespace adios2
@@ -97,13 +80,14 @@ void DataManSerializer::PutData(const core::Variable<T> &variable,
 }
 
 template <class T>
-void DataManSerializer::PutData(
-    const T *inputData, const std::string &varName, const Dims &varShape,
-    const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
-    const Dims &varMemCount, const std::string &doid, const size_t step,
-    const int rank, const std::string &address,
-    const std::vector<core::VariableBase::Operation> &ops, VecPtr localBuffer,
-    JsonPtr metadataJson)
+void DataManSerializer::PutData(const T *inputData, const std::string &varName,
+                                const Dims &varShape, const Dims &varStart,
+                                const Dims &varCount, const Dims &varMemStart,
+                                const Dims &varMemCount,
+                                const std::string &doid, const size_t step,
+                                const int rank, const std::string &address,
+                                const std::vector<core::Operator *> &ops,
+                                VecPtr localBuffer, JsonPtr metadataJson)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     Log(1,
@@ -149,7 +133,7 @@ void DataManSerializer::PutData(
     bool compressed = false;
     if (not ops.empty())
     {
-        compressionMethod = ops[0].Op->m_TypeString;
+        compressionMethod = ops[0]->m_TypeString;
         std::transform(compressionMethod.begin(), compressionMethod.end(),
                        compressionMethod.begin(), ::tolower);
 
@@ -157,17 +141,16 @@ void DataManSerializer::PutData(
                                                  varCount.end(), sizeof(T),
                                                  std::multiplies<size_t>()));
 
-        datasize = core::compress::Compress(
-            reinterpret_cast<const char *>(inputData), varStart, varCount,
-            helper::GetDataType<T>(), m_CompressBuffer.data(),
-            ops[0].Parameters, compressionMethod);
+        datasize = ops[0]->Operate(reinterpret_cast<const char *>(inputData),
+                                   varStart, varCount, helper::GetDataType<T>(),
+                                   m_CompressBuffer.data());
         compressed = true;
     }
 
     if (compressed)
     {
         metaj["Z"] = compressionMethod;
-        metaj["ZP"] = ops[0].Parameters;
+        metaj["ZP"] = ops[0]->GetParameters();
     }
     else
     {
@@ -264,8 +247,8 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 m_OperatorMapMutex.unlock();
                 decompressBuffer.reserve(
                     helper::GetTotalSize(j.count, sizeof(T)));
-                core::compress::Decompress(j.buffer->data() + j.position,
-                                           j.size, decompressBuffer.data());
+                core::Decompress(j.buffer->data() + j.position, j.size,
+                                 decompressBuffer.data());
                 decompressed = true;
                 input_data = decompressBuffer.data();
             }

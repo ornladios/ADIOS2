@@ -43,12 +43,11 @@ public:
      * @param type
      * @param bufferOut format will be: 'DataHeader ; (BloscCompressedChunk |
      * UncompressedData), [ BloscCompressedChunk, ...]'
-     * @param parameters
      * @return size of compressed buffer in bytes
      */
     size_t Operate(const char *dataIn, const Dims &blockStart,
-                   const Dims &blockCount, const DataType type, char *bufferOut,
-                   const Params &parameters) final;
+                   const Dims &blockCount, const DataType type,
+                   char *bufferOut) final;
 
     /**
      * @param bufferIn
