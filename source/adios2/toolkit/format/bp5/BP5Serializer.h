@@ -113,6 +113,7 @@ private:
         ShapeID Shape;
         size_t DataOffset;
         size_t MetaOffset;
+        char *OperatorType;
         int DimCount;
         int Type;
     } * BP5WriterRec;
@@ -167,11 +168,8 @@ private:
     void AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
                           const DataType Type, int ElementSize,
                           char *SizeField);
-    char *ConcatName(const char *base_name, const char *postfix,
-                     ShapeID Shape = ShapeID::Unknown);
-    const char *NamePrefix(ShapeID Shape);
-    char *BuildVarName(const char *base_name, const int type,
-                       const int element_size);
+    char *BuildVarName(const char *base_name, const ShapeID Shape,
+                       const int type, const int element_size);
     void BreakdownVarName(const char *Name, char **base_name_p, int *type_p,
                           int *element_size_p);
     char *BuildArrayDimsName(const char *base_name, const int type,

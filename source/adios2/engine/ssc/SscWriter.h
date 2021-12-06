@@ -15,7 +15,6 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosMpiHandshake.h"
 #include <mpi.h>
-#include <queue>
 
 namespace adios2
 {

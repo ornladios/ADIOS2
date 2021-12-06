@@ -27,7 +27,7 @@ int CompressSirius::m_Tiers = 0;
 bool CompressSirius::m_CurrentReadFinished = false;
 
 CompressSirius::CompressSirius(const Params &parameters)
-: Operator("sirius", parameters)
+: Operator("sirius", COMPRESS_SIRIUS, parameters)
 {
     helper::GetParameter(parameters, "Tiers", m_Tiers);
     m_TierBuffersMap.resize(m_Tiers);
@@ -36,16 +36,12 @@ CompressSirius::CompressSirius(const Params &parameters)
 
 size_t CompressSirius::Operate(const char *dataIn, const Dims &blockStart,
                                const Dims &blockCount, const DataType varType,
-                               char *bufferOut, const Params &params)
+                               char *bufferOut)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
 
-    // Universal operator metadata
-    PutParameter(bufferOut, bufferOutOffset, OperatorType::SIRIUS);
-    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
-    PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
-    // Universal operator metadata end
+    MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
 
     const size_t ndims = blockCount.size();
 
@@ -119,13 +115,10 @@ size_t CompressSirius::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressSirius::IsDataTypeValid(const DataType type) const
 {
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
+    if (type == DataType::Float)
+    {
+        return true;
     }
-    ADIOS2_FOREACH_SIRIUS_TYPE_1ARG(declare_type)
-#undef declare_type
     return false;
 }
 

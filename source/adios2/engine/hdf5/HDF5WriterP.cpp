@@ -24,7 +24,6 @@ HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode mode,
 : Engine("HDF5Writer", io, name, mode, std::move(comm))
 {
     m_IO.m_ReadStreaming = false;
-    m_EndMessage = ", in call to IO HDF5Writer Open " + m_Name + "\n";
     Init();
 }
 

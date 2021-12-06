@@ -238,7 +238,7 @@ void BP5Reader::Init()
         throw std::invalid_argument(
             "ERROR: BPFileReader only "
             "supports OpenMode::Read or OpenMode::ReadRandomAccess from" +
-            m_Name + " " + m_EndMessage);
+            m_Name);
     }
 
     // if IO was involved in reading before this flag may be true now

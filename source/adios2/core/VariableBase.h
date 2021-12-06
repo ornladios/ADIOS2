@@ -13,6 +13,7 @@
 #define ADIOS2_CORE_VARIABLEBASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <memory>
 #include <set>
 #include <sstream>
 #include <string>
@@ -73,20 +74,8 @@ public:
      * already encountered in previous step */
     bool m_FirstStreamingStep = true;
 
-    /** Operators metadata info */
-    struct Operation
-    {
-        /** reference to object derived from Operator class,
-         *  needs a pointer to enable assignment operator (C++ class) */
-        core::Operator *Op;
-        /** Variable specific parameters */
-        Params Parameters;
-        /** resulting information from executing Operation (e.g. buffer size) */
-        Params Info;
-    };
-
     /** Registered transforms */
-    std::vector<Operation> m_Operations;
+    std::vector<Operator *> m_Operations;
 
     size_t m_AvailableStepsStart = 0;
     size_t m_AvailableStepsCount = 0;
@@ -181,6 +170,9 @@ public:
     size_t AddOperation(core::Operator &op,
                         const Params &parameters = Params()) noexcept;
 
+    size_t AddOperation(const std::string &op,
+                        const Params &parameters = Params()) noexcept;
+
     /**
      * Removes all current Operations associated with AddOperation.
      * Provides the posibility to apply or not operators on a step basis.
@@ -235,6 +227,8 @@ protected:
     bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count
 
     unsigned int m_DeferredCounter = 0;
+
+    std::vector<std::shared_ptr<Operator>> m_PrivateOperations;
 
     void InitShapeType();
 

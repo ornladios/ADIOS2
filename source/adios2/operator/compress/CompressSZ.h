@@ -37,12 +37,11 @@ public:
      * @param blockCount
      * @param type
      * @param bufferOut
-     * @param parameters
      * @return size of compressed buffer
      */
     size_t Operate(const char *dataIn, const Dims &blockStart,
-                   const Dims &blockCount, const DataType type, char *bufferOut,
-                   const Params &parameters) final;
+                   const Dims &blockCount, const DataType type,
+                   char *bufferOut) final;
 
     /**
      * @param bufferIn
@@ -66,6 +65,18 @@ private:
      * @return : number of bytes in dataOut
      */
     size_t DecompressV1(const char *bufferIn, const size_t sizeIn,
+                        char *dataOut);
+
+    /**
+     * Decompress function for V2 buffer. Do NOT remove even if the buffer
+     * version is updated. Data might be still in lagacy formats. This function
+     * must be kept for backward compatibility
+     * @param bufferIn : compressed data buffer (V1 only)
+     * @param sizeIn : number of bytes in bufferIn
+     * @param dataOut : decompressed data buffer
+     * @return : number of bytes in dataOut
+     */
+    size_t DecompressV2(const char *bufferIn, const size_t sizeIn,
                         char *dataOut);
 
     std::string m_VersionInfo;

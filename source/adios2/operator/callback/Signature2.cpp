@@ -22,7 +22,8 @@ Signature2::Signature2(
                              const std::string &, const size_t, const Dims &,
                              const Dims &, const Dims &)> &function,
     const Params &parameters)
-: Operator("Signature2", parameters), m_Function(function)
+: Operator("Signature2", Operator::CALLBACK_SIGNATURE2, parameters),
+  m_Function(function)
 {
 }
 
@@ -40,6 +41,19 @@ void Signature2::RunCallback2(void *arg1, const std::string &arg2,
         throw std::runtime_error(
             "ERROR: callback function of Signature2 type failed\n");
     }
+}
+
+size_t Signature2::Operate(const char *dataIn, const Dims &blockStart,
+                           const Dims &blockCount, const DataType type,
+                           char *bufferOut)
+{
+    return 0;
+}
+
+size_t Signature2::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                  char *dataOut)
+{
+    return 0;
 }
 
 bool Signature2::IsDataTypeValid(const DataType type) const { return true; }

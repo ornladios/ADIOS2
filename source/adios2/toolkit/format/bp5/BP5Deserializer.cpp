@@ -14,6 +14,21 @@
 #include "BP5Deserializer.h"
 #include "BP5Deserializer.tcc"
 
+#ifdef ADIOS2_HAVE_ZFP
+#include "adios2/operator/compress/CompressZFP.h"
+#endif
+#ifdef ADIOS2_HAVE_SZ
+#include "adios2/operator/compress/CompressSZ.h"
+#endif
+#ifdef ADIOS2_HAVE_BZIP2
+#include "adios2/operator/compress/CompressBZIP2.h"
+#endif
+#ifdef ADIOS2_HAVE_MGARD
+#include "adios2/operator/compress/CompressMGARD.h"
+#endif
+
+#include "adios2/operator/OperatorFactory.h"
+
 #include <float.h>
 #include <limits.h>
 #include <math.h>
@@ -54,8 +69,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::GetPriorControl(FMFormat Format)
 
 bool BP5Deserializer::NameIndicatesArray(const char *Name)
 {
-    int Len = strlen(Name);
-    return (strcmp("Dims", Name + Len - 4) == 0);
+    return ((Name[2] == 'G') || (Name[2] == 'L') || (Name[2] == 'J'));
 }
 
 bool BP5Deserializer::NameIndicatesAttrArray(const char *Name)
@@ -141,26 +155,47 @@ void BP5Deserializer::BreakdownVarName(const char *Name, char **base_name_p,
 {
     int Type;
     int ElementSize;
-    const char *NameStart = strchr(strchr(Name, '_') + 1, '_') + 1;
-    // + 3 to skip BP5 or bp5 prefix
-    sscanf(Name + 3, "%d_%d_", &ElementSize, &Type);
+    const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
+    // + 4 to skip BP5_ or bp5_ prefix
+    sscanf(Name + 4, "%d_%d_", &ElementSize, &Type);
     *element_size_p = ElementSize;
     *type_p = (DataType)Type;
     *base_name_p = strdup(NameStart);
 }
 
 void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
-                                         DataType *type_p, int *element_size_p)
+                                         DataType *type_p, int *element_size_p,
+                                         char **Operator, bool *MinMax)
 {
     int Type;
     int ElementSize;
-    const char *NameStart = strchr(strchr(Name, '_') + 1, '_') + 1;
-    // + 3 to skip BP5 or bp5 prefix
-    sscanf(Name + 3, "%d_%d_", &ElementSize, &Type);
+    const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
+    // + 3 to skip BP5_ or bp5_ prefix
+    sscanf(Name + 4, "%d_%d", &ElementSize, &Type);
+    const char *Plus = index(Name, '+');
+    *Operator = NULL;
+    *MinMax = false;
+    while (Plus && (*Plus == '+'))
+    {
+        int Len;
+        if (sscanf(Plus, "+%dO", &Len) == 1)
+        { // Operator Spec
+            *Operator = (char *)malloc(Len + 1);
+            const char *OpStart = index(Plus, 'O') + 1;
+            memcpy(*Operator, index(Plus, 'O') + 1, Len);
+            Operator[Len] = 0;
+            Plus = OpStart + Len;
+        }
+        else if (strncmp(Plus, "+MM", 3) == 0)
+        {
+            *MinMax = true;
+            Plus += 3;
+        }
+    }
     *element_size_p = ElementSize;
     *type_p = (DataType)Type;
     *base_name_p = strdup(NameStart);
-    (*base_name_p)[strlen(*base_name_p) - 4] = 0; // kill "Dims"
+    *(rindex(*base_name_p, '_')) = 0;
 }
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key)
@@ -233,25 +268,16 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             C->OrigShapeID = ShapeID::LocalArray;
             break;
         }
-        if (strncmp(FieldList[i].field_name, "SST", 3) == 0)
-        {
-            if (NameIndicatesArray(FieldList[i].field_name))
-            {
-                C->OrigShapeID = ShapeID::LocalArray;
-            }
-            else
-            {
-                C->OrigShapeID = ShapeID::GlobalValue;
-            }
-        }
         BP5VarRec *VarRec = nullptr;
         if (NameIndicatesArray(FieldList[i].field_name))
         {
             char *ArrayName;
             DataType Type;
             int ElementSize;
-            BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
-                               &ElementSize);
+            char *Operator = NULL;
+            bool MinMax = false;
+            BreakdownArrayName(FieldList[i + 4].field_name, &ArrayName, &Type,
+                               &ElementSize, &Operator, &MinMax);
             VarRec = LookupVarByName(ArrayName);
             if (!VarRec)
             {
@@ -259,9 +285,14 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                 VarRec->Type = Type;
                 VarRec->ElementSize = ElementSize;
                 VarRec->OrigShapeID = C->OrigShapeID;
+                VarRec->Operator = Operator;
                 C->ElementSize = ElementSize;
             }
             i += 7; // number of fields in MetaArrayRec
+            if (Operator)
+            {
+                i++;
+            }
             free(ArrayName);
             C->VarRec = VarRec;
         }
@@ -629,7 +660,11 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
     if (BlockLen == 0)
         return;
 
-    m_Engine->m_IO.RemoveAllAttributes();
+    if (Step != m_LastAttrStep)
+    {
+        m_Engine->m_IO.RemoveAllAttributes();
+        m_LastAttrStep = Step;
+    }
     FFSformat =
         FFSTypeHandle_from_encode(ReaderFFSContext, (char *)AttributeBlock);
     if (!FFSformat)
@@ -694,12 +729,13 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
             else if (Type == helper::GetDataType<std::string>())
             {
                 m_Engine->m_IO.DefineAttribute<std::string>(
-                    FieldName, *(char **)field_data);
+                    FieldName, *(char **)field_data, "", "/", true);
             }
 #define declare_type(T)                                                        \
     else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
-        m_Engine->m_IO.DefineAttribute<T>(FieldName, *(T *)field_data);        \
+        m_Engine->m_IO.DefineAttribute<T>(FieldName, *(T *)field_data, "",     \
+                                          "/", true);                          \
     }
 
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -737,13 +773,14 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
                     array[i].assign(str_array[i]);
                 }
                 m_Engine->m_IO.DefineAttribute<std::string>(
-                    FieldName, array.data(), array.size());
+                    FieldName, array.data(), array.size(), "", "/", true);
             }
 #define declare_type(T)                                                        \
     else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         T **array = *(T ***)field_data;                                        \
-        m_Engine->m_IO.DefineAttribute<T>(FieldName, (T *)array, ElemCount);   \
+        m_Engine->m_IO.DefineAttribute<T>(FieldName, (T *)array, ElemCount,    \
+                                          "", "/", true);                      \
     }
 
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -1047,6 +1084,24 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                     char *IncomingData =
                         (char *)Requests[ReqIndex].DestinationAddr +
                         writer_meta_base->DataLocation[i];
+                    std::vector<char> decompressBuffer;
+                    if (Req.VarRec->Operator != NULL)
+                    {
+                        size_t DestSize = Req.VarRec->ElementSize;
+                        for (size_t dim = 0; dim < Req.VarRec->DimCount; dim++)
+                        {
+                            DestSize *=
+                                writer_meta_base
+                                    ->Count[dim * writer_meta_base->Dims];
+                        }
+                        decompressBuffer.reserve(DestSize);
+                        core::Decompress(
+                            IncomingData,
+                            ((MetaArrayRecOperator *)writer_meta_base)
+                                ->DataLengths[i],
+                            decompressBuffer.data());
+                        IncomingData = decompressBuffer.data();
+                    }
                     if (Req.Start.size())
                     {
                         SelOffset = Req.Start.data();

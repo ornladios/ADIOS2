@@ -28,23 +28,19 @@ namespace compress
 {
 
 CompressBZIP2::CompressBZIP2(const Params &parameters)
-: Operator("bzip2", parameters)
+: Operator("bzip2", COMPRESS_BZIP2, parameters)
 {
 }
 
 size_t CompressBZIP2::Operate(const char *dataIn, const Dims &blockStart,
                               const Dims &blockCount, DataType type,
-                              char *bufferOut, const Params &parameters)
+                              char *bufferOut)
 {
 
     const uint8_t bufferVersion = 1;
     unsigned int destOffset = 0;
 
-    // Universal operator metadata
-    PutParameter(bufferOut, destOffset, OperatorType::BZIP2);
-    PutParameter(bufferOut, destOffset, bufferVersion);
-    PutParameter(bufferOut, destOffset, static_cast<uint16_t>(0));
-    // Universal operator metadata end
+    MakeCommonHeader(bufferOut, destOffset, bufferVersion);
 
     const size_t sizeIn =
         helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
@@ -58,14 +54,15 @@ size_t CompressBZIP2::Operate(const char *dataIn, const Dims &blockStart,
     int blockSize100k = 1;
     int verbosity = 0;
     int workFactor = 0;
-    if (!parameters.empty())
+    if (!m_Parameters.empty())
     {
         const std::string hint(" in call to CompressBZIP2 Compress " +
                                ToString(type) + "\n");
-        helper::SetParameterValueInt("blockSize100k", parameters, blockSize100k,
+        helper::SetParameterValueInt("blockSize100k", m_Parameters,
+                                     blockSize100k, hint);
+        helper::SetParameterValueInt("verbosity", m_Parameters, verbosity,
                                      hint);
-        helper::SetParameterValueInt("verbosity", parameters, verbosity, hint);
-        helper::SetParameterValueInt("workFactor", parameters, workFactor,
+        helper::SetParameterValueInt("workFactor", m_Parameters, workFactor,
                                      hint);
         if (blockSize100k < 1 || blockSize100k > 9)
         {

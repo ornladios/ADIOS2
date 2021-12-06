@@ -281,21 +281,17 @@ static pressio_compressor *adios_to_libpressio_compressor(Params const &params)
 }
 
 CompressLibPressio::CompressLibPressio(const Params &parameters)
-: Operator("libpressio", parameters)
+: Operator("libpressio", COMPRESS_LIBPRESSIO, parameters)
 {
 }
 size_t CompressLibPressio::Operate(const char *dataIn, const Dims &blockStart,
                                    const Dims &blockCount, const DataType type,
-                                   char *bufferOut, const Params &parameters)
+                                   char *bufferOut)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
 
-    // Universal operator metadata
-    PutParameter(bufferOut, bufferOutOffset, OperatorType::LIBPRESSIO);
-    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
-    PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
-    // Universal operator metadata end
+    MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
 
     const size_t ndims = blockCount.size();
 
@@ -312,7 +308,7 @@ size_t CompressLibPressio::Operate(const char *dataIn, const Dims &blockStart,
                  static_cast<uint8_t>(pressio_minor_version()));
     PutParameter(bufferOut, bufferOutOffset,
                  static_cast<uint8_t>(pressio_patch_version()));
-    PutParameters(bufferOut, bufferOutOffset, parameters);
+    PutParameters(bufferOut, bufferOutOffset, m_Parameters);
     // zfp V1 metadata end
 
     auto inputs_dims = adios_to_libpressio_dims(blockCount);
@@ -324,7 +320,7 @@ size_t CompressLibPressio::Operate(const char *dataIn, const Dims &blockStart,
     pressio_compressor *compressor = nullptr;
     try
     {
-        compressor = adios_to_libpressio_compressor(parameters);
+        compressor = adios_to_libpressio_compressor(m_Parameters);
     }
     catch (std::exception &e)
     {
@@ -380,13 +376,14 @@ size_t CompressLibPressio::InverseOperate(const char *bufferIn,
 
 bool CompressLibPressio::IsDataTypeValid(const DataType type) const
 {
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
+    if (type == DataType::Int8 || type == DataType::UInt8 ||
+        type == DataType::Int16 || type == DataType::UInt16 ||
+        type == DataType::Int32 || type == DataType::UInt32 ||
+        type == DataType::Int64 || type == DataType::UInt64 ||
+        type == DataType::Float || type == DataType::Double)
+    {
+        return true;
     }
-    ADIOS2_FOREACH_LIBPRESSIO_TYPE_1ARG(declare_type)
-#undef declare_type
     return false;
 }
 

@@ -43,7 +43,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             "ERROR: SstReader did not find active "
             "Writer contact info in file \"" +
             m_Name + SST_POSTFIX +
-            "\".  Timeout or non-current SST contact file?" + m_EndMessage);
+            "\".  Timeout or non-current SST contact file?");
     }
 
     // Maybe need other writer-side params in the future, but for now only
@@ -293,8 +293,7 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     case adios2::StepMode::Append:
     case adios2::StepMode::Update:
         throw std::invalid_argument(
-            "ERROR: SstReader::BeginStep inappropriate StepMode specified" +
-            m_EndMessage);
+            "ERROR: SstReader::BeginStep inappropriate StepMode specified");
     case adios2::StepMode::Read:
         break;
     }

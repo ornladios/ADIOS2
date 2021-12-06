@@ -38,7 +38,6 @@ BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Open");
     m_IO.m_ReadStreaming = false;
-    m_EndMessage = " in call to IO Open BP5Writer " + m_Name + "\n";
 
     Init();
 }

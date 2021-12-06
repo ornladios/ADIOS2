@@ -88,6 +88,8 @@ private:
     std::vector<std::string> m_DrainMetadataIndexFileNames;
     std::vector<std::string> m_ActiveFlagFileNames;
 
+    int m_Verbosity = 0;
+
     void Init() final;
 
     /** Parses parameters from IO SetParameters */

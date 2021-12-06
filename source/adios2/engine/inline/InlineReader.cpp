@@ -28,7 +28,6 @@ InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
 : Engine("InlineReader", io, name, mode, std::move(comm))
 {
     PERFSTUBS_SCOPED_TIMER("InlineReader::Open");
-    m_EndMessage = " in call to IO Open InlineReader " + m_Name + "\n";
     m_ReaderRank = m_Comm.Rank();
     Init();
     if (m_Verbosity == 5)

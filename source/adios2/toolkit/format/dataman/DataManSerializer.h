@@ -99,7 +99,7 @@ public:
                  const Dims &varCount, const Dims &varMemStart,
                  const Dims &varMemCount, const std::string &doid,
                  const size_t step, const int rank, const std::string &address,
-                 const std::vector<core::VariableBase::Operation> &ops,
+                 const std::vector<core::Operator *> &ops,
                  VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     // another wrapper for PutData which accepts adios2::core::Variable
@@ -157,9 +157,6 @@ public:
 private:
     template <class T>
     void PutAttribute(const core::Attribute<T> &attribute);
-
-    bool IsCompressionAvailable(const std::string &method, DataType type,
-                                const Dims &count);
 
     void JsonToVarMap(nlohmann::json &metaJ, VecPtr pack);
 

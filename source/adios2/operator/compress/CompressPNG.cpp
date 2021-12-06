@@ -43,22 +43,19 @@ const std::map<std::string, std::set<uint32_t>> CompressPNG::m_BitDepths = {
     {"PNG_COLOR_TYPE_GA", {8, 16}}};
 
 // PUBLIC
-CompressPNG::CompressPNG(const Params &parameters) : Operator("png", parameters)
+CompressPNG::CompressPNG(const Params &parameters)
+: Operator("png", COMPRESS_PNG, parameters)
 {
 }
 
 size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
                             const Dims &blockCount, const DataType type,
-                            char *bufferOut, const Params &parameters)
+                            char *bufferOut)
 {
     size_t bufferOutOffset = 0;
     const uint8_t bufferVersion = 1;
 
-    // Universal operator metadata
-    PutParameter(bufferOut, bufferOutOffset, OperatorType::PNG);
-    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
-    PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
-    // Universal operator metadata end
+    MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
 
     size_t paramOffset = bufferOutOffset;
     bufferOutOffset += sizeof(size_t) + 3;
@@ -87,7 +84,7 @@ size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
     int bitDepth = 8;
     std::string colorTypeStr = "PNG_COLOR_TYPE_RGBA";
 
-    for (const auto &itParameter : parameters)
+    for (const auto &itParameter : m_Parameters)
     {
         const std::string key = itParameter.first;
         const std::string value = itParameter.second;

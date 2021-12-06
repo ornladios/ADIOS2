@@ -38,22 +38,18 @@ const std::set<std::string> CompressBlosc::m_Compressors = {
     "blosclz", "lz4", "lz4hc", "snappy", "zlib", "zstd"};
 
 CompressBlosc::CompressBlosc(const Params &parameters)
-: Operator("blosc", parameters)
+: Operator("blosc", COMPRESS_BLOSC, parameters)
 {
 }
 
 size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
                               const Dims &blockCount, const DataType type,
-                              char *bufferOut, const Params &parameters)
+                              char *bufferOut)
 {
     size_t bufferOutOffset = 0;
     const uint8_t bufferVersion = 1;
 
-    // Universal operator metadata
-    PutParameter(bufferOut, bufferOutOffset, OperatorType::BLOSC);
-    PutParameter(bufferOut, bufferOutOffset, bufferVersion);
-    PutParameter(bufferOut, bufferOutOffset, static_cast<uint16_t>(0));
-    // Universal operator metadata end
+    MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
 
     const size_t sizeIn =
         helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
@@ -81,7 +77,7 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
     std::string compressor = "blosclz";
     size_t blockSize = 0;
 
-    for (const auto &itParameter : parameters)
+    for (const auto &itParameter : m_Parameters)
     {
         const std::string key = itParameter.first;
         const std::string value = itParameter.second;
@@ -92,11 +88,11 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
                 value, "when setting Blosc clevel parameter\n"));
             if (compressionLevel < 0 || compressionLevel > 9)
             {
-                throw std::invalid_argument(
-                    "ERROR: compression_level must be an "
-                    "integer between 0 (default: no compression) and 9 "
-                    "(more compression, more memory) inclusive, in call to "
-                    "ADIOS2 Blosc Compress\n");
+                helper::Log("Operator", "CompressBlosc", "Operate",
+                            "compression_level must be an integer between 0 "
+                            "(no compression) and 9 (more compression, more "
+                            "memory consumption) inclusive",
+                            helper::EXCEPTION);
             }
         }
         else if (key == "doshuffle")
@@ -104,11 +100,10 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
             auto itShuffle = m_Shuffles.find(value);
             if (itShuffle == m_Shuffles.end())
             {
-                throw std::invalid_argument(
-                    "ERROR: invalid shuffle vale " + value +
-                    " must be BLOSC_SHUFFLE, BLOSC_NOSHUFFLE or "
-                    "BLOSC_BITSHUFFLE,  "
-                    " in call to ADIOS2 Blosc Compress\n");
+                helper::Log("Operator", "CompressBlosc", "Operate",
+                            "Parameter doshuffle must be BLOSC_SHUFFLE, "
+                            "BLOSC_NOSHUFFLE or BLOSC_BITSHUFFLE",
+                            helper::EXCEPTION);
             }
             doShuffle = itShuffle->second;
         }
@@ -122,11 +117,10 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
             compressor = value;
             if (m_Compressors.count(compressor) == 0)
             {
-                throw std::invalid_argument(
-                    "ERROR: invalid compressor " + compressor +
-                    " valid values: blosclz (default), lz4, lz4hc, "
-                    "snappy, "
-                    "zlib, or zstd, in call to ADIOS2 Blosc Compression\n");
+                helper::Log("Operator", "CompressBlosc", "Operate",
+                            "Parameter compressor must be blosclz (default), "
+                            "lz4, lz4hc, snappy, zlib, or zstd",
+                            helper::EXCEPTION);
             }
         }
         else if (key == "blocksize")
@@ -174,10 +168,10 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
         const int result = blosc_set_compressor(compressor.c_str());
         if (result == -1)
         {
-            throw std::invalid_argument(
-                "ERROR: invalid compressor " + compressor +
-                " check if supported by blosc build, in "
-                "call to ADIOS2 Blosc Compression\n");
+            helper::Log("Operator", "CompressBlosc", "Operate",
+                        "blosc library linked does not support compressor " +
+                            compressor,
+                        helper::EXCEPTION);
         }
         blosc_set_nthreads(threads);
         blosc_set_blocksize(blockSize);
@@ -249,7 +243,8 @@ size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        throw("unknown blosc buffer version");
+        helper::Log("Operator", "CompressBlosc", "InverseOperate",
+                    "corrupted compressed buffer", helper::EXCEPTION);
     }
 
     return 0;
@@ -277,7 +272,9 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     if (sizeIn - bufferInOffset < sizeof(DataHeader))
     {
-        throw("corrupted blosc buffer header." + m_VersionInfo + "\n");
+        helper::Log("Operator", "CompressBlosc", "InverseOperate",
+                    "corrupted compressed buffer." + m_VersionInfo,
+                    helper::EXCEPTION);
     }
     const bool isChunked =
         reinterpret_cast<const DataHeader *>(bufferIn + bufferInOffset)
@@ -298,7 +295,9 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     if (decompressedSize != sizeOut)
     {
-        throw("corrupted blosc buffer." + m_VersionInfo + "\n");
+        helper::Log("Operator", "CompressBlosc", "InverseOperate",
+                    "corrupted compressed buffer." + m_VersionInfo,
+                    helper::EXCEPTION);
     }
     return sizeOut;
 }
@@ -363,10 +362,11 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
                 currentOutputSize += static_cast<size_t>(decompressdSize);
             else
             {
-                throw std::runtime_error(
-                    "ERROR: ADIOS2 Blosc Decompress failed. Decompressed chunk "
-                    "results in zero decompressed bytes." +
-                    m_VersionInfo + "\n");
+                helper::Log("Operator", "CompressBlosc",
+                            "DecompressChunkedFormat",
+                            "blosc decompress failed with zero buffer size. " +
+                                m_VersionInfo,
+                            helper::EXCEPTION);
             }
             inputOffset += static_cast<size_t>(max_inputDataSize);
         }
