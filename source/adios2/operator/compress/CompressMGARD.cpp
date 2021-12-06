@@ -150,13 +150,10 @@ size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressMGARD::IsDataTypeValid(const DataType type) const
 {
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
+    if (type == DataType::Double)
+    {
+        return true;
     }
-    ADIOS2_FOREACH_MGARD_TYPE_1ARG(declare_type)
-#undef declare_type
     return false;
 }
 

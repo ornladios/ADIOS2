@@ -376,13 +376,14 @@ size_t CompressLibPressio::InverseOperate(const char *bufferIn,
 
 bool CompressLibPressio::IsDataTypeValid(const DataType type) const
 {
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
+    if (type == DataType::Int8 || type == DataType::UInt8 ||
+        type == DataType::Int16 || type == DataType::UInt16 ||
+        type == DataType::Int32 || type == DataType::UInt32 ||
+        type == DataType::Int64 || type == DataType::UInt64 ||
+        type == DataType::Float || type == DataType::Double)
+    {
+        return true;
     }
-    ADIOS2_FOREACH_LIBPRESSIO_TYPE_1ARG(declare_type)
-#undef declare_type
     return false;
 }
 

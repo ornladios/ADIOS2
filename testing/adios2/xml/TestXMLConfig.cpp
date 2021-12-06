@@ -106,9 +106,10 @@ TEST_F(XMLConfigTest, OpNullException)
                                  "configOpNullException.xml");
 
 #if ADIOS2_USE_MPI
-    EXPECT_THROW(adios2::ADIOS adios(configFile, MPI_COMM_WORLD), std::string);
+    EXPECT_THROW(adios2::ADIOS adios(configFile, MPI_COMM_WORLD),
+                 std::invalid_argument);
 #else
-    EXPECT_THROW(adios2::ADIOS adios(configFile), std::string);
+    EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 #endif
 }
 
@@ -122,7 +123,7 @@ TEST_F(XMLConfigTest, OpNoneException)
     EXPECT_THROW(adios2::ADIOS adios(configFile, MPI_COMM_WORLD),
                  std::invalid_argument);
 #else
-    EXPECT_THROW(adios2::ADIOS adios(configFile), std::string);
+    EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 #endif
 }
 

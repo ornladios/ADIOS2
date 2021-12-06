@@ -145,13 +145,12 @@ size_t CompressZFP::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressZFP::IsDataTypeValid(const DataType type) const
 {
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
+    if (type == DataType::Float || type == DataType::Double ||
+        type == DataType::FloatComplex || type == DataType::DoubleComplex ||
+        type == DataType::Int32 || type == DataType::Int64)
+    {
+        return true;
     }
-    ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
-#undef declare_type
     return false;
 }
 

@@ -115,13 +115,10 @@ size_t CompressSirius::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressSirius::IsDataTypeValid(const DataType type) const
 {
-#define declare_type(T)                                                        \
-    if (helper::GetDataType<T>() == type)                                      \
-    {                                                                          \
-        return true;                                                           \
+    if (type == DataType::Float)
+    {
+        return true;
     }
-    ADIOS2_FOREACH_SIRIUS_TYPE_1ARG(declare_type)
-#undef declare_type
     return false;
 }
 
