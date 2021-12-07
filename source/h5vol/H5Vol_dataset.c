@@ -100,7 +100,7 @@ herr_t H5VL_adios2_dataset_read(void *dset, hid_t mem_type_id,
     return gADIOS2ReadVar(var);
 }
 
-herr_t H5VL_adios2_dataset_get(void *dset,  H5VL_dataset_get_args_t *args,
+herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
                                hid_t dxpl_id, void **req)
 {
     REQUIRE_NOT_NULL_ERR(dset, -1);

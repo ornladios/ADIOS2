@@ -148,10 +148,11 @@ extern void *H5VL_adios2_object_open(void *obj,
                                      hid_t H5_ATTR_UNUSED dxpl_id,
                                      void H5_ATTR_UNUSED **req);
 
-extern herr_t
-H5VL_adios2_object_get(void *obj, const H5VL_loc_params_t *loc_params,
-                       H5VL_object_get_args_t *args, hid_t H5_ATTR_UNUSED dxpl_id,
-                       void H5_ATTR_UNUSED **req);
+extern herr_t H5VL_adios2_object_get(void *obj,
+                                     const H5VL_loc_params_t *loc_params,
+                                     H5VL_object_get_args_t *args,
+                                     hid_t H5_ATTR_UNUSED dxpl_id,
+                                     void H5_ATTR_UNUSED **req);
 
 // dataset functions:
 extern void *H5VL_adios2_dataset_create(void *obj,
@@ -189,10 +190,11 @@ extern herr_t H5VL_adios2_link_specific(void *obj,
                                         hid_t H5_ATTR_UNUSED dxpl_id,
                                         void H5_ATTR_UNUSED **req);
 
-extern herr_t
-H5VL_adios2_link_get(void *obj, const H5VL_loc_params_t *loc_params,
-                      H5VL_link_get_args_t *args, hid_t H5_ATTR_UNUSED dxpl_id,
-                     void H5_ATTR_UNUSED **req);
+extern herr_t H5VL_adios2_link_get(void *obj,
+                                   const H5VL_loc_params_t *loc_params,
+                                   H5VL_link_get_args_t *args,
+                                   hid_t H5_ATTR_UNUSED dxpl_id,
+                                   void H5_ATTR_UNUSED **req);
 
 //
 // group functions:
