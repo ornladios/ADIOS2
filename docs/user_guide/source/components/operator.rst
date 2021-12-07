@@ -10,7 +10,7 @@ Current supported operations are:
 
 ADIOS2 enables the use of third-party libraries to execute these tasks.
 
-Operators can be attached onto a variable in two modes: private or shared. In most situations, it is recommended to add an operator as a private one, which means it is owned by a certain Variable. A simple example is as follows.
+Operators can be attached onto a variable in two modes: private or shared. In most situations, it is recommended to add an operator as a private one, which means it is owned by a certain variable. A simple example code is as follows.
 
 .. code-block:: c++
 
