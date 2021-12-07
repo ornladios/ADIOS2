@@ -13,6 +13,7 @@ ADIOS2 enables the use of third-party libraries to execute these tasks.
 Operators can be attached onto a variable in two modes: private or shared. In most situations, it is recommended to add an operator as a private one, which means it is owned by a certain Variable. A simple example is as follows.
 
 .. code-block:: c++
+
     #include <vector>
     #include <adios2.h>
     int main(int argc, char *argv[])
@@ -46,6 +47,7 @@ Operators can be attached onto a variable in two modes: private or shared. In mo
 For users who need to attach a single operator onto multiple variables, a shared operator can be defined using the adios2::ADIOS object, and then attached to multiple variables using the reference to the operator object. Note that in this mode, all variables sharing this operator will also share the same configuration map. It should be only used when a number of variables need *exactly* the same operation. In real world use cases this is rarely seen, so please use this mode with caution.
 
 .. code-block:: c++
+
     #include <vector>
     #include <adios2.h>
     int main(int argc, char *argv[])
