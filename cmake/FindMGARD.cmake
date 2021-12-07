@@ -37,7 +37,7 @@ if(NOT MGARD_FOUND)
     )
   endif()
 
-  find_path(MGARD_INCLUDE_DIR mgard/compress_cuda.hpp ${MGARD_INCLUDE_OPTS})
+  find_path(MGARD_INCLUDE_DIR mgard/compress_x.hpp ${MGARD_INCLUDE_OPTS})
   find_library(MGARD_LIBRARY NAMES mgard ${MGARD_LIBRARY_OPTS})
   find_library(ZLIB_LIBRARY NAMES zlib z ${ZLIB_LIBRARY_OPTS})
   find_library(ZSTD_LIBRARY NAMES zstd ${ZSTD_LIBRARY_OPTS})

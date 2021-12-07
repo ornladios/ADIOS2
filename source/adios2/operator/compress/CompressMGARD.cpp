@@ -4,7 +4,7 @@
  *
  * CompressMGARD.cpp :
  *
- *  Created on: Aug 3, 2018
+ *  Created on: Dec 1, 2021
  *      Author: Jason Wang jason.ruonan.wang@gmail.com
  */
 

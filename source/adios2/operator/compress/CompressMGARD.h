@@ -4,8 +4,8 @@
  *
  * CompressMGARD.h :
  *
- *  Created on: Aug 3, 2018
- *      Author: William F Godoy godoywf@ornl.gov
+ *  Created on: Dec 1, 2021
+ *      Author: Jason Wang jason.ruonan.wang@gmail.com
  */
 
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSMGARD_H_
@@ -24,9 +24,6 @@ class CompressMGARD : public Operator
 {
 
 public:
-    /**
-     * Unique constructor
-     */
     CompressMGARD(const Params &parameters);
 
     ~CompressMGARD() = default;
