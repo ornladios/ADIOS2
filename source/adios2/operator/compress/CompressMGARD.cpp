@@ -12,7 +12,7 @@
 #include "adios2/helper/adiosFunctions.h"
 #include <cstring>
 #include <mgard/MGARDConfig.hpp>
-#include <mgard/compress_cuda.hpp>
+#include <mgard/compress_x.hpp>
 
 namespace adios2
 {
@@ -58,14 +58,14 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     // mgard V1 metadata end
 
     // set type
-    mgard_cuda::data_type mgardType;
+    mgard_x::data_type mgardType;
     if (type == helper::GetDataType<float>())
     {
-        mgardType = mgard_cuda::data_type::Float;
+        mgardType = mgard_x::data_type::Float;
     }
     else if (type == helper::GetDataType<double>())
     {
-        mgardType = mgard_cuda::data_type::Double;
+        mgardType = mgard_x::data_type::Double;
     }
     else
     {
@@ -75,8 +75,8 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     // set type end
 
     // set mgard style dim info
-    mgard_cuda::DIM mgardDim = ndims;
-    std::vector<mgard_cuda::SIZE> mgardCount;
+    mgard_x::DIM mgardDim = ndims;
+    std::vector<mgard_x::SIZE> mgardCount;
     for (const auto &c : blockCount)
     {
         mgardCount.push_back(c);
@@ -87,10 +87,10 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     bool hasTolerance = false;
     double tolerance = 0.0;
     double s = 0.0;
-    auto errorBoundType = mgard_cuda::error_bound_type::REL;
+    auto errorBoundType = mgard_x::error_bound_type::REL;
 
-    auto itAccuracy = parameters.find("accuracy");
-    if (itAccuracy != parameters.end())
+    auto itAccuracy = m_Parameters.find("accuracy");
+    if (itAccuracy != m_Parameters.end())
     {
         tolerance = std::stod(itAccuracy->second);
         hasTolerance = true;
@@ -112,23 +112,23 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     {
         s = std::stod(itSParameter->second);
     }
-    auto itMode = parameters.find("mode");
-    if (itMode != parameters.end())
+    auto itMode = m_Parameters.find("mode");
+    if (itMode != m_Parameters.end())
     {
         if (itMode->second == "ABS")
         {
-            errorBoundType = mgard_cuda::error_bound_type::ABS;
+            errorBoundType = mgard_x::error_bound_type::ABS;
         }
         else if (itMode->second == "REL")
         {
-            errorBoundType = mgard_cuda::error_bound_type::REL;
+            errorBoundType = mgard_x::error_bound_type::REL;
         }
     }
 
     size_t sizeOut = 0;
     void *compressedData = nullptr;
-    mgard_cuda::compress(mgardDim, mgardType, mgardCount, tolerance, s,
-                         errorBoundType, dataIn, compressedData, sizeOut);
+    mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s,
+                      errorBoundType, dataIn, compressedData, sizeOut, false);
     std::memcpy(bufferOut + bufferOutOffset, compressedData, sizeOut);
     bufferOutOffset += sizeOut;
 
@@ -170,8 +170,8 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
     try
     {
         void *dataOutVoid = nullptr;
-        mgard_cuda::decompress(bufferIn + bufferInOffset,
-                               sizeIn - bufferInOffset, dataOutVoid);
+        mgard_x::decompress(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                            dataOutVoid, false);
         std::memcpy(dataOut, dataOutVoid, sizeOut);
         if (dataOutVoid)
         {
@@ -214,7 +214,7 @@ size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressMGARD::IsDataTypeValid(const DataType type) const
 {
-    if (type == DataType::Double)
+    if (type == DataType::Double || type == DataType::Float)
     {
         return true;
     }
