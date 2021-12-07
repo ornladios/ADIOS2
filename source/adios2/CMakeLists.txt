@@ -56,6 +56,8 @@ add_library(adios2_core
   engine/null/NullEngine.cpp
 
   engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
+
+  engine/plugin/PluginEngine.cpp engine/plugin/PluginEngineInterface.cpp
 #toolkit
   toolkit/format/buffer/Buffer.cpp
   toolkit/format/buffer/BufferV.cpp
@@ -345,6 +347,29 @@ set_target_properties(
 
 install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common COMPONENT adios2_core-development
+)
+
+install(DIRECTORY core/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/core COMPONENT adios2_core-development
+  FILES_MATCHING PATTERN "*.h"
+)
+
+install(DIRECTORY engine/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/engine COMPONENT adios2_core-development
+  FILES_MATCHING PATTERN "*/*.h"
+  PATTERN "*/*.inl"
+)
+
+install(DIRECTORY helper/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/helper COMPONENT adios2_core-development
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN "*.inl"
+)
+
+install(DIRECTORY toolkit/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/toolkit COMPONENT adios2_core-development
+  FILES_MATCHING PATTERN "*/*.h"
+  PATTERN "*/*.inl"
 )
 
 # Library installation

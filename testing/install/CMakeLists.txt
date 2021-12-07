@@ -109,3 +109,5 @@ if(NOT WIN32)
     endif()
   endif()
 endif()
+
+add_install_cmake_test(plugin)

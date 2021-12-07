@@ -27,6 +27,7 @@ public:
 
 public:
     DynamicBinder(std::string libName);
+    DynamicBinder(std::string libName, std::string libPath);
     ~DynamicBinder();
 
     VoidSymbolPointer GetSymbol(std::string symbolName);

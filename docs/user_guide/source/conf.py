@@ -140,6 +140,7 @@ exclude_patterns = [
     'engines/sst.rst',
     'engines/inline.rst',
     'engines/null.rst',
+    'engines/plugin.rst',
     # 'engines/engines.rst',
     # 'faq/faq.rst',
 ]

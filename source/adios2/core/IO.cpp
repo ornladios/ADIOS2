@@ -32,6 +32,7 @@
 #include "adios2/engine/mhs/MhsWriter.h"
 #include "adios2/engine/null/NullEngine.h"
 #include "adios2/engine/nullcore/NullCoreWriter.h"
+#include "adios2/engine/plugin/PluginEngine.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
 
@@ -129,6 +130,9 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
     {"nullcore",
      {IO::NoEngine("ERROR: nullcore engine does not support read mode"),
       IO::MakeEngine<engine::NullCoreWriter>}},
+    {"plugin",
+     {IO::MakeEngine<engine::PluginEngine>,
+      IO::MakeEngine<engine::PluginEngine>}},
 };
 
 // Synchronize access to the factory in case one thread is

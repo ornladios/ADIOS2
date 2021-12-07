@@ -18,6 +18,7 @@
 #include <vector>    // for vector
 
 #include <adios2sys/DynamicLoader.hxx>
+#include <adios2sys/SystemTools.hxx>
 
 namespace adios2
 {
@@ -31,6 +32,12 @@ struct DynamicBinder::Impl
 
 DynamicBinder::DynamicBinder(std::string libName)
 {
+    DynamicBinder(libName, "");
+}
+
+DynamicBinder::DynamicBinder(std::string libName, std::string libPath)
+: m_Impl(new Impl)
+{
     std::vector<std::string> libPrefixes;
     libPrefixes.emplace_back("");
     libPrefixes.emplace_back("lib");
@@ -39,6 +46,7 @@ DynamicBinder::DynamicBinder(std::string libName)
 #endif
 
     std::vector<std::string> libSuffixes;
+    libSuffixes.emplace_back("");
 #ifdef __APPLE__
     libSuffixes.emplace_back(".dylib");
     libSuffixes.emplace_back(".so");
@@ -61,7 +69,19 @@ DynamicBinder::DynamicBinder(std::string libName)
     {
         for (const std::string &suffix : libSuffixes)
         {
-            fileName = prefix + libName + suffix;
+            if (!libPath.empty())
+            {
+                fileName = libPath + "/" + prefix + libName + suffix;
+                // Slashes in fileName is correct for unix-like systems
+                // ConvertToOutputPath() will change slashes if we're running on
+                // a Windows system
+                fileName =
+                    adios2sys::SystemTools::ConvertToOutputPath(fileName);
+            }
+            else
+            {
+                fileName = prefix + libName + suffix;
+            }
             m_Impl->m_LibraryHandle =
                 adios2sys::DynamicLoader::OpenLibrary(fileName);
             searchedLibs.push_back(fileName);

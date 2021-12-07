@@ -8,6 +8,7 @@ add_subdirectory(hello)
 add_subdirectory(query)
 add_subdirectory(useCases)
 add_subdirectory(inlineMWE)
+add_subdirectory(plugins)
 
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(heatTransfer)
