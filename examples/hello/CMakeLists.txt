@@ -34,3 +34,7 @@ endif()
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(bpFWriteCRead)
 endif()
+
+if(ADIOS2_HAVE_Fortran)
+    add_subdirectory(inlineFWriteCppRead)
+endif()
