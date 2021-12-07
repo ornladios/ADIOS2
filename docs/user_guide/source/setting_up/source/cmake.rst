@@ -128,9 +128,9 @@ Notes:
 .. code-block:: bash
 
     # Several dependencies are installed under /opt/foo/bar and then a
-    # single dependency (HDF5 in this case) is installed in /opt/hdf5/1.12.0
+    # single dependency (HDF5 in this case) is installed in /opt/hdf5/1.13.0
     $ export CMAKE_PREFIX_PATH=/opt/foo/bar
-    $ cmake -DHDF5_ROOT=/opt/hdf5/1.12.0 ../ADIOS2
+    $ cmake -DHDF5_ROOT=/opt/hdf5/1.13.0 ../ADIOS2
 
 Example: the following configuration will build, test and install under /opt/adios2/2.7.1 an optimized (Release) version of ADIOS2.
 
