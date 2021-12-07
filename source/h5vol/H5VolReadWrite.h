@@ -34,7 +34,8 @@ extern herr_t H5VL_adios2_beginstep(const char *engine_name,
 extern herr_t H5VL_adios2_endstep(const char *engine_nane);
 
 static herr_t H5VL_adios2_introspect_opt_query(void *obj, H5VL_subclass_t cls,
-                                               int opt_type, uint64_t *supported)
+                                               int opt_type,
+                                               uint64_t *supported)
 {
     *supported = 0;
     return 0;
