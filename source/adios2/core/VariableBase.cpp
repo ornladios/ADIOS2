@@ -244,8 +244,20 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 size_t VariableBase::AddOperation(const std::string &type,
                                   const Params &parameters) noexcept
 {
-    m_PrivateOperations.emplace_back(MakeOperator(type, parameters));
-    m_Operations.push_back(m_PrivateOperations.back().get());
+    auto op = MakeOperator(type, parameters);
+    if (op->IsDataTypeValid(m_Type))
+    {
+        m_PrivateOperations.push_back(op);
+        m_Operations.push_back(m_PrivateOperations.back().get());
+    }
+    else
+    {
+        helper::Log("Variable", "VariableBase", "AddOperation",
+                    "Operator " + op->m_TypeString +
+                        " does not support data type " + ToString(m_Type) +
+                        ", operator not added",
+                    helper::LogMode::WARNING);
+    }
     return m_Operations.size() - 1;
 }
 
@@ -262,9 +274,11 @@ size_t VariableBase::AddOperation(Operator &op,
     }
     else
     {
-        std::cerr << "ADIOS2 ERROR: Operator " << op.m_TypeString
-                  << " does not support data type " << m_Type
-                  << ", operator not added" << std::endl;
+        helper::Log("Variable", "VariableBase", "AddOperation",
+                    "Operator " + op.m_TypeString +
+                        " does not support data type " + ToString(m_Type) +
+                        ", operator not added",
+                    helper::LogMode::WARNING);
     }
     return m_Operations.size() - 1;
 }
