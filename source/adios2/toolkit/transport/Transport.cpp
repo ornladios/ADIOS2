@@ -77,8 +77,8 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
     size_t wrote = 0;
     int block = 0;
     size_t temp_offset = 0;
-    size_t max_size =
-        static_cast<size_t>(std::max(1024 * 1024UL, totalsize / 100UL));
+    size_t max_size = std::max(static_cast<size_t>(1024 * 1024UL),
+                               static_cast<size_t>(totalsize / 100UL));
     bool firstwrite = true;
     core::Seconds writeTotalTime(0.0);
     while (block < iovcnt)
