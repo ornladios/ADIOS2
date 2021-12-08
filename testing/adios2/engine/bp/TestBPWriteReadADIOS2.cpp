@@ -15,7 +15,8 @@
 
 #include "../SmallTestData.h"
 
-std::string engineName; // comes from command line
+std::string engineName;       // comes from command line
+std::string engineParameters; // comes from command line
 
 class BPWriteReadTestADIOS2 : public ::testing::Test
 {
@@ -136,8 +137,11 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
 
-        io.SetParameter("AsyncThreads", "0");
         io.AddTransport("file");
 
         // QUESTION: It seems that BPFilterWriter cannot overwrite existing
@@ -222,6 +226,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
         }
 
         adios2::Engine bpReader =
@@ -496,6 +504,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
         io.AddTransport("file");
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -564,6 +576,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
         }
 
         adios2::Engine bpReader =
@@ -817,6 +833,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
 
         io.AddTransport("file");
 
@@ -882,6 +902,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
         }
 
         adios2::Engine bpReader =
@@ -1100,6 +1124,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead10D2x2)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
 
         io.AddTransport("file");
 
@@ -1148,6 +1176,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead10D2x2)
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
         }
 
         adios2::Engine bpReader =
@@ -1302,6 +1334,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
 
         io.AddTransport("file");
 
@@ -1367,6 +1403,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
         }
 
         adios2::Engine bpReader =
@@ -1610,6 +1650,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
 
         io.AddTransport("file");
 
@@ -1675,6 +1719,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
         }
 
         adios2::Engine bpReader =
@@ -1775,6 +1823,10 @@ TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -1818,6 +1870,10 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
         {
             io.SetEngine(engineName);
         }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
 
         io.DefineVariable<int64_t>(
             "range", {static_cast<std::size_t>(Nx * mpiSize)},
@@ -1834,6 +1890,10 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
         }
 
         adios2::Engine bpReader =
@@ -1916,6 +1976,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteReadEmptyProcess)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -1959,6 +2023,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteReadEmptyProcess)
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
         }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
@@ -2030,6 +2098,10 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
         engineName = std::string(argv[1]);
+    }
+    if (argc > 2)
+    {
+        engineParameters = std::string(argv[2]);
     }
     result = RUN_ALL_TESTS();
 
