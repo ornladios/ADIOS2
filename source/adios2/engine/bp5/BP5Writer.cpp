@@ -1024,16 +1024,19 @@ void BP5Writer::FlushData(const bool isFinal)
                        m_Parameters.BufferChunkSize));
     }
 
+    auto databufsize = DataBuf->Size();
     WriteData(DataBuf);
+    /* DataBuf is deleted in WriteData() */
+    DataBuf = nullptr;
 
-    m_ThisTimestepDataSize += DataBuf->Size();
+    m_ThisTimestepDataSize += databufsize;
 
     if (!isFinal)
     {
         size_t tmp[2];
         // aggregate start pos and data size to rank 0
         tmp[0] = m_StartDataPos;
-        tmp[1] = DataBuf->Size();
+        tmp[1] = databufsize;
 
         std::vector<size_t> RecvBuffer;
         if (m_Comm.Rank() == 0)
@@ -1046,7 +1049,6 @@ void BP5Writer::FlushData(const bool isFinal)
             FlushPosSizeInfo.push_back(RecvBuffer);
         }
     }
-    delete DataBuf;
 }
 
 void BP5Writer::Flush(const int transportIndex) { FlushData(false); }
