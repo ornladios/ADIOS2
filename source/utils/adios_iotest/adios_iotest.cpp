@@ -259,20 +259,18 @@ int main(int argc, char *argv[])
                                   << " seconds work in each cycle";
                     }
                     const size_t N = 1048576;
-                    double *f = (double*) calloc(N, sizeof(double));
-                    double *g = (double*) malloc(N*sizeof(double));
+                    double *f = (double *)calloc(N, sizeof(double));
+                    double *g = (double *)malloc(N * sizeof(double));
                     int dummy = 1;
                     for (size_t c = 0; c < cmdS->cycles; ++c)
                     {
-                        auto end =
-                            std::chrono::high_resolution_clock::now() +
-                            std::chrono::microseconds(cmdS->busyTime_us);
+                        auto end = std::chrono::high_resolution_clock::now() +
+                                   std::chrono::microseconds(cmdS->busyTime_us);
                         if (cmdS->busyTime_us > 0.1)
                         {
                             adios.EnterComputationBlock();
                         }
-                        while (std::chrono::high_resolution_clock::now() <
-                                end)
+                        while (std::chrono::high_resolution_clock::now() < end)
                         {
                             for (int i = 0; i < N; ++i)
                             {
@@ -283,7 +281,8 @@ int main(int argc, char *argv[])
                         {
                             adios.ExitComputationBlock();
                         }
-                        MPI_Allreduce(f, g, N, MPI_DOUBLE, MPI_SUM, settings.appComm);
+                        MPI_Allreduce(f, g, N, MPI_DOUBLE, MPI_SUM,
+                                      settings.appComm);
                     }
                     std::chrono::high_resolution_clock::time_point end =
                         std::chrono::high_resolution_clock::now();
