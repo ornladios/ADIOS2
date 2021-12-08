@@ -24,6 +24,8 @@ module adios2_adios_mod
     external adios2_remove_io_f2c
     external adios2_remove_all_ios_f2c
     external adios2_finalize_f2c
+    external adios2_enter_computation_block_f2c
+    external adios2_exit_computation_block_f2c
 contains
 
     subroutine adios2_declare_io(io, adios, io_name, ierr)

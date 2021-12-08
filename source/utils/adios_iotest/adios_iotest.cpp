@@ -261,7 +261,6 @@ int main(int argc, char *argv[])
                     const size_t N = 1048576;
                     double *f = (double *)calloc(N, sizeof(double));
                     double *g = (double *)malloc(N * sizeof(double));
-                    int dummy = 1;
                     for (size_t c = 0; c < cmdS->cycles; ++c)
                     {
                         auto end = std::chrono::high_resolution_clock::now() +
@@ -272,7 +271,7 @@ int main(int argc, char *argv[])
                         }
                         while (std::chrono::high_resolution_clock::now() < end)
                         {
-                            for (int i = 0; i < N; ++i)
+                            for (size_t i = 0; i < N; ++i)
                             {
                                 f[i] = f[i] * 2.0 + 0.000001;
                             }

@@ -435,8 +435,8 @@ void BP5Writer::MarshalAttributes()
 
 void BP5Writer::EndStep()
 {
-    Seconds ts = Now() - m_EngineStart;
-    // std::cout << "END STEP starts at: " << ts.count() << std::endl;
+    /* Seconds ts = Now() - m_EngineStart;
+      std::cout << "END STEP starts at: " << ts.count() << std::endl; */
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Writer::EndStep");
     m_Profiler.Start("endstep");
@@ -531,8 +531,8 @@ void BP5Writer::EndStep()
     m_Profiler.Stop("endstep");
     m_WriterStep++;
     m_EndStepEnd = Now();
-    Seconds ts2 = Now() - m_EngineStart;
-    // std::cout << "END STEP ended at: " << ts2.count() << std::endl;
+    /* Seconds ts2 = Now() - m_EngineStart;
+     std::cout << "END STEP ended at: " << ts2.count() << std::endl;*/
 }
 
 // PRIVATE

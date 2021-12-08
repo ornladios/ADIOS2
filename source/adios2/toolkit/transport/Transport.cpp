@@ -65,8 +65,8 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
     if (iovcnt == 0 || internalDeadlineSec == 0.0 || *flagRush)
     {
         WriteV(iov, iovcnt, start);
-        core::Seconds totalWriteTime = core::Now() - starttime;
-        /*std::cout << "WriteV sync spent total time = " <<
+        /*core::Seconds totalWriteTime = core::Now() - starttime;
+        std::cout << "WriteV sync spent total time = " <<
            totalWriteTime.count()
                   << std::endl;*/
         return;
@@ -77,7 +77,8 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
     size_t wrote = 0;
     int block = 0;
     size_t temp_offset = 0;
-    size_t max_size = std::max(1024 * 1024UL, totalsize / 100UL);
+    size_t max_size =
+        static_cast<size_t>(std::max(1024 * 1024UL, totalsize / 100UL));
     bool firstwrite = true;
     core::Seconds writeTotalTime(0.0);
     while (block < iovcnt)
@@ -180,8 +181,8 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt,
         writeTotalTime += core::Now() - writeStart;
     }
 
-    core::Seconds totalWriteTime = core::Now() - starttime;
-    /*std::cout << "WriteV spent total time = " << totalWriteTime.count()
+    /*core::Seconds totalWriteTime = core::Now() - starttime;
+    std::cout << "WriteV spent total time = " << totalWriteTime.count()
               << " deadline was = " << deadlineSeconds.count() << std::endl;*/
 }
 
