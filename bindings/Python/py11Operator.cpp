@@ -17,33 +17,42 @@ namespace adios2
 namespace py11
 {
 
-Operator::Operator(core::Operator *op) : m_Operator(op) {}
-
-Operator::operator bool() const noexcept
-{
-    return (m_Operator == nullptr) ? false : true;
-}
+Operator::operator bool() const noexcept { return m_Parameters != nullptr; }
 
 std::string Operator::Type() const noexcept
 {
-    if (m_Operator == nullptr)
+    if (m_Parameters == nullptr)
     {
-        return "";
+        helper::Log("PythonAPI", "Operator", "Type()", "Operator is nullptr",
+                    helper::LogMode::EXCEPTION);
     }
-
-    return m_Operator->m_TypeString;
+    return m_Type;
 }
 
 void Operator::SetParameter(const std::string key, const std::string value)
 {
-    helper::CheckForNullptr(m_Operator, "in call to Operator::SetParameter");
-    return m_Operator->SetParameter(key, value);
+    if (m_Parameters == nullptr)
+    {
+        helper::Log("PythonAPI", "Operator", "SetParameter()",
+                    "Operator is nullptr", helper::LogMode::EXCEPTION);
+    }
+    (*m_Parameters)[key] = value;
 }
 
-Params Operator::Parameters() const
+Params &Operator::Parameters() const
 {
-    helper::CheckForNullptr(m_Operator, "in call to Operator::Parameters");
-    return m_Operator->GetParameters();
+    if (m_Parameters == nullptr)
+    {
+        helper::Log("PythonAPI", "Operator", "Parameter()",
+                    "Operator is nullptr", helper::LogMode::EXCEPTION);
+    }
+    return *m_Parameters;
+}
+
+// PRIVATE
+Operator::Operator(const std::string &type, Params *params)
+: m_Parameters(params), m_Type(type)
+{
 }
 
 } // end namespace py11

@@ -26,10 +26,8 @@ namespace adios2
 namespace helper
 {
 
-void ParseConfigYAML(
-    core::ADIOS &adios, const std::string &configFile,
-    std::map<std::string, core::IO> &ios,
-    std::map<std::string, std::shared_ptr<core::Operator>> &operators);
+void ParseConfigYAML(core::ADIOS &adios, const std::string &configFile,
+                     std::map<std::string, core::IO> &ios);
 
 } // end namespace helper
 } // end namespace adios2

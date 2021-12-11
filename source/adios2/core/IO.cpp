@@ -497,10 +497,7 @@ void IO::AddOperation(const std::string &variable,
                       const Params &parameters) noexcept
 {
     PERFSTUBS_SCOPED_TIMER("IO::other");
-    auto params = helper::LowerCaseParams(parameters);
-    Operator *op = &m_ADIOS.DefineOperator(
-        m_Name + "_" + variable + "_" + operatorType, operatorType, params);
-    m_VarOpsPlaceholder[variable].emplace_back(Operation{op, params, Params()});
+    m_VarOpsPlaceholder[variable].push_back({operatorType, parameters});
 }
 
 Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)

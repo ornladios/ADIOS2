@@ -41,11 +41,12 @@ public:
 
     void SetParameter(const std::string key, const std::string value);
 
-    Params Parameters() const;
+    Params &Parameters() const;
 
 private:
-    Operator(core::Operator *op);
-    core::Operator *m_Operator = nullptr;
+    Params *m_Parameters;
+    std::string m_Type;
+    Operator(const std::string &type, Params *params);
 };
 
 } // end namespace py11
