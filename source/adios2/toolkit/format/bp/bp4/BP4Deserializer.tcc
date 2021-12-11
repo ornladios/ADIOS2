@@ -1202,7 +1202,8 @@ BP4Deserializer::BlocksInfoCommon(
 
 template <class T>
 bool BP4Deserializer::IdentityOperation(
-    const std::vector<core::Operator *> &operations) const noexcept
+    const std::vector<std::shared_ptr<core::Operator>> &operations) const
+    noexcept
 {
     bool identity = false;
     for (const auto &op : operations)

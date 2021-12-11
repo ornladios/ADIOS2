@@ -95,7 +95,7 @@ public:
         Dims Count;
         Dims MemoryStart;
         Dims MemoryCount;
-        std::vector<Operator *> Operations;
+        std::vector<std::shared_ptr<Operator>> Operations;
         size_t Step = 0;
         size_t StepsStart = 0;
         size_t StepsCount = 0;

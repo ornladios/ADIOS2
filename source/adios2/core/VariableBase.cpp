@@ -247,8 +247,7 @@ size_t VariableBase::AddOperation(const std::string &type,
     auto op = MakeOperator(type, parameters);
     if (op->IsDataTypeValid(m_Type))
     {
-        m_PrivateOperations.push_back(op);
-        m_Operations.push_back(m_PrivateOperations.back().get());
+        m_Operations.push_back(op);
     }
     else
     {
@@ -261,33 +260,13 @@ size_t VariableBase::AddOperation(const std::string &type,
     return m_Operations.size() - 1;
 }
 
-size_t VariableBase::AddOperation(Operator &op,
-                                  const Params &parameters) noexcept
+size_t VariableBase::AddOperation(std::shared_ptr<core::Operator> op) noexcept
 {
-    if (op.IsDataTypeValid(m_Type))
-    {
-        for (const auto &p : parameters)
-        {
-            op.SetParameter(helper::LowerCase(p.first), p.second);
-        }
-        m_Operations.push_back(&op);
-    }
-    else
-    {
-        helper::Log("Variable", "VariableBase", "AddOperation",
-                    "Operator " + op.m_TypeString +
-                        " does not support data type " + ToString(m_Type) +
-                        ", operator not added",
-                    helper::LogMode::WARNING);
-    }
+    m_Operations.push_back(op);
     return m_Operations.size() - 1;
 }
 
-void VariableBase::RemoveOperations() noexcept
-{
-    m_PrivateOperations.clear();
-    m_Operations.clear();
-}
+void VariableBase::RemoveOperations() noexcept { m_Operations.clear(); }
 
 void VariableBase::SetOperationParameter(const size_t operationID,
                                          const std::string key,
