@@ -61,7 +61,7 @@ void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         itVar = m_TransportMap.find(variable.m_Name);
         if (itVar != m_TransportMap.end())
         {
-            var0->AddOperation(*itVar->second, {});
+            var0->AddOperation(itVar->second);
         }
     }
 
@@ -77,7 +77,7 @@ void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
             {
                 var = &m_SubIOs[i]->DefineVariable<T>(variable.m_Name,
                                                       variable.m_Shape);
-                var->AddOperation(*itVar->second, {});
+                var->AddOperation(itVar->second);
             }
             var->SetSelection({variable.m_Start, variable.m_Count});
             m_SubEngines[i]->Put(*var, data, Mode::Sync);

@@ -74,8 +74,7 @@ public:
      * already encountered in previous step */
     bool m_FirstStreamingStep = true;
 
-    /** Registered transforms */
-    std::vector<Operator *> m_Operations;
+    std::vector<std::shared_ptr<Operator>> m_Operations;
 
     size_t m_AvailableStepsStart = 0;
     size_t m_AvailableStepsCount = 0;
@@ -167,8 +166,7 @@ public:
      * @param parameters operation specific parameters
      * @return operator handler
      */
-    size_t AddOperation(core::Operator &op,
-                        const Params &parameters = Params()) noexcept;
+    size_t AddOperation(std::shared_ptr<core::Operator> op) noexcept;
 
     size_t AddOperation(const std::string &op,
                         const Params &parameters = Params()) noexcept;
@@ -227,8 +225,6 @@ protected:
     bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count
 
     unsigned int m_DeferredCounter = 0;
-
-    std::vector<std::shared_ptr<Operator>> m_PrivateOperations;
 
     void InitShapeType();
 

@@ -29,7 +29,7 @@ namespace helper
 void ParseConfigXML(
     core::ADIOS &adios, const std::string &configFile,
     std::map<std::string, core::IO> &ios,
-    std::map<std::string, std::shared_ptr<core::Operator>> &operators);
+    std::unordered_map<std::string, std::pair<std::string, Params>> &operators);
 
 } // end namespace helper
 } // end namespace adios2

@@ -33,7 +33,7 @@ namespace helper
 void ParseConfigXML(
     core::ADIOS &adios, const std::string &configFileXML,
     std::map<std::string, core::IO> &ios,
-    std::map<std::string, std::shared_ptr<core::Operator>> &operators)
+    std::unordered_map<std::string, std::pair<std::string, Params>> &operators)
 {
     const std::string hint("for config file " + configFileXML +
                            " in call to ADIOS constructor");
@@ -104,7 +104,8 @@ void ParseConfigXML(
                             helper::EXCEPTION);
             }
 
-            core::Operator *op = nullptr;
+            std::string type;
+            Params params;
 
             if (*opName)
             {
@@ -118,31 +119,22 @@ void ParseConfigXML(
                                     currentIO.m_Name,
                                 helper::EXCEPTION);
                 }
-                op = itOperator->second.get();
+                type = itOperator->second.first;
+                params = itOperator->second.second;
             }
 
             if (*opType)
             {
-                std::string operatorType = std::string(opType->value());
-                std::transform(operatorType.begin(), operatorType.end(),
-                               operatorType.begin(), ::tolower);
-
-                const std::string operatorName =
-                    "__" + currentIO.m_Name + "_" + operatorType;
-                auto itOperator = operators.find(operatorName);
-
-                if (itOperator == operators.end())
-                {
-                    op = &adios.DefineOperator(operatorName, operatorType);
-                }
-                else
-                {
-                    op = itOperator->second.get();
-                }
+                type = std::string(opType->value());
             }
-            const Params parameters = helper::XMLGetParameters(operation, hint);
+
+            for (const auto &p : helper::XMLGetParameters(operation, hint))
+            {
+                params[p.first] = p.second;
+            }
+
             currentIO.m_VarOpsPlaceholder[variableName].push_back(
-                core::IO::Operation{op, parameters, Params()});
+                {type, params});
         }
     };
 

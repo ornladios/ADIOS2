@@ -504,11 +504,19 @@ adios2_error adios2_add_operation(size_t *operation_index,
 
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
-        adios2::core::Operator *opCpp =
-            reinterpret_cast<adios2::core::Operator *>(op);
 
-        *operation_index =
-            variableBase->AddOperation(*opCpp, adios2::Params{{key, value}});
+        auto *opCpp =
+            reinterpret_cast<std::pair<std::string, adios2::Params> *>(op);
+
+        auto params = adios2::Params{{key, value}};
+
+        for (const auto &p : opCpp->second)
+        {
+            params[p.first] = p.second;
+        }
+
+        *operation_index = variableBase->AddOperation(opCpp->first, params);
+
         return adios2_error_none;
     }
     catch (...)

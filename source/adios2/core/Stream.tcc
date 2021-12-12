@@ -98,14 +98,7 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
         variable->m_Operations.clear();
         for (const auto &operation : operations)
         {
-            const std::string opType = operation.first;
-            Operator *op = m_ADIOS->InquireOperator(opType);
-            if (op == nullptr)
-            {
-                op = &m_ADIOS->DefineOperator(opType, opType);
-            }
-
-            variable->AddOperation(*op, operation.second);
+            variable->AddOperation(operation.first, operation.second);
         }
     }
 

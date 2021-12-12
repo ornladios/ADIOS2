@@ -41,13 +41,15 @@ Operator ADIOS::DefineOperator(const std::string name, const std::string type,
 {
     CheckPointer("for operator name " + name +
                  ", in call to ADIOS::DefineOperator");
-    return Operator(&m_ADIOS->DefineOperator(name, type, parameters));
+    auto op = &m_ADIOS->DefineOperator(name, type, parameters);
+    return Operator(op->first, &op->second);
 }
 
 Operator ADIOS::InquireOperator(const std::string name)
 {
     CheckPointer("for operator name " + name + ", in call to InquireOperator");
-    return Operator(m_ADIOS->InquireOperator(name));
+    auto op = m_ADIOS->InquireOperator(name);
+    return Operator(op->first, &op->second);
 }
 
 void ADIOS::FlushAll()

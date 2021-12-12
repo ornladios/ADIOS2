@@ -99,7 +99,7 @@ public:
                  const Dims &varCount, const Dims &varMemStart,
                  const Dims &varMemCount, const std::string &doid,
                  const size_t step, const int rank, const std::string &address,
-                 const std::vector<core::Operator *> &ops,
+                 const std::vector<std::shared_ptr<core::Operator>> &ops,
                  VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     // another wrapper for PutData which accepts adios2::core::Variable

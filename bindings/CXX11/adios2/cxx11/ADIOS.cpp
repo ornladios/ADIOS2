@@ -54,13 +54,22 @@ Operator ADIOS::DefineOperator(const std::string name, const std::string type,
 {
     CheckPointer("for operator name " + name +
                  ", in call to ADIOS::DefineOperator");
-    return Operator(&m_ADIOS->DefineOperator(name, type, parameters));
+    auto op = &m_ADIOS->DefineOperator(name, type, parameters);
+    return Operator(op->first, &op->second);
 }
 
 Operator ADIOS::InquireOperator(const std::string name)
 {
     CheckPointer("for operator name " + name + ", in call to InquireOperator");
-    return Operator(m_ADIOS->InquireOperator(name));
+    auto op = m_ADIOS->InquireOperator(name);
+    if (op == nullptr)
+    {
+        return Operator("", nullptr);
+    }
+    else
+    {
+        return Operator(op->first, &op->second);
+    }
 }
 
 bool ADIOS::RemoveIO(const std::string name)
@@ -73,39 +82,6 @@ void ADIOS::RemoveAllIOs() noexcept
 {
     CheckPointer("in call to ADIOS::RemoveAllIOs");
     m_ADIOS->RemoveAllIOs();
-}
-
-// PRIVATE
-
-#define declare_type(T)                                                        \
-    Operator ADIOS::DefineCallBack(                                            \
-        const std::string name,                                                \
-        const std::function<void(const T *, const std::string &,               \
-                                 const std::string &, const std::string &,     \
-                                 const size_t, const Dims &, const Dims &,     \
-                                 const Dims &)> &function,                     \
-        const Params &parameters)                                              \
-    {                                                                          \
-        using IOType = typename TypeInfo<T>::IOType;                           \
-                                                                               \
-        const auto &io_function = reinterpret_cast<const std::function<void(   \
-            const IOType *, const std::string &, const std::string &,          \
-            const std::string &, const size_t, const Dims &, const Dims &,     \
-            const Dims &)> &>(function);                                       \
-        return Operator(                                                       \
-            &m_ADIOS->DefineCallBack(name, io_function, parameters));          \
-    }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-
-Operator ADIOS::DefineCallBack(
-    const std::string name,
-    const std::function<void(void *, const std::string &, const std::string &,
-                             const std::string &, const size_t, const Dims &,
-                             const Dims &, const Dims &)> &function,
-    const Params &parameters)
-{
-    return Operator(&m_ADIOS->DefineCallBack(name, function, parameters));
 }
 
 // PRIVATE
