@@ -18,6 +18,16 @@ target_include_directories(adios2_h5vol PRIVATE ${HDF5_C_INCLUDE_DIRS})
 target_link_libraries(adios2_h5vol PRIVATE
   ${HDF5_C_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
 )
+
+message(STATUS "HDF5_VERSION=${HDF5_VERSION}")
+if (HDF5_VERSION)
+  if (HDF5_VERSION VERSION_LESS "1.13")
+    message(FATAL_ERROR "HDF5 version 1.13+ is required")
+  endif()
+else()
+  message(WARNING "Version of HDF5 is unknown, but version 1.13+ is required.")
+endif()
+
 if(NOT HDF5_IS_PARALLEL)
   target_link_libraries(adios2_h5vol PRIVATE adios2::c)
 elseif(HDF5_IS_PARALLEL AND ADIOS2_HAVE_MPI)
