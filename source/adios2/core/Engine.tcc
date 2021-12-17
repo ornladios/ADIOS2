@@ -29,6 +29,14 @@ typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
 {
     CheckOpenModes({{Mode::Write}}, " for variable " + variable.m_Name +
                                         ", in call to Variable<T>::Span Put");
+    if (!variable.m_Operations.empty())
+    {
+        throw std::invalid_argument(
+            "ERROR: span currently not supported with "
+            "operations, remove calls to Variable<T>::AddOperation or use "
+            "Variable<T>::RemoveOperations, in call to Variable<T>::Span "
+            "Engine::Put");
+    }
 
     auto itSpan = variable.m_BlocksSpan.emplace(
         variable.m_BlocksInfo.size(),
