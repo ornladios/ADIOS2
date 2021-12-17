@@ -1516,6 +1516,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
     }
 }
 
+#ifdef ADIOS2_HAVE_BZIP2
 TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
 {
     const std::string fname("BPWriteSpanOperatorException.bp");
@@ -1571,7 +1572,8 @@ TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
         {
             bpWriter.BeginStep();
 
-            // using bzip2, it could have been any operator
+            // using bzip2, it could have been any operator to generate an
+            // exception
             var_r32.AddOperation(
                 BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, "1e-4"}});
             var_r64.AddOperation(
@@ -1591,6 +1593,7 @@ TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
         bpWriter.Close();
     }
 }
+#endif
 
 int main(int argc, char **argv)
 {
