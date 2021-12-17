@@ -1579,12 +1579,10 @@ TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
             var_r64.AddOperation(
                 BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, "1e-4"}});
 
-            EXPECT_THROW(adios2::Variable<float>::Span r32Span = bpWriter.Put(
-                             var_r32, true, static_cast<float>(step)),
+            EXPECT_THROW(bpWriter.Put(var_r32, true, static_cast<float>(step)),
                          std::invalid_argument);
 
-            EXPECT_THROW(adios2::Variable<double>::Span r64Span = bpWriter.Put(
-                             var_r64, true, static_cast<double>(step)),
+            EXPECT_THROW(bpWriter.Put(var_r64, true, static_cast<double>(step)),
                          std::invalid_argument);
 
             bpWriter.EndStep();
