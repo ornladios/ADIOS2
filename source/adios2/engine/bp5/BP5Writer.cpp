@@ -69,7 +69,9 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (m_Parameters.AsyncWrite)
     {
+        m_AsyncWriteLock.lock();
         m_flagRush = true;
+        m_AsyncWriteLock.unlock();
         TimePoint wait_start = Now();
         if (m_WriteFuture.valid())
         {
@@ -457,7 +459,9 @@ void BP5Writer::EndStep()
     // for async IO and let the writer free it up when not needed anymore
     adios2::format::BufferV *databuf = TSInfo.DataBuffer;
     TSInfo.DataBuffer = NULL;
+    m_AsyncWriteLock.lock();
     m_flagRush = false;
+    m_AsyncWriteLock.unlock();
     WriteData(databuf);
     m_Profiler.Stop("AWD");
 
@@ -1065,7 +1069,9 @@ void BP5Writer::DoClose(const int transportIndex)
     Seconds wait(0.0);
     if (m_WriteFuture.valid())
     {
+        m_AsyncWriteLock.lock();
         m_flagRush = true;
+        m_AsyncWriteLock.unlock();
         m_WriteFuture.get();
         wait += Now() - wait_start;
     }

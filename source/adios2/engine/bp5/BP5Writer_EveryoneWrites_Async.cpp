@@ -35,7 +35,8 @@ BP5Writer::IsInComputationBlock(AsyncWriteInfo *info, size_t &compBlockIdx)
 {
     ComputationStatus compStatus = ComputationStatus::NotInComp_ExpectMore;
     size_t nExpectedBlocks = info->expectedComputationBlocks.size();
-    if (*info->flagRush || compBlockIdx >= nExpectedBlocks)
+
+    if (compBlockIdx >= nExpectedBlocks)
     {
         compStatus = ComputationStatus::NoMoreComp;
     }
@@ -43,9 +44,8 @@ BP5Writer::IsInComputationBlock(AsyncWriteInfo *info, size_t &compBlockIdx)
     {
         bool inComp = false;
         size_t compBlockID = 0;
+        // access variables modified by main thread to avoid data race
         info->lock->lock();
-        // access variables modified by main thread
-        // (the ones that cause race conditions)
         compBlockID = *info->currentComputationBlockID;
         inComp = *info->inComputationBlock;
         info->lock->unlock();
@@ -93,42 +93,31 @@ void BP5Writer::AsyncWriteOwnData(AsyncWriteInfo *info,
     bool firstWrite = seekOnFirstWrite;
     while (block < nBlocks)
     {
-        if (*info->flagRush)
-        {
-            max_size = MaxSizeT;
-        }
-
-        /* Get the next n bytes from the current block, current offset */
-        size_t n = DataVec[block].iov_len - temp_offset;
-        if (n > max_size)
-        {
-            n = max_size;
-        }
-
-        ComputationStatus compStatus = IsInComputationBlock(info, compBlockIdx);
-
-        /* Scheduling decisions:
-           Cases:
-           1. Not in a computation block AND we still expect more computation
-           blocks down the line ==> Sleep
-           2. In computation block ==> Write
-           3. We are at the end of a computation block (how close??) AND we
-           still expect more computation blocks down the line 3. ==> Sleep
-           4. We are at the end of the LAST computation block ==> Write
-           5. No more computation blocks expected ==> Write
-           6. Main thread set flagRush ==> Write
-        */
-
-        bool doSleep = false;
         bool doRush = false;
-        // case 3 not handled yet properly
-        if (*info->flagRush)
+        bool doSleep = false;
+
+        info->lock->lock();
+        doRush = *info->flagRush;
+        info->lock->unlock();
+
+        if (!doRush)
         {
-            // case 6
-            doRush = true;
-        }
-        else
-        {
+            ComputationStatus compStatus =
+                IsInComputationBlock(info, compBlockIdx);
+
+            /* Scheduling decisions:
+               Cases:
+               1. Not in a computation block AND we still expect more
+               computation blocks down the line ==> Sleep
+               2. In computation block ==> Write
+               3. We are at the end of a computation block (how close??) AND we
+               still expect more computation blocks down the line 3. ==> Sleep
+               4. We are at the end of the LAST computation block ==> Write
+               5. No more computation blocks expected ==> Write all at once
+               6. Main thread set flagRush ==> Write all at once
+               -- case 3 not handled yet properly
+            */
+
             switch (compStatus)
             {
             case ComputationStatus::NotInComp_ExpectMore:
@@ -143,12 +132,6 @@ void BP5Writer::AsyncWriteOwnData(AsyncWriteInfo *info,
                 // cases 2, 3, 4
                 break;
             }
-        }
-
-        if (doSleep)
-        {
-            std::this_thread::sleep_for(core::Seconds(0.01));
-            continue;
         }
 
         if (doRush)
@@ -169,10 +152,24 @@ void BP5Writer::AsyncWriteOwnData(AsyncWriteInfo *info,
 
             info->tm->WriteFileAt(vec.data(), vec.size(), pos);
 
-            break;
+            break; /* Exit loop after this final write */
         }
 
-        /* Write next batch of data now */
+        if (doSleep)
+        {
+            std::this_thread::sleep_for(core::Seconds(0.01));
+            continue;
+        }
+
+        /* Write next batch of data */
+
+        /* Get the next n bytes from the current block, current offset */
+        size_t n = DataVec[block].iov_len - temp_offset;
+        if (n > max_size)
+        {
+            n = max_size;
+        }
+
         if (firstWrite)
         {
             info->tm->WriteFileAt((const char *)DataVec[block].iov_base +

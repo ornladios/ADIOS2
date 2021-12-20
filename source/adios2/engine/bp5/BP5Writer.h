@@ -293,7 +293,15 @@ private:
     };
 
     AsyncWriteInfo *m_AsyncWriteInfo;
-    // lock to handle race condition over currentComp* variables
+    /* lock to handle race condition over the following currentComp* variables
+         m_InComputationBlock / AsyncWriteInfo::inComputationBlock
+         m_ComputationBlockID / AsyncWriteInfo::currentComputationBlockID
+         m_flagRush / AsyncWriteInfo::flagRush
+       Currently not used
+         m_ComputationBlockTimes / AsyncWriteInfo::currentComputationBlocks
+       Note: The rush flag does not need protection but CI TSAN sanitizer
+       screams data race if not protected.
+    */
     shm::Spinlock m_AsyncWriteLock;
 
     /* Static functions that will run in another thread */
