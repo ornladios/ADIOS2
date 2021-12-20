@@ -21,10 +21,11 @@ adios2_error adios2_operator_type(char *type, size_t *size,
         adios2::helper::CheckForNullptr(
             op, "for adios2_operator, in call to adios2_operator_type");
 
-        const adios2::core::Operator *opCpp =
-            reinterpret_cast<const adios2::core::Operator *>(op);
+        auto *opCpp =
+            reinterpret_cast<const std::pair<std::string, adios2::Params> *>(
+                op);
 
-        return String2CAPI(opCpp->m_TypeString, type, size);
+        return String2CAPI(opCpp->first, type, size);
     }
     catch (...)
     {

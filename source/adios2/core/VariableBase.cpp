@@ -244,36 +244,29 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 size_t VariableBase::AddOperation(const std::string &type,
                                   const Params &parameters) noexcept
 {
-    m_PrivateOperations.emplace_back(MakeOperator(type, parameters));
-    m_Operations.push_back(m_PrivateOperations.back().get());
-    return m_Operations.size() - 1;
-}
-
-size_t VariableBase::AddOperation(Operator &op,
-                                  const Params &parameters) noexcept
-{
-    if (op.IsDataTypeValid(m_Type))
+    auto op = MakeOperator(type, parameters);
+    if (op->IsDataTypeValid(m_Type))
     {
-        for (const auto &p : parameters)
-        {
-            op.SetParameter(helper::LowerCase(p.first), p.second);
-        }
-        m_Operations.push_back(&op);
+        m_Operations.push_back(op);
     }
     else
     {
-        std::cerr << "ADIOS2 ERROR: Operator " << op.m_TypeString
-                  << " does not support data type " << m_Type
-                  << ", operator not added" << std::endl;
+        helper::Log("Variable", "VariableBase", "AddOperation",
+                    "Operator " + op->m_TypeString +
+                        " does not support data type " + ToString(m_Type) +
+                        ", operator not added",
+                    helper::LogMode::WARNING);
     }
     return m_Operations.size() - 1;
 }
 
-void VariableBase::RemoveOperations() noexcept
+size_t VariableBase::AddOperation(std::shared_ptr<core::Operator> op) noexcept
 {
-    m_PrivateOperations.clear();
-    m_Operations.clear();
+    m_Operations.push_back(op);
+    return m_Operations.size() - 1;
 }
+
+void VariableBase::RemoveOperations() noexcept { m_Operations.clear(); }
 
 void VariableBase::SetOperationParameter(const size_t operationID,
                                          const std::string key,

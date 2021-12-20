@@ -59,10 +59,9 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
     if (itOperations != m_VarOpsPlaceholder.end())
     {
         variable.m_Operations.reserve(itOperations->second.size());
-
         for (auto &operation : itOperations->second)
         {
-            variable.AddOperation(*operation.Op, operation.Parameters);
+            variable.AddOperation(operation.first, operation.second);
         }
     }
 

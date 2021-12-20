@@ -71,11 +71,12 @@ public:
      * Inspect current operator parameters
      * @return map of key/value parameters
      */
-    Params Parameters() const;
+    Params &Parameters() const;
 
 private:
-    Operator(core::Operator *op);
-    core::Operator *m_Operator = nullptr;
+    Params *m_Parameters;
+    std::string m_Type;
+    Operator(const std::string &type, Params *params);
 };
 
 } // end namespace adios2

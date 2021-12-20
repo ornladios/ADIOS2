@@ -18,14 +18,15 @@ namespace core
 
 Operator::Operator(const std::string typeString, const OperatorType typeEnum,
                    const Params &parameters)
-: m_TypeString(typeString), m_TypeEnum(typeEnum), m_Parameters(parameters)
+: m_TypeString(typeString), m_TypeEnum(typeEnum),
+  m_Parameters(helper::LowerCaseParams(parameters))
 {
 }
 
 void Operator::SetParameter(const std::string key,
                             const std::string value) noexcept
 {
-    m_Parameters[key] = value;
+    m_Parameters[helper::LowerCase(key)] = value;
 }
 
 Params &Operator::GetParameters() noexcept { return m_Parameters; }

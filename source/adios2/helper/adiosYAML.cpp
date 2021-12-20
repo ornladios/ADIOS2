@@ -64,10 +64,8 @@ Params YAMLNodeMapToParams(const YAML::Node &node, const std::string &hint)
 
 } // end empty  namespace
 
-void ParseConfigYAML(
-    core::ADIOS &adios, const std::string &configFileYAML,
-    std::map<std::string, core::IO> &ios,
-    std::map<std::string, std::shared_ptr<core::Operator>> &operators)
+void ParseConfigYAML(core::ADIOS &adios, const std::string &configFileYAML,
+                     std::map<std::string, core::IO> &ios)
 {
     const std::string hint = "when parsing config file " + configFileYAML +
                              " in call to ADIOS constructor";
@@ -99,23 +97,12 @@ void ParseConfigYAML(
                     YAMLNode("Type", *it, errorMessage, isMandatory,
                              YAML::NodeType::Scalar);
 
-                core::Operator *op = nullptr;
-
                 Params parameters = YAMLNodeMapToParams(*it, hint);
-
                 const std::string operatorType =
                     EraseKey<std::string>("Type", parameters);
 
-                const std::string operatorName =
-                    "__" + currentIO.m_Name + "_" + operatorType;
-
-                auto itOperator = operators.find(operatorName);
-                op = (itOperator == operators.end())
-                         ? &adios.DefineOperator(operatorName, operatorType)
-                         : itOperator->second.get();
-
                 currentIO.m_VarOpsPlaceholder[variableName].push_back(
-                    core::IO::Operation{op, parameters, Params()});
+                    {operatorType, parameters});
             }
         }
     };

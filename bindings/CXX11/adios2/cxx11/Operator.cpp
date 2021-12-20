@@ -16,34 +16,26 @@
 namespace adios2
 {
 
-Operator::operator bool() const noexcept
-{
-    return (m_Operator == nullptr) ? false : true;
-}
+Operator::operator bool() const noexcept { return m_Parameters != nullptr; }
 
-std::string Operator::Type() const noexcept
-{
-    if (m_Operator == nullptr)
-    {
-        return "";
-    }
-
-    return m_Operator->m_TypeString;
-}
+std::string Operator::Type() const noexcept { return m_Type; }
 
 void Operator::SetParameter(const std::string key, const std::string value)
 {
-    helper::CheckForNullptr(m_Operator, "in call to Operator::SetParameter");
-    m_Operator->SetParameter(key, value);
+    helper::CheckForNullptr(m_Parameters, "in call to Operator::SetParameter");
+    (*m_Parameters)[key] = value;
 }
 
-Params Operator::Parameters() const
+Params &Operator::Parameters() const
 {
-    helper::CheckForNullptr(m_Operator, "in call to Operator::Parameters");
-    return m_Operator->GetParameters();
+    helper::CheckForNullptr(m_Parameters, "in call to Operator::Parameters");
+    return *m_Parameters;
 }
 
 // PRIVATE
-Operator::Operator(core::Operator *op) : m_Operator(op) {}
+Operator::Operator(const std::string &type, Params *params)
+: m_Parameters(params), m_Type(type)
+{
+}
 
 } // end namespace adios2

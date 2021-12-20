@@ -1516,6 +1516,83 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
     }
 }
 
+#ifdef ADIOS2_HAVE_BZIP2
+TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
+{
+    const std::string fname("BPWriteSpanOperatorException.bp");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    const size_t Nx = 8;
+
+    // Number of steps
+    const size_t NSteps = 3;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+    // Write test data using BP
+
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BP3");
+        }
+
+        const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
+        const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
+        const adios2::Dims count{Nx};
+
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
+                                                adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
+                                                 adios2::ConstantDims);
+        adios2::Operator BZIP2Op =
+            adios.DefineOperator("BZIP2Compressor", adios2::ops::LosslessBZIP2);
+
+        (void)var_r32;
+        (void)var_r64;
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            bpWriter.BeginStep();
+
+            // using bzip2, it could have been any operator to generate an
+            // exception
+            var_r32.AddOperation(
+                BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, "1e-4"}});
+            var_r64.AddOperation(
+                BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, "1e-4"}});
+
+            EXPECT_THROW(bpWriter.Put(var_r32, true, static_cast<float>(step)),
+                         std::invalid_argument);
+
+            EXPECT_THROW(bpWriter.Put(var_r64, true, static_cast<double>(step)),
+                         std::invalid_argument);
+
+            bpWriter.EndStep();
+        }
+
+        bpWriter.Close();
+    }
+}
+#endif
+
 int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI

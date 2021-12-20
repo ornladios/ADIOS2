@@ -80,14 +80,13 @@ void DataManSerializer::PutData(const core::Variable<T> &variable,
 }
 
 template <class T>
-void DataManSerializer::PutData(const T *inputData, const std::string &varName,
-                                const Dims &varShape, const Dims &varStart,
-                                const Dims &varCount, const Dims &varMemStart,
-                                const Dims &varMemCount,
-                                const std::string &doid, const size_t step,
-                                const int rank, const std::string &address,
-                                const std::vector<core::Operator *> &ops,
-                                VecPtr localBuffer, JsonPtr metadataJson)
+void DataManSerializer::PutData(
+    const T *inputData, const std::string &varName, const Dims &varShape,
+    const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
+    const Dims &varMemCount, const std::string &doid, const size_t step,
+    const int rank, const std::string &address,
+    const std::vector<std::shared_ptr<core::Operator>> &ops, VecPtr localBuffer,
+    JsonPtr metadataJson)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     Log(1,

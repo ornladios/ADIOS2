@@ -172,57 +172,28 @@ void ADIOS::ExitComputationBlock() noexcept
     }
 }
 
-Operator &ADIOS::DefineOperator(const std::string &name, const std::string type,
-                                const Params &parameters)
+std::pair<std::string, Params> &ADIOS::DefineOperator(const std::string &name,
+                                                      const std::string type,
+                                                      const Params &parameters)
 {
     CheckOperator(name);
-    auto itPair = m_Operators.emplace(name, MakeOperator(type, parameters));
-    return *itPair.first->second.get();
+    MakeOperator(type, parameters);
+    m_Operators[name] = {type, parameters};
+    return m_Operators[name];
 }
 
-Operator *ADIOS::InquireOperator(const std::string &name) noexcept
+std::pair<std::string, Params> *
+ADIOS::InquireOperator(const std::string &name) noexcept
 {
-    std::shared_ptr<Operator> *op = helper::InquireKey(name, m_Operators);
-    if (op == nullptr)
+    auto it = m_Operators.find(name);
+    if (it == m_Operators.end())
     {
         return nullptr;
     }
-    return op->get();
-}
-
-#define declare_type(T)                                                        \
-    Operator &ADIOS::DefineCallBack(                                           \
-        const std::string name,                                                \
-        const std::function<void(const T *, const std::string &,               \
-                                 const std::string &, const std::string &,     \
-                                 const size_t, const Dims &, const Dims &,     \
-                                 const Dims &)> &function,                     \
-        const Params &parameters)                                              \
-    {                                                                          \
-        CheckOperator(name);                                                   \
-        std::shared_ptr<Operator> callbackOperator =                           \
-            std::make_shared<callback::Signature1>(function, parameters);      \
-                                                                               \
-        auto itPair = m_Operators.emplace(name, std::move(callbackOperator));  \
-        return *itPair.first->second;                                          \
+    else
+    {
+        return &it->second;
     }
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
-Operator &ADIOS::DefineCallBack(
-    const std::string name,
-    const std::function<void(void *, const std::string &, const std::string &,
-                             const std::string &, const size_t, const Dims &,
-                             const Dims &, const Dims &)> &function,
-    const Params &parameters)
-{
-    CheckOperator(name);
-    std::shared_ptr<Operator> callbackOperator =
-        std::make_shared<callback::Signature2>(function, parameters);
-
-    auto itPair = m_Operators.emplace(name, std::move(callbackOperator));
-    return *itPair.first->second;
 }
 
 bool ADIOS::RemoveIO(const std::string name)
@@ -257,7 +228,7 @@ void ADIOS::XMLInit(const std::string &configFileXML)
 
 void ADIOS::YAMLInit(const std::string &configFileYAML)
 {
-    helper::ParseConfigYAML(*this, configFileYAML, m_IOs, m_Operators);
+    helper::ParseConfigYAML(*this, configFileYAML, m_IOs);
 }
 
 } // end namespace core
