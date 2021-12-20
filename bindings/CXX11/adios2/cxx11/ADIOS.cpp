@@ -49,6 +49,18 @@ void ADIOS::FlushAll()
     m_ADIOS->FlushAll();
 }
 
+void ADIOS::EnterComputationBlock() noexcept
+{
+    CheckPointer("in call to ADIOS::EnterComputationBlock()");
+    m_ADIOS->EnterComputationBlock();
+}
+
+void ADIOS::ExitComputationBlock() noexcept
+{
+    CheckPointer("in call to ADIOS::ExitComputationBlock()");
+    m_ADIOS->ExitComputationBlock();
+}
+
 Operator ADIOS::DefineOperator(const std::string name, const std::string type,
                                const Params &parameters)
 {

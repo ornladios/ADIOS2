@@ -195,8 +195,6 @@ void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios,
             io.SetEngine("BPFile");
         }
 
-        io.SetParameter("AsyncThreads", "0");
-
         if (engineName.compare("BP4") == 0)
         {
             io.SetParameters("statslevel=1");

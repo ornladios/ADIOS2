@@ -101,6 +101,13 @@ public:
         Auto
     };
 
+    enum class AsyncWrite
+    {
+        Sync = 0, // enable using AsyncWriteMode as bool expression
+        Naive,
+        Guided
+    };
+
 #define BP5_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(OpenTimeoutSecs, Int, int, 3600)                                     \
     MACRO(BeginStepPollingFrequencySecs, Int, int, 0)                          \
@@ -115,7 +122,8 @@ public:
     MACRO(FileSystemPageSize, UInt, unsigned int, 4096)                        \
     MACRO(AggregationType, AggregationType, int,                               \
           (int)AggregationType::TwoLevelShm)                                   \
-    MACRO(AsyncTasks, Bool, bool, true)                                        \
+    MACRO(AsyncOpen, Bool, bool, true)                                         \
+    MACRO(AsyncWrite, AsyncWrite, int, (int)AsyncWrite::Sync)                  \
     MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)               \
     MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \
     MACRO(MinDeferredSize, SizeBytes, size_t, DefaultMinDeferredSize)          \

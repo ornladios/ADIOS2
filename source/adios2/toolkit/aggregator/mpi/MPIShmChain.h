@@ -14,6 +14,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/aggregator/mpi/MPIAggregator.h"
+#include "adios2/toolkit/shm/Spinlock.h"
 
 #include <atomic>
 #include <chrono>
@@ -23,27 +24,6 @@ namespace adios2
 {
 namespace aggregator
 {
-
-class Spinlock
-{
-    /* from
-     * https://wang-yimu.com/a-tutorial-on-shared-memory-inter-process-communication
-     */
-public:
-    Spinlock() { flag_.clear(); }
-    void lock()
-    {
-        while (!try_lock())
-        {
-            std::this_thread::sleep_for(std::chrono::duration<double>(0.00001));
-        }
-    }
-    void unlock() { flag_.clear(); }
-
-private:
-    inline bool try_lock() { return !flag_.test_and_set(); }
-    std::atomic_flag flag_; //{ATOMIC_FLAG_INIT};
-};
 
 // constexpr size_t SHM_BUF_SIZE = 4194304; // 4MB
 // we allocate 2x this size + a bit for shared memory segment
@@ -162,10 +142,10 @@ private:
         // user facing structs
         ShmDataBuffer sdbA;
         ShmDataBuffer sdbB;
-        aggregator::Spinlock lockSegment;
+        shm::Spinlock lockSegment;
         // locks for individual buffers (sdb and buf)
-        aggregator::Spinlock lockA;
-        aggregator::Spinlock lockB;
+        shm::Spinlock lockA;
+        shm::Spinlock lockB;
         // the actual data buffers
         // char bufA[SHM_BUF_SIZE];
         // char bufB[SHM_BUF_SIZE];

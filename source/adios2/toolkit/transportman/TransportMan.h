@@ -201,6 +201,8 @@ public:
 
     void SeekToFileBegin(const int transportIndex = -1);
 
+    void SeekTo(const size_t start, const int transportIndex = -1);
+
     /**
      * Check if a file exists.
      * @param name

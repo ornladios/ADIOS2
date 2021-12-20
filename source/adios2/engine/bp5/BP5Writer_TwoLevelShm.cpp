@@ -13,6 +13,7 @@
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange, PaddingToAlignOffset
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
+#include "adios2/toolkit/shm/TokenChain.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
 
@@ -42,22 +43,6 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
     m_DataPos += helper::PaddingToAlignOffset(m_DataPos,
                                               m_Parameters.FileSystemPageSize);
 
-    /*
-    // Each aggregator needs to know the total size they write
-    // including alignment to page size
-    // This calculation is valid on aggregators only
-    std::vector<uint64_t> mySizes = a->m_Comm.GatherValues(Data->Size());
-    uint64_t myTotalSize = 0;
-    uint64_t pos = m_DataPos;
-    for (auto s : mySizes)
-    {
-        uint64_t alignment =
-            helper::PaddingToAlignOffset(pos, m_Parameters.FileSystemPageSize);
-        myTotalSize += alignment + s;
-        pos += alignment + s;
-    }
-    */
-
     // Each aggregator needs to know the total size they write
     // This calculation is valid on aggregators only
     std::vector<uint64_t> mySizes = a->m_Comm.GatherValues(Data->Size());
@@ -76,6 +61,8 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
     {
         a->CreateShm(static_cast<size_t>(maxSize), m_Parameters.MaxShmSize);
     }
+
+    shm::TokenChain<uint64_t> tokenChain(&a->m_Comm);
 
     if (a->m_IsAggregator)
     {
@@ -115,12 +102,8 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
 
         // Send token to first non-aggregator to start filling shm
         // Also informs next process its starting offset (for correct metadata)
-        if (a->m_Comm.Size() > 1)
-        {
-            uint64_t nextWriterPos = m_DataPos + Data->Size();
-            a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
-                            "Shm token in BP5Writer::WriteData_TwoLevelShm");
-        }
+        uint64_t nextWriterPos = m_DataPos + Data->Size();
+        tokenChain.SendToken(nextWriterPos);
 
         WriteMyOwnData(Data);
 
@@ -145,8 +128,7 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
     {
         // non-aggregators fill shared buffer in marching order
         // they also receive their starting offset this way
-        a->m_Comm.Recv(&m_StartDataPos, 1, a->m_Comm.Rank() - 1, 0,
-                       "Shm token in BP5Writer::WriteData_TwoLevelShm");
+        m_StartDataPos = tokenChain.RecvToken();
 
         /*std::cout << "Rank " << m_Comm.Rank()
                   << " non-aggregator recv token to fill shm = "
@@ -154,12 +136,8 @@ void BP5Writer::WriteData_TwoLevelShm(format::BufferV *Data)
 
         SendDataToAggregator(Data);
 
-        if (a->m_Comm.Rank() < a->m_Comm.Size() - 1)
-        {
-            uint64_t nextWriterPos = m_StartDataPos + Data->Size();
-            a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
-                            "Shm token in BP5Writer::WriteData_TwoLevelShm");
-        }
+        uint64_t nextWriterPos = m_StartDataPos + Data->Size();
+        tokenChain.SendToken(nextWriterPos);
     }
 
     if (a->m_Comm.Size() > 1)

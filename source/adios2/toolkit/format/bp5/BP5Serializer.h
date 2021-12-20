@@ -83,7 +83,7 @@ public:
      */
     BufferV *ReinitStepData(BufferV *DataBuffer);
 
-    TimestepInfo CloseTimestep(int timestep);
+    TimestepInfo CloseTimestep(int timestep, bool forceCopyDeferred = false);
     void PerformPuts();
 
     core::Engine *m_Engine = NULL;
@@ -183,7 +183,7 @@ private:
     size_t *AppendDims(size_t *OldDims, const size_t OldCount,
                        const size_t Count, const size_t *Vals);
 
-    void DumpDeferredBlocks();
+    void DumpDeferredBlocks(bool forceCopyDeferred = false);
 
     typedef struct _ArrayRec
     {

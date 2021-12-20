@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include <chrono>
 #include <errno.h>
 #include <float.h> // FLT_MAX
 #include <iomanip>
@@ -13,6 +14,7 @@
 #include <iterator>
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 
 #include "decomp.h"
 #include "processConfig.h"
@@ -26,8 +28,8 @@ CommandSleep::CommandSleep(size_t time)
 }
 CommandSleep::~CommandSleep() {}
 
-CommandBusy::CommandBusy(size_t time)
-: Command(Operation::Busy), busyTime_us(time)
+CommandBusy::CommandBusy(size_t cycles, size_t time)
+: Command(Operation::Busy), cycles(cycles), busyTime_us(time)
 {
 }
 CommandBusy::~CommandBusy() {}
@@ -322,8 +324,9 @@ void printConfig(const Config &cfg)
         case Operation::Busy:
         {
             auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
-            std::cout << "          Be busy for " << cmdS->busyTime_us
-                      << " microseconds " << std::endl;
+            std::cout << "          Be busy for " << cmdS->cycles
+                      << " compute cycles with " << cmdS->busyTime_us
+                      << " microseconds of computation each " << std::endl;
             break;
         }
         case Operation::Write:
@@ -561,15 +564,18 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             {
                 if (currentAppId == static_cast<int>(settings.appId))
                 {
-                    double d = stringToDouble(words, 1, "busy");
+                    size_t cycles =
+                        static_cast<int>(stringToSizet(words, 1, "busy"));
+                    double d = stringToDouble(words, 2, "busy");
                     if (verbose0)
                     {
-                        std::cout
-                            << "--> Command Busy for: " << std::setprecision(7)
-                            << d << " seconds" << std::endl;
+                        std::cout << "--> Command Busy for: " << cycles
+                                  << " cycles with " << std::setprecision(7)
+                                  << d << " seconds computation each"
+                                  << std::endl;
                     }
                     size_t t_us = static_cast<size_t>(d * 1000000);
-                    auto cmd = std::make_shared<CommandBusy>(t_us);
+                    auto cmd = std::make_shared<CommandBusy>(cycles, t_us);
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                 }

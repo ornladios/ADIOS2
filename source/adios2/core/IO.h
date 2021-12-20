@@ -25,6 +25,7 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Attribute.h"
+#include "adios2/core/CoreTypes.h"
 #include "adios2/core/Group.h"
 #include "adios2/core/Variable.h"
 #include "adios2/core/VariableCompound.h"
@@ -486,6 +487,11 @@ public:
     {
         return m_Engines;
     }
+
+    /** Inform about computation block through User->ADIOS */
+    void EnterComputationBlock() noexcept;
+    /** Inform about computation block through User->ADIOS */
+    void ExitComputationBlock() noexcept;
 
 private:
     /** true: exist in config file (XML) */

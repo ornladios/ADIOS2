@@ -109,6 +109,20 @@ void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_adios **adios,
     *ierr = static_cast<int>(adios2_finalize(*adios));
 }
 
+void FC_GLOBAL(adios2_enter_computation_block_f2c,
+               ADIOS2_ENTER_COMPUTATION_BLOCK_F2C)(adios2_adios **adios,
+                                                   int *ierr)
+{
+    *ierr = static_cast<int>(adios2_enter_computation_block(*adios));
+}
+
+void FC_GLOBAL(adios2_exit_computation_block_f2c,
+               ADIOS2_EXIT_COMPUTATION_BLOCK_F2C)(adios2_adios **adios,
+                                                  int *ierr)
+{
+    *ierr = static_cast<int>(adios2_exit_computation_block(*adios));
+}
+
 #ifdef __cplusplus
 }
 #endif

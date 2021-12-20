@@ -201,10 +201,13 @@ public:
     int Win_shared_query(Comm::Win &win, int rank, size_t *size, int *disp_unit,
                          void *baseptr, const std::string &hint) const override;
     int Win_free(Comm::Win &win, const std::string &hint) const override;
-    int Win_Lock(Comm::LockType lock_type, int rank, int assert, Comm::Win &win,
+    int Win_lock(Comm::LockType lock_type, int rank, int assert, Comm::Win &win,
                  const std::string &hint) const override;
-    int Win_Unlock(int rank, Comm::Win &win,
+    int Win_unlock(int rank, Comm::Win &win,
                    const std::string &hint) const override;
+    int Win_lock_all(int assert, Comm::Win &win,
+                     const std::string &hint) const override;
+    int Win_unlock_all(Comm::Win &win, const std::string &hint) const override;
 };
 
 CommImplMPI::~CommImplMPI()
@@ -579,7 +582,7 @@ int CommImplMPI::Win_free(Comm::Win &win, const std::string &hint) const
     return ret;
 }
 
-int CommImplMPI::Win_Lock(Comm::LockType lock_type, int rank, int assert,
+int CommImplMPI::Win_lock(Comm::LockType lock_type, int rank, int assert,
                           Comm::Win &win, const std::string &hint) const
 {
     CommWinImplMPI *w = dynamic_cast<CommWinImplMPI *>(CommWinImpl::Get(win));
@@ -588,11 +591,27 @@ int CommImplMPI::Win_Lock(Comm::LockType lock_type, int rank, int assert,
     CheckMPIReturn(ret, "in call to Win_Lock " + hint + "\n");
     return ret;
 }
-int CommImplMPI::Win_Unlock(int rank, Comm::Win &win,
+int CommImplMPI::Win_unlock(int rank, Comm::Win &win,
                             const std::string &hint) const
 {
     CommWinImplMPI *w = dynamic_cast<CommWinImplMPI *>(CommWinImpl::Get(win));
     int ret = MPI_Win_unlock(rank, w->m_Win);
+    CheckMPIReturn(ret, "in call to Win_Lock " + hint + "\n");
+    return ret;
+}
+
+int CommImplMPI::Win_lock_all(int assert, Comm::Win &win,
+                              const std::string &hint) const
+{
+    CommWinImplMPI *w = dynamic_cast<CommWinImplMPI *>(CommWinImpl::Get(win));
+    int ret = MPI_Win_lock_all(assert, w->m_Win);
+    CheckMPIReturn(ret, "in call to Win_Lock_all " + hint + "\n");
+    return ret;
+}
+int CommImplMPI::Win_unlock_all(Comm::Win &win, const std::string &hint) const
+{
+    CommWinImplMPI *w = dynamic_cast<CommWinImplMPI *>(CommWinImpl::Get(win));
+    int ret = MPI_Win_unlock_all(w->m_Win);
     CheckMPIReturn(ret, "in call to Win_Lock " + hint + "\n");
     return ret;
 }

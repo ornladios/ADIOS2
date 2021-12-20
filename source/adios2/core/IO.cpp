@@ -738,6 +738,30 @@ void IO::RemoveEngine(const std::string &name)
     }
 }
 
+void IO::EnterComputationBlock() noexcept
+{
+    for (auto &enginePair : m_Engines)
+    {
+        auto &engine = enginePair.second;
+        if (engine->OpenMode() != Mode::Read)
+        {
+            enginePair.second->EnterComputationBlock();
+        }
+    }
+}
+
+void IO::ExitComputationBlock() noexcept
+{
+    for (auto &enginePair : m_Engines)
+    {
+        auto &engine = enginePair.second;
+        if (engine->OpenMode() != Mode::Read)
+        {
+            enginePair.second->ExitComputationBlock();
+        }
+    }
+}
+
 void IO::FlushAll()
 {
     PERFSTUBS_SCOPED_TIMER("IO::FlushAll");

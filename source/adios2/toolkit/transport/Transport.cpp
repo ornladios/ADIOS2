@@ -9,6 +9,8 @@
  */
 
 #include "Transport.h"
+#include "adios2/core/CoreTypes.h"
+#include <algorithm> // max
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
 
