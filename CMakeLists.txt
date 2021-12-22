@@ -167,8 +167,8 @@ if(ADIOS2_HAVE_CUDA)
     set(CMAKE_CUDA_STANDARD 11)
     set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
     if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-        # default 70 to match Summit V100
-        set(CMAKE_CUDA_ARCHITECTURES 70)
+        # Mininum common non-deprecated architecture
+        set(CMAKE_CUDA_ARCHITECTURES 52)
     endif()
 endif()
 
