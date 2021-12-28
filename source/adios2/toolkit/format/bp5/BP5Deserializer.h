@@ -81,9 +81,10 @@ private:
         char *VarName = NULL;
         size_t DimCount = 0;
         ShapeID OrigShapeID;
-        char *Operator;
+        char *Operator = NULL;
         DataType Type;
         int ElementSize = 0;
+        size_t MinMaxOffset = SIZE_MAX;
         size_t *GlobalDims = NULL;
         size_t LastTSAdded = SIZE_MAX;
         size_t FirstTSSeen = SIZE_MAX;

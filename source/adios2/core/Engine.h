@@ -15,9 +15,11 @@
 #define ADIOS2_CORE_ENGINE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <float.h>
 #include <functional> //std::function
-#include <limits>     //std::numeric_limits
-#include <memory>     //std::shared_ptr
+#include <limits.h>
+#include <limits> //std::numeric_limits
+#include <memory> //std::shared_ptr
 #include <set>
 #include <string>
 #include <vector>
@@ -455,13 +457,6 @@ public:
 #define declare_field(T, N) T field_##N;
         ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(declare_field)
 #undef declare_field
-#define declare_get(T, N)                                                      \
-    T Get(T def) { return field_##N; }
-        ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(declare_get)
-#undef declare_get
-        std::string Get(std::string def) { return def; }
-        std::complex<float> Get(std::complex<float> def) { return def; }
-        std::complex<double> Get(std::complex<double> def) { return def; }
     };
 
     struct MinBlockInfo
@@ -478,6 +473,64 @@ public:
     {
         union PrimitiveStdtypeUnion MinUnion;
         union PrimitiveStdtypeUnion MaxUnion;
+        void Init(DataType Type)
+        {
+            memset(this, 0, sizeof(struct MinMaxStruct));
+            switch (Type)
+            {
+            case DataType::None:
+                break;
+            case DataType::Int8:
+                MinUnion.field_int8 = INT8_MAX;
+                MaxUnion.field_int8 = INT8_MIN;
+                break;
+            case DataType::Int16:
+                MinUnion.field_int16 = INT16_MAX;
+                MaxUnion.field_int16 = INT16_MIN;
+                break;
+            case DataType::Int32:
+                MinUnion.field_int32 = INT32_MAX;
+                MaxUnion.field_int32 = INT32_MIN;
+                break;
+            case DataType::Int64:
+                MinUnion.field_int64 = INT64_MAX;
+                MaxUnion.field_int64 = INT64_MIN;
+                break;
+            case DataType::Char:
+            case DataType::UInt8:
+                MinUnion.field_uint8 = UINT8_MAX;
+                MaxUnion.field_uint8 = 0;
+                break;
+            case DataType::UInt16:
+                MinUnion.field_uint16 = UINT16_MAX;
+                MaxUnion.field_uint16 = 0;
+                break;
+            case DataType::UInt32:
+                MinUnion.field_uint32 = UINT32_MAX;
+                MaxUnion.field_uint32 = 0;
+                break;
+            case DataType::UInt64:
+                MinUnion.field_uint64 = UINT64_MAX;
+                MaxUnion.field_uint64 = 0;
+                break;
+            case DataType::Float:
+                MinUnion.field_float = FLT_MAX;
+                MaxUnion.field_float = -FLT_MAX;
+                break;
+            case DataType::Double:
+                MinUnion.field_double = DBL_MAX;
+                MaxUnion.field_double = -DBL_MAX;
+            case DataType::LongDouble:
+                MinUnion.field_ldouble = LDBL_MAX;
+                MaxUnion.field_ldouble = -LDBL_MAX;
+                break;
+            case DataType::FloatComplex:
+            case DataType::DoubleComplex:
+            case DataType::String:
+            case DataType::Compound:
+                break;
+            }
+        }
     };
     struct MinVarInfo
     {

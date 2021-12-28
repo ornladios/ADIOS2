@@ -3008,6 +3008,7 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
 {
     const size_t ndim = variable->m_Shape.size();
     Dims dims(ndim, 0);
+    size_t nblocks = 0;
     if (timestep)
     {
         dims = variable->Shape();
@@ -3019,6 +3020,29 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
 
         // looping over the absolute step indexes
         // is not supported by a simple API function
+        const auto minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
+
+        if (minBlocks)
+        {
+            bool firstBlock = true;
+            nblocks = minBlocks->BlocksInfo.size();
+            for (size_t j = 0; j < nblocks; j++)
+            {
+                for (size_t k = 0; k < ndim; k++)
+                {
+                    if (firstBlock)
+                    {
+                        dims[k] = minBlocks->BlocksInfo[j].Count[k];
+                    }
+                    else if (dims[k] != minBlocks->BlocksInfo[j].Count[k])
+                    {
+                        dims[k] = 0;
+                    }
+                }
+                firstStep = false;
+            }
+            return dims;
+        }
         const std::map<size_t, std::vector<size_t>> &indices =
             variable->m_AvailableStepBlockIndexOffsets;
         auto itStep = indices.begin();
@@ -3473,16 +3497,13 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
                     }
                     else
                     {
-                        // fprintf(outf, " = ");
-                        // print_data(&minBlocks->BlocksInfo[j].MinUnion, 0,
-                        // adiosvartype, false);
-
-                        // fprintf(outf, " / ");
-                        // print_data(&minBlocks->BlocksInfo[j].MaxUnion, 0,
-                        // adiosvartype, false);
-                        //  No min max for minBlocks at the moment
                         fprintf(outf, " = ");
-                        fprintf(outf, "N/A / N/A");
+                        print_data(&minBlocks->BlocksInfo[j].MinUnion, 0,
+                                   adiosvartype, false);
+
+                        fprintf(outf, " / ");
+                        print_data(&minBlocks->BlocksInfo[j].MaxUnion, 0,
+                                   adiosvartype, false);
                     }
                 }
                 else

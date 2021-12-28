@@ -104,6 +104,8 @@ public:
     void *GetPtr(int bufferIdx, size_t posInBuffer);
     size_t CalcSize(const size_t Count, const size_t *Vals);
 
+    int m_StatsLevel = 1;
+
 private:
     void Init();
     typedef struct _BP5WriterRec
@@ -116,6 +118,7 @@ private:
         char *OperatorType;
         int DimCount;
         int Type;
+        size_t MinMaxOffset;
     } * BP5WriterRec;
 
     struct FFSWriterMarshalBase
@@ -168,6 +171,8 @@ private:
     void AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
                           const DataType Type, int ElementSize,
                           char *SizeField);
+    void AddDoubleArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
+                             int ElementSize, char *SizeField);
     char *BuildVarName(const char *base_name, const ShapeID Shape,
                        const int type, const int element_size);
     void BreakdownVarName(const char *Name, char **base_name_p, int *type_p,
@@ -184,6 +189,7 @@ private:
                        const size_t Count, const size_t *Vals);
 
     void DumpDeferredBlocks(bool forceCopyDeferred = false);
+    void VariableStatsEnabled(void *Variable);
 
     typedef struct _ArrayRec
     {

@@ -217,7 +217,6 @@
 
 #define ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(MACRO)                             \
     MACRO(int8_t, int8)                                                        \
-    MACRO(char, char)                                                          \
     MACRO(uint8_t, uint8)                                                      \
     MACRO(int16_t, int16)                                                      \
     MACRO(uint16_t, uint16)                                                    \
