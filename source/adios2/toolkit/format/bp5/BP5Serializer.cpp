@@ -425,6 +425,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
     Rec->FieldID = Info.RecCount;
     Rec->DimCount = DimCount;
     Rec->Type = (int)Type;
+    Rec->OperatorType = NULL;
     if (DimCount == 0)
     {
         // simple field, only add base value FMField to metadata

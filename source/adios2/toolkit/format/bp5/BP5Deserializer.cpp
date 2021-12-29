@@ -604,7 +604,6 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 }
                 if (VarRec->MinMaxOffset != SIZE_MAX)
                 {
-                    // MinMaxStruct init from variable
                     core::Engine::MinMaxStruct MinMax;
                     MinMax.Init(VarRec->Type);
                     for (size_t B = 0; B < BlockCount; B++)
@@ -614,7 +613,6 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                                 *)(((char *)meta_base) + VarRec->MinMaxOffset);
                         ApplyElementMinMax(MinMax, VarRec->Type, MMs[B]);
                     }
-                    // MinMaxStruct to variable
                 }
             }
             else

@@ -115,7 +115,7 @@ private:
         ShapeID Shape;
         size_t DataOffset;
         size_t MetaOffset;
-        char *OperatorType;
+        char *OperatorType = NULL;
         int DimCount;
         int Type;
         size_t MinMaxOffset;
