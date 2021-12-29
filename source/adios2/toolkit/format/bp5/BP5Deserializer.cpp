@@ -188,7 +188,7 @@ void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
             *Operator = (char *)malloc(Len + 1);
             const char *OpStart = index(Plus, 'O') + 1;
             memcpy(*Operator, index(Plus, 'O') + 1, Len);
-            Operator[Len] = 0;
+            (*Operator)[Len] = 0;
             Plus = OpStart + Len;
         }
         else if (strncmp(Plus, "+MM", 3) == 0)
@@ -293,6 +293,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                 VarRec->Operator = Operator;
                 C->ElementSize = ElementSize;
             }
+            C->VarRec = VarRec;
             size_t MetaRecFields = 7;
             if (Operator)
             {
@@ -306,7 +307,6 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             }
             i += MetaRecFields;
             free(ArrayName);
-            C->VarRec = VarRec;
         }
         else
         {
