@@ -680,15 +680,16 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                 tmpCount.push_back(Count[i]);
                 tmpOffsets.push_back(Offsets[i]);
             }
+            size_t AllocSize = ElemCount * ElemSize + 100;
             BufferV::BufferPos pos =
-                CurDataBuffer->Allocate(ElemCount * ElemSize, ElemSize);
+                CurDataBuffer->Allocate(AllocSize, ElemSize);
             char *CompressedData =
                 (char *)GetPtr(pos.bufferIdx, pos.posInBuffer);
             DataOffset = m_PriorDataBufferSizeTotal + pos.globalPos;
             CompressedSize = VB->m_Operations[0]->Operate(
                 (const char *)Data, tmpOffsets, tmpCount, (DataType)Rec->Type,
                 CompressedData);
-            // use data size to resize allocated buffer
+            CurDataBuffer->DownsizeLastAlloc(AllocSize, CompressedSize);
         }
         else if (Span == nullptr)
         {

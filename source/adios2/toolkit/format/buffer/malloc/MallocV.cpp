@@ -183,6 +183,13 @@ BufferV::BufferPos MallocV::Allocate(const size_t size, size_t align)
     return bp;
 }
 
+void MallocV::DownsizeLastAlloc(const size_t oldSize, const size_t newSize)
+{
+    DataV.back().Size -= (oldSize - newSize);
+    CurOffset -= (oldSize - newSize);
+    m_internalPos -= (oldSize - newSize);
+}
+
 void *MallocV::GetPtr(int bufferIdx, size_t posInBuffer)
 {
     if (bufferIdx == -1)
