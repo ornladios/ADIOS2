@@ -405,10 +405,10 @@ void BP5Serializer::AddDoubleArrayField(FMFieldList *FieldP, int *CountP,
                                         char *SizeField)
 {
     char *TypeWithArray = (char *)malloc(10 + strlen(SizeField) + 8);
-    sprintf(TypeWithArray, "char[%d][%s]", ElementSize, SizeField);
+    sprintf(TypeWithArray, "float[2][%s]", SizeField);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
     free(TypeWithArray);
-    (*FieldP)[*CountP - 1].field_size = 1;
+    (*FieldP)[*CountP - 1].field_size = ElementSize;
 }
 
 BP5Serializer::BP5WriterRec
@@ -494,7 +494,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         {
             Rec->MinMaxOffset = Offset;
             AddDoubleArrayField(&Info.MetaFields, &Info.MetaFieldCount,
-                                MinMaxName, sizeof(core::Engine::MinMaxStruct),
+                                MinMaxName, sizeof(long double),
                                 BlockCountName);
         }
         Rec->OperatorType = OperatorType;
@@ -664,6 +664,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         }
 
         core::Engine::MinMaxStruct MinMax;
+        MinMax.Init(Type);
         if ((m_StatsLevel > 0) && !Span)
         {
             GetMinMax(Data, ElemCount, (DataType)Rec->Type, MinMax);
