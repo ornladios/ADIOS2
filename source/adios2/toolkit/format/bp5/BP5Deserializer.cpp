@@ -44,8 +44,6 @@ namespace format
 {
 static void ApplyElementMinMax(Engine::MinMaxStruct &MinMax, DataType Type,
                                void *Element);
-static void ApplyElementMinMax(Engine::MinMaxStruct &MinMax, DataType Type,
-                               const Engine::MinMaxStruct &Element);
 
 void BP5Deserializer::InstallMetaMetaData(MetaMetaInfoBlock &MM)
 {
@@ -1691,88 +1689,6 @@ static void ApplyElementMinMax(Engine::MinMaxStruct &MinMax, DataType Type,
             MinMax.MinUnion.field_ldouble = *(long double *)Element;
         if (*(long double *)Element > MinMax.MaxUnion.field_ldouble)
             MinMax.MaxUnion.field_ldouble = *(long double *)Element;
-        break;
-    case DataType::FloatComplex:
-    case DataType::DoubleComplex:
-    case DataType::String:
-    case DataType::Compound:
-        break;
-    }
-}
-
-static void ApplyElementMinMax(Engine::MinMaxStruct &MinMax, DataType Type,
-                               const Engine::MinMaxStruct &Element)
-{
-    switch (Type)
-    {
-    case DataType::None:
-        break;
-    case DataType::Char:
-    case DataType::Int8:
-        if (Element.MinUnion.field_int8 < MinMax.MinUnion.field_int8)
-            MinMax.MinUnion.field_int8 = Element.MinUnion.field_int8;
-        if (Element.MaxUnion.field_int8 > MinMax.MaxUnion.field_int8)
-            MinMax.MaxUnion.field_int8 = Element.MaxUnion.field_int8;
-        break;
-    case DataType::Int16:
-        if (Element.MinUnion.field_int16 < MinMax.MinUnion.field_int16)
-            MinMax.MinUnion.field_int16 = Element.MinUnion.field_int16;
-        if (Element.MaxUnion.field_int16 > MinMax.MaxUnion.field_int16)
-            MinMax.MaxUnion.field_int16 = Element.MaxUnion.field_int16;
-        break;
-    case DataType::Int32:
-        if (Element.MinUnion.field_int32 < MinMax.MinUnion.field_int32)
-            MinMax.MinUnion.field_int32 = Element.MinUnion.field_int32;
-        if (Element.MaxUnion.field_int32 > MinMax.MaxUnion.field_int32)
-            MinMax.MaxUnion.field_int32 = Element.MaxUnion.field_int32;
-        break;
-    case DataType::Int64:
-        if (Element.MinUnion.field_int64 < MinMax.MinUnion.field_int64)
-            MinMax.MinUnion.field_int64 = Element.MinUnion.field_int64;
-        if (Element.MaxUnion.field_int64 > MinMax.MaxUnion.field_int64)
-            MinMax.MaxUnion.field_int64 = Element.MaxUnion.field_int64;
-        break;
-    case DataType::UInt8:
-        if (Element.MinUnion.field_uint8 < MinMax.MinUnion.field_uint8)
-            MinMax.MinUnion.field_uint8 = Element.MinUnion.field_uint8;
-        if (Element.MaxUnion.field_uint8 > MinMax.MaxUnion.field_uint8)
-            MinMax.MaxUnion.field_uint8 = Element.MaxUnion.field_uint8;
-        break;
-    case DataType::UInt16:
-        if (Element.MinUnion.field_uint16 < MinMax.MinUnion.field_uint16)
-            MinMax.MinUnion.field_uint16 = Element.MinUnion.field_uint16;
-        if (Element.MaxUnion.field_uint16 > MinMax.MaxUnion.field_uint16)
-            MinMax.MaxUnion.field_uint16 = Element.MaxUnion.field_uint16;
-        break;
-    case DataType::UInt32:
-        if (Element.MinUnion.field_uint32 < MinMax.MinUnion.field_uint32)
-            MinMax.MinUnion.field_uint32 = Element.MinUnion.field_uint32;
-        if (Element.MaxUnion.field_uint32 > MinMax.MaxUnion.field_uint32)
-            MinMax.MaxUnion.field_uint32 = Element.MaxUnion.field_uint32;
-        break;
-    case DataType::UInt64:
-        if (Element.MinUnion.field_uint64 < MinMax.MinUnion.field_uint64)
-            MinMax.MinUnion.field_uint64 = Element.MinUnion.field_uint64;
-        if (Element.MaxUnion.field_uint64 > MinMax.MaxUnion.field_uint64)
-            MinMax.MaxUnion.field_uint64 = Element.MaxUnion.field_uint64;
-        break;
-    case DataType::Float:
-        if (Element.MinUnion.field_float < MinMax.MinUnion.field_float)
-            MinMax.MinUnion.field_float = Element.MinUnion.field_float;
-        if (Element.MaxUnion.field_float > MinMax.MaxUnion.field_float)
-            MinMax.MaxUnion.field_float = Element.MaxUnion.field_float;
-        break;
-    case DataType::Double:
-        if (Element.MinUnion.field_double < MinMax.MinUnion.field_double)
-            MinMax.MinUnion.field_double = Element.MinUnion.field_double;
-        if (Element.MaxUnion.field_double > MinMax.MaxUnion.field_double)
-            MinMax.MaxUnion.field_double = Element.MaxUnion.field_double;
-        break;
-    case DataType::LongDouble:
-        if (Element.MinUnion.field_ldouble < MinMax.MinUnion.field_ldouble)
-            MinMax.MinUnion.field_ldouble = Element.MinUnion.field_ldouble;
-        if (Element.MaxUnion.field_ldouble > MinMax.MaxUnion.field_ldouble)
-            MinMax.MaxUnion.field_ldouble = Element.MaxUnion.field_ldouble;
         break;
     case DataType::FloatComplex:
     case DataType::DoubleComplex:
