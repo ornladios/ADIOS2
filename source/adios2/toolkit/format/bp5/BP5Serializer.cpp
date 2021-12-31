@@ -401,11 +401,13 @@ void BP5Serializer::AddVarArrayField(FMFieldList *FieldP, int *CountP,
 }
 
 void BP5Serializer::AddDoubleArrayField(FMFieldList *FieldP, int *CountP,
-                                        const char *Name, int ElementSize,
-                                        char *SizeField)
+                                        const char *Name, const DataType Type,
+                                        int ElementSize, char *SizeField)
 {
-    char *TypeWithArray = (char *)malloc(10 + strlen(SizeField) + 8);
-    sprintf(TypeWithArray, "float[2][%s]", SizeField);
+    char *TransType = TranslateADIOS2Type2FFS(Type);
+    char *TypeWithArray =
+        (char *)malloc(strlen(TransType) + strlen(SizeField) + 8);
+    sprintf(TypeWithArray, "%s[2][%s]", TransType, SizeField);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
     free(TypeWithArray);
     (*FieldP)[*CountP - 1].field_size = ElementSize;
@@ -494,8 +496,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         {
             Rec->MinMaxOffset = Offset;
             AddDoubleArrayField(&Info.MetaFields, &Info.MetaFieldCount,
-                                MinMaxName, sizeof(long double),
-                                BlockCountName);
+                                MinMaxName, Type, ElemSize, BlockCountName);
         }
         Rec->OperatorType = OperatorType;
         free(LongName);
@@ -731,12 +732,12 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                 MetaEntry->Offsets = NULL;
             if (m_StatsLevel > 0)
             {
-                core::Engine::MinMaxStruct **MMPtrLoc =
-                    (core::Engine::MinMaxStruct **)(((char *)MetaEntry) +
-                                                    Rec->MinMaxOffset);
-                *MMPtrLoc = (core::Engine::MinMaxStruct *)malloc(
-                    sizeof(core::Engine::MinMaxStruct));
-                *MMPtrLoc[0] = MinMax;
+                void **MMPtrLoc =
+                    (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
+                *MMPtrLoc = (void *)malloc(ElemSize);
+                memcpy(*MMPtrLoc, &MinMax.MinUnion, ElemSize);
+                memcpy(((char *)*MMPtrLoc) + ElemSize, &MinMax.MaxUnion,
+                       ElemSize);
             }
             if (DeferAddToVec)
             {
@@ -776,13 +777,16 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             }
             if (m_StatsLevel > 0)
             {
-                core::Engine::MinMaxStruct **MMPtrLoc =
-                    (core::Engine::MinMaxStruct **)(((char *)MetaEntry) +
-                                                    Rec->MinMaxOffset);
-                *MMPtrLoc = (core::Engine::MinMaxStruct *)realloc(
-                    *MMPtrLoc,
-                    MetaEntry->BlockCount * sizeof(core::Engine::MinMaxStruct));
-                (*MMPtrLoc)[MetaEntry->BlockCount - 1] = MinMax;
+                void **MMPtrLoc =
+                    (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
+                *MMPtrLoc = (void *)realloc(*MMPtrLoc,
+                                            MetaEntry->BlockCount * ElemSize);
+                memcpy(((char *)*MMPtrLoc) +
+                           ElemSize * (2 * (MetaEntry->BlockCount - 1)),
+                       &MinMax.MinUnion, ElemSize);
+                memcpy(((char *)*MMPtrLoc) +
+                           ElemSize * (2 * (MetaEntry->BlockCount - 1) + 1),
+                       &MinMax.MaxUnion, ElemSize);
             }
             if (DeferAddToVec)
             {

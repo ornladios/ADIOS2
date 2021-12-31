@@ -608,10 +608,17 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                     MinMax.Init(VarRec->Type);
                     for (size_t B = 0; B < BlockCount; B++)
                     {
-                        core::Engine::MinMaxStruct *MMs = *(
-                            core::Engine::MinMaxStruct *
-                                *)(((char *)meta_base) + VarRec->MinMaxOffset);
-                        ApplyElementMinMax(MinMax, VarRec->Type, MMs[B]);
+                        void *MMs = *(void **)(((char *)meta_base) +
+                                               VarRec->MinMaxOffset);
+                        ApplyElementMinMax(
+                            MinMax, VarRec->Type,
+                            (void *)(((char *)MMs) +
+                                     2 * B * ControlFields[i].ElementSize));
+                        ApplyElementMinMax(
+                            MinMax, VarRec->Type,
+                            (void *)(((char *)MMs) +
+                                     (2 * B + 1) *
+                                         ControlFields[i].ElementSize));
                     }
                 }
             }
@@ -1855,11 +1862,15 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
                         : 1;
                 for (size_t B = 0; B < WriterBlockCount; B++)
                 {
-                    core::Engine::MinMaxStruct *MMs = *(
-                        core::Engine::MinMaxStruct **)(((char *)
-                                                            writer_meta_base) +
-                                                       VarRec->MinMaxOffset);
-                    ApplyElementMinMax(MinMax, VarRec->Type, MMs[B]);
+                    void *MMs = *(void **)(((char *)writer_meta_base) +
+                                           VarRec->MinMaxOffset);
+                    ApplyElementMinMax(
+                        MinMax, VarRec->Type,
+                        (void *)(((char *)MMs) + 2 * B * Var.m_ElementSize));
+                    ApplyElementMinMax(
+                        MinMax, VarRec->Type,
+                        (void *)(((char *)MMs) +
+                                 (2 * B + 1) * Var.m_ElementSize));
                 }
             }
         }

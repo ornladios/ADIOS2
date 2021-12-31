@@ -172,7 +172,8 @@ private:
                           const DataType Type, int ElementSize,
                           char *SizeField);
     void AddDoubleArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
-                             int ElementSize, char *SizeField);
+                             const DataType Type, int ElementSize,
+                             char *SizeField);
     char *BuildVarName(const char *base_name, const ShapeID Shape,
                        const int type, const int element_size);
     void BreakdownVarName(const char *Name, char **base_name_p, int *type_p,
