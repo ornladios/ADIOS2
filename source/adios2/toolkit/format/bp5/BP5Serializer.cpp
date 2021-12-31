@@ -734,7 +734,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             {
                 void **MMPtrLoc =
                     (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
-                *MMPtrLoc = (void *)malloc(ElemSize);
+                *MMPtrLoc = (void *)malloc(ElemSize * 2);
                 memcpy(*MMPtrLoc, &MinMax.MinUnion, ElemSize);
                 memcpy(((char *)*MMPtrLoc) + ElemSize, &MinMax.MaxUnion,
                        ElemSize);
@@ -779,8 +779,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             {
                 void **MMPtrLoc =
                     (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
-                *MMPtrLoc = (void *)realloc(*MMPtrLoc,
-                                            MetaEntry->BlockCount * ElemSize);
+                *MMPtrLoc = (void *)realloc(*MMPtrLoc, MetaEntry->BlockCount *
+                                                           ElemSize * 2);
                 memcpy(((char *)*MMPtrLoc) +
                            ElemSize * (2 * (MetaEntry->BlockCount - 1)),
                        &MinMax.MinUnion, ElemSize);
