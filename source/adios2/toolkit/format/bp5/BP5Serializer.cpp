@@ -409,6 +409,7 @@ void BP5Serializer::AddDoubleArrayField(FMFieldList *FieldP, int *CountP,
         (char *)malloc(strlen(TransType) + strlen(SizeField) + 8);
     sprintf(TypeWithArray, "%s[2][%s]", TransType, SizeField);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
+    free(TransType);
     free(TypeWithArray);
     (*FieldP)[*CountP - 1].field_size = ElementSize;
 }

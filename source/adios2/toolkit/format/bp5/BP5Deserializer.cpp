@@ -608,15 +608,14 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                     {
                         void *MMs = *(void **)(((char *)meta_base) +
                                                VarRec->MinMaxOffset);
-                        ApplyElementMinMax(
-                            MinMax, VarRec->Type,
-                            (void *)(((char *)MMs) +
-                                     2 * B * ControlFields[i].ElementSize));
-                        ApplyElementMinMax(
-                            MinMax, VarRec->Type,
-                            (void *)(((char *)MMs) +
-                                     (2 * B + 1) *
-                                         ControlFields[i].ElementSize));
+                        char *BlockMinAddr =
+                            (((char *)MMs) + 2 * B * VarRec->ElementSize);
+                        char *BlockMaxAddr =
+                            (((char *)MMs) + (2 * B + 1) * VarRec->ElementSize);
+                        ApplyElementMinMax(MinMax, VarRec->Type,
+                                           (void *)BlockMinAddr);
+                        ApplyElementMinMax(MinMax, VarRec->Type,
+                                           (void *)BlockMaxAddr);
                     }
                 }
             }
@@ -727,6 +726,9 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
             create_fixed_FFSBuffer((char *)BaseData, DecodedLength);
         FFSdecode_to_buffer(ReaderFFSContext, (char *)AttributeBlock,
                             decode_buf);
+        std::cout << "Did Decode to buffer, base data was " << std::hex
+                  << BaseData << " length " << DecodedLength << std::dec
+                  << std::endl;
     }
     if (DumpMetadata == -1)
     {
@@ -1809,9 +1811,6 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
             {
                 void *writer_meta_base =
                     GetMetadataBase(VarRec, RelStep, WriterRank);
-                printf(
-                    "Applying element min max rank %zu, writer_meta_base %p\n",
-                    WriterRank, writer_meta_base);
                 if (writer_meta_base)
                     ApplyElementMinMax(MinMax, VarRec->Type, writer_meta_base);
             }
