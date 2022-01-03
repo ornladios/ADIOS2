@@ -104,6 +104,8 @@ public:
     void *GetPtr(int bufferIdx, size_t posInBuffer);
     size_t CalcSize(const size_t Count, const size_t *Vals);
 
+    size_t DebugGetDataBufferSize() const;
+
     int m_StatsLevel = 1;
 
 private:

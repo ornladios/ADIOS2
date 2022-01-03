@@ -159,13 +159,13 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
     {
         io.SetEngine(engineName);
     }
-    adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
-    EXPECT_TRUE(engine);
-
     if (readMode == ReadMode::ReadFileAll)
     {
         /// Read back data with File reading mode
         /// Read back the whole thing and check data
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         if (!mpiRank)
         {
             std::cout << "Read with File reading mode, read all steps at once"
@@ -210,6 +210,9 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
     {
         /// Read back data with File reading mode
         /// Read back step by step and check data
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         if (!mpiRank)
         {
             std::cout << "Read with File reading mode, read step by step"
@@ -239,6 +242,9 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
     {
         /// Read back data with File reading mode
         /// Read back step by step and block by block and check data
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         if (!mpiRank)
         {
             std::cout << "Read with File reading mode, read step by step, "
@@ -274,6 +280,9 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
     {
         /// Read back data with Stream reading mode
         /// Read back step by step and check data
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+        EXPECT_TRUE(engine);
+
         if (!mpiRank)
         {
             std::cout << "Read with Stream reading mode, read step by step"
@@ -302,6 +311,9 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
     }
     else if (readMode == ReadMode::ReadStreamBlocks)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         /// Read back data with Stream reading mode
         /// Read back step by step and check data
         if (!mpiRank)
@@ -412,11 +424,12 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
     {
         io.SetEngine(engineName);
     }
-    adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
-    EXPECT_TRUE(engine);
 
     if (readMode == ReadMode::ReadFileAll)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         /// Read back each variable with File reading mode
         /// Use SetStepSelection(0,1) explicitly
         if (!mpiRank)
@@ -459,6 +472,9 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
     }
     else if (readMode == ReadMode::ReadFileStepByStep)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         /// Read back each variable with File reading mode
         /// and do not use SetStepSelection() so default read after open is
         /// tested
@@ -490,6 +506,9 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
     }
     else if (readMode == ReadMode::ReadFileStepByStepBlocks)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         /// Read back each variable with File reading mode
         /// Read back block by block and check data
         if (!mpiRank)
@@ -527,6 +546,9 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
     }
     else if (readMode == ReadMode::ReadStream)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+        EXPECT_TRUE(engine);
+
         /// Read back each variable with Streaming reading mode
         if (!mpiRank)
         {
@@ -561,6 +583,9 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
     }
     else if (readMode == ReadMode::ReadStreamBlocks)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+        EXPECT_TRUE(engine);
+
         /// Read back each variable with Streaming reading mode
         if (!mpiRank)
         {
@@ -699,11 +724,12 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
     {
         io.SetEngine(engineName);
     }
-    adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
-    EXPECT_TRUE(engine);
 
     if (readMode == ReadMode::ReadFileAll)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         /// Read back data with File reading mode
         /// Read back the whole thing and check data
         if (!mpiRank)
@@ -736,6 +762,9 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
     }
     else if (readMode == ReadMode::ReadFileStepByStep)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         /// Read back data with File reading mode
         /// Read back step by step and check data
         if (!mpiRank)
@@ -767,6 +796,9 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
     }
     else if (readMode == ReadMode::ReadFileStepByStepBlocks)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         /// Read back data with File reading mode
         /// Read back step by step, block by block and check data
         if (!mpiRank)
@@ -804,6 +836,9 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
     }
     else if (readMode == ReadMode::ReadStream)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+        EXPECT_TRUE(engine);
+
         /// Read back data with Stream reading mode
         /// Read back step by step and check data
         if (!mpiRank)
@@ -845,6 +880,9 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
     }
     else if (readMode == ReadMode::ReadStreamBlocks)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+        EXPECT_TRUE(engine);
+
         /// Read back data with Stream reading mode
         /// Read back step by step and check data
         if (!mpiRank)
