@@ -88,30 +88,30 @@ void ZfpRate1D(const std::string configFile)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-        auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
-
-        auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
-
-        const adios2::Dims start{mpiRank * Nx};
-        const adios2::Dims count{Nx};
-        const adios2::Box<adios2::Dims> sel(start, count);
-        var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
-
         unsigned int t = 0;
         std::vector<float> decompressedR32s;
         std::vector<double> decompressedR64s;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+
+            auto var_r64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
+            ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+
+            const adios2::Dims start{mpiRank * Nx};
+            const adios2::Dims count{Nx};
+            const adios2::Box<adios2::Dims> sel(start, count);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
+
             bpReader.Get(var_r32, decompressedR32s);
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
@@ -204,32 +204,32 @@ void ZfpRate2D(const std::string configFile)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-        auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
-        ASSERT_EQ(var_r32.Shape()[1], Ny);
-
-        auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
-        ASSERT_EQ(var_r64.Shape()[1], Ny);
-
-        const adios2::Dims start{mpiRank * Nx, 0};
-        const adios2::Dims count{Nx, Ny};
-        const adios2::Box<adios2::Dims> sel(start, count);
-        var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
-
         unsigned int t = 0;
         std::vector<float> decompressedR32s;
         std::vector<double> decompressedR64s;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_r32.Shape()[1], Ny);
+
+            auto var_r64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
+            ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_r64.Shape()[1], Ny);
+
+            const adios2::Dims start{mpiRank * Nx, 0};
+            const adios2::Dims count{Nx, Ny};
+            const adios2::Box<adios2::Dims> sel(start, count);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
+
             bpReader.Get(var_r32, decompressedR32s);
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
@@ -323,34 +323,34 @@ void ZfpRate3D(const std::string configFile)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-        auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
-        ASSERT_EQ(var_r32.Shape()[1], Ny);
-        ASSERT_EQ(var_r32.Shape()[2], Nz);
-
-        auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
-        ASSERT_EQ(var_r64.Shape()[1], Ny);
-        ASSERT_EQ(var_r64.Shape()[2], Nz);
-
-        const adios2::Dims start{mpiRank * Nx, 0, 0};
-        const adios2::Dims count{Nx, Ny, Nz};
-        const adios2::Box<adios2::Dims> sel(start, count);
-        var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
-
         unsigned int t = 0;
         std::vector<float> decompressedR32s;
         std::vector<double> decompressedR64s;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_r32.Shape()[1], Ny);
+            ASSERT_EQ(var_r32.Shape()[2], Nz);
+
+            auto var_r64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
+            ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_r64.Shape()[1], Ny);
+            ASSERT_EQ(var_r64.Shape()[2], Nz);
+
+            const adios2::Dims start{mpiRank * Nx, 0, 0};
+            const adios2::Dims count{Nx, Ny, Nz};
+            const adios2::Box<adios2::Dims> sel(start, count);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
+
             bpReader.Get(var_r32, decompressedR32s);
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
@@ -445,31 +445,32 @@ void ZfpRate1DSel(const std::string configFile)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-        auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
-
-        auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], static_cast<std::size_t>(mpiSize) * Nx);
-
-        const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx +
-                                 Nx / 2};
-        const adios2::Dims count{Nx / 2};
-        const adios2::Box<adios2::Dims> sel(start, count);
-        var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
-
         unsigned int t = 0;
         std::vector<float> decompressedR32s;
         std::vector<double> decompressedR64s;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+
+            auto var_r64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
+            ASSERT_EQ(var_r64.Shape()[0],
+                      static_cast<std::size_t>(mpiSize) * Nx);
+
+            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx +
+                                     Nx / 2};
+            const adios2::Dims count{Nx / 2};
+            const adios2::Box<adios2::Dims> sel(start, count);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
+
             bpReader.Get(var_r32, decompressedR32s);
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
@@ -566,32 +567,32 @@ void ZfpRate2DSel(const std::string configFile)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-        auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
-        ASSERT_EQ(var_r32.Shape()[1], Ny);
-
-        auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
-        ASSERT_EQ(var_r64.Shape()[1], Ny);
-
-        const adios2::Dims start{mpiRank * Nx + Nx / 2, 0};
-        const adios2::Dims count{Nx / 2, Ny};
-        const adios2::Box<adios2::Dims> sel(start, count);
-        var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
-
         unsigned int t = 0;
         std::vector<float> decompressedR32s;
         std::vector<double> decompressedR64s;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_r32.Shape()[1], Ny);
+
+            auto var_r64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
+            ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_r64.Shape()[1], Ny);
+
+            const adios2::Dims start{mpiRank * Nx + Nx / 2, 0};
+            const adios2::Dims count{Nx / 2, Ny};
+            const adios2::Box<adios2::Dims> sel(start, count);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
+
             bpReader.Get(var_r32, decompressedR32s);
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
@@ -689,35 +690,35 @@ void ZfpRate3DSel(const std::string configFile)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-        auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
-        ASSERT_EQ(var_r32.Shape()[1], Ny);
-        ASSERT_EQ(var_r32.Shape()[2], Nz);
-
-        auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
-        ASSERT_EQ(var_r64.Shape()[1], Ny);
-        ASSERT_EQ(var_r64.Shape()[2], Nz);
-
-        const adios2::Dims start{
-            static_cast<std::size_t>(mpiRank) * Nx + Nx / 2, 0, 0};
-        const adios2::Dims count{Nx / 2, Ny, Nz};
-        const adios2::Box<adios2::Dims> sel(start, count);
-        var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
-
         unsigned int t = 0;
         std::vector<float> decompressedR32s;
         std::vector<double> decompressedR64s;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_r32.Shape()[1], Ny);
+            ASSERT_EQ(var_r32.Shape()[2], Nz);
+
+            auto var_r64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
+            ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_r64.Shape()[1], Ny);
+            ASSERT_EQ(var_r64.Shape()[2], Nz);
+
+            const adios2::Dims start{
+                static_cast<std::size_t>(mpiRank) * Nx + Nx / 2, 0, 0};
+            const adios2::Dims count{Nx / 2, Ny, Nz};
+            const adios2::Box<adios2::Dims> sel(start, count);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
+
             bpReader.Get(var_r32, decompressedR32s);
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
@@ -817,32 +818,33 @@ void ZfpRate2DSmallSel(const std::string configFile)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-        auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
-        ASSERT_EQ(var_r32.Shape()[1], Ny);
-
-        auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
-        ASSERT_EQ(var_r64.Shape()[1], Ny);
-
-        const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + 1, 1};
-        const adios2::Dims count{2, 2};
-        const adios2::Box<adios2::Dims> sel(start, count);
-        var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
-
         unsigned int t = 0;
         std::vector<float> decompressedR32s;
         std::vector<double> decompressedR64s;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_r32.Shape()[1], Ny);
+
+            auto var_r64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
+            ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+            ASSERT_EQ(var_r64.Shape()[1], Ny);
+
+            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + 1,
+                                     1};
+            const adios2::Dims count{2, 2};
+            const adios2::Box<adios2::Dims> sel(start, count);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
+
             bpReader.Get(var_r32, decompressedR32s);
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();

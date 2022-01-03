@@ -49,17 +49,17 @@ if(ADIOS2_HAVE_ZFP)
 endif()
 
 if(ADIOS2_HAVE_MGARD)
-  bp3_bp4_gtest_add_tests_helper(WriteReadMGARD MPI_ALLOW)
+  bp_gtest_add_tests_helper(WriteReadMGARD MPI_ALLOW)
 endif()
 
 if(ADIOS2_HAVE_BZip2)
-  bp3_bp4_gtest_add_tests_helper(WriteReadBZIP2 MPI_ALLOW)
+  bp_gtest_add_tests_helper(WriteReadBZIP2 MPI_ALLOW)
 endif()
 
 if(ADIOS2_HAVE_PNG)
-  bp3_bp4_gtest_add_tests_helper(WriteReadPNG MPI_ALLOW)
+  bp_gtest_add_tests_helper(WriteReadPNG MPI_ALLOW)
 endif()
 
 if(ADIOS2_HAVE_Blosc)
-  bp3_bp4_gtest_add_tests_helper(WriteReadBlosc MPI_ALLOW)
+  bp_gtest_add_tests_helper(WriteReadBlosc MPI_ALLOW)
 endif()
