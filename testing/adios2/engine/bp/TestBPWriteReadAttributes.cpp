@@ -899,7 +899,7 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
     }
 }
 
-TEST_F(BPWriteReadAttributes, WriteReadStreamVar)
+TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
 {
     const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
                               "AttributesWriteReadVar.bp";

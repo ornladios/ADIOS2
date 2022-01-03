@@ -35,6 +35,7 @@ public:
                             bool CopyReqd);
 
     virtual BufferPos Allocate(const size_t size, size_t align);
+    virtual void DownsizeLastAlloc(const size_t oldSize, const size_t newSize);
 
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer);
 

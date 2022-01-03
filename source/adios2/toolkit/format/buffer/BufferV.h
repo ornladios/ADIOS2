@@ -59,6 +59,8 @@ public:
      * during execution (even after reallocs)
      */
     virtual BufferPos Allocate(const size_t size, size_t align) = 0;
+    virtual void DownsizeLastAlloc(const size_t oldSize,
+                                   const size_t newSize) = 0;
 
     void AlignBuffer(const size_t align);
 
