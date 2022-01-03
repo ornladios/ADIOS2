@@ -726,9 +726,6 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
             create_fixed_FFSBuffer((char *)BaseData, DecodedLength);
         FFSdecode_to_buffer(ReaderFFSContext, (char *)AttributeBlock,
                             decode_buf);
-        std::cout << "Did Decode to buffer, base data was " << std::hex
-                  << BaseData << " length " << DecodedLength << std::dec
-                  << std::endl;
     }
     if (DumpMetadata == -1)
     {
@@ -1606,10 +1603,18 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
             Blk.BlockID = Id++;
             Blk.Start = Offsets;
             Blk.Count = Count;
+            Blk.MinMax.Init(VarRec->Type);
             if (MMs)
             {
-                Blk.MinUnion = MMs[i].MinUnion;
-                Blk.MaxUnion = MMs[i].MaxUnion;
+
+                char *BlockMinAddr =
+                    (((char *)MMs) + 2 * i * VarRec->ElementSize);
+                char *BlockMaxAddr =
+                    (((char *)MMs) + (2 * i + 1) * VarRec->ElementSize);
+                ApplyElementMinMax(Blk.MinMax, VarRec->Type,
+                                   (void *)BlockMinAddr);
+                ApplyElementMinMax(Blk.MinMax, VarRec->Type,
+                                   (void *)BlockMaxAddr);
             }
             // Blk.BufferP
             MV->BlocksInfo.push_back(Blk);

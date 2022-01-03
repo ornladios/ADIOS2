@@ -3498,11 +3498,11 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
                     else
                     {
                         fprintf(outf, " = ");
-                        print_data(&minBlocks->BlocksInfo[j].MinUnion, 0,
+                        print_data(&minBlocks->BlocksInfo[j].MinMax.MinUnion, 0,
                                    adiosvartype, false);
 
                         fprintf(outf, " / ");
-                        print_data(&minBlocks->BlocksInfo[j].MaxUnion, 0,
+                        print_data(&minBlocks->BlocksInfo[j].MinMax.MaxUnion, 0,
                                    adiosvartype, false);
                     }
                 }

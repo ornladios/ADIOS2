@@ -459,16 +459,6 @@ public:
 #undef declare_field
     };
 
-    struct MinBlockInfo
-    {
-        int WriterID = 0;
-        size_t BlockID = 0;
-        size_t *Start;
-        size_t *Count;
-        union PrimitiveStdtypeUnion MinUnion;
-        union PrimitiveStdtypeUnion MaxUnion;
-        void *BufferP = NULL;
-    };
     struct MinMaxStruct
     {
         union PrimitiveStdtypeUnion MinUnion;
@@ -590,6 +580,15 @@ public:
                 break;
             }
         }
+    };
+    struct MinBlockInfo
+    {
+        int WriterID = 0;
+        size_t BlockID = 0;
+        size_t *Start;
+        size_t *Count;
+        MinMaxStruct MinMax;
+        void *BufferP = NULL;
     };
     struct MinVarInfo
     {

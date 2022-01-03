@@ -100,8 +100,8 @@ ToBlocksInfo(const core::Engine::MinVarInfo *coreVarInfo)
         }
         else
         {
-            blockInfo.Min = *(T *)&coreBlockInfo.MinUnion;
-            blockInfo.Max = *(T *)&coreBlockInfo.MaxUnion;
+            blockInfo.Min = *(T *)&coreBlockInfo.MinMax.MinUnion;
+            blockInfo.Max = *(T *)&coreBlockInfo.MinMax.MaxUnion;
         }
         blockInfo.BlockID = coreBlockInfo.BlockID;
         blocksInfo.push_back(blockInfo);
