@@ -151,13 +151,13 @@ TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
     {
         io.SetEngine(engineName);
     }
-    adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
-    EXPECT_TRUE(engine);
-
     if (readMode == ReadMode::ReadFileStepByStepBlocks)
     {
         /// Read back data with File reading mode
         /// Read back step by step and block by block and check data
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         if (!mpiRank)
         {
             std::cout << "Read with File reading mode, read step by step, "
@@ -194,6 +194,9 @@ TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
     {
         /// Read back data with Stream reading mode
         /// Read back step by step and check data
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+        EXPECT_TRUE(engine);
+
         if (!mpiRank)
         {
             std::cout << "Read with Stream reading mode, read step by step, "
@@ -303,13 +306,13 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
     {
         io.SetEngine(engineName);
     }
-    adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
-    EXPECT_TRUE(engine);
-
     if (readMode == ReadMode::ReadFileStepByStepBlocks)
     {
         /// Read back each variable with File reading mode
         /// Read back block by block and check data
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         if (!mpiRank)
         {
             std::cout
@@ -347,6 +350,9 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
     else if (readMode == ReadMode::ReadStreamBlocks)
     {
         /// Read back each variable with Streaming reading mode
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+        EXPECT_TRUE(engine);
+
         if (!mpiRank)
         {
             std::cout
@@ -482,11 +488,11 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
     {
         io.SetEngine(engineName);
     }
-    adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
-    EXPECT_TRUE(engine);
-
     if (readMode == ReadMode::ReadFileStepByStepBlocks)
     {
+        adios2::Engine engine = io.Open(fname, adios2::Mode::ReadRandomAccess);
+        EXPECT_TRUE(engine);
+
         /// Read back data with File reading mode
         /// Read back step by step, block by block and check data
         if (!mpiRank)
@@ -527,6 +533,9 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
     {
         /// Read back data with Stream reading mode
         /// Read back step by step and check data
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+        EXPECT_TRUE(engine);
+
         if (!mpiRank)
         {
             std::cout

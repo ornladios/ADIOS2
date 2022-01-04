@@ -90,7 +90,8 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead =
+            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto var = ioRead.InquireVariable<int>(varpath);
         EXPECT_TRUE(var);

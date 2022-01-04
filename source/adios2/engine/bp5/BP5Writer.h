@@ -53,6 +53,8 @@ public:
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
+    size_t DebugGetDataBufferSize() const final;
+
 private:
     /** Single object controlling BP buffering */
     format::BP5Serializer m_BP5Serializer;

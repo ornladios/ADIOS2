@@ -168,7 +168,7 @@ private:
                                const size_t *LocalOffsets, size_t *LocalIndex);
     size_t RelativeToAbsoluteStep(const BP5VarRec *VarRec, size_t RelStep);
     int FindOffset(size_t Dims, const size_t *Size, const size_t *Index);
-    void GetSingleValueFromMetadata(core::VariableBase &variable,
+    bool GetSingleValueFromMetadata(core::VariableBase &variable,
                                     BP5VarRec *VarRec, void *DestData,
                                     size_t Step, size_t WriterRank);
     void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,

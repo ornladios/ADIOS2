@@ -1144,5 +1144,12 @@ void *BP5Serializer::GetPtr(int bufferIdx, size_t posInBuffer)
     return CurDataBuffer->GetPtr(bufferIdx, posInBuffer);
 }
 
+size_t BP5Serializer::DebugGetDataBufferSize() const
+{
+    if (CurDataBuffer == NULL)
+        return 0;
+    return CurDataBuffer->Size();
+}
+
 } // end namespace format
 } // end namespace adios2

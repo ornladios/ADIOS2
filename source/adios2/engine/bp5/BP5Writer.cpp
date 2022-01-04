@@ -1212,6 +1212,11 @@ void BP5Writer::PopulateMetadataIndexFileContent(
     position += 8;
 }
 
+size_t BP5Writer::DebugGetDataBufferSize() const
+{
+    return m_BP5Serializer.DebugGetDataBufferSize();
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2
