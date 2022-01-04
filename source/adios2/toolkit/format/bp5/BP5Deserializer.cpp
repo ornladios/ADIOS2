@@ -859,7 +859,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
     }
 }
 
-void BP5Deserializer::GetSingleValueFromMetadata(core::VariableBase &variable,
+bool BP5Deserializer::GetSingleValueFromMetadata(core::VariableBase &variable,
                                                  BP5VarRec *VarRec,
                                                  void *DestData, size_t Step,
                                                  size_t WriterRank)
@@ -867,7 +867,7 @@ void BP5Deserializer::GetSingleValueFromMetadata(core::VariableBase &variable,
     char *src = (char *)GetMetadataBase(VarRec, Step, WriterRank);
 
     if (!src)
-        return;
+        return false;
 
     if (variable.m_SelectionType == adios2::SelectionType::WriteBlock)
         WriterRank = variable.m_BlockID;
@@ -881,6 +881,7 @@ void BP5Deserializer::GetSingleValueFromMetadata(core::VariableBase &variable,
         std::string *TmpStr = static_cast<std::string *>(DestData);
         TmpStr->assign(*(const char **)src);
     }
+    return true;
 }
 
 bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
@@ -889,9 +890,12 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
     BP5VarRec *VarRec = VarByKey[&variable];
     if (VarRec->OrigShapeID == ShapeID::GlobalValue)
     {
-        int WriterRank = 0;
-        GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
-                                   WriterRank);
+        for (int WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
+        {
+            if (GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
+                                           WriterRank))
+                return false;
+        }
         return false;
     }
     if (VarRec->OrigShapeID == ShapeID::LocalValue)
@@ -902,8 +906,8 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
              WriterRank < variable.m_Count[0] + variable.m_Start[0];
              WriterRank++)
         {
-            GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
-                                       WriterRank);
+            (void)GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
+                                             WriterRank);
             DestData = (char *)DestData +
                        variable.m_ElementSize; // use variable.m_ElementSize
                                                // because it's the size in local
