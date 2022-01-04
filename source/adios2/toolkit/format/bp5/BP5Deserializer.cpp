@@ -890,7 +890,8 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
     BP5VarRec *VarRec = VarByKey[&variable];
     if (VarRec->OrigShapeID == ShapeID::GlobalValue)
     {
-        for (int WriterRank = 0; WriterRank < m_WriterCohortSize; WriterRank++)
+        for (size_t WriterRank = 0; WriterRank < m_WriterCohortSize;
+             WriterRank++)
         {
             if (GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
                                            WriterRank))
