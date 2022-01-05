@@ -748,6 +748,18 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 size_t BP5Reader::DoSteps() const { return m_StepsCount; }
 
+void BP5Reader::NotifyEngineNoVarsQuery()
+{
+    throw std::logic_error(
+        "ERROR: You've called InquireVariable() when the IO is empty.  If this "
+        "is code that is newly transititioning to the BP5 file engine, you may "
+        "be relying upon deprecated behaviour.  If you intend to use ADIOS "
+        "using the Begin/EndStep interface, move all InquireVariable calls "
+        "inside the BeginStep/EndStep pair.  If intending to use random-access "
+        "file mode, change your Open() mode parameter to "
+        "Mode::ReadRandomAccess.\n");
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

@@ -76,6 +76,10 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
 
     if (itVariable == m_Variables.end())
     {
+        for (auto &e : m_Engines)
+        {
+            e.second->NotifyEngineNoVarsQuery();
+        }
         return nullptr;
     }
 

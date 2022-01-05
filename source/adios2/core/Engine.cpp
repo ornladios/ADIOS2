@@ -105,6 +105,8 @@ void Engine::InitTransports() {}
 
 void Engine::NotifyEngineAttribute(std::string name, DataType type) noexcept {}
 
+void Engine::NotifyEngineNoVarsQuery() {}
+
 // DoPut*
 #define declare_type(T)                                                        \
     void Engine::DoPut(Variable<T> &, typename Variable<T>::Span &,            \
