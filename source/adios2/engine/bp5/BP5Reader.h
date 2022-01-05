@@ -159,7 +159,8 @@ private:
      */
     StepStatus CheckForNewSteps(Seconds timeoutSeconds);
 
-    /** Notify the engine when InquireVariable is called when the IO is empty. Called from IO.tcc
+    /** Notify the engine when InquireVariable is called when the IO is empty.
+     * Called from IO.tcc
      */
     void NotifyEngineNoVarsQuery();
 
