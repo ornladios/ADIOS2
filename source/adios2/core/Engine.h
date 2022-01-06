@@ -622,6 +622,11 @@ public:
     virtual void NotifyEngineAttribute(std::string name,
                                        DataType type) noexcept;
 
+    /** Notify the engine when InquireVariable is called when the IO is empty.
+     * Called from IO.tcc
+     */
+    virtual void NotifyEngineNoVarsQuery();
+
     /** Inform about computation block through User->ADIOS->IO */
     virtual void EnterComputationBlock() noexcept;
     /** Inform about computation block through User->ADIOS->IO */

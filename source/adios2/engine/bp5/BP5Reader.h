@@ -159,6 +159,11 @@ private:
      */
     StepStatus CheckForNewSteps(Seconds timeoutSeconds);
 
+    /** Notify the engine when InquireVariable is called when the IO is empty.
+     * Called from IO.tcc
+     */
+    void NotifyEngineNoVarsQuery();
+
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;
