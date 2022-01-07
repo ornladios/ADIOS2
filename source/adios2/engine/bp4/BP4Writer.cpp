@@ -386,9 +386,13 @@ void BP4Writer::InitBPBuffer()
                 m_BP4Serializer.m_PreDataFileLength =
                     m_FileDataManager.GetFileSize(0);
             }
-            m_BP4Serializer.m_PreDataFileLength =
-                m_BP4Serializer.m_Aggregator.m_Comm.BroadcastValue(
-                    m_BP4Serializer.m_PreDataFileLength);
+            if (m_BP4Serializer.m_Aggregator.m_IsActive)
+            {
+                // only use aggregator comm if it is active (created)
+                m_BP4Serializer.m_PreDataFileLength =
+                    m_BP4Serializer.m_Aggregator.m_Comm.BroadcastValue(
+                        m_BP4Serializer.m_PreDataFileLength);
+            }
 
             if (m_BP4Serializer.m_RankMPI == 0)
             {
