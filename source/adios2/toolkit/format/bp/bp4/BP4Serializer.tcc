@@ -39,7 +39,8 @@ inline void BP4Serializer::PutVariableMetadata(
     auto lf_SetOffset = [&](uint64_t &offset) {
         if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsAggregator)
         {
-            offset = static_cast<uint64_t>(m_Data.m_Position);
+            offset =
+                static_cast<uint64_t>(m_Data.m_Position + m_PreDataFileLength);
         }
         else
         {

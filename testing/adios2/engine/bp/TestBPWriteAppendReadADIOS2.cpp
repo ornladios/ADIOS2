@@ -172,18 +172,9 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
                 cr64_Single, attributeTestData.CR64.front());
         }
 
-        if (!engineName.empty())
-        {
-            io.SetEngine(engineName);
-        }
-        else
-        {
-            // Create the BP4 Engine
-            // Now only BP4 supports append mode
-            io.SetEngine("BP4");
-        }
+        io.SetEngine(engineName);
         io.AddTransport("file");
-        io.SetParameter("AggregatorRatio", "1");
+        io.SetParameter("AggregationRatio", "1");
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -225,6 +216,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
+            bpWriter.Put(var_i16, currentTestData.I16.data());
             bpWriter.Put(var_iString, currentTestData.S1);
             bpWriter.Put(var_i8, currentTestData.I8.data());
             bpWriter.Put(var_i16, currentTestData.I16.data());
@@ -336,18 +328,9 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
                 cr64_Single, attributeTestData.CR64.front());
         }
 
-        if (!engineName.empty())
-        {
-            io.SetEngine(engineName);
-        }
-        else
-        {
-            // Create the BP4 Engine
-            // Now only BP4 supports append mode
-            io.SetEngine("BP4");
-        }
+        io.SetEngine(engineName);
         io.AddTransport("file");
-        io.SetParameter("AggregatorRatio", "1");
+        io.SetParameter("AggregationRatio", "1");
 
         adios2::Engine bpAppender = io.Open(fname, adios2::Mode::Append);
 
@@ -389,6 +372,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             // fill in the variable with values from starting index to
             // starting index + count
             bpAppender.BeginStep();
+            bpAppender.Put(var_i16, currentTestData.I16.data());
             bpAppender.Put(var_iString, currentTestData.S1);
             bpAppender.Put(var_i8, currentTestData.I8.data());
             bpAppender.Put(var_i16, currentTestData.I16.data());
@@ -411,17 +395,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
-
-        if (!engineName.empty())
-        {
-            io.SetEngine(engineName);
-        }
-        else
-        {
-            // Create the BP4 Engine
-            // Now only BP4 supports append mode
-            io.SetEngine("BP4");
-        }
+        io.SetEngine(engineName);
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -732,6 +706,219 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
     }
 }
 
+// Write with append combined with aggregation, same aggregation ratio
+TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadAggregate)
+{
+    const std::string fname("ADIOS2BPWriteAppendReadAggregate.bp");
+    int mpiRank = 0, mpiSize = 1;
+    const std::size_t Nx = 4;
+    const std::size_t Ny = 2;
+    const std::size_t NSteps = 2;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("WriteIO");
+        io.SetEngine(engineName);
+        io.AddTransport("file");
+        io.SetParameter("NumAggregators", "2");
+
+        const adios2::Dims shape{Ny, static_cast<size_t>(Nx * mpiSize)};
+        const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
+        const adios2::Dims count{Ny, Nx};
+
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
+
+        /* Write phase I */
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            bpWriter.BeginStep();
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.EndStep();
+        }
+        bpWriter.Close();
+
+        /* Write phase II: append */
+        bpWriter = io.Open(fname, adios2::Mode::Append);
+        for (size_t step = NSteps; step < 2 * NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            bpWriter.BeginStep();
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.EndStep();
+        }
+        bpWriter.Close();
+    }
+
+    {
+        adios2::IO io = adios.DeclareIO("ReadIO");
+        io.SetEngine(engineName);
+
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
+
+        auto var_i32 = io.InquireVariable<int32_t>("i32");
+        EXPECT_TRUE(var_i32);
+        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_i32.Steps(), 2 * NSteps);
+        ASSERT_EQ(var_i32.Shape()[0], Ny);
+        ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+        std::array<int32_t, Nx * Ny> I32;
+
+        const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
+        const adios2::Dims count{Ny, Nx};
+
+        const adios2::Box<adios2::Dims> sel(start, count);
+
+        var_i32.SetSelection(sel);
+        for (size_t t = 0; t < 2 * NSteps; ++t)
+        {
+            var_i32.SetStepSelection({t, 1});
+            bpReader.Get(var_i32, I32.data());
+            bpReader.PerformGets();
+
+            // Generate test data for each rank uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+
+            for (size_t i = 0; i < Nx * Ny; ++i)
+            {
+                std::stringstream ss;
+                ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
+                std::string msg = ss.str();
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+            }
+        }
+        bpReader.Close();
+    }
+}
+
+// Write with append combined with aggregation, same aggregation ratio
+TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
+{
+    const std::string fname("ADIOS2BPWriteAppendReadAggregate.bp");
+    int mpiRank = 0, mpiSize = 1;
+    const std::size_t Nx = 4;
+    const std::size_t Ny = 2;
+    const std::size_t NSteps = 2;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("WriteIO");
+        io.SetEngine(engineName);
+        io.AddTransport("file");
+        io.SetParameter("NumAggregators", "2");
+
+        const adios2::Dims shape{Ny, static_cast<size_t>(Nx * mpiSize)};
+        const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
+        const adios2::Dims count{Ny, Nx};
+
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
+
+        /* Write phase I */
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            bpWriter.BeginStep();
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.EndStep();
+        }
+        bpWriter.Close();
+
+        /* Write phase II: append */
+        io.SetParameter("NumAggregators", "1");
+        bpWriter = io.Open(fname, adios2::Mode::Append);
+        for (size_t step = NSteps; step < 2 * NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            bpWriter.BeginStep();
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.EndStep();
+        }
+        bpWriter.Close();
+
+        /* Write phase III: append */
+        io.SetParameter("NumAggregators", "2");
+        bpWriter = io.Open(fname, adios2::Mode::Append);
+        for (size_t step = 2 * NSteps; step < 3 * NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            bpWriter.BeginStep();
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.EndStep();
+        }
+        bpWriter.Close();
+    }
+
+    {
+        adios2::IO io = adios.DeclareIO("ReadIO");
+        io.SetEngine(engineName);
+
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
+
+        auto var_i32 = io.InquireVariable<int32_t>("i32");
+        EXPECT_TRUE(var_i32);
+        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_i32.Steps(), 3 * NSteps);
+        ASSERT_EQ(var_i32.Shape()[0], Ny);
+        ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+        std::array<int32_t, Nx * Ny> I32;
+
+        const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
+        const adios2::Dims count{Ny, Nx};
+
+        const adios2::Box<adios2::Dims> sel(start, count);
+
+        var_i32.SetSelection(sel);
+        for (size_t t = 0; t < 3 * NSteps; ++t)
+        {
+            var_i32.SetStepSelection({t, 1});
+            bpReader.Get(var_i32, I32.data());
+            bpReader.PerformGets();
+
+            // Generate test data for each rank uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+
+            for (size_t i = 0; i < Nx * Ny; ++i)
+            {
+                std::stringstream ss;
+                ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
+                std::string msg = ss.str();
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+            }
+        }
+        bpReader.Close();
+    }
+}
+
 //******************************************************************************
 // main
 //******************************************************************************
@@ -748,6 +935,10 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
         engineName = std::string(argv[1]);
+    }
+    else
+    {
+        engineName = "BP4";
     }
     result = RUN_ALL_TESTS();
 
