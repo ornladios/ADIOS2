@@ -114,7 +114,9 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
     }
     else if (typeLowerCase == "sirius")
     {
+#ifdef ADIOS2_HAVE_MHS
         ret = std::make_shared<compress::CompressSirius>(parameters);
+#endif
     }
     else if (typeLowerCase == "sz")
     {
