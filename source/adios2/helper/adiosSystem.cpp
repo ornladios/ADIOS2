@@ -164,36 +164,21 @@ bool IsHDF5File(const std::string &name, helper::Comm &comm,
 char BPVersion(const std::string &name, helper::Comm &comm,
                const std::vector<Params> &transportsParameters) noexcept
 {
-    char version[] = {'X'};
-    std::string versionFileName = name + PathSeparator + ".bpversion";
+    char version = '4'; // default result
     if (!comm.Rank())
     {
-        try
+        std::string mmdFileName = name + PathSeparator + "mmd.0";
+        if (adios2sys::SystemTools::PathExists(mmdFileName))
         {
-            transportman::TransportMan tm(comm);
-            if (transportsParameters.empty())
-            {
-                std::vector<Params> defaultTransportParameters(1);
-                defaultTransportParameters[0]["transport"] = "File";
-                tm.OpenFiles({versionFileName}, adios2::Mode::Read,
-                             defaultTransportParameters, false);
-            }
-            else
-            {
-                tm.OpenFiles({versionFileName}, adios2::Mode::Read,
-                             transportsParameters, false);
-            }
-            if (tm.GetFileSize(0) > 0)
-            {
-                tm.ReadFile(version, 1, 0);
-            }
-            tm.CloseFiles();
+            version = '5';
         }
-        catch (std::ios_base::failure &)
+        else
         {
+            version = '4';
         }
     }
-    return version[0];
+    version = comm.BroadcastValue(version);
+    return version;
 }
 
 } // end namespace helper

@@ -321,19 +321,6 @@ void BP4Writer::InitTransports()
         }
         //}
     }
-
-    // last process create .bpversion file with content "4"
-    if (m_Comm.Rank() == m_Comm.Size() - 1)
-    {
-        std::vector<std::string> versionNames =
-            m_BP4Serializer.GetBPVersionFileNames(transportsNames);
-        auto emptyComm = helper::Comm();
-        transportman::TransportMan tm(emptyComm);
-        tm.OpenFiles(versionNames, Mode::Write, m_IO.m_TransportsParameters,
-                     false);
-        char b[1] = {'4'};
-        tm.WriteFiles(b, 1);
-    }
 }
 
 void BP4Writer::InitBPBuffer()
