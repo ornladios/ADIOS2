@@ -796,19 +796,6 @@ void BP5Writer::InitTransports()
             }
         }
     }
-
-    // last process create .bpversion file with content "5"
-    if (m_Comm.Rank() == m_Comm.Size() - 1)
-    {
-        std::vector<std::string> versionNames =
-            GetBPVersionFileNames(transportsNames);
-        auto emptyComm = helper::Comm();
-        transportman::TransportMan tm(emptyComm);
-        tm.OpenFiles(versionNames, Mode::Write, m_IO.m_TransportsParameters,
-                     useProfiler);
-        char b[1] = {'5'};
-        tm.WriteFiles(b, 1);
-    }
 }
 
 /*generate the header for the metadata index file*/

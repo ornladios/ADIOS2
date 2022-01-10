@@ -560,12 +560,6 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
             if (adios2sys::SystemTools::FileIsDirectory(name))
             {
                 char v = helper::BPVersion(name, comm, m_TransportsParameters);
-                if (v == 'X')
-                {
-                    // BP4 did not create this file pre 2.8.0 so if not found,
-                    // lets assume bp4
-                    v = '4';
-                }
                 engineTypeLC = "bp";
                 engineTypeLC.push_back(v);
             }
@@ -602,18 +596,12 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
     }
 
-    // filestream is either BP5 or BP4 depending on .bpversion
     /* Note: Mismatch between BP4/BP5 writer and FileStream reader is not
        handled if writer has not created the directory yet, when FileStream
-       falls back to default */
+       falls back to default (BP4) */
     if (engineTypeLC == "filestream")
     {
         char v = helper::BPVersion(name, comm, m_TransportsParameters);
-        if (v == 'X')
-        {
-            // FileStream default: BP4
-            v = '4';
-        }
         engineTypeLC = "bp";
         engineTypeLC.push_back(v);
         // std::cout << "Engine " << engineTypeLC << " selected for FileStream"
