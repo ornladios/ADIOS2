@@ -26,6 +26,7 @@ int BPWrite(const std::string fname, const size_t N, int nSteps){
   // Set up the ADIOS structures
   adios2::ADIOS adios;
   adios2::IO io = adios.DeclareIO("WriteIO");
+  io.SetEngine("BP5");
 
   // Declare an array for the ADIOS data of size (NumOfProcesses * N)
   const adios2::Dims shape{static_cast<size_t>(N)};
@@ -61,28 +62,23 @@ int BPRead(const std::string fname, const size_t N, int nSteps){
   // Create ADIOS structures
   adios2::ADIOS adios;
   adios2::IO io = adios.DeclareIO("ReadIO");
+  io.SetEngine("BP5");
 
   adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-  auto data = io.InquireVariable<float>("data");
-  std::cout << "Steps expected by the reader: " << bpReader.Steps() << std::endl;
-  std::cout << "Expecting data per step: " << data.Shape()[0];
-  std::cout  << " elements" << std::endl;
-
-  int write_step = bpReader.Steps();
-  // Create the local buffer and initialize the access point in the ADIOS file
-  std::vector<float> simData(N); //set size to N
-  const adios2::Dims start{0};
-  const adios2::Dims count{N};
-  const adios2::Box<adios2::Dims> sel(start, count);
-  data.SetSelection(sel);
-  
-  // Read the data in each of the ADIOS steps
-  for (size_t step = 0; step < write_step; step++)
+  unsigned int step = 0;
+  for (; bpReader.BeginStep() == adios2::StepStatus::OK; ++step)
   {
-      data.SetStepSelection({step, 1});
+	  auto data = io.InquireVariable<float>("data");
+	  // Create the local buffer and initialize the access point in the ADIOS file
+	  std::vector<float> simData(N); //set size to N
+	  const adios2::Dims start{0};
+	  const adios2::Dims count{N};
+	  const adios2::Box<adios2::Dims> sel(start, count);
+	  data.SetSelection(sel);
+
       bpReader.Get(data, simData.data());
-      bpReader.PerformGets();
+      bpReader.EndStep();
       std::cout << "Simualation step " << step << " : ";
       std::cout << simData.size() << " elements: " << simData[1] << std::endl;
   }
