@@ -9,16 +9,14 @@
  */
 
 #include "CompressSZ.h"
-
+#include "CompressNull.h"
+#include "adios2/helper/adiosFunctions.h"
 #include <cmath>     //std::ceil
 #include <ios>       //std::ios_base::failure
 #include <stdexcept> //std::invalid_argument
-
 extern "C" {
 #include <sz.h>
 }
-
-#include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
 {
@@ -277,10 +275,22 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     auto *szBuffer = SZ_compress(
         dtype, const_cast<char *>(dataIn), &szBufferSize, convertedDims[0],
         convertedDims[1], convertedDims[2], convertedDims[3], convertedDims[4]);
-    std::memcpy(bufferOut + bufferOutOffset, szBuffer, szBufferSize);
-    bufferOutOffset += szBufferSize;
-    free(szBuffer);
-    szBuffer = nullptr;
+    if (bufferOutOffset + szBufferSize >
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType)))
+    {
+        CompressNull c({});
+        bufferOutOffset =
+            c.Operate(dataIn, blockStart, blockCount, varType, bufferOut);
+    }
+    else
+    {
+        std::memcpy(bufferOut + bufferOutOffset, szBuffer, szBufferSize);
+        bufferOutOffset += szBufferSize;
+    }
+    if (szBuffer)
+    {
+        free(szBuffer);
+    }
     SZ_Finalize();
     return bufferOutOffset;
 }
