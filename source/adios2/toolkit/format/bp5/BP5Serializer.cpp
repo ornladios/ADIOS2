@@ -570,15 +570,26 @@ void BP5Serializer::DumpDeferredBlocks(bool forceCopyDeferred)
 }
 
 static void GetMinMax(const void *Data, size_t ElemCount, const DataType Type,
-                      core::Engine::MinMaxStruct &MinMax)
+                      core::Engine::MinMaxStruct &MinMax, MemorySpace MemSpace)
 {
-
     MinMax.Init(Type);
     if (ElemCount == 0)
         return;
     if (Type == DataType::Compound)
     {
     }
+#ifdef ADIOS2_HAVE_CUDA
+#define pertype(T, N)                                                          \
+	else if (MemSpace == MemorySpace::CUDA && Type == helper::GetDataType<T>())\
+	{                                                                          \
+		const size_t size = ElemCount * sizeof(T);                             \
+		const T *values = (const T *)Data;                                     \
+		helper::CUDAMinMax(values, ElemCount, MinMax.MinUnion.field_##N,       \
+						   MinMax.MaxUnion.field_##N);                         \
+    }
+    ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(pertype)
+#undef pertype
+#endif
 #define pertype(T, N)                                                          \
     else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
@@ -669,7 +680,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         MinMax.Init(Type);
         if ((m_StatsLevel > 0) && !Span)
         {
-            GetMinMax(Data, ElemCount, (DataType)Rec->Type, MinMax);
+            GetMinMax(Data, ElemCount, (DataType)Rec->Type, MinMax,
+					  VB->m_MemorySpace);
         }
 
         if (Rec->OperatorType)
