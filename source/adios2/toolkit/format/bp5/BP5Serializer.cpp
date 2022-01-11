@@ -712,7 +712,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             {
                 DataOffset = m_PriorDataBufferSizeTotal +
                              CurDataBuffer->AddToVec(ElemCount * ElemSize, Data,
-                                                     ElemSize, Sync);
+                                                     ElemSize, Sync, VB->m_MemorySpace);
             }
         }
         else

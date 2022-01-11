@@ -8,6 +8,7 @@
 
 #include "ChunkV.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
+#include "adios2/helper/adiosFunctions.h"
 
 #include <algorithm>
 #include <assert.h>
@@ -82,7 +83,7 @@ void ChunkV::CopyExternalToInternal()
 }
 
 size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
-                        bool CopyReqd)
+                        bool CopyReqd, MemorySpace MemSpace)
 {
     if (size == 0)
     {
@@ -120,7 +121,7 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
         if (AppendPossible)
         {
             // We can use current chunk, just append the data;
-            memcpy(m_TailChunk + m_TailChunkPos, buf, size);
+			CopyDataToBuffer(size, buf, m_TailChunkPos, MemSpace);
             DataV.back().Size += size;
             m_TailChunkPos += size;
         }
@@ -132,7 +133,7 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
                 NewSize = size;
             m_TailChunk = (char *)malloc(NewSize);
             m_Chunks.push_back(m_TailChunk);
-            memcpy(m_TailChunk, buf, size);
+			CopyDataToBuffer(size, buf, 0, MemSpace);
             m_TailChunkPos = size;
             VecEntry entry = {false, m_TailChunk, 0, size};
             DataV.push_back(entry);
@@ -140,6 +141,18 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
     }
     CurOffset = retOffset + size;
     return retOffset;
+}
+
+void ChunkV::CopyDataToBuffer(const size_t size, const void *buf, size_t pos,
+							  MemorySpace MemSpace){
+#ifdef ADIOS2_HAVE_CUDA
+    if(MemSpace == MemorySpace::CUDA)
+	{
+		helper::CudaMemCopyToBuffer(m_TailChunk, pos, buf, size);
+		return;
+	}
+#endif
+	memcpy(m_TailChunk + pos, buf, size);
 }
 
 BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)

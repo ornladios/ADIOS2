@@ -36,7 +36,7 @@ public:
     virtual void Reset();
 
     virtual size_t AddToVec(const size_t size, const void *buf, size_t align,
-                            bool CopyReqd);
+                            bool CopyReqd, MemorySpace MemSpace=MemorySpace::Host);
 
     virtual BufferPos Allocate(const size_t size, size_t align);
     void DownsizeLastAlloc(const size_t oldSize, const size_t newSize);

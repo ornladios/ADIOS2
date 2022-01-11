@@ -85,7 +85,7 @@ void MallocV::CopyExternalToInternal()
 }
 
 size_t MallocV::AddToVec(const size_t size, const void *buf, size_t align,
-                         bool CopyReqd)
+                         bool CopyReqd, MemorySpace MemSpace)
 {
     if (size == 0)
     {
