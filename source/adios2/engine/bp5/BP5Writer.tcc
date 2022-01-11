@@ -26,6 +26,10 @@ void BP5Writer::PutCommon(Variable<T> &variable, const T *values, bool sync)
         BeginStep(StepMode::Update);
     }
     variable.SetData(values);
+	// if the user buffer is allocated on the GPU always use sync mode
+	bool isCudaBuffer = (variable.m_MemorySpace == MemorySpace::CUDA);
+	if (isCudaBuffer)
+		sync = true;
 
     size_t *Shape = NULL;
     size_t *Start = NULL;
