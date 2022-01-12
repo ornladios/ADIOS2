@@ -879,7 +879,7 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     const uint8_t endianness = helper::IsLittleEndian() ? 0 : 1;
     helper::CopyToBuffer(buffer, position, &endianness);
 
-    // byte 37: BP Version 4
+    // byte 37: BP Version 5
     if (position != m_BPVersionPosition)
     {
         throw std::runtime_error(
@@ -907,7 +907,9 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     const uint32_t WriterCount = m_Comm.Size();
     helper::CopyToBuffer(buffer, position, &WriterCount);
     // bytes 44-47 aggregator count
-    helper::CopyToBuffer(buffer, position, &WriterCount);
+    const uint32_t AggregatorCount =
+        static_cast<uint32_t>(m_Aggregator->m_NumAggregators);
+    helper::CopyToBuffer(buffer, position, &AggregatorCount);
     // byte 48 columnMajor
     // write if data is column major in metadata and data
     const uint8_t columnMajor =
@@ -919,35 +921,185 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     absolutePosition = position;
 }
 
-void BP5Writer::InitBPBuffer()
+void BP5Writer::UpdateActiveFlag(const bool active)
 {
-    /* This is a new file.
-     * Make headers in data buffer and metadata buffer (but do not write
-     * them yet so that Open() can stay free of writing to disk)
-     */
-
-    const uint64_t a = static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
-    std::vector<uint64_t> Assignment = m_Comm.GatherValues(a, 0);
-
-    if (m_Comm.Rank() == 0)
+    const char activeChar = (active ? '\1' : '\0');
+    m_FileMetadataIndexManager.WriteFileAt(&activeChar, 1,
+                                           m_ActiveFlagPosition);
+    m_FileMetadataIndexManager.FlushFiles();
+    m_FileMetadataIndexManager.SeekToFileEnd();
+    if (m_DrainBB)
     {
-        format::BufferSTL b;
-        MakeHeader(b, "Metadata", false);
-        m_FileMetadataManager.WriteFiles(b.m_Buffer.data(), b.m_Position);
-        m_MetaDataPos = b.m_Position;
-        format::BufferSTL bi;
-        MakeHeader(bi, "Index Table", true);
-        m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
-                                              bi.m_Position);
-        // where each rank's data will end up
-        m_FileMetadataIndexManager.WriteFiles((char *)Assignment.data(),
-                                              sizeof(Assignment[0]) *
-                                                  Assignment.size());
+        for (size_t i = 0; i < m_MetadataIndexFileNames.size(); ++i)
+        {
+            m_FileDrainer.AddOperationWriteAt(m_DrainMetadataIndexFileNames[i],
+                                              m_ActiveFlagPosition, 1,
+                                              &activeChar);
+            m_FileDrainer.AddOperationSeekEnd(m_DrainMetadataIndexFileNames[i]);
+        }
+    }
+}
+
+uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
+{
+    const auto &buffer = bufferSTL.m_Buffer;
+    size_t &position = bufferSTL.m_Position;
+
+    // Check endinanness
+    position = m_EndianFlagPosition;
+    const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
+    bool IsLittleEndian = (endianness == 0) ? true : false;
+#ifndef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (helper::IsLittleEndian() != IsLittleEndian)
+    {
+        throw std::runtime_error(
+            "ERROR: reader found BigEndian bp file, "
+            "this version of ADIOS2 wasn't compiled "
+            "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
+            "explicitly, in call to Open\n");
+    }
+#endif
+
+    // BP version
+    position = m_BPVersionPosition;
+    uint8_t Version =
+        helper::ReadValue<uint8_t>(buffer, position, IsLittleEndian);
+    if (Version != 5)
+    {
+        throw std::runtime_error(
+            "ERROR: ADIOS2 BP5 Engine only supports bp format "
+            "version 5, found " +
+            std::to_string(Version) + " version \n");
     }
 
-    if (m_Aggregator->m_IsAggregator)
+    position = m_WriterCountPosition;
+    uint32_t WriterCount =
+        helper::ReadValue<uint32_t>(buffer, position, IsLittleEndian);
+    if ((int)WriterCount != m_Comm.Size())
     {
-        m_DataPos = 0;
+        throw std::runtime_error(
+            "ERROR: ADIOS2 BP5 Engine only supports appending with the same "
+            "number of processes as it was written."
+            " Number of writers in the existing file = " +
+            std::to_string(WriterCount) + "\n");
+    }
+
+    position = m_AggregatorCountPosition;
+    uint32_t AggregatorCount =
+        helper::ReadValue<uint32_t>(buffer, position, IsLittleEndian);
+    if ((size_t)AggregatorCount != m_Aggregator->m_NumAggregators)
+    {
+        throw std::runtime_error(
+            "ERROR: ADIOS2 BP5 Engine only supports appending with the same "
+            "number of aggregators as it was written."
+            " Number of aggregators in the existing file = " +
+            std::to_string(AggregatorCount) +
+            " current number of aggregators = " +
+            std::to_string(m_Aggregator->m_NumAggregators) + "\n");
+    }
+
+    position = m_ColumnMajorFlagPosition;
+    const uint8_t columnMajor =
+        helper::ReadValue<uint8_t>(buffer, position, IsLittleEndian);
+    const uint8_t NowColumnMajor =
+        (m_IO.m_ArrayOrder == ArrayOrdering::ColumnMajor) ? 'y' : 'n';
+    if (columnMajor != NowColumnMajor)
+    {
+        std::string m = (columnMajor == 'y' ? "column" : "row");
+        throw std::runtime_error(
+            "ERROR: ADIOS2 BP5 Engine only supports appending with the same "
+            "column/row major settings as it was written."
+            " Existing file is " +
+            m + " major\n");
+    }
+
+    // move position to first row
+    position = 64 + WriterCount * sizeof(uint64_t);
+
+    // Read each record now
+    uint64_t currentStep = 0;
+    while (position < buffer.size())
+    {
+        position += 2 * sizeof(uint64_t); // MetadataPos, MetadataSize
+        const uint64_t FlushCount =
+            helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
+        position += sizeof(uint64_t) * WriterCount * ((2 * FlushCount) + 1);
+        currentStep++;
+    }
+    return currentStep;
+}
+
+void BP5Writer::InitBPBuffer()
+{
+    if (m_OpenMode == Mode::Append)
+    {
+        format::BufferSTL preMetadataIndex;
+        size_t preMetadataIndexFileSize;
+
+        if (m_Comm.Rank() == 0)
+        {
+            preMetadataIndexFileSize =
+                m_FileMetadataIndexManager.GetFileSize(0);
+            preMetadataIndex.m_Buffer.resize(preMetadataIndexFileSize);
+            preMetadataIndex.m_Buffer.assign(preMetadataIndex.m_Buffer.size(),
+                                             '\0');
+            preMetadataIndex.m_Position = 0;
+            m_FileMetadataIndexManager.ReadFile(
+                preMetadataIndex.m_Buffer.data(), preMetadataIndexFileSize);
+        }
+        m_Comm.BroadcastVector(preMetadataIndex.m_Buffer);
+        m_WriterStep = CountStepsInMetadataIndex(preMetadataIndex);
+        if (m_WriterStep > 0)
+        {
+            if (m_Aggregator->m_IsAggregator)
+            {
+                m_DataPos = m_FileDataManager.GetFileSize(0);
+            }
+
+            if (m_Comm.Rank() == 0)
+            {
+                // Get the size of existing metametadata file
+                m_BP5Serializer.m_PreMetaMetadataFileLength =
+                    m_FileMetaMetadataManager.GetFileSize(0);
+                // Get the size of existing metadata file
+                m_MetaDataPos = m_FileMetadataManager.GetFileSize(0);
+            }
+        }
+    }
+
+    if (!m_WriterStep)
+    {
+        /* This is a new file.
+         * Make headers in data buffer and metadata buffer (but do not write
+         * them yet so that Open() can stay free of writing to disk)
+         */
+        const uint64_t a =
+            static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
+        std::vector<uint64_t> Assignment = m_Comm.GatherValues(a, 0);
+        if (m_Comm.Rank() == 0)
+        {
+            format::BufferSTL b;
+            MakeHeader(b, "Metadata", false);
+            m_FileMetadataManager.WriteFiles(b.m_Buffer.data(), b.m_Position);
+            m_MetaDataPos = b.m_Position;
+            format::BufferSTL bi;
+            MakeHeader(bi, "Index Table", true);
+            m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
+                                                  bi.m_Position);
+            // where each rank's data will end up
+            m_FileMetadataIndexManager.WriteFiles((char *)Assignment.data(),
+                                                  sizeof(Assignment[0]) *
+                                                      Assignment.size());
+        }
+    }
+    else
+    {
+        if (m_Comm.Rank() == 0)
+        {
+            // Set the flag in the header of metadata index table to 1 again
+            // to indicate a new run begins
+            UpdateActiveFlag(true);
+        }
     }
 
     if (m_Comm.Rank() == 0)
@@ -1096,6 +1248,7 @@ void BP5Writer::DoClose(const int transportIndex)
             WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
         }
         // close metadata index file
+        UpdateActiveFlag(false);
         m_FileMetadataIndexManager.CloseFiles();
     }
 

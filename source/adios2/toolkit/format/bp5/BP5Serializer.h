@@ -108,6 +108,9 @@ public:
 
     int m_StatsLevel = 1;
 
+    /* Variables to help appending to existing file */
+    size_t m_PreMetaMetadataFileLength = 0;
+
 private:
     void Init();
     typedef struct _BP5WriterRec
