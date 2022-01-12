@@ -15,12 +15,10 @@
 
 namespace adios2
 {
-namespace core
-{
-namespace engine
+namespace plugin
 {
 
-ExampleReadPlugin::ExampleReadPlugin(IO &io, const std::string &name,
+ExampleReadPlugin::ExampleReadPlugin(core::IO &io, const std::string &name,
                                      const Mode mode, helper::Comm comm)
 : PluginEngineInterface(io, name, mode, comm.Duplicate())
 {
@@ -105,11 +103,12 @@ void ExampleReadPlugin::Init()
 }
 
 #define declare(T)                                                             \
-    void ExampleReadPlugin::DoGetSync(Variable<T> &variable, T *values)        \
+    void ExampleReadPlugin::DoGetSync(core::Variable<T> &variable, T *values)  \
     {                                                                          \
         ReadVariable(variable, values);                                        \
     }                                                                          \
-    void ExampleReadPlugin::DoGetDeferred(Variable<T> &variable, T *values)    \
+    void ExampleReadPlugin::DoGetDeferred(core::Variable<T> &variable,         \
+                                          T *values)                           \
     {                                                                          \
         ReadVariable(variable, values);                                        \
     }
@@ -130,20 +129,19 @@ void ExampleReadPlugin::EndStep() { m_CurrentStep++; }
 
 void ExampleReadPlugin::DoClose(const int transportIndex) {}
 
-} // end namespace engine
-} // end namespace core
+} // end namespace plugin
 } // end namespace adios2
 
 extern "C" {
 
-adios2::core::engine::ExampleReadPlugin *EngineCreate(adios2::core::IO &io,
-                                                      const std::string &name,
-                                                      const adios2::Mode mode,
-                                                      adios2::helper::Comm comm)
+adios2::plugin::ExampleReadPlugin *EngineCreate(adios2::core::IO &io,
+                                                const std::string &name,
+                                                const adios2::Mode mode,
+                                                adios2::helper::Comm comm)
 {
-    return new adios2::core::engine::ExampleReadPlugin(io, name, mode,
-                                                       comm.Duplicate());
+    return new adios2::plugin::ExampleReadPlugin(io, name, mode,
+                                                 comm.Duplicate());
 }
 
-void EngineDestroy(adios2::core::engine::ExampleReadPlugin *obj) { delete obj; }
+void EngineDestroy(adios2::plugin::ExampleReadPlugin *obj) { delete obj; }
 }

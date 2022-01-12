@@ -47,10 +47,16 @@ void testStreaming(adios2::Engine &reader, std::vector<float> &myFloats,
 
 int main(int argc, char *argv[])
 {
-    bool streaming = false;
+    std::string config;
     if (argc > 1)
     {
-        streaming = std::atoi(argv[1]) == 1;
+        config = std::string(argv[1]);
+    }
+
+    bool streaming = false;
+    if (argc > 2)
+    {
+        streaming = std::atoi(argv[2]) == 1;
     }
 
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -58,16 +64,20 @@ int main(int argc, char *argv[])
     try
     {
         /** ADIOS class factory of IO class objects */
-        adios2::ADIOS adios;
+        adios2::ADIOS adios(config);
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO io = adios.DeclareIO("PluginIO");
+        adios2::IO io = adios.DeclareIO("reader");
 
-        /** Engine derived class, spawned to start IO operations */
-        io.SetEngine("Plugin");
-        io.SetParameters({{"PluginName", "ReadPlugin"}});
-        io.SetParameters({{"PluginLibrary", "PluginEngineRead"}});
+        if (config.empty())
+        {
+            io.SetEngine("Plugin");
+            adios2::Params params;
+            params["PluginName"] = "ReadPlugin";
+            params["PluginLibrary"] = "PluginEngineRead";
+            io.SetParameters(params);
+        }
         adios2::Engine reader = io.Open("TestPlugin", adios2::Mode::Read);
 
         auto var = io.InquireVariable<float>("data");

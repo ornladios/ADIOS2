@@ -16,9 +16,7 @@
 
 namespace adios2
 {
-namespace core
-{
-namespace engine
+namespace plugin
 {
 
 template <typename T>
@@ -31,7 +29,8 @@ void ExampleWritePlugin::WriteVariableInfo(core::Variable<T> &variable)
 }
 
 template <typename T>
-void ExampleWritePlugin::WriteArray(Variable<T> &variable, const T *values)
+void ExampleWritePlugin::WriteArray(core::Variable<T> &variable,
+                                    const T *values)
 {
     /** Write variable name and step to file, followed by the actual data on the
      * next line **/
@@ -50,7 +49,6 @@ void ExampleWritePlugin::WriteArray(Variable<T> &variable, const T *values)
     }
 }
 
-} // end namespace engine
-} // end namespace core
+} // end namespace plugin
 } // end namespace adios2
 #endif /* EXAMPLEWRITEPLUGIN_TCC_ */

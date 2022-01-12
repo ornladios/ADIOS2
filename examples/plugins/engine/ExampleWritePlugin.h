@@ -27,17 +27,15 @@
 
 namespace adios2
 {
-namespace core
-{
-namespace engine
+namespace plugin
 {
 
 /** An engine interface to be used by the plugin infrastructure */
 class ExampleWritePlugin : public PluginEngineInterface
 {
 public:
-    ExampleWritePlugin(IO &io, const std::string &name, const Mode openMode,
-                       helper::Comm comm);
+    ExampleWritePlugin(core::IO &io, const std::string &name,
+                       const Mode openMode, helper::Comm comm);
     virtual ~ExampleWritePlugin();
 
     /** Indicates beginning of a step **/
@@ -57,8 +55,8 @@ protected:
     void Init() override;
 
 #define declare(T)                                                             \
-    void DoPutSync(Variable<T> &variable, const T *values) override;           \
-    void DoPutDeferred(Variable<T> &variable, const T *values) override;
+    void DoPutSync(core::Variable<T> &variable, const T *values) override;     \
+    void DoPutDeferred(core::Variable<T> &variable, const T *values) override;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
 
@@ -75,19 +73,19 @@ private:
     void WriteVariableInfo(core::Variable<T> &variable);
 
     template <typename T>
-    void WriteArray(Variable<T> &variable, const T *values);
+    void WriteArray(core::Variable<T> &variable, const T *values);
 };
 
-} // end namespace engine
-} // end namespace core
+} // end namespace plugin
 } // end namespace adios2
 
 extern "C" {
 
-adios2::core::engine::ExampleWritePlugin *
-EngineCreate(adios2::core::IO &io, const std::string &name,
-             const adios2::Mode mode, adios2::helper::Comm comm);
-void EngineDestroy(adios2::core::engine::ExampleWritePlugin *obj);
+adios2::plugin::ExampleWritePlugin *EngineCreate(adios2::core::IO &io,
+                                                 const std::string &name,
+                                                 const adios2::Mode mode,
+                                                 adios2::helper::Comm comm);
+void EngineDestroy(adios2::plugin::ExampleWritePlugin *obj);
 }
 
 #endif /* EXAMPLEWRITEPLUGIN_H_ */

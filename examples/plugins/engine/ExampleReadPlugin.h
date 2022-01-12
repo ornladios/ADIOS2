@@ -27,17 +27,15 @@
 
 namespace adios2
 {
-namespace core
-{
-namespace engine
+namespace plugin
 {
 
 /** An engine interface to be used by the plugin infrastructure */
 class ExampleReadPlugin : public PluginEngineInterface
 {
 public:
-    ExampleReadPlugin(IO &io, const std::string &name, const Mode openMode,
-                      helper::Comm comm);
+    ExampleReadPlugin(core::IO &io, const std::string &name,
+                      const Mode openMode, helper::Comm comm);
     virtual ~ExampleReadPlugin();
 
     /** Indicates beginning of a step **/
@@ -57,8 +55,8 @@ protected:
     void Init() override;
 
 #define declare(T)                                                             \
-    void DoGetSync(Variable<T> &variable, T *values) override;                 \
-    void DoGetDeferred(Variable<T> &variable, T *values) override;
+    void DoGetSync(core::Variable<T> &variable, T *values) override;           \
+    void DoGetDeferred(core::Variable<T> &variable, T *values) override;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
 
@@ -74,19 +72,19 @@ private:
                      Dims count);
 
     template <class T>
-    void ReadVariable(Variable<T> &variable, T *values);
+    void ReadVariable(core::Variable<T> &variable, T *values);
 };
 
-} // end namespace engine
-} // end namespace core
+} // end namespace plugin
 } // end namespace adios2
 
 extern "C" {
 
-adios2::core::engine::ExampleReadPlugin *
-EngineCreate(adios2::core::IO &io, const std::string &name,
-             const adios2::Mode mode, adios2::helper::Comm comm);
-void EngineDestroy(adios2::core::engine::ExampleReadPlugin *obj);
+adios2::plugin::ExampleReadPlugin *EngineCreate(adios2::core::IO &io,
+                                                const std::string &name,
+                                                const adios2::Mode mode,
+                                                adios2::helper::Comm comm);
+void EngineDestroy(adios2::plugin::ExampleReadPlugin *obj);
 }
 
 #endif /* EXAMPLEREADPLUGIN_H_ */

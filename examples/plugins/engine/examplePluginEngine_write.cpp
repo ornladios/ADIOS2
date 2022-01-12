@@ -36,10 +36,16 @@ void testStreaming(adios2::Engine &writer, std::vector<float> &myFloats,
 
 int main(int argc, char *argv[])
 {
-    bool streaming = false;
+    std::string config;
     if (argc > 1)
     {
-        streaming = std::atoi(argv[1]) == 1;
+        config = std::string(argv[1]);
+    }
+
+    bool streaming = false;
+    if (argc > 2)
+    {
+        streaming = std::atoi(argv[2]) == 1;
     }
 
     /** Application variable */
@@ -49,21 +55,25 @@ int main(int argc, char *argv[])
     try
     {
         /** ADIOS class factory of IO class objects */
-        adios2::ADIOS adios;
+        adios2::ADIOS adios(config);
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO io = adios.DeclareIO("PluginIO");
+        adios2::IO io = adios.DeclareIO("writer");
 
         /** global array: name, { shape (total dimensions) }, { start (local) },
          * { count (local) }, all are constant dimensions */
         adios2::Variable<float> var = io.DefineVariable<float>(
             "data", {}, {}, {Nx}, adios2::ConstantDims);
 
-        /** Engine derived class, spawned to start IO operations */
-        io.SetEngine("Plugin");
-        io.SetParameters({{"PluginName", "WritePlugin"}});
-        io.SetParameters({{"PluginLibrary", "PluginEngineWrite"}});
+        if (config.empty())
+        {
+            io.SetEngine("Plugin");
+            adios2::Params params;
+            params["PluginName"] = "WritePlugin";
+            params["PluginLibrary"] = "PluginEngineWrite";
+            io.SetParameters(params);
+        }
         adios2::Engine writer = io.Open("TestPlugin", adios2::Mode::Write);
 
         if (streaming)
