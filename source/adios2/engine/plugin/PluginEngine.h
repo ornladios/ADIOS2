@@ -14,10 +14,8 @@
 
 #include "PluginEngineInterface.h"
 
-#include <functional>  // for function
-#include <memory>      // for unique_ptr
-#include <string>      // for string
-#include <type_traits> // for add_pointer
+#include <memory> // for unique_ptr
+#include <string> // for string
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
@@ -28,26 +26,14 @@
 
 namespace adios2
 {
-namespace core
-{
-namespace engine
+namespace plugin
 {
 
 /** A front-end wrapper for an engine implemented outside of libadios2 */
-class PluginEngine : public Engine
+class PluginEngine : public core::Engine
 {
 public:
-    // Function pointers used for the plugin factory methods
-    using EngineCreatePtr = std::add_pointer<PluginEngineInterface *(
-        IO &, const std::string &, const Mode, helper::Comm)>::type;
-    using EngineDestroyPtr =
-        std::add_pointer<void(PluginEngineInterface *)>::type;
-    using EngineCreateFun =
-        std::function<std::remove_pointer<EngineCreatePtr>::type>;
-    using EngineDestroyFun =
-        std::function<std::remove_pointer<EngineDestroyPtr>::type>;
-
-    PluginEngine(IO &io, const std::string &name, const Mode mode,
+    PluginEngine(core::IO &io, const std::string &name, const Mode mode,
                  helper::Comm comm);
     virtual ~PluginEngine();
 
@@ -58,13 +44,11 @@ public:
     void EndStep() override;
 
 protected:
-    void Init() override;
-
 #define declare(T)                                                             \
-    void DoPutSync(Variable<T> &, const T *) override;                         \
-    void DoPutDeferred(Variable<T> &, const T *) override;                     \
-    void DoGetSync(Variable<T> &, T *) override;                               \
-    void DoGetDeferred(Variable<T> &, T *) override;
+    void DoPutSync(core::Variable<T> &, const T *) override;                   \
+    void DoPutDeferred(core::Variable<T> &, const T *) override;               \
+    void DoGetSync(core::Variable<T> &, T *) override;                         \
+    void DoGetDeferred(core::Variable<T> &, T *) override;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
@@ -76,8 +60,7 @@ private:
     std::unique_ptr<Impl> m_Impl;
 };
 
-} // end namespace engine
-} // end namespace core
+} // end namespace plugin
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_PLUGIN_PLUGINENGINE_H_ */

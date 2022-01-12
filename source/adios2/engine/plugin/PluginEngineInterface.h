@@ -24,25 +24,22 @@
 
 namespace adios2
 {
-namespace core
-{
-namespace engine
+namespace plugin
 {
 
 /** An engine interface to be used by the plugin infrastructure */
-class PluginEngineInterface : public Engine
+class PluginEngineInterface : public core::Engine
 {
     // Give the plugin engine access to everything
     friend class PluginEngine;
 
 public:
-    PluginEngineInterface(IO &io, const std::string &name, const Mode mode,
-                          helper::Comm comm);
+    PluginEngineInterface(core::IO &io, const std::string &name,
+                          const Mode mode, helper::Comm comm);
     virtual ~PluginEngineInterface() = default;
 };
 
-} // end namespace engine
-} // end namespace core
+} // end namespace plugin
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_PLUGIN_PLUGINENGINEINTERFACE_H_ */
