@@ -31,9 +31,8 @@ struct DynamicBinder::Impl
     adios2sys::DynamicLoader::LibraryHandle m_LibraryHandle;
 };
 
-DynamicBinder::DynamicBinder(std::string libName)
+DynamicBinder::DynamicBinder(std::string libName) : DynamicBinder(libName, "")
 {
-    DynamicBinder(libName, "");
 }
 
 DynamicBinder::DynamicBinder(std::string libName, std::string libPath)
