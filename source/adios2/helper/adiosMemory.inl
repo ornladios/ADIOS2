@@ -79,9 +79,16 @@ template <class T>
 void CopyFromGPUToBuffer(std::vector<char> &buffer, size_t &position,
                          const T *source, const size_t elements) noexcept
 {
-    const char *src = reinterpret_cast<const char *>(source);
-    MemcpyGPUToBuffer(buffer.data() + position, src, elements * sizeof(T));
+	CudaMemCopyToBuffer(buffer.data(), position, source, elements * sizeof(T));
     position += elements * sizeof(T);
+}
+
+template <class T>
+void CudaMemCopyToBuffer(char *buffer, size_t position,
+                         const T *source, const size_t size) noexcept
+{
+    const char *src = reinterpret_cast<const char *>(source);
+    MemcpyGPUToBuffer(buffer + position, src, size);
 }
 #endif
 
