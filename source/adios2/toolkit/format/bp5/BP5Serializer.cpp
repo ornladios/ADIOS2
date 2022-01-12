@@ -580,12 +580,13 @@ static void GetMinMax(const void *Data, size_t ElemCount, const DataType Type,
     }
 #ifdef ADIOS2_HAVE_CUDA
 #define pertype(T, N)                                                          \
-	else if (MemSpace == MemorySpace::CUDA && Type == helper::GetDataType<T>())\
-	{                                                                          \
-		const size_t size = ElemCount * sizeof(T);                             \
-		const T *values = (const T *)Data;                                     \
-		helper::CUDAMinMax(values, ElemCount, MinMax.MinUnion.field_##N,       \
-						   MinMax.MaxUnion.field_##N);                         \
+    else if (MemSpace == MemorySpace::CUDA &&                                  \
+             Type == helper::GetDataType<T>())                                 \
+    {                                                                          \
+        const size_t size = ElemCount * sizeof(T);                             \
+        const T *values = (const T *)Data;                                     \
+        helper::CUDAMinMax(values, ElemCount, MinMax.MinUnion.field_##N,       \
+                           MinMax.MaxUnion.field_##N);                         \
     }
     ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(pertype)
 #undef pertype
@@ -681,7 +682,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         if ((m_StatsLevel > 0) && !Span)
         {
             GetMinMax(Data, ElemCount, (DataType)Rec->Type, MinMax,
-					  VB->m_MemorySpace);
+                      VB->m_MemorySpace);
         }
 
         if (Rec->OperatorType)
@@ -710,9 +711,10 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         {
             if (!DeferAddToVec)
             {
-                DataOffset = m_PriorDataBufferSizeTotal +
-                             CurDataBuffer->AddToVec(ElemCount * ElemSize, Data,
-                                                     ElemSize, Sync, VB->m_MemorySpace);
+                DataOffset =
+                    m_PriorDataBufferSizeTotal +
+                    CurDataBuffer->AddToVec(ElemCount * ElemSize, Data,
+                                            ElemSize, Sync, VB->m_MemorySpace);
             }
         }
         else

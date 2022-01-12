@@ -47,8 +47,8 @@ template <class T>
 void CopyFromGPUToBuffer(std::vector<char> &buffer, size_t &position,
                          const T *source, const size_t elements = 1) noexcept;
 template <class T>
-void CudaMemCopyToBuffer(char *buffer, size_t position,
-                         const T *source, const size_t size) noexcept;
+void CudaMemCopyToBuffer(char *buffer, size_t position, const T *source,
+                         const size_t size) noexcept;
 
 /**
  * Wrapper around cudaMemcpy needed for isolating CUDA interface dependency
