@@ -825,7 +825,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
         adios2::IO io = adios.DeclareIO("WriteIO");
         io.SetEngine(engineName);
         io.AddTransport("file");
-        io.SetParameter("NumAggregators", "2");
+        io.SetParameter("NumAggregators", "3");
 
         const adios2::Dims shape{Ny, static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
@@ -868,7 +868,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
             bpWriter.Close();
 
             /* Write phase III: append */
-            io.SetParameter("NumAggregators", "3");
+            io.SetParameter("NumAggregators", "2");
             bpWriter = io.Open(fname, adios2::Mode::Append);
             for (size_t step = 2 * NSteps; step < 3 * NSteps; ++step)
             {
