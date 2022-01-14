@@ -52,7 +52,6 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
     const std::string r32_Single = std::string("r32_Single_") + zero;
     const std::string r32_Array = std::string("r32_Array_") + zero;
     const std::string r64_Single = std::string("r64_Single_") + zero;
-    const std::string r128_Single = std::string("r128_Single_") + zero;
     const std::string cr32_Single = std::string("cr32_Single_") + zero;
     const std::string cr32_Array = std::string("cr32_Array_") + zero;
     const std::string cr64_Single = std::string("cr64_Single_") + zero;
@@ -160,8 +159,6 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
                                       attributeTestData.R32.size());
             io.DefineAttribute<double>(r64_Single,
                                        attributeTestData.R64.front());
-            io.DefineAttribute<long double>(r128_Single,
-                                            attributeTestData.R128.front());
 
             io.DefineAttribute<std::complex<float>>(
                 cr32_Single, attributeTestData.CR32.front());
@@ -315,8 +312,6 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
                                       attributeTestData.R32.size());
             io.DefineAttribute<double>(r64_Single,
                                        attributeTestData.R64.front());
-            io.DefineAttribute<long double>(r128_Single,
-                                            attributeTestData.R128.front());
 
             io.DefineAttribute<std::complex<float>>(
                 cr32_Single, attributeTestData.CR32.front());
@@ -416,7 +411,6 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
         auto attr_r32 = io.InquireAttribute<float>(r32_Single);
         auto attr_r32a = io.InquireAttribute<float>(r32_Array);
         auto attr_r64 = io.InquireAttribute<double>(r64_Single);
-        auto attr_r128 = io.InquireAttribute<long double>(r128_Single);
 
         auto attr_cr32 = io.InquireAttribute<std::complex<float>>(cr32_Single);
         auto attr_cr32a = io.InquireAttribute<std::complex<float>>(cr32_Array);
@@ -514,12 +508,6 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
         ASSERT_EQ(attr_r64.Data().size() == 1, true);
         ASSERT_EQ(attr_r64.Type(), adios2::GetType<double>());
         ASSERT_EQ(attr_r64.Data().front(), attributeTestData.R64.front());
-
-        EXPECT_TRUE(attr_r128);
-        ASSERT_EQ(attr_r128.Name(), r128_Single);
-        ASSERT_EQ(attr_r128.Data().size() == 1, true);
-        ASSERT_EQ(attr_r128.Type(), adios2::GetType<long double>());
-        ASSERT_EQ(attr_r128.Data().front(), attributeTestData.R128.front());
 
         EXPECT_TRUE(attr_cr32);
         ASSERT_EQ(attr_cr32.Name(), cr32_Single);
