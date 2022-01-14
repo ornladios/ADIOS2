@@ -893,6 +893,11 @@ typedef struct {
     double d;
 } *sd;
 
+typedef struct {
+    char tmp;
+    long double ld;
+} *sld;
+
 static int
 type_alignment(fmformat, field)
 FMFormat fmformat;
@@ -928,7 +933,8 @@ int field;
 	    case float_type:
 		if (size < sizeof(float)) return size;
 		if (size < sizeof(double)) return FMOffset(sf, f);
-		return FMOffset(sd, d);
+		if (size < sizeof(long double)) return FMOffset(sd, d);
+		return FMOffset(sld, ld);
 	    }
 	    break;
 	}
