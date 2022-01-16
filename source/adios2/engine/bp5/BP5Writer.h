@@ -238,6 +238,8 @@ private:
     void MakeHeader(format::BufferSTL &b, const std::string fileType,
                     const bool isActive);
 
+    uint64_t CountStepsInMetadataIndex(format::BufferSTL &bufferSTL);
+
     /* Async write's future */
     std::future<int> m_WriteFuture;
     // variables to delay writing to index file
