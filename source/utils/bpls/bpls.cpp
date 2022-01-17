@@ -3018,7 +3018,6 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
 {
     const size_t ndim = variable->m_Shape.size();
     Dims dims(ndim, 0);
-    size_t nblocks = 0;
     if (timestep)
     {
         dims = variable->Shape();
