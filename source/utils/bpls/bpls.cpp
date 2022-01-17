@@ -1090,11 +1090,21 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         {
             if (timestep == false)
             {
-                fprintf(outf, " = ");
-                print_data(&variable->m_Min, 0, adiosvartype, false);
-                fprintf(outf, " / ");
-                print_data(&variable->m_Max, 0, adiosvartype, false);
-
+                core::Engine::MinMaxStruct MinMax;
+                if (fp->VariableMinMax(*variable, DefaultSizeT, MinMax))
+                {
+                    fprintf(outf, " = ");
+                    print_data(&MinMax.MinUnion, 0, adiosvartype, false);
+                    fprintf(outf, " / ");
+                    print_data(&MinMax.MaxUnion, 0, adiosvartype, false);
+                }
+                else
+                {
+                    fprintf(outf, " = ");
+                    print_data(&variable->m_Min, 0, adiosvartype, false);
+                    fprintf(outf, " / ");
+                    print_data(&variable->m_Max, 0, adiosvartype, false);
+                }
                 // fprintf(outf," {MIN / MAX} ");
             }
 #if 0
@@ -3008,7 +3018,6 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
 {
     const size_t ndim = variable->m_Shape.size();
     Dims dims(ndim, 0);
-    size_t nblocks = 0;
     if (timestep)
     {
         dims = variable->Shape();
@@ -3020,26 +3029,27 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
 
         // looping over the absolute step indexes
         // is not supported by a simple API function
-        const auto minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
+        auto minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
 
         if (minBlocks)
         {
-            bool firstBlock = true;
-            nblocks = minBlocks->BlocksInfo.size();
-            for (size_t j = 0; j < nblocks; j++)
+            delete minBlocks;
+            for (size_t step = 0; step < nsteps; step++)
             {
+                minBlocks = fp->MinBlocksInfo(*variable, step);
                 for (size_t k = 0; k < ndim; k++)
                 {
-                    if (firstBlock)
+                    if (firstStep)
                     {
-                        dims[k] = minBlocks->BlocksInfo[j].Count[k];
+                        dims[k] = minBlocks->Shape[k];
                     }
-                    else if (dims[k] != minBlocks->BlocksInfo[j].Count[k])
+                    else if (dims[k] != minBlocks->Shape[k])
                     {
                         dims[k] = 0;
                     }
                 }
                 firstStep = false;
+                delete minBlocks;
             }
             return dims;
         }
