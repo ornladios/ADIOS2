@@ -391,6 +391,12 @@ install(DIRECTORY helper/
   PATTERN "*.inl"
 )
 
+install(DIRECTORY operator/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/operator COMPONENT adios2_core-development
+  FILES_MATCHING PATTERN "*/*.h"
+  PATTERN "*/*.inl"
+)
+
 install(DIRECTORY toolkit/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/toolkit COMPONENT adios2_core-development
   FILES_MATCHING PATTERN "*/*.h"
