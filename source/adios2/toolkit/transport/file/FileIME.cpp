@@ -30,7 +30,7 @@ namespace adios2
 namespace transport
 {
 
-std::atomic_uint FileIME::client_refcount = 0;
+std::atomic_uint FileIME::client_refcount(0);
 
 FileIME::FileIME(helper::Comm const &comm) : Transport("File", "IME", comm)
 {
