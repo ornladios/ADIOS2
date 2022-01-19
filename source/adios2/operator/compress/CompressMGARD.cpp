@@ -176,8 +176,13 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
         std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
         ". Please make sure a compatible version is used for decompression.";
 
-    const size_t sizeOut =
+    size_t sizeOut =
         helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+
+    if (type == DataType::FloatComplex || type == DataType::DoubleComplex)
+    {
+        sizeOut /= 2;
+    }
 
     try
     {
