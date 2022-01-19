@@ -61,7 +61,6 @@ size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
                             const Dims &blockCount, const DataType type,
                             char *bufferOut)
 {
-
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
 
