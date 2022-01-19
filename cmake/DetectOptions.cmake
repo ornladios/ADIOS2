@@ -167,7 +167,7 @@ set(mpi_find_components C)
 
 # Cuda
 if(ADIOS2_USE_CUDA STREQUAL AUTO)
-  find_package(CUDAToolkit)
+  find_package(CUDAToolkit QUIET)
 elseif(ADIOS2_USE_CUDA)
   find_package(CUDAToolkit REQUIRED)
 endif()
