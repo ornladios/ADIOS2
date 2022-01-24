@@ -43,9 +43,10 @@ public:
 
     const std::string m_TypeString;
     const OperatorType m_TypeEnum;
+    const std::string m_Category;
 
-    Operator(const std::string typeString, const OperatorType typeEnum,
-             const Params &parameters);
+    Operator(const std::string &typeString, const OperatorType typeEnum,
+             const std::string &category, const Params &parameters);
 
     virtual ~Operator() = default;
 

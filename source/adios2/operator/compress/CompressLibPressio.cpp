@@ -281,7 +281,7 @@ static pressio_compressor *adios_to_libpressio_compressor(Params const &params)
 }
 
 CompressLibPressio::CompressLibPressio(const Params &parameters)
-: Operator("libpressio", COMPRESS_LIBPRESSIO, parameters)
+: Operator("libpressio", COMPRESS_LIBPRESSIO, "compress", parameters)
 {
 }
 size_t CompressLibPressio::Operate(const char *dataIn, const Dims &blockStart,

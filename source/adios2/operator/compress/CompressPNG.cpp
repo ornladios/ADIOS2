@@ -44,7 +44,7 @@ const std::map<std::string, std::set<uint32_t>> CompressPNG::m_BitDepths = {
 
 // PUBLIC
 CompressPNG::CompressPNG(const Params &parameters)
-: Operator("png", COMPRESS_PNG, parameters)
+: Operator("png", COMPRESS_PNG, "compress", parameters)
 {
 }
 

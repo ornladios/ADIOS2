@@ -26,7 +26,7 @@ namespace compress
 {
 
 CompressSZ::CompressSZ(const Params &parameters)
-: Operator("sz", COMPRESS_SZ, parameters)
+: Operator("sz", COMPRESS_SZ, "compress", parameters)
 {
 }
 

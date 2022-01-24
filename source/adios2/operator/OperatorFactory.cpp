@@ -152,11 +152,15 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
     return ret;
 }
 
-size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut)
+size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut,
+                  std::shared_ptr<Operator> op)
 {
     Operator::OperatorType compressorType;
     std::memcpy(&compressorType, bufferIn, 1);
-    auto op = MakeOperator(OperatorTypeToString(compressorType), Params());
+    if (op == nullptr || op->m_TypeEnum != compressorType)
+    {
+        op = MakeOperator(OperatorTypeToString(compressorType), {});
+    }
     return op->InverseOperate(bufferIn, sizeIn, dataOut);
 }
 

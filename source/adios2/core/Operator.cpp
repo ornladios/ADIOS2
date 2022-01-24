@@ -16,9 +16,9 @@ namespace adios2
 namespace core
 {
 
-Operator::Operator(const std::string typeString, const OperatorType typeEnum,
-                   const Params &parameters)
-: m_TypeString(typeString), m_TypeEnum(typeEnum),
+Operator::Operator(const std::string &typeString, const OperatorType typeEnum,
+                   const std::string &category, const Params &parameters)
+: m_TypeString(typeString), m_TypeEnum(typeEnum), m_Category(category),
   m_Parameters(helper::LowerCaseParams(parameters))
 {
 }

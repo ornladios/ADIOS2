@@ -524,7 +524,17 @@ void BP4Deserializer::PostDataRead(
         char *preOpData = m_ThreadBuffers[threadID][0].data();
         const char *postOpData = m_ThreadBuffers[threadID][1].data();
 
-        core::Decompress(postOpData, blockOperationInfo.PayloadSize, preOpData);
+        std::shared_ptr<core::Operator> op = nullptr;
+        for (auto &o : blockInfo.Operations)
+        {
+            if (o->m_Category == "compress")
+            {
+                op = o;
+                break;
+            }
+        }
+        core::Decompress(postOpData, blockOperationInfo.PayloadSize, preOpData,
+                         op);
 
         // clip block to match selection
         helper::ClipVector(m_ThreadBuffers[threadID][0],

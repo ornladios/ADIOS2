@@ -23,7 +23,8 @@ namespace callback
                                  const size_t, const Dims &, const Dims &,     \
                                  const Dims &)> &function,                     \
         const Params &parameters)                                              \
-    : Operator("Signature1", Operator::CALLBACK_SIGNATURE1, parameters),       \
+    : Operator("Signature1", Operator::CALLBACK_SIGNATURE1, "callback",        \
+               parameters),                                                    \
       m_Function##L(function)                                                  \
     {                                                                          \
     }

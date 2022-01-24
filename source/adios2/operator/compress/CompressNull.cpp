@@ -19,7 +19,7 @@ namespace compress
 {
 
 CompressNull::CompressNull(const Params &parameters)
-: Operator("null", COMPRESS_NULL, parameters)
+: Operator("null", COMPRESS_NULL, "compress", parameters)
 {
 }
 
