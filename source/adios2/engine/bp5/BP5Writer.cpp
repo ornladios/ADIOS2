@@ -1155,6 +1155,7 @@ void BP5Writer::InitBPBuffer()
             const size_t off = m_AppendDataPos[m_Aggregator->m_SubStreamIndex];
             if (off < MaxSizeT)
             {
+                m_FileDataManager.Truncate(off);
                 m_FileDataManager.SeekTo(off);
                 m_DataPos = off;
             }
@@ -1166,15 +1167,20 @@ void BP5Writer::InitBPBuffer()
 
         if (m_Comm.Rank() == 0)
         {
-            // Get the size of existing metadata file
+            // Truncate existing metadata file
             if (m_AppendMetadataPos < MaxSizeT)
             {
                 m_MetaDataPos = m_AppendMetadataPos;
+                m_FileMetadataManager.Truncate(m_MetaDataPos);
+                // SeekTo instead of SeetToFileEnd in case a transport
+                // does not support actual truncate
+                // Plus truncate does not seek anyway
                 m_FileMetadataManager.SeekTo(m_MetaDataPos);
             }
             else
             {
                 m_MetaDataPos = m_FileMetadataManager.GetFileSize(0);
+                m_FileMetadataManager.SeekToFileEnd();
             }
 
             // Set the flag in the header of metadata index table to 1 again
@@ -1182,6 +1188,8 @@ void BP5Writer::InitBPBuffer()
             UpdateActiveFlag(true);
             if (m_AppendMetadataIndexPos < MaxSizeT)
             {
+                m_FileMetadataIndexManager.Truncate(m_AppendMetadataIndexPos);
+                // SeekTo in case a transport does not support actual truncate
                 m_FileMetadataIndexManager.SeekTo(m_AppendMetadataIndexPos);
             }
             else

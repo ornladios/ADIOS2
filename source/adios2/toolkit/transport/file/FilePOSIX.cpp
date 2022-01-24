@@ -17,7 +17,7 @@
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
 #include <sys/uio.h>   // writev
-#include <unistd.h>    // write, close
+#include <unistd.h>    // write, close, ftruncate
 
 #include <iostream>
 
@@ -563,6 +563,21 @@ void FilePOSIX::Seek(const size_t start)
     else
     {
         SeekToEnd();
+    }
+}
+
+void FilePOSIX::Truncate(const size_t length)
+{
+    WaitForOpen();
+    errno = 0;
+    const int status = ftruncate(m_FileDescriptor, static_cast<off_t>(length));
+    m_Errno = errno;
+    if (status == -1)
+    {
+        throw std::ios_base::failure(
+            "ERROR: couldn't truncate to " + std::to_string(length) +
+            " bytes of file " + m_Name + ", in call to POSIX IO truncate" +
+            SysErrMsg());
     }
 }
 

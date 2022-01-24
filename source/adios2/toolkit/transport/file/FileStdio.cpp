@@ -372,6 +372,21 @@ void FileStdio::Seek(const size_t start)
     }
 }
 
+#include <unistd.h> // ftruncate
+void FileStdio::Truncate(const size_t length)
+{
+
+    WaitForOpen();
+    int fd = fileno(m_File);
+    const auto status = ftruncate(fd, length);
+    if (status == -1)
+    {
+        throw std::ios_base::failure("ERROR: couldn't truncate to " +
+                                     std::to_string(length) + " of file " +
+                                     m_Name + ", in call to stdio Truncate\n");
+    }
+}
+
 void FileStdio::MkDir(const std::string &fileName) {}
 } // end namespace transport
 } // end namespace adios2
