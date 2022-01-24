@@ -1,26 +1,35 @@
+from ast import Sub
 import numpy as np
 from os import fstat
 from .utils import *
 
 WriterCount = -1
 
-def ReadWriterArray(f, fileSize, WriterCount):
+def ReadWriterMap(bytearray, pos):
+    data = np.frombuffer(bytearray, dtype=np.uint64, count=3,
+                             offset=pos)
+    WriterCount = int(data[0])
+    AggregatorCount = int(data[1])
+    SubfileCount = int(data[2])
+    pos = pos + 3 * 8
 
-    print("Writer count is " + str(WriterCount))
-    array = f.read(WriterCount * 8)
-    print("=====================")
-    print("|  Rank  |  Subfile |")
-    print("=====================")
+    print("  WriterMap: Writers = {0}  Aggregators = {1}  Subfiles = {2}".format(
+        WriterCount, AggregatorCount, SubfileCount))
+    data = np.frombuffer(bytearray, dtype=np.uint64, count=WriterCount,
+                             offset=pos)
+    print("  =====================")
+    print("  |  Rank  |  Subfile |")
+    print("  ---------------------")
     for r in range(0, WriterCount):
-        pos = r * 8
-        data = np.frombuffer(array, dtype=np.uint64, count=1, offset=pos)
         rank = str(r).rjust(7)
-        sub = str(data[0]).rjust(9)
-        print("|" + rank + " | FlushCount = " + sub + " |")
-    print("=====================")
-    return True
+        sub = str(data[r]).rjust(8)
+        print("  |" + rank + " | " + sub + " |")
+    print("  =====================")
 
-def ReadIndex(f, fileSize, WriterCount):
+    pos = pos + WriterCount *8
+    return pos, WriterCount, AggregatorCount, SubfileCount
+
+def ReadIndex(f, fileSize):
     nBytes = fileSize - f.tell()
     if nBytes <= 0:
         return True
@@ -30,17 +39,24 @@ def ReadIndex(f, fileSize, WriterCount):
     while pos < nBytes:
         print("-----------------------------------------------" +
               "---------------------------------------------------")
-        data = np.frombuffer(table, dtype=np.uint64, count=3,
+        data = np.frombuffer(table, dtype=np.uint64, count=4,
                              offset=pos)
         stepstr = str(step).ljust(6)
         mdatapos = str(data[0]).ljust(10)
         mdatasize = str(data[1]).ljust(10)
         flushcount = str(data[2]).ljust(3)
         FlushCount = data[2]
+        haswritermap = data[3]
         print("|   Step = " + stepstr + "| MetadataPos = " + mdatapos +
-              " |  MetadataSize = " + mdatasize + "   |" + flushcount + "|")
+              " |  MetadataSize = " + mdatasize + "   | FlushCount = " +
+               flushcount + "| hasWriterMap = " + str(haswritermap).ljust(3) + "|")
 
-        pos = pos + 3 * 8
+        pos = pos + 4 * 8
+
+        if (haswritermap > 0):
+            pos, WriterCount, AggregatorCount, SubfileCount = ReadWriterMap(table, pos)
+        
+
         for Writer in range(0, WriterCount):
             start = " Writer " + str(Writer) + " data "
             thiswriter = np.frombuffer(table, dtype=np.uint64,
@@ -76,10 +92,10 @@ def DumpIndexTable(fileName):
         if isinstance(status, list):
             WriterCount = status[1]
             status = status[0]
+        #if status:
+        #    status = ReadWriterArray(f, fileSize, WriterCount)
         if status:
-            status = ReadWriterArray(f, fileSize, WriterCount)
-        if status:
-            status = ReadIndex(f, fileSize, WriterCount)
+            status = ReadIndex(f, fileSize)
     return status
 
 

@@ -143,23 +143,24 @@ def ReadHeader(f, fileSize, fileType):
     iscolumnmajor = header[49]
     # 45..63 unused
 
-    print("-----------------------------------------------------------"
-          "-----------------------------------------------------------")
-    print("|        Version string            | Major | Minor | Patch "
-          "| unused | Endian | BP version | Active | WriterCount | AggCount" +
-          " | ColumnMajor |  unused      |")
-    print("|          32 bytes                |   1B  |   1B  |   1B  "
-          "|   1B   |   1B   |     1B     |   1B   |      4b     |    4b    " +
-          "|     1b      |    16B       |")
-    print("+----------------------------------------------------------"
-          "----------------------------------------------------------+")
-    print("| {0} |   {1}   |   {2}   |   {3}   |        |  {4}   "
-          "|      {5}     |  {6}   |      {7:d}      |     {8:d}    |      " +
-          "{9}      |              |".format(
-              versionStr, major, minor, micro, endian, bpversion, activeStr,
+    print("---------------------------------------------------------------"
+          "---------------------------------------------------------------")
+    print("|        Version string            |Major|Minor|Patch"
+          "|unused|Endian|BP version|Active|WriterCount|AggCount" +
+          "|ColumnMajor|unused|")
+    print("|          32 bytes                |  1B |  1B |  1B "
+          "|  1B  |  1B  |    1B    |  1B  |     4B    |   4B   " +
+          "|    1B     |  16B |")
+    print("+----------------------------------+-----+-----+-----+------+---"
+          "---+----------+------+-----------+--------+-----------+------+")
+    print("| {0} | {1} | {2} | {3} |      | {4}  "
+          "|     {5}    | {6}  |     {7:d}     |    {8:d}   |     " 
+          "{9}     |      |".format(
+              versionStr, str(major).center(3), str(minor).center(3), 
+              str(micro).center(3), endian, bpversion, activeStr,
               WriterCount, aggregatorcount, iscolumnmajor))
-    print("-----------------------------------------------------------"
-          "-----------------------------------------------------------")
+    print("---------------------------------------------------------------"
+          "---------------------------------------------------------------")
     return [status, WriterCount]
 
 
