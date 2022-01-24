@@ -171,6 +171,8 @@ private:
     bool GetSingleValueFromMetadata(core::VariableBase &variable,
                                     BP5VarRec *VarRec, void *DestData,
                                     size_t Step, size_t WriterRank);
+    void MemCopyData(char *OutData, const char *InData, size_t Size,
+                     MemorySpace MemSpace);
     void ExtractSelectionFromPartialRM(
         int ElementSize, size_t Dims, const size_t *GlobalDims,
         const size_t *PartialOffsets, const size_t *PartialCounts,

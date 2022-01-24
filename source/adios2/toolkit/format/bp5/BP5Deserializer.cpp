@@ -1256,6 +1256,19 @@ static int FindOffsetCM(size_t Dims, const size_t *Size, const size_t *Index)
  * *******************************
  */
 
+void BP5Deserializer::MemCopyData(char *OutData, const char *InData,
+                                  size_t Size, MemorySpace MemSpace)
+{
+#ifdef ADIOS2_HAVE_CUDA
+    if (MemSpace == MemorySpace::CUDA)
+    {
+        helper::CudaMemCopyToBuffer(OutData, 0, InData, Size);
+        return;
+    }
+#endif
+    memcpy(OutData, InData, Size);
+}
+
 // Row major version
 void BP5Deserializer::ExtractSelectionFromPartialRM(
     int ElementSize, size_t Dims, const size_t *GlobalDims,
@@ -1343,7 +1356,7 @@ void BP5Deserializer::ExtractSelectionFromPartialRM(
     size_t i;
     for (i = 0; i < BlockCount; i++)
     {
-        memcpy(OutData, InData, BlockSize * ElementSize);
+        MemCopyData(OutData, InData, BlockSize * ElementSize, MemSpace);
         InData += SourceBlockStride;
         OutData += DestBlockStride;
     }
@@ -1444,7 +1457,7 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
     OutData += DestBlockStartOffset;
     for (int i = 0; i < BlockCount; i++)
     {
-        memcpy(OutData, InData, BlockSize * ElementSize);
+        MemCopyData(OutData, InData, BlockSize * ElementSize, MemSpace);
         InData += SourceBlockStride;
         OutData += DestBlockStride;
     }
