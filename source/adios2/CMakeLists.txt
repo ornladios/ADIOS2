@@ -107,7 +107,7 @@ set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFF
 
 if(ADIOS2_HAVE_CUDA)
   enable_language(CUDA)
-  target_link_libraries(adios2_core PUBLIC CUDA::cudart CUDA::cuda_driver)
+  target_link_libraries(adios2_core PRIVATE CUDA::cudart)
   set_target_properties(adios2_core PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 endif()
 
