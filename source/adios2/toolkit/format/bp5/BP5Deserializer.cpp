@@ -10,6 +10,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/VariableBase.h"
+#include "adios2/helper/adiosFunctions.h"
 
 #include "BP5Deserializer.h"
 #include "BP5Deserializer.tcc"
@@ -927,6 +928,7 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
         Req.Count = variable.m_Count;
         Req.Start = variable.m_Start;
         Req.Step = Step;
+        Req.MemSpace = variable.m_MemorySpace;
         Req.Data = DestData;
         PendingRequests.push_back(Req);
     }
@@ -1168,14 +1170,14 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                         ExtractSelectionFromPartialRM(
                             ElementSize, DimCount, GlobalDimensions, RankOffset,
                             RankSize, SelOffset, SelSize, IncomingData,
-                            (char *)Req.Data);
+                            (char *)Req.Data, Req.MemSpace);
                     }
                     else
                     {
                         ExtractSelectionFromPartialCM(
                             ElementSize, DimCount, GlobalDimensions, RankOffset,
                             RankSize, SelOffset, SelSize, IncomingData,
-                            (char *)Req.Data);
+                            (char *)Req.Data, Req.MemSpace);
                     }
                 }
             }
@@ -1259,7 +1261,7 @@ void BP5Deserializer::ExtractSelectionFromPartialRM(
     int ElementSize, size_t Dims, const size_t *GlobalDims,
     const size_t *PartialOffsets, const size_t *PartialCounts,
     const size_t *SelectionOffsets, const size_t *SelectionCounts,
-    const char *InData, char *OutData)
+    const char *InData, char *OutData, MemorySpace MemSpace)
 {
     size_t BlockSize;
     size_t SourceBlockStride = 0;
@@ -1353,7 +1355,7 @@ void BP5Deserializer::ExtractSelectionFromPartialCM(
     int ElementSize, size_t Dims, const size_t *GlobalDims,
     const size_t *PartialOffsets, const size_t *PartialCounts,
     const size_t *SelectionOffsets, const size_t *SelectionCounts,
-    const char *InData, char *OutData)
+    const char *InData, char *OutData, MemorySpace MemSpace)
 {
     int BlockSize;
     int SourceBlockStride = 0;
