@@ -475,20 +475,13 @@ void BP4Deserializer::PreDataRead(
 {
     if (subStreamBoxInfo.OperationsInfo.size() > 0)
     {
-        const bool identity = IdentityOperation<T>(blockInfo.Operations);
-
-        // if identity is true, just read the entire block content as-is
         const helper::BlockOperationInfo &blockOperationInfo =
             InitPostOperatorBlockData(subStreamBoxInfo.OperationsInfo);
 
-        if (!identity)
-        {
-            m_ThreadBuffers[threadID][1].resize(blockOperationInfo.PayloadSize,
-                                                '\0');
-        }
+        m_ThreadBuffers[threadID][1].resize(blockOperationInfo.PayloadSize,
+                                            '\0');
 
-        buffer = identity ? reinterpret_cast<char *>(blockInfo.Data)
-                          : m_ThreadBuffers[threadID][1].data();
+        buffer = m_ThreadBuffers[threadID][1].data();
 
         payloadSize = blockOperationInfo.PayloadSize;
         payloadOffset = blockOperationInfo.PayloadOffset;
@@ -509,8 +502,7 @@ void BP4Deserializer::PostDataRead(
     const helper::SubStreamBoxInfo &subStreamBoxInfo,
     const bool isRowMajorDestination, const size_t threadID)
 {
-    if (subStreamBoxInfo.OperationsInfo.size() > 0 &&
-        !IdentityOperation<T>(blockInfo.Operations))
+    if (subStreamBoxInfo.OperationsInfo.size() > 0)
     {
         const helper::BlockOperationInfo &blockOperationInfo =
             InitPostOperatorBlockData(subStreamBoxInfo.OperationsInfo);
@@ -1208,22 +1200,6 @@ BP4Deserializer::BlocksInfoCommon(
         ++n;
     }
     return blocksInfo;
-}
-
-template <class T>
-bool BP4Deserializer::IdentityOperation(
-    const std::vector<std::shared_ptr<core::Operator>> &operations) const
-    noexcept
-{
-    bool identity = false;
-    for (const auto &op : operations)
-    {
-        if (op->m_TypeString == "identity")
-        {
-            identity = true;
-        }
-    }
-    return identity;
 }
 
 } // end namespace format
