@@ -13,7 +13,8 @@ def ReadWriterMap(bytearray, pos):
     SubfileCount = int(data[2])
     pos = pos + 3 * 8
 
-    print("  WriterMap: Writers = {0}  Aggregators = {1}  Subfiles = {2}"          .format(WriterCount, AggregatorCount, SubfileCount))
+    print("  WriterMap: Writers = {0}  Aggregators = {1}  Subfiles = {2}"
+          .format(WriterCount, AggregatorCount, SubfileCount))
     data = np.frombuffer(bytearray, dtype=np.uint64, count=WriterCount,
                          offset=pos)
     print("  =====================")

@@ -153,7 +153,7 @@ def ReadHeader(f, fileSize, fileType):
           "+------+------+----------+--------+------+-----------+------+")
     print("| {0} | {1} | {2} | {3} |      | {4}  "
           "|    {5}   |  {6}   | {7}  | {8}     |      |".format(
-              versionStr, str(major).center(3), str(minor).center(3),  
+              versionStr, str(major).center(3), str(minor).center(3),
               str(micro).center(3), endian, str(bpversion).center(3),
               str(bpminorversion).center(3), activeStr, clmnStr))
     print("---------------------------------------------------------"
