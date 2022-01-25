@@ -599,7 +599,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
     const auto &buffer = bufferSTL.m_Buffer;
     size_t &position = bufferSTL.m_Position;
 
-    if (buffer.size() < 64)
+    if (buffer.size() < m_IndexHeaderSize)
     {
         return 0;
     }
@@ -644,7 +644,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
             m + " major\n");
     }
 
-    position = 64; // after the header
+    position = m_IndexHeaderSize; // after the header
     // Just count the steps first
     unsigned int availableSteps = 0;
     uint64_t nDataFiles = 0;
@@ -710,7 +710,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
 
     // append but not at 0 and not after existing steps
     // Read each record now completely to get offsets at step+1
-    position = 64;
+    position = m_IndexHeaderSize;
     unsigned int currentStep = 0;
     std::vector<uint64_t> writerToFileMap;
     // reading one step beyond target to get correct offsets
@@ -981,9 +981,9 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
             " bytes.");
     }
 
-    if (b.GetAvailableSize() < 64)
+    if (b.GetAvailableSize() < m_IndexHeaderSize)
     {
-        b.Resize(position + 64, "BP4Serializer::MakeHeader " + fileType);
+        b.Resize(m_IndexHeaderSize, "BP4Serializer::MakeHeader " + fileType);
     }
 
     const std::string majorVersion(std::to_string(ADIOS2_VERSION_MAJOR));
@@ -1035,7 +1035,7 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     if (position != m_EndianFlagPosition)
     {
         throw std::runtime_error(
-            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Endian Flag "
+            "ADIOS Coding ERROR in BP5Writer::MakeHeader. Endian Flag "
             "position mismatch");
     }
     const uint8_t endianness = helper::IsLittleEndian() ? 0 : 1;
@@ -1045,41 +1045,40 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     if (position != m_BPVersionPosition)
     {
         throw std::runtime_error(
-            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Active Flag "
+            "ADIOS Coding ERROR in BP5Writer::MakeHeader. BP Version "
             "position mismatch");
     }
     const uint8_t version = 5;
     helper::CopyToBuffer(buffer, position, &version);
 
-    // byte 38: Active flag (used in Index Table only)
+    // byte 38: BP Minor version 1
+    if (position != m_BPMinorVersionPosition)
+    {
+        throw std::runtime_error(
+            "ADIOS Coding ERROR in BP5Writer::MakeHeader. BP Minor version "
+            "position mismatch");
+    }
+    const uint8_t minorversion = 1;
+    helper::CopyToBuffer(buffer, position, &minorversion);
+
+    // byte 39: Active flag (used in Index Table only)
     if (position != m_ActiveFlagPosition)
     {
         throw std::runtime_error(
-            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Active Flag "
+            "ADIOS Coding ERROR in BP5Writer::MakeHeader. Active Flag "
             "position mismatch");
     }
     const uint8_t activeFlag = (isActive ? 1 : 0);
     helper::CopyToBuffer(buffer, position, &activeFlag);
 
-    // byte 39: Minor file version
-    const uint8_t subversion = 0;
-    helper::CopyToBuffer(buffer, position, &subversion);
-
-    // bytes 40-43 writer count
-    const uint32_t WriterCount = m_Comm.Size();
-    helper::CopyToBuffer(buffer, position, &WriterCount);
-    // bytes 44-47 aggregator count
-    const uint32_t AggregatorCount =
-        static_cast<uint32_t>(m_Aggregator->m_NumAggregators);
-    helper::CopyToBuffer(buffer, position, &AggregatorCount);
-    // byte 48 columnMajor
+    // byte 40 columnMajor
     // write if data is column major in metadata and data
     const uint8_t columnMajor =
         (m_IO.m_ArrayOrder == ArrayOrdering::ColumnMajor) ? 'y' : 'n';
     helper::CopyToBuffer(buffer, position, &columnMajor);
 
-    // byte 49-63: unused
-    position += 15;
+    // byte 41-63: unused
+    position += 23;
     absolutePosition = position;
 }
 

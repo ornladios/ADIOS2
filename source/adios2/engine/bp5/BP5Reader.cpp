@@ -40,8 +40,10 @@ void BP5Reader::InstallMetadataForTimestep(size_t Step)
 {
     size_t pgstart = m_MetadataIndexTable[Step][0];
     size_t Position = pgstart + sizeof(uint64_t); // skip total data size
-    size_t MDPosition = Position + 2 * sizeof(uint64_t) * m_WriterCount;
-    for (size_t WriterRank = 0; WriterRank < m_WriterCount; WriterRank++)
+    const uint64_t WriterCount =
+        m_WriterMap[m_WriterMapIndex[Step]].WriterCount;
+    size_t MDPosition = Position + 2 * sizeof(uint64_t) * WriterCount;
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
     {
         // variable metadata for timestep
         size_t ThisMDSize = helper::ReadValue<uint64_t>(
@@ -58,7 +60,7 @@ void BP5Reader::InstallMetadataForTimestep(size_t Step)
         }
         MDPosition += ThisMDSize;
     }
-    for (size_t WriterRank = 0; WriterRank < m_WriterCount; WriterRank++)
+    for (size_t WriterRank = 0; WriterRank < WriterCount; WriterRank++)
     {
         // attribute metadata for timestep
         size_t ThisADSize = helper::ReadValue<uint64_t>(
@@ -173,7 +175,8 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
 {
     size_t FlushCount = m_MetadataIndexTable[Timestep][2];
     size_t DataPosPos = m_MetadataIndexTable[Timestep][3];
-    size_t SubfileNum = m_WriterToFileMap[WriterRank];
+    size_t SubfileNum = static_cast<size_t>(
+        m_WriterMap[m_WriterMapIndex[Timestep]].RankToSubfile[WriterRank]);
 
     // check if subfile is already opened
     if (m_DataFileManager.m_Transports.count(SubfileNum) == 0)
@@ -572,7 +575,7 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
         // done
 
         m_BP5Deserializer = new format::BP5Deserializer(
-            m_WriterCount, m_WriterIsRowMajor, m_ReaderIsRowMajor,
+            m_WriterMap[0].WriterCount, m_WriterIsRowMajor, m_ReaderIsRowMajor,
             (m_OpenMode == Mode::ReadRandomAccess));
         m_BP5Deserializer->m_Engine = this;
 
@@ -647,33 +650,27 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
                 std::to_string(m_Minifooter.Version) + " version \n");
         }
 
+        // BP minor version, unused
+        position = m_BPMinorVersionPosition;
+
         // Writer active flag
         position = m_ActiveFlagPosition;
         const char activeChar = helper::ReadValue<uint8_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
         m_WriterIsActive = (activeChar == '\1' ? true : false);
-        position = m_WriterCountPosition;
-        m_WriterCount = helper::ReadValue<uint32_t>(
-            buffer, position, m_Minifooter.IsLittleEndian);
-        position = m_AggregatorCountPosition;
-        m_AggregatorCount = helper::ReadValue<uint32_t>(
-            buffer, position, m_Minifooter.IsLittleEndian);
+
         position = m_ColumnMajorFlagPosition;
         const uint8_t val = helper::ReadValue<uint8_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
         m_WriterIsRowMajor = val == 'n';
         // move position to first row
-        position = 64;
-    }
-
-    for (uint64_t i = 0; i < m_WriterCount; i++)
-    {
-        m_WriterToFileMap.push_back(helper::ReadValue<uint64_t>(
-            buffer, position, m_Minifooter.IsLittleEndian));
+        position = m_IndexHeaderSize;
     }
 
     // Read each record now
     uint64_t currentStep = 0;
+    uint64_t lastMapStep = 0;
+    uint64_t lastWriterCount = 0;
     do
     {
         std::vector<uint64_t> ptrs;
@@ -683,6 +680,31 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
             buffer, position, m_Minifooter.IsLittleEndian);
         const uint64_t FlushCount = helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
+        const uint64_t hasWriterMap = helper::ReadValue<uint64_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
+
+        if (hasWriterMap)
+        {
+            auto p = m_WriterMap.emplace(currentStep, WriterMapStruct());
+            auto &s = p.first->second;
+            s.WriterCount = helper::ReadValue<uint64_t>(
+                buffer, position, m_Minifooter.IsLittleEndian);
+            s.AggregatorCount = helper::ReadValue<uint64_t>(
+                buffer, position, m_Minifooter.IsLittleEndian);
+            s.SubfileCount = helper::ReadValue<uint64_t>(
+                buffer, position, m_Minifooter.IsLittleEndian);
+            // Get the process -> subfile map
+            s.RankToSubfile.reserve(s.WriterCount);
+            for (uint64_t i = 0; i < s.WriterCount; i++)
+            {
+                const uint64_t subfileIdx = helper::ReadValue<uint64_t>(
+                    buffer, position, m_Minifooter.IsLittleEndian);
+                s.RankToSubfile.push_back(subfileIdx);
+            }
+            lastMapStep = currentStep;
+            lastWriterCount = s.WriterCount;
+        }
+        m_WriterMapIndex.push_back(lastMapStep);
 
         ptrs.push_back(MetadataPos);
         ptrs.push_back(MetadataSize);
@@ -708,7 +730,8 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
         }
 #endif
 
-        position += sizeof(uint64_t) * m_WriterCount * ((2 * FlushCount) + 1);
+        // skip over the writer -> data file offset records
+        position += sizeof(uint64_t) * lastWriterCount * ((2 * FlushCount) + 1);
         m_StepsCount++;
         currentStep++;
     } while (!oneStepOnly && position < buffer.size());

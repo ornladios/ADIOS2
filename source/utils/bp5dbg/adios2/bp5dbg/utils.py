@@ -130,38 +130,35 @@ def ReadHeader(f, fileSize, fileType):
         status = False
 
     bpversion = int(header[37])
-    active = int(header[38])
+    bpminorversion = int(header[38])
+    active = int(header[39])
     if active == 0:
         activeStr = ' no'
     else:
         activeStr = 'yes'
-
-    #    unused = hStr[39]
-
-    WriterCount = int(header[40])
-    aggregatorcount = int(header[44])
-    iscolumnmajor = header[49]
+    iscolumnmajor = hStr[40]
+    if iscolumnmajor == 'n':
+        clmnStr = '   no'
+    else:
+        clmnStr = '  yes'
     # 45..63 unused
 
-    print("---------------------------------------------------------------"
-          "---------------------------------------------------------------")
+    print("---------------------------------------------------------"
+          "---------------------------------------------------------")
     print("|        Version string            |Major|Minor|Patch"
-          "|unused|Endian|BP version|Active|WriterCount|AggCount" +
-          "|ColumnMajor|unused|")
+          "|unused|Endian|BP version|BP minor|Active|ColumnMajor|unused|")
     print("|          32 bytes                |  1B |  1B |  1B "
-          "|  1B  |  1B  |    1B    |  1B  |     4B    |   4B   " +
-          "|    1B     |  16B |")
-    print("+----------------------------------+-----+-----+-----+------+---"
-          "---+----------+------+-----------+--------+-----------+------+")
+          "|  1B  |  1B  |    1B    |   1B   |  1B  |    1B     |  23B |")
+    print("+----------------------------------+-----+-----+-----"
+          "+------+------+----------+--------+------+-----------+------+")
     print("| {0} | {1} | {2} | {3} |      | {4}  "
-          "|     {5}    | {6}  |     {7:d}     |    {8:d}   |     " 
-          "{9}     |      |".format(
+          "|    {5}   |  {6}   | {7}  | {8}     |      |".format(
               versionStr, str(major).center(3), str(minor).center(3), 
-              str(micro).center(3), endian, bpversion, activeStr,
-              WriterCount, aggregatorcount, iscolumnmajor))
-    print("---------------------------------------------------------------"
-          "---------------------------------------------------------------")
-    return [status, WriterCount]
+              str(micro).center(3), endian, str(bpversion).center(3),
+              str(bpminorversion).center(3), activeStr, clmnStr))
+    print("---------------------------------------------------------"
+          "---------------------------------------------------------")
+    return status
 
 
 if __name__ == "__main__":
