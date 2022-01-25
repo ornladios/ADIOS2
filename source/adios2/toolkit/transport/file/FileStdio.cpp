@@ -372,6 +372,13 @@ void FileStdio::Seek(const size_t start)
     }
 }
 
+#ifdef _WIN32
+void FileStdio::Truncate(const size_t length)
+{
+    throw std::ios_base::failure(
+        "ERROR: FileStdio::Truncate is not supported in Windows\n");
+}
+#else
 #include <unistd.h> // ftruncate
 void FileStdio::Truncate(const size_t length)
 {
@@ -386,7 +393,9 @@ void FileStdio::Truncate(const size_t length)
                                      m_Name + ", in call to stdio Truncate\n");
     }
 }
+#endif
 
 void FileStdio::MkDir(const std::string &fileName) {}
+
 } // end namespace transport
 } // end namespace adios2
