@@ -7,16 +7,15 @@ WriterCount = -1
 
 def ReadWriterMap(bytearray, pos):
     data = np.frombuffer(bytearray, dtype=np.uint64, count=3,
-                             offset=pos)
+                         offset=pos)
     WriterCount = int(data[0])
     AggregatorCount = int(data[1])
     SubfileCount = int(data[2])
     pos = pos + 3 * 8
 
-    print("  WriterMap: Writers = {0}  Aggregators = {1}  Subfiles = {2}".format(
-        WriterCount, AggregatorCount, SubfileCount))
+    print("  WriterMap: Writers = {0}  Aggregators = {1}  Subfiles = {2}"          .format(WriterCount, AggregatorCount, SubfileCount))
     data = np.frombuffer(bytearray, dtype=np.uint64, count=WriterCount,
-                             offset=pos)
+                         offset=pos)
     print("  =====================")
     print("  |  Rank  |  Subfile |")
     print("  ---------------------")
@@ -26,7 +25,7 @@ def ReadWriterMap(bytearray, pos):
         print("  |" + rank + " | " + sub + " |")
     print("  =====================")
 
-    pos = pos + WriterCount *8
+    pos = pos + WriterCount * 8
     return pos, WriterCount, AggregatorCount, SubfileCount
 
 def ReadIndex(f, fileSize):
@@ -49,13 +48,14 @@ def ReadIndex(f, fileSize):
         haswritermap = data[3]
         print("|   Step = " + stepstr + "| MetadataPos = " + mdatapos +
               " |  MetadataSize = " + mdatasize + "   | FlushCount = " +
-               flushcount + "| hasWriterMap = " + str(haswritermap).ljust(3) + "|")
+              flushcount + "| hasWriterMap = " +
+              str(haswritermap).ljust(3) + "|")
 
         pos = pos + 4 * 8
 
         if (haswritermap > 0):
-            pos, WriterCount, AggregatorCount, SubfileCount = ReadWriterMap(table, pos)
-        
+            pos, WriterCount, AggregatorCount, SubfileCount = ReadWriterMap(
+                table, pos)
 
         for Writer in range(0, WriterCount):
             start = " Writer " + str(Writer) + " data "
@@ -90,10 +90,7 @@ def DumpIndexTable(fileName):
         fileSize = fstat(f.fileno()).st_size
         status = ReadHeader(f, fileSize, "Index Table")
         if isinstance(status, list):
-            WriterCount = status[1]
             status = status[0]
-        #if status:
-        #    status = ReadWriterArray(f, fileSize, WriterCount)
         if status:
             status = ReadIndex(f, fileSize)
     return status
