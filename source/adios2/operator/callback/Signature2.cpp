@@ -22,7 +22,7 @@ Signature2::Signature2(
                              const std::string &, const size_t, const Dims &,
                              const Dims &, const Dims &)> &function,
     const Params &parameters)
-: Operator("Signature2", Operator::CALLBACK_SIGNATURE2, parameters),
+: Operator("Signature2", Operator::CALLBACK_SIGNATURE2, "callback", parameters),
   m_Function(function)
 {
 }

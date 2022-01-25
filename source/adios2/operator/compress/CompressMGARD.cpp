@@ -22,7 +22,7 @@ namespace compress
 {
 
 CompressMGARD::CompressMGARD(const Params &parameters)
-: Operator("mgard", COMPRESS_MGARD, parameters)
+: Operator("mgard", COMPRESS_MGARD, "compress", parameters)
 {
 }
 

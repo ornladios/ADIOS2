@@ -53,7 +53,7 @@ zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
                          const Params &parameters);
 
 CompressZFP::CompressZFP(const Params &parameters)
-: Operator("zfp", COMPRESS_ZFP, parameters)
+: Operator("zfp", COMPRESS_ZFP, "compress", parameters)
 {
 }
 

@@ -28,7 +28,7 @@ namespace compress
 {
 
 CompressBZIP2::CompressBZIP2(const Params &parameters)
-: Operator("bzip2", COMPRESS_BZIP2, parameters)
+: Operator("bzip2", COMPRESS_BZIP2, "compress", parameters)
 {
 }
 

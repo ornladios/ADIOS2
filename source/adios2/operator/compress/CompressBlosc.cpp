@@ -38,7 +38,7 @@ const std::set<std::string> CompressBlosc::m_Compressors = {
     "blosclz", "lz4", "lz4hc", "snappy", "zlib", "zstd"};
 
 CompressBlosc::CompressBlosc(const Params &parameters)
-: Operator("blosc", COMPRESS_BLOSC, parameters)
+: Operator("blosc", COMPRESS_BLOSC, "compress", parameters)
 {
 }
 
@@ -326,6 +326,19 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
     {
         blosc_init();
 
+        size_t threads = 1; // defaults
+        for (const auto &itParameter : m_Parameters)
+        {
+            const std::string key = itParameter.first;
+            const std::string value = itParameter.second;
+            if (key == "nthreads")
+            {
+                threads = static_cast<int>(helper::StringTo<int32_t>(
+                    value, "when setting Blosc nthreads parameter\n"));
+            }
+        }
+        blosc_set_nthreads(threads);
+
         while (inputOffset < inputDataSize)
         {
             /* move over the size of the compressed data */
@@ -390,6 +403,18 @@ size_t CompressBlosc::DecompressOldFormat(const char *bufferIn,
                                           const size_t sizeOut) const
 {
     blosc_init();
+    size_t threads = 1; // defaults
+    for (const auto &itParameter : m_Parameters)
+    {
+        const std::string key = itParameter.first;
+        const std::string value = itParameter.second;
+        if (key == "nthreads")
+        {
+            threads = static_cast<int>(helper::StringTo<int32_t>(
+                value, "when setting Blosc nthreads parameter\n"));
+        }
+    }
+    blosc_set_nthreads(threads);
     const int decompressedSize = blosc_decompress(bufferIn, dataOut, sizeOut);
     blosc_destroy();
     return static_cast<size_t>(decompressedSize);
