@@ -682,14 +682,16 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
     }
 
     unsigned int targetStep = 0;
-    if (m_Parameters.AppendAfterSteps + static_cast<int>(availableSteps) < 0)
+
+    if (m_Parameters.AppendAfterSteps < 0)
     {
-        targetStep = 0;
-    }
-    else if (m_Parameters.AppendAfterSteps < 0)
-    {
-        // -1 means last step
-        targetStep = availableSteps + m_Parameters.AppendAfterSteps + 1;
+        // -1 means append after last step
+        int s = (int)availableSteps + m_Parameters.AppendAfterSteps + 1;
+        if (s < 0)
+        {
+            s = 0;
+        }
+        targetStep = static_cast<unsigned int>(s);
     }
     else
     {
