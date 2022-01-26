@@ -12,18 +12,22 @@
 #define ADIOS2_HELPER_ADIOSCUDA_CU_
 
 #include "adios2/common/ADIOSMacros.h"
+#include <thrust/device_ptr.h>
+#include <thrust/extrema.h>
 
 #include "adiosCUDA.h"
-#include "adiosCUDAReduceImpl.h"
 
 namespace
 {
-
 template <class T>
 void CUDAMinMaxImpl(const T *values, const size_t size, T &min, T &max)
 {
-    min = reduce<T, MinOp>(size, 1024, 64, 1, values);
-    max = reduce<T, MaxOp>(size, 1024, 64, 1, values);
+    thrust::device_ptr<const T> dev_ptr(values);
+    auto res = thrust::minmax_element(dev_ptr, dev_ptr + size);
+    cudaMemcpy(&min, thrust::raw_pointer_cast(res.first), sizeof(T),
+               cudaMemcpyDeviceToHost);
+    cudaMemcpy(&max, thrust::raw_pointer_cast(res.second), sizeof(T),
+               cudaMemcpyDeviceToHost);
 }
 // types non supported on the device
 void CUDAMinMaxImpl(const long double * /*values*/, const size_t /*size*/,
