@@ -243,6 +243,7 @@ private:
     // Append helper data
     std::vector<size_t> m_AppendDataPos;  // each subfile append pos
     size_t m_AppendMetadataPos;           // metadata file append pos
+    size_t m_AppendMetaMetadataPos;       // meta-metadata file append pos
     size_t m_AppendMetadataIndexPos;      // index file append pos
     uint32_t m_AppendWriterCount;         // last active number of writers
     unsigned int m_AppendAggregatorCount; // last active number of aggr

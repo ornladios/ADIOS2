@@ -128,7 +128,7 @@ public:
     MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)          \
     MACRO(MaxShmSize, SizeBytes, size_t, DefaultMaxShmSize)                    \
     MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)         \
-    MACRO(AppendAfterStep, UInt, unsigned int, INT_MAX)                        \
+    MACRO(AppendAfterSteps, Int, int, INT_MAX)                                 \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)
 
     struct BP5Params

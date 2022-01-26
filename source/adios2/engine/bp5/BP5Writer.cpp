@@ -601,6 +601,11 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
 
     if (buffer.size() < m_IndexHeaderSize)
     {
+        m_AppendMetadataPos = 0;
+        m_AppendMetaMetadataPos = 0;
+        m_AppendMetadataIndexPos = 0;
+        m_AppendDataPos.resize(m_Aggregator->m_NumAggregators,
+                               0ULL); // safe bet
         return 0;
     }
 
@@ -676,31 +681,40 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
         availableSteps++;
     }
 
-    unsigned int targetStep = m_Parameters.AppendAfterStep;
-    if (targetStep < 0)
+    unsigned int targetStep = 0;
+    if (m_Parameters.AppendAfterSteps + static_cast<int>(availableSteps) < 0)
+    {
+        targetStep = 0;
+    }
+    else if (m_Parameters.AppendAfterSteps < 0)
     {
         // -1 means last step
-        targetStep = availableSteps + m_Parameters.AppendAfterStep + 1;
-        if (targetStep < 0)
-        {
-            targetStep = 0;
-        }
+        targetStep = availableSteps + m_Parameters.AppendAfterSteps + 1;
+    }
+    else
+    {
+        targetStep = static_cast<unsigned int>(m_Parameters.AppendAfterSteps);
     }
     if (targetStep > availableSteps)
     {
         targetStep = availableSteps;
     }
 
+    m_AppendDataPos.resize(nDataFiles, 0ULL);
+
     if (!targetStep)
     {
         // append at 0 is like writing new file
+        m_AppendMetadataPos = 0;
+        m_AppendMetaMetadataPos = 0;
+        m_AppendMetadataIndexPos = 0;
         return 0;
     }
 
-    m_AppendDataPos.resize(nDataFiles);
-    std::fill(m_AppendDataPos.begin(), m_AppendDataPos.end(), MaxSizeT);
     m_AppendMetadataPos = MaxSizeT; // size of header
+    m_AppendMetaMetadataPos = MaxSizeT;
     m_AppendMetadataIndexPos = MaxSizeT;
+    std::fill(m_AppendDataPos.begin(), m_AppendDataPos.end(), MaxSizeT);
 
     if (targetStep == availableSteps)
     {
@@ -757,8 +771,9 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
                         buffer, position, IsLittleEndian));
                 position +=
                     sizeof(uint64_t) * 2 * FlushCount; // no need to read
-                std::cout << "Writer " << i << " subfile " << writerToFileMap[i]
-                          << "  first data loc:" << FirstDataPos << std::endl;
+                /* std::cout << "Writer " << i << " subfile " <<
+                   writerToFileMap[i]  << "  first data loc:" << FirstDataPos <<
+                   std::endl; */
                 if (FirstDataPos < m_AppendDataPos[writerToFileMap[i]])
                 {
                     m_AppendDataPos[writerToFileMap[i]] = FirstDataPos;
@@ -1121,6 +1136,68 @@ void BP5Writer::InitBPBuffer()
         }
         m_Comm.BroadcastVector(preMetadataIndex.m_Buffer);
         m_WriterStep = CountStepsInMetadataIndex(preMetadataIndex);
+
+        // truncate and seek
+        if (m_Aggregator->m_IsAggregator)
+        {
+            const size_t off = m_AppendDataPos[m_Aggregator->m_SubStreamIndex];
+            if (off < MaxSizeT)
+            {
+                m_FileDataManager.Truncate(off);
+                // Seek is needed since truncate does not seek.
+                // SeekTo instead of SeetToFileEnd in case a transport
+                // does not support actual truncate.
+                m_FileDataManager.SeekTo(off);
+                m_DataPos = off;
+            }
+            else
+            {
+                m_DataPos = m_FileDataManager.GetFileSize(0);
+            }
+        }
+
+        if (m_Comm.Rank() == 0)
+        {
+            // Truncate existing metadata file
+            if (m_AppendMetadataPos < MaxSizeT)
+            {
+                m_MetaDataPos = m_AppendMetadataPos;
+                m_FileMetadataManager.Truncate(m_MetaDataPos);
+                m_FileMetadataManager.SeekTo(m_MetaDataPos);
+            }
+            else
+            {
+                m_MetaDataPos = m_FileMetadataManager.GetFileSize(0);
+                m_FileMetadataManager.SeekToFileEnd();
+            }
+
+            // Truncate existing meta-meta file
+            if (m_AppendMetaMetadataPos < MaxSizeT)
+            {
+                m_FileMetaMetadataManager.Truncate(m_AppendMetaMetadataPos);
+                m_FileMetaMetadataManager.SeekTo(m_AppendMetaMetadataPos);
+            }
+            else
+            {
+                m_FileMetadataIndexManager.SeekToFileEnd();
+            }
+
+            // Set the flag in the header of metadata index table to 1 again
+            // to indicate a new run begins
+            UpdateActiveFlag(true);
+
+            // Truncate existing index file
+            if (m_AppendMetadataIndexPos < MaxSizeT)
+            {
+                m_FileMetadataIndexManager.Truncate(m_AppendMetadataIndexPos);
+                m_FileMetadataIndexManager.SeekTo(m_AppendMetadataIndexPos);
+            }
+            else
+            {
+                m_FileMetadataIndexManager.SeekToFileEnd();
+            }
+        }
+        m_AppendDataPos.clear();
     }
 
     if (!m_WriterStep)
@@ -1141,60 +1218,13 @@ void BP5Writer::InitBPBuffer()
             m_FileMetadataIndexManager.SeekToFileBegin();
             m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
                                                   bi.m_Position);
+            m_FileMetaMetadataManager.SeekToFileBegin();
         }
+        // last attempt to clean up datafile if called with append mode,
+        // data existed but index was missing
         if (m_Aggregator->m_IsAggregator)
         {
             m_FileDataManager.SeekTo(0);
-        }
-    }
-    else
-    {
-        if (m_Aggregator->m_IsAggregator)
-        {
-            const size_t off = m_AppendDataPos[m_Aggregator->m_SubStreamIndex];
-            if (off < MaxSizeT)
-            {
-                m_FileDataManager.Truncate(off);
-                m_FileDataManager.SeekTo(off);
-                m_DataPos = off;
-            }
-            else
-            {
-                m_DataPos = m_FileDataManager.GetFileSize(0);
-            }
-        }
-
-        if (m_Comm.Rank() == 0)
-        {
-            // Truncate existing metadata file
-            if (m_AppendMetadataPos < MaxSizeT)
-            {
-                m_MetaDataPos = m_AppendMetadataPos;
-                m_FileMetadataManager.Truncate(m_MetaDataPos);
-                // SeekTo instead of SeetToFileEnd in case a transport
-                // does not support actual truncate
-                // Plus truncate does not seek anyway
-                m_FileMetadataManager.SeekTo(m_MetaDataPos);
-            }
-            else
-            {
-                m_MetaDataPos = m_FileMetadataManager.GetFileSize(0);
-                m_FileMetadataManager.SeekToFileEnd();
-            }
-
-            // Set the flag in the header of metadata index table to 1 again
-            // to indicate a new run begins
-            UpdateActiveFlag(true);
-            if (m_AppendMetadataIndexPos < MaxSizeT)
-            {
-                m_FileMetadataIndexManager.Truncate(m_AppendMetadataIndexPos);
-                // SeekTo in case a transport does not support actual truncate
-                m_FileMetadataIndexManager.SeekTo(m_AppendMetadataIndexPos);
-            }
-            else
-            {
-                m_FileMetadataIndexManager.SeekToFileEnd();
-            }
         }
     }
 
