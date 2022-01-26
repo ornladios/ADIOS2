@@ -8,7 +8,6 @@
  *      Author: Ana Gainaru gainarua@ornl.gov
  */
 
-
 #ifndef ADIOS2_HELPER_ADIOSCUDA_CU_
 #define ADIOS2_HELPER_ADIOSCUDA_CU_
 
