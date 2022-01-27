@@ -193,11 +193,8 @@ __global__ void reduce(const T *__restrict__ g_idata, T *__restrict__ g_odata,
     // reading from global memory, writing to shared memory
     unsigned int tid = threadIdx.x;
     unsigned int gridSize = blockSize * gridDim.x;
-    unsigned int maskLength = (blockSize & 31); // 31 = warpSize-1
-    maskLength = (maskLength > 0) ? (32 - maskLength) : maskLength;
-    const unsigned int mask = (0xffffffff) >> maskLength;
 
-    T mySum = 0;
+    T mySum = g_idata[0];
 
     // we reduce multiple elements per thread.  The number is determined by the
     // number of active thread blocks (via gridDim).  More blocks will result
@@ -229,7 +226,7 @@ __global__ void reduce(const T *__restrict__ g_idata, T *__restrict__ g_odata,
         }
     }
 
-    mySum = warpReduceSum<T, Op>(mask, mySum, op);
+    mySum = warpReduceSum<T, Op>(0xffffffff, mySum, op);
 
     // each thread puts its local sum into shared memory
     if ((tid % warpSize) == 0)
@@ -241,12 +238,14 @@ __global__ void reduce(const T *__restrict__ g_idata, T *__restrict__ g_odata,
 
     const unsigned int shmem_extent =
         (blockSize / warpSize) > 0 ? (blockSize / warpSize) : 1;
-    const unsigned int ballot_result = __ballot_sync(mask, tid < shmem_extent);
+    const unsigned int ballot_result =
+        __ballot_sync(0xffffffff, tid < shmem_extent);
     if (tid < shmem_extent)
     {
         mySum = sdata[tid];
-        mySum = warpReduceSum<T, Op>(ballot_result, mySum, op);
     }
+
+    mySum = warpReduceSum<T, Op>(0xffffffff, mySum, op);
 
     // write result for this block to global mem
     if (tid == 0)
@@ -419,6 +418,7 @@ T reduce(const size_t size, int maxThreads, int maxBlocks,
          int cpuFinalThreshold, const T *d_idata)
 {
 
+    Op op;
     T gpu_result = 0;
     int numBlocks = 0;
     int numThreads = 0;
@@ -453,7 +453,7 @@ T reduce(const size_t size, int maxThreads, int maxBlocks,
                                    cudaMemcpyDeviceToHost));
         for (int i = 0; i < s; i++)
         {
-            gpu_result += h_odata[i];
+            gpu_result = op(gpu_result, h_odata[i]);
         }
         needReadBack = false;
     }
