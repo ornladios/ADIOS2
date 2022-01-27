@@ -193,9 +193,6 @@ __global__ void reduce(const T *__restrict__ g_idata, T *__restrict__ g_odata,
     // reading from global memory, writing to shared memory
     unsigned int tid = threadIdx.x;
     unsigned int gridSize = blockSize * gridDim.x;
-    unsigned int maskLength = (blockSize & 31); // 31 = warpSize-1
-    maskLength = (maskLength > 0) ? (32 - maskLength) : maskLength;
-    const unsigned int mask = (0xffffffff) >> maskLength;
 
     T mySum = g_idata[0];
 
@@ -241,7 +238,8 @@ __global__ void reduce(const T *__restrict__ g_idata, T *__restrict__ g_odata,
 
     const unsigned int shmem_extent =
         (blockSize / warpSize) > 0 ? (blockSize / warpSize) : 1;
-    const unsigned int ballot_result = __ballot_sync(mask, tid < shmem_extent);
+    const unsigned int ballot_result =
+        __ballot_sync(0xffffffff, tid < shmem_extent);
     if (tid < shmem_extent)
     {
         mySum = sdata[tid];
