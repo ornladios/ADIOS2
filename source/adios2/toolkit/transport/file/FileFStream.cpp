@@ -354,6 +354,24 @@ void FileFStream::Seek(const size_t start)
     }
 }
 
+#if __cplusplus >= 201703L
+#include <filesystem>
+#endif
+
+void FileFStream::Truncate(const size_t length)
+{
+#if __cplusplus >= 201703L
+    // C++17 specific stuff here
+    WaitForOpen();
+    std::filesystem::path p(m_Name);
+    std::filesystem::resize_file(p, static_cast<std::uintmax_t>(length));
+    CheckFile("couldn't move to offset " + std::to_string(start) + " of file " +
+              m_Name + ", in call to fstream seekp");
+#else
+    // Trunation is not supported in a portable manner pre C++17
+#endif
+}
+
 void FileFStream::MkDir(const std::string &fileName) {}
 
 } // end namespace transport

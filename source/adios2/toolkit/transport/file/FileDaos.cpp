@@ -946,5 +946,10 @@ void FileDaos::Seek(const size_t start)
     }
 }
 
+void FileDaos::Truncate(const size_t length)
+{
+    throw std::ios_base::failure("ERROR: Daos Truncate is not implemented yet");
+}
+
 } // end namespace transport
 } // end namespace adios2

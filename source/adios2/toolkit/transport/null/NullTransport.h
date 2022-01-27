@@ -58,6 +58,8 @@ public:
 
     void Seek(const size_t start = MaxSizeT) override;
 
+    void Truncate(const size_t length) override;
+
 protected:
     struct NullTransportImpl;
     std::unique_ptr<NullTransportImpl> Impl;

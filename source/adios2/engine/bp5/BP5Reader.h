@@ -20,6 +20,8 @@
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 #include <chrono>
+#include <map>
+#include <vector>
 
 namespace adios2
 {
@@ -189,12 +191,11 @@ private:
 #undef declare_type
 
     size_t DoSteps() const final;
-    uint32_t m_WriterCount = 0;
-    uint32_t m_AggregatorCount = 0;
+
     uint32_t m_WriterColumnMajor = 0;
     bool m_ReaderIsRowMajor = true;
     bool m_WriterIsRowMajor = true;
-    std::vector<uint64_t> m_WriterToFileMap;
+
     format::BufferSTL m_MetadataIndex;
     format::BufferSTL m_MetaMetadata;
     format::BufferSTL m_Metadata;
@@ -205,6 +206,19 @@ private:
     void ReadData(const size_t WriterRank, const size_t Timestep,
                   const size_t StartOffset, const size_t Length,
                   char *Destination);
+
+    struct WriterMapStruct
+    {
+        uint32_t WriterCount = 0;
+        uint32_t AggregatorCount = 0;
+        uint32_t SubfileCount = 0;
+        std::vector<uint64_t> RankToSubfile; // size WriterCount
+    };
+
+    // step -> writermap but not for all steps
+    std::map<uint64_t, WriterMapStruct> m_WriterMap;
+    // step -> writermap index (for all steps)
+    std::vector<uint64_t> m_WriterMapIndex;
 };
 
 } // end namespace engine

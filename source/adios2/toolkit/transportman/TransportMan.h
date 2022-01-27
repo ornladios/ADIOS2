@@ -203,6 +203,8 @@ public:
 
     void SeekTo(const size_t start, const int transportIndex = -1);
 
+    void Truncate(const size_t length, const int transportIndex = -1);
+
     /**
      * Check if a file exists.
      * @param name

@@ -355,6 +355,11 @@ void FileIME::Seek(const size_t start)
     }
 }
 
+void FileIME::Truncate(const size_t length)
+{
+    throw std::ios_base::failure("ERROR: Daos Truncate is not implemented yet");
+}
+
 void FileIME::MkDir(const std::string &fileName) {}
 
 } // end namespace transport

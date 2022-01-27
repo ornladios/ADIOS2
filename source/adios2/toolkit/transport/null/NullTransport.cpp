@@ -141,6 +141,16 @@ void NullTransport::Seek(const size_t start)
     Impl->CurPos = start;
 }
 
+void NullTransport::Truncate(const size_t length)
+{
+    if (!Impl->IsOpen)
+    {
+        throw std::runtime_error(
+            "ERROR: NullTransport::Truncate: The transport is not open.");
+    }
+    Impl->Capacity = length;
+}
+
 void NullTransport::MkDir(const std::string &fileName) { return; }
 
 void NullTransport::CheckName() const { return; }

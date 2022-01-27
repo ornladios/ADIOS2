@@ -47,11 +47,9 @@ public:
     static constexpr size_t m_IndexHeaderSize = 64;
     static constexpr size_t m_EndianFlagPosition = 36;
     static constexpr size_t m_BPVersionPosition = 37;
-    static constexpr size_t m_ActiveFlagPosition = 38;
-    static constexpr size_t m_BPMinorVersionPosition = 39;
-    static constexpr size_t m_WriterCountPosition = 40;
-    static constexpr size_t m_AggregatorCountPosition = 44;
-    static constexpr size_t m_ColumnMajorFlagPosition = 48;
+    static constexpr size_t m_BPMinorVersionPosition = 38;
+    static constexpr size_t m_ActiveFlagPosition = 39;
+    static constexpr size_t m_ColumnMajorFlagPosition = 40;
     static constexpr size_t m_VersionTagPosition = 0;
     static constexpr size_t m_VersionTagLength = 32;
 
@@ -130,6 +128,7 @@ public:
     MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)          \
     MACRO(MaxShmSize, SizeBytes, size_t, DefaultMaxShmSize)                    \
     MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)         \
+    MACRO(AppendAfterSteps, Int, int, INT_MAX)                                 \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)
 
     struct BP5Params

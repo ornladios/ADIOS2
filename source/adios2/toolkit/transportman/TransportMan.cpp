@@ -376,6 +376,28 @@ void TransportMan::SeekTo(const size_t start, const int transportIndex)
     }
 }
 
+void TransportMan::Truncate(const size_t length, const int transportIndex)
+{
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+            if (transport->m_Type == "File")
+            {
+                transport->Truncate(length);
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to Truncate with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->Truncate(length);
+    }
+}
+
 size_t TransportMan::GetFileSize(const size_t transportIndex) const
 {
     auto itTransport = m_Transports.find(transportIndex);

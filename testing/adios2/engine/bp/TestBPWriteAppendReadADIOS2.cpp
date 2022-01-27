@@ -836,48 +836,35 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
 
         /* Write phase II: append */
         io.SetParameter("NumAggregators", "1");
-        if (engineName == "BP5" && mpiSize > 1)
+        bpWriter = io.Open(fname, adios2::Mode::Append);
+        for (size_t step = NSteps; step < 2 * NSteps; ++step)
         {
-            EXPECT_THROW(bpWriter = io.Open(fname, adios2::Mode::Append),
-                         std::runtime_error);
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            bpWriter.BeginStep();
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.EndStep();
         }
-        else
-        {
-            bpWriter = io.Open(fname, adios2::Mode::Append);
-            for (size_t step = NSteps; step < 2 * NSteps; ++step)
-            {
-                // Generate test data for each process uniquely
-                SmallTestData currentTestData = generateNewSmallTestData(
-                    m_TestData, static_cast<int>(step), mpiRank, mpiSize);
-                bpWriter.BeginStep();
-                bpWriter.Put(var_i32, currentTestData.I32.data());
-                bpWriter.EndStep();
-            }
-            bpWriter.Close();
+        bpWriter.Close();
 
-            /* Write phase III: append */
-            io.SetParameter("NumAggregators", "2");
-            bpWriter = io.Open(fname, adios2::Mode::Append);
-            for (size_t step = 2 * NSteps; step < 3 * NSteps; ++step)
-            {
-                // Generate test data for each process uniquely
-                SmallTestData currentTestData = generateNewSmallTestData(
-                    m_TestData, static_cast<int>(step), mpiRank, mpiSize);
-                bpWriter.BeginStep();
-                bpWriter.Put(var_i32, currentTestData.I32.data());
-                bpWriter.EndStep();
-            }
-            bpWriter.Close();
+        /* Write phase III: append */
+        io.SetParameter("NumAggregators", "2");
+        bpWriter = io.Open(fname, adios2::Mode::Append);
+        for (size_t step = 2 * NSteps; step < 3 * NSteps; ++step)
+        {
+            // Generate test data for each process uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            bpWriter.BeginStep();
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.EndStep();
         }
+        bpWriter.Close();
     }
 
     {
         size_t NumSteps = 3 * NSteps;
-        if (engineName == "BP5" && mpiSize > 1)
-        {
-            NumSteps = NSteps;
-        }
-
         adios2::IO io = adios.DeclareIO("ReadIO");
         io.SetEngine(engineName);
 
