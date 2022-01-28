@@ -213,8 +213,6 @@ BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByName(const char *Name)
     return ret;
 }
 
-static char *varname_debug;
-
 BP5Deserializer::BP5VarRec *BP5Deserializer::CreateVarRec(const char *ArrayName)
 {
     BP5VarRec *Ret = new BP5VarRec();
@@ -228,7 +226,6 @@ BP5Deserializer::BP5VarRec *BP5Deserializer::CreateVarRec(const char *ArrayName)
         Ret->PerWriterMetaFieldOffset.resize(writerCohortSize);
         Ret->PerWriterBlockStart.resize(writerCohortSize);
     }
-    varname_debug = Ret->VarName;
     return Ret;
 }
 
