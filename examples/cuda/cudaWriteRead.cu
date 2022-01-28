@@ -10,7 +10,6 @@
 
 #include <adios2.h>
 
-#include <cuda.h>
 #include <cuda_runtime.h>
 
 __global__ void update_array(float *vect, int val) {

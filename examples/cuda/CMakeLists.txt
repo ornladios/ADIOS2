@@ -6,5 +6,5 @@
 enable_language(CUDA)
 
 add_executable(GPUWriteRead_cuda cudaWriteRead.cu)
-target_link_libraries(GPUWriteRead_cuda PUBLIC adios2::cxx11 CUDA::cudart CUDA::cuda_driver)
+target_link_libraries(GPUWriteRead_cuda PUBLIC adios2::cxx11 CUDA::cudart)
 set_target_properties(GPUWriteRead_cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

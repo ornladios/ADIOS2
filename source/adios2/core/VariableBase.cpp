@@ -25,7 +25,6 @@
 #include "adios2/operator/OperatorFactory.h"
 
 #ifdef ADIOS2_HAVE_CUDA
-#include <cuda.h>
 #include <cuda_runtime.h>
 #endif
 
