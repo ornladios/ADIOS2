@@ -320,9 +320,8 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
         if (!m_BP5Deserializer)
         {
-            m_BP5Deserializer = new format::BP5Deserializer(
-                m_CurrentStepMetaData->WriterCohortSize, m_WriterIsRowMajor,
-                Params.IsRowMajor);
+            m_BP5Deserializer = new format::BP5Deserializer(m_WriterIsRowMajor,
+                                                            Params.IsRowMajor);
             m_BP5Deserializer->m_Engine = this;
         }
         SstMetaMetaList MMList =
@@ -355,7 +354,9 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         }
 
         m_IO.RemoveAllVariables();
-        m_BP5Deserializer->SetupForTimestep(SstCurrentStep(m_Input));
+        m_BP5Deserializer->SetupForStep(
+            SstCurrentStep(m_Input),
+            static_cast<size_t>(m_CurrentStepMetaData->WriterCohortSize));
 
         for (int i = 0; i < m_CurrentStepMetaData->WriterCohortSize; i++)
         {
