@@ -36,8 +36,6 @@ if(DAOS_ROOT)
     )
 endif()
 
-
-message(STATUS "DAOS_ROOT is : ${DAOS_ROOT}")
 find_path(DAOS_INCLUDE_DIR daos_api.h ${DAOS_INCLUDE_OPTS})
 find_library(DAOS_LIBRARY libdaos.so ${DAOS_LIBRARY_OPTS})
 find_library(DFS_LIBRARY libdfs.so ${DAOS_LIBRARY_OPTS})
@@ -45,7 +43,7 @@ find_library(DFS_LIBRARY libdfs.so ${DAOS_LIBRARY_OPTS})
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(DAOS
   FOUND_VAR DAOS_FOUND
-  REQUIRED_VARS DAOS_LIBRARY DAOS_INCLUDE_DIR
+  REQUIRED_VARS DAOS_LIBRARY DFS_LIBRARY DAOS_INCLUDE_DIR
 )
 
 if(DAOS_FOUND)
