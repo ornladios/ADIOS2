@@ -12,7 +12,7 @@ then
 fi
 
 # Check C and C++ code with clang-format
-find source testing examples bindings -iname '*.h' -o -iname '*.c' -o -iname '*.cpp' -o -iname '*.tcc' | xargs clang-format -i
+find source testing examples bindings -regextype posix-extended -iregex '.*\.(h|c|cpp|tcc|cu)'  | xargs clang-format -i
 DIFF="$(git diff)"
 if [ -n "${DIFF}" ]
 then
