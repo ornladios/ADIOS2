@@ -13,6 +13,7 @@
 #include "float.h"
 #include "iostream"
 #include "limits.h"
+#include <cstring>
 
 namespace adios2
 {
@@ -250,7 +251,7 @@ std::string ToString(const Box<Dims> &box)
 
 void MinMaxStruct::Init(DataType Type)
 {
-    memset(this, 0, sizeof(struct MinMaxStruct));
+    std::memset(this, 0, sizeof(struct MinMaxStruct));
     switch (Type)
     {
     case DataType::None:
