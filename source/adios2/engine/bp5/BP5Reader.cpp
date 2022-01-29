@@ -136,7 +136,9 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         //            i++;
         //        }
 
-        m_BP5Deserializer->SetupForTimestep(m_CurrentStep);
+        m_BP5Deserializer->SetupForStep(
+            m_CurrentStep,
+            m_WriterMap[m_WriterMapIndex[m_CurrentStep]].WriterCount);
 
         InstallMetadataForTimestep(m_CurrentStep);
         m_IO.ResetVariablesStepSelection(false,
@@ -574,9 +576,9 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
         // now we are sure the index header has been parsed, first step parsing
         // done
 
-        m_BP5Deserializer = new format::BP5Deserializer(
-            m_WriterMap[0].WriterCount, m_WriterIsRowMajor, m_ReaderIsRowMajor,
-            (m_OpenMode == Mode::ReadRandomAccess));
+        m_BP5Deserializer =
+            new format::BP5Deserializer(m_WriterIsRowMajor, m_ReaderIsRowMajor,
+                                        (m_OpenMode == Mode::ReadRandomAccess));
         m_BP5Deserializer->m_Engine = this;
 
         InstallMetaMetaData(m_MetaMetadata);
@@ -587,6 +589,9 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
         {
             for (size_t Step = 0; Step < m_MetadataIndexTable.size(); Step++)
             {
+                m_BP5Deserializer->SetupForStep(
+                    Step,
+                    m_WriterMap[m_WriterMapIndex[m_CurrentStep]].WriterCount);
                 InstallMetadataForTimestep(Step);
             }
         }

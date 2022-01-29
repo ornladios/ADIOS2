@@ -33,8 +33,8 @@ class BP5Deserializer : virtual public BP5Base
 {
 
 public:
-    BP5Deserializer(int WriterCount, bool WriterIsRowMajor,
-                    bool ReaderIsRowMajor, bool RandomAccessMode = false);
+    BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor,
+                    bool RandomAccessMode = false);
 
     ~BP5Deserializer();
 
@@ -52,7 +52,7 @@ public:
                          size_t WriterRank, size_t Step = SIZE_MAX);
     void InstallAttributeData(void *AttributeBlock, size_t BlockLen,
                               size_t Step = SIZE_MAX);
-    void SetupForTimestep(size_t t);
+    void SetupForStep(size_t Step, size_t WriterCount);
     // return from QueueGet is true if a sync is needed to fill the data
     bool QueueGet(core::VariableBase &variable, void *DestData);
     bool QueueGetSingle(core::VariableBase &variable, void *DestData,
@@ -68,8 +68,8 @@ public:
     bool VariableMinMax(const VariableBase &var, const size_t Step,
                         Engine::MinMaxStruct &MinMax);
 
-    bool m_WriterIsRowMajor = 1;
-    bool m_ReaderIsRowMajor = 1;
+    const bool m_WriterIsRowMajor;
+    const bool m_ReaderIsRowMajor;
     core::Engine *m_Engine = NULL;
 
 private:
@@ -126,8 +126,16 @@ private:
     };
 
     FFSContext ReaderFFSContext;
-    size_t m_WriterCohortSize;
-    bool m_RandomAccessMode;
+
+    const bool m_RandomAccessMode;
+
+    std::vector<size_t> m_WriterCohortSize; // per step, in random mode
+    size_t m_CurrentWriterCohortSize;       // valid in streaming mode
+    // return the number of writers
+    // m_CurrentWriterCohortSize in streaming mode
+    // m_WriterCohortSize[Step] in random access mode
+    size_t WriterCohortSize(size_t Step);
+
     size_t m_LastAttrStep = MaxSizeT; // invalid timestep for start
 
     std::unordered_map<std::string, BP5VarRec *> VarByName;
