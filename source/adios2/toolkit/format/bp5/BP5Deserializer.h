@@ -61,12 +61,11 @@ public:
     std::vector<ReadRequest> GenerateReadRequests();
     void FinalizeGets(std::vector<ReadRequest>);
 
-    Engine::MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);
-    Engine::MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
-    Engine::MinVarInfo *MinBlocksInfo(const VariableBase &Var,
-                                      const size_t Step);
+    MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);
+    MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
+    MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step);
     bool VariableMinMax(const VariableBase &var, const size_t Step,
-                        Engine::MinMaxStruct &MinMax);
+                        MinMaxStruct &MinMax);
 
     const bool m_WriterIsRowMajor;
     const bool m_ReaderIsRowMajor;

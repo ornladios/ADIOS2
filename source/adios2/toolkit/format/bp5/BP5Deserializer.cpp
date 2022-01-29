@@ -43,7 +43,7 @@ namespace adios2
 {
 namespace format
 {
-static void ApplyElementMinMax(Engine::MinMaxStruct &MinMax, DataType Type,
+static void ApplyElementMinMax(MinMaxStruct &MinMax, DataType Type,
                                void *Element);
 
 void BP5Deserializer::InstallMetaMetaData(MetaMetaInfoBlock &MM)
@@ -646,7 +646,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 }
                 if (VarRec->MinMaxOffset != SIZE_MAX)
                 {
-                    core::Engine::MinMaxStruct MinMax;
+                    MinMaxStruct MinMax;
                     MinMax.Init(VarRec->Type);
                     for (size_t B = 0; B < BlockCount; B++)
                     {
@@ -1587,35 +1587,53 @@ void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step,
     return writer_meta_base;
 }
 
-Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
-                                                   size_t Step)
+MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
 
-    Engine::MinVarInfo *MV =
-        new Engine::MinVarInfo(VarRec->DimCount, VarRec->GlobalDims);
+    MinVarInfo *MV = new MinVarInfo(VarRec->DimCount, VarRec->GlobalDims);
 
     const size_t writerCohortSize = WriterCohortSize(Step);
+    MV->Step = Step;
     MV->Dims = VarRec->DimCount;
     MV->Shape = VarRec->GlobalDims;
     MV->IsReverseDims =
         ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
 
+    MV->WasLocalVar = (VarRec->OrigShapeID == ShapeID::LocalValue);
     if ((VarRec->OrigShapeID == ShapeID::LocalValue) ||
         (VarRec->OrigShapeID == ShapeID::GlobalValue))
     {
-        MV->IsValue = true;
+        if (VarRec->OrigShapeID == ShapeID::LocalValue)
+        {
+            // appear as an array locally
+            MV->IsValue = false;
+            MV->Dims = 1;
+            MV->Shape = (size_t *)writerCohortSize;
+        }
+        else
+        {
+            MV->IsValue = true;
+        }
         MV->BlocksInfo.reserve(writerCohortSize);
+
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
             MetaArrayRec *writer_meta_base =
                 (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
             if (writer_meta_base)
             {
-                Engine::MinBlockInfo Blk;
+                static size_t one = 1;
+                static size_t zero = 0;
+                MinBlockInfo Blk;
                 Blk.WriterID = WriterRank;
                 Blk.BlockID = 0;
                 Blk.BufferP = writer_meta_base;
+                if (VarRec->OrigShapeID == ShapeID::LocalValue)
+                {
+                    Blk.Count = (size_t *)1;
+                    Blk.Start = (size_t *)WriterRank;
+                }
                 MV->BlocksInfo.push_back(Blk);
             }
         }
@@ -1647,11 +1665,11 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
             continue;
         size_t WriterBlockCount =
             MV->Dims ? writer_meta_base->DBCount / MV->Dims : 1;
-        core::Engine::MinMaxStruct *MMs = NULL;
+        MinMaxStruct *MMs = NULL;
         if (VarRec->MinMaxOffset != SIZE_MAX)
         {
-            MMs = *(core::Engine::MinMaxStruct **)(((char *)writer_meta_base) +
-                                                   VarRec->MinMaxOffset);
+            MMs = *(MinMaxStruct **)(((char *)writer_meta_base) +
+                                     VarRec->MinMaxOffset);
         }
         for (size_t i = 0; i < WriterBlockCount; i++)
         {
@@ -1661,7 +1679,7 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
                 Offsets = writer_meta_base->Offsets + (i * MV->Dims);
             if (writer_meta_base->Count)
                 Count = writer_meta_base->Count + (i * MV->Dims);
-            Engine::MinBlockInfo Blk;
+            MinBlockInfo Blk;
             Blk.WriterID = WriterRank;
             Blk.BlockID = Id++;
             Blk.Start = Offsets;
@@ -1686,7 +1704,7 @@ Engine::MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var,
     return MV;
 }
 
-static void ApplyElementMinMax(Engine::MinMaxStruct &MinMax, DataType Type,
+static void ApplyElementMinMax(MinMaxStruct &MinMax, DataType Type,
                                void *Element)
 {
     switch (Type)
@@ -1804,7 +1822,7 @@ size_t BP5Deserializer::RelativeToAbsoluteStep(const BP5VarRec *VarRec,
 }
 
 bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
-                                     Engine::MinMaxStruct &MinMax)
+                                     MinMaxStruct &MinMax)
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
     if ((VarRec->OrigShapeID == ShapeID::LocalArray) ||

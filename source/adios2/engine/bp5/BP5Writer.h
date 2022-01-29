@@ -111,6 +111,9 @@ private:
     /** Allocates memory and starts a PG group */
     void InitBPBuffer();
     void NotifyEngineAttribute(std::string name, DataType type) noexcept;
+    /** Notify the engine when a new attribute is defined or modified. Called
+     * from IO.tcc
+     */
 
     void EnterComputationBlock() noexcept;
     /** Inform about computation block through User->ADIOS->IO */
@@ -227,8 +230,7 @@ private:
      */
     std::vector<uint64_t> m_WriterDataPos;
 
-    uint32_t m_MarshaledAttributesCount =
-        0; // updated during EndStep/MarshalAttributes
+    bool m_MarshalAttributesNecessary = true;
 
     // where each writer rank writes its data, init in InitBPBuffer;
     std::vector<uint64_t> m_Assignment;

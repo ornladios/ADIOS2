@@ -570,7 +570,7 @@ void BP5Serializer::DumpDeferredBlocks(bool forceCopyDeferred)
 }
 
 static void GetMinMax(const void *Data, size_t ElemCount, const DataType Type,
-                      core::Engine::MinMaxStruct &MinMax, MemorySpace MemSpace)
+                      MinMaxStruct &MinMax, MemorySpace MemSpace)
 {
     MinMax.Init(Type);
     if (ElemCount == 0)
@@ -677,7 +677,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                 "BP5Serializer:: Marshall without Prior Init");
         }
 
-        core::Engine::MinMaxStruct MinMax;
+        MinMaxStruct MinMax;
         MinMax.Init(Type);
         if ((m_StatsLevel > 0) && !Span)
         {

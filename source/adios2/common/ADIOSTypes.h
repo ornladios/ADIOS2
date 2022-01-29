@@ -181,6 +181,52 @@ constexpr size_t MaxSizeT = std::numeric_limits<size_t>::max();
 constexpr size_t DefaultSizeT = std::numeric_limits<size_t>::max();
 constexpr size_t EngineCurrentStep = std::numeric_limits<size_t>::max();
 
+union PrimitiveStdtypeUnion
+{
+    int8_t field_int8;
+    uint8_t field_uint8;
+    int16_t field_int16;
+    uint16_t field_uint16;
+    int32_t field_int32;
+    uint32_t field_uint32;
+    int64_t field_int64;
+    uint64_t field_uint64;
+    float field_float;
+    double field_double;
+    long double field_ldouble;
+};
+
+struct MinMaxStruct
+{
+    union PrimitiveStdtypeUnion MinUnion;
+    union PrimitiveStdtypeUnion MaxUnion;
+    void Init(DataType Type);
+    void Dump(DataType Type);
+};
+struct MinBlockInfo
+{
+    int WriterID = 0;
+    size_t BlockID = 0;
+    size_t *Start;
+    size_t *Count;
+    MinMaxStruct MinMax;
+    void *BufferP = NULL;
+};
+struct MinVarInfo
+{
+    size_t Step;
+    bool WasLocalVar;
+    int Dims;
+    size_t *Shape;
+    bool IsValue = false;
+    bool IsReverseDims = false;
+    std::vector<struct MinBlockInfo> BlocksInfo;
+    MinVarInfo(int D, size_t *S)
+    : Dims(D), Shape(S), IsValue(false), IsReverseDims(false), BlocksInfo({})
+    {
+    }
+};
+
 // adios defaults
 #ifdef _WIN32
 const std::string DefaultFileLibrary("fstream");

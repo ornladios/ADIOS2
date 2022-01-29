@@ -128,7 +128,7 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
     if (m_Engine != nullptr)
     {
 
-        Engine::MinMaxStruct MM;
+        MinMaxStruct MM;
         if (m_Engine->VariableMinMax(*this, step, MM))
         {
             minMax.first = *(T *)&MM.MinUnion;

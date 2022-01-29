@@ -1090,7 +1090,7 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         {
             if (timestep == false)
             {
-                core::Engine::MinMaxStruct MinMax;
+                MinMaxStruct MinMax;
                 if (fp->VariableMinMax(*variable, DefaultSizeT, MinMax))
                 {
                     fprintf(outf, " = ");

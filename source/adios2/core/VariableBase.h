@@ -13,6 +13,9 @@
 #define ADIOS2_CORE_VARIABLEBASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <float.h>
+#include <iostream>
+#include <limits.h>
 #include <memory>
 #include <set>
 #include <sstream>

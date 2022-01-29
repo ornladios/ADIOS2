@@ -11,8 +11,9 @@
 #ifndef ADIOS2_BINDINGS_CXX11_CXX11_VARIABLE_TCC_
 #define ADIOS2_BINDINGS_CXX11_CXX11_VARIABLE_TCC_
 
+#include "Engine.h"
 #include "Variable.h"
-
+#include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -62,11 +63,73 @@ ToBlocksInfo(const std::vector<typename core::Variable<
 } // end empty namespace
 
 template <class T>
+std::map<size_t, std::vector<typename Variable<T>::Info>>
+Variable<T>::DoAllStepsBlocksInfoMap() const
+{
+    MinVarInfo *minBlocksInfo = nullptr;
+    minBlocksInfo = m_Variable->m_Engine->MinBlocksInfo(*m_Variable, 0);
+    if (!minBlocksInfo)
+        throw std::logic_error("no implemented");
+    std::map<size_t, std::vector<typename Variable<T>::Info>>
+        allStepsBlocksInfo;
+
+    size_t gotCount = 1;
+    size_t curStep = 1;
+    allStepsBlocksInfo.insert({0, ToBlocksInfoMin(minBlocksInfo)});
+    delete (minBlocksInfo);
+    while (gotCount < m_Variable->m_AvailableStepsCount)
+    {
+        minBlocksInfo =
+            m_Variable->m_Engine->MinBlocksInfo(*m_Variable, curStep);
+        if (minBlocksInfo)
+        {
+            allStepsBlocksInfo.insert(
+                {curStep, ToBlocksInfoMin(minBlocksInfo)});
+            delete (minBlocksInfo);
+            gotCount++;
+        }
+        curStep++;
+    }
+    return allStepsBlocksInfo;
+}
+
+template <class T>
 std::vector<std::vector<typename Variable<T>::Info>>
 Variable<T>::DoAllStepsBlocksInfo()
 {
     helper::CheckForNullptr(m_Variable,
                             "in call to Variable<T>::AllStepsBlocksInfo");
+
+    MinVarInfo *minBlocksInfo = nullptr;
+    if (m_Variable->m_Engine)
+    {
+        minBlocksInfo = m_Variable->m_Engine->MinBlocksInfo(
+            *m_Variable, m_Variable->m_AvailableStepsStart);
+        if (minBlocksInfo)
+        {
+            std::vector<std::vector<typename Variable<T>::Info>>
+                allStepsBlocksInfo;
+            // PUBLIC OUTPUT
+            size_t gotCount = 1;
+            size_t curStep = m_Variable->m_AvailableStepsStart + 1;
+            allStepsBlocksInfo.push_back(ToBlocksInfoMin(minBlocksInfo));
+            delete (minBlocksInfo);
+            while (gotCount < m_Variable->m_AvailableStepsCount)
+            {
+                minBlocksInfo =
+                    m_Variable->m_Engine->MinBlocksInfo(*m_Variable, curStep);
+                if (minBlocksInfo)
+                {
+                    allStepsBlocksInfo.push_back(
+                        ToBlocksInfoMin(minBlocksInfo));
+                    delete (minBlocksInfo);
+                    gotCount++;
+                }
+                curStep++;
+            }
+            return allStepsBlocksInfo;
+        }
+    }
 
     // PRIVATE INPUT
     const std::vector<std::vector<typename core::Variable<IOType>::BPInfo>>
@@ -83,6 +146,68 @@ Variable<T>::DoAllStepsBlocksInfo()
         ++relativeStep;
     }
     return allStepsBlocksInfo;
+}
+
+template <typename T>
+std::vector<typename Variable<T>::Info>
+Variable<T>::ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const
+{
+    auto coreBlocksInfo = coreVarInfo->BlocksInfo;
+    size_t Step = coreVarInfo->Step;
+
+    std::vector<typename Variable<T>::Info> blocksInfo;
+    blocksInfo.reserve(coreBlocksInfo.size());
+
+    for (auto &coreBlockInfo : coreBlocksInfo)
+    {
+        typename Variable<T>::Info blockInfo;
+
+        blockInfo.Step = Step;
+        if (coreVarInfo->Shape)
+        {
+            blockInfo.Start.reserve(coreVarInfo->Dims);
+            blockInfo.Count.reserve(coreVarInfo->Dims);
+            if (coreVarInfo->WasLocalVar)
+            {
+                /* Start and count are really values, not pointers */
+                blockInfo.Start.push_back((size_t)coreBlockInfo.Start);
+                blockInfo.Count.push_back((size_t)coreBlockInfo.Count);
+            }
+            else
+            {
+                for (int i = 0; i < coreVarInfo->Dims; i++)
+                {
+                    blockInfo.Start.push_back(coreBlockInfo.Start[i]);
+                    blockInfo.Count.push_back(coreBlockInfo.Count[i]);
+                }
+            }
+        }
+        else
+        {
+            blockInfo.Count.reserve(coreVarInfo->Dims);
+            for (int i = 0; i < coreVarInfo->Dims; i++)
+            {
+                blockInfo.Count.push_back(coreBlockInfo.Count[i]);
+            }
+        }
+        blockInfo.WriterID = coreBlockInfo.WriterID;
+
+        blockInfo.IsValue = coreVarInfo->IsValue;
+        blockInfo.IsReverseDims = coreVarInfo->IsReverseDims;
+        if (blockInfo.IsValue)
+        {
+            blockInfo.Value = *((T *)coreBlockInfo.BufferP);
+        }
+        else
+        {
+            blockInfo.Min = *(T *)&coreBlockInfo.MinMax.MinUnion;
+            blockInfo.Max = *(T *)&coreBlockInfo.MinMax.MaxUnion;
+        }
+        blockInfo.BlockID = coreBlockInfo.BlockID;
+        blocksInfo.push_back(blockInfo);
+    }
+
+    return blocksInfo;
 }
 
 template <typename T>
