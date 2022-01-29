@@ -179,20 +179,20 @@ private:
     bool GetSingleValueFromMetadata(core::VariableBase &variable,
                                     BP5VarRec *VarRec, void *DestData,
                                     size_t Step, size_t WriterRank);
-    void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
-                                       const size_t *GlobalDims,
-                                       const size_t *PartialOffsets,
-                                       const size_t *PartialCounts,
-                                       const size_t *SelectionOffsets,
-                                       const size_t *SelectionCounts,
-                                       const char *InData, char *OutData);
-    void ExtractSelectionFromPartialCM(int ElementSize, size_t Dims,
-                                       const size_t *GlobalDims,
-                                       const size_t *PartialOffsets,
-                                       const size_t *PartialCounts,
-                                       const size_t *SelectionOffsets,
-                                       const size_t *SelectionCounts,
-                                       const char *InData, char *OutData);
+    void MemCopyData(char *OutData, const char *InData, size_t Size,
+                     MemorySpace MemSpace);
+    void ExtractSelectionFromPartialRM(
+        int ElementSize, size_t Dims, const size_t *GlobalDims,
+        const size_t *PartialOffsets, const size_t *PartialCounts,
+        const size_t *SelectionOffsets, const size_t *SelectionCounts,
+        const char *InData, char *OutData,
+        MemorySpace MemSpace = MemorySpace::Host);
+    void ExtractSelectionFromPartialCM(
+        int ElementSize, size_t Dims, const size_t *GlobalDims,
+        const size_t *PartialOffsets, const size_t *PartialCounts,
+        const size_t *SelectionOffsets, const size_t *SelectionCounts,
+        const char *InData, char *OutData,
+        MemorySpace MemSpace = MemorySpace::Host);
 
     enum RequestTypeEnum
     {
@@ -208,6 +208,7 @@ private:
         size_t BlockID;
         Dims Start;
         Dims Count;
+        MemorySpace MemSpace;
         void *Data;
     };
     std::vector<BP5ArrayRequest> PendingRequests;

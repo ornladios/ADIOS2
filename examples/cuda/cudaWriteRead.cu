@@ -66,6 +66,9 @@ int BPRead(const std::string fname, const size_t N, int nSteps)
     adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
     unsigned int step = 0;
+    float *gpuSimData;
+    cudaMalloc(&gpuSimData, N * sizeof(float));
+    cudaMemset(gpuSimData, 0, N);
     for (; bpReader.BeginStep() == adios2::StepStatus::OK; ++step)
     {
         auto data = io.InquireVariable<float>("data");
@@ -77,8 +80,10 @@ int BPRead(const std::string fname, const size_t N, int nSteps)
         const adios2::Box<adios2::Dims> sel(start, count);
         data.SetSelection(sel);
 
-        bpReader.Get(data, simData.data());
+        data.SetMemorySpace(adios2::MemorySpace::CUDA);
+        bpReader.Get(data, gpuSimData, adios2::Mode::Deferred);
         bpReader.EndStep();
+        cudaMemcpy(simData.data(), gpuSimData, N, cudaMemcpyDeviceToHost);
         std::cout << "Simualation step " << step << " : ";
         std::cout << simData.size() << " elements: " << simData[1] << std::endl;
     }
