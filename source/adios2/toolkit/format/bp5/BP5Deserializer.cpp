@@ -1623,8 +1623,6 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
                 (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
             if (writer_meta_base)
             {
-                static size_t one = 1;
-                static size_t zero = 0;
                 MinBlockInfo Blk;
                 Blk.WriterID = WriterRank;
                 Blk.BlockID = 0;
