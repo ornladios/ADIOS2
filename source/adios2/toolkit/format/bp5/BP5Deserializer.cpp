@@ -946,7 +946,6 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
     if (VarRec->OrigShapeID == ShapeID::LocalValue)
     {
         // Shows up as global array with one element per writer rank
-        DestData = (char *)DestData + variable.m_Start[0] * VarRec->ElementSize;
         for (size_t WriterRank = variable.m_Start[0];
              WriterRank < variable.m_Count[0] + variable.m_Start[0];
              WriterRank++)
