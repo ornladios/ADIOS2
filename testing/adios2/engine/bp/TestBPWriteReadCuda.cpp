@@ -52,10 +52,14 @@ void RateCUDA(const std::string mode)
     std::iota(r32s.begin(), r32s.end(), .0f);
 
     {
+        // cuda simulation buffer
         float *gpuSimData = nullptr;
         cudaMalloc(&gpuSimData, Nx * sizeof(float));
         cudaMemcpy(gpuSimData, ((float *)&r32s[0] + (Nx * mpiRank)),
                    Nx * sizeof(float), cudaMemcpyHostToDevice);
+        // host simulation buffer
+        std::vector<float> simData(r32s.begin() + (Nx * mpiRank),
+                                   r32s.begin() + (Nx * (mpiRank + 1)));
 
         adios2::IO io = adios.DeclareIO("TestIO");
         io.SetEngine("BP5");
@@ -70,6 +74,8 @@ void RateCUDA(const std::string mode)
         const adios2::Dims count{Nx};
 
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+        auto var_r32_host =
+            io.DefineVariable<float>("r32host", shape, start, count);
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -77,10 +83,15 @@ void RateCUDA(const std::string mode)
         {
             // Update values in the simulation data
             cuda_increment(Nx, 1, 0, gpuSimData, INCREMENT);
+            std::transform(simData.begin(), simData.end(), simData.begin(),
+                           std::bind(std::plus<float>(), std::placeholders::_1,
+                                     INCREMENT));
 
             bpWriter.BeginStep();
             var_r32.SetMemorySpace(adios2::MemorySpace::CUDA);
             bpWriter.Put(var_r32, gpuSimData, ioMode);
+            var_r32_host.SetMemorySpace(adios2::MemorySpace::Host);
+            bpWriter.Put(var_r32_host, simData.data(), ioMode);
             bpWriter.EndStep();
         }
 
