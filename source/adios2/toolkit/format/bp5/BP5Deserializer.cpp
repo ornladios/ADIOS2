@@ -981,10 +981,10 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
         Req.VarRec = VarByKey[&variable];
         Req.RequestType = Local;
         Req.BlockID = variable.m_BlockID;
-        Req.Count = variable.m_Count;
         if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
         {
             Req.Start = variable.m_Start;
+            Req.Count = variable.m_Count;
         }
         Req.Data = DestData;
         Req.Step = Step;
@@ -1155,7 +1155,7 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                     std::vector<size_t> ZeroRankOffset(DimCount);
                     std::vector<size_t> ZeroGlobalDimensions(DimCount);
                     const size_t *SelOffset = NULL;
-                    const size_t *SelSize = Req.Count.data();
+                    const size_t *SelSize = NULL;
                     int ReqIndex = 0;
                     while (Requests[ReqIndex].WriterRank !=
                                static_cast<size_t>(WriterRank) ||
@@ -1192,6 +1192,10 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                     {
                         SelOffset = Req.Start.data();
                     }
+                    if (Req.Count.size())
+                    {
+                        SelSize = Req.Count.data();
+                    }
                     if (Req.RequestType == Local)
                     {
                         int LocalBlockID = Req.BlockID - NodeFirst;
@@ -1201,7 +1205,10 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
 
                         RankOffset = ZeroRankOffset.data();
                         GlobalDimensions = ZeroGlobalDimensions.data();
-                        SelSize = RankSize;
+                        if (SelSize == NULL)
+                        {
+                            SelSize = RankSize;
+                        }
                         if (SelOffset == NULL)
                         {
                             SelOffset = ZeroSel.data();
