@@ -410,8 +410,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             for (size_t i = 0; i < static_cast<size_t>(mpiSize); ++i)
             {
                 EXPECT_TRUE(iStringInfo[i].IsValue);
-                //                EXPECT_EQ(iStringInfo[i].Value, "Testing
-                //                ADIOS2 String type");
+                EXPECT_EQ(iStringInfo[i].Value, "Testing ADIOS2 String type");
             }
 
             for (size_t i = 0; i < 2 * static_cast<size_t>(mpiSize); ++i)

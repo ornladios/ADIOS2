@@ -196,7 +196,15 @@ Variable<T>::ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const
         blockInfo.IsReverseDims = coreVarInfo->IsReverseDims;
         if (blockInfo.IsValue)
         {
-            blockInfo.Value = *((T *)coreBlockInfo.BufferP);
+            if (std::is_same<T, std::string>::value)
+            {
+                std::string *Tmp = (std::string *)&blockInfo.Value;
+                Tmp->assign(*(const char **)coreBlockInfo.BufferP);
+            }
+            else
+            {
+                blockInfo.Value = *((T *)coreBlockInfo.BufferP);
+            }
         }
         else
         {
