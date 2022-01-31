@@ -535,7 +535,7 @@ void BP4Deserializer::PostDataRead(
         std::shared_ptr<core::Operator> op = nullptr;
         for (auto &o : blockInfo.Operations)
         {
-            if (o->m_Category == "compress")
+            if (o->m_Category == "compress" || o->m_Category == "plugin")
             {
                 op = o;
                 break;
