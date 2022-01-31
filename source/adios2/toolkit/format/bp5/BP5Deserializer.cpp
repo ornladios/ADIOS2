@@ -992,6 +992,8 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
     }
     else
     {
+        std::cout << "Missed get type " << variable.m_SelectionType << " shape "
+                  << variable.m_ShapeID << std::endl;
     }
     return true;
 }
@@ -1199,6 +1201,7 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
 
                         RankOffset = ZeroRankOffset.data();
                         GlobalDimensions = ZeroGlobalDimensions.data();
+                        SelSize = RankSize;
                         if (SelOffset == NULL)
                         {
                             SelOffset = ZeroSel.data();
