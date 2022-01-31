@@ -685,6 +685,7 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
         {
             varinfo = (adios2_varinfo *)malloc(sizeof(adios2_varinfo));
             varinfo->nblocks = minBlocksInfo->BlocksInfo.size();
+            varinfo->Shape = NULL;
             varinfo->BlocksInfo = (adios2_blockinfo *)malloc(
                 varinfo->nblocks * sizeof(adios2_blockinfo));
             auto *b = varinfo->BlocksInfo;
@@ -697,10 +698,13 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
             }
             else
             {
-                varinfo->Shape =
-                    (size_t *)malloc(sizeof(size_t) * minBlocksInfo->Dims);
-                memcpy(varinfo->Shape, minBlocksInfo->Shape,
-                       sizeof(size_t) * minBlocksInfo->Dims);
+                if (minBlocksInfo->Shape)
+                {
+                    varinfo->Shape =
+                        (size_t *)malloc(sizeof(size_t) * minBlocksInfo->Dims);
+                    memcpy(varinfo->Shape, minBlocksInfo->Shape,
+                           sizeof(size_t) * minBlocksInfo->Dims);
+                }
             }
             varinfo->IsValue = (int)minBlocksInfo->IsValue;
             varinfo->IsReverseDims = (int)minBlocksInfo->IsReverseDims;
