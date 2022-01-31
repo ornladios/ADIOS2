@@ -1593,6 +1593,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
     MinVarInfo *MV = new MinVarInfo(VarRec->DimCount, VarRec->GlobalDims);
 
     const size_t writerCohortSize = WriterCohortSize(Step);
+    size_t Id = 0;
     MV->Step = Step;
     MV->Dims = VarRec->DimCount;
     MV->Shape = VarRec->GlobalDims;
@@ -1624,7 +1625,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
             {
                 MinBlockInfo Blk;
                 Blk.WriterID = WriterRank;
-                Blk.BlockID = 0;
+                Blk.BlockID = Id++;
                 Blk.BufferP = writer_meta_base;
                 if (VarRec->OrigShapeID == ShapeID::LocalValue)
                 {
@@ -1636,7 +1637,6 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
         }
         return MV;
     }
-    size_t Id = 0;
     for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
     {
         MetaArrayRec *writer_meta_base =
