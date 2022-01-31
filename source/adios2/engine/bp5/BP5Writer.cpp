@@ -377,18 +377,22 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
     FlushPosSizeInfo.clear();
 }
 
+void BP5Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
+{
+    m_MarshalAttributesNecessary = true;
+}
+
 void BP5Writer::MarshalAttributes()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     const auto &attributes = m_IO.GetAttributes();
 
-    const uint32_t attributesCount = static_cast<uint32_t>(attributes.size());
-
     // if there are no new attributes, nothing to do
-    if (attributesCount == m_MarshaledAttributesCount)
+    if (!m_MarshalAttributesNecessary)
     {
         return;
     }
+    m_MarshalAttributesNecessary = false;
 
     for (const auto &attributePair : attributes)
     {
@@ -448,7 +452,6 @@ void BP5Writer::MarshalAttributes()
         ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
-    m_MarshaledAttributesCount = attributesCount;
 }
 
 void BP5Writer::EndStep()
@@ -1247,11 +1250,6 @@ void BP5Writer::InitBPBuffer()
             static_cast<uint64_t>(m_Aggregator->m_SubStreamIndex);
         m_WriterSubfileMap = m_Comm.GatherValues(a, 0);
     }
-}
-
-void BP5Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
-{
-    m_MarshaledAttributesCount = 0;
 }
 
 void BP5Writer::EnterComputationBlock() noexcept

@@ -26,6 +26,8 @@ class Group;  // friend
 namespace core
 {
 
+class VariableBase;
+
 template <class T>
 class Variable; // private implementation
 
@@ -376,6 +378,14 @@ public:
      */
     std::vector<std::vector<typename Variable<T>::Info>> AllStepsBlocksInfo();
 
+    /**
+     */
+    std::map<size_t, std::vector<typename Variable<T>::Info>>
+    AllStepsBlocksInfoMap() const;
+
+    std::vector<typename Variable<T>::Info>
+    ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const;
+
     using Span = adios2::detail::Span<T>;
 
 private:
@@ -383,6 +393,8 @@ private:
     core::Variable<IOType> *m_Variable = nullptr;
 
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
+    std::map<size_t, std::vector<typename Variable<T>::Info>>
+    DoAllStepsBlocksInfoMap() const;
 };
 
 template <typename T>

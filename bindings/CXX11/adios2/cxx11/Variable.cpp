@@ -235,6 +235,13 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    Variable<T>::AllStepsBlocksInfoMap() const                                 \
+    {                                                                          \
+        return DoAllStepsBlocksInfoMap();                                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     const T *Variable<T>::Info::Data() const                                   \
     {                                                                          \
         const core::Variable<T>::BPInfo *coreInfo =                            \

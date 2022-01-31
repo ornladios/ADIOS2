@@ -10,6 +10,10 @@
  */
 
 #include "ADIOSTypes.h"
+#include "float.h"
+#include "iostream"
+#include "limits.h"
+#include <cstring>
 
 namespace adios2
 {
@@ -245,4 +249,122 @@ std::string ToString(const Box<Dims> &box)
     return s;
 }
 
+void MinMaxStruct::Init(DataType Type)
+{
+    std::memset(this, 0, sizeof(struct MinMaxStruct));
+    switch (Type)
+    {
+    case DataType::None:
+        break;
+    case DataType::Int8:
+        MinUnion.field_int8 = INT8_MAX;
+        MaxUnion.field_int8 = INT8_MIN;
+        break;
+    case DataType::Int16:
+        MinUnion.field_int16 = INT16_MAX;
+        MaxUnion.field_int16 = INT16_MIN;
+        break;
+    case DataType::Int32:
+        MinUnion.field_int32 = INT32_MAX;
+        MaxUnion.field_int32 = INT32_MIN;
+        break;
+    case DataType::Int64:
+        MinUnion.field_int64 = INT64_MAX;
+        MaxUnion.field_int64 = INT64_MIN;
+        break;
+    case DataType::Char:
+    case DataType::UInt8:
+        MinUnion.field_uint8 = UINT8_MAX;
+        MaxUnion.field_uint8 = 0;
+        break;
+    case DataType::UInt16:
+        MinUnion.field_uint16 = UINT16_MAX;
+        MaxUnion.field_uint16 = 0;
+        break;
+    case DataType::UInt32:
+        MinUnion.field_uint32 = UINT32_MAX;
+        MaxUnion.field_uint32 = 0;
+        break;
+    case DataType::UInt64:
+        MinUnion.field_uint64 = UINT64_MAX;
+        MaxUnion.field_uint64 = 0;
+        break;
+    case DataType::Float:
+        MinUnion.field_float = FLT_MAX;
+        MaxUnion.field_float = -FLT_MAX;
+        break;
+    case DataType::Double:
+        MinUnion.field_double = DBL_MAX;
+        MaxUnion.field_double = -DBL_MAX;
+        break;
+    case DataType::LongDouble:
+        MinUnion.field_ldouble = LDBL_MAX;
+        MaxUnion.field_ldouble = -LDBL_MAX;
+        break;
+    case DataType::FloatComplex:
+    case DataType::DoubleComplex:
+    case DataType::String:
+    case DataType::Compound:
+        break;
+    }
+}
+
+void MinMaxStruct::Dump(DataType Type)
+{
+    switch (Type)
+    {
+    case DataType::None:
+        break;
+    case DataType::Int8:
+        std::cout << "Min : " << MinUnion.field_int8
+                  << ", Max : " << MaxUnion.field_int8;
+        break;
+    case DataType::Int16:
+        std::cout << "Min : " << MinUnion.field_int16
+                  << ", Max : " << MaxUnion.field_int16;
+        break;
+    case DataType::Int32:
+        std::cout << "Min : " << MinUnion.field_int32
+                  << ", Max : " << MaxUnion.field_int32;
+        break;
+    case DataType::Int64:
+        std::cout << "Min : " << MinUnion.field_int64
+                  << ", Max : " << MaxUnion.field_int64;
+        break;
+    case DataType::Char:
+    case DataType::UInt8:
+        std::cout << "Min : " << MinUnion.field_uint8
+                  << ", Max : " << MaxUnion.field_uint8;
+        break;
+    case DataType::UInt16:
+        std::cout << "Min : " << MinUnion.field_uint16
+                  << ", Max : " << MaxUnion.field_uint16;
+        break;
+    case DataType::UInt32:
+        std::cout << "Min : " << MinUnion.field_uint32
+                  << ", Max : " << MaxUnion.field_uint32;
+        break;
+    case DataType::UInt64:
+        std::cout << "Min : " << MinUnion.field_uint64
+                  << ", Max : " << MaxUnion.field_uint64;
+        break;
+    case DataType::Float:
+        std::cout << "Min : " << MinUnion.field_float
+                  << ", Max : " << MaxUnion.field_float;
+        break;
+    case DataType::Double:
+        std::cout << "Min : " << MinUnion.field_double
+                  << ", Max : " << MaxUnion.field_double;
+        break;
+    case DataType::LongDouble:
+        std::cout << "Min : " << MinUnion.field_ldouble
+                  << ", Max : " << MaxUnion.field_ldouble;
+        break;
+    case DataType::FloatComplex:
+    case DataType::DoubleComplex:
+    case DataType::String:
+    case DataType::Compound:
+        break;
+    }
+}
 } // end namespace adios2

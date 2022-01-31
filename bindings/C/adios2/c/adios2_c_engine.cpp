@@ -685,31 +685,66 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
         {
             varinfo = (adios2_varinfo *)malloc(sizeof(adios2_varinfo));
             varinfo->nblocks = minBlocksInfo->BlocksInfo.size();
+            varinfo->Shape = NULL;
             varinfo->BlocksInfo = (adios2_blockinfo *)malloc(
                 varinfo->nblocks * sizeof(adios2_blockinfo));
             auto *b = varinfo->BlocksInfo;
 
             varinfo->Dims = minBlocksInfo->Dims;
-            varinfo->Shape = minBlocksInfo->Shape;
+            if (minBlocksInfo->WasLocalVar)
+            {
+                varinfo->Shape = (size_t *)malloc(sizeof(size_t));
+                varinfo->Shape[0] = (intptr_t)minBlocksInfo->Shape;
+            }
+            else
+            {
+                if (minBlocksInfo->Shape)
+                {
+                    varinfo->Shape =
+                        (size_t *)malloc(sizeof(size_t) * minBlocksInfo->Dims);
+                    memcpy(varinfo->Shape, minBlocksInfo->Shape,
+                           sizeof(size_t) * minBlocksInfo->Dims);
+                }
+            }
             varinfo->IsValue = (int)minBlocksInfo->IsValue;
             varinfo->IsReverseDims = (int)minBlocksInfo->IsReverseDims;
             for (size_t i = 0; i < varinfo->nblocks; ++i)
             {
                 b[i].WriterID = minBlocksInfo->BlocksInfo[i].WriterID;
                 b[i].BlockID = minBlocksInfo->BlocksInfo[i].BlockID;
-                b[i].Start = minBlocksInfo->BlocksInfo[i].Start;
-                b[i].Count = minBlocksInfo->BlocksInfo[i].Count;
-                if (minBlocksInfo->IsValue)
+                if (minBlocksInfo->WasLocalVar)
                 {
-                    b[i].Value.uint64 = 0;
-                    //  = *((T *)minBlocksInfo->BlocksInfo[i].BufferP);
+                    b[i].Start = (size_t *)malloc(sizeof(size_t));
+                    b[i].Start[0] =
+                        (intptr_t)minBlocksInfo->BlocksInfo[i].Start;
+                    b[i].Count = (size_t *)malloc(sizeof(size_t));
+                    b[i].Count[0] =
+                        (intptr_t)minBlocksInfo->BlocksInfo[i].Count;
                 }
                 else
                 {
-                    b[i].MinUnion.uint64 = 0;
-                    //  = minBlocksInfo->BlocksInfo[i].MinUnion;
-                    b[i].MaxUnion.uint64 = 0;
-                    //  = minBlocksInfo->BlocksInfo[i].MaxUnion;
+                    b[i].Start =
+                        (size_t *)malloc(sizeof(size_t) * minBlocksInfo->Dims);
+                    memcpy(b[i].Start, minBlocksInfo->BlocksInfo[i].Start,
+                           sizeof(size_t) * minBlocksInfo->Dims);
+                    b[i].Count =
+                        (size_t *)malloc(sizeof(size_t) * minBlocksInfo->Dims);
+                    memcpy(b[i].Count, minBlocksInfo->BlocksInfo[i].Count,
+                           sizeof(size_t) * minBlocksInfo->Dims);
+                }
+                if (minBlocksInfo->IsValue)
+                {
+                    memcpy(&b[i].Value, minBlocksInfo->BlocksInfo[i].BufferP,
+                           sizeof(b[i].Value));
+                }
+                else
+                {
+                    memcpy(&b[i].MinUnion,
+                           &minBlocksInfo->BlocksInfo[i].MinMax.MinUnion,
+                           sizeof(b[i].MinUnion));
+                    memcpy(&b[i].MaxUnion,
+                           &minBlocksInfo->BlocksInfo[i].MinMax.MaxUnion,
+                           sizeof(b[i].MaxUnion));
                 }
             }
             delete minBlocksInfo;

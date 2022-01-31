@@ -359,7 +359,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
         EXPECT_EQ(cr32AllInfo.size(), NSteps);
         EXPECT_EQ(cr64AllInfo.size(), NSteps);
 
-        while (bpReader.BeginStep() == adios2::StepStatus::OK)
+        for (size_t CurrentStep = 0; CurrentStep < NSteps; CurrentStep++)
         {
             const std::vector<adios2::Variable<std::string>::Info>
                 &iStringInfo = iStringAllInfo.at(t);
@@ -717,83 +717,90 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                 EXPECT_EQ(r32Info[i].Max, r32Max);
                 EXPECT_EQ(r64Info[i].Min, r64Min);
                 EXPECT_EQ(r64Info[i].Max, r64Max);
-
-                EXPECT_EQ(cr32Info[i].Min, cr32Min);
-                EXPECT_EQ(cr32Info[i].Max, cr32Max);
-                EXPECT_EQ(cr64Info[i].Min, cr64Min);
-                EXPECT_EQ(cr64Info[i].Max, cr64Max);
             }
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
+            var_iString.SetStepSelection({CurrentStep, 1});
             bpReader.Get(var_iString, IString);
 
+            var_i8.SetStepSelection({CurrentStep, 1});
             var_i8.SetSelection(sel1);
             bpReader.Get(var_i8, I8.data());
             var_i8.SetSelection(sel2);
             bpReader.Get(var_i8, I8.data() + Nx / 2);
 
+            var_i16.SetStepSelection({CurrentStep, 1});
             var_i16.SetSelection(sel1);
             bpReader.Get(var_i16, I16.data());
             var_i16.SetSelection(sel2);
             bpReader.Get(var_i16, I16.data() + Nx / 2);
 
+            var_i32.SetStepSelection({CurrentStep, 1});
             var_i32.SetSelection(sel1);
             bpReader.Get(var_i32, I32.data());
             var_i32.SetSelection(sel2);
             bpReader.Get(var_i32, I32.data() + Nx / 2);
 
+            var_i64.SetStepSelection({CurrentStep, 1});
             var_i64.SetSelection(sel1);
             bpReader.Get(var_i64, I64.data());
             var_i64.SetSelection(sel2);
             bpReader.Get(var_i64, I64.data() + Nx / 2);
 
+            var_u8.SetStepSelection({CurrentStep, 1});
             var_u8.SetSelection(sel1);
             bpReader.Get(var_u8, U8.data());
             var_u8.SetSelection(sel2);
             bpReader.Get(var_u8, U8.data() + Nx / 2);
 
+            var_u16.SetStepSelection({CurrentStep, 1});
             var_u16.SetSelection(sel1);
             bpReader.Get(var_u16, U16.data());
             var_u16.SetSelection(sel2);
             bpReader.Get(var_u16, U16.data() + Nx / 2);
 
+            var_u32.SetStepSelection({CurrentStep, 1});
             var_u32.SetSelection(sel1);
             bpReader.Get(var_u32, U32.data());
             var_u32.SetSelection(sel2);
             bpReader.Get(var_u32, U32.data() + Nx / 2);
 
+            var_u64.SetStepSelection({CurrentStep, 1});
             var_u64.SetSelection(sel1);
             bpReader.Get(var_u64, U64.data());
             var_u64.SetSelection(sel2);
             bpReader.Get(var_u64, U64.data() + Nx / 2);
 
+            var_r32.SetStepSelection({CurrentStep, 1});
             var_r32.SetSelection(sel1);
             bpReader.Get(var_r32, R32.data());
             var_r32.SetSelection(sel2);
             bpReader.Get(var_r32, R32.data() + Nx / 2);
 
+            var_r64.SetStepSelection({CurrentStep, 1});
             var_r64.SetSelection(sel1);
             bpReader.Get(var_r64, R64.data());
             var_r64.SetSelection(sel2);
             bpReader.Get(var_r64, R64.data() + Nx / 2);
 
+            var_cr32.SetStepSelection({CurrentStep, 1});
             var_cr32.SetSelection(sel1);
             bpReader.Get(var_cr32, CR32.data());
             var_cr32.SetSelection(sel2);
             bpReader.Get(var_cr32, CR32.data() + Nx / 2);
 
+            var_cr64.SetStepSelection({CurrentStep, 1});
             var_cr64.SetSelection(sel1);
             bpReader.Get(var_cr64, CR64.data());
             var_cr64.SetSelection(sel2);
             bpReader.Get(var_cr64, CR64.data() + Nx / 2);
 
-            bpReader.EndStep();
-
             EXPECT_EQ(IString, currentTestData.S1);
 
+            bpReader.PerformGets();
             for (size_t i = 0; i < Nx; ++i)
             {
                 std::stringstream ss;
@@ -1129,71 +1136,84 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
 
         size_t t = 0;
 
-        while (bpReader.BeginStep() == adios2::StepStatus::OK)
+        for (size_t CurrentStep = 0; CurrentStep < NSteps; CurrentStep++)
         {
+            var_iString.SetStepSelection({CurrentStep, 1});
             bpReader.Get(var_iString, IString);
 
+            var_i8.SetStepSelection({CurrentStep, 1});
             var_i8.SetSelection(sel1);
             bpReader.Get(var_i8, I8.data());
             var_i8.SetSelection(sel2);
             bpReader.Get(var_i8, I8.data() + Ny * Nx / 2);
 
+            var_i16.SetStepSelection({CurrentStep, 1});
             var_i16.SetSelection(sel1);
             bpReader.Get(var_i16, I16.data());
             var_i16.SetSelection(sel2);
             bpReader.Get(var_i16, I16.data() + Ny * Nx / 2);
 
+            var_i32.SetStepSelection({CurrentStep, 1});
             var_i32.SetSelection(sel1);
             bpReader.Get(var_i32, I32.data());
             var_i32.SetSelection(sel2);
             bpReader.Get(var_i32, I32.data() + Ny * Nx / 2);
 
+            var_i64.SetStepSelection({CurrentStep, 1});
             var_i64.SetSelection(sel1);
             bpReader.Get(var_i64, I64.data());
             var_i64.SetSelection(sel2);
             bpReader.Get(var_i64, I64.data() + Ny * Nx / 2);
 
+            var_u8.SetStepSelection({CurrentStep, 1});
             var_u8.SetSelection(sel1);
             bpReader.Get(var_u8, U8.data());
             var_u8.SetSelection(sel2);
             bpReader.Get(var_u8, U8.data() + Ny * Nx / 2);
 
+            var_u16.SetStepSelection({CurrentStep, 1});
             var_u16.SetSelection(sel1);
             bpReader.Get(var_u16, U16.data());
             var_u16.SetSelection(sel2);
             bpReader.Get(var_u16, U16.data() + Ny * Nx / 2);
 
+            var_u32.SetStepSelection({CurrentStep, 1});
             var_u32.SetSelection(sel1);
             bpReader.Get(var_u32, U32.data());
             var_u32.SetSelection(sel2);
             bpReader.Get(var_u32, U32.data() + Ny * Nx / 2);
 
+            var_u64.SetStepSelection({CurrentStep, 1});
             var_u64.SetSelection(sel1);
             bpReader.Get(var_u64, U64.data());
             var_u64.SetSelection(sel2);
             bpReader.Get(var_u64, U64.data() + Ny * Nx / 2);
 
+            var_r32.SetStepSelection({CurrentStep, 1});
             var_r32.SetSelection(sel1);
             bpReader.Get(var_r32, R32.data());
             var_r32.SetSelection(sel2);
             bpReader.Get(var_r32, R32.data() + Ny * Nx / 2);
 
+            var_r64.SetStepSelection({CurrentStep, 1});
             var_r64.SetSelection(sel1);
             bpReader.Get(var_r64, R64.data());
             var_r64.SetSelection(sel2);
             bpReader.Get(var_r64, R64.data() + Ny * Nx / 2);
 
+            var_cr32.SetStepSelection({CurrentStep, 1});
             var_cr32.SetSelection(sel1);
             bpReader.Get(var_cr32, CR32.data());
             var_cr32.SetSelection(sel2);
             bpReader.Get(var_cr32, CR32.data() + Ny * Nx / 2);
 
+            var_cr64.SetStepSelection({CurrentStep, 1});
             var_cr64.SetSelection(sel1);
             bpReader.Get(var_cr64, CR64.data());
             var_cr64.SetSelection(sel2);
             bpReader.Get(var_cr64, CR64.data() + Ny * Nx / 2);
 
-            bpReader.EndStep();
+            bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
@@ -1532,35 +1552,33 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
 
         size_t t = 0;
 
-        while (bpReader.BeginStep() == adios2::StepStatus::OK)
+        for (size_t CurrentStep = 0; CurrentStep < NSteps; CurrentStep++)
         {
             const std::vector<adios2::Variable<int8_t>::Info> i8Info =
-                bpReader.BlocksInfo(var_i8, bpReader.CurrentStep());
+                bpReader.BlocksInfo(var_i8, CurrentStep);
             const std::vector<adios2::Variable<int16_t>::Info> i16Info =
-                bpReader.BlocksInfo(var_i16, bpReader.CurrentStep());
+                bpReader.BlocksInfo(var_i16, CurrentStep);
             const std::vector<adios2::Variable<int32_t>::Info> i32Info =
-                bpReader.BlocksInfo(var_i32, bpReader.CurrentStep());
+                bpReader.BlocksInfo(var_i32, CurrentStep);
             const std::vector<adios2::Variable<int64_t>::Info> i64Info =
-                bpReader.BlocksInfo(var_i64, bpReader.CurrentStep());
+                bpReader.BlocksInfo(var_i64, CurrentStep);
             const std::vector<adios2::Variable<uint8_t>::Info> u8Info =
-                bpReader.BlocksInfo(var_u8, bpReader.CurrentStep());
+                bpReader.BlocksInfo(var_u8, CurrentStep);
             const std::vector<adios2::Variable<uint16_t>::Info> u16Info =
-                bpReader.BlocksInfo(var_u16, bpReader.CurrentStep());
+                bpReader.BlocksInfo(var_u16, CurrentStep);
             const std::vector<adios2::Variable<uint32_t>::Info> u32Info =
-                bpReader.BlocksInfo(var_u32, bpReader.CurrentStep());
+                bpReader.BlocksInfo(var_u32, CurrentStep);
             const std::vector<adios2::Variable<uint64_t>::Info> u64Info =
-                bpReader.BlocksInfo(var_u64, bpReader.CurrentStep());
+                bpReader.BlocksInfo(var_u64, CurrentStep);
             const std::vector<adios2::Variable<float>::Info> r32Info =
-                bpReader.BlocksInfo(var_r32, bpReader.CurrentStep());
+                bpReader.BlocksInfo(var_r32, CurrentStep);
             const std::vector<adios2::Variable<double>::Info> r64Info =
-                bpReader.BlocksInfo(var_r64, bpReader.CurrentStep());
+                bpReader.BlocksInfo(var_r64, CurrentStep);
 
             const std::vector<adios2::Variable<std::complex<float>>::Info>
-                cr32Info =
-                    bpReader.BlocksInfo(var_cr32, bpReader.CurrentStep());
+                cr32Info = bpReader.BlocksInfo(var_cr32, CurrentStep);
             const std::vector<adios2::Variable<std::complex<double>>::Info>
-                cr64Info =
-                    bpReader.BlocksInfo(var_cr64, bpReader.CurrentStep());
+                cr64Info = bpReader.BlocksInfo(var_cr64, CurrentStep);
 
             EXPECT_EQ(i8Info.size(), 2 * mpiSize);
             EXPECT_EQ(i16Info.size(), 2 * mpiSize);
@@ -1961,78 +1979,85 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                 EXPECT_EQ(r32Info[i].Max, r32Max);
                 EXPECT_EQ(r64Info[i].Min, r64Min);
                 EXPECT_EQ(r64Info[i].Max, r64Max);
-
-                EXPECT_EQ(cr32Info[i].Min, cr32Min);
-                EXPECT_EQ(cr32Info[i].Max, cr32Max);
-                EXPECT_EQ(cr64Info[i].Min, cr64Min);
-                EXPECT_EQ(cr64Info[i].Max, cr64Max);
             }
 
+            var_i8.SetStepSelection({CurrentStep, 1});
             var_i8.SetSelection(sel1);
             bpReader.Get(var_i8, I8.data());
             var_i8.SetSelection(sel2);
             bpReader.Get(var_i8, I8.data() + Ny * Nx / 2);
 
+            var_i16.SetStepSelection({CurrentStep, 1});
             var_i16.SetSelection(sel1);
             bpReader.Get(var_i16, I16.data());
             var_i16.SetSelection(sel2);
             bpReader.Get(var_i16, I16.data() + Ny * Nx / 2);
 
+            var_i32.SetStepSelection({CurrentStep, 1});
             var_i32.SetSelection(sel1);
             bpReader.Get(var_i32, I32.data());
             var_i32.SetSelection(sel2);
             bpReader.Get(var_i32, I32.data() + Ny * Nx / 2);
 
+            var_i64.SetStepSelection({CurrentStep, 1});
             var_i64.SetSelection(sel1);
             bpReader.Get(var_i64, I64.data());
             var_i64.SetSelection(sel2);
             bpReader.Get(var_i64, I64.data() + Ny * Nx / 2);
 
+            var_u8.SetStepSelection({CurrentStep, 1});
             var_u8.SetSelection(sel1);
             bpReader.Get(var_u8, U8.data());
             var_u8.SetSelection(sel2);
             bpReader.Get(var_u8, U8.data() + Ny * Nx / 2);
 
+            var_u16.SetStepSelection({CurrentStep, 1});
             var_u16.SetSelection(sel1);
             bpReader.Get(var_u16, U16.data());
             var_u16.SetSelection(sel2);
             bpReader.Get(var_u16, U16.data() + Ny * Nx / 2);
 
+            var_u32.SetStepSelection({CurrentStep, 1});
             var_u32.SetSelection(sel1);
             bpReader.Get(var_u32, U32.data());
             var_u32.SetSelection(sel2);
             bpReader.Get(var_u32, U32.data() + Ny * Nx / 2);
 
+            var_u64.SetStepSelection({CurrentStep, 1});
             var_u64.SetSelection(sel1);
             bpReader.Get(var_u64, U64.data());
             var_u64.SetSelection(sel2);
             bpReader.Get(var_u64, U64.data() + Ny * Nx / 2);
 
+            var_r32.SetStepSelection({CurrentStep, 1});
             var_r32.SetSelection(sel1);
             bpReader.Get(var_r32, R32.data());
             var_r32.SetSelection(sel2);
             bpReader.Get(var_r32, R32.data() + Ny * Nx / 2);
 
+            var_r64.SetStepSelection({CurrentStep, 1});
             var_r64.SetSelection(sel1);
             bpReader.Get(var_r64, R64.data());
             var_r64.SetSelection(sel2);
             bpReader.Get(var_r64, R64.data() + Ny * Nx / 2);
 
+            var_cr32.SetStepSelection({CurrentStep, 1});
             var_cr32.SetSelection(sel1);
             bpReader.Get(var_cr32, CR32.data());
             var_cr32.SetSelection(sel2);
             bpReader.Get(var_cr32, CR32.data() + Ny * Nx / 2);
 
+            var_cr64.SetStepSelection({CurrentStep, 1});
             var_cr64.SetSelection(sel1);
             bpReader.Get(var_cr64, CR64.data());
             var_cr64.SetSelection(sel2);
             bpReader.Get(var_cr64, CR64.data() + Ny * Nx / 2);
 
-            bpReader.EndStep();
-
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+
+            bpReader.PerformGets();
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {

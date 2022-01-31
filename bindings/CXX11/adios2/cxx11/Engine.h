@@ -27,6 +27,7 @@ class Query; // friend
 namespace core
 {
 class Engine; // private implementation
+
 }
 /// \endcond
 

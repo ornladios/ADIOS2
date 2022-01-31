@@ -426,14 +426,14 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
      */
 }
 
-Engine::MinVarInfo *BP5Reader::MinBlocksInfo(const VariableBase &Var,
-                                             const size_t Step) const
+MinVarInfo *BP5Reader::MinBlocksInfo(const VariableBase &Var,
+                                     const size_t Step) const
 {
     return m_BP5Deserializer->MinBlocksInfo(Var, Step);
 }
 
 bool BP5Reader::VariableMinMax(const VariableBase &Var, const size_t Step,
-                               Engine::MinMaxStruct &MinMax)
+                               MinMaxStruct &MinMax)
 {
     return m_BP5Deserializer->VariableMinMax(Var, Step, MinMax);
 }
