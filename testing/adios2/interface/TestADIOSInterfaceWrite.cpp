@@ -599,21 +599,21 @@ TEST_F(ADIOSInterfaceWriteTest, Exceptions)
     EXPECT_THROW(adios.DefineOperator("bzip2Op", "bzip2"),
                  std::invalid_argument);
 #else
-    EXPECT_THROW(adios.DefineOperator("bzip2Op", "bzip2"), std::string);
+    EXPECT_THROW(adios.DefineOperator("bzip2Op", "bzip2"), std::runtime_error);
 #endif
 
 #ifdef ADIOS2_HAVE_ZFP
     EXPECT_NO_THROW(adios.DefineOperator("zfpOp", "zfp"));
     EXPECT_THROW(adios.DefineOperator("zfpOp", "zfp"), std::invalid_argument);
 #else
-    EXPECT_THROW(adios.DefineOperator("zfpOp", "zfp"), std::string);
+    EXPECT_THROW(adios.DefineOperator("zfpOp", "zfp"), std::runtime_error);
 #endif
 
 #ifdef ADIOS2_HAVE_SZ
     EXPECT_NO_THROW(adios.DefineOperator("szOp", "sz"));
     EXPECT_THROW(adios.DefineOperator("szOp", "sz"), std::invalid_argument);
 #else
-    EXPECT_THROW(adios.DefineOperator("szOp", "sz"), std::string);
+    EXPECT_THROW(adios.DefineOperator("szOp", "sz"), std::runtime_error);
 #endif
 }
 
