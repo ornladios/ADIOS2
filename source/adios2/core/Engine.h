@@ -546,9 +546,7 @@ protected:
     DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const;           \
                                                                                \
     virtual std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(            \
-        const Variable<T> &variable, const size_t step) const;                 \
-    virtual std::vector<size_t> DoGetAbsoluteSteps(                            \
-        const Variable<T> &variable) const;
+        const Variable<T> &variable, const size_t step) const;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

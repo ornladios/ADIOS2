@@ -172,12 +172,6 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
     {                                                                          \
         ThrowUp("DoBlocksInfo");                                               \
         return std::vector<typename Variable<T>::BPInfo>();                    \
-    }                                                                          \
-    std::vector<size_t> Engine::DoGetAbsoluteSteps(                            \
-        const Variable<T> &variable) const                                     \
-    {                                                                          \
-        ThrowUp("DoGetAbsoluteSteps");                                         \
-        return std::vector<size_t>();                                          \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

@@ -166,9 +166,6 @@ private:
      */
     void NotifyEngineNoVarsQuery();
 
-    void DoGetAbsoluteSteps(const VariableBase &variable,
-                            std::vector<size_t> &keys) const;
-
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;
@@ -194,6 +191,9 @@ private:
 #undef declare_type
 
     size_t DoSteps() const final;
+
+    void DoGetAbsoluteSteps(const VariableBase &variable,
+                            std::vector<size_t> &keys) const final;
 
     uint32_t m_WriterColumnMajor = 0;
     bool m_ReaderIsRowMajor = true;
