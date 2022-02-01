@@ -563,6 +563,9 @@ protected:
 
     virtual size_t DoSteps() const;
 
+    virtual void DoGetAbsoluteSteps(const VariableBase &variable,
+                                    std::vector<size_t> &keys) const;
+
     /** true: No more definitions or changes to existing variables are allowed
      */
     bool m_WriterDefinitionsLocked = false;

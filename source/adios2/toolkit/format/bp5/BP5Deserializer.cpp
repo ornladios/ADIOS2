@@ -202,10 +202,10 @@ void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
     *(rindex(*base_name_p, '_')) = 0;
 }
 
-BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key)
+BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key) const
 {
-    auto ret = VarByKey[Key];
-    return ret;
+    auto ret = VarByKey.find(Key);
+    return ret->second;
 }
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByName(const char *Name)
@@ -464,7 +464,7 @@ void BP5Deserializer::SetupForStep(size_t Step, size_t WriterCount)
     }
 }
 
-size_t BP5Deserializer::WriterCohortSize(size_t Step)
+size_t BP5Deserializer::WriterCohortSize(size_t Step) const
 {
     if (m_RandomAccessMode)
     {
@@ -1556,7 +1556,7 @@ BP5Deserializer::~BP5Deserializer()
 }
 
 void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step,
-                                       size_t WriterRank)
+                                       size_t WriterRank) const
 {
     MetaArrayRec *writer_meta_base = NULL;
     if (m_RandomAccessMode)
@@ -1826,6 +1826,29 @@ size_t BP5Deserializer::RelativeToAbsoluteStep(const BP5VarRec *VarRec,
         AbsStep++;
     }
     return AbsStep;
+}
+
+void BP5Deserializer::GetAbsoluteSteps(const VariableBase &Var,
+                                       std::vector<size_t> &keys) const
+{
+    BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
+    if (!m_RandomAccessMode)
+        return;
+
+    for (size_t Step = 0; Step < m_ControlArray.size(); Step++)
+    {
+        for (size_t WriterRank = 0; WriterRank < WriterCohortSize(Step);
+             WriterRank++)
+        {
+            MetaArrayRec *writer_meta_base =
+                (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+            if (writer_meta_base)
+            {
+                keys.push_back(Step);
+                break;
+            }
+        }
+    }
 }
 
 bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,

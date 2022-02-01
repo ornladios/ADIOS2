@@ -66,6 +66,8 @@ public:
     MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step);
     bool VariableMinMax(const VariableBase &var, const size_t Step,
                         MinMaxStruct &MinMax);
+    void GetAbsoluteSteps(const VariableBase &variable,
+                          std::vector<size_t> &keys) const;
 
     const bool m_WriterIsRowMajor;
     const bool m_ReaderIsRowMajor;
@@ -133,7 +135,7 @@ private:
     // return the number of writers
     // m_CurrentWriterCohortSize in streaming mode
     // m_WriterCohortSize[Step] in random access mode
-    size_t WriterCohortSize(size_t Step);
+    size_t WriterCohortSize(size_t Step) const;
 
     size_t m_LastAttrStep = MaxSizeT; // invalid timestep for start
 
@@ -157,7 +159,7 @@ private:
     bool NameIndicatesArray(const char *Name);
     bool NameIndicatesAttrArray(const char *Name);
     DataType TranslateFFSType2ADIOS(const char *Type, int size);
-    BP5VarRec *LookupVarByKey(void *Key);
+    BP5VarRec *LookupVarByKey(void *Key) const;
     BP5VarRec *LookupVarByName(const char *Name);
     BP5VarRec *CreateVarRec(const char *ArrayName);
     void ReverseDimensions(size_t *Dimensions, int count, int times);
@@ -212,7 +214,8 @@ private:
     };
     std::vector<BP5ArrayRequest> PendingRequests;
     bool NeedWriter(BP5ArrayRequest Req, size_t i, size_t &NodeFirst);
-    void *GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank);
+    void *GetMetadataBase(BP5VarRec *VarRec, size_t Step,
+                          size_t WriterRank) const;
     size_t CurTimestep = 0;
 };
 

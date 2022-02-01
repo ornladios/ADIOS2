@@ -166,6 +166,9 @@ private:
      */
     void NotifyEngineNoVarsQuery();
 
+    void DoGetAbsoluteSteps(const VariableBase &variable,
+                            std::vector<size_t> &keys) const;
+
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;

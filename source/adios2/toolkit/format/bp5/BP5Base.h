@@ -65,8 +65,8 @@ public:
         size_t DataBlockSize;
     };
 
-    void BP5BitfieldSet(struct BP5MetadataInfoStruct *MBase, int Bit);
-    int BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit);
+    void BP5BitfieldSet(struct BP5MetadataInfoStruct *MBase, int Bit) const;
+    int BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit) const;
 };
 } // end namespace format
 } // end namespace adios2

@@ -223,6 +223,11 @@ std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> &variable) const
 {
     const auto &m = variable.m_AvailableStepBlockIndexOffsets;
     std::vector<size_t> keys;
+    if (m.size() == 0)
+    {
+        DoGetAbsoluteSteps(variable, keys);
+        return keys;
+    }
     keys.reserve(m.size());
     for (auto it = m.cbegin(); it != m.cend(); ++it)
     {

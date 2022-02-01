@@ -142,6 +142,13 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
         return nullptr;                                                        \
     }
 
+void Engine::DoGetAbsoluteSteps(const VariableBase &variable,
+                                std::vector<size_t> &keys) const
+{
+    ThrowUp("DoGetAbsoluteSteps");
+    return;
+}
+
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
