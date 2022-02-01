@@ -9,6 +9,7 @@
  */
 
 #include "CompressMGARD.h"
+#include "CompressNull.h"
 #include "adios2/helper/adiosFunctions.h"
 #include <cstring>
 #include <mgard/MGARDConfig.hpp>
@@ -141,8 +142,19 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     void *compressedData = nullptr;
     mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s,
                       errorBoundType, dataIn, compressedData, sizeOut, false);
-    std::memcpy(bufferOut + bufferOutOffset, compressedData, sizeOut);
-    bufferOutOffset += sizeOut;
+
+    if (bufferOutOffset + sizeOut >
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type)))
+    {
+        CompressNull c({});
+        bufferOutOffset =
+            c.Operate(dataIn, blockStart, blockCount, type, bufferOut);
+    }
+    else
+    {
+        std::memcpy(bufferOut + bufferOutOffset, compressedData, sizeOut);
+        bufferOutOffset += sizeOut;
+    }
 
     if (compressedData)
     {
