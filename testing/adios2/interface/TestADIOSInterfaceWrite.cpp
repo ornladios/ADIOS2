@@ -592,7 +592,7 @@ TEST_F(ADIOSInterfaceWriteTest, Exceptions)
     EXPECT_FALSE(invalidOp);
     EXPECT_THROW(adios.AtIO("IOnull"), std::invalid_argument);
     EXPECT_THROW(adios.DefineOperator("WrongOp", "UnsupportedType"),
-                 std::string);
+                 std::invalid_argument);
 
 #ifdef ADIOS2_HAVE_BZIP2
     EXPECT_NO_THROW(adios.DefineOperator("bzip2Op", "bzip2"));

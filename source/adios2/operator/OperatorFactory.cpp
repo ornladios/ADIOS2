@@ -136,17 +136,17 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
     }
     else
     {
-        helper::Log("Operator", "OperatorFactory", "MakeOperator",
-                    "ADIOS2 does not support " + typeLowerCase + " operation",
-                    helper::EXCEPTION);
+        helper::Throw<std::invalid_argument>(
+            "Operator", "OperatorFactory", "MakeOperator",
+            "ADIOS2 does not support " + typeLowerCase + " operation");
     }
 
     if (ret == nullptr)
     {
-        helper::Log("Operator", "OperatorFactory", "MakeOperator",
-                    "ADIOS2 didn't compile with " + typeLowerCase +
-                        " library, operator not added",
-                    helper::EXCEPTION);
+        helper::Throw<std::runtime_error>(
+            "Operator", "OperatorFactory", "MakeOperator",
+            "ADIOS2 didn't compile with " + typeLowerCase +
+                " library, operator not added");
     }
 
     return ret;
