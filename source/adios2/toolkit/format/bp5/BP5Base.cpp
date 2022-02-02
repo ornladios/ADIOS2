@@ -23,7 +23,7 @@ namespace adios2
 namespace format
 {
 
-void BP5Base::BP5BitfieldSet(struct BP5MetadataInfoStruct *MBase, int Bit)
+void BP5Base::BP5BitfieldSet(struct BP5MetadataInfoStruct *MBase, int Bit) const
 {
     size_t Element = Bit / (sizeof(size_t) * 8);
     int ElementBit = Bit % (sizeof(size_t) * 8);
@@ -38,7 +38,7 @@ void BP5Base::BP5BitfieldSet(struct BP5MetadataInfoStruct *MBase, int Bit)
     MBase->BitField[Element] |= ((size_t)1 << ElementBit);
 }
 
-int BP5Base::BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit)
+int BP5Base::BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit) const
 {
     size_t Element = Bit / (sizeof(size_t) * 8);
     int ElementBit = Bit % (sizeof(size_t) * 8);

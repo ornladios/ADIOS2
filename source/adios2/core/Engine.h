@@ -546,9 +546,7 @@ protected:
     DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const;           \
                                                                                \
     virtual std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(            \
-        const Variable<T> &variable, const size_t step) const;                 \
-    virtual std::vector<size_t> DoGetAbsoluteSteps(                            \
-        const Variable<T> &variable) const;
+        const Variable<T> &variable, const size_t step) const;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -562,6 +560,9 @@ protected:
 #undef declare_type
 
     virtual size_t DoSteps() const;
+
+    virtual void DoGetAbsoluteSteps(const VariableBase &variable,
+                                    std::vector<size_t> &keys) const;
 
     /** true: No more definitions or changes to existing variables are allowed
      */

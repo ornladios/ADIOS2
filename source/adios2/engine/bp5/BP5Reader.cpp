@@ -742,6 +742,13 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
     } while (!oneStepOnly && position < buffer.size());
 }
 
+void BP5Reader::DoGetAbsoluteSteps(const VariableBase &variable,
+                                   std::vector<size_t> &keys) const
+{
+    m_BP5Deserializer->GetAbsoluteSteps(variable, keys);
+    return;
+}
+
 #define declare_type(T)                                                        \
     void BP5Reader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \

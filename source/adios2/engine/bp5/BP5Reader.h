@@ -192,6 +192,9 @@ private:
 
     size_t DoSteps() const final;
 
+    void DoGetAbsoluteSteps(const VariableBase &variable,
+                            std::vector<size_t> &keys) const final;
+
     uint32_t m_WriterColumnMajor = 0;
     bool m_ReaderIsRowMajor = true;
     bool m_WriterIsRowMajor = true;
