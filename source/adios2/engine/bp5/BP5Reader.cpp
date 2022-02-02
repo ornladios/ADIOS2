@@ -590,8 +590,7 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
             for (size_t Step = 0; Step < m_MetadataIndexTable.size(); Step++)
             {
                 m_BP5Deserializer->SetupForStep(
-                    Step,
-                    m_WriterMap[m_WriterMapIndex[m_CurrentStep]].WriterCount);
+                    Step, m_WriterMap[m_WriterMapIndex[Step]].WriterCount);
                 InstallMetadataForTimestep(Step);
             }
         }
