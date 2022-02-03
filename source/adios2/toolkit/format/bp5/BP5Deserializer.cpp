@@ -893,11 +893,44 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
                 "(random access), or "
                 "number of BeginStep calls (streaming), in call to Get");
         }
-        for (size_t i = 0; i < variable.m_StepsCount; i++)
+        size_t Step = variable.m_AvailableStepsStart;
+        size_t GotCount = 0;
+        BP5VarRec *VarRec = VarByKey[&variable];
+        //  m_StepsStart is relative, so we have to look to see if var was
+        //  written on each step.
+        while (GotCount < variable.m_StepsStart)
         {
-            ret = QueueGetSingle(variable, DestData, variable.m_StepsStart + i);
-            size_t increment = variable.TotalSize() * variable.m_ElementSize;
-            DestData = (void *)((char *)DestData + increment);
+            const size_t writerCohortSize = WriterCohortSize(Step);
+            for (size_t WriterRank = 0; WriterRank < writerCohortSize;
+                 WriterRank++)
+            {
+                if (GetMetadataBase(VarRec, Step, WriterRank))
+                {
+                    GotCount++;
+                    break;
+                }
+            }
+            Step++;
+        }
+        GotCount = 0;
+        while (GotCount < variable.m_StepsCount)
+        {
+            const size_t writerCohortSize = WriterCohortSize(Step);
+            for (size_t WriterRank = 0; WriterRank < writerCohortSize;
+                 WriterRank++)
+            {
+                if (GetMetadataBase(VarRec, Step, WriterRank))
+                {
+                    // This writer wrote on this timestep
+                    ret = QueueGetSingle(variable, DestData, Step);
+                    size_t increment =
+                        variable.TotalSize() * variable.m_ElementSize;
+                    DestData = (void *)((char *)DestData + increment);
+                    GotCount++;
+                    break;
+                }
+            }
+            Step++;
         }
         return ret;
     }

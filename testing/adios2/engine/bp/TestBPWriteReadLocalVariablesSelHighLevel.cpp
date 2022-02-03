@@ -485,10 +485,11 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
         oStream.close();
     }
 #if ADIOS2_USE_MPI
-    adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
-                            engineName);
+    adios2::fstream iStream(fname, adios2::fstream::in_random_access,
+                            MPI_COMM_WORLD, engineName);
 #else
-    adios2::fstream iStream(fname, adios2::fstream::in, engineName);
+    adios2::fstream iStream(fname, adios2::fstream::in_random_access,
+                            engineName);
 #endif
 
     const size_t stepStart = 0;
