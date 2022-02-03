@@ -8,6 +8,9 @@
  *      Author: Jason Wang jason.ruonan.wang@gmail.com
  */
 
+#ifndef ADIOS2_HELPER_ADIOSLOG_H_
+#define ADIOS2_HELPER_ADIOSLOG_H_
+
 #include <string>
 
 namespace adios2
@@ -82,3 +85,5 @@ void Throw(const std::string &component, const std::string &source,
 
 } // end namespace helper
 } // end namespace adios2
+
+#endif /* ADIOS2_HELPER_ADIOSLOG_H_ */
