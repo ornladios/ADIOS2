@@ -16,12 +16,19 @@ namespace adios2
 namespace helper
 {
 
+#ifdef _WIN32
+#define ADIOS2_EXPORT __declspec(dllexport)
+#else
+#define ADIOS2_EXPORT __attribute__((visibility("default")))
+#endif
+
 /*
  * CUDA kernel for computing the min and max from a
  * GPU buffer
  */
 template <class T>
-void CUDAMinMax(const T *values, const size_t size, T &min, T &max);
+ADIOS2_EXPORT void CUDAMinMax(const T *values, const size_t size, T &min,
+                              T &max);
 
 } // helper
 } // adios2

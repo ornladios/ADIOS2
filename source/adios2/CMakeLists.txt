@@ -37,7 +37,6 @@ add_library(adios2_core
   helper/adiosXML.cpp
   helper/adiosXMLUtil.cpp
   helper/adiosYAML.cpp
-  helper/adiosCUDA.cu
   helper/adiosLog.cpp
 
 #engine derived classes
@@ -105,10 +104,24 @@ add_library(adios2_core
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)
 
+set(maybe_adios2_core_cuda)
 if(ADIOS2_HAVE_CUDA)
   enable_language(CUDA)
-  target_link_libraries(adios2_core PRIVATE CUDA::cudart)
-  set_target_properties(adios2_core PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+  add_library(adios2_core_cuda helper/adiosCUDA.cu)
+  set_target_properties(adios2_core_cuda PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+    CUDA_STANDARD 14
+    CUDA_STANDARD_REQUIRED ON
+    CUDA_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON
+    INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>"
+    EXPORT_NAME core_cuda
+    OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_cuda
+    )
+
+  target_link_libraries(adios2_core PRIVATE adios2_core_cuda CUDA::cudart CUDA::cuda_driver)
+  set(maybe_adios2_core_cuda adios2_core_cuda)
 endif()
 
 target_include_directories(adios2_core
@@ -377,7 +390,7 @@ install(DIRECTORY toolkit/
 )
 
 # Library installation
-install(TARGETS adios2_core ${maybe_adios2_core_mpi} EXPORT adios2Exports
+install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development
