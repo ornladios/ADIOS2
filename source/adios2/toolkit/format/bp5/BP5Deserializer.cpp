@@ -1167,13 +1167,13 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
             {
                 /* if needed this writer fill destination with acquired data */
                 int ElementSize = Req.VarRec->ElementSize;
-                size_t *GlobalDimensions = Req.VarRec->GlobalDims;
                 MetaArrayRec *writer_meta_base =
                     (MetaArrayRec *)GetMetadataBase(Req.VarRec, Req.Step,
                                                     WriterRank);
                 if (!writer_meta_base)
                     continue; // Not writen on this step
 
+                size_t *GlobalDimensions = writer_meta_base->Shape;
                 int DimCount = writer_meta_base->Dims;
                 for (size_t Block = 0; Block < writer_meta_base->BlockCount;
                      Block++)
@@ -1639,7 +1639,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
     size_t Id = 0;
     MV->Step = Step;
     MV->Dims = VarRec->DimCount;
-    MV->Shape = VarRec->GlobalDims;
+    MV->Shape = NULL;
     MV->IsReverseDims =
         ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
 
@@ -1686,6 +1686,10 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
             (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
         if (writer_meta_base)
         {
+            if (MV->Shape == NULL)
+            {
+                MV->Shape = writer_meta_base->Shape;
+            }
             size_t WriterBlockCount =
                 writer_meta_base->Dims
                     ? writer_meta_base->DBCount / writer_meta_base->Dims
