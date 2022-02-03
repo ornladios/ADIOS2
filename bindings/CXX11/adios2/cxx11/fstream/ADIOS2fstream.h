@@ -45,9 +45,10 @@ public:
     /** Available open modes for adios2::fstream constructor or open calls */
     enum openmode
     {
-        out, //!< write
-        in,  //!< read
-        app  //!< append, not yet supported
+        out,              //!< write
+        in,               //!< read
+        in_random_access, //!< read_random_access
+        app               //!< append, not yet supported
     };
 
 #if ADIOS2_USE_MPI
