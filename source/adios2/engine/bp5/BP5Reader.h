@@ -16,6 +16,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/engine/bp5/BP5Engine.h"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosRangeFilter.h"
 #include "adios2/toolkit/format/bp5/BP5Deserializer.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
@@ -95,6 +96,12 @@ private:
     size_t m_StepsCount = 0;
     bool m_FirstStep = true;
     bool m_IdxHeaderParsed = false; // true after first index parsing
+
+    /** used to filter steps */
+    helper::RangeFilter m_SelectedSteps;
+
+    // offset/size pairs to read sections of metadata from file in InitBuffer
+    std::vector<std::pair<uint64_t, uint64_t>> m_FilteredMetadataInfo;
 
     Minifooter m_Minifooter;
 

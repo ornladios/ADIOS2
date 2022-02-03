@@ -38,6 +38,7 @@ add_library(adios2_core
   helper/adiosXMLUtil.cpp
   helper/adiosYAML.cpp
   helper/adiosLog.cpp
+  helper/adiosRangeFilter.cpp
 
 #engine derived classes
   engine/bp3/BP3Reader.cpp engine/bp3/BP3Reader.tcc

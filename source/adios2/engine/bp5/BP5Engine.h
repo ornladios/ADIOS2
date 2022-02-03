@@ -27,7 +27,13 @@ class BP5Engine
 {
 public:
     int m_RankMPI = 0;
-    /* metadata index table*/
+    /* metadata index table
+            0: pos in memory for step (after filtered read)
+            1: size of metadata
+            2: flush count
+            3: pos in index where data offsets are enumerated
+            4: abs. pos in metadata File for step
+    */
     std::unordered_map<uint64_t, std::vector<uint64_t>> m_MetadataIndexTable;
 
     struct Minifooter
@@ -129,6 +135,7 @@ public:
     MACRO(MaxShmSize, SizeBytes, size_t, DefaultMaxShmSize)                    \
     MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)         \
     MACRO(AppendAfterSteps, Int, int, INT_MAX)                                 \
+    MACRO(SelectSteps, String, std::string, (char *)(intptr_t)0)               \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)
 
     struct BP5Params
