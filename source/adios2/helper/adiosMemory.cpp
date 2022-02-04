@@ -316,6 +316,11 @@ void MemcpyGPUToBuffer(void *dst, const char *GPUbuffer, size_t byteCount)
 {
     cudaMemcpy(dst, GPUbuffer, byteCount, cudaMemcpyDeviceToHost);
 }
+
+void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount)
+{
+    cudaMemcpy(GPUbuffer, src, byteCount, cudaMemcpyHostToDevice);
+}
 #endif
 
 } // end namespace helper

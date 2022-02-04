@@ -50,10 +50,18 @@ template <class T>
 void CudaMemCopyToBuffer(char *dest, size_t position, const T *GPUbuffer,
                          const size_t size) noexcept;
 
+/*
+ * Copies data from a specific location in the adios buffer to a GPU buffer
+ */
+template <class T>
+void CudaMemCopyFromBuffer(T *GPUbuffer, size_t position, const char *source,
+                           const size_t size) noexcept;
+
 /**
  * Wrapper around cudaMemcpy needed for isolating CUDA interface dependency
  */
 void MemcpyGPUToBuffer(void *dst, const char *GPUbuffer, size_t byteCount);
+void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount);
 #endif
 
 /**

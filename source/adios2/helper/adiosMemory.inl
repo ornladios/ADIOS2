@@ -90,6 +90,14 @@ void CudaMemCopyToBuffer(char *dest, size_t position, const T *GPUbuffer,
     const char *buffer = reinterpret_cast<const char *>(GPUbuffer);
     MemcpyGPUToBuffer(dest + position, buffer, size);
 }
+
+template <class T>
+void CudaMemCopyFromBuffer(T *GPUbuffer, size_t position, const char *source,
+                           const size_t size) noexcept
+{
+    const char *src = reinterpret_cast<const char *>(source + position);
+    MemcpyBufferToGPU(GPUbuffer, src, size);
+}
 #endif
 
 template <class T>

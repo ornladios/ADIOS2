@@ -1348,7 +1348,7 @@ void BP5Deserializer::MemCopyData(char *OutData, const char *InData,
 #ifdef ADIOS2_HAVE_CUDA
     if (MemSpace == MemorySpace::CUDA)
     {
-        helper::CudaMemCopyToBuffer(OutData, 0, InData, Size);
+        helper::CudaMemCopyFromBuffer(OutData, 0, InData, Size);
         return;
     }
 #endif
