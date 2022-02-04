@@ -1158,7 +1158,7 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
 {
     for (const auto &Req : PendingRequests)
     {
-        //        ImplementGapWarning(Reqs);
+        // ImplementGapWarning(Reqs);
         const size_t writerCohortSize = WriterCohortSize(Req.Step);
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
@@ -1348,7 +1348,7 @@ void BP5Deserializer::MemCopyData(char *OutData, const char *InData,
 #ifdef ADIOS2_HAVE_CUDA
     if (MemSpace == MemorySpace::CUDA)
     {
-        helper::CudaMemCopyToBuffer(OutData, 0, InData, Size);
+        helper::CudaMemCopyFromBuffer(OutData, 0, InData, Size);
         return;
     }
 #endif
