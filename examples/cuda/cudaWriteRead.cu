@@ -83,7 +83,8 @@ int BPRead(const std::string fname, const size_t N, int nSteps)
         data.SetMemorySpace(adios2::MemorySpace::CUDA);
         bpReader.Get(data, gpuSimData, adios2::Mode::Deferred);
         bpReader.EndStep();
-        cudaMemcpy(simData.data(), gpuSimData, N, cudaMemcpyDeviceToHost);
+        cudaMemcpy(simData.data(), gpuSimData, N * sizeof(float),
+                   cudaMemcpyDeviceToHost);
         std::cout << "Simualation step " << step << " : ";
         std::cout << simData.size() << " elements: " << simData[1] << std::endl;
     }
