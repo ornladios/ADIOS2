@@ -1158,7 +1158,7 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
 {
     for (const auto &Req : PendingRequests)
     {
-        //        ImplementGapWarning(Reqs);
+        // ImplementGapWarning(Reqs);
         const size_t writerCohortSize = WriterCohortSize(Req.Step);
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {

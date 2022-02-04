@@ -76,19 +76,19 @@ void InsertToBuffer(std::vector<char> &buffer, const T *source,
 
 #ifdef ADIOS2_HAVE_CUDA
 template <class T>
-void CopyFromGPUToBuffer(std::vector<char> &buffer, size_t &position,
-                         const T *source, const size_t elements) noexcept
+void CopyFromGPUToBuffer(std::vector<char> &dest, size_t &position,
+                         const T *GPUbuffer, const size_t elements) noexcept
 {
-    CudaMemCopyToBuffer(buffer.data(), position, source, elements * sizeof(T));
+    CudaMemCopyToBuffer(dest.data(), position, GPUbuffer, elements * sizeof(T));
     position += elements * sizeof(T);
 }
 
 template <class T>
-void CudaMemCopyToBuffer(char *buffer, size_t position, const T *source,
+void CudaMemCopyToBuffer(char *dest, size_t position, const T *GPUbuffer,
                          const size_t size) noexcept
 {
-    const char *src = reinterpret_cast<const char *>(source);
-    MemcpyGPUToBuffer(buffer + position, src, size);
+    const char *buffer = reinterpret_cast<const char *>(GPUbuffer);
+    MemcpyGPUToBuffer(dest + position, buffer, size);
 }
 #endif
 

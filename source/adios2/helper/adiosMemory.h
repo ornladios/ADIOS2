@@ -44,16 +44,16 @@ void InsertToBuffer(std::vector<char> &buffer, const T *source,
  * Copies data from a GPU buffer to a specific location in the adios buffer
  */
 template <class T>
-void CopyFromGPUToBuffer(std::vector<char> &buffer, size_t &position,
+void CopyFromGPUToBuffer(std::vector<char> &dest, size_t &position,
                          const T *source, const size_t elements = 1) noexcept;
 template <class T>
-void CudaMemCopyToBuffer(char *buffer, size_t position, const T *source,
+void CudaMemCopyToBuffer(char *dest, size_t position, const T *GPUbuffer,
                          const size_t size) noexcept;
 
 /**
  * Wrapper around cudaMemcpy needed for isolating CUDA interface dependency
  */
-void MemcpyGPUToBuffer(void *dst, const char *src, size_t byteCount);
+void MemcpyGPUToBuffer(void *dst, const char *GPUbuffer, size_t byteCount);
 #endif
 
 /**
