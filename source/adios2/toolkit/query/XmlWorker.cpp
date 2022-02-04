@@ -1,5 +1,6 @@
 #include "Worker.h"
 
+#include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosXMLUtil.h"
 
 #include <pugixml.hpp>
@@ -142,7 +143,9 @@ QueryVar *XmlWorker::ParseVarNode(const pugi::xml_node &node,
     const DataType varType = currentIO.InquireVariableType(variableName);
     if (varType == DataType::None)
     {
-        std::cerr << "No such variable: " << variableName << std::endl;
+        helper::Log("Query", "XmlWorker", "ParseVarNode",
+                    "No such variable: " + variableName,
+                    helper::LogMode::ERROR);
         throw std::ios_base::failure("No such variable: " + variableName);
     }
 #define declare_type(T)                                                        \

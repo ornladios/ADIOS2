@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "adiosComm.h"
+#include "adiosLog.h"
 
 namespace adios2
 {
@@ -21,8 +22,10 @@ namespace
 {
 void CommDummyError(const std::string &msg)
 {
-    std::cerr << "CommDummy: a function returned error code '" << msg
-              << "'. Aborting!" << std::endl;
+    helper::Log("Helper", "adiosCommDummy", "CommDummyError",
+                "CommDummy: a function returned error code '" + msg +
+                    "'. Aborting!",
+                helper::LogMode::ERROR);
     std::abort();
 }
 }

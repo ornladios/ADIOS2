@@ -1,5 +1,5 @@
 #include "Worker.h"
-//#include "XmlWorker.cpp"
+#include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
 {
@@ -68,7 +68,9 @@ QueryVar *Worker::GetBasicVarQuery(adios2::core::IO &currentIO,
     const DataType varType = currentIO.InquireVariableType(variableName);
     if (varType == DataType::None)
     {
-        std::cerr << "No such variable: " << variableName << std::endl;
+        helper::Log("Query", "Worker", "GetBasicVarQuery",
+                    "No such variable: " + variableName,
+                    helper::LogMode::ERROR);
         return nullptr;
     }
 #define declare_type(T)                                                        \

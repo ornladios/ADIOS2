@@ -9,6 +9,7 @@
  */
 
 #include "FileDrainerSingleThread.h"
+#include "adios2/helper/adiosLog.h"
 
 #include <chrono>
 #include <cstddef>
@@ -216,8 +217,10 @@ void FileDrainerSingleThread::DrainThread()
                 }
                 catch (std::ios_base::failure &e)
                 {
-                    std::cerr << "ADIOS THREAD ERROR: " << e.what()
-                              << std::endl;
+                    helper::Log("BurstBuffer", "FileDrainerSingleThread",
+                                "DrainThread",
+                                "ADIOS THREAD ERROR: " + std::string(e.what()),
+                                helper::LogMode::ERROR);
                 }
             }
             break;

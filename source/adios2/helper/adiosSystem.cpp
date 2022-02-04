@@ -96,26 +96,26 @@ int ExceptionToError(const std::string &function)
     }
     catch (std::invalid_argument &e)
     {
-        helper::Log("Helper", "adiosSystem", "ExceptionToError", function,
-                    helper::LogMode::ERROR);
+        helper::Log("Helper", "adiosSystem", "ExceptionToError",
+                    function + ": " + e.what(), helper::LogMode::ERROR);
         return 1;
     }
     catch (std::system_error &e)
     {
-        helper::Log("Helper", "adiosSystem", "ExceptionToError", function,
-                    helper::LogMode::ERROR);
+        helper::Log("Helper", "adiosSystem", "ExceptionToError",
+                    function + ": " + e.what(), helper::LogMode::ERROR);
         return 2;
     }
     catch (std::runtime_error &e)
     {
-        helper::Log("Helper", "adiosSystem", "ExceptionToError", function,
-                    helper::LogMode::ERROR);
+        helper::Log("Helper", "adiosSystem", "ExceptionToError",
+                    function + ": " + e.what(), helper::LogMode::ERROR);
         return 3;
     }
     catch (std::exception &e)
     {
-        helper::Log("Helper", "adiosSystem", "ExceptionToError", function,
-                    helper::LogMode::ERROR);
+        helper::Log("Helper", "adiosSystem", "ExceptionToError",
+                    function + ": " + e.what(), helper::LogMode::ERROR);
         return 4;
     }
 }
