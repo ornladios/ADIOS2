@@ -21,7 +21,6 @@
 
 #include <assert.h>
 #include <iomanip>
-#include <iostream>
 #include <string>
 
 #include "adios2/common/ADIOSMacros.h"
@@ -30,6 +29,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
 
 #if ADIOS2_USE_MPI
@@ -589,19 +589,22 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
         write_total + variables.size() * 200 + attributes.size() * 32 + 1024;
     if (bufsize > max_write_buffer_size)
     {
-        std::cerr << "ERROR: rank " << m_Rank
-                  << ": write buffer size needs to hold about " << bufsize
-                  << "bytes but max is set to " << max_write_buffer_size
-                  << std::endl;
+        helper::Log("Util", "Reorganize", "ProcessMetadata",
+                    "write buffer size needs to hold about " +
+                        std::to_string(bufsize) + " bytes but max is set to " +
+                        std::to_string(max_write_buffer_size),
+                    m_Rank, m_Rank, 0, 0, helper::LogMode::ERROR);
         return 1;
     }
 
     if (largest_block > max_read_buffer_size)
     {
-        std::cerr << "ERROR: rank " << m_Rank
-                  << ": read buffer size needs to hold at least "
-                  << largest_block << "bytes but max is set to "
-                  << max_read_buffer_size << std::endl;
+        helper::Log("Util", "Reorganize", "ProcessMetadata",
+                    "read buffer size needs to hold at least " +
+                        std::to_string(largest_block) +
+                        " bytes but max is set to " +
+                        std::to_string(max_read_buffer_size),
+                    m_Rank, m_Rank, 0, 0, helper::LogMode::ERROR);
         return 1;
     }
     return retval;
@@ -615,13 +618,13 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
     size_t nvars = variables.size();
     if (nvars != varinfo.size())
     {
-        std::cerr << "ERROR rank " << m_Rank
-                  << ": Invalid program state, number "
-                     "of variables ("
-                  << nvars
-                  << ") to read does not match the number of processed "
-                     "variables ("
-                  << varinfo.size() << ")" << std::endl;
+        helper::Log(
+            "Util", "Reorganize", "ReadWrite",
+            "Invalid program state, number of variables (" +
+                std::to_string(nvars) +
+                ") to read does not match the number of processed variables (" +
+                std::to_string(varinfo.size()) + ")",
+            m_Rank, m_Rank, 0, 0, helper::LogMode::ERROR);
     }
 
     /*

@@ -99,9 +99,9 @@ size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
 
     if (sizeOut == 0)
     {
-        helper::Log("Operator", "CompressZFP", "Operate(Compress)",
-                    "zfp failed, compressed buffer size is 0",
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressZFP", "Operate(Compress)",
+            "zfp failed, compressed buffer size is 0");
     }
 
     bufferOutOffset += sizeOut;
@@ -133,10 +133,9 @@ size_t CompressZFP::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        helper::Log("Operator", "CompressZFP", "Operate(Compress)",
-                    "invalid zfp buffer version" +
-                        std::to_string(bufferVersion),
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressZFP", "Operate(Compress)",
+            "invalid zfp buffer version" + std::to_string(bufferVersion));
     }
 
     return 0;
@@ -198,9 +197,9 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     if (!status)
     {
-        helper::Log("Operator", "CompressZFP", "DecompressV1",
-                    "zfp failed with status " + std::to_string(status),
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressZFP", "DecompressV1",
+            "zfp failed with status " + std::to_string(status));
     }
 
     zfp_field_free(field);
@@ -240,9 +239,9 @@ zfp_type GetZfpType(DataType type)
     }
     else
     {
-        helper::Log("Operator", "CompressZFP", "GetZfpType",
-                    "invalid data type " + ToString(type),
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressZFP", "GetZfpType",
+            "invalid data type " + ToString(type));
     }
 
     return zfpType;
@@ -271,19 +270,18 @@ zfp_field *GetZFPField(const char *data, const Dims &dimensions, DataType type)
     }
     else
     {
-        helper::Log("Operator", "CompressZFP", "GetZfpField",
-                    "zfp does not support " +
-                        std::to_string(dimensions.size()) + "D data",
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressZFP", "GetZfpField",
+            "zfp does not support " + std::to_string(dimensions.size()) +
+                "D data");
     }
 
     if (field == nullptr)
     {
-        helper::Log("Operator", "CompressZFP", "GetZfpField",
-                    "zfp failed to make field for" +
-                        std::to_string(dimensions.size()) + "D data in " +
-                        ToString(type),
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressZFP", "GetZfpField",
+            "zfp failed to make field for" + std::to_string(dimensions.size()) +
+                "D data in " + ToString(type));
     }
 
     return field;
@@ -349,8 +347,8 @@ zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
         {
             oss << "(" << p.first << ", " << p.second << ").";
         }
-        helper::Log("Operator", "CompressZFP", "GetZfpField", oss.str(),
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::runtime_error>("Operator", "CompressZFP",
+                                          "GetZfpField", oss.str());
     }
 
     if (hasAccuracy)

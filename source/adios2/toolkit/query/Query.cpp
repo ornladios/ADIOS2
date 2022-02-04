@@ -1,7 +1,6 @@
 #include "Query.h"
-#include "adios2/helper/adiosFunctions.h"
-//#include <adios2.h>
 #include "BlockIndex.h"
+#include "adios2/helper/adiosFunctions.h"
 
 #include "Query.tcc"
 
@@ -241,9 +240,10 @@ bool QueryVar::IsSelectionValid(adios2::Dims &shape) const
 
     if (m_Selection.first.size() != shape.size())
     {
-        std::cerr << "ERROR:  query selection dimension is different from "
-                     "shape dimension"
-                  << std::endl;
+        helper::Log(
+            "Query", "QueryVar", "IsSelectionValid",
+            "Query selection dimension is different from shape dimension",
+            helper::LogMode::ERROR);
         return false; // different dimension
     }
 

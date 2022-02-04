@@ -1,4 +1,5 @@
 #include "Worker.h"
+#include "adios2/helper/adiosLog.h"
 
 #include <nlohmann_json.hpp>
 
@@ -97,7 +98,9 @@ void JsonWorker::ParseJson()
         const DataType varType = currIO.InquireVariableType(varName);
         if (varType == DataType::None)
         {
-            std::cerr << "No such variable: " << varName << std::endl;
+            helper::Log("Query", "JsonWorker", "ParseJson",
+                        "No such variable: " + varName.dump(),
+                        helper::LogMode::ERROR);
             return nullptr;
         }
 
@@ -118,7 +121,8 @@ void JsonWorker::ParseJson()
 
     if (!adios2::query::JsonUtil::HasEntry(jsonObj, "io"))
     {
-        std::cerr << " no io node in json query file" << std::endl;
+        helper::Log("Query", "JsonWorker", "ParseJson",
+                    "No io node in json query file", helper::LogMode::ERROR);
         throw std::ios_base::failure("Expecting the io node: " +
                                      m_SourceReader->m_IO.m_Name);
     }

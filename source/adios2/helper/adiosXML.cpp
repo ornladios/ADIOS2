@@ -45,8 +45,9 @@ void ParseConfigXML(
 
         if (fileContents.empty())
         {
-            helper::Log("Helper", "AdiosXML", "ParseConfigXML",
-                        "empty config xml file", helper::EXCEPTION);
+            helper::Throw<std::invalid_argument>("Helper", "AdiosXML",
+                                                 "ParseConfigXML",
+                                                 "empty config xml file");
         }
         return fileContents;
     };
@@ -83,25 +84,24 @@ void ParseConfigXML(
 
             if (*opName && *opType)
             {
-                helper::Log(
+                helper::Throw<std::invalid_argument>(
                     "Helper", "AdiosXML", "ParseConfigXML",
                     "operator (" + std::string(opName->value()) +
                         ") and type (" + std::string(opType->value()) +
                         ") attributes can't coexist in <operation> element "
                         "inside <variable name=\"" +
-                        variableName + "\"> element",
-                    helper::EXCEPTION);
+                        variableName + "\"> element");
             }
 
             if (!*opName && !*opType)
             {
-                helper::Log("Helper", "AdiosXML", "ParseConfigXML",
-                            "<operation> element "
-                            "inside <variable name=\"" +
-                                variableName +
-                                "\"> element requires either operator "
-                                "(existing) or type (supported) attribute",
-                            helper::EXCEPTION);
+                helper::Throw<std::invalid_argument>(
+                    "Helper", "AdiosXML", "ParseConfigXML",
+                    "<operation> element "
+                    "inside <variable name=\"" +
+                        variableName +
+                        "\"> element requires either operator "
+                        "(existing) or type (supported) attribute");
             }
 
             std::string type;
@@ -112,12 +112,11 @@ void ParseConfigXML(
                 auto itOperator = operators.find(std::string(opName->value()));
                 if (itOperator == operators.end())
                 {
-                    helper::Log("Helper", "AdiosXML", "ParseConfigXML",
-                                "operator " + std::string(opName->value()) +
-                                    " not previously defined, from variable " +
-                                    variableName + " inside io " +
-                                    currentIO.m_Name,
-                                helper::EXCEPTION);
+                    helper::Throw<std::invalid_argument>(
+                        "Helper", "AdiosXML", "ParseConfigXML",
+                        "operator " + std::string(opName->value()) +
+                            " not previously defined, from variable " +
+                            variableName + " inside io " + currentIO.m_Name);
                 }
                 type = itOperator->second.first;
                 params = itOperator->second.second;

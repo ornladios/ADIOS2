@@ -29,8 +29,8 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 
     if (m_MpiSize > 1)
     {
-        std::cerr << "DataMan does not support N-to-M decomposition!"
-                  << std::endl;
+        helper::Throw<std::logic_error>("Engine", "DataManWriter", "Open",
+                                        m_Name, m_Comm.Rank());
     }
 
     helper::GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);

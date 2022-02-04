@@ -10,7 +10,6 @@
 #include "adiosSystem.h"
 #include <chrono> //system_clock, now
 #include <ctime>
-#include <iostream>  //std::cerr
 #include <stdexcept> // std::runtime_error, std::exception
 #include <system_error>
 
@@ -18,6 +17,7 @@
 
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
 
 // needed by IsHDF5File()
@@ -96,26 +96,26 @@ int ExceptionToError(const std::string &function)
     }
     catch (std::invalid_argument &e)
     {
-        std::cerr << e.what() << "\n";
-        std::cerr << function << "\n";
+        helper::Log("Helper", "adiosSystem", "ExceptionToError",
+                    function + ": " + e.what(), helper::LogMode::ERROR);
         return 1;
     }
     catch (std::system_error &e)
     {
-        std::cerr << e.what() << "\n";
-        std::cerr << function << "\n";
+        helper::Log("Helper", "adiosSystem", "ExceptionToError",
+                    function + ": " + e.what(), helper::LogMode::ERROR);
         return 2;
     }
     catch (std::runtime_error &e)
     {
-        std::cerr << e.what() << "\n";
-        std::cerr << function << "\n";
+        helper::Log("Helper", "adiosSystem", "ExceptionToError",
+                    function + ": " + e.what(), helper::LogMode::ERROR);
         return 3;
     }
     catch (std::exception &e)
     {
-        std::cerr << e.what() << "\n";
-        std::cerr << function << "\n";
+        helper::Log("Helper", "adiosSystem", "ExceptionToError",
+                    function + ": " + e.what(), helper::LogMode::ERROR);
         return 4;
     }
 }

@@ -29,46 +29,10 @@ std::string defaultColor = "\033[0m";
 
 std::unordered_set<std::string> messages;
 
-void Log(const std::string &component, const std::string &source,
-         const std::string &activity, const std::string &message,
-         const LogMode mode)
+std::string MakeMessage(const std::string &component, const std::string &source,
+                        const std::string &activity, const std::string &message,
+                        const int commRank, const LogMode mode)
 {
-    Log(component, source, activity, message, -1, -1, 0, 0, mode);
-}
-
-void Log(const std::string &component, const std::string &source,
-         const std::string &activity, const std::string &message,
-         const int priority, const int verbosity, const LogMode mode)
-{
-    Log(component, source, activity, message, -1, -1, priority, verbosity,
-        mode);
-}
-
-void Log(const std::string &component, const std::string &source,
-         const std::string &activity, const std::string &message,
-         const int logRank, const int commRank, const int priority,
-         const int verbosity, const LogMode mode)
-{
-
-    // don't print if
-    // 1. logRank does not meet commRank, or
-    // 2. priority does not meet verbosity, or
-    // 3. the same messaage has been already printed
-    if ((logRank >= 0 && commRank >= 0 && logRank != commRank) ||
-        priority > verbosity || messages.find(message) != messages.end())
-    {
-        if (mode == LogMode::EXCEPTION)
-        {
-            throw message;
-        }
-        else
-        {
-            return;
-        }
-    }
-
-    messages.insert(message);
-
     std::stringstream m;
 
     auto timeNow =
@@ -107,18 +71,53 @@ void Log(const std::string &component, const std::string &source,
     m << " <" << component << "> <" << source << "> <" << activity
       << "> : " << message << defaultColor << std::endl;
 
+    return m.str();
+}
+
+void Log(const std::string &component, const std::string &source,
+         const std::string &activity, const std::string &message,
+         const LogMode mode)
+{
+    Log(component, source, activity, message, -1, -1, 0, 0, mode);
+}
+
+void Log(const std::string &component, const std::string &source,
+         const std::string &activity, const std::string &message,
+         const int priority, const int verbosity, const LogMode mode)
+{
+    Log(component, source, activity, message, -1, -1, priority, verbosity,
+        mode);
+}
+
+void Log(const std::string &component, const std::string &source,
+         const std::string &activity, const std::string &message,
+         const int logRank, const int commRank, const int priority,
+         const int verbosity, const LogMode mode)
+{
+
+    // don't print if
+    // 1. logRank does not meet commRank, or
+    // 2. priority does not meet verbosity, or
+    // 3. the error or warning has been already printed
+    if ((logRank >= 0 && commRank >= 0 && logRank != commRank) ||
+        priority > verbosity ||
+        (messages.find(message) != messages.end() &&
+         (mode == LogMode::ERROR || mode == LogMode::WARNING)))
+    {
+        return;
+    }
+
+    messages.insert(message);
+
+    auto m = MakeMessage(component, source, activity, message, commRank, mode);
+
     if (mode == INFO || mode == WARNING)
     {
-        std::cout << m.str();
+        std::cout << m;
     }
     else if (mode == ERROR)
     {
-        std::cerr << m.str();
-    }
-    else if (mode == EXCEPTION)
-    {
-        std::cerr << m.str();
-        throw m.str();
+        std::cerr << m;
     }
 }
 
