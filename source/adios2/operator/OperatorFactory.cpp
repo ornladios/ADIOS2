@@ -143,7 +143,7 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
 
     if (ret == nullptr)
     {
-        helper::Throw<std::runtime_error>(
+        helper::Throw<std::invalid_argument>(
             "Operator", "OperatorFactory", "MakeOperator",
             "ADIOS2 didn't compile with " + typeLowerCase +
                 " library, operator not added");
