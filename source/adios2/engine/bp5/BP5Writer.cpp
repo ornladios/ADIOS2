@@ -47,8 +47,9 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     if (m_BetweenStepPairs)
     {
-        throw std::logic_error("ERROR: BeginStep() is called a second time "
-                               "without an intervening EndStep()");
+        helper::Throw<std::logic_error>("Engine", "BP5Writer", "BeginStep",
+                                        "BeginStep() is called a second time "
+                                        "without an intervening EndStep()");
     }
 
     Seconds ts = Now() - m_EngineStart;
@@ -221,10 +222,11 @@ void BP5Writer::WriteData(format::BufferV *Data)
             WriteData_TwoLevelShm_Async(Data);
             break;
         default:
-            throw std::invalid_argument(
+            helper::Throw<std::invalid_argument>(
+                "Engine", "BP5Writer", "WriteData",
                 "Aggregation method " +
-                std::to_string(m_Parameters.AggregationType) +
-                "is not supported in BP5");
+                    std::to_string(m_Parameters.AggregationType) +
+                    "is not supported in BP5");
         }
     }
     else
@@ -241,10 +243,11 @@ void BP5Writer::WriteData(format::BufferV *Data)
             WriteData_TwoLevelShm(Data);
             break;
         default:
-            throw std::invalid_argument(
+            helper::Throw<std::invalid_argument>(
+                "Engine", "BP5Writer", "WriteData",
                 "Aggregation method " +
-                std::to_string(m_Parameters.AggregationType) +
-                "is not supported in BP5");
+                    std::to_string(m_Parameters.AggregationType) +
+                    "is not supported in BP5");
         }
         delete Data;
     }
@@ -619,10 +622,12 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
     if (helper::IsLittleEndian() != IsLittleEndian)
     {
         std::string m = (IsLittleEndian ? "Little" : "Big");
-        throw std::runtime_error(
-            "ERROR: ADIOS2 BP5 Engine only supports appending with the same "
+
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Writer", "CountStepsInMetadataIndex",
+            "ADIOS2 BP5 Engine only supports appending with the same "
             "endianness. The existing file is " +
-            m + "Endian\n");
+                m + "Endian");
     }
 
     // BP version
@@ -631,10 +636,11 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
         helper::ReadValue<uint8_t>(buffer, position, IsLittleEndian);
     if (Version != 5)
     {
-        throw std::runtime_error(
-            "ERROR: ADIOS2 BP5 Engine only supports bp format "
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Writer", "CountStepsInMetadataIndex",
+            "ADIOS2 BP5 Engine only supports bp format "
             "version 5, found " +
-            std::to_string(Version) + " version \n");
+                std::to_string(Version) + " version");
     }
 
     position = m_ColumnMajorFlagPosition;
@@ -645,11 +651,12 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
     if (columnMajor != NowColumnMajor)
     {
         std::string m = (columnMajor == 'y' ? "column" : "row");
-        throw std::runtime_error(
-            "ERROR: ADIOS2 BP5 Engine only supports appending with the same "
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Writer", "CountStepsInMetadataIndex",
+            "ADIOS2 BP5 Engine only supports appending with the same "
             "column/row major settings as it was written."
             " Existing file is " +
-            m + " major\n");
+                m + " major");
     }
 
     position = m_IndexHeaderSize; // after the header
@@ -994,11 +1001,12 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     auto &absolutePosition = b.m_AbsolutePosition;
     if (position > 0)
     {
-        throw std::invalid_argument(
-            "ERROR: BP4Serializer::MakeHeader can only be called for an empty "
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP5Writer", "MakeHeader",
+            "BP4Serializer::MakeHeader can only be called for an empty "
             "buffer. This one for " +
-            fileType + " already has content of " + std::to_string(position) +
-            " bytes.");
+                fileType + " already has content of " +
+                std::to_string(position) + " bytes.");
     }
 
     if (b.GetAvailableSize() < m_IndexHeaderSize)
@@ -1013,7 +1021,8 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     // byte 0-31: Readable tag
     if (position != m_VersionTagPosition)
     {
-        throw std::runtime_error(
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Writer", "MakeHeader",
             "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Version Tag "
             "position mismatch");
     }
@@ -1054,7 +1063,8 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     // byte 36: endianness
     if (position != m_EndianFlagPosition)
     {
-        throw std::runtime_error(
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Writer", "MakeHeader",
             "ADIOS Coding ERROR in BP5Writer::MakeHeader. Endian Flag "
             "position mismatch");
     }
@@ -1064,7 +1074,8 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     // byte 37: BP Version 5
     if (position != m_BPVersionPosition)
     {
-        throw std::runtime_error(
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Writer", "MakeHeader",
             "ADIOS Coding ERROR in BP5Writer::MakeHeader. BP Version "
             "position mismatch");
     }
@@ -1074,7 +1085,8 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     // byte 38: BP Minor version 1
     if (position != m_BPMinorVersionPosition)
     {
-        throw std::runtime_error(
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Writer", "MakeHeader",
             "ADIOS Coding ERROR in BP5Writer::MakeHeader. BP Minor version "
             "position mismatch");
     }
@@ -1084,7 +1096,8 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
     // byte 39: Active flag (used in Index Table only)
     if (position != m_ActiveFlagPosition)
     {
-        throw std::runtime_error(
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Writer", "MakeHeader",
             "ADIOS Coding ERROR in BP5Writer::MakeHeader. Active Flag "
             "position mismatch");
     }

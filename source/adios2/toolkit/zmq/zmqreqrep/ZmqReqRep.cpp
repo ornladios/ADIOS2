@@ -24,7 +24,8 @@ ZmqReqRep::ZmqReqRep()
     m_Context = zmq_ctx_new();
     if (not m_Context)
     {
-        throw std::runtime_error("creating zmq context failed");
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqReqRep", "ZmqReqRep",
+                                          "creating zmq context failed");
     }
 }
 
@@ -84,13 +85,15 @@ void ZmqReqRep::OpenReplier(const std::string &address, const int timeout,
     m_Socket = zmq_socket(m_Context, ZMQ_REP);
     if (not m_Socket)
     {
-        throw std::runtime_error("creating zmq socket failed");
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqReqRep", "OpenReplier",
+                                          "creating zmq socket failed");
     }
 
     int error = zmq_bind(m_Socket, address.c_str());
     if (error)
     {
-        throw std::runtime_error("binding zmq socket failed");
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqReqRep", "OpenReplier",
+                                          "binding zmq socket failed");
     }
 
     zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &m_Timeout, sizeof(m_Timeout));

@@ -41,9 +41,10 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
         auto itVariable = m_Variables.find(name);
         if (itVariable != m_Variables.end())
         {
-            throw std::invalid_argument("ERROR: variable " + name +
-                                        " exists in IO object " + m_Name +
-                                        ", in call to DefineVariable\n");
+            helper::Throw<std::invalid_argument>(
+                "Core", "IO", "DefineVariable",
+                "variable " + name + " exists in IO object " + m_Name +
+                    ", in call to DefineVariable");
         }
     }
 
@@ -113,10 +114,11 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     if (!variableName.empty() &&
         InquireVariableType(variableName) == DataType::None)
     {
-        throw std::invalid_argument(
-            "ERROR: variable " + variableName +
-            " doesn't exist, can't associate attribute " + name +
-            ", in call to DefineAttribute");
+        helper::Throw<std::invalid_argument>(
+            "Core", "IO", "DefineAttribute",
+            "variable " + variableName +
+                " doesn't exist, can't associate attribute " + name +
+                ", in call to DefineAttribute");
     }
 
     const std::string globalName =
@@ -141,12 +143,13 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: modifiable attribute " + globalName +
-                    " has been defined with type " +
-                    ToString(itExistingAttribute->second->m_Type) +
-                    ". Type cannot be changed to " +
-                    ToString(helper::GetDataType<T>()) + "\n");
+                helper::Throw<std::invalid_argument>(
+                    "Core", "IO", "DefineAttribute",
+                    "modifiable attribute " + globalName +
+                        " has been defined with type " +
+                        ToString(itExistingAttribute->second->m_Type) +
+                        ". Type cannot be changed to " +
+                        ToString(helper::GetDataType<T>()));
             }
         }
         return static_cast<Attribute<T> &>(*itExistingAttribute->second);
@@ -175,10 +178,11 @@ IO::DefineAttribute(const std::string &name, const T *array,
     if (!variableName.empty() &&
         InquireVariableType(variableName) == DataType::None)
     {
-        throw std::invalid_argument(
-            "ERROR: variable " + variableName +
-            " doesn't exist, can't associate attribute " + name +
-            ", in call to DefineAttribute");
+        helper::Throw<std::invalid_argument>(
+            "Core", "IO", "DefineAttribute",
+            "variable " + variableName +
+                " doesn't exist, can't associate attribute " + name +
+                ", in call to DefineAttribute");
     }
 
     const std::string globalName =
@@ -207,12 +211,13 @@ IO::DefineAttribute(const std::string &name, const T *array,
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: modifiable attribute " + globalName +
-                    " has been defined with type " +
-                    ToString(itExistingAttribute->second->m_Type) +
-                    ". Type cannot be changed to " +
-                    ToString(helper::GetDataType<T>()) + "\n");
+                helper::Throw<std::invalid_argument>(
+                    "Core", "IO", "DefineAttribute",
+                    "modifiable attribute " + globalName +
+                        " has been defined with type " +
+                        ToString(itExistingAttribute->second->m_Type) +
+                        ". Type cannot be changed to " +
+                        ToString(helper::GetDataType<T>()));
             }
         }
         return static_cast<Attribute<T> &>(*itExistingAttribute->second);

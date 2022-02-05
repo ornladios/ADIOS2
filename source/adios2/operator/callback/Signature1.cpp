@@ -7,7 +7,9 @@
  *  Created on: Oct 19, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
+
 #include "Signature1.h"
+#include "adios2/helper/adiosLog.h"
 
 namespace adios2
 {
@@ -43,9 +45,10 @@ ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)
         }                                                                      \
         else                                                                   \
         {                                                                      \
-            throw std::runtime_error("ERROR: Signature1 with type " +          \
-                                     std::string(#L) +                         \
-                                     " callback function failed\n");           \
+            helper::Throw<std::runtime_error>(                                 \
+                "Operator", "Signature1", "RunCallback1",                      \
+                "Signature1 with type " + std::string(#L) +                    \
+                    " callback function failed");                              \
         }                                                                      \
     }
 ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)

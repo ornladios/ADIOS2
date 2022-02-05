@@ -9,6 +9,7 @@
  */
 
 #include "adiosType.h"
+#include "adiosLog.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm> //std::transform, std::count
@@ -99,7 +100,9 @@ size_t GetDataTypeSize(DataType type)
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-    throw(std::runtime_error("unknown data type"));
+    helper::Throw<std::runtime_error>("Helper", "adiosType", "GetDataTypeSize",
+                                      "unknown data type");
+    return 0;
 }
 
 std::string DimsToCSV(const Dims &dimensions) noexcept
@@ -212,11 +215,13 @@ TimeUnit StringToTimeUnit(const std::string timeUnitString,
     }
     else
     {
-        throw std::invalid_argument("ERROR: invalid value " + timeUnitString +
-                                    " in Parameter key=ProfileUnits, "
-                                    " must be Microseconds, Milliseconds, "
-                                    "Seconds, Minutes or Hours " +
-                                    hint + "\n");
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosType", "StringToTimeUnit",
+            "invalid value " + timeUnitString +
+                " in Parameter key=ProfileUnits, "
+                " must be Microseconds, Milliseconds, "
+                "Seconds, Minutes or Hours " +
+                hint);
     }
     return timeUnit;
 }
@@ -242,8 +247,9 @@ size_t BytesFactor(const std::string units)
     }
     else
     {
-        throw std::invalid_argument("ERROR: units " + units +
-                                    " not supported in call to BytesFactor\n");
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosType", "BytesFactor",
+            "units " + units + " not supported in call to BytesFactor");
     }
     return factor;
 }

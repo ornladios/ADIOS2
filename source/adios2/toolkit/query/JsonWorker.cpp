@@ -58,8 +58,9 @@ void ConstructTree(adios2::query::RangeTree &host, nlohmann::json &opO)
 void LoadVarQuery(QueryVar *q, nlohmann::json &varO)
 {
     if (!adios2::query::JsonUtil::HasEntry(varO, "op"))
-        throw std::ios_base::failure("No op entry specified for var:" +
-                                     q->m_VarName);
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "query::JsonWorker", "LoadVarQuery",
+            "No op entry specified for var:" + q->m_VarName);
 
     if (adios2::query::JsonUtil::HasEntry(varO, "boundingbox"))
     {
@@ -87,12 +88,16 @@ void JsonWorker::ParseJson()
     auto lf_assertArray = [&](nlohmann::json &jsonO,
                               const std::string &name) -> void {
         if (!jsonO.is_array())
-            throw std::ios_base::failure("Expecting Array for node:" + name);
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "query::JsonWorker", "ParseJson",
+                "Expecting Array for node:" + name);
     }; // lf assert
 
     auto lf_parseVar = [&](nlohmann::json &varO) -> QueryVar * {
         if (!adios2::query::JsonUtil::HasEntry(varO, "name"))
-            throw std::ios_base::failure("No var name specified!!");
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "query::JsonWorker", "ParseJson",
+                "No var name specified!!");
         auto varName = (varO)["name"];
         adios2::core::IO &currIO = m_SourceReader->m_IO;
         const DataType varType = currIO.InquireVariableType(varName);
@@ -121,17 +126,19 @@ void JsonWorker::ParseJson()
 
     if (!adios2::query::JsonUtil::HasEntry(jsonObj, "io"))
     {
-        helper::Log("Query", "JsonWorker", "ParseJson",
-                    "No io node in json query file", helper::LogMode::ERROR);
-        throw std::ios_base::failure("Expecting the io node: " +
-                                     m_SourceReader->m_IO.m_Name);
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "query::JsonWorker", "ParseJson",
+            "No io node in json query file. Expecting the io node: " +
+                m_SourceReader->m_IO.m_Name);
     }
 
     auto ioO = jsonObj.find("io");
     std::string const ioName = (*ioO)["name"];
     if (m_SourceReader->m_IO.m_Name.compare(ioName) != 0)
-        throw std::ios_base::failure("invalid query io. Expecting io name = " +
-                                     m_SourceReader->m_IO.m_Name);
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "query::JsonWorker", "ParseJson",
+            "invalid query io. Expecting io name = " +
+                m_SourceReader->m_IO.m_Name);
     if (adios2::query::JsonUtil::HasEntry(*ioO, "var"))
     {
         auto varO = (*ioO).find("var");
@@ -140,8 +147,9 @@ void JsonWorker::ParseJson()
         return;
     }
     if (!adios2::query::JsonUtil::HasEntry(*ioO, "query"))
-        throw std::ios_base::failure(
-            "no query entry was defined for composite query. ");
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "query::JsonWorker", "ParseJson",
+            "no query entry was defined for composite query");
     auto queryO = (*ioO)["query"];
     auto relationO = queryO["op"];
     QueryComposite *result =

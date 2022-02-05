@@ -30,16 +30,19 @@ YAML::Node YAMLNode(const std::string nodeName, const YAML::Node &upperNode,
 
     if (isMandatory && !node)
     {
-        throw std::invalid_argument(
-            "ERROR: YAML: no " + nodeName +
-            " node found, (is your node key lower case?), " + hint);
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosYAML", "YAMLNode",
+            "no " + nodeName + " node found, (is your node key lower case?), " +
+                hint);
     }
     if (node && node.Type() != nodeType)
     {
-        throw std::invalid_argument("ERROR: YAML: node " + nodeName +
-                                    " is the wrong type, review adios2 "
-                                    "config YAML specs for the node, " +
-                                    hint);
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosYAML", "YAMLNode",
+            "node " + nodeName +
+                " is the wrong type, review adios2 "
+                "config YAML specs for the node, " +
+                hint);
     }
     return node;
 }
@@ -54,9 +57,10 @@ Params YAMLNodeMapToParams(const YAML::Node &node, const std::string &hint)
         auto it = parameters.emplace(key, value);
         if (!it.second)
         {
-            throw std::invalid_argument(
-                "ERROR: YAML: found duplicated key : " + key +
-                ", keys must be unique in a YAML node, " + hint);
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosYAML", "YAMLNodeMapToParams",
+                "found duplicated key : " + key +
+                    ", keys must be unique in a YAML node, " + hint);
         }
     }
     return parameters;
@@ -173,11 +177,12 @@ void ParseConfigYAML(core::ADIOS &adios, const std::string &configFileYAML,
 
     if (!document)
     {
-        throw std::invalid_argument(
-            "ERROR: YAML: parser error in file " + configFileYAML +
-            " invalid format check with any YAML editor if format is "
-            "ill-formed, " +
-            hint + "\n");
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosYAML", "ParseConfigYAML",
+            "parser error in file " + configFileYAML +
+                " invalid format check with any YAML editor if format is "
+                "ill-formed, " +
+                hint);
     }
 
     for (auto itNode = document.begin(); itNode != document.end(); ++itNode)

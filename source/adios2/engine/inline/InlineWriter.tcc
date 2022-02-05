@@ -38,8 +38,9 @@ void InlineWriter::PutSyncCommon(Variable<T> &variable, const T *data)
     }
     else
     {
-        throw std::invalid_argument("ERROR: ADIOS Inline Engine: Put Sync is "
-                                    "not supported.");
+        helper::Throw<std::invalid_argument>("Engine", "InlineWriter",
+                                             "PutSyncCommon",
+                                             "Put Sync is not supported.");
     }
 }
 

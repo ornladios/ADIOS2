@@ -494,8 +494,10 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         FFSTypeHandle_from_encode(ReaderFFSContext, (char *)MetadataBlock);
     if (!FFSformat)
     {
-        throw std::logic_error("Internal error or file corruption, no know "
-                               "format for Metadata Block");
+        helper::Throw<std::logic_error>("Toolkit", "format::BP5Deserializer",
+                                        "InstallMetaData",
+                                        "Internal error or file corruption, no "
+                                        "know format for Metadata Block");
     }
     if (!FFShas_conversion(FFSformat))
     {
@@ -743,8 +745,10 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
         FFSTypeHandle_from_encode(ReaderFFSContext, (char *)AttributeBlock);
     if (!FFSformat)
     {
-        throw std::logic_error("Internal error or file corruption, no know "
-                               "format for Attribute Block");
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Deserializer", "InstallAttributeData",
+            "Internal error or file corruption, no know "
+            "format for Attribute Block");
     }
     if (!FFShas_conversion(FFSformat))
     {
@@ -882,16 +886,18 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
         if (variable.m_StepsStart + variable.m_StepsCount >
             variable.m_AvailableStepsCount)
         {
-            throw std::invalid_argument(
-                "ERROR: offset " + std::to_string(variable.m_StepsCount) +
-                " from steps start " + std::to_string(variable.m_StepsStart) +
-                " in variable " + variable.m_Name +
-                " is beyond the largest available step = " +
-                std::to_string(variable.m_AvailableStepsCount +
-                               variable.m_AvailableStepsStart) +
-                ", check Variable SetStepSelection argument stepsCount "
-                "(random access), or "
-                "number of BeginStep calls (streaming), in call to Get");
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::BP5Deserializer", "QueueGet",
+                "offset " + std::to_string(variable.m_StepsCount) +
+                    " from steps start " +
+                    std::to_string(variable.m_StepsStart) + " in variable " +
+                    variable.m_Name +
+                    " is beyond the largest available step = " +
+                    std::to_string(variable.m_AvailableStepsCount +
+                                   variable.m_AvailableStepsStart) +
+                    ", check Variable SetStepSelection argument stepsCount "
+                    "(random access), or "
+                    "number of BeginStep calls (streaming)");
         }
         size_t Step = variable.m_AvailableStepsStart;
         size_t GotCount = 0;
@@ -1897,7 +1903,8 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
     {
         if (VarRec->MinMaxOffset == SIZE_MAX)
         {
-            throw std::logic_error(
+            helper::Throw<std::logic_error>(
+                "Toolkit", "format::BP5Deserializer", "VariableMinMax",
                 "Min or Max requests for Variable for which Min/Max was not "
                 "supplied by the writer.  Specify parameter StatsLevel > 0 to "
                 "include writer-side data statistics.");

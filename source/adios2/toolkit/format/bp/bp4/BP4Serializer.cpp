@@ -49,11 +49,12 @@ void BP4Serializer::MakeHeader(BufferSTL &b, const std::string fileType,
     auto &absolutePosition = b.m_AbsolutePosition;
     if (position > 0)
     {
-        throw std::invalid_argument(
-            "ERROR: BP4Serializer::MakeHeader can only be called for an empty "
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "format::bp::BP4Serializer", "MakeHeader",
+            "can only be called for an empty "
             "buffer. This one for " +
-            fileType + " already has content of " + std::to_string(position) +
-            " bytes.");
+                fileType + " already has content of " +
+                std::to_string(position) + " bytes.");
     }
 
     if (b.GetAvailableSize() < 64)
@@ -68,8 +69,9 @@ void BP4Serializer::MakeHeader(BufferSTL &b, const std::string fileType,
     // byte 0-31: Readable tag
     if (position != m_VersionTagPosition)
     {
-        throw std::runtime_error(
-            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Version Tag "
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP4Serializer", "MakeHeader",
+            "Version Tag "
             "position mismatch");
     }
     std::string versionLongTag("ADIOS-BP v" + majorVersion + "." +
@@ -109,8 +111,9 @@ void BP4Serializer::MakeHeader(BufferSTL &b, const std::string fileType,
     // byte 36: endianness
     if (position != m_EndianFlagPosition)
     {
-        throw std::runtime_error(
-            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Endian Flag "
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP4Serializer", "MakeHeader",
+            "Endian Flag "
             "position mismatch");
     }
     const uint8_t endianness = helper::IsLittleEndian() ? 0 : 1;
@@ -119,8 +122,9 @@ void BP4Serializer::MakeHeader(BufferSTL &b, const std::string fileType,
     // byte 37: BP Version 4
     if (position != m_BPVersionPosition)
     {
-        throw std::runtime_error(
-            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Active Flag "
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP4Serializer", "MakeHeader",
+            "Active Flag "
             "position mismatch");
     }
     const uint8_t version = 4;
@@ -129,8 +133,9 @@ void BP4Serializer::MakeHeader(BufferSTL &b, const std::string fileType,
     // byte 38: Active flag (used in Index Table only)
     if (position != m_ActiveFlagPosition)
     {
-        throw std::runtime_error(
-            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Active Flag "
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP4Serializer", "MakeHeader",
+            "Active Flag "
             "position mismatch");
     }
     const uint8_t activeFlag = (isActive ? 1 : 0);
@@ -726,9 +731,11 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
         }
 
         default:
-            throw std::invalid_argument(
-                "ERROR: type " + std::to_string(dataType) +
-                " not supported in BP4 Metadata Merge\n");
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BP4Serializer",
+                "AggregateCollectiveMetadataIndices",
+                "type " + std::to_string(dataType) +
+                    " not supported in BP4 Metadata Merge");
 
         } // end switch
     };

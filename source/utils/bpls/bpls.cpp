@@ -30,6 +30,8 @@
 
 #include <errno.h>
 
+#include "adios2/helper/adiosLog.h"
+
 #if defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
 #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
 /* pre GCC 4.9 cannot handle the C++ regex implementation. Will use C-lib
@@ -2792,10 +2794,10 @@ bool print_data_xml(const char *s, const size_t length)
     auto parse_result = document.load_buffer(s, length);
     if (!parse_result)
     {
-        /*throw std::invalid_argument(
-            "ERROR: XML: parse error in XML string, description: " +
-            std::string(parse_result.description()) +
-            ", check with any XML editor if format is ill-formed\n ");*/
+        //   helper::Throw<std::invalid_argument>( "Utils", "bpls",
+        //   "print_data_xml", "ERROR: XML: parse error in XML string,
+        //   description: " + std::string(parse_result.description()) + ", check
+        //   with any XML editor if format is ill-formed");
         return true;
     }
     std::cout << std::endl;

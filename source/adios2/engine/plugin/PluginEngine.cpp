@@ -18,6 +18,7 @@
 #include <utility>
 
 #include "adios2/helper/adiosDynamicBinder.h"
+#include "adios2/helper/adiosLog.h"
 
 #include <adios2sys/SystemTools.hxx>
 
@@ -77,8 +78,9 @@ void PluginEngine::Init()
     auto paramPluginLibraryIt = m_IO.m_Parameters.find("PluginLibrary");
     if (paramPluginLibraryIt == m_IO.m_Parameters.end())
     {
-        throw std::invalid_argument(
-            "PluginEngine: PluginLibrary must be specified in "
+        helper::Throw<std::invalid_argument>(
+            "Engine", "PluginEngine", "Init",
+            "PluginLibrary must be specified in "
             "engine parameters if no PluginName "
             "is specified");
     }
@@ -91,18 +93,22 @@ void PluginEngine::Init()
         m_Impl->m_Binder->GetSymbol("EngineCreate"));
     if (!m_Impl->m_HandleCreate)
     {
-        throw std::runtime_error("PluginEngine: Unable to locate "
-                                 "EngineCreate symbol in specified plugin "
-                                 "library");
+        helper::Throw<std::runtime_error>(
+            "Engine", "PluginEngine", "Init",
+            "Unable to locate "
+            "EngineCreate symbol in specified plugin "
+            "library");
     }
 
     m_Impl->m_HandleDestroy = reinterpret_cast<EngineDestroyPtr>(
         m_Impl->m_Binder->GetSymbol("EngineDestroy"));
     if (!m_Impl->m_HandleDestroy)
     {
-        throw std::runtime_error("PluginEngine: Unable to locate "
-                                 "EngineDestroy symbol in specified plugin "
-                                 "library");
+        helper::Throw<std::runtime_error>(
+            "Engine", "PluginEngine", "Init",
+            "Unable to locate "
+            "EngineDestroy symbol in specified plugin "
+            "library");
     }
 }
 

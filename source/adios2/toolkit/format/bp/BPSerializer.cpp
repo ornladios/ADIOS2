@@ -341,9 +341,11 @@ void BPSerializer::UpdateOffsetsInMetadata()
 
             default:
                 // TODO: complex, long double
-                throw std::invalid_argument(
-                    "ERROR: type " + std::to_string(header.DataType) +
-                    " not supported in updating aggregated offsets\n");
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "format::bp::BPSerializer",
+                    "UpdateOffsetsInMetadata",
+                    "type " + std::to_string(header.DataType) +
+                        " not supported in updating aggregated offsets");
 
             } // end switch
         }
@@ -408,9 +410,10 @@ void BPSerializer::MergeSerializeIndices(
         }
 
         default:
-            throw std::invalid_argument(
-                "ERROR: type " + std::to_string(dataType) +
-                " not supported in BP3 Metadata Merge\n");
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BPSerializer", "MergeSerializeIndices",
+                "type " + std::to_string(dataType) +
+                    " not supported in BP3 Metadata Merge");
 
         } // end switch
     };
@@ -451,9 +454,11 @@ void BPSerializer::MergeSerializeIndices(
 
             if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
             {
-                throw std::runtime_error(
-                    "ERROR: invalid data type for variable " + header.Name +
-                    "when writing metadata index\n");
+                helper::Throw<std::runtime_error>(
+                    "Toolkit", "format::bp::BPSerializer",
+                    "MergeSerializeIndices",
+                    "invalid data type for variable " + header.Name +
+                        "when writing metadata index");
             }
 
             // move all positions to headerSize
@@ -568,9 +573,10 @@ void BPSerializer::MergeSerializeIndices(
 
         if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
         {
-            throw std::runtime_error("ERROR: invalid data type for variable " +
-                                     header.Name +
-                                     "when writing collective metadata\n");
+            helper::Throw<std::runtime_error>(
+                "Toolkit", "format::bp::BPSerializer", "MergeSerializeIndices",
+                "invalid data type for variable " + header.Name +
+                    "when writing collective metadata");
         }
 
         // move all positions to headerSize

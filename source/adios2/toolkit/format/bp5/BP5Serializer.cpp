@@ -673,8 +673,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         MetaEntry->Dims = DimCount;
         if (CurDataBuffer == NULL)
         {
-            throw std::logic_error(
-                "BP5Serializer:: Marshall without Prior Init");
+            helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer",
+                                            "Marshal", "without prior Init");
         }
 
         MinMaxStruct MinMax;
@@ -876,7 +876,8 @@ void BP5Serializer::InitStep(BufferV *DataBuffer)
 {
     if (CurDataBuffer != NULL)
     {
-        throw std::logic_error("BP5Serializer:: InitStep without prior close");
+        helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer",
+                                        "InitStep", "without prior Close");
     }
     CurDataBuffer = DataBuffer;
     m_PriorDataBufferSizeTotal = 0;
@@ -886,7 +887,8 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer)
 {
     if (CurDataBuffer == NULL)
     {
-        throw std::logic_error("BP5Serializer:: ReinitStep without prior Init");
+        helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer",
+                                        "ReinitStepData", "without prior Init");
     }
     //  Dump data for externs into iovec
     DumpDeferredBlocks();
@@ -960,8 +962,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
 
     if (CurDataBuffer == NULL)
     {
-        throw std::logic_error(
-            "BP5Serializer:: CloseTimestep without Prior Init");
+        helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer",
+                                        "CloseTimestep", "without prior Init");
     }
 
     //  Dump data for externs into iovec

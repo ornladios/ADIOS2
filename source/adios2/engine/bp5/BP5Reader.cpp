@@ -78,21 +78,23 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (m_OpenMode == Mode::ReadRandomAccess)
     {
-        throw std::logic_error(
-            "ERROR: BeginStep called in random access mode\n");
+        helper::Throw<std::logic_error>(
+            "Engine", "BP5Reader", "BeginStep",
+            "BeginStep called in random access mode");
     }
     if (m_BetweenStepPairs)
     {
-        throw std::logic_error("ERROR: BeginStep() is called a second time "
-                               "without an intervening EndStep()");
+        helper::Throw<std::logic_error>("Engine", "BP5Reader", "BeginStep",
+                                        "BeginStep() is called a second time "
+                                        "without an intervening EndStep()");
     }
 
     if (mode != StepMode::Read)
     {
-        throw std::invalid_argument("ERROR: mode is not supported yet, "
-                                    "only Read is valid for "
-                                    "engine BP5Reader, in call to "
-                                    "BeginStep\n");
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP5Reader", "BeginStep",
+            "mode is not supported yet, only Read is valid for engine "
+            "BP5Reader, in call to BeginStep");
     }
 
     StepStatus status = StepStatus::OK;
@@ -159,12 +161,14 @@ void BP5Reader::EndStep()
 {
     if (m_OpenMode == Mode::ReadRandomAccess)
     {
-        throw std::logic_error("ERROR: EndStep called in random access mode\n");
+        helper::Throw<std::logic_error>("Engine", "BP5Reader", "EndStep",
+                                        "EndStep called in random access mode");
     }
     if (!m_BetweenStepPairs)
     {
-        throw std::logic_error(
-            "ERROR: EndStep() is called without a successful BeginStep()");
+        helper::Throw<std::logic_error>(
+            "Engine", "BP5Reader", "EndStep",
+            "EndStep() is called without a successful BeginStep()");
     }
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Reader::EndStep");
@@ -240,10 +244,11 @@ void BP5Reader::Init()
 {
     if ((m_OpenMode != Mode::Read) && (m_OpenMode != Mode::ReadRandomAccess))
     {
-        throw std::invalid_argument(
-            "ERROR: BPFileReader only "
-            "supports OpenMode::Read or OpenMode::ReadRandomAccess from" +
-            m_Name);
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP5Reader", "Init",
+            "BPFileReader only supports OpenMode::Read or "
+            "OpenMode::ReadRandomAccess from" +
+                m_Name);
     }
 
     // if IO was involved in reading before this flag may be true now
@@ -399,29 +404,33 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
     {
         if (m_Comm.Rank() == 0 && !lasterrmsg.empty())
         {
-            throw std::ios_base::failure("ERROR: File " + m_Name +
-                                         " cannot be opened: " + lasterrmsg);
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP5Reader", "OpenFiles",
+                "File " + m_Name + " cannot be opened: " + lasterrmsg);
         }
         else
         {
-            throw std::ios_base::failure("File " + m_Name +
-                                         " cannot be opened");
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP5Reader", "OpenFiles",
+                "File " + m_Name + " cannot be opened");
         }
     }
     else if (flag == 1)
     {
         if (m_Comm.Rank() == 0)
         {
-            throw std::ios_base::failure(
-                "ERROR: File " + m_Name + " could not be found within the " +
-                std::to_string(timeoutSeconds.count()) +
-                "s timeout: " + lasterrmsg);
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP5Reader", "OpenFiles",
+                "File " + m_Name + " could not be found within the " +
+                    std::to_string(timeoutSeconds.count()) +
+                    "s timeout: " + lasterrmsg);
         }
         else
         {
-            throw std::ios_base::failure(
-                "ERROR: File " + m_Name + " could not be found within the " +
-                std::to_string(timeoutSeconds.count()) + "s timeout");
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP5Reader", "OpenFiles",
+                "File " + m_Name + " could not be found within the " +
+                    std::to_string(timeoutSeconds.count()) + "s timeout");
         }
     }
 
@@ -577,8 +586,9 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
             }
             else
             {
-                throw std::ios_base::failure(
-                    "ERROR: File " + m_Name +
+                helper::Throw<std::ios_base::failure>(
+                    "Engine", "BP5Reader", "InitBuffer",
+                    "File " + m_Name +
                     " was found with an index file but md.0 "
                     "has not contained enough data within "
                     "the specified timeout of " +
@@ -651,11 +661,12 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
 #ifndef ADIOS2_HAVE_ENDIAN_REVERSE
         if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
         {
-            throw std::runtime_error(
-                "ERROR: reader found BigEndian bp file, "
+            helper::Throw<std::runtime_error>(
+                "Engine", "BP5Reader", "ParseMetadataIndex",
+                "reader found BigEndian bp file, "
                 "this version of ADIOS2 wasn't compiled "
                 "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
-                "explicitly, in call to Open\n");
+                "explicitly, in call to Open");
         }
 #endif
 
@@ -668,10 +679,11 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
             buffer, position, m_Minifooter.IsLittleEndian);
         if (m_Minifooter.Version != 5)
         {
-            throw std::runtime_error(
-                "ERROR: ADIOS2 BP5 Engine only supports bp format "
+            helper::Throw<std::runtime_error>(
+                "Engine", "BP5Reader", "ParseMetadataIndex",
+                "ADIOS2 BP5 Engine only supports bp format "
                 "version 5, found " +
-                std::to_string(m_Minifooter.Version) + " version \n");
+                    std::to_string(m_Minifooter.Version) + " version");
         }
 
         // BP minor version, unused
@@ -839,15 +851,16 @@ void BP5Reader::NotifyEngineNoVarsQuery()
 {
     if (!m_BetweenStepPairs)
     {
-        throw std::logic_error(
-            "ERROR: You've called InquireVariable() when the IO is empty and "
+        helper::Throw<std::logic_error>(
+            "Engine", "BP5Reader", "NotifyEngineNoVarsQuery",
+            "You've called InquireVariable() when the IO is empty and "
             "outside a BeginStep/EndStep pair.  If this is code that is newly "
             "transititioning to the BP5 file engine, you may be relying upon "
             "deprecated behaviour.  If you intend to use ADIOS using the "
             "Begin/EndStep interface, move all InquireVariable calls inside "
             "the BeginStep/EndStep pair.  If intending to use random-access "
             "file mode, change your Open() mode parameter to "
-            "Mode::ReadRandomAccess.\n");
+            "Mode::ReadRandomAccess.");
     }
 }
 

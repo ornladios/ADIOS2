@@ -165,8 +165,9 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown BP5 Boolean parameter \"" + value + "\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "BP5Engine", "ParseParams",
+                    "Unknown BP5 Boolean parameter '" + value + "'");
             }
         }
     };
@@ -254,9 +255,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown BP5 BufferVType parameter \"" + value +
-                    "\" (must be \"malloc\" or \"chunk\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "BP5Engine", "ParseParams",
+                    "Unknown BP5 BufferVType parameter \"" + value +
+                        "\" (must be \"malloc\" or \"chunk\"");
             }
         }
     };
@@ -284,10 +286,11 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown BP5 AggregationType parameter \"" + value +
-                    "\" (must be \"auto\", \"everyonewrites\" or "
-                    "\"twolevelshm\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "BP5Engine", "ParseParams",
+                    "Unknown BP5 AggregationType parameter \"" + value +
+                        "\" (must be \"auto\", \"everyonewrites\" or "
+                        "\"twolevelshm\"");
             }
         }
     };
@@ -316,10 +319,12 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown BP5 AsyncWriteMode parameter \"" + value +
-                    "\" (must be \"auto\", \"sync\", \"naive\", \"throttled\" "
-                    "or \"guided\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "BP5Engine", "ParseParams",
+                    "Unknown BP5 AsyncWriteMode parameter \"" + value +
+                        "\" (must be \"auto\", \"sync\", \"naive\", "
+                        "\"throttled\" "
+                        "or \"guided\"");
             }
         }
     };

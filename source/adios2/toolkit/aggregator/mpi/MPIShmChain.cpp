@@ -218,8 +218,9 @@ void MPIShmChain::CreateShm(size_t blocksize, const size_t maxsegmentsize)
 {
     if (!m_Comm.IsMPI())
     {
-        throw std::runtime_error("Coding Error: MPIShmChain::CreateShm was "
-                                 "called with a non-MPI communicator");
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "aggregator::mpi::MPIShmChain", "CreateShm",
+            "called with a non-MPI communicator");
     }
     char *ptr;
     size_t structsize = sizeof(ShmSegment);

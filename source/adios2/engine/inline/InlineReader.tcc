@@ -58,9 +58,9 @@ void InlineReader::Get(core::Variable<T> &variable, T **data) const
 template <class T>
 void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    throw std::runtime_error(
-        "ERROR: ADIOS Inline Engine: GetBlockDeferredCommon "
-        "should be used instead of GetDeferredCommon.");
+    helper::Throw<std::runtime_error>(
+        "Engine", "InlineReader", "GetDeferredCommon",
+        "GetBlockDeferredCommon should be used instead of GetDeferredCommon.");
 }
 
 template <class T>
@@ -69,9 +69,10 @@ InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 {
     if (variable.m_BlockID >= variable.m_BlocksInfo.size())
     {
-        throw std::invalid_argument(
-            "ERROR: selected BlockID " + std::to_string(variable.m_BlockID) +
-            " is above range of available blocks in GetBlockSync\n");
+        helper::Throw<std::invalid_argument>(
+            "Engine", "InlineReader", "GetBlockSyncCommon",
+            "selected BlockID " + std::to_string(variable.m_BlockID) +
+                " is above range of available blocks in GetBlockSync");
     }
     if (m_Verbosity == 5)
     {
@@ -91,9 +92,10 @@ InlineReader::GetBlockDeferredCommon(Variable<T> &variable)
 {
     if (variable.m_BlockID >= variable.m_BlocksInfo.size())
     {
-        throw std::invalid_argument(
-            "ERROR: selected BlockID " + std::to_string(variable.m_BlockID) +
-            " is above range of available blocks in GetBlockSync\n");
+        helper::Throw<std::invalid_argument>(
+            "Engine", "InlineReader", "GetBlockDeferredCommon",
+            "selected BlockID " + std::to_string(variable.m_BlockID) +
+                " is above range of available blocks in GetBlockSync");
     }
     if (m_Verbosity == 5)
     {

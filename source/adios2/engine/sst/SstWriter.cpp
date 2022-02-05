@@ -127,8 +127,9 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     m_WriterStep++;
     if (m_BetweenStepPairs)
     {
-        throw std::logic_error("ERROR: BeginStep() is called a second time "
-                               "without an intervening EndStep()");
+        helper::Throw<std::logic_error>("Engine", "SstWriter", "BeginStep",
+                                        "BeginStep() is called a second time "
+                                        "without an intervening EndStep()");
     }
 
     m_BetweenStepPairs = true;
@@ -244,8 +245,9 @@ void SstWriter::EndStep()
     PERFSTUBS_SCOPED_TIMER_FUNC();
     if (!m_BetweenStepPairs)
     {
-        throw std::logic_error(
-            "ERROR: EndStep() is called without a successful BeginStep()");
+        helper::Throw<std::logic_error>(
+            "Engine", "SstWriter", "EndStep",
+            "EndStep() is called without a successful BeginStep()");
     }
     m_BetweenStepPairs = false;
     if (m_WriterDefinitionsLocked && !m_DefinitionsNotified)
@@ -378,9 +380,11 @@ void SstWriter::Init()
 
     if (Params.verbose < 0 || Params.verbose > 5)
     {
-        throw std::invalid_argument("ERROR: Method verbose argument must be an "
-                                    "integer in the range [0,5], in call to "
-                                    "Open or Engine constructor\n");
+        helper::Throw<std::invalid_argument>(
+            "Engine", "SstWriter", "Init",
+            "ERROR: Method verbose argument must be an "
+            "integer in the range [0,5], in call to "
+            "Open or Engine constructor\n");
     }
 }
 

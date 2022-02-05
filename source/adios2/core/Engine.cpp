@@ -198,9 +198,10 @@ size_t Engine::DoSteps() const
 // PRIVATE
 void Engine::ThrowUp(const std::string function) const
 {
-    throw std::invalid_argument("ERROR: Engine derived class " + m_EngineType +
-                                " doesn't implement function " + function +
-                                "\n");
+    helper::Throw<std::invalid_argument>(
+        "Core", "Engine", "ThrowUp",
+        "Engine derived class " + m_EngineType +
+            " doesn't implement function " + function);
 }
 
 void Engine::CheckOpenModes(const std::set<Mode> &modes,
@@ -208,8 +209,9 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
 {
     if (modes.count(m_OpenMode) == 0)
     {
-        throw std::invalid_argument(
-            "ERROR: Engine Open Mode not valid for function, " + hint);
+        helper::Throw<std::invalid_argument>(
+            "Core", "Engine", "CheckOpenModes",
+            "Engine Open Mode not valid for function, " + hint);
     }
 }
 

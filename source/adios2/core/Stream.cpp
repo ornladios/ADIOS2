@@ -91,10 +91,12 @@ void Stream::EndStep()
     }
     else
     {
-        throw std::invalid_argument("ERROR: stream " + m_Name +
-                                    " calling end step function twice (check "
-                                    "if a write function calls it) or "
-                                    "invalid stream\n");
+        helper::Throw<std::invalid_argument>(
+            "Core", "Stream", "EndStep",
+            "stream " + m_Name +
+                " calling end step function twice (check "
+                "if a write function calls it) or "
+                "invalid stream");
     }
 }
 
@@ -117,9 +119,11 @@ size_t Stream::CurrentStep() const
 
     if (m_Engine == nullptr)
     {
-        throw std::invalid_argument("ERROR: stream with name " + m_Name +
-                                    "is invalid or closed, in call "
-                                    "to CurrentStep");
+        helper::Throw<std::invalid_argument>(
+            "Core", "Stream", "CurrentStep",
+            "stream with name " + m_Name +
+                "is invalid or closed, in call "
+                "to CurrentStep");
     }
 
     return m_Engine->CurrentStep();

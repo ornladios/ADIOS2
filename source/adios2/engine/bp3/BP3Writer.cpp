@@ -213,9 +213,11 @@ void BP3Writer::InitBPBuffer()
 {
     if (m_OpenMode == Mode::Append)
     {
-        throw std::invalid_argument("ADIOS2: Mode::Append is only available in "
-                                    "BP4; it is not implemented "
-                                    "for BP3 files.");
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP3Writer", "InitBPBuffer",
+            "Mode::Append is only available in "
+            "BP4; it is not implemented "
+            "for BP3 files.");
         // TODO: Get last pg timestep and update timestep counter in
     }
     else

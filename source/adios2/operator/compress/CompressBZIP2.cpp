@@ -66,12 +66,13 @@ size_t CompressBZIP2::Operate(const char *dataIn, const Dims &blockStart,
                                      hint);
         if (blockSize100k < 1 || blockSize100k > 9)
         {
-            throw std::invalid_argument(
-                "ERROR: BlockSize100K must be an "
+            helper::Throw<std::invalid_argument>(
+                "Operator", "CompressBZIP2", "Operate",
+                "BlockSize100K must be an "
                 "integer between 1 (less "
                 "compression, less memory) and 9 "
                 "(more compression, more memory) inclusive, " +
-                hint);
+                    hint);
         }
     }
 
@@ -133,7 +134,9 @@ size_t CompressBZIP2::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        throw("unknown bzip2 buffer version");
+        helper::Throw<std::runtime_error>("Operator", "CompressBZIP2",
+                                          "InverseOperate",
+                                          "unknown bzip2 buffer version");
     }
 
     return 0;
@@ -193,7 +196,9 @@ size_t CompressBZIP2::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     if (expectedSizeOut != sizeOut)
     {
-        throw("corrupted bzip2 buffer");
+        helper::Throw<std::runtime_error>("Operator", "CompressBZIP2",
+                                          "DecompressV1",
+                                          "corrupted bzip2 buffer");
     }
 
     return sizeOut;
@@ -204,43 +209,54 @@ void CompressBZIP2::CheckStatus(const int status, const std::string hint) const
     switch (status)
     {
     case (BZ_CONFIG_ERROR):
-        throw std::invalid_argument(
-            "ERROR: BZ_CONFIG_ERROR, BZIP2 library is not configured "
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressBZIP2", "CheckStatus",
+            "BZ_CONFIG_ERROR, BZIP2 library is not configured "
             "correctly" +
-            hint);
+                hint);
 
     case (BZ_PARAM_ERROR):
-        throw std::invalid_argument(
-            "ERROR: BZ_PARAM_ERROR bufferOut stream might be null" + hint);
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressBZIP2", "CheckStatus",
+            "BZ_PARAM_ERROR bufferOut stream might be null" + hint);
 
     case (BZ_MEM_ERROR):
-        throw std::ios_base::failure(
-            "ERROR: BZ_MEM_ERROR BZIP2 detected insufficient memory " + hint);
+        helper::Throw<std::ios_base::failure>(
+            "Operator", "CompressBZIP2", "CheckStatus",
+            "BZ_MEM_ERROR BZIP2 detected insufficient memory " + hint);
 
     case (BZ_OUTBUFF_FULL):
-        throw std::ios_base::failure("ERROR: BZ_OUTBUFF_FULL BZIP2 detected "
-                                     "size of compressed data is larger than "
-                                     "destination length " +
-                                     hint);
+        helper::Throw<std::ios_base::failure>(
+            "Operator", "CompressBZIP2", "CheckStatus",
+            "BZ_OUTBUFF_FULL BZIP2 detected "
+            "size of compressed data is larger than "
+            "destination length " +
+                hint);
 
     // decompression
     case (BZ_DATA_ERROR):
-        throw std::invalid_argument("ERROR: BZ_DATA_ERROR, BZIP2 library "
-                                    "detected integrity errors in compressed "
-                                    "data " +
-                                    hint);
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressBZIP2", "CheckStatus",
+            "BZ_DATA_ERROR, BZIP2 library "
+            "detected integrity errors in compressed "
+            "data " +
+                hint);
 
     case (BZ_DATA_ERROR_MAGIC):
-        throw std::invalid_argument("ERROR: BZ_DATA_ERROR_MAGIC, BZIP2 library "
-                                    "detected wrong magic numbers in "
-                                    "compressed data " +
-                                    hint);
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressBZIP2", "CheckStatus",
+            "BZ_DATA_ERROR_MAGIC, BZIP2 library "
+            "detected wrong magic numbers in "
+            "compressed data " +
+                hint);
 
     case (BZ_UNEXPECTED_EOF):
-        throw std::invalid_argument("ERROR: BZ_UNEXPECTED_EOF, BZIP2 library "
-                                    "detected unexpected end of "
-                                    "compressed data " +
-                                    hint);
+        helper::Throw<std::invalid_argument>("Operator", "CompressBZIP2",
+                                             "CheckStatus",
+                                             "BZ_UNEXPECTED_EOF, BZIP2 library "
+                                             "detected unexpected end of "
+                                             "compressed data " +
+                                                 hint);
     default:
         break;
     }

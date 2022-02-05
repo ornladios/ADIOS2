@@ -102,11 +102,12 @@ void BP4Deserializer::ParseMetadataIndex(BufferSTL &bufferSTL,
 #ifndef ADIOS2_HAVE_ENDIAN_REVERSE
         if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
         {
-            throw std::runtime_error(
-                "ERROR: reader found BigEndian bp file, "
+            helper::Throw<std::runtime_error>(
+                "Toolkit", "format::bp::BP4Deserializer", "ParseMetadataIndex",
+                "reader found BigEndian bp file, "
                 "this version of ADIOS2 wasn't compiled "
                 "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
-                "explicitly, in call to Open\n");
+                "explicitly, in call to Open");
         }
 #endif
 
@@ -119,10 +120,11 @@ void BP4Deserializer::ParseMetadataIndex(BufferSTL &bufferSTL,
             buffer, position, m_Minifooter.IsLittleEndian);
         if (m_Minifooter.Version != 4)
         {
-            throw std::runtime_error(
-                "ERROR: ADIOS2 BP4 Engine only supports bp format "
+            helper::Throw<std::runtime_error>(
+                "Toolkit", "format::bp::BP4Deserializer", "ParseMetadataIndex",
+                "ADIOS2 BP4 Engine only supports bp format "
                 "version 4, found " +
-                std::to_string(m_Minifooter.Version) + " version \n");
+                    std::to_string(m_Minifooter.Version) + " version");
         }
 
         // Writer active flag
@@ -226,10 +228,10 @@ const helper::BlockOperationInfo &BP4Deserializer::InitPostOperatorBlockData(
     m_Minifooter.Version = helper::ReadValue<uint8_t>(buffer, position);
     if (m_Minifooter.Version < 3)
     {
-        throw std::runtime_error("ERROR: ADIOS2 only supports bp format "
-                                 "version 3 and above, found " +
-                                 std::to_string(m_Minifooter.Version) +
-                                 " version \n");
+        helper::Throw<std::runtime_error>( "Toolkit",
+"format::bp::BP4Deserializer", "ParseMinifooter", "ADIOS2 only supports bp
+format " "version 3 and above, found " + std::to_string(m_Minifooter.Version) +
+                                 " version ");
     }
 
     position = bufferSize - m_MetadataSet.MiniFooterSize;
@@ -657,8 +659,9 @@ bool BP4Deserializer::ReadActiveFlag(std::vector<char> &buffer)
 {
     if (buffer.size() < m_ActiveFlagPosition)
     {
-        throw std::runtime_error("BP4Deserializer::ReadActiveFlag() is called "
-                                 "with a buffer smaller than required");
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP4Deserializer", "ReadActiveFlag",
+            "called with a buffer smaller than required");
     }
     // Writer active flag
     size_t position = m_ActiveFlagPosition;

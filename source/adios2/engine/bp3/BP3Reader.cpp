@@ -35,25 +35,28 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     PERFSTUBS_SCOPED_TIMER("BP3Reader::BeginStep");
     if (mode != StepMode::Read)
     {
-        throw std::invalid_argument(
-            "ERROR: mode is not supported yet, "
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP3Reader", "BeginStep",
+            "mode is not supported yet, "
             "only Read is valid for "
             "engine BP3 with adios2::Mode::Read, in call to "
-            "BeginStep\n");
+            "BeginStep");
     }
 
     if (!m_BP3Deserializer.m_DeferredVariables.empty())
     {
-        throw std::invalid_argument(
-            "ERROR: existing variables subscribed with "
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP3Reader", "BeginStep",
+            "existing variables subscribed with "
             "GetDeferred, did you forget to call "
-            "PerformGets() or EndStep()?, in call to BeginStep\n");
+            "PerformGets() or EndStep()?, in call to BeginStep");
     }
 
     if (m_BetweenStepPairs)
     {
-        throw std::logic_error("ERROR: BeginStep() is called a second time "
-                               "without an intervening EndStep()");
+        helper::Throw<std::logic_error>("Engine", "BP3Reader", "BeginStep",
+                                        "BeginStep() is called a second time "
+                                        "without an intervening EndStep()");
     }
 
     m_BetweenStepPairs = true;
@@ -87,8 +90,9 @@ void BP3Reader::EndStep()
 {
     if (!m_BetweenStepPairs)
     {
-        throw std::logic_error(
-            "ERROR: EndStep() is called without a successful BeginStep()");
+        helper::Throw<std::logic_error>(
+            "Engine", "BP3Reader", "EndStep",
+            "EndStep() is called without a successful BeginStep()");
     }
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP3Reader::EndStep");
@@ -134,8 +138,9 @@ void BP3Reader::Init()
 {
     if (m_OpenMode != Mode::Read)
     {
-        throw std::invalid_argument(
-            "ERROR: BPFileReader only supports OpenMode::Read from" + m_Name);
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP3Reader", "Init",
+            "BPFileReader only supports OpenMode::Read from" + m_Name);
     }
 
     // if IO was involved in reading before this flag may be true now
@@ -191,7 +196,7 @@ void BP3Reader::InitBuffer()
                               "size, which is " +
                               std::to_string(miniFooterSize) + " bytes." +
                               " It is unlikely that this is a .bp file.";
-            throw std::logic_error(err);
+            helper::Throw<std::logic_error>("Engine", "BP3Reader", "Init", err);
         }
         const size_t miniFooterStart =
             helper::GetDistance(fileSize, miniFooterSize,

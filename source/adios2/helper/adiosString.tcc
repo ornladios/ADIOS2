@@ -16,6 +16,8 @@
 #include <algorithm> //std::transform
 #include <iterator>  //std::inserter
 
+#include "adios2/helper/adiosLog.h"
+
 namespace adios2
 {
 namespace helper
@@ -55,9 +57,10 @@ bool StringTo(const std::string &input, const std::string &hint)
     }
     else
     {
-        throw std::invalid_argument(
-            "ERROR: invalid input value: " + input +
-            " for on/off or true/false bool conversion " + hint + "\n");
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosString", "StringTo",
+            "invalid input value: " + input +
+                " for on/off or true/false bool conversion " + hint);
     }
     return result;
 }
@@ -72,9 +75,11 @@ int32_t StringTo(const std::string &input, const std::string &hint)
     }
     catch (...)
     {
-        std::throw_with_nested(std::invalid_argument(
-            "ERROR: could not cast " + input + " to int32_t " + hint));
+        helper::ThrowNested<std::invalid_argument>(
+            "Helper", "adiosString", "StringTo",
+            "could not cast " + input + " to int32_t " + hint);
     }
+    return 0;
 }
 
 template <>
@@ -87,9 +92,11 @@ uint32_t StringTo(const std::string &input, const std::string &hint)
     }
     catch (...)
     {
-        std::throw_with_nested(std::invalid_argument(
-            "ERROR: could not cast " + input + " to uint32_t " + hint));
+        helper::ThrowNested<std::invalid_argument>(
+            "Helper", "adiosString", "StringTo",
+            "could not cast " + input + " to uint32_t " + hint);
     }
+    return 0;
 }
 
 template <>
@@ -102,9 +109,11 @@ int64_t StringTo(const std::string &input, const std::string &hint)
     }
     catch (...)
     {
-        std::throw_with_nested(std::invalid_argument(
-            "ERROR: could not cast " + input + " to int64_t " + hint));
+        helper::ThrowNested<std::invalid_argument>(
+            "Helper", "adiosString", "StringTo",
+            "could not cast " + input + " to int64_t " + hint);
     }
+    return 0;
 }
 
 template <>
@@ -117,9 +126,11 @@ uint64_t StringTo(const std::string &input, const std::string &hint)
     }
     catch (...)
     {
-        std::throw_with_nested(std::invalid_argument(
-            "ERROR: could not cast " + input + " to uint64_t " + hint));
+        helper::ThrowNested<std::invalid_argument>(
+            "Helper", "adiosString", "StringTo",
+            "could not cast " + input + " to uint64_t " + hint);
     }
+    return 0;
 }
 
 template <>
@@ -132,9 +143,11 @@ float StringTo(const std::string &input, const std::string &hint)
     }
     catch (...)
     {
-        std::throw_with_nested(std::invalid_argument(
-            "ERROR: could not cast " + input + " to float " + hint));
+        helper::ThrowNested<std::invalid_argument>(
+            "Helper", "adiosString", "StringTo",
+            "could not cast " + input + " to float " + hint);
     }
+    return 0;
 }
 
 template <>
@@ -147,9 +160,11 @@ double StringTo(const std::string &input, const std::string &hint)
     }
     catch (...)
     {
-        std::throw_with_nested(std::invalid_argument(
-            "ERROR: could not cast " + input + " to double " + hint));
+        helper::ThrowNested<std::invalid_argument>(
+            "Helper", "adiosString", "StringTo",
+            "could not cast " + input + " to double " + hint);
     }
+    return 0;
 }
 
 } // end namespace helper

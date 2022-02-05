@@ -13,6 +13,7 @@
 
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosLog.h"
 #include <mpi.h>
 #include <unordered_map>
 #include <vector>
@@ -59,7 +60,8 @@ public:
         }
         if (m_Buffer == nullptr)
         {
-            throw("ssc buffer realloc failed");
+            helper::Throw<std::runtime_error>("Engine", "SscHelper", "resize",
+                                              "ssc buffer realloc failed");
         }
     }
     template <typename T>

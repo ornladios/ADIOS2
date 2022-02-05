@@ -223,8 +223,9 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
 
     if (status < 0)
     {
-        throw std::ios_base::failure(
-            "ERROR: HDF5 file Write failed, in call to Write\n");
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "interop::hdf5::HDF5Common", "Write",
+            "HDF5 file Write failed");
     }
 
 #ifdef NO_STAT

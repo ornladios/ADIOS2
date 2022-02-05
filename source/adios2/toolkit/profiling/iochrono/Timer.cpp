@@ -69,8 +69,9 @@ int64_t Timer::GetElapsedTime()
 {
     if (!m_InitialTimeSet)
     {
-        throw std::invalid_argument("ERROR: Resume() in process " + m_Process +
-                                    " not called\n");
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "profiling::iochrono::Timer", "GetElapsedTime",
+            "Resume() in process " + m_Process + " not called");
     }
 
     int64_t time = -1;

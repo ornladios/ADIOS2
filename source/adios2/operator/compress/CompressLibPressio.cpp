@@ -69,7 +69,10 @@ static pressio_dtype adios_to_libpressio_dtype(DataType var_type)
     {
         return pressio_uint64_dtype;
     }
-    throw std::runtime_error("libpressio: unexpected datatype");
+    helper::Throw<std::runtime_error>("Operator", "CompressLibPressio",
+                                      "adios_to_libpressio_dtype",
+                                      "unexpected datatype");
+    return pressio_byte_dtype;
 }
 
 static std::vector<size_t> adios_to_libpressio_dims(Dims const &dims)
@@ -124,14 +127,18 @@ pressio_param parse_adios_config_entry(std::string const &key)
                 auto digit_len = key.find_first_of(']', current);
                 if (digit_len == std::string::npos)
                 {
-                    throw std::invalid_argument("invalid substr");
+                    helper::Throw<std::invalid_argument>(
+                        "Operator", "CompressLibPressio",
+                        "parse_adios_config_entry", "invalid substr");
                 }
                 p.index =
                     stoll(key.substr(current + 1, digit_len - (current + 1)));
                 current = digit_len + 2;
                 if (key.at(digit_len + 1) != ':')
                 {
-                    throw std::invalid_argument("missing expected :");
+                    helper::Throw<std::invalid_argument>(
+                        "Operator", "CompressLibPressio",
+                        "parse_adios_config_entry", "missing expected :");
                 }
             }
             else
@@ -165,8 +172,10 @@ static pressio_compressor *adios_to_libpressio_compressor(Params const &params)
         pressio_release(instance);
         if (compressor == nullptr)
         {
-            throw std::runtime_error("compressor unavailable: " +
-                                     compressor_it->second);
+            helper::Throw<std::runtime_error>("Operator", "CompressLibPressio",
+                                              "adios_to_libpressio_compressor",
+                                              "compressor unavailable: " +
+                                                  compressor_it->second);
         }
 
         // adios parameters have unique names and must have string type
@@ -192,8 +201,10 @@ static pressio_compressor *adios_to_libpressio_compressor(Params const &params)
                 continue;
             case pressio_param::type::malformed:
                 pressio_compressor_release(compressor);
-                throw std::runtime_error("malformed parameter name " +
-                                         param.first);
+                helper::Throw<std::runtime_error>(
+                    "Operator", "CompressLibPressio",
+                    "adios_to_libpressio_compressor",
+                    "malformed parameter name " + param.first);
             }
 
             if (parsed.has_index)
@@ -264,11 +275,17 @@ static pressio_compressor *adios_to_libpressio_compressor(Params const &params)
             case pressio_options_key_exists:
                 pressio_options_free(compressor_options);
                 pressio_compressor_release(compressor);
-                throw std::runtime_error("enable to convert " + entry.first);
+                helper::Throw<std::runtime_error>(
+                    "Operator", "CompressLibPressio",
+                    "adios_to_libpressio_compressor",
+                    "enable to convert " + entry.first);
             case pressio_options_key_does_not_exist:
                 pressio_options_free(compressor_options);
                 pressio_compressor_release(compressor);
-                throw std::runtime_error("unexpected option " + entry.first);
+                helper::Throw<std::runtime_error>(
+                    "Operator", "CompressLibPressio",
+                    "adios_to_libpressio_compressor",
+                    "unexpected option " + entry.first);
             }
             pressio_option_free(option);
         }
@@ -277,7 +294,10 @@ static pressio_compressor *adios_to_libpressio_compressor(Params const &params)
 
         return compressor;
     }
-    throw std::runtime_error("missing required \"compressor_id\" setting");
+    helper::Throw<std::runtime_error>(
+        "Operator", "CompressLibPressio", "adios_to_libpressio_compressor",
+        "missing required \"compressor_id\" setting");
+    return 0;
 }
 
 CompressLibPressio::CompressLibPressio(const Params &parameters)
@@ -326,15 +346,19 @@ size_t CompressLibPressio::Operate(const char *dataIn, const Dims &blockStart,
     {
         pressio_data_free(input_buf);
         pressio_data_free(output_buf);
-        throw;
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressLibPressio", "Operate",
+            "adios_to_libpressio_compressor failed");
     }
 
     if (pressio_compressor_compress(compressor, input_buf, output_buf) != 0)
     {
         pressio_data_free(input_buf);
         pressio_data_free(output_buf);
-        throw std::runtime_error(std::string("pressio_compressor_compress: ") +
-                                 pressio_compressor_error_msg(compressor));
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressLibPressio", "Operate",
+            "pressio_compressor_compress: " +
+                std::string(pressio_compressor_error_msg(compressor)));
     }
 
     size_t size_in_bytes = 0;
@@ -368,7 +392,9 @@ size_t CompressLibPressio::InverseOperate(const char *bufferIn,
     }
     else
     {
-        throw("unknown LibPressio buffer version");
+        helper::Throw<std::runtime_error>("Operator", "CompressLibPressio",
+                                          "InverseOperate",
+                                          "unknown LibPressio buffer version");
     }
 
     return 0;
@@ -430,16 +456,18 @@ size_t CompressLibPressio::DecompressV1(const char *bufferIn,
     {
         pressio_data_free(input_buf);
         pressio_data_free(output_buf);
-        throw std::runtime_error(m_VersionInfo + "\n");
+        helper::Throw<std::runtime_error>("Operator", "CompressLibPressio",
+                                          "DecompressV1", m_VersionInfo);
     }
 
     if (pressio_compressor_decompress(compressor, input_buf, output_buf) != 0)
     {
         pressio_data_free(input_buf);
         pressio_data_free(output_buf);
-        throw std::runtime_error(
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressLibPressio", "DecompressV1",
             std::string("pressio_compressor_decompress: ") +
-            pressio_compressor_error_msg(compressor) + m_VersionInfo + "\n");
+                pressio_compressor_error_msg(compressor) + m_VersionInfo);
     }
 
     size_t size_in_bytes = 0;

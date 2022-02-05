@@ -55,10 +55,11 @@ void HDF5WriterP::Init()
 {
     if (m_OpenMode != Mode::Write && m_OpenMode != Mode::Append)
     {
-        throw std::invalid_argument(
-            "ERROR: HDF5Writer only support OpenMode::Write or "
+        helper::Throw<std::invalid_argument>(
+            "Engine", "HDF5WriterP", "Init",
+            "HDF5Writer only support OpenMode::Write or "
             "OpenMode::Append "
-            ", in call to ADIOS Open or HDF5Writer constructor\n");
+            ", in call to ADIOS Open or HDF5Writer constructor");
     }
 
     if (m_OpenMode == Mode::Append)

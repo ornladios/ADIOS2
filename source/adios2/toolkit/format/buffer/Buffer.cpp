@@ -9,6 +9,7 @@
  */
 
 #include "Buffer.h"
+#include "adios2/helper/adiosLog.h"
 
 namespace adios2
 {
@@ -22,14 +23,16 @@ Buffer::Buffer(const std::string type, const size_t fixedSize)
 
 void Buffer::Resize(const size_t size, const std::string hint)
 {
-    throw std::invalid_argument("ERROR: buffer memory of type " + m_Type +
-                                " can't call Resize " + hint + "\n");
+    helper::Throw<std::invalid_argument>("Toolkit", "format::Buffer", "Resize",
+                                         "buffer memory of type " + m_Type +
+                                             " can't call Resize " + hint);
 }
 
 void Buffer::Reset(const bool resetAbsolutePosition, const bool zeroInitialize)
 {
-    throw std::invalid_argument("ERROR: buffer memory of type " + m_Type +
-                                " can't call Reset\n");
+    helper::Throw<std::invalid_argument>("Toolkit", "format::Buffer", "Reset",
+                                         "buffer memory of type " + m_Type +
+                                             " can't call Reset");
 }
 
 char *Buffer::Data() noexcept { return nullptr; }
@@ -47,8 +50,9 @@ size_t Buffer::GetAvailableSize() const
 
 void Buffer::Delete()
 {
-    throw std::invalid_argument("ERROR: buffer memory of type " + m_Type +
-                                " can't call Delete\n");
+    helper::Throw<std::invalid_argument>("Toolkit", "format::Buffer", "Delete",
+                                         "buffer memory of type " + m_Type +
+                                             " can't call Delete");
 }
 
 } // end namespace format

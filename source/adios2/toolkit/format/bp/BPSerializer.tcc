@@ -248,9 +248,11 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         }
         default:
         {
-            throw std::invalid_argument(
-                "ERROR: characteristic ID " + std::to_string(id) +
-                " not supported when updating offsets\n");
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BPSerializer",
+                "UpdateIndexOffsetsCharacteristics",
+                "characteristic ID " + std::to_string(id) +
+                    " not supported when updating offsets");
         }
 
         } // end id switch

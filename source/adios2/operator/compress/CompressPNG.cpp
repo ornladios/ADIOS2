@@ -71,11 +71,12 @@ size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
 
     if (ndims != 3 && ndims != 2)
     {
-        throw std::invalid_argument(
-            "ERROR: image number of dimensions " + std::to_string(ndims) +
-            " is invalid, must be 2 {height,width*bytes_per_pixel} or 3"
-            " {height,width,bytes_per_pixel]} , in call to ADIOS2 PNG "
-            " compression\n");
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressPNG", "Operate",
+            "image number of dimensions " + std::to_string(ndims) +
+                " is invalid, must be 2 {height,width*bytes_per_pixel} or 3"
+                " {height,width,bytes_per_pixel]} , in call to ADIOS2 PNG "
+                " compression");
     }
 
     // defaults
@@ -96,12 +97,13 @@ size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
 
             if (compressionLevel < 1 || compressionLevel > 9)
             {
-                throw std::invalid_argument(
-                    "ERROR: compression_level must be an "
+                helper::Throw<std::invalid_argument>(
+                    "Operator", "CompressPNG", "Operate",
+                    "compression_level must be an "
                     "integer between 1 (less "
                     "compression, less memory) and 9 "
                     "(more compression, more memory) inclusive, in call to "
-                    "ADIOS2 PNG Compress\n");
+                    "ADIOS2 PNG Compress");
             }
         }
         else if (key == "color_type")
@@ -110,9 +112,10 @@ size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
 
             if (itColorType == m_ColorTypes.end())
             {
-                throw std::invalid_argument(
-                    "ERROR: invalid color_type, see PNG_COLOR_TYPE_* for "
-                    "available types, in call to ADIOS2 PNG Compress\n");
+                helper::Throw<std::invalid_argument>(
+                    "Operator", "CompressPNG", "Operate",
+                    "invalid color_type, see PNG_COLOR_TYPE_* for "
+                    "available types, in call to ADIOS2 PNG Compress");
             }
 
             colorTypeStr = itColorType->first;
@@ -127,11 +130,12 @@ size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
 
     if (m_BitDepths.at(colorTypeStr).count(static_cast<int32_t>(bitDepth)) == 0)
     {
-        throw std::invalid_argument(
-            "ERROR: bit_depth " + std::to_string(bitDepth) +
-            " and color_type " + colorTypeStr +
-            " combination is not allowed by libpng, in call to ADIOS2 PNG "
-            "compression\n");
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressPNG", "Operate",
+            "bit_depth " + std::to_string(bitDepth) + " and color_type " +
+                colorTypeStr +
+                " combination is not allowed by libpng, in call to ADIOS2 PNG "
+                "compression");
     }
 
     png_structp pngWrite = png_create_write_struct(PNG_LIBPNG_VER_STRING,
@@ -151,8 +155,9 @@ size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
 
     if (setjmp(png_jmpbuf(pngWrite)))
     {
-        throw std::invalid_argument(
-            "ERROR: libpng detected an error in ADIOS2 PNG Compress\n");
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressPNG", "Operate",
+            "libpng detected an error in ADIOS2 PNG Compress");
     }
 
     png_set_compression_level(pngWrite, compressionLevel);
@@ -210,7 +215,9 @@ size_t CompressPNG::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        throw("unknown png buffer version");
+        helper::Throw<std::invalid_argument>("Operator", "CompressPNG",
+                                             "InverseOperate",
+                                             "unknown png buffer version");
     }
 
     return 0;
@@ -245,20 +252,22 @@ size_t CompressPNG::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     if (result == 0)
     {
-        throw std::runtime_error(
-            "ERROR: png_image_begin_read_from_memory failed in call "
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressPNG", "DecompressV1",
+            "png_image_begin_read_from_memory failed in call "
             "to ADIOS2 PNG Decompress." +
-            m_VersionInfo + "\n");
+                m_VersionInfo);
     }
 
     // TODO might be needed from parameters?
     result = png_image_finish_read(&image, nullptr, dataOut, 0, nullptr);
     if (result == 0)
     {
-        throw std::runtime_error(
-            "ERROR: png_image_finish_read_from_memory failed in call "
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressPNG", "DecompressV1",
+            "png_image_finish_read_from_memory failed in call "
             "to ADIOS2 PNG Decompress." +
-            m_VersionInfo + "\n");
+                m_VersionInfo);
     }
     return outSize;
 }

@@ -14,6 +14,7 @@
 #include "Stream.h"
 
 #include "adios2/core/Variable.h"
+#include "adios2/helper/adiosLog.h"
 
 namespace adios2
 {
@@ -322,9 +323,10 @@ void Stream::CheckPCommon(const std::string &name, const T *values) const
 {
     if (values == nullptr)
     {
-        throw std::runtime_error(
-            "ERROR: passed null values pointer for variable " + name +
-            ", in call to read pointer\n");
+        helper::Throw<std::runtime_error>(
+            "Core", "Stream", "CheckPCommon",
+            "passed null values pointer for variable " + name +
+                ", in call to read pointer");
     }
 }
 
@@ -340,10 +342,11 @@ void Stream::SetBlockSelectionCommon(Variable<T> &variable,
     {
         if (blockID != 0)
         {
-            throw std::invalid_argument(
-                "ERROR: in variable " + variable.m_Name +
-                " only set blockID > 0 for variables "
-                "with ShapeID::LocalArray, in call to read\n");
+            helper::Throw<std::invalid_argument>(
+                "Core", "Stream", "SetBlockSelectionCommon",
+                "in variable " + variable.m_Name +
+                    " only set blockID > 0 for variables "
+                    "with ShapeID::LocalArray, in call to read");
         }
     }
 }

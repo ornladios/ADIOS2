@@ -25,6 +25,13 @@ if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
   target_sources(adios_iotest PRIVATE hdf5Stream.cpp)
 
   target_link_libraries(adios_iotest ${HDF5_C_LIBRARIES})
+
+  if(ADIOS2_HAVE_MPI)
+    target_link_libraries(adios_iotest ${HDF5_C_LIBRARIES} adios2_core_mpi)
+  else()
+    target_link_libraries(adios_iotest ${HDF5_C_LIBRARIES} adios2_core)
+  endif()
+
 endif()
 
 

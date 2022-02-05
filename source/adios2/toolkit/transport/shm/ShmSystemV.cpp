@@ -9,6 +9,7 @@
  */
 
 #include "ShmSystemV.h"
+#include "adios2/helper/adiosLog.h"
 
 #include <cstring> //std::memcpy
 
@@ -28,8 +29,9 @@ ShmSystemV::ShmSystemV(const unsigned int projectID, const size_t size,
 {
     if (projectID == 0)
     {
-        throw std::invalid_argument(
-            "ERROR: projectID can't be zero, in shared memory segment\n");
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::shm::ShmSystemV", "ShmSystemV",
+            "projectID can't be zero, in shared memory segment");
     }
 }
 
@@ -77,9 +79,9 @@ void ShmSystemV::Open(const std::string &name, const Mode openMode,
         break;
 
     default:
-        throw std::invalid_argument(
-            "ERROR: unknown open mode for shared memory segment " + m_Name +
-            ", in call to SystemV Open");
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::shm::ShmSystemV", "Open",
+            "unknown open mode for shared memory segment " + m_Name);
     }
 
     CheckShmID("in call to ShmSystemV shmget at Open");
@@ -112,10 +114,10 @@ void ShmSystemV::Close()
     ProfilerStop("close");
     if (result < 1)
     {
-        throw std::ios_base::failure(
-            "ERROR: failed to detach shared memory segment of size " +
-            std::to_string(m_Size) + " and name " + m_Name +
-            ", in call to SystemV shmdt Close\n");
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::shm::ShmSystemV", "Close",
+            "failed to detach shared memory segment of size " +
+                std::to_string(m_Size) + " and name " + m_Name);
     }
 
     if (m_RemoveAtClose)
@@ -125,10 +127,10 @@ void ShmSystemV::Close()
         ProfilerStop("close");
         if (remove < 1)
         {
-            throw std::ios_base::failure(
-                "ERROR: failed to remove shared memory segment of size " +
-                std::to_string(m_Size) + " and name " + m_Name +
-                ", in call to SystemV shmctl Close\n");
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::shm::ShmSystemV", "Close",
+                "failed to remove shared memory segment of size " +
+                    std::to_string(m_Size) + " and name " + m_Name);
         }
     }
 
@@ -155,10 +157,10 @@ void ShmSystemV::CheckShmID(const std::string hint) const
 {
     if (m_ShmID < 0)
     {
-        throw std::ios_base::failure(
-            "ERROR: Failed shared memory segment of size " +
-            std::to_string(m_Size) + " and name " + m_Name + ", " + hint +
-            "\n");
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::shm::ShmSystemV", "CheckShmID",
+            "Failed shared memory segment of size " + std::to_string(m_Size) +
+                " and name " + m_Name + ", " + hint);
     }
 }
 
@@ -166,9 +168,10 @@ void ShmSystemV::CheckBuffer(const std::string hint) const
 {
     if (m_Buffer == nullptr)
     {
-        throw std::ios_base::failure(
-            "ERROR: nullptr shared memory segment of size " +
-            std::to_string(m_Size) + " and name " + m_Name + " " + hint + "\n");
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::shm::ShmSystemV", "CheckBuffer",
+            "nullptr shared memory segment of size " + std::to_string(m_Size) +
+                " and name " + m_Name + " " + hint);
     }
 }
 
@@ -177,11 +180,12 @@ void ShmSystemV::CheckSizes(const size_t start, const size_t size,
 {
     if (start + size > m_Size)
     {
-        throw std::invalid_argument(
-            "ERROR: final position (start + size) = (" + std::to_string(start) +
-            " + " + std::to_string(size) +
-            " ) exceeding shared memory pre-allocated size:" +
-            std::to_string(m_Size) + "," + hint + "\n");
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::shm::ShmSystemV", "CheckSizes",
+            "final position (start + size) = (" + std::to_string(start) +
+                " + " + std::to_string(size) +
+                " ) exceeding shared memory pre-allocated size:" +
+                std::to_string(m_Size) + "," + hint);
     }
 }
 
