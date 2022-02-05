@@ -589,16 +589,17 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
                 helper::Throw<std::ios_base::failure>(
                     "Engine", "BP5Reader", "InitBuffer",
                     "File " + m_Name +
-                    " was found with an index file but md.0 "
-                    "has not contained enough data within "
-                    "the specified timeout of " +
-                    std::to_string(timeoutSeconds.count()) +
-                    " seconds. index size = " + std::to_string(newIdxSize) +
-                    " metadata size = " + std::to_string(actualFileSize) +
-                    " expected size = " + std::to_string(expectedMinFileSize) +
-                    ". One reason could be if the reader finds old data "
-                    "while "
-                    "the writer is creating the new files.");
+                        " was found with an index file but md.0 "
+                        "has not contained enough data within "
+                        "the specified timeout of " +
+                        std::to_string(timeoutSeconds.count()) +
+                        " seconds. index size = " + std::to_string(newIdxSize) +
+                        " metadata size = " + std::to_string(actualFileSize) +
+                        " expected size = " +
+                        std::to_string(expectedMinFileSize) +
+                        ". One reason could be if the reader finds old data "
+                        "while "
+                        "the writer is creating the new files.");
             }
         }
 
