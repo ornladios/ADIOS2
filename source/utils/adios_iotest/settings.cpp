@@ -141,6 +141,7 @@ int Settings::rescaleDecomp()
     adios2::helper::Throw<std::invalid_argument>(
         "Utils::adios_iotest", "settings", "rescaleDecomp",
         "decomposition ratios must scale up to process count");
+    return 0;
 }
 
 int Settings::processArgs(int argc, char *argv[])
