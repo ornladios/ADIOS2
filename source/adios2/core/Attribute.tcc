@@ -107,8 +107,7 @@ void Attribute<T>::Modify(const T *data, const size_t elements)
     {
         helper::Throw<std::invalid_argument>(
             "Core", "Attribute", "Modify",
-            "Trying to modify attribute " + this->m_Name +
-                " which has been defined as non-modifiable");
+            "Attribute " + this->m_Name + " being modified is not modifiable");
     }
 }
 
@@ -127,8 +126,7 @@ void Attribute<T>::Modify(const T &data)
     {
         helper::Throw<std::invalid_argument>(
             "Core", "Attribute", "Modify",
-            "Trying to modify attribute " + this->m_Name +
-                " which has been defined as non-modifiable");
+            "Attribute " + this->m_Name + " being modified is not modifiable");
     }
 }
 

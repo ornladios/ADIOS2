@@ -33,10 +33,8 @@ typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
     {
         helper::Throw<std::invalid_argument>(
             "Core", "Engine", "Put",
-            "span currently not supported with "
-            "operations, remove calls to Variable<T>::AddOperation or use "
-            "Variable<T>::RemoveOperations, in call to Variable<T>::Span "
-            "Engine::Put");
+            "Span does not support Operations. Try removing Operations from "
+            "variables using Span");
     }
 
     auto itSpan = variable.m_BlocksSpan.emplace(
@@ -64,8 +62,7 @@ void Engine::Put(Variable<T> &variable, const T *data, const Mode launch)
         helper::Throw<std::invalid_argument>(
             "Core", "Engine", "Put",
             "invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid, in call to "
-                "Put");
+                ", only Mode::Deferred and Mode::Sync are valid");
     }
 }
 
@@ -111,8 +108,7 @@ void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
         helper::Throw<std::invalid_argument>(
             "Core", "Engine", "Get",
             "invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid, in call to "
-                "Get");
+                ", only Mode::Deferred and Mode::Sync are valid");
     }
 }
 
@@ -156,8 +152,8 @@ void Engine::Get(core::Variable<T> &variable, T **data) const
     {
         helper::Throw<std::runtime_error>(
             "Core", "Engine", "Get",
-            "Currently, only the inline engine implements "
-            "Get(core::Variable<T>&, T**)");
+            "Engine " + m_EngineType +
+                " does not support Get(core::Variable<T>&, T**)");
     }
 }
 
@@ -187,8 +183,7 @@ typename Variable<T>::BPInfo *Engine::Get(Variable<T> &variable,
         helper::Throw<std::invalid_argument>(
             "Core", "Engine", "Get",
             "invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid, in call to "
-                "GetBlock");
+                ", only Mode::Deferred and Mode::Sync are valid");
     }
 
     CommonChecks<T>(variable, info->Data, {{Mode::Read}}, "in call to Get");
