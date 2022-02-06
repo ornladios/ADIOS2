@@ -275,11 +275,7 @@ size_t IO::AddTransport(const std::string type, const Params &parameters)
     if (parameters.count("transport") == 1 ||
         parameters.count("Transport") == 1)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IO", "AddTransport",
-            "key Transport (or transport) "
-            "is not valid for transport type " +
-                type + ", in call to AddTransport)");
+        helper::Throw<std::invalid_argument>( "Core", "IO", "AddTransport", "key Transport (or transport) is not allowed in transport parameters);
     }
 
     CheckTransportType(type);
@@ -297,9 +293,8 @@ void IO::SetTransportParameter(const size_t transportIndex,
     {
         helper::Throw<std::invalid_argument>(
             "Core", "IO", "SetTransportParameter",
-            "transportIndex is larger than "
-            "transports created with AddTransport, for key: " +
-                key + ", value: " + value + "in call to SetTransportParameter");
+            "transport Index " + std::to_string(transportIndex) +
+                " does not exist");
     }
 
     m_TransportsParameters[transportIndex][key] = value;
@@ -525,10 +520,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         if (isEngineActive) // check if active
         {
             helper::Throw<std::invalid_argument>(
-                "Core", "IO", "Open",
-                "IO Engine with name " + name +
-                    " already created and is active (Close "
-                    "not called yet), in call to Open");
+                "Core", "IO", "Open", "Engine " + name + " is opened twice");
         }
     }
 
@@ -627,7 +619,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         {
             helper::Throw<std::runtime_error>(
                 "Core", "IO", "Open",
-                "Append mode is not supported for the inline engine.");
+                "Append mode is not supported in the inline engine.");
         }
 
         // See inline.rst:44
@@ -635,7 +627,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         {
             helper::Throw<std::runtime_error>(
                 "Core", "IO", "Open",
-                "Sync mode is not supported for the inline engine.");
+                "Sync mode is not supported in the inline engine.");
         }
 
         if (m_Engines.size() >= 2)
@@ -683,12 +675,9 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IO", "Open",
-            "engine " + m_EngineType +
-                " not supported, IO SetEngine must add "
-                "a supported engine, in call to "
-                "Open");
+        helper::Throw<std::invalid_argument>("Core", "IO", "Open",
+                                             "Engine type " + m_EngineType +
+                                                 " is not valid");
     }
 
     auto itEngine = m_Engines.emplace(name, std::move(engine));
@@ -696,9 +685,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     if (!itEngine.second)
     {
         helper::Throw<std::invalid_argument>(
-            "Core", "IO", "Open",
-            "engine of type " + m_EngineType + " and name " + name +
-                " could not be created, in call to Open");
+            "Core", "IO", "Open", "failed to create Engine " + m_EngineType);
     }
     // return a reference
     return *itEngine.first->second.get();
@@ -720,10 +707,8 @@ Engine &IO::GetEngine(const std::string &name)
     auto itEngine = m_Engines.find(name);
     if (itEngine == m_Engines.end())
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IO", "GetEngine",
-            "engine name " + name +
-                " could not be found, in call to GetEngine");
+        helper::Throw<std::invalid_argument>("Core", "IO", "GetEngine",
+                                             "Engine " + name + " not found");
     }
     // return a reference
     return *itEngine->second.get();
@@ -844,7 +829,7 @@ void IO::CheckAttributeCommon(const std::string &name) const
     {
         helper::Throw<std::invalid_argument>(
             "Core", "IO", "CheckAttributeCommon",
-            "attribute " + name + " exists in IO object " + m_Name +
+            "Attribute " + name + " exists in IO " + m_Name +
                 ", in call to DefineAttribute");
     }
 }
@@ -856,8 +841,7 @@ void IO::CheckTransportType(const std::string type) const
         helper::Throw<std::invalid_argument>(
             "Core", "IO", "CheckTransportType",
             "wrong first argument " + type +
-                ", must "
-                "be a single word for a supported transport type, in "
+                ", must be a single word for a supported transport type, in "
                 "call to IO AddTransport");
     }
 }
