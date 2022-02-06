@@ -394,7 +394,7 @@ size_t CompressLibPressio::InverseOperate(const char *bufferIn,
     {
         helper::Throw<std::runtime_error>("Operator", "CompressLibPressio",
                                           "InverseOperate",
-                                          "unknown LibPressio buffer version");
+                                          "invalid LibPressio buffer version");
     }
 
     return 0;

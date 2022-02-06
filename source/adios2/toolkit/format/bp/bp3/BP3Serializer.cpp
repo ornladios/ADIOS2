@@ -604,10 +604,11 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     }
     catch (...)
     {
-        std::throw_with_nested(std::runtime_error(
-            "ERROR: buffer overflow when resizing to " +
-            std::to_string(bufferSTL.m_Position + extraSize) +
-            " bytes, in call to GathervVectors\n"));
+        helper::ThrowNested<std::runtime_error>(
+            "Toolkit::Format", "bp::bp3::BP3Serializer",
+            "AggregateCollectiveMetadataIndices",
+            "buffer overflow when resizing to " +
+                std::to_string(bufferSTL.m_Position + extraSize) + " bytes");
     }
 
     // deserialize, it's all local inside rank 0

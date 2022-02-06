@@ -88,11 +88,11 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
                 value, "when setting Blosc clevel parameter\n"));
             if (compressionLevel < 0 || compressionLevel > 9)
             {
-                helper::Log("Operator", "CompressBlosc", "Operate",
-                            "compression_level must be an integer between 0 "
-                            "(no compression) and 9 (more compression, more "
-                            "memory consumption) inclusive",
-                            helper::EXCEPTION);
+                helper::Throw<std::invalid_argument>(
+                    "Operator", "CompressBlosc", "Operate",
+                    "compression_level must be an integer between 0 (no "
+                    "compression) and 9 (more compression, more memory "
+                    "consumption) inclusive");
             }
         }
         else if (key == "doshuffle")
@@ -100,10 +100,10 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
             auto itShuffle = m_Shuffles.find(value);
             if (itShuffle == m_Shuffles.end())
             {
-                helper::Log("Operator", "CompressBlosc", "Operate",
-                            "Parameter doshuffle must be BLOSC_SHUFFLE, "
-                            "BLOSC_NOSHUFFLE or BLOSC_BITSHUFFLE",
-                            helper::EXCEPTION);
+                helper::Throw<std::invalid_argument>(
+                    "Operator", "CompressBlosc", "Operate",
+                    "Parameter doshuffle must be BLOSC_SHUFFLE, "
+                    "BLOSC_NOSHUFFLE or BLOSC_BITSHUFFLE");
             }
             doShuffle = itShuffle->second;
         }
@@ -117,10 +117,10 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
             compressor = value;
             if (m_Compressors.count(compressor) == 0)
             {
-                helper::Log("Operator", "CompressBlosc", "Operate",
-                            "Parameter compressor must be blosclz (default), "
-                            "lz4, lz4hc, snappy, zlib, or zstd",
-                            helper::EXCEPTION);
+                helper::Throw<std::invalid_argument>(
+                    "Operator", "CompressBlosc", "Operate",
+                    "Parameter compressor must be blosclz (default), lz4, "
+                    "lz4hc, snappy, zlib, or zstd");
             }
         }
         else if (key == "blocksize")
@@ -170,10 +170,10 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
         const int result = blosc_set_compressor(compressor.c_str());
         if (result == -1)
         {
-            helper::Log("Operator", "CompressBlosc", "Operate",
-                        "blosc library linked does not support compressor " +
-                            compressor,
-                        helper::EXCEPTION);
+            helper::Throw<std::invalid_argument>(
+                "Operator", "CompressBlosc", "Operate",
+                "blosc library linked does not support compressor " +
+                    compressor);
         }
         blosc_set_nthreads(threads);
         blosc_set_blocksize(blockSize);
@@ -245,8 +245,9 @@ size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        helper::Log("Operator", "CompressBlosc", "InverseOperate",
-                    "corrupted compressed buffer", helper::EXCEPTION);
+        helper::Throw<std::runtime_error>("Operator", "CompressBlosc",
+                                          "InverseOperate",
+                                          "invalid blosc buffer version");
     }
 
     return 0;
@@ -274,9 +275,9 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     if (sizeIn - bufferInOffset < sizeof(DataHeader))
     {
-        helper::Log("Operator", "CompressBlosc", "InverseOperate",
-                    "corrupted compressed buffer." + m_VersionInfo,
-                    helper::EXCEPTION);
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressBlosc", "InverseOperate",
+            "corrupted compressed buffer." + m_VersionInfo);
     }
     const bool isChunked =
         reinterpret_cast<const DataHeader *>(bufferIn + bufferInOffset)
@@ -297,9 +298,8 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     if (decompressedSize != sizeOut)
     {
-        helper::Log("Operator", "CompressBlosc", "InverseOperate",
-                    "corrupted compressed buffer." + m_VersionInfo,
-                    helper::EXCEPTION);
+        helper::Throw<std::runtime_error>("Operator", "CompressBlosc",
+                                          "DecompressV1", m_VersionInfo);
     }
     return sizeOut;
 }
@@ -377,11 +377,10 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
                 currentOutputSize += static_cast<size_t>(decompressdSize);
             else
             {
-                helper::Log("Operator", "CompressBlosc",
-                            "DecompressChunkedFormat",
-                            "blosc decompress failed with zero buffer size. " +
-                                m_VersionInfo,
-                            helper::EXCEPTION);
+                helper::Throw<std::runtime_error>(
+                    "Operator", "CompressBlosc", "DecompressChunkedFormat",
+                    "blosc decompress failed with zero buffer size. " +
+                        m_VersionInfo);
             }
             inputOffset += static_cast<size_t>(max_inputDataSize);
         }

@@ -11,6 +11,7 @@
 #include "adiosString.h"
 #include "adiosLog.h"
 #include "adiosString.tcc"
+#include "adiosType.h" //BytesFactor
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <fstream>
@@ -18,8 +19,6 @@
 #include <sstream>
 #include <stdexcept> // std::invalid_argument
 /// \endcond
-
-#include "adios2/helper/adiosType.h" //BytesFactor
 
 namespace adios2
 {

@@ -41,9 +41,8 @@ DataManReader::DataManReader(IO &io, const std::string &name,
 
     if (m_IPAddress.empty())
     {
-        helper::Log("Engine", "DataManReader", "Open",
-                    "IP address not specified", 0, m_Comm.Rank(), 0,
-                    m_Verbosity, helper::LogMode::EXCEPTION);
+        helper::Throw<std::invalid_argument>("Engine", "DataManReader", "Open",
+                                             "IP address not specified");
     }
 
     std::string requesterAddress =
@@ -103,9 +102,8 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     }
     else
     {
-        helper::Log("Engine", "DataManReader", "Open", "invalid transport mode",
-                    0, m_Comm.Rank(), 0, m_Verbosity,
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::invalid_argument>("Engine", "DataManReader", "Open",
+                                             "invalid transport mode");
     }
 
     m_Requester.Request("Ready", 5);
@@ -168,9 +166,9 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         {
             if (i.type == DataType::None)
             {
-                helper::Log("Engine", "DataManReader", "BeginStep",
-                            "invalid data type", 0, m_Comm.Rank(), 0,
-                            m_Verbosity, helper::LogMode::EXCEPTION);
+                helper::Throw<std::invalid_argument>("Engine", "DataManReader",
+                                                     "BeginStep",
+                                                     "invalid data type");
             }
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetDataType<T>())                               \
@@ -181,9 +179,9 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 #undef declare_type
             else
             {
-                helper::Log("Engine", "DataManReader", "BeginStep",
-                            "invalid data type", 0, m_Comm.Rank(), 0,
-                            m_Verbosity, helper::LogMode::EXCEPTION);
+                helper::Throw<std::invalid_argument>("Engine", "DataManReader",
+                                                     "BeginStep",
+                                                     "invalid data type");
             }
         }
     }

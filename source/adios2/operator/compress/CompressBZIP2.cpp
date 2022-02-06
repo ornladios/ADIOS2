@@ -136,7 +136,7 @@ size_t CompressBZIP2::InverseOperate(const char *bufferIn, const size_t sizeIn,
     {
         helper::Throw<std::runtime_error>("Operator", "CompressBZIP2",
                                           "InverseOperate",
-                                          "unknown bzip2 buffer version");
+                                          "invalid bzip2 buffer version");
     }
 
     return 0;

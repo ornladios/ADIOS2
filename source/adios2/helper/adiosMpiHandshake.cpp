@@ -9,6 +9,7 @@
  */
 
 #include "adiosMpiHandshake.h"
+#include "adiosLog.h"
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
@@ -108,8 +109,9 @@ HandshakeRank(const std::string &filename, const char mode,
                             nowTime - startTime);
                     if (duration.count() > timeoutSeconds)
                     {
-                        throw(std::runtime_error(
-                            "Mpi handshake timeout for Stream " + filename));
+                        helper::Throw<std::runtime_error>(
+                            "Helper", "adiosMpiHandshake", "HandshakeRank",
+                            "Mpi handshake timeout for Stream " + filename);
                     }
 
                     fs.open(filename + ".w.c");

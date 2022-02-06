@@ -37,10 +37,9 @@ void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
         {
             if (b.bufferCount < data->size())
             {
-                helper::Log("Engine", "SSCWriter", "PutDeferredCommon",
-                            "SSC only accepts fixed length string variables",
-                            -1, m_Comm.Rank(), 0, m_Verbosity,
-                            helper::LogMode::EXCEPTION);
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "SSCWriter", "PutDeferredCommon",
+                    "SSC only accepts fixed length string variables");
             }
             std::memcpy(m_Buffer.data() + b.bufferStart, data->data(),
                         data->size());
@@ -71,9 +70,9 @@ void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
         }
         else
         {
-            helper::Log("Engine", "SSCWriter", "PutDeferredCommon",
-                        "IO pattern changed after locking", -1, m_Comm.Rank(),
-                        0, m_Verbosity, helper::LogMode::EXCEPTION);
+            helper::Throw<std::invalid_argument>(
+                "Engine", "SSCWriter", "PutDeferredCommon",
+                "IO pattern changed after locking");
         }
     }
 }
@@ -142,9 +141,9 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         }
         else
         {
-            helper::Log("Engine", "SSCWriter", "PutDeferredCommon",
-                        "IO pattern changed after locking", -1, m_Comm.Rank(),
-                        0, m_Verbosity, helper::LogMode::EXCEPTION);
+            helper::Throw<std::invalid_argument>(
+                "Engine", "SSCWriter", "PutDeferredCommon",
+                "IO pattern changed after locking");
         }
     }
 }

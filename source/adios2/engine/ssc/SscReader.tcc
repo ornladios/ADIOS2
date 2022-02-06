@@ -56,10 +56,9 @@ void SscReader::GetDeferredDeltaCommon(Variable<T> &variable, T *data)
     {
         if (d == 0)
         {
-            helper::Log("Engine", "SSCReader", "GetDeferredDeltaCommon",
-                        "SetSelection count dimensions cannot be 0", 0,
-                        m_Comm.Rank(), 0, m_Verbosity,
-                        helper::LogMode::EXCEPTION);
+            helper::Throw<std::invalid_argument>(
+                "Engine", "SscReader", "GetDeferredDeltaCommon",
+                "SetSelection count dimensions cannot be 0");
         }
     }
 }

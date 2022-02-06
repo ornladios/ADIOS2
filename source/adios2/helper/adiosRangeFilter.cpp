@@ -9,6 +9,7 @@
  */
 
 #include "adiosRangeFilter.h"
+#include "adiosLog.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 //#include <iostream>
@@ -138,16 +139,19 @@ size_t RangeFilter::ToSizeT(const std::string &input)
         const size_t out = static_cast<size_t>(std::stoul(input, &pos));
         if (pos < input.size())
         {
-            std::throw_with_nested(std::invalid_argument(
-                "ERROR: could not cast string '" + input + "' to number "));
+            helper::ThrowNested<std::invalid_argument>(
+                "Helper", "adiosRangeFilter", "ToSizeT",
+                "could not cast string '" + input + "' to number ");
         }
         return out;
     }
     catch (...)
     {
-        std::throw_with_nested(std::invalid_argument(
-            "ERROR: could not cast string '" + input + "' to number "));
+        helper::ThrowNested<std::invalid_argument>(
+            "Helper", "adiosRangeFilter", "ToSizeT",
+            "could not cast string '" + input + "' to number ");
     }
+    return 0;
 }
 
 } // end namespace helper

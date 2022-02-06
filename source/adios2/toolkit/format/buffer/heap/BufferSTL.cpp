@@ -10,6 +10,7 @@
 
 #include "BufferSTL.h"
 #include "BufferSTL.tcc"
+#include "adios2/helper/adiosLog.h"
 #include <cstdlib>
 #include <cstring>
 
@@ -37,9 +38,10 @@ void BufferSTL::Resize(const size_t size, const std::string hint)
     catch (...)
     {
         // catch a bad_alloc
-        std::throw_with_nested(std::runtime_error(
-            "ERROR: buffer overflow when resizing to " + std::to_string(size) +
-            " bytes, " + hint + "\n"));
+        helper::ThrowNested<std::runtime_error>(
+            "Toolkit::Format", "buffer::heap::BufferSTL", "BufferSystemV",
+            "buffer overflow when resizing to " + std::to_string(size) +
+                " bytes, " + hint);
     }
 }
 

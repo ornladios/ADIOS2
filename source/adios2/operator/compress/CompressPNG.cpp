@@ -215,9 +215,9 @@ size_t CompressPNG::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        helper::Throw<std::invalid_argument>("Operator", "CompressPNG",
-                                             "InverseOperate",
-                                             "unknown png buffer version");
+        helper::Throw<std::runtime_error>("Operator", "CompressPNG",
+                                          "InverseOperate",
+                                          "invalid png buffer version");
     }
 
     return 0;
