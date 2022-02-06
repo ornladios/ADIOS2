@@ -9,6 +9,7 @@
  */
 
 #include "adiosXMLUtil.h"
+#include "adiosLog.h"
 
 #include <iterator>  // std::distance
 #include <stdexcept> //std::invalid_argument
@@ -30,11 +31,11 @@ std::unique_ptr<pugi::xml_document> XMLDocument(const std::string &xmlContents,
 
     if (!parse_result)
     {
-        throw std::invalid_argument(
-            "ERROR: XML: parse error in XML string, description: " +
-            std::string(parse_result.description()) +
-            ", check with any XML editor if format is ill-formed, " + hint +
-            "\n");
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosXMLUtil", "XMLDocument",
+            "parse error in XML string, description: " +
+                std::string(parse_result.description()) +
+                ", check with any XML editor if format is ill-formed, " + hint);
     }
     return document;
 }
@@ -48,8 +49,9 @@ XMLNode(const std::string nodeName, const pugi::xml_document &xmlDocument,
 
     if (isMandatory && !node)
     {
-        throw std::invalid_argument("ERROR: XML: no <" + nodeName +
-                                    "> element found, " + hint);
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosXMLUtil", "XMLNode",
+            "no <" + nodeName + "> element found, " + hint);
     }
 
     if (isUnique)
@@ -59,10 +61,10 @@ XMLNode(const std::string nodeName, const pugi::xml_document &xmlDocument,
                           xmlDocument.children(nodeName.c_str()).end());
         if (nodes > 1)
         {
-            throw std::invalid_argument("ERROR: XML only one <" + nodeName +
-                                        "> element can exist inside " +
-                                        std::string(xmlDocument.name()) + ", " +
-                                        hint + "\n");
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosXMLUtil", "XMLNode",
+                "XML only one <" + nodeName + "> element can exist inside " +
+                    std::string(xmlDocument.name()) + ", " + hint);
         }
     }
     return node;
@@ -77,9 +79,10 @@ XMLNode(const std::string nodeName, const pugi::xml_node &upperNode,
 
     if (isMandatory && !node)
     {
-        throw std::invalid_argument(
-            "ERROR: XML: no <" + nodeName + "> element found, inside <" +
-            std::string(upperNode.name()) + "> element " + hint);
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosXMLUtil", "XMLNode",
+            "no <" + nodeName + "> element found, inside <" +
+                std::string(upperNode.name()) + "> element " + hint);
     }
 
     if (isUnique)
@@ -89,10 +92,10 @@ XMLNode(const std::string nodeName, const pugi::xml_node &upperNode,
                           upperNode.children(nodeName.c_str()).end());
         if (nodes > 1)
         {
-            throw std::invalid_argument("ERROR: XML only one <" + nodeName +
-                                        "> element can exist inside <" +
-                                        std::string(upperNode.name()) +
-                                        "> element, " + hint + "\n");
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosXMLUtil", "XMLNode",
+                "XML only one <" + nodeName + "> element can exist inside <" +
+                    std::string(upperNode.name()) + "> element, " + hint);
         }
     }
     return node;
@@ -109,9 +112,10 @@ XMLAttribute(const std::string attributeName, const pugi::xml_node &node,
     {
         const std::string nodeName(node.name());
 
-        throw std::invalid_argument("ERROR: XML: No attribute " +
-                                    attributeName + " found on <" + nodeName +
-                                    "> element" + hint);
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosXMLUtil", "XMLAttribute",
+            "No attribute " + attributeName + " found on <" + nodeName +
+                "> element" + hint);
     }
     return attribute;
 }

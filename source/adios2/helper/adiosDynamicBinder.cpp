@@ -9,6 +9,7 @@
  */
 
 #include "adiosDynamicBinder.h"
+#include "adiosLog.h"
 
 #include <algorithm> // for copy
 #include <iostream>  // for operator<<, stringstream, bas...
@@ -103,7 +104,8 @@ DynamicBinder::DynamicBinder(std::string libName, std::string libPath)
         std::copy(searchedLibs.begin(), searchedLibs.end(),
                   std::ostream_iterator<std::string>(errString, " "));
 
-        throw std::runtime_error(errString.str());
+        helper::Throw<std::runtime_error>("Helper", "adiosDynamicBinder",
+                                          "DynamicBinder", errString.str());
     }
 }
 

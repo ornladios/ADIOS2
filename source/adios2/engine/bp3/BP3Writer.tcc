@@ -47,10 +47,11 @@ void BP3Writer::PutCommon(Variable<T> &variable,
 
     if (resizeResult == format::BP3Base::ResizeResult::Flush)
     {
-        throw std::invalid_argument(
-            "ERROR: returning a Span can't trigger "
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP3Writer", "PutCommon",
+            "returning a Span can't trigger "
             "buffer reallocation in BP3 engine, remove "
-            "MaxBufferSize parameter, in call to Put\n");
+            "MaxBufferSize parameter, in call to Put");
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//

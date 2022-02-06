@@ -42,8 +42,10 @@ const InlineWriter *InlineReader::GetWriter() const
     const auto &engine_map = m_IO.GetEngines();
     if (engine_map.size() != 2)
     {
-        throw std::runtime_error("There must be exactly one reader and one "
-                                 "writer for the inline engine.");
+        helper::Throw<std::runtime_error>(
+            "Engine", "InlineReader", "GetWriter",
+            "There must be exactly one reader and one "
+            "writer for the inline engine.");
     }
 
     std::shared_ptr<Engine> e = engine_map.begin()->second;
@@ -55,7 +57,8 @@ const InlineWriter *InlineReader::GetWriter() const
     const auto writer = dynamic_cast<InlineWriter *>(e.get());
     if (!writer)
     {
-        throw std::runtime_error(
+        helper::Throw<std::runtime_error>(
+            "Engine", "InlineReader", "GetWriter",
             "dynamic_cast<InlineWriter*> failed; this is very likely a bug.");
     }
     return writer;
@@ -67,8 +70,10 @@ StepStatus InlineReader::BeginStep(const StepMode mode,
     PERFSTUBS_SCOPED_TIMER("InlineReader::BeginStep");
     if (m_InsideStep)
     {
-        throw std::runtime_error("InlineReader::BeginStep was called but the "
-                                 "reader is already inside a step");
+        helper::Throw<std::runtime_error>(
+            "Engine", "InlineReader", "BeginStep",
+            "InlineReader::BeginStep was called but the "
+            "reader is already inside a step");
     }
     // Reader should be on step that writer just completed
     auto writer = GetWriter();
@@ -118,8 +123,10 @@ void InlineReader::EndStep()
     PERFSTUBS_SCOPED_TIMER("InlineReader::EndStep");
     if (!m_InsideStep)
     {
-        throw std::runtime_error("InlineReader::EndStep() cannot be called "
-                                 "without a call to BeginStep() first");
+        helper::Throw<std::runtime_error>(
+            "Engine", "InlineReader", "EndStep",
+            "InlineReader::EndStep() cannot be called "
+            "without a call to BeginStep() first");
     }
     if (m_Verbosity == 5)
     {
@@ -205,10 +212,11 @@ void InlineReader::InitParameters()
         {
             m_Verbosity = std::stoi(value);
             if (m_Verbosity < 0 || m_Verbosity > 5)
-                throw std::invalid_argument(
-                    "ERROR: Method verbose argument must be an "
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "InlineReader", "InitParameters",
+                    "Method verbose argument must be an "
                     "integer in the range [0,5], in call to "
-                    "Open or Engine constructor\n");
+                    "Open or Engine constructor");
         }
     }
 }

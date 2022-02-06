@@ -14,6 +14,7 @@
 #include "Attribute.h"
 
 #include "adios2/helper/adiosFunctions.h" //GetDataType<T>
+#include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosType.h"
 
 #include <cstring>
@@ -104,9 +105,9 @@ void Attribute<T>::Modify(const T *data, const size_t elements)
     }
     else
     {
-        throw std::invalid_argument(
-            "ERROR: Trying to modify attribute " + this->m_Name +
-            " which has been defined as non-modifiable\n");
+        helper::Throw<std::invalid_argument>(
+            "Core", "Attribute", "Modify",
+            "Attribute " + this->m_Name + " being modified is not modifiable");
     }
 }
 
@@ -123,9 +124,9 @@ void Attribute<T>::Modify(const T &data)
     }
     else
     {
-        throw std::invalid_argument(
-            "ERROR: Trying to modify attribute " + this->m_Name +
-            " which has been defined as non-modifiable\n");
+        helper::Throw<std::invalid_argument>(
+            "Core", "Attribute", "Modify",
+            "Attribute " + this->m_Name + " being modified is not modifiable");
     }
 }
 

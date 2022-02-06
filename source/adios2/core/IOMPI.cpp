@@ -36,8 +36,10 @@ std::shared_ptr<Engine> MakeEngineMPI(IO &io, const std::string &name,
 {
     if (!comm.IsMPI())
     {
-        throw std::invalid_argument("A MPI-only engine cannot be used with a "
-                                    "communicator that is not MPI-based.");
+        helper::Throw<std::invalid_argument>(
+            "Core", "IOMPI", "MakeEngineMPI",
+            "A MPI-only engine cannot be used with a "
+            "communicator that is not MPI-based.");
     }
     return IO::MakeEngine<T>(io, name, mode, std::move(comm));
 }

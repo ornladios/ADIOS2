@@ -45,24 +45,27 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (mode != StepMode::Read)
     {
-        throw std::invalid_argument("ERROR: mode is not supported yet, "
-                                    "only Read is valid for "
-                                    "engine BP4Reader, in call to "
-                                    "BeginStep\n");
+        helper::Throw<std::invalid_argument>("Engine", "BP4Reader", "BeginStep",
+                                             "mode is not supported yet, "
+                                             "only Read is valid for "
+                                             "engine BP4Reader, in call to "
+                                             "BeginStep");
     }
 
     if (m_BetweenStepPairs)
     {
-        throw std::logic_error("ERROR: BeginStep() is called a second time "
-                               "without an intervening EndStep()");
+        helper::Throw<std::logic_error>("Engine", "BP4Reader", "BeginStep",
+                                        "BeginStep() is called a second time "
+                                        "without an intervening EndStep()");
     }
 
     if (!m_BP4Deserializer.m_DeferredVariables.empty())
     {
-        throw std::invalid_argument(
-            "ERROR: existing variables subscribed with "
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP4Reader", "BeginStep",
+            "existing variables subscribed with "
             "GetDeferred, did you forget to call "
-            "PerformGets() or EndStep()?, in call to BeginStep\n");
+            "PerformGets() or EndStep()?, in call to BeginStep");
     }
 
     // used to inquire for variables in streaming mode
@@ -119,8 +122,9 @@ void BP4Reader::EndStep()
                 0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
     if (!m_BetweenStepPairs)
     {
-        throw std::logic_error(
-            "ERROR: EndStep() is called without a successful BeginStep()");
+        helper::Throw<std::logic_error>(
+            "Engine", "BP4Reader", "EndStep",
+            "EndStep() is called without a successful BeginStep()");
     }
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP4Reader::EndStep");
@@ -168,9 +172,10 @@ void BP4Reader::Init()
 {
     if (m_OpenMode != Mode::Read)
     {
-        throw std::invalid_argument("ERROR: BPFileReader only "
-                                    "supports OpenMode::Read from" +
-                                    m_Name);
+        helper::Throw<std::invalid_argument>("Engine", "BP4Reader", "Init",
+                                             "BPFileReader only "
+                                             "supports OpenMode::Read from" +
+                                                 m_Name);
     }
     // if IO was involved in reading before this flag may be true now
     m_IO.m_ReadStreaming = false;
@@ -304,29 +309,33 @@ void BP4Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
     {
         if (m_BP4Deserializer.m_RankMPI == 0 && !lasterrmsg.empty())
         {
-            throw std::ios_base::failure("ERROR: File " + m_Name +
-                                         " cannot be opened: " + lasterrmsg);
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP4Reader", "OpenFiles",
+                "File " + m_Name + " cannot be opened: " + lasterrmsg);
         }
         else
         {
-            throw std::ios_base::failure("File " + m_Name +
-                                         " cannot be opened");
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP4Reader", "OpenFiles",
+                "File " + m_Name + " cannot be opened");
         }
     }
     else if (flag == 1)
     {
         if (m_BP4Deserializer.m_RankMPI == 0)
         {
-            throw std::ios_base::failure(
-                "ERROR: File " + m_Name + " could not be found within the " +
-                std::to_string(timeoutSeconds.count()) +
-                "s timeout: " + lasterrmsg);
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP4Reader", "OpenFiles",
+                "File " + m_Name + " could not be found within the " +
+                    std::to_string(timeoutSeconds.count()) +
+                    "s timeout: " + lasterrmsg);
         }
         else
         {
-            throw std::ios_base::failure(
-                "ERROR: File " + m_Name + " could not be found within the " +
-                std::to_string(timeoutSeconds.count()) + "s timeout");
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP4Reader", "OpenFiles",
+                "File " + m_Name + " could not be found within the " +
+                    std::to_string(timeoutSeconds.count()) + "s timeout");
         }
     }
 
@@ -370,13 +379,14 @@ void MetadataCalculateMinFileSize(
 
     if (idxsize % m_BP4Deserializer.m_IndexRecordSize != 0)
     {
-        throw std::runtime_error(
-            "FATAL CODING ERROR: ADIOS Index file " + IdxFileName +
-            " is assumed to always contain n*" +
-            std::to_string(m_BP4Deserializer.m_IndexRecordSize) +
-            " byte-length records. "
-            "Right now the length of index buffer is " +
-            std::to_string(idxsize) + " bytes.");
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP4Reader", "MetadataCalculateMinFileSize",
+            "ADIOS Index file " + IdxFileName +
+                " is assumed to always contain n*" +
+                std::to_string(m_BP4Deserializer.m_IndexRecordSize) +
+                " byte-length records. "
+                "Right now the length of index buffer is " +
+                std::to_string(idxsize) + " bytes.");
     }
 
     const size_t nTotalRecords = idxsize / m_BP4Deserializer.m_IndexRecordSize;
@@ -417,11 +427,12 @@ MetadataExpectedMinFileSize(const format::BP4Deserializer &m_BP4Deserializer,
     size_t idxsize = m_BP4Deserializer.m_MetadataIndex.m_Buffer.size();
     if (idxsize % 64 != 0)
     {
-        throw std::runtime_error(
-            "FATAL CODING ERROR: ADIOS Index file " + IdxFileName +
-            " is assumed to always contain n*64 byte-length records. "
-            "The file size now is " +
-            std::to_string(idxsize) + " bytes.");
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP4Reader", "MetadataExpectedMinFileSize",
+            "ADIOS Index file " + IdxFileName +
+                " is assumed to always contain n*64 byte-length records. "
+                "The file size now is " +
+                std::to_string(idxsize) + " bytes.");
     }
     if ((hasHeader && idxsize < m_BP4Deserializer.m_IndexHeaderSize +
                                     m_BP4Deserializer.m_IndexRecordSize) ||
@@ -484,18 +495,21 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
             }
             else
             {
-                throw std::ios_base::failure(
-                    "ERROR: File " + m_Name +
-                    " was found with an index file but md.0 "
-                    "has not contained enough data within "
-                    "the specified timeout of " +
-                    std::to_string(timeoutSeconds.count()) +
-                    " seconds. index size = " +
-                    std::to_string(metadataIndexFileSize) +
-                    " metadata size = " + std::to_string(fileSize) +
-                    " expected size = " + std::to_string(expectedMinFileSize) +
-                    ". One reason could be if the reader finds old data while "
-                    "the writer is creating the new files.");
+                helper::Throw<std::ios_base::failure>(
+                    "Engine", "BP4Reader", "InitBuffer",
+                    "File " + m_Name +
+                        " was found with an index file but md.0 "
+                        "has not contained enough data within "
+                        "the specified timeout of " +
+                        std::to_string(timeoutSeconds.count()) +
+                        " seconds. index size = " +
+                        std::to_string(metadataIndexFileSize) +
+                        " metadata size = " + std::to_string(fileSize) +
+                        " expected size = " +
+                        std::to_string(expectedMinFileSize) +
+                        ". One reason could be if the reader finds old data "
+                        "while "
+                        "the writer is creating the new files.");
             }
         }
     }

@@ -64,12 +64,13 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
     const size_t maxStep = indices.rbegin()->first;
     if (stepsStart + 1 > maxStep)
     {
-        throw std::invalid_argument(
-            "ERROR: steps start " + std::to_string(stepsStart) +
-            " from SetStepsSelection or BeginStep is larger than "
-            "the maximum available step " +
-            std::to_string(maxStep - 1) + " for variable " + variable.m_Name +
-            ", in call to Get\n");
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "format::bp::BP4Deserializer", "InitVariableBlockInfo",
+            "steps start " + std::to_string(stepsStart) +
+                " from SetStepsSelection or BeginStep is larger than "
+                "the maximum available step " +
+                std::to_string(maxStep - 1) + " for variable " +
+                variable.m_Name + ", in call to Get");
     }
 
     auto itStep = std::next(indices.begin(), stepsStart);
@@ -81,14 +82,17 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
     {
         if (itStep == indices.end())
         {
-            throw std::invalid_argument(
-                "ERROR: offset " + std::to_string(i) + " from steps start " +
-                std::to_string(stepsStart) + " in variable " + variable.m_Name +
-                " is beyond the largest available step = " +
-                std::to_string(maxStep - 1) +
-                ", check Variable SetStepSelection argument stepsCount "
-                "(random access), or "
-                "number of BeginStep calls (streaming), in call to Get");
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BP4Deserializer",
+                "InitVariableBlockInfo",
+                "offset " + std::to_string(i) + " from steps start " +
+                    std::to_string(stepsStart) + " in variable " +
+                    variable.m_Name +
+                    " is beyond the largest available step = " +
+                    std::to_string(maxStep - 1) +
+                    ", check Variable SetStepSelection argument stepsCount "
+                    "(random access), or "
+                    "number of BeginStep calls (streaming), in call to Get");
         }
         ++itStep;
     }
@@ -103,12 +107,14 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
 
         if (variable.m_BlockID >= blocksInfo.size())
         {
-            throw std::invalid_argument(
-                "ERROR: invalid blockID " + std::to_string(variable.m_BlockID) +
-                " from steps start " + std::to_string(stepsStart) +
-                " in variable " + variable.m_Name +
-                ", check argument to Variable<T>::SetBlockID, in call "
-                "to Get\n");
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BP4Deserializer",
+                "InitVariableBlockInfo",
+                "invalid blockID " + std::to_string(variable.m_BlockID) +
+                    " from steps start " + std::to_string(stepsStart) +
+                    " in variable " + variable.m_Name +
+                    ", check argument to Variable<T>::SetBlockID, in call "
+                    "to Get");
         }
 
         // switch to bounding box for global array
@@ -205,12 +211,14 @@ void BP4Deserializer::SetVariableBlockInfo(
         const size_t dimensions = blockCharacteristics.Count.size();
         if (dimensions != blockInfo.Count.size())
         {
-            throw std::invalid_argument(
-                "ERROR: block Count (available) and "
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BP4Deserializer",
+                "SetVariableBlockInfo",
+                "block Count (available) and "
                 "selection Count (requested) number of dimensions, do not "
                 "match "
                 "when reading local array variable " +
-                variableName + ", in call to Get");
+                    variableName + ", in call to Get");
         }
 
         const Dims readInCount = m_ReverseDimensions
@@ -226,15 +234,16 @@ void BP4Deserializer::SetVariableBlockInfo(
         {
             if (blockInfoStart[i] + blockInfo.Count[i] > readInCount[i])
             {
-                throw std::invalid_argument(
-                    "ERROR: selection Start " +
-                    helper::DimsToString(blockInfoStart) + " and Count " +
-                    helper::DimsToString(blockInfo.Count) +
-                    " (requested) is out of bounds of (available) local"
-                    " Count " +
-                    helper::DimsToString(readInCount) +
-                    " , when reading local array variable " + variableName +
-                    ", in call to Get");
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "format::bp::BP4Deserializer",
+                    "SetVariableBlockInfo",
+                    "selection Start " + helper::DimsToString(blockInfoStart) +
+                        " and Count " + helper::DimsToString(blockInfo.Count) +
+                        " (requested) is out of bounds of (available) local"
+                        " Count " +
+                        helper::DimsToString(readInCount) +
+                        " , when reading local array variable " + variableName +
+                        ", in call to Get");
             }
         }
 
@@ -364,29 +373,34 @@ void BP4Deserializer::SetVariableBlockInfo(
             const size_t dimensions = readInShape.size();
             if (dimensions != blockInfo.Shape.size())
             {
-                throw std::invalid_argument(
-                    "ERROR: variable Shape (available) and "
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "format::bp::BP4Deserializer",
+                    "SetVariableBlockInfo",
+                    "variable Shape (available) and "
                     "selection Shape (requested) number of dimensions, do not "
                     "match in step " +
-                    std::to_string(step) +
-                    " when reading global array variable " + variable.m_Name +
-                    ", in call to Get");
+                        std::to_string(step) +
+                        " when reading global array variable " +
+                        variable.m_Name + ", in call to Get");
             }
 
             for (size_t i = 0; i < dimensions; ++i)
             {
                 if (blockInfo.Start[i] + blockInfo.Count[i] > readInShape[i])
                 {
-                    throw std::invalid_argument(
-                        "ERROR: selection Start " +
-                        helper::DimsToString(blockInfo.Start) + " and Count " +
-                        helper::DimsToString(blockInfo.Count) +
-                        " (requested) is out of bounds of (available) "
-                        "Shape " +
-                        helper::DimsToString(readInShape) +
-                        " , when reading global array variable " +
-                        variable.m_Name + " in step " + std::to_string(step) +
-                        ", in call to Get");
+                    helper::Throw<std::invalid_argument>(
+                        "Toolkit", "format::bp::BP4Deserializer",
+                        "SetVariableBlockInfo",
+                        "selection Start " +
+                            helper::DimsToString(blockInfo.Start) +
+                            " and Count " +
+                            helper::DimsToString(blockInfo.Count) +
+                            " (requested) is out of bounds of (available) "
+                            "Shape " +
+                            helper::DimsToString(readInShape) +
+                            " , when reading global array variable " +
+                            variable.m_Name + " in step " +
+                            std::to_string(step) + ", in call to Get");
                 }
             }
             // Get intersections with each block
@@ -439,14 +453,16 @@ void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 
         if (blocksStart + blocksCount > positions.size())
         {
-            throw std::invalid_argument(
-                "ERROR: selection Start {" + std::to_string(blocksStart) +
-                "} and Count {" + std::to_string(blocksCount) +
-                "} (requested) is out of bounds of (available) Shape {" +
-                std::to_string(positions.size()) + "} for relative step " +
-                std::to_string(s) +
-                " , when reading 1D global array variable " + variable.m_Name +
-                ", in call to Get");
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BP4Deserializer",
+                "GetValueFromMetadata",
+                "selection Start {" + std::to_string(blocksStart) +
+                    "} and Count {" + std::to_string(blocksCount) +
+                    "} (requested) is out of bounds of (available) Shape {" +
+                    std::to_string(positions.size()) + "} for relative step " +
+                    std::to_string(s) +
+                    " , when reading 1D global array variable " +
+                    variable.m_Name + ", in call to Get");
         }
 
         for (size_t b = blocksStart; b < blocksStart + blocksCount; ++b)
@@ -698,9 +714,12 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
     }
     else
     {
-        throw std::runtime_error("ERROR: variable " + variableName +
-                                 " of type string can't be an array, when "
-                                 "parsing metadata in call to Open");
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP4Deserializer",
+            "DefineVariableInEngineIOPerStep",
+            "variable " + variableName +
+                " of type string can't be an array, when "
+                "parsing metadata in call to Open");
     }
 
     // going back to get variable index position
@@ -902,9 +921,11 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
             break;
         }
         default:
-            throw std::runtime_error(
-                "ERROR: invalid ShapeID or not yet supported for variable " +
-                variableName + ", in call to Open\n");
+            helper::Throw<std::runtime_error>(
+                "Toolkit", "format::bp::BP4Deserializer",
+                "DefineVariableInEngineIOPerStep",
+                "invalid ShapeID or not yet supported for variable " +
+                    variableName + ", in call to Open");
         } // end switch
 
         if (characteristics.Statistics.IsValue)

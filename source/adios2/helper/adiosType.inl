@@ -18,6 +18,7 @@
 #include <sstream>   //std::ostringstream
 
 #include "adios2/common/ADIOSMacros.h"
+#include "adiosLog.h"
 
 namespace adios2
 {
@@ -239,7 +240,9 @@ void CheckForNullptr(T *pointer, const std::string hint)
 {
     if (pointer == nullptr)
     {
-        throw std::invalid_argument("ERROR: found null pointer " + hint + "\n");
+        helper::Throw<std::invalid_argument>("Helper", "adiosType",
+                                             "CheckForNullPtr",
+                                             "found null pointer " + hint);
     }
 }
 

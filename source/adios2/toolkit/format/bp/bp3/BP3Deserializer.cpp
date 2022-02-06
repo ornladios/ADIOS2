@@ -83,17 +83,19 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
             std::to_string(endianness) +
             "), this indicates the the file is either corrupted, or not a .bp "
             "file.";
-        throw std::runtime_error(err);
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP3Deserializer", "ParseMinifooter", err);
     }
     m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
 #ifndef ADIOS2_HAVE_ENDIAN_REVERSE
     if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
     {
-        throw std::runtime_error(
-            "ERROR: reader found BigEndian bp file, "
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP3Deserializer", "ParseMinifooter",
+            "reader found BigEndian bp file, "
             "this version of ADIOS2 wasn't compiled "
             "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
-            "explicitly, in call to Open\n");
+            "explicitly, in call to Open");
     }
 #endif
 
@@ -114,10 +116,11 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
         buffer, position, m_Minifooter.IsLittleEndian);
     if (m_Minifooter.Version < 3)
     {
-        throw std::runtime_error("ERROR: ADIOS2 only supports bp format "
-                                 "version 3 and above, found " +
-                                 std::to_string(m_Minifooter.Version) +
-                                 " version \n");
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP3Deserializer", "ParseMinifooter",
+            "ADIOS2 only supports bp format "
+            "version 3 and above, found " +
+                std::to_string(m_Minifooter.Version) + " version");
     }
 
     position = bufferSize - m_MetadataSet.MiniFooterSize;

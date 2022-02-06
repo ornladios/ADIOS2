@@ -228,10 +228,12 @@ void *ChunkV::GetPtr(int bufferIdx, size_t posInBuffer)
     else if (static_cast<size_t>(bufferIdx) > DataV.size() ||
              DataV[bufferIdx].External)
     {
-        throw std::invalid_argument(
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "format::ChunkV", "GetPtr",
             "ChunkV::GetPtr(" + std::to_string(bufferIdx) + ", " +
-            std::to_string(posInBuffer) +
-            ") refers to a non-existing or deferred memory chunk.");
+                std::to_string(posInBuffer) +
+                ") refers to a non-existing or deferred memory chunk.");
+        return nullptr;
     }
     else
     {

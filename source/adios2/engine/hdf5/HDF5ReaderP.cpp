@@ -25,7 +25,10 @@ namespace engine
 #define CHECK_H5_RETURN(returnCode, reason)                                    \
     {                                                                          \
         if (returnCode < 0)                                                    \
-            throw std::runtime_error((reason));                                \
+        {                                                                      \
+            helper::Throw<std::runtime_error>("Engine", "HDF5ReaderP",         \
+                                              "CHECK_H5_RETURN", reason);      \
+        }                                                                      \
     }
 
 HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
@@ -34,7 +37,8 @@ HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
 {
     if (!helper::IsHDF5File(name, m_Comm, {}))
     {
-        throw std::invalid_argument("!ADIOS2 Error: Invalid HDF5 file found");
+        helper::Throw<std::invalid_argument>(
+            "Engine", "HDF5ReaderP", "HDF5ReaderP", "Invalid HDF5 file found");
     }
 
     Init();
@@ -65,9 +69,10 @@ void HDF5ReaderP::Init()
 {
     if (m_OpenMode != Mode::Read)
     {
-        throw std::invalid_argument(
-            "ERROR: HDF5Reader only supports OpenMode::Read "
-            ", in call to Open\n");
+        helper::Throw<std::invalid_argument>(
+            "Engine", "HDF5ReaderP", "Init",
+            "HDF5Reader only supports OpenMode::Read "
+            ", in call to Open");
     }
 
     m_H5File.Init(m_Name, m_Comm, false);
@@ -78,7 +83,8 @@ void HDF5ReaderP::Init()
 
     if (ts == 0)
     {
-        throw std::runtime_error("This h5 file is NOT written by ADIOS2");
+        helper::Throw<std::runtime_error>( "Engine", "HDF5ReaderP", "Init",
+    "This h5 file is NOT written by ADIOS2");
     }
     */
     m_H5File.ReadAttrToIO(m_IO);

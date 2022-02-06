@@ -64,8 +64,9 @@ Reorganize::Reorganize(int argc, char *argv[])
     if (argc < 7)
     {
         PrintUsage();
-        throw std::invalid_argument(
-            "ERROR: Not enough arguments. At least 6 are required\n");
+        helper::Throw<std::invalid_argument>(
+            "Utils", "AdiosReorganize", "Reorganize",
+            "Not enough arguments. At least 6 are required");
     }
     infilename = std::string(argv[1]);
     outfilename = std::string(argv[2]);
@@ -87,7 +88,8 @@ Reorganize::Reorganize(int argc, char *argv[])
                 "ERROR: Invalid decomposition number in argument " +
                 std::to_string(j) + ": '" + std::string(argv[j]) + "'\n");
             PrintUsage();
-            throw std::invalid_argument(errmsg);
+            helper::Throw<std::invalid_argument>("Utils", "AdiosReorganize",
+                                                 "Reorganize", errmsg);
         }
         nd++;
         j++;
@@ -95,8 +97,9 @@ Reorganize::Reorganize(int argc, char *argv[])
 
     if (argc > j)
     {
-        throw std::invalid_argument(
-            "ERROR: Up to 6 decomposition arguments are supported\n");
+        helper::Throw<std::invalid_argument>(
+            "Utils", "AdiosReorganize", "Reorganize",
+            "Up to 6 decomposition arguments are supported");
     }
 
     int prod = 1;
@@ -114,7 +117,8 @@ Reorganize::Reorganize(int argc, char *argv[])
                            std::to_string(prod) + " > number of processes " +
                            std::to_string(m_Size) + "\n");
         PrintUsage();
-        throw std::invalid_argument(errmsg);
+        helper::Throw<std::invalid_argument>("Utils", "AdiosReorganize",
+                                             "Reorganize", errmsg);
     }
 }
 

@@ -83,6 +83,16 @@ void Throw(const std::string &component, const std::string &source,
     throw(T(m));
 }
 
+template <class T>
+void ThrowNested(const std::string &component, const std::string &source,
+                 const std::string &activity, const std::string &message,
+                 const int commRank = -1)
+{
+    auto m = MakeMessage(component, source, activity, message, commRank,
+                         LogMode::EXCEPTION);
+    throw_with_nested(T(m));
+}
+
 } // end namespace helper
 } // end namespace adios2
 

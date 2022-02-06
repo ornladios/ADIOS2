@@ -6,6 +6,7 @@
  */
 
 #include "adiosCommMPI.h"
+#include "adiosLog.h"
 
 #include <algorithm>
 #include <ios> //std::ios_base::failure
@@ -91,7 +92,9 @@ void CheckMPIReturn(const int value, const std::string &hint)
         error = "MPI_ERR number: " + std::to_string(value);
     }
 
-    throw std::runtime_error("ERROR: ADIOS2 detected " + error + ", " + hint);
+    helper::Throw<std::runtime_error>("Helper", "AdiosCommMPI",
+                                      "CheckMPIReturn",
+                                      "ADIOS2 detected " + error + ", " + hint);
 }
 }
 

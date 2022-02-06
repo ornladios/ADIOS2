@@ -354,11 +354,12 @@ void BP4Writer::InitBPBuffer()
             IsLittleEndian = (endianness == 0) ? true : false;
             if (helper::IsLittleEndian() != IsLittleEndian)
             {
-                throw std::runtime_error(
-                    "ERROR: previous run generated BigEndian bp file, "
+                helper::Throw<std::runtime_error>(
+                    "Engine", "BP4Writer", "InitBPBuffer",
+                    "previous run generated BigEndian bp file, "
                     "this version of ADIOS2 wasn't compiled "
                     "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
-                    "explicitly, in call to Open\n");
+                    "explicitly, in call to Open");
             }
             const size_t pos_last_step = preMetadataIndexFileSize - 64;
             position = pos_last_step;

@@ -9,6 +9,7 @@
  */
 
 #include "adiosString.h"
+#include "adiosLog.h"
 #include "adiosString.tcc"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
@@ -31,8 +32,9 @@ std::string FileToString(const std::string &fileName, const std::string hint)
 
     if (!fileStream)
     {
-        throw std::ios_base::failure("ERROR: file " + fileName +
-                                     " not found, " + hint + "\n");
+        helper::Throw<std::ios_base::failure>(
+            "Helper", "adiosString", "FileToString",
+            "file " + fileName + " not found, " + hint);
     }
 
     std::ostringstream fileSS;
@@ -55,10 +57,11 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
 
         if (equalPosition == parameter.npos)
         {
-            throw std::invalid_argument(
-                "ERROR: wrong format for IO parameter " + parameter +
-                ", format must be key" + delimKeyValue +
-                "value for each entry \n");
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosString", "BuildParametersMap",
+                "wrong format for IO parameter " + parameter +
+                    ", format must be key" + delimKeyValue +
+                    "value for each entry");
         }
 
         field = parameter.substr(0, equalPosition);
@@ -77,14 +80,16 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
 
         if (value.length() == 0)
         {
-            throw std::invalid_argument("ERROR: empty value in IO parameter " +
-                                        parameter + ", format must be key" +
-                                        delimKeyValue + "value \n");
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosString", "BuildParametersMap",
+                "empty value in IO parameter " + parameter +
+                    ", format must be key" + delimKeyValue + "value");
         }
         if (parametersOutput.count(field) == 1)
         {
-            throw std::invalid_argument("ERROR: parameter " + field +
-                                        " already exists, must be unique\n");
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosString", "BuildParametersMap",
+                "parameter " + field + " already exists, must be unique");
         }
 
         parametersOutput[field] = value;
@@ -110,10 +115,11 @@ Params BuildParametersMap(const std::string &input, const char delimKeyValue,
         const size_t position = parameter.find(delimKeyValue);
         if (position == parameter.npos)
         {
-            throw std::invalid_argument(
-                "ERROR: wrong format for IO parameter " + parameter +
-                ", format must be key" + delimKeyValue +
-                "value for each entry \n");
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosString", "BuildParametersMap",
+                "wrong format for IO parameter " + parameter +
+                    ", format must be key" + delimKeyValue +
+                    "value for each entry");
         }
 
         std::string key = parameter.substr(0, position);
@@ -122,15 +128,17 @@ Params BuildParametersMap(const std::string &input, const char delimKeyValue,
         lf_Trim(value);
         if (value.length() == 0)
         {
-            throw std::invalid_argument("ERROR: empty value in IO parameter " +
-                                        parameter + ", format must be key" +
-                                        delimKeyValue + "value \n");
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosString", "BuildParametersMap",
+                "empty value in IO parameter " + parameter +
+                    ", format must be key" + delimKeyValue + "value");
         }
         if (parametersOutput.count(key) == 1)
         {
-            throw std::invalid_argument(
-                "ERROR: key " + key +
-                " appears multiple times in the parameters string\n");
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosString", "BuildParametersMap",
+                "key " + key +
+                    " appears multiple times in the parameters string");
         }
 
         parametersOutput[key] = value;
@@ -215,8 +223,9 @@ std::string GetParameter(const std::string key, const Params &params,
     {
         if (isMandatory)
         {
-            throw std::invalid_argument("ERROR: mandatory parameter " + key +
-                                        " not found, " + hint);
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosString", "GetParameter",
+                "mandatory parameter " + key + " not found, " + hint);
         }
     }
     else
@@ -256,9 +265,9 @@ bool GetParameter(const Params &params, const std::string &key, int &value)
         }
         catch (...)
         {
-            std::string error =
-                "Engine parameter " + key + " can only be integer numbers";
-            throw(std::invalid_argument(error));
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosString", "GetParameter",
+                "Engine parameter " + key + " can only be integer numbers");
         }
     }
     return true;
@@ -280,9 +289,9 @@ bool GetParameter(const Params &params, const std::string &key, uint64_t &value)
         }
         catch (...)
         {
-            std::string error =
-                "Engine parameter " + key + " can only be integer numbers";
-            throw(std::invalid_argument(error));
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosString", "GetParameter",
+                "Engine parameter " + key + " can only be integer numbers");
         }
     }
     return true;
@@ -304,9 +313,9 @@ bool GetParameter(const Params &params, const std::string &key, float &value)
         }
         catch (...)
         {
-            std::string error =
-                "Engine parameter " + key + " can only be float numbers";
-            throw(std::invalid_argument(error));
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosString", "GetParameter",
+                "Engine parameter " + key + " can only be float numbers");
         }
     }
     return true;

@@ -15,6 +15,7 @@
 #include <zmq.h>
 
 #include "ZmqPubSub.h"
+#include "adios2/helper/adiosLog.h"
 
 namespace adios2
 {
@@ -40,19 +41,25 @@ void ZmqPubSub::OpenPublisher(const std::string &address)
     m_ZmqContext = zmq_ctx_new();
     if (not m_ZmqContext)
     {
-        throw std::runtime_error("creating zmq context failed");
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
+                                          "OpenPublisher",
+                                          "creating zmq context failed");
     }
 
     m_ZmqSocket = zmq_socket(m_ZmqContext, ZMQ_PUB);
     if (not m_ZmqSocket)
     {
-        throw std::runtime_error("creating zmq socket failed");
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
+                                          "OpenPublisher",
+                                          "creating zmq socket failed");
     }
 
     int error = zmq_bind(m_ZmqSocket, address.c_str());
     if (error)
     {
-        throw std::runtime_error("binding zmq socket failed");
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
+                                          "OpenPublisher",
+                                          "binding zmq socket failed");
     }
 }
 
@@ -62,19 +69,25 @@ void ZmqPubSub::OpenSubscriber(const std::string &address,
     m_ZmqContext = zmq_ctx_new();
     if (not m_ZmqContext)
     {
-        throw std::runtime_error("creating zmq context failed");
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
+                                          "OpenSubscriber",
+                                          "creating zmq context failed");
     }
 
     m_ZmqSocket = zmq_socket(m_ZmqContext, ZMQ_SUB);
     if (not m_ZmqSocket)
     {
-        throw std::runtime_error("creating zmq socket failed");
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
+                                          "OpenSubscriber",
+                                          "creating zmq socket failed");
     }
 
     int error = zmq_connect(m_ZmqSocket, address.c_str());
     if (error)
     {
-        throw std::runtime_error("connecting zmq socket failed");
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
+                                          "OpenSubscriber",
+                                          "connecting zmq socket failed");
     }
 
     zmq_setsockopt(m_ZmqSocket, ZMQ_SUBSCRIBE, "", 0);

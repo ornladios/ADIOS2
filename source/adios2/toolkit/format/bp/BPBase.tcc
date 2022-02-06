@@ -173,9 +173,9 @@ BPBase::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
         }
         default:
         {
-            throw std::invalid_argument("ERROR: characteristic ID " +
-                                        std::to_string(id) +
-                                        " not supported\n");
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BPBase", "ParseCharacteristics",
+                "characteristic ID " + std::to_string(id) + " not supported");
         }
 
         } // end id switch
@@ -465,9 +465,10 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
                 }
                 case (statistic_hist):
                 {
-                    throw std::invalid_argument(
-                        "ERROR: ADIOS2 default engine doesn't support "
-                        "histogram statistics\n");
+                    helper::Throw<std::invalid_argument>(
+                        "Toolkit", "format::bp::BPBase", "ParseCharacteristics",
+                        "ADIOS2 default engine doesn't support "
+                        "histogram statistics");
                 }
                 case (statistic_cnt):
                 {
@@ -529,9 +530,9 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
 
         default:
         {
-            throw std::invalid_argument("ERROR: characteristic ID " +
-                                        std::to_string(id) +
-                                        " not supported\n");
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BPBase", "ParseCharacteristics",
+                "characteristic ID " + std::to_string(id) + " not supported");
         }
 
         } // end switch

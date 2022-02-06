@@ -69,7 +69,9 @@ public:
         m_Type = type;
         if (key < 0)
         {
-            throw std::ios_base::failure("ERROR: HDF5 failure detected.");
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "interop::hdf5::HDF5Common::HDF5TypeGuard",
+                "HDF5TypeGuard", "HDF5 failure detected");
         }
     }
 

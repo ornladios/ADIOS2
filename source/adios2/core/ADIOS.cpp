@@ -55,8 +55,9 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
     {
         if (!adios2sys::SystemTools::FileExists(configFile))
         {
-            throw std::logic_error("Config file " + configFile +
-                                   " passed to ADIOS does not exist.");
+            helper::Throw<std::logic_error>("Core", "ADIOS", "ADIOS",
+                                            "config file " + configFile +
+                                                " not found");
         }
         if (helper::EndsWith(configFile, ".xml"))
         {
@@ -103,11 +104,8 @@ IO &ADIOS::DeclareIO(const std::string name, const ArrayOrdering ArrayOrder)
         }
         else
         {
-            throw std::invalid_argument(
-                "ERROR: IO with name " + name +
-                " previously declared with DeclareIO, name must be "
-                "unique,"
-                " in call to DeclareIO\n");
+            helper::Throw<std::invalid_argument>(
+                "Core", "ADIOS", "DeclareIO", "IO " + name + " declared twice");
         }
     }
 
@@ -126,17 +124,17 @@ IO &ADIOS::AtIO(const std::string name)
 
     if (itIO == m_IOs.end())
     {
-        throw std::invalid_argument("ERROR: IO with name " + name +
-                                    " was not declared, did you previously "
-                                    "call DeclareIO?, in call to AtIO\n");
+        helper::Throw<std::invalid_argument>("Core", "ADIOS", "AtIO",
+                                             "IO " + name +
+                                                 " being used is not declared");
     }
     else
     {
         if (!itIO->second.IsDeclared())
         {
-            throw std::invalid_argument("ERROR: IO with name " + name +
-                                        " was not declared, did you previously "
-                                        "call DeclareIO ?, in call to AtIO\n");
+            helper::Throw<std::invalid_argument>(
+                "Core", "ADIOS", "AtIO",
+                "IO " + name + " being used is not declared");
         }
     }
 
@@ -213,11 +211,9 @@ void ADIOS::CheckOperator(const std::string name) const
 {
     if (m_Operators.count(name) == 1)
     {
-        throw std::invalid_argument(
-            "ERROR: Operator with name " + name +
-            ", is already defined in either config file "
-            "or with call to DefineOperator, name must "
-            "be unique, in call to DefineOperator\n");
+        helper::Throw<std::invalid_argument>("Core", "ADIOS", "CheckOperator",
+                                             "Operator " + name +
+                                                 " defined twice");
     }
 }
 

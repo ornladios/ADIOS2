@@ -1,6 +1,8 @@
 #include "NullCoreWriter.h"
 #include "NullCoreWriter.tcc"
 
+#include "adios2/helper/adiosLog.h"
+
 namespace adios2
 {
 namespace core
@@ -28,14 +30,16 @@ StepStatus NullCoreWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     if (!Impl->IsOpen)
     {
-        throw std::runtime_error(
-            "ERROR: NullCoreWriter::BeginStep: Engine already closed");
+        helper::Throw<std::runtime_error>(
+            "Engine", "NullCoreWriter", "BeginStep",
+            "NullCoreWriter::BeginStep: Engine already closed");
     }
 
     if (Impl->IsInStep)
     {
-        throw std::runtime_error(
-            "ERROR: NullCoreWriter::BeginStep: Step already active");
+        helper::Throw<std::runtime_error>(
+            "Engine", "NullCoreWriter", "BeginStep",
+            "NullCoreWriter::BeginStep: Step already active");
     }
 
     Impl->IsInStep = true;
@@ -47,8 +51,9 @@ size_t NullCoreWriter::CurrentStep() const
 {
     if (!Impl->IsOpen)
     {
-        throw std::runtime_error(
-            "ERROR: NullCoreWriter::CurrentStep: Engine already closed");
+        helper::Throw<std::runtime_error>(
+            "Engine", "NullCoreWriter", "CurrentStep",
+            "NullCoreWriter::CurrentStep: Engine already closed");
     }
 
     return Impl->CurrentStep;
@@ -58,14 +63,16 @@ void NullCoreWriter::EndStep()
 {
     if (!Impl->IsOpen)
     {
-        throw std::runtime_error(
-            "ERROR: NullCoreWriter::EndStep: Engine already closed");
+        helper::Throw<std::runtime_error>(
+            "Engine", "NullCoreWriter", "EndStep",
+            "NullCoreWriter::EndStep: Engine already closed");
     }
 
     if (!Impl->IsInStep)
     {
-        throw std::runtime_error(
-            "ERROR: NullCoreWriter::EndStep: No active step");
+        helper::Throw<std::runtime_error>(
+            "Engine", "NullCoreWriter", "EndStep",
+            "NullCoreWriter::EndStep: No active step");
     }
 
     Impl->IsInStep = false;
@@ -75,8 +82,9 @@ void NullCoreWriter::PerformPuts()
 {
     if (!Impl->IsOpen)
     {
-        throw std::runtime_error(
-            "ERROR: NullCoreWriter::PerformPuts: Engine already closed");
+        helper::Throw<std::runtime_error>(
+            "Engine", "NullCoreWriter", "PerformPuts",
+            "NullCoreWriter::PerformPuts: Engine already closed");
     }
 
     return;
@@ -86,8 +94,9 @@ void NullCoreWriter::Flush(const int)
 {
     if (!Impl->IsOpen)
     {
-        throw std::runtime_error(
-            "ERROR: NullCoreWriter::Flush: Engine already closed");
+        helper::Throw<std::runtime_error>(
+            "Engine", "NullCoreWriter", "Flush",
+            "NullCoreWriter::Flush: Engine already closed");
     }
 
     return;
@@ -97,8 +106,8 @@ void NullCoreWriter::DoClose(const int)
 {
     if (!Impl->IsOpen)
     {
-        throw std::runtime_error(
-            "ERROR: NullCoreWriter::DoClose: already closed");
+        helper::Throw<std::runtime_error>("Engine", "NullCoreWriter", "DoClose",
+                                          "already closed");
     }
 
     Impl->IsOpen = false;

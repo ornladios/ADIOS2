@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+#include "adios2/helper/adiosLog.h"
+
 hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
                        MPI_Comm comm)
 : Stream(streamName, mode), comm(comm)
@@ -25,7 +27,9 @@ hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
 
     if (ret < 0)
     {
-        throw std::runtime_error("Unable to call set_fapl_mpio");
+        adios2::helper::Throw<std::runtime_error>(
+            "Utils::adios_iotest", "hdf5Stream", "hdf5Stream",
+            "Unable to call set_fapl_mpio");
     }
     // int myRank;
     // MPI_Comm_rank(comm, &myRank);
@@ -62,7 +66,9 @@ hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
     ret = H5Pclose(acc_tpl);
     if (ret < 0)
     {
-        throw std::runtime_error("Unable to call set_fapl_mpio");
+        adios2::helper::Throw<std::runtime_error>(
+            "Utils::adios_iotest", "hdf5Stream", "hdf5Stream",
+            "Unable to call set_fapl_mpio");
     }
 }
 

@@ -6,6 +6,7 @@
 
 #include "adios2/toolkit/sst/sst.h"
 
+using namespace adios2;
 using namespace adios2::core;
 
 void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
@@ -29,8 +30,9 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown Sst Boolean parameter \"" + value + "\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "SstParamParser", "ParseParams",
+                    "Unknown Sst Boolean parameter \"" + value + "\"");
             }
         }
     };
@@ -73,14 +75,17 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             else if (method == "cloud")
             {
                 parameter = SstRegisterCloud;
-                throw std::invalid_argument("ERROR: Sst RegistrationMethod "
-                                            "\"cloud\" not yet implemented");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "SstParamParser", "ParseParams",
+                    "Sst RegistrationMethod "
+                    "\"cloud\" not yet implemented");
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown Sst RegistrationMethod parameter \"" +
-                    method + "\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "SstParamParser", "ParseParams",
+                    "Unknown Sst RegistrationMethod parameter \"" + method +
+                        "\"");
             }
             return true;
         }
@@ -105,9 +110,10 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown Sst CompressionMethod parameter \"" +
-                    method + "\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "SstParamParser", "ParseParams",
+                    "Unknown Sst CompressionMethod parameter \"" + method +
+                        "\"");
             }
             return true;
         }
@@ -143,9 +149,9 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown Sst MarshalMethod parameter \"" + method +
-                    "\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "SstParamParser", "ParseParams",
+                    "Unknown Sst MarshalMethod parameter \"" + method + "\"");
             }
             return true;
         }
@@ -170,9 +176,9 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown Sst CPCommPattern parameter \"" + method +
-                    "\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "SstParamParser", "ParseParams",
+                    "Unknown Sst CPCommPattern parameter \"" + method + "\"");
             }
             return true;
         }
@@ -197,9 +203,9 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown Sst QueueFullPolicy parameter \"" + method +
-                    "\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "SstParamParser", "ParseParams",
+                    "Unknown Sst QueueFullPolicy parameter \"" + method + "\"");
             }
             return true;
         }
@@ -228,9 +234,10 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                throw std::invalid_argument(
-                    "ERROR: Unknown Sst SpeculativePreloadMode parameter \"" +
-                    method + "\"");
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "SstParamParser", "ParseParams",
+                    "Unknown Sst SpeculativePreloadMode parameter \"" + method +
+                        "\"");
             }
             return true;
         }

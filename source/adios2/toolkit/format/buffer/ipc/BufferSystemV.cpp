@@ -9,6 +9,7 @@
  */
 
 #include "BufferSystemV.h"
+#include "adios2/helper/adiosLog.h"
 
 #include <assert.h>
 #include <cstring> //std::memcpy
@@ -33,17 +34,20 @@ BufferSystemV::BufferSystemV(const size_t fixedSize, const std::string &name,
                      IPC_CREAT | 0666);
     if (m_ShmID == -1)
     {
-        throw std::ios_base::failure(
-            "ERROR: could not create shared memory buffer of size " +
-            std::to_string(fixedSize) + " with shmget \n");
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "format::buffer::ipc::BufferSystemV", "BufferSystemV",
+            "could not create shared memory buffer of size " +
+                std::to_string(fixedSize) + " with shmget");
     }
 
     void *data = shmat(m_ShmID, nullptr, 0);
     int *status = reinterpret_cast<int *>(data);
     if (*status == -1)
     {
-        throw std::runtime_error("ERROR: could not attach shared memory buffer "
-                                 "to address with shmat\n");
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::buffer::ipc::BufferSystemV", "BufferSystemV",
+            "could not attach shared memory buffer "
+            "to address with shmat");
     }
     m_Data = static_cast<char *>(data);
 }

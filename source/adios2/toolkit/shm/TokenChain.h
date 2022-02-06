@@ -140,11 +140,12 @@ public:
     {
         if (m_Rank != m_Shm->currentRank)
         {
-            throw std::runtime_error(
-                "ADIOS2 Programming error: TokenChain::SendToken can only be "
+            helper::Throw<std::runtime_error>(
+                "Toolkit", "shm::TokenChain", "SendToken",
+                "function can only be "
                 "called by the Rank who last called "
                 "RecvToken, rank = " +
-                std::to_string(m_Rank));
+                    std::to_string(m_Rank));
         }
         assert(0 <= m_Shm->currentRank && m_Shm->currentRank < m_nProc);
         m_Shm->token = token;

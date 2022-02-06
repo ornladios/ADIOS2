@@ -104,9 +104,6 @@ public:
     virtual void Write(const char *buffer, size_t size,
                        size_t start = MaxSizeT) = 0;
 
-    virtual void IWrite(const char *buffer, size_t size, Status &status,
-                        size_t start = MaxSizeT);
-
     /**
      * Writes to transport, writev version. Note that size is non-const due to
      * the nature of underlying transport libraries
@@ -129,9 +126,6 @@ public:
      * current stream position
      */
     virtual void Read(char *buffer, size_t size, size_t start = MaxSizeT) = 0;
-
-    virtual void IRead(char *buffer, size_t size, Status &status,
-                       size_t start = MaxSizeT);
 
     /**
      * Returns the size of current data in transport

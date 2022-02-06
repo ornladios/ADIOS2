@@ -52,7 +52,9 @@ const std::string HDF5Common::PARAMETER_HAS_IDLE_WRITER_RANK = "IdleH5Writer";
 #define CHECK_H5_RETURN(returnCode, reason)                                    \
     {                                                                          \
         if (returnCode < 0)                                                    \
-            throw std::runtime_error((reason));                                \
+            helper::Throw<std::runtime_error>("Toolkit",                       \
+                                              "interop::hdf5::HDF5Common",     \
+                                              "CHECK_H5_RETURN", reason);      \
     }
 /*
    //need to know ndim before defining this.
@@ -177,14 +179,16 @@ void HDF5Common::Append(const std::string &name, helper::Comm const &comm)
             m_IsGeneratedByAdios = true;
         }
         if (!m_IsGeneratedByAdios)
-            throw std::ios_base::failure(
-                "HDF5Engine Append error. Likely no such file." + name);
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "interop::hdf5::HDF5Common", "Append",
+                "Likely no such file." + name);
 
         GetNumAdiosSteps(); // read how many steps exists in this file
 
         if (0 == m_NumAdiosSteps)
-            throw std::ios_base::failure(
-                "HDF5Engine Append error. No valid steps found in " + name);
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "interop::hdf5::HDF5Common", "Append",
+                "No valid steps found in " + name);
         if (1 == m_NumAdiosSteps)
             m_GroupId = H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT);
         else
@@ -194,8 +198,9 @@ void HDF5Common::Append(const std::string &name, helper::Comm const &comm)
         Advance();
     }
     else
-        throw std::ios_base::failure(
-            "HDF5Engine Append error. Likely no such file." + name);
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "interop::hdf5::HDF5Common", "Append",
+            "Likely no such file." + name);
 }
 
 void HDF5Common::Init(const std::string &name, helper::Comm const &comm,
@@ -230,9 +235,9 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm,
 
             if (m_GroupId < 0)
             {
-                throw std::ios_base::failure(
-                    "ERROR: Unable to create HDF5 group " + ts0 +
-                    " in call to Open\n");
+                helper::Throw<std::ios_base::failure>(
+                    "Toolkit", "interop::hdf5::HDF5Common", "Init",
+                    "Unable to create HDF5 group " + ts0 + " in call to Open");
             }
         }
     }
@@ -257,8 +262,10 @@ void HDF5Common::WriteAdiosSteps()
 {
     if (m_FileId < 0)
     {
-        throw std::invalid_argument("ERROR: invalid HDF5 file to record "
-                                    "steps, in call to Write\n");
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "interop::hdf5::HDF5Common", "WriteAdiosSteps",
+            "invalid HDF5 file to record "
+            "steps, in call to Write");
     }
 
     if (!m_WriteMode)
@@ -298,8 +305,9 @@ unsigned int HDF5Common::GetNumAdiosSteps()
 
     if (m_FileId < 0)
     {
-        throw std::invalid_argument(
-            "ERROR: invalid HDF5 file to read step attribute.\n");
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "interop::hdf5::HDF5Common", "GetNumAdiosSteps",
+            "invalid HDF5 file to read step attribute");
     }
 
     if (!m_IsGeneratedByAdios)
@@ -417,7 +425,8 @@ herr_t result = H5Gget_info(hid, &group_info);
 
 if (result < 0) {
   // error
-  throw std::ios_base::failure("Unable to get group info.");
+  helper::Throw<std::ios_base::failure>( "Toolkit", "interop::hdf5::HDF5Common",
+"ReadNativeGroup", "Unable to get group info");
 }
 
 if (group_info.nlinks == 0) {
@@ -430,7 +439,8 @@ hsize_t idx;
 for (idx=0; idx<group_info.nlinks; idx++) {
   int currType = H5Gget_objtype_by_idx(hid, idx);
   if (currType < 0) {
-    throw std::ios_base::failure("unable to get type info of idx"+idx);
+  helper::Throw<std::ios_base::failure>( "Toolkit", "interop::hdf5::HDF5Common",
+"ReadNativeGroup", "unable to get type info of idx"+idx);
   }
 
 
@@ -793,19 +803,22 @@ void HDF5Common::Close()
 void HDF5Common::SetAdiosStep(int step)
 {
     if (m_WriteMode)
-        throw std::ios_base::failure(
-            "ERROR: unable to change step at Write MODE.");
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "interop::hdf5::HDF5Common", "SetAdiosStep",
+            "unable to change step at Write MODE");
 
     if (step < 0)
-        throw std::ios_base::failure(
-            "ERROR: unable to change to negative step.");
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "interop::hdf5::HDF5Common", "SetAdiosStep",
+            "unable to change to negative step");
 
     GetNumAdiosSteps();
 
     unsigned int ustep = static_cast<unsigned int>(step);
     if (ustep >= m_NumAdiosSteps)
-        throw std::ios_base::failure(
-            "ERROR: given time step is more than actual known steps.");
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "interop::hdf5::HDF5Common", "SetAdiosStep",
+            "given time step is more than actual known steps");
 
     if (m_CurrentAdiosStep == ustep)
     {
@@ -820,8 +833,10 @@ void HDF5Common::SetAdiosStep(int step)
     m_GroupId = H5Gopen(m_FileId, stepName.c_str(), H5P_DEFAULT);
     if (m_GroupId < 0)
     {
-        throw std::ios_base::failure("ERROR: unable to open HDF5 group " +
-                                     stepName + ", in call to Open\n");
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "interop::hdf5::HDF5Common", "SetAdiosStep",
+            "ERROR: unable to open HDF5 group " + stepName +
+                ", in call to Open");
     }
 
     m_CurrentAdiosStep = ustep;
@@ -901,8 +916,9 @@ void HDF5Common::Advance()
         m_GroupId = H5Gopen(m_FileId, stepName.c_str(), H5P_DEFAULT);
         if (m_GroupId < 0)
         {
-            throw std::ios_base::failure("ERROR: unable to open HDF5 group " +
-                                         stepName + ", in call to Open\n");
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "interop::hdf5::HDF5Common", "Advance",
+                "unable to open HDF5 group " + stepName + ", in call to Open");
         }
     }
     ++m_CurrentAdiosStep;
@@ -928,8 +944,9 @@ void HDF5Common::CheckWriteGroup()
 
     if (m_GroupId < 0)
     {
-        throw std::ios_base::failure("ERROR: HDF5: Unable to create group " +
-                                     stepName);
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "interop::hdf5::HDF5Common", "CheckWriteGroup",
+            "Unable to create group " + stepName);
     }
 }
 

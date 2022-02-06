@@ -23,12 +23,6 @@ Transport::Transport(const std::string type, const std::string library,
 {
 }
 
-void Transport::IWrite(const char *buffer, size_t size, Status &status,
-                       size_t start)
-{
-    throw std::invalid_argument("ERROR: this class doesn't implement IWrite\n");
-}
-
 void Transport::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
 {
     if (iovcnt > 0)
@@ -44,11 +38,6 @@ void Transport::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
     {
         Seek(start);
     }
-}
-
-void Transport::IRead(char *buffer, size_t size, Status &status, size_t start)
-{
-    throw std::invalid_argument("ERROR: this class doesn't implement IRead\n");
 }
 
 void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
@@ -137,8 +126,9 @@ void Transport::CheckName() const
 {
     if (m_Name.empty())
     {
-        throw std::invalid_argument("ERROR: name can't be empty for " +
-                                    m_Library + " transport \n");
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::Transport", "CheckName",
+            "name can't be empty for " + m_Library + " transport ");
     }
 }
 

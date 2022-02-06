@@ -31,9 +31,10 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 
     if (m_BetweenStepPairs == false)
     {
-        throw std::logic_error("ERROR: When using the SST engine in ADIOS2, "
-                               "Put() calls must appear between "
-                               "BeginStep/EndStep pairs");
+        helper::Throw<std::logic_error>("Engine", "SstWriter", "PutSyncCommon",
+                                        "When using the SST engine in ADIOS2, "
+                                        "Put() calls must appear between "
+                                        "BeginStep/EndStep pairs");
     }
 
     if ((Params.MarshalMethod == SstMarshalFFS) ||
@@ -93,7 +94,9 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                               " Put adios2::Mode::Sync");
         if (resizeResult == format::BP3Base::ResizeResult::Failure)
         {
-            throw std::runtime_error("Failed to resize BP3 serializer buffer");
+            helper::Throw<std::runtime_error>(
+                "Engine", "SstWriter", "PutSyncCommon",
+                "Failed to resize BP3 serializer buffer");
         }
 
         const bool sourceRowMajor =
@@ -106,7 +109,9 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     }
     else
     {
-        throw std::invalid_argument("ERROR: unknown marshaling method \n");
+        helper::Throw<std::invalid_argument>("Engine", "SstWriter",
+                                             "PutSyncCommon",
+                                             "unknown marshaling method");
     }
 }
 

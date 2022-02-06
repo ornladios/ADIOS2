@@ -17,6 +17,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "adios2/helper/adiosLog.h"
+
 struct option options[] = {{"help", no_argument, NULL, 'h'},
                            {"verbose", no_argument, NULL, 'v'},
                            {"appid", required_argument, NULL, 'a'},
@@ -84,8 +86,9 @@ size_t Settings::stringToNumber(const std::string &varName,
     size_t retval = static_cast<size_t>(std::strtoull(arg, &end, 10));
     if (end[0] || errno == ERANGE)
     {
-        throw std::invalid_argument("Invalid value given for " + varName +
-                                    ": " + std::string(arg));
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "settings", "stringToNumber",
+            "Invalid value given for " + varName + ": " + std::string(arg));
     }
     return retval;
 }
@@ -135,8 +138,10 @@ int Settings::rescaleDecomp()
         }
     }
 
-    throw std::invalid_argument(
+    adios2::helper::Throw<std::invalid_argument>(
+        "Utils::adios_iotest", "settings", "rescaleDecomp",
         "decomposition ratios must scale up to process count");
+    return 0;
 }
 
 int Settings::processArgs(int argc, char *argv[])
@@ -162,8 +167,9 @@ int Settings::processArgs(int argc, char *argv[])
         case 'd':
             if (decompDefined && isRatioDecomp)
             {
-                throw std::invalid_argument(
-                    "Cannot have -D and -d used at the same time ");
+                adios2::helper::Throw<std::invalid_argument>(
+                    "Utils::adios_iotest", "settings", "processArgs",
+                    "Cannot have -D and -d used at the same time");
             }
             if (strchr(optarg, ','))
             {
@@ -180,8 +186,9 @@ int Settings::processArgs(int argc, char *argv[])
         case 'D':
             if (decompDefined && !isRatioDecomp)
             {
-                throw std::invalid_argument(
-                    "Cannot have -D and -d used at the same time ");
+                adios2::helper::Throw<std::invalid_argument>(
+                    "Utils::adios_iotest", "settings", "processArgs",
+                    "Cannot have -D and -d used at the same time");
             }
             if (strchr(optarg, ','))
             {
@@ -213,8 +220,9 @@ int Settings::processArgs(int argc, char *argv[])
         case 's':
             if (scalingDefined && !isStrongScaling)
             {
-                throw std::invalid_argument(
-                    "Cannot have -w and -s used at the same time ");
+                adios2::helper::Throw<std::invalid_argument>(
+                    "Utils::adios_iotest", "settings", "processArgs",
+                    "Cannot have -w and -s used at the same time");
             }
             isStrongScaling = true;
             scalingDefined = true;
@@ -225,8 +233,9 @@ int Settings::processArgs(int argc, char *argv[])
         case 'w':
             if (scalingDefined && isStrongScaling)
             {
-                throw std::invalid_argument(
-                    "Cannot have -s and -w used at the same time ");
+                adios2::helper::Throw<std::invalid_argument>(
+                    "Utils::adios_iotest", "settings", "processArgs",
+                    "Cannot have -s and -w used at the same time");
             }
             isStrongScaling = false;
             scalingDefined = true;
@@ -253,14 +262,16 @@ int Settings::processArgs(int argc, char *argv[])
             }
             else
             {
-                throw std::invalid_argument("Invalid argument " +
-                                            std::string(optarg));
+                adios2::helper::Throw<std::invalid_argument>(
+                    "Utils::adios_iotest", "settings", "processArgs",
+                    "Invalid argument " + std::string(optarg));
             }
             break;
 
         default:
-            throw std::invalid_argument("Invalid argument option " +
-                                        std::string(optarg));
+            adios2::helper::Throw<std::invalid_argument>(
+                "Utils::adios_iotest", "settings", "processArgs",
+                "Invalid argument option " + std::string(optarg));
         } /* end switch */
         if (c != 1)
         {
@@ -277,26 +288,31 @@ int Settings::processArgs(int argc, char *argv[])
             s += std::string(argv[optind]) + " ";
             ++optind;
         }
-        throw std::invalid_argument("There are unknown arguments: " + s);
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "settings", "processArgs",
+            "There are unknown arguments: " + s);
     }
 
     /* Check if we have a everything defined */
     if (!appIdDefined)
     {
-        throw std::invalid_argument("Missing argument for application ID, "
-                                    "which must be unique for each application "
-                                    "(see -a option)");
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "settings", "processArgs",
+            "Missing argument for application ID, which must be unique for "
+            "each application (see -a option)");
     }
     if (configFileName.empty())
     {
-        throw std::invalid_argument(
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "settings", "processArgs",
             "Missing argument for config file (see -c option)");
     }
     if (!scalingDefined)
     {
-        throw std::invalid_argument("Missing argument for scaling, "
-                                    "which must be set to Strong or Weak "
-                                    "(see -s, -w options)");
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "settings", "processArgs",
+            "Missing argument for scaling, which must be set to Strong or Weak "
+            "(see -s, -w options)");
     }
 
     return 0;

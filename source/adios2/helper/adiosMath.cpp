@@ -9,6 +9,7 @@
  */
 
 #include "adiosMath.h"
+#include "adiosLog.h"
 
 #include <algorithm> //std::transform, std::reverse
 #include <cmath>
@@ -367,10 +368,11 @@ size_t GetDistance(const size_t end, const size_t start,
 {
     if (end < start)
     {
-        throw std::invalid_argument(
-            "ERROR: end position: " + std::to_string(end) +
-            " is smaller than start position " + std::to_string(start) + ", " +
-            hint);
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosMath", "GetDistance",
+            "end position: " + std::to_string(end) +
+                " is smaller than start position " + std::to_string(start) +
+                ", " + hint);
     }
 
     return end - start;
@@ -404,8 +406,10 @@ BlockDivisionInfo DivideBlock(const Dims &count, const size_t subblockSize,
 {
     if (divisionMethod != BlockDivisionMethod::Contiguous)
     {
-        throw std::invalid_argument("ERROR: adios2::helper::DivideBlock() only "
-                                    "works with Contiguous division method");
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosMath", "DivideBlock",
+            "adios2::helper::DivideBlock() only "
+            "works with Contiguous division method");
     }
     const size_t ndim = count.size();
     const size_t nElems = helper::GetTotalSize(count);

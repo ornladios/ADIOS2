@@ -28,13 +28,19 @@ size_t GetTypeSize(DataType type)
 {
     if (type == DataType::None)
     {
-        throw(std::runtime_error("unknown data type"));
+        helper::Throw<std::runtime_error>("Engine", "SscHelper", "GetTypeSize",
+                                          "unknown data type");
     }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>()) { return sizeof(T); }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-    else { throw(std::runtime_error("unknown data type")); }
+    else
+    {
+        helper::Throw<std::runtime_error>("Engine", "SscHelper", "GetTypeSize",
+                                          "unknown data type");
+    }
+    return 0;
 }
 
 size_t TotalDataSize(const Dims &dims, DataType type, const ShapeID &shapeId)
@@ -48,7 +54,9 @@ size_t TotalDataSize(const Dims &dims, DataType type, const ShapeID &shapeId)
     {
         return GetTypeSize(type);
     }
-    throw(std::runtime_error("ShapeID not supported"));
+    helper::Throw<std::runtime_error>("Engine", "SscHelper", "TotalDataSize",
+                                      "ShapeID not supported");
+    return 0;
 }
 
 size_t TotalDataSize(const BlockVec &bv)
@@ -305,8 +313,9 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
 #undef declare_type
                     else
                     {
-                        throw(
-                            std::runtime_error("unknown attribute data type"));
+                        helper::Throw<std::runtime_error>(
+                            "Engine", "SscHelper", "Deserialize",
+                            "unknown attribute data type");
                     }
                 }
             }
@@ -365,7 +374,9 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
             {
                 if (b.type == DataType::None)
                 {
-                    throw(std::runtime_error("unknown variable data type"));
+                    helper::Throw<std::runtime_error>(
+                        "Engine", "SscHelper", "Deserialize",
+                        "unknown variable data type");
                 }
 #define declare_type(T)                                                        \
     else if (b.type == helper::GetDataType<T>())                               \
@@ -402,7 +413,9 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
 #undef declare_type
                 else
                 {
-                    throw(std::runtime_error("unknown variable data type"));
+                    helper::Throw<std::runtime_error>(
+                        "Engine", "SscHelper", "Deserialize",
+                        "unknown variable data type");
                 }
             }
         }

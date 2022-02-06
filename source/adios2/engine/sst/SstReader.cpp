@@ -39,11 +39,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     if (!m_Input)
     {
         delete[] cstr;
-        throw std::runtime_error(
-            "ERROR: SstReader did not find active "
+        helper::Throw<std::runtime_error>(
+            "Engine", "SstReader", "SstReader",
+            "SstReader did not find active "
             "Writer contact info in file \"" +
-            m_Name + SST_POSTFIX +
-            "\".  Timeout or non-current SST contact file?");
+                m_Name + SST_POSTFIX +
+                "\".  Timeout or non-current SST contact file?");
     }
 
     // Maybe need other writer-side params in the future, but for now only
@@ -284,16 +285,18 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     SstStatusValue result;
     if (m_BetweenStepPairs)
     {
-        throw std::logic_error("ERROR: BeginStep() is called a second time "
-                               "without an intervening EndStep()");
+        helper::Throw<std::logic_error>("Engine", "SstReader", "BeginStep",
+                                        "BeginStep() is called a second time "
+                                        "without an intervening EndStep()");
     }
 
     switch (Mode)
     {
     case adios2::StepMode::Append:
     case adios2::StepMode::Update:
-        throw std::invalid_argument(
-            "ERROR: SstReader::BeginStep inappropriate StepMode specified");
+        helper::Throw<std::invalid_argument>(
+            "Engine", "SstReader", "BeginStep",
+            "SstReader::BeginStep inappropriate StepMode specified");
     case adios2::StepMode::Read:
         break;
     }
@@ -444,8 +447,9 @@ void SstReader::EndStep()
 {
     if (!m_BetweenStepPairs)
     {
-        throw std::logic_error(
-            "ERROR: EndStep() is called without a successful BeginStep()");
+        helper::Throw<std::logic_error>(
+            "Engine", "SstReader", "EndStep",
+            "EndStep() is called without a successful BeginStep()");
     }
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER_FUNC();
@@ -462,8 +466,9 @@ void SstReader::EndStep()
         if (Result != SstSuccess)
         {
             // tentative, until we change EndStep so that it has a return value
-            throw std::runtime_error(
-                "ERROR:  Writer failed before returning data");
+            helper::Throw<std::runtime_error>(
+                "Engine", "SstReader", "EndStep",
+                "Writer failed before returning data");
         }
     }
     else if (m_WriterMarshalMethod == SstMarshalBP)
@@ -514,8 +519,9 @@ void SstReader::Init()
     {                                                                          \
         if (m_BetweenStepPairs == false)                                       \
         {                                                                      \
-            throw std::logic_error(                                            \
-                "ERROR: When using the SST engine in ADIOS2, "                 \
+            helper::Throw<std::logic_error>(                                   \
+                "Engine", "SstReader", "DoGetSync",                            \
+                "When using the SST engine in ADIOS2, "                        \
                 "Get() calls must appear between "                             \
                 "BeginStep/EndStep pairs");                                    \
         }                                                                      \
@@ -571,8 +577,9 @@ void SstReader::Init()
     {                                                                          \
         if (m_BetweenStepPairs == false)                                       \
         {                                                                      \
-            throw std::logic_error(                                            \
-                "ERROR: When using the SST engine in ADIOS2, "                 \
+            helper::Throw<std::logic_error>(                                   \
+                "Engine", "SstReader", "DoGetDeferred",                        \
+                "When using the SST engine in ADIOS2, "                        \
                 "Get() calls must appear between "                             \
                 "BeginStep/EndStep pairs");                                    \
         }                                                                      \
@@ -651,8 +658,9 @@ void SstReader::BP5PerformGets()
     {
         if (SstWaitForCompletion(m_Input, i) != SstSuccess)
         {
-            throw std::runtime_error(
-                "ERROR:  Writer failed before returning data");
+            helper::Throw<std::runtime_error>(
+                "Engine", "SstReader", "BP5PerformGets",
+                "Writer failed before returning data");
         }
     }
 
@@ -706,8 +714,9 @@ void SstReader::PerformGets()
         {
             if (SstWaitForCompletion(m_Input, i) != SstSuccess)
             {
-                throw std::runtime_error(
-                    "ERROR:  Writer failed before returning data");
+                helper::Throw<std::runtime_error>(
+                    "Engine", "SstReader", "PerformGets",
+                    "Writer failed before returning data");
             }
         }
 
@@ -755,8 +764,10 @@ MinVarInfo *SstReader::MinBlocksInfo(const VariableBase &Var,
     {
         return (MinVarInfo *)m_BP5Deserializer->MinBlocksInfo(Var, Step);
     }
-    throw std::invalid_argument(
-        "ERROR: Unknown marshal mechanism in MinBlocksInfo\n");
+    helper::Throw<std::invalid_argument>(
+        "Engine", "SstReader", "MinBlocksInfo",
+        "Unknown marshal mechanism in MinBlocksInfo");
+    return nullptr;
 }
 
 #define declare_type(T)                                                        \
@@ -765,15 +776,19 @@ MinVarInfo *SstReader::MinBlocksInfo(const VariableBase &Var,
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
-            throw std::invalid_argument("ERROR: SST Engine doesn't implement " \
-                                        "function DoAllStepsBlocksInfo\n");    \
+            helper::Throw<std::invalid_argument>(                              \
+                "Engine", "SstReader", "DoAllStepsBlocksInfo",                 \
+                "SST Engine doesn't implement "                                \
+                "function DoAllStepsBlocksInfo");                              \
         }                                                                      \
         else if (m_WriterMarshalMethod == SstMarshalBP)                        \
         {                                                                      \
             return m_BP3Deserializer->AllStepsBlocksInfo(variable);            \
         }                                                                      \
-        throw std::invalid_argument(                                           \
-            "ERROR: Unknown marshal mechanism in DoAllStepsBlocksInfo\n");     \
+        helper::Throw<std::invalid_argument>(                                  \
+            "Engine", "SstReader", "DoAllStepsBlocksInfo",                     \
+            "Unknown marshal mechanism in DoAllStepsBlocksInfo");              \
+        return std::map<size_t, std::vector<typename Variable<T>::BPInfo>>();  \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::BPInfo> SstReader::DoBlocksInfo(         \
@@ -792,8 +807,10 @@ MinVarInfo *SstReader::MinBlocksInfo(const VariableBase &Var,
             std::vector<typename Variable<T>::BPInfo> tmp;                     \
             return tmp;                                                        \
         }                                                                      \
-        throw std::invalid_argument(                                           \
-            "ERROR: Unknown marshal mechanism in DoBlocksInfo\n");             \
+        helper::Throw<std::invalid_argument>(                                  \
+            "Engine", "SstReader", "DoBlocksInfo",                             \
+            "Unknown marshal mechanism in DoBlocksInfo");                      \
+        return std::vector<typename Variable<T>::BPInfo>();                    \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

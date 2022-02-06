@@ -31,11 +31,10 @@ typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
                                         ", in call to Variable<T>::Span Put");
     if (!variable.m_Operations.empty())
     {
-        throw std::invalid_argument(
-            "ERROR: span currently not supported with "
-            "operations, remove calls to Variable<T>::AddOperation or use "
-            "Variable<T>::RemoveOperations, in call to Variable<T>::Span "
-            "Engine::Put");
+        helper::Throw<std::invalid_argument>(
+            "Core", "Engine", "Put",
+            "Span does not support Operations. Try removing Operations from "
+            "variables using Span");
     }
 
     auto itSpan = variable.m_BlocksSpan.emplace(
@@ -60,10 +59,10 @@ void Engine::Put(Variable<T> &variable, const T *data, const Mode launch)
         DoPutSync(variable, data);
         break;
     default:
-        throw std::invalid_argument(
-            "ERROR: invalid launch Mode for variable " + variable.m_Name +
-            ", only Mode::Deferred and Mode::Sync are valid, in call to "
-            "Put\n");
+        helper::Throw<std::invalid_argument>(
+            "Core", "Engine", "Put",
+            "invalid launch Mode for variable " + variable.m_Name +
+                ", only Mode::Deferred and Mode::Sync are valid");
     }
 }
 
@@ -106,10 +105,10 @@ void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
         DoGetSync(variable, data);
         break;
     default:
-        throw std::invalid_argument(
-            "ERROR: invalid launch Mode for variable " + variable.m_Name +
-            ", only Mode::Deferred and Mode::Sync are valid, in call to "
-            "Get\n");
+        helper::Throw<std::invalid_argument>(
+            "Core", "Engine", "Get",
+            "invalid launch Mode for variable " + variable.m_Name +
+                ", only Mode::Deferred and Mode::Sync are valid");
     }
 }
 
@@ -151,8 +150,10 @@ void Engine::Get(core::Variable<T> &variable, T **data) const
     }
     else
     {
-        throw std::runtime_error("Currently, only the inline engine implements "
-                                 "Get(core::Variable<T>&, T**)");
+        helper::Throw<std::runtime_error>(
+            "Core", "Engine", "Get",
+            "Engine " + m_EngineType +
+                " does not support Get(core::Variable<T>&, T**)");
     }
 }
 
@@ -179,10 +180,10 @@ typename Variable<T>::BPInfo *Engine::Get(Variable<T> &variable,
         info = DoGetBlockSync(variable);
         break;
     default:
-        throw std::invalid_argument(
-            "ERROR: invalid launch Mode for variable " + variable.m_Name +
-            ", only Mode::Deferred and Mode::Sync are valid, in call to "
-            "GetBlock\n");
+        helper::Throw<std::invalid_argument>(
+            "Core", "Engine", "Get",
+            "invalid launch Mode for variable " + variable.m_Name +
+                ", only Mode::Deferred and Mode::Sync are valid");
     }
 
     CommonChecks<T>(variable, info->Data, {{Mode::Read}}, "in call to Get");
@@ -254,9 +255,10 @@ Variable<T> &Engine::FindVariable(const std::string &variableName,
     Variable<T> *variable = m_IO.InquireVariable<T>(variableName);
     if (variable == nullptr)
     {
-        throw std::invalid_argument("ERROR: variable " + variableName +
-                                    " not found in IO " + m_IO.m_Name + ", " +
-                                    hint + "\n");
+        helper::Throw<std::invalid_argument>("Core", "Engine", "FindVariable",
+                                             "variable " + variableName +
+                                                 " not found in IO " +
+                                                 m_IO.m_Name + ", " + hint);
     }
     return *variable;
 }

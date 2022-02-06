@@ -8,6 +8,7 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "FilePOSIX.h"
+#include "adios2/helper/adiosLog.h"
 
 #include <cstdio>      // remove
 #include <cstring>     // strerror
@@ -237,9 +238,9 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
                     continue;
                 }
 
-                throw std::ios_base::failure(
-                    "ERROR: couldn't write to file " + m_Name +
-                    ", in call to POSIX Write" + SysErrMsg());
+                helper::Throw<std::ios_base::failure>(
+                    "Toolkit", "transport::file::FilePOSIX", "Write",
+                    "couldn't write to file " + m_Name + " " + SysErrMsg());
             }
 
             buffer += writtenSize;
@@ -256,10 +257,10 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
 
         if (static_cast<size_t>(newPosition) != start)
         {
-            throw std::ios_base::failure(
-                "ERROR: couldn't move to start position " +
-                std::to_string(start) + " in file " + m_Name +
-                ", in call to POSIX lseek" + SysErrMsg());
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FilePOSIX", "Write",
+                "couldn't move to start position " + std::to_string(start) +
+                    " in file " + m_Name + " " + SysErrMsg());
         }
     }
     else
@@ -308,9 +309,9 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
         {
             if (errno != EINTR)
             {
-                throw std::ios_base::failure(
-                    "ERROR: couldn't write to file " + m_Name +
-                    ", in call to POSIX Write(iovec)" + SysErrMsg());
+                helper::Throw<std::ios_base::failure>(
+                    "Toolkit", "transport::file::FilePOSIX", "WriteV",
+                    "couldn't write to file " + m_Name + " " + SysErrMsg());
             }
             written = 0;
         }
@@ -360,10 +361,10 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
 
         if (static_cast<size_t>(newPosition) != start)
         {
-            throw std::ios_base::failure(
-                "ERROR: couldn't move to start position " +
-                std::to_string(start) + " in file " + m_Name +
-                ", in call to POSIX lseek" + SysErrMsg());
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FilePOSIX", "WriteV",
+                "couldn't move to start position " + std::to_string(start) +
+                    " in file " + m_Name + " " + SysErrMsg());
         }
     }
 
@@ -399,9 +400,9 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
                     continue;
                 }
 
-                throw std::ios_base::failure(
-                    "ERROR: couldn't read from file " + m_Name +
-                    ", in call to POSIX IO read" + SysErrMsg());
+                helper::Throw<std::ios_base::failure>(
+                    "Toolkit", "transport::file::FilePOSIX", "Read",
+                    "couldn't read from file " + m_Name + " " + SysErrMsg());
             }
 
             buffer += readSize;
@@ -419,10 +420,10 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
 
         if (static_cast<size_t>(newPosition) != start)
         {
-            throw std::ios_base::failure(
-                "ERROR: couldn't move to start position " +
-                std::to_string(start) + " in file " + m_Name +
-                ", in call to POSIX lseek" + SysErrMsg());
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FilePOSIX", "Read",
+                "couldn't move to start position " + std::to_string(start) +
+                    " in file " + m_Name + " " + SysErrMsg());
         }
     }
 
@@ -453,8 +454,9 @@ size_t FilePOSIX::GetSize()
     if (fstat(m_FileDescriptor, &fileStat) == -1)
     {
         m_Errno = errno;
-        throw std::ios_base::failure("ERROR: couldn't get size of file " +
-                                     m_Name + SysErrMsg());
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FilePOSIX", "GetSize",
+            "couldn't get size of file " + m_Name + SysErrMsg());
     }
     m_Errno = errno;
     return static_cast<size_t>(fileStat.st_size);
@@ -484,9 +486,9 @@ void FilePOSIX::Close()
 
     if (status == -1)
     {
-        throw std::ios_base::failure("ERROR: couldn't close file " + m_Name +
-                                     ", in call to POSIX IO close" +
-                                     SysErrMsg());
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FilePOSIX", "Close",
+            "couldn't close file " + m_Name + " " + SysErrMsg());
     }
 
     m_IsOpen = false;
@@ -506,7 +508,9 @@ void FilePOSIX::CheckFile(const std::string hint) const
 {
     if (m_FileDescriptor == -1)
     {
-        throw std::ios_base::failure("ERROR: " + hint + SysErrMsg());
+        helper::Throw<std::ios_base::failure>("Toolkit",
+                                              "transport::file::FilePOSIX",
+                                              "CheckFile", hint + SysErrMsg());
     }
 }
 
@@ -524,9 +528,9 @@ void FilePOSIX::SeekToEnd()
     m_Errno = 0;
     if (status == -1)
     {
-        throw std::ios_base::failure(
-            "ERROR: couldn't seek to the end of file " + m_Name +
-            ", in call to POSIX IO lseek" + SysErrMsg());
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FilePOSIX", "SeekToEnd",
+            "couldn't seek to the end of file " + m_Name + " " + SysErrMsg());
     }
 }
 
@@ -538,9 +542,9 @@ void FilePOSIX::SeekToBegin()
     m_Errno = errno;
     if (status == -1)
     {
-        throw std::ios_base::failure(
-            "ERROR: couldn't seek to the begin of file " + m_Name +
-            ", in call to POSIX IO lseek" + SysErrMsg());
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FilePOSIX", "SeekToBegin",
+            "couldn't seek to the begin of file " + m_Name + " " + SysErrMsg());
     }
 }
 
@@ -554,10 +558,10 @@ void FilePOSIX::Seek(const size_t start)
         m_Errno = errno;
         if (status == -1)
         {
-            throw std::ios_base::failure(
-                "ERROR: couldn't seek to offset " + std::to_string(start) +
-                " of file " + m_Name + ", in call to POSIX IO lseek" +
-                SysErrMsg());
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FilePOSIX", "Seek",
+                "couldn't seek to offset " + std::to_string(start) +
+                    " of file " + m_Name + " " + SysErrMsg());
         }
     }
     else
@@ -574,10 +578,10 @@ void FilePOSIX::Truncate(const size_t length)
     m_Errno = errno;
     if (status == -1)
     {
-        throw std::ios_base::failure(
-            "ERROR: couldn't truncate to " + std::to_string(length) +
-            " bytes of file " + m_Name + ", in call to POSIX IO truncate" +
-            SysErrMsg());
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FilePOSIX", "Truncate",
+            "couldn't truncate to " + std::to_string(length) +
+                " bytes of file " + m_Name + " " + SysErrMsg());
     }
 }
 

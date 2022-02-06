@@ -96,10 +96,11 @@ void BPBase::Init(const Params &parameters, const std::string hint,
             if (parsedParameters.InitialBufferSize <
                 DefaultInitialBufferSize) // 16384b
             {
-                throw std::invalid_argument(
-                    "ERROR: wrong value for Parameter key=InitialBufferSize, "
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "format::bp::BPBase", "Init",
+                    "wrong value for Parameter key=InitialBufferSize, "
                     "it must be larger than 16Kb (minimum default), " +
-                    hint);
+                        hint);
             }
         }
         else if (key == "maxbuffersize")
@@ -125,10 +126,11 @@ void BPBase::Init(const Params &parameters, const std::string hint,
                     value, " in Parameter key=StatsLevel " + hint));
             if (parsedParameters.StatsLevel > 5)
             {
-                throw std::invalid_argument(
-                    "ERROR: value for Parameter key=StatsLevel must be "
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "format::bp::BPBase", "Init",
+                    "value for Parameter key=StatsLevel must be "
                     "an integer in the range [0,5], " +
-                    hint);
+                        hint);
             }
         }
         else if (key == "statsblocksize")
@@ -170,11 +172,12 @@ void BPBase::Init(const Params &parameters, const std::string hint,
                 int n = m_SizeMPI / ratio;
                 if ((m_SizeMPI % ratio))
                 {
-                    throw std::invalid_argument(
-                        "ERROR: value for Parameter key=AggregatorRatio=" +
-                        std::to_string(ratio) + " must be " +
-                        "an integer divisor of the number of processes=" +
-                        std::to_string(m_SizeMPI) + " " + hint);
+                    helper::Throw<std::invalid_argument>(
+                        "Toolkit", "format::bp::BPBase", "Init",
+                        "value for Parameter key=AggregatorRatio=" +
+                            std::to_string(ratio) + " must be " +
+                            "an integer divisor of the number of processes=" +
+                            std::to_string(m_SizeMPI) + " " + hint);
                 }
 
                 if (n < 1)
@@ -287,14 +290,16 @@ BPBase::ResizeResult BPBase::ResizeBuffer(const size_t dataIn,
 
     if (dataIn > maxBufferSize)
     {
-        throw std::runtime_error(
-            "ERROR: data size: " +
-            std::to_string(static_cast<float>(dataIn) / (1024. * 1024.)) +
-            " Mb is too large for adios2 bp MaxBufferSize=" +
-            std::to_string(static_cast<float>(maxBufferSize) /
-                           (1024. * 1024.)) +
-            "Mb, try increasing MaxBufferSize in call to IO SetParameters " +
-            hint + "\n");
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BPBase", "ResizeBuffer",
+            "data size: " +
+                std::to_string(static_cast<float>(dataIn) / (1024. * 1024.)) +
+                " Mb is too large for adios2 bp MaxBufferSize=" +
+                std::to_string(static_cast<float>(maxBufferSize) /
+                               (1024. * 1024.)) +
+                "Mb, try increasing MaxBufferSize in call to IO "
+                "SetParameters " +
+                hint);
     }
 
     if (requiredSize <= currentSize)

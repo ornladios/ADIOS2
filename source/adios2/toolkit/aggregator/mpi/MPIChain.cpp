@@ -9,6 +9,7 @@
  */
 #include "MPIChain.h"
 
+#include "adios2/helper/adiosLog.h"
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
 
 namespace adios2
@@ -117,8 +118,9 @@ MPIChain::IExchangeAbsolutePosition(format::Buffer &buffer, const int step)
 
     if (m_IsInExchangeAbsolutePosition)
     {
-        throw std::runtime_error("ERROR: MPIChain::IExchangeAbsolutePosition: "
-                                 "An existing exchange is still active.");
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "aggregator::mpi::MPIChain", "IExchangeAbsolutePosition",
+            "An existing exchange is still active");
     }
 
     const int destination = (step != m_Size - 1) ? step + 1 : 0;
@@ -190,8 +192,9 @@ void MPIChain::WaitAbsolutePosition(ExchangeAbsolutePositionRequests &requests,
 
     if (!m_IsInExchangeAbsolutePosition)
     {
-        throw std::runtime_error("ERROR: MPIChain::WaitAbsolutePosition: An "
-                                 "existing exchange is not active.");
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "aggregator::mpi::MPIChain", "WaitAbsolutePosition",
+            "An existing exchange is not active");
     }
 
     const int destination = (step != m_Size - 1) ? step + 1 : 0;
@@ -285,11 +288,12 @@ void MPIChain::ResizeUpdateBuffer(const size_t newSize, format::Buffer &buffer,
     {
         if (newSize > buffer.m_FixedSize)
         {
-            throw std::invalid_argument(
-                "ERROR: requesting new size: " + std::to_string(newSize) +
-                " bytes, for fixed size buffer " +
-                std::to_string(buffer.m_FixedSize) + " of type " +
-                buffer.m_Type + ", allocate more memory\n");
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "aggregator::mpi::MPIChain", "ResizeUpdateBuffer",
+                "requesting new size: " + std::to_string(newSize) +
+                    " bytes, for fixed size buffer " +
+                    std::to_string(buffer.m_FixedSize) + " of type " +
+                    buffer.m_Type + ", allocate more memory");
         }
         return; // do nothing if fixed size is enough
     }

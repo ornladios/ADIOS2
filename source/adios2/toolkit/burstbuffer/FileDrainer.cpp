@@ -9,6 +9,7 @@
  */
 
 #include "FileDrainer.h"
+#include "adios2/helper/adiosLog.h"
 
 #include <chrono>
 #include <cstdio>
@@ -108,9 +109,9 @@ void FileDrainer::AddOperationOpen(const std::string &toFileName, Mode mode)
     }
     else
     {
-        throw std::runtime_error(
-            "ADIOS Coding ERROR: FileDrainer::AddOperationOpen() only supports "
-            "Write and Append modes\n");
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "BurstBuffer::FileDrainer", "AddOperationOpen",
+            "only supports Write and Append modes");
     }
 }
 
@@ -245,11 +246,13 @@ std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
             }
             else
             {
-                throw std::ios_base::failure(
+                helper::Throw<std::ios_base::failure>(
+                    "Toolkit", "BurstBuffer::FileDrainer", "Read",
                     "FileDrainer couldn't read from file " + path +
-                    " offset = " + std::to_string(currentOffset) +
-                    " count = " + std::to_string(count) + " bytes but only " +
-                    std::to_string(totalRead + readSize) + ".\n");
+                        " offset = " + std::to_string(currentOffset) +
+                        " count = " + std::to_string(count) +
+                        " bytes but only " +
+                        std::to_string(totalRead + readSize));
             }
         }
         buffer += readSize;
@@ -266,9 +269,10 @@ size_t FileDrainer::Write(OutputFile &f, size_t count, const char *buffer,
 
     if (f->bad())
     {
-        throw std::ios_base::failure(
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "BurstBuffer::FileDrainer", "Write",
             "FileDrainer couldn't write to file " + path +
-            " count = " + std::to_string(count) + " bytes\n");
+                " count = " + std::to_string(count) + " bytes");
     }
 
     return count;

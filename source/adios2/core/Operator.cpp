@@ -60,8 +60,8 @@ Dims Operator::ConvertDims(const Dims &dimensions, const DataType type,
 
     if (targetDims < 1)
     {
-        throw(std::invalid_argument(
-            "Operator::ConvertDims only accepts targetDims>0"));
+        helper::Throw<std::invalid_argument>("Core", "Operator", "ConvertDims",
+                                             "only accepts targetDims > 0");
     }
 
     Dims ret = dimensions;
@@ -103,9 +103,10 @@ void Operator::CheckCallbackType(const std::string type) const
 {
     if (m_TypeString != type)
     {
-        throw std::invalid_argument("ERROR: operator of type " + m_TypeString +
-                                    " doesn't match expected callback type " +
-                                    type + " arguments\n");
+        helper::Throw<std::invalid_argument>(
+            "Core", "Operator", "CheckCallbackType",
+            "operator of type " + m_TypeString +
+                " doesn't match expected callback type " + type + " arguments");
     }
 }
 

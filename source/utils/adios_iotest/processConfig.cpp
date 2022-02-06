@@ -1,5 +1,5 @@
 /*
- * processConfig.h
+ * processConfig.cpp
  *
  *  Created on: Oct 2018
  *      Author: Norbert Podhorszki
@@ -18,6 +18,8 @@
 
 #include "decomp.h"
 #include "processConfig.h"
+
+#include "adios2/helper/adiosLog.h"
 
 Command::Command(Operation operation) : op(operation) {}
 Command::~Command() {}
@@ -82,10 +84,11 @@ size_t stringToSizet(std::vector<std::string> &words, size_t pos,
 {
     if (words.size() < pos + 1)
     {
-        throw std::invalid_argument(
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "processConfig", "stringToSizet",
             "Line for " + lineID +
-            " is invalid. Missing value at word position " +
-            std::to_string(pos + 1));
+                " is invalid. Missing value at word position " +
+                std::to_string(pos + 1));
     }
 
     char *end;
@@ -93,8 +96,9 @@ size_t stringToSizet(std::vector<std::string> &words, size_t pos,
     size_t n = static_cast<size_t>(std::strtoull(words[pos].c_str(), &end, 10));
     if (end[0] || errno == ERANGE)
     {
-        throw std::invalid_argument("Invalid value given for " + lineID + ": " +
-                                    words[pos]);
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "processConfig", "stringToSizet",
+            "Invalid value given for " + lineID + ": " + words[pos]);
     }
     return n;
 }
@@ -104,10 +108,11 @@ double stringToDouble(std::vector<std::string> &words, size_t pos,
 {
     if (words.size() < pos + 1)
     {
-        throw std::invalid_argument(
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "processConfig", "stringToDouble",
             "Line for " + lineID +
-            " is invalid. Missing floating point value at word position " +
-            std::to_string(pos + 1));
+                " is invalid. Missing floating point value at word position " +
+                std::to_string(pos + 1));
     }
 
     char *end;
@@ -115,8 +120,10 @@ double stringToDouble(std::vector<std::string> &words, size_t pos,
     double d = static_cast<double>(std::strtod(words[pos].c_str(), &end));
     if (end[0] || errno == ERANGE)
     {
-        throw std::invalid_argument("Invalid floating point value given for " +
-                                    lineID + ": " + words[pos]);
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "processConfig", "stringToDouble",
+            "Invalid floating point value given for " + lineID + ": " +
+                words[pos]);
     }
     return d;
 }
@@ -204,10 +211,12 @@ size_t processDecomp(std::string &word, const Settings &settings,
         }
         else
         {
-            throw std::invalid_argument(
+            adios2::helper::Throw<std::invalid_argument>(
+                "Utils::adios_iotest", "processConfig", "processDecomp",
                 "Invalid identifier '" + std::string(1, c) + "' for " +
-                decompID + " in character position " + std::to_string(i + 1) +
-                ". Only accepted characters are XYZVW and 1");
+                    decompID + " in character position " +
+                    std::to_string(i + 1) +
+                    ". Only accepted characters are XYZVW and 1");
         }
     }
     return decomp;
@@ -222,7 +231,10 @@ size_t getTypeSize(std::string &type)
             return t.second;
         }
     }
-    throw std::invalid_argument("Type '" + type + "' is invalid. ");
+    adios2::helper::Throw<std::invalid_argument>(
+        "Utils::adios_iotest", "processConfig", "getTypeSize",
+        "Type '" + type + "' is invalid. ");
+    return 0;
 }
 
 VariableInfo processArray(std::vector<std::string> &words,
@@ -230,9 +242,10 @@ VariableInfo processArray(std::vector<std::string> &words,
 {
     if (words.size() < 4)
     {
-        throw std::invalid_argument("Line for array definition is invalid. "
-                                    "There must be at least 4 words "
-                                    "in the line (array type name ndim)");
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "processConfig", "processArray",
+            "Line for array definition is invalid. There must be at least 4 "
+            "words in the line (array type name ndim)");
     }
     VariableInfo ov;
     ov.shapeID = adios2::ShapeID::GlobalArray;
@@ -245,11 +258,11 @@ VariableInfo processArray(std::vector<std::string> &words,
 
     if (words.size() < 4 + 2 * ov.ndim)
     {
-        throw std::invalid_argument(
-            "Line for array definition is invalid. "
-            "There must be at least 4 + 2*N words where N is the 4th word ndim "
-            "in the line (array type name ndim dim1 ... dimN decomp1 ... "
-            "decompN)");
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "processConfig", "processArray",
+            "Line for array definition is invalid. There must be at least 4 + "
+            "2*N words where N is the 4th word ndim in the line (array type "
+            "name ndim dim1 ... dimN decomp1 ... decompN)");
     }
 
     for (size_t i = 0; i < ov.ndim; i++)
@@ -276,12 +289,13 @@ VariableInfo processArray(std::vector<std::string> &words,
     }
     if (nprocDecomp != settings.nProc)
     {
-        throw std::invalid_argument(
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "processConfig", "processArray",
             "Invalid decomposition for array '" + ov.name +
-            "'. The product of the decompositions (here " +
-            std::to_string(nprocDecomp) +
-            ") must equal the number of processes (here " +
-            std::to_string(settings.nProc) + ")");
+                "'. The product of the decompositions (here " +
+                std::to_string(nprocDecomp) +
+                ") must equal the number of processes (here " +
+                std::to_string(settings.nProc) + ")");
     }
     return ov;
 }
@@ -400,9 +414,10 @@ void globalChecks(const Config &cfg, const Settings &settings)
         {
             if (cfg.condMap.find(cmd->conditionalStream) == cfg.condMap.end())
             {
-                throw std::invalid_argument(
+                adios2::helper::Throw<std::invalid_argument>(
+                    "Utils::adios_iotest", "processConfig", "globalChecks",
                     "Name used in conditional is not a read stream: '" +
-                    cmd->conditionalStream + "'");
+                        cmd->conditionalStream + "'");
             }
         }
     }
@@ -410,9 +425,10 @@ void globalChecks(const Config &cfg, const Settings &settings)
     {
         if (cfg.condMap.find(it.first) == cfg.condMap.end())
         {
-            throw std::invalid_argument(
+            adios2::helper::Throw<std::invalid_argument>(
+                "Utils::adios_iotest", "processConfig", "globalChecks",
                 "Name used in step over command is not a read stream: '" +
-                it.first + "' ");
+                    it.first + "' ");
         }
     }
 }
@@ -424,8 +440,9 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
     std::ifstream configFile(settings.configFileName);
     if (!configFile.is_open())
     {
-        throw std::invalid_argument(settings.configFileName +
-                                    " cannot be opened ");
+        adios2::helper::Throw<std::invalid_argument>(
+            "Utils::adios_iotest", "processConfig", "processConfig",
+            settings.configFileName + " cannot be opened ");
     }
     if (verbose0)
     {
@@ -458,19 +475,19 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             {
                 if (words.size() < 2)
                 {
-                    throw std::invalid_argument(
-                        "Line for 'cond' is invalid. "
-                        "Missing group name at word position "
-                        "2");
+                    adios2::helper::Throw<std::invalid_argument>(
+                        "Utils::adios_iotest", "processConfig", "processConfig",
+                        "Line for 'cond' is invalid. Missing group name at "
+                        "word position 2");
                 }
                 conditionalStream = words[1];
 
                 if (words.size() < 3)
                 {
-                    throw std::invalid_argument(
-                        "Line for 'cond' is invalid. "
-                        "Missing command from word position "
-                        "3");
+                    adios2::helper::Throw<std::invalid_argument>(
+                        "Utils::adios_iotest", "processConfig", "processConfig",
+                        "Line for 'cond' is invalid. Missing command from word "
+                        "position 3");
                 }
                 words.erase(words.begin(), words.begin() + 2);
                 key = words[0];
@@ -481,9 +498,10 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             {
                 if (words.size() < 2)
                 {
-                    throw std::invalid_argument("Line for group is invalid. "
-                                                "Missing name at word position "
-                                                "2");
+                    adios2::helper::Throw<std::invalid_argument>(
+                        "Utils::adios_iotest", "processConfig", "processConfig",
+                        "Line for group is invalid. Missing name at word "
+                        "position 2");
                 }
 
                 currentGroup = words[1];
@@ -586,18 +604,22 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                 {
                     if (words.size() < 3)
                     {
-                        throw std::invalid_argument(
-                            "Line for 'write' is invalid. "
-                            "Need at least output name and group name ");
+                        adios2::helper::Throw<std::invalid_argument>(
+                            "Utils::adios_iotest", "processConfig",
+                            "processConfig",
+                            "Line for 'write' is invalid. Need at least output "
+                            "name and group name ");
                     }
                     std::string fileName(words[1]);
                     std::string groupName(words[2]);
                     auto grpIt = cfg.groupVariablesMap.find(groupName);
                     if (grpIt == cfg.groupVariablesMap.end())
                     {
-                        throw std::invalid_argument(
+                        adios2::helper::Throw<std::invalid_argument>(
+                            "Utils::adios_iotest", "processConfig",
+                            "processConfig",
                             "Group '" + groupName +
-                            "' used in 'write' command is undefined. ");
+                                "' used in 'write' command is undefined. ");
                     }
 
                     if (verbose0)
@@ -617,12 +639,13 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         auto vIt = grpIt->second.find(words[widx]);
                         if (vIt == grpIt->second.end())
                         {
-                            throw std::invalid_argument("Group '" + groupName +
-                                                        "' used in 'write' "
-                                                        "command has no "
-                                                        "variable '" +
-                                                        words[widx] +
-                                                        "' defined.");
+                            adios2::helper::Throw<std::invalid_argument>(
+                                "Utils::adios_iotest", "processConfig",
+                                "processConfig",
+                                "Group '" + groupName +
+                                    "' used in 'write' command has no variable "
+                                    "'" +
+                                    words[widx] + "' defined.");
                         }
                         cmd->variables.push_back(vIt->second);
                         ++widx;
@@ -647,11 +670,11 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                 {
                     if (words.size() < 4)
                     {
-                        throw std::invalid_argument(
-                            "Line for 'read' is invalid. "
-                            "Need at least 3 arguments: "
-                            "mode, output name, group "
-                            "name ");
+                        adios2::helper::Throw<std::invalid_argument>(
+                            "Utils::adios_iotest", "processConfig",
+                            "processConfig",
+                            "Line for 'read' is invalid. Need at least 3 "
+                            "arguments: mode, output name, group name ");
                     }
                     std::string mode(words[1]);
                     std::transform(mode.begin(), mode.end(), mode.begin(),
@@ -665,15 +688,19 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     auto grpIt = cfg.groupVariablesMap.find(groupName);
                     if (grpIt == cfg.groupVariablesMap.end())
                     {
-                        throw std::invalid_argument(
+                        adios2::helper::Throw<std::invalid_argument>(
+                            "Utils::adios_iotest", "processConfig",
+                            "processConfig",
                             "Group '" + groupName +
-                            "' used in 'read' command is undefined. ");
+                                "' used in 'read' command is undefined. ");
                     }
                     if (mode != "next" && mode != "latest")
                     {
-                        throw std::invalid_argument(
-                            "Mode (1st argument) for 'read' is invalid. "
-                            "It must be either 'next' or 'latest'");
+                        adios2::helper::Throw<std::invalid_argument>(
+                            "Utils::adios_iotest", "processConfig",
+                            "processConfig",
+                            "Mode (1st argument) for 'read' is invalid. It "
+                            "must be either 'next' or 'latest'");
                     }
 
                     double d = -1.0;
@@ -715,12 +742,13 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         auto vIt = grpIt->second.find(words[widx]);
                         if (vIt == grpIt->second.end())
                         {
-                            throw std::invalid_argument("Group '" + groupName +
-                                                        "' used in 'write' "
-                                                        "command has no "
-                                                        "variable '" +
-                                                        words[widx] +
-                                                        "' defined.");
+                            adios2::helper::Throw<std::invalid_argument>(
+                                "Utils::adios_iotest", "processConfig",
+                                "processConfig",
+                                "Group '" + groupName +
+                                    "' used in 'write' command has no variable "
+                                    "'" +
+                                    words[widx] + "' defined.");
                         }
                         if (verbose0)
                         {
@@ -835,17 +863,19 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             {
                 if (words.size() < 3)
                 {
-                    throw std::invalid_argument("Line for 'link' is invalid. "
-                                                "Need at least 2 words: "
-                                                "group <group_name> ");
+                    adios2::helper::Throw<std::invalid_argument>(
+                        "Utils::adios_iotest", "processConfig", "processConfig",
+                        "Line for 'link' is invalid. Need at least 2 words: "
+                        "group <group_name> ");
                 }
                 std::string groupName = words[2];
                 auto grpIt = cfg.groupVariablesMap.find(groupName);
                 if (grpIt == cfg.groupVariablesMap.end())
                 {
-                    throw std::invalid_argument(
+                    adios2::helper::Throw<std::invalid_argument>(
+                        "Utils::adios_iotest", "processConfig", "processConfig",
                         "Group '" + groupName +
-                        "' used in 'link' command is undefined. ");
+                            "' used in 'link' command is undefined. ");
                 }
 
                 if (verbose0)
@@ -863,12 +893,13 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         auto vIt = grpIt->second.find(words[widx]);
                         if (vIt == grpIt->second.end())
                         {
-                            throw std::invalid_argument("Group '" + groupName +
-                                                        "' used in 'link' "
-                                                        "command has no "
-                                                        "variable '" +
-                                                        words[widx] +
-                                                        "' defined.");
+                            adios2::helper::Throw<std::invalid_argument>(
+                                "Utils::adios_iotest", "processConfig",
+                                "processConfig",
+                                "Group '" + groupName +
+                                    "' used in 'link' command has no variable "
+                                    "'" +
+                                    words[widx] + "' defined.");
                         }
                         if (verbose0)
                         {
@@ -901,8 +932,9 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             }
             else
             {
-                throw std::invalid_argument("Unrecognized keyword '" + key +
-                                            "'.");
+                adios2::helper::Throw<std::invalid_argument>(
+                    "Utils::adios_iotest", "processConfig", "processConfig",
+                    "Unrecognized keyword '" + key + "'.");
             }
         }
     }
