@@ -151,6 +151,7 @@ size_t RangeFilter::ToSizeT(const std::string &input)
             "Helper", "adiosRangeFilter", "ToSizeT",
             "could not cast string '" + input + "' to number ");
     }
+    return 0;
 }
 
 } // end namespace helper
