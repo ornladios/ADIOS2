@@ -237,9 +237,10 @@ void DataManSerializer::JsonToVarMap(nlohmann::json &metaJ, VecPtr pack)
                 }
                 catch (std::exception &e)
                 {
-                    throw(std::runtime_error(
-                        "DataManSerializer::JsonToVarMap missing "
-                        "compulsory properties in JSON metadata"));
+                    helper::Throw<std::runtime_error>(
+                        "Toolkit::Format", "dataman::DataManSerializer",
+                        "JsonToVarMap",
+                        "missing compulsory properties in JSON metadata");
                 }
 
                 // optional properties
@@ -450,10 +451,10 @@ VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
     }
     else
     {
-        throw(std::invalid_argument(m_UseJsonSerialization +
-                                    " is not a valid method. DataManSerializer "
-                                    "only uses string, msgpack, cbor or "
-                                    "ubjson"));
+        helper::Throw<std::runtime_error>(
+            "Toolkit::Format", "dataman::DataManSerializer", "SerializeJson",
+            "json serialization method " + m_UseJsonSerialization +
+                " not valid");
     }
     return pack;
 }
@@ -475,8 +476,9 @@ nlohmann::json DataManSerializer::DeserializeJson(const char *start,
 
     if (start == nullptr or start == NULL or size == 0)
     {
-        throw(std::runtime_error("DataManSerializer::DeserializeJson received "
-                                 "uninitialized message"));
+        helper::Throw<std::runtime_error>(
+            "Toolkit::Format", "dataman::DataManSerializer", "DeserializeJson",
+            "received invalid message");
     }
     nlohmann::json message;
     if (m_UseJsonSerialization == "msgpack")
@@ -497,10 +499,10 @@ nlohmann::json DataManSerializer::DeserializeJson(const char *start,
     }
     else
     {
-        throw(std::invalid_argument(m_UseJsonSerialization +
-                                    " is not a valid method. DataManSerializer "
-                                    "only uses string, msgpack, cbor or "
-                                    "ubjson"));
+        helper::Throw<std::invalid_argument>(
+            "Toolkit::Format", "dataman::DataManSerializer", "DeserializeJson",
+            "json serialization method " + m_UseJsonSerialization +
+                " not valid");
     }
 
     return message;

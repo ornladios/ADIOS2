@@ -134,7 +134,7 @@ size_t CompressZFP::InverseOperate(const char *bufferIn, const size_t sizeIn,
     else
     {
         helper::Throw<std::runtime_error>(
-            "Operator", "CompressZFP", "Operate(Compress)",
+            "Operator", "CompressZFP", "InverseOperate",
             "invalid zfp buffer version" + std::to_string(bufferVersion));
     }
 

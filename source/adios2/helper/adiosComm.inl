@@ -11,6 +11,8 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
+#include "adios2/helper/adiosLog.h"
+
 #include <numeric>   //std::accumulate
 #include <stdexcept> //std::runtime_error
 #include <string>    //std::to_string
@@ -95,10 +97,9 @@ void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
         }
         catch (...)
         {
-            std::throw_with_nested(
-                std::runtime_error("ERROR: buffer overflow when resizing to " +
-                                   std::to_string(newSize) +
-                                   " bytes, in call to GathervVectors\n"));
+            helper::ThrowNested<std::runtime_error>(
+                "Helper", "adiosComm", "GathervVectors",
+                "buffer overflow when resizing to " + std::to_string(newSize));
         }
     }
 

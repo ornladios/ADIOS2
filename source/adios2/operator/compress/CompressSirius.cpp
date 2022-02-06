@@ -107,7 +107,9 @@ size_t CompressSirius::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        throw("unknown sirius buffer version");
+        helper::Throw<std::runtime_error>("Operator", "CompressSirius",
+                                          "InverseOperate",
+                                          "invalid sirius buffer version");
     }
 
     return 0;

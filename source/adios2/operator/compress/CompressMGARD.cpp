@@ -41,9 +41,10 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     const size_t ndims = convertedDims.size();
     if (ndims > 5)
     {
-        helper::Log("Operator", "CompressMGARD", "Operate",
-                    "MGARG only supports up to 5 dimensions",
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressMGARD", "Operate",
+            "MGARD does not support data in " + std::to_string(ndims) +
+                " dimensions");
     }
 
     // mgard V1 metadata
@@ -81,9 +82,9 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     }
     else
     {
-        helper::Log("Operator", "CompressMGARD", "Operate",
-                    "MGARD only supports float and double types",
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressMGARD", "Operate",
+            "MGARD only supports float and double types");
     }
     // set type end
 
@@ -116,9 +117,9 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     }
     if (!hasTolerance)
     {
-        helper::Log("Operator", "CompressMGARD", "Operate",
-                    "missing mandatory parameter tolerance / accuracy",
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::invalid_argument>(
+            "Operator", "CompressMGARD", "Operate",
+            "missing mandatory parameter tolerance / accuracy");
     }
     auto itSParameter = m_Parameters.find("s");
     if (itSParameter != m_Parameters.end())
@@ -209,8 +210,8 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     catch (...)
     {
-        helper::Log("Operator", "CompressMGARD", "DecompressV1", m_VersionInfo,
-                    helper::LogMode::EXCEPTION);
+        helper::Throw<std::runtime_error>("Operator", "CompressMGARD",
+                                          "DecompressV1", m_VersionInfo);
     }
 
     return sizeOut;
@@ -236,8 +237,9 @@ size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        helper::Log("Operator", "CompressMGARD", "DecompressV1",
-                    "unknown mgard buffer version", helper::LogMode::EXCEPTION);
+        helper::Throw<std::runtime_error>("Operator", "CompressMGARD",
+                                          "InverseOperate",
+                                          "invalid mgard buffer version");
     }
 
     return 0;

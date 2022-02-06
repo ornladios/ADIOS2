@@ -54,9 +54,8 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 
     if (m_IPAddress.empty())
     {
-        helper::Log("Engine", "DataManWriter", "Open",
-                    "IP address not specified", 0, m_Comm.Rank(), 0,
-                    m_Verbosity, helper::LogMode::EXCEPTION);
+        helper::Throw<std::invalid_argument>("Engine", "DataManWriter", "Open",
+                                             "IP address not specified");
     }
 
     if (m_MonitorActive)

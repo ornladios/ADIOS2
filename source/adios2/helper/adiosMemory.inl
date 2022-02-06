@@ -632,9 +632,10 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint,
     }
     catch (...)
     {
-        std::throw_with_nested(std::runtime_error(
-            "ERROR: buffer overflow when resizing to " +
-            std::to_string(dataSize) + " bytes, " + hint + "\n"));
+        helper::ThrowNested<std::runtime_error>(
+            "Helper", "adiosMemory", "Resize",
+            "buffer overflow when resizing to " + std::to_string(dataSize) +
+                " bytes, " + hint);
     }
 }
 

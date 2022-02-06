@@ -296,10 +296,11 @@ std::vector<T> Stream::GetCommon(Variable<T> &variable)
     }
     catch (std::exception &e)
     {
-        std::throw_with_nested(
-            std::runtime_error("ERROR: couldn't read variable " +
-                               variable.m_Name + "\n" + e.what()));
+        helper::ThrowNested<std::runtime_error>(
+            "Core", "Stream", "GetCommon",
+            "couldn't read variable " + variable.m_Name + ": " + e.what());
     }
+    return std::vector<T>();
 }
 
 template <class T>
@@ -312,9 +313,10 @@ void Stream::GetPCommon(Variable<T> &variable, T *values)
     }
     catch (std::exception &e)
     {
-        std::throw_with_nested(
-            std::runtime_error("ERROR: couldn't read pointer variable " +
-                               variable.m_Name + "\n" + e.what()));
+        helper::ThrowNested<std::runtime_error>(
+            "Core", "Stream", "GetCommon",
+            "couldn't read pointer variable " + variable.m_Name + ": " +
+                e.what());
     }
 }
 

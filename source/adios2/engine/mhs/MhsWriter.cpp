@@ -45,7 +45,8 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         }
         else
         {
-            throw("invalid operator");
+            helper::Throw<std::invalid_argument>(
+                "Engine", "MhsWriter", "MhsWriter", "invalid operator");
         }
     }
     for (int i = 0; i < m_Tiers; ++i)
