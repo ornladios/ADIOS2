@@ -275,7 +275,10 @@ size_t IO::AddTransport(const std::string type, const Params &parameters)
     if (parameters.count("transport") == 1 ||
         parameters.count("Transport") == 1)
     {
-        helper::Throw<std::invalid_argument>( "Core", "IO", "AddTransport", "key Transport (or transport) is not allowed in transport parameters);
+        helper::Throw<std::invalid_argument>(
+            "Core", "IO", "AddTransport",
+            "key Transport (or transport) is not allowed in transport "
+            "parameters");
     }
 
     CheckTransportType(type);
