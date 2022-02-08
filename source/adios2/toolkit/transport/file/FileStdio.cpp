@@ -111,6 +111,71 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
     }
 }
 
+void FileStdio::OpenChain(const std::string &name, Mode openMode,
+                          const helper::Comm &chainComm, const bool async)
+{
+    auto lf_AsyncOpenWrite = [&](const std::string &name) -> FILE * {
+        errno = 0;
+        return std::fopen(name.c_str(), "wb");
+    };
+
+    int token = 1;
+    m_Name = name;
+    CheckName();
+
+    if (chainComm.Rank() > 0)
+    {
+        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
+                       "Chain token in FileStdio::OpenChain");
+    }
+
+    m_OpenMode = openMode;
+    switch (m_OpenMode)
+    {
+    case (Mode::Write):
+        if (async)
+        {
+            m_IsOpening = true;
+            m_OpenFuture =
+                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+        }
+        else
+        {
+            errno = 0;
+            m_File = std::fopen(name.c_str(), "wb");
+        }
+        break;
+    case (Mode::Append):
+        errno = 0;
+        m_File = std::fopen(name.c_str(), "rwb");
+        // m_File = std::fopen(name.c_str(), "a+b");
+        std::fseek(m_File, 0, SEEK_END);
+        break;
+    case (Mode::Read):
+        errno = 0;
+        m_File = std::fopen(name.c_str(), "rb");
+        break;
+    default:
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileStdio", "Open",
+            "unknown open mode for file " + m_Name);
+    }
+
+    if (!m_IsOpening)
+    {
+        CheckFile(
+            "couldn't open file " + m_Name +
+            ", check permissions or path existence, in call to stdio open");
+        m_IsOpen = true;
+    }
+
+    if (chainComm.Rank() < chainComm.Size() - 1)
+    {
+        chainComm.Isend(&token, 1, chainComm.Rank() + 1, 0,
+                        "Sending Chain token in FileStdio::OpenChain");
+    }
+}
+
 void FileStdio::SetBuffer(char *buffer, size_t size)
 {
     if (!m_File)
