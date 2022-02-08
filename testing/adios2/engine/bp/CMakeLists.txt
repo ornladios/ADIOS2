@@ -78,7 +78,7 @@ bp_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 async_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 
 bp_gtest_add_tests_helper(WriteReadADIOS2fstream MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(WriteReadADIOS2stdio MPI_ALLOW)
+bp_gtest_add_tests_helper(WriteReadADIOS2stdio MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2 MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2_Threads MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAttributes MPI_ALLOW)
