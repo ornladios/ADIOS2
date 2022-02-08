@@ -331,11 +331,16 @@ adios2::Mode File::ToMode(const std::string mode) const
     {
         modeCpp = adios2::Mode::Read;
     }
+    else if (mode == "rra")
+    {
+        modeCpp = adios2::Mode::ReadRandomAccess;
+    }
     else
     {
         throw std::invalid_argument(
             "ERROR: adios2 mode " + mode + " for file " + m_Name +
-            " not supported, only \"r\", \"w\" and \"a\" (read, write, append) "
+            " not supported, only \"r\", \"rra\", \"w\" and \"a\" (read, "
+            "readRandomAccess, write, append) "
             "are valid modes, in call to open\n");
     }
 
