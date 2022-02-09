@@ -68,7 +68,7 @@ public:
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer) = 0;
 
 protected:
-    static char zero[64];
+    std::vector<char> zero;
     const bool m_AlwaysCopy = false;
 
     struct VecEntry

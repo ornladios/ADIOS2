@@ -894,7 +894,7 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer)
     DumpDeferredBlocks();
 
     m_PriorDataBufferSizeTotal += CurDataBuffer->AddToVec(
-        0, NULL, sizeof(max_align_t), true); //  output block size aligned
+        0, NULL, m_BufferAlignmentSize, true); //  output block size aligned
 
     BufferV *tmp = CurDataBuffer;
     CurDataBuffer = DataBuffer;
@@ -970,7 +970,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
     DumpDeferredBlocks(forceCopyDeferred);
 
     MBase->DataBlockSize = CurDataBuffer->AddToVec(
-        0, NULL, sizeof(max_align_t), true); //  output block size aligned
+        0, NULL, m_BufferAlignmentSize, true); //  output block size aligned
 
     MBase->DataBlockSize += m_PriorDataBufferSizeTotal;
 

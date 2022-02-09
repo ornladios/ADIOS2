@@ -61,7 +61,7 @@ void FileStdio::WaitForOpen()
 }
 
 void FileStdio::Open(const std::string &name, const Mode openMode,
-                     const bool async)
+                     const bool async, const bool directio)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> FILE * {
         errno = 0;
@@ -112,7 +112,8 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
 }
 
 void FileStdio::OpenChain(const std::string &name, Mode openMode,
-                          const helper::Comm &chainComm, const bool async)
+                          const helper::Comm &chainComm, const bool async,
+                          const bool directio)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> FILE * {
         errno = 0;

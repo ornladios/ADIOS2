@@ -65,7 +65,8 @@ public:
      * @param async
      */
     virtual void Open(const std::string &name, const Mode openMode,
-                      const bool async = false) = 0;
+                      const bool async = false,
+                      const bool directio = false) = 0;
 
     /**
      * Opens transport, possibly asynchronously, in a chain to avoid
@@ -78,7 +79,8 @@ public:
      */
     virtual void OpenChain(const std::string &name, Mode openMode,
                            const helper::Comm &chainComm,
-                           const bool async = false);
+                           const bool async = false,
+                           const bool directio = false);
 
     /**
      * If OS buffered (FILE* or fstream), sets the buffer size

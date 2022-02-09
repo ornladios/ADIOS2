@@ -81,7 +81,8 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
 }
 
 void Transport::OpenChain(const std::string &name, const Mode openMode,
-                          const helper::Comm &chainComm, const bool async)
+                          const helper::Comm &chainComm, const bool async,
+                          const bool directio)
 {
     std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type +
                           " using library " + m_Library +

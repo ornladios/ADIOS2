@@ -111,6 +111,8 @@ public:
     /* Variables to help appending to existing file */
     size_t m_PreMetaMetadataFileLength = 0;
 
+    size_t m_BufferAlignmentSize = 16 * sizeof(max_align_t);
+
 private:
     void Init();
     typedef struct _BP5WriterRec

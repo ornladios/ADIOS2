@@ -70,6 +70,8 @@ int main(int argc, char *argv[])
         io.SetParameter("NumAggregators", "1");
         io.SetParameter("NumSubFiles", "1");
         io.SetParameter("AsyncWrite", "Guided");
+        io.SetParameter("AsyncOpen", "true");
+        io.SetParameter("O_DIRECT", "true");
 
         /*
          * Define global array: type, name, global dimensions

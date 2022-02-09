@@ -87,13 +87,13 @@ void MallocV::CopyExternalToInternal()
 size_t MallocV::AddToVec(const size_t size, const void *buf, size_t align,
                          bool CopyReqd, MemorySpace MemSpace)
 {
+    AlignBuffer(align); // may call back AddToVec recursively
+    size_t retOffset = CurOffset;
+
     if (size == 0)
     {
         return CurOffset;
     }
-
-    AlignBuffer(align);
-    size_t retOffset = CurOffset;
 
     if (!CopyReqd && !m_AlwaysCopy)
     {

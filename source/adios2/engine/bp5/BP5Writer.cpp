@@ -931,6 +931,14 @@ void BP5Writer::InitTransports()
         }
     }
 
+    if (m_Parameters.O_DIRECT)
+    {
+        for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
+        {
+            m_IO.m_TransportsParameters[i]["O_DIRECT"] = "true";
+        }
+    }
+
     bool useProfiler = true;
 
     if (m_IAmWritingData)
@@ -953,6 +961,11 @@ void BP5Writer::InitTransports()
 
     if (m_Comm.Rank() == 0)
     {
+        // force turn off directio to metadata files
+        for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
+        {
+            m_IO.m_TransportsParameters[i]["O_DIRECT"] = "false";
+        }
         m_FileMetaMetadataManager.OpenFiles(m_MetaMetadataFileNames, m_OpenMode,
                                             m_IO.m_TransportsParameters,
                                             useProfiler);

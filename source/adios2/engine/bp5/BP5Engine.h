@@ -124,6 +124,7 @@ public:
     MACRO(NumAggregators, UInt, unsigned int, 0)                               \
     MACRO(NumSubFiles, UInt, unsigned int, 999999)                             \
     MACRO(FileSystemPageSize, UInt, unsigned int, 4096)                        \
+    MACRO(O_DIRECT, Bool, bool, false)                                         \
     MACRO(AggregationType, AggregationType, int,                               \
           (int)AggregationType::TwoLevelShm)                                   \
     MACRO(AsyncOpen, Bool, bool, true)                                         \

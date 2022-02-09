@@ -632,6 +632,13 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
         return helper::StringTo<bool>(AsyncOpen, "");
     };
 
+    auto lf_GetDirectIO = [&](const std::string defaultValue,
+                              const Params &parameters) -> bool {
+        std::string directio = defaultValue;
+        helper::SetParameterValue("O_DIRECT", parameters, directio);
+        return helper::StringTo<bool>(directio, "");
+    };
+
     // BODY OF FUNCTION starts here
     std::shared_ptr<Transport> transport;
     lf_SetFileTransport(lf_GetLibrary(DefaultFileLibrary, parameters),
@@ -650,12 +657,14 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     if (useComm)
     {
         transport->OpenChain(fileName, openMode, chainComm,
-                             lf_GetAsyncOpen("true", parameters));
+                             lf_GetAsyncOpen("false", parameters),
+                             lf_GetDirectIO("false", parameters));
     }
     else
     {
         transport->Open(fileName, openMode,
-                        lf_GetAsyncOpen("false", parameters));
+                        lf_GetAsyncOpen("false", parameters),
+                        lf_GetDirectIO("false", parameters));
     }
     return transport;
 }

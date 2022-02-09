@@ -16,10 +16,10 @@ namespace adios2
 namespace format
 {
 
-char BufferV::zero[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/*char BufferV::zero[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};*/
 
 BufferV::BufferV(const std::string type, const bool AlwaysCopy)
 : m_Type(type), m_AlwaysCopy(AlwaysCopy)
@@ -43,8 +43,11 @@ void BufferV::AlignBuffer(const size_t align)
     if (badAlign)
     {
         size_t addAlign = align - badAlign;
-        assert(addAlign < sizeof(max_align_t));
-        AddToVec(addAlign, zero, 1, true);
+        if (addAlign > zero.size())
+        {
+            zero.resize(addAlign);
+        }
+        AddToVec(addAlign, zero.data(), 1, true);
     }
 }
 
