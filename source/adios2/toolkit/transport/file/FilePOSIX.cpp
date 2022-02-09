@@ -10,6 +10,12 @@
 #include "FilePOSIX.h"
 #include "adios2/helper/adiosLog.h"
 
+#ifdef ADIOS2_HAVE_O_DIRECT
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#endif
+
 #include <cstdio>      // remove
 #include <cstring>     // strerror
 #include <errno.h>     // errno
@@ -58,13 +64,29 @@ void FilePOSIX::WaitForOpen()
     }
 }
 
-void FilePOSIX::Open(const std::string &name, const Mode openMode,
-                     const bool async)
+static int __GetOpenFlag(const int flag, const bool directio)
 {
-    auto lf_AsyncOpenWrite = [&](const std::string &name) -> int {
+#ifdef ADIOS2_HAVE_O_DIRECT
+    if (directio)
+    {
+        return flag | O_DIRECT;
+    }
+    else
+#endif
+    {
+        return flag;
+    }
+}
+
+void FilePOSIX::Open(const std::string &name, const Mode openMode,
+                     const bool async, const bool directio)
+{
+    auto lf_AsyncOpenWrite = [&](const std::string &name,
+                                 const bool directio) -> int {
         ProfilerStart("open");
         errno = 0;
-        int FD = open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        int flag = __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio);
+        int FD = open(m_Name.c_str(), flag, 0666);
         m_Errno = errno;
         ProfilerStop("open");
         return FD;
@@ -72,6 +94,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
 
     m_Name = name;
     CheckName();
+    m_DirectIO = directio;
     m_OpenMode = openMode;
     switch (m_OpenMode)
     {
@@ -80,15 +103,16 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
         if (async)
         {
             m_IsOpening = true;
-            m_OpenFuture =
-                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+            m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite,
+                                      name, directio);
         }
         else
         {
             ProfilerStart("open");
             errno = 0;
-            m_FileDescriptor =
-                open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            m_FileDescriptor = open(
+                m_Name.c_str(),
+                __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio), 0666);
             m_Errno = errno;
             ProfilerStop("open");
         }
@@ -98,7 +122,8 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
         ProfilerStart("open");
         errno = 0;
         // m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
-        m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
+        m_FileDescriptor = open(
+            m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT, directio), 0777);
         lseek(m_FileDescriptor, 0, SEEK_END);
         m_Errno = errno;
         ProfilerStop("open");
@@ -125,12 +150,15 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
 }
 
 void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
-                          const helper::Comm &chainComm, const bool async)
+                          const helper::Comm &chainComm, const bool async,
+                          const bool directio)
 {
-    auto lf_AsyncOpenWrite = [&](const std::string &name) -> int {
+    auto lf_AsyncOpenWrite = [&](const std::string &name,
+                                 const bool directio) -> int {
         ProfilerStart("open");
         errno = 0;
-        int FD = open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        int flag = __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio);
+        int FD = open(m_Name.c_str(), flag, 0666);
         m_Errno = errno;
         ProfilerStop("open");
         return FD;
@@ -146,6 +174,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
                        "Chain token in FilePOSIX::OpenChain");
     }
 
+    m_DirectIO = directio;
     m_OpenMode = openMode;
     switch (m_OpenMode)
     {
@@ -156,8 +185,8 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
             // only when process is a single writer, can create the file
             // asynchronously, otherwise other processes are waiting on it
             m_IsOpening = true;
-            m_OpenFuture =
-                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+            m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite,
+                                      name, directio);
         }
         else
         {
@@ -166,11 +195,14 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
             if (chainComm.Rank() == 0)
             {
                 m_FileDescriptor =
-                    open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                    open(m_Name.c_str(),
+                         __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio),
+                         0666);
             }
             else
             {
-                m_FileDescriptor = open(m_Name.c_str(), O_WRONLY, 0666);
+                m_FileDescriptor = open(
+                    m_Name.c_str(), __GetOpenFlag(O_WRONLY, directio), 0666);
                 lseek(m_FileDescriptor, 0, SEEK_SET);
             }
             m_Errno = errno;
@@ -183,11 +215,14 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
         errno = 0;
         if (chainComm.Rank() == 0)
         {
-            m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0666);
+            m_FileDescriptor =
+                open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT, directio),
+                     0666);
         }
         else
         {
-            m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
+            m_FileDescriptor =
+                open(m_Name.c_str(), __GetOpenFlag(O_RDWR, directio));
         }
         lseek(m_FileDescriptor, 0, SEEK_END);
         m_Errno = errno;
@@ -248,6 +283,18 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         }
     };
 
+    /*auto lf_DirectIOCheck = [&](const char *buffer, size_t size,
+                                size_t offset) {
+        if (m_DirectIO)
+        {
+            auto mempos = (uintptr_t)buffer;
+            std::cout << "FilePOSIX::Write directio" << m_Name
+                      << " offset = " << offset << " size = " << size
+                      << " mempos = " << mempos << " mem%512 = " << mempos % 512
+                      << std::endl;
+        }
+    };*/
+
     WaitForOpen();
     if (start != MaxSizeT)
     {
@@ -277,13 +324,17 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         size_t position = 0;
         for (size_t b = 0; b < batches; ++b)
         {
+            /* lf_DirectIOCheck(&buffer[position], DefaultMaxFileBatchSize,
+                             start + position);*/
             lf_Write(&buffer[position], DefaultMaxFileBatchSize);
             position += DefaultMaxFileBatchSize;
         }
+        // lf_DirectIOCheck(&buffer[position], remainder, start + position);
         lf_Write(&buffer[position], remainder);
     }
     else
     {
+        // lf_DirectIOCheck(buffer, size, start);
         lf_Write(buffer, size);
     }
 }

@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
         io.SetParameter("AggregationType", "TwoLevelShm");
         io.SetParameter("NumAggregators", "1");
         io.SetParameter("NumSubFiles", "1");
-        io.SetParameter("AsyncWrite", "Guided");
+        io.SetParameter("AsyncWrite", "false");
 
         /*
          * Define global array: type, name, global dimensions

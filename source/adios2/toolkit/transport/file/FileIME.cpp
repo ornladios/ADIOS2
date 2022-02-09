@@ -71,7 +71,7 @@ FileIME::~FileIME()
 
 /** Note that async mode is unsupported in FileIME. */
 void FileIME::Open(const std::string &name, const Mode openMode,
-                   const bool async)
+                   const bool async, const bool directio)
 {
     /** DEFAULT_IME_FILE_PREFIX is "ime://" */
     m_Name = DEFAULT_IME_FILE_PREFIX;

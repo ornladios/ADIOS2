@@ -242,8 +242,8 @@ void BP5Writer::WriteData_EveryoneWrites_Async(format::BufferV *Data,
     }
 
     // align to PAGE_SIZE
-    m_DataPos += helper::PaddingToAlignOffset(m_DataPos,
-                                              m_Parameters.FileSystemPageSize);
+    m_DataPos +=
+        helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
     m_StartDataPos = m_DataPos;
 
     if (a->m_Comm.Rank() < a->m_Comm.Size() - 1)

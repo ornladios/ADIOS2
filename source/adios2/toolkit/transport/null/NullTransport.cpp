@@ -33,7 +33,7 @@ NullTransport::NullTransport(helper::Comm const &comm)
 NullTransport::~NullTransport() = default;
 
 void NullTransport::Open(const std::string &name, const Mode openMode,
-                         const bool async)
+                         const bool async, const bool directio)
 {
     if (Impl->IsOpen)
     {

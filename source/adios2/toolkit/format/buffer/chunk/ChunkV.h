@@ -26,6 +26,7 @@ public:
     const size_t m_ChunkSize;
 
     ChunkV(const std::string type, const bool AlwaysCopy = false,
+           const size_t MemAlign = 1, const size_t MemBlockSize = 1,
            const size_t ChunkSize = DefaultBufferChunkSize);
     virtual ~ChunkV();
 
@@ -45,9 +46,21 @@ public:
                           MemorySpace MemSpace);
 
 private:
-    std::vector<char *> m_Chunks;
+    struct Chunk
+    {
+        char *Ptr;          // aligned, do not free
+        void *AllocatedPtr; // original ptr, free this
+        size_t Size;
+    };
+
+    std::vector<Chunk> m_Chunks;
     size_t m_TailChunkPos = 0;
-    char *m_TailChunk = NULL;
+    Chunk *m_TailChunk = nullptr;
+
+    // allocator function, doing aligned allocation of memory
+    // return true if (re)allocation is successful
+    // on failure, VecEntry is unmodified
+    size_t ChunkAlloc(Chunk &v, const size_t size);
 };
 
 } // end namespace format

@@ -214,7 +214,8 @@ void MPIShmChain::HandshakeLinks_Complete(HandshakeStruct &hs)
                         "aggregator, at Open");
 }
 
-void MPIShmChain::CreateShm(size_t blocksize, const size_t maxsegmentsize)
+void MPIShmChain::CreateShm(size_t blocksize, const size_t maxsegmentsize,
+                            const size_t alignment_size)
 {
     if (!m_Comm.IsMPI())
     {
@@ -224,21 +225,20 @@ void MPIShmChain::CreateShm(size_t blocksize, const size_t maxsegmentsize)
     }
     char *ptr;
     size_t structsize = sizeof(ShmSegment);
-    structsize += helper::PaddingToAlignOffset(structsize, sizeof(max_align_t));
+    structsize += helper::PaddingToAlignOffset(structsize, alignment_size);
     if (!m_Rank)
     {
-        blocksize +=
-            helper::PaddingToAlignOffset(blocksize, sizeof(max_align_t));
+        blocksize += helper::PaddingToAlignOffset(blocksize, alignment_size);
         size_t totalsize = structsize + 2 * blocksize;
         if (totalsize > maxsegmentsize)
         {
             // roll back and calculate sizes from maxsegmentsize
-            totalsize = maxsegmentsize - sizeof(max_align_t) + 1;
+            totalsize = maxsegmentsize - alignment_size + 1;
             totalsize +=
-                helper::PaddingToAlignOffset(totalsize, sizeof(max_align_t));
-            blocksize = (totalsize - structsize) / 2 - sizeof(max_align_t) + 1;
+                helper::PaddingToAlignOffset(totalsize, alignment_size);
+            blocksize = (totalsize - structsize) / 2 - alignment_size + 1;
             blocksize +=
-                helper::PaddingToAlignOffset(blocksize, sizeof(max_align_t));
+                helper::PaddingToAlignOffset(blocksize, alignment_size);
             totalsize = structsize + 2 * blocksize;
         }
         m_Win = m_Comm.Win_allocate_shared(totalsize, 1, &ptr);

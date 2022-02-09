@@ -46,7 +46,7 @@ void FileFStream::WaitForOpen()
 }
 
 void FileFStream::Open(const std::string &name, const Mode openMode,
-                       const bool async)
+                       const bool async, const bool directio)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> void {
         ProfilerStart("open");
@@ -107,7 +107,8 @@ void FileFStream::Open(const std::string &name, const Mode openMode,
 }
 
 void FileFStream::OpenChain(const std::string &name, Mode openMode,
-                            const helper::Comm &chainComm, const bool async)
+                            const helper::Comm &chainComm, const bool async,
+                            const bool directio)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> void {
         ProfilerStart("open");

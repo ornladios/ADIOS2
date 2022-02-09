@@ -49,7 +49,7 @@ ShmSystemV::~ShmSystemV() // this might not be correct
 }
 
 void ShmSystemV::Open(const std::string &name, const Mode openMode,
-                      const bool async)
+                      const bool async, const bool directio)
 {
     m_Name = name;
     CheckName();
