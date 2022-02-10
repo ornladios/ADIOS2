@@ -95,14 +95,14 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
     {
-        m_BP5Serializer.InitStep(new MallocV("BP5Writer", false,
-                                             m_Parameters.InitialBufferSize,
-                                             m_Parameters.GrowthFactor));
+        m_BP5Serializer.InitStep(new MallocV(
+            "BP5Writer", false, m_BP5Serializer.m_BufferAlign,
+            m_Parameters.InitialBufferSize, m_Parameters.GrowthFactor));
     }
     else
     {
-        m_BP5Serializer.InitStep(new ChunkV("BP5Writer",
-                                            false /* always copy */,
+        m_BP5Serializer.InitStep(new ChunkV("BP5Writer", false,
+                                            m_BP5Serializer.m_BufferAlign,
                                             m_Parameters.BufferChunkSize));
     }
     m_ThisTimestepDataSize = 0;
@@ -269,8 +269,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
     }
 
     // align to PAGE_SIZE
-    m_DataPos += helper::PaddingToAlignOffset(m_DataPos,
-                                              m_Parameters.FileSystemPageSize);
+    m_DataPos +=
+        helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
     m_StartDataPos = m_DataPos;
 
     if (!SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
@@ -589,14 +589,38 @@ void BP5Writer::InitParameters()
         m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
     }
 
-    if (m_Parameters.FileSystemPageSize == 0)
+    if (m_Parameters.StripeSize == 0)
     {
-        m_Parameters.FileSystemPageSize = 4096;
+        m_Parameters.StripeSize = 4096;
     }
-    if (m_Parameters.FileSystemPageSize > 67108864)
+
+    if (m_Parameters.StripeSize > 67108864)
     {
         // Limiting to max 64MB page size
-        m_Parameters.FileSystemPageSize = 67108864;
+        m_Parameters.StripeSize = 67108864;
+    }
+
+    if (m_Parameters.DirectIO)
+    {
+        if (m_Parameters.DirectIOAlignBuffer == 0)
+        {
+            m_Parameters.DirectIOAlignBuffer = m_Parameters.DirectIOAlignOffset;
+        }
+        m_BP5Serializer.m_BufferBlockSize = m_Parameters.DirectIOAlignOffset;
+        m_BP5Serializer.m_BufferAlign = m_Parameters.DirectIOAlignBuffer;
+        if (m_Parameters.StripeSize % m_Parameters.DirectIOAlignOffset)
+        {
+            size_t k =
+                m_Parameters.StripeSize / m_Parameters.DirectIOAlignOffset + 1;
+            m_Parameters.StripeSize = k * m_Parameters.DirectIOAlignOffset;
+        }
+        if (m_Parameters.BufferChunkSize % m_Parameters.DirectIOAlignOffset)
+        {
+            size_t k = m_Parameters.BufferChunkSize /
+                           m_Parameters.DirectIOAlignOffset +
+                       1;
+            m_Parameters.BufferChunkSize = k * m_Parameters.DirectIOAlignOffset;
+        }
     }
 }
 
@@ -931,11 +955,11 @@ void BP5Writer::InitTransports()
         }
     }
 
-    if (m_Parameters.O_DIRECT)
+    if (m_Parameters.DirectIO)
     {
         for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
         {
-            m_IO.m_TransportsParameters[i]["O_DIRECT"] = "true";
+            m_IO.m_TransportsParameters[i]["DirectIO"] = "true";
         }
     }
 
@@ -964,7 +988,7 @@ void BP5Writer::InitTransports()
         // force turn off directio to metadata files
         for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
         {
-            m_IO.m_TransportsParameters[i]["O_DIRECT"] = "false";
+            m_IO.m_TransportsParameters[i]["DirectIO"] = "false";
         }
         m_FileMetaMetadataManager.OpenFiles(m_MetaMetadataFileNames, m_OpenMode,
                                             m_IO.m_TransportsParameters,
@@ -1315,14 +1339,14 @@ void BP5Writer::FlushData(const bool isFinal)
     BufferV *DataBuf;
     if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
     {
-        DataBuf = m_BP5Serializer.ReinitStepData(
-            new MallocV("BP5Writer", false, m_Parameters.InitialBufferSize,
-                        m_Parameters.GrowthFactor));
+        DataBuf = m_BP5Serializer.ReinitStepData(new MallocV(
+            "BP5Writer", false, m_BP5Serializer.m_BufferAlign,
+            m_Parameters.InitialBufferSize, m_Parameters.GrowthFactor));
     }
     else
     {
         DataBuf = m_BP5Serializer.ReinitStepData(
-            new ChunkV("BP5Writer", false /* always copy */,
+            new ChunkV("BP5Writer", false, m_BP5Serializer.m_BufferAlign,
                        m_Parameters.BufferChunkSize));
     }
 

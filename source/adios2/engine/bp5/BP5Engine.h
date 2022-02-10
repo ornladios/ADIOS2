@@ -123,8 +123,10 @@ public:
     MACRO(CollectiveMetadata, Bool, bool, true)                                \
     MACRO(NumAggregators, UInt, unsigned int, 0)                               \
     MACRO(NumSubFiles, UInt, unsigned int, 999999)                             \
-    MACRO(FileSystemPageSize, UInt, unsigned int, 4096)                        \
-    MACRO(O_DIRECT, Bool, bool, false)                                         \
+    MACRO(StripeSize, UInt, unsigned int, 4096)                                \
+    MACRO(DirectIO, Bool, bool, true)                                          \
+    MACRO(DirectIOAlignOffset, UInt, unsigned int, 512)                        \
+    MACRO(DirectIOAlignBuffer, UInt, unsigned int, 0)                          \
     MACRO(AggregationType, AggregationType, int,                               \
           (int)AggregationType::TwoLevelShm)                                   \
     MACRO(AsyncOpen, Bool, bool, true)                                         \

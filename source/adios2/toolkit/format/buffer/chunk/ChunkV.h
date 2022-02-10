@@ -26,6 +26,7 @@ public:
     const size_t m_ChunkSize;
 
     ChunkV(const std::string type, const bool AlwaysCopy = false,
+           const size_t MemAlign = 1,
            const size_t ChunkSize = DefaultBufferChunkSize);
     virtual ~ChunkV();
 

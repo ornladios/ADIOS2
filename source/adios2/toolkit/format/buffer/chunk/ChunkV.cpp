@@ -22,8 +22,8 @@ namespace format
 {
 
 ChunkV::ChunkV(const std::string type, const bool AlwaysCopy,
-               const size_t ChunkSize)
-: BufferV(type, AlwaysCopy), m_ChunkSize(ChunkSize)
+               const size_t MemAlign, const size_t ChunkSize)
+: BufferV(type, AlwaysCopy, MemAlign), m_ChunkSize(ChunkSize)
 {
 }
 
@@ -48,8 +48,6 @@ bool ChunkV::ChunkAlloc(Chunk &v, const size_t size)
             size_t p = (size_t)v.AllocatedPtr;
             v.Ptr = (char *)((p + m_MemAlign - 1) & ~(m_MemAlign - 1));
         }
-        std::cout << "Data buffer extended from " << v.Size << " to " << size
-                  << std::endl;
         v.Size = size;
         return true;
     }

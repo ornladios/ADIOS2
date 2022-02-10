@@ -20,8 +20,9 @@ namespace format
 {
 
 MallocV::MallocV(const std::string type, const bool AlwaysCopy,
-                 size_t InitialBufferSize, double GrowthFactor)
-: BufferV(type, AlwaysCopy), m_InitialBufferSize(InitialBufferSize),
+                 const size_t MemAlign, size_t InitialBufferSize,
+                 double GrowthFactor)
+: BufferV(type, AlwaysCopy, MemAlign), m_InitialBufferSize(InitialBufferSize),
   m_GrowthFactor(GrowthFactor)
 {
 }

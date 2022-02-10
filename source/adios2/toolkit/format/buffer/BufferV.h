@@ -21,12 +21,12 @@ class BufferV
 {
 public:
     const std::string m_Type;
-    const size_t m_MemAlign;     // allocate each pointer aligned
-    const size_t m_MemBlockSize; // each buffer is multiple of this
+    const size_t m_MemAlign; // allocate each pointer aligned
 
     uint64_t Size() noexcept;
 
-    BufferV(const std::string type, const bool AlwaysCopy = false);
+    BufferV(const std::string type, const bool AlwaysCopy = false,
+            const size_t MemAlign = 1);
     virtual ~BufferV();
 
     virtual std::vector<core::iovec> DataVec() noexcept = 0;

@@ -82,9 +82,6 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
         ProfilerStart("open");
         errno = 0;
         int flag = __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio);
-        std::cout << "FilePOSIX::Open::Async " << name
-                  << " directio = " << directio << " flag = " << flag
-                  << std::endl;
         int FD = open(m_Name.c_str(), flag, 0666);
         m_Errno = errno;
         ProfilerStop("open");
@@ -157,9 +154,6 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
         ProfilerStart("open");
         errno = 0;
         int flag = __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio);
-        std::cout << "FilePOSIX::Open::Async " << name
-                  << " directio = " << directio << " flag = " << flag
-                  << std::endl;
         int FD = open(m_Name.c_str(), flag, 0666);
         m_Errno = errno;
         ProfilerStop("open");
@@ -285,7 +279,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         }
     };
 
-    auto lf_DirectIOCheck = [&](const char *buffer, size_t size,
+    /*auto lf_DirectIOCheck = [&](const char *buffer, size_t size,
                                 size_t offset) {
         if (m_DirectIO)
         {
@@ -295,7 +289,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
                       << " mempos = " << mempos << " mem%512 = " << mempos % 512
                       << std::endl;
         }
-    };
+    };*/
 
     WaitForOpen();
     if (start != MaxSizeT)
@@ -326,17 +320,17 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         size_t position = 0;
         for (size_t b = 0; b < batches; ++b)
         {
-            lf_DirectIOCheck(&buffer[position], DefaultMaxFileBatchSize,
-                             start + position);
+            /* lf_DirectIOCheck(&buffer[position], DefaultMaxFileBatchSize,
+                             start + position);*/
             lf_Write(&buffer[position], DefaultMaxFileBatchSize);
             position += DefaultMaxFileBatchSize;
         }
-        lf_DirectIOCheck(&buffer[position], remainder, start + position);
+        // lf_DirectIOCheck(&buffer[position], remainder, start + position);
         lf_Write(&buffer[position], remainder);
     }
     else
     {
-        lf_DirectIOCheck(buffer, size, start);
+        // lf_DirectIOCheck(buffer, size, start);
         lf_Write(buffer, size);
     }
 }

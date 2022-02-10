@@ -635,7 +635,7 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     auto lf_GetDirectIO = [&](const std::string defaultValue,
                               const Params &parameters) -> bool {
         std::string directio = defaultValue;
-        helper::SetParameterValue("O_DIRECT", parameters, directio);
+        helper::SetParameterValue("DirectIO", parameters, directio);
         return helper::StringTo<bool>(directio, "");
     };
 

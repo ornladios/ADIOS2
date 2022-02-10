@@ -111,7 +111,9 @@ public:
     /* Variables to help appending to existing file */
     size_t m_PreMetaMetadataFileLength = 0;
 
-    size_t m_BufferAlignmentSize = 16 * sizeof(max_align_t);
+    size_t m_BufferAlign = 1; // align buffers in memory
+    // align buffers to integer multiples of block size
+    size_t m_BufferBlockSize = 16 * sizeof(max_align_t);
 
 private:
     void Init();
@@ -159,6 +161,7 @@ private:
 
     size_t MetadataSize = 0;
     BufferV *CurDataBuffer = NULL;
+
     std::vector<MetaMetaInfoBlock> PreviousMetaMetaInfoBlocks;
 
     size_t m_PriorDataBufferSizeTotal = 0;
