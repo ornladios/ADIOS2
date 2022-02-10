@@ -21,6 +21,8 @@ class BufferV
 {
 public:
     const std::string m_Type;
+    const size_t m_MemAlign;     // allocate each pointer aligned
+    const size_t m_MemBlockSize; // each buffer is multiple of this
 
     uint64_t Size() noexcept;
 

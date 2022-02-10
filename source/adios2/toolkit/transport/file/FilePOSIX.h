@@ -76,6 +76,7 @@ private:
     int m_Errno = 0;
     bool m_IsOpening = false;
     std::future<int> m_OpenFuture;
+    bool m_DirectIO = false;
 
     /**
      * Check if m_FileDescriptor is -1 after an operation

@@ -93,6 +93,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
 
     m_Name = name;
     CheckName();
+    m_DirectIO = directio;
     m_OpenMode = openMode;
     switch (m_OpenMode)
     {
@@ -175,6 +176,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
                        "Chain token in FilePOSIX::OpenChain");
     }
 
+    m_DirectIO = directio;
     m_OpenMode = openMode;
     switch (m_OpenMode)
     {
@@ -283,6 +285,18 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         }
     };
 
+    auto lf_DirectIOCheck = [&](const char *buffer, size_t size,
+                                size_t offset) {
+        if (m_DirectIO)
+        {
+            auto mempos = (uintptr_t)buffer;
+            std::cout << "FilePOSIX::Write directio" << m_Name
+                      << " offset = " << offset << " size = " << size
+                      << " mempos = " << mempos << " mem%512 = " << mempos % 512
+                      << std::endl;
+        }
+    };
+
     WaitForOpen();
     if (start != MaxSizeT)
     {
@@ -312,22 +326,17 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         size_t position = 0;
         for (size_t b = 0; b < batches; ++b)
         {
-            std::cout << "FilePOSIX::Write " << m_Name
-                      << " pos = " << start + position
-                      << " size = " << DefaultMaxFileBatchSize << std::endl;
+            lf_DirectIOCheck(&buffer[position], DefaultMaxFileBatchSize,
+                             start + position);
             lf_Write(&buffer[position], DefaultMaxFileBatchSize);
             position += DefaultMaxFileBatchSize;
         }
-        std::cout << "FilePOSIX::Write " << m_Name
-                  << " pos = " << start + position << " size = " << remainder
-                  << std::endl;
-
+        lf_DirectIOCheck(&buffer[position], remainder, start + position);
         lf_Write(&buffer[position], remainder);
     }
     else
     {
-        std::cout << "FilePOSIX::Write " << m_Name << " pos = " << start
-                  << " size = " << size << std::endl;
+        lf_DirectIOCheck(buffer, size, start);
         lf_Write(buffer, size);
     }
 }
