@@ -149,6 +149,11 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
             // realloc down to used size (helpful?) and set size in array
             size_t actualsize = ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
             size_t alignment = actualsize - m_TailChunkPos;
+            if (alignment)
+            {
+                auto p = m_Chunks.back().Ptr + m_TailChunkPos;
+                std::fill(p, p + alignment, 0);
+            }
             retOffset += alignment;
             DataV.back().Size = actualsize;
             m_TailChunkPos = 0;
@@ -215,8 +220,14 @@ BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
     {
         // No room in current chunk, close it out
         // realloc down to used size (helpful?) and set size in array
-        ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
-        DataV.back().Size = m_TailChunkPos;
+        size_t actualsize = ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
+        size_t alignment = actualsize - m_TailChunkPos;
+        if (alignment)
+        {
+            auto p = m_Chunks.back().Ptr + m_TailChunkPos;
+            std::fill(p, p + alignment, 0);
+        }
+        DataV.back().Size = actualsize;
         m_TailChunkPos = 0;
         m_TailChunk = nullptr;
         AppendPossible = false;

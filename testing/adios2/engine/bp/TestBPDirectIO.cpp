@@ -49,8 +49,8 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
         ioWrite.SetParameter("DirectIOAlignOffset", "4096");
         ioWrite.SetParameter("DirectIOAlignBuffer", "4096");
         ioWrite.SetParameter("StripeSize", "9999");
-        ioWrite.SetParameter("BufferChunkSize", "3111");
-        // BufferChunkSize should be adjusted to 4096 by engine
+        ioWrite.SetParameter("BufferChunkSize", "7111");
+        // BufferChunkSize should be adjusted to 2*4096 by engine
         // StripeSize should be adjusted to 3*4096 by engine
 
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
