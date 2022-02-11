@@ -125,7 +125,7 @@ if(ADIOS2_HAVE_BP5)
   gtest_add_tests_helper(ParameterSelectSteps MPI_ALLOW BP Engine.BP. .BP5
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
   )
-  gtest_add_tests_helper(DirectIO MPI_ALLOW BP Engine.BP. .BP5
+  gtest_add_tests_helper(DirectIO MPI_NONE BP Engine.BP. .BP5
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
   )
 endif(ADIOS2_HAVE_BP5)
