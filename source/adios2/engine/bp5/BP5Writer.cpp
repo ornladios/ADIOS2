@@ -118,7 +118,8 @@ void BP5Writer::PerformPuts()
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::PerformPuts");
     m_Profiler.Start("PP");
-    m_BP5Serializer.PerformPuts();
+    m_BP5Serializer.PerformPuts(m_Parameters.AsyncWrite ||
+                                m_Parameters.DirectIO);
     m_Profiler.Stop("PP");
     return;
 }
@@ -467,8 +468,8 @@ void BP5Writer::EndStep()
     MarshalAttributes();
 
     // true: advances step
-    auto TSInfo =
-        m_BP5Serializer.CloseTimestep(m_WriterStep, m_Parameters.AsyncWrite);
+    auto TSInfo = m_BP5Serializer.CloseTimestep(
+        m_WriterStep, m_Parameters.AsyncWrite || m_Parameters.DirectIO);
 
     /* TSInfo includes NewMetaMetaBlocks, the MetaEncodeBuffer, the
      * AttributeEncodeBuffer and the data encode Vector */
@@ -1339,15 +1340,18 @@ void BP5Writer::FlushData(const bool isFinal)
     BufferV *DataBuf;
     if (m_Parameters.BufferVType == (int)BufferVType::MallocVType)
     {
-        DataBuf = m_BP5Serializer.ReinitStepData(new MallocV(
-            "BP5Writer", false, m_BP5Serializer.m_BufferAlign,
-            m_Parameters.InitialBufferSize, m_Parameters.GrowthFactor));
+        DataBuf = m_BP5Serializer.ReinitStepData(
+            new MallocV("BP5Writer", false, m_BP5Serializer.m_BufferAlign,
+                        m_Parameters.InitialBufferSize,
+                        m_Parameters.GrowthFactor),
+            m_Parameters.AsyncWrite || m_Parameters.DirectIO);
     }
     else
     {
         DataBuf = m_BP5Serializer.ReinitStepData(
             new ChunkV("BP5Writer", false, m_BP5Serializer.m_BufferAlign,
-                       m_Parameters.BufferChunkSize));
+                       m_Parameters.BufferChunkSize),
+            m_Parameters.AsyncWrite || m_Parameters.DirectIO);
     }
 
     auto databufsize = DataBuf->Size();

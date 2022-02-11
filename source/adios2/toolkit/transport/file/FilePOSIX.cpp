@@ -10,8 +10,10 @@
 #include "FilePOSIX.h"
 #include "adios2/helper/adiosLog.h"
 
+#ifdef ADIOS2_HAVE_O_DIRECT
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #endif
 
 #include <cstdio>      // remove
@@ -64,11 +66,13 @@ void FilePOSIX::WaitForOpen()
 
 static int __GetOpenFlag(const int flag, const bool directio)
 {
+#ifdef ADIOS2_HAVE_O_DIRECT
     if (directio)
     {
         return flag | O_DIRECT;
     }
     else
+#endif
     {
         return flag;
     }
@@ -279,7 +283,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         }
     };
 
-    /*auto lf_DirectIOCheck = [&](const char *buffer, size_t size,
+    auto lf_DirectIOCheck = [&](const char *buffer, size_t size,
                                 size_t offset) {
         if (m_DirectIO)
         {
@@ -289,7 +293,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
                       << " mempos = " << mempos << " mem%512 = " << mempos % 512
                       << std::endl;
         }
-    };*/
+    };
 
     WaitForOpen();
     if (start != MaxSizeT)
@@ -330,7 +334,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
     }
     else
     {
-        // lf_DirectIOCheck(buffer, size, start);
+        lf_DirectIOCheck(buffer, size, start);
         lf_Write(buffer, size);
     }
 }

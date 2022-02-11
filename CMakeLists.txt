@@ -182,9 +182,48 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
+
+#------------------------------------------------------------------------------#
+# POSIX O_DIRECT is only working for Unix in adios for now
+#------------------------------------------------------------------------------#
+if(CYGWIN)
+  #-tb O_DIRECT messes up cygwin
+  set(ADIOS2_HAVE_O_DIRECT 0)
+elseif(MSVC)
+  # Windows has other things but we are not using them
+  set(ADIOS2_HAVE_O_DIRECT 0)
+elseif(APPLE)
+  # Mac has other things but we are not using them
+  set(ADIOS2_HAVE_O_DIRECT 0)
+else()
+
+  message(STATUS "Checking for O_DIRECT")
+  include(CheckCXXSourceCompiles)
+  check_cxx_source_compiles("
+#include <unistd.h>
+#include <fcntl.h>
+int main(int argc, char * argv[]) { argc = O_DIRECT; }
+" O_DIRECT_WORKS)
+
+  if (O_DIRECT_WORKS)
+    set(ADIOS2_HAVE_O_DIRECT 1)
+  else()
+    set(ADIOS2_HAVE_O_DIRECT 0)
+  endif()
+
+endif()
+
+#if(NOT HAVE_O_DIRECT)
+#  message(WARNING " -----  The open() flag O_DIRECT is not available! ---- ")
+#else()
+#  message(STATUS " -----  The open() flag O_DIRECT is available! ---- ")
+#endif()
+
+
 set(ADIOS2_CONFIG_OPTS
-    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME SysVShMem ZeroMQ Profiling Endian_Reverse
+    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME SysVShMem ZeroMQ Profiling Endian_Reverse O_DIRECT
 )
+
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
   ${PROJECT_SOURCE_DIR}/CTestCustom.cmake.in
@@ -228,6 +267,7 @@ if(BUILD_SHARED_LIBS AND ADIOS2_RUN_INSTALL_TEST)
     set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
   endif()
 endif()
+
 
 #------------------------------------------------------------------------------#
 # Third party libraries
