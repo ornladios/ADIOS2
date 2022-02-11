@@ -22,8 +22,9 @@ namespace format
 {
 
 ChunkV::ChunkV(const std::string type, const bool AlwaysCopy,
-               const size_t MemAlign, const size_t ChunkSize)
-: BufferV(type, AlwaysCopy, MemAlign), m_ChunkSize(ChunkSize)
+               const size_t MemAlign, const size_t MemBlockSize,
+               const size_t ChunkSize)
+: BufferV(type, AlwaysCopy, MemAlign, MemBlockSize), m_ChunkSize(ChunkSize)
 {
 }
 
@@ -35,11 +36,19 @@ ChunkV::~ChunkV()
     }
 }
 
-bool ChunkV::ChunkAlloc(Chunk &v, const size_t size)
+size_t ChunkV::ChunkAlloc(Chunk &v, const size_t size)
 {
     // try to alloc/realloc a buffer to requested size
+    // first, size must be aligned with block size
+    size_t actualsize = size;
+    size_t rem = size % m_MemBlockSize;
+    if (rem)
+    {
+        actualsize = actualsize + (m_MemBlockSize - rem);
+    }
+
     // align usable buffer to m_MemAlign bytes
-    void *b = realloc(v.AllocatedPtr, size + m_MemAlign - 1);
+    void *b = realloc(v.AllocatedPtr, actualsize + m_MemAlign - 1);
     if (b)
     {
         if (b != v.AllocatedPtr)
@@ -48,16 +57,16 @@ bool ChunkV::ChunkAlloc(Chunk &v, const size_t size)
             size_t p = (size_t)v.AllocatedPtr;
             v.Ptr = (char *)((p + m_MemAlign - 1) & ~(m_MemAlign - 1));
         }
-        v.Size = size;
-        return true;
+        v.Size = actualsize;
+        return actualsize;
     }
     else
     {
-        std::cout << "ADIOS2 ERROR: Cannot (re)allocate " << size
+        std::cout << "ADIOS2 ERROR: Cannot (re)allocate " << actualsize
                   << " bytes for a chunk in ChunkV. "
                      "Continue buffering with chunk size "
                   << v.Size / 1048576 << " MB" << std::endl;
-        return false;
+        return 0;
     }
 }
 
@@ -138,8 +147,10 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
         {
             // No room in current chunk, close it out
             // realloc down to used size (helpful?) and set size in array
-            ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
-            DataV.back().Size = m_TailChunkPos;
+            size_t actualsize = ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
+            size_t alignment = actualsize - m_TailChunkPos;
+            retOffset += alignment;
+            DataV.back().Size = actualsize;
             m_TailChunkPos = 0;
             m_TailChunk = nullptr;
             AppendPossible = false;

@@ -24,7 +24,7 @@ public:
     uint64_t Size() noexcept;
 
     MallocV(const std::string type, const bool AlwaysCopy = false,
-            const size_t MemAlign = 1,
+            const size_t MemAlign = 1, const size_t MemBlockSize = 1,
             size_t InitialBufferSize = DefaultInitialBufferSize,
             double GrowthFactor = DefaultBufferGrowthFactor);
     virtual ~MallocV();

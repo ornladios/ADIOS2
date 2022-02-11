@@ -22,8 +22,9 @@ namespace format
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};*/
 
 BufferV::BufferV(const std::string type, const bool AlwaysCopy,
-                 const size_t MemAlign)
-: m_Type(type), m_MemAlign(MemAlign), m_AlwaysCopy(AlwaysCopy)
+                 const size_t MemAlign, const size_t MemBlockSize)
+: m_Type(type), m_MemAlign(MemAlign), m_MemBlockSize(MemBlockSize),
+  m_AlwaysCopy(AlwaysCopy)
 {
 }
 

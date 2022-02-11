@@ -114,7 +114,7 @@ public:
 
     size_t m_BufferAlign = 1; // align buffers in memory
     // align buffers to integer multiples of block size
-    size_t m_BufferBlockSize = 16 * sizeof(max_align_t);
+    size_t m_BufferBlockSize = sizeof(max_align_t);
 
 private:
     void Init();

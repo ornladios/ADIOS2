@@ -97,13 +97,14 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
     {
         m_BP5Serializer.InitStep(new MallocV(
             "BP5Writer", false, m_BP5Serializer.m_BufferAlign,
-            m_Parameters.InitialBufferSize, m_Parameters.GrowthFactor));
+            m_BP5Serializer.m_BufferBlockSize, m_Parameters.InitialBufferSize,
+            m_Parameters.GrowthFactor));
     }
     else
     {
-        m_BP5Serializer.InitStep(new ChunkV("BP5Writer", false,
-                                            m_BP5Serializer.m_BufferAlign,
-                                            m_Parameters.BufferChunkSize));
+        m_BP5Serializer.InitStep(new ChunkV(
+            "BP5Writer", false, m_BP5Serializer.m_BufferAlign,
+            m_BP5Serializer.m_BufferBlockSize, m_Parameters.BufferChunkSize));
     }
     m_ThisTimestepDataSize = 0;
 
@@ -1342,6 +1343,7 @@ void BP5Writer::FlushData(const bool isFinal)
     {
         DataBuf = m_BP5Serializer.ReinitStepData(
             new MallocV("BP5Writer", false, m_BP5Serializer.m_BufferAlign,
+                        m_BP5Serializer.m_BufferBlockSize,
                         m_Parameters.InitialBufferSize,
                         m_Parameters.GrowthFactor),
             m_Parameters.AsyncWrite || m_Parameters.DirectIO);
@@ -1350,6 +1352,7 @@ void BP5Writer::FlushData(const bool isFinal)
     {
         DataBuf = m_BP5Serializer.ReinitStepData(
             new ChunkV("BP5Writer", false, m_BP5Serializer.m_BufferAlign,
+                       m_BP5Serializer.m_BufferBlockSize,
                        m_Parameters.BufferChunkSize),
             m_Parameters.AsyncWrite || m_Parameters.DirectIO);
     }

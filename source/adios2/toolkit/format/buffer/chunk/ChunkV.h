@@ -26,7 +26,7 @@ public:
     const size_t m_ChunkSize;
 
     ChunkV(const std::string type, const bool AlwaysCopy = false,
-           const size_t MemAlign = 1,
+           const size_t MemAlign = 1, const size_t MemBlockSize = 1,
            const size_t ChunkSize = DefaultBufferChunkSize);
     virtual ~ChunkV();
 
@@ -60,7 +60,7 @@ private:
     // allocator function, doing aligned allocation of memory
     // return true if (re)allocation is successful
     // on failure, VecEntry is unmodified
-    bool ChunkAlloc(Chunk &v, const size_t size);
+    size_t ChunkAlloc(Chunk &v, const size_t size);
 };
 
 } // end namespace format

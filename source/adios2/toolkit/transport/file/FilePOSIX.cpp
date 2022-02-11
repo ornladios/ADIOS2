@@ -283,7 +283,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         }
     };
 
-    auto lf_DirectIOCheck = [&](const char *buffer, size_t size,
+    /*auto lf_DirectIOCheck = [&](const char *buffer, size_t size,
                                 size_t offset) {
         if (m_DirectIO)
         {
@@ -293,7 +293,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
                       << " mempos = " << mempos << " mem%512 = " << mempos % 512
                       << std::endl;
         }
-    };
+    };*/
 
     WaitForOpen();
     if (start != MaxSizeT)
@@ -334,7 +334,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
     }
     else
     {
-        lf_DirectIOCheck(buffer, size, start);
+        // lf_DirectIOCheck(buffer, size, start);
         lf_Write(buffer, size);
     }
 }
