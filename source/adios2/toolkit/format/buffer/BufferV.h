@@ -21,10 +21,14 @@ class BufferV
 {
 public:
     const std::string m_Type;
+    const size_t m_MemAlign; // allocate each pointer aligned
+                             // keep each buffer integer multiple of this size
+    const size_t m_MemBlockSize;
 
     uint64_t Size() noexcept;
 
-    BufferV(const std::string type, const bool AlwaysCopy = false);
+    BufferV(const std::string type, const bool AlwaysCopy = false,
+            const size_t MemAlign = 1, const size_t MemBlockSize = 1);
     virtual ~BufferV();
 
     virtual std::vector<core::iovec> DataVec() noexcept = 0;
@@ -68,7 +72,7 @@ public:
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer) = 0;
 
 protected:
-    static char zero[64];
+    std::vector<char> zero;
     const bool m_AlwaysCopy = false;
 
     struct VecEntry

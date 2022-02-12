@@ -81,10 +81,11 @@ public:
      * those offsets are relative to the entire sequence of data
      * produced by a writer rank.
      */
-    BufferV *ReinitStepData(BufferV *DataBuffer);
+    BufferV *ReinitStepData(BufferV *DataBuffer,
+                            bool forceCopyDeferred = false);
 
     TimestepInfo CloseTimestep(int timestep, bool forceCopyDeferred = false);
-    void PerformPuts();
+    void PerformPuts(bool forceCopyDeferred = false);
 
     core::Engine *m_Engine = NULL;
 
@@ -110,6 +111,10 @@ public:
 
     /* Variables to help appending to existing file */
     size_t m_PreMetaMetadataFileLength = 0;
+
+    size_t m_BufferAlign = 1; // align buffers in memory
+    // align buffers to integer multiples of block size
+    size_t m_BufferBlockSize = sizeof(max_align_t);
 
 private:
     void Init();
@@ -157,6 +162,7 @@ private:
 
     size_t MetadataSize = 0;
     BufferV *CurDataBuffer = NULL;
+
     std::vector<MetaMetaInfoBlock> PreviousMetaMetaInfoBlocks;
 
     size_t m_PriorDataBufferSizeTotal = 0;

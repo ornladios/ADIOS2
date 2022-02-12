@@ -22,8 +22,9 @@ namespace format
 {
 
 ChunkV::ChunkV(const std::string type, const bool AlwaysCopy,
+               const size_t MemAlign, const size_t MemBlockSize,
                const size_t ChunkSize)
-: BufferV(type, AlwaysCopy), m_ChunkSize(ChunkSize)
+: BufferV(type, AlwaysCopy, MemAlign, MemBlockSize), m_ChunkSize(ChunkSize)
 {
 }
 
@@ -31,7 +32,41 @@ ChunkV::~ChunkV()
 {
     for (const auto &Chunk : m_Chunks)
     {
-        free((void *)Chunk);
+        free(Chunk.AllocatedPtr);
+    }
+}
+
+size_t ChunkV::ChunkAlloc(Chunk &v, const size_t size)
+{
+    // try to alloc/realloc a buffer to requested size
+    // first, size must be aligned with block size
+    size_t actualsize = size;
+    size_t rem = size % m_MemBlockSize;
+    if (rem)
+    {
+        actualsize = actualsize + (m_MemBlockSize - rem);
+    }
+
+    // align usable buffer to m_MemAlign bytes
+    void *b = realloc(v.AllocatedPtr, actualsize + m_MemAlign - 1);
+    if (b)
+    {
+        if (b != v.AllocatedPtr)
+        {
+            v.AllocatedPtr = b;
+            size_t p = (size_t)v.AllocatedPtr;
+            v.Ptr = (char *)((p + m_MemAlign - 1) & ~(m_MemAlign - 1));
+        }
+        v.Size = actualsize;
+        return actualsize;
+    }
+    else
+    {
+        std::cout << "ADIOS2 ERROR: Cannot (re)allocate " << actualsize
+                  << " bytes for a chunk in ChunkV. "
+                     "Continue buffering with chunk size "
+                  << v.Size / 1048576 << " MB" << std::endl;
+        return 0;
     }
 }
 
@@ -50,18 +85,16 @@ void ChunkV::CopyExternalToInternal()
             {
                 // No room in current chunk, close it out
                 // realloc down to used size (helpful?) and set size in array
-                m_Chunks.back() =
-                    (char *)realloc(m_Chunks.back(), m_TailChunkPos);
-
+                ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
                 m_TailChunkPos = 0;
-                m_TailChunk = NULL;
+                m_TailChunk = nullptr;
                 AppendPossible = false;
             }
             if (AppendPossible)
             {
                 // We can use current chunk, just append the data and modify the
                 // DataV entry
-                memcpy(m_TailChunk + m_TailChunkPos, DataV[i].Base, size);
+                memcpy(m_TailChunk->Ptr + m_TailChunkPos, DataV[i].Base, size);
                 DataV[i].External = false;
                 DataV[i].Base = m_TailChunk + m_TailChunkPos;
                 m_TailChunkPos += size;
@@ -72,11 +105,13 @@ void ChunkV::CopyExternalToInternal()
                 size_t NewSize = m_ChunkSize;
                 if (size > m_ChunkSize)
                     NewSize = size;
-                m_TailChunk = (char *)malloc(NewSize);
-                m_Chunks.push_back(m_TailChunk);
-                memcpy(m_TailChunk, DataV[i].Base, size);
+                Chunk c{nullptr, nullptr, 0};
+                ChunkAlloc(c, NewSize);
+                m_Chunks.push_back(c);
+                m_TailChunk = &m_Chunks.back();
+                memcpy(m_TailChunk->Ptr, DataV[i].Base, size);
                 m_TailChunkPos = size;
-                DataV[i] = {false, m_TailChunk, 0, size};
+                DataV[i] = {false, m_TailChunk->Ptr, 0, size};
             }
         }
     }
@@ -85,13 +120,13 @@ void ChunkV::CopyExternalToInternal()
 size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
                         bool CopyReqd, MemorySpace MemSpace)
 {
+    AlignBuffer(align); // may call back AddToVec recursively
+    size_t retOffset = CurOffset;
+
     if (size == 0)
     {
         return CurOffset;
     }
-
-    AlignBuffer(align);
-    size_t retOffset = CurOffset;
 
     if (!CopyReqd && !m_AlwaysCopy)
     {
@@ -105,17 +140,24 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
         // internal
         bool AppendPossible =
             DataV.size() && !DataV.back().External &&
-            (m_TailChunk + m_TailChunkPos - DataV.back().Size ==
+            (m_TailChunk->Ptr + m_TailChunkPos - DataV.back().Size ==
              DataV.back().Base);
 
         if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
         {
             // No room in current chunk, close it out
             // realloc down to used size (helpful?) and set size in array
-            m_Chunks.back() = (char *)realloc(m_Chunks.back(), m_TailChunkPos);
-
+            size_t actualsize = ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
+            size_t alignment = actualsize - m_TailChunkPos;
+            if (alignment)
+            {
+                auto p = m_Chunks.back().Ptr + m_TailChunkPos;
+                std::fill(p, p + alignment, 0);
+            }
+            retOffset += alignment;
+            DataV.back().Size = actualsize;
             m_TailChunkPos = 0;
-            m_TailChunk = NULL;
+            m_TailChunk = nullptr;
             AppendPossible = false;
         }
         if (AppendPossible)
@@ -131,11 +173,13 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
             size_t NewSize = m_ChunkSize;
             if (size > m_ChunkSize)
                 NewSize = size;
-            m_TailChunk = (char *)malloc(NewSize);
-            m_Chunks.push_back(m_TailChunk);
+            Chunk c{nullptr, nullptr, 0};
+            ChunkAlloc(c, NewSize);
+            m_Chunks.push_back(c);
+            m_TailChunk = &m_Chunks.back();
             CopyDataToBuffer(size, buf, 0, MemSpace);
             m_TailChunkPos = size;
-            VecEntry entry = {false, m_TailChunk, 0, size};
+            VecEntry entry = {false, m_TailChunk->Ptr, 0, size};
             DataV.push_back(entry);
         }
     }
@@ -149,11 +193,11 @@ void ChunkV::CopyDataToBuffer(const size_t size, const void *buf, size_t pos,
 #ifdef ADIOS2_HAVE_CUDA
     if (MemSpace == MemorySpace::CUDA)
     {
-        helper::CudaMemCopyToBuffer(m_TailChunk, pos, buf, size);
+        helper::CudaMemCopyToBuffer(m_TailChunk->Ptr, pos, buf, size);
         return;
     }
 #endif
-    memcpy(m_TailChunk + pos, buf, size);
+    memcpy(m_TailChunk->Ptr + pos, buf, size);
 }
 
 BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
@@ -169,16 +213,23 @@ BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
     // internal
     bool AppendPossible =
         DataV.size() && !DataV.back().External &&
-        (m_TailChunk + m_TailChunkPos - DataV.back().Size == DataV.back().Base);
+        (m_TailChunk->Ptr + m_TailChunkPos - DataV.back().Size ==
+         DataV.back().Base);
 
     if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
     {
         // No room in current chunk, close it out
         // realloc down to used size (helpful?) and set size in array
-        m_Chunks.back() = (char *)realloc(m_Chunks.back(), m_TailChunkPos);
-
+        size_t actualsize = ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
+        size_t alignment = actualsize - m_TailChunkPos;
+        if (alignment)
+        {
+            auto p = m_Chunks.back().Ptr + m_TailChunkPos;
+            std::fill(p, p + alignment, 0);
+        }
+        DataV.back().Size = actualsize;
         m_TailChunkPos = 0;
-        m_TailChunk = NULL;
+        m_TailChunk = nullptr;
         AppendPossible = false;
     }
 
@@ -196,11 +247,13 @@ BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
         size_t NewSize = m_ChunkSize;
         if (size > m_ChunkSize)
             NewSize = size;
-        m_TailChunk = (char *)malloc(NewSize);
-        m_Chunks.push_back(m_TailChunk);
+        Chunk c{nullptr, nullptr, 0};
+        ChunkAlloc(c, NewSize);
+        m_Chunks.push_back(c);
+        m_TailChunk = &m_Chunks.back();
         bufferPos = 0;
         m_TailChunkPos = size;
-        VecEntry entry = {false, m_TailChunk, 0, size};
+        VecEntry entry = {false, m_TailChunk->Ptr, 0, size};
         DataV.push_back(entry);
     }
 

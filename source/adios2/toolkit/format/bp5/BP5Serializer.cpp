@@ -546,10 +546,10 @@ size_t BP5Serializer::CalcSize(const size_t Count, const size_t *Vals)
     return Elems;
 }
 
-void BP5Serializer::PerformPuts()
+void BP5Serializer::PerformPuts(bool forceCopyDeferred)
 {
     //  Dump data for externs into iovec
-    DumpDeferredBlocks();
+    DumpDeferredBlocks(forceCopyDeferred);
 
     CurDataBuffer->CopyExternalToInternal();
 }
@@ -883,7 +883,8 @@ void BP5Serializer::InitStep(BufferV *DataBuffer)
     m_PriorDataBufferSizeTotal = 0;
 }
 
-BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer)
+BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer,
+                                       bool forceCopyDeferred)
 {
     if (CurDataBuffer == NULL)
     {
@@ -891,10 +892,10 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer)
                                         "ReinitStepData", "without prior Init");
     }
     //  Dump data for externs into iovec
-    DumpDeferredBlocks();
+    DumpDeferredBlocks(forceCopyDeferred);
 
     m_PriorDataBufferSizeTotal += CurDataBuffer->AddToVec(
-        0, NULL, sizeof(max_align_t), true); //  output block size aligned
+        0, NULL, m_BufferBlockSize, true); //  output block size aligned
 
     BufferV *tmp = CurDataBuffer;
     CurDataBuffer = DataBuffer;
@@ -970,7 +971,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
     DumpDeferredBlocks(forceCopyDeferred);
 
     MBase->DataBlockSize = CurDataBuffer->AddToVec(
-        0, NULL, sizeof(max_align_t), true); //  output block size aligned
+        0, NULL, m_BufferBlockSize, true); //  output block size aligned
 
     MBase->DataBlockSize += m_PriorDataBufferSizeTotal;
 

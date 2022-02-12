@@ -518,7 +518,7 @@ void FileDaos::WaitForOpen()
 }
 
 void FileDaos::Open(const std::string &name, const Mode openMode,
-                    const bool async)
+                    const bool async, const bool directio)
 {
 
     int rc;

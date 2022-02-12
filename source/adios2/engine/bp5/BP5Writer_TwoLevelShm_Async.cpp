@@ -177,8 +177,8 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
     // to arrive from the rank below
 
     // align to PAGE_SIZE (only valid on master aggregator at this point)
-    m_DataPos += helper::PaddingToAlignOffset(m_DataPos,
-                                              m_Parameters.FileSystemPageSize);
+    m_DataPos +=
+        helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
 
     // Each aggregator needs to know the total size they write
     // This calculation is valid on aggregators only
@@ -196,7 +196,13 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
 
     if (a->m_Comm.Size() > 1)
     {
-        a->CreateShm(static_cast<size_t>(maxSize), m_Parameters.MaxShmSize);
+        size_t alignment_size = sizeof(max_align_t);
+        if (m_Parameters.DirectIO)
+        {
+            alignment_size = m_Parameters.DirectIOAlignOffset;
+        }
+        a->CreateShm(static_cast<size_t>(maxSize), m_Parameters.MaxShmSize,
+                     alignment_size);
     }
 
     if (a->m_IsAggregator)
@@ -209,8 +215,8 @@ void BP5Writer::WriteData_TwoLevelShm_Async(format::BufferV *Data)
                 &m_DataPos, 1, a->m_AggregatorChainComm.Rank() - 1, 0,
                 "AggregatorChain token in BP5Writer::WriteData_TwoLevelShm");
             // align to PAGE_SIZE
-            m_DataPos += helper::PaddingToAlignOffset(
-                m_DataPos, m_Parameters.FileSystemPageSize);
+            m_DataPos += helper::PaddingToAlignOffset(m_DataPos,
+                                                      m_Parameters.StripeSize);
         }
         m_StartDataPos = m_DataPos; // metadata needs this info
         if (a->m_AggregatorChainComm.Rank() <

@@ -20,9 +20,10 @@ namespace format
 {
 
 MallocV::MallocV(const std::string type, const bool AlwaysCopy,
+                 const size_t MemAlign, const size_t MemBlockSize,
                  size_t InitialBufferSize, double GrowthFactor)
-: BufferV(type, AlwaysCopy), m_InitialBufferSize(InitialBufferSize),
-  m_GrowthFactor(GrowthFactor)
+: BufferV(type, AlwaysCopy, MemAlign, MemBlockSize),
+  m_InitialBufferSize(InitialBufferSize), m_GrowthFactor(GrowthFactor)
 {
 }
 
@@ -87,13 +88,13 @@ void MallocV::CopyExternalToInternal()
 size_t MallocV::AddToVec(const size_t size, const void *buf, size_t align,
                          bool CopyReqd, MemorySpace MemSpace)
 {
+    AlignBuffer(align); // may call back AddToVec recursively
+    size_t retOffset = CurOffset;
+
     if (size == 0)
     {
         return CurOffset;
     }
-
-    AlignBuffer(align);
-    size_t retOffset = CurOffset;
 
     if (!CopyReqd && !m_AlwaysCopy)
     {
