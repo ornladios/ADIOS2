@@ -11,6 +11,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
 .. toctree::
    :caption: Introduction
 
+   introduction/whatsnew
    introduction/introduction
 
 
