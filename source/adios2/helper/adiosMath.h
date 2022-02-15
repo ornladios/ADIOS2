@@ -314,6 +314,16 @@ void GetMinMaxSubblocks(const T *values, const Dims &count,
                         const BlockDivisionInfo &info, std::vector<T> &MinMaxs,
                         T &bmin, T &bmax, const unsigned int threads) noexcept;
 
+/**
+ * @brief Return a value within the min/max limits
+ * @param value The value to be returned
+ * @param minValue Minimum limit returned if value is below this
+ * @param maxValue Maximum limit returned if value is above this
+ * @return A value withing the limits.
+ */
+template <class T>
+T SetWithinLimit(const T value, const T minValue, const T maxValue);
+
 } // end namespace helper
 } // end namespace adios2
 

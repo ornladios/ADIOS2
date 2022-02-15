@@ -67,9 +67,7 @@ int main(int argc, char *argv[])
         adios2::IO io = adios.DeclareIO("Output");
         io.SetEngine("BP5");
         io.SetParameter("AggregationType", "TwoLevelShm");
-        io.SetParameter("NumAggregators", "1");
-        io.SetParameter("NumSubFiles", "1");
-        io.SetParameter("AsyncWrite", "false");
+        io.SetParameter("AggregatorRatio", "4");
 
         /*
          * Define global array: type, name, global dimensions
