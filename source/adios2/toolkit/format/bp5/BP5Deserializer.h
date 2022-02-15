@@ -64,6 +64,7 @@ public:
     MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);
     MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
     MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step);
+    Dims *VarShape(const VariableBase &, const size_t Step) const;
     bool VariableMinMax(const VariableBase &var, const size_t Step,
                         MinMaxStruct &MinMax);
     void GetAbsoluteSteps(const VariableBase &variable,
@@ -89,7 +90,8 @@ private:
         size_t *GlobalDims = NULL;
         size_t LastTSAdded = SIZE_MAX;
         size_t FirstTSSeen = SIZE_MAX;
-        size_t LastShapeAdded = SIZE_MAX;
+        size_t LastStepAdded = SIZE_MAX;
+        std::vector<size_t> AbsStepFromRel; // per relative step vector
         std::vector<size_t> PerWriterMetaFieldOffset;
         std::vector<size_t> PerWriterBlockStart;
     };
