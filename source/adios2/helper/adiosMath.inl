@@ -601,6 +601,14 @@ std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
     return result;
 }
 
+template <class T>
+T SetWithinLimit(const T value, const T minValue, const T maxValue)
+{
+    T v = (value < minValue ? minValue : value);
+    v = (v > maxValue ? maxValue : v);
+    return v;
+}
+
 } // end namespace helper
 } // end namespace adios2
 

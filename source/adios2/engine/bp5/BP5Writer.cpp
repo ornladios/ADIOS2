@@ -12,6 +12,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
+#include "adios2/helper/adiosMath.h"      // SetWithinLimit
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
@@ -581,25 +582,35 @@ void BP5Writer::InitParameters()
     m_WriteToBB = !(m_Parameters.BurstBufferPath.empty());
     m_DrainBB = m_WriteToBB && m_Parameters.BurstBufferDrain;
 
-    if (m_Parameters.NumAggregators > static_cast<unsigned int>(m_Comm.Size()))
+    unsigned int nproc = (unsigned int)m_Comm.Size();
+    m_Parameters.NumAggregators =
+        helper::SetWithinLimit(m_Parameters.NumAggregators, 0U, nproc);
+    m_Parameters.NumSubFiles =
+        helper::SetWithinLimit(m_Parameters.NumSubFiles, 0U, nproc);
+    m_Parameters.AggregatorRatio =
+        helper::SetWithinLimit(m_Parameters.AggregatorRatio, 0U, nproc);
+    if (m_Parameters.NumAggregators == 0)
     {
-        m_Parameters.NumAggregators = static_cast<unsigned int>(m_Comm.Size());
+        if (m_Parameters.AggregatorRatio > 0)
+        {
+            m_Parameters.NumAggregators = helper::SetWithinLimit(
+                nproc / m_Parameters.AggregatorRatio, 0U, nproc);
+        }
+        else if (m_Parameters.NumSubFiles > 0)
+        {
+            m_Parameters.NumAggregators =
+                helper::SetWithinLimit(m_Parameters.NumSubFiles, 0U, nproc);
+        }
     }
+    m_Parameters.NumSubFiles = helper::SetWithinLimit(
+        m_Parameters.NumSubFiles, 0U, m_Parameters.NumAggregators);
 
-    if (m_Parameters.NumSubFiles > m_Parameters.NumAggregators)
-    {
-        m_Parameters.NumSubFiles = m_Parameters.NumAggregators;
-    }
-
+    // Limiting to max 64MB page size
+    m_Parameters.StripeSize =
+        helper::SetWithinLimit(m_Parameters.StripeSize, 0U, 67108864U);
     if (m_Parameters.StripeSize == 0)
     {
         m_Parameters.StripeSize = 4096;
-    }
-
-    if (m_Parameters.StripeSize > 67108864)
-    {
-        // Limiting to max 64MB page size
-        m_Parameters.StripeSize = 67108864;
     }
 
     if (m_Parameters.DirectIO)
@@ -799,8 +810,8 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
 
         if (currentStep == targetStep)
         {
-            // we need the very first (smallest) write position to each subfile
-            // Offsets and sizes,  2*FlushCount + 1 per writer
+            // we need the very first (smallest) write position to each
+            // subfile Offsets and sizes,  2*FlushCount + 1 per writer
             for (uint64_t i = 0; i < m_AppendWriterCount; i++)
             {
                 // first flush/write position will do
@@ -810,8 +821,8 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
                 position +=
                     sizeof(uint64_t) * 2 * FlushCount; // no need to read
                 /* std::cout << "Writer " << i << " subfile " <<
-                   writerToFileMap[i]  << "  first data loc:" << FirstDataPos <<
-                   std::endl; */
+                   writerToFileMap[i]  << "  first data loc:" <<
+                   FirstDataPos << std::endl; */
                 if (FirstDataPos < m_AppendDataPos[writerToFileMap[i]])
                 {
                     m_AppendDataPos[writerToFileMap[i]] = FirstDataPos;
@@ -863,9 +874,7 @@ void BP5Writer::InitAggregator()
                   << " aggr size = " << m_AggregatorTwoLevelShm.m_Size
                   << " rank = " << m_AggregatorTwoLevelShm.m_Rank
                   << " subfile = " << m_AggregatorTwoLevelShm.m_SubStreamIndex
-                  << " type = " << m_Parameters.AggregationType
-
-                  << std::endl;*/
+                  << " type = " << m_Parameters.AggregationType << std::endl;*/
 
         m_IAmDraining = m_AggregatorTwoLevelShm.m_IsMasterAggregator;
         m_IAmWritingData = m_AggregatorTwoLevelShm.m_IsAggregator;
@@ -1492,7 +1501,8 @@ void BP5Writer::FlushProfiler()
         std::string profileFileName;
         if (m_DrainBB)
         {
-            // auto bpTargetNames = m_BP4Serializer.GetBPBaseNames({m_Name});
+            // auto bpTargetNames =
+            // m_BP4Serializer.GetBPBaseNames({m_Name});
             std::vector<std::string> bpTargetNames = {m_Name};
             if (fileTransportIdx > -1)
             {
@@ -1509,7 +1519,8 @@ void BP5Writer::FlushProfiler()
         else
         {
             transport::FileFStream profilingJSONStream(m_Comm);
-            // auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_BBName});
+            // auto bpBaseNames =
+            // m_BP4Serializer.GetBPBaseNames({m_BBName});
             std::vector<std::string> bpBaseNames = {m_Name};
             if (fileTransportIdx > -1)
             {
