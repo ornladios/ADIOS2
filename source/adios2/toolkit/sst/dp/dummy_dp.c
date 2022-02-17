@@ -662,6 +662,7 @@ static FMStructDescRec DummyWriterContactStructs[] = {
      sizeof(struct _DummyWriterContactInfo), NULL},
     {NULL, NULL, 0, NULL}};
 
+#ifdef NOTDEF
 static FMField DummyTimestepInfoList[] = {
     {"CheckString", "string", sizeof(char *),
      FMOffset(DummyPerTimestepInfo, CheckString)},
@@ -673,6 +674,7 @@ static FMStructDescRec DummyTimestepInfoStructs[] = {
     {"DummyTimestepInfo", DummyTimestepInfoList,
      sizeof(struct _DummyPerTimestepInfo), NULL},
     {NULL, NULL, 0, NULL}};
+#endif
 
 static struct _CP_DP_Interface dummyDPInterface;
 
@@ -685,7 +687,6 @@ extern CP_DP_Interface LoadDummyDP()
         DummyWriterContactStructs; // description of writer contact info
     dummyDPInterface.TimestepInfoFormats =
         NULL; // DummyTimestepInfoStructs;   Per rank per timestep info
-
     dummyDPInterface.initReader = DummyInitReader;
     dummyDPInterface.initWriter = DummyInitWriter;
     dummyDPInterface.initWriterPerReader = DummyInitWriterPerReader;
