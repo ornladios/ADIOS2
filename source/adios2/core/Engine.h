@@ -459,6 +459,12 @@ public:
         return nullptr;
     }
 
+    //  in this call, Step is RELATIVE, not absolute
+    virtual Dims *VarShape(const VariableBase &, const size_t Step) const
+    {
+        return nullptr;
+    }
+
     virtual bool VariableMinMax(const VariableBase &, const size_t Step,
                                 MinMaxStruct &MinMax)
     {

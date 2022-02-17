@@ -26,6 +26,15 @@ Dims Variable<T>::DoShape(const size_t step) const
 {
     CheckRandomAccess(step, "Shape");
 
+    if (m_Engine)
+    {
+        // see if the engine implements Variable Shape inquiry
+        auto ShapePtr = m_Engine->VarShape(*this, step);
+        if (ShapePtr)
+        {
+            return *ShapePtr;
+        }
+    }
     if (m_FirstStreamingStep && step == adios2::EngineCurrentStep)
     {
         return m_Shape;

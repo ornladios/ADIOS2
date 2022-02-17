@@ -593,6 +593,14 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             }
             VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
         }
+        else
+        {
+            if ((VarRec->AbsStepFromRel.size() == 0) ||
+                (VarRec->AbsStepFromRel.back() != Step))
+            {
+                VarRec->AbsStepFromRel.push_back(Step);
+            }
+        }
         if ((ControlFields[i].OrigShapeID == ShapeID::GlobalArray) ||
             (ControlFields[i].OrigShapeID == ShapeID::LocalArray))
         {
@@ -665,21 +673,6 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                     }
                 }
             }
-            else
-            {
-                //   Random access, add to m_AvailableShapes
-                if ((VarRec->LastShapeAdded != Step) && meta_base->Shape)
-                {
-                    std::vector<size_t> shape;
-                    for (size_t i = 0; i < meta_base->Dims; i++)
-                    {
-                        shape.push_back(meta_base->Shape[i]);
-                    }
-                    static_cast<VariableBase *>(VarRec->Variable)
-                        ->m_AvailableShapes[Step + 1] = shape;
-                    VarRec->LastShapeAdded = Step;
-                }
-            }
         }
         else
         {
@@ -708,18 +701,18 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                         m_Engine;
                 }
                 VarByKey[VarRec->Variable] = VarRec;
-                VarRec->LastTSAdded = Step; // starts at 1
+                VarRec->LastTSAdded = Step;
             }
+        }
+        if (VarRec->FirstTSSeen == SIZE_MAX)
+        {
+            VarRec->FirstTSSeen = Step;
         }
         if (m_RandomAccessMode && (VarRec->LastTSAdded != Step))
         {
             static_cast<VariableBase *>(VarRec->Variable)
                 ->m_AvailableStepsCount++;
             VarRec->LastTSAdded = Step;
-        }
-        if (VarRec->FirstTSSeen == SIZE_MAX)
-        {
-            VarRec->FirstTSSeen = Step;
         }
     }
 }
@@ -882,9 +875,10 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
     }
     else
     {
+        BP5VarRec *VarRec = VarByKey[&variable];
         bool ret = false;
         if (variable.m_StepsStart + variable.m_StepsCount >
-            variable.m_AvailableStepsCount)
+            VarRec->AbsStepFromRel.size())
         {
             helper::Throw<std::invalid_argument>(
                 "Toolkit", "format::BP5Deserializer", "QueueGet",
@@ -892,51 +886,30 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
                     " from steps start " +
                     std::to_string(variable.m_StepsStart) + " in variable " +
                     variable.m_Name +
-                    " is beyond the largest available step = " +
-                    std::to_string(variable.m_AvailableStepsCount +
-                                   variable.m_AvailableStepsStart) +
+                    " is beyond the largest available relative step = " +
+                    std::to_string(VarRec->AbsStepFromRel.size()) +
                     ", check Variable SetStepSelection argument stepsCount "
                     "(random access), or "
                     "number of BeginStep calls (streaming)");
         }
-        size_t Step = variable.m_AvailableStepsStart;
-        size_t GotCount = 0;
-        BP5VarRec *VarRec = VarByKey[&variable];
-        //  m_StepsStart is relative, so we have to look to see if var was
-        //  written on each step.
-        while (GotCount < variable.m_StepsStart)
+        for (size_t RelStep = variable.m_StepsStart;
+             RelStep < variable.m_StepsStart + variable.m_StepsCount; RelStep++)
         {
-            const size_t writerCohortSize = WriterCohortSize(Step);
+            const size_t AbsStep = VarRec->AbsStepFromRel[RelStep];
+            const size_t writerCohortSize = WriterCohortSize(AbsStep);
             for (size_t WriterRank = 0; WriterRank < writerCohortSize;
                  WriterRank++)
             {
-                if (GetMetadataBase(VarRec, Step, WriterRank))
-                {
-                    GotCount++;
-                    break;
-                }
-            }
-            Step++;
-        }
-        GotCount = 0;
-        while (GotCount < variable.m_StepsCount)
-        {
-            const size_t writerCohortSize = WriterCohortSize(Step);
-            for (size_t WriterRank = 0; WriterRank < writerCohortSize;
-                 WriterRank++)
-            {
-                if (GetMetadataBase(VarRec, Step, WriterRank))
+                if (GetMetadataBase(VarRec, AbsStep, WriterRank))
                 {
                     // This writer wrote on this timestep
-                    ret = QueueGetSingle(variable, DestData, Step);
+                    ret = QueueGetSingle(variable, DestData, AbsStep);
                     size_t increment =
                         variable.TotalSize() * variable.m_ElementSize;
                     DestData = (void *)((char *)DestData + increment);
-                    GotCount++;
                     break;
                 }
             }
-            Step++;
         }
         return ret;
     }
@@ -1892,6 +1865,45 @@ void BP5Deserializer::GetAbsoluteSteps(const VariableBase &Var,
             }
         }
     }
+}
+
+Dims *BP5Deserializer::VarShape(const VariableBase &Var,
+                                const size_t RelStep) const
+{
+    BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
+    if (VarRec->OrigShapeID != ShapeID::GlobalArray)
+    {
+        return nullptr;
+    }
+    size_t AbsStep = RelStep;
+    if (m_RandomAccessMode)
+    {
+        if (RelStep == adios2::EngineCurrentStep)
+        {
+            AbsStep = VarRec->AbsStepFromRel[Var.m_StepsStart];
+        }
+        else
+        {
+            AbsStep = VarRec->AbsStepFromRel[RelStep];
+        }
+    }
+    for (size_t WriterRank = 0; WriterRank < WriterCohortSize(AbsStep);
+         WriterRank++)
+    {
+        MetaArrayRec *writer_meta_base =
+            (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
+        if (writer_meta_base && writer_meta_base->Shape)
+        {
+            Dims *Shape = new Dims();
+            Shape->reserve(writer_meta_base->Dims);
+            for (size_t i = 0; i < writer_meta_base->Dims; i++)
+            {
+                Shape->push_back(writer_meta_base->Shape[i]);
+            }
+            return Shape;
+        }
+    }
+    return nullptr;
 }
 
 bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,

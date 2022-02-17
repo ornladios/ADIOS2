@@ -375,7 +375,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
-            // bpReader.Get(var_bool, TF.data());
             bpReader.Get(var_char, CHAR.data());
             bpReader.Get(var_iString, IString);
 
