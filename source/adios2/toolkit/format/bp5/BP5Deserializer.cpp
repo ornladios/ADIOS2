@@ -907,8 +907,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
                     size_t increment =
                         variable.TotalSize() * variable.m_ElementSize;
                     DestData = (void *)((char *)DestData + increment);
-                    if (VarRec->OrigShapeID == ShapeID::GlobalValue)
-                        break;
+                    break;
                 }
             }
         }
