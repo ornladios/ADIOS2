@@ -608,6 +608,16 @@ template <class T>
 void CopyContiguousMemory(const char *src, const size_t payloadStride, T *dest,
                           const bool endianReverse, const bool isGPU)
 {
+    if (isGPU)
+    {
+        if (endianReverse)
+            std::cout << "Endian Reverse is not surrported with GPU buffers"
+                      << std::endl;
+#ifdef ADIOS2_HAVE_CUDA
+        CudaMemCopyFromBuffer(dest, 0, src, payloadStride);
+        return;
+#endif
+    }
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     if (endianReverse)
     {
