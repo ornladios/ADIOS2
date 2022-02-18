@@ -371,13 +371,14 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const Box<Dims> &blockBox,
                           const Box<Dims> &intersectionBox,
                           const bool isRowMajor, const bool reverseDimensions,
-                          const bool endianReverse)
+                          const bool endianReverse, const bool isGPU)
 {
     auto lf_ClipRowMajor =
         [](T *dest, const Dims &destStart, const Dims &destCount,
            const char *contiguousMemory, const Box<Dims> &blockBox,
            const Box<Dims> &intersectionBox, const bool isRowMajor,
-           const bool reverseDimensions, const bool endianReverse)
+           const bool reverseDimensions, const bool endianReverse,
+           const bool isGPU)
 
     {
         const Dims &istart = intersectionBox.first;
@@ -434,7 +435,7 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                 helper::LinearIndex(selectionBox, currentPoint, true);
 
             CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
-                                 dest + variableStart, endianReverse);
+                                 dest + variableStart, endianReverse, isGPU);
 
             // Here update each non-contiguous dim recursively
             if (nContDim >= dimensions)
@@ -473,7 +474,8 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
         [](T *dest, const Dims &destStart, const Dims &destCount,
            const char *contiguousMemory, const Box<Dims> &blockBox,
            const Box<Dims> &intersectionBox, const bool isRowMajor,
-           const bool reverseDimensions, const bool endianReverse)
+           const bool reverseDimensions, const bool endianReverse,
+           const bool isGPU)
 
     {
         const Dims &istart = intersectionBox.first;
@@ -525,7 +527,7 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                 helper::LinearIndex(selectionBox, currentPoint, false);
 
             CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
-                                 dest + variableStart, endianReverse);
+                                 dest + variableStart, endianReverse, isGPU);
 
             // Here update each non-contiguous dim recursively.
             if (nContDim >= dimensions)
@@ -570,7 +572,7 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
         const size_t stride = (end.back() - start.back() + 1) * sizeof(T);
 
         CopyContiguousMemory(contiguousMemory, stride, dest + normalizedStart,
-                             endianReverse);
+                             endianReverse, isGPU);
         return;
     }
 
@@ -578,13 +580,13 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
     {
         lf_ClipRowMajor(dest, destStart, destCount, contiguousMemory, blockBox,
                         intersectionBox, isRowMajor, reverseDimensions,
-                        endianReverse);
+                        endianReverse, isGPU);
     }
     else // stored with Fortran, R
     {
         lf_ClipColumnMajor(dest, destStart, destCount, contiguousMemory,
                            blockBox, intersectionBox, isRowMajor,
-                           reverseDimensions, endianReverse);
+                           reverseDimensions, endianReverse, isGPU);
     }
 }
 
@@ -594,17 +596,17 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const Box<Dims> &blockBox,
                           const Box<Dims> &intersectionBox,
                           const bool isRowMajor, const bool reverseDimensions,
-                          const bool endianReverse)
+                          const bool endianReverse, const bool isGPU)
 {
 
     ClipContiguousMemory(dest, destStart, destCount, contiguousMemory.data(),
                          blockBox, intersectionBox, isRowMajor,
-                         reverseDimensions, endianReverse);
+                         reverseDimensions, endianReverse, isGPU);
 }
 
 template <class T>
 void CopyContiguousMemory(const char *src, const size_t payloadStride, T *dest,
-                          const bool endianReverse)
+                          const bool endianReverse, const bool isGPU)
 {
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     if (endianReverse)

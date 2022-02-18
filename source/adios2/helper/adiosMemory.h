@@ -184,7 +184,8 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const Box<Dims> &intersectionBox,
                           const bool isRowMajor = true,
                           const bool reverseDimensions = false,
-                          const bool endianReverse = false);
+                          const bool endianReverse = false,
+                          const bool isGPU = false);
 
 template <class T>
 void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
@@ -193,11 +194,13 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const Box<Dims> &intersectionBox,
                           const bool isRowMajor = true,
                           const bool reverseDimensions = false,
-                          const bool endianReverse = false);
+                          const bool endianReverse = false,
+                          const bool isGPU = false);
 
 template <class T>
 void CopyContiguousMemory(const char *src, const size_t stride, T *dest,
-                          const bool endianReverse = false);
+                          const bool endianReverse = false,
+                          const bool isGPU = false);
 
 /**
  * Clips a vector returning the sub-vector between start and end (end is

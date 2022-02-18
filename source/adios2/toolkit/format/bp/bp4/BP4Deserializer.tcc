@@ -567,7 +567,7 @@ void BP4Deserializer::PostDataRead(
         blockInfo.Data, blockInfoStart, blockInfo.Count,
         m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
         subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
-        endianReverse);
+        endianReverse, blockInfo.IsGPU);
 }
 
 template <class T>
