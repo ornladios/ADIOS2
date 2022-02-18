@@ -57,13 +57,6 @@ public:
     void InsertMember(const std::string &name, const size_t offset);
 };
 
-// Explicit declaration of the public template methods
-#define declare_template_instantiation(T)                                      \
-    extern template void VariableCompound::InsertMember<T>(                    \
-        const std::string &, const size_t);
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 } // end namespace core
 } // end namespace adios2
 
