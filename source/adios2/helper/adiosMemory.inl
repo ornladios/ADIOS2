@@ -611,8 +611,9 @@ void CopyContiguousMemory(const char *src, const size_t payloadStride, T *dest,
     if (isGPU)
     {
         if (endianReverse)
-            std::cout << "Endian Reverse is not surrported with GPU buffers"
-                      << std::endl;
+            helper::Throw<std::invalid_argument>(
+                "Helper", "Memory", "CopyContiguousMemory",
+                "Direct byte order reversal not supported for GPU buffers");
 #ifdef ADIOS2_HAVE_CUDA
         CudaMemCopyFromBuffer(dest, 0, src, payloadStride);
         return;
