@@ -6,7 +6,7 @@ Fortran bindings
    :language: fortran
    :class: highlight
 
-The Fortran bindings API consist entirely on subroutines calls. Always, the 1st argument is a Fortran type (struct) to an ADIOS2 component, while the last argument is an error integer flag, :f90:`integer ierr`. ``ierr==0`` means normal execution while any other value represents an error or a different state. ADIOS2 Fortran bindings provide a list of possible errors coming from the C++ standardized error exception library:
+The Fortran bindings API consists entirely of subroutine calls. The 1st argument is always a Fortran type (struct) to an ADIOS2 component, while the last argument is an error integer flag, :f90:`integer ierr`. ``ierr==0`` means normal execution while any other value represents an error or a different state. ADIOS2 Fortran bindings provide a list of possible errors coming from the C++ standardized error exception library:
 
 .. code-block:: fortran
 
@@ -19,7 +19,7 @@ The Fortran bindings API consist entirely on subroutines calls. Always, the 1st 
 
 Click here for a `Fortran write and read example`_ to illustrate the use of the APIs calls before digging into the description of each subroutine. This test will compile under your build/bin/ directory.
 
-.. _`Fortran write and read example`: https://github.com/ornladios/ADIOS2/blob/master/testing/adios2/bindings/fortran/TestBPWriteReadHeatMap3D.f90
+.. _`Fortran write and read example`: https://github.com/ornladios/ADIOS2/blob/master/testing/adios2/bindings/fortran/TestBPWriteReadHeatMap3D.F90
 
 The following subsections describe the overall component representation and the main subroutines versions in the Fortran bindings API.
 
@@ -120,52 +120,6 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       logical, intent(in):: adios2_debug_mode
       
 
-* :f90:`subroutine adios2_declare_io` spawn io components
-
-   .. code-block:: fortran
-
-      subroutine adios2_declare_io(io, adios, io_name, ierr)
-      
-      ! WHERE:
-      
-      ! io component that defines an IO tasks inside adios component
-      type(adios2_io), intent(out):: io
-      
-      ! adios component from adios2_init spawning io tasks 
-      type(adios2_adios), intent(in):: adios
-      
-      ! unique name associated with this io component inside adios
-      character*(*), intent(in):: io_name
-
-* :f90:`subroutine adios2_at_io` retrieve an existing io component, useful when the original handler for adios2_declare_io goes out of scope
-
-   .. code-block:: fortran
-
-      subroutine adios2_at_io(io, adios, io_name, ierr)
-      
-      ! WHERE:
-      
-      ! io component that defines an IO tasks inside adios component
-      type(adios2_io), intent(out):: io
-      
-      ! adios component from adios2_init that owns io tasks 
-      type(adios2_adios), intent(in):: adios
-      
-      ! unique name associated with an existing io component (created with adios2_declare_io)
-      character*(*), intent(in):: io_name
-
-
-* :f90:`subroutine adios2_flush_all` flush all current engines in all ios
-
-   .. code-block:: fortran
-
-      subroutine adios2_flush_all(adios, ierr)
-      
-      ! WHERE:
-      
-      ! adios component from adios2_init owning ios and engines 
-      type(adios2_adios), intent(in):: adios  
-   
 * :f90:`subroutine adios2_finalize` final point for the adios component
 
    .. code-block:: fortran
@@ -185,7 +139,121 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       
 :ref:`IO` subroutines
 ---------------------
+
+* :f90:`subroutine adios2_declare_io` spawn io components
+
+   .. code-block:: fortran
+
+      subroutine adios2_declare_io(io, adios, io_name, ierr)
       
+      ! WHERE:
+      
+      ! io component that defines an IO tasks inside adios component
+      type(adios2_io), intent(out):: io
+      
+      ! adios component from adios2_init spawning io tasks 
+      type(adios2_adios), intent(in):: adios
+      
+      ! unique name associated with this io component inside adios
+      character*(*), intent(in):: io_name
+
+
+* :f90:`subroutine adios2_at_io` retrieve an existing io component, useful when the original handler for adios2_declare_io goes out of scope
+
+   .. code-block:: fortran
+
+      subroutine adios2_at_io(io, adios, io_name, ierr)
+      
+      ! WHERE:
+      
+      ! io component that defines an IO tasks inside adios component
+      type(adios2_io), intent(out):: io
+      
+      ! adios component from adios2_init that owns io tasks 
+      type(adios2_adios), intent(in):: adios
+      
+      ! unique name associated with an existing io component (created with adios2_declare_io)
+      character*(*), intent(in):: io_name
+
+   
+* :f90:`subroutine adios2_set_engine` set engine type in code, see :ref:`Supported Engines` for a list of available engines
+   
+   .. code-block:: fortran
+      
+      subroutine adios2_set_engine(io, engine_type, ierr)
+      
+      ! WHERE:
+      
+      ! io component owning the attribute
+      type(adios2_io), intent(in):: io
+      
+      ! engine_type: BPFile (default), HDF5, DataMan, SST, SSC
+      character*(*), intent(in):: engine_type
+
+
+* :f90:`subroutine adios2_set_parameter` set IO key/value pair parameter in code, see :ref:`Supported Engines` for a list of available parameters for each engine type
+   
+   .. code-block:: fortran
+      
+      subroutine adios2_set_parameter(io, key, value, ierr)
+      
+      ! WHERE:
+      
+      ! io component owning the attribute
+      type(adios2_io), intent(in):: io
+      
+      ! key in the key/value pair parameter
+      character*(*), intent(in):: key
+      
+      ! value in the key/value pair parameter
+      character*(*), intent(in):: value
+      
+
+* :f90:`subroutine adios2_flush_all_engines` flushes all existing engines opened by this io
+   
+   .. code-block:: fortran
+   
+      subroutine adios2_flush_all_engines(io, ierr)
+        
+      ! WHERE:
+      
+      ! io in which search and flush for all engines is performed
+      type(adios2_io), intent(in) :: io 
+
+
+* :f90:`subroutine adios2_remove_variable` remove existing variable by its unique name
+   
+   .. code-block:: fortran
+   
+      subroutine adios2_remove_variable(io, name, result, ierr)
+        
+      ! WHERE:
+      
+      ! io in which search and removal for variable is performed
+      type(adios2_io), intent(in) :: io
+      
+      ! unique key name to search for variable 
+      character*(*), intent(in) :: name
+      
+      ! true: variable removed, false: variable not found, not removed
+      logical, intent(out) :: result
+      
+
+* :f90:`subroutine adios2_remove_all_variables` remove all existing variables
+   
+   .. code-block:: fortran
+   
+      subroutine adios2_remove_variable(io, ierr)
+        
+      ! WHERE:
+      
+      ! io in which search and removal for all variables is performed
+      type(adios2_io), intent(in) :: io
+         
+
+:ref:`Variable` subroutines
+---------------------------
+     
 * :f90:`subroutine adios2_define_variable` 
 
    .. code-block:: fortran
@@ -233,7 +301,27 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       !           adios2_variable_dims = .false. use for code clarity
       logical, value, intent(in):: adios2_constant_dims
       
+
+* :f90:`subroutine adios2_inquire_variable` inquire for existing variable by its unique name
    
+   .. code-block:: fortran
+   
+      subroutine adios2_inquire_variable(variable, io, name, ierr)
+        
+      ! WHERE:
+      
+      ! output variable handler:
+      ! variable%valid = .true. points to valid found variable
+      ! variable%valid = .false. variable not found
+      type(adios2_variable), intent(out) :: variable
+      
+      ! io in which search for variable is performed
+      type(adios2_io), intent(in) :: io
+      
+      ! unique key name to search for variable 
+      character*(*), intent(in) :: name
+      
+
 * available :f90:`adios2_type` parameters in :f90:`subroutine adios2_define_variable` 
    
    .. code-block:: fortran
@@ -259,183 +347,69 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
    *e.g.* use ``adios2_type_dp`` instead of ``3``
   
   
-               
-* :f90:`subroutine adios2_define_attribute`
+* :f90:`subroutine adios2_set_shape` set new ``shape_dims`` if dims are variable in ``adios2_define_variable``
    
    .. code-block:: fortran
-
-      ! Single value attributes
-      subroutine adios2_define_attribute(attribute, io, attribute_name, data, ierr)
-                                         
-      ! 1D array attributes
-      subroutine adios2_define_attribute(attribute, io, attribute_name, data, elements, ierr)
-         
-      ! WHERE:
+   
+      subroutine adios2_set_selection(variable, ndims, shape_dims, ierr)
       
-      ! handler to newly defined attribute
-      type(adios2_attribute), intent(out):: attribute 
+      ! WHERE
       
-      ! io component owning the attribute
-      type(adios2_io), intent(in):: io
+      ! variable handler
+      type(adios2_variable), intent(in) :: variable
       
-      ! unique attribute identifier within io
-      character*(*), intent(in):: attribute_name
+      ! number of dimensions in shape_dims
+      integer, intent(in) :: ndims
       
-      ! overloaded subroutine allows for multiple attribute data types
-      ! they can be single values or 1D arrays
-      Generic Fortran types, intent(in):: data 
-      Generic Fortran types, dimension(:), intent(in):: data
-                                        
-      ! number of elements if passing a 1D array in data argument
-      integer, intent(in):: elements
+      ! new shape_dims
+      integer(kind=8), dimension(:), intent(in):: shape_dims
 
 
-* :f90:`subroutine adios2_set_engine` set engine type in code, see :ref:`Supported Engines` for a list of available engines
+* :f90:`subroutine adios2_set_selection` set new start_dims and count_dims
    
    .. code-block:: fortran
+   
+      subroutine adios2_set_selection(variable, ndims, start_dims, count_dims, ierr)
       
-      subroutine adios2_set_engine(io, engine_type, ierr)
+      ! WHERE
       
-      ! WHERE:
+      ! variable handler
+      type(adios2_variable), intent(in) :: variable
       
-      ! io component owning the attribute
-      type(adios2_io), intent(in):: io
+      ! number of dimensions in start_dims and count_dims
+      integer, intent(in) :: ndims
       
-      ! engine_type: BPFile (default), HDF5, DataMan, SST, SSC
-      character*(*), intent(in):: engine_type
+      ! new start_dims
+      integer(kind=8), dimension(:), intent(in):: start_dims
+      
+      ! new count_dims
+      integer(kind=8), dimension(:), intent(in):: count_dims
+      
 
-* :f90:`subroutine adios2_set_parameter` set IO key/value pair parameter in code, see :ref:`Supported Engines` for a list of available parameters for each engine type
-   
-   .. code-block:: fortran
-      
-      subroutine adios2_set_parameter(io, key, value, ierr)
-      
-      ! WHERE:
-      
-      ! io component owning the attribute
-      type(adios2_io), intent(in):: io
-      
-      ! key in the key/value pair parameter
-      character*(*), intent(in):: key
-      
-      ! value in the key/value pair parameter
-      character*(*), intent(in):: value
-      
-      
-* :f90:`subroutine adios2_inquire_variable` inquire for existing variable by its unique name
+* :f90:`subroutine adios2_set_steps_selection` set new step_start and step_count
    
    .. code-block:: fortran
    
-      subroutine adios2_inquire_variable(variable, io, name, ierr)
-        
-      ! WHERE:
+      subroutine adios2_set_selection(variable, step_start, step_count, ierr)
       
-      ! output variable handler:
-      ! variable%valid = .true. points to valid found variable
-      ! variable%valid = .false. variable not found
-      type(adios2_variable), intent(out) :: variable
+      ! WHERE
       
-      ! io in which search for variable is performed
-      type(adios2_io), intent(in) :: io
+      ! variable handler
+      type(adios2_variable), intent(in) :: variable
       
-      ! unique key name to search for variable 
-      character*(*), intent(in) :: name
+      ! new step_start 
+      integer(kind=8), intent(in):: step_start
       
-* :f90:`subroutine adios2_inquire_attribute` inquire for existing attribute by its unique name
-   
-   .. code-block:: fortran
-   
-      subroutine adios2_inquire_attribute(attribute, io, name, ierr)
-        
-      ! WHERE:
-      
-      ! output attribute handler:
-      ! attribute%valid = .true. points to valid found attribute
-      ! attribute%valid = .false. attribute not found
-      type(adios2_attribute), intent(out) :: attribute
-      
-      ! io in which search for attribute is performed
-      type(adios2_io), intent(in) :: io
-      
-      ! unique key name to search for attribute 
-      character*(*), intent(in) :: name
+      ! new step_count (or number of steps to read from step_start)
+      integer(kind=8), intent(in):: step_count
 
-..  caution::
-
-   Use the ``adios2_remove_*`` subroutines with extreme CAUTION.
-   They create outdated dangling information in the ``adios2_type`` handlers.
-   If you don't need them, don't use them. 
+      ! error code
+      integer, intent(out) :: ierr
 
 
-* :f90:`subroutine adios2_remove_variable` remove existing variable by its unique name
-   
-   .. code-block:: fortran
-   
-      subroutine adios2_remove_variable(io, name, result, ierr)
-        
-      ! WHERE:
-      
-      ! io in which search and removal for variable is performed
-      type(adios2_io), intent(in) :: io
-      
-      ! unique key name to search for variable 
-      character*(*), intent(in) :: name
-      
-      ! true: variable removed, false: variable not found, not removed
-      logical, intent(out) :: result
-      
-      
-* :f90:`subroutine adios2_remove_attribute` remove existing attribute by its unique name
-   
-   .. code-block:: fortran
-   
-      subroutine adios2_remove_attribute(io, name, result, ierr)
-        
-      ! WHERE:
-      
-      ! io in which search and removal for attribute is performed
-      type(adios2_io), intent(in) :: io
-      
-      ! unique key name to search for attribute 
-      character*(*), intent(in) :: name
-      
-      ! true: attribute removed, false: attribute not found, not removed
-      logical, intent(out) :: result
-      
-* :f90:`subroutine adios2_remove_all_variables` remove all existing variables
-   
-   .. code-block:: fortran
-   
-      subroutine adios2_remove_variable(io, ierr)
-        
-      ! WHERE:
-      
-      ! io in which search and removal for all variables is performed
-      type(adios2_io), intent(in) :: io
-      
-      
-* :f90:`subroutine adios2_remove_all_attributes` remove all existing attributes
-   
-   .. code-block:: fortran
-   
-      subroutine adios2_remove_all_attributes(io, ierr)
-        
-      ! WHERE:
-      
-      ! io in which search and removal for all attributes is performed
-      type(adios2_io), intent(in) :: io
+:ref:`Engine` subroutines
+-------------------------
 
-* :f90:`subroutine adios2_flush_all_engines` flushes all existing engines opened by this io
-   
-   .. code-block:: fortran
-   
-      subroutine adios2_flush_all_engines(io, ierr)
-        
-      ! WHERE:
-      
-      ! io in which search and flush for all engines is performed
-      type(adios2_io), intent(in) :: io 
-      
 * :f90:`subroutine adios2_open` opens an engine to executes IO tasks 
    
    .. code-block:: fortran
@@ -468,106 +442,6 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       integer, intent(in):: adios2_mode
 
 
-
-
-
-
-:ref:`Variable` subroutines
----------------------------
-
-* :f90:`subroutine adios2_set_shape` set new ``shape_dims`` if dims are variable in ``adios2_define_variable``
-   
-   .. code-block:: fortran
-   
-      subroutine adios2_set_selection(variable, ndims, shape_dims, ierr)
-      
-      ! WHERE
-      
-      ! variable handler
-      type(adios2_variable), intent(in) :: variable
-      
-      ! number of dimensions in shape_dims
-      integer, intent(in) :: ndims
-      
-      ! new shape_dims
-      integer(kind=8), dimension(:), intent(in):: shape_dims
-
-
-
-* :f90:`subroutine adios2_set_selection` set new start_dims and count_dims
-   
-   .. code-block:: fortran
-   
-      subroutine adios2_set_selection(variable, ndims, start_dims, count_dims, ierr)
-      
-      ! WHERE
-      
-      ! variable handler
-      type(adios2_variable), intent(in) :: variable
-      
-      ! number of dimensions in start_dims and count_dims
-      integer, intent(in) :: ndims
-      
-      ! new start_dims
-      integer(kind=8), dimension(:), intent(in):: start_dims
-      
-      ! new count_dims
-      integer(kind=8), dimension(:), intent(in):: count_dims
-      
-* :f90:`subroutine adios2_set_steps_selection` set new step_start and step_count
-   
-   .. code-block:: fortran
-   
-      subroutine adios2_set_selection(variable, step_start, step_count, ierr)
-      
-      ! WHERE
-      
-      ! variable handler
-      type(adios2_variable), intent(in) :: variable
-      
-      ! new step_start 
-      integer(kind=8), intent(in):: step_start
-      
-      ! new step_count (or number of steps to read from step_start)
-      integer(kind=8), intent(in):: step_count
-
-      ! error code
-      integer, intent(out) :: ierr
-
-* :f90:`subroutine adios2_attribute_data` Retrieve attribute data
-
-   .. code-block:: fortran
-
-      subroutine adios2_attribute_data(data, attribute, ierr)
-
-      ! WHERE
-
-      ! data handler
-      character*(*), intent(out):: data
-      real, intent(out):: data
-      real(kind=8), intent(out):: data
-      integer(kind=1), intent(out):: data
-      integer(kind=2), intent(out):: data
-      integer(kind=4), intent(out):: data
-      integer(kind=8), intent(out):: data
-      character*(*), dimension(:), intent(out):: data
-      real, dimension(:), intent(out):: data
-      real(kind=8), dimension(:), intent(out):: data
-      integer(kind=2), dimension(:), intent(out):: data
-      integer(kind=4), dimension(:), intent(out):: data
-      integer(kind=8), dimension(:), intent(out):: data
-
-
-      ! attribute
-      type(adios2_attribute), intent(in):: attribute
-
-      ! error code
-      integer, intent(out) :: ierr
-
-      
-:ref:`Engine` subroutines
--------------------------
-
 * :f90:`subroutine adios2_begin_step` moves to next step, starts at 0
    
    .. code-block:: fortran
@@ -595,7 +469,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! status of the stream from adios2_step_status_* parameters
       integer, intent(out):: status
    
-   
+      
 * :f90:`subroutine adios2_current_step` extracts current step
    
    .. code-block:: fortran
@@ -609,6 +483,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       
       ! populated with current_step value
       integer(kind=8), intent(out) :: current_step 
+
 
 * :f90:`subroutine adios2_steps` Inspect total number of available steps, 
       use for file engines in read mode only
@@ -638,7 +513,6 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       type(adios2_engine), intent(in) :: engine
    
 * :f90:`subroutine adios2_put` put variable metadata and data into adios2 for IO operations. Default is deferred mode, optional sync mode, see :ref:`Put: modes and memory contracts`. Variable and data types must match.
-
    
    .. code-block:: fortran
    
@@ -688,7 +562,6 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       
 * :f90:`subroutine adios2_get` get variable data into adios2 for IO operations. Default is deferred mode, optional sync mode, see :ref:`Get: modes and memory contracts`. Variable and data types must match, variable can be obtained from ``adios2_inquire_variable``. Data must be pre-allocated.
 
-   
    .. code-block:: fortran
    
       ! Full signature
@@ -747,4 +620,134 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! engine handler  
       type(adios2_engine), intent(in) :: engine
       
+
+* :f90:`subroutine adios2_flush_all` flush all current engines in all ios
+
+   .. code-block:: fortran
+
+      subroutine adios2_flush_all(adios, ierr)
       
+      ! WHERE:
+      
+      ! adios component from adios2_init owning ios and engines 
+      type(adios2_adios), intent(in):: adios  
+   
+
+:ref:`Attribute` subroutines
+----------------------------
+
+* :f90:`subroutine adios2_define_attribute`
+   
+   .. code-block:: fortran
+
+      ! Single value attributes
+      subroutine adios2_define_attribute(attribute, io, attribute_name, data, ierr)
+                                         
+      ! 1D array attributes
+      subroutine adios2_define_attribute(attribute, io, attribute_name, data, elements, ierr)
+         
+      ! WHERE:
+      
+      ! handler to newly defined attribute
+      type(adios2_attribute), intent(out):: attribute 
+      
+      ! io component owning the attribute
+      type(adios2_io), intent(in):: io
+      
+      ! unique attribute identifier within io
+      character*(*), intent(in):: attribute_name
+      
+      ! overloaded subroutine allows for multiple attribute data types
+      ! they can be single values or 1D arrays
+      Generic Fortran types, intent(in):: data 
+      Generic Fortran types, dimension(:), intent(in):: data
+                                        
+      ! number of elements if passing a 1D array in data argument
+      integer, intent(in):: elements
+
+
+* :f90:`subroutine adios2_inquire_attribute` inquire for existing attribute by its unique name
+   
+   .. code-block:: fortran
+   
+      subroutine adios2_inquire_attribute(attribute, io, name, ierr)
+        
+      ! WHERE:
+      
+      ! output attribute handler:
+      ! attribute%valid = .true. points to valid found attribute
+      ! attribute%valid = .false. attribute not found
+      type(adios2_attribute), intent(out) :: attribute
+      
+      ! io in which search for attribute is performed
+      type(adios2_io), intent(in) :: io
+      
+      ! unique key name to search for attribute 
+      character*(*), intent(in) :: name
+
+..  caution::
+
+   Use the ``adios2_remove_*`` subroutines with extreme CAUTION.
+   They create outdated dangling information in the ``adios2_type`` handlers.
+   If you don't need them, don't use them. 
+
+
+* :f90:`subroutine adios2_attribute_data` Retrieve attribute data
+
+   .. code-block:: fortran
+
+      subroutine adios2_attribute_data(data, attribute, ierr)
+
+      ! WHERE
+
+      ! data handler
+      character*(*), intent(out):: data
+      real, intent(out):: data
+      real(kind=8), intent(out):: data
+      integer(kind=1), intent(out):: data
+      integer(kind=2), intent(out):: data
+      integer(kind=4), intent(out):: data
+      integer(kind=8), intent(out):: data
+      character*(*), dimension(:), intent(out):: data
+      real, dimension(:), intent(out):: data
+      real(kind=8), dimension(:), intent(out):: data
+      integer(kind=2), dimension(:), intent(out):: data
+      integer(kind=4), dimension(:), intent(out):: data
+      integer(kind=8), dimension(:), intent(out):: data
+
+
+      ! attribute
+      type(adios2_attribute), intent(in):: attribute
+
+      ! error code
+      integer, intent(out) :: ierr
+
+      
+* :f90:`subroutine adios2_remove_attribute` remove existing attribute by its unique name
+   
+   .. code-block:: fortran
+   
+      subroutine adios2_remove_attribute(io, name, result, ierr)
+        
+      ! WHERE:
+      
+      ! io in which search and removal for attribute is performed
+      type(adios2_io), intent(in) :: io
+      
+      ! unique key name to search for attribute 
+      character*(*), intent(in) :: name
+      
+      ! true: attribute removed, false: attribute not found, not removed
+      logical, intent(out) :: result
+         
+      
+* :f90:`subroutine adios2_remove_all_attributes` remove all existing attributes
+   
+   .. code-block:: fortran
+   
+      subroutine adios2_remove_all_attributes(io, ierr)
+        
+      ! WHERE:
+      
+      ! io in which search and removal for all attributes is performed
+      type(adios2_io), intent(in) :: io
