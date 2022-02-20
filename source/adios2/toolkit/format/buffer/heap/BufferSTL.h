@@ -46,12 +46,6 @@ public:
     size_t DebugGetSize() const;
 };
 
-#define declare_template_instantiation(T)                                      \
-    extern template size_t BufferSTL::Align<T>() const noexcept;
-
-ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 } // end namespace format
 } // end namespace adios2
 

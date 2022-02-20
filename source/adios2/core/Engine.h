@@ -609,59 +609,6 @@ private:
                         const std::string hint) const;
 };
 
-#define declare_template_instantiation(T)                                      \
-                                                                               \
-    extern template void Engine::Put<T>(Variable<T> &, const T *, const Mode); \
-    extern template void Engine::Put<T>(const std::string &, const T *,        \
-                                        const Mode);                           \
-                                                                               \
-    extern template void Engine::Put<T>(Variable<T> &, const T &, const Mode); \
-    extern template void Engine::Put<T>(const std::string &, const T &,        \
-                                        const Mode);                           \
-                                                                               \
-    extern template void Engine::Get<T>(Variable<T> &, T *, const Mode);       \
-    extern template void Engine::Get<T>(const std::string &, T *, const Mode); \
-                                                                               \
-    extern template void Engine::Get<T>(Variable<T> &, T &, const Mode);       \
-    extern template void Engine::Get<T>(const std::string &, T &, const Mode); \
-                                                                               \
-    extern template void Engine::Get<T>(Variable<T> &, std::vector<T> &,       \
-                                        const Mode);                           \
-                                                                               \
-    extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
-                                        const Mode);                           \
-                                                                               \
-    extern template typename Variable<T>::BPInfo *Engine::Get<T>(              \
-        Variable<T> &, const Mode);                                            \
-    extern template typename Variable<T>::BPInfo *Engine::Get<T>(              \
-        const std::string &, const Mode);                                      \
-                                                                               \
-    extern template Variable<T> &Engine::FindVariable(                         \
-        const std::string &variableName, const std::string hint);              \
-                                                                               \
-    extern template std::map<size_t,                                           \
-                             std::vector<typename Variable<T>::BPInfo>>        \
-    Engine::AllStepsBlocksInfo(const Variable<T> &) const;                     \
-                                                                               \
-    extern template std::vector<std::vector<typename Variable<T>::BPInfo>>     \
-    Engine::AllRelativeStepsBlocksInfo(const Variable<T> &) const;             \
-                                                                               \
-    extern template std::vector<typename Variable<T>::BPInfo>                  \
-    Engine::BlocksInfo(const Variable<T> &, const size_t) const;               \
-                                                                               \
-    extern template std::vector<size_t> Engine::GetAbsoluteSteps(              \
-        const Variable<T> &) const;
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-#define declare_template_instantiation(T)                                      \
-    extern template typename Variable<T>::Span &Engine::Put(                   \
-        Variable<T> &, const bool, const T &);                                 \
-    extern template void Engine::Get(Variable<T> &, T **) const;
-ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 } // end namespace core
 } // end namespace adios2
 

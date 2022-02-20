@@ -276,13 +276,6 @@ private:
     bool m_IdleWriterOn = false;
 };
 
-// Explicit declaration of the public template methods
-#define declare_template_instantiation(T)                                      \
-    extern template void HDF5Common::Write(core::Variable<T> &variable,        \
-                                           const T *value);
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 } // end namespace interop
 } // end namespace adios
 

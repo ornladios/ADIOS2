@@ -151,13 +151,7 @@ public:
                                   const std::string separator = "/") const
         noexcept;
 };
-// Explicit declaration of the public template methods
-#define declare_template_instantiation(T)                                      \
-    extern template Variable<T> *Group::InquireVariable<T>(                    \
-        const std::string &name) noexcept;
 
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
 } // end namespace core
 } // end namespace adios2
 

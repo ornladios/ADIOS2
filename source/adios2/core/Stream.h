@@ -159,60 +159,6 @@ private:
     void SetBlockSelectionCommon(Variable<T> &variable, const size_t blockID);
 };
 
-#define declare_template_instantiation(T)                                      \
-    extern template void Stream::WriteAttribute(                               \
-        const std::string &, const T &, const std::string &,                   \
-        const std::string, const bool);                                        \
-                                                                               \
-    extern template void Stream::WriteAttribute(                               \
-        const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string, const bool);                                        \
-                                                                               \
-    extern template void Stream::ReadAttribute(                                \
-        const std::string &, T *, const std::string &, const std::string);
-
-ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-// Explicit declaration of the public template methods
-#define declare_template_instantiation(T)                                      \
-                                                                               \
-    extern template void Stream::Write<T>(                                     \
-        const std::string &, const T *, const Dims &, const Dims &,            \
-        const Dims &, const vParams &, const bool);                            \
-                                                                               \
-    extern template void Stream::Write<T>(const std::string &, const T &,      \
-                                          const bool, const bool);             \
-                                                                               \
-    extern template void Stream::Read<T>(const std::string &, T *,             \
-                                         const size_t);                        \
-                                                                               \
-    extern template void Stream::Read<T>(const std::string &, T *,             \
-                                         const Box<size_t> &, const size_t);   \
-                                                                               \
-    extern template void Stream::Read<T>(const std::string &, T *,             \
-                                         const Box<Dims> &, const size_t);     \
-                                                                               \
-    extern template void Stream::Read<T>(const std::string &, T *,             \
-                                         const Box<Dims> &,                    \
-                                         const Box<size_t> &, const size_t);   \
-                                                                               \
-    extern template std::vector<T> Stream::Read<T>(const std::string &,        \
-                                                   const size_t);              \
-                                                                               \
-    extern template std::vector<T> Stream::Read(                               \
-        const std::string &, const Box<size_t> &, const size_t);               \
-                                                                               \
-    extern template std::vector<T> Stream::Read<T>(                            \
-        const std::string &, const Box<Dims> &, const Box<size_t> &,           \
-        const size_t);                                                         \
-                                                                               \
-    extern template std::vector<T> Stream::Read<T>(                            \
-        const std::string &, const Box<Dims> &, const size_t);
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 } // end namespace core
 } // end namespace adios2
 

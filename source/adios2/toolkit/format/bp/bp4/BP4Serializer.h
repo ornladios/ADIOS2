@@ -256,26 +256,6 @@ private:
                                             BufferSTL &bufferSTL);
 };
 
-#define declare_template_instantiation(T)                                      \
-    extern template void BP4Serializer::PutVariablePayload(                    \
-        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
-        const bool, typename core::Variable<T>::Span *) noexcept;              \
-                                                                               \
-    extern template void BP4Serializer::PutVariableMetadata(                   \
-        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
-        const bool, typename core::Variable<T>::Span *) noexcept;
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-#define declare_template_instantiation(T)                                      \
-    extern template void BP4Serializer::PutSpanMetadata(                       \
-        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
-        const typename core::Variable<T>::Span &) noexcept;
-
-ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 } // end namespace format
 } // end namespace adios2
 

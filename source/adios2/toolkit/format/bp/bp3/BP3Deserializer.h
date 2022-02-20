@@ -217,64 +217,6 @@ private:
         const;
 };
 
-// TODO: deprecate this
-#define declare_template_instantiation(T)                                      \
-    extern template void BP3Deserializer::GetSyncVariableDataFromStream(       \
-        core::Variable<T> &, BufferSTL &) const;                               \
-                                                                               \
-    extern template typename core::Variable<T>::BPInfo &                       \
-    BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *) const;    \
-                                                                               \
-    extern template void BP3Deserializer::SetVariableBlockInfo(                \
-        core::Variable<T> &, typename core::Variable<T>::BPInfo &) const;      \
-                                                                               \
-    extern template void BP3Deserializer::ClipContiguousMemory<T>(             \
-        typename core::Variable<T>::BPInfo &, const std::vector<char> &,       \
-        const Box<Dims> &, const Box<Dims> &intersectionBox) const;            \
-                                                                               \
-    extern template void BP3Deserializer::GetValueFromMetadata(                \
-        core::Variable<T> &variable, T *) const;
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-#define declare_template_instantiation(T)                                      \
-                                                                               \
-    extern template std::map<std::string, helper::SubFileInfoMap>              \
-    BP3Deserializer::GetSyncVariableSubFileInfo(const core::Variable<T> &)     \
-        const;                                                                 \
-                                                                               \
-    extern template void BP3Deserializer::GetDeferredVariable(                 \
-        core::Variable<T> &, T *);                                             \
-                                                                               \
-    extern template helper::SubFileInfoMap BP3Deserializer::GetSubFileInfo(    \
-        const core::Variable<T> &) const;                                      \
-                                                                               \
-    extern template std::map<size_t,                                           \
-                             std::vector<typename core::Variable<T>::BPInfo>>  \
-    BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &) const;      \
-                                                                               \
-    extern template std::vector<                                               \
-        std::vector<typename core::Variable<T>::BPInfo>>                       \
-    BP3Deserializer::AllRelativeStepsBlocksInfo(const core::Variable<T> &)     \
-        const;                                                                 \
-                                                                               \
-    extern template std::vector<typename core::Variable<T>::BPInfo>            \
-    BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
-        const;                                                                 \
-                                                                               \
-    extern template void BP3Deserializer::PreDataRead(                         \
-        core::Variable<T> &, typename core::Variable<T>::BPInfo &,             \
-        const helper::SubStreamBoxInfo &, char *&, size_t &, size_t &,         \
-        const size_t);                                                         \
-                                                                               \
-    extern template void BP3Deserializer::PostDataRead(                        \
-        core::Variable<T> &, typename core::Variable<T>::BPInfo &,             \
-        const helper::SubStreamBoxInfo &, const bool, const size_t);
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 } // end namespace format
 } // end namespace adios2
 

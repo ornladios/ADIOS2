@@ -632,15 +632,6 @@ private:
                               const bool isLittleEndian = true) const;
 };
 
-#define declare_template_instantiation(T)                                      \
-    extern template BPBase::Characteristics<T>                                 \
-    BPBase::ReadElementIndexCharacteristics(const std::vector<char> &,         \
-                                            size_t &, const BPBase::DataTypes, \
-                                            const bool, const bool) const;
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 } // end namespace format
 } // end namespace adios2
 
